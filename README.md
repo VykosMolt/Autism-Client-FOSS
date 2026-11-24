@@ -2,9 +2,8 @@
 
 A FOSS fork of **AUTISM Client** for **Minecraft 26.3** (Fabric, Java 25).
 
-This is still a work in progress. Right now the codebase is a ~750k-line consolidation of 5.3, the 5.7.11 updates (including the AI/parkour stack), Aggressive PvP, and the MC 26.3 fixes in one working tree. The goal is to end up with something much shorter and cleaner: cutting down vibecoded monolithic classes (like ~20k lines for Scaffolding), removing unrelated extras that belong as their own mods (like the matchmaking system), and replacing subsystems such as swapping `multi` out for an [Azalea](https://github.com/azalea-rs/azalea)-based Rust network protocol.
+This is still a work in progress. Right now the codebase is a ~750k-line consolidation of my own patched version of 5.3, a version of 5.3 made for 26.3, the 5.7.11 updates (including the AI/parkour stack), Aggressive PvP addon, and the further MC 26.3 fixes in one tree. The goal is to end up with something much shorter, cleaner and actually manageable by cutting down vibecoded slop like the countless monolithic classes of over 9k lines of code ( ~20k lines for Scaffolding btw, and it didnt work before I fixed it), removing unrelated extras that belong as their own mods (like the matchmaking system), and replacing subsystems such as swapping `multi` out for an [Azalea](https://github.com/azalea-rs/azalea)-based Rust network protocol.
 
-> Original integrity and authorization checks are kept untouched and excluded from this repo via `.gitignore`. Prebuilt JARs are under **Releases**.
 
 ## Branches
 
