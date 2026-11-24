@@ -134,7 +134,7 @@ public final class CacheEntry extends Command {
       init_V_Str("§7" + t + " list [category] §8· §7" + t + " schema <id> §8· §7" + t + " call <id> [k=v ...]");
       init_V_Str("§7" + t + " goto|parkour|mine|chop|follow|fight|build|fill|dig §8- §7positional shorthands (Tab completes every argument)");
       init_V_Str("§8goto may dig, pillar and bridge (never where the player cannot build, e.g. adventure mode); parkour never breaks or places");
-      init_V_Str("§7" + t + " parkour [--no-fall-damage] <x> <y> <z>");
+      init_V_Str("§7" + t + " parkour [nofall] [speed0|speed1|speed2] [<x> <y> <z> ...]");
       init_V_Str("§8The flag can go last. Omit the destination to pick it in Freecam.");
       init_V_Str(
          "§7"
@@ -347,9 +347,18 @@ public final class CacheEntry extends Command {
       }
 
       boolean parkour = sub.equals("parkour");
-      boolean noDamagePicker = parkour && !args.isEmpty() && args.stream().allMatch(cy::init_Z);
-      if (noDamagePicker || args.isEmpty() && (sub.equals("goto") || parkour)) {
-         return !aP.init_Z_Z_Z(parkour, noDamagePicker) ? this.sync("Join a world and stop any running movement task before choosing a destination") : 1;
+      boolean parkourPicker = parkour && !args.isEmpty() && args.stream().allMatch(cy::isParkourFlag);
+      if (parkourPicker || args.isEmpty() && (sub.equals("goto") || parkour)) {
+         cy.Inner_CachePool parkourOptions;
+         try {
+            parkourOptions = parkour ? cy.parseParkourFlags(args) : new cy.Inner_CachePool(false, -1);
+         } catch (IllegalArgumentException e) {
+            return this.sync(e.getMessage());
+         }
+
+         return !aP.init_Z_Z_cy_CachePool(parkour, parkourOptions)
+            ? this.sync("Join a world and stop any running movement task before choosing a destination")
+            : 1;
       }
 
       Minecraft mc = Minecraft.getInstance();

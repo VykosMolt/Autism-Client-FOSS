@@ -61,6 +61,10 @@ final class bQ {
    }
 
    static boolean init_Z_BlockPos(BlockPos worker, AABB site, int budget, Predicate<BlockPos> open) {
+      return !init_Set_BlockPos(worker, site, budget, open).isEmpty();
+   }
+
+   static Set<Long> init_Set_BlockPos(BlockPos worker, AABB site, int budget, Predicate<BlockPos> open) {
       HashSet<Long> seen = new HashSet<>();
       ArrayDeque<BlockPos> queue = new ArrayDeque<>();
       queue.add(worker);
@@ -68,12 +72,12 @@ final class bQ {
 
       while (!queue.isEmpty()) {
          if (seen.size() > budget) {
-            return false;
+            return Set.of();
          }
 
          BlockPos cell = queue.poll();
          if (!site.contains(Vec3.atCenterOf(cell))) {
-            return false;
+            return Set.of();
          }
 
          for (Direction direction : Direction.values()) {
@@ -84,7 +88,7 @@ final class bQ {
          }
       }
 
-      return true;
+      return seen;
    }
 
    static BlockPos init(LevelReader world, BlockPos ceiling, Map<Long, TableIndex.Inner_StreamUtil> source) {
@@ -191,24 +195,30 @@ final class bQ {
    }
 
    static boolean init(BlockPos candidate, Map<Long, TableIndex.Inner_StreamUtil> source, LevelReader world) {
+      return init_Z_BlockPos(candidate, source, world, null);
+   }
+
+   static boolean init_Z_BlockPos(BlockPos candidate, Map<Long, TableIndex.Inner_StreamUtil> source, LevelReader world, BlockPos ignore) {
       LevelReader removed = null;
 
       for (Direction direction : Direction.values()) {
          BlockPos dependent = candidate.relative(direction);
-         TableIndex.Inner_StreamUtil cell = source.get(dependent.asLong());
-         if (cell != null) {
-            BlockState requested = TableIndex.init_BlockState(cell);
-            if (direction == Direction.UP && requested.getBlock() instanceof FallingBlock) {
-               return true;
-            }
-
-            if (requested.canSurvive(world, dependent)) {
-               if (removed == null) {
-                  removed = init(world, candidate, Blocks.AIR.defaultBlockState());
+         if (!dependent.equals(ignore)) {
+            TableIndex.Inner_StreamUtil cell = source.get(dependent.asLong());
+            if (cell != null) {
+               BlockState requested = TableIndex.init_BlockState(cell);
+               if (direction == Direction.UP && requested.getBlock() instanceof FallingBlock) {
+                  return true;
                }
 
-               if (!requested.canSurvive(removed, dependent)) {
-                  return true;
+               if (requested.canSurvive(world, dependent)) {
+                  if (removed == null) {
+                     removed = init(world, candidate, Blocks.AIR.defaultBlockState());
+                  }
+
+                  if (!requested.canSurvive(removed, dependent)) {
+                     return true;
+                  }
                }
             }
          }
@@ -218,10 +228,15 @@ final class bQ {
    }
 
    static AiOperation init(final BlockPos top, final BlockPos bottom, final Set<Long> protectedCells) {
+      return init_AiOperation_BlockPos_2(top, bottom, protectedCells, protectedCells);
+   }
+
+   static AiOperation init_AiOperation_BlockPos_2(
+      final BlockPos top, final BlockPos bottom, final Set<Long> protectedCells, final Set<Long> digProtected
+   ) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          AiOperation init_AiOperation = HashUtil.init_AiOperation_BlockPos(top, 0.25, false, false, false, 20);
-         final autismclient.ai.a.DataUtil init_DataUtil = new autismclient.ai.a.DataUtil();
          final long init_J = System.nanoTime() + 40000000000L;
          boolean init_Z;
 
@@ -245,26 +260,30 @@ final class bQ {
                   }
                }
 
-               autismclient.ai.a.RefQueue.open_V();
-               if (!autismclient.ai.a.RefQueue.flush_Z()) {
+               autismclient.ai.a.AiMotionSafety.putAt_V();
+               if (!autismclient.ai.a.AiMotionSafety.fill_Z()) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Landing inside the access shaft", "{}", List.of());
                }
 
-               if (mc.player.getY() <= bottom.getY() + 0.25) {
+               if (mc.player.getY() <= bottom.getY() + 0.25 && mc.player.blockPosition().equals(bottom)) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Buried construction stance reached");
                }
 
                Vec3 centre = Vec3.atBottomCenterOf(bottom);
-               double gap = Math.hypot(centre.x - mc.player.getX(), centre.z - mc.player.getZ());
-               if (!(gap > 0.035) && !(mc.player.getDeltaMovement().horizontalDistanceSqr() > 4.0E-4)) {
+               Vec3 vel = mc.player.getDeltaMovement();
+               double dx = centre.x - mc.player.getX();
+               double dz = centre.z - mc.player.getZ();
+               if (!(dx * dx + dz * dz > 0.0012250000000000002) && !(vel.horizontalDistanceSqr() > 4.0E-4)) {
                   mc.options.keyShift.setDown(false);
                   BlockPos floor = BlockPos.containing(mc.player.getX(), mc.player.getY() - 0.001, mc.player.getZ());
-                  if (floor.getX() != bottom.getX() || floor.getZ() != bottom.getZ() || floor.getY() < bottom.getY() || protectedCells.contains(floor.asLong())
-                     )
-                   {
+                  if (floor.getX() != bottom.getX()
+                     || floor.getZ() != bottom.getZ()
+                     || floor.getY() < bottom.getY()
+                     || floor.getY() >= top.getY()
+                     || protectedCells.contains(floor.asLong())) {
                      return this.init(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
-                  } else if (bQ.init(mc.level, bottom, floor.getY()) && autismclient.ai.a.RefQueue.init_Z_BlockPos(floor)) {
-                     this.init_AiOperation = autismclient.ai.a.ConfigStore.init(floor, 10, true, protectedCells, false);
+                  } else if (bQ.init(mc.level, bottom, floor.getY()) && autismclient.ai.a.AiMotionSafety.putAt(floor)) {
+                     this.init_AiOperation = autismclient.ai.a.ConfigStore.init(floor, 10, true, digProtected, false);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Opening the next floor of the access shaft", "{}", List.of());
                   } else {
                      return this.init(AiOperation.Status.FAILED, "The access shaft has no safe landing after its floor is removed");
@@ -272,9 +291,16 @@ final class bQ {
                } else {
                   mc.player.setSprinting(false);
                   mc.options.keyShift.setDown(true);
-                  this.init_DataUtil.init_V_Vec3(new Vec3(centre.x, mc.player.getEyeY(), centre.z));
-                  this.init_DataUtil.load_V();
-                  mc.options.keyUp.setDown(gap > 0.035 && this.init_DataUtil.load_Z());
+                  if (vel.horizontalDistanceSqr() <= 4.0E-4) {
+                     double yawRad = Math.toRadians(mc.player.getYRot());
+                     double fwd = -Math.sin(yawRad) * dx + Math.cos(yawRad) * dz;
+                     double strafe = Math.cos(yawRad) * dx + Math.sin(yawRad) * dz;
+                     mc.options.keyUp.setDown(fwd > 0.024);
+                     mc.options.keyDown.setDown(fwd < -0.024);
+                     mc.options.keyLeft.setDown(strafe > 0.024);
+                     mc.options.keyRight.setDown(strafe < -0.024);
+                  }
+
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Centering on the access shaft before removing its floor", "{}", List.of());
                }
             } else {
@@ -288,13 +314,18 @@ final class bQ {
          }
 
          @Override
+         public boolean canInterruptNow() {
+            return this.init_AiOperation == null ? autismclient.ai.a.AiMotionSafety.fill_Z() : this.init_AiOperation.canInterruptNow();
+         }
+
+         @Override
          public void cancel() {
             this.init_Z = true;
             if (this.init_AiOperation != null) {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.ai.a.RefQueue.open_V();
+            autismclient.ai.a.AiMotionSafety.putAt_V();
          }
       };
    }
@@ -311,7 +342,7 @@ final class bQ {
             Direction face = Direction.getNearest(dx, 0, dz, Direction.NORTH);
             if (constraint.acceptsFace(face) && constraint.acceptsRay(-dx * 0.2, -1.5, -dz * 0.2)) {
                final Vec3 edge = Vec3.atBottomCenterOf(floor.above()).add(dx * 0.7, 0.0, dz * 0.7);
-               if (!autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(mc.player.position(), edge)) {
+               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
                   return null;
                }
 
@@ -329,7 +360,7 @@ final class bQ {
 
                   @Override
                   public AiOperation.Result tick() {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      mc.player.setSprinting(false);
                      mc.options.keyShift.setDown(true);
                      if (mc.player.onGround() && ++this.init_I <= 60) {
@@ -338,7 +369,7 @@ final class bQ {
                         }
 
                         Vec3 remaining = edge.subtract(mc.player.position());
-                        if (!autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(mc.player.position(), edge)) {
+                        if (!autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
                            return this.init(AiOperation.Status.FAILED, "Support-edge alignment would touch lava");
                         }
 
@@ -362,13 +393,13 @@ final class bQ {
                   }
 
                   AiOperation.Result init(AiOperation.Status status, String message) {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      return new AiOperation.Result(status, message, "{}", List.of());
                   }
 
                   @Override
                   public void cancel() {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                   }
                };
             } else {
@@ -522,7 +553,7 @@ final class bQ {
                               return this.init("Exposing the next step's support face");
                            }
 
-                           autismclient.ai.a.RefQueue.open_V();
+                           autismclient.ai.a.AiMotionSafety.putAt_V();
                            mc.options.keyShift.setDown(true);
                            this.load_I = 2;
                            this.read = 0;
@@ -575,7 +606,7 @@ final class bQ {
                               return this.init("Leaning out for the stair landing");
                            }
 
-                           autismclient.ai.a.RefQueue.open_V();
+                           autismclient.ai.a.AiMotionSafety.putAt_V();
                            mc.options.keyShift.setDown(true);
                            this.load_Z = true;
                            this.init_AiOperation = this.load(landing, keep);
@@ -661,14 +692,14 @@ final class bQ {
             }
 
             boolean init(Vec3 point, boolean sneak) {
-               if (!autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(mc.player.position(), point)) {
+               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), point)) {
                   this.init_Str = "Access alignment would touch lava";
                   return false;
                } else {
                   double dx = point.x - mc.player.getX();
                   double dz = point.z - mc.player.getZ();
                   if (dx * dx + dz * dz < (sneak ? 1.0E-4 : 0.01)) {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      return true;
                   } else if (++this.read > 90) {
                      this.init_Str = "Access alignment could not reach " + point + " from " + mc.player.position();
@@ -705,7 +736,7 @@ final class bQ {
                   this.init_AiOperation.cancel();
                }
 
-               autismclient.ai.a.RefQueue.open_V();
+               autismclient.ai.a.AiMotionSafety.putAt_V();
             }
          };
    }

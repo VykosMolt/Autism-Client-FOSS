@@ -173,7 +173,7 @@ final class Y {
                      && (leg == null || !leg.requiresReconciliationAfterEmergency())
                      && (this.init_AiOperation == null || !this.init_AiOperation.requiresReconciliationAfterEmergency())
                      && zoneClient.player.getHealth() >= 8.0F
-                     && autismclient.ai.a.RefQueue.flush_Z()
+                     && autismclient.ai.a.AiMotionSafety.fill_Z()
                      && u.init_Z(zoneClient)
             )) {
             if (this.init_K == null) {
@@ -249,7 +249,7 @@ final class Y {
             && !this.write
             && this.init_AiOperation.canInterruptNow()
             && !this.init_AiOperation.requiresReconciliationAfterEmergency()
-            && autismclient.ai.a.RefQueue.flush_Z()) {
+            && autismclient.ai.a.AiMotionSafety.fill_Z()) {
             X.Inner_BufferHelper live = X.init_X_BufferHelper();
             X.Inner_DataUtil next = X.init_X_StreamUtil(this.init_X_CachePool_Minecraft(zoneClient), live).action();
             if (CacheEntry.init_Z_X_DataUtil(this.init_X_DataUtil, next, live.hostilesNear())
@@ -272,7 +272,7 @@ final class Y {
             return this.init_AiOperation_Result();
          }
 
-         if (autismclient.ai.a.RefQueue.flush_Z() && (leg == null || leg.canInterruptNow())) {
+         if (autismclient.ai.a.AiMotionSafety.fill_Z() && (leg == null || leg.canInterruptNow())) {
             X.Inner_BufferHelper vitals = X.init_X_BufferHelper();
             boolean moving = motion.horizontalDistance() >= 0.12;
             if (!cv.init_Z() && !d.init(Minecraft.getInstance()) && !UiHelper.init() && p.init(Minecraft.getInstance(), moving)) {

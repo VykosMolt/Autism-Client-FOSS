@@ -42,7 +42,7 @@ final class Q implements AiOperation {
    private final int init_I;
    private final Q.Inner_DataUtil init_Q_DataUtil;
    private final autismclient.ai.a.DataUtil init_DataUtil = new autismclient.ai.a.DataUtil();
-   private final autismclient.ai.a.RefQueue.Inner_DataUtil init_RefQueue_DataUtil;
+   private final autismclient.ai.a.AiBlockDigger init_RefQueue_DataUtil;
    private final Set<BlockPos> init_Set = new HashSet<>();
    private Map<BlockPos, BlockPos> init_Map = Map.of();
    private AiOperation init_AiOperation;
@@ -110,7 +110,7 @@ final class Q implements AiOperation {
       this.init_Str = input;
       this.init_Q_DataUtil = plan;
       this.init_I = Math.max(0, cookingTicks - 30);
-      this.init_RefQueue_DataUtil = new autismclient.ai.a.RefQueue.Inner_DataUtil(
+      this.init_RefQueue_DataUtil = new autismclient.ai.a.AiBlockDigger(
          this.init_Minecraft,
          slot -> this.init_Minecraft.player.getInventory().setSelectedSlot(slot),
          this.init_DataUtil::init_V_Vec3,
@@ -305,14 +305,14 @@ final class Q implements AiOperation {
                this.read_BlockPos = null;
                this.init_RefQueue_DataUtil.init_V();
             } else if (this.update(this.read_BlockPos) && autismclient.ai.a.CachePool.init(this.init_Minecraft, this.read_BlockPos) != null) {
-               autismclient.ai.a.RefQueue.Inner_DataUtil.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.read_BlockPos);
+               autismclient.ai.a.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.read_BlockPos);
                this.init_DataUtil.load_V();
-               if (r == autismclient.ai.a.RefQueue.Inner_DataUtil.Inner_DataUtil_2.init) {
+               if (r == autismclient.ai.a.AiBlockDigger.Inner_DataUtil_2.init) {
                   return this.init_AiOperation_Result_Str_3("Mining needed " + this.init_Str_BlockPos(this.read_BlockPos) + " while the furnace cooks");
                }
 
                this.init_RefQueue_DataUtil.init_V();
-               if (r == autismclient.ai.a.RefQueue.Inner_DataUtil.Inner_DataUtil_2.load) {
+               if (r == autismclient.ai.a.AiBlockDigger.Inner_DataUtil_2.load) {
                   this.read_I++;
                }
 

@@ -80,7 +80,7 @@ public final class TokenStore {
             long init_J = -1L;
             final JsonArray init_JsonArray = new JsonArray();
             final DataUtil init_DataUtil = new DataUtil();
-            final RefQueue.Inner_DataUtil init_RefQueue_DataUtil = new RefQueue.Inner_DataUtil(
+            final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                this.init_Minecraft, this::init_V, this.init_DataUtil::init_V_Vec3, true, true, this.init_DataUtil::load_V
             );
             final StreamUtil init_StreamUtil = backfill ? new StreamUtil(this.init_Minecraft) : null;
@@ -699,7 +699,7 @@ public final class TokenStore {
                int ax = Math.abs(dx);
                int az = Math.abs(dz);
                if (Math.max(ax, az) <= 3 && (ax == 0 || az == 0 || ax == az)) {
-                  if (!RefQueue.init_Z_Vec3_Vec3(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(to))) {
+                  if (!AiMotionSafety.putAt_Z_Vec3_Vec3(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(to))) {
                      return false;
                   }
 

@@ -85,14 +85,31 @@ public final class cA {
       try {
          if (sub.equals("parkour")) {
             List<String> completed = cy.init_List(remaining.substring(0, cursor.offset()));
-            List<String> destination = completed.stream().filter(token -> !cy.init_Z(token)).toList();
-            if (destination.size() == completed.size()) {
-               init(at, cursor.current(), List.of("--no-fall-damage"));
+            cy.Inner_CachePool flags = cy.parseParkourFlags(completed);
+            List<String> destination = completed.stream().filter(token -> !cy.isParkourFlag(token)).toList();
+            if (!flags.noFall()) {
+               String flag = cursor.current().startsWith("-") ? "--no-fall-damage" : "nofall";
+               init(at, cursor.current(), List.of(flag));
+            }
+
+            if (flags.speedLevel() < 0) {
+               init(at, cursor.current(), cy.parkourSpeedFlags);
             }
 
             pos = destination.size();
             if (!destination.isEmpty() && destination.getFirst().equalsIgnoreCase("to")) {
                pos--;
+            }
+
+            if (pos >= 3 && pos < 96) {
+               try {
+                  for (String coord : destination.subList(destination.size() - pos, destination.size())) {
+                     cy.init_I_Str_D(coord, 0.0);
+                  }
+
+                  init(at, cursor.current(), List.of("~"));
+               } catch (IllegalArgumentException ignored) {
+               }
             }
          } else if (sub.equals("goto") && pos >= 1) {
             String trimmed = remaining.trim();

@@ -1,8 +1,10 @@
 package autismclient.ai;
 
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,6 +14,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.client.Minecraft;
@@ -20,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
@@ -32,6 +37,9 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.storage.TagValueInput;
 
@@ -47,8 +55,10 @@ final class cT {
    private final String load_Str;
    private final boolean write_Z;
    private final boolean update_Z;
-   private final List<cT.Inner_DataUtil> init_List;
-   private final long init_J;
+   private final Future<cT.Inner_TableCache> init_Future;
+   private List<cT.Inner_DataUtil> init_List;
+   private BitSet[][] occupiedMasks;
+   private long init_J;
    private final Map<BlockState, BlockState> init_Map = new IdentityHashMap<>();
    private final Map<Long, BitSet> load_Map = new HashMap<>();
    private final boolean sync_Z;
@@ -65,7 +75,7 @@ final class cT {
    private CompletableFuture<?> init_CompletableFuture;
    private int close;
    private long read_J;
-   private boolean flush_Z;
+   private LevelChunk cachedChunk;
    volatile boolean init_Z;
    volatile boolean load_Z;
    volatile cT.Inner_StreamUtil init_cT_StreamUtil;
@@ -94,16 +104,6 @@ final class cT {
          int endX = Math.addExact(origin.getX(), document.init_I_I_Str(rotation, mirror) - 1);
          int endZ = Math.addExact(origin.getZ(), document.load_I_I(rotation) - 1);
          if (level.getWorldBorder().isWithinBounds(origin) && level.getWorldBorder().isWithinBounds(new BlockPos(endX, origin.getY(), endZ))) {
-            this.init_List = init(document, origin, rotation, mirror);
-            long work = 0L;
-
-            for (cT.Inner_DataUtil c : this.init_List) {
-               for (cT.Inner_CachePool r : c.ranges) {
-                  work += (r.max - r.min + 1) * 256L;
-               }
-            }
-
-            this.init_J = 2L * work + document.load_List.size() + (includeEntities ? document.read_List.size() : 0);
             this.sync_Z = !checkpoint.isEmpty();
             this.load_Str = cR.init_Str_JsonObject(checkpoint, "operation", UUID.randomUUID().toString());
             this.load_I = (int)cR.init_J_JsonObject(checkpoint, "phase", 0L);
@@ -113,32 +113,22 @@ final class cT {
             this.sync_I = (int)cR.init_J_JsonObject(checkpoint, "blockEntity", 0L);
             this.flush_I = (int)cR.init_J_JsonObject(checkpoint, "entity", 0L);
             this.load_J = cR.init_J_JsonObject(checkpoint, "done", 0L);
-            if (this.load_I < 0
-               || this.load_I > 4
-               || this.read_I < 0
-               || this.read_I > this.init_List.size()
-               || this.write_I < 0
-               || this.update_I < 0
-               || this.sync_I < 0
-               || this.sync_I > document.load_List.size()
-               || this.flush_I < 0
-               || this.flush_I > document.read_List.size()
-               || this.load_J < 0L
-               || this.load_J > this.init_J) {
+            this.init_J = Math.max(0L, cR.init_J_JsonObject(checkpoint, "total", 0L));
+            if (this.load_I >= 0
+               && this.load_I <= 4
+               && this.read_I >= 0
+               && this.write_I >= 0
+               && this.update_I >= 0
+               && this.sync_I >= 0
+               && this.sync_I <= document.load_List.size()
+               && this.flush_I >= 0
+               && this.flush_I <= document.read_List.size()
+               && this.load_J >= 0L) {
+               this.init_Future = cR.init_ExecutorService.submit(() -> prepare(document, this.init_BlockPos, rotation, mirror, includeAir));
+               this.load("");
+            } else {
                throw new IllegalArgumentException("Invalid paste checkpoint");
             }
-
-            if (this.read_I < this.init_List.size()
-               && (
-                  this.write_I >= this.init_List.get(this.read_I).ranges.size()
-                     || this.update_I
-                        > 256
-                           * (this.init_List.get(this.read_I).ranges.get(this.write_I).max - this.init_List.get(this.read_I).ranges.get(this.write_I).min + 1)
-               )) {
-               throw new IllegalArgumentException("Invalid paste cursor");
-            }
-
-            this.load("");
          } else {
             throw new IllegalArgumentException("The schematic crosses the world border");
          }
@@ -146,6 +136,29 @@ final class cT {
          throw new IllegalArgumentException(
             "Paste spans Y " + origin.getY() + " to " + top + ". Move the placement inside Y " + level.getMinY() + " to " + level.getMaxY() + "."
          );
+      }
+   }
+
+   private void applyPrepared(cT.Inner_TableCache prepared) {
+      this.init_List = prepared.columns();
+      this.occupiedMasks = prepared.occupied();
+      this.init_J = 2L * prepared.work() + this.init_cQ.load_List.size() + (this.update_Z ? this.init_cQ.read_List.size() : 0);
+      if (this.read_I <= this.init_List.size() && this.load_J <= this.init_J) {
+         if (this.read_I < this.init_List.size()
+            && (
+               this.write_I >= this.init_List.get(this.read_I).ranges.size()
+                  || this.update_I
+                     > 256
+                        * (
+                           this.init_List.get(this.read_I).ranges.get(this.write_I).max
+                              - this.init_List.get(this.read_I).ranges.get(this.write_I).min
+                              + 1
+                        )
+            )) {
+            throw new IllegalArgumentException("Invalid paste cursor");
+         }
+      } else {
+         throw new IllegalArgumentException("Invalid paste checkpoint");
       }
    }
 
@@ -192,9 +205,17 @@ final class cT {
    private void load() {
       if (!this.init_Z && !this.init_cT_StreamUtil.complete && !this.init_IntegratedServer.isPublished()) {
          long deadline = System.nanoTime() + Math.clamp(37000000L - this.init_IntegratedServer.getAverageTickTimeNanos(), 4000000L, 14000000L);
-         this.flush_Z = false;
+         this.cachedChunk = null;
 
          try {
+            if (this.init_List == null) {
+               if (!this.init_Future.isDone()) {
+                  return;
+               }
+
+               this.applyPrepared(this.init_Future.get());
+            }
+
             for (int n = 0; n < 32768 && ((n & 31) != 0 || System.nanoTime() < deadline) && !this.init_Z; n++) {
                if (this.load_I == 0 || this.load_I == 3) {
                   if (this.read_I >= this.init_List.size()) {
@@ -205,9 +226,9 @@ final class cT {
                      cT.Inner_CachePool range = column.ranges.get(this.write_I);
                      int rangeSize = (range.max - range.min + 1) * 256;
                      long maskKey = (long)this.read_I << 32 | this.write_I;
-                     if (this.load_I == 3 && !this.sync_Z && this.update_I < rangeSize) {
-                        BitSet changes = this.load_Map.get(maskKey);
-                        int next = changes == null ? -1 : changes.nextSetBit(this.update_I);
+                     if (this.update_I < rangeSize) {
+                        BitSet mask = this.load_I == 3 && !this.sync_Z ? this.load_Map.get(maskKey) : this.occupiedMasks[this.read_I][this.write_I];
+                        int next = mask == null ? -1 : mask.nextSetBit(this.update_I);
                         if (next < 0) {
                            next = rangeSize;
                         }
@@ -248,9 +269,9 @@ final class cT {
                               this.load_BlockPos_MutableBl.set(x, y, z);
                               if (this.load_I == 0) {
                                  BlockState state = this.init_Map.computeIfAbsent(saved, s -> cQ.init_BlockState_BlockState(s, this.init_I, this.init_Str));
-                                 if (!this.init_ServerLevel.getBlockState(this.load_BlockPos_MutableBl).equals(state)) {
+                                 if (this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
                                     boolean written = this.init_ServerLevel.setBlock(this.load_BlockPos_MutableBl, state, 818);
-                                    if (!written && !this.init_ServerLevel.getBlockState(this.load_BlockPos_MutableBl).equals(state)) {
+                                    if (!written && this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
                                        throw new IllegalStateException("Could not paste at " + this.load_BlockPos_MutableBl.toShortString());
                                     }
 
@@ -259,7 +280,7 @@ final class cT {
                                     }
                                  }
                               } else {
-                                 BlockState live = this.init_ServerLevel.getBlockState(this.load_BlockPos_MutableBl);
+                                 BlockState live = this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl);
                                  this.init_ServerLevel.updateNeighborsAt(this.load_BlockPos_MutableBl, live.getBlock());
                                  if (!live.getFluidState().isEmpty()) {
                                     this.init_ServerLevel.scheduleTick(this.load_BlockPos_MutableBl, live.getFluidState().getType(), 1);
@@ -379,6 +400,10 @@ final class cT {
    }
 
    private void init(String error) {
+      if (!this.init_Future.isDone()) {
+         this.init_Future.cancel(true);
+      }
+
       this.load(error);
       this.load_Z = true;
       if (init_cT == this) {
@@ -388,16 +413,26 @@ final class cT {
 
    private boolean init(int x, int z) {
       long key = ChunkPos.pack(x, z);
-      if (this.flush_Z && this.read_J == key) {
+      if (this.cachedChunk != null && this.read_J == key) {
          return true;
       }
 
       ChunkPos pos = new ChunkPos(x, z);
       ServerChunkCache source = this.init_ServerLevel.getChunkSource();
       source.addTicketWithRadius(TicketType.UNKNOWN, pos, 0);
+      this.cachedChunk = source.getChunkNow(x, z);
+      if (this.cachedChunk != null) {
+         this.read_J = key;
+         this.init_ChunkPos = null;
+         return true;
+      }
+
       if (!pos.equals(this.init_ChunkPos)) {
          this.init_ChunkPos = pos;
-         this.init_CompletableFuture = source.getChunkFuture(x, z, ChunkStatus.FULL, true);
+         this.init_CompletableFuture = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
+               () -> source.getChunkFuture(x, z, ChunkStatus.FULL, true), cR.init_ExecutorService
+            )
+            .thenCompose(future -> (CompletionStage<ChunkResult<ChunkAccess>>)future);
          this.close = this.init_IntegratedServer.getTickCount();
       }
 
@@ -405,17 +440,11 @@ final class cT {
          throw new IllegalStateException("Target chunk is still unavailable; paste can be resumed");
       }
 
-      if (!this.init_CompletableFuture.isDone()) {
-         return false;
-      }
-
       if (this.init_CompletableFuture.isCompletedExceptionally()) {
          this.init_CompletableFuture.join();
       }
 
-      this.flush_Z = source.getChunk(x, z, ChunkStatus.FULL, false) != null;
-      this.read_J = key;
-      return this.flush_Z;
+      return false;
    }
 
    private void init_V_I(int x, int y, int z) {
@@ -496,33 +525,39 @@ final class cT {
          this.flush_I,
          "done",
          this.load_J,
+         "total",
+         this.init_J,
          "includeAir",
          this.write_Z,
          "includeEntities",
          this.update_Z
       );
       String var10000;
-      switch (this.load_I) {
-         case 0:
-            var10000 = "Pasting blocks";
-            break;
-         case 1:
-            var10000 = "Restoring block data";
-            break;
-         case 2:
-            var10000 = "Restoring entities";
-            break;
-         case 3:
-            var10000 = "Updating neighbours";
-            break;
-         default:
-            var10000 = "Paste complete";
+      if (this.init_List == null) {
+         var10000 = "Preparing paste";
+      } else {
+         switch (this.load_I) {
+            case 0:
+               var10000 = "Pasting blocks";
+               break;
+            case 1:
+               var10000 = "Restoring block data";
+               break;
+            case 2:
+               var10000 = "Restoring entities";
+               break;
+            case 3:
+               var10000 = "Updating neighbours";
+               break;
+            default:
+               var10000 = "Paste complete";
+         }
       }
 
       String status = var10000;
       this.init_cT_StreamUtil = new cT.Inner_StreamUtil(
          status,
-         this.load_I == 4 ? 100 : (int)Math.min(99L, 100L * this.load_J / Math.max(1L, this.init_J)),
+         this.load_I == 4 ? 100 : (this.init_J == 0L ? 0 : (int)Math.min(99L, 100L * this.load_J / this.init_J)),
          this.load_J,
          this.init_J,
          cursor,
@@ -533,6 +568,82 @@ final class cT {
 
    static UUID init_UUID_Str(String operation, int index, int child) {
       return UUID.nameUUIDFromBytes((operation + ":" + index + ":" + child).getBytes(StandardCharsets.UTF_8));
+   }
+
+   static cT.Inner_TableCache prepare(cQ doc, BlockPos origin, int rotation, String mirror, boolean includeAir) {
+      List<cT.Inner_DataUtil> columns = init(doc, origin, rotation, mirror);
+      Long2IntOpenHashMap columnIndex = new Long2IntOpenHashMap(columns.size());
+      BitSet[][] occupied = new BitSet[columns.size()][];
+      long work = 0L;
+
+      for (int i = 0; i < columns.size(); i++) {
+         cT.Inner_DataUtil col = columns.get(i);
+         columnIndex.put(ChunkPos.pack(col.x(), col.z()), i);
+         occupied[i] = new BitSet[col.ranges().size()];
+
+         for (cT.Inner_CachePool range : col.ranges()) {
+            work += (range.max() - range.min() + 1) * 256L;
+         }
+      }
+
+      BlockPos p0 = doc.init(0, 0, 0, rotation, mirror);
+      BlockPos dx = doc.init(1, 0, 0, rotation, mirror).subtract(p0);
+      BlockPos dz = doc.init(0, 0, 1, rotation, mirror).subtract(p0);
+      boolean multiRegion = doc.init_List.size() > 1;
+
+      for (cQ.Inner_CachePool r : doc.init_List) {
+         cQ.init();
+         if (includeAir || !Arrays.stream(r.init_BlockStateArr).allMatch(BlockStateBase::isAir)) {
+            int cellIndex = 0;
+
+            for (int sy = r.load; sy < r.load + r.update; sy++) {
+               int wy = sy + origin.getY();
+
+               for (int sz = r.read; sz < r.read + r.sync; sz++) {
+                  int wx = origin.getX() + p0.getX() + dx.getX() * r.init_I + dz.getX() * sz;
+                  int wz = origin.getZ() + p0.getZ() + dx.getZ() * r.init_I + dz.getZ() * sz;
+                  int lastCol = -1;
+                  int rangeIdx = 0;
+                  int yOffset = 0;
+                  BitSet bits = null;
+
+                  for (int sx = r.init_I; sx < r.init_I + r.write; wz += dx.getZ()) {
+                     int idx = cellIndex++;
+                     if ((idx & 4095) == 0) {
+                        cQ.init();
+                     }
+
+                     if (includeAir || !r.init_BlockState(idx).isAir() && (!multiRegion || doc.init_cQ_CachePool_I(sx, sy, sz) == r)) {
+                        int colIdx = columnIndex.get(ChunkPos.pack(wx >> 4, wz >> 4));
+                        if (colIdx != lastCol) {
+                           List<cT.Inner_CachePool> ranges = columns.get(colIdx).ranges();
+                           rangeIdx = 0;
+
+                           while (ranges.get(rangeIdx).max() < wy) {
+                              rangeIdx++;
+                           }
+
+                           yOffset = (wy - ranges.get(rangeIdx).min()) * 256;
+                           bits = occupied[colIdx][rangeIdx];
+                           if (bits == null) {
+                              occupied[colIdx][rangeIdx] = bits = new BitSet();
+                           }
+
+                           lastCol = colIdx;
+                        }
+
+                        bits.set(yOffset | (wz & 15) << 4 | wx & 15);
+                     }
+
+                     sx++;
+                     wx += dx.getX();
+                  }
+               }
+            }
+         }
+      }
+
+      return new cT.Inner_TableCache(columns, occupied, work);
    }
 
    static List<cT.Inner_DataUtil> init(cQ doc, BlockPos origin, int rotation, String mirror) {
@@ -581,5 +692,8 @@ final class cT {
    }
 
    record Inner_StreamUtil(String phase, int percent, long done, long total, JsonObject checkpoint, boolean complete, String error) {
+   }
+
+   record Inner_TableCache(List<cT.Inner_DataUtil> columns, BitSet[][] occupied, long work) {
    }
 }

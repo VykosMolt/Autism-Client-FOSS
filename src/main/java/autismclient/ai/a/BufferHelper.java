@@ -546,7 +546,7 @@ public final class BufferHelper {
             final Map<Long, Integer> sync_Map = new HashMap<>();
             final int load_I = this.load_I_6();
             final DataUtil init_DataUtil = new DataUtil();
-            final RefQueue.Inner_DataUtil init_RefQueue_DataUtil = new RefQueue.Inner_DataUtil(
+            final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
                   this.init_DataUtil::init_V_Vec3,
@@ -557,7 +557,7 @@ public final class BufferHelper {
                )
                .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.init_V_ce_DataUtil(rotation))
                .init_RefQueue_DataUtil_BiPredicate((state, tool) -> af.init(mc, state, tool, wantedDrops));
-            final RefQueue.Inner_DataUtil load_RefQueue_DataUtil = new RefQueue.Inner_DataUtil(
+            final AiBlockDigger load_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
                   this.init_DataUtil::init_V_Vec3,
@@ -567,7 +567,7 @@ public final class BufferHelper {
                   () -> !this.init_DataUtil.init_Z()
                )
                .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.init_V_ce_DataUtil(rotation));
-            RefQueue.Inner_DataUtil read_RefQueue_DataUtil = this.init_RefQueue_DataUtil;
+            AiBlockDigger read_RefQueue_DataUtil = this.init_RefQueue_DataUtil;
             List<BlockPos> init_List = new ArrayList<>();
             final Set<Long> write_Set = new HashSet<>();
             final FieldCache init_FieldCache = new FieldCache();
@@ -699,7 +699,7 @@ public final class BufferHelper {
 
                BlockState state = mc.level.getBlockState(cell);
                double breakTicks = r.init_D_Minecraft(mc, mc.player.getMainHandItem(), state, state.getDestroySpeed(mc.level, cell));
-               if (BufferHelper.init_I(cell) >= 2 || breakTicks + RefQueue.Inner_DataUtil.init_I_Minecraft(mc) + 40.0 > mc.player.getMaxAirSupply()) {
+               if (BufferHelper.init_I(cell) >= 2 || breakTicks + AiBlockDigger.init_I_Minecraft(mc) + 40.0 > mc.player.getMaxAirSupply()) {
                   this.init_Set.add(cell.asLong());
                }
 
@@ -883,7 +883,7 @@ public final class BufferHelper {
                }
 
                if (!result.terminal() && this.init_AiOperation == null && mc.player != null) {
-                  RefQueue.Inner_DataUtil.init_V_Minecraft(mc);
+                  AiBlockDigger.init_V_Minecraft(mc);
                }
 
                return result;
@@ -941,7 +941,7 @@ public final class BufferHelper {
 
                         this.load_AiOperation.cancel();
                         this.load_AiOperation = null;
-                        RefQueue.open_V();
+                        AiMotionSafety.putAt_V();
                         return this.init_AiOperation_Result_6("Breathing again; back to " + label);
                      } else {
                         this.init_V_14();
@@ -987,14 +987,14 @@ public final class BufferHelper {
                               TaskTimer.init_V("gather dig " + this.read_BlockPos.toShortString());
                            }
 
-                           RefQueue.Inner_DataUtil.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(this.read_BlockPos);
-                           if (status == RefQueue.Inner_DataUtil.Inner_DataUtil_2.init) {
+                           AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(this.read_BlockPos);
+                           if (status == AiBlockDigger.Inner_DataUtil_2.init) {
                               return this.init_AiOperation_Result_6("Breaking " + mc.level.getBlockState(this.read_BlockPos).getBlock().getName().getString());
                            }
 
                            BlockPos was = this.read_BlockPos;
                            this.read_BlockPos = null;
-                           if (status == RefQueue.Inner_DataUtil.Inner_DataUtil_2.load) {
+                           if (status == AiBlockDigger.Inner_DataUtil_2.load) {
                               this.open_I = 0;
                               if (this.init_Z) {
                                  this.write_V(was);
@@ -1096,7 +1096,7 @@ public final class BufferHelper {
                                     held,
                                     held - this.load_I_6() - this.pop_I - this.write_Map.size(),
                                     mc.level.getBlockState(inReach).is(BlockTags.LOGS),
-                                    RefQueue.flush_Z(),
+                                    AiMotionSafety.fill_Z(),
                                     this.canInterruptNow(),
                                     this.requiresReconciliationAfterEmergency() || !this.write_Map.isEmpty()
                                  )) {
@@ -1147,8 +1147,8 @@ public final class BufferHelper {
                                     TaskTimer.init_V("gather dig " + inReach.toShortString());
                                  }
 
-                                 RefQueue.Inner_DataUtil.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(inReach);
-                                 if (status == RefQueue.Inner_DataUtil.Inner_DataUtil_2.read) {
+                                 AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(inReach);
+                                 if (status == AiBlockDigger.Inner_DataUtil_2.read) {
                                     if (this.read_RefQueue_DataUtil.init_Str().equals("no tool that gets its drops")) {
                                        return this.load_AiOperation_Result_2(inReach);
                                     }
@@ -1629,9 +1629,9 @@ public final class BufferHelper {
                                     }
 
                                     this.load_V_7();
-                                    RefQueue.open_V();
-                                    if (!RefQueue.init_Z_D_D(0.0, 0.0)) {
-                                       RefQueue.load_V();
+                                    AiMotionSafety.putAt_V();
+                                    if (!AiMotionSafety.putAt_Z_D_D(0.0, 0.0)) {
+                                       AiMotionSafety.fill_V();
                                     }
 
                                     this.init_BlockPos(List.of(near));
@@ -1853,8 +1853,8 @@ public final class BufferHelper {
                double yaw = Math.toRadians(mc.player.getYRot());
                double forward = dx * -Math.sin(yaw) + dz * Math.cos(yaw);
                double right = dx * -Math.cos(yaw) + dz * -Math.sin(yaw);
-               if (!RefQueue.init_Z_Vec3_Vec3(mc.player.position(), new Vec3(point.x, mc.player.getY(), point.z))
-                  || !RefQueue.init_Z_D_D(forward > 0.2 ? 1.0 : (forward < -0.2 ? -1.0 : 0.0), right > 0.2 ? -1.0 : (right < -0.2 ? 1.0 : 0.0))) {
+               if (!AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), new Vec3(point.x, mc.player.getY(), point.z))
+                  || !AiMotionSafety.putAt_Z_D_D(forward > 0.2 ? 1.0 : (forward < -0.2 ? -1.0 : 0.0), right > 0.2 ? -1.0 : (right < -0.2 ? 1.0 : 0.0))) {
                   return false;
                } else if (this.init(point.x, point.z) && this.init((point.x + mc.player.getX()) / 2.0, (point.z + mc.player.getZ()) / 2.0)) {
                   mc.options.keyUp.setDown(forward > 0.2);
@@ -1966,7 +1966,7 @@ public final class BufferHelper {
                }
             }
 
-            RefQueue.Inner_DataUtil.Inner_DataUtil_2 init_RefQueue_DataUtil_(BlockPos cell) {
+            AiBlockDigger.Inner_DataUtil_2 init_RefQueue_DataUtil_(BlockPos cell) {
                Set<UUID> before = null;
                if (this.init_Z && !this.read_RefQueue_DataUtil.init_Z_BlockPos(cell) && this.write_Z_2(cell)) {
                   before = new HashSet<>();
@@ -1982,9 +1982,9 @@ public final class BufferHelper {
                   }
                }
 
-               RefQueue.Inner_DataUtil.Inner_DataUtil_2 result = this.read_RefQueue_DataUtil
+               AiBlockDigger.Inner_DataUtil_2 result = this.read_RefQueue_DataUtil
                   .init_RefQueue_DataUtil__BlockPos(cell, this.write_Vec3(cell), this.load_Vec3(cell));
-               if (before != null && (this.read_RefQueue_DataUtil.init_Z_BlockPos(cell) || result == RefQueue.Inner_DataUtil.Inner_DataUtil_2.load)) {
+               if (before != null && (this.read_RefQueue_DataUtil.init_Z_BlockPos(cell) || result == AiBlockDigger.Inner_DataUtil_2.load)) {
                   this.init_BufferHelper_Cache.init(cell.asLong(), before);
                }
 
@@ -3495,7 +3495,7 @@ public final class BufferHelper {
                this.init_DataPipe.init_V();
                this.update_BlockPos = null;
                this.init_DataUtil.init_V();
-               RefQueue.open_V();
+               AiMotionSafety.putAt_V();
             }
 
             @Override

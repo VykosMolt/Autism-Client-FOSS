@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Verifies the built AUTISM Client 5.3-26.3 JAR:
+# Verifies the built AUTISM Client 5.8-26.3 JAR:
 #   1. JarCheck against stock 26.3 JAR (optional; skip with SKIP_JAR_CHECK=1)
 #   2. Full MC 26.3 Mixin Audit with Sodium 0.9.3-beta.5 + Lithium + Fabric API + ModMenu
 #   3. Full MC 26.3 Mixin Audit with Sodium 0.9.3-beta.3 + Iris 1.11.7 + Lithium + Fabric API + ModMenu
@@ -10,14 +10,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJ_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REAL_HOME="${REAL_HOME:-$HOME}"
-JDK_DIR="${JAVA_HOME:-$(find "$REAL_HOME/.local/share/gradle/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' -print -quit 2>/dev/null || true)}"
+JDK_DIR="${JAVA_HOME:-$(find "$REAL_HOME/.local/share/gradle/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' 2>/dev/null | head -n 1 || true)}"
 JDK="${JDK_DIR:+$JDK_DIR/bin}"
 JDK="${JDK:-$(dirname "$(readlink -f "$(command -v javac)")")}"
 LIB="${PRISM_LIBS:-$REAL_HOME/.local/share/PrismLauncher/libraries}"
 MODS_DIR="${MC_MODS_DIR:-$REAL_HOME/.local/share/PrismLauncher/mods}"
 IRIS_MODS_DIR="${IRIS_MODS_DIR:-$MODS_DIR}"
 
-JAR_PATH="${1:-$PROJ_DIR/build/libs/AUTISM-Client-5.3-26.3-decompiled.jar}"
+JAR_PATH="${1:-$PROJ_DIR/build/libs/AUTISM-Client-5.8-26.3.jar}"
 STOCK_JAR="${2:-$REAL_HOME/Downloads/AUTISM-Client-5.3-26.3.jar}"
 
 CURRENT_WORK=""
@@ -55,7 +55,7 @@ run_mixin_audit() {
   work="$(mktemp -d /tmp/autism-263-verify-XXXXXX)"
   CURRENT_WORK="$work"
   mkdir -p "$work/mods" "$work/classes"
-  cp "$JAR_PATH" "$work/mods/AUTISM-Client-5.3-26.3.jar"
+  cp "$JAR_PATH" "$work/mods/AUTISM-Client-5.8-26.3.jar"
   cp "$MODS_DIR/fabric-api-0.166.2+26.3.jar" "$work/mods/"
   cp "$MODS_DIR/lithium-fabric-0.26.3+mc26.3.jar" "$work/mods/"
   cp "$MODS_DIR/modmenu-21.0.1.jar" "$work/mods/"

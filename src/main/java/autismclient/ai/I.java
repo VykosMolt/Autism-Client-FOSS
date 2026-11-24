@@ -356,7 +356,7 @@ final class I {
                         long ground = best.below().asLong();
                         long revision = ca.init_J_BlockPos(best);
                         BlockState before = mc.level.getBlockState(best);
-                        if (autismclient.ai.a.RefQueue.Inner_DataUtil.init_Z_Minecraft(mc, best, ray.getDirection())
+                        if (autismclient.ai.a.AiBlockDigger.init_Z_Minecraft(mc, best, ray.getDirection())
                            && bG.init(before, mc.level.getBlockState(best), crop)) {
                            this.sync++;
                            acted = true;

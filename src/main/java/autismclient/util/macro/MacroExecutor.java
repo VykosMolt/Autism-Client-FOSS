@@ -8885,7 +8885,7 @@ public class MacroExecutor {
                   } catch (Throwable var5) {
                   }
 
-                  autismclient.ai.a.RefQueue.open_V();
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                } finally {
                   load_AtomicInteger.decrementAndGet();
                }
@@ -8943,7 +8943,7 @@ public class MacroExecutor {
                      }
                   }
 
-                  autismclient.ai.a.RefQueue.open_V();
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                } finally {
                   load_AtomicInteger.decrementAndGet();
                }

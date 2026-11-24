@@ -86,30 +86,32 @@ public final class TextFormat {
          }
 
          long tick = source.init_J(world);
-         int lx = at.getX() & 15;
-         int lz = at.getZ() & 15;
-         if (lx > 0 && lx < 15 && lz > 0 && lz < 15) {
-            int cx = at.getX() >> 4;
-            int cz = at.getZ() >> 4;
-            Object chunk = source.init_Obj(world, cx, cz);
-            if (chunk == null) {
-               return true;
-            }
+         int minX = at.getX() - 1;
+         int maxX = at.getX() + 1;
+         int minZ = at.getZ() - 1;
+         int maxZ = at.getZ() + 1;
 
-            TextFormat.Inner_StreamUtil summary = init(cache, world, source, chunk, cx, cz, IoWorker.init(IoWorker.init_J(cx, cz)), tick);
-            if (summary == null) {
-               return true;
-            }
-
-            if (!summary.containsSulfur) {
-               return false;
-            }
-         }
-
-         for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-               if (init(cache, world, source, at.offset(dx, 0, dz), tick)) {
+         for (int cx = minX >> 4; cx <= maxX >> 4; cx++) {
+            for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++) {
+               Object chunk = source.init_Obj(world, cx, cz);
+               if (chunk == null) {
                   return true;
+               }
+
+               int revision = IoWorker.init(IoWorker.init_J(cx, cz));
+               TextFormat.Inner_StreamUtil summary = init(cache, world, source, chunk, cx, cz, revision, tick);
+               if (summary == null) {
+                  return true;
+               }
+
+               if (summary.containsSulfur) {
+                  for (int x = Math.max(minX, cx << 4); x <= Math.min(maxX, (cx << 4) + 15); x++) {
+                     for (int z = Math.max(minZ, cz << 4); z <= Math.min(maxZ, (cz << 4) + 15); z++) {
+                        if (init(cache, world, source, chunk, cx, cz, revision, tick, x, at.getY(), z)) {
+                           return true;
+                        }
+                     }
+                  }
                }
             }
          }
@@ -122,29 +124,23 @@ public final class TextFormat {
       }
    }
 
-   private static boolean init(TextFormat.Inner_DataUtil cache, Object world, TextFormat.Inner_ConfigStore source, BlockPos at, long tick) {
-      int cx = at.getX() >> 4;
-      int cz = at.getZ() >> 4;
-      Object chunk = source.init_Obj(world, cx, cz);
-      if (chunk == null) {
-         return true;
-      }
-
-      long key = BlockPos.asLong(at.getX(), 0, at.getZ());
-      long chunkKey = IoWorker.init_J(at.getX() >> 4, at.getZ() >> 4);
-      int revision = IoWorker.init(chunkKey);
-      TextFormat.Inner_StreamUtil summary = init(cache, world, source, chunk, cx, cz, revision, tick);
-      if (summary == null) {
-         return true;
-      }
-
-      if (!summary.containsSulfur) {
-         return false;
-      }
-
+   private static boolean init(
+      TextFormat.Inner_DataUtil cache,
+      Object world,
+      TextFormat.Inner_ConfigStore source,
+      Object chunk,
+      int cx,
+      int cz,
+      int revision,
+      long tick,
+      int x,
+      int y,
+      int z
+   ) {
+      long key = BlockPos.asLong(x, 0, z);
       TextFormat.Inner_CachePool cached = cache.init_LinkedHashMap.get(key);
       if (cached == null || cached.chunk.get() != chunk || cached.revision != revision || tick - cached.tick > 200L || tick < cached.tick) {
-         List<TextFormat.Inner_BufferHelper> ranges = List.copyOf(source.init_List(chunk, at.getX(), at.getZ()));
+         List<TextFormat.Inner_BufferHelper> ranges = List.copyOf(source.init_List(chunk, x, z));
          if (!init(world, source, chunk, cx, cz, revision)) {
             return true;
          }
@@ -158,7 +154,7 @@ public final class TextFormat {
       }
 
       for (TextFormat.Inner_BufferHelper range : cached.ranges) {
-         if (at.getY() >= range.bottom && at.getY() <= range.top) {
+         if (y >= range.bottom && y <= range.top) {
             return true;
          }
       }

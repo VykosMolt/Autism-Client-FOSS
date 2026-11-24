@@ -74,7 +74,7 @@ public final class ConfigStore {
          final DataUtil init_DataUtil = new DataUtil();
          final ConfigStore.Inner_DataUtil init_ConfigStore_DataUt = new ConfigStore.Inner_DataUtil();
          final int init_I = this.init_Minecraft.player == null ? -1 : this.init_Minecraft.player.getInventory().getSelectedSlot();
-         final RefQueue.Inner_DataUtil init_RefQueue_DataUtil = new RefQueue.Inner_DataUtil(
+         final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                this.init_Minecraft,
                s -> this.init_Minecraft.player.getInventory().setSelectedSlot(s),
                this.init_DataUtil::init_V_Vec3,
@@ -157,13 +157,13 @@ public final class ConfigStore {
                }
 
                boolean wasDigging = this.init_RefQueue_DataUtil.init_Z_BlockPos(target);
-               RefQueue.Inner_DataUtil.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(target);
+               AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(target);
                this.init_DataUtil.load_V();
-               if (status == RefQueue.Inner_DataUtil.Inner_DataUtil_2.load) {
+               if (status == AiBlockDigger.Inner_DataUtil_2.load) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
                }
 
-               if (status == RefQueue.Inner_DataUtil.Inner_DataUtil_2.init) {
+               if (status == AiBlockDigger.Inner_DataUtil_2.init) {
                   return this.init("Breaking target");
                }
 

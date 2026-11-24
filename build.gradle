@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'autismclient'
-version = '5.3-26.3-decompiled'
+version = '5.8-26.3'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_25

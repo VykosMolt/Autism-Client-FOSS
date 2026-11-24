@@ -187,14 +187,17 @@ public final class DataUtil {
                this.init_Vec3 == null ? " (rotation)" : " (point)",
                target == this.init_ce_DataUtil ? "" : String.format(Locale.ROOT, " offset to %.0f/%.0f", target.init(), target.load())
             );
-            float yaw = player.getYRot() + init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(target.init() - player.getYRot()), this.init_DataUtil_DataUtil);
-            float pitch = player.getXRot() + init_F_F_DataUtil_DataUtil(target.load() - player.getXRot(), this.init_DataUtil_DataUtil);
+            float prevYaw = player.getYRot();
+            float prevPitch = player.getXRot();
+            float yaw = prevYaw + init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(target.init() - prevYaw), this.init_DataUtil_DataUtil);
+            float pitch = prevPitch + init_F_F_DataUtil_DataUtil(target.load() - prevPitch, this.init_DataUtil_DataUtil);
             ce.Inner_DataUtil stepped = new ce.Inner_DataUtil(yaw, pitch);
             if (Minecraft.getInstance().level != null) {
                stepped = this.init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft.getInstance(), stepped);
             }
 
             ce.init_V_LocalPlayer(player, stepped, false);
+            AiCameraTurn.putAt(player, prevYaw, prevPitch);
             this.read_I = player.tickCount;
             write = player.tickCount;
             this.load_I = this.init_D() <= 1.0 ? this.load_I + 1 : 0;

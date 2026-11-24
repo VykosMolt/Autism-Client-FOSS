@@ -197,6 +197,7 @@ import net.minecraft.world.level.block.WallSkullBlock;
 import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.WeightedPressurePlateBlock;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -422,7 +423,7 @@ final class TableIndex {
       }
 
       Map<String, List<String>> substitutes = init_Map(args);
-      boolean clearTerrain = ag.init_Z_JsonObject(args, "clearTerrain", args.has("schematic") && !args.get("schematic").isJsonNull());
+      boolean clearTerrain = ag.init_Z_JsonObject(args, "clearTerrain", false);
       boolean shulkerStock = ag.init_Z_JsonObject(args, "shulkerStock", true);
       return new TableIndex.Inner_ConfigStore(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock)
          .withAssumeFly(ag.init_Z_JsonObject(args, "assumeFly", false));
@@ -3037,12 +3038,12 @@ final class TableIndex {
                   deadline,
                   System::nanoTime,
                   owner -> {
-                     autismclient.ai.a.RefQueue.init_V_Set(closedDoors);
+                     autismclient.ai.a.AiRoutePolicy.putAt(closedDoors);
                      cG.init(owner, blueprint.origin(), blueprint.cells(), blueprint.cells().size(), false, true);
                      cG.init(owner, "Building schematic", "Restoring captured switch positions", -1, -1);
                   },
                   owner -> {
-                     autismclient.ai.a.RefQueue.init_V_Set(Set.of());
+                     autismclient.ai.a.AiRoutePolicy.putAt(Set.of());
                      cG.init_V(owner);
                   }
                );
@@ -3179,6 +3180,9 @@ final class TableIndex {
             final Map<Long, Integer> write_Map;
             final Map<Long, Long> update_Map;
             BlockPos write_BlockPos;
+            Set<Long> detachedSupports;
+            Set<Long> activeKeep;
+            boolean retryingDetached;
             int drain;
             long write_J;
             long update_J;
@@ -3286,6 +3290,7 @@ final class TableIndex {
                this.close_List = new ArrayList<>();
                this.write_Map = new HashMap<>();
                this.update_Map = new HashMap<>();
+               this.activeKeep = Set.of();
                this.run_Set = new HashSet<>();
                this.get_Set = new HashSet<>();
                this.set_Set = new HashSet<>();
@@ -3306,11 +3311,11 @@ final class TableIndex {
 
             void init_V_10() {
                autismclient.ai.a.UtilCore.init(Map.of());
-               autismclient.ai.a.RefQueue.init_V_Set(Set.of());
+               autismclient.ai.a.AiRoutePolicy.putAt(Set.of());
                autismclient.ai.a.ClassCache.Inner_CachePool.init_V_J(0L);
                autismclient.ai.a.ClassCache.Inner_CachePool.load_V_J(0L);
                if (schematic) {
-                  autismclient.ai.a.RefQueue.flush_V();
+                  autismclient.ai.a.AiRoutePolicy.putAt_V();
                }
 
                autismclient.ai.a.ClassCache.Inner_CachePool.init_V_Set(Set.of());
@@ -3358,14 +3363,14 @@ final class TableIndex {
                }
 
                autismclient.ai.a.UtilCore.init(this.close_Map);
-               autismclient.ai.a.RefQueue.init_V_Set(this.clear_Set);
+               autismclient.ai.a.AiRoutePolicy.putAt(this.clear_Set);
                autismclient.ai.a.ClassCache.Inner_CachePool.init_V_J(3000000000L);
                if (schematic) {
                   autismclient.ai.a.ClassCache.Inner_CachePool.load_V_J(3000000000L);
                }
 
                if (schematic) {
-                  autismclient.ai.a.RefQueue.init_V_LongPredicate(this.close_Set::contains);
+                  autismclient.ai.a.AiRoutePolicy.putAt(this.close_Set::contains);
                }
 
                if (schematic && this.reset_Set != null) {
@@ -3742,11 +3747,7 @@ final class TableIndex {
                            && r.message() != null
                            && r.message().startsWith("No route toward the target");
                         BlockPos worker = mc.player.blockPosition();
-                        if (schematic && this.mark < 6 && noRoute && this.open(worker)) {
-                           this.mark++;
-                           this.read_BlockPos = null;
-                           this.run_Z = this.init_Z = false;
-                           this.init_AiOperation = this.load_AiOperation();
+                        if (noRoute && this.openExit(worker)) {
                            return this.init_AiOperation_Result_5("Breaking out of the closed room");
                         }
 
@@ -4020,7 +4021,7 @@ final class TableIndex {
                                        }
 
                                        if (mc.player.tickCount - this.load_J < 100L) {
-                                          autismclient.ai.a.RefQueue.open_V();
+                                          autismclient.ai.a.AiMotionSafety.putAt_V();
                                           return this.init_AiOperation_Result_5("Waiting for water to propagate from the verified source cells");
                                        }
 
@@ -4064,7 +4065,7 @@ final class TableIndex {
                                     int itemSlot = af.read(af.load_af_DataUtil(cell.block()));
                                     if (itemSlot >= 0) {
                                        this.task++;
-                                       autismclient.ai.a.RefQueue.open_V();
+                                       autismclient.ai.a.AiMotionSafety.putAt_V();
                                        this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(pos.below()));
                                        this.init_DataUtil.load_V();
                                        mc.options.keyJump.setDown(mc.player.onGround() || mc.player.isInWater());
@@ -4231,7 +4232,7 @@ final class TableIndex {
 
                                              if (!sourced) {
                                                 if (schematic && ++this.entry <= 20) {
-                                                   autismclient.ai.a.RefQueue.open_V();
+                                                   autismclient.ai.a.AiMotionSafety.putAt_V();
                                                    return this.init_AiOperation_Result_5("Awaiting material: " + BuiltInRegistries.ITEM.getKey(item));
                                                 }
 
@@ -4259,6 +4260,10 @@ final class TableIndex {
                                                       : !mc.player.getBoundingBox().intersects(this.init_AABB)
                                                 )) {
                                                 if (schematic && this.read(cell, pos)) {
+                                                   if (this.openExit(mc.player.blockPosition())) {
+                                                      return this.init_AiOperation_Result_5("Opening access out of the closed room");
+                                                   }
+
                                                    this.load_V(pos);
                                                    return this.init_AiOperation_Result_5("Leaving the room " + pos.toShortString() + " closes");
                                                 }
@@ -4276,7 +4281,7 @@ final class TableIndex {
                                                 String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
                                                 if (autismclient.util.aw.init(mc, ArrayUtil.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
                                                    if (schematic && ++this.node <= 20) {
-                                                      autismclient.ai.a.RefQueue.open_V();
+                                                      autismclient.ai.a.AiMotionSafety.putAt_V();
                                                       return this.init_AiOperation_Result_5("Awaiting material: selecting " + itemId);
                                                    }
 
@@ -4954,8 +4959,8 @@ final class TableIndex {
                   && this.push_AiOperation == null
                   && this.close_AiOperation == null
                   && this.poll_AiOperation == null
-                  && !autismclient.ai.a.RefQueue.flush_Z()) {
-                  autismclient.ai.a.RefQueue.open_V();
+                  && !autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                   if (mc.player.tickCount % 100 == 0) {
                      AutismClientAddon.LOG
                         .info(
@@ -5053,6 +5058,14 @@ final class TableIndex {
                            (int)Math.ceil(cleanupVolume.maxY) - 1,
                            (int)Math.ceil(cleanupVolume.maxZ) - 1
                         );
+                     if (schematic && this.detachedSupports == null) {
+                        this.detachedSupports = new HashSet<>();
+
+                        for (BlockPos support : supports) {
+                           this.detachedSupports.add(support.asLong());
+                        }
+                     }
+
                      this.table = supports.size();
                      this.update_J = System.currentTimeMillis();
                      this.write_J = this.update_J;
@@ -5097,6 +5110,7 @@ final class TableIndex {
                                        candidate.toShortString(),
                                        beside.toShortString()
                                     );
+                                 this.write_BlockPos = null;
                                  this.push_AiOperation = HashUtil.init_AiOperation_BlockPos(beside, 0.35, false, false, false, 10);
                                  return this.init_AiOperation_Result_5("Stepping beside a temporary support to remove it");
                               }
@@ -5131,6 +5145,7 @@ final class TableIndex {
 
                            keep.remove(candidate.asLong());
                            this.write_BlockPos = candidate;
+                           this.activeKeep = keep;
                            this.push_AiOperation = autismclient.ai.a.ConfigStore.init(candidate, 10, true, keep, false);
                            continue;
                         }
@@ -5166,6 +5181,21 @@ final class TableIndex {
 
                   this.push_AiOperation.cancel();
                   this.push_AiOperation = null;
+                  if (this.write_BlockPos == null) {
+                     return this.init_AiOperation_Result_5("Rechecking reach from beside the temporary support");
+                  }
+
+                  if (schematic
+                     && !this.retryingDetached
+                     && r.failure() == A.close
+                     && this.write_BlockPos.getY() > mc.player.getEyeY() + 1.0
+                     && this.detachedSupports != null
+                     && this.detachedSupports.remove(this.write_BlockPos.asLong())) {
+                     this.retryingDetached = true;
+                     this.push_AiOperation = autismclient.ai.a.ConfigStore.init(this.write_BlockPos, 15, true, this.activeKeep, true);
+                     return this.init_AiOperation_Result_5("Reaching the detached temporary support");
+                  }
+
                   this.store++;
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
                      this.drain++;
@@ -5187,6 +5217,14 @@ final class TableIndex {
                      AutismClientAddon.LOG.info("[AI] scaffold cleanup failed: {}", r.message());
                   }
 
+                  if (this.retryingDetached) {
+                     this.retryingDetached = false;
+                     this.pop_Z = false;
+                     this.close_List.clear();
+                  }
+
+                  this.write_BlockPos = null;
+                  this.activeKeep = Set.of();
                   return this.init_AiOperation_Result_5("Clearing scaffolding from the finished work");
                }
             }
@@ -5245,7 +5283,7 @@ final class TableIndex {
                                     && box.minX < body.maxX
                                     && box.maxZ > body.minZ
                                     && box.minZ < body.maxZ
-                                    && autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(mc.player.position(), new Vec3(mc.player.getX(), box.maxY, mc.player.getZ()))
+                                    && autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), new Vec3(mc.player.getX(), box.maxY, mc.player.getZ()))
                                     )
                                   {
                                     return true;
@@ -5287,7 +5325,7 @@ final class TableIndex {
                         && floor.getFluidState().isEmpty()
                         && Block.isShapeFullBlock(floor.getCollisionShape(mc.level, candidate.below()))
                         && mc.level.noCollision(mc.player, body)
-                        && autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(mc.player.position(), Vec3.atBottomCenterOf(candidate))) {
+                        && autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), Vec3.atBottomCenterOf(candidate))) {
                         doorExit = candidate;
                         distance = d;
                      }
@@ -5829,6 +5867,10 @@ final class TableIndex {
             }
 
             Set<Long> init(boolean recovery) {
+               return this.init_Set_Z_BlockPos(recovery, null);
+            }
+
+            Set<Long> init_Set_Z_BlockPos(boolean recovery, BlockPos ignore) {
                BlockPos worker = mc.player.blockPosition();
                if (recovery && this.close_Z && worker.getY() + 2 < this.init_AABB.maxY && (worker.getY() < blueprint.origin().getY() || this.close(worker))) {
                   for (BlockPos ceiling : List.of(worker.above(), worker.above(2))) {
@@ -5887,7 +5929,8 @@ final class TableIndex {
 
                for (long key : this.open_Set) {
                   BlockPos pos = BlockPos.of(key);
-                  if (!mc.level.getBlockState(pos).isAir()) {
+                  if ((ignore == null || !pos.equals(ignore.below()) || bQ.init_Z_BlockPos(pos, this.load_Map, mc.level, ignore))
+                     && !mc.level.getBlockState(pos).isAir()) {
                      keep.add(key);
                   }
                }
@@ -6090,6 +6133,75 @@ final class TableIndex {
                return bQ.init_Z_BlockPos(worker, this.init_AABB.inflate(1.0), 24000, this::poll);
             }
 
+            boolean openExit(BlockPos worker) {
+               if (schematic && this.mark < 6) {
+                  final Set<Long> room = bQ.init_Set_BlockPos(worker, this.init_AABB.inflate(1.0), 24000, this::poll);
+                  if (room.isEmpty()) {
+                     return false;
+                  }
+
+                  final ArrayList<BlockPos> placedInRoom = new ArrayList<>();
+
+                  for (long key : room) {
+                     TableIndex.Inner_StreamUtil cell = this.load_Map.get(key);
+                     BlockPos p = BlockPos.of(key);
+                     if (cell != null && TableIndex.read(cell, mc.level.getBlockState(p))) {
+                        placedInRoom.add(p);
+                     }
+                  }
+
+                  this.mark++;
+                  this.read_BlockPos = null;
+                  this.run_Z = this.init_Z = false;
+                  final AiOperation escape = this.load_AiOperation();
+                  this.init_AiOperation = new AiOperation() {
+                     @Override
+                     public AiOperation.Result tick() {
+                        AiOperation.Result res = escape.tick();
+                        if (res.status() == AiOperation.Status.SUCCEEDED) {
+                           for (BlockPos p : placedInRoom) {
+                              if (!TableIndex.read(load_Map.get(p.asLong()), mc.level.getBlockState(p))) {
+                                 mergeSyncRoom(p.asLong(), room);
+                              }
+                           }
+                        }
+
+                        return res;
+                     }
+
+                     @Override
+                     public boolean canInterruptNow() {
+                        return escape.canInterruptNow();
+                     }
+
+                     @Override
+                     public boolean requiresReconciliationAfterEmergency() {
+                        return escape.requiresReconciliationAfterEmergency();
+                     }
+
+                     @Override
+                     public void cancel() {
+                        escape.cancel();
+                     }
+                  };
+                  return true;
+               } else {
+                  return false;
+               }
+            }
+
+            void mergeSyncRoom(long key, Set<Long> room) {
+               this.sync_Map.merge(key, room, (existing, added) -> {
+                  if (existing.containsAll(added)) {
+                     return existing;
+                  }
+
+                  HashSet<Long> merged = new HashSet<>(existing);
+                  merged.addAll(added);
+                  return merged;
+               });
+            }
+
             boolean read(TableIndex.Inner_StreamUtil cell, BlockPos target) {
                if (!this.init_AABB.inflate(1.0).contains(mc.player.position())) {
                   return false;
@@ -6102,6 +6214,10 @@ final class TableIndex {
                   && !(placed.getBlock() instanceof FenceGateBlock)) {
                   AABB site = this.init_AABB.inflate(1.0);
                   BlockPos feet = autismclient.ai.a.i.init(mc);
+                  if (this.sync_Map.getOrDefault(target.asLong(), Set.of()).contains(feet.asLong())) {
+                     return true;
+                  }
+
                   HashSet<Long> seen = new HashSet<>();
                   ArrayDeque<BlockPos> queue = new ArrayDeque<>();
                   seen.add(target.asLong());
@@ -6131,7 +6247,7 @@ final class TableIndex {
                   }
 
                   seen.remove(target.asLong());
-                  this.sync_Map.computeIfAbsent(target.asLong(), k -> new HashSet<>()).addAll(seen);
+                  this.mergeSyncRoom(target.asLong(), seen);
                   AutismClientAddon.LOG
                      .info("[AI] build: placing {} at {} would close the body in; leaving first ({} cells)", cell.block(), target.toShortString(), seen.size());
                   return true;
@@ -6197,14 +6313,14 @@ final class TableIndex {
                try {
                   Class<AbstractSignEditScreen> screen = AbstractSignEditScreen.class;
                   Field signField = screen.getDeclaredField("sign");
-                  Field frontField = screen.getDeclaredField("isFrontText");
+                  Field slotField = screen.getDeclaredField("slot");
                   Field messagesField = screen.getDeclaredField("messages");
                   signField.setAccessible(true);
-                  frontField.setAccessible(true);
+                  slotField.setAccessible(true);
                   messagesField.setAccessible(true);
                   SignBlockEntity sign = (SignBlockEntity)signField.get(editor);
                   String text = power.signText().get(sign.getBlockPos().subtract(blueprint.origin()).asLong());
-                  if (text != null && frontField.getBoolean(editor)) {
+                  if (text != null && slotField.get(editor) == SignTextSlot.FRONT) {
                      String[] messages = (String[])messagesField.get(editor);
                      String[] lines = text.split("\n", -1);
 
@@ -7478,53 +7594,77 @@ final class TableIndex {
                      return false;
                   }
 
-                  this.put_Z = this.run_Z = true;
                   BlockPos roof = this.load_BlockPos(stance);
                   if (roof == null) {
                      return false;
                   }
 
-                  final AiOperation descent = bQ.init(roof.above(), stance, this.load_Set());
-                  BlockPos plant = roof == null ? null : roof.above();
-                  BlockState canopy = plant == null ? Blocks.AIR.defaultBlockState() : mc.level.getBlockState(plant);
-                  if (plant != null
-                     && !canopy.isAir()
-                     && !canopy.hasBlockEntity()
-                     && canopy.getFluidState().isEmpty()
-                     && canopy.getCollisionShape(mc.level, plant).isEmpty()) {
-                     final AiOperation clear = autismclient.ai.a.ConfigStore.init(plant, 15, false, this.load_Set(), false);
-                     this.init_AiOperation = new AiOperation() {
-                        boolean init;
+                  BlockPos plant = roof.above();
+                  BlockState canopy = mc.level.getBlockState(plant);
+                  boolean hasCanopy = !canopy.isAir() && canopy.getCollisionShape(mc.level, plant).isEmpty();
+                  Set<Long> protectedCells = this.init_Set_Z_BlockPos(true, hasCanopy ? plant : null);
+                  if (!hasCanopy
+                     || !canopy.hasBlockEntity()
+                        && canopy.getFluidState().isEmpty()
+                        && !(canopy.getDestroySpeed(mc.level, plant) < 0.0F)
+                        && !protectedCells.contains(plant.asLong())) {
+                     for (BlockPos shaftCell : BlockPos.betweenClosed(stance, roof)) {
+                        if (!mc.level.getBlockState(shaftCell).isAir() && protectedCells.contains(shaftCell.asLong())) {
+                           return false;
+                        }
+                     }
 
-                        @Override
-                        public AiOperation.Result tick() {
-                           if (!this.init) {
-                              AiOperation.Result r = clear.tick();
-                              if (!r.terminal()) {
-                                 return r;
+                     HashSet<Long> digProtected = new HashSet<>(protectedCells);
+                     digProtected.addAll(this.close_Set);
+                     final AiOperation descent = bQ.init_AiOperation_BlockPos_2(plant, stance, protectedCells, digProtected);
+                     this.put_Z = this.run_Z = true;
+                     if (hasCanopy) {
+                        final AiOperation clear = autismclient.ai.a.ConfigStore.init(plant, 15, false, digProtected, false);
+                        this.init_AiOperation = new AiOperation() {
+                           boolean init;
+
+                           @Override
+                           public AiOperation.Result tick() {
+                              if (!this.init) {
+                                 AiOperation.Result r = clear.tick();
+                                 if (!r.terminal()) {
+                                    return r;
+                                 }
+
+                                 clear.cancel();
+                                 this.init = true;
+                                 if (r.status() != AiOperation.Status.SUCCEEDED) {
+                                    return r;
+                                 }
                               }
 
-                              clear.cancel();
-                              this.init = true;
-                              if (r.status() != AiOperation.Status.SUCCEEDED) {
-                                 return r;
-                              }
+                              return descent.tick();
                            }
 
-                           return descent.tick();
-                        }
+                           @Override
+                           public boolean canInterruptNow() {
+                              return (this.init ? descent : clear).canInterruptNow();
+                           }
 
-                        @Override
-                        public void cancel() {
-                           clear.cancel();
-                           descent.cancel();
-                        }
-                     };
+                           @Override
+                           public boolean requiresReconciliationAfterEmergency() {
+                              return (this.init ? descent : clear).requiresReconciliationAfterEmergency();
+                           }
+
+                           @Override
+                           public void cancel() {
+                              clear.cancel();
+                              descent.cancel();
+                           }
+                        };
+                     } else {
+                        this.init_AiOperation = descent;
+                     }
+
+                     return true;
                   } else {
-                     this.init_AiOperation = descent;
+                     return false;
                   }
-
-                  return true;
                } else {
                   return false;
                }
@@ -7906,7 +8046,7 @@ final class TableIndex {
                this.put_Set.clear();
                this.flush_Set.clear();
                this.stop_Set = null;
-               autismclient.ai.a.RefQueue.open_V();
+               autismclient.ai.a.AiMotionSafety.putAt_V();
             }
 
             void push() {
@@ -7957,6 +8097,17 @@ final class TableIndex {
                   this.push_AiOperation.cancel();
                   this.push_AiOperation = null;
                }
+
+               if (this.retryingDetached) {
+                  if (this.detachedSupports != null && this.write_BlockPos != null) {
+                     this.detachedSupports.add(this.write_BlockPos.asLong());
+                  }
+
+                  this.retryingDetached = false;
+               }
+
+               this.write_BlockPos = null;
+               this.activeKeep = Set.of();
 
                if (this.update_AiOperation != null) {
                   this.update_AiOperation.cancel();
@@ -8019,7 +8170,7 @@ final class TableIndex {
                   }
 
                   this.clear_Z = true;
-                  autismclient.ai.a.RefQueue.open_V();
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.load_I) {
                      autismclient.util.aw.init_V(mc, this.load_I);
                   }

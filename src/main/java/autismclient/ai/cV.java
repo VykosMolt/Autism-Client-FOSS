@@ -5,10 +5,13 @@ import autismclient.gui.d.PacketUtil;
 import autismclient.util.bk;
 import autismclient.util.cH;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -21,16 +24,21 @@ import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Util;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.ClipContext.Block;
 import net.minecraft.world.level.ClipContext.Fluid;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -39,6 +47,8 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 public final class cV {
    private static cV init_cV;
+   private static final LongOpenHashSet loadedChunkKeys = new LongOpenHashSet();
+   private static ClientLevel loadedChunkLevel;
    static final int init_I = 256;
    private final Minecraft init_Minecraft;
    final cR init_cR;
@@ -61,10 +71,12 @@ public final class cV {
    private boolean write_Z;
    private boolean update_Z;
    private cP init_cP;
+   private SchematicRecording activeRecording;
    private cT init_cT;
    private String open;
    private cV.Inner_DataUtil init_cV_DataUtil;
    private final Object init_Obj = new Object();
+   private final Object recordingVisOwner = new Object();
    cP.Inner_DataUtil init_cP_DataUtil;
    String init_Str = "";
    String load_Str = "";
@@ -79,7 +91,28 @@ public final class cV {
    }
 
    public static void init_V() {
+      ClientChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
+         if (loadedChunkLevel != level) {
+            loadedChunkKeys.clear();
+            loadedChunkLevel = level;
+         }
+
+         loadedChunkKeys.add(chunk.getPos().pack());
+         if (init_cV != null && init_cV.activeRecording != null) {
+            init_cV.activeRecording.putAt_V_ClientLevel_LevelChunk(level, chunk);
+         }
+      });
+      ClientChunkEvents.CHUNK_UNLOAD.register((level, chunk) -> {
+         if (loadedChunkLevel == level) {
+            loadedChunkKeys.remove(chunk.getPos().pack());
+         }
+      });
       ClientTickEvents.END_CLIENT_TICK.register(client -> {
+         if (client.level == null && loadedChunkLevel != null) {
+            loadedChunkKeys.clear();
+            loadedChunkLevel = null;
+         }
+
          if (init_cV == null && client.level != null && autismclient.e.FileCache.init()) {
             init_cV();
          }
@@ -88,6 +121,26 @@ public final class cV {
             init_cV.open_V();
          }
       });
+   }
+
+   static List<LevelChunk> loadedChunks(ClientLevel level) {
+      if (level != loadedChunkLevel) {
+         return List.of();
+      }
+
+      ArrayList<LevelChunk> chunks = new ArrayList<>(loadedChunkKeys.size());
+      ClientChunkCache source = level.getChunkSource();
+      LongIterator iterator = loadedChunkKeys.iterator();
+
+      while (iterator.hasNext()) {
+         long key = iterator.nextLong();
+         LevelChunk chunk = source.getChunk(ChunkPos.getX(key), ChunkPos.getZ(key), ChunkStatus.FULL, false);
+         if (chunk != null) {
+            chunks.add(chunk);
+         }
+      }
+
+      return chunks;
    }
 
    public static void load_V() {
@@ -236,7 +289,7 @@ public final class cV {
    }
 
    boolean flush_Z() {
-      return this.read_Z || this.init_Future != null || this.init_cP != null || this.init_cT != null;
+      return this.read_Z || this.init_Future != null || this.init_cP != null || this.activeRecording != null || this.init_cT != null;
    }
 
    boolean init_Z_cR_StreamUtil(cR.Inner_StreamUtil p) {
@@ -254,6 +307,8 @@ public final class cV {
    String load_Str() {
       if (this.init_cP != null) {
          return this.init_cP.init_Str;
+      } else if (this.activeRecording != null) {
+         return this.activeRecording.putAt_Str;
       } else if (this.init_cT != null) {
          return this.init_cT.init_cT_StreamUtil.phase();
       } else if (this.read_Z || this.init_Future != null) {
@@ -268,6 +323,8 @@ public final class cV {
    int init_I() {
       if (this.init_cP != null) {
          return this.init_cP.init_I;
+      } else if (this.activeRecording != null) {
+         return this.activeRecording.flowTemp();
       } else if (this.init_cT != null) {
          return this.init_cT.init_cT_StreamUtil.percent();
       } else {
@@ -390,6 +447,32 @@ public final class cV {
             } catch (Exception e) {
                this.read(cR.init_Str_Throwable(e));
             }
+         }
+      }
+   }
+
+   SchematicRecording activeRecording() {
+      return this.activeRecording;
+   }
+
+   void startRecording(boolean entities) {
+      if (this.read_Z() && this.write_Z() && !this.flush_Z()) {
+         try {
+            this.activeRecording = new SchematicRecording(this.init_Minecraft, this.init_cR.load_Path, this.init_Str, entities);
+            this.close = "";
+            this.flush = "";
+         } catch (Exception e) {
+            this.read(cR.init_Str_Throwable(e));
+         }
+      }
+   }
+
+   void stopAndSaveRecording() {
+      if (this.activeRecording != null) {
+         try {
+            this.activeRecording.putAt_V_Str(this.init_Str);
+         } catch (IllegalArgumentException e) {
+            this.read(cR.init_Str_Throwable(e));
          }
       }
    }
@@ -685,10 +768,21 @@ public final class cV {
    }
 
    void close_V() {
+      this.close_V(false);
+   }
+
+   private void close_V(boolean keepRecording) {
       if (this.init_cP != null) {
          this.init_cP.init_V();
          this.init_cP = null;
          this.flush = "Save cancelled";
+      }
+
+      if (this.activeRecording != null && !keepRecording) {
+         this.activeRecording.fill_V();
+         this.activeRecording = null;
+         cG.init_V(this.recordingVisOwner);
+         this.flush = "Recording cancelled";
       }
 
       if (this.init_cT != null) {
@@ -708,7 +802,11 @@ public final class cV {
    public void open_V() {
       if (this.init_ClientLevel != this.init_Minecraft.level) {
          this.open_Z();
-         this.close_V();
+         if (this.activeRecording != null && this.activeRecording.putAt_Z()) {
+            this.activeRecording.putAt_V();
+         }
+
+         this.close_V(true);
          this.poll();
          this.init_cP_DataUtil = null;
          this.init_ClientLevel = this.init_Minecraft.level;
@@ -735,6 +833,37 @@ public final class cV {
                   autismclient.util.bi.load(this.flush);
                } else if (!finished.load_Str.isEmpty()) {
                   this.read(finished.load_Str);
+               }
+            }
+         }
+
+         if (this.activeRecording != null) {
+            this.activeRecording.putAt_V_Minecraft(this.init_Minecraft);
+            if (!this.activeRecording.readEx_Z && !this.activeRecording.fill_Z) {
+               cG.putAt(
+                  this.recordingVisOwner,
+                  "Recording chunks",
+                  this.activeRecording.putAt_Z ? this.activeRecording.putAt_Str : "",
+                  this.activeRecording.putAt_Str(),
+                  this.activeRecording.flowTemp()
+               );
+            } else {
+               SchematicRecording finished = this.activeRecording;
+               this.activeRecording = null;
+               cG.init_V(this.recordingVisOwner);
+               if (finished.putAt_Path != null) {
+                  this.write_V();
+                  if (finished.fill_Z()) {
+                     this.flush = "Recording limit reached · saved " + finished.putAt_Path.getFileName();
+                     autismclient.util.bi.read(this.flush);
+                  } else {
+                     this.flush = "Saved " + finished.putAt_Path.getFileName();
+                     autismclient.util.bi.load(this.flush);
+                  }
+               } else if (!finished.fill_Str.isEmpty()) {
+                  this.read(finished.fill_Str);
+               } else {
+                  this.flush = "Recording cancelled";
                }
             }
          }

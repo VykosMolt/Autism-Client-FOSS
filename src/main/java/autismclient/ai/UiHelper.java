@@ -486,7 +486,7 @@ final class UiHelper {
                      && this.init_K.load_Z()
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_SyncManager == null || this.init_SyncManager.canInterruptNow())
-                     && autismclient.ai.a.RefQueue.flush_Z()) {
+                     && autismclient.ai.a.AiMotionSafety.fill_Z()) {
                      if (this.init_AiOperation == null) {
                         this.update_V();
                         this.write_V_2();
@@ -1571,7 +1571,7 @@ final class UiHelper {
                AABB core = end.deflate(0.2, 0.0, 0.2);
                return !mc.level.noCollision(new AABB(core.minX, core.minY - 0.55, core.minZ, core.maxX, core.minY - 0.01, core.maxZ));
             } else {
-               if (!autismclient.ai.a.RefQueue.init_Z_D_2(forward, strafe, false, false)) {
+               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
                   return false;
                }
 
@@ -1583,7 +1583,7 @@ final class UiHelper {
                   return false;
                }
 
-               if (!autismclient.ai.a.RefQueue.init_Z_D_2(forward, strafe, false, false)) {
+               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
                   return false;
                }
 

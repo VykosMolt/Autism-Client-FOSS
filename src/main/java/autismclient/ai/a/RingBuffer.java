@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.ScaffoldingBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SlimeBlock;
 import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.WebBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -40,197 +41,282 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class RingBuffer implements ClassCache.Inner_StateCache {
-   static final int init_I = 6;
-   private final Minecraft init_Minecraft;
-   private final boolean init_Z;
-   private final ClientLevel init_ClientLevel;
-   private final StateCache init_StateCache;
-   private final int load;
-   private final int read;
-   private volatile RingBuffer.Inner_DataUtil init_RingBuffer_DataUti;
-   private static final AtomicReferenceArray<RingBuffer.Inner_StreamUtil> init_AtomicReferenceArr = new AtomicReferenceArray<>(
+   static final int flowState = 6;
+   private final Minecraft putAt_Minecraft;
+   private final boolean putAt_Z;
+   private final ClientLevel putAt_ClientLevel;
+   private final StateCache putAt_PacketHelper;
+   private final int fill;
+   private final int readEx;
+   private volatile RingBuffer.Inner_DataUtil putAt_PoolStore_CacheHel;
+   private static final AtomicReferenceArray<RingBuffer.Inner_StreamUtil> putAt_AtomicReferenceArr = new AtomicReferenceArray<>(
       Math.max(1, Block.BLOCK_STATE_REGISTRY.size())
    );
-   private static final long init_J = 30000000000L;
-   private static final int write = 4;
-   private static final int update = 40;
-   private static final Map<Long, Long> init_Map = new HashMap<>();
-   private static Object init_Obj;
+   private static final long putAt_J = 30000000000L;
+   private static final int value = 4;
+   private static final int prevEx = 40;
+   private static final Map<Long, Long> putAt_Map = new HashMap<>();
+   private static Object putAt_Obj;
 
-   public RingBuffer(Minecraft mc, ItemStack[] tools, StateCache memory) {
-      this.init_Minecraft = mc;
-      this.init_ClientLevel = mc.level;
-      this.init_StateCache = memory;
-      this.load = this.init_ClientLevel.getMinY();
-      this.read = this.init_ClientLevel.getMaxY() - 1;
-      this.init_Z = this.init_ClientLevel.dimension() == Level.NETHER;
-      this.init_RingBuffer_DataUti = new RingBuffer.Inner_DataUtil(init_ItemStackArr_ItemStackArr(tools), r.Inner_DataUtil.of(mc), 0L);
+   public RingBuffer(Minecraft var1, ItemStack[] var2, StateCache var3) {
+      this.putAt_Minecraft = var1;
+      this.putAt_ClientLevel = var1.level;
+      this.putAt_PacketHelper = var3;
+      this.fill = this.putAt_ClientLevel.getMinY();
+      this.readEx = this.putAt_ClientLevel.getMaxY() - 1;
+      this.putAt_Z = this.putAt_ClientLevel.dimension() == Level.NETHER;
+      this.putAt_PoolStore_CacheHel = new RingBuffer.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var2), r.Inner_DataUtil.of(var1), 0L);
    }
 
-   public ClientLevel init_ClientLevel() {
-      return this.init_ClientLevel;
+   public ClientLevel putAt_ClientLevel() {
+      return this.putAt_ClientLevel;
    }
 
-   public void init_V_ItemStackArr_2(ItemStack[] snapshot) {
-      RingBuffer.Inner_DataUtil old = this.init_RingBuffer_DataUti;
-      r.Inner_DataUtil factors = r.Inner_DataUtil.of(this.init_Minecraft);
-      if (!init(old.init_ItemStackArr, snapshot) || !factors.equals(old.init_r_DataUtil)) {
-         this.init_RingBuffer_DataUti = new RingBuffer.Inner_DataUtil(init_ItemStackArr_ItemStackArr(snapshot), factors, old.init_J + 1L, old.init_BiPredicate);
+   @Override
+   public double movementSpeed() {
+      return this.putAt_Minecraft.player == null ? 0.1 : BitSetUtil.putAt_D_LivingEntity(this.putAt_Minecraft.player);
+   }
+
+   public void putAt_V_ItemStackArr_2(ItemStack[] var1) {
+      RingBuffer.Inner_DataUtil var2 = this.putAt_PoolStore_CacheHel;
+      r.Inner_DataUtil var3 = r.Inner_DataUtil.of(this.putAt_Minecraft);
+      if (!putAt(var2.putAt_ItemStackArr, var1) || !var3.equals(var2.putAt_ByteWorker_CacheHe)) {
+         this.putAt_PoolStore_CacheHel = new RingBuffer.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var1), var3, var2.putAt_J + 1L, var2.putAt_BiPredicate);
       }
    }
 
-   public void init_V_BiPredicate_2(BiPredicate<BlockState, ItemStack> accepted) {
-      RingBuffer.Inner_DataUtil old = this.init_RingBuffer_DataUti;
-      if (old.init_BiPredicate != accepted) {
-         this.init_RingBuffer_DataUti = new RingBuffer.Inner_DataUtil(old.init_ItemStackArr, old.init_r_DataUtil, old.init_J + 1L, accepted);
+   public void putAt_V_BiPredicate_2(BiPredicate<BlockState, ItemStack> var1) {
+      RingBuffer.Inner_DataUtil var2 = this.putAt_PoolStore_CacheHel;
+      if (var2.putAt_BiPredicate != var1) {
+         this.putAt_PoolStore_CacheHel = new RingBuffer.Inner_DataUtil(var2.putAt_ItemStackArr, var2.putAt_ByteWorker_CacheHe, var2.putAt_J + 1L, var1);
       }
    }
 
    @Override
-   public long init_J() {
-      return this.init_RingBuffer_DataUti.init_J;
+   public long putAt_J() {
+      return this.putAt_PoolStore_CacheHel.putAt_J;
    }
 
    @Override
-   public ClassCache.Inner_FileCache init_ClassCache_FileCac_I(int x, int y, int z) {
-      if (y < this.load) {
+   public ClassCache.Inner_FileCache probe(int var1, int var2, int var3) {
+      if (var2 < this.fill) {
          return ClassCache.Inner_FileCache.UNLOADED;
       }
 
-      if (y > this.read) {
+      if (var2 > this.readEx) {
          return ClassCache.Inner_FileCache.air();
       }
 
-      BlockState state = this.init_BlockState(x, y, z);
-      if (state == null) {
-         return this.load_ClassCache_FileCac(x, y, z);
+      BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      if (var4 == null) {
+         return this.putAt_FileStore_BitCache(var1, var2, var3);
       }
 
-      RingBuffer.Inner_StreamUtil info = init_RingBuffer_StreamU_BlockState(state);
-      if (info == null) {
+      RingBuffer.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+      if (var5 == null) {
          return ClassCache.Inner_FileCache.UNLOADED;
       }
 
-      ClassCache.Inner_FileCache probe = !info.diggableKind() ? info.probe() : init(info.probe(), this.init(state, info, x, y, z));
-      if (info.falling() && y - 1 >= this.load) {
-         BlockState below = this.init_BlockState(x, y - 1, z);
-         if (below != null && FallingBlock.isFree(below)) {
-            probe = init_ClassCache_FileCac_ClassCache_FileCac(probe);
+      ClassCache.Inner_FileCache var6 = !var5.diggableKind() ? var5.probe() : putAt(var5.probe(), this.putAt(var4, var5, var1, var2, var3));
+      if (var5.falling() && var2 - 1 >= this.fill) {
+         BlockState var7 = this.putAt_BlockState(var1, var2 - 1, var3);
+         if (var7 != null && FallingBlock.isFree(var7)) {
+            var6 = putAt_FileStore_BitCache_FileStore_BitCache(var6);
          }
       }
 
-      return init(probe, TextFormat.init(this.init_ClientLevel, new BlockPos(x, y, z)));
+      if (!var6.climbable() && var4.getBlock() instanceof TrapDoorBlock && var2 - 1 >= this.fill) {
+         BlockState var8 = this.putAt_BlockState(var1, var2 - 1, var3);
+         if (ClassCache.Inner_StreamUtil.putAt_Z_BlockState_BlockState(var4, var8)) {
+            var6 = fill(var6);
+         }
+      }
+
+      return putAt(var6, TextFormat.init(this.putAt_ClientLevel, new BlockPos(var1, var2, var3)));
    }
 
-   static ClassCache.Inner_FileCache init(ClassCache.Inner_FileCache probe, boolean sulfur) {
-      return sulfur && !probe.hazardFeet() ? probe.withHazards(true, probe.hazardFloor()) : probe;
+   @Override
+   public ClassCache.Inner_IoCodec putAt_FileStore_IoCodec_I(int var1, int var2, int var3, boolean var4) {
+      if (this.putAt_ClientLevel.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var6) {
+         long var7 = 0L;
+         int var9 = Math.max(var2, this.fill);
+         int var10 = Math.min(var2 + 64 - 1, this.readEx);
+
+         try {
+            LevelChunkSection[] var11 = var6.getSections();
+            int var12 = var1 & 15;
+            int var13 = var3 & 15;
+            int var14 = var9;
+
+            while (var14 <= var10) {
+               LevelChunkSection var15 = var11[var6.getSectionIndex(var14)];
+               int var16 = Math.min(var10, var14 | 15);
+               if (var15 != null && !var15.hasOnlyAir()) {
+                  for (; var14 <= var16; var14++) {
+                     BlockState var17 = var15.getBlockState(var12, var14 & 15, var13);
+                     if (!var17.isAir()) {
+                        RingBuffer.Inner_StreamUtil var18 = putAt_PoolStore_TableCac_BlockState(var17);
+                        if (var18 != null && !var18.probe().passable()) {
+                           var7 |= 1L << var14 - var2;
+                        }
+                     }
+                  }
+               }
+
+               var14 = var16 + 1;
+            }
+
+            return new ClassCache.Inner_IoCodec(var7, false);
+         } catch (RuntimeException var19) {
+            return ClassCache.Inner_StateCache.super.putAt_FileStore_IoCodec_I(var1, var2, var3, var4);
+         }
+      } else {
+         return !var4 && this.putAt_PacketHelper != null
+            ? ClassCache.Inner_StateCache.super.putAt_FileStore_IoCodec_I(var1, var2, var3, false)
+            : new ClassCache.Inner_IoCodec(0L, false);
+      }
    }
 
-   static ClassCache.Inner_FileCache init_ClassCache_FileCac_ClassCache_FileCac(ClassCache.Inner_FileCache p) {
+   static ClassCache.Inner_FileCache putAt(ClassCache.Inner_FileCache var0, boolean var1) {
+      return var1 && !var0.hazardFeet() ? var0.withHazards(true, var0.hazardFloor()) : var0;
+   }
+
+   static ClassCache.Inner_FileCache putAt_FileStore_BitCache_FileStore_BitCache(ClassCache.Inner_FileCache var0) {
       return new ClassCache.Inner_FileCache(
-         p.loaded(),
-         p.passable(),
-         p.top16(),
-         p.water(),
-         p.lava(),
-         p.climbable(),
-         p.hazardFeet(),
+         var0.loaded(),
+         var0.passable(),
+         var0.top16(),
+         var0.water(),
+         var0.lava(),
+         var0.climbable(),
+         var0.hazardFeet(),
          true,
-         p.falling(),
-         p.fallMult10(),
-         p.breakTicks(),
-         p.door(),
-         p.slabStair(),
-         p.farmland(),
-         p.ice(),
-         p.cached(),
-         p.destructionPenalty(),
-         p.soulSand(),
-         p.thorny(),
-         p.portal()
+         var0.falling(),
+         var0.fallMult10(),
+         var0.breakTicks(),
+         var0.door(),
+         var0.slabStair(),
+         var0.farmland(),
+         var0.ice(),
+         var0.cached(),
+         var0.destructionPenalty(),
+         var0.soulSand(),
+         var0.thorny(),
+         var0.portal(),
+         false,
+         var0.feetTrigger(),
+         var0.pressurePlate()
+      );
+   }
+
+   static ClassCache.Inner_FileCache fill(ClassCache.Inner_FileCache var0) {
+      return new ClassCache.Inner_FileCache(
+         var0.loaded(),
+         true,
+         0,
+         var0.water(),
+         var0.lava(),
+         true,
+         var0.hazardFeet(),
+         var0.hazardFloor(),
+         var0.falling(),
+         var0.fallMult10(),
+         var0.breakTicks(),
+         var0.door(),
+         var0.slabStair(),
+         var0.farmland(),
+         var0.ice(),
+         var0.cached(),
+         var0.destructionPenalty(),
+         var0.soulSand(),
+         var0.thorny(),
+         var0.portal(),
+         var0.narrowFooting(),
+         var0.feetTrigger(),
+         var0.pressurePlate()
       );
    }
 
    @Override
-   public short init_S_I(int x, int y, int z) {
-      if (y < this.load) {
+   public short putAt_S_I(int var1, int var2, int var3) {
+      if (var2 < this.fill) {
          return 1;
-      } else if (y > this.read) {
+      } else if (var2 > this.readEx) {
          return 0;
       } else {
-         BlockState state = this.init_BlockState(x, y, z);
-         if (state == null) {
-            return e.init_S_ClassCache_FileCac(this.load_ClassCache_FileCac(x, y, z));
+         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+         if (var4 == null) {
+            return e.init_S_ClassCache_FileCac(this.putAt_FileStore_BitCache(var1, var2, var3));
          } else {
-            RingBuffer.Inner_StreamUtil info = init_RingBuffer_StreamU_BlockState(state);
-            if (info == null) {
+            RingBuffer.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+            if (var5 == null) {
                return 1;
             } else {
-               return !info.dynamicShape() ? info.shape() : init(state, new BlockPos(x, y, z));
+               return !var5.dynamicShape() ? var5.shape() : putAt(var4, new BlockPos(var1, var2, var3));
             }
          }
       }
    }
 
    @Override
-   public byte init_B_I(int x, int y, int z) {
-      if (y >= this.load && y <= this.read) {
-         BlockState state = this.init_BlockState(x, y, z);
-         if (state == null) {
+   public byte putAt_B_I(int var1, int var2, int var3) {
+      if (var2 >= this.fill && var2 <= this.readEx) {
+         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+         if (var4 == null) {
             return m.init_m.init();
          }
 
-         RingBuffer.Inner_StreamUtil info = init_RingBuffer_StreamU_BlockState(state);
-         return info == null ? m.init_m.init() : info.surface();
+         RingBuffer.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+         return var5 == null ? m.init_m.init() : var5.surface();
       } else {
          return m.init_m.init();
       }
    }
 
    @Override
-   public short load_S(int x, int y, int z) {
-      if (y < this.load) {
+   public short fill_S(int var1, int var2, int var3) {
+      if (var2 < this.fill) {
          return 1;
       }
 
-      if (y > this.read) {
+      if (var2 > this.readEx) {
          return 0;
       }
 
-      BlockState state = this.init_BlockState(x, y, z);
-      if (state == null) {
-         return e.init_S_ClassCache_FileCac(this.load_ClassCache_FileCac(x, y, z));
+      BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      if (var4 == null) {
+         return e.init_S_ClassCache_FileCac(this.putAt_FileStore_BitCache(var1, var2, var3));
       }
 
-      RingBuffer.Inner_StreamUtil info = init_RingBuffer_StreamU_BlockState(state);
-      if (info == null) {
+      RingBuffer.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+      if (var5 == null) {
          return 1;
       }
 
-      if (!info.dynamicShape()) {
-         return info.outlineShape();
+      if (!var5.dynamicShape()) {
+         return var5.outlineShape();
       }
 
       try {
-         return e.init_S_List(state.getShape(EmptyBlockGetter.INSTANCE, new BlockPos(x, y, z)).toAabbs());
-      } catch (RuntimeException unexpected) {
+         return e.init_S_List(var4.getShape(EmptyBlockGetter.INSTANCE, new BlockPos(var1, var2, var3)).toAabbs());
+      } catch (RuntimeException var7) {
          return 1;
       }
    }
 
-   BlockState init_BlockState(int x, int y, int z) {
-      if (y >= this.load && y <= this.read) {
-         if (this.init_ClientLevel.getChunkSource().getChunk(x >> 4, z >> 4, ChunkStatus.FULL, false) instanceof LevelChunk chunk) {
+   BlockState putAt_BlockState(int var1, int var2, int var3) {
+      if (var2 >= this.fill && var2 <= this.readEx) {
+         if (this.putAt_ClientLevel.getChunkSource().getChunk(var1 >> 4, var3 >> 4, ChunkStatus.FULL, false) instanceof LevelChunk var5) {
             try {
-               LevelChunkSection[] sections = chunk.getSections();
-               int index = chunk.getSectionIndex(y);
-               if (index >= 0 && index < sections.length) {
-                  LevelChunkSection section = sections[index];
-                  return section != null && !section.hasOnlyAir() ? section.getBlockState(x & 15, y & 15, z & 15) : Blocks.AIR.defaultBlockState();
+               LevelChunkSection[] var6 = var5.getSections();
+               int var7 = var5.getSectionIndex(var2);
+               if (var7 >= 0 && var7 < var6.length) {
+                  LevelChunkSection var8 = var6[var7];
+                  return var8 != null && !var8.hasOnlyAir() ? var8.getBlockState(var1 & 15, var2 & 15, var3 & 15) : Blocks.AIR.defaultBlockState();
                } else {
                   return null;
                }
-            } catch (RuntimeException raced) {
+            } catch (RuntimeException var9) {
                return null;
             }
          } else {
@@ -241,52 +327,52 @@ public final class RingBuffer implements ClassCache.Inner_StateCache {
       }
    }
 
-   private ClassCache.Inner_FileCache load_ClassCache_FileCac(int x, int y, int z) {
-      return this.init_StateCache == null ? ClassCache.Inner_FileCache.UNLOADED : this.init_StateCache.init_ClassCache_FileCac_I(x, y, z);
+   private ClassCache.Inner_FileCache putAt_FileStore_BitCache(int var1, int var2, int var3) {
+      return this.putAt_PacketHelper == null ? ClassCache.Inner_FileCache.UNLOADED : this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1, var2, var3);
    }
 
-   private double init(BlockState state, RingBuffer.Inner_StreamUtil info, int x, int y, int z) {
-      RingBuffer.Inner_DataUtil p = this.init_RingBuffer_DataUti;
-      if (info.requiresTool()
-         && !p.init_r_DataUtil.creative()
-         && !p.load.computeIfAbsent(state, s -> ClassCache.Inner_StreamUtil.init_Z_BlockState_ItemStackArr(s, p.init_ItemStackArr))) {
+   private double putAt(BlockState var1, RingBuffer.Inner_StreamUtil var2, int var3, int var4, int var5) {
+      RingBuffer.Inner_DataUtil var6 = this.putAt_PoolStore_CacheHel;
+      if (var2.requiresTool()
+         && !var6.putAt_ByteWorker_CacheHe.creative()
+         && !var6.fill.computeIfAbsent(var1, var1x -> ClassCache.Inner_StreamUtil.putAt_Z_BlockState_ItemStackArr(var1x, var6.putAt_ItemStackArr))) {
          return 1.0 / 0.0;
       }
 
-      if (!this.write(x, y, z) && !this.update(x, y, z) && !this.load_Z(x, y, z)) {
-         if (!this.init_Z || !state.is(Blocks.NETHER_GOLD_ORE) && !state.is(Blocks.GILDED_BLACKSTONE)) {
-            if ((state.is(Blocks.ICE) || state.is(Blocks.FROSTED_ICE)) && !this.init_Z) {
-               BlockState under = this.init_BlockState(x, y - 1, z);
-               if (under == null || ClassCache.Inner_StreamUtil.init_Z_Z(true, under.isSolid(), under.liquid(), false)) {
+      if (!this.value(var3, var4, var5) && !this.prevEx(var3, var4, var5) && !this.fill_Z(var3, var4, var5)) {
+         if (!this.putAt_Z || !var1.is(Blocks.NETHER_GOLD_ORE) && !var1.is(Blocks.GILDED_BLACKSTONE)) {
+            if ((var1.is(Blocks.ICE) || var1.is(Blocks.FROSTED_ICE)) && !this.putAt_Z) {
+               BlockState var7 = this.putAt_BlockState(var3, var4 - 1, var5);
+               if (var7 == null || ClassCache.Inner_StreamUtil.putAt_Z_Z(true, var7.isSolid(), var7.liquid(), false)) {
                   return 1.0 / 0.0;
                }
             }
 
-            if (!this.init_Z
-               || !this.flush(x, y + 2, z)
-                  && !this.flush(x + 1, y + 1, z)
-                  && !this.flush(x - 1, y + 1, z)
-                  && !this.flush(x, y + 1, z + 1)
-                  && !this.flush(x, y + 1, z - 1)) {
-               double ticks = this.init(p, state, info);
-               int stack = 0;
-               int yy = y + 1;
+            if (!this.putAt_Z
+               || !this.chunkAt(var3, var4 + 2, var5)
+                  && !this.chunkAt(var3 + 1, var4 + 1, var5)
+                  && !this.chunkAt(var3 - 1, var4 + 1, var5)
+                  && !this.chunkAt(var3, var4 + 1, var5 + 1)
+                  && !this.chunkAt(var3, var4 + 1, var5 - 1)) {
+               double var13 = this.putAt(var6, var1, var2);
+               int var9 = 0;
+               int var10 = var4 + 1;
 
-               while (yy <= this.read) {
-                  BlockState above = this.init_BlockState(x, yy, z);
-                  if (above == null) {
+               while (var10 <= this.readEx) {
+                  BlockState var11 = this.putAt_BlockState(var3, var10, var5);
+                  if (var11 == null) {
                      return 1.0 / 0.0;
                   }
 
-                  RingBuffer.Inner_StreamUtil aboveInfo = init_RingBuffer_StreamU_BlockState(above);
-                  if (aboveInfo != null && aboveInfo.falling()) {
-                     if (++stack <= 6 && aboveInfo.diggableKind()) {
-                        if (this.update(x, yy, z)) {
+                  RingBuffer.Inner_StreamUtil var12 = putAt_PoolStore_TableCac_BlockState(var11);
+                  if (var12 != null && var12.falling()) {
+                     if (++var9 <= 6 && var12.diggableKind()) {
+                        if (this.prevEx(var3, var10, var5)) {
                            return 1.0 / 0.0;
                         }
 
-                        ticks += this.init(p, above, aboveInfo);
-                        yy++;
+                        var13 += this.putAt(var6, var11, var12);
+                        var10++;
                         continue;
                      }
 
@@ -295,7 +381,7 @@ public final class RingBuffer implements ClassCache.Inner_StateCache {
                   break;
                }
 
-               return ticks;
+               return var13;
             } else {
                return 1.0 / 0.0;
             }
@@ -307,268 +393,278 @@ public final class RingBuffer implements ClassCache.Inner_StateCache {
       }
    }
 
-   private double init(RingBuffer.Inner_DataUtil p, BlockState state, RingBuffer.Inner_StreamUtil info) {
-      return p.init_ConcurrentHashMap
+   private double putAt(RingBuffer.Inner_DataUtil var1, BlockState var2, RingBuffer.Inner_StreamUtil var3) {
+      return var1.putAt_ConcurrentHashMap
          .computeIfAbsent(
-            state,
-            s -> p.init_BiPredicate == null
-               ? ClassCache.Inner_StreamUtil.init(this.init_Minecraft, s, info.hardness(), p.init_ItemStackArr, p.init_r_DataUtil)
-               : ClassCache.Inner_StreamUtil.init(this.init_Minecraft, s, info.hardness(), p.init_ItemStackArr, p.init_r_DataUtil, p.init_BiPredicate)
+            var2,
+            var3x -> var1.putAt_BiPredicate == null
+               ? ClassCache.Inner_StreamUtil.putAt(this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe)
+               : ClassCache.Inner_StreamUtil.putAt(
+                  this.putAt_Minecraft, var3x, var3.hardness(), var1.putAt_ItemStackArr, var1.putAt_ByteWorker_CacheHe, var1.putAt_BiPredicate
+               )
          );
    }
 
-   private boolean load_Z(int x, int y, int z) {
-      return this.read(x + 1, y, z)
-         || this.read(x - 1, y, z)
-         || this.read(x, y + 1, z)
-         || this.read(x, y - 1, z)
-         || this.read(x, y, z + 1)
-         || this.read(x, y, z - 1);
+   private boolean fill_Z(int var1, int var2, int var3) {
+      return this.readEx(var1 + 1, var2, var3)
+         || this.readEx(var1 - 1, var2, var3)
+         || this.readEx(var1, var2 + 1, var3)
+         || this.readEx(var1, var2 - 1, var3)
+         || this.readEx(var1, var2, var3 + 1)
+         || this.readEx(var1, var2, var3 - 1);
    }
 
-   private boolean read(int x, int y, int z) {
-      if (y >= this.load && y <= this.read) {
-         BlockState state = this.init_BlockState(x, y, z);
-         return state != null && state.is(Blocks.NETHER_PORTAL);
+   private boolean readEx(int var1, int var2, int var3) {
+      if (var2 >= this.fill && var2 <= this.readEx) {
+         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+         return var4 != null && var4.is(Blocks.NETHER_PORTAL);
       } else {
          return false;
       }
    }
 
-   private boolean write(int x, int y, int z) {
-      return this.flush(x + 1, y, z)
-         || this.flush(x - 1, y, z)
-         || this.flush(x, y + 1, z)
-         || this.flush(x, y - 1, z)
-         || this.flush(x, y, z + 1)
-         || this.flush(x, y, z - 1);
+   private boolean value(int var1, int var2, int var3) {
+      return this.chunkAt(var1 + 1, var2, var3)
+         || this.chunkAt(var1 - 1, var2, var3)
+         || this.chunkAt(var1, var2 + 1, var3)
+         || this.chunkAt(var1, var2 - 1, var3)
+         || this.chunkAt(var1, var2, var3 + 1)
+         || this.chunkAt(var1, var2, var3 - 1);
    }
 
-   private boolean update(int x, int y, int z) {
-      return this.sync(x + 1, y, z) || this.sync(x - 1, y, z) || this.sync(x, y + 1, z) || this.sync(x, y, z + 1) || this.sync(x, y, z - 1);
+   private boolean prevEx(int var1, int var2, int var3) {
+      return this.prev(var1 + 1, var2, var3)
+         || this.prev(var1 - 1, var2, var3)
+         || this.prev(var1, var2 + 1, var3)
+         || this.prev(var1, var2, var3 + 1)
+         || this.prev(var1, var2, var3 - 1);
    }
 
-   private boolean sync(int x, int y, int z) {
-      if (y >= this.load && y <= this.read) {
-         BlockState state = this.init_BlockState(x, y, z);
-         return state != null && state.getFluidState().is(FluidTags.WATER);
+   private boolean prev(int var1, int var2, int var3) {
+      if (var2 >= this.fill && var2 <= this.readEx) {
+         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+         return var4 != null && var4.getFluidState().is(FluidTags.WATER);
       } else {
          return false;
       }
    }
 
-   private boolean flush(int x, int y, int z) {
-      if (y >= this.load && y <= this.read) {
-         BlockState state = this.init_BlockState(x, y, z);
-         return state == null ? true : state.getFluidState().is(FluidTags.LAVA);
+   private boolean chunkAt(int var1, int var2, int var3) {
+      if (var2 >= this.fill && var2 <= this.readEx) {
+         BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+         return var4 == null ? true : var4.getFluidState().is(FluidTags.LAVA);
       } else {
          return false;
       }
    }
 
-   public boolean init_Z(int x, int y, int z) {
-      BlockState state = this.init_BlockState(x, y, z);
-      if (state == null) {
+   public boolean putAt_Z_2(int var1, int var2, int var3) {
+      BlockState var4 = this.putAt_BlockState(var1, var2, var3);
+      if (var4 == null) {
          return false;
       }
 
-      RingBuffer.Inner_StreamUtil info = init_RingBuffer_StreamU_BlockState(state);
-      return info != null && info.falling();
+      RingBuffer.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+      return var5 != null && var5.falling();
    }
 
-   static ClassCache.Inner_FileCache init(ClassCache.Inner_FileCache p, double ticks) {
+   static ClassCache.Inner_FileCache putAt(ClassCache.Inner_FileCache var0, double var1) {
       return new ClassCache.Inner_FileCache(
-         p.loaded(),
-         p.passable(),
-         p.top16(),
-         p.water(),
-         p.lava(),
-         p.climbable(),
-         p.hazardFeet(),
-         p.hazardFloor(),
-         p.falling(),
-         p.fallMult10(),
-         ticks,
-         p.door(),
-         p.slabStair(),
-         p.farmland(),
-         p.ice(),
-         p.cached(),
-         p.destructionPenalty(),
-         p.soulSand(),
-         p.thorny(),
-         p.portal(),
-         p.narrowFooting()
+         var0.loaded(),
+         var0.passable(),
+         var0.top16(),
+         var0.water(),
+         var0.lava(),
+         var0.climbable(),
+         var0.hazardFeet(),
+         var0.hazardFloor(),
+         var0.falling(),
+         var0.fallMult10(),
+         var1,
+         var0.door(),
+         var0.slabStair(),
+         var0.farmland(),
+         var0.ice(),
+         var0.cached(),
+         var0.destructionPenalty(),
+         var0.soulSand(),
+         var0.thorny(),
+         var0.portal(),
+         var0.narrowFooting(),
+         var0.feetTrigger(),
+         var0.pressurePlate()
       );
    }
 
-   static RingBuffer.Inner_StreamUtil init_RingBuffer_StreamU_BlockState(BlockState state) {
-      int id = Block.getId(state);
-      if (id >= 0 && id < init_AtomicReferenceArr.length()) {
-         RingBuffer.Inner_StreamUtil known = init_AtomicReferenceArr.get(id);
-         if (known != null) {
-            return known;
+   static RingBuffer.Inner_StreamUtil putAt_PoolStore_TableCac_BlockState(BlockState var0) {
+      int var1 = Block.getId(var0);
+      if (var1 >= 0 && var1 < putAt_AtomicReferenceArr.length()) {
+         RingBuffer.Inner_StreamUtil var2 = putAt_AtomicReferenceArr.get(var1);
+         if (var2 != null) {
+            return var2;
          }
 
-         RingBuffer.Inner_StreamUtil made = load(state);
-         if (made != null) {
-            init_AtomicReferenceArr.compareAndSet(id, null, made);
+         RingBuffer.Inner_StreamUtil var3 = fill(var0);
+         if (var3 != null) {
+            putAt_AtomicReferenceArr.compareAndSet(var1, null, var3);
          }
 
-         return made;
+         return var3;
       } else {
-         return load(state);
+         return fill(var0);
       }
    }
 
-   private static RingBuffer.Inner_StreamUtil load(BlockState state) {
+   private static RingBuffer.Inner_StreamUtil fill(BlockState var0) {
       try {
-         if (state.isAir()) {
+         if (var0.isAir()) {
             return new RingBuffer.Inner_StreamUtil(
                ClassCache.Inner_FileCache.air(), (short)0, (short)0, m.init_m.init(), 0.0F, false, false, false, false, false, false
             );
          }
 
-         FluidState fluid = state.getFluidState();
-         boolean water = fluid.is(FluidTags.WATER);
-         boolean lava = fluid.is(FluidTags.LAVA);
-         Block block = state.getBlock();
-         boolean dynamic = block.hasDynamicShape() || state.hasOffsetFunction();
-         VoxelShape shape = state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
-         boolean passable = shape.isEmpty();
-         boolean door = false;
-         if (block instanceof DoorBlock) {
-            door = DoorBlock.isWoodenDoor(state);
-            if (door && state.getValue(BlockStateProperties.OPEN)) {
-               passable = true;
+         FluidState var1 = var0.getFluidState();
+         boolean var2 = var1.is(FluidTags.WATER);
+         boolean var3 = var1.is(FluidTags.LAVA);
+         Block var4 = var0.getBlock();
+         boolean var5 = var4.hasDynamicShape() || var0.hasOffsetFunction();
+         VoxelShape var6 = var0.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+         boolean var7 = var6.isEmpty();
+         boolean var8 = false;
+         if (var4 instanceof DoorBlock) {
+            var8 = DoorBlock.isWoodenDoor(var0);
+            if (var8 && var0.getValue(BlockStateProperties.OPEN)) {
+               var7 = true;
             }
-         } else if (block instanceof FenceGateBlock) {
-            door = true;
-            if (state.getValue(BlockStateProperties.OPEN)) {
-               passable = true;
+         } else if (var4 instanceof FenceGateBlock) {
+            var8 = true;
+            if (var0.getValue(BlockStateProperties.OPEN)) {
+               var7 = true;
             }
          }
 
-         boolean climb = ClassCache.Inner_StreamUtil.init_Z_BlockState(state);
-         if (climb && !(block instanceof ScaffoldingBlock)) {
-            passable = true;
+         boolean var9 = ClassCache.Inner_StreamUtil.putAt_Z_BlockState(var0);
+         if (var9 && !(var4 instanceof ScaffoldingBlock)) {
+            var7 = true;
          }
 
-         int top16 = passable ? 0 : (int)Math.round(shape.max(Axis.Y) * 16.0);
-         boolean hazardFeet = ClassCache.Inner_StreamUtil.load(state);
-         boolean thorny = state.is(Blocks.SWEET_BERRY_BUSH);
-         boolean contactHazard = ClassCache.Inner_StreamUtil.read(state);
-         boolean narrowFooting = !contactHazard && !passable && !ClassCache.Inner_StreamUtil.init_Z_VoxelShape(shape);
-         boolean portal = ClassCache.Inner_StreamUtil.write(state);
-         String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
-         int mult10 = Math.round(ClassCache.Inner_StreamUtil.init_F_Str_Z(path, water) * 10.0F);
-         boolean falling = block instanceof FallingBlock;
-         boolean slabStair = block instanceof SlabBlock || block instanceof StairBlock;
-         boolean farmland = block instanceof FarmlandBlock;
-         boolean ice = state.is(Blocks.ICE) || state.is(Blocks.PACKED_ICE) || state.is(Blocks.BLUE_ICE) || state.is(Blocks.FROSTED_ICE);
-         boolean soulSand = state.is(Blocks.SOUL_SAND);
-         float hardness = state.getDestroySpeed(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
-         boolean diggableKind = (!passable || block instanceof WebBlock) && fluid.isEmpty() && hardness >= 0.0F && !state.hasBlockEntity();
-         ClassCache.Inner_FileCache probe = new ClassCache.Inner_FileCache(
+         int var10 = var7 ? 0 : (int)Math.round(var6.max(Axis.Y) * 16.0);
+         boolean var11 = ClassCache.Inner_StreamUtil.fill(var0);
+         boolean var12 = ClassCache.Inner_StreamUtil.readEx(var0);
+         boolean var13 = ClassCache.Inner_StreamUtil.value(var0);
+         boolean var14 = var0.is(Blocks.SWEET_BERRY_BUSH);
+         boolean var15 = ClassCache.Inner_StreamUtil.prevEx(var0);
+         boolean var16 = !var15 && !var7 && !ClassCache.Inner_StreamUtil.putAt_Z_VoxelShape(var6);
+         boolean var17 = ClassCache.Inner_StreamUtil.prev(var0);
+         String var18 = BuiltInRegistries.BLOCK.getKey(var4).getPath();
+         int var19 = Math.round(ClassCache.Inner_StreamUtil.putAt_F_Str_Z(var18, var2) * 10.0F);
+         boolean var20 = var4 instanceof FallingBlock;
+         boolean var21 = var4 instanceof SlabBlock || var4 instanceof StairBlock;
+         boolean var22 = var4 instanceof FarmlandBlock;
+         boolean var23 = var0.is(Blocks.ICE) || var0.is(Blocks.PACKED_ICE) || var0.is(Blocks.BLUE_ICE) || var0.is(Blocks.FROSTED_ICE);
+         boolean var24 = var0.is(Blocks.SOUL_SAND);
+         float var25 = var0.getDestroySpeed(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+         boolean var26 = (!var7 || var4 instanceof WebBlock) && var1.isEmpty() && var25 >= 0.0F && !var0.hasBlockEntity();
+         ClassCache.Inner_FileCache var27 = new ClassCache.Inner_FileCache(
             true,
-            passable,
-            top16,
-            water,
-            lava,
-            climb,
-            hazardFeet,
-            contactHazard || narrowFooting,
-            falling,
-            mult10,
+            var7,
+            var10,
+            var2,
+            var3,
+            var9,
+            var11,
+            var15 || var16,
+            var20,
+            var19,
             1.0 / 0.0,
-            door,
-            slabStair,
-            farmland,
-            ice,
+            var8,
+            var21,
+            var22,
+            var23,
             false,
-            ClassCache.Inner_CachePool.init_I_Str(path),
-            soulSand,
-            thorny,
-            portal,
-            narrowFooting
+            ClassCache.Inner_CachePool.putAt_I_Str(var18),
+            var24,
+            var14,
+            var17,
+            var16,
+            var12,
+            var13
          );
-         if (passable && !water && !lava && !climb && !hazardFeet && !thorny && !portal && top16 == 0 && mult10 == 10) {
-            probe = ClassCache.Inner_FileCache.air();
+         if (var7 && !var2 && !var3 && !var9 && !var11 && !var12 && !var13 && !var14 && !var17 && var10 == 0 && var19 == 10) {
+            var27 = ClassCache.Inner_FileCache.air();
          }
 
-         short shapeId = !shape.isEmpty() && (!climb || block instanceof ScaffoldingBlock) ? (shape == Shapes.block() ? 1 : e.init_S_List(shape.toAabbs())) : 0;
-         double bounce = block instanceof SlimeBlock ? 1.0 : (block instanceof BedBlock ? 0.75 : 0.0);
-         byte surface = m.init(block.getFriction(), block.getSpeedFactor(), block.getJumpFactor(), bounce).init();
-         short outlineShape = e.init_S_List(state.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
+         short var28 = var6.isEmpty() ? 0 : (var6 == Shapes.block() ? 1 : e.init_S_List(var6.toAabbs()));
+         double var29 = var4 instanceof SlimeBlock ? 1.0 : (var4 instanceof BedBlock ? 0.75 : 0.0);
+         byte var31 = m.init(var4.getFriction(), var4.getSpeedFactor(), var4.getJumpFactor(), var29).init();
+         short var32 = e.init_S_List(var0.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
          return new RingBuffer.Inner_StreamUtil(
-            probe,
-            shapeId,
-            outlineShape,
-            surface,
-            hardness,
-            dynamic,
-            falling,
-            diggableKind,
-            state.requiresCorrectToolForDrops(),
-            ClassCache.Inner_StreamUtil.update(state),
-            StateCache.init(path)
+            var27,
+            var28,
+            var32,
+            var31,
+            var25,
+            var5,
+            var20,
+            var26,
+            var0.requiresCorrectToolForDrops(),
+            ClassCache.Inner_StreamUtil.chunkAt(var0),
+            StateCache.init(var18)
          );
-      } catch (RuntimeException unexpected) {
+      } catch (RuntimeException var33) {
          return null;
       }
    }
 
-   private static short init(BlockState state, BlockPos pos) {
+   private static short putAt(BlockState var0, BlockPos var1) {
       try {
-         VoxelShape shape = state.getCollisionShape(EmptyBlockGetter.INSTANCE, pos);
-         if (shape.isEmpty()) {
-            return 0;
-         } else if (ClassCache.Inner_StreamUtil.init_Z_BlockState(state) && !(state.getBlock() instanceof ScaffoldingBlock)) {
+         VoxelShape var2 = var0.getCollisionShape(EmptyBlockGetter.INSTANCE, var1);
+         if (var2.isEmpty()) {
             return 0;
          } else {
-            return shape == Shapes.block() ? 1 : e.init_S_List(shape.toAabbs());
+            return var2 == Shapes.block() ? 1 : e.init_S_List(var2.toAabbs());
          }
-      } catch (RuntimeException unexpected) {
+      } catch (RuntimeException var3) {
          return 1;
       }
    }
 
-   private static ItemStack[] init_ItemStackArr_ItemStackArr(ItemStack[] tools) {
-      ItemStack[] out = new ItemStack[tools.length];
+   private static ItemStack[] putAt_ItemStackArr_ItemStackArr(ItemStack[] var0) {
+      ItemStack[] var1 = new ItemStack[var0.length];
 
-      for (int i = 0; i < tools.length; i++) {
-         out[i] = tools[i] == null ? ItemStack.EMPTY : tools[i].copy();
+      for (int var2 = 0; var2 < var0.length; var2++) {
+         var1[var2] = var0[var2] == null ? ItemStack.EMPTY : var0[var2].copy();
       }
 
-      return out;
+      return var1;
    }
 
-   static boolean init(ItemStack[] a, ItemStack[] b) {
-      if (a != null && b != null && a.length == b.length) {
-         for (int i = 0; i < a.length; i++) {
-            ItemStack x = a[i] == null ? ItemStack.EMPTY : a[i];
-            ItemStack y = b[i] == null ? ItemStack.EMPTY : b[i];
-            if (!init_Z_ItemStack(x)) {
-               x = ItemStack.EMPTY;
+   static boolean putAt(ItemStack[] var0, ItemStack[] var1) {
+      if (var0 != null && var1 != null && var0.length == var1.length) {
+         for (int var2 = 0; var2 < var0.length; var2++) {
+            ItemStack var3 = var0[var2] == null ? ItemStack.EMPTY : var0[var2];
+            ItemStack var4 = var1[var2] == null ? ItemStack.EMPTY : var1[var2];
+            if (!putAt_Z_ItemStack(var3)) {
+               var3 = ItemStack.EMPTY;
             }
 
-            if (!init_Z_ItemStack(y)) {
-               y = ItemStack.EMPTY;
+            if (!putAt_Z_ItemStack(var4)) {
+               var4 = ItemStack.EMPTY;
             }
 
-            if (!x.isEmpty() && !y.isEmpty()) {
-               if (x.getItem() != y.getItem()) {
+            if (!var3.isEmpty() && !var4.isEmpty()) {
+               if (var3.getItem() != var4.getItem()) {
                   return false;
                }
 
-               if (!Objects.equals(x.getEnchantments(), y.getEnchantments())) {
+               if (!Objects.equals(var3.getEnchantments(), var4.getEnchantments())) {
                   return false;
                }
 
-               if (load(x) != load(y)) {
+               if (fill(var3) != fill(var4)) {
                   return false;
                }
-            } else if (x.isEmpty() != y.isEmpty()) {
+            } else if (var3.isEmpty() != var4.isEmpty()) {
                return false;
             }
          }
@@ -579,41 +675,41 @@ public final class RingBuffer implements ClassCache.Inner_StateCache {
       }
    }
 
-   private static boolean init_Z_ItemStack(ItemStack s) {
-      return !s.isEmpty() && s.has(DataComponents.TOOL);
+   private static boolean putAt_Z_ItemStack(ItemStack var0) {
+      return !var0.isEmpty() && var0.has(DataComponents.TOOL);
    }
 
-   private static boolean load(ItemStack s) {
-      return s.isDamageableItem() && !af.init(s, 2);
+   private static boolean fill(ItemStack var0) {
+      return var0.isDamageableItem() && !af.init(var0, 2);
    }
 
-   public static void init(Minecraft mc, StateCache memory) {
-      if (memory != null && mc.level != null && mc.player != null) {
-         if (init_Obj != mc.level) {
-            init_Map.clear();
-            init_Obj = mc.level;
+   public static void putAt(Minecraft var0, StateCache var1) {
+      if (var1 != null && var0.level != null && var0.player != null) {
+         if (putAt_Obj != var0.level) {
+            putAt_Map.clear();
+            putAt_Obj = var0.level;
          }
 
-         long now = System.nanoTime();
-         int pcx = mc.player.getBlockX() >> 4;
-         int pcz = mc.player.getBlockZ() >> 4;
+         long var2 = System.nanoTime();
+         int var4 = var0.player.getBlockX() >> 4;
+         int var5 = var0.player.getBlockZ() >> 4;
 
-         for (int r = 0; r <= 4; r++) {
-            for (int dx = -r; dx <= r; dx++) {
-               for (int dz = -r; dz <= r; dz++) {
-                  if (Math.max(Math.abs(dx), Math.abs(dz)) == r) {
-                     int cx = pcx + dx;
-                     int cz = pcz + dz;
-                     long key = IoWorker.init_J(cx, cz);
-                     Long last = init_Map.get(key);
-                     if ((last == null || now - last >= 30000000000L)
-                        && mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) instanceof LevelChunk chunk) {
-                        init_Map.put(key, now);
-                        if (init_Map.size() > 4096) {
-                           init_Map.clear();
+         for (int var6 = 0; var6 <= 4; var6++) {
+            for (int var7 = -var6; var7 <= var6; var7++) {
+               for (int var8 = -var6; var8 <= var6; var8++) {
+                  if (Math.max(Math.abs(var7), Math.abs(var8)) == var6) {
+                     int var9 = var4 + var7;
+                     int var10 = var5 + var8;
+                     long var11 = IoWorker.init_J(var9, var10);
+                     Long var13 = putAt_Map.get(var11);
+                     if ((var13 == null || var2 - var13 >= 30000000000L)
+                        && var0.level.getChunkSource().getChunk(var9, var10, ChunkStatus.FULL, false) instanceof LevelChunk var14) {
+                        putAt_Map.put(var11, var2);
+                        if (putAt_Map.size() > 4096) {
+                           putAt_Map.clear();
                         }
 
-                        init(mc.level, memory, chunk, cx, cz, mc.player.getBlockY());
+                        putAt(var0.level, var1, var14, var9, var10, var0.player.getBlockY());
                         return;
                      }
                   }
@@ -623,78 +719,78 @@ public final class RingBuffer implements ClassCache.Inner_StateCache {
       }
    }
 
-   private static void init(ClientLevel level, StateCache memory, LevelChunk chunk, int cx, int cz, int centreY) {
-      int yLo = Math.max(level.getMinY(), centreY - 40);
-      int yHi = Math.min(level.getMaxY() - 1, centreY + 40);
-      int height = yHi - yLo + 1;
-      if (height > 0 && height <= 128) {
-         short[] flags = new short[256 * height];
-         Map<Integer, String> notables = null;
-         MutableBlockPos p = new MutableBlockPos();
+   private static void putAt(ClientLevel var0, StateCache var1, LevelChunk var2, int var3, int var4, int var5) {
+      int var6 = Math.max(var0.getMinY(), var5 - 40);
+      int var7 = Math.min(var0.getMaxY() - 1, var5 + 40);
+      int var8 = var7 - var6 + 1;
+      if (var8 > 0 && var8 <= 128) {
+         short[] var9 = new short[256 * var8];
+         HashMap var10 = null;
+         MutableBlockPos var11 = new MutableBlockPos();
 
-         for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-               for (int y = yLo; y <= yHi; y++) {
-                  p.set((cx << 4) + x, y, (cz << 4) + z);
-                  BlockState state = chunk.getBlockState(p);
-                  RingBuffer.Inner_StreamUtil info = init_RingBuffer_StreamU_BlockState(state);
-                  if (info != null) {
-                     ClassCache.Inner_FileCache probe = info.probe();
-                     int f = 1;
-                     if (probe.passable()) {
-                        f |= 2;
+         for (int var12 = 0; var12 < 16; var12++) {
+            for (int var13 = 0; var13 < 16; var13++) {
+               for (int var14 = var6; var14 <= var7; var14++) {
+                  var11.set((var3 << 4) + var12, var14, (var4 << 4) + var13);
+                  BlockState var15 = var2.getBlockState(var11);
+                  RingBuffer.Inner_StreamUtil var16 = putAt_PoolStore_TableCac_BlockState(var15);
+                  if (var16 != null) {
+                     ClassCache.Inner_FileCache var17 = var16.probe();
+                     byte var18 = 1;
+                     if (var17.passable()) {
+                        var18 |= 2;
                      }
 
-                     if (probe.water()) {
-                        f |= 4;
+                     if (var17.water()) {
+                        var18 |= 4;
                      }
 
-                     if (probe.lava()) {
-                        f |= 8;
+                     if (var17.lava()) {
+                        var18 |= 8;
                      }
 
-                     if (probe.hazardFeet()) {
-                        f |= 32;
+                     if (var17.hazardFeet()) {
+                        var18 |= 32;
                      }
 
-                     if (probe.hazardFloor()) {
-                        f |= 64;
+                     if (var17.hazardFloor()) {
+                        var18 |= 64;
                      }
 
-                     flags[(x * 16 + z) * height + (y - yLo)] = (short)f;
-                     if (info.notable() && StateCache.init_I(f) == 1) {
-                        if (notables == null) {
-                           notables = new HashMap<>();
+                     var9[(var12 * 16 + var13) * var8 + (var14 - var6)] = var18;
+                     if (var16.notable() && StateCache.init_I(var18) == 1) {
+                        if (var10 == null) {
+                           var10 = new HashMap();
                         }
 
-                        notables.put((y - yLo) * 256 + z * 16 + x, "minecraft:" + BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath());
+                        var10.put((var14 - var6) * 256 + var13 * 16 + var12, "minecraft:" + BuiltInRegistries.BLOCK.getKey(var15.getBlock()).getPath());
                      }
                   }
                }
             }
          }
 
-         memory.init(cx, cz, yLo, height, flags, notables);
+         var1.init(var3, var4, var6, var8, var9, var10);
       }
    }
 
    static final class Inner_DataUtil {
-      final ItemStack[] init_ItemStackArr;
-      final r.Inner_DataUtil init_r_DataUtil;
-      final long init_J;
-      final BiPredicate<BlockState, ItemStack> init_BiPredicate;
-      final ConcurrentHashMap<BlockState, Double> init_ConcurrentHashMap = new ConcurrentHashMap<>();
-      final ConcurrentHashMap<BlockState, Boolean> load = new ConcurrentHashMap<>();
+      final ItemStack[] putAt_ItemStackArr;
+      final r.Inner_DataUtil putAt_ByteWorker_CacheHe;
+      final long putAt_J;
+      final BiPredicate<BlockState, ItemStack> putAt_BiPredicate;
+      final ConcurrentHashMap<BlockState, Double> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
+      final ConcurrentHashMap<BlockState, Boolean> fill = new ConcurrentHashMap<>();
 
-      Inner_DataUtil(ItemStack[] tools, r.Inner_DataUtil factors, long revision) {
-         this(tools, factors, revision, null);
+      Inner_DataUtil(ItemStack[] var1, r.Inner_DataUtil var2, long var3) {
+         this(var1, var2, var3, null);
       }
 
-      Inner_DataUtil(ItemStack[] tools, r.Inner_DataUtil factors, long revision, BiPredicate<BlockState, ItemStack> accepted) {
-         this.init_ItemStackArr = tools;
-         this.init_r_DataUtil = factors;
-         this.init_J = revision;
-         this.init_BiPredicate = accepted;
+      Inner_DataUtil(ItemStack[] var1, r.Inner_DataUtil var2, long var3, BiPredicate<BlockState, ItemStack> var5) {
+         this.putAt_ItemStackArr = var1;
+         this.putAt_ByteWorker_CacheHe = var2;
+         this.putAt_J = var3;
+         this.putAt_BiPredicate = var5;
       }
    }
 

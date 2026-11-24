@@ -20,9 +20,13 @@ public final class ai {
    }
 
    public static boolean init_Z(Entity entity) {
-      return !AutismLiteVariant.enabled() && autismclient.util.g.TokenStore.init(entity)
-         ? autismclient.util.g.TokenStore.load(entity)
-         : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
+      if (!AutismLiteVariant.enabled() && autismclient.util.g.TokenStore.init(entity)) {
+         return autismclient.util.g.TokenStore.load(entity);
+      } else {
+         return !AutismLiteVariant.enabled() && init_Minecraft != null && entity == init_Minecraft.player && autismclient.ai.o.init_Z()
+            ? false
+            : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
+      }
    }
 
    public static float init_F() {
@@ -80,7 +84,7 @@ public final class ai {
          return false;
       } else if (!AutismLiteVariant.enabled() && j.flush_Z_9()) {
          return false;
-      } else if (!AutismLiteVariant.enabled() && autismclient.ai.a.RefQueue.poll_Z()) {
+      } else if (!AutismLiteVariant.enabled() && autismclient.ai.a.AiMotionSafety.putAt_Z()) {
          return false;
       } else if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
          return original;
@@ -92,7 +96,7 @@ public final class ai {
    }
 
    public static boolean update() {
-      if (!AutismLiteVariant.enabled() && bg.init_Z_36()) {
+      if (!AutismLiteVariant.enabled() && (bg.init_Z_36() || autismclient.ai.a.AiMotionSafety.putAt_Z())) {
          return true;
       } else if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
          return false;

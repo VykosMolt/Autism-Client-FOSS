@@ -278,6 +278,12 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
+            autismclient.ai.a.AiPlannerWarmup.putAt(client);
+         } catch (Throwable t) {
+            logTickError("plannerWarmup", t);
+         }
+
+         try {
             if (!AutismLiteVariant.enabled()) {
                ValueSink.load();
             }

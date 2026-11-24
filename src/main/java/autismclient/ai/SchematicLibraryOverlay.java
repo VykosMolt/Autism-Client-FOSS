@@ -169,10 +169,16 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
       return 20 + (this.init_cV.load_Z() ? 16 : 0) + (this.init_cV.init_I() >= 0 ? 13 : 0);
    }
 
+   private int captureHeight() {
+      int bodyTop = 34;
+      int contentBottom = bodyTop + 48 + 14;
+      return contentBottom + 4 + (this.init_cV.load_Z() ? 16 : 0) + (this.init_cV.init_I() >= 0 ? 13 : 0);
+   }
+
    private int init_I_I(int rows) {
       int bodyTop = 34;
       if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.read) {
-         return bodyTop + 32 + 14 + this.pop_I();
+         return this.captureHeight();
       }
 
       byte var10000;
@@ -325,13 +331,17 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
 
                int progress = this.init_cV.init_I();
                if (progress >= 0) {
-                  int progressWidth = 48;
+                  SchematicRecording recording = this.init_cV.activeRecording();
+                  String statusText = recording != null && !recording.putAt_Z ? recording.putAt_Str() : this.init_cV.load_Str();
+                  String pctText = progress + "%";
+                  int pctWidth = ui.init_PoolEntry().init(pctText);
+                  int barWidth = Math.min(90, w / 3);
                   int progressY = this.init_NetHelper.load() - 4 - 7;
-                  this.init_V_SyncManager_5(ui, this.init_cV.load_Str(), x, progressY - 1, w - progressWidth - 34, ui.init_TableIndex().init_JsonUtil().valid);
-                  autismclient.gui.f.b.NodeWalker.init(
-                     ui, autismclient.gui.f.NetHelper.init(x + w - progressWidth - 25, progressY + 2, progressWidth, 4), progress / 100.0
-                  );
-                  this.init_V_SyncManager_5(ui, progress + "%", x + w - 22, progressY - 1, 22, ui.init_TableIndex().init_JsonUtil().prev);
+                  int pctX = this.init_NetHelper.init() - 10 - 3 - pctWidth;
+                  int barX = pctX - 3 - barWidth;
+                  this.init_V_SyncManager_5(ui, statusText, x, progressY - 1, barX - x - 3, ui.init_TableIndex().init_JsonUtil().valid);
+                  autismclient.gui.f.b.NodeWalker.init(ui, autismclient.gui.f.NetHelper.init(barX, progressY + 2, barWidth, 4), progress / 100.0);
+                  this.init_V_SyncManager_5(ui, pctText, pctX, progressY - 1, pctWidth, ui.init_TableIndex().init_JsonUtil().prev);
                }
             } finally {
                this.init_V_GuiGraphicsExtract_Z(graphics, clipped);
@@ -603,37 +613,51 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
 
    private void load(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom, float delta) {
       this.init_V_SyncManager(ui, x, y, width, delta);
-      int rowY = y + 13 + 3;
-      int selectWidth = ui.init_PoolEntry().init("Select corners") + 10;
-      this.init_V_SyncManager_2(
+      boolean busy = this.init_cV.flush_Z();
+      int step = 16;
+      int rowY = y + step;
+      this.init_V_SyncManager_3(
          ui,
-         autismclient.gui.f.NetHelper.init(x, rowY, selectWidth, 13),
-         "Select corners",
-         autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-         this.init_cV.write_Z() && !this.init_cV.flush_Z(),
-         this.init_cV::sync_V
+         x,
+         rowY,
+         width,
+         List.of(
+            new SchematicLibraryOverlay.Inner_DataUtil(
+               "Select corners",
+               autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
+               this.init_cV.write_Z() && !busy,
+               this.init_cV::sync_V
+            ),
+            new SchematicLibraryOverlay.Inner_DataUtil(
+               "Save area",
+               autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
+               this.init_cV.read_Z() && this.init_cV.write_Z() && this.init_cV.init_cP_DataUtil != null && !busy,
+               () -> this.init_cV.init_V_Z_Z(false, this.flush_Z)
+            )
+         )
       );
-      this.init_V_SyncManager_5(
-         ui,
-         this.init_cV.init_cP_DataUtil == null ? "No area selected" : this.init_cV.init_cP_DataUtil.size(),
-         x + selectWidth + 6,
-         rowY + 2,
-         width - selectWidth - 6,
-         ui.init_TableIndex().init_JsonUtil().valid
-      );
-      this.init_V_SyncManager_4(
-         ui,
-         autismclient.gui.f.NetHelper.init(x, rowY + 13 + 3, Math.min(width, ui.init_PoolEntry().init("Capture entities") + 37), 14),
-         "Capture entities",
-         this.flush_Z,
-         !this.init_cV.flush_Z(),
-         () -> this.flush_Z = !this.flush_Z
-      );
-      if (this.init_cV.flush_Z()) {
+      int row2Y = rowY + step;
+      SchematicRecording recording = this.init_cV.activeRecording();
+      if (recording != null && recording.putAt_Z()) {
          this.init_V_SyncManager_3(
             ui,
             x,
-            bottom + 3,
+            row2Y,
+            width,
+            List.of(
+               new SchematicLibraryOverlay.Inner_DataUtil(
+                  "Stop & save", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, true, this.init_cV::stopAndSaveRecording
+               ),
+               new SchematicLibraryOverlay.Inner_DataUtil(
+                  "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.init_cV::close_V
+               )
+            )
+         );
+      } else if (busy) {
+         this.init_V_SyncManager_3(
+            ui,
+            x,
+            row2Y,
             width,
             List.of(
                new SchematicLibraryOverlay.Inner_DataUtil(
@@ -645,14 +669,14 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
          this.init_V_SyncManager_3(
             ui,
             x,
-            bottom + 3,
+            row2Y,
             width,
             List.of(
                new SchematicLibraryOverlay.Inner_DataUtil(
-                  "Save area",
-                  autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-                  this.init_cV.read_Z() && this.init_cV.write_Z() && this.init_cV.init_cP_DataUtil != null,
-                  () -> this.init_cV.init_V_Z_Z(false, this.flush_Z)
+                  "Record chunks",
+                  autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
+                  this.init_cV.read_Z() && this.init_cV.write_Z(),
+                  () -> this.init_cV.startRecording(this.flush_Z)
                ),
                new SchematicLibraryOverlay.Inner_DataUtil(
                   "Save loaded chunks",
@@ -663,6 +687,15 @@ final class SchematicLibraryOverlay extends autismclient.util.bj {
             )
          );
       }
+
+      this.init_V_SyncManager_4(
+         ui,
+         autismclient.gui.f.NetHelper.init(x, row2Y + step, Math.min(width, ui.init_PoolEntry().init("Capture entities") + 37), 14),
+         "Capture entities",
+         this.flush_Z,
+         !busy,
+         () -> this.flush_Z = !this.flush_Z
+      );
    }
 
    private void load(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom) {

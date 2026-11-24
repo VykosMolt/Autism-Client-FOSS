@@ -190,12 +190,12 @@ public final class CachePool {
                // the lexical check above can't see symlinks, so the deepest existing part must also resolve inside
                if (Files.exists(base)) {
                   Path existing = resolved;
-                  while (!Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
+                  while (existing != null && !Files.exists(existing, LinkOption.NOFOLLOW_LINKS)) {
                      existing = existing.getParent();
                   }
 
                   try {
-                     if (!existing.toRealPath().startsWith(base.toRealPath())) {
+                     if (existing == null || !existing.toRealPath().startsWith(base.toRealPath())) {
                         throw new IllegalArgumentException("Path escapes the addon directory through a link: " + relative);
                      }
                   } catch (IOException e) {

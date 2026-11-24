@@ -293,7 +293,7 @@ final class aE {
                      this.load_AiOperation.cancel();
                      this.load_AiOperation = null;
                      return this.init_AiOperation_Result_9("Resuming after " + this.init_Str);
-                  } else if (autismclient.ai.a.RefQueue.flush_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
+                  } else if (autismclient.ai.a.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
                      X.Inner_BufferHelper vitals = X.init_X_BufferHelper();
                      AiOperation action = X.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_19());
                      if (action == null) {

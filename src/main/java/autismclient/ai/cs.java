@@ -22,12 +22,9 @@ public final class cs {
          return cs.Inner_StreamUtil.EMPTY;
       }
 
-      if (target > 0) {
-         heading = heading + " / " + Math.max(0, Math.min(target, completed)) + " of " + target;
-      }
-
       String action = init(activity);
-      return new cs.Inner_StreamUtil(heading, action.isEmpty() ? "In progress" : action, "");
+      int percent = target > 0 ? (int)(100L * Math.clamp(completed, 0, target) / target) : -1;
+      return new cs.Inner_StreamUtil(heading, action.isEmpty() ? "In progress" : action, "", percent);
    }
 
    public static String init(String diagnostic, String fallback) {
@@ -111,14 +108,14 @@ public final class cs {
          init_W_StreamUtil.init();
          load.init();
          return cs.Inner_StreamUtil.EMPTY;
-      } else if (chosen.priority >= 200) {
+      } else if (!chosen.immediate && chosen.priority < 200) {
+         String title = init_W_StreamUtil.init(chosen.content.title, now, 1500000000L);
+         String activity = load.init(chosen.content.activity, now, 1500000000L);
+         return new cs.Inner_StreamUtil(title, activity, chosen.content.detail, chosen.content.percent);
+      } else {
          init_W_StreamUtil.init();
          load.init();
          return chosen.content;
-      } else {
-         String title = init_W_StreamUtil.init(chosen.content.title, now, 1500000000L);
-         String activity = load.init(chosen.content.activity, now, 1500000000L);
-         return new cs.Inner_StreamUtil(title, activity, chosen.content.detail);
       }
    }
 
@@ -141,7 +138,12 @@ public final class cs {
    }
 
    static int init(cs.Inner_StreamUtil content, ToIntFunction<String> measure, int available) {
-      int widest = Math.max(measure.applyAsInt(content.title), Math.max(measure.applyAsInt(content.activity), measure.applyAsInt(content.detail)));
+      int titleW = measure.applyAsInt(content.title);
+      if (content.percent >= 0) {
+         titleW += measure.applyAsInt("100%") + 12;
+      }
+
+      int widest = Math.max(titleW, Math.max(measure.applyAsInt(content.bannerActivity()), measure.applyAsInt(content.bannerDetail())));
       return (int)Math.max(1L, Math.min(Math.max(1, available), Math.max(0, widest) + 10L));
    }
 
@@ -149,14 +151,33 @@ public final class cs {
       return value == null ? "" : value.strip().replaceAll("[\\r\\n\\t]+", " ");
    }
 
-   record Inner_DataUtil(cs.Inner_StreamUtil content, int priority, long publication) {
+   record Inner_DataUtil(cs.Inner_StreamUtil content, int priority, long publication, boolean immediate) {
+      Inner_DataUtil(cs.Inner_StreamUtil content, int priority, long publication) {
+         this(content, priority, publication, false);
+      }
    }
 
-   record Inner_StreamUtil(String title, String activity, String detail) {
+   record Inner_StreamUtil(String title, String activity, String detail, int percent) {
       static final cs.Inner_StreamUtil EMPTY = new cs.Inner_StreamUtil("", "", "");
+
+      Inner_StreamUtil(String title, String activity, String detail) {
+         this(title, activity, detail, -1);
+      }
 
       boolean visible() {
          return !this.title.isEmpty();
+      }
+
+      String bannerActivity() {
+         if (this.percent >= 0 && !this.detail.isEmpty()) {
+            return this.activity.isEmpty() ? this.detail : this.activity + "  ·  " + this.detail;
+         } else {
+            return this.activity;
+         }
+      }
+
+      String bannerDetail() {
+         return this.percent >= 0 ? "" : this.detail;
       }
    }
 }

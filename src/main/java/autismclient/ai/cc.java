@@ -2522,7 +2522,7 @@ public final class cc {
             this.init_V_Str_Str("error", "Operation cleanup: " + e.getMessage());
          } finally {
             if (current.resources().contains("INPUT")) {
-               autismclient.ai.a.RefQueue.open_V();
+               autismclient.ai.a.AiMotionSafety.putAt_V();
                Minecraft mc = Minecraft.getInstance();
                if (mc.options != null) {
                   for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {

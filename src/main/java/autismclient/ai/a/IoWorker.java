@@ -1,5 +1,6 @@
 package autismclient.ai.a;
 
+import it.unimi.dsi.fastutil.HashCommon;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +27,7 @@ public final class IoWorker {
    }
 
    public static void init_V(int cx, int cz) {
-      init_Map.computeIfAbsent(init_J(cx, cz), k -> new AtomicInteger()).set(init_AtomicInteger.incrementAndGet());
+      init_Map.computeIfAbsent(HashCommon.mix(init_J(cx, cz)), k -> new AtomicInteger()).set(init_AtomicInteger.incrementAndGet());
       init_AtomicLong.incrementAndGet();
       if (init_Map.size() > 8192) {
          load();
@@ -34,7 +35,7 @@ public final class IoWorker {
    }
 
    public static int init(long chunkKey) {
-      AtomicInteger revision = init_Map.get(chunkKey);
+      AtomicInteger revision = init_Map.get(HashCommon.mix(chunkKey));
       return revision == null ? load : revision.get();
    }
 

@@ -508,7 +508,7 @@ final class cq {
                      }
 
                      boolean shaft = false;
-                     if (target == null && autismclient.ai.a.RefQueue.flush_Z() && !this.init_Minecraft.player.isInWater()) {
+                     if (target == null && autismclient.ai.a.AiMotionSafety.fill_Z() && !this.init_Minecraft.player.isInWater()) {
                         target = cq.init_BlockPos_BlockPos(
                            this.init_Minecraft.player.blockPosition(),
                            escapeThreats,

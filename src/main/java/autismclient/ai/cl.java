@@ -1733,7 +1733,7 @@ final class cl {
                   this.init_AiOperation = this.init_Supplier.get();
                   return this.init("Looking for food animals");
                } else {
-                  return !N.init(this.canInterruptNow() && autismclient.ai.a.RefQueue.flush_Z(), this.requiresReconciliationAfterEmergency())
+                  return !N.init(this.canInterruptNow() && autismclient.ai.a.AiMotionSafety.fill_Z(), this.requiresReconciliationAfterEmergency())
                      ? this.init("Waiting for the food trip's safe handoff")
                      : this.init(
                         have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, "No time for another complete hunt; " + have + " food held"

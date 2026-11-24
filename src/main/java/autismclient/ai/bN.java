@@ -142,8 +142,11 @@ final class bN {
                   return false;
                }
 
+               float prevYaw = mc.player.getYRot();
+               float prevPitch = mc.player.getXRot();
                mc.player.setYRot(candidate.init_U_DataUtil().load().init());
                mc.player.setXRot(candidate.init_U_DataUtil().load().load());
+               autismclient.ai.a.AiCameraTurn.putAt(mc.player, prevYaw, prevPitch);
                this.write_Z = true;
                mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());
                return true;
@@ -177,7 +180,7 @@ final class bN {
                   }
 
                   if (!cu.init(mc.level, mc.player.blockPosition())) {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      return R.init_AiOperation_Result(
                         AiOperation.Status.RUNNING, "Waiting for current terrain to load", ag.init_JsonObject_ObjArr("placed", this.sync_I)
                      );
@@ -283,7 +286,7 @@ final class bN {
                   } else {
                      int slot = ct.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.init_List_7());
                      if (slot < 0 && support != null) {
-                        autismclient.ai.a.RefQueue.open_V();
+                        autismclient.ai.a.AiMotionSafety.putAt_V();
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
@@ -430,7 +433,7 @@ final class bN {
             public void cancel() {
                if (!this.update_Z) {
                   this.update_Z = true;
-                  autismclient.ai.a.RefQueue.open_V();
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                   this.init_DataUtil.init_V();
                   if (mc.player != null && this.flush_I >= 0 && mc.player.getInventory().getSelectedSlot() == this.flush_I) {
                      mc.player.getInventory().setSelectedSlot(this.update_I);

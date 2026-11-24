@@ -842,7 +842,7 @@ final class bx {
                   }
 
                   if (tableBudget > 0) {
-                     if (!autismclient.ai.a.RefQueue.flush_Z()) {
+                     if (!autismclient.ai.a.AiMotionSafety.fill_Z()) {
                         return this.load_AiOperation_Result_2("Settling before carrying the kit's crafting table onward");
                      }
 
@@ -2254,7 +2254,7 @@ final class bx {
 
                AutismClientAddon.LOG.info("[AI] ladder for {}: guard {} after {}: {}", itemId, r.status(), this.sync_Str, bx.load_Str(r.message()));
                return this.load_AiOperation_Result_2("Back to the ladder after " + this.sync_Str);
-            } else if (autismclient.ai.a.RefQueue.flush_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
+            } else if (autismclient.ai.a.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
                X.Inner_BufferHelper vitals = X.init_X_BufferHelper();
                AiOperation action = X.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.load_I_12());
                if (action == null) {
@@ -2422,7 +2422,7 @@ final class bx {
 
    static AiOperation init(int seconds, boolean carryRequired) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.player != null && mc.level != null && e.init_I("minecraft:crafting_table") <= 0 && autismclient.ai.a.RefQueue.flush_Z()) {
+      if (mc.player != null && mc.level != null && e.init_I("minecraft:crafting_table") <= 0 && autismclient.ai.a.AiMotionSafety.fill_Z()) {
          ItemEntity observed = null;
          double dropCost = 1.0 / 0.0;
 
@@ -2631,7 +2631,7 @@ final class bx {
             this.init_bb.init_V(this.read_AiOperation);
          }
       };
-      return bb.init(recovery, autismclient.ai.a.RefQueue::flush_Z, () -> mc.player == stationPlayer && mc.level == stationWorld, stationDeadline);
+      return bb.init(recovery, autismclient.ai.a.AiMotionSafety::fill_Z, () -> mc.player == stationPlayer && mc.level == stationWorld, stationDeadline);
    }
 
    static double init_D_D(double dx, double dy, double dz) {

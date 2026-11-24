@@ -84,7 +84,7 @@ final class cB {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.a.DataUtil init_DataUtil = new autismclient.ai.a.DataUtil();
             final autismclient.ai.a.DataPipe init_DataPipe = new autismclient.ai.a.DataPipe();
-            final autismclient.ai.a.RefQueue.Inner_DataUtil init_RefQueue_DataUtil = new autismclient.ai.a.RefQueue.Inner_DataUtil(
+            final autismclient.ai.a.AiBlockDigger init_RefQueue_DataUtil = new autismclient.ai.a.AiBlockDigger(
                mc, this::init, this.init_DataUtil::init_V_Vec3, true, true, this.init_DataUtil::load_V
             );
             AiOperation init_AiOperation;

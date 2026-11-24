@@ -39,10 +39,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
 
 final class bj {
@@ -115,7 +120,7 @@ final class bj {
 
    long load_J() {
       return 7L * this.init_bj_CachePool.init_TableIndex_DataUti.cells().size()
-         + 40817L
+         + this.init_bj_CachePool.init_bj_DataUtil.total
          + (
             this.init_bj_CachePool.init_Z && this.init_bj_CachePool.load_I == this.init_bj_CachePool.init_TableIndex_DataUti.cells().size()
                ? this.init_bj_CachePool.init_J()
@@ -418,13 +423,13 @@ final class bj {
    static void init_V_AbstractSignEditSc(AbstractSignEditScreen editor, BlockPos origin, Map<Long, String> text) throws IllegalAccessException, NoSuchFieldException {
       Class<AbstractSignEditScreen> screen = AbstractSignEditScreen.class;
       Field signField = screen.getDeclaredField("sign");
-      Field frontField = screen.getDeclaredField("isFrontText");
+      Field slotField = screen.getDeclaredField("slot");
       Field messagesField = screen.getDeclaredField("messages");
       signField.setAccessible(true);
-      frontField.setAccessible(true);
+      slotField.setAccessible(true);
       messagesField.setAccessible(true);
       SignBlockEntity sign = (SignBlockEntity)signField.get(editor);
-      if (frontField.getBoolean(editor)) {
+      if (slotField.get(editor) == SignTextSlot.FRONT) {
          init((String[])messagesField.get(editor), text.get(sign.getBlockPos().subtract(origin).asLong()));
       }
    }
@@ -456,11 +461,11 @@ final class bj {
          this.init_Item = item;
          this.init_Set = tried;
          this.init_Vec3 = from;
-         this.init_bj_DataUtil = new bj.Inner_DataUtil(center);
+         this.init_bj_DataUtil = new bj.Inner_DataUtil(center, prep.init_LevelReader);
       }
 
       void init_V() {
-         this.init_bj_DataUtil.load = 40817;
+         this.init_bj_DataUtil.load = this.init_bj_DataUtil.total;
          this.init_Z = true;
       }
 
@@ -621,7 +626,7 @@ final class bj {
          this.init_LevelReader = world;
          this.init_Predicate = loaded;
          this.init_Z = clearTerrain;
-         this.init_bj_DataUtil = new bj.Inner_DataUtil(initialCenter);
+         this.init_bj_DataUtil = new bj.Inner_DataUtil(initialCenter, world);
       }
 
       boolean init_Z() {
@@ -639,7 +644,7 @@ final class bj {
             } else if (this.read_I < this.init_TableIndex_DataUti.cells().size()) {
                return "Checking source supports (" + this.read_I + "/" + this.init_TableIndex_DataUti.cells().size() + ")";
             } else if (!this.init_bj_DataUtil.init()) {
-               return "Scanning original stock depot (" + this.init_bj_DataUtil.load + "/40817)";
+               return "Scanning original stock depot (" + this.init_bj_DataUtil.load + "/" + this.init_bj_DataUtil.total + ")";
             } else {
                return this.load_Z ? "Schematic stock prepared" : "Checking terrain (" + this.init_J + " cells)";
             }
@@ -977,20 +982,60 @@ final class bj {
 
    static final class Inner_DataUtil {
       static final int init_I = 40817;
+      private static final int RADIUS = 24;
       final BlockPos init_BlockPos;
+      final ClientLevel level;
+      final int minChunkX;
+      final int minChunkZ;
+      final int chunkWidth;
+      final int total;
+      Iterator<BlockPos> pending = Collections.emptyIterator();
       int load;
 
-      Inner_DataUtil(BlockPos center) {
+      Inner_DataUtil(BlockPos center, LevelReader world) {
          this.init_BlockPos = center.immutable();
+         this.level = world instanceof ClientLevel clientLevel ? clientLevel : null;
+         this.minChunkX = center.getX() - RADIUS >> 4;
+         this.minChunkZ = center.getZ() - RADIUS >> 4;
+         this.chunkWidth = (center.getX() + RADIUS >> 4) - this.minChunkX + 1;
+         int chunkDepth = (center.getZ() + RADIUS >> 4) - this.minChunkZ + 1;
+         this.total = this.level == null ? init_I : this.chunkWidth * chunkDepth;
       }
 
       boolean init() {
-         return this.load >= 40817;
+         return this.load >= this.total && !this.pending.hasNext();
       }
 
       void init(bj.Inner_CachePool prep) {
-         int i = this.load++;
-         BlockPos p = this.init_BlockPos.offset(i % 49 - 24, i / 49 % 17 - 8, i / 833 - 24);
+         BlockPos p;
+         if (this.level != null) {
+            if (!this.pending.hasNext()) {
+               int idx = this.load++;
+               LevelChunk chunk = this.level
+                  .getChunkSource()
+                  .getChunk(this.minChunkX + idx % this.chunkWidth, this.minChunkZ + idx / this.chunkWidth, ChunkStatus.FULL, false);
+               if (chunk != null) {
+                  this.pending = chunk.getBlockEntities()
+                     .values()
+                     .stream()
+                     .filter(ShulkerBoxBlockEntity.class::isInstance)
+                     .map(BlockEntity::getBlockPos)
+                     .toList()
+                     .iterator();
+               }
+
+               return;
+            }
+
+            p = this.pending.next();
+            if (Math.abs(p.getX() - this.init_BlockPos.getX()) > RADIUS || Math.abs(p.getZ() - this.init_BlockPos.getZ()) > RADIUS) {
+               return;
+            }
+         } else {
+            int i = this.load++;
+            p = this.init_BlockPos.offset(i % 49 - 24, i / 49 % 17 - 8, i / 833 - 24);
+         }
+
          if (!prep.init_Map.containsKey(p.asLong()) && prep.init_Predicate.test(p) && prep.init_BlockState_BlockPos(p).getBlock() instanceof ShulkerBoxBlock) {
             prep.init_Set.add(p.asLong());
          }

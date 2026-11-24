@@ -13,114 +13,171 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-final class ArrayUtil {
-   private final Minecraft init_Minecraft;
-   private final autismclient.gui.d.PacketUtil init_PacketUtil;
+public final class ArrayUtil {
+   private final Minecraft putAt_Minecraft;
+   private final autismclient.gui.d.PacketUtil putAt_RingBuffer;
 
-   ArrayUtil(Minecraft mc, ArrayUtil.Inner_DataUtil loss, Consumer<Boolean> approve, Runnable cancel) {
-      this.init_Minecraft = mc;
-      List<autismclient.gui.d.PacketUtil.Inner_DataUtil> actions = new ArrayList<>();
-      actions.add(new autismclient.gui.d.PacketUtil.Inner_DataUtil("Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::init_V));
-      actions.add(
+   public ArrayUtil(Minecraft var1, ArrayUtil.Inner_DataUtil var2, Consumer<Boolean> var3, Runnable var4) {
+      this.putAt_Minecraft = var1;
+      ArrayList var5 = new ArrayList();
+      var5.add(
          new autismclient.gui.d.PacketUtil.Inner_DataUtil(
-            "Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, () -> this.init_V_Consumer_Z(approve, false)
+            "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::putAt_V
          )
       );
-      Module noFall = al.init_Module_Str("no-fall");
-      if (noFall != null && !noFall.isEnabled()) {
-         actions.add(
+      var5.add(
+         new autismclient.gui.d.PacketUtil.Inner_DataUtil(
+            "Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, () -> this.putAt_V_Consumer_Z(var3, false)
+         )
+      );
+      Module var6 = al.init_Module_Str("no-fall");
+      if (var6 != null && !var6.isEnabled()) {
+         var5.add(
             new autismclient.gui.d.PacketUtil.Inner_DataUtil(
-               "NoFall & Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> this.init_V_Consumer_Z(approve, true)
+               "NoFall & Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> this.putAt_V_Consumer_Z(var3, true)
             )
          );
       }
 
-      String risk = String.format(Locale.ROOT, "About %.1f hearts of damage Â· %.1f hearts available", loss.damage() / 2.0F, loss.health() / 2.0F);
-      this.init_PacketUtil = new autismclient.gui.d.PacketUtil(
+      String var7 = putAt_Str_BufferCore_CacheHe(var2);
+      this.putAt_RingBuffer = new autismclient.gui.d.PacketUtil(
          "Parkour fall warning",
          List.of(
-            loss.lethal() ? "This route could kill you in vanilla." : "This route can cause fall damage.",
-            risk,
+            var2.lethal() ? "This route could kill you in vanilla." : "This route can cause fall damage.",
+            var7,
             "Go assumes the server has fall damage disabled."
          ),
-         actions,
-         cancel
+         var5,
+         var4
       );
    }
 
-   private void init_V_Consumer_Z(Consumer<Boolean> approve, boolean enable) {
-      this.init_PacketUtil.init_V_Runnable(() -> approve.accept(enable));
+   static String putAt_Str_BufferCore_CacheHe(ArrayUtil.Inner_DataUtil var0) {
+      return String.format(Locale.ROOT, "About %s HP of damage · %s HP available", putAt_Str_F(var0.damage()), putAt_Str_F(var0.health()));
    }
 
-   boolean init_Z() {
-      return cx.init_Z(this.init_Minecraft, this.init_PacketUtil);
+   static String putAt_Str_F(float var0) {
+      float var1 = Math.max(0.0F, var0);
+      float var2 = Math.round(var1 * 2.0F) / 2.0F;
+      return Math.abs(var2 - Math.rint(var2)) < 0.0010000000474974513 ? Integer.toString(Math.round(var2)) : String.format(Locale.ROOT, "%.1f", var2);
    }
 
-   void init_V() {
-      this.init_PacketUtil.onClose();
+   static boolean putAt(boolean var0, boolean var1, boolean var2, boolean var3, boolean var4, boolean var5) {
+      return var0 || var1 || var2 || var3 || var4 || var5;
    }
 
-   static ArrayUtil.Inner_DataUtil init_ArrayUtil_DataUtil_Minecraft_List(Minecraft mc, List<ClassCache.UiHelper> route) {
-      LocalPlayer player = mc.player;
-      double health = player.getHealth() + player.getAbsorptionAmount();
-      if (!player.getAbilities().invulnerable && !player.hasEffect(MobEffects.SLOW_FALLING)) {
-         AutismLivingEntityAccessor access = (AutismLivingEntityAccessor)player;
-         ClientLevel level = mc.level;
-         BitSetUtil world = new BitSetUtil(level, player);
-         float damage = 0.0F;
+   private void putAt_V_Consumer_Z(Consumer<Boolean> var1, boolean var2) {
+      this.putAt_RingBuffer.init_V_Runnable(() -> var1.accept(var2));
+   }
 
-         for (ClassCache.UiHelper move : route) {
-            BlockState floor = mc.level.getBlockState(move.to().below());
-            BlockState feet = mc.level.getBlockState(move.to());
-            if (feet.getFluidState().isEmpty() && !feet.is(Blocks.COBWEB) && !floor.is(Blocks.SLIME_BLOCK)) {
-               float multiplier = !floor.is(Blocks.HAY_BLOCK) && !floor.is(Blocks.HONEY_BLOCK) ? (floor.getBlock() instanceof BedBlock ? 0.5F : 1.0F) : 0.2F;
-               double landingY = move.jump() != null ? move.jump().landY() : init_D_ClientLevel_BlockPos(level, move.to());
-               double sourceY = init_D_ClientLevel_BlockPos(level, move.from());
-               double peak = sourceY;
-               if (move.jump() != null) {
-                  PoolEntry maneuver = move.jump().maneuver();
-                  if (maneuver == null) {
-                     peak += 1.253;
-                  } else {
-                     NodeWalker.Inner_StreamUtil state = maneuver.start();
+   public boolean putAt_Z() {
+      return cx.init_Z(this.putAt_Minecraft, this.putAt_RingBuffer);
+   }
 
-                     for (NodeWalker.Inner_DataUtil input : maneuver.inputs()) {
-                        state = NodeWalker.init(state, input, world);
-                        peak = Math.max(peak, state.y());
+   public void putAt_V() {
+      this.putAt_RingBuffer.onClose();
+   }
+
+   public static ArrayUtil.Inner_DataUtil putAt_BufferCore_CacheHe_Minecraft_List(Minecraft var0, List<ClassCache.UiHelper> var1) {
+      LocalPlayer var2 = var0.player;
+      double var3 = var2.getHealth() + var2.getAbsorptionAmount();
+      if (!var2.getAbilities().invulnerable && !var2.hasEffect(MobEffects.SLOW_FALLING)) {
+         AutismLivingEntityAccessor var5 = (AutismLivingEntityAccessor)var2;
+         ClientLevel var6 = var0.level;
+         BitSetUtil var7 = new BitSetUtil(var6, var2);
+         float var8 = 0.0F;
+
+         for (ClassCache.UiHelper var10 : var1) {
+            if (var10.type() != ClassCache.Inner_SyncManager.get) {
+               BlockState var11 = var0.level.getBlockState(var10.to().below());
+               BlockState var12 = var0.level.getBlockState(var10.to());
+               boolean var13 = var12.is(BlockTags.CLIMBABLE)
+                  || var12.getBlock() instanceof TrapDoorBlock && ClassCache.Inner_StreamUtil.putAt_Z_BlockState_BlockState(var12, var11);
+               if (!putAt(
+                  var13,
+                  !var12.getFluidState().isEmpty(),
+                  var12.is(Blocks.COBWEB),
+                  var12.is(Blocks.POWDER_SNOW),
+                  var12.is(Blocks.SWEET_BERRY_BUSH),
+                  var11.is(Blocks.SLIME_BLOCK)
+               )) {
+                  float var14 = !var11.is(Blocks.HAY_BLOCK) && !var11.is(Blocks.HONEY_BLOCK) ? (var11.getBlock() instanceof BedBlock ? 0.5F : 1.0F) : 0.2F;
+                  double var15 = var10.jump() != null ? var10.jump().landY() : putAt_D_ClientLevel_BlockPos(var6, var10.to());
+                  double var17 = putAt_D_ClientLevel_BlockPos(var6, var10.from());
+                  double var19 = var17;
+                  if (var10.jump() != null) {
+                     PoolEntry var21 = var10.jump().maneuver();
+                     if (var21 == null) {
+                        if (var10.type() == ClassCache.Inner_SyncManager.SLIME_BOUNCE) {
+                           continue;
+                        }
+
+                        var19 += 1.253;
+                     } else {
+                        var var22 = var21.inputs();
+                        NodeWalker.Inner_StreamUtil var23 = var21.start();
+                        var19 = var23.y();
+                        boolean var24 = false;
+
+                        for (int var25 = 0; var25 < var22.size(); var25++) {
+                           var23 = NodeWalker.fill(var23, (NodeWalker.Inner_DataUtil)var22.get(var25), var7);
+                           int var26 = (int)Math.floor(var23.x());
+                           int var27 = (int)Math.floor(var23.y());
+                           int var28 = (int)Math.floor(var23.z());
+                           if (!var7.state(var26, var27, var28)
+                              && !var7.fill_Z(var26, var27, var28)
+                              && (!var23.onGround() || !(var23.vy() > 0.1) && !var7.closeOf(var26, var27 - 1, var28))) {
+                              if (!var23.onGround()) {
+                                 var24 = true;
+                                 var19 = Math.max(var19, var23.y());
+                              } else {
+                                 if (var24) {
+                                    break;
+                                 }
+
+                                 var19 = var23.y();
+                              }
+                           } else {
+                              var19 = var23.y();
+                              var24 = false;
+                           }
+                        }
                      }
                   }
-               }
 
-               if (!(peak <= landingY)) {
-                  int raw = access.autism$calculateFallDamage(peak - landingY, multiplier);
-                  if (raw > 0) {
-                     float amount = access.autism$getDamageAfterMagicAbsorb(player.damageSources().fall(), raw);
-                     damage += Math.max(0.0F, amount);
+                  if (!(var19 <= var15)) {
+                     int var29 = var5.autism$calculateFallDamage(var19 - var15, var14);
+                     if (var29 > 0) {
+                        float var30 = var5.autism$getDamageAfterMagicAbsorb(var2.damageSources().fall(), var29);
+                        var8 += Math.max(0.0F, var30);
+                     }
                   }
                }
             }
          }
 
-         return new ArrayUtil.Inner_DataUtil(damage, (float)health);
+         return new ArrayUtil.Inner_DataUtil(var8, (float)var3);
       } else {
-         return new ArrayUtil.Inner_DataUtil(0.0F, (float)health);
+         return new ArrayUtil.Inner_DataUtil(0.0F, (float)var3);
       }
    }
 
-   private static double init_D_ClientLevel_BlockPos(ClientLevel level, BlockPos stance) {
-      BlockPos support = stance.below();
-      VoxelShape shape = level.getBlockState(support).getCollisionShape(level, support);
-      return shape.isEmpty() ? stance.getY() : support.getY() + shape.max(Axis.Y);
+   private static double putAt_D_ClientLevel_BlockPos(ClientLevel var0, BlockPos var1) {
+      BlockPos var2 = var1.below();
+      VoxelShape var3 = var0.getBlockState(var2).getCollisionShape(var0, var2);
+      return var3.isEmpty() ? var1.getY() : var2.getY() + var3.max(Axis.Y);
    }
 
-   record Inner_DataUtil(float damage, float health) {
-      boolean lethal() {
+   public record Inner_DataUtil(float damage, float health) {
+      public boolean lethal() {
          return this.damage >= this.health;
       }
    }

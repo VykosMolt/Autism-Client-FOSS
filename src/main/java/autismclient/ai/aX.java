@@ -1345,7 +1345,7 @@ final class aX {
                      return this.init(A.write, "The planned pour face is unavailable", null);
                   }
 
-                  if (autismclient.ai.a.RefQueue.flush_Z()
+                  if (autismclient.ai.a.AiMotionSafety.fill_Z()
                      && (!lava || aX.init(this.init_Minecraft.player.blockPosition(), face.support().relative(face.face())))
                      && autismclient.ai.a.CachePool.init(this.init_Minecraft, face.support(), face.face()) != null) {
                      return null;

@@ -255,7 +255,7 @@ final class bf implements AiOperation {
          }
       }
 
-      autismclient.ai.a.RefQueue.init_V_LongPredicate(this.init_bj.init_Set()::contains);
+      autismclient.ai.a.AiRoutePolicy.putAt(this.init_bj.init_Set()::contains);
       if (!this.init_DataUtil.update_Z()) {
          AiOperation.Result guarded = this.init_Y
             .init_AiOperation_Result_AiOperation(
@@ -420,10 +420,6 @@ final class bf implements AiOperation {
                cG.init(this, this.init_TableIndex_DataUti.origin(), this.init_TableIndex_DataUti.cells(), this.init_UiHelper.update_I(), false, true);
             }
 
-            if (this.read_J % 10L == 0L) {
-               cG.init(this, "Building schematic", this.init_UiHelper.load_Str(), this.init_UiHelper.update_I(), this.init_UiHelper.write_I());
-            }
-
             AiOperation.Result var10000;
             switch (this.init_UiHelper.init_UiHelper_J()) {
                case update:
@@ -486,6 +482,35 @@ final class bf implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_Str_9(String message) {
+      String phase;
+      if (!this.init_bj.load_Z() || this.init_UiHelper.init_Z()) {
+         phase = "Preparing site";
+      } else if (!this.init_Z) {
+         phase = "Clearing terrain";
+      } else if (this.init_Item != null || !this.init_ItemStack.isEmpty()) {
+         phase = "Restocking";
+      } else if (this.load_Item != null) {
+         phase = "Recovering drops";
+      } else {
+         String var10000;
+         switch (this.init_UiHelper.init_UiHelper_J()) {
+            case load:
+               var10000 = "Placing fluids";
+               break;
+            case read:
+               var10000 = "Removing supports";
+               break;
+            case write:
+               var10000 = "Verifying build";
+               break;
+            default:
+               var10000 = cs.init(message, "Placing blocks");
+         }
+
+         phase = var10000;
+      }
+
+      cG.init(this, "Building schematic", phase, this.init_UiHelper.update_I(), this.init_UiHelper.write_I());
       return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_42().toString(), List.of());
    }
 
@@ -1015,7 +1040,7 @@ final class bf implements AiOperation {
          this.read_V_8();
          autismclient.ai.a.ClassCache.Inner_CachePool.init_V_J(0L);
          autismclient.ai.a.ClassCache.Inner_CachePool.load_V_J(0L);
-         autismclient.ai.a.RefQueue.flush_V();
+         autismclient.ai.a.AiRoutePolicy.putAt_V();
          ca.load_V_Consumer(this.init_Consumer);
          ca.load_V_LongConsumer(this.init_LongConsumer);
          this.init_DataUtil.read_V();

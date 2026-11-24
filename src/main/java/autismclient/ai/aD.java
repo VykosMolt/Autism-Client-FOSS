@@ -952,8 +952,8 @@ final class aD {
                double right = dx * -Math.cos(yaw) + dz * -Math.sin(yaw);
                double f = forward > 0.01 ? 1.0 : (forward < -0.01 ? -1.0 : 0.0);
                double strafe = right > 0.01 ? -1.0 : (right < -0.01 ? 1.0 : 0.0);
-               if (autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(this.init_Minecraft.player.position(), center)
-                  && autismclient.ai.a.RefQueue.init_Z_D_D(f, strafe)) {
+               if (autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(this.init_Minecraft.player.position(), center)
+                  && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(f, strafe)) {
                   this.init_Minecraft.options.keyUp.setDown(f > 0.0);
                   this.init_Minecraft.options.keyDown.setDown(f < 0.0);
                   this.init_Minecraft.options.keyRight.setDown(strafe < 0.0);

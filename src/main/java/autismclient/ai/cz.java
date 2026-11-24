@@ -2551,6 +2551,87 @@ final class cz {
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
+      JsonObject gotoSchema = init_JsonObject_ObjArr(
+         "x",
+         "integer",
+         "y",
+         "integer",
+         "z",
+         "integer",
+         "dx",
+         "integer",
+         "dy",
+         "integer",
+         "dz",
+         "integer",
+         "direction",
+         "string",
+         "distance",
+         "number",
+         "waypoint",
+         "string",
+         "entity",
+         "integer",
+         "player",
+         "string",
+         "radius",
+         "number",
+         "timeoutSeconds",
+         "integer",
+         "sprint",
+         "boolean",
+         "bunnyhop",
+         "boolean",
+         "maxFall",
+         "integer",
+         "avoidWater",
+         "boolean",
+         "allowClimb",
+         "boolean",
+         "allowDoors",
+         "boolean",
+         "allowDig",
+         "boolean",
+         "allowPillar",
+         "boolean",
+         "allowBridge",
+         "boolean",
+         "allowInventory",
+         "boolean",
+         "digReluctance",
+         "integer",
+         "yOnly",
+         "boolean",
+         "interactOnArrival",
+         "boolean",
+         "strategy",
+         "string",
+         "parkour",
+         "boolean",
+         "assumeNoFallDamage",
+         "boolean",
+         "parkourRecordPace",
+         "boolean"
+      );
+      JsonObject gotoCheckpointItem = init_JsonObject_JsonObject_StrArr(
+         init_JsonObject_ObjArr("x", "integer", "y", "integer", "z", "integer"), "x", "y", "z"
+      );
+      gotoSchema.getAsJsonObject("properties")
+         .add("checkpoints", ag.init_JsonObject_ObjArr("type", "array", "items", gotoCheckpointItem, "minItems", 1, "maxItems", 31));
+      gotoSchema.getAsJsonObject("properties")
+         .add(
+            "parkourSpeed",
+            ag.init_JsonObject_ObjArr(
+               "type",
+               "integer",
+               "minimum",
+               0,
+               "maximum",
+               2,
+               "description",
+               "Parkour planning speed. 0 is vanilla walking speed, 1 is Speed I, and 2 is Speed II. Does not apply an effect."
+            )
+         );
       out.add(
          AiCatalog.init(
             "game:goto",
@@ -2558,67 +2639,7 @@ final class cz {
             "navigation",
             "Travel to a destination in ONE call with the pathfinding engine: DESTINATION in any ONE form: x,y,z; x,z alone (nearest standable height there); dx,dy,dz offsets from the player; direction (north/south/east/west, or forward/back/left/right relative to the camera) plus distance in blocks; waypoint (a saved waypoint name); entity (a loaded entity id); player (a name). One call does the whole trip - never split it into legs, never observe first. Knobs (all optional, defaults are the fast legal vanilla behaviour): sprint (default true), bunnyhop (default true: sprint-jumps on open ground, ~1.25x sprint), jumps are always part of the route (gaps up to four blocks, onto and off slabs, in any direction, from under a ceiling, each landing proven by simulating the arc), maxFall (0-3, default 3: the deepest walk-off drop; every walk-off plans a two-cell landing set so the vanilla air drift never carries the player off a far edge), avoidWater (default false), allowClimb (ladders/vines and swims, default true), allowDoors (default true). plans asynchronously and continuously walks, sprints, jumps, descends (soft landings priced), and - when enabled - digs tunnels, pillars and bridges as part of the route; never breaks block entities or fluid boundaries. On open flat ground with headroom the engine sprint-jumps (bunnyhops) for about 1.25x sprint speed. The camera aims directly at each move's target (instant, exact - no sweep physics). allowDig, allowPillar and allowBridge default true (pillar/bridge need construction blocks in the hotbar): the route takes whatever is fastest, digging through terrain included (block entities are never broken; pass allowDig:false to keep the terrain intact). Every broken block costs its tool-timed break time plus a small tiebreaker (digReluctance ticks, 0-60, default 2), so a door still beats tunneling through a wall. radius default 1.5, timeoutSeconds default 300. Optional strategy: fastest (default), safest (routes around hostile mobs, falls and water), saver (conserves tools, blocks and food - never sprints). yOnly (default false) makes the goal the target Y level only (x/z just bias the column - mining levels). interactOnArrival (default false) opens the destination block on arrival when it is a chest, station or utility menu. Jumping is never an option to turn off: goto and a movement-only trip plan the same route whenever breaking or placing would not help. Wherever the player cannot build (adventure mode) nothing is ever broken or placed, whatever the knobs say; for a movement-only trip in survival pass allowDig, allowPillar and allowBridge false (what .tools parkour does). Mining always selects the fastest suitable tool from the full inventory and performs a verified hotbar swap when needed; stone and ore are never mined without their harvesting tool. allowInventory (default false) additionally restocks construction blocks from the backpack when the hotbar runs out; plan costs then assume the swap succeeds when the backpack holds the material. Normal goto limits falls to vanilla safe landings. The parkour command sets parkour:true, which disables edits, waits for a route proof without a default deadline, and checks for a fall-damage route after the safe search rules it out. The optional assumeNoFallDamage:true for parkour assumes immunity for that trip without enabling a module. Returns {pathTicks, blocksDug, pillarsPlaced, bridgesPlaced, restocks, distanceTravelled}.",
             List.of("navigation"),
-            init_JsonObject_ObjArr(
-                  "x",
-                  "integer",
-                  "y",
-                  "integer",
-                  "z",
-                  "integer",
-                  "dx",
-                  "integer",
-                  "dy",
-                  "integer",
-                  "dz",
-                  "integer",
-                  "direction",
-                  "string",
-                  "distance",
-                  "number",
-                  "waypoint",
-                  "string",
-                  "entity",
-                  "integer",
-                  "player",
-                  "string",
-                  "radius",
-                  "number",
-                  "timeoutSeconds",
-                  "integer",
-                  "sprint",
-                  "boolean",
-                  "bunnyhop",
-                  "boolean",
-                  "maxFall",
-                  "integer",
-                  "avoidWater",
-                  "boolean",
-                  "allowClimb",
-                  "boolean",
-                  "allowDoors",
-                  "boolean",
-                  "allowDig",
-                  "boolean",
-                  "allowPillar",
-                  "boolean",
-                  "allowBridge",
-                  "boolean",
-                  "allowInventory",
-                  "boolean",
-                  "digReluctance",
-                  "integer",
-                  "yOnly",
-                  "boolean",
-                  "interactOnArrival",
-                  "boolean",
-                  "strategy",
-                  "string",
-                  "parkour",
-                  "boolean",
-                  "assumeNoFallDamage",
-                  "boolean"
-               )
-               .toString(),
+            gotoSchema.toString(),
             "Connected living player; target terrain must be observed.",
             "Walks, sprints, sprint-jumps, digs, pillars and bridges along the route with direct, exact rotations; hotbar slot restored on stop.",
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
@@ -3369,7 +3390,7 @@ final class cz {
             var10000 = HashUtil.init(args);
             break;
          case "game:goto":
-            var10000 = HashUtil.init(args);
+            var10000 = !args.has("checkpoints") && !AiParkourRoute.putAt_Z_JsonObject(args) ? HashUtil.init(args) : new AiParkourRoute(args);
             break;
          case "game:follow":
             var10000 = M.init(args);

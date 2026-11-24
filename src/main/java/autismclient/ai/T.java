@@ -584,7 +584,7 @@ final class T {
                }
             }
          };
-         return bb.init(collection, autismclient.ai.a.RefQueue::flush_Z, () -> mc.player == player && mc.level == world, deadline);
+         return bb.init(collection, autismclient.ai.a.AiMotionSafety::fill_Z, () -> mc.player == player && mc.level == world, deadline);
       } else {
          throw new IllegalArgumentException("Expected item registry id and count 1..2304");
       }
@@ -600,7 +600,7 @@ final class T {
       Object player = mc.player;
       return new T.Inner_DataUtil(
          () -> !beforeBreak && !init_Z(ids) || load(ids),
-         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.a.RefQueue.flush_Z() && init_Z(mc),
+         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.a.AiMotionSafety.fill_Z() && init_Z(mc),
          () -> cx.init(
             ag.init_JsonObject_ObjArr(
                "action",

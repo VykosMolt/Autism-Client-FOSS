@@ -139,7 +139,7 @@ public final class TaskTimer {
                   .info(
                      String.format(
                         Locale.ROOT,
-                        "[AI] cam %d yaw %.1f pitch %.1f at %.2f %.2f %.2f keys %s%s%s%s dig %s | %s%s",
+                        "[AI] cam %d yaw %.1f pitch %.1f at %.2f %.2f %.2f keys %s%s%s%s%s body %s%s%s%s%s dig %s | %s%s",
                         write_I,
                         yaw,
                         player.getXRot(),
@@ -150,6 +150,12 @@ public final class TaskTimer {
                         mc.options.keyLeft.isDown() ? "A" : "",
                         mc.options.keyDown.isDown() ? "S" : "",
                         mc.options.keyRight.isDown() ? "D" : "",
+                        mc.options.keyJump.isDown() ? "J" : "",
+                        player.onGround() ? "g" : "-",
+                        player.isSprinting() ? "s" : "-",
+                        player.horizontalCollision ? "h" : "-",
+                        player.verticalCollision && !player.verticalCollisionBelow ? "c" : "-",
+                        player.onClimbable() ? "l" : "-",
                         RenderState.init_Z(mc) ? "on" : "-",
                         init_Str_Str_I(activity, 90),
                         write_Str.isEmpty() ? "" : " | " + write_Str

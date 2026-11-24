@@ -144,7 +144,7 @@ final class d {
                   }
 
                   if (this.init_HashUtil_CachePool == null
-                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.a.RefQueue.flush_Z()) {
+                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.a.AiMotionSafety.fill_Z()) {
                      this.write();
                      if (this.init_Z) {
                         this.init_DataPipe.init_V();
@@ -346,7 +346,7 @@ final class d {
                            }
                         }
 
-                        if (autismclient.ai.a.RefQueue.flush_Z()) {
+                        if (autismclient.ai.a.AiMotionSafety.fill_Z()) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Escape tunnel sealed out of the creeper's sight");
                         }
                      }

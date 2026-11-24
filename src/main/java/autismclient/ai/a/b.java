@@ -87,7 +87,7 @@ public final class b implements AiOperation {
       this.init_Vec3 = Minecraft.getInstance().player.position();
       this.init_J = System.nanoTime() + Math.max(1, seconds) * 1000000000L;
       draft.load_V();
-      RefQueue.open_V();
+      AiMotionSafety.putAt_V();
    }
 
    @Override

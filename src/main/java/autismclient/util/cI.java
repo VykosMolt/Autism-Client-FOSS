@@ -19,12 +19,18 @@ public final class cI {
    }
 
    public static void init(Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color, float width) {
+      init(pose, buffer, x1, y1, z1, x2, y2, z2, color, color, width);
+   }
+
+   public static void init(
+      Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color1, int color2, float width
+   ) {
       Vector3f normal = init.get().set((float)(x2 - x1), (float)(y2 - y1), (float)(z2 - z1));
       if (!(normal.lengthSquared() <= 1.0E-8F)) {
          normal.normalize();
          pose.transformNormal(normal, normal);
-         buffer.addVertex(pose, (float)x1, (float)y1, (float)z1).setColor(color).setNormal(normal.x, normal.y, normal.z).setLineWidth(width);
-         buffer.addVertex(pose, (float)x2, (float)y2, (float)z2).setColor(color).setNormal(normal.x, normal.y, normal.z).setLineWidth(width);
+         buffer.addVertex(pose, (float)x1, (float)y1, (float)z1).setColor(color1).setNormal(normal.x, normal.y, normal.z).setLineWidth(width);
+         buffer.addVertex(pose, (float)x2, (float)y2, (float)z2).setColor(color2).setNormal(normal.x, normal.y, normal.z).setLineWidth(width);
       }
    }
 

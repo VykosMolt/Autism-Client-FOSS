@@ -416,7 +416,7 @@ public final class CrystalEngine extends Engine {
         poppedAt.clear();
         describedTargets.clear();
 
-        FightLog.start(String.format(java.util.Locale.ROOT, "version aggressive (AUTISM 5.3-26.3); crosshair-only %s; place-delay %d; break-delay %d; instant-place %s; attack-frequency %d; ticks-existed %d; place-range %.1f; break-range %.1f; min-damage %.1f; max-damage %.1f; switch %s; ping %d; smart-delay %s; place-ahead %d; predict-movement %s; support %s; deny-crystals %s; damage-ratio %.1f; aim %.0f; turn-to-place %s; trade-totem %s; pop-margin %d; keep-totems %d",
+        FightLog.start(String.format(java.util.Locale.ROOT, "version aggressive (AUTISM 5.8-26.3); crosshair-only %s; place-delay %d; break-delay %d; instant-place %s; attack-frequency %d; ticks-existed %d; place-range %.1f; break-range %.1f; min-damage %.1f; max-damage %.1f; switch %s; ping %d; smart-delay %s; place-ahead %d; predict-movement %s; support %s; deny-crystals %s; damage-ratio %.1f; aim %.0f; turn-to-place %s; trade-totem %s; pop-margin %d; keep-totems %d",
             crosshair.get(), placeDelay.get(), breakDelay.get(), instantPlace.get(), attackFrequency.get(), ticksExisted.get(), placeRange.get(), breakRange.get(), minDamage.get(), maxDamage.get(), autoSwitch.get(), PlayerUtils.getPing(),
             smartDelay.get(), placeAhead.get(), predictMovement.get(), support.get(), deny.get(), damageRatio.get(), aim.ms(), turnToPlace.get(), tradeTotem.get(), popMargin.get(), keepTotems.get()));
     }

@@ -1,10 +1,14 @@
 package autismclient.ai;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -50,7 +54,6 @@ final class cP {
    private final Path load_Path;
    private final String read_Str;
    private final boolean read_Z;
-   private final boolean write_Z;
    private int load_I;
    private int read_I;
    private List<BlockPos> load_List;
@@ -78,60 +81,46 @@ final class cP {
          this.load_Path = folder;
          this.read_Str = init_Str_Str(name);
          this.read_Z = includeEntities;
-         this.write_Z = selection == null;
-         int minCx;
-         int maxCx;
-         int minCz;
-         int maxCz;
+         ArrayList<LevelChunk> chunks = new ArrayList<>();
          if (selection != null) {
-            minCx = selection.min.getX() >> 4;
-            maxCx = selection.max.getX() >> 4;
-            minCz = selection.min.getZ() >> 4;
-            maxCz = selection.max.getZ() >> 4;
             if (selection.volume() < 1L || selection.volume() > 134217728L) {
                throw new IllegalArgumentException("Select at most 128 million blocks");
             }
-         } else {
-            int radius = Math.min(64, mc.options.renderDistance().get() + 3);
-            int cx = mc.player.getBlockX() >> 4;
-            int cz = mc.player.getBlockZ() >> 4;
-            minCx = cx - radius;
-            maxCx = cx + radius;
-            minCz = cz - radius;
-            maxCz = cz + radius;
-         }
 
-         ArrayList<cP.Inner_CachePool> captured = new ArrayList<>();
+            int minCx = selection.min.getX() >> 4;
+            int maxCx = selection.max.getX() >> 4;
+            int minCz = selection.min.getZ() >> 4;
+            int maxCz = selection.max.getZ() >> 4;
 
-         for (int cx = minCx; cx <= maxCx; cx++) {
-            for (int cz = minCz; cz <= maxCz; cz++) {
-               if (this.init_ClientLevel.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) == null) {
-                  if (selection != null) {
+            for (int cx = minCx; cx <= maxCx; cx++) {
+               for (int cz = minCz; cz <= maxCz; cz++) {
+                  LevelChunk live = this.init_ClientLevel.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
+                  if (live == null) {
                      throw new IllegalArgumentException("A selected chunk is outside view distance");
                   }
-               } else {
-                  int x0 = cx << 4;
-                  int z0 = cz << 4;
-                  int y0 = this.init_ClientLevel.getMinY();
-                  int x1 = x0 + 15;
-                  int z1 = z0 + 15;
-                  int y1 = this.init_ClientLevel.getMaxY();
-                  if (selection != null) {
-                     x0 = Math.max(x0, selection.min.getX());
-                     z0 = Math.max(z0, selection.min.getZ());
-                     y0 = Math.max(y0, selection.min.getY());
-                     x1 = Math.min(x1, selection.max.getX());
-                     z1 = Math.min(z1, selection.max.getZ());
-                     y1 = Math.min(y1, selection.max.getY());
-                  }
 
-                  if (y1 >= y0) {
-                     cP.Inner_DataUtil area = new cP.Inner_DataUtil(new BlockPos(x0, y0, z0), new BlockPos(x1, y1, z1));
-                     cP.Inner_CachePool chunk = new cP.Inner_CachePool(new ChunkPos(cx, cz), area);
-                     captured.add(chunk);
-                     this.init_Map.put(chunk.init_ChunkPos.pack(), chunk);
-                  }
+                  chunks.add(live);
                }
+            }
+         } else {
+            chunks.addAll(cV.loadedChunks(this.init_ClientLevel));
+            chunks.sort(Comparator.<LevelChunk>comparingInt(c -> c.getPos().x()).thenComparingInt(c -> c.getPos().z()));
+         }
+
+         ArrayList<cP.Inner_CachePool> captured = new ArrayList<>(chunks.size());
+
+         for (LevelChunk live : chunks) {
+            ChunkPos chunkPos = live.getPos();
+            int x0 = chunkPos.x() << 4;
+            int z0 = chunkPos.z() << 4;
+            cP.Inner_DataUtil fullArea = new cP.Inner_DataUtil(
+               new BlockPos(x0, this.init_ClientLevel.getMinY(), z0), new BlockPos(x0 + 15, this.init_ClientLevel.getMaxY(), z0 + 15)
+            );
+            cP.Inner_DataUtil area = selection == null ? fullArea : fullArea.intersection(selection);
+            if (area != null) {
+               cP.Inner_CachePool chunk = new cP.Inner_CachePool(chunkPos, area);
+               captured.add(chunk);
+               this.init_Map.put(chunkPos.pack(), chunk);
             }
          }
 
@@ -331,29 +320,11 @@ final class cP {
       this.init_I = 70;
       this.init_Str = "Packing schematic";
       this.init_Future = cR.init_ExecutorService.submit(() -> {
-         Path temporary = null;
-
          try {
-            Files.createDirectories(this.load_Path);
-            CompoundTag root = init(this.init_List, this.write_Z, p -> {
+            this.init_Path = init(this.load_Path, this.read_Str, this.init_List, true, p -> {
                this.init_I = 70 + p / 5;
                this.read();
             });
-            this.read();
-            this.init_Str = "Writing file";
-            this.init_I = 92;
-            temporary = Files.createTempFile(this.load_Path, ".capture-", ".tmp");
-            NbtIo.writeCompressed(root, temporary);
-            this.read();
-            Path output = this.load_Path.resolve(this.read_Str + ".litematic");
-
-            for (int i = 2; Files.exists(output); i++) {
-               output = this.load_Path.resolve(this.read_Str + " (" + i + ").litematic");
-            }
-
-            Files.move(temporary, output);
-            temporary = null;
-            this.init_Path = output;
             this.init_I = 100;
             this.init_Str = "Saved";
             this.load_Z = true;
@@ -364,14 +335,37 @@ final class cP {
             this.init_Str = "Save failed";
             this.load_Z = true;
          } finally {
-            if (temporary != null) {
-               try {
-                  Files.deleteIfExists(temporary);
-               } catch (Exception var14) {
-               }
-            }
+            Thread.interrupted();
          }
       });
+   }
+
+   static Path init(Path folder, String name, List<cP.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) throws IOException {
+      Files.createDirectories(folder);
+      CompoundTag root = init(chunks, trimAir, progress);
+      cQ.init();
+      Path temporary = Files.createTempFile(folder, ".capture-", ".tmp");
+
+      try {
+         NbtIo.writeCompressed(root, temporary);
+         cQ.init();
+         Path output = folder.resolve(name + ".litematic");
+
+         for (int i = 2; Files.exists(output); i++) {
+            output = folder.resolve(name + " (" + i + ").litematic");
+         }
+
+         Files.move(temporary, output);
+         temporary = null;
+         return output;
+      } finally {
+         if (temporary != null) {
+            try {
+               Files.deleteIfExists(temporary);
+            } catch (Exception var14) {
+            }
+         }
+      }
    }
 
    private void read() {
@@ -383,13 +377,20 @@ final class cP {
 
    static CompoundTag init(List<cP.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) {
       cP.Inner_StreamUtil bounds = new cP.Inner_StreamUtil();
+      IdentityHashMap<cP.Inner_CachePool, cP.Inner_StreamUtil> perChunkBounds = trimAir ? new IdentityHashMap<>() : null;
       if (trimAir) {
          int checked = 0;
 
          for (cP.Inner_CachePool chunk : chunks) {
             cQ.init();
-            bounds.init(chunk);
-            bounds.load(chunk);
+            cP.Inner_StreamUtil chunkBounds = new cP.Inner_StreamUtil();
+            chunkBounds.init(chunk);
+            chunkBounds.load(chunk);
+            if (!chunkBounds.init_Z()) {
+               perChunkBounds.put(chunk, chunkBounds);
+               bounds.init(chunkBounds);
+            }
+
             checked++;
             progress.accept(checked * 20 / chunks.size());
          }
@@ -407,7 +408,18 @@ final class cP {
       long capturedVolume = 0L;
 
       for (cP.Inner_CachePool chunk : chunks) {
-         cP.Inner_DataUtil area = chunk.init_cP_DataUtil.intersection(enclosing);
+         cP.Inner_DataUtil area;
+         if (trimAir) {
+            cP.Inner_StreamUtil chunkBounds = perChunkBounds.get(chunk);
+            if (chunkBounds == null) {
+               continue;
+            }
+
+            area = chunk.init_cP_DataUtil.intersection(chunkBounds.init());
+         } else {
+            area = chunk.init_cP_DataUtil.intersection(enclosing);
+         }
+
          if (area != null) {
             areas.put(chunk, area);
             capturedVolume += area.volume();
@@ -434,7 +446,8 @@ final class cP {
          int l = a.max.getZ() - a.min.getZ() + 1;
          int[] values = new int[w * h * l];
          ArrayList<BlockState> palette = new ArrayList<>();
-         IdentityHashMap<BlockState, Integer> ids = new IdentityHashMap<>();
+         Reference2IntOpenHashMap<BlockState> ids = new Reference2IntOpenHashMap<>();
+         ids.defaultReturnValue(-1);
          palette.add(Blocks.AIR.defaultBlockState());
          ids.put(palette.get(0), 0);
 
@@ -446,10 +459,13 @@ final class cP {
                for (int z = 0; z < l; z++) {
                   for (int x = 0; x < w; x++) {
                      BlockState state = section.get(a.min.getX() + x & 15, worldY & 15, a.min.getZ() + z & 15);
-                     int id = ids.computeIfAbsent(state, block -> {
-                        palette.add(block);
-                        return palette.size() - 1;
-                     });
+                     int id = ids.getInt(state);
+                     if (id < 0) {
+                        palette.add(state);
+                        id = palette.size() - 1;
+                        ids.put(state, id);
+                     }
+
                      values[(y * l + z) * w + x] = id;
                      if (!state.isAir()) {
                         nonAir++;
@@ -536,7 +552,7 @@ final class cP {
       return t;
    }
 
-   private static void init(CompoundTag tag, BlockPos base) {
+   static void init(CompoundTag tag, BlockPos base) {
       ListTag pos = tag.getListOrEmpty("Pos");
       if (pos.size() == 3) {
          ListTag result = new ListTag();
@@ -569,7 +585,7 @@ final class cP {
    static final class Inner_CachePool {
       final ChunkPos init_ChunkPos;
       final cP.Inner_DataUtil init_cP_DataUtil;
-      final Map<Integer, PalettedContainer<BlockState>> init_Map = new HashMap<>();
+      final Int2ObjectOpenHashMap<PalettedContainer<BlockState>> init_Map = new Int2ObjectOpenHashMap<>();
       final List<CompoundTag> init_List = new ArrayList<>();
       final List<CompoundTag> load = new ArrayList<>();
 
@@ -634,9 +650,20 @@ final class cP {
          this.sync = Math.max(this.sync, z);
       }
 
+      void init(cP.Inner_StreamUtil other) {
+         if (!other.init_Z()) {
+            this.init(other.init, other.load, other.read);
+            this.init(other.write, other.update, other.sync);
+         }
+      }
+
+      boolean init_Z() {
+         return this.init > this.write;
+      }
+
       cP.Inner_DataUtil init() {
-         if (this.init > this.write) {
-            throw new IllegalArgumentException("The rendered chunks contain only air");
+         if (this.init_Z()) {
+            throw new IllegalArgumentException("The captured area contains only air");
          } else {
             return new cP.Inner_DataUtil(new BlockPos(this.init, this.load, this.read), new BlockPos(this.write, this.update, this.sync));
          }
@@ -649,13 +676,13 @@ final class cP {
          int z0 = a.min.getZ();
          int z1 = a.max.getZ();
 
-         for (Entry<Integer, PalettedContainer<BlockState>> entry : chunk.init_Map.entrySet()) {
+         for (int sectionY : chunk.init_Map.keySet()) {
             cQ.init();
-            int bottom = entry.getKey() << 4;
+            PalettedContainer<BlockState> section = chunk.init_Map.get(sectionY);
+            int bottom = sectionY << 4;
             int y0 = Math.max(bottom, a.min.getY());
             int y1 = Math.min(bottom + 15, a.max.getY());
             if (y0 <= y1 && (x0 < this.init || x1 > this.write || y0 < this.load || y1 > this.update || z0 < this.read || z1 > this.sync)) {
-               PalettedContainer<BlockState> section = entry.getValue();
                if (!section.maybeHas(BlockStateBase::isAir)) {
                   this.init(x0, y0, z0);
                   this.init(x1, y1, z1);

@@ -292,7 +292,7 @@ final class B {
 
                   if (this.init_Minecraft.gui.screen() != null) {
                      autismclient.util.ai.init();
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      this.init_DataUtil.init_V();
                      return this.read("Harvest paused while a screen is open");
                   }
@@ -1145,7 +1145,7 @@ final class B {
                   this.write_List.clear();
                   this.update_List.clear();
                   this.write_BlockPos = null;
-                  autismclient.ai.a.RefQueue.open_V();
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.getInventory().getSelectedSlot() != this.init_I) {
                      autismclient.util.aw.init_V(this.init_Minecraft, this.init_I);
                   }

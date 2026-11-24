@@ -299,7 +299,7 @@ final class u {
                         }
 
                         autismclient.ai.a.ClassCache.Inner_CachePool.init_V_J(5000000000L);
-                        autismclient.ai.a.RefQueue.init_V_F_J(25.0F, 5000000000L);
+                        autismclient.ai.a.AiMotionSafety.putAt_V_F_J(25.0F, 5000000000L);
                         if (mc.player.onGround() && mc.player.tickCount % 40 == 0) {
                            au.init(mc.player, Items.WATER_BUCKET);
                         }

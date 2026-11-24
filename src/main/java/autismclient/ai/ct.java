@@ -154,14 +154,14 @@ final class ct {
                   }
 
                   if (!cu.init(mc.level, mc.player.blockPosition())) {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      return R.init_AiOperation_Result(
                         AiOperation.Status.RUNNING, "Waiting for current terrain to load", ag.init_JsonObject_ObjArr("placed", this.init_List.size())
                      );
                   }
 
                   if (this.update >= 0) {
-                     autismclient.ai.a.RefQueue.open_V();
+                     autismclient.ai.a.AiMotionSafety.putAt_V();
                      if (++this.update < 20) {
                         return R.init_AiOperation_Result(
                            AiOperation.Status.RUNNING, "Verifying the supports", ag.init_JsonObject_ObjArr("placed", this.init_List.size())
@@ -194,7 +194,7 @@ final class ct {
 
                      int slot = ct.init_I_I_List(mc.player.getInventory().getSelectedSlot(), ct.init_List(mc));
                      if (slot < 0 && support != null) {
-                        autismclient.ai.a.RefQueue.open_V();
+                        autismclient.ai.a.AiMotionSafety.putAt_V();
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
@@ -284,7 +284,7 @@ final class ct {
             public void cancel() {
                if (!this.init_Z) {
                   this.init_Z = true;
-                  autismclient.ai.a.RefQueue.open_V();
+                  autismclient.ai.a.AiMotionSafety.putAt_V();
                   this.init_DataUtil.init_V();
                   if (mc.player != null && this.write >= 0 && mc.player.getInventory().getSelectedSlot() == this.write) {
                      mc.player.getInventory().setSelectedSlot(this.read);

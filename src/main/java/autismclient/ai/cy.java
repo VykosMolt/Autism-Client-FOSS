@@ -14,8 +14,10 @@ import java.util.Set;
 
 public final class cy {
    public static final String init_Str = "Usage: .tools goto <x> <y> <z> [radius] [strategy] | goto <direction> <blocks> | goto <waypoint>";
-   static final String load = "--no-fall-damage";
-   public static final String read = "Usage: .tools parkour [--no-fall-damage] <x> <y> <z> [radius] [strategy] | parkour <direction> <blocks> | parkour <waypoint>. The flag can also go last. Omit the destination to pick it in Freecam.";
+   static final String load = "nofall";
+   static final List<String> parkourSpeedFlags = List.of("speed0", "speed1", "speed2");
+   public static final String read = "Usage: .tools parkour [nofall] [speed0|speed1|speed2] [<x> <y> <z> ...]. Flags can go before or after the destination. Omit the destination to pick checkpoints in Freecam.";
+   static final int maxParkourDestinations = 32;
    public static final String write = "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]";
    public static final String update = "Usage: .tools chop <block> [count]";
    public static final String sync = "Usage: .tools follow [type]";
@@ -537,36 +539,95 @@ public final class cy {
    }
 
    private static cy.Inner_StreamUtil init(List<String> args, double px, double py, double pz) {
-      boolean assumeNoDamage = args.stream().anyMatch(cy::init_Z);
-      if (assumeNoDamage) {
-         args = args.stream().filter(arg -> !init_Z(arg)).toList();
-      }
+      cy.Inner_CachePool options = parseParkourFlags(args);
+      String usage = read;
+      args = args.stream().filter(arg -> !isParkourFlag(arg)).toList();
 
       cy.Inner_StreamUtil trip;
       try {
-         trip = load(args, px, py, pz);
+         if (!args.isEmpty() && args.getFirst().equalsIgnoreCase("to")) {
+            args = args.subList(1, args.size());
+         }
+
+         if (args.size() > 5) {
+            if (args.size() % 3 != 0) {
+               throw new IllegalArgumentException(usage);
+            }
+
+            if (args.size() / 3 > maxParkourDestinations) {
+               throw new IllegalArgumentException("Parkour accepts up to 32 destinations");
+            }
+
+            JsonArray checkpoints = new JsonArray();
+            for (int i = 0; i < args.size() - 3; i += 3) {
+               checkpoints.add(parseCoordsObject(args.subList(i, i + 3), px, py, pz));
+            }
+
+            JsonObject dest = parseCoordsObject(args.subList(args.size() - 3, args.size()), px, py, pz);
+            dest.add("checkpoints", checkpoints);
+            dest.addProperty("allowInventory", false);
+            trip = new cy.Inner_StreamUtil("game:goto", dest);
+         } else {
+            trip = load(args, px, py, pz);
+         }
       } catch (IllegalArgumentException e) {
-         throw new IllegalArgumentException(
-            e.getMessage()
-               .replace(
-                  "Usage: .tools goto <x> <y> <z> [radius] [strategy] | goto <direction> <blocks> | goto <waypoint>",
-                  "Usage: .tools parkour [--no-fall-damage] <x> <y> <z> [radius] [strategy] | parkour <direction> <blocks> | parkour <waypoint>. The flag can also go last. Omit the destination to pick it in Freecam."
-               )
-         );
+         throw new IllegalArgumentException(e.getMessage().replace(init_Str, usage));
       }
 
-      return new cy.Inner_StreamUtil(trip.id(), init_JsonObject_JsonObject_Z(trip.arguments(), assumeNoDamage));
+      return new cy.Inner_StreamUtil(trip.id(), init_JsonObject_JsonObject_ParkourOptions(trip.arguments(), options));
+   }
+
+   private static JsonObject parseCoordsObject(List<String> coords, double px, double py, double pz) {
+      JsonObject out = new JsonObject();
+      out.addProperty("x", init_I_Str_D(coords.get(0), px));
+      out.addProperty("y", init_I_Str_D(coords.get(1), py));
+      out.addProperty("z", init_I_Str_D(coords.get(2), pz));
+      return out;
    }
 
    public static boolean init_Z(String token) {
-      return "--no-fall-damage".equalsIgnoreCase(token);
+      return "nofall".equalsIgnoreCase(token) || "--no-fall-damage".equalsIgnoreCase(token);
+   }
+
+   public static boolean isParkourFlag(String token) {
+      return init_Z(token) || parkourSpeedFlags.contains(token.toLowerCase(Locale.ROOT));
+   }
+
+   public static cy.Inner_CachePool parseParkourFlags(List<String> args) {
+      boolean noFall = false;
+      int speed = -1;
+
+      for (String token : args) {
+         if (init_Z(token)) {
+            noFall = true;
+         }
+
+         int idx = parkourSpeedFlags.indexOf(token.toLowerCase(Locale.ROOT));
+         if (idx >= 0) {
+            if (speed >= 0 && speed != idx) {
+               throw new IllegalArgumentException("Choose one parkour speed: speed0, speed1 or speed2");
+            }
+
+            speed = idx;
+         }
+      }
+
+      return new cy.Inner_CachePool(noFall, speed);
    }
 
    static JsonObject init_JsonObject_JsonObject_Z(JsonObject destination, boolean assumeNoDamage) {
+      return init_JsonObject_JsonObject_ParkourOptions(destination, new cy.Inner_CachePool(assumeNoDamage, -1));
+   }
+
+   static JsonObject init_JsonObject_JsonObject_ParkourOptions(JsonObject destination, cy.Inner_CachePool options) {
       JsonObject out = destination.deepCopy();
       out.addProperty("parkour", true);
-      if (assumeNoDamage) {
+      if (options.noFall()) {
          out.addProperty("assumeNoFallDamage", true);
+      }
+
+      if (options.speedLevel() >= 0) {
+         out.addProperty("parkourSpeed", options.speedLevel());
       }
 
       out.addProperty("allowDig", false);
@@ -577,6 +638,9 @@ public final class cy {
       }
 
       return out;
+   }
+
+   public record Inner_CachePool(boolean noFall, int speedLevel) {
    }
 
    private static cy.Inner_StreamUtil load(List<String> args, double px, double py, double pz) {

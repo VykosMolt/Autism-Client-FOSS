@@ -294,7 +294,7 @@ final class RingBuffer {
                      && this.init_AiOperation == null
                      && RingBuffer.init(
                         healTo,
-                        autismclient.ai.a.RefQueue.flush_Z(),
+                        autismclient.ai.a.AiMotionSafety.fill_Z(),
                         RingBuffer.init_Z_BlockPos_Predicate(feet, this::init_Z_3) && this.write_Z(feet),
                         this.update_Z(feet),
                         mc.player.isInWater() || mc.player.isInLava() || u.init_Z(mc)
@@ -336,7 +336,7 @@ final class RingBuffer {
                            this.init_RingBuffer_DataUti == RingBuffer.Inner_DataUtil.sync,
                            mc.player.isOnFire(),
                            ca.init_Z_UUID(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
-                           autismclient.ai.a.RefQueue.flush_Z(),
+                           autismclient.ai.a.AiMotionSafety.fill_Z(),
                            this.init_RingBuffer_DataUti == RingBuffer.Inner_DataUtil.sync && this.init_Z_6(),
                            this.init_RingBuffer_DataUti == RingBuffer.Inner_DataUtil.sync && this.update_Z(this.update_BlockPos),
                            mc.player.isInLava() || u.init_Z(mc)
@@ -497,7 +497,7 @@ final class RingBuffer {
                   && this.write_BlockPos.getY() == this.update_BlockPos.getY() + 2
                   && !this.write_BlockPos.equals(RingBuffer.init_BlockPos(this.update_BlockPos))
                   && this.load_Z(this.update_BlockPos);
-               if (!autismclient.ai.a.RefQueue.flush_Z() && !beamInFlight) {
+               if (!autismclient.ai.a.AiMotionSafety.fill_Z() && !beamInFlight) {
                   return this.init("Settling before closing the shelter");
                }
 
@@ -588,7 +588,7 @@ final class RingBuffer {
                      && !this.init_Z_3(this.write_BlockPos)
                      && this.load_Z(this.update_BlockPos)
                      && !this.init_DataPipe.load_Z()
-                     && autismclient.ai.a.RefQueue.flush_Z()
+                     && autismclient.ai.a.AiMotionSafety.fill_Z()
                      && !autismclient.ai.a.DataPipe.init_Z_BlockPos_Item(this.write_BlockPos, this.init_Item)) {
                      mc.options.keyJump.setDown(true);
                      this.sync_Z = true;
@@ -695,7 +695,7 @@ final class RingBuffer {
                         mc.player.getFoodData().getFoodLevel(),
                         cq.init(mc.player.getInventory()) >= 0,
                         this.init_Z_6(),
-                        autismclient.ai.a.RefQueue.flush_Z(),
+                        autismclient.ai.a.AiMotionSafety.fill_Z(),
                         this.canInterruptNow(),
                         this.requiresReconciliationAfterEmergency()
                      )) {
@@ -773,11 +773,11 @@ final class RingBuffer {
                   this.init_RingBuffer_DataUti = RingBuffer.Inner_DataUtil.close;
                   return this.init("Cap open; climbing out");
                } else {
-                  if (RingBuffer.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.a.RefQueue.flush_Z())) {
+                  if (RingBuffer.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.a.AiMotionSafety.fill_Z())) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Down from the tower; the night is over");
                   }
 
-                  if (!autismclient.ai.a.RefQueue.flush_Z()) {
+                  if (!autismclient.ai.a.AiMotionSafety.fill_Z()) {
                      return this.init("Settling onto the ground while descending the shelter");
                   }
 
@@ -846,7 +846,7 @@ final class RingBuffer {
                } else {
                   this.init_AiOperation.cancel();
                   this.init_AiOperation = null;
-                  if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.a.RefQueue.flush_Z()) {
+                  if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.a.AiMotionSafety.fill_Z()) {
                      return this.init("Settling on the surface before handing back control");
                   } else if (r.status() == AiOperation.Status.SUCCEEDED && this.write_Z) {
                      return this.init(
@@ -1143,7 +1143,7 @@ final class RingBuffer {
             @Override
             public boolean canInterruptNow() {
                return !this.flush_Z
-                  && autismclient.ai.a.RefQueue.flush_Z()
+                  && autismclient.ai.a.AiMotionSafety.fill_Z()
                   && !this.sync_Z
                   && !RingBuffer.init_Z_Z_BooleanSupplier(this.init_Z, this.init_DataPipe::load_Z)
                   && !this.init_UtilCore.load_Z()

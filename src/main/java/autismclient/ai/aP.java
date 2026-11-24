@@ -128,8 +128,12 @@ public final class aP {
    }
 
    public static boolean init_Z_Z_Z(boolean parkour, boolean assumeNoFallDamage) {
+      return init_Z_Z_cy_CachePool(parkour, new cy.Inner_CachePool(assumeNoFallDamage, -1));
+   }
+
+   public static boolean init_Z_Z_cy_CachePool(boolean parkour, cy.Inner_CachePool options) {
       if (!autismclient.modules.aD.init_Z() && autismclient.e.MethodUtil.init()) {
-         az selection = new az(parkour, assumeNoFallDamage);
+         az selection = new az(parkour, options);
          init_V_aR_Runnable(selection, selection::write);
          return init_aP != null && init_aP.init_aR == selection;
       } else {
@@ -139,6 +143,10 @@ public final class aP {
 
    public static autismclient.ai.a.j.Inner_StreamUtil init_j_StreamUtil() {
       return init_aP != null && init_aP.init_aR instanceof az navigation ? navigation.init_j_StreamUtil() : null;
+   }
+
+   static az activeNavigationSelection() {
+      return init_aP != null && init_aP.init_aR instanceof az navigation ? navigation : null;
    }
 
    private static boolean load(aR session) {
@@ -203,9 +211,20 @@ public final class aP {
       }
 
       if (action == 1 && !wasHeld) {
-         if (mode.init_aR instanceof az) {
-            if (Compat263.keyEventGlfwKey(event) == 256) {
+         if (mode.init_aR instanceof az navigation) {
+            int key = Compat263.keyEventGlfwKey(event);
+            if (key == 256) {
                mode.init_V_Z_Z(false, false);
+            }
+
+            if (navigation.isParkour()) {
+               if (key == 69) {
+                  mode.init_V_Z_Z(false, false);
+               }
+
+               if (key == 81) {
+                  navigation.undoCheckpoint();
+               }
             }
          } else if (mode.init_aR instanceof cU) {
             if (Compat263.keyEventGlfwKey(event) == 69 || Compat263.keyEventGlfwKey(event) == 256) {
@@ -255,6 +274,10 @@ public final class aP {
       }
 
       if (init_aP != null && !init_Z_I(Compat263.keyEventGlfwKey(event))) {
+         if (Compat263.keyEventGlfwKey(event) == 81 && mode.init_aR instanceof az navigation && navigation.isParkour()) {
+            return true;
+         }
+
          Options o = Minecraft.getInstance().options;
 
          for (KeyMapping mapping : new KeyMapping[]{o.keyUp, o.keyDown, o.keyLeft, o.keyRight, o.keyJump, o.keyShift, o.keySprint}) {
@@ -280,11 +303,14 @@ public final class aP {
       if (mode != null && action == 1 && !wasHeld) {
          if (mode.init_aR instanceof az navigation) {
             if (button == 0) {
-               mode.init_V_Z_Z(false, false);
+               if (navigation.isParkour()) {
+                  navigation.addCheckpoint();
+               } else {
+                  mode.init_V_Z_Z(false, false);
+               }
             }
 
-            if (button == 1) {
-               navigation.update();
+            if (button == 1 && navigation.updateAndCheck()) {
                mode.init_V_Z_Z(true, false);
             }
          } else if (mode.init_aR instanceof cU selection) {
@@ -384,7 +410,16 @@ public final class aP {
       aP mode = init_aP;
       if (mode.init_aR instanceof az selection) {
          String message = selection.load_Z() ? "Destination " + selection.init_BlockPos().toShortString() : "Aim at a standing surface";
-         return new aP.Inner_DataUtil(message, "Right-click: route  ·  Left-click: cancel");
+         if (selection.isParkour()) {
+            int count = selection.checkpoints().size();
+            if (count > 0) {
+               message = count + (count == 1 ? " checkpoint  ·  " : " checkpoints  ·  ") + message;
+            }
+
+            return new aP.Inner_DataUtil(message, "Left: add  ·  Right: start  ·  Q: undo  ·  E: cancel");
+         } else {
+            return new aP.Inner_DataUtil(message, "Right-click: route  ·  Left-click: cancel");
+         }
       } else if (mode.init_aR instanceof cU selection) {
          String label = selection.load_Z()
             ? selection.init_cP_DataUtil().size() + "  |  Enter to use area"
@@ -409,8 +444,11 @@ public final class aP {
 
    public static autismclient.gui.f.NetHelper init_NetHelper_GuiGraphicsExtract(GuiGraphicsExtractor graphics) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, Minecraft.getInstance().font, 0, 0);
-      int width = Math.max(1, Math.min(380, ui.init_I() - 16));
       aP.Inner_DataUtil text = init_aP_DataUtil();
+      int targetWidth = init_aP.init_aR instanceof az
+         ? Math.max(ui.init_PoolEntry().init(text.message()), ui.init_PoolEntry().init(text.detail())) + 24
+         : 380;
+      int width = Math.max(1, Math.min(targetWidth, ui.init_I() - 16));
       return autismclient.gui.f.NetHelper.init(8, 8, width, autismclient.gui.f.b.StreamUtil.init(ui, width, text.message(), text.detail()));
    }
 
@@ -419,11 +457,15 @@ public final class aP {
       if (mode != null) {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, Minecraft.getInstance().font, 0, 0);
          aP.Inner_DataUtil text = init_aP_DataUtil();
+         if (mode.init_aR instanceof az navigation) {
+            autismclient.modules.AiCheckpointHud.render(ui, navigation.checkpoints());
+         }
+
          autismclient.gui.f.b.StreamUtil.init(
             ui,
             init_NetHelper_GuiGraphicsExtract(graphics),
-            mode.init_aR instanceof az
-               ? "Pick destination"
+            mode.init_aR instanceof az navigation
+               ? (navigation.isParkour() ? "Parkour route" : "Pick destination")
                : (mode.init_aR instanceof cU ? "Select area" : (mode.init_aR instanceof E ? "Farm area" : "Schematic placement")),
             text.message(),
             text.detail()

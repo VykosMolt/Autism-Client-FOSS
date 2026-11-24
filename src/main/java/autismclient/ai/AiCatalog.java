@@ -416,7 +416,13 @@ public final class AiCatalog {
             + ck.load(autismclient.ai.a.DataUtil.class)
             + ck.load(autismclient.ai.a.DataPipe.class)
             + ck.load(autismclient.ai.a.ClassCache.class)
-            + ck.load(autismclient.ai.a.RefQueue.class)
+            + ck.load(autismclient.ai.a.AiWrExecutor.class)
+            + ck.load(autismclient.ai.a.AiPaceScript.class)
+            + ck.load(autismclient.ai.a.AiPacePlayback.class)
+            + ck.load(autismclient.ai.a.AiWallJump.class)
+            + ck.load(autismclient.ai.a.AiLadderJump.class)
+            + ck.load(autismclient.ai.a.AiSlimeBounce.class)
+            + ck.load(AiParkourRoute.class)
             + ck.load(HashUtil.class)
             + ck.load(autismclient.ai.a.TokenStore.class);
       }

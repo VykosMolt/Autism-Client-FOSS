@@ -154,7 +154,7 @@ public final class o {
 
          Runnable prepare = () -> {
             if (requiredResources.contains("INPUT")) {
-               autismclient.ai.a.RefQueue.open_V();
+               autismclient.ai.a.AiMotionSafety.putAt_V();
                ConfigStore.init_ConfigStore().pop();
             }
 
@@ -186,7 +186,7 @@ public final class o {
 
          init_AiOperation_Result = null;
          x.init_x().init("op_started", ag.init_JsonObject_ObjArr("id", id, "source", "direct"));
-         AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + read_Str() + "§7 cancels" + write_Str());
+         AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + read_Str() + "§7 cancels");
          return created.init_k_StreamUtil;
       } else {
          throw new IllegalArgumentException(
@@ -529,24 +529,14 @@ public final class o {
 
    private static void init(o.Inner_DataUtil a, AiOperation.Result result) {
       String data = result.dataJson();
-      boolean changed = !result.message().equals(a.read);
       a.read = result.message();
       a.write = data == null ? "{}" : data;
       if (!result.terminal()) {
          a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.read, a.read, a.write);
-      }
-
-      AiToolSettings.Verbosity verbosity = init_AiToolSettings().verbosityLevel();
-      if (verbosity.reportsProgress() && !result.terminal()) {
-         long now = System.currentTimeMillis();
-         if (changed && now - a.load_J >= verbosity.progressIntervalMs()) {
-            a.load_J = now;
-            String line = "§7" + a.init_Str + ": " + result.message();
-            if (verbosity.includesData() && !a.write.isBlank() && !a.write.equals("{}")) {
-               line = line + " §8" + init(a.write, 160);
-            }
-
-            AutismClientMessaging.sendPrefixed(line);
+         if (init_o_DataUtil == a) {
+            String title = a.init_Str.substring(a.init_Str.indexOf(':') + 1).replace('_', ' ');
+            String pretty = title.isEmpty() ? a.init_Str : Character.toUpperCase(title.charAt(0)) + title.substring(1);
+            cG.init(a, pretty, cs.init(a.read, "In progress"), -1);
          }
       }
    }
@@ -658,6 +648,7 @@ public final class o {
    }
 
    private static void init_V(o.Inner_DataUtil a) {
+      cG.init_V(a);
       if (init_o_DataUtil == a) {
          init_o_DataUtil = null;
       }
@@ -698,7 +689,7 @@ public final class o {
 
    private static void load(o.Inner_DataUtil a) {
       if (a.init_AutoCloseable != null && a.init_List.contains("INPUT")) {
-         autismclient.ai.a.RefQueue.open_V();
+         autismclient.ai.a.AiMotionSafety.putAt_V();
          Minecraft mc = Minecraft.getInstance();
          if (mc.options != null) {
             for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {

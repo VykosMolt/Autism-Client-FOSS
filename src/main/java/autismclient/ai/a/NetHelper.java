@@ -3,6 +3,7 @@ package autismclient.ai.a;
 import autismclient.compat263.Compat263;
 import autismclient.util.U;
 import autismclient.util.ce;
+import autismclient.util.ch;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import net.minecraft.client.Minecraft;
@@ -109,10 +110,16 @@ public final class NetHelper {
       }
 
       this.init_BitSetUtil.init_V();
+      JsonUtil.Inner_DataUtil currentRot = new JsonUtil.Inner_DataUtil(player.getYRot(), player.getXRot());
+      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      JsonUtil.Inner_DataUtil wireRot = autismclient.ai.ClassCache.init()
+         ? (wire.init_Z() ? new JsonUtil.Inner_DataUtil(wire.read(), wire.write()) : null)
+         : currentRot;
       JsonUtil.Inner_StreamUtil cmd = this.init_JsonUtil
-         .init_JsonUtil_StreamUti_NodeWalker_StreamU_2(
+         .putAt(
             NodeWalker.Inner_StreamUtil.of(player),
-            new JsonUtil.Inner_DataUtil(player.getYRot(), player.getXRot()),
+            currentRot,
+            wireRot,
             player.getEyeHeight() < 1.5F,
             this.init_BitSetUtil,
             slot >= 0
@@ -123,13 +130,24 @@ public final class NetHelper {
 
       this.init_DataUtil.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.flush);
       this.init_DataUtil.init_V_ce_DataUtil(new ce.Inner_DataUtil(cmd.yaw(), cmd.pitch()));
+      boolean failedPlace = false;
+      if (cmd.place() > 0 && slot >= 0) {
+         BlockPos cell = new BlockPos(lane.cellX(cmd.place()), lane.floorY(), lane.cellZ(cmd.place()));
+         if (this.init_Z_LocalPlayer(player, cell, slot, select)) {
+            this.load++;
+            onPlaced.accept(cell);
+         } else {
+            failedPlace = true;
+         }
+      }
+
       this.init_DataUtil.load_V();
       this.init_Minecraft.options.keyUp.setDown(cmd.forward() > 0);
       this.init_Minecraft.options.keyDown.setDown(cmd.forward() < 0);
       this.init_Minecraft.options.keyLeft.setDown(cmd.left() > 0);
       this.init_Minecraft.options.keyRight.setDown(cmd.left() < 0);
       this.init_Minecraft.options.keyJump.setDown(cmd.jump());
-      this.init_Minecraft.options.keyShift.setDown(cmd.sneak() || this.init_BlockPos != null);
+      this.init_Minecraft.options.keyShift.setDown(cmd.sneak() || this.init_BlockPos != null || failedPlace && player.onGround());
       if (cmd.sprint()) {
          player.setSprinting(true);
          if (!this.init_Minecraft.options.toggleSprint().get()) {
@@ -138,14 +156,6 @@ public final class NetHelper {
       } else {
          player.setSprinting(false);
          this.init_Minecraft.options.keySprint.setDown(false);
-      }
-
-      if (cmd.place() > 0 && slot >= 0) {
-         BlockPos cell = new BlockPos(lane.cellX(cmd.place()), lane.floorY(), lane.cellZ(cmd.place()));
-         if (this.init_Z_LocalPlayer(player, cell, slot, select)) {
-            this.load++;
-            onPlaced.accept(cell);
-         }
       }
 
       if (ListPool.init_Z()) {

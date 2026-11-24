@@ -66,7 +66,7 @@ autismclient/ai/a/ClassCache$ByteReader	elapsedNanos;rounds;expanded;generated;b
 autismclient/ai/a/ClassCache$ConfigStore	type;from;to
 autismclient/ai/a/ClassCache$DataUtil	allowDig;allowPillar;allowBridge;canSprint;hasBlocks;allowParkour;strategy;threats;jumpBoost;slowFalling;levitation;breakReluctance;disabledTypes;constructionBlocks;maxFall;avoidWater;repairFarmland;supportedBridges;fallPolicy
 autismclient/ai/a/ClassCache$EventBus	expanded;trail
-autismclient/ai/a/ClassCache$FileCache	loaded;passable;top16;water;lava;climbable;hazardFeet;hazardFloor;falling;fallMult10;breakTicks;door;slabStair;farmland;ice;cached;destructionPenalty;soulSand;thorny;portal;narrowFooting
+autismclient/ai/a/ClassCache$FileCache	loaded;passable;top16;water;lava;climbable;hazardFeet;hazardFloor;falling;fallMult10;breakTicks;door;slabStair;farmland;ice;cached;destructionPenalty;soulSand;thorny;portal;narrowFooting;feetTrigger;pressurePlate
 autismclient/ai/a/ClassCache$PacketUtil	movements;reachesGoal;expanded;hitPending;exhausted;wedgedStart;confinedStart;awaitingTerrain
 autismclient/ai/a/ClassCache$RenderState$CachePool$DataUtil	from;to;approach;sprint
 autismclient/ai/a/ClassCache$RenderState$CachePool$StreamUtil	plan;x;y;z
@@ -76,7 +76,7 @@ autismclient/ai/a/ClassCache$StreamUtil$CachePool	falling;open;lava;water
 autismclient/ai/a/ClassCache$StreamUtil$DataUtil	flags;top16;digX4;mult10;revision;penalties;ready;shape;surface
 autismclient/ai/a/ClassCache$TextFormat$DataUtil	movement;flags;solves;hits;nanos;queries
 autismclient/ai/a/ClassCache$TextFormat$StreamUtil	candidate;continuation;source;sourceCost;priority;order
-autismclient/ai/a/ClassCache$UiHelper	type;from;to;cellsToBreak;cellsToPlace;costTicks;plannedBreakTicks;jump;repairFarmland
+autismclient/ai/a/ClassCache$UiHelper	type;from;to;cellsToBreak;cellsToPlace;costTicks;plannedBreakTicks;jump;repairFarmland;paceJump
 autismclient/ai/a/EventBus$DataUtil	yaw;pitch;chain;margin
 autismclient/ai/a/EventBus$StreamUtil	lines;gone;yaw;pitch;turn
 autismclient/ai/a/HashUtil$BufferHelper	sprint;bunnyhop;maxFall;avoidWater;allowClimb;allowDoors
@@ -106,7 +106,7 @@ autismclient/ai/a/TableIndex$DataUtil	forward;strafe;margin
 autismclient/ai/a/TableIndex$JsonUtil	from;fromSurface;yaw;sprint
 autismclient/ai/a/TableIndex$NetHelper	ox;oz;ux;uz;target
 autismclient/ai/a/TableIndex$StateCache	yaw;runTicks;sprint;coastAfter;flightTicks;startX;startZ;landX;landY;landZ;landSpeed;margin;backup;approach;maneuver
-autismclient/ai/a/TableIndex$StreamUtil	end;ticks;settled;coastAfter;along;margin;bumped
+autismclient/ai/a/TableIndex$StreamUtil	end;ticks;settled;coastAfter;along;margin;bumped;wall
 autismclient/ai/a/TableIndex$SyncManager	x;z
 autismclient/ai/a/TableIndex$TaskQueue	world;runs;press;air;line;to;surface;held
 autismclient/ai/a/TableIndex$UiHelper	runTicks;strafe;coastAfter;margin;sprint;flightTicks
@@ -124,7 +124,7 @@ autismclient/ai/a/c$CachePool$StreamUtil	done;at;cost;visitedLow;visitedHigh;vie
 autismclient/ai/a/c$ConfigStore	station;jobs
 autismclient/ai/a/c$StreamUtil	stops;covered;required;ticks;supports
 autismclient/ai/a/j$StreamUtil	feet;stance;box;adjusted
-autismclient/ai/a/l$StreamUtil	at;ticks;struck
+autismclient/ai/a/l$StreamUtil	ticks;struck
 autismclient/ai/a/r$DataUtil	haste;fatigue;blockSpeed;creative;ironReserve;stonePick
 autismclient/ai/a/s$DataUtil	cell;miningTicks
 autismclient/ai/a/s$StreamUtil	target;totalTicks;pending;timedOut
@@ -305,8 +305,8 @@ autismclient/ai/cC$NetHelper	text;spans;deco;marker;indent;flags;height
 autismclient/ai/cC$TaskQueue	line;tool;userIndent;toolIndent;userPad;groupGap;blockGap
 autismclient/ai/cE$CachePool	bounds;scroll
 autismclient/ai/cE$DataUtil	bounds;left;right;tip;field
-autismclient/ai/cG$BufferHelper	a;b;next
-autismclient/ai/cG$DataUtil	world;camera;ghosts;targets;route;bounds;status;plans
+autismclient/ai/cG$BufferHelper	a;b;t0;t1;air;active
+autismclient/ai/cG$DataUtil	world;camera;ghosts;targets;route;markers;bounds;status;plans
 autismclient/ai/cG$StreamUtil	pos;state;color;fullCube;mining;active;planned
 autismclient/ai/cI$DataUtil	status;headers;body
 autismclient/ai/cM$StreamUtil	pos;category;block;tick;revision;observedAtMillis
@@ -343,8 +343,8 @@ autismclient/ai/ci$CachePool	output;input;fuel;stationId
 autismclient/ai/ci$DataUtil	output;plan;input;stationTier
 autismclient/ai/ci$StreamUtil	item;burn;count;stack
 autismclient/ai/cl$StreamUtil	block;stand
-autismclient/ai/cs$DataUtil	content;priority;publication
-autismclient/ai/cs$StreamUtil	title;activity;detail
+autismclient/ai/cs$DataUtil	content;priority;publication;immediate
+autismclient/ai/cs$StreamUtil	title;activity;detail;percent
 autismclient/ai/ct$CachePool	targetX;targetZ;yawDegrees;blocks;mode;verify;timeoutSeconds
 autismclient/ai/ct$DataUtil	construction;count
 autismclient/ai/cu$DataUtil	data;x;z;y;distance

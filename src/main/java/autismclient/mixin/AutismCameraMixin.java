@@ -1,5 +1,6 @@
 package autismclient.mixin;
 
+import autismclient.ai.a.AiCameraTurn;
 import autismclient.modules.EventBus;
 import autismclient.modules.I;
 import autismclient.modules.aC;
@@ -41,8 +42,26 @@ public abstract class AutismCameraMixin {
 
    @ModifyArgs(method = "alignWithEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;setRotation(FF)V", ordinal = 0))
    private void autism$dangerVisibleRotation(Args args, float partialTick) {
-      if (!AutismLiteVariant.enabled() && this.entity == Minecraft.getInstance().player) {
+      if (!AutismLiteVariant.enabled()) {
+         Minecraft mc = Minecraft.getInstance();
+         if (this.entity != mc.player) {
+            AiCameraTurn.putAt(null);
+            return;
+         }
+
          ce.Inner_DataUtil rotation = z.init_ce_DataUtil_F_2(partialTick);
+         if (rotation == null
+            && mc.player != null
+            && mc.options.getCameraType().isFirstPerson()
+            && mc.gui.screen() == null
+            && !mc.player.isPassenger()
+            && !aC.init_Z()
+            && I.init_I_4() == null) {
+            rotation = AiCameraTurn.putAt(mc.player);
+         } else {
+            AiCameraTurn.putAt(null);
+         }
+
          if (rotation != null) {
             args.set(0, rotation.init());
             args.set(1, rotation.load());

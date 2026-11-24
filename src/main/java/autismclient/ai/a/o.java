@@ -12,22 +12,26 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class o {
-   private static final Map<AiOperation, WeakReference<RefQueue>> init = Collections.synchronizedMap(new WeakHashMap<>());
+   private static final Map<AiOperation, WeakReference<AiWrExecutor>> putAt = Collections.synchronizedMap(new WeakHashMap<>());
 
    private o() {
    }
 
-   static void init(AiOperation owner, RefQueue executor) {
-      init.put(owner, new WeakReference<>(executor));
+   static void putAt(AiOperation var0, AiWrExecutor var1) {
+      putAt.put(var0, new WeakReference<>(var1));
    }
 
-   static void init(AiOperation owner, Function<Predicate<AABB>, Vec3> look, Runnable click) {
+   static void putAt(AiOperation var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
       if (!AutismLiteVariant.enabled()) {
-         WeakReference<RefQueue> reference = init.get(owner);
-         RefQueue executor = reference == null ? null : reference.get();
-         if (executor != null) {
-            executor.init_V_Function_Runnable(look, click);
+         var var3 = putAt.get(var0);
+         AiWrExecutor var4 = var3 == null ? null : (AiWrExecutor)var3.get();
+         if (var4 != null) {
+            var4.putAt_V_Function_Runnable(var1, var2);
          }
       }
    }
+
+   // 5.3 external ABI bridges
+   static void init(AiOperation op, AiWrExecutor exec) { putAt(op, exec); }
+   static void init(AiOperation op, Function<Predicate<AABB>, Vec3> look, Runnable click) { putAt(op, look, click); }
 }

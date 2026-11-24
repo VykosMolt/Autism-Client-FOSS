@@ -416,7 +416,7 @@ final class ValueSink {
          VoxelShape shape = mc.level.getBlockState(below).getCollisionShape(mc.level, below);
          if (!shape.isEmpty()) {
             return drop <= 3
-               && autismclient.ai.a.RefQueue.init_Z_Vec3_Vec3(
+               && autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(
                   mc.player.position(), new Vec3(step.getX() + 0.5, below.getY() + shape.max(Axis.Y), step.getZ() + 0.5)
                );
          }
@@ -668,7 +668,7 @@ final class ValueSink {
                   if (out != null) {
                      this.flush();
                      this.sync_V();
-                     int[] keys = autismclient.ai.a.RefQueue.init_IArr_F_F(
+                     int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(
                         mc.player.getYRot(), autismclient.ai.a.NodeWalker.init_F_D(mc.player.getX(), mc.player.getZ(), out.getX() + 0.5, out.getZ() + 0.5)
                      );
                      mc.options.keyUp.setDown(keys[0] > 0);
@@ -725,7 +725,7 @@ final class ValueSink {
                      }
                   }
 
-                  if (!cv.init_Z() && this.canInterruptNow() && autismclient.ai.a.RefQueue.flush_Z()) {
+                  if (!cv.init_Z() && this.canInterruptNow() && autismclient.ai.a.AiMotionSafety.fill_Z()) {
                      by.Inner_StreamUtil shot = ValueSink.init_by_StreamUtil(mc);
                      if (shot != null && ValueSink.init(shot) <= 8 && (!k.init(mc, mc.level.getEntity(shot.entityId())) || !k.init(mc, ValueSink.init(shot)))) {
                         this.flush();
@@ -1316,7 +1316,7 @@ final class ValueSink {
                mc.options.keyJump.setDown(false);
                if (radial > 0) {
                   boolean safe = this.read_Z_3()
-                     && autismclient.ai.a.RefQueue.init_Z_D_D(1.0, 0.0)
+                     && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(1.0, 0.0)
                      && (!mc.player.onGround() || autismclient.ai.a.SyncManager.init(mc, 1.0, 0.0, 6) != null);
                   mc.options.keyUp.setDown(safe);
                   mc.options.keyDown.setDown(false);
@@ -1329,7 +1329,7 @@ final class ValueSink {
                   boolean behind = ValueSink.init_Z_Minecraft_BlockPos(
                         mc, BlockPos.containing(mc.player.getX() + Math.sin(radians), mc.player.getY(), mc.player.getZ() - Math.cos(radians))
                      )
-                     && autismclient.ai.a.RefQueue.init_Z_D_D(-1.0, 0.0);
+                     && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(-1.0, 0.0);
                   behind &= !mc.player.onGround() || autismclient.ai.a.SyncManager.init(mc, -1.0, 0.0, 6) != null;
                   if (behind) {
                      mc.options.keyUp.setDown(false);
@@ -1347,12 +1347,12 @@ final class ValueSink {
 
             void init_V_Entity(Entity from) {
                float away = autismclient.ai.a.NodeWalker.init_F_D(from.getX(), from.getZ(), mc.player.getX(), mc.player.getZ());
-               int[] keys = autismclient.ai.a.RefQueue.init_IArr_F_F(mc.player.getYRot(), away);
+               int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(mc.player.getYRot(), away);
                double radians = Math.toRadians(away);
                boolean safe = ValueSink.init_Z_Minecraft_BlockPos(
                      mc, BlockPos.containing(mc.player.getX() - Math.sin(radians), mc.player.getY(), mc.player.getZ() + Math.cos(radians))
                   )
-                  && autismclient.ai.a.RefQueue.init_Z_D_D(keys[0], -keys[1]);
+                  && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1]);
                mc.options.keySprint.setDown(false);
                mc.options.keyJump.setDown(false);
                mc.options.keyUp.setDown(safe && keys[0] > 0);
@@ -1523,15 +1523,15 @@ final class ValueSink {
                this.init_DataUtil.load_V();
                boolean facing = Math.abs(Mth.wrapDegrees(this.init_F_Entity(this.init_Entity) - mc.player.getYRot())) < 35.0F;
                boolean jump = facing && stepUp && mc.player.onGround();
-               boolean safe = facing && autismclient.ai.a.RefQueue.init_Z_D_2(1.0, 0.0, jump, true);
+               boolean safe = facing && autismclient.ai.a.AiMotionSafety.putAt_Z_D(1.0, 0.0, jump, true);
                mc.options.keyUp.setDown(safe);
                mc.options.keySprint.setDown(safe);
                mc.options.keyJump.setDown(safe && jump);
                if (facing && !safe) {
                   ValueSink.init_V_Entity_J(this.init_Entity, now + 15000000000L);
                   this.init_Entity = null;
-                  if (!autismclient.ai.a.RefQueue.init_Z_D_D(0.0, 0.0)) {
-                     autismclient.ai.a.RefQueue.load_V();
+                  if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(0.0, 0.0)) {
+                     autismclient.ai.a.AiMotionSafety.fill_V();
                   }
 
                   return this.load("Leaving a chase whose movement would touch lava");
@@ -1717,7 +1717,7 @@ final class ValueSink {
                   this.load_Z = true;
                }
 
-               boolean safe = (this.load_Z ? rightSafe : leftSafe) && autismclient.ai.a.RefQueue.init_Z_D_D(0.0, this.load_Z ? -1.0 : 1.0);
+               boolean safe = (this.load_Z ? rightSafe : leftSafe) && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(0.0, this.load_Z ? -1.0 : 1.0);
                mc.options.keyUp.setDown(false);
                mc.options.keyDown.setDown(false);
                mc.options.keyLeft.setDown(safe && !this.load_Z);
@@ -1765,7 +1765,7 @@ final class ValueSink {
 
                   float yaw = (float)(Math.toDegrees(Math.atan2(away.z, away.x)) - 90.0);
                   mc.player.setYRot(yaw);
-                  if (this.read_Z_3() && autismclient.ai.a.RefQueue.init_Z_D_2(1.0, 0.0, false, mc.player.getFoodData().getFoodLevel() > 6)) {
+                  if (this.read_Z_3() && autismclient.ai.a.AiMotionSafety.putAt_Z_D(1.0, 0.0, false, mc.player.getFoodData().getFoodLevel() > 6)) {
                      mc.options.keyLeft.setDown(false);
                      mc.options.keyRight.setDown(false);
                      mc.options.keyUp.setDown(true);
@@ -1833,7 +1833,7 @@ final class ValueSink {
                   && !this.sync_Z()
                   && this.write_Z_2()
                   && ValueSink.init_Z_AABB(this.init_Entity.getBoundingBox(), mc.player.getEyePosition(), reach);
-               boolean safe = attempt && autismclient.ai.a.RefQueue.init_Z_D_2(forward, strafe, true, mc.player.isSprinting());
+               boolean safe = attempt && autismclient.ai.a.AiMotionSafety.putAt_Z_D(forward, strafe, true, mc.player.isSprinting());
                if (attempt && !safe) {
                   this.pop_I++;
                }
@@ -2193,12 +2193,12 @@ final class ValueSink {
                         double dz = cz - mc.player.getZ();
                         if (dx * dx + dz * dz > 0.0144) {
                            this.reset++;
-                           int[] keys = autismclient.ai.a.RefQueue.init_IArr_F_F(
+                           int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(
                               mc.player.getYRot(), autismclient.ai.a.NodeWalker.init_F_D(mc.player.getX(), mc.player.getZ(), cx, cz)
                            );
                            mc.options.keyShift.setDown(true);
-                           if (!autismclient.ai.a.RefQueue.init_Z_D_D(keys[0], -keys[1])) {
-                              autismclient.ai.a.RefQueue.load_V();
+                           if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1])) {
+                              autismclient.ai.a.AiMotionSafety.fill_V();
                               this.reset = 40;
                               return this.load("Holding the safe side of the pillar");
                            }
@@ -2448,12 +2448,12 @@ final class ValueSink {
             }
 
             void init(double x, double z) {
-               int[] keys = autismclient.ai.a.RefQueue.init_IArr_F_F(
+               int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(
                   mc.player.getYRot(), autismclient.ai.a.NodeWalker.init_F_D(mc.player.getX(), mc.player.getZ(), x, z)
                );
                mc.options.keyShift.setDown(true);
-               if (!autismclient.ai.a.RefQueue.init_Z_D_D(keys[0], -keys[1])) {
-                  autismclient.ai.a.RefQueue.load_V();
+               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1])) {
+                  autismclient.ai.a.AiMotionSafety.fill_V();
                } else {
                   mc.options.keyUp.setDown(keys[0] > 0);
                   mc.options.keyDown.setDown(keys[0] < 0);
