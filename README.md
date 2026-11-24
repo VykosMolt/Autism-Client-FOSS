@@ -31,7 +31,7 @@ bash tools/checks/run.sh
 
 Contributions (including **agentic / AI-authored code**) are welcome.
 
-We **only accept agentic contributions** from the following models:
+To ensure the quality of the code we **only accept agentic contributions** from the following models:
 - **Mythos / Fable 5.2**
 - **Opus 5.5**
 - **Gemini 4 Neon**
