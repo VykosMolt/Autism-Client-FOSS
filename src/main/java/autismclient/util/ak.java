@@ -1,0 +1,196 @@
+package autismclient.util;
+
+import autismclient.gui.macro.editor.ActionEditorOverlay;
+import net.minecraft.client.gui.Font;
+
+public final class ak {
+   private final AutismLANSyncOverlay init_AutismLANSyncOverl;
+   private final AutismMacroListOverlay init_AutismMacroListOve;
+   private final AutismQueueEditorOverlay init_AutismQueueEditorO;
+   private final AutismCustomFilterOverlay init_AutismCustomFilter;
+   private final AutismCustomFilterPresetOverlay init_AutismCustomFilter_2;
+   private final AutismMacroEditorOverlay init_AutismMacroEditorO;
+   private final AutismKeybindOverlay init_AutismKeybindOverl;
+   private final AutismLauncherOverlay init_AutismLauncherOver;
+   private AutismPacketLoggerOverlay init_AutismPacketLogger;
+   private AutismServerInfoOverlay init_AutismServerInfoOv;
+
+   private ak(Font font, cX tiedOverlay) {
+      aE.init_aE().flush(() -> {});
+      this.init_AutismLANSyncOverl = AutismLANSyncOverlay.init_AutismLANSyncOverl_Font(font);
+      this.init_AutismMacroListOve = tiedOverlay instanceof AutismMacroListOverlay library ? library : new AutismMacroListOverlay(font);
+      this.init_AutismQueueEditorO = new AutismQueueEditorOverlay(font);
+      this.init_AutismCustomFilter = new AutismCustomFilterOverlay(font);
+      this.init_AutismCustomFilter_2 = this.init_AutismCustomFilter.init_AutismCustomFilter();
+      this.init_AutismLANSyncOverl.write_V_10();
+      if (this.init_AutismMacroListOve != tiedOverlay) {
+         this.init_AutismMacroListOve.update_V_11();
+      }
+
+      this.init_AutismQueueEditorO.sync_V_17();
+      this.init_AutismCustomFilter.b__V();
+      if (this.init_AutismCustomFilter_2 != null) {
+         this.init_AutismCustomFilter_2.b__V();
+      }
+
+      this.init_AutismMacroEditorO = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
+      if (this.init_AutismMacroEditorO != null) {
+         this.init_AutismMacroEditorO.poll_V_5();
+      }
+
+      bk manager = bk.init_bk();
+      manager.load_V();
+      manager.init_V(this.init_AutismLANSyncOverl);
+      manager.init_V(this.init_AutismMacroListOve);
+      manager.init_V(this.init_AutismQueueEditorO);
+      manager.init_V(this.init_AutismCustomFilter);
+      if (this.init_AutismCustomFilter_2 != null) {
+         manager.init_V(this.init_AutismCustomFilter_2);
+      }
+
+      if (this.init_AutismMacroEditorO != null) {
+         manager.init_V(this.init_AutismMacroEditorO);
+      }
+
+      manager.init_V(ActionEditorOverlay.init_ActionEditorOverla_2());
+      AutismItemNbtInspectOverlay itemNbtInspectOverlay = AutismItemNbtInspectOverlay.init_AutismItemNbtInspe_Font(font);
+      if (itemNbtInspectOverlay != null) {
+         manager.init_V(itemNbtInspectOverlay);
+      }
+
+      autismclient.modules.PoolEntry autismModule = autismclient.modules.PoolEntry.init_PoolEntry();
+      if (!AutismLiteVariant.enabled()) {
+         cX multiOverlay = autismModule == null ? null : autismModule.sync_cX();
+         if (multiOverlay != null && multiOverlay.sync_Z()) {
+            manager.init_V(multiOverlay);
+         }
+
+         autismclient.ai.ConfigStore.init_ConfigStore().load_V();
+         autismclient.ai.cV.read_V();
+      }
+
+      this.init_AutismKeybindOverl = new AutismKeybindOverlay();
+      this.init_AutismKeybindOverl.b__V();
+      manager.init_V(this.init_AutismKeybindOverl);
+      this.init_AutismLauncherOver = new AutismLauncherOverlay(
+         this.init_AutismMacroListOve,
+         null,
+         this.init_AutismLANSyncOverl,
+         this.init_AutismQueueEditorO,
+         this.init_AutismPacketLogger,
+         this.init_AutismCustomFilter
+      );
+      this.init_AutismLauncherOver.init_V_AutismKeybindOverl(this.init_AutismKeybindOverl);
+      this.init_AutismLauncherOver.init_V_Supplier(() -> {
+         if (this.init_AutismPacketLogger == null && autismModule != null) {
+            this.init_AutismPacketLogger = autismModule.init_AutismPacketLogger();
+            if (this.init_AutismPacketLogger != null) {
+               this.init_AutismPacketLogger.flush_V_13();
+            }
+         }
+
+         if (this.init_AutismPacketLogger != null) {
+            manager.init_V(this.init_AutismPacketLogger);
+         }
+
+         return this.init_AutismPacketLogger;
+      });
+      this.init_AutismLauncherOver.load_V_Supplier(() -> {
+         if (this.init_AutismServerInfoOv == null) {
+            this.init_AutismServerInfoOv = autismclient.modules.PoolEntry.init_PoolEntry().init_AutismServerInfoOv();
+         }
+
+         if (this.init_AutismServerInfoOv != null) {
+            manager.init_V(this.init_AutismServerInfoOv);
+         }
+
+         return this.init_AutismServerInfoOv;
+      });
+      if (this.init_AutismPacketLogger == null && AutismPacketLoggerOverlay.poll_Z_13()) {
+         this.init_AutismPacketLogger = autismclient.modules.PoolEntry.init_PoolEntry().init_AutismPacketLogger();
+         if (this.init_AutismPacketLogger != null) {
+            this.init_AutismPacketLogger.flush_V_13();
+            if (this.init_AutismPacketLogger.sync_Z()) {
+               manager.init_V(this.init_AutismPacketLogger);
+            }
+         }
+      }
+
+      if (this.init_AutismServerInfoOv == null && AutismServerInfoOverlay.poll_Z_16()) {
+         this.init_AutismServerInfoOv = autismclient.modules.PoolEntry.init_PoolEntry().init_AutismServerInfoOv();
+         if (this.init_AutismServerInfoOv != null) {
+            this.init_AutismServerInfoOv.update_V_21();
+            if (this.init_AutismServerInfoOv.sync_Z()) {
+               manager.init_V(this.init_AutismServerInfoOv);
+            }
+         }
+      }
+
+      if (!AutismLiteVariant.enabled() && autismModule != null) {
+         cX matchmakingOverlay = autismModule.init_cX();
+         if (matchmakingOverlay != null && matchmakingOverlay.sync_Z()) {
+            manager.init_V(matchmakingOverlay);
+         }
+
+         cX profilesOverlay = autismModule.load_cX();
+         if (profilesOverlay != null && profilesOverlay.sync_Z()) {
+            manager.init_V(profilesOverlay);
+         }
+      }
+
+      this.init_AutismLauncherOver.b__V();
+      manager.init_V(this.init_AutismLauncherOver);
+   }
+
+   public static ak init(Font font) {
+      return init(font, null);
+   }
+
+   public static ak init(Font font, cX tiedOverlay) {
+      return new ak(font, tiedOverlay);
+   }
+
+   public void init() {
+      if (this.init_AutismLANSyncOverl != null) {
+         this.init_AutismLANSyncOverl.read_V_5();
+      }
+
+      if (this.init_AutismMacroListOve != null) {
+         this.init_AutismMacroListOve.write_V_13();
+      }
+
+      if (this.init_AutismQueueEditorO != null) {
+         this.init_AutismQueueEditorO.update_V_20();
+      }
+
+      if (this.init_AutismMacroEditorO != null) {
+         this.init_AutismMacroEditorO.open_V_7();
+      }
+
+      if (this.init_AutismLauncherOver != null) {
+         this.init_AutismLauncherOver.a__V();
+      }
+
+      if (this.init_AutismPacketLogger != null) {
+         this.init_AutismPacketLogger.write_V_18();
+      }
+
+      if (this.init_AutismCustomFilter != null) {
+         this.init_AutismCustomFilter.a__V();
+      }
+
+      if (this.init_AutismCustomFilter_2 != null) {
+         this.init_AutismCustomFilter_2.a__V();
+      }
+
+      if (this.init_AutismKeybindOverl != null) {
+         this.init_AutismKeybindOverl.a__V();
+      }
+
+      if (this.init_AutismServerInfoOv != null) {
+         this.init_AutismServerInfoOv.write_V_24();
+      }
+
+      bk.init_bk().load_V();
+   }
+}

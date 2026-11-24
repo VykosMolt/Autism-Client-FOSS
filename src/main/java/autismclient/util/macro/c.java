@@ -1,0 +1,24 @@
+package autismclient.util.macro;
+
+public final class c {
+   private c() {
+   }
+
+   public static boolean init(MacroAction action) {
+      return action != null && !(action instanceof EventBus) && L.init_Z(action);
+   }
+
+   public static boolean init(autismclient.util.aM macro) {
+      if (macro != null && macro.init_List != null) {
+         for (MacroAction action : macro.init_List) {
+            if (action != null && action.isEnabled()) {
+               return init(action);
+            }
+         }
+
+         return false;
+      } else {
+         return false;
+      }
+   }
+}

@@ -1,0 +1,22 @@
+package autismclient.mixin;
+
+import autismclient.modules.az;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import net.minecraft.client.renderer.fog.environment.BlindnessFogEnvironment;
+import net.minecraft.client.renderer.fog.environment.DarknessFogEnvironment;
+import net.minecraft.client.renderer.fog.environment.MobEffectFogEnvironment;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+
+@Mixin(MobEffectFogEnvironment.class)
+public abstract class AutismNoRenderFogEnvMixin {
+   @ModifyReturnValue(method = "isApplicable", at = @At("RETURN"), require = 0)
+   private boolean autism$noEffectFog(boolean original) {
+      if (!original) {
+         return false;
+      }
+
+      Object self = this;
+      return self instanceof BlindnessFogEnvironment && az.prev() ? false : !(self instanceof DarknessFogEnvironment) || !az.valid();
+   }
+}

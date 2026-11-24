@@ -1,0 +1,116 @@
+plugins {
+    id 'java'
+}
+
+group = 'autismclient'
+version = '5.3-26.3-decompiled'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+def userHome = System.getenv('REAL_HOME') ?: System.getProperty('user.home')
+def prismLibs = file(System.getenv('PRISM_LIBS') ?: "${userHome}/.local/share/PrismLauncher/libraries")
+def modsDir = file(System.getenv('MC_MODS_DIR') ?: "${userHome}/.local/share/PrismLauncher/mods")
+def irisModsDir = file(System.getenv('IRIS_MODS_DIR') ?: modsDir.absolutePath)
+def cpFile = file(System.getenv('CP26_3') ?: 'cp26.3.txt')
+
+def externalJars = []
+if (cpFile.exists()) {
+    cpFile.text.trim().split(':').each { p ->
+        def f = file(p)
+        if (f.exists() && f.name.endsWith('.jar') && !f.name.startsWith('AUTISM')) {
+            externalJars << f
+        }
+    }
+}
+[
+    new File(prismLibs, 'net/fabricmc/fabric-loader/0.20.1/fabric-loader-0.20.1.jar'),
+    new File(prismLibs, 'net/fabricmc/sponge-mixin/0.17.5+mixin.0.8.7/sponge-mixin-0.17.5+mixin.0.8.7.jar'),
+    new File(prismLibs, 'org/ow2/asm/asm/9.10.1/asm-9.10.1.jar'),
+    new File(prismLibs, 'org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar'),
+    new File(prismLibs, 'org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl/3.4.3/lwjgl-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-sdl/3.4.3/lwjgl-sdl-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-opengl/3.4.3/lwjgl-opengl-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-stb/3.4.3/lwjgl-stb-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-freetype/3.4.3/lwjgl-freetype-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-jemalloc/3.4.3/lwjgl-jemalloc-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-openal/3.4.3/lwjgl-openal-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-vulkan/3.4.3/lwjgl-vulkan-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-vma/3.4.3/lwjgl-vma-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-shaderc/3.4.3/lwjgl-shaderc-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-spng/3.4.3/lwjgl-spng-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-spvc/3.4.3/lwjgl-spvc-3.4.3.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar'),
+    new File(prismLibs, 'org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar'),
+    new File("${userHome}/.local/share/gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/26.0.2/c7ce3cdeda3d18909368dfe5977332dfad326c6d/annotations-26.0.2.jar"),
+    new File(modsDir, 'sodium-fabric-0.9.3-beta.5+mc26.3.jar'),
+    new File(modsDir, 'fabric-api-0.166.2+26.3.jar'),
+    new File(irisModsDir, 'iris-fabric-1.11.7+mc26.3.jar'),
+    new File(modsDir, 'lithium-fabric-0.26.3+mc26.3.jar'),
+    new File(modsDir, 'modmenu-21.0.1.jar'),
+].each { f ->
+    if (f.exists()) externalJars << f
+}
+
+dependencies {
+    compileOnly files('stubs/compat-stubs.jar')
+    compileOnly files('stubs/integrity-stubs.jar')
+    compileOnly files('src/main/resources/autism-ai/worker.jar')
+    compileOnly files(externalJars)
+    compileOnly fileTree(dir: 'src/main/resources/META-INF/jars', include: ['*.jar'])
+    compileOnly fileTree(dir: 'libs', include: ['**/*.jar'])
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-proc:none', '-nowarn', '-Xmaxerrs', '5000'])
+    options.fork = true
+    options.forkOptions.memoryMaximumSize = '4g'
+}
+
+def asmCp = files(
+    new File(prismLibs, 'org/ow2/asm/asm/9.10.1/asm-9.10.1.jar'),
+    new File(prismLibs, 'org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar'),
+    new File(prismLibs, 'org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar')
+)
+
+tasks.register('packageModJar', Exec) {
+    dependsOn tasks.named('compileJava')
+    group = 'build'
+    description = 'Reverse-remaps compiled classes back to runtime ABI, overlays untouched stock classes, and packages the runnable Fabric mod JAR.'
+    def javaBin = "${System.getProperty('java.home')}/bin/java"
+    def classesDir = layout.buildDirectory.dir('classes/java/main').get().asFile
+    def outJar = layout.buildDirectory.file("libs/AUTISM-Client-${version}.jar").get().asFile
+    inputs.dir(classesDir)
+    inputs.dir(file('src/main/resources'))
+    inputs.files(
+        file('tools/ReverseRemapJar.java'),
+        file('stubs/integrity-stubs.jar'),
+        file('precompiled/integrity-classes.jar'),
+        file('mappings/disambig.tsv'),
+        file('mappings/enum-names.tsv'),
+        file('mappings/record-names.tsv')
+    )
+    outputs.file(outJar)
+    commandLine(
+        javaBin,
+        '-cp', asmCp.asPath,
+        file('tools/ReverseRemapJar.java').absolutePath,
+        classesDir.absolutePath,
+        file('stubs/integrity-stubs.jar').absolutePath,
+        file('precompiled/integrity-classes.jar').absolutePath,
+        file('src/main/resources').absolutePath,
+        file('mappings/disambig.tsv').absolutePath,
+        outJar.absolutePath
+    )
+}
+
+tasks.named('jar') { enabled = false }
+
+tasks.named('assemble') {
+    dependsOn tasks.named('packageModJar')
+}

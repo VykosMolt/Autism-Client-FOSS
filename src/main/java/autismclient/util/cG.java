@@ -1,0 +1,139 @@
+package autismclient.util;
+
+import autismclient.compat263.Compat263;
+import autismclient.compat263.CompatGLFW;
+import autismclient.compat263.CompatGLFWImage;
+import com.mojang.blaze3d.platform.IconSet;
+import com.mojang.blaze3d.platform.MacosUtil;
+import com.mojang.blaze3d.platform.NativeImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.PackMetadataResources;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+
+public final class cG {
+   public static final String init_Str = "AUTISM Client";
+   private static final String load_Str = "assets/autismclient/icons/window/";
+   private static final int[] init_IArr = new int[]{16, 32, 48, 128, 256};
+   private static final int init_I = 60;
+   private static boolean init_Z = false;
+   private static int load_I;
+
+   private cG() {
+   }
+
+   public static void init_V(Minecraft client) {
+      if (!init_Z && client != null && client.getWindow() != null) {
+         init_Z = true;
+         load(client);
+      }
+   }
+
+   public static void load(Minecraft client) {
+      load_I = 60;
+      write(client);
+   }
+
+   public static void read(Minecraft client) {
+      if (load_I > 0) {
+         write(client);
+      }
+   }
+
+   private static void write(Minecraft client) {
+      if (load_I > 0) {
+         load_I--;
+         if (client != null && client.getWindow() != null) {
+            boolean hidden = autismclient.modules.aD.init_Z() || AutismLiteVariant.enabled();
+            boolean ok;
+            if (hidden) {
+               client.updateTitle();
+               ok = init_Z(client);
+            } else {
+               client.getWindow().setTitle("AUTISM Client");
+               ok = init(client.getWindow().handle());
+            }
+
+            if (ok) {
+               load_I = 0;
+            }
+         }
+      }
+   }
+
+   private static boolean init_Z(Minecraft client) {
+      try {
+         IconSet iconSet = SharedConstants.getCurrentVersion().stable() ? IconSet.RELEASE : IconSet.SNAPSHOT;
+         client.getWindow().setIcon((PackMetadataResources)client.getVanillaPackResources(), iconSet);
+         return true;
+      } catch (Throwable ignored) {
+         return false;
+      }
+   }
+
+   private static boolean init(long windowHandle) {
+      if (windowHandle == 0L) {
+         return false;
+      }
+
+      if (MacosUtil.IS_MACOS) {
+         try {
+            Compat263.loadMacIcon(() -> {
+               try {
+                  return init("mac_icon.png");
+               } catch (IOException e) {
+                  throw new RuntimeException(e);
+               }
+            });
+            return true;
+         } catch (Throwable ignored) {
+            return false;
+         }
+      } else {
+         List<ByteBuffer> allocatedBuffers = new ArrayList<>(init_IArr.length);
+
+         try (MemoryStack stack = MemoryStack.stackPush()) {
+            CompatGLFWImage.Buffer icons = CompatGLFWImage.malloc(init_IArr.length, stack);
+
+            for (int i = 0; i < init_IArr.length; i++) {
+               int size = init_IArr[i];
+
+               try (
+                  InputStream stream = init("icon_" + size + "x" + size + ".png");
+                  NativeImage image = NativeImage.read(stream);
+               ) {
+                  ByteBuffer pixels = MemoryUtil.memAlloc(image.getWidth() * image.getHeight() * 4);
+                  allocatedBuffers.add(pixels);
+                  pixels.asIntBuffer().put(image.getPixelsABGR());
+                  icons.position(i);
+                  icons.width(image.getWidth());
+                  icons.height(image.getHeight());
+                  icons.pixels(pixels);
+               }
+            }
+
+            CompatGLFW.glfwSetWindowIcon(windowHandle, icons);
+            return true;
+         } catch (Throwable ignored) {
+            return false;
+         } finally {
+            allocatedBuffers.forEach(MemoryUtil::memFree);
+         }
+      }
+   }
+
+   private static InputStream init(String fileName) throws IOException {
+      InputStream stream = cG.class.getClassLoader().getResourceAsStream("assets/autismclient/icons/window/" + fileName);
+      if (stream == null) {
+         throw new IOException("Missing Autism window icon resource: " + fileName);
+      } else {
+         return stream;
+      }
+   }
+}

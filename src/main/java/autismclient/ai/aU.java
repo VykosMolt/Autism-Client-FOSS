@@ -1,0 +1,232 @@
+package autismclient.ai;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+final class aU {
+   private aU() {
+   }
+
+   static List<aU.Inner_BufferHelper> init_List(List<aU.Inner_BufferHelper> steps) {
+      Map<String, aU.Inner_BufferHelper> byId = new LinkedHashMap<>();
+
+      for (aU.Inner_BufferHelper step : steps) {
+         if (step.id().isBlank()) {
+            throw new IllegalArgumentException("Every plan step needs a non-empty id");
+         }
+
+         if (byId.putIfAbsent(step.id(), step) != null) {
+            throw new IllegalArgumentException("Duplicate plan step id '" + step.id() + "'");
+         }
+      }
+
+      for (aU.Inner_BufferHelper step : steps) {
+         for (String need : step.needs()) {
+            if (!byId.containsKey(need)) {
+               throw new IllegalArgumentException("Step '" + step.id() + "' needs unknown step '" + need + "'");
+            }
+
+            if (need.equals(step.id())) {
+               throw new IllegalArgumentException("Step '" + step.id() + "' cannot depend on itself");
+            }
+         }
+      }
+
+      Map<String, Integer> remaining = new HashMap<>();
+      Map<String, List<String>> dependents = new HashMap<>();
+
+      for (aU.Inner_BufferHelper step : steps) {
+         remaining.put(step.id(), step.needs().size());
+
+         for (String need : step.needs()) {
+            dependents.computeIfAbsent(need, key -> new ArrayList<>()).add(step.id());
+         }
+      }
+
+      Deque<String> ready = new ArrayDeque<>();
+
+      for (aU.Inner_BufferHelper step : steps) {
+         if (remaining.get(step.id()) == 0) {
+            ready.addLast(step.id());
+         }
+      }
+
+      List<aU.Inner_BufferHelper> ordered = new ArrayList<>(steps.size());
+
+      while (!ready.isEmpty()) {
+         String id = ready.pollFirst();
+         ordered.add(byId.get(id));
+
+         for (String dependent : dependents.getOrDefault(id, List.of())) {
+            if (remaining.merge(dependent, -1, Integer::sum) == 0) {
+               ready.addLast(dependent);
+            }
+         }
+      }
+
+      if (ordered.size() != steps.size()) {
+         Set<String> stuck = new LinkedHashSet<>(byId.keySet());
+         ordered.forEach(step -> stuck.remove(step.id()));
+         throw new IllegalArgumentException("Plan steps form a dependency cycle: " + String.join(", ", stuck));
+      } else {
+         return List.copyOf(ordered);
+      }
+   }
+
+   static aU.Inner_StreamUtil init_aU_StreamUtil(List<aU.Inner_StreamUtil> plan) {
+      Map<String, aU.Inner_StreamUtil> byId = new LinkedHashMap<>();
+
+      for (aU.Inner_StreamUtil progress : plan) {
+         byId.put(progress.init_aU_BufferHelper.id(), progress);
+      }
+
+      for (aU.Inner_StreamUtil progress : plan) {
+         if (progress.init_aU_CachePool == aU.Inner_CachePool.init) {
+            for (String need : progress.init_aU_BufferHelper.needs()) {
+               aU.Inner_StreamUtil dependency = byId.get(need);
+               if (dependency != null
+                  && (dependency.init_aU_CachePool == aU.Inner_CachePool.write || dependency.init_aU_CachePool == aU.Inner_CachePool.update)) {
+                  progress.init_aU_CachePool = aU.Inner_CachePool.update;
+                  progress.init_Str = "skipped: step '" + need + "' it depends on did not complete";
+                  break;
+               }
+            }
+         }
+      }
+
+      for (aU.Inner_StreamUtil progress : plan) {
+         if (progress.init_aU_CachePool == aU.Inner_CachePool.init) {
+            boolean blocked = false;
+
+            for (String need : progress.init_aU_BufferHelper.needs()) {
+               aU.Inner_StreamUtil dependency = byId.get(need);
+               if (dependency != null && dependency.init_aU_CachePool != aU.Inner_CachePool.read) {
+                  blocked = true;
+               }
+            }
+
+            if (!blocked) {
+               return progress;
+            }
+         }
+      }
+
+      return null;
+   }
+
+   static boolean init_Z(List<aU.Inner_StreamUtil> plan) {
+      for (aU.Inner_StreamUtil progress : plan) {
+         if (progress.init_aU_CachePool == aU.Inner_CachePool.init || progress.init_aU_CachePool == aU.Inner_CachePool.load) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   static boolean init(aU.Inner_StreamUtil progress, boolean succeeded, String message, aU.Inner_DataUtil policy) {
+      progress.init_Str = message;
+      if (succeeded) {
+         progress.init_aU_CachePool = aU.Inner_CachePool.read;
+         return false;
+      } else if (policy == aU.Inner_DataUtil.read && progress.init_I < 2) {
+         progress.init_aU_CachePool = aU.Inner_CachePool.init;
+         return false;
+      } else {
+         progress.init_aU_CachePool = aU.Inner_CachePool.write;
+         return policy == aU.Inner_DataUtil.init;
+      }
+   }
+
+   static boolean init(aU.Inner_StreamUtil progress, String message, aU.Inner_DataUtil policy) {
+      progress.init_Str = message;
+      progress.init_aU_CachePool = aU.Inner_CachePool.write;
+      return policy == aU.Inner_DataUtil.init;
+   }
+
+   static Map<String, Integer> init_Map(List<aU.Inner_StreamUtil> plan) {
+      Map<String, Integer> counts = new LinkedHashMap<>();
+
+      for (aU.Inner_CachePool state : aU.Inner_CachePool.values()) {
+         counts.put(state.name().toLowerCase(Locale.ROOT), 0);
+      }
+
+      for (aU.Inner_StreamUtil progress : plan) {
+         counts.merge(progress.init_aU_CachePool.name().toLowerCase(Locale.ROOT), 1, Integer::sum);
+      }
+
+      return counts;
+   }
+
+   static void init(String capability) {
+      if (capability == null || !capability.startsWith("game:")) {
+         throw new IllegalArgumentException(
+            "Plan steps may only call game: capabilities; '" + capability + "' is not one. Use perform directly for modules, macros and commands."
+         );
+      }
+   }
+
+   static Set<String> init_Set(List<aU.Inner_StreamUtil> plan) {
+      Set<String> ids = new LinkedHashSet<>();
+
+      for (aU.Inner_StreamUtil progress : plan) {
+         if (progress.init_aU_CachePool == aU.Inner_CachePool.init || progress.init_aU_CachePool == aU.Inner_CachePool.update) {
+            ids.add(progress.init_aU_BufferHelper.id());
+         }
+      }
+
+      return ids;
+   }
+
+   static Set<String> load(List<aU.Inner_StreamUtil> plan) {
+      Set<String> ids = new HashSet<>();
+
+      for (aU.Inner_StreamUtil progress : plan) {
+         if (progress.init_aU_CachePool == aU.Inner_CachePool.read) {
+            ids.add(progress.init_aU_BufferHelper.id());
+         }
+      }
+
+      return ids;
+   }
+
+   record Inner_BufferHelper(String id, String capability, String argumentsJson, List<String> needs) {
+      Inner_BufferHelper {
+         needs = List.copyOf(needs);
+      }
+   }
+
+   enum Inner_CachePool {
+      init,
+      load,
+      read,
+      write,
+      update;
+   }
+
+   enum Inner_DataUtil {
+      init,
+      load,
+      read;
+   }
+
+   static final class Inner_StreamUtil {
+      final aU.Inner_BufferHelper init_aU_BufferHelper;
+      aU.Inner_CachePool init_aU_CachePool = aU.Inner_CachePool.init;
+      String init_Str = "";
+      int init_I;
+
+      Inner_StreamUtil(aU.Inner_BufferHelper step) {
+         this.init_aU_BufferHelper = step;
+      }
+   }
+}

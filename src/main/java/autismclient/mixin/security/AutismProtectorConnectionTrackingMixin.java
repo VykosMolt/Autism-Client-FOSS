@@ -1,0 +1,126 @@
+package autismclient.mixin.security;
+
+import autismclient.AutismClientAddon;
+import autismclient.g.BufferHelper;
+import autismclient.g.HashUtil;
+import autismclient.util.AutismLiteVariant;
+import autismclient.util.g.ConfigStore;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import java.net.SocketAddress;
+import net.minecraft.network.ClientboundPacketListener;
+import net.minecraft.network.Connection;
+import net.minecraft.network.PacketListener;
+import net.minecraft.network.ProtocolInfo;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.handshake.ClientIntent;
+import net.minecraft.network.protocol.login.ServerboundHelloPacket;
+import net.minecraft.network.protocol.status.ClientStatusPacketListener;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(Connection.class)
+public class AutismProtectorConnectionTrackingMixin {
+   @Unique
+   private volatile BufferHelper.Inner_StreamUtil autism$privacyContext;
+
+   @Inject(method = "channelActive", at = @At("HEAD"))
+   private void autism$onChannelActive(ChannelHandlerContext context, CallbackInfo ci) {
+      boolean multiChannel = !AutismLiteVariant.enabled() && context != null && ConfigStore.init_Z(context.channel());
+      SocketAddress peerAddress = context != null && context.channel() != null ? context.channel().remoteAddress() : null;
+      this.autism$context(peerAddress, multiChannel);
+      if (!System.getProperty("autism.privacy.compat.dir", "").isBlank()) {
+         AutismClientAddon.LOG
+            .info(
+               "[Privacy-compat] channel active: flow={}, mode={}, local={}",
+               ((Connection)(Object)this).getReceiving(),
+               this.autism$privacyContext.init_BufferHelper_Cache(),
+               this.autism$privacyContext.read()
+            );
+      }
+   }
+
+   @Inject(method = "initiateServerboundConnection", at = @At("HEAD"))
+   private void autism$trackServerboundConnection(
+      String host, int port, ProtocolInfo<?> serverbound, ProtocolInfo<?> clientbound, ClientboundPacketListener listener, ClientIntent intent, CallbackInfo ci
+   ) {
+      this.autism$bindHandshake(host, port, listener);
+   }
+
+   @Inject(method = "initiateServerboundStatusConnection", at = @At("HEAD"))
+   private void autism$trackStatusConnection(String host, int port, ClientStatusPacketListener listener, CallbackInfo ci) {
+      this.autism$bindHandshake(host, port, listener);
+   }
+
+   @Inject(method = "setupInboundProtocol", at = @At("TAIL"))
+   private void autism$trackInboundListener(ProtocolInfo<?> protocol, PacketListener listener, CallbackInfo ci) {
+      Connection connection = (Connection)(Object)this;
+      this.autism$context(connection.getRemoteAddress(), false);
+      this.autism$privacyContext = BufferHelper.init(connection, listener);
+   }
+
+   @Inject(method = "doSendPacket", at = @At("HEAD"))
+   private void autism$trackAccount(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
+      if (packet instanceof ServerboundHelloPacket hello) {
+         BufferHelper.init((Connection)(Object)this, hello.profileId(), hello.name());
+      }
+   }
+
+   @Inject(method = "channelInactive", at = @At("HEAD"))
+   private void autism$onChannelInactive(ChannelHandlerContext context, CallbackInfo ci) {
+      this.autism$disconnectExactContext();
+   }
+
+   @Inject(method = "handleDisconnection", at = @At("HEAD"))
+   private void autism$onDisconnection(CallbackInfo ci) {
+      Connection connection = (Connection)(Object)this;
+      BufferHelper.Inner_StreamUtil context = this.autism$privacyContext;
+      if (context == null) {
+         context = BufferHelper.init_BufferHelper_Strea(connection);
+      }
+
+      autism$disconnectClosedConnection(connection, context);
+   }
+
+   @Unique
+   private static void autism$disconnectClosedConnection(Connection connection, BufferHelper.Inner_StreamUtil context) {
+      if (!connection.isConnecting() && !connection.isConnected()) {
+         autism$disconnectExactContext(context);
+      }
+   }
+
+   private void autism$disconnectExactContext() {
+      BufferHelper.Inner_StreamUtil context = this.autism$privacyContext;
+      if (context == null) {
+         context = BufferHelper.init_BufferHelper_Strea((Connection)(Object)this);
+      }
+
+      autism$disconnectExactContext(context);
+   }
+
+   @Unique
+   private static void autism$disconnectExactContext(BufferHelper.Inner_StreamUtil context) {
+      autismclient.g.ConfigStore.init_V(context);
+   }
+
+   private BufferHelper.Inner_StreamUtil autism$context(SocketAddress peerAddress, boolean multiChannel) {
+      Connection connection = (Connection)(Object)this;
+      boolean multi = multiChannel || !AutismLiteVariant.enabled() && ConfigStore.init_Z(connection);
+      BufferHelper.Inner_CachePool mode = HashUtil.sync() ? BufferHelper.Inner_CachePool.init : BufferHelper.Inner_CachePool.load;
+      this.autism$privacyContext = BufferHelper.init(connection, mode, multi, peerAddress);
+      return this.autism$privacyContext;
+   }
+
+   private void autism$bindHandshake(String host, int port, PacketListener listener) {
+      Connection connection = (Connection)(Object)this;
+      BufferHelper.Inner_StreamUtil context = this.autism$context(connection.getRemoteAddress(), false);
+      if (context.init_BufferHelper_Buffe() == null) {
+         BufferHelper.init(connection, host, port);
+      }
+
+      this.autism$privacyContext = BufferHelper.init(connection, listener);
+   }
+}

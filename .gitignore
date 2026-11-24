@@ -1,0 +1,10 @@
+build/
+.gradle/
+logs/
+cp26.3.txt
+precompiled/
+stubs/integrity-stubs.jar
+libs/
+*.jar
+!stubs/compat-stubs.jar
+!src/main/resources/**

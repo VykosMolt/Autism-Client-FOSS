@@ -1,0 +1,67 @@
+package autismclient.util;
+
+import autismclient.gui.f.b.f;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+
+public final class bi {
+   private static final int init_I = -14249;
+   private static final f init_f = new f(2100L, 140.0F, 220.0F, 4, 4, 18);
+
+   private static int load() {
+      return ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.sync);
+   }
+
+   private bi() {
+   }
+
+   public static void init(String message) {
+      init(message != null && !message.isBlank() ? message : "Copied.", load());
+   }
+
+   public static void load(String message) {
+      init(message, load());
+   }
+
+   public static void read(String message) {
+      init(message, -14249);
+   }
+
+   public static void write(String message) {
+      init(message, -42149);
+   }
+
+   public static void init(String message, int accentColor) {
+      if (!autismclient.modules.aD.write_Z()) {
+         init_f.init(message, accentColor);
+      }
+   }
+
+   public static void init(GuiGraphicsExtractor graphics) {
+      if (autismclient.modules.aD.write_Z()) {
+         init_V();
+      } else {
+         Minecraft mc = Minecraft.getInstance();
+         if (graphics != null && mc != null && mc.font != null) {
+            bf.init(graphics);
+            if (init_f.init_Z()) {
+               int width = Math.min(320, Math.max(120, cA.init_I() - 16));
+               int x = Math.max(8, (cA.init_I() - width) / 2);
+               init_f.init(autismclient.gui.f.UiHelper.init(graphics, mc.font, -1, -1), x, 8, width);
+            }
+         }
+      }
+   }
+
+   public static boolean init_Z() {
+      return autismclient.modules.aD.write_Z() ? false : init_f.init_Z() || bf.init_Z();
+   }
+
+   public static int init_I() {
+      return init_f.init_I();
+   }
+
+   public static void init_V() {
+      init_f.init_V();
+   }
+}

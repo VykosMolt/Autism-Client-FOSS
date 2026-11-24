@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "playbooks": [
+    {
+      "id": "speedrun_overworld",
+      "title": "Beating the game: overworld route",
+      "keywords": ["speedrun", "beat the game", "beat minecraft", "ender dragon", "the end", "stronghold", "nether", "portal"],
+      "body": [
+        "Pacing budget - watch elapsed time and skip optional safety (full iron armor, extra food stockpiling) when behind: opening <=5 min, iron+portal <=12, nether barter+rods <=20, stronghold+End <=13, dragon dead <=50.",
+        "Spawn check: a spawn on a cliff edge, high plateau, tiny island or mid-ocean costs more time than a reroll - if the first 30 seconds show no walkable route down or out, recreate the world once with client:world_create under a new name.",
+        "First move, ONE call: game:nether_entry takes a fresh spawn to standing in the Nether with no model rounds in between - it chops logs, crafts wooden+stone pickaxes, tops up food, detours through a predicted village for chests/hay/beds, gets iron+flint, crafts bucket and flint_and_steel, finds lava, casts the lava-pool portal and enters. Call it before anything else; the whole overworld is its job.",
+        "It guards itself (eat/fight/flee between legs) and sleeps in a carried bed or burrows at dusk. The result reports phases[] with per-phase status+elapsedMs (opening, food, village, iron_fire, lava, portal, enter) plus an inventory summary, and emits the nether_entered split. After a death or interruption re-issue the SAME call - every finished phase skips itself from live inventory state.",
+        "A FAILED nether_entry carries {phase, reason, missing{}} - game:obtain the named items and re-issue; never hand-assemble the chop/craft/smelt chain it already runs. villageX/villageZ pins the detour from your own knowledge, skipVillage:true drops it (a server without a seed, or behind pace).",
+        "Singleplayer edge: game:oracle resolves the seed automatically - ask it for village, lava pool, and later stronghold/bastion/fortress directly (seed-exact); blind exploration is for servers without a seed.",
+        "nether_entry lands you with beds, buckets, blocks and a weapon; gold armor is the one gap it does not cover - game:equip what:armor prefer golden_* right after entry keeps piglins neutral."
+      ]
+    },
+    {
+      "id": "speedrun_nether_end",
+      "title": "Beating the game: nether, stronghold and the End",
+      "keywords": ["speedrun", "beat the game", "ender dragon", "nether", "stronghold", "pearls", "blaze", "bartering", "bastion", "fortress"],
+      "body": [
+        "On nether entry: game:equip what:armor with prefer:'golden_*' so piglins stay neutral, and note the portal coordinates. game:oracle bastion + fortress from the seed - skip the search entirely.",
+        "Pearls: game:barter with a gold target (~40 ingots yields ~10-12 pearls; it loops ingots to piglins and emits the pearls_met split). Gold from bastion chests (game:container loot; block in first - brutes ignore gold armor) or game:collect/game:mine gold ore.",
+        "Rods: game:fight target minecraft:blaze count 7-8 at a fortress spawner with useShield:true - it reaches hovering blazes by walking under and pillaring up. Block off the spawner area first.",
+        "Eyes: game:craft ender_eye x12 from pearls + blaze powder (rods -> powder via game:craft).",
+        "Stronghold: game:oracle stronghold -> game:goto -> game:dig shape:staircase with targetY at the portal-room level (safe stepped descent, reports reachedY) -> fill every empty frame slot via game:interact with ender_eye held.",
+        "End: game:dragon_fight runs the whole fight - clears the crystals (bow for uncaged, pillars to caged ones), detects the perch from the synced dragon phase, one-cycles with beds standing off at a game:danger-priced distance, and falls back to melee/bow. Needs 4-6 beds or bow+arrows; emits the dragon_dead split.",
+        "Finish the run with postcondition {\"kind\":\"beat_game\"} (equivalently stat minecraft.killed:minecraft.ender_dragon count 1). Splits - nether/end entered, pearls_met, portal_lit, dragon_dead - are recorded in the run trace.",
+        "End survival: never look endermen in the face (a 2-block ceiling makes you unhittable, water at your feet when swarmed) and never stand in purple dragon-breath clouds."
+      ]
+    },
+    {
+      "id": "never_die",
+      "title": "Combat without dying (hard requirement)",
+      "keywords": ["cannot die", "dont die", "survive", "hardcore", "combat", "fight", "skeletons", "mobs", "kill"],
+      "body": [
+        "Posture: enable module:kill-aura with an explicit entities filter (only what you must kill), module:auto-totem (health threshold), module:auto-armor (best set, save-durability off for fights). Disable them when the fight ends.",
+        "KillAura composes: it refuses to attack while you eat or mine, so game:eat and game:flee work mid-fight.",
+        "Rules: eat at food <= 14, flee or eat at health <= 8, hard disengage (flee + blocks) at health <= 4. Totem is the last line, not a plan.",
+        "Danger math: every observation includes a danger block - predicted damage per source with ETAs, your protections, and lethal/lethalThroughTotem verdicts with a conservative margin. Trust the verdicts: lethalThroughTotem means even popping a totem won't save you - retreat NOW, not after the current step.",
+        "Awareness: game:oracle threats lists every hostile within 24 blocks with positions - check it before fights, descents and night travel so nothing engages for free.",
+        "React early: every observation includes nearby entities and vitals - a hostile closing in beats any current step; fight with kill-aura or evade, then resume. The host may interrupt a step under real threat - treat it as a react-first signal, not a failure.",
+        "Parallel work wins time: smelt on every furnace you own at once (load all, collect later), let crops grow while mining, run macros in the background - never idle-watch a process.",
+        "Skeletons: strafe, never straight-line. Zombies: high ground or doorframe. Creepers: hit-and-retreat; never fight two at once without shield.",
+        "Water bucket is the best defensive item: MLG for falls, wall for mobs, extinguish for fire.",
+        "Shields block skeleton arrows and creeper blasts fully when raised in time - craft one at 1 iron if the fight is scripted.",
+        "Native game: operations temporarily disable combat modules for control; re-enable them immediately after the operation."
+      ]
+    },
+    {
+      "id": "server_economy",
+      "title": "Servers: economy, shops, clickable chat",
+      "keywords": ["sell", "shop", "ah", "auction", "balance", "bal", "pay", "money", "emerald", "trade", "buy"],
+      "body": [
+        "Discover commands before assuming them: /shop /sell /bal /ah /pay /tpa vary per server; read the response chat and adjust. The plugin scanner (client:plugin_scan) reveals which economy plugins exist.",
+        "Balance: scoreboard sidebar often shows it; otherwise /bal or /balance and capture with game:command regex.",
+        "GUI shops: /shop or /ah usually opens a chest menu - read slot items with the container observation and game:inspect_item for prices in lore/NBT; click with game:inventory_click; confirm dialogs vary.",
+        "Confirmations: many servers ask to confirm sales/payments in chat - clickable [Confirm] buttons work via game:chat_click; text confirmations work via game:command.",
+        "/pay: template is usually /pay <player> <amount>; some servers need /pay accept or a second confirmation - read the response.",
+        "Selling inventory: /sell hand for the held item, /sell all for matching items, or a GUI sell menu - verify the balance delta after selling before repeating."
+      ]
+    },
+    {
+      "id": "movement_tech",
+      "title": "Fast safe movement",
+      "keywords": ["movement", "travel", "fast", "sprint", "bridge", "tower", "descend", "clutch"],
+      "body": [
+        "Native navigation sprints automatically on open flat ground with food > 6 - keep food high to stay fast.",
+        "Gaps and towers: enable module:scaffold for long bridges (it places beneath you); native allowBridge covers short gaps. Disable scaffold before precise native operations.",
+        "Descents: water bucket pours beat every other descent; dig a 2x1 shaft and pour, or pour against a wall and ride it down.",
+        "No-fall is human-only (packet no-fall is a detectable cheat, never use it): game:mlg is the legit clutch - place water at the landing point in the last ~3 ticks, or a cobweb in the last ~4. auto prefers water, falls back to cobweb, then to a soft block (hay/slime/honey/bed/powder snow) within reach. Check game:danger's fall forecast before every big drop and clutch when it predicts damage.",
+        "Nether falls: water does not work - cobweb, powder snow, hay, or a lava MLG (place lava at the landing point, it slows the fall; only with fire resistance). Plan the clutch before the drop, not during it.",
+        "Pearl clutching is low-percentage - never route over a kill-zone on purpose when a bridge exists.",
+        "Boats: oceans and rivers are free speed; craft one early for long water travel.",
+        "Ice/packed ice: sprint-jump on ice is the fastest ground movement that exists in vanilla.",
+        "Telly bridging: game:telly is the AI's own fast bridge - instant legit rotations at max vanilla placement rate across void gaps; walk mode for careful edges, sprint for flats, telly (sprint-jump) for max speed. Carry 2+ stacks of full blocks; count them before a long gap.",
+        "Projectiles: game:dodge predicts incoming arrows/fireballs and sidesteps or deflects (ghast fireballs are reflected by hitting them within reach). The projectiles list in observations shows type, position, velocity, closest approach and time-to-impact - dodge early instead of tanking.",
+        "Policy default is legit-only: no TP, no clips, no fly unless the user enables those switches - sprint, boats, water buckets and scaffold cover everything legitimately. Native ops rotate instantly; combat modules keep their own anticheat-safe curves."
+      ]
+    }
+  ]
+}

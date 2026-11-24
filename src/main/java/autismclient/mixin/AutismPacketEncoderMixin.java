@@ -1,0 +1,69 @@
+package autismclient.mixin;
+
+import autismclient.modules.PoolEntry;
+import autismclient.util.AutismLiteVariant;
+import autismclient.util.bg;
+import autismclient.util.bn;
+import autismclient.util.g.ConfigStore;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import net.minecraft.network.PacketEncoder;
+import net.minecraft.network.PacketListener;
+import net.minecraft.network.ProtocolInfo;
+import net.minecraft.network.protocol.BundlePacket;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+
+@Mixin(PacketEncoder.class)
+public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
+   @Shadow
+   @Final
+   private ProtocolInfo<T> protocolInfo;
+
+   @WrapMethod(method = "encode(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/protocol/Packet;Lio/netty/buffer/ByteBuf;)V")
+   private void autism$captureEncodedPlaintext(ChannelHandlerContext ctx, Packet<T> packet, ByteBuf output, Operation<Void> original) {
+      long captureState = bg.init_J();
+      if (bg.init_I_J(captureState) == 0) {
+         original.call(ctx, packet, output);
+      } else {
+         boolean multi = !AutismLiteVariant.enabled() && ctx != null && ConfigStore.init_Z(ctx.channel());
+         boolean suppressPayloadCodec = multi && bg.load(captureState);
+         if (suppressPayloadCodec) {
+            bg.init_V();
+         }
+
+         try {
+            original.call(ctx, packet, output);
+         } finally {
+            if (suppressPayloadCodec) {
+               bg.load_V();
+            }
+         }
+
+         if (!multi) {
+            PoolEntry module = PoolEntry.init_PoolEntry();
+            if (module != null) {
+               String protocol = this.protocolInfo.id().id();
+               if (bg.init_Z_J(captureState)) {
+                  bn.init(packet, "C2S", protocol, packet.type(), output);
+               }
+
+               if (bg.load(captureState) && autism$isPayloadCarrier(packet)) {
+                  module.init(packet, "C2S", protocol, "encoder");
+               }
+            }
+         }
+      }
+   }
+
+   @Unique
+   private static boolean autism$isPayloadCarrier(Packet<?> packet) {
+      return packet instanceof ServerboundCustomPayloadPacket || packet instanceof BundlePacket;
+   }
+}

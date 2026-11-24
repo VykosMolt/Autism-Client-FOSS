@@ -1,0 +1,95 @@
+package autismclient.gui.f.b;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+public final class DataUtil {
+   private static final int init_I = 40;
+   private static final int load_I = 96;
+   private static final long init_J = 205000000L;
+   private static final long load_J = 128000000L;
+   private static final long read = 200000000L;
+   private static final long write = 30000000000L;
+   private static final Map<String, DataUtil.Inner_DataUtil> init_Map = new HashMap<>();
+   private static long update;
+
+   private DataUtil() {
+   }
+
+   public static void init(
+      autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean enabled, boolean hovered, String animationKey
+   ) {
+      long now = System.nanoTime();
+      DataUtil.Inner_DataUtil state = init_Map.get(animationKey);
+      if (state == null) {
+         state = new DataUtil.Inner_DataUtil(enabled ? 1.0F : 0.0F, enabled, now);
+         init_Map.put(animationKey, state);
+      } else if (state.init_Z != enabled) {
+         state.init_F = state.init(now, 200000000L);
+         state.init_Z = enabled;
+         state.init_J = now;
+      }
+
+      state.load = now;
+      init(context, bounds, label, hovered, state.init(now, 200000000L));
+      init_V_J(now);
+   }
+
+   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, float progress) {
+      autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
+      float p = init_F_F(progress);
+      int fill = j.init_I_I(colors.load, colors.stop, 0.22F * p);
+      int border = j.init_I_I(colors.set, colors.stop, p);
+      float hoverT = autismclient.gui.f.DataUtil.init(autismclient.gui.f.DataUtil.init(bounds), hovered);
+      fill = j.init_I_I(fill, colors.read, hoverT * 0.6F);
+      border = j.init_I_I(border, p > 0.5F ? colors.stop : colors.run, hoverT * 0.65F);
+      autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, fill, border);
+      if (label != null && !label.isEmpty()) {
+         context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label, bounds, colors.prev);
+      }
+   }
+
+   public static long init_J_I(int width) {
+      float t = init_F_F((float)(width - 40) / Math.max(1, 56));
+      return Math.round(2.05E8F + -7.7E7F * t);
+   }
+
+   private static void init_V_J(long now) {
+      if (now - update >= 30000000000L) {
+         update = now;
+         Iterator<DataUtil.Inner_DataUtil> iterator = init_Map.values().iterator();
+
+         while (iterator.hasNext()) {
+            if (now - iterator.next().load > 30000000000L) {
+               iterator.remove();
+            }
+         }
+      }
+   }
+
+   private static float init_F_F(float value) {
+      return Math.max(0.0F, Math.min(1.0F, value));
+   }
+
+   private static final class Inner_DataUtil {
+      private float init_F;
+      private boolean init_Z;
+      private long init_J;
+      private long load;
+
+      private Inner_DataUtil(float startProgress, boolean targetEnabled, long now) {
+         this.init_F = startProgress;
+         this.init_Z = targetEnabled;
+         this.init_J = now;
+         this.load = now;
+      }
+
+      private float init(long now, long durationNanos) {
+         float elapsed = Math.min(1.0F, (float)(now - this.init_J) / (float)Math.max(1L, durationNanos));
+         float eased = elapsed * elapsed * (3.0F - 2.0F * elapsed);
+         float target = this.init_Z ? 1.0F : 0.0F;
+         return this.init_F + (target - this.init_F) * eased;
+      }
+   }
+}

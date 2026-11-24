@@ -1,0 +1,197 @@
+package autismclient.util.macro;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action;
+import net.minecraft.world.InteractionHand;
+
+public class an implements E, MacroAction, aP {
+   public String itemName = "";
+   public ArrayUtil itemTarget = new ArrayUtil();
+   public int slot = -1;
+   public an.Inner_DataUtil useMode = an.Inner_DataUtil.init;
+   public boolean waitForFinish = true;
+   public int holdTicks = 20;
+   public int useCount = 1;
+   public boolean sneak = false;
+   public boolean waitForGui = false;
+   public String guiName = "";
+   public volatile D packetOrder = D.init;
+   private boolean init = true;
+
+   @Override
+   public void execute(Minecraft mc) {
+      if (mc.player != null && mc.getConnection() != null) {
+         ArrayUtil target = this.init_ArrayUtil_3();
+         target = target.init_ArrayUtil_Minecraft(mc);
+         if (target != null) {
+            if (target.init_Z() || target.update()) {
+               autismclient.util.aw.init(mc, target, mc.player.getInventory().getSelectedSlot());
+            }
+
+            mc.getConnection().send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
+         }
+      }
+   }
+
+   public void init_V_Minecraft_7(Minecraft mc) {
+      if (mc.player != null && mc.getConnection() != null) {
+         mc.getConnection().send(new ServerboundPlayerActionPacket(Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
+      }
+   }
+
+   @Override
+   public StreamGate getType() {
+      return StreamGate.pop;
+   }
+
+   @Override
+   public CompoundTag toTag() {
+      CompoundTag tag = new CompoundTag();
+      tag.putString("type", "USE_ITEM");
+      ArrayUtil target = this.init_ArrayUtil_3();
+      if (target.init_Z() || target.update()) {
+         tag.put("itemName", target.init_CompoundTag());
+      }
+
+      if (this.slot >= 0) {
+         tag.putInt("slot", this.slot);
+      }
+
+      tag.putString("useMode", this.useMode.name());
+      tag.putBoolean("waitForFinish", this.waitForFinish);
+      tag.putInt("holdTicks", this.holdTicks);
+      tag.putInt("useCount", this.useCount);
+      tag.putBoolean("sneak", this.sneak);
+      tag.putBoolean("waitForGui", this.waitForGui);
+      tag.putString("guiName", this.guiName == null ? "" : this.guiName);
+      tag.putBoolean("enabled", this.init);
+      E.init_V_CompoundTag_D(tag, this.packetOrder);
+      return tag;
+   }
+
+   @Override
+   public void fromTag(CompoundTag tag) {
+      this.itemTarget = tag.getCompound("itemName")
+         .map(ArrayUtil::init_ArrayUtil_CompoundTag)
+         .orElseGet(() -> ArrayUtil.update(tag.getStringOr("itemName", "")));
+      this.slot = tag.contains("slot") ? Math.max(-1, tag.getIntOr("slot", -1)) : this.itemTarget.init_I;
+      this.itemTarget.init_I = -1;
+      this.itemName = this.itemTarget.write_Str();
+      if (tag.contains("useMode")) {
+         String modeName = tag.getStringOr("useMode", "AUTOMATIC");
+         if ("INSTANT".equals(modeName)) {
+            modeName = "AUTOMATIC";
+         }
+
+         if ("HOLD".equals(modeName)) {
+            modeName = "CUSTOM_HOLD";
+         }
+
+         try {
+            this.useMode = an.Inner_DataUtil.valueOf(modeName);
+         } catch (IllegalArgumentException ignored) {
+            this.useMode = an.Inner_DataUtil.init;
+         }
+      }
+
+      this.waitForFinish = tag.getBooleanOr("waitForFinish", true);
+      if (tag.contains("holdTicks")) {
+         this.holdTicks = tag.getIntOr("holdTicks", 20);
+      }
+
+      if (tag.contains("useCount")) {
+         this.useCount = Math.max(1, tag.getIntOr("useCount", 1));
+      }
+
+      this.sneak = tag.getBooleanOr("sneak", false);
+      this.waitForGui = tag.getBooleanOr("waitForGui", false);
+      this.guiName = tag.getStringOr("guiName", "");
+      if (tag.contains("enabled")) {
+         this.init = tag.getBooleanOr("enabled", true);
+      }
+
+      this.packetOrder = E.init_D_CompoundTag(tag);
+   }
+
+   @Override
+   public boolean read_Z() {
+      return false;
+   }
+
+   @Override
+   public void load(boolean v) {
+   }
+
+   @Override
+   public boolean write_Z() {
+      return this.waitForGui;
+   }
+
+   @Override
+   public void read(boolean v) {
+      this.waitForGui = v;
+   }
+
+   @Override
+   public String init_Str_7() {
+      return this.guiName == null ? "" : this.guiName;
+   }
+
+   @Override
+   public void init_V_Str(String name) {
+      this.guiName = name == null ? "" : name;
+   }
+
+   @Override
+   public D init_D() {
+      return this.packetOrder;
+   }
+
+   @Override
+   public String getDisplayName() {
+      ArrayUtil target = this.init_ArrayUtil_3();
+      String item = !target.init_Z() && !target.update() ? "current" : target.load_Str();
+      String count = this.useCount > 1 ? " x" + this.useCount : "";
+      String wait = this.waitForFinish ? ", wait" : "";
+      String sneakLabel = this.sneak ? ", sneak" : "";
+      String base = this.useMode == an.Inner_DataUtil.load
+         ? "Use Item (" + item + ", hold " + this.holdTicks + "t" + wait + sneakLabel + ")"
+         : "Use Item (" + item + count + wait + sneakLabel + ")";
+      return base + aP.init_Str_aP(this);
+   }
+
+   @Override
+   public String getIcon() {
+      return "U";
+   }
+
+   @Override
+   public boolean isEnabled() {
+      return this.init;
+   }
+
+   @Override
+   public void setEnabled(boolean e) {
+      this.init = e;
+   }
+
+   private ArrayUtil init_ArrayUtil_3() {
+      ArrayUtil target = this.itemTarget != null ? this.itemTarget.init_ArrayUtil() : ArrayUtil.update(this.itemName);
+      if (!target.init_Z() && !target.update()) {
+         target = ArrayUtil.update(this.itemName);
+      }
+
+      target.init_I = this.slot;
+      return target;
+   }
+
+   public enum Inner_DataUtil {
+      init,
+      load;
+   }
+}

@@ -1,0 +1,248 @@
+package autismclient.modules;
+
+import autismclient.api.module.ValueRange;
+import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
+import autismclient.util.cD;
+import autismclient.util.ci;
+import autismclient.util.ck;
+import autismclient.util.cn;
+import java.util.Random;
+import java.util.UUID;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Input;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+
+final class bf {
+   static final ValueRange init_ValueRange = new ValueRange(20, 60);
+   static final ValueRange load_ValueRange = new ValueRange(45, 85);
+   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private final be init_be = new be();
+   private final Random init_Random = new Random();
+   private final bf.Inner_DataUtil init_bf_DataUtil;
+   private ClientLevel init_ClientLevel;
+   private ClientPacketListener init_ClientPacketListen;
+   private Player init_Player;
+   private UUID init_UUID;
+   private int init_I;
+   private int load_I;
+   private Item init_Item;
+   private double init_D;
+
+   bf(bf.Inner_DataUtil settings) {
+      this.init_bf_DataUtil = settings;
+   }
+
+   private static int init_I() {
+      return ck.init_ck().state_I();
+   }
+
+   void init(Player attacker, Entity entity) {
+      if (attacker == init_Minecraft.player
+         && entity instanceof LivingEntity target
+         && ci.sync()
+         && this.update()
+         && init_Minecraft.player.input.keyPresses.forward()
+         && !init_Minecraft.player.input.keyPresses.backward()
+         && target.isAlive()
+         && target.level() == init_Minecraft.level
+         && !target.isSpectator()
+         && (!this.init_bf_DataUtil.init_Z() || target instanceof Player)
+         && !aL.init_Z_Entity_5(target)
+         && !ByteReader.init_Z(target)) {
+         long now = System.nanoTime();
+         int chance = this.init_bf_DataUtil.init_I();
+         boolean selected = chance > 0 && this.init_Random.nextInt(100) < chance;
+         if (this.init_be
+            .init(now, init_I(), this.init(this.init_bf_DataUtil.init_ValueRange(), 0), this.init(this.init_bf_DataUtil.load_ValueRange(), 1), selected)) {
+            this.init_ClientLevel = init_Minecraft.level;
+            this.init_ClientPacketListen = init_Minecraft.getConnection();
+            this.init_Player = attacker;
+            this.init_UUID = target.getUUID();
+            this.init_I = target.getId();
+            this.load_I = init_Minecraft.player.getInventory().getSelectedSlot();
+            this.init_Item = init_Minecraft.player.getMainHandItem().getItem();
+         }
+      }
+   }
+
+   void init_V_ClientboundDamageE(ClientboundDamageEventPacket packet) {
+      if (this.init_be.init_Z() && packet.entityId() == this.init_I && this.read_Z()) {
+         Entity target = init_Minecraft.level.getEntity(this.init_I);
+         if (target != null && target.getUUID().equals(this.init_UUID) && packet.getSource(init_Minecraft.level).getEntity() == init_Minecraft.player) {
+            this.init_be.init_Z(System.nanoTime());
+         }
+      }
+   }
+
+   Input init_Input_Input(Input original) {
+      if (!this.init_be.init_Z()) {
+         return original;
+      }
+
+      boolean valid = this.read_Z()
+         && this.update()
+         && this.init_bf_DataUtil.init_I() > 0
+         && original.forward()
+         && !original.backward()
+         && !original.shift()
+         && this.write_Z();
+      boolean release = this.init_be.init(System.nanoTime(), init_I(), valid);
+      if (!this.init_be.init_Z()) {
+         this.write_V();
+      }
+
+      if (!release) {
+         return original;
+      }
+
+      boolean strafe = original.left() != original.right() && !init_Z_Input(original);
+      return new Input(false, original.backward(), strafe && original.left(), strafe && original.right(), original.jump(), original.shift(), false);
+   }
+
+   private static boolean init_Z_Input(Input original) {
+      autismclient.util.bb.Inner_DataUtil footing = cD.init(init_Minecraft.player);
+      if (footing == null) {
+         return false;
+      }
+
+      float camera = init_Minecraft.player.getYRot();
+      float side = original.left() ? 90.0F : -90.0F;
+      float whole = (float)Math.toDegrees(Math.atan2(original.left() ? 1.0 : -1.0, original.forward() ? 1.0 : 0.0));
+      int full = 3;
+      return footing.ticks(camera - side) < full && footing.ticks(camera - whole) >= full;
+   }
+
+   boolean init_Z() {
+      return this.init_be.load_Z() && this.read_Z() && this.update();
+   }
+
+   boolean load_Z() {
+      this.init_V();
+      return this.init_be.init_Z();
+   }
+
+   void init_V() {
+      if (!this.init_be.load(System.nanoTime())) {
+         this.write_V();
+      } else if (this.read_Z()
+         && this.update()
+         && this.init_bf_DataUtil.init_I() > 0
+         && this.write_Z()
+         && init_Minecraft.options.keyUp.isDown()
+         && !init_Minecraft.options.keyDown.isDown()
+         && !init_Minecraft.options.keyShift.isDown()) {
+         Entity target = init_Minecraft.level.getEntity(this.init_I);
+         if (!(
+            target instanceof LivingEntity living
+               && living.isAlive()
+               && target.getUUID().equals(this.init_UUID)
+               && !aL.init_Z_Entity_5(living)
+               && !ByteReader.init_Z(living)
+         )) {
+            this.init_be.init_V();
+            this.write_V();
+         }
+      } else {
+         this.init_be.init_V();
+         this.write_V();
+      }
+   }
+
+   void load_V() {
+      if (this.init_be.init_Z()) {
+         this.init_be.init_V();
+         this.write_V();
+      }
+   }
+
+   long init_J() {
+      return this.init_be.init_J();
+   }
+
+   void read_V() {
+      this.init_be.load_V();
+      this.write_V();
+   }
+
+   private boolean read_Z() {
+      return init_Minecraft.level != null
+         && init_Minecraft.level == this.init_ClientLevel
+         && init_Minecraft.player == this.init_Player
+         && init_Minecraft.getConnection() == this.init_ClientPacketListen;
+   }
+
+   private boolean write_Z() {
+      return init_Minecraft.player.getInventory().getSelectedSlot() == this.load_I && init_Minecraft.player.getMainHandItem().is(this.init_Item);
+   }
+
+   private boolean update() {
+      if (init_Minecraft.isSameThread()
+         && init_Minecraft.player != null
+         && init_Minecraft.level != null
+         && init_Minecraft.getConnection() != null
+         && init_Minecraft.gameMode != null
+         && init_Minecraft.gui.screen() == null
+         && init_Minecraft.gui.overlay() == null
+         && init_Minecraft.player.isAlive()
+         && !init_Minecraft.player.isSpectator()
+         && !init_Minecraft.player.isUsingItem()
+         && !autismclient.util.DataPipe.init()
+         && !(init_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !UtilCore.read_Z_10())
+         && !init_Minecraft.player.isPassenger()
+         && !init_Minecraft.player.getAbilities().flying
+         && !init_Minecraft.player.isFallFlying()
+         && !init_Minecraft.player.isInWater()
+         && !init_Minecraft.player.isInLava()
+         && !init_Minecraft.player.onClimbable()
+         && (!this.init_bf_DataUtil.load_Z() || init_Minecraft.player.onGround())
+         && !aD.init_Z()
+         && !aC.init_Z()
+         && !aC.write()) {
+         Module scaffold = al.init_Module_Str("scaffold");
+         return (scaffold == null || !scaffold.isEnabled())
+            && !j.init_Z_49()
+            && !z.sync_Z_12()
+            && !UtilCore.init_Z_23()
+            && !FieldCache.init_Z_6()
+            && !TableIndex.init_Z_20()
+            && !autismclient.util.macro.g.init_Z()
+            && !cn.init_Z();
+      } else {
+         return false;
+      }
+   }
+
+   private long init(ValueRange range, int minimum) {
+      ValueRange band = (range == null ? (minimum > 0 ? load_ValueRange : init_ValueRange) : range).clamp(minimum, 200.0);
+      this.init_D = this.init_D * 0.92 + this.init_Random.nextGaussian() * 0.035;
+      double style = (autismclient.util.am.init_am().close() - 0.9) * 0.5;
+      double sample = Math.max(0.0, Math.min(1.0, (this.init_Random.nextDouble() + this.init_Random.nextDouble()) * 0.5 + style + this.init_D));
+      return Math.round((band.min() + (band.max() - band.min()) * sample) * 1000000.0);
+   }
+
+   private void write_V() {
+      this.init_ClientLevel = null;
+      this.init_ClientPacketListen = null;
+      this.init_Player = null;
+      this.init_UUID = null;
+      this.init_Item = null;
+   }
+
+   interface Inner_DataUtil {
+      int init_I();
+
+      ValueRange init_ValueRange();
+
+      ValueRange load_ValueRange();
+
+      boolean init_Z();
+
+      boolean load_Z();
+   }
+}

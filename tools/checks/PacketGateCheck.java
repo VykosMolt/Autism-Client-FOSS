@@ -1,0 +1,61 @@
+package autismclient.util.macro;
+
+import autismclient.compat263.CompatSwingPacket;
+import java.lang.reflect.Field;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.InteractionHand;
+import sun.misc.Unsafe;
+
+public class PacketGateCheck {
+   public static void main(String[] args) throws Exception {
+      Field u = Unsafe.class.getDeclaredField("theUnsafe");
+      u.setAccessible(true);
+      Unsafe unsafe = (Unsafe)u.get(null);
+      Minecraft mc = (Minecraft)unsafe.allocateInstance(Minecraft.class);
+      Field instance = Minecraft.class.getDeclaredField("instance");
+      instance.setAccessible(true);
+      instance.set(null, mc);
+      // Panic-hide off without reading the real config from disk.
+      autismclient.modules.aD.init((autismclient.util.AutismConfig)null);
+
+      C.load_V();
+      C.load(gate("g", B.Inner_CachePool.init), 0L);
+      check(C.init_Z(), "owner-0 gate installed");
+      C.load(gate("g", B.Inner_CachePool.write), 7L);
+      check(!C.init_Z(), "UNBLOCK from a run removes the owner-0 gate with the same id");
+
+      C.load(gate("g", B.Inner_CachePool.init), 0L);
+      C.load(gate("run", B.Inner_CachePool.init), 7L);
+      CompatSwingPacket packet = new CompatSwingPacket(InteractionHand.MAIN_HAND);
+      check(C.init(packet, "C2S") == C.Inner_StreamUtil.load, "gates block on the connection they were made on");
+
+      net.minecraft.SharedConstants.tryDetectVersion();
+      net.minecraft.server.Bootstrap.bootStrap();
+      LocalPlayer player = (LocalPlayer)unsafe.allocateInstance(LocalPlayer.class);
+      Field connection = LocalPlayer.class.getField("connection");
+      unsafe.putObject(player, unsafe.objectFieldOffset(connection), unsafe.allocateInstance(ClientPacketListener.class));
+      Field playerField = Minecraft.class.getField("player");
+      unsafe.putObject(mc, unsafe.objectFieldOffset(playerField), player);
+      check(mc.getConnection() != null, "fake connection in place");
+      C.init(packet, "C2S");
+      check(C.init(7L) == 1, "run-owned gate survives a connection change");
+      check(C.init(0L) == 0, "owner-0 gate is dropped on a different connection");
+      System.out.println("PASS PacketGateCheck");
+   }
+
+   private static B gate(String id, B.Inner_CachePool mode) {
+      B gate = new B();
+      gate.gateId = id;
+      gate.mode = mode;
+      return gate;
+   }
+
+   private static void check(boolean ok, String what) {
+      if (!ok) {
+         System.out.println("FAIL " + what);
+         System.exit(1);
+      }
+   }
+}

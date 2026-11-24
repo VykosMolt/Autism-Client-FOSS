@@ -1,0 +1,1031 @@
+package autismclient.util;
+
+import java.util.List;
+import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
+
+public class AutismLauncherOverlay extends bj {
+   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final int flush_I = 0;
+   private static final int close_I = 0;
+   private static final String init_Str_2 = "MAIN_MENU";
+   private static final String load_Str = "UTILITIES";
+   private static final int open_I = 0;
+   private static final int poll_I = 4;
+   private static final int push_I = 3;
+   private static final int pop_I = 2;
+   private static final int tick = 20;
+   private static final int run = 20;
+   private static final int get = 136;
+   private static final int set = 8;
+   private static final int put = 14;
+   private static final int add = 4;
+   private static final int clear = 13;
+   private static final int reset = 58;
+   private static final int start = 164;
+   private static final float init_F_2 = 3.0F;
+   private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
+   private final autismclient.gui.f.c.StateCache init_StateCache = new autismclient.gui.f.c.StateCache();
+   private final autismclient.gui.f.c.TextFormat init_TextFormat = new autismclient.gui.f.c.TextFormat(this.init_CharEncoder, this.init_StateCache);
+   private final AutismMacroListOverlay init_AutismMacroListOve;
+   private final AutismFabricatorOverlay init_AutismFabricatorOv;
+   private final AutismLANSyncOverlay init_AutismLANSyncOverl;
+   private final AutismQueueEditorOverlay init_AutismQueueEditorO;
+   private final AutismPacketLoggerOverlay init_AutismPacketLogger;
+   private final AutismCustomFilterOverlay init_AutismCustomFilter;
+   private Supplier<AutismPacketLoggerOverlay> init_Supplier;
+   private Supplier<AutismServerInfoOverlay> load_Supplier;
+   private final String read_Str;
+   private final boolean write_Z;
+   private final boolean update_Z;
+   private final boolean sync_Z;
+   private Runnable init_Runnable;
+   private Runnable load_Runnable;
+   private AutismKeybindOverlay init_AutismKeybindOverl;
+   private AutismServerInfoOverlay init_AutismServerInfoOv;
+   private autismclient.gui.f.c.ByteReader init_ByteReader;
+   private autismclient.gui.f.c.ByteReader load_ByteReader;
+   private autismclient.gui.f.c.ByteReader read_ByteReader;
+   private autismclient.gui.f.b.BitSetUtil init_BitSetUtil;
+   private static final String write_Str = "Type message or /command...";
+   private autismclient.gui.f.c.JsonUtil init_JsonUtil;
+   private autismclient.gui.f.c.JsonUtil load_JsonUtil;
+   private autismclient.gui.f.c.JsonUtil read_JsonUtil;
+   private autismclient.gui.f.c.DataUtil init_DataUtil;
+   private int stop = 0;
+   private int next = 0;
+   private int prev = 164;
+   private int valid = 220;
+   private boolean flush_Z = true;
+   private boolean close_Z = false;
+   private float load_F;
+   private float read_F;
+   private float write_F;
+   private float update_F;
+   private int size;
+   private int data;
+   private boolean open_Z = false;
+   private Font init_Font;
+   private int value = -2147483648;
+   private boolean poll_Z;
+   private boolean push_Z;
+   private boolean pop_Z;
+   private int cache = -2147483648;
+
+   public AutismLauncherOverlay(
+      AutismMacroListOverlay macroListOverlay,
+      AutismFabricatorOverlay fabricatorOverlay,
+      AutismLANSyncOverlay lanSyncOverlay,
+      AutismQueueEditorOverlay queueEditorOverlay,
+      AutismPacketLoggerOverlay packetLoggerOverlay,
+      AutismCustomFilterOverlay customFilterOverlay
+   ) {
+      this(macroListOverlay, fabricatorOverlay, lanSyncOverlay, queueEditorOverlay, packetLoggerOverlay, customFilterOverlay, "autism-launcher", true, true);
+   }
+
+   public AutismLauncherOverlay(
+      AutismMacroListOverlay macroListOverlay,
+      AutismFabricatorOverlay fabricatorOverlay,
+      AutismLANSyncOverlay lanSyncOverlay,
+      AutismQueueEditorOverlay queueEditorOverlay,
+      AutismPacketLoggerOverlay packetLoggerOverlay,
+      AutismCustomFilterOverlay customFilterOverlay,
+      String overlayId,
+      boolean includeScreenSection,
+      boolean includeChatSection
+   ) {
+      this(
+         macroListOverlay,
+         fabricatorOverlay,
+         lanSyncOverlay,
+         queueEditorOverlay,
+         packetLoggerOverlay,
+         customFilterOverlay,
+         overlayId,
+         true,
+         includeScreenSection,
+         includeChatSection
+      );
+   }
+
+   public AutismLauncherOverlay(
+      AutismMacroListOverlay macroListOverlay,
+      AutismFabricatorOverlay fabricatorOverlay,
+      AutismLANSyncOverlay lanSyncOverlay,
+      AutismQueueEditorOverlay queueEditorOverlay,
+      AutismPacketLoggerOverlay packetLoggerOverlay,
+      AutismCustomFilterOverlay customFilterOverlay,
+      String overlayId,
+      boolean includeFabricatorButton,
+      boolean includeScreenSection,
+      boolean includeChatSection
+   ) {
+      this.init_AutismMacroListOve = macroListOverlay;
+      this.init_AutismFabricatorOv = fabricatorOverlay;
+      this.init_AutismLANSyncOverl = lanSyncOverlay;
+      this.init_AutismQueueEditorO = queueEditorOverlay;
+      this.init_AutismPacketLogger = packetLoggerOverlay;
+      this.init_AutismCustomFilter = customFilterOverlay;
+      this.init_Supplier = () -> this.init_AutismPacketLogger;
+      this.read_Str = overlayId != null && !overlayId.isBlank() ? overlayId : "autism-launcher";
+      this.write_Z = includeFabricatorButton;
+      this.update_Z = includeScreenSection;
+      this.sync_Z = includeChatSection;
+      this.write_V_11();
+      this.b__V();
+      if (this.init_DataUtil != null) {
+         this.init_DataUtil.load_DataUtil(this.init_DataUtil.init_Z_3());
+      }
+   }
+
+   public void init_V_Runnable(Runnable action) {
+      this.init_Runnable = action;
+      this.write_V_11();
+   }
+
+   public void load_V_Runnable(Runnable action) {
+      this.load_Runnable = action;
+      this.write_V_11();
+   }
+
+   public void init_V_AutismKeybindOverl(AutismKeybindOverlay overlay) {
+      this.init_AutismKeybindOverl = overlay;
+   }
+
+   public void init_V_AutismServerInfoOv(AutismServerInfoOverlay overlay) {
+      this.init_AutismServerInfoOv = overlay;
+      this.load_Supplier = () -> this.init_AutismServerInfoOv;
+   }
+
+   public void init_V_Supplier(Supplier<AutismPacketLoggerOverlay> supplier) {
+      this.init_Supplier = supplier == null ? () -> this.init_AutismPacketLogger : supplier;
+   }
+
+   public void load_V_Supplier(Supplier<AutismServerInfoOverlay> supplier) {
+      this.load_Supplier = supplier == null ? () -> this.init_AutismServerInfoOv : supplier;
+   }
+
+   private AutismPacketLoggerOverlay init_AutismPacketLogger() {
+      AutismPacketLoggerOverlay overlay = this.init_Supplier == null ? this.init_AutismPacketLogger : this.init_Supplier.get();
+      if (overlay != null) {
+         bk.init_bk().init_V(overlay);
+      }
+
+      return overlay;
+   }
+
+   private AutismServerInfoOverlay init_AutismServerInfoOv() {
+      AutismServerInfoOverlay overlay = this.load_Supplier == null ? this.init_AutismServerInfoOv : this.load_Supplier.get();
+      if (overlay != null) {
+         bk.init_bk().init_V(overlay);
+      }
+
+      return overlay;
+   }
+
+   private void write_V_11() {
+      this.init_StateCache.init(autismclient.gui.f.c.IoWorker.init(0)).load_StateCache(false).read_StateCache(false);
+      this.init_StateCache.init_PacketUtil_3().init_V_2();
+      this.init_StateCache.init_PacketUtil_3().init(autismclient.gui.f.c.IoWorker.init_IoWorker).init(0);
+      this.init_DataUtil = new autismclient.gui.f.c.DataUtil("Main Menu").init(this.prev()).load(this.valid()).init_DataUtil(true);
+      this.init_DataUtil.init_PacketUtil_2().init(new autismclient.gui.f.c.IoWorker(1, 0, 1, 1)).init(this.get_I_9());
+      this.init_StateCache.init_PacketUtil_3().init_TableIndex_TableIndex(this.init_DataUtil);
+      autismclient.gui.f.c.ByteReader macrosButton = this.init(
+         "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            AutismMacroEditorOverlay macroEditorOverlay = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
+            if (macroEditorOverlay != null && macroEditorOverlay.sync_Z()) {
+               if (this.init_AutismMacroListOve != null) {
+                  this.init_AutismMacroListOve.init_V_Z(false);
+               }
+
+               bk.init_bk().update_V(macroEditorOverlay);
+            } else if (this.init_AutismMacroListOve != null) {
+               this.init_V_cX(this.init_AutismMacroListOve);
+            }
+         }
+      );
+      if (this.write_Z) {
+         this.init_V_PacketUtil(
+            this.init_DataUtil.init_PacketUtil_2(),
+            macrosButton,
+            this.init("Fabricator", autismclient.gui.f.a.DataUtil.flush, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+               if (this.init_AutismFabricatorOv != null) {
+                  this.init_V_cX(this.init_AutismFabricatorOv);
+               }
+            })
+         );
+      } else {
+         this.init_DataUtil.init_PacketUtil_2().init_TableIndex_TableIndex(macrosButton);
+      }
+
+      this.init_V_PacketUtil(
+         this.init_DataUtil.init_PacketUtil_2(),
+         this.init("LAN Sync", autismclient.gui.f.a.DataUtil.update, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            if (this.init_AutismLANSyncOverl != null) {
+               this.init_V_cX(this.init_AutismLANSyncOverl);
+            }
+         }),
+         this.init("Queue", autismclient.gui.f.a.DataUtil.poll, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            if (this.init_AutismQueueEditorO != null) {
+               this.init_V_cX(this.init_AutismQueueEditorO);
+            }
+         })
+      );
+      this.init_V_PacketUtil(
+         this.init_DataUtil.init_PacketUtil_2(),
+         this.init("Logger", autismclient.gui.f.a.DataUtil.open, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            AutismPacketLoggerOverlay overlay = this.init_AutismPacketLogger();
+            this.init_V_cX(overlay);
+         }),
+         this.init("Packets", autismclient.gui.f.a.DataUtil.close, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            if (this.init_AutismCustomFilter != null) {
+               this.init_V_cX(this.init_AutismCustomFilter);
+            }
+         })
+      );
+      this.init_V_PacketUtil(
+         this.init_DataUtil.init_PacketUtil_2(),
+         this.init("Server Info", autismclient.gui.f.a.DataUtil.push, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            AutismServerInfoOverlay overlay = this.init_AutismServerInfoOv();
+            this.init_V_cX(overlay);
+         }),
+         this.init("Settings", autismclient.gui.f.a.DataUtil.write, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            if (this.init_AutismKeybindOverl != null) {
+               this.init_V_cX(this.init_AutismKeybindOverl);
+            }
+         })
+      );
+      if (!AutismLiteVariant.enabled()) {
+         autismclient.gui.f.c.ByteReader matchmakingButton = this.init(
+            "Matchmaking", autismclient.gui.f.a.DataUtil.set, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+               autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
+               if (mod != null) {
+                  cX ov = mod.init_cX();
+                  if (ov != null) {
+                     ((AutismMatchmakingOverlay)ov).load(false);
+                     this.init_V_cX(ov);
+                  }
+               }
+            }
+         );
+         this.read_ByteReader = this.init("Multi", autismclient.gui.f.a.DataUtil.put, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
+            if (mod != null) {
+               mod.buffer();
+            }
+         });
+         this.init_V_PacketUtil(this.init_DataUtil.init_PacketUtil_2(), matchmakingButton, this.read_ByteReader);
+         this.init_V_PacketUtil(
+            this.init_DataUtil.init_PacketUtil_2(),
+            this.init("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+               if (!AutismLiteVariant.enabled()) {
+                  autismclient.ai.ConfigStore.init_ConfigStore().read();
+               }
+            }),
+            this.init("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+               if (!AutismLiteVariant.enabled()) {
+                  autismclient.ai.cV.load_V();
+               }
+            })
+         );
+      }
+
+      this.init_V_Str_Identifier("PACKET", autismclient.gui.f.a.DataUtil.tick);
+      this.init_ByteReader = this.init("Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this::update_V_9).load_ByteReader_Z(true);
+      this.load_ByteReader = this.init("Delay", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this::sync_V_8).load_ByteReader_Z(true);
+      this.init_V_PacketUtil(this.init_DataUtil.init_PacketUtil_2(), this.init_ByteReader, this.load_ByteReader);
+      this.init_V_PacketUtil(
+         this.init_DataUtil.init_PacketUtil_2(),
+         this.init("Flush", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::flush_V_8),
+         this.init("Clear", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::close_V_7)
+      );
+      if (this.update_Z) {
+         this.init_V_Str_Identifier("SCREEN", autismclient.gui.f.a.DataUtil.run);
+         this.init_V_PacketUtil(
+            this.init_DataUtil.init_PacketUtil_2(),
+            this.init("Close", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this.init_Runnable != null ? this.init_Runnable : aG::update),
+            this.init("De-sync", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this.load_Runnable != null ? this.load_Runnable : this::open_V_6)
+         );
+         this.init_V_PacketUtil(
+            this.init_DataUtil.init_PacketUtil_2(),
+            this.init("Save", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::poll_V_4),
+            this.init("Load", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::set_V_4)
+         );
+         this.init_V_PacketUtil(
+            this.init_DataUtil.init_PacketUtil_2(),
+            this.init("Title", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, aG::open),
+            this.init("Disc+Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this::put_V_3)
+         );
+      }
+
+      if (this.sync_Z) {
+         this.init_BitSetUtil = new autismclient.gui.f.b.BitSetUtil()
+            .update(0)
+            .read_BitSetUtil_I(this.size())
+            .read_BitSetUtil_F(this.data())
+            .init_BitSetUtil_F(this.data())
+            .load_BitSetUtil_I(6)
+            .load_BitSetUtil_Str("Type message or /command...")
+            .flush(true)
+            .init_BitSetUtil_Supplier(() -> init_Minecraft.gui != null ? init_Minecraft.gui.hud.getChat().getRecentChat() : List.of())
+            .load_BitSetUtil_Consumer(this::init_V_Str_6);
+         this.init_DataUtil.init_PacketUtil_2().init_TableIndex_TableIndex(this.init_BitSetUtil);
+         this.init_DataUtil.init_PacketUtil_2().init_TableIndex_TableIndex(new autismclient.gui.f.c.FileCache(0.0F, 2.0F));
+         autismclient.gui.f.c.StreamUtil syncRow = new autismclient.gui.f.c.StreamUtil()
+            .init(this.value())
+            .init(new autismclient.gui.f.c.IoWorker(4, 0, 2, 0))
+            .init_StreamUtil(false);
+         syncRow.init_TableIndex_Z(true);
+         int keyColor = aG.init_I();
+         int[] valueColors = aG.init_IArr();
+         this.init_JsonUtil = syncRow.init_TableIndex_TableIndex(
+            new autismclient.gui.f.c.JsonUtil("Rev: ", "--").init(keyColor).load(valueColors[0]).init_JsonUtil(true)
+         );
+         this.load_JsonUtil = syncRow.init_TableIndex_TableIndex(
+            new autismclient.gui.f.c.JsonUtil("SyncID: ", "--").init(keyColor).load(valueColors[1]).init_JsonUtil(true)
+         );
+         this.read_JsonUtil = syncRow.init_TableIndex_TableIndex(
+            new autismclient.gui.f.c.JsonUtil("Slot: ", "--").init(keyColor).load(valueColors[2]).init_JsonUtil(true)
+         );
+         this.init_DataUtil.init_PacketUtil_2().init_TableIndex_TableIndex(syncRow);
+      } else {
+         this.init_BitSetUtil = null;
+         this.init_JsonUtil = null;
+         this.load_JsonUtil = null;
+         this.read_JsonUtil = null;
+      }
+
+      if (!this.sync_Z && !this.init_DataUtil.init_PacketUtil_2().init_List_2().isEmpty()) {
+         autismclient.gui.f.c.TableIndex last = this.init_DataUtil.init_PacketUtil_2().init_List_2().getLast();
+         if (last instanceof autismclient.gui.f.c.ByteReader button) {
+            button.init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.init(true, true));
+         } else if (last instanceof autismclient.gui.f.c.StreamUtil pair) {
+            List<autismclient.gui.f.c.ByteReader> buttons = pair.init_List_2()
+               .stream()
+               .filter(autismclient.gui.f.c.ByteReader.class::isInstance)
+               .map(autismclient.gui.f.c.ByteReader.class::cast)
+               .toList();
+
+            for (int i = 0; i < buttons.size(); i++) {
+               buttons.get(i).init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.init(i == 0, i == buttons.size() - 1));
+            }
+         }
+      }
+   }
+
+   private void init_V_cX(cX overlay) {
+      if (overlay != null) {
+         bk manager = bk.init_bk();
+         boolean wasRegistered = manager.init_List().contains(overlay);
+         manager.init_V(overlay);
+         manager.init_V_cX_Z(overlay, false);
+         if (!wasRegistered && overlay.sync_Z()) {
+            manager.update_V(overlay);
+         } else {
+            overlay.init_V_Z(!overlay.sync_Z());
+            if (overlay.sync_Z()) {
+               manager.update_V(overlay);
+            }
+         }
+      }
+   }
+
+   private void init_V_Str_Identifier(String label, Identifier icon) {
+      if (!this.init_DataUtil.init_PacketUtil_2().init_List_2().isEmpty()) {
+         this.init_DataUtil.init_PacketUtil_2().init_TableIndex_TableIndex(new autismclient.gui.f.c.FileCache(0.0F, this.run_I_11()));
+      }
+
+      this.init_DataUtil
+         .init_PacketUtil_2()
+         .init_TableIndex_TableIndex(new autismclient.gui.f.c.ConfigStore(label, icon).init(this.reset()).init_ConfigStore(true));
+   }
+
+   private autismclient.gui.f.c.ByteReader init(autismclient.gui.f.c.PacketUtil parent, String label, Identifier icon, Runnable action) {
+      autismclient.gui.f.c.ByteReader button = this.init(label, icon, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, action);
+      parent.init_TableIndex_TableIndex(button);
+      return button;
+   }
+
+   private void init_V_PacketUtil(autismclient.gui.f.c.PacketUtil parent, autismclient.gui.f.c.ByteReader left, autismclient.gui.f.c.ByteReader right) {
+      autismclient.gui.f.c.StreamUtil row = new autismclient.gui.f.c.StreamUtil()
+         .init(this.get_I_9())
+         .init(autismclient.gui.f.c.IoWorker.init_IoWorker)
+         .init_StreamUtil(false);
+      left.read_ByteReader_Z(true);
+      right.read_ByteReader_Z(true);
+      row.init_TableIndex_TableIndex(left.init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.write));
+      row.init_TableIndex_TableIndex(right.init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.write));
+      row.init_TableIndex_Z(true);
+      parent.init_TableIndex_TableIndex(row);
+   }
+
+   private autismclient.gui.f.c.ByteReader init(String label, Identifier icon, autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant, Runnable action) {
+      autismclient.gui.f.c.ByteReader button = new autismclient.gui.f.c.ByteReader(label, variant, action)
+         .read_ByteReader_Z(false)
+         .init_ByteReader_Z(true)
+         .init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.write)
+         .load_ByteReader_I(this.set_I_9())
+         .init_ByteReader_I(this.put_I_3())
+         .init_ByteReader_F(this.init_I_Str_Identifier(label, icon))
+         .read_ByteReader_I(0);
+      if (icon != null) {
+         button.init_ByteReader_Identifier(icon)
+            .init_ByteReader_ByteReader_DataUti(autismclient.gui.f.c.ByteReader.Inner_DataUtil.load)
+            .write(this.add_I_9())
+            .update(this.clear_I_3());
+      }
+
+      return button;
+   }
+
+   @Override
+   public String init_Str() {
+      return this.read_Str;
+   }
+
+   @Override
+   public int init_I() {
+      return this.push_I_13();
+   }
+
+   @Override
+   public int load_I() {
+      return this.next();
+   }
+
+   @Override
+   public cH init_cH() {
+      return new cH(this.stop, this.next, this.prev, this.valid, this.flush_Z, !this.init_DataUtil.init_Z_3());
+   }
+
+   @Override
+   public void init_V_cH(cH bounds) {
+      if (bounds != null) {
+         cH clamped = this.init_cH_cH_2(bounds);
+         this.stop = clamped.init_I;
+         this.next = clamped.load_I;
+         this.prev = clamped.read;
+         this.valid = clamped.write;
+         this.flush_Z = clamped.init_Z;
+         if (this.init_DataUtil != null) {
+            this.init_DataUtil.load_DataUtil(!clamped.load_Z);
+         }
+      }
+   }
+
+   @Override
+   public void a__V() {
+      ck.init_ck().init_V_Str_cH(this.init_Str(), this.init_cH());
+      AutismConfig config = AutismConfig.getGlobal();
+      AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.computeIfAbsent("MAIN_MENU", ignored -> new AutismConfig.ModuleCategoryLayout());
+      cH trueGeometry = bk.init_bk().init(this.init_Str());
+      int saveX = trueGeometry != null ? trueGeometry.init_I : this.stop;
+      int saveY = trueGeometry != null ? trueGeometry.load_I : this.next;
+      if (layout.f_x_I != saveX || layout.f_y_I != saveY || layout.collapsed != this.flush_Z()) {
+         layout.f_x_I = saveX;
+         layout.f_y_I = saveY;
+         layout.collapsed = this.flush_Z();
+         config.save();
+      }
+   }
+
+   @Override
+   public void b__V() {
+      cH saved = ck.init_ck().init_cH_Str(this.init_Str());
+      boolean savedVisible = saved == null || saved.init_Z;
+      boolean savedCollapsed = saved != null && saved.load_Z;
+      AutismConfig config = AutismConfig.getGlobal();
+      AutismConfig.ModuleCategoryLayout layout = config.moduleCategoryLayouts.get("MAIN_MENU");
+      if (layout == null) {
+         AutismConfig.ModuleCategoryLayout old = config.moduleCategoryLayouts.get("UTILITIES");
+         if (old != null) {
+            layout = new AutismConfig.ModuleCategoryLayout();
+            layout.f_x_I = old.f_x_I;
+            layout.f_y_I = old.f_y_I;
+            layout.collapsed = old.collapsed;
+            config.moduleCategoryLayouts.put("MAIN_MENU", layout);
+         }
+      }
+
+      if (layout != null && layout.f_x_I >= 0 && layout.f_y_I >= 0) {
+         this.init_V_cH(new cH(layout.f_x_I, layout.f_y_I, this.prev, this.valid, savedVisible, layout.collapsed || savedCollapsed));
+      } else if (saved != null) {
+         this.init_V_cH(saved);
+      }
+   }
+
+   @Override
+   public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+      if (this.flush_Z || this.a__Z()) {
+         ck shared = ck.init_ck();
+         if (this.init_ByteReader != null) {
+            boolean sending = shared.read_Z();
+            this.init_ByteReader.init_ByteReader_Str("Send");
+            this.init_ByteReader
+               .init_ByteReader_ByteReader_StreamU(
+                  sending ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write
+               );
+         }
+
+         if (this.load_ByteReader != null) {
+            boolean delaying = shared.write_Z();
+            this.load_ByteReader.init_ByteReader_Str("Delay");
+            this.load_ByteReader
+               .init_ByteReader_ByteReader_StreamU(
+                  delaying ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write
+               );
+         }
+
+         if (!AutismLiteVariant.enabled() && this.read_ByteReader != null) {
+            autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.init_PacketUtil();
+            this.read_ByteReader.init_ByteReader_Str(multi.load_Z() ? "Multi " + multi.read_Str() : "Multi");
+            this.read_ByteReader
+               .init_ByteReader_ByteReader_StreamU(
+                  multi.load_Z() ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load
+               );
+         }
+
+         this.clear_V_3();
+         this.add_V_4();
+         this.prev = this.push_I_13();
+         autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+         float uiMouseX = viewport.init_F_D(mouseX);
+         float uiMouseY = viewport.load(mouseY);
+         autismclient.gui.f.c.SyncManager metrics = new autismclient.gui.f.c.SyncManager(
+            context, init_Minecraft.font, viewport, this.init_CharEncoder, uiMouseX, uiMouseY, delta
+         );
+         this.valid = Math.max(this.load_I(), Math.round(this.init_StateCache.init_F_SyncManager_F(metrics, this.prev)));
+         cH clamped = this.init_cH_cH_2(
+            new cH(this.stop, this.next, this.prev, this.valid, this.flush_Z, this.init_DataUtil != null && !this.init_DataUtil.init_Z_3())
+         );
+         this.stop = clamped.init_I;
+         this.next = clamped.load_I;
+         this.prev = clamped.read;
+         this.valid = clamped.write;
+         this.init_StateCache.init_StateCache(true);
+         this.init_StateCache.init_TableIndex_F(this.stop, this.next, this.prev, this.valid);
+         this.init_TextFormat.init(context, mouseX, mouseY, delta);
+      }
+   }
+
+   @Override
+   public boolean init_Z_D_3(double mouseX, double mouseY, int button) {
+      if (!this.flush_Z) {
+         return false;
+      } else {
+         autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+         float uiMouseX = viewport.init_F_D(mouseX);
+         float uiMouseY = viewport.load(mouseY);
+         if (button == 0 && this.init_Z_F_F_3(uiMouseX, uiMouseY) && this.init_DataUtil != null) {
+            this.close_Z = true;
+            this.open_Z = false;
+            this.load_F = uiMouseX - this.stop;
+            this.read_F = uiMouseY - this.next;
+            this.write_F = uiMouseX;
+            this.update_F = uiMouseY;
+            this.size = this.stop;
+            this.data = this.next;
+            return true;
+         } else {
+            return this.init_TextFormat.init_Z_D_2(mouseX, mouseY, button) ? true : this.init_Z_D_D(mouseX, mouseY);
+         }
+      }
+   }
+
+   @Override
+   public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
+      if (this.close_Z) {
+         this.close_Z = false;
+         this.a__V();
+         return true;
+      } else {
+         return this.init_TextFormat.load(mouseX, mouseY, button);
+      }
+   }
+
+   @Override
+   public boolean init_Z_D(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+      if (!this.close_Z) {
+         return this.init_TextFormat.init(mouseX, mouseY, button, deltaX, deltaY);
+      }
+
+      autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      float uiMouseX = viewport.init_F_D(mouseX);
+      float uiMouseY = viewport.load(mouseY);
+      cH clamped = this.init_cH_cH_2(
+         new cH(
+            Math.round(uiMouseX - this.load_F),
+            Math.round(uiMouseY - this.read_F),
+            this.prev,
+            this.valid,
+            this.flush_Z,
+            this.init_DataUtil != null && !this.init_DataUtil.init_Z_3()
+         )
+      );
+      this.stop = clamped.init_I;
+      this.next = clamped.load_I;
+      this.open_Z = this.open_Z
+         || Math.abs(uiMouseX - this.write_F) >= 3.0F
+         || Math.abs(uiMouseY - this.update_F) >= 3.0F
+         || this.stop != this.size
+         || this.next != this.data;
+      return true;
+   }
+
+   @Override
+   public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
+      return this.init_TextFormat.init_Z_D(mouseX, mouseY, amount);
+   }
+
+   @Override
+   public boolean init_Z_I(int keyCode, int scanCode, int modifiers) {
+      if (!this.flush_Z || this.flush_Z()) {
+         return false;
+      }
+
+      if (keyCode == 258 && this.init_BitSetUtil != null && this.init_BitSetUtil.load_Z() && this.init_BitSetUtil.init_Str().isEmpty()) {
+         String last = this.load_Str_6();
+         if (last != null && !last.isBlank()) {
+            this.init_BitSetUtil.init_BitSetUtil_Str(last);
+            this.init_BitSetUtil.init_BitSetUtil();
+         }
+
+         return true;
+      } else {
+         return this.init_TextFormat.init_Z_I(keyCode, scanCode, modifiers);
+      }
+   }
+
+   @Override
+   public boolean init_Z_C_I(char chr, int modifiers) {
+      return this.flush_Z && !this.flush_Z() ? this.init_TextFormat.init(chr, modifiers) : false;
+   }
+
+   @Override
+   public boolean sync_Z() {
+      return this.flush_Z;
+   }
+
+   @Override
+   public void init_V_Z(boolean visible) {
+      this.flush_Z = visible;
+      if (!visible) {
+         this.init_TextFormat.load();
+         this.close_Z = false;
+         this.open_Z = false;
+      } else if (this.init_DataUtil != null) {
+         this.init_DataUtil.load_DataUtil(this.init_DataUtil.init_Z_3());
+      }
+   }
+
+   @Override
+   public boolean init_Z_D_D(double mouseX, double mouseY) {
+      if (!this.flush_Z) {
+         return false;
+      }
+
+      autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      float uiX = viewport.init_F_D(mouseX);
+      float uiY = viewport.load(mouseY);
+      return uiX >= this.stop && uiX < this.stop + this.prev && uiY >= this.next && uiY < this.next + this.valid;
+   }
+
+   @Override
+   public boolean load_Z_D_D(double mouseX, double mouseY) {
+      if (!this.flush_Z) {
+         return false;
+      }
+
+      autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      return this.init_Z_F_F_3(viewport.init_F_D(mouseX), viewport.load(mouseY));
+   }
+
+   @Override
+   public boolean load_Z() {
+      return true;
+   }
+
+   @Override
+   public boolean flush_Z() {
+      return this.init_DataUtil != null && !this.init_DataUtil.init_Z_3();
+   }
+
+   @Override
+   public void write_V_Z(boolean collapsed) {
+      if (this.flush_Z() != collapsed) {
+         if (this.init_DataUtil != null) {
+            this.init_DataUtil.init_DataUtil(!collapsed);
+         }
+
+         if (collapsed) {
+            this.get_V();
+         }
+
+         this.a__V();
+      }
+   }
+
+   @Override
+   public boolean write_Z() {
+      return this.init_TextFormat.init_Z();
+   }
+
+   @Override
+   public void push_V() {
+      this.init_TextFormat.load();
+   }
+
+   private boolean init_Z_F_F_3(float uiMouseX, float uiMouseY) {
+      return this.init_DataUtil != null
+         && uiMouseX >= this.stop
+         && uiMouseX < this.stop + this.prev
+         && uiMouseY >= this.next
+         && uiMouseY < this.next + this.prev();
+   }
+
+   private cH init_cH_cH_2(cH bounds) {
+      autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      int margin = 4;
+      int viewportW = Math.round(viewport.init());
+      int viewportH = Math.round(viewport.load());
+      int availableW = Math.max(1, viewportW - margin * 2);
+      int availableH = Math.max(this.prev(), viewportH - margin * 2);
+      int width = Math.max(Math.min(this.init_I(), availableW), Math.min(bounds.read, availableW));
+      int minHeight = bounds.load_Z ? this.prev() : this.load_I();
+      int height = Math.max(Math.min(minHeight, availableH), Math.min(bounds.write, availableH));
+      int renderedHeight = bounds.load_Z ? this.prev() : height;
+      int x = Math.max(margin, Math.min(bounds.init_I, Math.max(margin, viewportW - margin - width)));
+      int y = Math.max(margin, Math.min(bounds.load_I, Math.max(margin, viewportH - margin - renderedHeight)));
+      return new cH(x, y, width, height, bounds.init_Z, bounds.load_Z);
+   }
+
+   private int push_I_13() {
+      if (init_Minecraft.font == null) {
+         return this.stop();
+      }
+
+      int reloadGen = autismclient.gui.f.b.k.init_I();
+      if (this.cache != -2147483648
+         && this.init_Font == init_Minecraft.font
+         && this.value == reloadGen
+         && this.poll_Z == this.write_Z
+         && this.push_Z == this.update_Z
+         && this.pop_Z == this.sync_Z) {
+         return this.cache;
+      }
+
+      int computed = this.pop_I_13();
+      this.init_Font = init_Minecraft.font;
+      this.value = reloadGen;
+      this.poll_Z = this.write_Z;
+      this.push_Z = this.update_Z;
+      this.pop_Z = this.sync_Z;
+      this.cache = computed;
+      return computed;
+   }
+
+   private int pop_I_13() {
+      int pairWidth = this.start_I_8();
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Macros", autismclient.gui.f.a.DataUtil.sync));
+      if (this.write_Z) {
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Fabricator", autismclient.gui.f.a.DataUtil.flush));
+      }
+
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("LAN Sync", autismclient.gui.f.a.DataUtil.update));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Queue", autismclient.gui.f.a.DataUtil.poll));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Logger", autismclient.gui.f.a.DataUtil.open));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Packets", autismclient.gui.f.a.DataUtil.close));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Server Info", autismclient.gui.f.a.DataUtil.push));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Settings", autismclient.gui.f.a.DataUtil.write));
+      if (!AutismLiteVariant.enabled()) {
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Matchmaking", autismclient.gui.f.a.DataUtil.set));
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Multi 500", autismclient.gui.f.a.DataUtil.put));
+      }
+
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Send", null));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Delay", null));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Flush", null));
+      pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Clear", null));
+      if (this.update_Z) {
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Close", null));
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("De-sync", null));
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Save", null));
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Load", null));
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Title", null));
+         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Disc+Send", null));
+      }
+
+      int chatWidth = this.sync_Z ? Math.max(this.data(), this.load_I_Str_2("Type message or /command...")) : 0;
+      int headerWidth = autismclient.gui.f.b.k.init(
+            init_Minecraft.font,
+            "MAIN MENU",
+            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load),
+            this.init_CharEncoder.load(autismclient.gui.f.b.l.load)
+         )
+         + this.reset()
+         + this.clear_I_3()
+         + this.cache();
+      int subLabelWidth = this.init_I_Str_3("PACKET");
+      if (this.update_Z) {
+         subLabelWidth = Math.max(subLabelWidth, this.init_I_Str_3("SCREEN"));
+      }
+
+      int contentWidth = Math.max(headerWidth, Math.max(subLabelWidth, Math.max(pairWidth * 2 + this.get_I_9(), chatWidth)));
+      return Math.max(this.stop(), contentWidth + this.tick_I_11() * 2 + this.buffer());
+   }
+
+   private int init_I_Str_Identifier(String label, Identifier icon) {
+      if (init_Minecraft.font == null) {
+         return this.start_I_8();
+      }
+
+      int width = autismclient.gui.f.b.k.init(
+            init_Minecraft.font,
+            label,
+            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+            this.init_CharEncoder.load(autismclient.gui.f.b.l.read)
+         )
+         + this.put_I_3() * 2
+         + this.queue();
+      if (icon != null) {
+         width += this.add_I_9() + this.clear_I_3();
+      }
+
+      return width;
+   }
+
+   private int init_I_Str_3(String label) {
+      return autismclient.gui.f.b.k.init(
+            init_Minecraft.font,
+            label,
+            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load),
+            this.init_CharEncoder.load(autismclient.gui.f.b.l.load)
+         )
+         + this.reset()
+         + this.clear_I_3()
+         + this.queue();
+   }
+
+   private int load_I_Str_2(String placeholder) {
+      return autismclient.gui.f.b.k.init(
+            init_Minecraft.font,
+            placeholder,
+            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
+            this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
+         )
+         + this.state()
+         + this.queue();
+   }
+
+   private int tick_I_11() {
+      return 0;
+   }
+
+   private int run_I_11() {
+      return 0;
+   }
+
+   private int get_I_9() {
+      return 0;
+   }
+
+   private int set_I_9() {
+      return autismclient.gui.f.RenderState.init(13);
+   }
+
+   private int put_I_3() {
+      return 5;
+   }
+
+   private int add_I_9() {
+      return 10;
+   }
+
+   private int clear_I_3() {
+      return 3;
+   }
+
+   private int reset() {
+      return 11;
+   }
+
+   private int start_I_8() {
+      return 54;
+   }
+
+   private int stop() {
+      return 120;
+   }
+
+   private int next() {
+      return 56;
+   }
+
+   private int prev() {
+      return autismclient.gui.f.RenderState.init(14);
+   }
+
+   private int valid() {
+      return 0;
+   }
+
+   private int size() {
+      return autismclient.gui.f.RenderState.init(13);
+   }
+
+   private int data() {
+      return 124;
+   }
+
+   private int value() {
+      return 4;
+   }
+
+   private int cache() {
+      return 16;
+   }
+
+   private int state() {
+      return 10;
+   }
+
+   private int queue() {
+      return 2;
+   }
+
+   private int buffer() {
+      return 2;
+   }
+
+   private void update_V_9() {
+      aG.init_V();
+   }
+
+   private void sync_V_8() {
+      aG.load_V();
+   }
+
+   private void flush_V_8() {
+      aG.read();
+   }
+
+   private void close_V_7() {
+      aG.write();
+   }
+
+   private void open_V_6() {
+      aG.sync();
+   }
+
+   private void poll_V_4() {
+      aG.flush();
+   }
+
+   private void set_V_4() {
+      aG.close();
+   }
+
+   private void put_V_3() {
+      aG.poll();
+   }
+
+   private void init_V_Str_6(String raw) {
+      String sent = aG.init(raw);
+      if (sent != null && this.init_BitSetUtil != null) {
+         if (!sent.isEmpty()) {
+            this.init_BitSetUtil.read_BitSetUtil_Str(sent);
+         }
+
+         this.init_BitSetUtil.init_BitSetUtil_Str("");
+         this.init_BitSetUtil.init_V_Z(false);
+      }
+   }
+
+   private void add_V_4() {
+      if (this.init_BitSetUtil != null) {
+         this.init_BitSetUtil.load_BitSetUtil_Str(aG.load_Str());
+      }
+   }
+
+   private String load_Str_6() {
+      return aG.init_Str();
+   }
+
+   private void clear_V_3() {
+      String[] metrics = aG.init_StrArr();
+      if (this.init_JsonUtil != null) {
+         this.init_JsonUtil.init(metrics[0]);
+      }
+
+      if (this.load_JsonUtil != null) {
+         this.load_JsonUtil.init(metrics[1]);
+      }
+
+      if (this.read_JsonUtil != null) {
+         this.read_JsonUtil.init(metrics[2]);
+      }
+   }
+}

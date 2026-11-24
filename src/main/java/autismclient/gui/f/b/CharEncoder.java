@@ -1,0 +1,536 @@
+package autismclient.gui.f.b;
+
+import autismclient.util.ct;
+import net.minecraft.resources.Identifier;
+
+public final class CharEncoder {
+   public static final float init_F = 2.0F;
+   private static final int init_I = 11;
+   private static final int load = 12;
+   private static final int read = 13;
+   private static final int write = 14;
+   private static final int update = 3;
+   private static final int sync = 2;
+   private static final int flush = 13;
+   private static final int close = 1;
+   private autismclient.gui.f.JsonUtil init_JsonUtil;
+   private int open = -2147483648;
+
+   private static int init_I_I_ct_DataUtil(int color, ct.Inner_DataUtil channel) {
+      return ct.init_I_I_ct_DataUtil(color, channel);
+   }
+
+   private autismclient.gui.f.JsonUtil init_JsonUtil() {
+      int generation = ct.init_I();
+      if (this.init_JsonUtil == null) {
+         this.init_JsonUtil = new autismclient.gui.f.JsonUtil();
+         this.open = generation;
+      } else if (this.open != generation) {
+         this.init_JsonUtil.init();
+         this.open = generation;
+      }
+
+      return this.init_JsonUtil;
+   }
+
+   public static int init_I_I(int color) {
+      return init_I_I_2(color, 13, 10);
+   }
+
+   private static int init_I_I_2(int color, int numerator, int denominator) {
+      int alpha = color >>> 24 & 0xFF;
+      int boosted = Math.min(255, alpha * numerator / denominator);
+      return boosted << 24 | color & 16777215;
+   }
+
+   public Identifier init_Identifier_l(l tone) {
+      Identifier var10000;
+      switch (tone) {
+         case init:
+            var10000 = autismclient.gui.f.a.DataUtil.read;
+            break;
+         case load:
+            var10000 = autismclient.gui.f.a.DataUtil.load;
+            break;
+         case read:
+         case write:
+         case update:
+            var10000 = autismclient.gui.f.a.DataUtil.init;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int init_I() {
+      return 8;
+   }
+
+   public int load() {
+      return Math.max(14, this.init_I_l_I(l.load, 3));
+   }
+
+   public int read() {
+      return 3;
+   }
+
+   public int write() {
+      return 2;
+   }
+
+   public int update() {
+      return Math.max(13, this.init_I_l_I(l.read, 3));
+   }
+
+   public int sync() {
+      return 1;
+   }
+
+   public float init_F() {
+      return 1.0F;
+   }
+
+   public int load(int value) {
+      return value;
+   }
+
+   public float init_F_F(float value) {
+      return value;
+   }
+
+   public autismclient.gui.f.c.IoWorker init_IoWorker_IoWorker(autismclient.gui.f.c.IoWorker insets) {
+      return insets == null
+         ? autismclient.gui.f.c.IoWorker.init_IoWorker
+         : new autismclient.gui.f.c.IoWorker(this.load(insets.read()), this.load(insets.write()), this.load(insets.update()), this.load(insets.sync()));
+   }
+
+   public int init_I_l(l tone) {
+      int vanillaHeight = k.init(this.init_Identifier_l(tone));
+      if (vanillaHeight > 0) {
+         return vanillaHeight;
+      }
+
+      byte var10000;
+      switch (tone) {
+         case init:
+            var10000 = 13;
+            break;
+         case load:
+            var10000 = 12;
+            break;
+         case read:
+         case write:
+         case update:
+            var10000 = 11;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int init_I_l_I(l tone, int extraSpacing) {
+      byte var10000;
+      switch (tone) {
+         case init:
+            var10000 = 3;
+            break;
+         case load:
+            var10000 = 2;
+            break;
+         case read:
+         case write:
+         case update:
+            var10000 = 2;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      int minimumSpacing = var10000;
+      return this.init_I_l(tone) + Math.max(this.load(extraSpacing), minimumSpacing);
+   }
+
+   public int flush() {
+      return 1;
+   }
+
+   public int close() {
+      return 1;
+   }
+
+   public int open() {
+      return 1;
+   }
+
+   public int load(l tone) {
+      int var10000;
+      switch (tone) {
+         case init:
+         case load:
+         case read:
+            var10000 = init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.read);
+            break;
+         case write:
+            var10000 = init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.read);
+            break;
+         case update:
+            var10000 = init_I_I_ct_DataUtil(-45747, ct.Inner_DataUtil.init);
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int read(int rgb) {
+      return this.init_I_I(rgb, 212, 0.035F);
+   }
+
+   public int write(int rgb) {
+      return this.init_I_I(rgb, 196, 0.035F);
+   }
+
+   public int update(int rgb) {
+      return this.init_I_I(rgb, 230, 0.035F);
+   }
+
+   private int init_I_I(int rgb, int alpha, float tint) {
+      int accent = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.init);
+      int tinted = j.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
+      return alpha << 24 | tinted & 16777215;
+   }
+
+   public int poll() {
+      return this.init_JsonUtil().update;
+   }
+
+   public int push() {
+      return j.init_I_I(this.init_JsonUtil().update, -736814558, 0.16F);
+   }
+
+   public int pop() {
+      return this.init_JsonUtil().flush;
+   }
+
+   public int tick() {
+      return autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().flush, 0.8F);
+   }
+
+   public int run() {
+      return init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.open);
+   }
+
+   public int get() {
+      return this.init_JsonUtil().run;
+   }
+
+   public int set() {
+      return this.init_JsonUtil().get;
+   }
+
+   public int put() {
+      return this.init_JsonUtil().add;
+   }
+
+   public int add() {
+      return init_I_I_ct_DataUtil(this.read(2756114), ct.Inner_DataUtil.flush);
+   }
+
+   public int clear() {
+      return init_I_I_ct_DataUtil(-33411, ct.Inner_DataUtil.flush);
+   }
+
+   public int init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+         case write:
+         case update:
+            var10000 = j.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.2F);
+            break;
+         case load:
+            var10000 = this.init_JsonUtil().load;
+            break;
+         case read:
+            var10000 = this.init_JsonUtil().open;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   private int flush(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+            var10000 = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.close);
+            break;
+         case write:
+            var10000 = this.init_JsonUtil().data;
+            break;
+         case update:
+            var10000 = this.init_JsonUtil().stop;
+            break;
+         case load:
+         case read:
+            var10000 = this.init_JsonUtil().set;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int init_I_ByteReader_StreamU_Z_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant, boolean active) {
+      return !active ? this.close(variant) : this.init_I_ByteReader_StreamU_2(variant);
+   }
+
+   private int close(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+         case write:
+         case update:
+            var10000 = j.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.07F);
+            break;
+         case load:
+            var10000 = this.init_JsonUtil().load;
+            break;
+         case read:
+            var10000 = this.init_JsonUtil().open;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int load(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+         case write:
+         case update:
+            var10000 = this.flush(variant);
+            break;
+         case load:
+         case read:
+            var10000 = this.init_JsonUtil().set;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int read(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+         case write:
+         case update:
+            var10000 = j.init_I_I(this.close(variant), this.flush(variant), 0.5F);
+            break;
+         case load:
+         case read:
+            var10000 = autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().set, 0.75F);
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int write(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+         case write:
+         case update:
+            var10000 = j.init_I_I(this.flush(variant), -1, 0.18F);
+            break;
+         case load:
+         case read:
+            var10000 = this.init_JsonUtil().run;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int update(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read);
+            break;
+         case write:
+            var10000 = init_I_I_ct_DataUtil(-42406, ct.Inner_DataUtil.flush);
+            break;
+         case update:
+            var10000 = init_I_I_ct_DataUtil(-4656181, ct.Inner_DataUtil.sync);
+            break;
+         case load:
+         case read:
+            var10000 = this.load(l.read);
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int sync(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+      int var10000;
+      switch (variant) {
+         case init:
+            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read);
+            break;
+         case write:
+            var10000 = init_I_I_ct_DataUtil(-6521989, ct.Inner_DataUtil.flush);
+            break;
+         case update:
+            var10000 = init_I_I_ct_DataUtil(-7821680, ct.Inner_DataUtil.sync);
+            break;
+         case load:
+         case read:
+            var10000 = this.load(l.write);
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int init_I_ByteReader_StreamU_Z(ByteReader.Inner_StreamUtil variant, boolean active) {
+      if (variant == ByteReader.Inner_StreamUtil.sync) {
+         return 1430088703;
+      } else {
+         return variant == ByteReader.Inner_StreamUtil.flush
+            ? 1713842993
+            : this.init_I_ByteReader_StreamU_Z_2(this.init_ByteReader_StreamU_ByteReader_StreamU(variant), active);
+      }
+   }
+
+   private int load(ByteReader.Inner_StreamUtil variant) {
+      return this.close(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+   }
+
+   public int load(ByteReader.Inner_StreamUtil variant, boolean active) {
+      if (variant == ByteReader.Inner_StreamUtil.sync) {
+         return -9466369;
+      } else if (variant == ByteReader.Inner_StreamUtil.flush) {
+         return -11117210;
+      } else {
+         return active
+            ? this.load(this.init_ByteReader_StreamU_ByteReader_StreamU(variant))
+            : this.read(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+      }
+   }
+
+   private int read(ByteReader.Inner_StreamUtil variant) {
+      return this.read(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+   }
+
+   public int init_I_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
+      if (variant == ByteReader.Inner_StreamUtil.sync) {
+         return -7231489;
+      } else {
+         return variant == ByteReader.Inner_StreamUtil.flush ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+      }
+   }
+
+   public int read(ByteReader.Inner_StreamUtil variant, boolean active) {
+      if (variant == ByteReader.Inner_StreamUtil.sync) {
+         return -1;
+      } else if (variant == ByteReader.Inner_StreamUtil.flush) {
+         return -4669753;
+      } else {
+         return active
+            ? this.update(this.init_ByteReader_StreamU_ByteReader_StreamU(variant))
+            : this.sync(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+      }
+   }
+
+   private int write(ByteReader.Inner_StreamUtil variant) {
+      return this.sync(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+   }
+
+   private autismclient.gui.f.c.ByteReader.Inner_StreamUtil init_ByteReader_StreamU_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
+      autismclient.gui.f.c.ByteReader.Inner_StreamUtil var10000;
+      switch (variant) {
+         case write:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init;
+            break;
+         case init:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load;
+            break;
+         case update:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.read;
+            break;
+         case load:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write;
+            break;
+         case read:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update;
+            break;
+         case sync:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init;
+            break;
+         case flush:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.read;
+            break;
+         default:
+            throw new MatchException(null, null);
+      }
+
+      return var10000;
+   }
+
+   public int reset() {
+      return this.init_JsonUtil().pop;
+   }
+
+   public int start() {
+      return this.init_JsonUtil().tick;
+   }
+
+   public int stop() {
+      return this.init_JsonUtil().open;
+   }
+
+   public int next() {
+      return this.init_JsonUtil().push;
+   }
+
+   public int prev() {
+      return init_I_I_ct_DataUtil(this.read(2308139), ct.Inner_DataUtil.write);
+   }
+
+   public int valid() {
+      return init_I_I_ct_DataUtil(this.read(1183762), ct.Inner_DataUtil.close);
+   }
+
+   public int size() {
+      return 905969664;
+   }
+
+   public int data() {
+      return this.read(592139);
+   }
+}

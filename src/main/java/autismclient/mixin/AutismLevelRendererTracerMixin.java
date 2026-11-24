@@ -1,0 +1,106 @@
+package autismclient.mixin;
+
+import autismclient.ai.cG;
+import autismclient.modules.D;
+import autismclient.modules.F;
+import autismclient.modules.NodeWalker;
+import autismclient.modules.ar;
+import autismclient.util.AutismLiteVariant;
+import autismclient.util.PkgCls_j;
+import autismclient.util.co;
+import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import org.joml.Vector4f;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(LevelRenderer.class)
+public class AutismLevelRendererTracerMixin {
+   @Inject(
+      method = "render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;ZLnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lorg/joml/Vector4f;ZZ)V",
+      at = @At("HEAD")
+   )
+   private void autism$beginDelayedOverlays(
+      GraphicsResourceAllocator allocator,
+      boolean renderBlockOutline,
+      CameraRenderState cameraState,
+      GpuBufferSlice gpuBufferSlice,
+      Vector4f vector4f,
+      boolean shouldRenderSky,
+      boolean flag,
+      CallbackInfo ci
+   ) {
+      PkgCls_j.init_V();
+   }
+
+   @Inject(
+      method = "render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;ZLnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lorg/joml/Vector4f;ZZ)V",
+      at = @At("RETURN")
+   )
+   private void autism$drawTracers(
+      GraphicsResourceAllocator allocator,
+      boolean renderBlockOutline,
+      CameraRenderState cameraState,
+      GpuBufferSlice gpuBufferSlice,
+      Vector4f vector4f,
+      boolean shouldRenderSky,
+      boolean flag,
+      CallbackInfo ci
+   ) {
+      boolean chams = PkgCls_j.init_Z();
+      boolean tracers = ar.init_Z();
+      boolean esp = ar.load_Z();
+      boolean waypoints = ar.read_Z();
+      boolean skeleton = co.init_Z();
+      boolean ai = !AutismLiteVariant.enabled() && cG.init_Z();
+      boolean danger = !AutismLiteVariant.enabled() && D.init();
+      boolean beds = !AutismLiteVariant.enabled() && NodeWalker.init_Z();
+      boolean portal = !AutismLiteVariant.enabled() && F.init_Z();
+      if (chams || tracers || esp || waypoints || skeleton || ai || danger || beds || portal) {
+         PoseStack matrixStack = new PoseStack();
+         matrixStack.mulPose(cameraState.viewRotationMatrix);
+         if (chams) {
+            PkgCls_j.init(matrixStack);
+         }
+
+         if (tracers) {
+            ar.init_V_PoseStack(matrixStack);
+         }
+
+         if (esp) {
+            ar.load(matrixStack);
+         }
+
+         if (skeleton) {
+            co.init(matrixStack);
+         }
+
+         if (waypoints) {
+            ar.read(matrixStack);
+         }
+
+         if (!AutismLiteVariant.enabled()) {
+            if (ai) {
+               cG.init(matrixStack);
+            }
+
+            if (danger) {
+               D.init(matrixStack);
+            }
+
+            if (beds) {
+               NodeWalker.init(matrixStack);
+            }
+
+            if (portal) {
+               F.init(matrixStack);
+            }
+         }
+      }
+   }
+}
