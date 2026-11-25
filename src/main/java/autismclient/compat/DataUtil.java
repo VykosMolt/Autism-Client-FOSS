@@ -208,7 +208,7 @@ public class DataUtil extends Screen {
 
       out.add(this.init("Theme Color", () -> this.minecraft.gui.setScreen(new CacheEntry(this))));
       out.add(this.init("Addons", () -> this.minecraft.gui.setScreen(new autismclient.gui.d.CachePool(this))));
-      out.add(this.init("Donate", () -> aJ.init_V("https://ko-fi.com/melonik"), "Discord", () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu")));
+      out.add(this.init("Discord", () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu")));
       return out;
    }
 

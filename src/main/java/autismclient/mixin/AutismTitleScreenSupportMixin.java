@@ -36,10 +36,8 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
          });
          this.autism$rightButton(Component.literal("Matchmaking"), 28, b -> this.autism$openMenuOverlay(true));
          this.autism$rightButton(Component.literal("Profiles"), 52, b -> this.autism$openMenuOverlay(false));
-         this.autism$leftButton(Component.literal("Card/PayPal"), 4, "https://ko-fi.com/melonik");
-         this.autism$leftButton(Component.literal("Crypto"), 28, "https://nowpayments.io/donation/melonikautismclient");
-         this.autism$leftButton(Component.literal("AUTISM INC"), 52, "https://discord.gg/V8GsKP6k5u");
-         this.autism$leftButton(Component.literal("AUTISM Client"), 76, "https://discord.com/invite/JZ7XgUCtBu");
+         this.autism$leftButton(Component.literal("AUTISM INC"), 4, "https://discord.gg/V8GsKP6k5u");
+         this.autism$leftButton(Component.literal("AUTISM Client"), 28, "https://discord.com/invite/JZ7XgUCtBu");
       }
    }
 
