@@ -59,9 +59,13 @@ public final class ApplyAccessWidener {
              ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(tmp))) {
             for (ZipEntry e : Collections.list(zf.entries())) {
                 if (e.isDirectory()) continue;
+                String name = e.getName();
+                if (name.startsWith("META-INF/")
+                    && (name.endsWith(".SF") || name.endsWith(".RSA") || name.endsWith(".DSA") || name.endsWith(".EC"))) {
+                    continue;
+                }
                 byte[] bytes;
                 try (InputStream in = zf.getInputStream(e)) { bytes = in.readAllBytes(); }
-                String name = e.getName();
                 if (name.endsWith(".class")) {
                     String cn = name.substring(0, name.length() - 6);
                     if (touchedClasses.contains(cn)) {

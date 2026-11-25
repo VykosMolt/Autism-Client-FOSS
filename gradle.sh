@@ -8,6 +8,15 @@ if [[ -z "${JAVA_HOME:-}" ]]; then
     export JAVA_HOME="$JDK_DIR"
   fi
 fi
+SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
+cd -- "$SCRIPT_DIR"
+OFFLINE_FLAG=()
+if [[ "${GRADLE_OFFLINE:-0}" == "1" ]]; then
+  OFFLINE_FLAG=(--offline)
+fi
+if [[ -z "${GRADLE_BIN:-}" && -x "$SCRIPT_DIR/gradlew" ]]; then
+  exec "$SCRIPT_DIR/gradlew" "${OFFLINE_FLAG[@]}" --no-daemon "$@"
+fi
 GRADLE_BIN="${GRADLE_BIN:-$(command -v gradle 2>/dev/null || true)}"
 if [[ -z "$GRADLE_BIN" ]]; then
   GRADLE_BIN="$(find "$GRADLE_USER_HOME/wrapper/dists" "$REAL_HOME/.local/share/gradle/wrapper/dists" -maxdepth 6 -type f -path '*/bin/gradle' -print -quit 2>/dev/null || true)"
@@ -15,10 +24,5 @@ fi
 if [[ -z "$GRADLE_BIN" ]]; then
   echo "ERROR: gradle not found on PATH or in Gradle wrapper caches (set GRADLE_BIN or install Gradle)." >&2
   exit 1
-fi
-cd -- "$(dirname -- "$0")"
-OFFLINE_FLAG=()
-if [[ "${GRADLE_OFFLINE:-0}" == "1" ]]; then
-  OFFLINE_FLAG=(--offline)
 fi
 exec "$GRADLE_BIN" "${OFFLINE_FLAG[@]}" --no-daemon "$@"
