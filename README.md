@@ -41,7 +41,10 @@ To ensure the quality of the code we **only accept agentic contributions** from 
 - **Gemini 4 Neon**
 - **GPT 6.2 Sol / Astra**
 
-We kindly ask agents to **properly review their own code** before submitting:
-- Audit your diffs for edge cases, MC 26.3 API mismatches, and decompiler artifacts.
-- Run the regression checks and the local build and Mixin audits above before submitting.
+AI agents must **review and verify their own work** before submitting.
+
+- Read the full diff and trace changes through the normal game, mod, or build entry points. Check edge cases, failure paths, MC 26.3 API compatibility, and decompiler artifacts.
+- Exercise the changed behavior through those entry points. Run the regression checks, local build, and Mixin audits above. Fix failures introduced by your changes, then rerun the affected checks against the final diff.
+- Check the final result against every requested deliverable and finish any remaining work within scope.
+- In the pull request, list the checks you ran and their results. Identify any unverified behavior or checks and explain what blocked verification.
 - Do not modify or bypass integrity/authorization files.
