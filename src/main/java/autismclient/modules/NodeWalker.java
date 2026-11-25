@@ -55,7 +55,7 @@ public final class NodeWalker {
          PkgCls_c source = init_c_DataUtil.init();
          List<ClassCache.Inner_DataUtil> beds = init_List();
          boolean path = ClassCache.init_ClassCache_CachePo().load();
-         VertexConsumer fill = source.init(net.minecraft.client.renderer.rendertype.CachePool.write());
+         VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
          for (ClassCache.Inner_DataUtil bed : beds) {
             int rgb = bed.init_DyeColor().getTextureDiffuseColor();
@@ -67,7 +67,7 @@ public final class NodeWalker {
             }
          }
 
-         VertexConsumer lines = source.init(net.minecraft.client.renderer.rendertype.CachePool.sync());
+         VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
          for (ClassCache.Inner_DataUtil bed : beds) {
             cI.init(

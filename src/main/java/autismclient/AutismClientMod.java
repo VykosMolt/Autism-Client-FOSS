@@ -5,7 +5,6 @@ import autismclient.ai.am;
 import autismclient.ai.cV;
 import autismclient.ai.o;
 import autismclient.ai.a.StateCache;
-import autismclient.f.DataUtil;
 import autismclient.g.CharEncoder;
 import autismclient.g.FieldCache;
 import autismclient.g.FileCache;
@@ -28,7 +27,6 @@ import autismclient.util.AutismMacroEditorOverlay;
 import autismclient.util.H;
 import autismclient.util.J;
 import autismclient.util.KeyHolder;
-import autismclient.util.L;
 import autismclient.util.NodeWalker;
 import autismclient.util.StreamGate;
 import autismclient.util.W;
@@ -50,16 +48,13 @@ import autismclient.util.cJ;
 import autismclient.util.cd;
 import autismclient.util.cg;
 import autismclient.util.co;
-import autismclient.util.cr;
 import autismclient.util.cv;
 import autismclient.util.cx;
 import autismclient.util.cy;
 import autismclient.util.v;
 import autismclient.util.w;
 import autismclient.util.c.CachePool;
-import autismclient.util.g.ValueSink;
 import autismclient.util.macro.MacroExecutor;
-import autismclient.util.mm.EventBus;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -173,7 +168,6 @@ public final class AutismClientMod implements ClientModInitializer {
       }
 
       P.init_V_12();
-      DataUtil.init();
       autismclient.commands.DataUtil.init_V();
       if (!AutismLiteVariant.enabled()) {
          o.init_V();
@@ -193,7 +187,6 @@ public final class AutismClientMod implements ClientModInitializer {
          @Override
          public void onResourceManagerReload(ResourceManager manager) {
             k.init_V();
-            cr.init_V();
             CachePool.init();
             Thread prewarm = new Thread(() -> {
                try {
@@ -284,25 +277,9 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            if (!AutismLiteVariant.enabled()) {
-               ValueSink.load();
-            }
-         } catch (Throwable t) {
-            logTickError("multiTakeover", t);
-         }
-
-         try {
             cd.init_V();
          } catch (Throwable t) {
             logTickError("remoteView", t);
-         }
-
-         try {
-            if (!AutismLiteVariant.enabled() && L.load_Z() && EventBus.init_EventBus().read_Z()) {
-               autismclient.util.mm.BufferHelper.init_BufferHelper().flush_V();
-            }
-         } catch (Throwable t) {
-            logTickError("mmAutoJoin", t);
          }
 
          try {
@@ -381,10 +358,6 @@ public final class AutismClientMod implements ClientModInitializer {
          PoolEntry.init_PoolEntry().init(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
-         if (!AutismLiteVariant.enabled()) {
-            autismclient.util.mm.BufferHelper.init_BufferHelper().poll_V();
-         }
-
          try {
             aN.init_V_Z(true);
          } catch (Throwable t) {
@@ -394,11 +367,7 @@ public final class AutismClientMod implements ClientModInitializer {
          AutismConfig.flushPendingSaves(2000L);
       });
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-         if (!AutismLiteVariant.enabled()) {
-            autismclient.util.mm.BufferHelper.init_BufferHelper().poll_V();
-         }
-
          AutismConfig.flushPendingSaves(2000L);
-      }, "mm-shutdown-leave"));
+      }, "autism-shutdown-save"));
    }
 }

@@ -105,7 +105,6 @@ public final class aQ extends Module {
          && !aC.init_Z()
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
          && !FieldCache.init_Z_6()
          && !TableIndex.init_Z_20()
          && !autismclient.util.aD.read_Z()

@@ -8,15 +8,8 @@ public final class Q {
    }
 
    public static void load(AutismConfig config) {
-      if (config != null && config.essentialHiddenByPanic) {
-         config.essentialHiddenByPanic = false;
-         config.save();
-      }
    }
 
    public static void read(AutismConfig config) {
-      if (config != null && config.essentialHiddenByPanic) {
-         config.essentialHiddenByPanic = false;
-      }
    }
 }

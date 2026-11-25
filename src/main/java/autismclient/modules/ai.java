@@ -20,20 +20,12 @@ public final class ai {
    }
 
    public static boolean init_Z(Entity entity) {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.TokenStore.init(entity)) {
-         return autismclient.util.g.TokenStore.load(entity);
-      } else {
-         return !AutismLiteVariant.enabled() && init_Minecraft != null && entity == init_Minecraft.player && autismclient.ai.o.init_Z()
-            ? false
-            : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
-      }
+      return !AutismLiteVariant.enabled() && init_Minecraft != null && entity == init_Minecraft.player && autismclient.ai.o.init_Z()
+         ? false
+         : init_ai_DataUtil().init_Z() && init_Minecraft != null && entity == init_Minecraft.player;
    }
 
    public static float init_F() {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-         return 1.0F;
-      }
-
       float multiplier = 1.0F;
 
       for (Module module : al.load_List()) {
@@ -46,19 +38,11 @@ public final class ai {
    }
 
    public static float init_F(Player player) {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-         return autismclient.util.g.TokenStore.init_F(player);
-      }
-
       f.Inner_FileCache flight = init_ai_DataUtil().init_f_FileCache();
       return flight != null ? flight.init_F_7() : -1.0F;
    }
 
    public static boolean init_Z(Player player) {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-         return autismclient.util.g.TokenStore.init_Z(player);
-      }
-
       f.Inner_FileCache flight = init_ai_DataUtil().init_f_FileCache();
       return flight != null && flight.load_Z_21();
    }
@@ -86,8 +70,6 @@ public final class ai {
          return false;
       } else if (!AutismLiteVariant.enabled() && autismclient.ai.a.AiMotionSafety.putAt_Z()) {
          return false;
-      } else if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-         return original;
       } else if (aI.open_Z_3()) {
          return original;
       } else {
@@ -98,19 +80,13 @@ public final class ai {
    public static boolean update() {
       if (!AutismLiteVariant.enabled() && (bg.init_Z_36() || autismclient.ai.a.AiMotionSafety.putAt_Z())) {
          return true;
-      } else if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-         return false;
       } else {
          return aI.open_Z_3() ? false : al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.init();
       }
    }
 
    public static boolean init(boolean original) {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-         return original;
-      } else {
-         return JsonUtil.load() ? false : original;
-      }
+      return JsonUtil.load() ? false : original;
    }
 
    public static boolean sync() {
@@ -189,16 +165,12 @@ public final class ai {
    }
 
    public static void init_V() {
-      if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z()) && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z()) && cf.init_Z_J(4L)) {
+      if ((AutismLiteVariant.enabled() || !PkgCls_a.init_Z()) && cf.init_Z_J(4L)) {
          al.flush_V();
       }
    }
 
    public static Vec3 init(Entity entity, MoverType type, Vec3 movement) {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.TokenStore.init(entity)) {
-         return autismclient.util.g.TokenStore.init_Vec3_Entity(entity, type, movement);
-      }
-
       if (AutismLiteVariant.enabled()
          || !PkgCls_a.init_Z()
          || init_Minecraft.player == null
@@ -220,10 +192,6 @@ public final class ai {
                return movement;
             }
          } else {
-            if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-               return movement;
-            }
-
             if (!cf.init_Z_J(8L)) {
                return movement;
             }
@@ -245,13 +213,7 @@ public final class ai {
          || !PkgCls_a.init_Z()
          || init_Minecraft.player == null
          || entity != init_Minecraft.player && entity != init_Minecraft.player.getVehicle()) {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.TokenStore.init(entity)) {
-            Vec3 movement = entity.getDeltaMovement();
-            Vec3 adjusted = autismclient.util.g.TokenStore.init_Vec3_Entity_Vec3(entity, movement);
-            if (adjusted != null && adjusted != movement) {
-               entity.setDeltaMovement(adjusted);
-            }
-         } else if (entity == init_Minecraft.player && !aD.init_Z()) {
+         if (entity == init_Minecraft.player && !aD.init_Z()) {
             ai.Inner_DataUtil state = init_ai_DataUtil();
             f.Inner_ListPool speed = state.init_f_ListPool();
             if (speed != null) {

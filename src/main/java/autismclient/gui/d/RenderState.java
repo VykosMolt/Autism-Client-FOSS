@@ -24,7 +24,7 @@ public class RenderState extends Screen {
    private static final String[][] init_StrArr2 = new String[][]{
       {"coordinates", "nether_coords", "compass", "looking_at", "biome", "weather", "world_time", "real_time", "server", "server_ip", "server_brand"},
       {"speed", "rotation", "game_mode", "armor", "inventory", "durability", "item_counter", "potion_timers", "breaking_progress"},
-      {"active_modules", "watermark", "fps", "ping", "tps", "cps", "keystrokes", "anti_vanish", "memory", "fps_graph", "spotify", "bed_danger", "gif"}
+      {"active_modules", "watermark", "fps", "ping", "tps", "cps", "keystrokes", "anti_vanish", "memory", "fps_graph", "bed_danger", "gif"}
    };
    private static final int update = 10;
    private static final int sync = 6;

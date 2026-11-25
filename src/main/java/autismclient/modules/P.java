@@ -190,7 +190,7 @@ public final class P extends Module implements autismclient.util.aj.Inner_Config
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
-                              net.minecraft.client.renderer.rendertype.CachePool.write(),
+                              autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
                               (pose, buffer) -> module.init(pose, buffer, holes, camera, player)
                            );
                      }
@@ -199,7 +199,7 @@ public final class P extends Module implements autismclient.util.aj.Inner_Config
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
-                              net.minecraft.client.renderer.rendertype.CachePool.update(),
+                              autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(),
                               (pose, buffer) -> module.load_V_PoseStack_Pose(pose, buffer, holes, camera, player)
                            );
                      }

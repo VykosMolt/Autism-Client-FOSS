@@ -76,11 +76,11 @@ public final class ad {
                         AABB box = target.getBoundingBox().inflate(0.04).move(-camera.x, -camera.y, -camera.z);
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, net.minecraft.client.renderer.rendertype.CachePool.write(), (pose, buffer) -> load(pose, buffer, box, fillColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> load(pose, buffer, box, fillColor)
                            );
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, net.minecraft.client.renderer.rendertype.CachePool.update(), (pose, buffer) -> init(pose, buffer, box, lineColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> init(pose, buffer, box, lineColor)
                            );
                      } else if (hasBlock) {
                         BlockPos pos = blockHit.getBlockPos();
@@ -90,11 +90,11 @@ public final class ad {
                         AABB box = init(mc, pos).inflate(0.0025).move(-camera.x, -camera.y, -camera.z);
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, net.minecraft.client.renderer.rendertype.CachePool.write(), (pose, buffer) -> load(pose, buffer, box, fillColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> load(pose, buffer, box, fillColor)
                            );
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, net.minecraft.client.renderer.rendertype.CachePool.update(), (pose, buffer) -> init(pose, buffer, box, lineColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> init(pose, buffer, box, lineColor)
                            );
                      }
                   }

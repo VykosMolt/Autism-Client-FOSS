@@ -54,7 +54,7 @@ public final class KeyHolder {
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
-                              net.minecraft.client.renderer.rendertype.CachePool.load(),
+                              autismclient.render.AutismRenderTypes.aiGhost(),
                               (pose, buffer) -> {
                                  int quads = 0;
 

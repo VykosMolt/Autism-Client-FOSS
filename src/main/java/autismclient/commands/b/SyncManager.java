@@ -4,7 +4,6 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.modules.aC;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.p;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.Minecraft;
@@ -34,11 +33,9 @@ public final class SyncManager extends Command {
                AutismClientMessaging.sendPrefixed("§aPosition copied (freecam): ", init(coordinates));
                return 1;
             } else {
-               Player controlled = AutismLiteVariant.enabled() ? (mc == null ? null : mc.player) : autismclient.util.g.PoolEntry.init_Player();
+               Player controlled = mc == null ? null : mc.player;
                if (mc != null && controlled != null && mc.keyboardHandler != null) {
-                  Entity positionOwner = (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z()) && controlled.getVehicle() != null
-                     ? controlled.getVehicle()
-                     : controlled;
+                  Entity positionOwner = controlled.getVehicle() != null ? controlled.getVehicle() : controlled;
                   String coordinates = init(positionOwner.position());
                   mc.keyboardHandler.setClipboard(coordinates);
                   AutismClientMessaging.sendPrefixed("§aPosition copied: ", init(coordinates));

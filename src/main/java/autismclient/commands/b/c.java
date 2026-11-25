@@ -3,7 +3,6 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.ck;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -35,11 +34,6 @@ public class c extends Command {
    }
 
    private static int init(int targetSlot) {
-      String povResult = AutismLiteVariant.enabled() ? null : autismclient.util.g.PoolEntry.init_Str_I(targetSlot);
-      if (povResult != null) {
-         AutismClientMessaging.sendPrefixed(("Sent".equals(povResult) ? "§a" : "§c") + "POV XCarry: §f" + povResult);
-         return 1;
-      }
 
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer p = mc.player;

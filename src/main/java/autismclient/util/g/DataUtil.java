@@ -50,12 +50,6 @@ public final class DataUtil {
       return new DataUtil(init_List_Collection_Set(accounts, accountIds), formValues, loginMode, allMacroName);
    }
 
-   public static DataUtil init_DataUtil_MethodUtil_Set(MethodUtil profile, Set<String> accountIds) {
-      return profile == null
-         ? init_DataUtil_Collection_Set(List.of(), accountIds)
-         : new DataUtil(init_List_Collection_Set(profile.init_List(), accountIds), Map.of(), profile.init_DataUtil_StreamUti(), profile.init_Str());
-   }
-
    public List<DataUtil.Inner_DataUtil> init_List() {
       return List.copyOf(this.init_List);
    }
@@ -110,10 +104,6 @@ public final class DataUtil {
 
    public void load_V_Str(String accountId) {
       this.init_Map.remove(load_Str_Str(accountId));
-   }
-
-   public MethodUtil init_MethodUtil() {
-      return new MethodUtil(this.init_List, this.init_DataUtil_StreamUti, this.init_Str);
    }
 
    public DataUtil init_DataUtil() {

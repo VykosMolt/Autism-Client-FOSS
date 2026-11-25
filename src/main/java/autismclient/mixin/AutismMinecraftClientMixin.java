@@ -36,8 +36,6 @@ import autismclient.util.cG;
 import autismclient.util.cd;
 import autismclient.util.ck;
 import autismclient.util.s;
-import autismclient.util.g.PacketUtil;
-import autismclient.util.g.PoolEntry;
 import autismclient.util.i.DataUtil;
 import autismclient.util.macro.MacroExecutor;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -146,36 +144,12 @@ public class AutismMinecraftClientMixin {
       } finally {
          cd.init(self, restoreRemote);
       }
-
-      // Multi POV picks against the real camera, after the freecam/remote-view restore (stock order).
-      this.autism$multiPovAuthoritativePick(partialTicks);
    }
 
    @Inject(method = "shouldEntityAppearGlowing", at = @At("RETURN"), cancellable = true)
    private void autism$frameEspGlow(Entity entity, CallbackInfoReturnable<Boolean> cir) {
       if (!cir.getReturnValueZ() && ah.init_Z(entity)) {
          cir.setReturnValue(true);
-      }
-   }
-
-   @Inject(method = "close", at = @At("HEAD"))
-   private void autism$disconnectMultiOnClose(CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()) {
-         PacketUtil multi = PacketUtil.load_PacketUtil();
-         if (multi != null) {
-            multi.load_V();
-         }
-      }
-   }
-
-   @Unique
-   private void autism$multiPovAuthoritativePick(float partialTicks) {
-      if (!AutismLiteVariant.enabled() && PoolEntry.init_Z()) {
-         Minecraft client = (Minecraft)(Object)this;
-         HitResult vanillaHit = client.hitResult;
-         HitResult result = PoolEntry.init_HitResult_Minecraft(client, partialTicks, vanillaHit);
-         client.hitResult = result;
-         client.crosshairPickEntity = result instanceof EntityHitResult entityHit ? entityHit.getEntity() : null;
       }
    }
 
@@ -299,8 +273,6 @@ public class AutismMinecraftClientMixin {
                cir.setReturnValue(false);
             } else if (cd.init_Z()) {
                cir.setReturnValue(false);
-            } else if (!AutismLiteVariant.enabled() && PoolEntry.init_Z() && PoolEntry.init_Z_Minecraft(client)) {
-               cir.setReturnValue(false);
             } else if (ck.init_ck().frame()) {
                cir.setReturnValue(false);
             } else if (al.init_Z_HitResult(client.hitResult)) {
@@ -334,9 +306,6 @@ public class AutismMinecraftClientMixin {
       } else if (FieldCache.init_Z_6() || TableIndex.init_Z_20()) {
          ci.cancel();
       } else if (!s.close_Z() && DataPipe.load()) {
-         ci.cancel();
-      } else if (!AutismLiteVariant.enabled() && PoolEntry.init_Z()) {
-         PoolEntry.init_V_Minecraft_Z((Minecraft)(Object)this, leftClick);
          ci.cancel();
       }
    }
@@ -387,8 +356,6 @@ public class AutismMinecraftClientMixin {
             } else if (DataPipe.load()) {
                ci.cancel();
             } else if (StreamGate.init_Z(client)) {
-               ci.cancel();
-            } else if (!AutismLiteVariant.enabled() && PoolEntry.init_Z() && PoolEntry.load_Z(client)) {
                ci.cancel();
             } else {
                ck captureState = ck.init_ck();
@@ -512,10 +479,6 @@ public class AutismMinecraftClientMixin {
          s.sync_V();
          as.poll();
       } else {
-         if (!AutismLiteVariant.enabled() && PoolEntry.init_Z()) {
-            PoolEntry.read(client);
-         }
-
          boolean escapeDown = CompatGLFW.glfwGetKey(client.getWindow().handle(), 256) == 1;
          boolean justPressed = escapeDown && !this.autism$escapeWasDown;
          this.autism$escapeWasDown = escapeDown;

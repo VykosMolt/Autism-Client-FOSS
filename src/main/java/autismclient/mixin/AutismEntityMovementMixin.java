@@ -8,7 +8,6 @@ import autismclient.modules.ai;
 import autismclient.modules.ax;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.cd;
-import autismclient.util.g.PoolEntry;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
@@ -69,9 +68,6 @@ public class AutismEntityMovementMixin {
       if ((Object)this == Minecraft.getInstance().player) {
          if (aC.init_Z()) {
             aC.load(deltaYaw, deltaPitch);
-            ci.cancel();
-         } else if (!AutismLiteVariant.enabled() && PoolEntry.init_Z()) {
-            PoolEntry.init_Z_D_D(deltaYaw, deltaPitch);
             ci.cancel();
          } else if (cd.init_Z()) {
             ci.cancel();

@@ -83,18 +83,14 @@ public class AutismServerInfoOverlay extends bj {
    private final autismclient.gui.f.c.TextFormat init_TextFormat = new autismclient.gui.f.c.TextFormat(this.init_CharEncoder, this.init_CharEncoder_2);
    private final AutismServerInfoOverlay.Inner_RingBuffer init_AutismServerInfoOv_4 = new AutismServerInfoOverlay.Inner_RingBuffer();
    private final autismclient.gui.f.b.BitSetUtil init_BitSetUtil = new autismclient.gui.f.b.BitSetUtil();
-   private final autismclient.gui.f.b.BitSetUtil load_BitSetUtil = new autismclient.gui.f.b.BitSetUtil();
    private final AutismServerInfoOverlay.Inner_TableIndex init_AutismServerInfoOv_5 = new AutismServerInfoOverlay.Inner_TableIndex();
    private final AutismServerInfoOverlay.Inner_HashUtil init_AutismServerInfoOv_2 = new AutismServerInfoOverlay.Inner_HashUtil();
    private final autismclient.gui.f.c.BitSetUtil init_BitSetUtil_2 = new autismclient.gui.f.c.BitSetUtil();
-   private final autismclient.gui.f.c.BitSetUtil load_BitSetUtil_2 = new autismclient.gui.f.c.BitSetUtil();
    private autismclient.gui.f.c.PacketUtil init_PacketUtil;
    private boolean open_Z = false;
    private int clear_I = 0;
-   private boolean poll_Z = false;
-   private int reset = 0;
    private long init_J = 0L;
-   private static final String[] init_StrArr = AutismLiteVariant.enabled() ? new String[]{"Info", "Plugins"} : new String[]{"Info", "Plugins", "DupeDB"};
+   private static final String[] init_StrArr = new String[]{"Info", "Plugins"};
    private int start = 0;
    private final List<AutismServerInfoOverlay.Inner_DataUtil> init_List = new ArrayList<>();
    private volatile String load_Str = null;
@@ -117,14 +113,8 @@ public class AutismServerInfoOverlay extends bj {
    private Map<String, AutismServerInfoOverlay.Inner_TaskQueue> write_Map = Map.of();
    private int data = -1;
    private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
-   private final autismclient.gui.f.b.CacheEntry load_CacheEntry = new autismclient.gui.f.b.CacheEntry();
    private int value = 0;
-   private int cache = 0;
    private String sync_Str = null;
-   private final Set<String> init_Set = new HashSet<>();
-   private String flush_Str = "";
-   private long load_J = 0L;
-   private Boolean init_Boolean = null;
    private int state = 50;
    private boolean pop_Z = false;
    private boolean tick_Z = false;
@@ -744,14 +734,6 @@ public class AutismServerInfoOverlay extends bj {
             this.init_CacheEntry.load(0, 0);
             this.prev_V_7();
          });
-      this.load_BitSetUtil
-         .load_BitSetUtil_Str("Search radar...")
-         .read_BitSetUtil_F(this.drain_I_2())
-         .read_BitSetUtil_I(this.index_I_2())
-         .init_BitSetUtil_Consumer(text -> {
-            this.load_CacheEntry.load(0, 0);
-            this.prev_V_7();
-         });
       this.init_AutismServerInfoOv_5
          .init_AutismServerInfoOv(10.0F, 500.0F)
          .init_AutismServerInfoOv(10.0F)
@@ -813,8 +795,6 @@ public class AutismServerInfoOverlay extends bj {
 
       if (this.start == 0) {
          this.count_V_2();
-      } else if (this.start == 2 && !AutismLiteVariant.enabled()) {
-         this.index_V_2();
       } else if (this.tick_Z) {
          this.task_V_2();
       } else if (!this.pop_Z) {
@@ -835,12 +815,9 @@ public class AutismServerInfoOverlay extends bj {
       this.start = Math.max(0, Math.min(init_StrArr.length - 1, tabIdx));
       this.init_AutismServerInfoOv_4.init_AutismServerInfoOv_I(this.start);
       this.init_CacheEntry.load(0, 0);
-      this.load_CacheEntry.load(0, 0);
       this.sync_Str = null;
       if (this.start == 0) {
          this.count_V_2();
-      } else if (this.start == 2 && !AutismLiteVariant.enabled()) {
-         this.index_V_2();
       } else if (this.tick_Z) {
          this.task_V_2();
       } else if (!this.pop_Z) {
@@ -858,14 +835,12 @@ public class AutismServerInfoOverlay extends bj {
       this.init_AutismServerInfoOv_4.init_AutismServerInfoOv_I(this.start);
       this.init_AutismServerInfoOv_5.load_AutismServerInfoOv(this.state);
       this.init_AutismServerInfoOv_2.init(this.init_F_2());
-      if (!this.tick_Z || this.start == 2) {
+      if (!this.tick_Z) {
          this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_AutismServerInfoOv_4);
       }
 
       if (this.start == 0) {
          this.valid_V_4();
-      } else if (this.start == 2 && !AutismLiteVariant.enabled()) {
-         this.cache_V_2();
       } else if (!this.pop_Z && !this.tick_Z) {
          this.size_V_3();
       } else if (this.tick_Z) {
@@ -1097,79 +1072,10 @@ public class AutismServerInfoOverlay extends bj {
       this.init_BitSetUtil_2.init(viewportHeight);
    }
 
-   private void cache_V_2() {
-      AutismDupeRadar.RadarState radarState = AutismDupeRadar.init_AutismDupeRadar_Ra();
-      this.init_V_AutismDupeRadar_Ra(radarState);
-      int pluginCount = this.read_List_3().size();
-      if (!this.sync_Z) {
-         this.init_V_AutismDupeRadar_Ra_I(radarState, pluginCount);
-      }
-
-      radarState = AutismDupeRadar.init_AutismDupeRadar_Ra();
-      this.init_V_AutismDupeRadar_Ra(radarState);
-      if (!radarState.authenticated()) {
-         this.init_CharEncoder_2
-            .init_PacketUtil()
-            .init_TableIndex_TableIndex(new autismclient.gui.f.c.PoolEntry("Login to continue.", autismclient.gui.f.b.l.write).load_PoolEntry(true));
-         if (radarState.error() != null && !radarState.error().isBlank()) {
-            this.init_CharEncoder_2
-               .init_PacketUtil()
-               .init_TableIndex_TableIndex(
-                  new autismclient.gui.f.c.TaskQueue("Error:", radarState.error()).init_TaskQueue_F(this.chunk_I_2()).init_TaskQueue_Integer(p.valid())
-               );
-         }
-
-         autismclient.gui.f.c.UiHelper loginButtons = new autismclient.gui.f.c.UiHelper().init(this.flags_I_2());
-         loginButtons.init_TableIndex_TableIndex(
-            new autismclient.gui.f.c.ByteReader(
-                  radarState.authenticating() ? "Login..." : "Login DupeDB", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update, AutismDupeRadar::init_V
-               )
-               .load_ByteReader_I(this.count_I_2())
-         );
-         this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(loginButtons);
-      } else {
-         this.init_CharEncoder_2
-            .init_PacketUtil()
-            .init_TableIndex_TableIndex(new autismclient.gui.f.c.TaskQueue("Server:", this.tick_Str_2()).init_TaskQueue_F(this.chunk_I_2()));
-         if (!this.pop_Z) {
-            this.init_CharEncoder_2
-               .init_PacketUtil()
-               .init_TableIndex_TableIndex(
-                  new autismclient.gui.f.c.TaskQueue("Alert:", "Plugins not scanned").init_TaskQueue_F(this.chunk_I_2()).init_TaskQueue_Integer(p.valid())
-               );
-         }
-
-         autismclient.gui.f.c.UiHelper authButtons = new autismclient.gui.f.c.UiHelper().init(this.flags_I_2());
-         authButtons.init_TableIndex_TableIndex(
-            new autismclient.gui.f.c.ByteReader("Logout", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, AutismDupeRadar::load_V)
-               .load_ByteReader_I(this.count_I_2())
-         );
-         this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(authButtons);
-         this.load_BitSetUtil.read_BitSetUtil_F(Math.max(this.drain_I_2(), this.pop_I - this.fill_I_2()));
-         this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.load_BitSetUtil);
-         this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.load_BitSetUtil_2);
-         this.tick_I = this.init_I_BitSetUtil_I(this.load_BitSetUtil_2, this.init_I_Z_2(!this.pop_Z));
-         float viewportHeight = Math.max(this.load_F(), this.run_I - this.tick_I);
-         this.load_BitSetUtil_2.init(viewportHeight);
-      }
-   }
-
    private int init_I_BitSetUtil_I(autismclient.gui.f.c.BitSetUtil slot, int fallback) {
       slot.init(0.0F);
       int measured = Math.round(this.init_TextFormat.init(this.pop_I));
       return measured > 0 ? measured : fallback;
-   }
-
-   private void init_V_AutismDupeRadar_Ra(AutismDupeRadar.RadarState state) {
-      boolean authenticated = state != null && state.authenticated();
-      if (this.init_Boolean != null && this.init_Boolean != authenticated) {
-         this.flush_Str = "";
-         this.load_J = 0L;
-         this.init_Set.clear();
-         this.load_CacheEntry.load(0, 0);
-      }
-
-      this.init_Boolean = authenticated;
    }
 
    private autismclient.gui.f.c.ByteReader init_ByteReader() {
@@ -1304,16 +1210,11 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private boolean clear_Z_4() {
-      return this.start == 1 ? this.pop_Z && !this.tick_Z : this.start == 2 && !AutismLiteVariant.enabled() && this.reset_Z_4();
+      return this.start == 1 && this.pop_Z && !this.tick_Z;
    }
 
    private int tick_I_22() {
       return this.load_I_I_I(Math.max(this.set_I_20(), Math.min(this.stop_I_7(), this.put_I_8())), this.a__I());
-   }
-
-   private int run_I_22() {
-      int auto = this.reset_I_7();
-      return this.reset_Z_4() ? this.load_I_I_I(auto, this.a__I()) : auto;
    }
 
    @Override
@@ -1359,13 +1260,6 @@ public class AutismServerInfoOverlay extends bj {
       this.prev_V_7();
    }
 
-   private void index_V_2() {
-      this.pop_I = this.pop_I_24();
-      this.run_I = this.run_I_22();
-      this.entry_V_2();
-      this.prev_V_7();
-   }
-
    private void count_V_2() {
       this.pop_I = this.pop_I_24();
       this.run_I = this.stop_I_7();
@@ -1386,47 +1280,6 @@ public class AutismServerInfoOverlay extends bj {
       autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
       int viewportHeight = Math.round(viewport.load());
       return Math.max(this.set_I_20(), viewportHeight - 28);
-   }
-
-   private int add_I_17() {
-      return Math.max(this.init_I_Z_2(!this.pop_Z) + Math.round(this.load_F()), this.stop_I_7());
-   }
-
-   private int clear_I_8() {
-      autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
-      int viewportHeight = Math.round(viewport.load());
-      return Math.max(this.add_I_17(), viewportHeight - 28);
-   }
-
-   private boolean reset_Z_4() {
-      AutismDupeRadar.RadarState state = AutismDupeRadar.init_AutismDupeRadar_Ra();
-      return state != null && state.authenticated();
-   }
-
-   private int reset_I_7() {
-      if (this.reset_Z_4()) {
-         return Math.max(this.add_I_17(), Math.min(this.stop_I_7(), this.clear_I_8()));
-      }
-
-      autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
-      int viewportLimit = Math.max(this.start_I_15(), Math.round(viewport.load()) - this.f());
-      return Math.min(this.start_I_15(), viewportLimit);
-   }
-
-   private int start_I_15() {
-      AutismDupeRadar.RadarState state = AutismDupeRadar.init_AutismDupeRadar_Ra();
-      boolean hasError = state != null && state.error() != null && !state.error().isBlank();
-      int tabHeight = this.level_I_2();
-      int labelHeight = this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.write, 3);
-      int errorHeight = hasError ? 12 : 0;
-      int nodeCount = hasError ? 4 : 3;
-      return this.init_CharEncoder.load()
-         + this.task_I_2() * 2
-         + this.pool_I_2() * Math.max(0, nodeCount - 1)
-         + tabHeight
-         + labelHeight
-         + errorHeight
-         + this.count_I_2();
    }
 
    private int stop_I_7() {
@@ -1462,16 +1315,6 @@ public class AutismServerInfoOverlay extends bj {
          + searchHeight
          + buttonRowHeight
          + headerLabelHeight;
-   }
-
-   private int init_I_Z_2(boolean includePluginAlert) {
-      int contentPadding = this.task_I_2() * 2;
-      int rowCount = includePluginAlert ? 2 : 1;
-      int contentGap = this.pool_I_2() * (4 + rowCount);
-      int infoRows = 12 * rowCount;
-      int actionRows = this.count_I_2();
-      int searchHeight = this.index_I_2();
-      return this.init_CharEncoder.load() + contentPadding + contentGap + this.level_I_2() + infoRows + actionRows + searchHeight;
    }
 
    private int size_I_3() {
@@ -1523,10 +1366,6 @@ public class AutismServerInfoOverlay extends bj {
          this.f_f_I = Math.max(this.bind_I_2(), this.pop_I);
          this.f_g_I = Math.max(this.data_I_3(), this.run_I);
          this.f_h_I = Math.max(this.f_h_I, this.f_f_I);
-      } else if (this.start == 2 && !AutismLiteVariant.enabled()) {
-         this.f_h_I = Math.max(this.f_h_I, this.pop_I);
-         this.f_i_I = Math.max(this.f_i_I, Math.min(this.clear_I_8(), this.run_I));
-         this.f_f_I = Math.max(this.f_f_I, this.f_h_I);
       } else if (this.pop_Z && !this.tick_Z) {
          this.f_h_I = Math.max(this.b_I_2(), this.pop_I);
          this.f_i_I = Math.max(this.set_I_20(), Math.min(this.put_I_8(), this.run_I));
@@ -1725,13 +1564,6 @@ public class AutismServerInfoOverlay extends bj {
       if (!currentAddress.isEmpty()) {
          if (!currentAddress.equals(this.push_Str)) {
             this.push_Str = currentAddress;
-            this.flush_Str = "";
-            this.load_J = 0L;
-            this.init_Set.clear();
-            this.load_CacheEntry.load(0, 0);
-            if (!AutismLiteVariant.enabled()) {
-               AutismDupeRadar.write_V();
-            }
          }
 
          String currentContextSignature = this.read_Str_8();
@@ -3474,13 +3306,6 @@ public class AutismServerInfoOverlay extends bj {
       this.run_Str = "";
       this.get_Str = "";
       this.push_Str = "";
-      this.flush_Str = "";
-      this.load_J = 0L;
-      this.init_Set.clear();
-      if (!AutismLiteVariant.enabled()) {
-         AutismDupeRadar.write_V();
-      }
-
       this.prev_V_7();
    }
 
@@ -4737,8 +4562,6 @@ public class AutismServerInfoOverlay extends bj {
             this.get_V();
          } else if (this.start == 0) {
             this.count_V_2();
-         } else if (this.start == 2 && !AutismLiteVariant.enabled()) {
-            this.index_V_2();
          } else if (this.tick_Z) {
             this.task_V_2();
          } else if (!this.pop_Z) {
@@ -4817,10 +4640,6 @@ public class AutismServerInfoOverlay extends bj {
 
    @Override
    public int load_I() {
-      if (this.start == 2 && !AutismLiteVariant.enabled()) {
-         return this.reset_I_7();
-      }
-
       if (this.start == 1) {
          if (this.tick_Z) {
             return this.prev_I_6();
@@ -4848,7 +4667,7 @@ public class AutismServerInfoOverlay extends bj {
       this.block_V_2();
       this.drain_V_2();
       long nowMs = System.currentTimeMillis();
-      if (nowMs - this.init_J >= 100L && (this.set_Z || this.tick_Z) || this.start == 2 && !AutismLiteVariant.enabled() && nowMs - this.init_J >= 500L) {
+      if (nowMs - this.init_J >= 100L && (this.set_Z || this.tick_Z)) {
          this.init_List.clear();
          this.next_V_7();
          this.init_J = nowMs;
@@ -4870,8 +4689,6 @@ public class AutismServerInfoOverlay extends bj {
          this.run_I = preferredHeight;
       } else if (this.start == 0) {
          this.run_I = this.stop_I_7();
-      } else if (this.start == 2 && !AutismLiteVariant.enabled()) {
-         this.run_I = this.run_I_22();
       } else if (this.tick_Z) {
          this.run_I = this.prev_I_6();
       } else if (!this.pop_Z) {
@@ -4893,9 +4710,6 @@ public class AutismServerInfoOverlay extends bj {
             if (this.start == 1 && this.pop_Z && !this.tick_Z) {
                this.init_List.clear();
                this.init_V_GuiGraphicsExtract_11(ctx, viewport, uiMouseX, uiMouseY, delta);
-            } else if (this.start == 2 && !AutismLiteVariant.enabled() && this.reset_Z_4()) {
-               this.init_List.clear();
-               this.load(ctx, viewport, uiMouseX, uiMouseY, delta);
             }
          } finally {
             autismclient.gui.f.HashUtil.init_HashUtil().init(ctx);
@@ -5217,452 +5031,6 @@ public class AutismServerInfoOverlay extends bj {
          && row.init_AutismServerInfoOv_4 == AutismServerInfoOverlay.Inner_JsonUtil.update
          && row.load != null
          && row.load.startsWith("/");
-   }
-
-   private void load(GuiGraphicsExtractor ctx, autismclient.gui.f.c.RingBuffer viewport, float uiMouseX, float uiMouseY, float delta) {
-      int x = Math.round(this.load_BitSetUtil_2.load_F());
-      int y = Math.round(this.load_BitSetUtil_2.read_F());
-      int rowW = Math.round(this.load_BitSetUtil_2.write_F());
-      int viewH = this.init_I_BitSetUtil(this.load_BitSetUtil_2);
-      if (rowW > 0 && viewH > 0) {
-         int clipLeft = x + 1;
-         int clipTop = y + 1;
-         int clipRight = x + rowW - 1;
-         int clipBottom = y + viewH - 1;
-         int innerViewH = this.load_I_2(viewH);
-         if (innerViewH > 0) {
-            int rowContentW = Math.max(48, clipRight - clipLeft);
-            List<AutismServerInfoOverlay.Inner_IoWorker> rows = this.init_List_I_2(rowContentW);
-            int estimatedContentHeight = this.init_I_List_4(rows);
-            int maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-            this.load_CacheEntry.init_V_I_I(this.load_CacheEntry.init(), maxScroll);
-            int visualScroll = this.load_CacheEntry.init_I_F_I(delta, maxScroll);
-            this.cache = estimatedContentHeight;
-            autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_I_2(x, y, rowW, viewH);
-            if (scrollbarMetrics.init_Z()) {
-               rowContentW = Math.max(48, clipRight - clipLeft - 10);
-               rows = this.init_List_I_2(rowContentW);
-               estimatedContentHeight = this.init_I_List_4(rows);
-               maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
-               this.load_CacheEntry.init_V_I_I(this.load_CacheEntry.init(), maxScroll);
-               visualScroll = this.load_CacheEntry.init_I_F_I(0.0F, maxScroll);
-               this.cache = estimatedContentHeight;
-               scrollbarMetrics = this.init_PoolEntry_DataUtil_I_2(x, y, rowW, viewH);
-            }
-
-            boolean active = bk.init_bk().update_Z(this) || bk.init_bk().write_Z(this);
-            viewport.init_V_GuiGraphicsExtract(ctx);
-
-            try {
-               autismclient.gui.f.b.FileCache.init(ctx, x, y, rowW, viewH, active);
-               viewport.init(ctx, clipLeft, clipTop, clipRight, clipBottom);
-
-               try {
-                  int startIndex = this.load_I_List_I(rows, visualScroll);
-                  int cy = clipTop - visualScroll + this.init_I_List_I_3(rows, startIndex);
-
-                  for (int rowIndex = startIndex; rowIndex < rows.size(); rowIndex++) {
-                     AutismServerInfoOverlay.Inner_IoWorker row = rows.get(rowIndex);
-                     int rowY = cy;
-                     int rowBottom = rowY + row.init_I;
-                     boolean rowVisible = rowBottom > clipTop && rowY < clipBottom;
-                     if (rowVisible) {
-                        this.init_V_GuiGraphicsExtract_3(ctx, row, clipLeft, rowY, rowContentW, uiMouseX, uiMouseY, clipTop, clipBottom);
-                     }
-
-                     cy += row.init_I;
-                     if (cy > clipBottom + this.o()) {
-                        break;
-                     }
-                  }
-               } finally {
-                  viewport.read(ctx);
-               }
-
-               autismclient.gui.f.b.PoolEntry.init(ctx, scrollbarMetrics, scrollbarMetrics.init(uiMouseX, uiMouseY), this.poll_Z);
-            } finally {
-               viewport.load(ctx);
-            }
-         }
-      }
-   }
-
-   private void init_V_GuiGraphicsExtract_3(
-      GuiGraphicsExtractor ctx,
-      AutismServerInfoOverlay.Inner_IoWorker row,
-      int x,
-      int y,
-      int width,
-      float uiMouseX,
-      float uiMouseY,
-      int clipTop,
-      int clipBottom
-   ) {
-      if (row.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_PoolEntry.init) {
-         autismclient.gui.f.b.TableIndex.load(ctx, x, y, width, row.init_I);
-         int textY = j.init(y, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
-         autismclient.gui.f.b.k.init(
-            ctx,
-            this.init_Font,
-            row.init_Str,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
-            x + this.n(),
-            textY,
-            false
-         );
-      } else if (row.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_PoolEntry.write) {
-         autismclient.gui.f.b.TableIndex.init(ctx, x, y, width, row.init_I, false, false);
-         int textY = j.init(y, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
-         String text = autismclient.gui.f.b.k.init(
-            this.init_Font,
-            row.init_Str,
-            Math.max(20, width - 10),
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
-         );
-         autismclient.gui.f.b.k.init(
-            ctx,
-            this.init_Font,
-            text,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
-            x + 5,
-            textY,
-            false
-         );
-      } else if (row.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_PoolEntry.load && row.init_AutismDupeRadar_Ra_2 != null) {
-         AutismDupeRadar.RadarMatch match = row.init_AutismDupeRadar_Ra_2;
-         String key = this.load_Str(match);
-         boolean expanded = this.init_Set.contains(key);
-         boolean hovered = uiMouseX >= x && uiMouseX < x + width && uiMouseY >= y && uiMouseY < y + row.init_I;
-         autismclient.gui.f.b.TableIndex.init(ctx, x, y, width, row.init_I, hovered, expanded);
-         int textY = j.init(y, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
-         autismclient.gui.f.PacketUtil.init(
-            ctx,
-            autismclient.gui.f.NetHelper.init(x + 2, textY, 9, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read)),
-            expanded,
-            hovered ? this.init_CharEncoder.load(autismclient.gui.f.b.l.read) : this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
-         );
-         int rowColor = this.init_I_AutismDupeRadar_Ra(match);
-         String count = match.findings().size() + "x";
-         int countW = autismclient.gui.f.b.k.init(
-               this.init_Font,
-               count,
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-               this.init_CharEncoder.load(autismclient.gui.f.b.l.write)
-            )
-            + 4;
-         int countX = x + width - countW - 5;
-         String label = match.displayLabel();
-         int labelMax = Math.max(30, countX - (x + 13) - 4);
-         autismclient.gui.f.b.k.init(
-            ctx,
-            this.init_Font,
-            autismclient.gui.f.b.k.init(this.init_Font, label, labelMax, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), rowColor),
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-            rowColor,
-            x + 13,
-            textY,
-            false
-         );
-         autismclient.gui.f.b.k.init(
-            ctx,
-            this.init_Font,
-            count,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
-            countX,
-            textY,
-            false
-         );
-         int hitTop = Math.max(y, clipTop);
-         int hitBottom = Math.min(y + row.init_I, clipBottom);
-         this.init_List.add(new AutismServerInfoOverlay.Inner_DataUtil(x, hitTop, width, Math.max(1, hitBottom - hitTop), () -> {
-            if (this.init_Set.contains(key)) {
-               this.init_Set.remove(key);
-            } else {
-               this.init_Set.add(key);
-            }
-
-            this.prev_V_7();
-         }));
-      } else if (row.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_PoolEntry.read
-         && row.init_AutismDupeRadar_Ra != null
-         && row.init_AutismDupeRadar_Ra_2 != null) {
-         AutismDupeRadar.RadarFinding finding = row.init_AutismDupeRadar_Ra;
-         boolean hovered = uiMouseX >= x + 5 && uiMouseX < x + width - 5 && uiMouseY >= y && uiMouseY < y + row.init_I;
-         autismclient.gui.f.b.TableIndex.init(ctx, x + 5, y, width - 9, row.init_I, hovered, false);
-         int color = this.init_I_Str_7(finding.status());
-         autismclient.gui.f.b.TableIndex.read(ctx, x + 5, y, 1, row.init_I, color);
-         int textY = j.init(y, row.init_I, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
-         int openW = 28;
-         int openX = x + width - openW - 5;
-         String title = finding.title();
-         if (finding.summary() != null && !finding.summary().isBlank()) {
-            title = title + " - " + finding.summary();
-         }
-
-         String label = autismclient.gui.f.b.k.init(
-            this.init_Font,
-            title,
-            Math.max(20, openX - x - 20),
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            hovered ? this.init_CharEncoder.load(autismclient.gui.f.b.l.read) : color
-         );
-         autismclient.gui.f.b.k.init(
-            ctx,
-            this.init_Font,
-            label,
-            this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
-            hovered ? this.init_CharEncoder.load(autismclient.gui.f.b.l.read) : color,
-            x + 11,
-            textY,
-            false
-         );
-         this.init_V_GuiGraphicsExtract_5(ctx, openX, y + 2, openW, row.init_I - 4, "Open", p.node());
-         int hitTop = Math.max(y, clipTop);
-         int hitBottom = Math.min(y + row.init_I, clipBottom);
-         this.init_List
-            .add(
-               new AutismServerInfoOverlay.Inner_DataUtil(
-                  openX, hitTop, openW, Math.max(1, hitBottom - hitTop), () -> AutismDupeRadar.init_V_Str(finding.sourceUrl())
-               )
-            );
-      }
-   }
-
-   private void init_V_GuiGraphicsExtract_5(GuiGraphicsExtractor ctx, int x, int y, int width, int height, String label, int color) {
-      autismclient.gui.f.b.ConfigStore.init(
-         autismclient.gui.f.UiHelper.init(ctx, this.init_Font, -1, -1), autismclient.gui.f.NetHelper.init(x, y, width, height), label, color, false, false
-      );
-   }
-
-   private int init_I_Str_7(String status) {
-      String s = status == null ? "" : status.toLowerCase(Locale.ROOT);
-      if (s.contains("unpatch") || s.contains("not patch")) {
-         return p.cache();
-      } else if (s.contains("patch")) {
-         return -46261;
-      } else if (s.contains("work")) {
-         return p.cache();
-      } else if (!s.contains("unverif") && !s.contains("pending")) {
-         return s.contains("verif") ? p.cache() : this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
-      } else {
-         return p.entry();
-      }
-   }
-
-   private int init_I_AutismDupeRadar_Ra(AutismDupeRadar.RadarMatch match) {
-      if (match == null) {
-         return this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
-      }
-
-      boolean usable = false;
-      boolean unverified = false;
-      boolean patched = false;
-
-      for (AutismDupeRadar.RadarFinding finding : match.findings()) {
-         if (finding != null) {
-            String s = finding.status() == null ? "" : finding.status().toLowerCase(Locale.ROOT);
-            if (s.contains("unpatch") || s.contains("not patch")) {
-               usable = true;
-            } else if (s.contains("patch")) {
-               patched = true;
-            } else if (s.contains("work")) {
-               usable = true;
-            } else if (s.contains("unverif") || s.contains("pending")) {
-               unverified = true;
-            } else if (s.contains("verif")) {
-               usable = true;
-            }
-         }
-      }
-
-      if (usable) {
-         return p.cache();
-      } else if (unverified) {
-         return p.entry();
-      } else {
-         return patched ? -46261 : this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
-      }
-   }
-
-   private int load_I_2(String status) {
-      String s = status == null ? "" : status.toLowerCase(Locale.ROOT);
-      if (s.contains("unpatch") || s.contains("not patch")) {
-         return 0;
-      } else if (s.contains("patch")) {
-         return 2;
-      } else if (s.contains("work")) {
-         return 0;
-      } else if (!s.contains("unverif") && !s.contains("pending")) {
-         return s.contains("verif") ? 0 : 3;
-      } else {
-         return 1;
-      }
-   }
-
-   private int load_I(AutismDupeRadar.RadarMatch match) {
-      int best = 3;
-      if (match != null) {
-         for (AutismDupeRadar.RadarFinding finding : match.findings()) {
-            if (finding != null) {
-               best = Math.min(best, this.load_I_2(finding.status()));
-            }
-         }
-      }
-
-      return best;
-   }
-
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_I_2(int x, int y, int width, int height) {
-      int innerHeight = this.load_I_2(height);
-      int maxScroll = Math.max(0, this.cache - innerHeight);
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
-         this.cache, Math.max(1, innerHeight), x + width - 5, y + 1, 3, Math.max(1, innerHeight), this.load_CacheEntry.init_I_F_I(0.0F, maxScroll)
-      );
-   }
-
-   private List<AutismServerInfoOverlay.Inner_IoWorker> init_List_I_2(int rowContentW) {
-      AutismDupeRadar.RadarState state = AutismDupeRadar.init_AutismDupeRadar_Ra();
-      String query = this.load_BitSetUtil.init_Str() == null ? "" : this.load_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
-      List<AutismServerInfoOverlay.Inner_IoWorker> rows = new ArrayList<>();
-      if (state.checking() || state.authenticating()) {
-         rows.add(AutismServerInfoOverlay.Inner_IoWorker.load(state.status(), this.table_I_2()));
-      }
-
-      List<AutismDupeRadar.RadarMatch> matches = new ArrayList<>();
-
-      for (AutismDupeRadar.RadarMatch match : state.matches()) {
-         if (match != null && this.init_Z_AutismDupeRadar_Ra(match)) {
-            String search = this.init_Str_AutismDupeRadar_Ra(match);
-            if (query.isEmpty() || search.contains(query)) {
-               matches.add(match);
-            }
-         }
-      }
-
-      if (matches.isEmpty()) {
-         String emptyText = state.matches().isEmpty() ? "No server matches" : "No search matches.";
-         rows.add(AutismServerInfoOverlay.Inner_IoWorker.load(emptyText, this.table_I_2()));
-         return rows;
-      }
-
-      matches.sort(
-         Comparator.<AutismDupeRadar.RadarMatch>comparingInt(m -> this.load_I(m))
-            .thenComparing(Comparator.comparingLong(AutismDupeRadar.RadarMatch::sortTimestampMs).reversed())
-            .thenComparing(AutismDupeRadar.RadarMatch::displayLabel, String.CASE_INSENSITIVE_ORDER)
-      );
-
-      for (AutismDupeRadar.RadarMatch match : matches) {
-         rows.add(AutismServerInfoOverlay.Inner_IoWorker.init(match, this.table_I_2(), this.init_Str_AutismDupeRadar_Ra(match)));
-         if (this.init_Set.contains(this.load_Str(match))) {
-            List<AutismDupeRadar.RadarFinding> findings = new ArrayList<>(match.findings());
-            findings.sort(
-               Comparator.<AutismDupeRadar.RadarFinding>comparingInt(f -> this.load_I_2(f.status()))
-                  .thenComparing(Comparator.comparingLong(AutismDupeRadar.RadarFinding::sortTimestampMs).reversed())
-            );
-
-            for (AutismDupeRadar.RadarFinding finding : findings) {
-               if (finding != null && (query.isEmpty() || this.init_Str_AutismDupeRadar_Ra_AutismDupeRadar_Ra(match, finding).contains(query))) {
-                  rows.add(
-                     AutismServerInfoOverlay.Inner_IoWorker.init(
-                        match, finding, this.store_I_2(), this.init_Str_AutismDupeRadar_Ra_AutismDupeRadar_Ra(match, finding)
-                     )
-                  );
-               }
-            }
-         }
-      }
-
-      return rows;
-   }
-
-   private boolean init_Z_AutismDupeRadar_Ra(AutismDupeRadar.RadarMatch match) {
-      return match != null;
-   }
-
-   private String init_Str_AutismDupeRadar_Ra(AutismDupeRadar.RadarMatch match) {
-      if (match == null) {
-         return "";
-      }
-
-      StringBuilder sb = new StringBuilder();
-      sb.append(match.detectedPlugin())
-         .append(' ')
-         .append(match.providerPlugin())
-         .append(' ')
-         .append(match.matchConfidence())
-         .append(' ')
-         .append(match.matchSource().label())
-         .append(' ')
-         .append(match.matchedInput())
-         .append(' ')
-         .append(match.provider());
-
-      for (AutismDupeRadar.RadarFinding finding : match.findings()) {
-         sb.append(' ').append(this.init_Str_AutismDupeRadar_Ra_AutismDupeRadar_Ra(match, finding));
-      }
-
-      return sb.toString().toLowerCase(Locale.ROOT);
-   }
-
-   private String init_Str_AutismDupeRadar_Ra_AutismDupeRadar_Ra(AutismDupeRadar.RadarMatch match, AutismDupeRadar.RadarFinding finding) {
-      return finding == null ? "" : this.init_Str_StrArr(match == null ? "" : match.detectedPlugin(), finding.title(), finding.summary(), finding.provider());
-   }
-
-   private String load_Str(AutismDupeRadar.RadarMatch match) {
-      return match == null
-         ? ""
-         : (match.matchSource().name() + "|" + match.detectedPlugin() + "|" + match.providerPlugin() + "|" + match.matchedInput() + "|" + match.sourceUrl())
-            .toLowerCase(Locale.ROOT);
-   }
-
-   private int init_I_List_4(List<AutismServerInfoOverlay.Inner_IoWorker> rows) {
-      if (rows != null && !rows.isEmpty()) {
-         int total = 0;
-
-         for (AutismServerInfoOverlay.Inner_IoWorker row : rows) {
-            total += row == null ? 0 : row.init_I;
-         }
-
-         return total;
-      } else {
-         return 0;
-      }
-   }
-
-   private int init_I_List_I_3(List<AutismServerInfoOverlay.Inner_IoWorker> rows, int index) {
-      if (rows != null && !rows.isEmpty() && index > 0) {
-         int total = 0;
-
-         for (int i = 0; i < Math.min(index, rows.size()); i++) {
-            total += rows.get(i) == null ? 0 : rows.get(i).init_I;
-         }
-
-         return total;
-      } else {
-         return 0;
-      }
-   }
-
-   private int load_I_List_I(List<AutismServerInfoOverlay.Inner_IoWorker> rows, int scrollOffset) {
-      if (rows != null && !rows.isEmpty() && scrollOffset > 0) {
-         int total = 0;
-
-         for (int i = 0; i < rows.size(); i++) {
-            AutismServerInfoOverlay.Inner_IoWorker row = rows.get(i);
-            total += row == null ? 0 : row.init_I;
-            if (total > scrollOffset) {
-               return i;
-            }
-         }
-
-         return Math.max(0, rows.size() - 1);
-      } else {
-         return 0;
-      }
    }
 
    private autismclient.gui.f.b.PoolEntry.Inner_DataUtil load_PoolEntry_DataUtil_I(int x, int y, int width, int height) {
@@ -7216,7 +6584,6 @@ public class AutismServerInfoOverlay extends bj {
          this.init_V_Z(false);
          this.flush_Z = false;
          this.open_Z = false;
-         this.poll_Z = false;
          this.close_Z = false;
          return true;
       }
@@ -7257,23 +6624,7 @@ public class AutismServerInfoOverlay extends bj {
          }
       }
 
-      if (this.start == 2 && !AutismLiteVariant.enabled() && this.reset_Z_4()) {
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_I_2(
-            Math.round(this.load_BitSetUtil_2.load_F()),
-            Math.round(this.load_BitSetUtil_2.read_F()),
-            Math.round(this.load_BitSetUtil_2.write_F()),
-            this.init_I_BitSetUtil(this.load_BitSetUtil_2)
-         );
-         if (scrollbarMetrics.init_Z() && scrollbarMetrics.init(uiMouseX, uiMouseY)) {
-            this.poll_Z = true;
-            this.reset = Math.max(0, Math.round(uiMouseY) - scrollbarMetrics.update());
-            this.load_CacheEntry.init_V_PoolEntry_DataUtil(scrollbarMetrics, Math.round(uiMouseY), this.reset);
-            this.write_V_24();
-            return true;
-         }
-      }
-
-      if (this.start == 1 && this.pop_Z && !this.tick_Z || this.start == 2 && !AutismLiteVariant.enabled() && this.reset_Z_4()) {
+      if (this.start == 1 && this.pop_Z && !this.tick_Z) {
          for (AutismServerInfoOverlay.Inner_DataUtil region : this.init_List) {
             if (region.init(uiMouseX, uiMouseY)) {
                this.init_TextFormat.load();
@@ -7297,10 +6648,6 @@ public class AutismServerInfoOverlay extends bj {
          this.open_Z = false;
          this.write_V_24();
          return true;
-      } else if (button == 0 && this.poll_Z) {
-         this.poll_Z = false;
-         this.write_V_24();
-         return true;
       } else if (this.flush_Z) {
          this.flush_Z = false;
          this.write_V_24();
@@ -7322,19 +6669,6 @@ public class AutismServerInfoOverlay extends bj {
             this.init_I_BitSetUtil(this.init_BitSetUtil_2)
          );
          this.init_CacheEntry.init(scrollbarMetrics, Math.round(uiMouseY), this.clear_I, this.o());
-         return true;
-      }
-
-      if (this.poll_Z && button == 0) {
-         autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
-         float uiMouseY = viewport.load(my);
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_I_2(
-            Math.round(this.load_BitSetUtil_2.load_F()),
-            Math.round(this.load_BitSetUtil_2.read_F()),
-            Math.round(this.load_BitSetUtil_2.write_F()),
-            this.init_I_BitSetUtil(this.load_BitSetUtil_2)
-         );
-         this.load_CacheEntry.init_V_PoolEntry_DataUtil(scrollbarMetrics, Math.round(uiMouseY), this.reset);
          return true;
       }
 
@@ -7378,11 +6712,6 @@ public class AutismServerInfoOverlay extends bj {
          int maxScroll = Math.max(0, this.value - this.load_I_2(viewH));
          this.init_CacheEntry.init_V_D(amount, this.o(), maxScroll);
          return true;
-      } else if (this.start == 2 && !AutismLiteVariant.enabled() && this.reset_Z_4()) {
-         int viewH = this.init_I_BitSetUtil(this.load_BitSetUtil_2);
-         int maxScroll = Math.max(0, this.cache - this.load_I_2(viewH));
-         this.load_CacheEntry.init_V_D(amount, this.o(), maxScroll);
-         return true;
       } else {
          return this.init_TextFormat.init_Z_D(mx, my, amount);
       }
@@ -7406,133 +6735,6 @@ public class AutismServerInfoOverlay extends bj {
          this.init_V_Str_Throwable("charTyped", t);
          return false;
       }
-   }
-
-   private List<AutismDupeRadar.RadarPluginSnapshot> read_List_3() {
-      if (!this.pop_Z) {
-         return List.of();
-      }
-
-      List<AutismDupeRadar.RadarPluginSnapshot> snapshots = new ArrayList<>();
-
-      for (AutismServerInfoOverlay.Inner_TaskQueue detail : this.init_Collection()) {
-         if (detail != null && !detail.init_Str.isBlank()) {
-            boolean feature = detail.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.load
-               || detail.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ConfigStore.read
-               || detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.update
-               || detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.write
-               || detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.push
-               || detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.close
-               || detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.pop;
-            if (!feature
-               && (
-                  detail.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ConfigStore.init
-                     || detail.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ConfigStore.load
-               )) {
-               snapshots.add(
-                  new AutismDupeRadar.RadarPluginSnapshot(
-                     detail.init_Str,
-                     detail.load_Str,
-                     this.init_Str_AutismServerInfoOv(detail.init_AutismServerInfoOv),
-                     detail.init_List.size(),
-                     detail.read_List,
-                     detail.load_List,
-                     false
-                  )
-               );
-            }
-         }
-      }
-
-      snapshots.sort(Comparator.comparing(AutismDupeRadar.RadarPluginSnapshot::displayName, String.CASE_INSENSITIVE_ORDER));
-      return snapshots;
-   }
-
-   private void init_V_AutismDupeRadar_Ra_I(AutismDupeRadar.RadarState state, int pluginCount) {
-      if (state != null && state.authenticated() && !state.authenticating() && !state.checking()) {
-         AutismDupeRadar.RadarServerSnapshot serverSnapshot = this.init_AutismDupeRadar_Ra();
-         boolean hasServerIdentity = serverSnapshot != null && !serverSnapshot.identities().isEmpty();
-         if (pluginCount > 0 || hasServerIdentity) {
-            long now = System.currentTimeMillis();
-            String signature = this.pop_Str_2();
-            boolean noResults = state.updatedAtMs() <= 0L;
-            boolean stale = state.updatedAtMs() > 0L && now - state.updatedAtMs() > 1800000L;
-            boolean changed = !signature.equals(this.flush_Str);
-            if ((noResults || stale || changed) && (changed || now - this.load_J >= 5000L)) {
-               this.flush_Str = signature;
-               this.load_J = now;
-               AutismDupeRadar.init_V_List(this.read_List_3(), serverSnapshot, stale);
-            }
-         }
-      }
-   }
-
-   private String pop_Str_2() {
-      StringBuilder sb = new StringBuilder();
-      sb.append(this.load_Str_11()).append('|');
-
-      for (AutismDupeRadar.RadarPluginSnapshot snapshot : this.read_List_3()) {
-         sb.append(snapshot.canonicalKey()).append(',');
-      }
-
-      for (AutismDupeRadar.RadarServerIdentity identity : this.init_AutismDupeRadar_Ra().identities()) {
-         sb.append(identity.ip() ? "ip:" : "domain:").append(identity.value()).append(',');
-      }
-
-      return sb.toString();
-   }
-
-   private AutismDupeRadar.RadarServerSnapshot init_AutismDupeRadar_Ra() {
-      List<AutismDupeRadar.RadarServerIdentity> identities = new ArrayList<>();
-      this.init_V_List_Str_3(identities, this.open_Str_2());
-      this.init_V_List_Str_3(identities, this.load_Str_11());
-      this.init_V_List_Str_3(identities, this.push(this.open_Str_2()));
-      String liveIp = this.poll_Str_2();
-      if (!liveIp.isBlank()) {
-         this.init_V_List_Str_3(identities, liveIp);
-      }
-
-      String displayedIp = this.pop(this.open_Str_2());
-      if (!displayedIp.isBlank() && !"--".equals(displayedIp) && !"Resolving...".equals(displayedIp) && !"Failed".equals(displayedIp)) {
-         this.init_V_List_Str_3(identities, displayedIp);
-      }
-
-      return new AutismDupeRadar.RadarServerSnapshot(identities);
-   }
-
-   private String tick_Str_2() {
-      String displayed = this.push(this.open_Str_2());
-      if (displayed != null && !displayed.isBlank() && !"--".equals(displayed)) {
-         return displayed;
-      }
-
-      String current = this.push(this.load_Str_11());
-      return current != null && !current.isBlank() && !"--".equals(current) ? current : "--";
-   }
-
-   private void init_V_List_Str_3(List<AutismDupeRadar.RadarServerIdentity> identities, String raw) {
-      if (identities != null && raw != null && !raw.isBlank() && !"--".equals(raw)) {
-         String clean = raw.trim().toLowerCase(Locale.ROOT);
-         if (clean.startsWith("/")) {
-            clean = clean.substring(1);
-         }
-
-         String host = this.push(clean);
-         if (host == null || host.isBlank() || "--".equals(host)) {
-            host = clean;
-         }
-
-         host = host.trim().toLowerCase(Locale.ROOT);
-         if (!host.isBlank() && !"localhost".equals(host)) {
-            boolean ip = host.matches("\\d{1,3}(?:\\.\\d{1,3}){3}") || host.contains(":") && !host.contains(".");
-            identities.add(new AutismDupeRadar.RadarServerIdentity(host, ip));
-         }
-      }
-   }
-
-   private void c_V_2() {
-      init_Minecraft.keyboardHandler.setClipboard(AutismDupeRadar.read_Str());
-      bi.init("Radar report copied.");
    }
 
    private void d_V_2() {
@@ -7777,51 +6979,6 @@ public class AutismServerInfoOverlay extends bj {
       }
    }
 
-   private static final class Inner_IoWorker {
-      final AutismServerInfoOverlay.Inner_PoolEntry init_AutismServerInfoOv;
-      final String init_Str;
-      final AutismDupeRadar.RadarMatch init_AutismDupeRadar_Ra_2;
-      final AutismDupeRadar.RadarFinding init_AutismDupeRadar_Ra;
-      final int init_I;
-      final String load;
-
-      private Inner_IoWorker(
-         AutismServerInfoOverlay.Inner_PoolEntry type,
-         String title,
-         AutismDupeRadar.RadarMatch match,
-         AutismDupeRadar.RadarFinding finding,
-         int height,
-         String searchText
-      ) {
-         this.init_AutismServerInfoOv = type == null ? AutismServerInfoOverlay.Inner_PoolEntry.write : type;
-         this.init_Str = title == null ? "" : title;
-         this.init_AutismDupeRadar_Ra_2 = match;
-         this.init_AutismDupeRadar_Ra = finding;
-         this.init_I = Math.max(1, height);
-         this.load = searchText == null ? "" : searchText;
-      }
-
-      static AutismServerInfoOverlay.Inner_IoWorker init(String title, int height) {
-         return new AutismServerInfoOverlay.Inner_IoWorker(AutismServerInfoOverlay.Inner_PoolEntry.init, title, null, null, height, init(title));
-      }
-
-      static AutismServerInfoOverlay.Inner_IoWorker init(AutismDupeRadar.RadarMatch match, int height, String searchText) {
-         return new AutismServerInfoOverlay.Inner_IoWorker(AutismServerInfoOverlay.Inner_PoolEntry.load, "", match, null, height, searchText);
-      }
-
-      static AutismServerInfoOverlay.Inner_IoWorker init(AutismDupeRadar.RadarMatch match, AutismDupeRadar.RadarFinding finding, int height, String searchText) {
-         return new AutismServerInfoOverlay.Inner_IoWorker(AutismServerInfoOverlay.Inner_PoolEntry.read, "", match, finding, height, searchText);
-      }
-
-      static AutismServerInfoOverlay.Inner_IoWorker load(String text, int height) {
-         return new AutismServerInfoOverlay.Inner_IoWorker(AutismServerInfoOverlay.Inner_PoolEntry.write, text, null, null, height, init(text));
-      }
-
-      private static String init(String text) {
-         return text == null ? "" : text.toLowerCase(Locale.ROOT);
-      }
-   }
-
    private enum Inner_JsonUtil {
       init,
       load,
@@ -7883,13 +7040,6 @@ public class AutismServerInfoOverlay extends bj {
       boolean init(long expectedGeneration, String address) {
          return this.init_bS.init(expectedGeneration, address);
       }
-   }
-
-   private enum Inner_PoolEntry {
-      init,
-      load,
-      read,
-      write;
    }
 
    private static final class Inner_RenderState {

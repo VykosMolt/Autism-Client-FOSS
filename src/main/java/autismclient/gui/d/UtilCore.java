@@ -10,18 +10,15 @@ import autismclient.modules.aD;
 import autismclient.modules.ae;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.L;
 import autismclient.util.aJ;
-import autismclient.util.aR;
 import autismclient.util.aS;
 import autismclient.util.aT;
 import autismclient.util.bK;
 import autismclient.util.bk;
 import autismclient.util.cA;
 import autismclient.util.cX;
-import autismclient.util.cq;
 import autismclient.util.ct;
 import autismclient.util.cu;
 import autismclient.util.p;
@@ -31,9 +28,6 @@ import com.mojang.realmsclient.RealmsMainScreen;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -45,7 +39,6 @@ import java.util.Random;
 import java.util.function.Supplier;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CommonButtons;
@@ -85,20 +78,14 @@ public class UtilCore extends Screen implements TaskQueue {
    private static final Identifier update_Identifier = init_Identifier_Str("minecraft_realms");
    private static final Identifier sync_Identifier = init_Identifier_Str("options");
    private static final Identifier flush_Identifier = init_Identifier_Str("quit_game");
-   private static final Identifier close_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/essential.png");
    private static final Identifier open_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/modmenu.png");
-   private static final Identifier poll_Identifier = Identifier.fromNamespaceAndPath("replaymod", "logo_button.png");
-   private static final Identifier push_Identifier = Identifier.fromNamespaceAndPath("flashback", "icon.png");
    private static final Identifier pop_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/discord.png");
-   private static final Identifier tick_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/donate.png");
    private static final int read_I = 32;
    private static final int write_I = 32;
    private static final Identifier run_Identifier = Identifier.fromNamespaceAndPath("minecraft", "icon/language");
    private static final Identifier get_Identifier = Identifier.fromNamespaceAndPath("minecraft", "icon/accessibility");
    private static final int update_I = 15;
    private static final int sync_I = 32;
-   private static final int flush_I = 164;
-   private static final int close_I = 128;
    private static final Component init_Component = Component.translatable("narrator.screen.title");
    private static final int open_I = 5;
    private static final int poll_I = 11;
@@ -109,11 +96,6 @@ public class UtilCore extends Screen implements TaskQueue {
    private final List<UtilCore.Inner_StreamUtil> init_List = new ArrayList<>();
    private final String init_Str = load_Str();
    private final boolean init_Z = FabricLoader.getInstance().isModLoaded("modmenu");
-   private final boolean load_Z = FabricLoader.getInstance().isModLoaded("essential");
-   private final boolean read_Z = FabricLoader.getInstance().isModLoaded("replaymod");
-   private final boolean write_Z = FabricLoader.getInstance().isModLoaded("flashback");
-   private List<UtilCore.Inner_CachePool> load_List = List.of();
-   private boolean update_Z;
    private int run_I = -1;
    private long init_J;
    private boolean sync_Z = true;
@@ -139,8 +121,6 @@ public class UtilCore extends Screen implements TaskQueue {
    private int entry;
    private boolean flush_Z;
    private int node;
-   private int task;
-   private int pool;
    private final List<UtilCore.Inner_ConfigStore> read_List = new ArrayList<>();
    private final List<UtilCore.Inner_DataUtil> write_List = new ArrayList<>();
    private int index;
@@ -271,9 +251,7 @@ public class UtilCore extends Screen implements TaskQueue {
             this.init_V_GuiGraphicsExtract_2(graphics, hoveredTooltip, uiMouseX, uiMouseY);
          }
 
-         this.flush(graphics);
          this.update(graphics);
-         this.sync(graphics);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
          bK.init("title.render", perf);
@@ -429,7 +407,6 @@ public class UtilCore extends Screen implements TaskQueue {
          int bottomBarH = utilitySize + margin + 14;
          this.put = (screenW - this.clear) / 2;
          this.add = Math.max(margin, (screenH - stackH - bottomBarH) / 2);
-         this.pool = this.add + stackH;
          int rowTop = this.add + this.reset + cardToRows;
          int rowX = this.put + (this.clear - rowW) / 2;
          int sideW = Math.min(172, (screenW - this.clear) / 2 - margin * 2);
@@ -510,7 +487,7 @@ public class UtilCore extends Screen implements TaskQueue {
             int supportRowH = Math.max(compact ? 16 : 20, k.init(autismclient.gui.f.a.DataUtil.load) + 8);
             int supportRowGap = 3;
             int supportIcon = Math.min(14, supportRowH - 6);
-            String[] supportLabels = new String[]{"Card/PayPal", "Crypto", "AUTISM INC", "AUTISM CLIENT"};
+            String[] supportLabels = new String[]{"AUTISM INC", "AUTISM CLIENT"};
             int supportTextW = 0;
 
             for (String label : supportLabels) {
@@ -518,7 +495,7 @@ public class UtilCore extends Screen implements TaskQueue {
             }
 
             this.next = supportTextW + supportIcon + 22;
-            this.prev = 5 + 4 * supportRowH + 3 * supportRowGap + 5;
+            this.prev = 5 + 2 * supportRowH + supportRowGap + 5;
             this.start = margin;
             this.stop = this.size + this.value + 6;
             int supportRowY = this.stop + 5;
@@ -528,9 +505,9 @@ public class UtilCore extends Screen implements TaskQueue {
                this.next - 8,
                supportRowH,
                supportLabels[0],
-               tick_Identifier,
-               () -> aJ.init_V("https://ko-fi.com/melonik"),
-               "https://ko-fi.com/melonik"
+               pop_Identifier,
+               () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
+               "https://discord.gg/V8GsKP6k5u"
             );
             this.init(
                this.start + 4,
@@ -538,26 +515,6 @@ public class UtilCore extends Screen implements TaskQueue {
                this.next - 8,
                supportRowH,
                supportLabels[1],
-               tick_Identifier,
-               () -> aJ.init_V("https://nowpayments.io/donation/melonikautismclient"),
-               "https://nowpayments.io/donation/melonikautismclient"
-            );
-            this.init(
-               this.start + 4,
-               supportRowY + (supportRowH + supportRowGap) * 2,
-               this.next - 8,
-               supportRowH,
-               supportLabels[2],
-               pop_Identifier,
-               () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
-               "https://discord.gg/V8GsKP6k5u"
-            );
-            this.init(
-               this.start + 4,
-               supportRowY + (supportRowH + supportRowGap) * 3,
-               this.next - 8,
-               supportRowH,
-               supportLabels[3],
                pop_Identifier,
                () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu"),
                "https://discord.com/invite/JZ7XgUCtBu"
@@ -638,18 +595,6 @@ public class UtilCore extends Screen implements TaskQueue {
             this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.load));
          }
       }, Component.literal("Modules & Macros")));
-      all.add(new UtilCore.Inner_TaskQueue("MATCHMAKING", "", autismclient.gui.f.a.DataUtil.set, null, 32, () -> {
-         if (!aD.read_Z()) {
-            autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
-            cX overlay = mod == null ? null : mod.init_cX();
-            if (overlay != null) {
-               bk.init_bk().init_V(overlay);
-               ((AutismMatchmakingOverlay)overlay).load(true);
-               overlay.init_V_Z(true);
-               this.minecraft.gui.setScreen(new TaskTimer(overlay, this, true));
-            }
-         }
-      }, Component.literal("Matchmaking")));
       all.add(new UtilCore.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
          if (!aD.read_Z()) {
             autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
@@ -673,22 +618,9 @@ public class UtilCore extends Screen implements TaskQueue {
             Component.literal("Accessibility")
          )
       );
-      if (this.read_Z) {
-         all.add(new UtilCore.Inner_TaskQueue("REPLAYS", "", poll_Identifier, null, 164, () -> this.flush(), Component.literal("Replay Viewer")));
-      }
-
-      if (this.write_Z) {
-         all.add(new UtilCore.Inner_TaskQueue("FLASHBACK", "", push_Identifier, null, 128, () -> this.close(), Component.literal("Flashback Replays")));
-      }
-
-      if (this.load_Z) {
-         all.add(new UtilCore.Inner_TaskQueue("ESSENTIAL", "", close_Identifier, null, 32, () -> this.sync(), Component.literal("Essential")));
-      }
-
       int gap = 4;
       this.node = all.isEmpty() ? 0 : all.size() * utilitySize + (all.size() - 1) * gap;
       int x = screenW - margin - this.node;
-      this.task = all.isEmpty() ? screenW : x;
       int y = screenH - margin - utilitySize;
 
       for (int i = 0; i < all.size(); i++) {
@@ -925,83 +857,6 @@ public class UtilCore extends Screen implements TaskQueue {
       }
    }
 
-   private void sync(GuiGraphicsExtractor graphics) {
-      if (autismclient.util.al.init_Z_Str("spotify")) {
-         int screenW = cA.init_I();
-         int screenH = cA.load_I();
-         if (screenH >= 200) {
-            cq.init_V();
-            cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
-            boolean playing = snapshot != null && snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init;
-            boolean paused = snapshot != null && snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.load;
-            if (playing || paused) {
-               String track = aR.init(snapshot);
-               if (!track.isEmpty()) {
-                  float p = this.init_F_I(320);
-                  if (!(p <= 0.0F)) {
-                     Identifier fontId = autismclient.gui.f.a.DataUtil.init;
-                     int textColor = init(this.init_CharEncoder.load(l.write), p);
-                     int fullTextWidth = k.init(this.font, track, fontId, textColor);
-                     autismclient.util.al.Inner_TextFormat art = autismclient.util.al.init_al_TextFormat_cq_ConfigStore(snapshot);
-                     int artSize = art != null ? 16 : 0;
-                     int artGap = art != null ? 4 : 0;
-                     int modCountRight = 4 + k.init(this.font, this.init_Str, fontId, 0);
-                     int availableHalf = Math.min(screenW / 2 - modCountRight, this.task - screenW / 2) - 4;
-                     int natural = artSize + artGap + fullTextWidth;
-                     int stripWidth = Math.min(natural, 2 * Math.max(0, availableHalf));
-                     if (stripWidth >= 24) {
-                        int clip = stripWidth - artSize - artGap;
-                        if (clip < 16) {
-                           art = null;
-                           artSize = 0;
-                           artGap = 0;
-                           clip = stripWidth;
-                        }
-
-                        int total = artSize + artGap + Math.min(fullTextWidth, clip);
-                        int x = screenW / 2 - total / 2;
-                        int fontH = k.init(fontId);
-                        int barY = screenH - 4;
-                        int textY = barY - 2 - fontH;
-                        if (textY >= this.pool + 4) {
-                           long holdUntil = snapshot.init_J() + 1200L;
-                           int speed = autismclient.util.al.init_I_Str("spotify");
-                           long nowMs = System.currentTimeMillis();
-                           if (art != null) {
-                              int artY = textY + (fontH - 16) / 2;
-                              graphics.blit(
-                                 RenderPipelines.GUI_TEXTURED,
-                                 art.init_Identifier(),
-                                 x,
-                                 artY,
-                                 0.0F,
-                                 0.0F,
-                                 16,
-                                 16,
-                                 art.init_I(),
-                                 art.load(),
-                                 art.init_I(),
-                                 art.load(),
-                                 init(-1, p)
-                              );
-                           }
-
-                           aR.init(graphics, this.font, track, fontId, textColor, x + artSize + artGap, textY, clip, false, nowMs, holdUntil, speed);
-                           double progress = autismclient.util.al.init_D_cq_ConfigStore(snapshot);
-                           k.init(graphics, x, barY, x + total, barY + 2, init(this.init_CharEncoder.load(l.write), p * 0.22F));
-                           int fillW = (int)Math.round(total * progress);
-                           if (fillW > 0) {
-                              k.init(graphics, x, barY, x + fillW, barY + 2, init(this.init_CharEncoder.load(l.update), p * 0.9F));
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-
    private String init_Str_Str(String text, int maxWidth, Identifier fontId, int color) {
       if (text == null) {
          return "";
@@ -1018,110 +873,6 @@ public class UtilCore extends Screen implements TaskQueue {
       }
 
       return trimmed + ".";
-   }
-
-   private void flush(GuiGraphicsExtractor graphics) {
-      List<UtilCore.Inner_CachePool> credits = this.load_List();
-      if (!credits.isEmpty()) {
-         float p = this.init_F_I(320);
-         if (!(p <= 0.0F)) {
-            int lineGap = k.init(autismclient.gui.f.a.DataUtil.init) + 2;
-            int y = cA.load_I() - k.init(autismclient.gui.f.a.DataUtil.init) - 5 - credits.size() * lineGap;
-
-            for (UtilCore.Inner_CachePool credit : credits) {
-               int x = 4;
-
-               for (UtilCore.Inner_BufferHelper segment : credit.init()) {
-                  if (!segment.init_Str().isEmpty()) {
-                     int color = init(segment.init_I(), p);
-                     k.init(graphics, this.font, segment.init_Str(), autismclient.gui.f.a.DataUtil.init, color, x, y, false);
-                     x += k.init(this.font, segment.init_Str(), autismclient.gui.f.a.DataUtil.init, color);
-                  }
-               }
-
-               y += lineGap;
-            }
-         }
-      }
-   }
-
-   private List<UtilCore.Inner_CachePool> load_List() {
-      if (this.load_List.isEmpty() && !this.update_Z) {
-         if (!FabricLoader.getInstance().isModLoaded("meteor-client")) {
-            return this.load_List;
-         }
-
-         try {
-            Class<?> addonManagerClass = Class.forName("meteordevelopment.meteorclient.addons.AddonManager");
-            Field addonsField = addonManagerClass.getField("ADDONS");
-            if (!(addonsField.get(null) instanceof Iterable<?> addons)) {
-               return this.load_List;
-            }
-
-            List<UtilCore.Inner_CachePool> loaded = new ArrayList<>();
-
-            for (Object addon : addons) {
-               UtilCore.Inner_CachePool line = init_UtilCore_CachePool_Obj(addon);
-               if (line != null) {
-                  loaded.add(line);
-               }
-            }
-
-            this.load_List = List.copyOf(loaded);
-         } catch (ReflectiveOperationException | RuntimeException ignored) {
-            this.update_Z = true;
-         }
-
-         return this.load_List;
-      } else {
-         return this.load_List;
-      }
-   }
-
-   private static UtilCore.Inner_CachePool init_UtilCore_CachePool_Obj(Object addon) throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
-      if (addon == null) {
-         return null;
-      }
-
-      Class<?> addonClass = addon.getClass();
-      String name = init_Str_Class(addonClass, addon, "name");
-      String[] authors = init_StrArr(addonClass, addon);
-      if (name != null && !name.isBlank() && authors.length != 0) {
-         int addonColor = init_I(addonClass, addon);
-         List<UtilCore.Inner_BufferHelper> segments = new ArrayList<>();
-         segments.add(new UtilCore.Inner_BufferHelper(name, addonColor));
-         segments.add(new UtilCore.Inner_BufferHelper(" by ", -5592406));
-
-         for (int i = 0; i < authors.length; i++) {
-            if (i > 0) {
-               segments.add(new UtilCore.Inner_BufferHelper(i == authors.length - 1 ? " & " : ", ", -5592406));
-            }
-
-            segments.add(new UtilCore.Inner_BufferHelper(authors[i], -1));
-         }
-
-         return new UtilCore.Inner_CachePool(List.copyOf(segments));
-      } else {
-         return null;
-      }
-   }
-
-   private static String init_Str_Class(Class<?> type, Object instance, String name) throws IllegalAccessException, NoSuchFieldException {
-      return type.getField(name).get(instance) instanceof String text ? text : null;
-   }
-
-   private static String[] init_StrArr(Class<?> type, Object instance) throws IllegalAccessException, NoSuchFieldException {
-      return type.getField("authors").get(instance) instanceof String[] authors ? authors : new String[0];
-   }
-
-   private static int init_I(Class<?> type, Object instance) throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
-      Object color = type.getField("color").get(instance);
-      if (color == null) {
-         return -1;
-      }
-
-      Method getPacked = color.getClass().getMethod("getPacked");
-      return getPacked.invoke(color) instanceof Integer intColor ? intColor : -1;
    }
 
    private void update() {
@@ -1141,63 +892,6 @@ public class UtilCore extends Screen implements TaskQueue {
    private static String load_Str() {
       int modCount = FabricLoader.getInstance().getAllMods().size();
       return modCount + (modCount == 1 ? " Mod" : " Mods");
-   }
-
-   private void sync() {
-      try {
-         Class<?> clazz = Class.forName("gg.essential.gui.modals.QuickAccessModal");
-         Object companion = clazz.getDeclaredField("Companion").get(null);
-         Method open = companion.getClass().getDeclaredMethod("open");
-         open.setAccessible(true);
-         open.invoke(companion);
-      } catch (Exception var4) {
-      }
-   }
-
-   private void flush() {
-      try {
-         Class<?> replayModuleClass = Class.forName("com.replaymod.replay.ReplayModReplay");
-         Field instanceField = replayModuleClass.getField("instance");
-         Object replayModule = instanceField.get(null);
-         if (replayModule == null) {
-            return;
-         }
-
-         Class<?> viewerClass = Class.forName("com.replaymod.replay.gui.screen.GuiReplayViewer");
-         Constructor<?> constructor = viewerClass.getConstructor(replayModuleClass);
-         Object viewer = constructor.newInstance(replayModule);
-         Method display = init(viewerClass, "display");
-         if (display == null) {
-            return;
-         }
-
-         display.setAccessible(true);
-         display.invoke(viewer);
-      } catch (Exception var8) {
-      }
-   }
-
-   private void close() {
-      try {
-         Class<?> screenClass = Class.forName("com.moulberry.flashback.screen.select_replay.SelectReplayScreen");
-         Constructor<?> constructor = screenClass.getConstructor(Screen.class);
-         if (constructor.newInstance(this) instanceof Screen s) {
-            this.minecraft.gui.setScreen(s);
-         }
-      } catch (Exception var5) {
-      }
-   }
-
-   private static Method init(Class<?> type, String name) {
-      for (Class<?> current = type; current != null; current = current.getSuperclass()) {
-         for (Method method : current.getDeclaredMethods()) {
-            if (method.getName().equals(name) && method.getParameterCount() == 0) {
-               return method;
-            }
-         }
-      }
-
-      return null;
    }
 
    private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, Component tooltip, float uiMouseX, float uiMouseY) {
@@ -1232,21 +926,6 @@ public class UtilCore extends Screen implements TaskQueue {
       }
 
       return this.run_I;
-   }
-
-   private record Inner_BufferHelper(String init_Str, int init_I) {
-   }
-
-   private record Inner_CachePool(List<UtilCore.Inner_BufferHelper> init) {
-      private int init(Font font) {
-         int width = 0;
-
-         for (UtilCore.Inner_BufferHelper segment : this.init) {
-            width += k.init(font, segment.init_Str(), autismclient.gui.f.a.DataUtil.init, segment.init_I());
-         }
-
-         return width;
-      }
    }
 
    private record Inner_ConfigStore(String init_Str, Supplier<String> init_Supplier) {

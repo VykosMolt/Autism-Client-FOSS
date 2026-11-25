@@ -1,86 +1,11 @@
 package autismclient.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import javax.imageio.ImageIO;
 
 public final class aq {
    private aq() {
-   }
-
-   public static boolean init_Z(byte[] data) {
-      return data != null && data.length > 3 && (data[0] & 255) == 137 && (data[1] & 255) == 80 && (data[2] & 255) == 78;
-   }
-
-   public static boolean load(byte[] data) {
-      return data != null && data.length > 2 && (data[0] & 255) == 255 && (data[1] & 255) == 216;
-   }
-
-   public static byte[] init_BArr(byte[] data) {
-      if (init_Z(data)) {
-         return data;
-      }
-
-      if (!load(data)) {
-         return null;
-      }
-
-      try {
-         BufferedImage image = ImageIO.read(new ByteArrayInputStream(data));
-         if (image == null) {
-            return null;
-         }
-
-         ByteArrayOutputStream out = new ByteArrayOutputStream(data.length);
-         return !ImageIO.write(image, "png", out) ? null : out.toByteArray();
-      } catch (Throwable t) {
-         return null;
-      }
-   }
-
-   public static NativeImage init_NativeImage(byte[] data) {
-      if (data == null || data.length == 0) {
-         return null;
-      }
-
-      if (init_Z(data)) {
-         try {
-            return NativeImage.read(new ByteArrayInputStream(data));
-         } catch (Throwable t) {
-            return null;
-         }
-      } else {
-         try {
-            BufferedImage image = ImageIO.read(new ByteArrayInputStream(data));
-            if (image == null) {
-               return null;
-            }
-
-            NativeImage out = new NativeImage(image.getWidth(), image.getHeight(), true);
-            try {
-               for (int y = 0; y < image.getHeight(); y++) {
-                  for (int x = 0; x < image.getWidth(); x++) {
-                     out.setPixel(x, y, image.getRGB(x, y));
-                  }
-               }
-
-               return out;
-            } catch (Throwable t) {
-               out.close();
-               throw t;
-            }
-         } catch (Throwable t) {
-            return null;
-         }
-      }
-   }
-
-   public static NativeImage[] init_NativeImageArr(NativeImage base) {
-      return init(base, 512);
    }
 
    public static NativeImage[] init(NativeImage base, int maxTop) {

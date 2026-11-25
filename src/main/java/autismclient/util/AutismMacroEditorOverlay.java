@@ -166,9 +166,6 @@ public class AutismMacroEditorOverlay extends bj {
    private long poll_J = System.nanoTime();
    private static final int drain = -5609729;
    private static final int fill = 88;
-   private boolean clear_Z;
-   private boolean reset_Z;
-   private long push_J;
 
    public static AutismMacroEditorOverlay init_AutismMacroEditorO_2() {
       if (init_AutismMacroEditorO_5 == null) {
@@ -438,10 +435,6 @@ public class AutismMacroEditorOverlay extends bj {
          topRow += this.h_I() + gap;
       }
 
-      if (this.clear_Z) {
-         topRow += this.load_I_Str_3("Multi") + 11 + gap;
-      }
-
       if (!this.set_Z && !this.update_Z && this.init_aM != null && aE.init_aE().write_Z()) {
          topRow += this.g_I() + gap;
       }
@@ -654,12 +647,8 @@ public class AutismMacroEditorOverlay extends bj {
       return this.bind_I();
    }
 
-   private boolean pop_Z_4() {
-      return AutismLiteVariant.enabled() ? false : autismclient.util.g.ValueSink.init_Z();
-   }
-
    private String init_Str_Z_3(boolean localRunning) {
-      return localRunning ? "Stop" : (this.pop_Z_4() ? "Run on POV" : "Run");
+      return localRunning ? "Stop" : "Run";
    }
 
    private int g_I() {
@@ -3050,7 +3039,7 @@ public class AutismMacroEditorOverlay extends bj {
             "Join a server (blank = last) and continue once in (Playable by default).",
             () -> this.init_V_MacroAction_2(new autismclient.util.macro.ClassCache())
          );
-         this.init_V_List(entries, "flow", "Module", "Toggle AUTISM or Meteor modules.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ak()));
+         this.init_V_List(entries, "flow", "Module", "Toggle AUTISM modules.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ak()));
          this.init_V_List(entries, "flow", "Assert", "Validate preconditions.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.DataUtil()));
          this.init_V_List(entries, "flow", "Pay", "Send payments to a player list.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.G()));
          this.init_V_List(entries, "interaction", "InstaBreak", "Instant rebreak for one captured block.", this::entry_V);
@@ -3065,16 +3054,6 @@ public class AutismMacroEditorOverlay extends bj {
             "Measure time between macro, packet, GUI, teleport, or position events.",
             () -> this.init_V_MacroAction_2(new autismclient.util.macro.O())
          );
-         if (AutismConfig.getGlobal().multiDisclaimerAccepted && !AutismLiteVariant.enabled()) {
-            this.init_V_List(
-               entries,
-               "flow",
-               "Multi",
-               "Run the next N steps on selected Multi accounts, with connect + wait options.",
-               () -> this.init_V_MacroAction_2(new autismclient.util.macro.t())
-            );
-         }
-
          this.init_V_List(
             entries, "flow", "Start Macro", "Start another macro from the macro library.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.af())
          );
@@ -4341,21 +4320,6 @@ public class AutismMacroEditorOverlay extends bj {
          bx += this.f_I() + gap;
       }
 
-      this.clear_Z = this.buffer_Z();
-      this.reset_Z = this.pop_Z_4();
-      if (!this.value_Z() && this.clear_Z) {
-         int multiRunW = autismclient.gui.f.b.k.init(
-               this.init_Font,
-               "Multi",
-               this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read),
-               this.init_CharEncoder.load(autismclient.gui.f.b.l.read)
-            )
-            + this.e_I()
-            + 11;
-         this.init("Multi", bx, row2Y, multiRunW, bh, this::d_V);
-         bx += multiRunW + gap;
-      }
-
       if (!this.set_Z && aE.init_aE().write_Z() && !this.update_Z && this.init_aM != null) {
          this.init("LAN", bx, row2Y, this.g_I(), bh, () -> {
             if (this.init_aM != null) {
@@ -4538,40 +4502,6 @@ public class AutismMacroEditorOverlay extends bj {
       }
    }
 
-   private boolean buffer_Z() {
-      if (AutismLiteVariant.enabled()) {
-         return false;
-      }
-
-      autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-      return multi != null && multi.load_Z();
-   }
-
-   private void c_V() {
-      long now = System.currentTimeMillis();
-      if (now - this.push_J >= 500L) {
-         this.push_J = now;
-         if (this.buffer_Z() != this.clear_Z || this.pop_Z_4() != this.reset_Z) {
-            this.bind_V();
-         }
-      }
-   }
-
-   private void d_V() {
-      if (!AutismLiteVariant.enabled()) {
-         autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-         if (multi == null || !multi.load_Z()) {
-            bi.write("No Multi session is active anymore.");
-            this.bind_V();
-         } else if (this.init_aM != null && !this.init_aM.init_List.isEmpty()) {
-            autismclient.util.g.PacketUtil.Inner_CachePool result = multi.load(this.init_aM, Set.of());
-            bi.init("Run for Multi: " + result.init_Str() + ". Details are in the Multi console.", -11013497);
-         } else {
-            bi.write("Macro has no actions!");
-         }
-      }
-   }
-
    private void e_V() {
       if (this.init_aM == null) {
          AutismClientMessaging.sendPrefixed("No macro to run!");
@@ -4583,16 +4513,6 @@ public class AutismMacroEditorOverlay extends bj {
          this.bind_V();
       } else if (!this.node_Z()) {
          AutismClientMessaging.sendPrefixed(this.write_Str_3());
-         this.bind_V();
-      } else if (!AutismLiteVariant.enabled() && this.pop_Z_4()) {
-         autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-         if (multi != null && multi.load_Z()) {
-            autismclient.util.g.PacketUtil.Inner_CachePool result = multi.load(this.init_aM, Set.of());
-            bi.init("Run on POV: " + result.init_Str() + ".", -11013497);
-         } else {
-            bi.write("The POV Multi session is no longer active.");
-         }
-
          this.bind_V();
       } else {
          this.g_V();
@@ -4877,14 +4797,6 @@ public class AutismMacroEditorOverlay extends bj {
                   }
 
                   if (!previousName.isBlank() && cZ.load(previousName, savedOrUpdated.init_Str)) {
-                     if (!AutismLiteVariant.enabled()) {
-                        autismclient.util.g.TaskTimer.init_TaskTimer().init_I(previousName, savedOrUpdated.init_Str);
-                        autismclient.util.g.PacketUtil liveMulti = autismclient.util.g.PacketUtil.load_PacketUtil();
-                        if (liveMulti != null) {
-                           liveMulti.load_V(previousName, savedOrUpdated.init_Str);
-                        }
-                     }
-
                      if (!cZ.init(previousName, savedOrUpdated.init_Str) && aE.init_aE().write_Z()) {
                         aE.init_aE().read_V_Str(previousName);
                      }
@@ -4946,7 +4858,6 @@ public class AutismMacroEditorOverlay extends bj {
       this.drain_V();
       this.a_V();
       this.b_V();
-      this.c_V();
       if (this.write_Z || this.a__Z()) {
          boolean stepListLocked = this.queue_Z();
          int panelMouseX = mouseX;
@@ -6163,12 +6074,6 @@ public class AutismMacroEditorOverlay extends bj {
             String blockedReason = this.write_Str_3();
             var10000 = blockedReason != null ? blockedReason : "Run this macro";
             break;
-         case "Run on POV":
-            var10000 = "Run this editor draft only on the bot currently under POV";
-            break;
-         case "Multi":
-            var10000 = this.pop_Z_4() ? "Run this editor draft only on the bot currently under POV" : "Run this editor draft on the active Multi sessions";
-            break;
          case "Stop":
             var10000 = "Stop the running macro";
             break;
@@ -6264,7 +6169,7 @@ public class AutismMacroEditorOverlay extends bj {
             var10000 = "Wait for LAN sync peer to reach a macro step";
             break;
          case "Module":
-            var10000 = "Toggle AUTISM or Meteor modules";
+            var10000 = "Toggle AUTISM modules";
             break;
          case "Sneak":
             var10000 = "Hold or release sneak key";

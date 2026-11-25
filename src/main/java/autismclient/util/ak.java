@@ -60,11 +60,6 @@ public final class ak {
 
       autismclient.modules.PoolEntry autismModule = autismclient.modules.PoolEntry.init_PoolEntry();
       if (!AutismLiteVariant.enabled()) {
-         cX multiOverlay = autismModule == null ? null : autismModule.sync_cX();
-         if (multiOverlay != null && multiOverlay.sync_Z()) {
-            manager.init_V(multiOverlay);
-         }
-
          autismclient.ai.ConfigStore.init_ConfigStore().load_V();
          autismclient.ai.cV.read_V();
       }
@@ -127,11 +122,6 @@ public final class ak {
       }
 
       if (!AutismLiteVariant.enabled() && autismModule != null) {
-         cX matchmakingOverlay = autismModule.init_cX();
-         if (matchmakingOverlay != null && matchmakingOverlay.sync_Z()) {
-            manager.init_V(matchmakingOverlay);
-         }
-
          cX profilesOverlay = autismModule.load_cX();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
             manager.init_V(profilesOverlay);

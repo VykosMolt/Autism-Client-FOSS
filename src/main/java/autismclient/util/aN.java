@@ -421,14 +421,6 @@ public class aN {
          AutismClientMessaging.sendPrefixed("§aDeleted macro: " + macro.init_Str);
       }
 
-      if (!deletedName.isBlank() && !AutismLiteVariant.enabled()) {
-         autismclient.util.g.TaskTimer.init_TaskTimer().init_I(deletedName, "");
-         autismclient.util.g.PacketUtil liveMulti = autismclient.util.g.PacketUtil.load_PacketUtil();
-         if (liveMulti != null) {
-            liveMulti.load_V(deletedName, "");
-         }
-      }
-
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
       if (editor != null && editor.init_Z_aM(macro)) {
          editor.update_V_10();
@@ -509,13 +501,7 @@ public class aN {
    }
 
    public void init_V() {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.ValueSink.init_Z()) {
-         autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-         if (multi != null) {
-            autismclient.util.g.PacketUtil.Inner_CachePool result = multi.write_PacketUtil_CachePo_Set(Set.of());
-            AutismClientMessaging.sendPrefixed("§eStop POV macro: " + result.init_Str());
-         }
-      } else if (MacroExecutor.load_Z()) {
+      if (MacroExecutor.load_Z()) {
          MacroExecutor.read_V();
       } else {
          AutismClientMessaging.sendPrefixed("§eNo macro is currently running.");

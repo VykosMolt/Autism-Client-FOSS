@@ -51,7 +51,7 @@ public final class aC {
                            context.submitNodeCollector()
                               .submitCustomGeometry(
                                  poseStack,
-                                 net.minecraft.client.renderer.rendertype.CachePool.write(),
+                                 autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
                                  (pose, buffer) -> load(pose, buffer, fillBox, targetFillColor)
                               );
                            int bracketColor = 208 + (int)(47.0F * wave) << 24 | 16726843;
@@ -59,7 +59,7 @@ public final class aC {
                            context.submitNodeCollector()
                               .submitCustomGeometry(
                                  poseStack,
-                                 net.minecraft.client.renderer.rendertype.CachePool.update(),
+                                 autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(),
                                  (pose, buffer) -> init(pose, buffer, bracketBox, bracketColor)
                               );
                         }
@@ -69,7 +69,7 @@ public final class aC {
                            context.submitNodeCollector()
                               .submitCustomGeometry(
                                  poseStack,
-                                 net.minecraft.client.renderer.rendertype.CachePool.write(),
+                                 autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
                                  (pose, buffer) -> load(pose, buffer, marker.move(-camera.x, -camera.y, -camera.z), 1509899067)
                               );
                         }

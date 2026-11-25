@@ -55,11 +55,33 @@ if (cpFile.exists()) {
     if (f.exists()) externalJars << f
 }
 
+def fabricLoaderJar = new File(prismLibs, 'net/fabricmc/fabric-loader/0.20.1/fabric-loader-0.20.1.jar')
+def extractMixinExtras = tasks.register('extractMixinExtras') {
+    def outFile = layout.buildDirectory.file('compile-deps/mixinextras.jar')
+    inputs.file(fabricLoaderJar)
+    outputs.file(outFile)
+    doLast {
+        if (!fabricLoaderJar.exists()) {
+            throw new GradleException("Fabric Loader JAR not found: ${fabricLoaderJar}")
+        }
+        new java.util.zip.ZipFile(fabricLoaderJar).withCloseable { zf ->
+            def entry = zf.entries().toList().find { it.name.startsWith('META-INF/jars/mixinextras-fabric-') && it.name.endsWith('.jar') }
+            if (entry == null) {
+                throw new GradleException("MixinExtras JAR not found inside ${fabricLoaderJar}")
+            }
+            def dst = outFile.get().asFile
+            dst.parentFile.mkdirs()
+            zf.getInputStream(entry).withCloseable { inp -> dst.bytes = inp.bytes }
+        }
+    }
+}
+
 dependencies {
     compileOnly files('stubs/compat-stubs.jar')
     compileOnly files('stubs/integrity-stubs.jar')
     compileOnly files('src/main/resources/autism-ai/worker.jar')
     compileOnly files(externalJars)
+    compileOnly files(extractMixinExtras.map { it.outputs.files.singleFile })
     compileOnly fileTree(dir: 'src/main/resources/META-INF/jars', include: ['*.jar'])
     compileOnly fileTree(dir: 'libs', include: ['**/*.jar'])
 }

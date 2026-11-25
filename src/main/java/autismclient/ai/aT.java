@@ -302,7 +302,7 @@ final class aT implements AutoCloseable {
                return dx * dx + dyx * dyx + dzx * dzx;
             }));
             this.flush = this.close = 0;
-            RenderType type = net.minecraft.client.renderer.rendertype.CachePool.init();
+            RenderType type = autismclient.render.AutismRenderTypes.aiPlanGhost();
 
             for (aT.Inner_BufferHelper section : visible) {
                if (section.init_J != this.load_J) {
@@ -339,7 +339,7 @@ final class aT implements AutoCloseable {
       Pose identity = new PoseStack().last();
       section.load_Z = section.init_P
          .init(
-            net.minecraft.client.renderer.rendertype.CachePool.init(),
+            autismclient.render.AutismRenderTypes.aiPlanGhost(),
             buffer -> {
                label91:
                for (int i : section.init_IntArrayList) {

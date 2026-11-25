@@ -125,21 +125,8 @@ public final class AutismConfig implements Cloneable {
    public boolean classicMenuLayoutCustom = false;
    public int tpMaxPackets = 20;
    public int tpPauseMs = 500;
-   public boolean welcomeShown = false;
-   public String welcomeInstallIdentity = "";
    public boolean voiceChatModdedPromptShown = false;
-   public boolean multiDisclaimerAccepted = false;
-   public boolean multiShowTooltips = true;
-   public boolean multiAutoSolveCaptcha = true;
-   public int multiMacroStartDelayMs = 0;
-   public boolean accountGenSetPassword = true;
-   public String accountGenPasswordMode = "Generate";
-   public String accountGenSharedPassword = "";
    public String activeProfileId = "";
-   public List<String> hideRestoreMeteorModules = new ArrayList<>();
-   public boolean hideMeteorHudActive = true;
-   public boolean essentialHiddenByPanic = false;
-   public boolean essentialSavedEnabled = true;
    public List<String> disabledAddonIds = new ArrayList<>();
    public AutismConfig.ThemeColors themeColors = new AutismConfig.ThemeColors();
    private static final Object SAVE_LOCK = new Object();
@@ -354,9 +341,6 @@ public final class AutismConfig implements Cloneable {
       copy.activeProfileId = "";
       copy.packetLoggerCapturing = false;
       copy.serverPluginScans = new LinkedHashMap<>();
-      copy.welcomeShown = false;
-      copy.welcomeInstallIdentity = "";
-      copy.essentialHiddenByPanic = false;
       return copy;
    }
 
@@ -627,10 +611,6 @@ public final class AutismConfig implements Cloneable {
 
       if (this.hideRestoreModules == null) {
          this.hideRestoreModules = new ArrayList<>();
-      }
-
-      if (this.hideRestoreMeteorModules == null) {
-         this.hideRestoreMeteorModules = new ArrayList<>();
       }
 
       if (this.moduleCategoryLayouts == null) {

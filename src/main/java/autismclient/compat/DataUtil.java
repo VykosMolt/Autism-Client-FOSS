@@ -191,13 +191,9 @@ public class DataUtil extends Screen {
       }));
       out.add(this.init("Overlay Scale", cA.init_Str(), () -> cA.init_V_D(cA.load_D()), () -> cA.init_V_D(cA.read())));
       List<String> prefixes = new ArrayList<>(z.init_List);
-      if (z.init_Z()) {
-         prefixes.remove(".");
-      }
-
       String cur = z.init_Str();
       if (!prefixes.contains(cur)) {
-         cur = prefixes.isEmpty() ? "%" : prefixes.get(0);
+         cur = prefixes.isEmpty() ? "." : prefixes.get(0);
       }
 
       out.add(this.init_DataUtil_BufferHel_PoolEntry(module, prefixes, cur));
@@ -208,7 +204,7 @@ public class DataUtil extends Screen {
 
       out.add(this.init("Theme Color", () -> this.minecraft.gui.setScreen(new CacheEntry(this))));
       out.add(this.init("Addons", () -> this.minecraft.gui.setScreen(new autismclient.gui.d.CachePool(this))));
-      out.add(this.init("Donate", () -> aJ.init_V("https://ko-fi.com/melonik"), "Discord", () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu")));
+      out.add(this.init("Discord", () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu")));
       return out;
    }
 
@@ -300,20 +296,6 @@ public class DataUtil extends Screen {
          this.init(g, rb, label, clickable && rb.init_Z(mx, my), false);
          if (clickable) {
             this.init_V_NetHelper(rb, onClick, null);
-         }
-      };
-   }
-
-   private DataUtil.BufferHelper init(String labelA, Runnable onA, String labelB, Runnable onB) {
-      return (g, rb, mx, my, clickable) -> {
-         int half = (rb.update() - 2) / 2;
-         NetHelper a = NetHelper.init(rb.read(), rb.write(), half, rb.sync());
-         NetHelper b = NetHelper.init(rb.read() + half + 2, rb.write(), rb.update() - half - 2, rb.sync());
-         this.init(g, a, labelA, clickable && a.init_Z(mx, my), false);
-         this.init(g, b, labelB, clickable && b.init_Z(mx, my), false);
-         if (clickable) {
-            this.init_V_NetHelper(a, onA, null);
-            this.init_V_NetHelper(b, onB, null);
          }
       };
    }

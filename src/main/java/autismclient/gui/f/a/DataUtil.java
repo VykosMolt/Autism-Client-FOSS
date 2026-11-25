@@ -18,8 +18,6 @@ public final class DataUtil {
    public static final Identifier tick = init("packetcategory");
    public static final Identifier run = init("screencategory");
    public static final Identifier get = init("chatcategory");
-   public static final Identifier set = init("matchmaking");
-   public static final Identifier put = init("multi");
    public static final Identifier add = init("profiles");
    public static final Identifier clear = init("schematics");
    public static final Identifier reset = init("cat_combat");

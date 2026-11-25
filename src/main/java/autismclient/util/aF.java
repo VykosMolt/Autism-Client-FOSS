@@ -172,12 +172,7 @@ public final class aF {
       init(sb, "macro", () -> MacroExecutor.read_Str() + " pendingConditions=" + b.init_I());
       init(sb, "antiVanish", autismclient.modules.SyncManager::load_Str);
       init(sb, "hud", () -> {
-         String mmSegment = " mm=lite";
-         if (!AutismLiteVariant.enabled()) {
-            mmSegment = " mm=" + autismclient.util.mm.BufferHelper.init_BufferHelper().sync_Str();
-         }
-
-         return "enabledElements=" + al.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I() + mmSegment;
+         return "enabledElements=" + al.init_I() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();
       });
       init(
          sb,

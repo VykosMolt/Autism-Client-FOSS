@@ -76,14 +76,14 @@ public final class cJ {
                            int fc = dynamic ? load_I & 0xFF000000 | init(-13248397, -50373, progress) & 16777215 : load_I;
                            context.submitNodeCollector()
                               .submitCustomGeometry(
-                                 poseStack, net.minecraft.client.renderer.rendertype.CachePool.write(), (pose, buffer) -> init(pose, buffer, box, fc)
+                                 poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> init(pose, buffer, box, fc)
                               );
                         }
 
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               poseStack,
-                              net.minecraft.client.renderer.rendertype.CachePool.update(),
+                              autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(),
                               (pose, buffer) -> init(pose, buffer, box, line, init_F, load_Z)
                            );
                      }

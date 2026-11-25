@@ -18,7 +18,6 @@ import autismclient.util.cf;
 import autismclient.util.ck;
 import autismclient.util.cx;
 import autismclient.util.w;
-import autismclient.util.g.PoolEntry;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -211,10 +210,6 @@ public abstract class AutismMouseHandlerMixin {
                ci.cancel();
                return;
             }
-         }
-
-         if (this.minecraft != null && this.minecraft.gui.screen() == null && !AutismLiteVariant.enabled() && PoolEntry.init_Z_D(yOffset)) {
-            ci.cancel();
          }
       }
    }

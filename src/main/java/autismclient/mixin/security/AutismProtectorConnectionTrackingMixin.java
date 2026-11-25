@@ -3,8 +3,6 @@ package autismclient.mixin.security;
 import autismclient.AutismClientAddon;
 import autismclient.g.BufferHelper;
 import autismclient.g.HashUtil;
-import autismclient.util.AutismLiteVariant;
-import autismclient.util.g.ConfigStore;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
@@ -29,9 +27,8 @@ public class AutismProtectorConnectionTrackingMixin {
 
    @Inject(method = "channelActive", at = @At("HEAD"))
    private void autism$onChannelActive(ChannelHandlerContext context, CallbackInfo ci) {
-      boolean multiChannel = !AutismLiteVariant.enabled() && context != null && ConfigStore.init_Z(context.channel());
       SocketAddress peerAddress = context != null && context.channel() != null ? context.channel().remoteAddress() : null;
-      this.autism$context(peerAddress, multiChannel);
+      this.autism$context(peerAddress, false);
       if (!System.getProperty("autism.privacy.compat.dir", "").isBlank()) {
          AutismClientAddon.LOG
             .info(
@@ -108,9 +105,8 @@ public class AutismProtectorConnectionTrackingMixin {
 
    private BufferHelper.Inner_StreamUtil autism$context(SocketAddress peerAddress, boolean multiChannel) {
       Connection connection = (Connection)(Object)this;
-      boolean multi = multiChannel || !AutismLiteVariant.enabled() && ConfigStore.init_Z(connection);
       BufferHelper.Inner_CachePool mode = HashUtil.sync() ? BufferHelper.Inner_CachePool.init : BufferHelper.Inner_CachePool.load;
-      this.autism$privacyContext = BufferHelper.init(connection, mode, multi, peerAddress);
+      this.autism$privacyContext = BufferHelper.init(connection, mode, false, peerAddress);
       return this.autism$privacyContext;
    }
 

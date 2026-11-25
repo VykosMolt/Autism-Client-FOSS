@@ -5,7 +5,6 @@ import autismclient.api.module.ColorSetting;
 import autismclient.api.module.DoubleSetting;
 import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismMinecraftAccessor;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.bM;
 import java.util.List;
 import net.minecraft.client.player.LocalPlayer;
@@ -47,7 +46,7 @@ public final class StreamUtil extends Module {
    public void tick() {
       this.init_BlockPos = null;
       if (MC != null && MC.level != null) {
-         Player player = AutismLiteVariant.enabled() ? MC.player : autismclient.util.g.PoolEntry.init_Player();
+         Player player = MC.player;
          StreamUtil.Inner_DataUtil placement = init(player, MC.hitResult, this.decimal("range"));
          if (placement != null && !al.init_Z_HitResult(placement.init_BlockHitResult(), placement.init_InteractionHand(), this.id())) {
             if (this.bool("guide")) {
@@ -64,8 +63,7 @@ public final class StreamUtil extends Module {
       if (MC != null
          && MC.level != null
          && MC.player != null
-         && MC.gameMode != null
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())) {
+         && MC.gameMode != null) {
          StreamUtil.Inner_DataUtil placement = init(MC.player, hitResult, this.decimal("range"));
          if (placement == null) {
             return false;
@@ -82,7 +80,6 @@ public final class StreamUtil extends Module {
    private void init_V_StreamUtil_DataUti(StreamUtil.Inner_DataUtil placement) {
       if (MC.player != null
          && MC.gameMode != null
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
          && MC.options.keyUse.isDown()
          && ((AutismMinecraftAccessor)MC).autism$getRightClickDelay() <= 0
          && !HashUtil.load_Z()

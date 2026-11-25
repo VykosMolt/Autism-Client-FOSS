@@ -317,7 +317,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
    private boolean sync_Z_2() {
       if (MC != null && MC.player != null) {
          return !MC.player.isPassenger() && !MC.player.getAbilities().flying
-            ? (AutismLiteVariant.enabled() || !PkgCls_a.init_Z()) && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
+            ? AutismLiteVariant.enabled() || !PkgCls_a.init_Z()
             : false;
       } else {
          return false;
@@ -383,7 +383,6 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
          && !aD.init_Z()
          && !aC.init_Z()
          && !cd.init_Z()
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !MacroExecutor.write_Z()
          && !MC.player.isDeadOrDying()

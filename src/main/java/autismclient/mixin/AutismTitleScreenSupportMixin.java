@@ -4,7 +4,6 @@ import autismclient.gui.d.HashUtil;
 import autismclient.gui.d.TaskTimer;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.aD;
-import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.aJ;
 import autismclient.util.bk;
@@ -34,12 +33,9 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
                this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.load));
             }
          });
-         this.autism$rightButton(Component.literal("Matchmaking"), 28, b -> this.autism$openMenuOverlay(true));
-         this.autism$rightButton(Component.literal("Profiles"), 52, b -> this.autism$openMenuOverlay(false));
-         this.autism$leftButton(Component.literal("Card/PayPal"), 4, "https://ko-fi.com/melonik");
-         this.autism$leftButton(Component.literal("Crypto"), 28, "https://nowpayments.io/donation/melonikautismclient");
-         this.autism$leftButton(Component.literal("AUTISM INC"), 52, "https://discord.gg/V8GsKP6k5u");
-         this.autism$leftButton(Component.literal("AUTISM Client"), 76, "https://discord.com/invite/JZ7XgUCtBu");
+         this.autism$rightButton(Component.literal("Profiles"), 28, b -> this.autism$openProfilesOverlay());
+         this.autism$leftButton(Component.literal("AUTISM INC"), 4, "https://discord.gg/V8GsKP6k5u");
+         this.autism$leftButton(Component.literal("AUTISM Client"), 28, "https://discord.com/invite/JZ7XgUCtBu");
       }
    }
 
@@ -60,16 +56,14 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
    }
 
    @Unique
-   private void autism$openMenuOverlay(boolean matchmaking) {
+   private void autism$openProfilesOverlay() {
       if (!aD.read_Z()) {
          PoolEntry mod = PoolEntry.init_PoolEntry();
          if (mod != null) {
-            cX overlay = matchmaking ? mod.init_cX() : mod.load_cX();
+            cX overlay = mod.load_cX();
             if (overlay != null) {
                bk.init_bk().init_V(overlay);
-               if (overlay instanceof AutismMatchmakingOverlay mm) {
-                  mm.load(true);
-               } else if (overlay instanceof AutismProfilesOverlay pf) {
+               if (overlay instanceof AutismProfilesOverlay pf) {
                   pf.load(true);
                }
 

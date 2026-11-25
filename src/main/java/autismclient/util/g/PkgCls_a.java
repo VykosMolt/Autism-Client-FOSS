@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -161,17 +160,13 @@ public final class PkgCls_a {
       PkgCls_a.Inner_StreamUtil request = init_a_StreamUtil_Str(
          arguments, player == null ? null : init_Vec3_LocalPlayer(player), config.tpMaxPackets, config.tpPauseMs
       );
-      String common = init_Str_a_StreamUtil_b(request, null);
+      String common = init_Str_a_StreamUtil(request);
       if (common != null) {
          return common;
       }
 
       if (player == null || mc.getConnection() == null || player.level() == null) {
          return "Join a world first";
-      }
-
-      if (read()) {
-         return "POV owns player commands";
       }
 
       if (MacroExecutor.write_Z()) {
@@ -192,10 +187,6 @@ public final class PkgCls_a {
       LocalPlayer player = mc == null ? null : mc.player;
       if (handle == null || action == null || player == null || mc.getConnection() == null || player.level() == null) {
          return new PkgCls_a.Inner_StateCache(false, "No world or connection");
-      }
-
-      if (read()) {
-         return new PkgCls_a.Inner_StateCache(false, "POV owns player movement");
       }
 
       Vec3 origin = init_Vec3_LocalPlayer(player);
@@ -235,45 +226,7 @@ public final class PkgCls_a {
       }
    }
 
-   static String load(String arguments) {
-      return AutismLiteVariant.enabled() ? "POV is unavailable" : c.init(arguments);
-   }
-
-   static String init_Str_b(b session, RemotePlayer bot, String arguments) {
-      AutismConfig config = AutismConfig.getGlobal();
-      b.Inner_StreamUtil location = session == null ? null : session.init_b_StreamUtil();
-      Vec3 origin = location == null ? null : location.init_Vec3();
-      PkgCls_a.Inner_StreamUtil request = init_a_StreamUtil_Str(arguments, origin, config.tpMaxPackets, config.tpPauseMs);
-      String common = init_Str_a_StreamUtil_b(request, session);
-      if (common != null) {
-         return common;
-      }
-
-      if (session == null || bot == null || location == null || origin == null) {
-         return "POV session is not ready";
-      }
-
-      if (bot.isPassenger()) {
-         return "Vehicle POV is unsupported";
-      }
-
-      b.Inner_DataUtil handle = session.init_b_DataUtil_RemotePlayer(bot);
-      if (handle == null) {
-         return "POV session is not ready";
-      }
-
-      synchronized (init_Obj) {
-         init_a_ConfigStore = PkgCls_a.Inner_ConfigStore.init(session, bot, request, location, handle);
-      }
-
-      return init_Str_Vec3(request.init_Vec3(), request.init_I(), request.load(), false);
-   }
-
-   private static boolean read() {
-      return AutismLiteVariant.enabled() ? false : c.init();
-   }
-
-   private static String init_Str_a_StreamUtil_b(PkgCls_a.Inner_StreamUtil request, b owner) {
+   private static String init_Str_a_StreamUtil(PkgCls_a.Inner_StreamUtil request) {
       if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.flush) {
          return request.init_Str();
       } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.sync) {
@@ -285,9 +238,9 @@ public final class PkgCls_a {
          config.save();
          return "TP defaults: " + request.init_I() + " packets, " + request.load() + " ms";
       } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.read) {
-         return init_Str_b(owner);
+         return init_Str_status();
       } else {
-         return request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.load ? init_Str_b_Str(owner, "stopped by command") : null;
+         return request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.load ? init_Str_stop("stopped by command") : null;
       }
    }
 
@@ -1157,12 +1110,6 @@ public final class PkgCls_a {
    }
 
    private static boolean load(PkgCls_a.Inner_ConfigStore job, PkgCls_a.Inner_TaskQueue frame) {
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load) {
-         return !frame.init_Z()
-            ? job.init_b.init_Z_b_DataUtil_Z(job.init_b_DataUtil, frame.load())
-            : job.init_b.init_Z_b_DataUtil_List(job.init_b_DataUtil, frame.init_List());
-      }
-
       Minecraft mc = Minecraft.getInstance();
       if (mc.getConnection() != null && mc.player != null) {
          boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && aR.load_Z_12();
@@ -1226,35 +1173,29 @@ public final class PkgCls_a {
    }
 
    private static void init_V_a_ConfigStore_2(PkgCls_a.Inner_ConfigStore job, Vec3 position, boolean onGround) {
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load) {
-         job.init_b.init_V_b_DataUtil(job.init_b_DataUtil, position, onGround);
-      } else {
-         LocalPlayer player = job.init_LocalPlayer;
-         if (player != null) {
-            if (job.init_Entity != null) {
-               job.init_Entity.setPos(position);
-            }
-
-            if (job.init_Entity != null) {
-               job.init_Entity.positionRider(player);
-            } else {
-               player.setPos(position.x, position.y, position.z);
-            }
-
-            player.setOnGround(onGround);
-            player.setDeltaMovement(Vec3.ZERO);
-            player.xxa = 0.0F;
-            player.zza = 0.0F;
-            player.setJumping(false);
-            player.resetFallDistance();
+      LocalPlayer player = job.init_LocalPlayer;
+      if (player != null) {
+         if (job.init_Entity != null) {
+            job.init_Entity.setPos(position);
          }
+
+         if (job.init_Entity != null) {
+            job.init_Entity.positionRider(player);
+         } else {
+            player.setPos(position.x, position.y, position.z);
+         }
+
+         player.setOnGround(onGround);
+         player.setDeltaMovement(Vec3.ZERO);
+         player.xxa = 0.0F;
+         player.zza = 0.0F;
+         player.setJumping(false);
+         player.resetFallDistance();
       }
    }
 
    private static F.Inner_StreamUtil init_F_StreamUtil_a_ConfigStore(PkgCls_a.Inner_ConfigStore job) {
-      Entity entity = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load
-         ? job.init_RemotePlayer
-         : (job.init_Entity != null ? job.init_Entity : job.init_LocalPlayer);
+      Entity entity = job.init_Entity != null ? job.init_Entity : job.init_LocalPlayer;
       return F.init_F_StreamUtil_Entity(entity);
    }
 
@@ -1332,32 +1273,9 @@ public final class PkgCls_a {
       }
    }
 
-   static void init_V_b_Vec3(b session, Vec3 corrected) {
-      if (session != null && corrected != null) {
-         synchronized (init_Obj) {
-            PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
-            if (job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load && job.init_b == session) {
-               b.Inner_DataUtil current = session.init_b_DataUtil();
-               if (current != null && current.equals(job.init_b_DataUtil)) {
-                  b.Inner_DataUtil correctedHandle = session.init_b_DataUtil_b_DataUtil(current);
-                  if (correctedHandle != null) {
-                     job.init_b_DataUtil = correctedHandle;
-                     job.init_a_CachePool = new PkgCls_a.Inner_CachePool(corrected, 0L);
-                  }
-               }
-            }
-         }
-      }
-   }
-
    public static boolean init_Z() {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
       return job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init;
-   }
-
-   static boolean init_Z_b(b session) {
-      PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
-      return job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load && job.init_b == session;
    }
 
    public static boolean load_Z() {
@@ -1415,43 +1333,17 @@ public final class PkgCls_a {
       }
    }
 
-   static void init_V_b_Str(b session, String reason) {
-      PkgCls_a.Inner_ConfigStore job;
-      synchronized (init_Obj) {
-         job = init_a_ConfigStore != null && init_a_ConfigStore.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load && init_a_ConfigStore.init_b == session
-            ? init_a_ConfigStore
-            : null;
-      }
-
-      if (job != null) {
-         init_V_a_ConfigStore_3(job, false, reason == null ? "POV ownership changed" : reason);
-      }
-   }
-
    private static String init_Str_a_ConfigStore_Minecraft(PkgCls_a.Inner_ConfigStore job, Minecraft mc) {
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load) {
-         String invalid = job.init_b.init_Str_b_DataUtil_Str(job.init_b_DataUtil, job.init_Str);
-         if (invalid != null) {
-            return invalid;
+      if (job.init_Z ? MacroExecutor.write_Z() : !MacroExecutor.write_Z()) {
+         if (mc.player != job.init_LocalPlayer || mc.getConnection() != job.init_Obj || mc.level != job.load_Obj) {
+            return "player connection changed";
+         } else if (job.init_LocalPlayer.isDeadOrDying()) {
+            return "player died";
          } else {
-            return job.init_RemotePlayer != null && !job.init_RemotePlayer.isDeadOrDying() ? null : "POV bot died";
+            return job.init_Entity != null && job.init_LocalPlayer.getVehicle() != job.init_Entity ? "vehicle ownership changed" : null;
          }
       } else {
-         if (read()) {
-            return "POV ownership changed";
-         }
-
-         if (job.init_Z ? MacroExecutor.write_Z() : !MacroExecutor.write_Z()) {
-            if (mc.player != job.init_LocalPlayer || mc.getConnection() != job.init_Obj || mc.level != job.load_Obj) {
-               return "player connection changed";
-            } else if (job.init_LocalPlayer.isDeadOrDying()) {
-               return "player died";
-            } else {
-               return job.init_Entity != null && job.init_LocalPlayer.getVehicle() != job.init_Entity ? "vehicle ownership changed" : null;
-            }
-         } else {
-            return job.init_Z ? "owning macro stopped" : "macro took movement ownership";
-         }
+         return job.init_Z ? "owning macro stopped" : "macro took movement ownership";
       }
    }
 
@@ -1487,42 +1379,35 @@ public final class PkgCls_a {
       }
    }
 
-   private static String init_Str_b(b requestedOwner) {
+   private static String init_Str_status() {
       synchronized (init_Obj) {
          if (init_a_ConfigStore == null) {
             return "No active TP";
          } else {
-            return requestedOwner == null
-                  || init_a_ConfigStore.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load && init_a_ConfigStore.init_b == requestedOwner
-               ? String.format(
-                  Locale.ROOT,
-                  "TP %s%s: %.2f %.2f %.2f -> %.2f %.2f %.2f, %d packets, step %.3f",
-                  init_a_ConfigStore.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load ? init_a_ConfigStore.init_b_DataUtil.init_Str() : "main",
-                  init_a_ConfigStore.read_Z ? " recovery" : "",
-                  init_a_ConfigStore.load_Vec3.x,
-                  init_a_ConfigStore.load_Vec3.y,
-                  init_a_ConfigStore.load_Vec3.z,
-                  init_a_ConfigStore.init_Vec3.x,
-                  init_a_ConfigStore.init_Vec3.y,
-                  init_a_ConfigStore.init_Vec3.z,
-                  init_a_ConfigStore.init_I,
-                  init_a_ConfigStore.init_D
-               )
-               : "No active TP for this POV";
+            return String.format(
+               Locale.ROOT,
+               "TP %s%s: %.2f %.2f %.2f -> %.2f %.2f %.2f, %d packets, step %.3f",
+               "main",
+               init_a_ConfigStore.read_Z ? " recovery" : "",
+               init_a_ConfigStore.load_Vec3.x,
+               init_a_ConfigStore.load_Vec3.y,
+               init_a_ConfigStore.load_Vec3.z,
+               init_a_ConfigStore.init_Vec3.x,
+               init_a_ConfigStore.init_Vec3.y,
+               init_a_ConfigStore.init_Vec3.z,
+               init_a_ConfigStore.init_I,
+               init_a_ConfigStore.init_D
+            );
          }
       }
    }
 
-   private static String init_Str_b_Str(b requestedOwner, String reason) {
+   private static String init_Str_stop(String reason) {
       PkgCls_a.Inner_ConfigStore job;
       synchronized (init_Obj) {
          job = init_a_ConfigStore;
          if (job == null) {
             return "No active TP";
-         }
-
-         if (requestedOwner != null && (job.init_a_NetHelper != PkgCls_a.Inner_NetHelper.load || job.init_b != requestedOwner)) {
-            return "No active TP for this POV";
          }
       }
 
@@ -1534,10 +1419,6 @@ public final class PkgCls_a {
 
       if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && job.init_LocalPlayer != null) {
          job.init_LocalPlayer.setDeltaMovement(Vec3.ZERO);
-      }
-
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load) {
-         job.init_b.init_V_b_DataUtil(job.init_b_DataUtil);
       }
 
       if (job.init_J != 0L) {
@@ -1567,10 +1448,6 @@ public final class PkgCls_a {
 
       if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && job.init_LocalPlayer != null) {
          job.init_LocalPlayer.setDeltaMovement(Vec3.ZERO);
-      }
-
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load) {
-         job.init_b.init_V_b_DataUtil(job.init_b_DataUtil);
       }
 
       if (job.init_J != 0L) {
@@ -1677,8 +1554,6 @@ public final class PkgCls_a {
       final Object init_Obj;
       final Object load_Obj;
       final Entity init_Entity;
-      final b init_b;
-      final RemotePlayer init_RemotePlayer;
       final String init_Str;
       final Vec3 init_Vec3;
       final PkgCls_a.Inner_JsonUtil init_a_JsonUtil;
@@ -1687,7 +1562,6 @@ public final class PkgCls_a {
       final long load_J = PkgCls_a.init_AtomicLong.incrementAndGet();
       final Deque<Vec3> init_Deque = new ArrayDeque<>();
       final Deque<PkgCls_a.Inner_TaskQueue> load_Deque = new ArrayDeque<>();
-      b.Inner_DataUtil init_b_DataUtil;
       Vec3 load_Vec3;
       Vec3 read_Vec3;
       Vec3 write_Vec3;
@@ -1726,8 +1600,6 @@ public final class PkgCls_a {
          Object mainConnection,
          Object level,
          Entity vehicle,
-         b session,
-         RemotePlayer bot,
          String dimension,
          Vec3 start,
          PkgCls_a.Inner_StreamUtil request,
@@ -1739,8 +1611,6 @@ public final class PkgCls_a {
          this.init_Obj = mainConnection;
          this.load_Obj = level;
          this.init_Entity = vehicle;
-         this.init_b = session;
-         this.init_RemotePlayer = bot;
          this.init_Str = dimension == null ? "" : dimension;
          this.load_Vec3 = start;
          this.read_Vec3 = start;
@@ -1759,8 +1629,6 @@ public final class PkgCls_a {
             connection,
             level,
             vehicle,
-            null,
-            null,
             "",
             vehicle == null ? player.position() : vehicle.position(),
             request,
@@ -1778,24 +1646,12 @@ public final class PkgCls_a {
             connection,
             level,
             vehicle,
-            null,
-            null,
             "",
             vehicle == null ? player.position() : vehicle.position(),
             request,
             true,
             macroId
          );
-      }
-
-      static PkgCls_a.Inner_ConfigStore init(
-         b session, RemotePlayer bot, PkgCls_a.Inner_StreamUtil request, b.Inner_StreamUtil location, b.Inner_DataUtil handle
-      ) {
-         PkgCls_a.Inner_ConfigStore job = new PkgCls_a.Inner_ConfigStore(
-            PkgCls_a.Inner_NetHelper.load, null, null, null, null, session, bot, location.init_Str(), location.init_Vec3(), request, false, 0L
-         );
-         job.init_b_DataUtil = handle;
-         return job;
       }
    }
 

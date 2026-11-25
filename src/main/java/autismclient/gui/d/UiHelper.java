@@ -4,8 +4,6 @@ import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.util.AutismConfig;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.cA;
 import autismclient.util.ct;
 import java.security.SecureRandom;
@@ -42,10 +40,6 @@ public final class UiHelper extends KeyHolder {
    private String read_Str = "";
    private int update = ValueSink.close;
    private int sync = 124;
-
-   public UiHelper(Screen parent, autismclient.util.g.DataUtil draft, Set<String> initiallySelected, Consumer<autismclient.util.g.DataUtil> onSave) {
-      this(parent, draft, initiallySelected, onSave, false);
-   }
 
    public UiHelper(
       Screen parent, autismclient.util.g.DataUtil draft, Set<String> initiallySelected, Consumer<autismclient.util.g.DataUtil> onSave, boolean passwordsOnly
@@ -117,55 +111,6 @@ public final class UiHelper extends KeyHolder {
          b -> this.update_V_13()
       );
       y += step;
-      if (!this.init_Z) {
-         boolean off = this.init_DataUtil.init_DataUtil_StreamUti() == autismclient.util.g.DataUtil.Inner_StreamUtil.init;
-         int modeH = off ? ctrlH * 2 : ctrlH;
-         this.init(
-            right,
-            y,
-            rightW,
-            modeH,
-            "Login: " + init_Str_DataUtil_StreamUti_2(this.init_DataUtil.init_DataUtil_StreamUti()),
-            off ? autismclient.gui.f.b.CachePool.Inner_DataUtil.update : autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-            b -> this.flush()
-         );
-         y += modeH + gap;
-         if (this.init_DataUtil.init_DataUtil_StreamUti() == autismclient.util.g.DataUtil.Inner_StreamUtil.read) {
-            String macro = this.init_DataUtil.init_Str().isBlank() ? "none" : this.init_DataUtil.init_Str();
-            String macroLabel = "Login Macro: " + macro;
-            this.init(
-               right,
-               y,
-               Math.min(this.init_I_Str_19(macroLabel), rightW),
-               macroLabel,
-               this.init_DataUtil.init_Str().isBlank()
-                  ? autismclient.gui.f.b.CachePool.Inner_DataUtil.load
-                  : autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
-               b -> this.sync()
-            );
-            y += step;
-         }
-      }
-
-      if (!AutismLiteVariant.enabled()) {
-         boolean autoCaptcha = AutismConfig.getGlobal().multiAutoSolveCaptcha;
-         String captchaLabel = "Auto-solve Captchas: " + (autoCaptcha ? "On" : "Off");
-         this.init(
-            right,
-            y,
-            Math.min(this.init_I_Str_19(captchaLabel), rightW),
-            captchaLabel,
-            autoCaptcha ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write : autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-            b -> {
-               AutismConfig config = AutismConfig.getGlobal();
-               config.multiAutoSolveCaptcha = !config.multiAutoSolveCaptcha;
-               config.save();
-               this.init();
-            }
-         );
-         y += step;
-      }
-
       this.sync = y + 2;
       int saveW = this.init_I_Str_19("Save");
       int backW = this.init_I_Str_19("Back");
@@ -284,75 +229,8 @@ public final class UiHelper extends KeyHolder {
       return out.toString();
    }
 
-   private void sync() {
-      if (this.minecraft != null && !AutismLiteVariant.enabled()) {
-         this.minecraft
-            .gui
-            .setScreen(
-               new BitSetUtil(
-                  this,
-                  this.init_DataUtil.init_Str(),
-                  name -> {
-                     this.init_DataUtil.init_V_Str(name);
-                     this.load(
-                        this.init_DataUtil.init_Str().isBlank()
-                           ? "Login macro cleared. Press Save to keep it."
-                           : "Login macro set to \"" + this.init_DataUtil.init_Str() + "\". Press Save to keep it.",
-                        ValueSink.open
-                     );
-                  }
-               )
-            );
-      }
-   }
-
-   private void flush() {
-      autismclient.util.g.DataUtil.Inner_StreamUtil[] modes = autismclient.util.g.DataUtil.Inner_StreamUtil.values();
-      this.init_DataUtil.init_V_DataUtil_StreamUti(modes[(this.init_DataUtil.init_DataUtil_StreamUti().ordinal() + 1) % modes.length]);
-      this.load("Login mode: " + init_Str_DataUtil_StreamUti_2(this.init_DataUtil.init_DataUtil_StreamUti()) + ". Press Save to keep it.", ValueSink.open);
-      this.rebuildWidgets();
-   }
-
-   private static String init_Str_DataUtil_StreamUti_2(autismclient.util.g.DataUtil.Inner_StreamUtil mode) {
-      String var10000;
-      switch (mode) {
-         case init:
-            var10000 = "Off";
-            break;
-         case load:
-            var10000 = "Auto (detect)";
-            break;
-         case read:
-            var10000 = "Custom macro";
-            break;
-         default:
-            throw new MatchException(null, null);
-      }
-
-      return var10000;
-   }
-
    private String load_Str_7() {
-      if (this.init_Z) {
-         return "Type a password (you can see it), then Set for Selected or Set for All - or Generate a random one per account. Used to fill custom login screens.";
-      }
-
-      String var10000;
-      switch (this.init_DataUtil.init_DataUtil_StreamUti()) {
-         case init:
-            var10000 = "";
-            break;
-         case load:
-            var10000 = "Auto: bots answer the usual login and register prompts on their own - AuthMe chat commands and custom login screens - using the password set above. If no login shows up within 40 seconds, it stops.";
-            break;
-         case read:
-            var10000 = "Custom: make a macro that logs in and put {password} wherever the password goes - for example a command \"/login {password}\", or a login-screen field set to {password}. {password} is the password you set above. Pick that macro below; it runs when the bot joins and stops after 40 seconds if no login was needed.";
-            break;
-         default:
-            throw new MatchException(null, null);
-      }
-
-      return var10000;
+      return "Type a password (you can see it), then Set for Selected or Set for All - or Generate a random one per account. Used to fill custom login screens.";
    }
 
    private void close() {
@@ -363,13 +241,7 @@ public final class UiHelper extends KeyHolder {
    }
 
    private String load(String id) {
-      String stored = this.init_DataUtil.init_Map_Str(id).getOrDefault("password", "");
-      if (!stored.isBlank()) {
-         return stored;
-      }
-
-      autismclient.util.BitSetUtil account = autismclient.util.TokenStore.init_TokenStore().init_BitSetUtil(id);
-      return account != null && account.flush != null ? account.flush : "";
+      return this.init_DataUtil.init_Map_Str(id).getOrDefault("password", "");
    }
 
    private List<String> init_List_13() {
@@ -387,9 +259,7 @@ public final class UiHelper extends KeyHolder {
          return "Current account";
       }
 
-      autismclient.util.BitSetUtil account = autismclient.util.TokenStore.init_TokenStore().init_BitSetUtil(id);
-      String label = account == null ? id : account.init_Str();
-      return init_Str_Str_I_3(label != null && !label.isBlank() ? label : id, 32);
+      return init_Str_Str_I_3(id, 32);
    }
 
    private static String init_Str_Str_I_3(String text, int maxChars) {

@@ -71,7 +71,7 @@ public final class co {
       if (!bones.isEmpty()) {
          init_List = List.of();
          PkgCls_c bufferSource = init_c_DataUtil.init();
-         VertexConsumer buffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.sync());
+         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
          for (co.Inner_DataUtil bone : bones) {

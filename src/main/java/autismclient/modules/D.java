@@ -58,7 +58,7 @@ public final class D {
             Vec3 camera = Q.init();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             PkgCls_c buffers = init_c_DataUtil.init();
-            VertexConsumer lines = buffers.init(net.minecraft.client.renderer.rendertype.CachePool.read());
+            VertexConsumer lines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (A.Inner_BufferHelper warning : danger.read_List_2()) {
                if (!warning.init_Entity().isRemoved()) {
@@ -98,7 +98,7 @@ public final class D {
 
             init(pose.last(), lines, danger.update_List(), camera);
             if (!danger.update_List().isEmpty()) {
-               VertexConsumer fill = buffers.init(net.minecraft.client.renderer.rendertype.CachePool.write());
+               VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
                load(pose.last(), fill, danger.update_List(), camera);
             }
 
@@ -210,7 +210,7 @@ public final class D {
          pose.translate(0.0, -1.501, 0.0);
          model.renderToBuffer(
             pose,
-            buffers.init(net.minecraft.client.renderer.rendertype.StreamUtil.init(pipeline)),
+            buffers.init(autismclient.render.AutismRenderTypes.pearlGhost(pipeline)),
             15728880,
             OverlayTexture.NO_OVERLAY,
             tint & 16777215 | alpha << 24

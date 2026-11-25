@@ -1566,7 +1566,6 @@ public final class aa extends Module implements cn.Inner_DataUtil {
          && !aD.init_Z()
          && !aC.init_Z()
          && !cd.init_Z()
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !f.load()

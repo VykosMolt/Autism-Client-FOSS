@@ -818,7 +818,6 @@ public final class j extends Module implements cn.Inner_DataUtil {
          && !aD.init_Z()
          && !aC.init_Z()
          && !cd.init_Z()
-         && !autismclient.util.g.PoolEntry.init_Z()
          && !HashUtil.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()

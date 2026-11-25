@@ -2,7 +2,6 @@ package autismclient.util.mm.guardian.impl;
 
 import autismclient.e.DataUtil;
 import autismclient.util.L;
-import autismclient.util.mm.BufferHelper;
 import autismclient.util.mm.a.StreamUtil;
 import autismclient.util.mm.guardian.Guardian;
 import com.google.gson.JsonArray;
@@ -13,7 +12,7 @@ import java.util.Locale;
 import net.fabricmc.loader.api.FabricLoader;
 
 final class InjectionScan {
-   private static final Class<?>[] CORE = new Class[]{L.class, BufferHelper.class, StreamUtil.class, Guardian.class};
+   private static final Class<?>[] CORE = new Class[]{L.class, StreamUtil.class, Guardian.class};
 
    private InjectionScan() {
    }

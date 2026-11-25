@@ -443,7 +443,7 @@ public final class w {
             if (!read_Z && !init_Z && ++init_I >= 100 && mc.gui.screen() != null) {
                init_Z = true;
                if (!Boolean.getBoolean("autism.combat.server.online")) {
-                  FieldCache.init(new User(load_Str, UUIDUtil.createOfflinePlayerUUID(load_Str), "", Optional.empty(), Optional.empty()));
+                  ((AutismMinecraftAccessor)mc).autism$setUser(new User(load_Str, UUIDUtil.createOfflinePlayerUUID(load_Str), "", Optional.empty(), Optional.empty()));
                }
 
                String address = System.getProperty("autism.combat.server.address", "127.0.0.1:25565");
@@ -1253,7 +1253,7 @@ public final class w {
             gates.addProperty("freecam", autismclient.modules.aC.init_Z());
             gates.addProperty("remoteView", cd.init_Z());
             gates.addProperty("fastExp", f.load());
-            gates.addProperty("multiPilot", autismclient.util.g.PoolEntry.init_Z());
+            gates.addProperty("multiPilot", false);
             gates.addProperty("packetTeleport", autismclient.util.g.PkgCls_a.init_Z());
             gates.addProperty("macro", MacroExecutor.write_Z());
             gates.addProperty("autoTotem", autismclient.modules.FieldCache.init_Z_6());

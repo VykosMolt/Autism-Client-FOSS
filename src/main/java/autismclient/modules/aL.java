@@ -29,13 +29,10 @@ import net.minecraft.world.phys.EntityHitResult;
 
 public final class aL extends Module {
    public static final int init_I = -866779137;
-   private static final long init_J = 500L;
    static final int load_I = 100;
    private static aL init_aL;
    private String init_Str;
    private Set<String> init_Set = Set.of();
-   private Set<String> load_Set = Set.of();
-   private long load_J;
    private boolean init_Z;
    private final Set<UUID> read = new HashSet<>();
    private Object init_Obj;
@@ -45,7 +42,6 @@ public final class aL extends Module {
       init_aL = this;
       this.add(new StringListSetting("friends", "Friends", "").playerNameList().build());
       this.add(new BoolSetting("auto-teams", "Auto Teams", false).description("Detect teammates automatically.").build());
-      this.add(new BoolSetting("multi-bots", "Multi Bots", true).description("Count my bots as teammates").build());
       this.add(new BoolSetting("quick-add", "Quick Add", true).description("Add/remove with key.").build());
       this.add(new KeybindSetting("quick-add-bind", "Quick Add Key", autismclient.util.ValueSink.init_I(2)).visibleWhen(() -> this.bool("quick-add")).build());
       this.add(new BoolSetting("esp", "ESP", true).build());
@@ -189,7 +185,6 @@ public final class aL extends Module {
       aL module = init_aL();
       return module != null && entity instanceof Player player && entity != MC.player
          ? module.init_Z_Player_2(player)
-            || module.bool("multi-bots") && module.load_Z_Player(player)
             || module.bool("auto-teams") && module.read_Z_Player(player)
          : false;
    }
@@ -239,26 +234,6 @@ public final class aL extends Module {
       this.init_Str = source;
       this.init_Set = Set.copyOf(names);
       return this.init_Set;
-   }
-
-   private boolean load_Z_Player(Player player) {
-      String name = player.getScoreboardName();
-      return name != null && !name.isBlank() ? this.load().contains(name.toLowerCase(Locale.ROOT)) : false;
-   }
-
-   private Set<String> load() {
-      if (AutismLiteVariant.enabled()) {
-         return Set.of();
-      }
-
-      long now = System.currentTimeMillis();
-      if (this.load_J != 0L && now - this.load_J < 500L) {
-         return this.load_Set;
-      }
-
-      this.load_J = now;
-      this.load_Set = autismclient.util.g.PacketUtil.init_PacketUtil().init_Set();
-      return this.load_Set;
    }
 
    private boolean read_Z_Player(Player suspected) {

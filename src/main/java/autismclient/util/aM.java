@@ -79,19 +79,7 @@ public class aM {
             this.load_V();
          }
 
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.ValueSink.init_Z()) {
-            autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-            if (multi != null && multi.load_Z()) {
-               autismclient.util.g.PacketUtil.Inner_CachePool result = multi.load(this, Set.of());
-               bi.init("Run on POV: " + result.init_Str() + ".", -11013497);
-               return -1L;
-            } else {
-               bi.write("The POV Multi session is no longer active.");
-               return -1L;
-            }
-         } else {
-            return MacroExecutor.init_J_aM(this);
-         }
+         return MacroExecutor.init_J_aM(this);
       } else {
          AutismClientMessaging.sendPrefixed("§cMacro has no actions!");
          return -1L;

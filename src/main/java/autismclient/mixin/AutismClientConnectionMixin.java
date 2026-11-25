@@ -20,7 +20,6 @@ import autismclient.modules.f;
 import autismclient.modules.z;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.C;
 import autismclient.util.D;
 import autismclient.util.E;
 import autismclient.util.EventBus;
@@ -35,8 +34,6 @@ import autismclient.util.w;
 import autismclient.util.y;
 import autismclient.util.b.CachePool;
 import autismclient.util.e.DataUtil;
-import autismclient.util.g.ConfigStore;
-import autismclient.util.g.NetHelper;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.J;
 import autismclient.util.macro.MacroExecutor;
@@ -58,7 +55,6 @@ import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
-import net.minecraft.network.SkipPacketException;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket;
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
@@ -108,15 +104,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Connection.class)
-public abstract class AutismClientConnectionMixin implements C {
+public abstract class AutismClientConnectionMixin {
    @Unique
    private static final boolean AUTISM_PACKET_TRACE = Boolean.getBoolean("autism.packet.trace");
    @Unique
    private volatile boolean autism$spoofPipelineInstalled;
-   @Unique
-   private volatile boolean autism$multiManaged;
-   @Unique
-   private volatile ConfigStore.Inner_DataUtil autism$multiProxy;
    @Unique
    private volatile PacketListener autism$protocolHintListener;
    @Unique
@@ -140,36 +132,9 @@ public abstract class AutismClientConnectionMixin implements C {
    }
 
    @Unique
-   private boolean autism$isMultiConnectionOrChannel() {
-      return this.autism$multiManaged;
-   }
-
-   @Override
-   public boolean autism$isMultiManaged() {
-      return this.autism$multiManaged;
-   }
-
-   @Override
-   public ConfigStore.Inner_DataUtil autism$multiProxy() {
-      return this.autism$multiProxy;
-   }
-
-   @Override
-   public void autism$setMultiManaged(ConfigStore.Inner_DataUtil proxy) {
-      this.autism$multiProxy = proxy;
-      this.autism$multiManaged = true;
-   }
-
-   @Override
-   public void autism$clearMultiManaged() {
-      this.autism$multiManaged = false;
-      this.autism$multiProxy = null;
-   }
-
-   @Unique
    private static void autism$snapshotPrivacyMode(Connection connection, SocketAddress peerAddress) {
       BufferHelper.Inner_CachePool mode = AutismConfig.getGlobal().spoofClientVanilla ? BufferHelper.Inner_CachePool.init : BufferHelper.Inner_CachePool.load;
-      BufferHelper.init(connection, mode, !AutismLiteVariant.enabled() && ConfigStore.init_Z(connection), peerAddress);
+      BufferHelper.init(connection, mode, false, peerAddress);
    }
 
    @Inject(
@@ -185,24 +150,14 @@ public abstract class AutismClientConnectionMixin implements C {
    @Inject(method = "channelActive", at = @At("HEAD"))
    private void autism$onChannelActive(ChannelHandlerContext context, CallbackInfo ci) {
       this.autism$spoofPipelineInstalled = false;
-      if (!AutismLiteVariant.enabled()) {
-         ConfigStore.init((Connection)(Object)this, context.channel());
-      }
-
-      if (!this.autism$isMultiConnectionOrChannel()) {
-         this.autism$ensureSpoofPipelineFilter();
-      }
+      this.autism$ensureSpoofPipelineFilter();
    }
 
    @Inject(method = "channelInactive", at = @At("HEAD"))
    private void autism$onChannelInactive(ChannelHandlerContext context, CallbackInfo ci) {
       this.autism$spoofPipelineInstalled = false;
       bg.read();
-      if (this.autism$isMultiConnectionOrChannel()) {
-         if (!AutismLiteVariant.enabled()) {
-            ConfigStore.init_V(context.channel());
-         }
-      } else if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
+      if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
          ch.init_V();
          aI.update_V_10();
          if (!AutismLiteVariant.enabled()) {
@@ -211,16 +166,6 @@ public abstract class AutismClientConnectionMixin implements C {
 
          CharEncoder.load();
          RefQueue.init();
-      }
-   }
-
-   @Inject(method = "exceptionCaught(Lio/netty/channel/ChannelHandlerContext;Ljava/lang/Throwable;)V", at = @At("HEAD"), require = 1)
-   private void autism$recordMultiTransportFailure(ChannelHandlerContext context, Throwable error, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled()
-         && this.autism$multiManaged
-         && !(error instanceof SkipPacketException)
-         && ((Connection)(Object)this).getPacketListener() instanceof NetHelper listener) {
-         listener.init(error);
       }
    }
 
@@ -235,7 +180,7 @@ public abstract class AutismClientConnectionMixin implements C {
 
       if (!ListPool.init((Connection)(Object)this, channel, packet, listener, flush)) {
          ci.cancel();
-      } else if (!this.autism$isMultiConnectionOrChannel()) {
+      } else {
          if (!AutismLiteVariant.enabled() && !ac.init_Z_Connection_Packet((Connection)(Object)this, packet)) {
             ci.cancel();
             return;
@@ -312,9 +257,7 @@ public abstract class AutismClientConnectionMixin implements C {
 
    @Inject(method = "configurePacketHandler", at = @At("TAIL"))
    private void autism$onConfigurePacketHandler(ChannelPipeline pipeline, CallbackInfo ci) {
-      if (!this.autism$isMultiConnectionOrChannel()) {
-         this.autism$ensureSpoofPipelineFilter();
-      }
+      this.autism$ensureSpoofPipelineFilter();
    }
 
    @ModifyVariable(
@@ -328,7 +271,7 @@ public abstract class AutismClientConnectionMixin implements C {
          return packet;
       }
 
-      if (!this.autism$isMultiConnectionOrChannel() && packet instanceof ServerboundUseItemPacket usePacket) {
+      if (packet instanceof ServerboundUseItemPacket usePacket) {
          float yaw = usePacket.yRot();
          float pitch = usePacket.xRot();
          if (f.load()) {
@@ -352,7 +295,6 @@ public abstract class AutismClientConnectionMixin implements C {
 
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;)V", at = @At("HEAD"), cancellable = true)
    private void yang$onSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
-      if (!this.autism$isMultiConnectionOrChannel()) {
          aI.init_V_Packet(packet);
          if (!AutismLiteVariant.enabled()) {
             w.load(packet);
@@ -550,12 +492,11 @@ public abstract class AutismClientConnectionMixin implements C {
                }
             }
          }
-      }
    }
 
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;)V", at = @At("TAIL"))
    private void yang$afterSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
-      if (!this.autism$isMultiConnectionOrChannel() && !aD.read_Z() && this.isPlayConnectionActive()) {
+      if (!aD.read_Z() && this.isPlayConnectionActive()) {
          if (!AutismLiteVariant.enabled() && Minecraft.getInstance().isSameThread()) {
             EventBus.init(packet);
          }
@@ -602,7 +543,6 @@ public abstract class AutismClientConnectionMixin implements C {
 
    @Inject(method = "channelRead0", at = @At("HEAD"), cancellable = true)
    private void yang$onReceivePacket(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
-      if (!this.autism$isMultiConnectionOrChannel()) {
          PacketListener listener = ((Connection)(Object)this).getPacketListener();
          PoolEntry module = PoolEntry.init_PoolEntry();
          PoolEntry.Inner_DataUtil hooks = module == null
@@ -695,7 +635,6 @@ public abstract class AutismClientConnectionMixin implements C {
                ci.cancel();
             }
          }
-      }
    }
 
    @Unique
@@ -735,7 +674,6 @@ public abstract class AutismClientConnectionMixin implements C {
 
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;Z)V", at = @At("HEAD"), cancellable = true)
    private void autism$onSendPacketWithFlush(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
-      if (!this.autism$isMultiConnectionOrChannel()) {
          aI.init_V_Packet(packet);
          if (!AutismLiteVariant.enabled()) {
             w.load(packet);
@@ -771,7 +709,6 @@ public abstract class AutismClientConnectionMixin implements C {
                }
             }
          }
-      }
    }
 
    @Unique

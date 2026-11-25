@@ -259,7 +259,6 @@ public final class UtilCore extends Module implements cn.Inner_DataUtil {
          && !aC.init_Z()
          && !aC.write()
          && !cd.init_Z()
-         && !autismclient.util.g.PoolEntry.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
          && !f.load()

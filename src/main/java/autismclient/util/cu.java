@@ -356,7 +356,6 @@ public final class cu {
       read_Map.clear();
       load_Z = false;
       init_AbstractTexture = null;
-      cr.init_V();
       ct.Inner_StreamUtil st = ct.init_ct_StreamUtil();
       if (st.init_Z_ct_DataUtil(ct.Inner_DataUtil.update)) {
          load_Z = true;

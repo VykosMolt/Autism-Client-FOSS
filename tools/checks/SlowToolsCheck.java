@@ -6,8 +6,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-// Clipboard writes and Spotify backend probes must not block the calling (render/client) thread when the tools hang.
-// Runs each case in a child JVM whose PATH holds slow fake tools only; the real clipboard and media players are never touched.
+// Clipboard writes must not block the calling (render/client) thread when clipboard tools hang.
+// Runs in a child JVM whose PATH holds slow fake tools only; the real clipboard is never touched.
 public class SlowToolsCheck {
    public static void main(String[] args) throws Exception {
       if (args.length == 2) {
@@ -22,10 +22,7 @@ public class SlowToolsCheck {
       }
 
       run("clipboard", bin, out);
-      Path shBin = Files.createTempDirectory("slowtools-sh");
-      fake(shBin, "sh", "sleep 3; exit 1");
-      run("spotify", shBin, out);
-      System.out.println("PASS SlowToolsCheck: clipboard write and Spotify probes return at once with hung tools");
+      System.out.println("PASS SlowToolsCheck: clipboard write returns at once with hung tools");
    }
 
    private static void fake(Path dir, String name, String body) throws Exception {
@@ -48,27 +45,17 @@ public class SlowToolsCheck {
    }
 
    private static void child(String mode, Path out) throws Exception {
-      if (mode.equals("clipboard")) {
-         long start = System.nanoTime();
-         n.init_V("hello");
-         long ms = (System.nanoTime() - start) / 1000000L;
-         check(ms < 500L, "clipboard write blocked the caller for " + ms + " ms");
-         check(n.init_Str().equals("hello"), "pending write not visible to a read");
-         long deadline = System.currentTimeMillis() + 5000L;
-         while (!(Files.exists(out) && Files.readString(out).equals("hello")) && System.currentTimeMillis() < deadline) {
-            Thread.sleep(100L);
-         }
-
-         check(Files.exists(out) && Files.readString(out).equals("hello"), "clipboard was never written");
-      } else {
-         check(net.minecraft.util.Util.getPlatform() == net.minecraft.util.Util.OS.LINUX, "premise: Util loads and reports Linux");
-         long start = System.nanoTime();
-         cq.load_V();
-         cq.init_V();
-         long ms = (System.nanoTime() - start) / 1000000L;
-         check(ms < 500L, "Spotify probes blocked the caller for " + ms + " ms");
+      long start = System.nanoTime();
+      n.init_V("hello");
+      long ms = (System.nanoTime() - start) / 1000000L;
+      check(ms < 500L, "clipboard write blocked the caller for " + ms + " ms");
+      check(n.init_Str().equals("hello"), "pending write not visible to a read");
+      long deadline = System.currentTimeMillis() + 5000L;
+      while (!(Files.exists(out) && Files.readString(out).equals("hello")) && System.currentTimeMillis() < deadline) {
+         Thread.sleep(100L);
       }
 
+      check(Files.exists(out) && Files.readString(out).equals("hello"), "clipboard was never written");
       System.exit(0);
    }
 

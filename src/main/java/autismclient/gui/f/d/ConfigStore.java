@@ -87,9 +87,7 @@ public final class ConfigStore {
       new ConfigStore.Inner_ConfigStore("logger", "Logger", autismclient.gui.f.a.DataUtil.open),
       new ConfigStore.Inner_ConfigStore("packets", "Packets", autismclient.gui.f.a.DataUtil.close),
       new ConfigStore.Inner_ConfigStore("server", "Server Info", autismclient.gui.f.a.DataUtil.push),
-      new ConfigStore.Inner_ConfigStore("keys", "Settings", autismclient.gui.f.a.DataUtil.write),
-      new ConfigStore.Inner_ConfigStore("matchmaking", "Matchmaking", autismclient.gui.f.a.DataUtil.set),
-      new ConfigStore.Inner_ConfigStore("multi", "Multi", autismclient.gui.f.a.DataUtil.put)
+      new ConfigStore.Inner_ConfigStore("keys", "Settings", autismclient.gui.f.a.DataUtil.write)
    );
    private static final ConfigStore.Inner_DataUtil[] init_ConfigStore_DataUtArr = new ConfigStore.Inner_DataUtil[]{
       new ConfigStore.Inner_DataUtil("flush", "Flush", autismclient.gui.f.b.CachePool.Inner_DataUtil.init),
@@ -952,20 +950,11 @@ public final class ConfigStore {
    }
 
    private static String init_Str_ConfigStore_Config(ConfigStore.Inner_ConfigStore entry) {
-      if (entry == load_List.get(load_List.size() - 1)) {
-         autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.init_PacketUtil();
-         if (multi.load_Z()) {
-            return "Multi " + multi.read_Str();
-         }
-      }
-
       return entry.load();
    }
 
    private static autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil_ConfigStore_Config(ConfigStore.Inner_ConfigStore entry) {
-      return entry == load_List.get(load_List.size() - 1) && autismclient.util.g.PacketUtil.init_PacketUtil().load_Z()
-         ? autismclient.gui.f.b.CachePool.Inner_DataUtil.write
-         : autismclient.gui.f.b.CachePool.Inner_DataUtil.init;
+      return autismclient.gui.f.b.CachePool.Inner_DataUtil.init;
    }
 
    private int init_I_SyncManager(SyncManager context) {
@@ -983,7 +972,6 @@ public final class ConfigStore {
          pair = Math.max(pair, init_I_SyncManager(context, entry.load(), true));
       }
 
-      pair = Math.max(pair, init_I_SyncManager(context, "Multi 500", true));
       if (inWorld) {
          for (String label : new String[]{"Send", "Delay"}) {
             pair = Math.max(pair, init_I_SyncManager(context, label, false));

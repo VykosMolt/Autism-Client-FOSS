@@ -122,7 +122,7 @@ public final class aY {
             boolean hidden = pass == 0;
             double opacity = hidden ? 0.78 : 1.0;
             VertexConsumer lines = buffers.init(
-               hidden ? net.minecraft.client.renderer.rendertype.BufferHelper.read() : net.minecraft.client.renderer.rendertype.BufferHelper.init()
+               hidden ? autismclient.render.AutismRenderTypes.trajectoryPath(true) : autismclient.render.AutismRenderTypes.trajectoryPath(false)
             );
 
             for (aS.Inner_CachePool path : paths) {
@@ -130,7 +130,7 @@ public final class aY {
             }
 
             VertexConsumer markers = buffers.init(
-               hidden ? net.minecraft.client.renderer.rendertype.BufferHelper.write() : net.minecraft.client.renderer.rendertype.BufferHelper.load()
+               hidden ? autismclient.render.AutismRenderTypes.trajectoryImpact(true) : autismclient.render.AutismRenderTypes.trajectoryImpact(false)
             );
 
             for (aS.Inner_CachePool path : paths) {
@@ -159,13 +159,13 @@ public final class aY {
 
          close = hitTargets.size();
          if (!hitTargets.isEmpty()) {
-            VertexConsumer fill = buffers.init(net.minecraft.client.renderer.rendertype.CachePool.write());
+            VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (Entity entity : hitTargets) {
                cI.init(pose, fill, init(entity, camera, partial, 0.016), init(-44976, 72));
             }
 
-            VertexConsumer edge = buffers.init(net.minecraft.client.renderer.rendertype.CachePool.read());
+            VertexConsumer edge = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (Entity entity : hitTargets) {
                AABB box = init(entity, camera, partial, 0.018);
@@ -176,9 +176,9 @@ public final class aY {
          }
 
          if (!blocks.isEmpty()) {
-            VertexConsumer blastLines = buffers.init(net.minecraft.client.renderer.rendertype.CachePool.read());
+            VertexConsumer blastLines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
             D.init(pose, blastLines, blocks, camera);
-            VertexConsumer fill = buffers.init(net.minecraft.client.renderer.rendertype.CachePool.write());
+            VertexConsumer fill = buffers.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
             D.load(pose, fill, blocks, camera);
          }
 

@@ -89,7 +89,6 @@ public final class ListPool {
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.aC.init_Z()
          && !cd.init_Z()
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
          && !f.load()
@@ -338,8 +337,7 @@ public final class ListPool {
          && !f.load()
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.aC.init_Z()
-         && !cd.init_Z()
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())) {
+         && !cd.init_Z()) {
          ck state = ck.init_ck();
          return !state.frame() && !state.pool();
       } else {

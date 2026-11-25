@@ -537,7 +537,7 @@ public final class ar {
          load_List = List.of();
          Vec3 cam = load_Vec3;
          PkgCls_c bufferSource = init_c_DataUtil.init();
-         VertexConsumer buffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.sync());
+         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
          for (ar.Inner_ConfigStore seg : lines) {
@@ -692,7 +692,7 @@ public final class ar {
       if (storageFill || blockFill || barrierFill || spawnerFill || frameFill || xrayFill || airFill || tpClickFill || ghostFill || !auraPreviewBoxes.isEmpty()
          )
        {
-         VertexConsumer buffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.write());
+         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
          if (!meshed) {
             if (xrayFill && xrayFrame != null) {
                xrayFrame.init(pose, buffer, cam, xrayFillAlpha);
@@ -751,7 +751,7 @@ public final class ar {
       }
 
       if (storageWire || blockWire || spawnerWire || frameWire || xrayWire || airWire || tpClickWire || ghostWire || !auraPreviewBoxes.isEmpty()) {
-         VertexConsumer buffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.sync());
+         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
          if (!meshed) {
             if (xrayWire && xrayFrame != null) {
                xrayFrame.load(pose, buffer, cam, 1.5F);
@@ -865,7 +865,7 @@ public final class ar {
          if (stale) {
             long perf = bK.load_J();
             Vec3 origin = anchor;
-            load_Z = init_P.init(net.minecraft.client.renderer.rendertype.CachePool.write(), buffer -> {
+            load_Z = init_P.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), buffer -> {
                if (xrayFill && xrayFrame != null) {
                   xrayFrame.init(init_PoseStack_Pose, buffer, origin, xrayFillAlpha);
                }
@@ -894,7 +894,7 @@ public final class ar {
                   frameFrame.init(init_PoseStack_Pose, buffer, origin, 0.35F);
                }
             });
-            read_Z = load_P.init(net.minecraft.client.renderer.rendertype.CachePool.sync(), buffer -> {
+            read_Z = load_P.init(autismclient.render.AutismRenderTypes.tracerEspLines(), buffer -> {
                if (xrayWire && xrayFrame != null) {
                   xrayFrame.load(init_PoseStack_Pose, buffer, origin, 1.5F);
                }
@@ -937,11 +937,11 @@ public final class ar {
          double dz = init_Vec3.z - camera.z;
          Matrix4fc framePose = pose.pose();
          if (load_Z) {
-            init_P.init(net.minecraft.client.renderer.rendertype.CachePool.write(), framePose, dx, dy, dz);
+            init_P.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), framePose, dx, dy, dz);
          }
 
          if (read_Z) {
-            load_P.init(net.minecraft.client.renderer.rendertype.CachePool.sync(), framePose, dx, dy, dz);
+            load_P.init(autismclient.render.AutismRenderTypes.tracerEspLines(), framePose, dx, dy, dz);
          }
 
          return true;
@@ -980,7 +980,7 @@ public final class ar {
       if (level != null) {
          CardinalLighting lighting = level.cardinalLighting();
          load(count, cam);
-         VertexConsumer buffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.flush());
+         VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.oreGhostSeeThrough());
 
          for (int i = 0; i < count; i++) {
             long packed = load_JArr[i];
@@ -1726,7 +1726,7 @@ public final class ar {
             double baseRadius = snapshot.init_D();
             double maxRenderDist = 128.0;
             if (discTexture != null) {
-               VertexConsumer discBuffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.load(discTexture));
+               VertexConsumer discBuffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(discTexture));
 
                for (ar.Inner_NetHelper dot : snapshot.init_List()) {
                   double cx = (dot.init_AABB().minX + dot.init_AABB().maxX) * 0.5;

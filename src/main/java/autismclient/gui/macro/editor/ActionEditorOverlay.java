@@ -29,7 +29,6 @@ import autismclient.util.bG;
 import autismclient.util.bJ;
 import autismclient.util.bN;
 import autismclient.util.bO;
-import autismclient.util.bd;
 import autismclient.util.bi;
 import autismclient.util.bj;
 import autismclient.util.bk;
@@ -434,7 +433,6 @@ public class ActionEditorOverlay extends bj {
    private final Map<String, Component> set_Map = new HashMap<>();
    private boolean state_Z = false;
    private final List<String> stop_List = new ArrayList<>();
-   private final List<String> next_List = new ArrayList<>();
    private List<ak.Inner_DataUtil> prev_List;
    private Runnable load_Runnable;
    private final List<ActionEditorOverlay.Inner_StreamUtil> valid_List = new ArrayList<>();
@@ -980,7 +978,6 @@ public class ActionEditorOverlay extends bj {
       }
 
       this.stop_List.clear();
-      this.next_List.clear();
       this.prev_List = null;
       if (action instanceof ak) {
          k search = this.init_k_I(180);
@@ -6953,21 +6950,9 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label() + " (" + values.size() + ")", font, p.parse(), x, y + 2, false);
       int addY = y + 13;
       int[] acctBtns = this.init_IArr_I(x, w, false, "+ Accounts", "All", "None");
-      this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, acctBtns[0], addY, acctBtns[1], 13, "+ Accounts", ByteReader.Inner_StreamUtil.write, true, mx, my, () -> this.read(values)
-      );
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, acctBtns[2], addY, acctBtns[3], 13, "All", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> {
-         bd snapshot = this.init_bd();
-         if (!snapshot.init_List().isEmpty()) {
-            values.clear();
-
-            for (bd.Inner_DataUtil account : snapshot.init_List()) {
-               String accountId = account.init();
-               if (accountId != null && !accountId.isBlank() && !values.contains(accountId)) {
-                  values.add(accountId);
-               }
-            }
-         }
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, acctBtns[0], addY, acctBtns[1], 13, "+ Accounts", ByteReader.Inner_StreamUtil.write, false, mx, my, () -> {
+      });
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, acctBtns[2], addY, acctBtns[3], 13, "All", ByteReader.Inner_StreamUtil.init, false, mx, my, () -> {
       });
       this.init_ByteReader_GuiGraphicsExtract_2(
          ctx, acctBtns[4], addY, acctBtns[5], 13, "None", ByteReader.Inner_StreamUtil.init, !values.isEmpty(), mx, my, values::clear
@@ -7034,44 +7019,8 @@ public class ActionEditorOverlay extends bj {
       );
    }
 
-   private bd init_bd() {
-      return AutismLiteVariant.enabled() ? new bd(List.of(), null) : autismclient.util.g.StreamUtil.init();
-   }
-
    private String push_Str(String accountId) {
-      return this.init_bd().init(accountId);
-   }
-
-   private void read(List<String> values) {
-      List<RaceStepSelectorOverlay.Inner_DataUtil> options = new ArrayList<>();
-      bd snapshot = this.init_bd();
-
-      for (bd.Inner_DataUtil account : snapshot.init_List()) {
-         String accountId = account.init();
-         if (accountId != null && !accountId.isBlank() && !values.contains(accountId)) {
-            StringBuilder description = new StringBuilder();
-            if (account.load() != null && !account.load().isBlank()) {
-               description.append("proxy: ").append(account.load());
-            }
-
-            if (account.read() != null && !account.read().isBlank()) {
-               if (description.length() > 0) {
-                  description.append("  ");
-               }
-
-               description.append("macro: ").append(account.read());
-            }
-
-            options.add(new RaceStepSelectorOverlay.Inner_DataUtil("Accounts", accountId, snapshot.init(accountId), description.toString()));
-         }
-      }
-
-      this.init_RaceStepSelectorOv.init_V_Str_4("Account Selector", options, option -> {
-         if (option != null && option.load() != null && !option.load().isBlank()) {
-            values.add(option.load());
-            this.fill();
-         }
-      });
+      return accountId == null ? "" : accountId;
    }
 
    private void sync_V(String fieldKey) {
@@ -11938,20 +11887,13 @@ public class ActionEditorOverlay extends bj {
       cy += 18;
       String query = search != null ? search.load_Str() : "";
       List<String> filteredAutism = this.init_List_Str_2("toggle_module_autism_registry", this.stop_List, query);
-      List<String> filteredMeteor = this.init_List_Str_2("toggle_module_meteor_registry", this.next_List, query);
-      boolean hasExternalModules = !this.next_List.isEmpty();
-      if (this.stop_List.isEmpty() && this.next_List.isEmpty()) {
+      if (this.stop_List.isEmpty()) {
          this.init_V_GuiGraphicsExtract_3(ctx, x, cy, w, "toggle_module_registry_empty", 6, "No modules found right now.");
          cy += 82;
       } else {
          cy = this.init_I_GuiGraphicsExtract(
-            ctx, x, cy, w, mx, my, "AUTISM Modules", "toggle_module_autism_registry", this.stop_List, filteredAutism, hasExternalModules ? 3 : 6, selected
+            ctx, x, cy, w, mx, my, "AUTISM Modules", "toggle_module_autism_registry", this.stop_List, filteredAutism, 6, selected
          );
-         if (hasExternalModules) {
-            cy = this.init_I_GuiGraphicsExtract(
-               ctx, x, cy, w, mx, my, "Meteor Modules", "toggle_module_meteor_registry", this.next_List, filteredMeteor, 3, selected
-            );
-         }
       }
 
       String hint = selected.isEmpty()
@@ -12063,15 +12005,9 @@ public class ActionEditorOverlay extends bj {
 
    private void c() {
       this.stop_List.clear();
-      this.next_List.clear();
       EventBus autismVp = this.close_Map.get("toggle_module_autism_registry");
       if (autismVp != null) {
          autismVp.load_V(0);
-      }
-
-      EventBus meteorVp = this.close_Map.get("toggle_module_meteor_registry");
-      if (meteorVp != null) {
-         meteorVp.load_V(0);
       }
 
       EventBus emptyVp = this.close_Map.get("toggle_module_registry_empty");
@@ -12085,14 +12021,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      for (String moduleName : autismclient.util.z.write_List()) {
-         if (moduleName != null && !moduleName.isBlank() && !this.init_Z_List_Str(this.next_List, moduleName)) {
-            this.next_List.add(moduleName);
-         }
-      }
-
       this.stop_List.sort(String::compareToIgnoreCase);
-      this.next_List.sort(String::compareToIgnoreCase);
    }
 
    private List<String> load_List_List_Str(List<String> source, String query) {
@@ -12161,10 +12090,6 @@ public class ActionEditorOverlay extends bj {
 
    private void pop_V(String query) {
       List<String> filtered = this.load_List_List_Str(this.stop_List, query);
-      if (filtered.isEmpty()) {
-         filtered = this.load_List_List_Str(this.next_List, query);
-      }
-
       if (!filtered.isEmpty()) {
          this.tick_V(filtered.get(0));
       }
@@ -15875,7 +15800,7 @@ public class ActionEditorOverlay extends bj {
                            int h = 4;
                            h += 74;
                            h += 18;
-                           h += this.next_List.isEmpty() ? 94 : 110;
+                           h += 94;
                            return h + 14;
                         }
 

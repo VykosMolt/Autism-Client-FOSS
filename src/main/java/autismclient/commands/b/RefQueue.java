@@ -4,7 +4,6 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismItemNbtInspectOverlay;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.ay;
 import autismclient.util.bi;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -35,7 +34,7 @@ public class RefQueue extends Command {
 
    private static ItemStack init_ItemStack() {
       Minecraft mc = Minecraft.getInstance();
-      Player player = AutismLiteVariant.enabled() ? (mc == null ? null : mc.player) : autismclient.util.g.PoolEntry.init_Player();
+      Player player = mc == null ? null : mc.player;
       if (player == null) {
          return ItemStack.EMPTY;
       }

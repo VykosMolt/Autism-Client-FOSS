@@ -241,7 +241,7 @@ public class EventBus extends Screen {
 
    private void init(EventBus.Inner_StreamUtil row, int x, int y, int w, int h) {
       List<String> choices = row.init_List;
-      String current = "spotify-color-mode".equals(row.init_Str) ? this.init_Str() : al.init_Str_Str_Str(this.init_Str, row.init_Str);
+      String current = al.init_Str_Str_Str(this.init_Str, row.init_Str);
       int selected = Math.max(0, choices.indexOf(current));
       int choiceW = 0;
 
@@ -760,7 +760,6 @@ public class EventBus extends Screen {
       }
 
       boolean isArrayList = "active_modules".equals(this.init_Str);
-      boolean isSpotify = "spotify".equals(this.init_Str);
       boolean isCompass = "compass".equals(this.init_Str);
       boolean isKeystrokes = "keystrokes".equals(this.init_Str);
       boolean isSlots = "armor".equals(this.init_Str) || "inventory".equals(this.init_Str);
@@ -774,25 +773,13 @@ public class EventBus extends Screen {
          return merged;
       }
 
-      String spotifyMode = this.init_Str();
-      boolean partArtist = al.init_Z_Str_Str(this.init_Str, "spotify-part-artist");
-      boolean partTime = al.init_Z_Str_Str(this.init_Str, "spotify-part-time");
-      boolean partProgress = al.init_Z_Str_Str(this.init_Str, "spotify-part-progress");
-      boolean rainbowTitle = al.init_Z_Str_Str(this.init_Str, "spotify-rainbow-title");
-      boolean rainbowArtist = partArtist && al.init_Z_Str_Str(this.init_Str, "spotify-rainbow-artist");
-      boolean rainbowTime = partTime && al.init_Z_Str_Str(this.init_Str, "spotify-rainbow-time");
-      boolean rainbowProgress = partProgress && al.init_Z_Str_Str(this.init_Str, "spotify-rainbow-progress");
-      int spotifyRainbowParts = (rainbowTitle ? 1 : 0) + (rainbowArtist ? 1 : 0) + (rainbowTime ? 1 : 0) + (rainbowProgress ? 1 : 0);
-      boolean spotifyTint = isSpotify && "Rainbow".equals(spotifyMode) && spotifyRainbowParts > 0;
       boolean customMatters;
       if (isArrayList) {
          customMatters = false;
       } else if (isCompass || isKeystrokes || isAddon) {
          customMatters = true;
       } else if (!"watermark".equals(this.init_Str) && !"gif".equals(this.init_Str) && !isSlots) {
-         if (isSpotify) {
-            customMatters = background || outline || spotifyTint;
-         } else if ("fps_graph".equals(this.init_Str)) {
+         if ("fps_graph".equals(this.init_Str)) {
             customMatters = background || outline || al.init_Z_Str_Str(this.init_Str, "show-current-fps");
          } else {
             customMatters = true;
@@ -803,7 +790,7 @@ public class EventBus extends Screen {
 
       boolean customColors = isArrayList || al.init_Z_Str_Str(this.init_Str, "use-custom-colors");
       rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("Visibility"));
-      if (!this.init_Z() && !isSpotify && !"breaking_progress".equals(this.init_Str)) {
+      if (!this.init_Z() && !"breaking_progress".equals(this.init_Str)) {
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("alignment", "Alignment", "Left", "Center", "Right"));
       }
 
@@ -835,10 +822,6 @@ public class EventBus extends Screen {
             rows.add(EventBus.Inner_StreamUtil.load("label-color", "Label Color"));
             rows.add(EventBus.Inner_StreamUtil.load("value-color", "Value Color"));
             rows.add(EventBus.Inner_StreamUtil.load("accent-color", "Accent Color"));
-         } else if (isSpotify) {
-            if (spotifyTint) {
-               rows.add(EventBus.Inner_StreamUtil.load("value-color", "Rainbow Tint"));
-            }
          } else if ("fps_graph".equals(this.init_Str)) {
             if (al.init_Z_Str_Str(this.init_Str, "show-current-fps")) {
                rows.add(EventBus.Inner_StreamUtil.load("value-color", "Value Color"));
@@ -1014,92 +997,6 @@ public class EventBus extends Screen {
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("keystroke-show-mouse", "Show Mouse"));
       }
 
-      if (isSpotify) {
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("Spotify"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("spotify-width", "Width", EventBus.Inner_CachePool.write, 140.0, 260.0, 1.0));
-         rows.add(
-            EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("spotify-scroll-speed", "Scroll Speed", EventBus.Inner_CachePool.write, 10.0, 60.0, 1.0)
-         );
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("spotify-source", "Source", "Spotify", "Any Media"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-menu-strip", "Menu Strip"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("Colors"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("spotify-color-mode", "Color Mode", "Theme", "Custom", "Rainbow"));
-         if ("Custom".equals(spotifyMode)) {
-            rows.add(EventBus.Inner_StreamUtil.load("spotify-title-color", "Title Color"));
-            if (partArtist) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-artist-color", "Artist Color"));
-            }
-
-            if (partTime) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-time-color", "Time Color"));
-            }
-
-            if (partProgress) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-progress-color", "Progress Color"));
-            }
-         } else if ("Rainbow".equals(spotifyMode)) {
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-rainbow-title", "Rainbow Title"));
-            if (partArtist) {
-               rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-rainbow-artist", "Rainbow Artist"));
-            }
-
-            if (partTime) {
-               rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-rainbow-time", "Rainbow Time"));
-            }
-
-            if (partProgress) {
-               rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-rainbow-progress", "Rainbow Timeline"));
-            }
-
-            if (spotifyRainbowParts > 0) {
-               rows.add(
-                  EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-speed", "Animation Speed", EventBus.Inner_CachePool.write, 0.1, 2.0, 0.05)
-               );
-               if (spotifyRainbowParts > 1) {
-                  rows.add(
-                     EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str(
-                        "rainbow-spread", "Two-Tone Spread", EventBus.Inner_CachePool.write, 0.001, 0.12, 0.001
-                     )
-                  );
-               }
-
-               rows.add(
-                  EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-saturation", "Saturation", EventBus.Inner_CachePool.write, 0.0, 0.35, 0.05)
-               );
-               rows.add(
-                  EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-brightness", "Brightness", EventBus.Inner_CachePool.write, 0.0, 1.0, 0.05)
-               );
-               rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("spotify-rainbow-direction", "Direction", "Forward", "Reverse"));
-            }
-
-            if (!rainbowTitle) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-title-color", "Title Color"));
-            }
-
-            if (partArtist && !rainbowArtist) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-artist-color", "Artist Color"));
-            }
-
-            if (partTime && !rainbowTime) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-time-color", "Time Color"));
-            }
-
-            if (partProgress && !rainbowProgress) {
-               rows.add(EventBus.Inner_StreamUtil.load("spotify-progress-color", "Progress Color"));
-            }
-         }
-
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("Parts"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-part-art", "Album Art"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-part-artist", "Artist"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-part-time", "Time"));
-         if (partArtist && partTime) {
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("spotify-time-position", "Time Position", "Top", "Bottom"));
-         }
-
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("spotify-part-progress", "Progress Bar"));
-      }
-
       for (int i = rows.size() - 1; i >= 0; i--) {
          if (rows.get(i).init_EventBus_CachePool == EventBus.Inner_CachePool.close
             && (i == rows.size() - 1 || rows.get(i + 1).init_EventBus_CachePool == EventBus.Inner_CachePool.close)) {
@@ -1189,11 +1086,6 @@ public class EventBus extends Screen {
       } else {
          this.load_Z = false;
       }
-   }
-
-   private String init_Str() {
-      String mode = al.init_Str_Str_Str(this.init_Str, "spotify-color-mode");
-      return !"Theme".equals(mode) && !"Rainbow".equals(mode) ? "Custom" : mode;
    }
 
    private boolean init_Z() {

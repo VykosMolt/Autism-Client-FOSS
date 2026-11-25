@@ -67,7 +67,7 @@ public final class aJ {
                   ? cu.init_Identifier(init_IdentifierArr[face], ct.init_ct_StreamUtil().init_I_ct_DataUtil(ct.Inner_DataUtil.update))
                   : cu.init_Identifier(init_IdentifierArr[face], customColor);
                if (texture != null) {
-                  VertexConsumer buffer = bufferSource.init(net.minecraft.client.renderer.rendertype.CachePool.load(texture));
+                  VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));
                   float[] verts = init_FArr2[face];
                   float[] uvs = load_FArr2[face];
 

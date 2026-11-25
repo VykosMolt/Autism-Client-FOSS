@@ -10,7 +10,6 @@ import autismclient.commands.Command;
 import autismclient.modules.Module;
 import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismWaypoints;
-import autismclient.util.g.PacketUtil;
 import autismclient.util.macro.MacroExecutor;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -61,11 +60,9 @@ final class cz {
       "client:packet_gui",
       "client:packet_filter",
       "client:waypoint_manage",
-      "client:accounts",
       "client:proxies",
       "client:join_macro",
       "client:server_info",
-      "client:matchmaking",
       "client:connect",
       "client:disconnect",
       "client:addon",
@@ -1426,14 +1423,6 @@ final class cz {
       );
       init_V_List(
          out,
-         "client:multi",
-         "multi",
-         "Headless Multi bots. action profiles (list saved bot profiles), start {profile} (launch a profile's bots), inspect (live bots + connected count), retry (reconnect disconnected bots), disconnectAll, assignAll {name} (assign a macro to every bot), and per-bot run/assign/stop/disconnect {bot, name} for one observed bot. Never exposes account credentials.",
-         init_JsonObject_ObjArr("action", "string", "profile", "string", "bot", "string", "name", "string"),
-         "profiles/inspect report state; commands only confirm dispatch and require bot-state verification."
-      );
-      init_V_List(
-         out,
          "client:macros",
          "macros",
          "List saved macros including native serialized data and optimistic edit fingerprints.",
@@ -1554,7 +1543,7 @@ final class cz {
             "Sends command-suggestion probe packets and writes the client's per-server scan cache.",
             List.of("NETWORK"),
             "Scan cache entry for the current server present and stable; partial results on timeout.",
-            "If nothing is detected the server may hide its command tree; payload fingerprints and dupedb checks can still identify plugins.",
+            "If nothing is detected the server may hide its command tree; payload fingerprints can still identify plugins.",
             ag.init_JsonObject_ObjArr("id", "client:plugin_scan", "arguments", ag.init_JsonObject_ObjArr("force", false)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -1574,23 +1563,6 @@ final class cz {
             "If absent, connect and run client:plugin_scan.",
             ag.init_JsonObject_ObjArr("id", "client:plugin_scan_cached", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
-         )
-      );
-      out.add(
-         AiCatalog.init(
-            "client:dupedb",
-            "autism",
-            "server-intel",
-            "Check the current server's scanned plugins against DupeDB for known duplication exploits. Requires a prior client:plugin_scan result and a one-time manual DupeDB login via the server info overlay (interactive OAuth - this capability never logs in). Matches are third-party claims about the server, not verified exploitability; findings carry title/status/summary plus working/patched/verified counts.",
-            List.of("server-intel"),
-            init_JsonObject_ObjArr("forceRefresh", "boolean", "timeoutSeconds", "integer").toString(),
-            "Multiplayer server, cached plugin scan, prior manual DupeDB login.",
-            "Queries the external DupeDB API and overwrites the shared radar cache.",
-            List.of(),
-            "Radar check completed with matches and status counts.",
-            "On missing auth or scan, complete the named prerequisite first; on provider error, report its message.",
-            ag.init_JsonObject_ObjArr("id", "client:dupedb", "arguments", ag.init_JsonObject_ObjArr("forceRefresh", false)).toString(),
-            AiCapabilityDescriptor.Classification.ACTION
          )
       );
       out.add(
@@ -1879,23 +1851,6 @@ final class cz {
       );
       out.add(
          AiCatalog.init(
-            "client:accounts",
-            "autism",
-            "accounts",
-            "The account manager. action list (labels, types, usernames, which is active - never tokens or passwords); add {username, type Cracked} adds a cracked (offline) account; remove {account}; login {account} logs in and switches the live session to that account (Microsoft logins open the browser flow). Cracked accounts only can be created here.",
-            List.of("accounts", "alts"),
-            init_JsonObject_ObjArr("action", "string", "account", "string", "username", "string", "type", "string").toString(),
-            "None; works offline.",
-            "Logging in replaces the live game session with that account's; it disconnects you from a server first.",
-            List.of(),
-            "The account list with the active account.",
-            "Login runs in the background; observe the account status afterwards.",
-            ag.init_JsonObject_ObjArr("id", "client:accounts", "arguments", ag.init_JsonObject_ObjArr("action", "list")).toString(),
-            AiCapabilityDescriptor.Classification.ACTION
-         )
-      );
-      out.add(
-         AiCatalog.init(
             "client:proxies",
             "autism",
             "proxies",
@@ -1951,27 +1906,10 @@ final class cz {
       );
       out.add(
          AiCatalog.init(
-            "client:matchmaking",
-            "autism",
-            "matchmaking",
-            "The AUTISM matchmaking lobby browser (an encrypted relay, separate from LAN Sync). action status (connection, whether in a lobby, members, the current lobby and peers); browse (refresh and list public lobbies); join {lobbyId}; leave; chat {text}. Creating and hosting a lobby is done in the Matchmaking window.",
-            List.of("matchmaking", "lobby"),
-            init_JsonObject_ObjArr("action", "string", "lobbyId", "string", "text", "string").toString(),
-            "None; connects to the matchmaking relay on demand.",
-            "Joining connects you to a lobby's shared server context; chat is visible to the lobby.",
-            List.of(),
-            "The matchmaking status after the action.",
-            "Joining and connecting run in the background; poll status.",
-            ag.init_JsonObject_ObjArr("id", "client:matchmaking", "arguments", ag.init_JsonObject_ObjArr("action", "browse")).toString(),
-            AiCapabilityDescriptor.Classification.ACTION
-         )
-      );
-      out.add(
-         AiCatalog.init(
             "client:server_info",
             "autism",
             "server-intel",
-            "Read the connected server's live info: brand, address, ping, protocol, the version it reports and the client's probed real version, an estimated TPS and the world difficulty. Plugin and dupe intel are client:plugin_scan and client:dupedb.",
+            "Read the connected server's live info: brand, address, ping, protocol, the version it reports and the client's probed real version, an estimated TPS and the world difficulty. Plugin intel is client:plugin_scan.",
             List.of("server", "tps", "ping"),
             init_JsonObject_ObjArr().toString(),
             "A multiplayer connection.",
@@ -3791,10 +3729,6 @@ final class cz {
             return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Waypoints", MapStore.sync(args));
          }
 
-         if (id.equals("client:accounts")) {
-            return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Accounts", MapStore.flush(args));
-         }
-
          if (id.equals("client:proxies")) {
             return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Proxies", MapStore.close(args));
          }
@@ -3805,10 +3739,6 @@ final class cz {
 
          if (id.equals("client:server_info")) {
             return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Server info", MapStore.poll(args));
-         }
-
-         if (id.equals("client:matchmaking")) {
-            return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Matchmaking", MapStore.push(args));
          }
 
          if (id.equals("client:profiles")) {
@@ -3863,138 +3793,8 @@ final class cz {
                case "client:plugin_scan":
                   var10000 = cb.init_AiOperation(args);
                   break;
-               case "client:dupedb":
-                  var10000 = cb.load(args);
-                  break;
                case "client:lan_control":
                   var10000 = R.init_AiOperation(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", ai.load(args));
-                  break;
-               case "client:multi":
-                  String action = ag.init_Str_JsonObject(args, "action", "inspect");
-                  if (action.equals("profiles")) {
-                     autismclient.util.g.TaskTimer pm = autismclient.util.g.TaskTimer.init_TaskTimer();
-                     JsonArray profiles = new JsonArray();
-
-                     for (autismclient.util.g.FieldCache p : pm.init_List()) {
-                        profiles.add(
-                           ag.init_JsonObject_ObjArr(
-                              "id",
-                              p.read_Str,
-                              "name",
-                              p.write_Str,
-                              "server",
-                              p.update_Str,
-                              "bots",
-                              p.init_List.size(),
-                              "selected",
-                              p.read_Str.equals(pm.read_Str())
-                           )
-                        );
-                     }
-
-                     var10000 = R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Multi profiles", ag.init_JsonObject_ObjArr("profiles", profiles));
-                  } else if (action.equals("start")) {
-                     autismclient.util.g.TaskTimer pm = autismclient.util.g.TaskTimer.init_TaskTimer();
-                     String key = ag.init_Str_JsonObject(args, "profile", "").trim();
-                     autismclient.util.g.FieldCache profile = pm.init_FieldCache_Str(key);
-                     if (profile == null) {
-                        for (autismclient.util.g.FieldCache p : pm.init_List()) {
-                           if (p.write_Str.equalsIgnoreCase(key)) {
-                              profile = p;
-                              break;
-                           }
-                        }
-                     }
-
-                     if (profile == null) {
-                        throw new IllegalArgumentException("Unknown Multi profile; action profiles lists them");
-                     }
-
-                     PacketUtil.Inner_TextFormat r = PacketUtil.init_PacketUtil().init_PacketUtil_TextFor_FieldCache(profile);
-                     var10000 = R.init_AiOperation(
-                        r.init_Z() ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                        r.init_Str(),
-                        ag.init_JsonObject_ObjArr("started", r.init_Z(), "profile", profile.write_Str)
-                     );
-                  } else {
-                     PacketUtil multi = PacketUtil.load_PacketUtil();
-                     if (multi == null) {
-                        var10000 = R.init_AiOperation(AiOperation.Status.FAILED, "Multi is not running; start a profile first", new JsonObject());
-                     } else if (action.equals("inspect")) {
-                        var10000 = R.init_AiOperation(
-                           AiOperation.Status.SUCCEEDED,
-                           "Read live Multi sessions",
-                           ag.init_JsonObject_ObjArr("bots", multi.read_List(), "connected", multi.init_I(), "sessions", multi.read_I())
-                        );
-                     } else if (action.equals("retry")) {
-                        PacketUtil.Inner_EventBus r = multi.init_PacketUtil_EventBu();
-                        var10000 = R.init_AiOperation(
-                           r.init_Z() ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                           r.init_Str(),
-                           ag.init_JsonObject_ObjArr("retried", r.init_Z())
-                        );
-                     } else if (action.equals("disconnectAll")) {
-                        multi.load_V_Str("AI assistant");
-                        var10000 = R.init_AiOperation(
-                           AiOperation.Status.SUCCEEDED, "Disconnected all bots", ag.init_JsonObject_ObjArr("connected", multi.init_I())
-                        );
-                     } else if (action.equals("assignAll")) {
-                        autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
-                        if (macro == null) {
-                           throw new IllegalArgumentException("Unknown saved macro");
-                        }
-
-                        multi.write_V_Str(macro.init_Str);
-                        var10000 = R.init_AiOperation(
-                           AiOperation.Status.SUCCEEDED, "Assigned macro to every bot", ag.init_JsonObject_ObjArr("macro", macro.init_Str)
-                        );
-                     } else {
-                        Set<String> selected = multi.init_Set_Str(ag.init_Str_JsonObject(args, "bot", ""));
-                        if (selected.isEmpty()) {
-                           throw new IllegalArgumentException("Select an observed live bot by name (or use assignAll/disconnectAll/retry for all)");
-                        }
-
-                        AiOperation.Status var39 = AiOperation.Status.UNCERTAIN;
-                        Object[] var10002 = new Object[]{"result", null};
-                        Object var10005;
-                        switch (action) {
-                           case "stop":
-                              var10005 = multi.load_PacketUtil_CachePo_Set(selected);
-                              break;
-                           case "run":
-                              autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
-                              if (macro == null) {
-                                 throw new IllegalArgumentException("Unknown saved macro");
-                              }
-
-                              var10005 = multi.init_PacketUtil_CachePo_aM_Set(macro, selected);
-                              break;
-                           case "assign": {
-                              autismclient.util.aM macro2 = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
-                              if (macro2 == null) {
-                                 throw new IllegalArgumentException("Unknown saved macro");
-                              }
-
-                              var10005 = multi.init_I_Set_Str(selected, macro2.init_Str);
-                              break;
-                           }
-                           case "disconnect":
-                              for (String botId : selected) {
-                                 multi.init_V_Str(botId);
-                              }
-
-                              var10005 = "disconnected " + selected.size();
-                              break;
-                           default:
-                              throw new IllegalArgumentException(
-                                 "Unknown Multi action; use profiles, start, inspect, retry, disconnectAll, assignAll, run, assign, stop or disconnect"
-                              );
-                        }
-
-                        var10002[1] = var10005;
-                        var10000 = R.init_AiOperation(var39, "Multi command dispatched; inspect actual bot outcome", ag.init_JsonObject_ObjArr(var10002));
-                     }
-                  }
                   break;
                case "client:run_macro":
                   autismclient.util.aM macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));

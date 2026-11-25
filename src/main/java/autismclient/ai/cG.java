@@ -1006,7 +1006,7 @@ public final class cG {
          }
 
          try {
-            VertexConsumer texture = source.init(net.minecraft.client.renderer.rendertype.CachePool.load());
+            VertexConsumer texture = source.init(autismclient.render.AutismRenderTypes.aiGhost());
             Set<Long> solid = new HashSet<>();
 
             for (cG.Inner_StreamUtil g : f.ghosts) {
@@ -1076,7 +1076,7 @@ public final class cG {
                }
             }
 
-            VertexConsumer lines = source.init(net.minecraft.client.renderer.rendertype.CachePool.read());
+            VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.aiPlanLines());
             Vec3 offset = f.camera.scale(-1.0);
             cU selection = aP.init_cU();
             if (selection != null) {

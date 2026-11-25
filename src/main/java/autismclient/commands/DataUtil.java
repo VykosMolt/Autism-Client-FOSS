@@ -3,7 +3,6 @@ package autismclient.commands;
 import autismclient.AutismClientAddon;
 import autismclient.api.AddonRegistrationResult;
 import autismclient.commands.b.ArrayUtil;
-import autismclient.commands.b.BitSetUtil;
 import autismclient.commands.b.BufferHelper;
 import autismclient.commands.b.ByteReader;
 import autismclient.commands.b.CacheEntry;
@@ -11,7 +10,6 @@ import autismclient.commands.b.ClassCache;
 import autismclient.commands.b.ConfigStore;
 import autismclient.commands.b.DataPipe;
 import autismclient.commands.b.EventBus;
-import autismclient.commands.b.FieldCache;
 import autismclient.commands.b.FileCache;
 import autismclient.commands.b.HashUtil;
 import autismclient.commands.b.IoWorker;
@@ -22,7 +20,6 @@ import autismclient.commands.b.MethodUtil;
 import autismclient.commands.b.NetHelper;
 import autismclient.commands.b.NodeWalker;
 import autismclient.commands.b.PacketUtil;
-import autismclient.commands.b.PathHelper;
 import autismclient.commands.b.PoolEntry;
 import autismclient.commands.b.RefQueue;
 import autismclient.commands.b.RenderState;
@@ -108,11 +105,8 @@ public final class DataUtil {
          init_V(new PoolEntry());
          init_V(new UiHelper());
          if (!AutismLiteVariant.enabled()) {
-            init_V(new BitSetUtil());
             init_V(new CacheEntry());
             init_V(new autismclient.commands.b.DataUtil());
-            init_V(new FieldCache());
-            init_V(new PathHelper());
             init_V(new StreamGate());
             init_V(new MethodUtil());
             init_V(new ListPool());
@@ -410,10 +404,6 @@ public final class DataUtil {
       }
 
       try {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.BitSetUtil.init(trimmed)) {
-            return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.init, "Routed to the piloted bot session");
-         }
-
          init_CommandDispatcher.execute(trimmed, AutismCommandSource.INSTANCE);
          return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.init, "");
       } catch (CommandSyntaxException e) {

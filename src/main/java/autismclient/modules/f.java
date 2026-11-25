@@ -413,8 +413,7 @@ public final class f {
 
       @Override
       public void tick() {
-         if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-            && !IoWorker.init_Z()
+         if (!IoWorker.init_Z()
             && MC.player != null
             && MC.gameMode != null
             && !"Packet".equals(this.choice("mode"))
@@ -436,9 +435,7 @@ public final class f {
 
       @Override
       public boolean onPacketSend(Packet<?> packet) {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-            return false;
-         } else if (!("Packet".equals(this.choice("mode")) && packet instanceof ServerboundMovePlayerPacket move) || !this.init_Z_37()) {
+         if (!("Packet".equals(this.choice("mode")) && packet instanceof ServerboundMovePlayerPacket move) || !this.init_Z_37()) {
             return false;
          } else {
             if (move.isOnGround()) {
@@ -4641,7 +4638,6 @@ public final class f {
             && !aD.read_Z()
             && !aC.init_Z()
             && !cd.init_Z()
-            && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.write_Z();
       }
@@ -4874,8 +4870,6 @@ public final class f {
       private int read_I;
       private int write_I;
       private boolean load_Z;
-      private Boolean init_Boolean;
-      private long init_J;
       private int update_I = -2147483648;
       private String load_Str = "Abilities";
       private String read_Str = "Packet";
@@ -4943,42 +4937,36 @@ public final class f {
          this.flush_V_8();
          this.init_Str = this.load_Str;
          this.flush_Z = false;
-         if (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z()) {
-            if ("Vulcan".equals(this.init_Str)) {
-               if (!this.sync_Z_9()) {
-                  this.init_V_2(true);
+         if ("Vulcan".equals(this.init_Str)) {
+            if (!this.sync_Z_9()) {
+               this.init_V_2(true);
+            } else {
+               this.load_D = MC.player.getY();
+               boolean airborne = !MC.player.onGround();
+               this.read_I = airborne ? 10 : 0;
+               this.write_I = 0;
+               this.load_Z = MC.player.isFallFlying();
+               if (airborne) {
+                  this.update_V_15();
                } else {
-                  this.load_D = MC.player.getY();
-                  boolean airborne = !MC.player.onGround();
-                  this.read_I = airborne ? 10 : 0;
-                  this.write_I = 0;
-                  this.load_Z = MC.player.isFallFlying();
-                  if (airborne) {
-                     this.update_V_15();
-                  } else {
-                     this.write_V_19();
-                  }
+                  this.write_V_19();
                }
-            } else if ("Abilities".equals(this.init_Str)) {
-               this.init_V_39();
             }
+         } else if ("Abilities".equals(this.init_Str)) {
+            this.init_V_39();
          }
       }
 
       @Override
       public void tick() {
          this.close_V_7();
-         if (MC.player != null && !this.flush_Z_8() && "Vulcan".equals(this.load_Str)) {
-         }
       }
 
       @Override
       public void preMovementTick() {
-         if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-            && MC.player != null
+         if (MC.player != null
             && MC.gameMode != null
-            && !MC.player.isSpectator()
-            && !this.flush_Z_8()) {
+            && !MC.player.isSpectator()) {
             if (IoWorker.init_Z()) {
                if (this.init_Z) {
                   this.load_V_29();
@@ -5051,19 +5039,14 @@ public final class f {
 
       @Override
       public void onDisable() {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-            this.flush_V_8();
-            this.init_Z = false;
-         } else {
-            boolean wasVulcan = "Vulcan".equals(this.init_Str) || "Vulcan".equals(this.load_Str);
-            if (wasVulcan) {
-               this.sync_V_10();
-            }
+         boolean wasVulcan = "Vulcan".equals(this.init_Str) || "Vulcan".equals(this.load_Str);
+         if (wasVulcan) {
+            this.sync_V_10();
+         }
 
-            this.flush_V_8();
-            if (MC.player != null && !MC.player.isSpectator() && (this.init_Z || "Abilities".equals(this.init_Str))) {
-               this.load_V_29();
-            }
+         this.flush_V_8();
+         if (MC.player != null && !MC.player.isSpectator() && (this.init_Z || "Abilities".equals(this.init_Str))) {
+            this.load_V_29();
          }
       }
 
@@ -5075,10 +5058,6 @@ public final class f {
 
       @Override
       public boolean onPacketSend(Packet<?> packet) {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-            return false;
-         }
-
          if (this.sync_Z) {
             return false;
          }
@@ -5087,7 +5066,7 @@ public final class f {
             return false;
          }
 
-         if (MC.player != null && MC.getConnection() != null && !this.flush_Z_8()) {
+         if (MC.player != null && MC.getConnection() != null) {
             this.close_V_7();
             if ("Vulcan".equals(this.load_Str)) {
                return false;
@@ -5131,11 +5110,7 @@ public final class f {
 
       @Override
       public boolean onPacketReceive(Packet<?> packet) {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-            return false;
-         }
-
-         if (MC.player != null && !this.flush_Z_8()) {
+         if (MC.player != null) {
             this.close_V_7();
             if (packet instanceof ClientboundPlayerAbilitiesPacket abilities && "Abilities".equals(this.load_Str)) {
                AuditClientFixes.applyFlightAbilities(this, abilities);
@@ -5154,7 +5129,7 @@ public final class f {
          }
 
          this.close_V_7();
-         return this.isEnabled() && !this.flush_Z_8() && "Velocity".equals(this.load_Str)
+         return this.isEnabled() && "Velocity".equals(this.load_Str)
             ? (float)this.read_D * (MC.player != null && MC.player.isSprinting() ? 15.0F : 10.0F)
             : -1.0F;
       }
@@ -5169,7 +5144,7 @@ public final class f {
          }
 
          this.close_V_7();
-         return this.isEnabled() && !this.flush_Z_8() && "Velocity".equals(this.load_Str) && this.write_Z;
+         return this.isEnabled() && "Velocity".equals(this.load_Str) && this.write_Z;
       }
 
       private void init_V_39() {
@@ -5437,31 +5412,6 @@ public final class f {
             this.flush_I = Math.max(1, this.integer("off-time"));
          }
       }
-
-      private boolean flush_Z_8() {
-         long now = System.currentTimeMillis();
-         if (this.init_Boolean != null && now - this.init_J < 250L) {
-            return this.init_Boolean;
-         }
-
-         this.init_J = now;
-         this.init_Boolean = this.close_Z_7();
-         return this.init_Boolean;
-      }
-
-      private boolean close_Z_7() {
-         try {
-            Class<?> modulesClass = Class.forName("meteordevelopment.meteorclient.systems.modules.Modules", false, f.Inner_FileCache.class.getClassLoader());
-            Class<?> flightClass = Class.forName(
-               "meteordevelopment.meteorclient.systems.modules.movement.Flight", false, f.Inner_FileCache.class.getClassLoader()
-            );
-            Object modules = modulesClass.getMethod("get").invoke(null);
-            Object flight = modulesClass.getMethod("get", Class.class).invoke(modules, flightClass);
-            return flight != null && Boolean.TRUE.equals(flight.getClass().getMethod("isActive").invoke(flight));
-         } catch (Throwable ignored) {
-            return false;
-         }
-      }
    }
 
    static final class Inner_HashUtil extends Module {
@@ -5519,11 +5469,6 @@ public final class f {
       public void onEnable() {
          autismclient.util.al.init_V();
          autismclient.util.macro.ab.load_V();
-      }
-
-      @Override
-      public void tick() {
-         autismclient.util.al.read_V();
       }
 
       @Override
@@ -5736,8 +5681,6 @@ public final class f {
       private double load_D;
       private long init_J;
       private String init_Str = "Vanilla";
-      private Boolean init_Boolean;
-      private long load_J;
 
       Inner_ListPool() {
          super("speed", "Speed", ae.load_ae, "Boosts movement speed.");
@@ -5776,7 +5719,7 @@ public final class f {
 
       @Override
       public void preMovementTick() {
-         if (MC.player != null && !this.update() && !this.load_Z_22()) {
+         if (MC.player != null && !this.load_Z_22()) {
             this.init_V_41();
             if (this.write()) {
                this.load_V_30();
@@ -5794,7 +5737,7 @@ public final class f {
             return movement;
          }
 
-         if (!this.update() && !this.load_Z_22()) {
+         if (!this.load_Z_22()) {
             this.init_V_41();
             if (this.write()) {
                return this.read(movement);
@@ -5817,7 +5760,7 @@ public final class f {
 
       @Override
       public boolean shouldApplySpeedTimer() {
-         return !this.update() && !this.load_Z_22() && this.read();
+         return !this.load_Z_22() && this.read();
       }
 
       @Override
@@ -5862,7 +5805,7 @@ public final class f {
       Vec3 init(Vec3 movement) {
          if (movement == null || MC.player == null || !this.bool("in-liquids") || !this.write()) {
             return movement;
-         } else if (!this.update() && !this.load_Z_22()) {
+         } else if (!this.load_Z_22()) {
             this.init_V_41();
             return this.read(movement);
          } else {
@@ -6064,31 +6007,6 @@ public final class f {
          }
       }
 
-      private boolean update() {
-         long now = System.currentTimeMillis();
-         if (this.init_Boolean != null && now - this.load_J < 250L) {
-            return this.init_Boolean;
-         }
-
-         this.load_J = now;
-         this.init_Boolean = this.sync();
-         return this.init_Boolean;
-      }
-
-      private boolean sync() {
-         try {
-            Class<?> modulesClass = Class.forName("meteordevelopment.meteorclient.systems.modules.Modules", false, f.Inner_ListPool.class.getClassLoader());
-            Class<?> speedClass = Class.forName(
-               "meteordevelopment.meteorclient.systems.modules.movement.speed.Speed", false, f.Inner_ListPool.class.getClassLoader()
-            );
-            Object modules = modulesClass.getMethod("get").invoke(null);
-            Object speed = modulesClass.getMethod("get", Class.class).invoke(modules, speedClass);
-            return speed != null && Boolean.TRUE.equals(speed.getClass().getMethod("isActive").invoke(speed));
-         } catch (Throwable ignored) {
-            return false;
-         }
-      }
-
       private void load_V_30() {
          this.init_I = 0;
          this.init_D = 0.2873;
@@ -6170,7 +6088,7 @@ public final class f {
 
       @Override
       public void tick() {
-         if (MC.player != null && MC.level != null && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())) {
+         if (MC.player != null && MC.level != null) {
             if (this.init) {
                autismclient.util.aB.init(MC.options.keyJump).autism$simulatePress(false);
                this.init = false;
@@ -6465,7 +6383,6 @@ public final class f {
 
       boolean init_Z_46() {
          return this.isEnabled()
-            && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !"Packet".equals(this.choice("mode"))
             && MC != null
@@ -6487,8 +6404,7 @@ public final class f {
       }
 
       private void init_V_43() {
-         if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-            && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
+         if ((AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && MC.options != null
             && MC.player != null
             && !MC.player.getAbilities().flying) {
@@ -6503,17 +6419,13 @@ public final class f {
 
       @Override
       public void onDisable() {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
+         if (this.init) {
+            this.init(false);
             this.init = false;
-         } else {
-            if (this.init) {
-               this.init(false);
-               this.init = false;
-            }
+         }
 
-            if (MC.options != null) {
-               MC.options.keyShift.setDown(false);
-            }
+         if (MC.options != null) {
+            MC.options.keyShift.setDown(false);
          }
       }
 
@@ -6583,21 +6495,18 @@ public final class f {
 
       @Override
       public void onStartBreakingBlock(BlockPos pos, Direction direction) {
-         if (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z()) {
-            this.init_BlockPos = pos == null ? null : pos.immutable();
-            this.init_Direction = direction == null ? Direction.UP : direction;
-            if (this.bool("render")) {
-               autismclient.util.au.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
-            }
-
-            this.init_I = 0;
+         this.init_BlockPos = pos == null ? null : pos.immutable();
+         this.init_Direction = direction == null ? Direction.UP : direction;
+         if (this.bool("render")) {
+            autismclient.util.au.init(this.init_BlockPos, this.init("color", this.init("line-color", -12986502)));
          }
+
+         this.init_I = 0;
       }
 
       @Override
       public void tick() {
-         if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-            && MC.player != null
+         if (MC.player != null
             && MC.level != null
             && MC.getConnection() != null
             && this.init_BlockPos != null
@@ -6737,28 +6646,22 @@ public final class f {
 
       @Override
       public void tick() {
-         if (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z()) {
-            String mode = this.choice("mode");
-            if ("Haste".equals(mode)) {
-               this.init_V_44();
-            } else {
-               this.load();
-            }
+         String mode = this.choice("mode");
+         if ("Haste".equals(mode)) {
+            this.init_V_44();
+         } else {
+            this.load();
+         }
 
-            if ("Damage".equals(mode)) {
-               this.read();
-            } else if ("Packet".equals(mode) && MC.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor) {
-               accessor.autism$setDestroyDelay(0);
-            }
+         if ("Damage".equals(mode)) {
+            this.read();
+         } else if ("Packet".equals(mode) && MC.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor) {
+            accessor.autism$setDestroyDelay(0);
          }
       }
 
       @Override
       public boolean onPacketSend(Packet<?> packet) {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-            return false;
-         }
-
          if ("Damage".equals(this.choice("mode")) && this.bool("grim-bypass") && MC.getConnection() != null) {
             if (packet instanceof ServerboundPlayerActionPacket action && action.getAction() == Action.STOP_DESTROY_BLOCK) {
                MC.getConnection().send(new ServerboundPlayerActionPacket(Action.ABORT_DESTROY_BLOCK, action.getPos().above(), action.getDirection()));
@@ -6772,10 +6675,6 @@ public final class f {
 
       @Override
       public boolean onStartDestroyBlock(BlockPos pos, Direction direction) {
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
-            return false;
-         }
-
          if (!"Damage".equals(this.choice("mode")) || !this.bool("instamine")) {
             return false;
          }
@@ -6808,8 +6707,7 @@ public final class f {
 
       @Override
       public void onBlockBreakingProgress(BlockPos pos, Direction direction) {
-         if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-            && "Packet".equals(this.choice("mode"))
+         if ("Packet".equals(this.choice("mode"))
             && MC.player != null
             && MC.level != null
             && MC.getConnection() != null
@@ -8163,8 +8061,7 @@ public final class f {
       public void tick() {
          if (!AutismLiteVariant.enabled() && UtilCore.init_Z_23()) {
             this.init_V_47();
-         } else if ((AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-            && MC.player != null
+         } else if (MC.player != null
             && MC.level != null
             && MC.gameMode != null
             && !FieldCache.init_Z_6()

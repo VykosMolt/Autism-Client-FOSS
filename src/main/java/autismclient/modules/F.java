@@ -72,7 +72,7 @@ public final class F {
          PkgCls_c source = init_c_DataUtil.init();
          int color = module.init_I_2();
          if (!module.init_List_3().isEmpty()) {
-            VertexConsumer fill = source.init(net.minecraft.client.renderer.rendertype.CachePool.write());
+            VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (BlockPos pos : module.init_List_3()) {
                cI.init(matrices.last(), fill, init(pos).move(camera.scale(-1.0)), cV.init(color, 32));
@@ -82,11 +82,11 @@ public final class F {
          if (init(module, target, camera)) {
             cV.Inner_DataUtil column = cV.init(camera, target, init_Minecraft.level.getMinY(), init_Minecraft.level.getMaxY() + 1.0);
             if (column != null) {
-               init(matrices, source.init(net.minecraft.client.renderer.rendertype.CachePool.write()), column, color);
+               init(matrices, source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
             }
          }
 
-         VertexConsumer lines = source.init(net.minecraft.client.renderer.rendertype.CachePool.sync());
+         VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
          for (BlockPos pos : module.init_List_3()) {
             cI.init(matrices.last(), lines, init(pos).inflate(0.003).move(camera.scale(-1.0)), cV.init(color, 221), 1.5F);

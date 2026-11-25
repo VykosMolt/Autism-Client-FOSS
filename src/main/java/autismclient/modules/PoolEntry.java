@@ -6,8 +6,6 @@ import autismclient.compat263.CompatSwingPacket;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.AutismMatchmakingOverlay;
-import autismclient.util.AutismMultiOverlay;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismPayloadSupport;
 import autismclient.util.AutismProfilesOverlay;
@@ -116,9 +114,7 @@ public final class PoolEntry {
    private volatile boolean poll;
    private volatile boolean push;
    private AutismServerInfoOverlay init_AutismServerInfoOv;
-   private cX init_cX;
    private cX load_cX;
-   private cX read_cX;
    private final Deque<PoolEntry.Inner_StreamUtil> init_Deque = new ArrayDeque<>(96);
    private final Set<Packet<?>> load_Set = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
    private final Deque<String> load_Deque = new ArrayDeque<>(256);
@@ -192,8 +188,6 @@ public final class PoolEntry {
          next.applyRuntimeDefaults();
          AutismConfig prev = this.init_AutismConfig != null ? this.init_AutismConfig : AutismConfig.getGlobal();
          if (prev != null) {
-            next.welcomeShown = prev.welcomeShown;
-            next.welcomeInstallIdentity = prev.welcomeInstallIdentity;
             next.serverPluginScans = prev.serverPluginScans;
             next.lanSyncEnabled = prev.lanSyncEnabled;
          }
@@ -1590,44 +1584,6 @@ public final class PoolEntry {
       return true;
    }
 
-   public cX init_cX() {
-      if (AutismLiteVariant.enabled()) {
-         return null;
-      }
-
-      if (this.init_cX == null && init_Minecraft != null && init_Minecraft.font != null) {
-         this.init_cX = new AutismMatchmakingOverlay(init_Minecraft.font);
-         this.init_cX.b__V();
-      }
-
-      return this.init_cX;
-   }
-
-   public boolean queue() {
-      if (AutismLiteVariant.enabled()) {
-         return false;
-      }
-
-      cX overlay = this.init_cX();
-      if (overlay == null) {
-         return false;
-      }
-
-      if (overlay.sync_Z()) {
-         overlay.init_V_Z(false);
-         return true;
-      }
-
-      bk.init_bk().init_V(overlay);
-      ((AutismMatchmakingOverlay)overlay).update_V_12();
-      bk.init_bk().update_V(overlay);
-      if (init_Minecraft != null) {
-         init_Minecraft.gui.setScreen(new autismclient.gui.d.TaskTimer(overlay, null, false, true));
-      }
-
-      return true;
-   }
-
    public cX load_cX() {
       if (AutismLiteVariant.enabled()) {
          return null;
@@ -1641,104 +1597,19 @@ public final class PoolEntry {
       return this.load_cX;
    }
 
-   public cX read_cX() {
-      if (AutismLiteVariant.enabled()) {
-         return null;
-      }
-
-      if (this.read_cX == null && init_Minecraft != null && init_Minecraft.font != null) {
-         this.read_cX = new AutismMultiOverlay(init_Minecraft.font);
-         this.read_cX.b__V();
-      }
-
-      return this.read_cX;
-   }
-
-   public cX write_cX() {
-      return this.init_cX;
-   }
-
    public cX update_cX() {
       return this.load_cX;
    }
 
-   public cX sync_cX() {
-      return this.read_cX;
-   }
-
    public void close_V() {
       if (!cx.load_Z() && !AutismLiteVariant.enabled()) {
-         try {
-            if (this.init_cX != null && this.init_cX.sync_Z()) {
-               this.init_cX.init_V_Z(false);
-            }
-         } catch (Throwable var3) {
-         }
-
          try {
             if (this.load_cX != null && this.load_cX.sync_Z()) {
                this.load_cX.init_V_Z(false);
             }
          } catch (Throwable var2) {
          }
-
-         try {
-            autismclient.util.g.PacketUtil manager = autismclient.util.g.PacketUtil.load_PacketUtil();
-            if ((manager == null || !manager.load_Z()) && this.read_cX != null && this.read_cX.sync_Z()) {
-               this.read_cX.init_V_Z(false);
-            }
-         } catch (Throwable var4) {
-         }
       }
-   }
-
-   public boolean buffer() {
-      if (AutismLiteVariant.enabled()) {
-         return false;
-      } else {
-         cX overlay = this.read_cX();
-         if (overlay == null) {
-            return false;
-         } else {
-            bk overlayManager = bk.init_bk();
-            if (overlay.sync_Z() && !overlayManager.load_Z(overlay)) {
-               overlay.init_V_Z(false);
-               return true;
-            } else {
-               autismclient.gui.d.RingBuffer.init(init_Minecraft, init_Minecraft == null ? null : init_Minecraft.gui.screen(), this::run_V);
-               return true;
-            }
-         }
-      }
-   }
-
-   private void run_V() {
-      cX overlay = this.read_cX();
-      if (overlay != null) {
-         bk manager = bk.init_bk();
-         manager.init_V(overlay);
-         manager.init_V_cX_Z(overlay, false);
-         ((AutismMultiOverlay)overlay).update_V_14();
-         manager.update_V(overlay);
-      }
-   }
-
-   public boolean entry() {
-      if (AutismLiteVariant.enabled()) {
-         return false;
-      }
-
-      cX overlay = this.read_cX();
-      if (overlay == null) {
-         return false;
-      }
-
-      this.run_V();
-      if (init_Minecraft != null) {
-         init_Minecraft.gui.setScreen(new autismclient.gui.d.TaskTimer(overlay, null, false, true));
-      }
-
-      return true;
    }
 
    public boolean node() {
@@ -2071,14 +1942,7 @@ public final class PoolEntry {
                boolean pressed = this.init_Z_I(macro.load_I);
                boolean wasPressed = this.init_Map.getOrDefault(macro.init_Str, false);
                if (pressed && !wasPressed) {
-                  if (!AutismLiteVariant.enabled() && autismclient.util.g.ValueSink.init_Z()) {
-                     autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-                     if (multi != null && multi.init_Z_Str_Set(macro.init_Str, Set.of())) {
-                        multi.write_PacketUtil_CachePo_Set(Set.of());
-                     } else {
-                        macro.init_V();
-                     }
-                  } else if (MacroExecutor.init_Z_aM(macro)) {
+                  if (MacroExecutor.init_Z_aM(macro)) {
                      MacroExecutor.load_V_aM(macro);
                   } else {
                      macro.init_V();

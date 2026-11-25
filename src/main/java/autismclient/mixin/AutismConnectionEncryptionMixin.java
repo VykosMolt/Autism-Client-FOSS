@@ -1,10 +1,8 @@
 package autismclient.mixin;
 
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.bg;
 import autismclient.util.bn;
 import autismclient.util.l;
-import autismclient.util.g.ConfigStore;
 import io.netty.channel.Channel;
 import javax.crypto.Cipher;
 import net.minecraft.network.Connection;
@@ -21,7 +19,7 @@ public abstract class AutismConnectionEncryptionMixin {
 
    @Inject(method = "setEncryptionKey", at = @At("TAIL"))
    private void autism$observeEncryptionBoundary(Cipher decryptCipher, Cipher encryptCipher, CallbackInfo ci) {
-      if ((AutismLiteVariant.enabled() || !ConfigStore.init_Z((Connection)(Object)this)) && this.channel != null) {
+      if (this.channel != null) {
          if (bg.init_Z()) {
             bn.init_V(this.channel);
          }

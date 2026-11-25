@@ -37,10 +37,6 @@ public final class cd {
             return new cd.Inner_DataUtil(false, "You cannot remote-view yourself.");
          }
 
-         if (!AutismLiteVariant.enabled() && autismclient.util.g.ValueSink.init_Z()) {
-            return new cd.Inner_DataUtil(false, "Leave Multi POV first.");
-         }
-
          if (autismclient.modules.aC.init_Z()) {
             return new cd.Inner_DataUtil(false, "Disable Freecam first.");
          }

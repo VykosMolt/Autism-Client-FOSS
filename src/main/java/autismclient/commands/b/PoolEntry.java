@@ -3,7 +3,6 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.AutismLiteVariant;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -69,13 +68,12 @@ public class PoolEntry extends Command {
 
    private static int init(String itemId, int count) {
       Minecraft mc = Minecraft.getInstance();
-      boolean pov = !AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z();
-      if (!pov && mc.player == null) {
+      if (mc.player == null) {
          AutismClientMessaging.sendPrefixed("§cNot in a world.");
          return 1;
       }
 
-      if (!pov && !mc.player.getAbilities().instabuild) {
+      if (!mc.player.getAbilities().instabuild) {
          AutismClientMessaging.sendPrefixed("§cCreative mode required.");
          return 1;
       }
@@ -88,21 +86,11 @@ public class PoolEntry extends Command {
 
       Identifier id = BuiltInRegistries.ITEM.getKey(item);
       ItemStack stack = new ItemStack(item, count);
-      String povResult = null;
-      if (!AutismLiteVariant.enabled()) {
-         povResult = autismclient.util.g.PoolEntry.init_Str_ItemStack(stack);
-      }
-
-      if (povResult != null) {
-         AutismClientMessaging.sendPrefixed(("Sent".equals(povResult) ? "§a" : "§c") + "POV give: §f" + povResult);
-         return 1;
-      } else {
-         int slot = mc.player.getInventory().getSelectedSlot();
-         int containerSlot = 36 + slot;
-         mc.getConnection().send(new ServerboundSetCreativeModeSlotPacket((short)containerSlot, stack));
-         mc.player.getInventory().setItem(slot, stack);
-         AutismClientMessaging.sendPrefixed("§aGave §f" + id + " x" + count);
-         return 1;
-      }
+      int slot = mc.player.getInventory().getSelectedSlot();
+      int containerSlot = 36 + slot;
+      mc.getConnection().send(new ServerboundSetCreativeModeSlotPacket((short)containerSlot, stack));
+      mc.player.getInventory().setItem(slot, stack);
+      AutismClientMessaging.sendPrefixed("§aGave §f" + id + " x" + count);
+      return 1;
    }
 }

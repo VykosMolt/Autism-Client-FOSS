@@ -119,7 +119,7 @@ public final class cg {
                      context.submitNodeCollector()
                         .submitCustomGeometry(
                            context.poseStack(),
-                           net.minecraft.client.renderer.rendertype.CachePool.write(),
+                           autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
                            (pose, buffer) -> {
                               for (int i = 0; i < 32; i++) {
                                  long t = init_JArr[i];

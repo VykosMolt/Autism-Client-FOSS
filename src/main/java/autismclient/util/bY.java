@@ -81,7 +81,6 @@ public final class bY extends df<bW> implements Iterable<bW> {
 
    public static bY init_bY() {
       init_bY.load_V();
-      aV.init();
       init_bY.write_V();
       return init_bY;
    }

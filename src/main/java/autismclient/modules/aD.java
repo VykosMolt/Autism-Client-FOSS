@@ -99,8 +99,6 @@ public final class aD {
          }
 
          am.init_V();
-         autismclient.util.aU.init(config);
-         autismclient.util.Q.init(config);
          config.save();
       });
    }
@@ -121,8 +119,6 @@ public final class aD {
          }
 
          am.init_V();
-         autismclient.util.aU.load(config);
-         autismclient.util.Q.read(config);
          config.save();
          if (config.lanSyncEnabled) {
             autismclient.util.aE.init_aE().init_V();
@@ -147,8 +143,6 @@ public final class aD {
             }
 
             am.init_V();
-            autismclient.util.aU.init_V();
-            autismclient.util.Q.init(AutismConfig.getGlobal());
             AutismClientMessaging.clearClientMessages();
          });
       }
@@ -163,9 +157,6 @@ public final class aD {
       bD.load();
       AutismClientMessaging.clearClientMessages();
       AutismClientMessaging.clearChatInputHistory();
-      if (!AutismLiteVariant.enabled()) {
-         autismclient.util.g.PacketUtil.init_PacketUtil().init_V();
-      }
    }
 
    public static void read_V() {

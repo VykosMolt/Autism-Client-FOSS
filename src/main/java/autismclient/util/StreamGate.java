@@ -42,16 +42,7 @@ public final class StreamGate {
 
       StreamGate.Inner_DataUtil pending = init_StreamGate_DataUti;
       if (pending != null && mc != null) {
-         if (!AutismLiteVariant.enabled() && pending.init_Z()) {
-            autismclient.util.g.PoolEntry.Inner_DataUtil menu = autismclient.util.g.PoolEntry.init_PoolEntry_DataUtil_J(pending.init_J());
-            if (menu != null) {
-               init_StreamGate_DataUti = null;
-               autismclient.util.g.PoolEntry.init_V();
-               CompoundTag complete = init(mc, pending.init_CompoundTag(), menu.init_List(), menu.init_Str(), menu.load());
-               init(mc, complete, menu.init_List(), "Server-synchronized contents.");
-               return;
-            }
-         } else if (mc.player != null) {
+         if (mc.player != null) {
             AbstractContainerMenu menu = mc.player.containerMenu;
             if (menu != null && menu != mc.player.inventoryMenu && menu.containerId != pending.init_I()) {
                init_StreamGate_DataUti = null;
@@ -64,7 +55,7 @@ public final class StreamGate {
             }
          }
 
-         if (System.nanoTime() - pending.load() >= 1500000000L || !AutismLiteVariant.enabled() && pending.init_Z() != autismclient.util.g.PoolEntry.init_Z()) {
+         if (System.nanoTime() - pending.load() >= 1500000000L) {
             init_StreamGate_DataUti = null;
             init(mc, pending.init_CompoundTag(), List.of(), "Contents were not provided.");
          }
@@ -105,7 +96,6 @@ public final class StreamGate {
          );
          CompoundTag localPayload = init(snapshot, localEntity, "client");
          if (blockEntity != null
-            && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
             && mc.player != null
             && mc.player.connection != null
             && mc.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
@@ -122,10 +112,8 @@ public final class StreamGate {
          }
 
          if (init(mc, pos, state, blockEntity)) {
-            boolean pov = !AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z();
-            long generation = !AutismLiteVariant.enabled() && pov ? autismclient.util.g.PoolEntry.init_J() : -1L;
-            int containerId = !pov && mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : -1;
-            init_StreamGate_DataUti = new StreamGate.Inner_DataUtil(localPayload, pov, generation, containerId, System.nanoTime());
+            int containerId = mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : -1;
+            init_StreamGate_DataUti = new StreamGate.Inner_DataUtil(localPayload, false, -1L, containerId, System.nanoTime());
             bi.init("Reading block contents...", p.node());
             return false;
          }

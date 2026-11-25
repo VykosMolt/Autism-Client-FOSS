@@ -7,7 +7,6 @@ import autismclient.modules.Module;
 import autismclient.modules.aL;
 import autismclient.modules.al;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.C;
 import autismclient.util.aD;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.Connection;
@@ -34,7 +33,7 @@ public final class Autism {
 
     /** One of AUTISM's extra-account connections, not the player's own. */
     public static boolean extraConnection(Connection connection) {
-        return connection instanceof C managed && managed.autism$isMultiManaged();
+        return false;
     }
 
     /** Left alone by AUTISM's own Crystal Aura: a bot (AntiBot) or a friend Teams protects from attacks. */

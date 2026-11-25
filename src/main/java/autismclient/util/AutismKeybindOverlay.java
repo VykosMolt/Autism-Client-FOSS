@@ -739,10 +739,6 @@ public class AutismKeybindOverlay extends bj {
          this.init_AutismConfig().commandPrefix = selected;
          this.init_AutismConfig().save();
       }
-
-      if (!selected.equals(requested)) {
-         bi.read("Meteor uses '.'. Prefix kept as '%'.");
-      }
    }
 
    private void flush_V_6() {

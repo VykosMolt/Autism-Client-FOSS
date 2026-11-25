@@ -56,14 +56,14 @@ public final class au {
                      if (load(finalShape) && (finalSideColor >>> 24 & 0xFF) > 0) {
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, net.minecraft.client.renderer.rendertype.CachePool.write(), (pose, buffer) -> load(pose, buffer, box, finalSideColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(), (pose, buffer) -> load(pose, buffer, box, finalSideColor)
                            );
                      }
 
                      if (init(finalShape)) {
                         context.submitNodeCollector()
                            .submitCustomGeometry(
-                              poseStack, net.minecraft.client.renderer.rendertype.CachePool.update(), (pose, buffer) -> init(pose, buffer, box, finalColor)
+                              poseStack, autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(), (pose, buffer) -> init(pose, buffer, box, finalColor)
                            );
                      }
                   }

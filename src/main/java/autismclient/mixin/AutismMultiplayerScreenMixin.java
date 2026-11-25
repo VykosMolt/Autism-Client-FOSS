@@ -4,9 +4,6 @@ import autismclient.c.StreamUtil;
 import autismclient.gui.d.ArrayUtil;
 import autismclient.gui.d.ByteReader;
 import autismclient.gui.d.MapStore;
-import autismclient.gui.d.PathHelper;
-import autismclient.gui.d.RingBuffer;
-import autismclient.gui.d.TableIndex;
 import autismclient.gui.d.a;
 import autismclient.gui.f.RenderState;
 import autismclient.gui.f.UiHelper;
@@ -14,14 +11,11 @@ import autismclient.gui.f.b.h;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.aA;
 import autismclient.util.aN;
 import autismclient.util.bW;
 import autismclient.util.bY;
 import autismclient.util.cA;
-import autismclient.util.g.PacketUtil;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -31,9 +25,6 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList;
-import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList.Entry;
-import net.minecraft.client.gui.screens.multiplayer.ServerSelectionList.OnlineServerEntry;
-import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -51,8 +42,6 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    @Unique
    private static final int MACRO_BUTTON_WIDTH = 50;
    @Unique
-   private static final int MULTI_BUTTON_WIDTH = 50;
-   @Unique
    private static final int STACK_WIDTH = 104;
    @Unique
    private static final int MARGIN = 4;
@@ -65,15 +54,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    @Unique
    private static final int EXTERNAL_VIA_FABRIC_PLUS = 1;
    @Unique
-   private static final int EXTERNAL_REPLAY_RECORD = 2;
-   @Unique
    private static final int EXTERNAL_OPSEC = 3;
    @Unique
-   private Button autism$accountsButton;
-   @Unique
    private Button autism$joinMacroButton;
-   @Unique
-   private Button autism$multiButton;
    @Unique
    private Button autism$proxiesButton;
    @Unique
@@ -83,11 +66,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    @Unique
    private Button autism$libraryButton;
    @Unique
-   private Button autism$recordButton;
-   @Unique
    private boolean autism$voicePromptChecked;
-   @Unique
-   private boolean autism$meteorUiConfigSuppressed;
    @Unique
    private int autism$topButtonsLeft = 4;
    @Shadow
@@ -101,26 +80,6 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    private void autism$repositionElements(CallbackInfo ci) {
       this.autism$layoutButtons();
       this.autism$maybeShowVoiceChatPrompt();
-   }
-
-   @Inject(method = "tick", at = @At("TAIL"))
-   private void autism$refreshMultiButton(CallbackInfo ci) {
-      if (this.autism$multiButton != null) {
-         String label = autism$multiLabel();
-         if (!label.equals(this.autism$multiButton.getMessage().getString())) {
-            this.autism$multiButton.setMessage(Component.literal(label));
-         }
-      }
-   }
-
-   @Unique
-   private static String autism$multiLabel() {
-      if (AutismLiteVariant.enabled()) {
-         return "Multi";
-      }
-
-      PacketUtil manager = PacketUtil.init_PacketUtil();
-      return manager.load_Z() ? "Multi " + manager.read_Str() : "Multi";
    }
 
    @Unique
@@ -148,16 +107,13 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
 
    @Unique
    private void autism$layoutButtons() {
-      this.autism$suppressMeteorWidgets();
       AbstractWidget via = null;
       AbstractWidget opsec = null;
 
       for (GuiEventListener child : this.children()) {
          if (child instanceof AbstractWidget widget && !this.autism$isOwned(widget)) {
             int kind = this.autism$externalKind(widget);
-            if (kind == 2) {
-               autism$setVisible(widget, false);
-            } else if (kind == 1) {
+            if (kind == 1) {
                via = widget;
             } else if (kind == 3) {
                opsec = widget;
@@ -167,14 +123,11 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
 
       boolean hidden = aD.init_Z();
       if (hidden) {
-         autism$setVisible(this.autism$accountsButton, false);
          autism$setVisible(this.autism$joinMacroButton, false);
-         autism$setVisible(this.autism$multiButton, false);
          autism$setVisible(this.autism$proxiesButton, false);
          autism$setVisible(this.autism$spoofButton, false);
          autism$setVisible(this.autism$packsButton, false);
          autism$setVisible(this.autism$libraryButton, false);
-         autism$setVisible(this.autism$recordButton, false);
          autism$setVisible(via, false);
          autism$setVisible(opsec, false);
       } else {
@@ -182,31 +135,18 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
          int topRight = this.width - 4;
          int topAvailable = Math.max(4, this.width - 8);
          int topGap = 2;
-         boolean lite = AutismLiteVariant.enabled();
-         int topCell = lite ? Math.max(1, (topAvailable - topGap * 3) / 4) : Math.max(1, (topAvailable - topGap * 4) / 5);
-         int accountsW = Math.min(this.autism$hugWidth("Accounts"), topCell);
+         int topCell = Math.max(1, (topAvailable - topGap * 2) / 3);
          int proxiesW = Math.min(this.autism$hugWidth("Proxies"), topCell);
          int libraryW = Math.min(this.autism$hugWidth("Library"), topCell);
          int macroW = Math.min(this.autism$hugWidth("Macro"), topCell);
          int cursor = topRight;
-         cursor -= accountsW;
-         autism$place(this.autism$accountsButton, cursor, 4, accountsW, 16);
-         cursor -= topGap + proxiesW;
+         cursor -= proxiesW;
          autism$place(this.autism$proxiesButton, cursor, 4, proxiesW, 16);
          cursor -= topGap + libraryW;
          this.autism$libraryButton.setMessage(this.autism$fitLabel(libraryW, "Library"));
          autism$place(this.autism$libraryButton, cursor, 4, libraryW, 16);
          cursor -= topGap + macroW;
          autism$place(this.autism$joinMacroButton, cursor, 4, macroW, 16);
-         if (!lite) {
-            String multiLabel = autism$multiLabel();
-            int multiW = Math.min(this.autism$hugWidth(multiLabel), topCell);
-            cursor -= topGap + multiW;
-            autism$place(this.autism$multiButton, cursor, 4, multiW, 16);
-            if (!multiLabel.equals(this.autism$multiButton.getMessage().getString())) {
-               this.autism$multiButton.setMessage(Component.literal(multiLabel));
-            }
-         }
 
          this.autism$topButtonsLeft = Math.max(4, cursor);
          int footerRight = this.width / 2 - 154 - 3;
@@ -219,16 +159,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
          autism$place(this.autism$packsButton, footerX, footerY + 20 + 3, footerWidth, 20);
          int rightX = Math.min(this.width - 4 - 104, this.width / 2 + 154 + 3);
          int rightWidth = Math.max(60, Math.min(104, this.width - 4 - rightX));
-         int count = (FabricLoader.getInstance().isModLoaded("replaymod") ? 1 : 0) + (via != null ? 1 : 0) + (opsec != null ? 1 : 0);
+         int count = (via != null ? 1 : 0) + (opsec != null ? 1 : 0);
          int rightY = Math.max(4, this.height - 8 - Math.max(0, count * 20 + Math.max(0, count - 1) * 3));
          int slot = 0;
-         if (FabricLoader.getInstance().isModLoaded("replaymod")) {
-            this.autism$recordButton.setMessage(this.autism$replayServerLabel(rightWidth));
-            autism$place(this.autism$recordButton, rightX, rightY + slot++ * 23, rightWidth, 20);
-         } else {
-            autism$setVisible(this.autism$recordButton, false);
-         }
-
          if (via != null) {
             autism$place(via, rightX, rightY + slot++ * 23, rightWidth, 20);
          }
@@ -241,23 +174,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
 
    @Unique
    private void autism$ensureOwnedButtons() {
-      if (this.autism$accountsButton == null) {
-         this.autism$accountsButton = this.addRenderableWidget(
-            Button.builder(Component.literal("Accounts"), ignored -> this.minecraft.gui.setScreen(new autismclient.gui.d.StreamUtil(this)))
-               .bounds(0, 0, 60, 20)
-               .build()
-         );
-      }
-
       if (this.autism$joinMacroButton == null) {
          this.autism$joinMacroButton = this.addRenderableWidget(
             Button.builder(Component.literal("Macro"), ignored -> this.minecraft.gui.setScreen(new ByteReader(this))).bounds(0, 0, 50, 20).build()
-         );
-      }
-
-      if (this.autism$multiButton == null && !AutismLiteVariant.enabled()) {
-         this.autism$multiButton = this.addRenderableWidget(
-            Button.builder(Component.literal("Multi"), ignored -> this.autism$openMulti()).bounds(0, 0, 50, 20).build()
          );
       }
 
@@ -294,13 +213,6 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
             Button.builder(Component.literal("Library"), ignored -> this.autism$openPluginLibrary()).bounds(0, 0, 60, 20).build()
          );
       }
-
-      if (this.autism$recordButton == null) {
-         this.autism$recordButton = this.addRenderableWidget(Button.builder(Component.literal("Replay"), ignored -> {
-            this.autism$toggleReplayServerRecording();
-            this.autism$layoutButtons();
-         }).bounds(0, 0, 104, 20).build());
-      }
    }
 
    @Unique
@@ -309,42 +221,12 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    }
 
    @Unique
-   private void autism$openMulti() {
-      if (!AutismLiteVariant.enabled()) {
-         ServerData selected = this.autism$selectedServerData();
-         String address = selected == null ? "" : selected.ip;
-         Runnable proceed = () -> {
-            if (PacketUtil.init_PacketUtil().load_Z()) {
-               this.minecraft.gui.setScreen(new TableIndex(this));
-            } else {
-               PacketUtil.init_PacketUtil().init_V_ServerData(selected);
-               this.minecraft.gui.setScreen(new PathHelper(this, address));
-            }
-         };
-         RingBuffer.init(this.minecraft, this, proceed);
-      }
-   }
-
-   @Unique
    private boolean autism$isOwned(AbstractWidget widget) {
-      return widget == this.autism$accountsButton
-         || widget == this.autism$joinMacroButton
-         || widget == this.autism$multiButton
+      return widget == this.autism$joinMacroButton
          || widget == this.autism$proxiesButton
          || widget == this.autism$spoofButton
          || widget == this.autism$packsButton
-         || widget == this.autism$libraryButton
-         || widget == this.autism$recordButton;
-   }
-
-   @Unique
-   private ServerData autism$selectedServerData() {
-      if (this.serverSelectionList == null) {
-         return null;
-      }
-
-      Entry selected = this.serverSelectionList.getSelected();
-      return selected instanceof OnlineServerEntry online ? online.getServerData() : null;
+         || widget == this.autism$libraryButton;
    }
 
    @Unique
@@ -382,12 +264,6 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
    }
 
    @Unique
-   private Component autism$replayServerLabel(int width) {
-      boolean enabled = autism$getReplayBoolean("RECORD_SERVER", true);
-      return this.autism$fitLabel(width, enabled ? "Replay: On" : "Replay: Off", enabled ? "Rec: On" : "Rec: Off", "Replay");
-   }
-
-   @Unique
    private int autism$hugWidth(String label) {
       return RenderState.load(this.font.width(label));
    }
@@ -412,88 +288,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
       String className = widget.getClass().getName().toLowerCase(Locale.ROOT);
       if (FabricLoader.getInstance().isModLoaded("viafabricplus") && "ViaFabricPlus".equals(label)) {
          return 1;
-      } else if (!FabricLoader.getInstance().isModLoaded("replaymod")
-         || !className.contains("replaymod") && !normalized.contains("recordserver") && !normalized.contains("replaymodguisettingsrecordserver")) {
-         return !className.contains("opsec") && !normalized.contains("opsec") ? 0 : 3;
       } else {
-         return 2;
+         return !className.contains("opsec") && !normalized.contains("opsec") ? 0 : 3;
       }
-   }
-
-   @Unique
-   private void autism$suppressMeteorWidgets() {
-      if (FabricLoader.getInstance().isModLoaded("meteor-client")) {
-         if (!this.autism$meteorUiConfigSuppressed) {
-            this.autism$meteorUiConfigSuppressed = true;
-            autism$disableMeteorMultiplayerUiConfig();
-         }
-
-         for (GuiEventListener child : this.children()) {
-            if (child instanceof Button button && !this.autism$isOwned(button)) {
-               String label = button.getMessage().getString();
-               if ("Accounts".equals(label) || "Proxies".equals(label)) {
-                  autism$setVisible(button, false);
-               }
-            }
-         }
-      }
-   }
-
-   @Unique
-   private void autism$toggleReplayServerRecording() {
-      boolean enabled = autism$getReplayBoolean("RECORD_SERVER", true);
-      autism$setReplayBoolean("RECORD_SERVER", !enabled);
-   }
-
-   @Unique
-   private static boolean autism$getReplayBoolean(String settingField, boolean fallback) {
-      try {
-         Object settings = autism$replaySettingsRegistry();
-         Object key = Class.forName("com.replaymod.recording.Setting").getField(settingField).get(null);
-         return settings.getClass().getMethod("get", Class.forName("com.replaymod.core.SettingsRegistry$SettingKey")).invoke(settings, key) instanceof Boolean bool
-            ? bool
-            : fallback;
-      } catch (ReflectiveOperationException | LinkageError ignored) {
-         return fallback;
-      }
-   }
-
-   @Unique
-   private static void autism$setReplayBoolean(String settingField, boolean value) {
-      try {
-         Object settings = autism$replaySettingsRegistry();
-         Object key = Class.forName("com.replaymod.recording.Setting").getField(settingField).get(null);
-         Class<?> settingKeyClass = Class.forName("com.replaymod.core.SettingsRegistry$SettingKey");
-         settings.getClass().getMethod("set", settingKeyClass, Object.class).invoke(settings, key, value);
-         settings.getClass().getMethod("save").invoke(settings);
-      } catch (ReflectiveOperationException | LinkageError var5) {
-      }
-   }
-
-   @Unique
-   private static Object autism$replaySettingsRegistry() throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
-      Object replayMod = Class.forName("com.replaymod.core.ReplayMod").getField("instance").get(null);
-      return replayMod.getClass().getMethod("getSettingsRegistry").invoke(replayMod);
-   }
-
-   @Unique
-   private static void autism$disableMeteorMultiplayerUiConfig() {
-      try {
-         Class<?> configClass = Class.forName("meteordevelopment.meteorclient.systems.config.Config");
-         Object config = configClass.getMethod("get").invoke(null);
-         Class<?> buttonPositionClass = Class.forName("meteordevelopment.meteorclient.systems.config.Config$ButtonPosition");
-         Object hidden = Enum.valueOf(buttonPositionClass.asSubclass(Enum.class), "Hidden");
-         autism$setMeteorSetting(configClass.getField("accountButtonAnchor").get(config), hidden);
-         autism$setMeteorSetting(configClass.getField("proxiesButtonAnchor").get(config), hidden);
-         autism$setMeteorSetting(configClass.getField("showAccountStatus").get(config), false);
-         autism$setMeteorSetting(configClass.getField("showProxiesStatus").get(config), false);
-      } catch (ReflectiveOperationException var4) {
-      }
-   }
-
-   @Unique
-   private static void autism$setMeteorSetting(Object setting, Object value) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-      setting.getClass().getSuperclass().getMethod("set", Object.class).invoke(setting, value);
    }
 
    @Override

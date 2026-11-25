@@ -5,16 +5,8 @@ import autismclient.api.hud.HudElementProvider;
 import autismclient.api.hud.HudElements;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.modules.Module;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.GpuFormat;
-import com.mojang.renderpearl.api.textures.FilterMode;
 import java.awt.Color;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -37,7 +29,6 @@ import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -89,7 +80,6 @@ public final class al {
    public static final String value_Str = "server_ip";
    public static final String cache_Str = "server_brand";
    public static final String state_Str = "fps_graph";
-   public static final String queue_Str = "spotify";
    public static final String buffer_Str = "bed_danger";
    public static final String entry_Str = "gif";
    private static final String node_Str = "padding";
@@ -98,29 +88,10 @@ public final class al {
    private static final String index_Str = "outline-color";
    private static final String count = "background";
    private static final String flags = "compass-width";
-   private static final String level = "spotify-scroll-speed";
-   private static final String frame = "spotify-menu-strip";
-   private static final String block = "spotify-source";
-   private static final String chunk = "spotify-width";
-   private static final String table = "spotify-color-mode";
-   private static final String store = "spotify-artist-color";
-   private static final String drain = "spotify-title-color";
-   private static final String fill = "spotify-time-color";
-   private static final String mark = "spotify-progress-color";
-   private static final String scan = "spotify-part-art";
-   private static final String parse = "spotify-part-artist";
-   private static final String bind = "spotify-part-time";
-   private static final String f_a_Str = "spotify-time-position";
-   private static final String f_b_Str = "spotify-part-progress";
    private static final String f_c_Str = "rainbow-speed";
    private static final String f_d_Str = "rainbow-spread";
    private static final String f_e_Str = "rainbow-saturation";
    private static final String f_f_Str = "rainbow-brightness";
-   private static final String f_g_Str = "spotify-rainbow-direction";
-   private static final String f_h_Str = "spotify-rainbow-artist";
-   private static final String f_i_Str = "spotify-rainbow-title";
-   private static final String f_j_Str = "spotify-rainbow-time";
-   private static final String f_k_Str = "spotify-rainbow-progress";
    private static final String f_l_Str = "stair-snap";
    private static final String f_m_Str = "logo-width";
    private static final String f_n_Str = "logo-right-padding";
@@ -130,53 +101,24 @@ public final class al {
    private static final String f_r_Str = "keystroke-show-space";
    private static final String f_s_Str = "keystroke-show-mouse";
    private static final String f_t_Str = "keystroke-size";
-   private static final String f_u_Str = "gif-path";
-   private static final String f_v_Str = "gif-width";
-   private static final String f_w_Str = "gif-height";
-   private static final String f_x_Str = "gif-keep-aspect";
-   private static final String f_y_Str = "gif-fps";
-   private static final String f_z_Str = "gif-quality";
-   private static final String f_A_Str = "gif-natural";
    private static final String f_B_Str = "1";
    private static final String f_C_Str = "0";
    private static final String f_D_Str = "false";
    private static final String f_E_Str = "FF750000";
    private static final String f_F_Str = "true";
    private static final String f_G_Str = "112";
-   private static final String f_H_Str = "true";
-   private static final String f_I_Str = "25";
-   private static final String f_J_Str = "Spotify";
-   private static final String f_K_Str = "175";
-   private static final String f_L_Str = "Theme";
-   private static final String f_M_Str = "FFB79E9E";
-   private static final String f_N_Str = "FFF3ECE7";
-   private static final String f_O_Str = "FFB79E9E";
-   private static final String f_P_Str = "FFFF3B3B";
    private static final String f_Q_Str = "1.0";
    private static final String f_R_Str = "0.035";
    private static final String f_S_Str = "0.35";
    private static final String f_T_Str = "1.0";
-   private static final String f_U_Str = "Forward";
-   private static final String f_V_Str = "true";
-   private static final String f_W_Str = "true";
-   private static final String f_X_Str = "false";
-   private static final String f_Y_Str = "true";
    private static final String f_Z_Str = "2";
-   private static final String f_aa_Str = "120";
-   private static final String f_ab_Str = "120";
-   private static final String f_ac_Str = "false";
-   private static final String f_ad_Str = "0";
-   private static final String f_ae_Str = "Original";
-   private static final String f_af_Str = "true";
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static long init_J;
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final DateTimeFormatter init_DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT);
    private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/hud/autismclient_hud.png");
-   private static final int init_I = 552;
-   private static final int load_I = 52;
-   private static final int read_I = 552;
-   private static final int write_I = 52;
+   private static final int init_I = 1600;
+   private static final int load_I = 151;
    private static final int update_I = 1;
    private static final int sync_I = 1;
    private static final int flush_I = 2;
@@ -212,7 +154,6 @@ public final class al {
       "keystrokes",
       "memory",
       "fps_graph",
-      "spotify",
       "bed_danger",
       "gif"
    );
@@ -252,42 +193,6 @@ public final class al {
    private static final int[] init_IArr = new int[init_StrArr.length];
    private static Font init_Font;
    private static int next_I = -2147483648;
-   private static long sync_J;
-   private static boolean update_Z;
-   private static boolean sync_Z;
-   private static final int prev_I = 32;
-   private static final int valid_I = 7;
-   private static final int size_I = 5;
-   private static final int data_I = 3;
-   private static al.Inner_PacketUtil init_al_PacketUtil;
-   private static aR.Inner_DataUtil init_aR_DataUtil = new aR.Inner_DataUtil(-9223372036854775808L, "", null, -1);
-   private static final al.Inner_RenderState init_al_RenderState = new al.Inner_RenderState();
-   private static boolean flush_Z;
-   private static double update_D = 0.0 / 0.0;
-   private static long flush_J;
-   private static long close_J = -9223372036854775808L;
-   private static double sync_D = 0.0 / 0.0;
-   private static String f_ag_Str = "";
-   private static int value_I;
-   private static final Identifier load_Identifier = Identifier.fromNamespaceAndPath("autismclient", "spotify_art");
-   private static al.Inner_ByteReader init_al_ByteReader;
-   private static String f_ah_Str = "";
-   private static long open_J = -9223372036854775808L;
-   private static long poll_J;
-   private static int cache_I;
-   private static int state_I;
-   private static long push_J = -1L;
-   private static long pop_J = -1L;
-   private static final long tick_J = 500L;
-   private static volatile al.Inner_DataUtil init_al_DataUtil;
-   private static final Object init_Obj = new Object();
-   private static al.Inner_StreamUtil init_al_StreamUtil;
-   private static Thread init_Thread;
-   private static long run_J;
-   private static boolean close_Z;
-   private static int queue_I;
-   private static int buffer_I;
-   private static Screen init_Screen;
    private static final float[] init_FArr = new float[7];
    private static long get_J;
    private static final int entry_I = 200;
@@ -298,7 +203,6 @@ public final class al {
    private static long set_J;
    private static int pool_I;
    private static final Map<String, String> write_Map = new HashMap<>();
-   private static int index_I = -1;
    private static final Map<String, Integer> update_Map = init_Map();
    private static List<al.Inner_JsonUtil> write_List;
    private static final al.Inner_CachePool[] init_al_CachePoolArr = new al.Inner_CachePool[init_List.size()];
@@ -454,9 +358,6 @@ public final class al {
          case "fps_graph":
             var10000 = "FPS Graph";
             break;
-         case "spotify":
-            var10000 = "Spotify";
-            break;
          case "bed_danger":
             var10000 = "Bed Danger";
             break;
@@ -572,9 +473,6 @@ public final class al {
          case "fps_graph":
             var10000 = "Recent FPS history as a graph.";
             break;
-         case "spotify":
-            var10000 = "Spotify now playing (Windows, Linux, macOS).";
-            break;
          case "bed_danger":
             var10000 = "Enemy warnings near your bed; configure Warning Distance in Danger > Bed Danger.";
             break;
@@ -625,28 +523,6 @@ public final class al {
 
    public static void load_V() {
       AutismConfig.getGlobal().save();
-   }
-
-   public static void read_V() {
-      try {
-         if (init_Minecraft.player == null || init_Minecraft.level == null) {
-            return;
-         }
-
-         if (!init_AutismConfig_HudEl_Str("spotify").enabled) {
-            return;
-         }
-
-         if (!AutismLiteVariant.enabled()) {
-            cq.init_V();
-         }
-      } catch (Throwable t) {
-         long now = System.currentTimeMillis();
-         if (now - sync_J > 5000L) {
-            sync_J = now;
-            AutismClientAddon.LOG.warn("[Autism] Spotify tick heartbeat failed; skipped", t);
-         }
-      }
    }
 
    public static boolean init_Z_Screen_Module(Screen screen, Module hud) {
@@ -849,16 +725,6 @@ public final class al {
       } else if ("compass".equals(id)) {
          width = pad * 2 + tick(id);
          height = pad * 2 + 18;
-      } else if ("spotify".equals(id) && !AutismLiteVariant.enabled()) {
-         cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
-         boolean live = init_Z_cq_ConfigStore(snapshot);
-         boolean artSlot = load_Z(id, "spotify-part-art")
-            && (!live || init_Identifier_Str(snapshot.read(), snapshot.init_J(), snapshot.init_Str() + "|" + snapshot.load_Str()) != null);
-         width = pad * 2 + run(id);
-         height = pad * 2 + Math.max(artSlot ? 32 : 0, load_Z(id, "spotify-part-artist") ? 20 : init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read));
-         if (load_Z(id, "spotify-part-progress")) {
-            height += 5;
-         }
       } else if ("keystrokes".equals(id)) {
          int unit = load_I(id);
          int keyH = init_I_I(unit);
@@ -1142,7 +1008,6 @@ public final class al {
             && !"compass".equals(id)
             && !"watermark".equals(id)
             && !"keystrokes".equals(id)
-            && !"spotify".equals(id)
             && !"bed_danger".equals(id)
             && !"gif".equals(id)
             && !HudElements.isAddon(id)
@@ -1208,7 +1073,6 @@ public final class al {
          case "anti_vanish":
          case "cps":
          case "keystrokes":
-         case "spotify":
          case "bed_danger":
          case "gif":
             var10000 = 50L;
@@ -1563,17 +1427,6 @@ public final class al {
       } else if ("active_modules".equals(id)) {
          init(context, font, id, cached, editor, selected, hovered, alpha);
       } else {
-         if ("spotify".equals(id) && !editor && !AutismLiteVariant.enabled()) {
-            cq.init_V();
-            cq.Inner_ConfigStore gateSnapshot = cq.init_cq_ConfigStore();
-            if (!cq.init_Z()) {
-               if (!update_Z && init_Minecraft.player != null) {
-               }
-
-               return;
-            }
-         }
-
          al.Inner_SyncManager style = cached.init_al_SyncManager();
          boolean flatGrid = ("armor".equals(id) || "inventory".equals(id)) && load_Z(id);
          boolean background = style.init_Z() && !flatGrid;
@@ -1613,8 +1466,6 @@ public final class al {
             load(context, x + pad, y + pad, alpha, style);
          } else if ("compass".equals(id)) {
             init_V_GuiGraphicsExtract_3(context, font, id, x + pad, y + pad, unscaledW - pad * 2, unscaledH - pad * 2, alpha, style);
-         } else if ("spotify".equals(id)) {
-            init_V_GuiGraphicsExtract(context, font, id, x + pad, y + pad, unscaledW - pad * 2, unscaledH, alpha, style, editor);
          } else if ("keystrokes".equals(id)) {
             init(context, font, id, x + pad, y + pad, unscaledW - pad * 2, unscaledH - pad * 2, alpha);
          } else if (HudElements.isAddon(id)) {
@@ -1680,23 +1531,21 @@ public final class al {
    }
 
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha) {
-      if (!cr.init(context, x, y, width, height, alpha)) {
-         context.blit(
-            RenderPipelines.GUI_TEXTURED,
-            cu.init(init_Identifier, ct.Inner_DataUtil.init),
-            x,
-            y,
-            0.0F,
-            0.0F,
-            width,
-            height,
-            552,
-            52,
-            552,
-            52,
-            ARGB.white(alpha)
-         );
-      }
+      context.blit(
+         RenderPipelines.GUI_TEXTURED,
+         cu.init(init_Identifier, ct.Inner_DataUtil.init),
+         x,
+         y,
+         0.0F,
+         0.0F,
+         width,
+         height,
+         init_I,
+         load_I,
+         init_I,
+         load_I,
+         ARGB.white(alpha)
+      );
    }
 
    private static void init_V_GuiGraphicsExtract_4(
@@ -1928,474 +1777,6 @@ public final class al {
             );
          }
       }
-   }
-
-   private static boolean init_Z_cq_ConfigStore(cq.Inner_ConfigStore snapshot) {
-      return snapshot != null
-         && (snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init || snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.load)
-         && snapshot.load_Str() != null
-         && !snapshot.load_Str().isBlank();
-   }
-
-   private static boolean load_Z(String id, String key) {
-      return init_Z_Str_Str(id, key);
-   }
-
-   private static al.Inner_PacketUtil init_al_PacketUtil_Font_cq_ConfigStore(Font font, cq.Inner_ConfigStore snapshot) {
-      long stamp = snapshot == null ? -9223372036854775808L : snapshot.init_J();
-      int metricsGen = autismclient.gui.f.b.k.init_I();
-      if (init_al_PacketUtil != null && init_aR_DataUtil.init(stamp, "", font, metricsGen)) {
-         return init_al_PacketUtil;
-      }
-
-      al.Inner_PacketUtil next = new al.Inner_PacketUtil();
-      next.init_Str = snapshot != null && snapshot.load_Str() != null ? snapshot.load_Str().trim() : "";
-      next.load_Str = snapshot != null && snapshot.init_Str() != null ? snapshot.init_Str().trim() : "";
-      next.init_I = autismclient.gui.f.b.k.init(font, next.init_Str, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), 0);
-      next.load_I = autismclient.gui.f.b.k.init(font, next.load_Str, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), 0);
-      init_al_PacketUtil = next;
-      init_aR_DataUtil = new aR.Inner_DataUtil(stamp, "", font, metricsGen);
-      return next;
-   }
-
-   private static al.Inner_RenderState init_al_RenderState_Str(String id, int contentW, int timeTextWidth, boolean live, boolean artSlot) {
-      al.Inner_RenderState g = init_al_RenderState;
-      boolean artist = load_Z(id, "spotify-part-artist");
-      boolean time = load_Z(id, "spotify-part-time");
-      boolean progress = load_Z(id, "spotify-part-progress");
-      int fontH = init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read);
-      g.init = Math.max(artSlot ? 32 : 0, artist ? 20 : fontH);
-      g.load = artSlot ? 39 : 0;
-      boolean timeTop = !"Bottom".equals(init_Str_Str_Str(id, "spotify-time-position")) && artist;
-      int timeReserve = time && live ? timeTextWidth + 4 : 0;
-      g.read = Math.max(8, contentW - g.load - (timeTop ? timeReserve : 0));
-      g.write = Math.max(8, contentW - g.load - (timeTop ? 0 : timeReserve));
-      if (artist) {
-         g.update = (g.init - 20) / 2;
-         g.sync = g.update + 11;
-      } else {
-         g.update = 0;
-         g.sync = (g.init - fontH) / 2;
-      }
-
-      g.flush = timeTop ? g.update : g.sync;
-      g.close = contentW - timeTextWidth;
-      int cursor = g.init;
-      if (progress) {
-         g.open = cursor + 2;
-         g.poll = contentW;
-         cursor += 5;
-      }
-
-      g.push = cursor;
-      return g;
-   }
-
-   private static double load(cq.Inner_ConfigStore snapshot) {
-      double polled = snapshot.init_D();
-      long nowMs = System.currentTimeMillis();
-      if (Double.isNaN(update_D) || polled != update_D) {
-         update_D = polled;
-         flush_J = nowMs;
-      }
-
-      return aR.init_D_D(update_D, flush_J, snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init, snapshot.load_D(), nowMs);
-   }
-
-   private static double read(cq.Inner_ConfigStore snapshot) {
-      double duration = snapshot.load_D();
-      return duration <= 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, load(snapshot) / duration));
-   }
-
-   public static al.Inner_TextFormat init_al_TextFormat_cq_ConfigStore(cq.Inner_ConfigStore snapshot) {
-      if (snapshot != null && snapshot.read() != null && !snapshot.read().isEmpty()) {
-         Identifier id = init_Identifier_Str(snapshot.read(), snapshot.init_J(), snapshot.init_Str() + "|" + snapshot.load_Str());
-         return id == null ? null : new al.Inner_TextFormat(id, cache_I, state_I);
-      } else {
-         return null;
-      }
-   }
-
-   public static double init_D_cq_ConfigStore(cq.Inner_ConfigStore snapshot) {
-      return snapshot == null ? 0.0 : read(snapshot);
-   }
-
-   private static String init_Str_cq_ConfigStore(cq.Inner_ConfigStore snapshot, Font font, Identifier fontId) {
-      double position = load(snapshot);
-      long wholeSec = (long)position;
-      double duration = snapshot.load_D();
-      if (wholeSec != close_J || duration != sync_D) {
-         close_J = wholeSec;
-         sync_D = duration;
-         f_ag_Str = init_Str_D(position) + " / " + init_Str_D(Math.max(0.0, duration));
-         value_I = autismclient.gui.f.b.k.init(font, f_ag_Str, fontId, 0);
-      }
-
-      return f_ag_Str;
-   }
-
-   private static String init_Str_D(double seconds) {
-      int total = Math.max(0, (int)seconds);
-      int sec = total % 60;
-      return total / 60 + ":" + (sec < 10 ? "0" + sec : Integer.toString(sec));
-   }
-
-   private static void init_V_Str(String path, long mtime, long size, String label) {
-      al.Inner_DataUtil current = init_al_DataUtil;
-      if (current == null || !current.init_Str().equals(path) || current.init_J() != mtime || current.load_J() != size) {
-         init_al_DataUtil = new al.Inner_DataUtil(path, mtime, size, label);
-         if (init_Thread == null) {
-            init_Thread = new Thread(al::flush_V, "autism-spotify-art-decode");
-            init_Thread.setDaemon(true);
-            init_Thread.start();
-         }
-      }
-   }
-
-   private static al.Inner_StreamUtil init_al_StreamUtil_Str(String path, long mtime, long size) {
-      synchronized (init_Obj) {
-         al.Inner_StreamUtil result = init_al_StreamUtil;
-         if (result == null) {
-            return null;
-         } else if (result.init_al_DataUtil().init_Str().equals(path)
-            && result.init_al_DataUtil().init_J() == mtime
-            && result.init_al_DataUtil().load_J() == size) {
-            init_al_StreamUtil = null;
-            return result;
-         } else {
-            return null;
-         }
-      }
-   }
-
-   private static void flush_V() {
-      while (true) {
-         al.Inner_DataUtil request = init_al_DataUtil;
-         if (request == null) {
-            try {
-               Thread.sleep(50L);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               return;
-            }
-         } else {
-            init_al_DataUtil = null;
-            NativeImage[] chain = null;
-
-            try {
-               NativeImage image = aq.init_NativeImage(Files.readAllBytes(Path.of(request.init_Str())));
-               if (image != null) {
-                  init_V_NativeImage_I(image, 5);
-                  chain = aq.init_NativeImageArr(image);
-               }
-            } catch (Throwable t) {
-               chain = null;
-            }
-
-            synchronized (init_Obj) {
-               if (init_al_StreamUtil != null && init_al_StreamUtil.init_NativeImageArr() != null) {
-                  for (NativeImage level : init_al_StreamUtil.init_NativeImageArr()) {
-                     level.close();
-                  }
-               }
-
-               init_al_StreamUtil = new al.Inner_StreamUtil(request, chain);
-            }
-         }
-      }
-   }
-
-   private static Identifier init_Identifier_Str(String path, long stamp, String label) {
-      if (path == null || path.isEmpty()) {
-         return null;
-      }
-
-      if (path.equals(f_ah_Str) && stamp == open_J && init_al_ByteReader != null) {
-         return load_Identifier;
-      }
-
-      long nowMs = System.currentTimeMillis();
-      if (nowMs - poll_J < 500L) {
-         return null;
-      }
-
-      Path artFile = Path.of(path);
-
-      BasicFileAttributes attrs;
-      try {
-         attrs = Files.readAttributes(artFile, BasicFileAttributes.class);
-      } catch (IOException e) {
-         read_V("art file not there yet (download in flight?): " + path);
-         poll_J = nowMs;
-         return null;
-      }
-
-      if (init_al_ByteReader != null && attrs.lastModifiedTime().toMillis() == push_J && attrs.size() == pop_J) {
-         f_ah_Str = path;
-         open_J = stamp;
-         return load_Identifier;
-      }
-
-      al.Inner_StreamUtil decoded = init_al_StreamUtil_Str(path, attrs.lastModifiedTime().toMillis(), attrs.size());
-      if (decoded == null) {
-         init_V_Str(path, attrs.lastModifiedTime().toMillis(), attrs.size(), label);
-         return null;
-      }
-
-      if (decoded.init_NativeImageArr() == null) {
-         read_V("art decode failed for " + label + " (" + path + ")");
-         poll_J = nowMs;
-         f_ah_Str = "";
-         return null;
-      }
-
-      NativeImage[] chain = decoded.init_NativeImageArr();
-
-      try {
-         int artW = chain[0].getWidth();
-         int artH = chain[0].getHeight();
-         if (init_al_ByteReader != null && artW == cache_I && artH == state_I) {
-            init_al_ByteReader.init(chain);
-         } else {
-            init_al_ByteReader = new al.Inner_ByteReader(chain);
-         }
-
-         chain = null;
-         init_Minecraft.getTextureManager().register(load_Identifier, init_al_ByteReader);
-         f_ah_Str = path;
-         open_J = stamp;
-         cache_I = artW;
-         state_I = artH;
-         push_J = attrs.lastModifiedTime().toMillis();
-         pop_J = attrs.size();
-         return load_Identifier;
-      } catch (Exception e) {
-         if (chain != null) {
-            for (NativeImage level : chain) {
-               level.close();
-            }
-         }
-
-         read_V("art upload failed on " + path + ": " + e);
-         poll_J = nowMs;
-         f_ah_Str = "";
-         return null;
-      }
-   }
-
-   private static void read_V(String message) {
-   }
-
-   private static void init_V_NativeImage_I(NativeImage image, int radius) {
-      int w = image.getWidth();
-      int h = image.getHeight();
-      int r = Math.max(1, Math.min(radius, Math.min(w, h) / 2));
-
-      for (int cy = 0; cy < r; cy++) {
-         for (int cx = 0; cx < r; cx++) {
-            double dist = Math.sqrt((cx + 0.5 - r) * (cx + 0.5 - r) + (cy + 0.5 - r) * (cy + 0.5 - r));
-            if (!(dist <= r - 1.0)) {
-               float coverage = (float)Math.max(0.0, Math.min(1.0, r - dist));
-               init_V_NativeImage(image, cx, cy, w, h, coverage);
-            }
-         }
-      }
-   }
-
-   private static void init_V_NativeImage(NativeImage image, int cx, int cy, int w, int h, float coverage) {
-      int[][] positions = new int[][]{{cx, cy}, {w - 1 - cx, cy}, {cx, h - 1 - cy}, {w - 1 - cx, h - 1 - cy}};
-
-      for (int[] p : positions) {
-         int pixel = image.getPixel(p[0], p[1]);
-         int a = pixel >>> 24 & 0xFF;
-         image.setPixel(p[0], p[1], pixel & 16777215 | (int)(a * coverage) << 24);
-      }
-   }
-
-   private static void init_V_GuiGraphicsExtract(
-      GuiGraphicsExtractor context, Font font, String id, int x, int y, int width, int height, float alpha, al.Inner_SyncManager style, boolean editor
-   ) {
-      if (!AutismLiteVariant.enabled()) {
-         write_V(id);
-         cq.init_V();
-         cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
-         boolean live = init_Z_cq_ConfigStore(snapshot);
-         if (editor || cq.init_Z()) {
-            Identifier fontId = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read);
-            boolean artOn = load_Z(id, "spotify-part-art");
-            boolean artistOn = load_Z(id, "spotify-part-artist");
-            boolean timeOn = load_Z(id, "spotify-part-time");
-            boolean progressOn = load_Z(id, "spotify-part-progress");
-            Identifier art = live && artOn ? init_Identifier_Str(snapshot.read(), snapshot.init_J(), snapshot.init_Str() + "|" + snapshot.load_Str()) : null;
-            boolean artLoaded = art != null;
-            if (artLoaded != flush_Z) {
-               flush_Z = artLoaded;
-               init_Map.remove("spotify");
-            }
-
-            int expandedH = flush_I(id) * 2 + 32 + (progressOn ? 5 : 0);
-            boolean artSlot = artOn && (!live || artLoaded) && height >= expandedH;
-            if (!sync_Z && !editor && live) {
-            }
-
-            String timeText = live && timeOn ? init_Str_cq_ConfigStore(snapshot, font, fontId) : "";
-            int timeWidth = timeText.isEmpty() ? 0 : value_I;
-            al.Inner_RenderState g = init_al_RenderState_Str(id, width, timeWidth, live, artSlot);
-            String spotifyMode = write_Str(id);
-            int artistColor;
-            int titleColor;
-            int progressColor;
-            int timeColor;
-            if ("Theme".equals(spotifyMode)) {
-               artistColor = read(id, "spotify-artist-color", -4743522);
-               titleColor = read(id, "spotify-title-color", -791321);
-               progressColor = read(id, "spotify-progress-color", -50373);
-               timeColor = read(id, "spotify-time-color", -4743522);
-            } else if ("Rainbow".equals(spotifyMode)) {
-               float phase = init_F_D(init_D_Str(id, "rainbow-speed", 1.0) * ("Reverse".equals(init_Str_Str_Str(id, "spotify-rainbow-direction")) ? -1.0 : 1.0));
-               float spread = (float)init_D_Str(id, "rainbow-spread", 0.035);
-               float saturation = Math.min(0.35F, (float)init_D_Str(id, "rainbow-saturation", 0.35));
-               float brightness = Math.min(1.0F, (float)init_D_Str(id, "rainbow-brightness", 1.0));
-               int softenWith = load_I_Str_2(id, "value-color", -791321);
-               artistColor = init_I_Str(id, "spotify-rainbow-artist", "true", phase, 0.0F, saturation, brightness, softenWith, "spotify-artist-color", -4743522);
-               titleColor = init_I_Str(id, "spotify-rainbow-title", "true", phase, spread, saturation, brightness, softenWith, "spotify-title-color", -791321);
-               progressColor = init_I_Str(
-                  id, "spotify-rainbow-progress", "true", phase, spread * 2.0F, saturation, brightness, softenWith, "spotify-progress-color", -50373
-               );
-               timeColor = init_I_Str(
-                  id, "spotify-rainbow-time", "false", phase, spread * 3.0F, saturation, brightness, softenWith, "spotify-time-color", -4743522
-               );
-            } else {
-               artistColor = write(id, "spotify-artist-color", -4743522);
-               titleColor = write(id, "spotify-title-color", -791321);
-               progressColor = write(id, "spotify-progress-color", -50373);
-               timeColor = write(id, "spotify-time-color", -4743522);
-            }
-
-            timeColor = init_I_I_F(timeColor, alpha);
-            if (artSlot) {
-               int artY = y + (g.init - 32) / 2;
-               if (art != null) {
-                  context.blit(RenderPipelines.GUI_TEXTURED, art, x, artY, 0.0F, 0.0F, 32, 32, cache_I, state_I, cache_I, state_I, ARGB.white(alpha));
-               } else {
-                  int muted = init_I_I_F(load_I_Str_2(id, "label-color", -4743522), alpha);
-                  autismclient.gui.f.b.k.init(context, x, artY, x + 32, artY + 32, init_I_I_F(muted, 0.22F));
-               }
-            }
-
-            al.Inner_PacketUtil text = init_al_PacketUtil_Font_cq_ConfigStore(font, snapshot);
-            long nowMs = System.currentTimeMillis();
-            long holdUntil = live ? snapshot.init_J() + 1200L : 0L;
-            int speed = init_I_Str(id);
-            if (artistOn) {
-               aR.init(
-                  context,
-                  font,
-                  live ? text.load_Str : "",
-                  fontId,
-                  init_I_I_F(artistColor, alpha),
-                  x + g.load,
-                  y + g.update,
-                  g.read,
-                  style.read_Z(),
-                  nowMs,
-                  holdUntil,
-                  speed,
-                  live ? text.load_I : 0
-               );
-            }
-
-            String title = live ? text.init_Str : "Spotify";
-            aR.init(
-               context,
-               font,
-               title,
-               fontId,
-               init_I_I_F(titleColor, alpha),
-               x + g.load,
-               y + g.sync,
-               g.write,
-               style.read_Z(),
-               nowMs,
-               holdUntil,
-               speed,
-               live ? text.init_I : autismclient.gui.f.b.k.init(font, title, fontId, 0)
-            );
-            if (!timeText.isEmpty()) {
-               autismclient.gui.f.b.k.init(context, font, timeText, fontId, timeColor, x + g.close, y + g.flush, style.read_Z());
-            }
-
-            if (progressOn) {
-               autismclient.gui.f.b.k.init(context, x, y + g.open, x + g.poll, y + g.open + 3, init_I_I_F(progressColor, alpha * 0.22F));
-               int fillW = live ? Math.round(g.poll * (float)read(snapshot)) : 0;
-               if (fillW > 0) {
-                  autismclient.gui.f.b.k.init(context, x, y + g.open, x + fillW, y + g.open + 3, init_I_I_F(progressColor, alpha * 0.9F));
-               }
-            }
-         }
-      }
-   }
-
-   private static boolean load(Screen screen) {
-      if (screen instanceof autismclient.gui.d.RenderState) {
-         return false;
-      } else if (init_Minecraft.player == null) {
-         return false;
-      } else if (init_AutismConfig_HudEl_Str("spotify").enabled && (AutismLiteVariant.enabled() || cq.init_Z())) {
-         Module hud = autismclient.modules.al.init_Module_Str("hud");
-         return hud != null && init_Z_Screen_Module(screen, hud);
-      } else {
-         return false;
-      }
-   }
-
-   public static boolean init_Z_I_2(int mouseX, int mouseY, Screen screen) {
-      if (!load(screen)) {
-         return false;
-      } else {
-         al.Inner_TaskQueue layout = init_al_TaskQueue_Str_Font("spotify", init_Minecraft.font);
-         int pad = flush_I("spotify");
-         int contentX = layout.read() + pad;
-         int contentY = layout.write() + pad;
-         int contentW = layout.update() - pad * 2;
-         int contentH = layout.sync() - pad * 2;
-         if (mouseX >= contentX && mouseX < contentX + contentW && mouseY >= contentY && mouseY < contentY + contentH) {
-            close_Z = true;
-            init_Screen = screen;
-            queue_I = mouseX - layout.read();
-            buffer_I = mouseY - layout.write();
-            return true;
-         } else {
-            return false;
-         }
-      }
-   }
-
-   public static boolean load_Z_I(int mouseX, int mouseY, Screen screen) {
-      if (screen != init_Screen || !load(screen)) {
-         close_Z = false;
-         init_Screen = null;
-         return false;
-      } else if (close_Z) {
-         init_V_Str("spotify", mouseX - queue_I, mouseY - buffer_I, read_I(), write_I());
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   public static boolean init_Z_Screen(Screen screen) {
-      if (screen != init_Screen) {
-         return false;
-      }
-
-      if (!close_Z) {
-         return false;
-      }
-
-      close_Z = false;
-      init_Screen = null;
-      return true;
    }
 
    private static int init_I_F(float phase, float hueOffset, float saturation, float brightness, int softenWith) {
@@ -3536,9 +2917,6 @@ public final class al {
          case "bed_danger":
             var10000 = "TOP_CENTER";
             break;
-         case "spotify":
-            var10000 = "BOTTOM_LEFT";
-            break;
          case "keystrokes":
             var10000 = "MIDDLE_LEFT";
             break;
@@ -3600,9 +2978,6 @@ public final class al {
             break;
          case "bed_danger":
             var10000 = new int[]{0, 52};
-            break;
-         case "spotify":
-            var10000 = new int[]{1, -2};
             break;
          case "potion_timers":
             var10000 = new int[]{0, logoBottom + rowH * 4};
@@ -3689,32 +3064,6 @@ public final class al {
          settings.put("padding", "1");
          settings.put("compass-width", "112");
          settings.put("outline", "false");
-      }
-
-      if ("spotify".equals(id)) {
-         settings.put("spotify-menu-strip", "true");
-         settings.put("spotify-scroll-speed", "25");
-         settings.put("spotify-source", "Spotify");
-         settings.put("spotify-width", "175");
-         settings.put("spotify-color-mode", "Theme");
-         settings.put("spotify-artist-color", "FFB79E9E");
-         settings.put("spotify-title-color", "FFF3ECE7");
-         settings.put("spotify-time-color", "FFB79E9E");
-         settings.put("spotify-progress-color", "FFFF3B3B");
-         settings.put("spotify-part-art", "true");
-         settings.put("spotify-part-artist", "true");
-         settings.put("spotify-part-time", "true");
-         settings.put("spotify-time-position", "Top");
-         settings.put("spotify-part-progress", "true");
-         settings.put("rainbow-speed", "1.0");
-         settings.put("rainbow-spread", "0.035");
-         settings.put("rainbow-saturation", "0.35");
-         settings.put("rainbow-brightness", "1.0");
-         settings.put("spotify-rainbow-direction", "Forward");
-         settings.put("spotify-rainbow-artist", "true");
-         settings.put("spotify-rainbow-title", "true");
-         settings.put("spotify-rainbow-time", "false");
-         settings.put("spotify-rainbow-progress", "true");
       }
 
       if ("armor".equals(id) || "inventory".equals(id)) {
@@ -3905,28 +3254,6 @@ public final class al {
       return init_I_I_2(init_I_Str_2(id, "compass-width", 112), 72, 200);
    }
 
-   public static boolean init_Z_Str(String id) {
-      return init_Z_Str_Str(id, "spotify-menu-strip");
-   }
-
-   public static int init_I_Str(String id) {
-      return init_I_I_2(init_I_Str_2(id, "spotify-scroll-speed", 25), 10, 60);
-   }
-
-   private static int run(String id) {
-      return init_I_I_2(init_I_Str_2(id, "spotify-width", 175), 140, 260);
-   }
-
-   private static void write_V(String id) {
-      int source = "Any Media".equals(init_Str_Str_Str(id, "spotify-source")) ? 1 : 0;
-      if (source != index_I) {
-         index_I = source;
-         if (!AutismLiteVariant.enabled()) {
-            cq.load(source == 1);
-         }
-      }
-   }
-
    static int read_I() {
       if (init_Minecraft.getWindow() == null) {
          return 854;
@@ -4002,41 +3329,6 @@ public final class al {
       }
    }
 
-   private static String write_Str(String id) {
-      String mode = init_Str_Str_Str(id, "spotify-color-mode");
-      return "Flat".equals(mode) ? "Custom" : mode;
-   }
-
-   private static int read(String id, String key, int fallback) {
-      return ct.init_I_I_ct_DataUtil(init_I_Str_I(load_Str(id, key), fallback), init_ct_DataUtil_Str(key));
-   }
-
-   private static int write(String id, String key, int fallback) {
-      return init_I_Str_I(init_Str_Str_Str(id, key), fallback);
-   }
-
-   private static boolean init_Z_Str(String id, String key, boolean fallback) {
-      String value = init_Str_Str_Str(id, key);
-      return value.isEmpty() ? fallback : Boolean.parseBoolean(value);
-   }
-
-   private static int init_I_Str(
-      String id,
-      String toggleKey,
-      String toggleDefault,
-      float phase,
-      float offset,
-      float saturation,
-      float brightness,
-      int softenWith,
-      String pickerKey,
-      int pickerFallback
-   ) {
-      return init_Z_Str(id, toggleKey, Boolean.parseBoolean(toggleDefault))
-         ? init_I_F(phase, offset, saturation, brightness, softenWith)
-         : write(id, pickerKey, pickerFallback);
-   }
-
    private static ct.Inner_DataUtil init_ct_DataUtil_Str(String key) {
       if (key == null) {
          return ct.Inner_DataUtil.init;
@@ -4052,9 +3344,6 @@ public final class al {
          case "text-color":
          case "module-info-color":
          case "keystroke-text-color":
-         case "spotify-artist-color":
-         case "spotify-title-color":
-         case "spotify-time-color":
             var10000 = ct.Inner_DataUtil.read;
             break;
          case "background-color":
@@ -4256,17 +3545,12 @@ public final class al {
 
       for (int i = 0; i < init_List.size(); i++) {
          String id = init_List.get(i);
-         boolean hiddenSpotify = false;
-         if (!editor && "spotify".equals(id) && !AutismLiteVariant.enabled()) {
-            hiddenSpotify = !cq.init_Z();
-         }
-
          boolean hiddenBedDanger = "bed_danger".equals(id) && !editor;
          if (hiddenBedDanger && !AutismLiteVariant.enabled()) {
             hiddenBedDanger = !autismclient.modules.u.init();
          }
 
-         al.Inner_CachePool current = !flush_Z(id) && init_AutismConfig_HudEl_Str(id).enabled && !hiddenSpotify && !hiddenBedDanger
+         al.Inner_CachePool current = !flush_Z(id) && init_AutismConfig_HudEl_Str(id).enabled && !hiddenBedDanger
             ? init_al_CachePool_Str_Font(id, font)
             : null;
          if (init_al_CachePoolArr[i] != current) {
@@ -4808,44 +4092,6 @@ public final class al {
       }
    }
 
-   private static final class Inner_ByteReader extends AbstractTexture {
-      private NativeImage[] init;
-
-      private Inner_ByteReader(NativeImage[] levels) {
-         this.init = levels;
-         NativeImage top = levels[0];
-         this.texture = RenderSystem.getDevice().createTexture("spotify_art", 5, GpuFormat.RGBA8_UNORM, top.getWidth(), top.getHeight(), 1, levels.length);
-         this.sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR, true);
-         this.textureView = RenderSystem.getDevice().createTextureView(this.texture);
-         this.init();
-      }
-
-      private void init() {
-         for (int level = 0; level < this.init.length; level++) {
-            RenderSystem.getDevice().createCommandEncoder().writeToTexture(this.texture, this.init[level], level, 0, 0, 0);
-         }
-      }
-
-      private void init(NativeImage[] next) {
-         NativeImage[] old = this.init;
-         this.init = next;
-         this.init();
-
-         for (NativeImage image : old) {
-            image.close();
-         }
-      }
-
-      @Override
-      public void close() {
-         for (NativeImage image : this.init) {
-            image.close();
-         }
-
-         super.close();
-      }
-   }
-
    private static final class Inner_CachePool {
       private final al.Inner_ConfigStore init_al_ConfigStore;
       private final List<al.Inner_NetHelper> init_List;
@@ -4889,9 +4135,6 @@ public final class al {
    private record Inner_ConfigStore(
       boolean init_Z, String init_Str, int init_I, int load, int read, long init_J, int write, int update, int sync, int flush, int close, int open, int poll
    ) {
-   }
-
-   private record Inner_DataUtil(String init_Str, long init_J, long load_J, String load_Str) {
    }
 
    private record Inner_EventBus(
@@ -4966,31 +4209,7 @@ public final class al {
       }
    }
 
-   private static final class Inner_PacketUtil {
-      String init_Str = "";
-      String load_Str = "";
-      int init_I;
-      int load_I;
-   }
-
-   private static final class Inner_RenderState {
-      int init;
-      int load;
-      int read;
-      int write;
-      int update;
-      int sync;
-      int flush;
-      int close;
-      int open;
-      int poll;
-      int push;
-   }
-
    private record Inner_StateCache(String init_Str, int init_I) {
-   }
-
-   private record Inner_StreamUtil(al.Inner_DataUtil init_al_DataUtil, NativeImage[] init_NativeImageArr) {
    }
 
    private record Inner_SyncManager(
@@ -5040,9 +4259,6 @@ public final class al {
       public int sync() {
          return this.write;
       }
-   }
-
-   public record Inner_TextFormat(Identifier init_Identifier, int init_I, int load) {
    }
 
    private record Inner_UiHelper(boolean init_Z, String init_Str) {

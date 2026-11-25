@@ -74,8 +74,6 @@ public class aE {
    private volatile Runnable flush_Runnable;
    private volatile Runnable close_Runnable;
    private volatile ConcurrentHashMap<String, Map<String, aM>> init_ConcurrentHashMap = new ConcurrentHashMap<>();
-   private volatile ConcurrentHashMap<String, Map<String, aM>> load_ConcurrentHashMap = new ConcurrentHashMap<>();
-   private Map<String, String> read_Map = new ConcurrentHashMap<>();
    private final Map<String, aE.Inner_BufferHelper> write_Map = new ConcurrentHashMap<>();
    private volatile Map<String, String> update_Map = new ConcurrentHashMap<>();
    private volatile String update_Str = "";
@@ -271,8 +269,6 @@ public class aE {
       this.init_Map.clear();
       this.init_ConcurrentHashMap.clear();
       this.init_AtomicLong.incrementAndGet();
-      this.load_ConcurrentHashMap.clear();
-      this.read_Map.clear();
       this.update_Map.clear();
       this.update_Str = "";
       this.read_Z = false;
@@ -1157,10 +1153,6 @@ public class aE {
          Minecraft mc = Minecraft.getInstance();
          if (mc.level != null) {
             long currentTick = mc.level.getGameTime();
-            if (this.read_Str != null && currentTick % 40L == 10L) {
-               this.size();
-            }
-
             if (this.read_Str != null && !this.init_Map.isEmpty() && currentTick % 600L == 37L) {
                this.push();
             }
@@ -1205,7 +1197,6 @@ public class aE {
          this.pop.remove(dead);
          this.init_ConcurrentHashMap.remove(dead);
          this.init_AtomicLong.incrementAndGet();
-         this.load_ConcurrentHashMap.remove(dead);
          this.open_Map.remove(dead);
          if (this.load_Z) {
             Socket s = this.poll_Map.remove(dead);
@@ -1333,7 +1324,6 @@ public class aE {
                      this.pop.remove(username);
                      this.init_ConcurrentHashMap.remove(username);
                      this.init_AtomicLong.incrementAndGet();
-                     this.load_ConcurrentHashMap.remove(username);
                      this.open_Map.remove(username);
                      AutismClientMessaging.sendPrefixed("§e" + username + " left.");
                      if (this.load_Z) {
@@ -1607,7 +1597,6 @@ public class aE {
                   this.init_Map.remove(disconnectedUser);
                   this.init_ConcurrentHashMap.remove(disconnectedUser);
                   this.init_AtomicLong.incrementAndGet();
-                  this.load_ConcurrentHashMap.remove(disconnectedUser);
                   this.pop.remove(disconnectedUser);
                   this.open_Map.remove(disconnectedUser);
                   AutismClientMessaging.sendPrefixed("§e" + disconnectedUser + " disconnected.");
@@ -1649,7 +1638,6 @@ public class aE {
    private void load(Socket clientSocket, String clientUsername) {
       try {
          List<aM> localMacros = aN.init_aN().init_List();
-         List<aM> meteorMacros = db.init();
          Object lock = this.push.computeIfAbsent(clientUsername, k -> new Object());
          OutputStream out = clientSocket.getOutputStream();
 
@@ -1657,12 +1645,8 @@ public class aE {
             this.init(out, lock, this.write_Str, macro, (byte)0);
          }
 
-         for (aM macro : meteorMacros) {
-            this.init(out, lock, this.write_Str, macro, (byte)1);
-         }
-
          this.init_V_OutputStream(
-            out, lock, new autismclient.util.d.DataUtil.FileCache(this.read_Str, this.write_Str, init_List_List_List(localMacros, meteorMacros))
+            out, lock, new autismclient.util.d.DataUtil.FileCache(this.read_Str, this.write_Str, init_List_List(localMacros))
          );
       } catch (IOException e) {
          AutismClientAddon.LOG.warn("[TCP] Failed to send macro list: {}", e.getMessage());
@@ -1684,16 +1668,6 @@ public class aE {
                      for (aM macro : peerMacros.values()) {
                         if (macro != null) {
                            this.init(out, lock, peer, macro, (byte)0);
-                           names.add(macro.init_Str);
-                        }
-                     }
-                  }
-
-                  Map<String, aM> peerMeteor = this.load_ConcurrentHashMap.get(peer);
-                  if (peerMeteor != null) {
-                     for (aM macro : peerMeteor.values()) {
-                        if (macro != null) {
-                           this.init(out, lock, peer, macro, (byte)1);
                            names.add(macro.init_Str);
                         }
                      }
@@ -1816,18 +1790,13 @@ public class aE {
    private void init_V_DataOutputStream(DataOutputStream out) {
       try {
          List<aM> localMacros = aN.init_aN().init_List();
-         List<aM> meteorMacros = db.init();
          synchronized (this.init_Obj) {
             for (aM macro : localMacros) {
                this.init(out, null, this.write_Str, macro, (byte)0);
             }
 
-            for (aM macro : meteorMacros) {
-               this.init(out, null, this.write_Str, macro, (byte)1);
-            }
-
             this.init_V_OutputStream(
-               out, null, new autismclient.util.d.DataUtil.FileCache(this.read_Str, this.write_Str, init_List_List_List(localMacros, meteorMacros))
+               out, null, new autismclient.util.d.DataUtil.FileCache(this.read_Str, this.write_Str, init_List_List(localMacros))
             );
          }
       } catch (IOException e) {
@@ -1972,40 +1941,10 @@ public class aE {
       }
    }
 
-   private void size() {
-      try {
-         Map<String, String> currentMeteorMacros = this.sync_Map();
-         boolean changed = currentMeteorMacros.size() != this.read_Map.size();
-         if (!changed) {
-            for (Entry<String, String> entry : currentMeteorMacros.entrySet()) {
-               String lastValue = this.read_Map.get(entry.getKey());
-               if (!entry.getValue().equals(lastValue)) {
-                  changed = true;
-                  break;
-               }
-            }
-         }
-
-         if (changed) {
-            for (String previousName : new ArrayList<>(this.read_Map.keySet())) {
-               if (!currentMeteorMacros.containsKey(previousName)) {
-                  this.read_V_Str(previousName);
-               }
-            }
-
-            this.read_Map = new ConcurrentHashMap<>(currentMeteorMacros);
-            this.push();
-         }
-      } catch (Exception e) {
-         AutismClientAddon.LOG.error("[Autism-LAN] Failed to check macro list changes", e);
-      }
-   }
-
    public void push() {
       String session = this.read_Str;
       if (session != null) {
          List<aM> localMacros = aN.init_aN().init_List();
-         List<aM> meteorMacros = db.init();
          String sender = this.write_Str;
          List<autismclient.util.d.DataUtil> packets = new ArrayList<>();
 
@@ -2013,13 +1952,8 @@ public class aE {
             packets.addAll(this.init_List_Str(sender, macro, (byte)0));
          }
 
-         for (aM macro : meteorMacros) {
-            packets.addAll(this.init_List_Str(sender, macro, (byte)1));
-         }
-
-         packets.add(new autismclient.util.d.DataUtil.FileCache(session, sender, init_List_List_List(localMacros, meteorMacros)));
+         packets.add(new autismclient.util.d.DataUtil.FileCache(session, sender, init_List_List(localMacros)));
          this.init_V_List(packets);
-         this.read_Map = new ConcurrentHashMap<>(this.sync_Map());
       }
    }
 
@@ -2036,16 +1970,10 @@ public class aE {
       }
    }
 
-   private static List<String> init_List_List_List(List<aM> local, List<aM> meteor) {
-      List<String> names = new ArrayList<>(local.size() + meteor.size());
+   private static List<String> init_List_List(List<aM> local) {
+      List<String> names = new ArrayList<>(local.size());
 
       for (aM macro : local) {
-         if (macro != null && macro.init_Str != null) {
-            names.add(macro.init_Str);
-         }
-      }
-
-      for (aM macro : meteor) {
          if (macro != null && macro.init_Str != null) {
             names.add(macro.init_Str);
          }
@@ -2109,18 +2037,6 @@ public class aE {
       return length;
    }
 
-   private Map<String, String> sync_Map() {
-      Map<String, String> snapshot = new LinkedHashMap<>();
-
-      for (aM macro : db.init()) {
-         if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
-            snapshot.put(macro.init_Str, macro.init_CompoundTag().toString());
-         }
-      }
-
-      return snapshot;
-   }
-
    private void read_V_DataUtil(autismclient.util.d.DataUtil packet) {
       this.init_V_DataUtil_Z(packet, true);
    }
@@ -2135,9 +2051,7 @@ public class aE {
                aM macro = new aM();
                macro.init_aM_CompoundTag(nbt);
                String relayNbt = macro.load_CompoundTag().toString();
-               if (p.init_B == 1) {
-                  this.load_ConcurrentHashMap.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(cZ.init(macro.init_Str), macro);
-               } else {
+               if (p.init_B != 1) {
                   this.init_ConcurrentHashMap.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(cZ.init(macro.init_Str), macro);
                }
 
@@ -2227,13 +2141,6 @@ public class aE {
             aM macro = aN.init_aN().init_aM_Str(requestedName);
             if (macro != null) {
                this.init_V_Str(this.write_Str, macro, (byte)2);
-            } else {
-               for (aM meteorMacro : db.init()) {
-                  if (meteorMacro != null && meteorMacro.init_Str != null && meteorMacro.init_Str.equalsIgnoreCase(requestedName)) {
-                     this.init_V_Str(this.write_Str, meteorMacro, (byte)2);
-                     return;
-                  }
-               }
             }
          }
       }
@@ -2262,11 +2169,6 @@ public class aE {
                senderMacros.remove(cZ.init(p.read));
             }
 
-            Map<String, aM> senderMeteor = this.load_ConcurrentHashMap.get(p.load);
-            if (senderMeteor != null) {
-               senderMeteor.remove(cZ.init(p.read));
-            }
-
             if (this.load_Z && p.load != null && !p.load.isBlank()) {
                this.init_V_DataUtil_Str(new autismclient.util.d.DataUtil.EventBus(this.read_Str, p.load, p.read), p.load);
             }
@@ -2288,11 +2190,6 @@ public class aE {
             Map<String, aM> senderMacros = this.init_ConcurrentHashMap.get(p.load);
             if (senderMacros != null) {
                senderMacros.keySet().retainAll(live);
-            }
-
-            Map<String, aM> senderMeteor = this.load_ConcurrentHashMap.get(p.load);
-            if (senderMeteor != null) {
-               senderMeteor.keySet().retainAll(live);
             }
 
             if (this.load_Z) {
@@ -2710,10 +2607,6 @@ public class aE {
       return new HashMap<>(this.init_ConcurrentHashMap);
    }
 
-   public Map<String, Map<String, aM>> write_Map() {
-      return new HashMap<>(this.load_ConcurrentHashMap);
-   }
-
    public List<String> init_List_Str(String macroName) {
       List<String> missing = new ArrayList<>();
       if (macroName != null && !macroName.isBlank()) {
@@ -2764,20 +2657,13 @@ public class aE {
 
    public List<String> load_List() {
       Map<String, String> remoteMacros = new LinkedHashMap<>();
-      Set<String> ownMacros = new HashSet<>();
-
-      for (String meteorName : z.load_List()) {
-         ownMacros.add(cZ.init(meteorName));
-      }
 
       for (Entry<String, Map<String, aM>> entry : this.init_ConcurrentHashMap.entrySet()) {
          if (!entry.getKey().equals(this.write_Str)) {
             for (aM macro : entry.getValue().values()) {
                if (macro != null) {
                   String key = cZ.init(macro.init_Str);
-                  if (!ownMacros.contains(key)) {
-                     remoteMacros.putIfAbsent(key, macro.init_Str);
-                  }
+                  remoteMacros.putIfAbsent(key, macro.init_Str);
                }
             }
          }

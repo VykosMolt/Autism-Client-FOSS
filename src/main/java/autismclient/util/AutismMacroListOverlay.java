@@ -4,7 +4,6 @@ import autismclient.compat263.CompatGLFW;
 import autismclient.gui.f.b.j;
 import autismclient.util.macro.MacroExecutor;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -104,8 +103,6 @@ public class AutismMacroListOverlay extends bj {
    private final List<AutismMacroListOverlay.Inner_DataUtil> read_List = new ArrayList<>();
    private final List<AutismMacroListOverlay.Inner_ConfigStore> write_List = new ArrayList<>(4);
    private List<AutismMacroListOverlay.Inner_StreamUtil> update_List = List.of();
-   private List<aM> sync_List = Collections.emptyList();
-   private long sync_J = 0L;
    private long flush_J = -9223372036854775808L;
    private int data;
 
@@ -148,7 +145,7 @@ public class AutismMacroListOverlay extends bj {
 
    private void close_V_9() {
       aE sync = aE.init_aE();
-      this.update_List = this.init_List_List(aN.init_aN().init_List(), this.init_List_7(), sync.read_Map(), sync.write_Map(), sync);
+      this.update_List = this.init_List_List(aN.init_aN().init_List(), sync.read_Map(), sync);
       if (!this.init_LinkedHashSet.isEmpty()) {
          Set<String> visibleKeys = new HashSet<>();
 
@@ -316,16 +313,6 @@ public class AutismMacroListOverlay extends bj {
          + this.valid_I_2()
          + 12;
       return Math.max(title, Math.max(list, actions) + this.add_I_11() * 2);
-   }
-
-   private List<aM> init_List_7() {
-      long now = System.currentTimeMillis();
-      if (now - this.sync_J > 2000L) {
-         this.sync_List = db.init();
-         this.sync_J = now;
-      }
-
-      return this.sync_List;
    }
 
    public AutismMacroEditorOverlay init_AutismMacroEditorO_3() {
@@ -810,9 +797,6 @@ public class AutismMacroListOverlay extends bj {
          case write:
             var10000 = item.init_Str;
             break;
-         case update:
-            var10000 = "Meteor: " + item.init_aM.init_Str;
-            break;
          default:
             var10000 = item.init_Str;
       }
@@ -825,9 +809,6 @@ public class AutismMacroListOverlay extends bj {
          case write:
             var10000 = item.load != null && !item.load.isBlank() ? item.load : "";
             break;
-         case update:
-            var10000 = init_Str_I_5(item.init_aM.init_List.size());
-            break;
          default:
             var10000 = "";
       }
@@ -839,10 +820,7 @@ public class AutismMacroListOverlay extends bj {
             var37 = rowContext.init_I_I(this.init_CharEncoder.load(autismclient.gui.f.b.l.read));
             break;
          case write:
-            var37 = rowContext.init_I_I(item.init_Z ? -2698497 : -12122);
-            break;
-         case update:
-            var37 = rowContext.init_I_I(-2562305);
+            var37 = rowContext.init_I_I(-12122);
             break;
          default:
             var37 = rowContext.init_I_I(this.init_CharEncoder.load(autismclient.gui.f.b.l.read));
@@ -1009,16 +987,6 @@ public class AutismMacroListOverlay extends bj {
                   )
                );
             break;
-         case update:
-            this.write_List
-               .add(
-                  new AutismMacroListOverlay.Inner_ConfigStore(
-                     "REFACTOR",
-                     autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load,
-                     this.init_I_Str_I_4("REFACTOR", 70),
-                     AutismMacroListOverlay.Inner_BufferHelper.poll
-                  )
-               );
       }
 
       return this.write_List;
@@ -1061,14 +1029,7 @@ public class AutismMacroListOverlay extends bj {
                }
 
                if (init_Z_Str_4(item.init_aM.init_Str)) {
-                  if (!AutismLiteVariant.enabled() && autismclient.util.g.ValueSink.init_Z()) {
-                     autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-                     if (multi != null) {
-                        multi.write_PacketUtil_CachePo_Set(Set.of());
-                     }
-                  } else {
-                     MacroExecutor.init_V_Str(item.init_aM.init_Str);
-                  }
+                  MacroExecutor.init_V_Str(item.init_aM.init_Str);
                } else {
                   item.init_aM.init_V();
                }
@@ -1100,19 +1061,12 @@ public class AutismMacroListOverlay extends bj {
             case open:
                this.init_V_AutismMacroListOve(item);
                break;
-            case poll:
-               this.load_V_AutismMacroListOve(item);
          }
       }
    }
 
    private static boolean init_Z_Str_4(String name) {
-      if (!AutismLiteVariant.enabled() && autismclient.util.g.ValueSink.init_Z()) {
-         autismclient.util.g.PacketUtil multi = autismclient.util.g.PacketUtil.load_PacketUtil();
-         return multi != null && multi.init_Z_Str_Set(name, Set.of());
-      } else {
-         return MacroExecutor.init_Z_Str(name);
-      }
+      return MacroExecutor.init_Z_Str(name);
    }
 
    public void init_V_I_7(int count) {
@@ -1144,7 +1098,7 @@ public class AutismMacroListOverlay extends bj {
    private void init_V_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil item) {
       if (item.load != null && !item.load.isBlank()) {
          aE sync = aE.init_aE();
-         Map<String, Map<String, aM>> allRemote = item.init_Z ? sync.write_Map() : sync.read_Map();
+         Map<String, Map<String, aM>> allRemote = sync.read_Map();
          Map<String, aM> remoteMacros = allRemote.get(item.load);
          aM source = remoteMacros != null ? remoteMacros.get(cZ.init(item.init_Str)) : null;
          if (source == null) {
@@ -1154,22 +1108,9 @@ public class AutismMacroListOverlay extends bj {
             if (imported == null) {
                AutismClientMessaging.sendPrefixed("§cFailed to import macro: " + item.init_Str);
             } else {
-               String sourceType = item.init_Z ? "Meteor macro" : "macro";
-               AutismClientMessaging.sendPrefixed("§aImported " + sourceType + " as: " + imported.init_Str);
+               AutismClientMessaging.sendPrefixed("§aImported macro as: " + imported.init_Str);
                this.clear_Z = true;
             }
-         }
-      }
-   }
-
-   private void load_V_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil item) {
-      if (item.init_aM != null) {
-         aM imported = aN.init_aN().init_aM_aM_Str(item.init_aM, item.init_aM.init_Str);
-         if (imported == null) {
-            AutismClientMessaging.sendPrefixed("§cFailed to import from Meteor.");
-         } else {
-            AutismClientMessaging.sendPrefixed("§aImported Meteor macro as: " + imported.init_Str);
-            this.clear_Z = true;
          }
       }
    }
@@ -1576,7 +1517,7 @@ public class AutismMacroListOverlay extends bj {
    }
 
    private List<AutismMacroListOverlay.Inner_StreamUtil> init_List_List(
-      List<aM> localMacros, List<aM> meteorMacros, Map<String, Map<String, aM>> remoteMacros, Map<String, Map<String, aM>> remoteMeteorMacros, aE sync
+      List<aM> localMacros, Map<String, Map<String, aM>> remoteMacros, aE sync
    ) {
       String filter = this.init_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
       List<AutismMacroListOverlay.Inner_StreamUtil> items = new ArrayList<>();
@@ -1599,46 +1540,10 @@ public class AutismMacroListOverlay extends bj {
                items.add(
                   row.init_Z()
                      ? AutismMacroListOverlay.Inner_StreamUtil.init(row, entry.getKey())
-                     : AutismMacroListOverlay.Inner_StreamUtil.init(row.init_aM().init_Str, entry.getKey(), false)
+                     : AutismMacroListOverlay.Inner_StreamUtil.init(row.init_aM().init_Str, entry.getKey())
                );
             }
          }
-      }
-
-      if (!z.init_Z()) {
-         return items;
-      }
-
-      List<AutismMacroListOverlay.Inner_StreamUtil> meteorSection = new ArrayList<>();
-
-      for (aM macro : meteorMacros) {
-         if (this.load_Z_Str_Str(macro.init_Str, filter)) {
-            meteorSection.add(AutismMacroListOverlay.Inner_StreamUtil.load(macro));
-         }
-      }
-
-      if (sync.write_Z()) {
-         for (Entry<String, Map<String, aM>> entry : remoteMeteorMacros.entrySet()) {
-            for (aM macro : entry.getValue().values()) {
-               boolean alreadyLocalMeteor = false;
-
-               for (aM localMeteor : meteorMacros) {
-                  if (cZ.init(localMeteor.init_Str, macro.init_Str)) {
-                     alreadyLocalMeteor = true;
-                     break;
-                  }
-               }
-
-               if (!alreadyLocalMeteor && this.load_Z_Str_Str(macro.init_Str, filter)) {
-                  meteorSection.add(AutismMacroListOverlay.Inner_StreamUtil.init(macro.init_Str, entry.getKey(), true));
-               }
-            }
-         }
-      }
-
-      if (!meteorSection.isEmpty()) {
-         items.add(AutismMacroListOverlay.Inner_StreamUtil.init("Meteor Macros", -2562305));
-         items.addAll(meteorSection);
       }
 
       return items;
@@ -2768,16 +2673,14 @@ public class AutismMacroListOverlay extends bj {
       sync,
       flush,
       close,
-      open,
-      poll;
+      open;
    }
 
    private enum Inner_CachePool {
       init,
       load,
       read,
-      write,
-      update;
+      write;
    }
 
    private static final class Inner_ConfigStore {
@@ -2834,7 +2737,6 @@ public class AutismMacroListOverlay extends bj {
       private int init_I;
       private aM init_aM;
       private String load;
-      private boolean init_Z;
       private cY.Inner_DataUtil init_cY_DataUtil;
 
       private static AutismMacroListOverlay.Inner_StreamUtil init(cY.Inner_DataUtil row, String source) {
@@ -2861,19 +2763,11 @@ public class AutismMacroListOverlay extends bj {
          return item;
       }
 
-      private static AutismMacroListOverlay.Inner_StreamUtil init(String label, String source, boolean remoteMeteor) {
+      private static AutismMacroListOverlay.Inner_StreamUtil init(String label, String source) {
          AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
          item.init_AutismMacroListOve = AutismMacroListOverlay.Inner_CachePool.write;
          item.init_Str = label;
          item.load = source;
-         item.init_Z = remoteMeteor;
-         return item;
-      }
-
-      private static AutismMacroListOverlay.Inner_StreamUtil load(aM macro) {
-         AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
-         item.init_AutismMacroListOve = AutismMacroListOverlay.Inner_CachePool.update;
-         item.init_aM = macro;
          return item;
       }
    }

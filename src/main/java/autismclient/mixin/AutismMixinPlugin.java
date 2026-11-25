@@ -22,9 +22,6 @@ public class AutismMixinPlugin implements IMixinConfigPlugin {
    private boolean indigoLoaded;
    private boolean opsecLoaded;
    private boolean exploitPreventerLoaded;
-   private boolean replayModLoaded;
-   private boolean flashbackLoaded;
-   private boolean essentialLoaded;
    private boolean lithiumLoaded;
    private boolean viaLoaded;
    private static final Set<String> MANDATORY_SECURITY_MIXINS = Set.of(
@@ -63,9 +60,6 @@ public class AutismMixinPlugin implements IMixinConfigPlugin {
       this.indigoLoaded = loader.isModLoaded("fabric-renderer-indigo");
       this.opsecLoaded = loader.isModLoaded("opsec");
       this.exploitPreventerLoaded = loader.isModLoaded("exploitpreventer");
-      this.replayModLoaded = loader.isModLoaded("replaymod");
-      this.flashbackLoaded = loader.isModLoaded("flashback");
-      this.essentialLoaded = loader.isModLoaded("essential") || loader.isModLoaded("essential-container") || loader.isModLoaded("essential-loader");
       this.lithiumLoaded = loader.isModLoaded("lithium");
       this.viaLoaded = loader.isModLoaded("viafabricplus");
    }
@@ -85,12 +79,6 @@ public class AutismMixinPlugin implements IMixinConfigPlugin {
             return this.sodiumLoaded;
          } else if ("AutismFluidRendererMixin".equals(simpleName) && this.sodiumLoaded) {
             return false;
-         } else if ("AutismReplayModGuiHandlerMixin".equals(simpleName) || "AutismReplayStudioTeamMixin".equals(simpleName)) {
-            return this.replayModLoaded;
-         } else if ("AutismFlashbackConnectionMixin".equals(simpleName)) {
-            return this.flashbackLoaded;
-         } else if (simpleName.startsWith("AutismEssential")) {
-            return this.essentialLoaded;
          } else if (mixinClassName.startsWith("autismclient.mixin.indigo.")) {
             return this.indigoLoaded && !this.sodiumLoaded;
          } else if (mixinClassName.startsWith("autismclient.mixin.lithium.")) {

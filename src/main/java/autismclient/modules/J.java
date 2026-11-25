@@ -8,7 +8,6 @@ import autismclient.api.module.KeybindSetting;
 import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismMinecraftAccessor;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.AutismLiteVariant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -260,7 +259,7 @@ public final class J extends Module {
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand ignoredHand) {
-      if (MC != null && MC.level != null && MC.player != null && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())) {
+      if (MC != null && MC.level != null && MC.player != null) {
          if (FieldCache.init_Z_6()) {
             return false;
          }

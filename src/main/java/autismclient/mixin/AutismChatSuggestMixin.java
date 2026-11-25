@@ -4,10 +4,8 @@ import autismclient.AutismClientAddon;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.DataUtil;
 import autismclient.mixin.accessor.AutismCommandSuggestionsListAccessor;
-import autismclient.modules.aD;
 import autismclient.modules.al;
 import autismclient.util.aN;
-import autismclient.util.z;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestion;
@@ -98,10 +96,7 @@ public abstract class AutismChatSuggestMixin {
    @Unique
    private void autism$updateAutismCommandInfoSafe(CallbackInfo ci) {
       String value = this.input.getValue();
-      if (autism$shouldSuppressMeteorSuggestions(value)) {
-         this.autism$clearActiveSuggestions();
-         ci.cancel();
-      } else if (!autism$isAutismCommandInput(value)) {
+      if (!autism$isAutismCommandInput(value)) {
          if (this.autism$owningSuggestions) {
             this.autism$clearActiveSuggestions();
          }
@@ -189,43 +184,9 @@ public abstract class AutismChatSuggestMixin {
       }
    }
 
-   @Inject(method = "updateCommandInfo", at = @At("TAIL"))
-   private void autism$hideLateMeteorSuggestionsInPanic(CallbackInfo ci) {
-      if (autism$shouldSuppressMeteorSuggestions(this.input.getValue())) {
-         this.autism$clearActiveSuggestions();
-      }
-   }
-
-   @Inject(method = "showSuggestions", at = @At("HEAD"), cancellable = true)
-   private void autism$hideShownMeteorSuggestionsInPanic(boolean narrateFirstSuggestion, CallbackInfo ci) {
-      if (autism$shouldSuppressMeteorSuggestions(this.input.getValue())) {
-         this.autism$clearActiveSuggestions();
-         ci.cancel();
-      }
-   }
-
    @Unique
    private static boolean autism$isAutismCommandInput(String value) {
       return !DataUtil.init_Z() && DataUtil.init_Z(value);
-   }
-
-   @Unique
-   private static boolean autism$shouldSuppressMeteorSuggestions(String value) {
-      if (!aD.init_Z()) {
-         return false;
-      } else if (!z.init_Z()) {
-         return false;
-      } else if (value == null) {
-         return false;
-      } else {
-         String trimmed = value.trim();
-         if (!trimmed.isEmpty() && !trimmed.startsWith("/")) {
-            String prefix = z.read_Str();
-            return !prefix.isEmpty() && trimmed.startsWith(prefix);
-         } else {
-            return false;
-         }
-      }
    }
 
    @Unique

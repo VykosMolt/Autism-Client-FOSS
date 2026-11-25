@@ -6,7 +6,6 @@ import autismclient.compat263.CompatGLFW;
 import autismclient.compat263.CompatSwingPacket;
 import autismclient.modules.PoolEntry;
 import autismclient.util.bw;
-import autismclient.util.g.HashUtil;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -111,12 +110,11 @@ public final class Protocol263Check {
       J.read_V();
       J.write();
 
-      // 4. ServerboundPunchPacket in PoolEntry, util.g.HashUtil, bw registry aliases, and StreamCodec compatibility
+      // 4. ServerboundPunchPacket in PoolEntry, bw registry aliases, and StreamCodec compatibility
       Field poolSetF = PoolEntry.class.getDeclaredField("init_Set");
       poolSetF.setAccessible(true);
       Set<Class<?>> poolSet = (Set<Class<?>>) poolSetF.get(null);
       check("PoolEntry ignore set contains ServerboundPunchPacket", poolSet.contains(ServerboundPunchPacket.class));
-      check("util.g.HashUtil ignore set contains ServerboundPunchPacket", HashUtil.init(ServerboundPunchPacket.class));
       check("bw resolves CompatSwingPacket -> ServerboundPunchPacket", bw.init_Class_Str("CompatSwingPacket") == ServerboundPunchPacket.class);
       check("bw resolves HandSwingC2SPacket -> ServerboundPunchPacket", bw.init_Class_Str("HandSwingC2SPacket") == ServerboundPunchPacket.class);
       check("bw resolves ServerboundAttackPacket", bw.init_Class_Str("ServerboundAttackPacket") == ServerboundAttackPacket.class);

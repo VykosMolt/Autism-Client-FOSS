@@ -11007,7 +11007,6 @@ public final class aI extends Module {
             && !aC.init_Z()
             && !cd.init_Z()
             && !f.load()
-            && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.write_Z()
             && !FieldCache.init_Z_6()
@@ -17971,7 +17970,6 @@ public final class aI extends Module {
          && this.f_j_I >= 0
          && MC != null
          && MC.player != null
-         && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
          && !MacroExecutor.write_Z()
          && MC.player.getInventory().getSelectedSlot() != this.f_j_I
          && autismclient.util.ah.write_Z(this.id())) {

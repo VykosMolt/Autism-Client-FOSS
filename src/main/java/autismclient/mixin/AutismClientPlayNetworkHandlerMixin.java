@@ -39,9 +39,7 @@ import autismclient.util.e.DataUtil;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.h.CachePool;
 import autismclient.util.macro.b;
-import autismclient.util.mm.TaskQueue;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
@@ -622,13 +620,6 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          if (overlay != null) {
             overlay.set_V_9();
          }
-      }
-   }
-
-   @Inject(method = "sendUnattendedCommand", at = @At("HEAD"), cancellable = true)
-   private void autism$interceptCardClick(String command, Screen screen, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && TaskQueue.init(command)) {
-         ci.cancel();
       }
    }
 

@@ -31,19 +31,10 @@
   },
   "jars": [
     {
-      "file": "META-INF/jars/jsvg-2.1.0.jar"
-    },
-    {
-      "file": "META-INF/jars/mixinextras-fabric-0.5.4.jar"
-    },
-    {
       "file": "META-INF/jars/netty-codec-socks-4.1.118.Final.jar"
     },
     {
       "file": "META-INF/jars/netty-handler-proxy-4.1.118.Final.jar"
-    },
-    {
-      "file": "META-INF/jars/org.eclipse.paho.client.mqttv3-1.2.5.jar"
     }
   ]
 }

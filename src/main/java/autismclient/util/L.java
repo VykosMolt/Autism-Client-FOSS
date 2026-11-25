@@ -885,12 +885,6 @@ public final class L {
       flush = autismclient.e.DataUtil.init(new int[]{-400249055});
       autismclient.util.mm.EventBus.init_EventBus().init_V();
       push = autismclient.e.DataUtil.init(new int[]{-400249053});
-      autismclient.util.mm.BufferHelper.init_BufferHelper().sync_V();
-
-      try {
-         autismclient.util.mm.BufferHelper.init_BufferHelper().load_V();
-      } catch (Throwable var1) {
-      }
    }
 
    public static synchronized void init_V(String newJwt, long expSeconds) {

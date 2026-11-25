@@ -1,10 +1,8 @@
 package autismclient.mixin;
 
 import autismclient.modules.PoolEntry;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.bg;
 import autismclient.util.bn;
-import autismclient.util.g.ConfigStore;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import io.netty.buffer.ByteBuf;
@@ -32,31 +30,16 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
       if (bg.init_I_J(captureState) == 0) {
          original.call(ctx, packet, output);
       } else {
-         boolean multi = !AutismLiteVariant.enabled() && ctx != null && ConfigStore.init_Z(ctx.channel());
-         boolean suppressPayloadCodec = multi && bg.load(captureState);
-         if (suppressPayloadCodec) {
-            bg.init_V();
-         }
-
-         try {
-            original.call(ctx, packet, output);
-         } finally {
-            if (suppressPayloadCodec) {
-               bg.load_V();
+         original.call(ctx, packet, output);
+         PoolEntry module = PoolEntry.init_PoolEntry();
+         if (module != null) {
+            String protocol = this.protocolInfo.id().id();
+            if (bg.init_Z_J(captureState)) {
+               bn.init(packet, "C2S", protocol, packet.type(), output);
             }
-         }
 
-         if (!multi) {
-            PoolEntry module = PoolEntry.init_PoolEntry();
-            if (module != null) {
-               String protocol = this.protocolInfo.id().id();
-               if (bg.init_Z_J(captureState)) {
-                  bn.init(packet, "C2S", protocol, packet.type(), output);
-               }
-
-               if (bg.load(captureState) && autism$isPayloadCarrier(packet)) {
-                  module.init(packet, "C2S", protocol, "encoder");
-               }
+            if (bg.load(captureState) && autism$isPayloadCarrier(packet)) {
+               module.init(packet, "C2S", protocol, "encoder");
             }
          }
       }

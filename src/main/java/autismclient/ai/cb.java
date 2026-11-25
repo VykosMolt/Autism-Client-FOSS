@@ -3,12 +3,10 @@ package autismclient.ai;
 import autismclient.api.ai.AiOperation;
 import autismclient.modules.PoolEntry;
 import autismclient.util.AutismConfig;
-import autismclient.util.AutismDupeRadar;
 import autismclient.util.AutismServerInfoOverlay;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,17 +33,6 @@ public final class cb {
 
    static String init(boolean connectedToServer) {
       return connectedToServer ? null : "Not connected to a multiplayer server; join one first (singleplayer has no server intelligence)";
-   }
-
-   static String init(boolean connectedToServer, boolean scanCached, boolean authenticated) {
-      String server = init(connectedToServer);
-      if (server != null) {
-         return server;
-      } else if (!scanCached) {
-         return "No plugin scan is cached for this server; run client:plugin_scan first";
-      } else {
-         return !authenticated ? "DupeDB login required once; log in via the server info overlay, then retry" : null;
-      }
    }
 
    static List<cb.Inner_DataUtil> init(
@@ -411,74 +398,6 @@ public final class cb {
       }
    }
 
-   public static AiOperation load(JsonObject args) {
-      Minecraft mc = Minecraft.getInstance();
-      final String address = init_Str(mc);
-      AutismConfig.PluginScanCacheEntry entry = address.isBlank() ? null : AutismConfig.getGlobal().getPluginScanByAddress(address);
-      String precondition = init(!address.isBlank(), entry != null, AutismDupeRadar.init_AutismDupeRadar_Ra().authenticated());
-      if (precondition != null) {
-         throw new IllegalArgumentException(precondition);
-      }
-
-      final boolean forceRefresh = ag.init_Z_JsonObject(args, "forceRefresh", false);
-      final int timeoutSeconds = Math.max(1, Math.min(60, ag.init_I_JsonObject(args, "timeoutSeconds", 60)));
-      List<cb.Inner_DataUtil> candidates = init(init(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40));
-      List<AutismDupeRadar.RadarPluginSnapshot> snapshots = new ArrayList<>(candidates.size());
-
-      for (cb.Inner_DataUtil plugin : candidates) {
-         snapshots.add(
-            new AutismDupeRadar.RadarPluginSnapshot(
-               plugin.displayName(), plugin.key(), init_Str(plugin.confidence()), plugin.commands().size(), plugin.channels(), plugin.guis(), false
-            )
-         );
-      }
-
-      AutismDupeRadar.RadarServerSnapshot server = init_AutismDupeRadar_Ra(mc);
-      final long resultsBefore = AutismDupeRadar.init_AutismDupeRadar_Ra().updatedAtMs();
-      AutismDupeRadar.init_V_List(snapshots, server, forceRefresh);
-      final int submittedPlugins = snapshots.size();
-      return new AiOperation() {
-         final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-         boolean init_Z;
-
-         @Override
-         public AiOperation.Result tick() {
-            if (this.init_Z) {
-               return R.init_AiOperation_Result(AiOperation.Status.CANCELLED, "DupeDB check cancelled", new JsonObject());
-            }
-
-            AutismDupeRadar.RadarState state = AutismDupeRadar.init_AutismDupeRadar_Ra();
-            if (!state.checking() && !state.authenticating()) {
-               if (state.error() != null && !state.error().isBlank() && state.updatedAtMs() <= resultsBefore) {
-                  return R.init_AiOperation_Result(
-                     AiOperation.Status.FAILED, "DupeDB check failed: " + state.error(), cb.init(address, state, submittedPlugins, forceRefresh, true)
-                  );
-               }
-
-               if (state.updatedAtMs() > resultsBefore) {
-                  return R.init_AiOperation_Result(
-                     AiOperation.Status.SUCCEEDED, "DupeDB radar results for " + address, cb.init(address, state, submittedPlugins, forceRefresh, false)
-                  );
-               }
-            }
-
-            if (System.nanoTime() > this.init_J) {
-               this.init_Z = true;
-               return R.init_AiOperation_Result(
-                  AiOperation.Status.TIMED_OUT, "DupeDB check did not finish in time", cb.init(address, state, submittedPlugins, forceRefresh, true)
-               );
-            } else {
-               return R.init_AiOperation_Result(AiOperation.Status.RUNNING, state.status() == null ? "Checking DupeDB" : state.status(), new JsonObject());
-            }
-         }
-
-         @Override
-         public void cancel() {
-            this.init_Z = true;
-         }
-      };
-   }
-
    private static String init_Str(Minecraft mc) {
       if (mc == null) {
          return "";
@@ -493,39 +412,6 @@ public final class cb {
          return mc != null && mc.getConnection() != null && mc.getConnection().serverBrand() != null ? mc.getConnection().serverBrand() : "";
       } catch (Throwable ignored) {
          return "";
-      }
-   }
-
-   private static AutismDupeRadar.RadarServerSnapshot init_AutismDupeRadar_Ra(Minecraft mc) {
-      List<AutismDupeRadar.RadarServerIdentity> identities = new ArrayList<>();
-      ServerData server = mc.getCurrentServer();
-      if (server != null && server.ip != null) {
-         String host = server.ip.trim();
-         int colon = host.lastIndexOf(58);
-         if (colon > 0 && host.indexOf(58) == colon) {
-            host = host.substring(0, colon);
-         }
-
-         init(identities, host);
-      }
-
-      try {
-         if (mc.getConnection() != null
-            && mc.getConnection().getConnection() != null
-            && mc.getConnection().getConnection().getRemoteAddress() instanceof InetSocketAddress socket
-            && socket.getAddress() != null) {
-            identities.add(new AutismDupeRadar.RadarServerIdentity(socket.getAddress().getHostAddress(), true));
-         }
-      } catch (Throwable var5) {
-      }
-
-      return new AutismDupeRadar.RadarServerSnapshot(identities);
-   }
-
-   private static void init(List<AutismDupeRadar.RadarServerIdentity> identities, String host) {
-      if (host != null && !host.isBlank()) {
-         boolean ip = host.matches("^\\d{1,3}(\\.\\d{1,3}){3}$") || host.contains(":");
-         identities.add(new AutismDupeRadar.RadarServerIdentity(host, ip));
       }
    }
 
@@ -614,91 +500,6 @@ public final class cb {
             }
          }
       }
-   }
-
-   private static JsonObject init(String address, AutismDupeRadar.RadarState state, int submittedPlugins, boolean forceRefresh, boolean partial) {
-      JsonObject out = new JsonObject();
-      out.addProperty("serverAddress", address);
-      out.addProperty("provider", read(state.providerLabel()));
-      out.addProperty("forceRefresh", forceRefresh);
-      if (partial) {
-         out.addProperty("partial", true);
-      }
-
-      out.addProperty("status", read(state.status()));
-      if (state.error() != null && !state.error().isBlank()) {
-         out.addProperty("error", state.error());
-      }
-
-      out.addProperty("submittedPluginCount", submittedPlugins);
-      out.addProperty("detectedPluginCount", Math.max(state.detectedPluginCount(), submittedPlugins));
-      out.addProperty("updatedAtMs", state.updatedAtMs());
-      out.addProperty("stale", state.stale());
-      List<AutismDupeRadar.RadarMatch> matches = state.matches();
-      out.addProperty("matchCount", matches.size());
-      JsonArray array = new JsonArray();
-      List<AutismDupeRadar.RadarFinding> allFindings = new ArrayList<>();
-      int included = 0;
-
-      for (AutismDupeRadar.RadarMatch match : matches) {
-         allFindings.addAll(match.findings());
-         if (included++ < 40) {
-            JsonObject row = new JsonObject();
-            row.addProperty("detectedPlugin", match.detectedPlugin());
-            if (!match.providerPlugin().isBlank()) {
-               row.addProperty("providerPlugin", match.providerPlugin());
-            }
-
-            row.addProperty("confidence", match.matchConfidence());
-            row.addProperty("source", match.matchSource().label());
-            row.addProperty("score", Math.round(match.matchScore() * 1000.0) / 1000.0);
-            if (!match.matchedInput().isBlank()) {
-               row.addProperty("matchedInput", match.matchedInput());
-            }
-
-            if (!match.sourceUrl().isBlank()) {
-               row.addProperty("url", match.sourceUrl());
-            }
-
-            JsonArray findings = new JsonArray();
-            int findingCount = 0;
-
-            for (AutismDupeRadar.RadarFinding finding : match.findings()) {
-               if (findingCount++ >= 10) {
-                  break;
-               }
-
-               findings.add(
-                  ag.init_JsonObject_ObjArr(
-                     "title",
-                     read(finding.title()),
-                     "status",
-                     read(finding.status()),
-                     "summary",
-                     init(finding.summary(), 280),
-                     "url",
-                     read(finding.sourceUrl())
-                  )
-               );
-            }
-
-            row.add("findings", findings);
-            if (match.findings().size() > 10) {
-               row.addProperty("findingsTruncated", match.findings().size() - 10);
-            }
-
-            array.add(row);
-         }
-      }
-
-      out.add("matches", array);
-      if (matches.size() > 40) {
-         out.addProperty("matchesTruncated", matches.size() - 40);
-      }
-
-      AutismDupeRadar.StatusCounts counts = AutismDupeRadar.init_AutismDupeRadar_St_List(allFindings);
-      out.add("statusCounts", ag.init_JsonObject_ObjArr("working", counts.working(), "patched", counts.patched(), "verified", counts.verified()));
-      return out;
    }
 
    record Inner_DataUtil(String displayName, String key, String confidence, String evidence, List<String> commands, List<String> channels, List<String> guis) {

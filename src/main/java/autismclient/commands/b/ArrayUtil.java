@@ -3,7 +3,6 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bi;
 import autismclient.util.z;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -35,10 +34,6 @@ public class ArrayUtil extends Command {
 
          String selected = z.init_Str(requested);
          autismclient.modules.PoolEntry.init_PoolEntry().init_V_Str(selected);
-         if (!selected.equals(requested)) {
-            bi.read("Meteor uses '.'. Prefix kept as '%'.");
-         }
-
          AutismClientMessaging.sendPrefixed("Prefix set to " + selected);
          return 1;
       }));
