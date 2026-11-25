@@ -82,49 +82,34 @@ public final class cG {
          return false;
       }
 
-      if (MacosUtil.IS_MACOS) {
-         try {
-            Compat263.loadMacIcon(() -> {
-               try {
-                  return init("mac_icon.png");
-               } catch (IOException e) {
-                  throw new RuntimeException(e);
-               }
-            });
-            return true;
-         } catch (Throwable ignored) {
-            return false;
-         }
-      } else {
-         List<ByteBuffer> allocatedBuffers = new ArrayList<>(init_IArr.length);
+      List<ByteBuffer> allocatedBuffers = new ArrayList<>(init_IArr.length);
 
-         try (MemoryStack stack = MemoryStack.stackPush()) {
-            CompatGLFWImage.Buffer icons = CompatGLFWImage.malloc(init_IArr.length, stack);
+      try (MemoryStack stack = MemoryStack.stackPush()) {
+         CompatGLFWImage.Buffer icons = CompatGLFWImage.malloc(init_IArr.length, stack);
 
-            for (int i = 0; i < init_IArr.length; i++) {
-               int size = init_IArr[i];
+         for (int i = 0; i < init_IArr.length; i++) {
+            int size = init_IArr[i];
 
-               try (
-                  InputStream stream = init("icon_" + size + "x" + size + ".png");
-                  NativeImage image = NativeImage.read(stream);
-               ) {
-                  ByteBuffer pixels = MemoryUtil.memAlloc(image.getWidth() * image.getHeight() * 4);
-                  allocatedBuffers.add(pixels);
-                  pixels.asIntBuffer().put(image.getPixelsABGR());
-                  icons.position(i);
-                  icons.width(image.getWidth());
-                  icons.height(image.getHeight());
-                  icons.pixels(pixels);
-               }
+            try (
+               InputStream stream = init("icon_" + size + "x" + size + ".png");
+               NativeImage image = NativeImage.read(stream);
+            ) {
+               ByteBuffer pixels = MemoryUtil.memAlloc(image.getWidth() * image.getHeight() * 4);
+               allocatedBuffers.add(pixels);
+               pixels.asIntBuffer().put(image.getPixelsABGR());
+               icons.position(i);
+               icons.width(image.getWidth());
+               icons.height(image.getHeight());
+               icons.pixels(pixels);
             }
-
-            CompatGLFW.glfwSetWindowIcon(windowHandle, icons);
-            return true;
-         } catch (Throwable ignored) {
-            return false;
-         } finally {
-            allocatedBuffers.forEach(MemoryUtil::memFree);
          }
+
+         CompatGLFW.glfwSetWindowIcon(windowHandle, icons);
+         return true;
+      } catch (Throwable ignored) {
+         return false;
+      } finally {
+         allocatedBuffers.forEach(MemoryUtil::memFree);
       }
    }
 

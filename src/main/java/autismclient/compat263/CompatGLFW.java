@@ -6,7 +6,10 @@ import java.util.Arrays;
 import org.lwjgl.sdl.SDLClipboard;
 import org.lwjgl.sdl.SDLKeyboard;
 import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLPixels;
+import org.lwjgl.sdl.SDLSurface;
 import org.lwjgl.sdl.SDLVideo;
+import org.lwjgl.sdl.SDL_Surface;
 
 public final class CompatGLFW {
    public static final int GLFW_RELEASE = 0;
@@ -248,7 +251,69 @@ public final class CompatGLFW {
       }
    }
 
-   public static void glfwSetWindowIcon(long var0, CompatGLFWImage.Buffer var2) {
+   public static void glfwSetWindowIcon(long windowHandle, CompatGLFWImage.Buffer icons) {
+      if (windowHandle == 0L || icons == null || icons.pixels.length == 0) {
+         return;
+      }
+
+      int primaryIdx = -1;
+      int bestArea = -1;
+      for (int i = 0; i < icons.pixels.length; i++) {
+         int w = icons.widths[i];
+         int h = icons.heights[i];
+         if (w > 0 && h > 0 && icons.pixels[i] != null) {
+            int area = w * h;
+            if (area > bestArea) {
+               bestArea = area;
+               primaryIdx = i;
+            }
+         }
+      }
+      if (primaryIdx < 0) {
+         return;
+      }
+
+      SDL_Surface primary = null;
+      try {
+         ByteBuffer primarySlice = icons.pixels[primaryIdx].duplicate();
+         primarySlice.rewind();
+         primary = SDLSurface.SDL_CreateSurfaceFrom(
+            icons.widths[primaryIdx],
+            icons.heights[primaryIdx],
+            SDLPixels.SDL_PIXELFORMAT_RGBA32,
+            primarySlice,
+            icons.widths[primaryIdx] * 4
+         );
+         if (primary == null) {
+            return;
+         }
+
+         for (int i = 0; i < icons.pixels.length; i++) {
+            if (i == primaryIdx) {
+               continue;
+            }
+            int w = icons.widths[i];
+            int h = icons.heights[i];
+            ByteBuffer buf = icons.pixels[i];
+            if (w <= 0 || h <= 0 || buf == null) {
+               continue;
+            }
+            ByteBuffer slice = buf.duplicate();
+            slice.rewind();
+            SDL_Surface alt = SDLSurface.SDL_CreateSurfaceFrom(w, h, SDLPixels.SDL_PIXELFORMAT_RGBA32, slice, w * 4);
+            if (alt != null) {
+               SDLSurface.SDL_AddSurfaceAlternateImage(primary, alt);
+               SDLSurface.SDL_DestroySurface(alt);
+            }
+         }
+
+         SDLVideo.SDL_SetWindowIcon(windowHandle, primary);
+      } catch (Throwable ignored) {
+      } finally {
+         if (primary != null) {
+            SDLSurface.SDL_DestroySurface(primary);
+         }
+      }
    }
 
    public static void glfwSetWindowSize(long var0, int var2, int var3) {

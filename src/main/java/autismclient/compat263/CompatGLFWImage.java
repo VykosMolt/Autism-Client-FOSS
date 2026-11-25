@@ -8,24 +8,48 @@ public final class CompatGLFWImage {
    private CompatGLFWImage() {
    }
 
-   public static CompatGLFWImage.Buffer malloc(int var0, MemoryStack var1) {
-      return new CompatGLFWImage.Buffer();
+   public static CompatGLFWImage.Buffer malloc(int count, MemoryStack stack) {
+      return new CompatGLFWImage.Buffer(Math.max(0, count));
    }
 
    public static final class Buffer {
-      public CustomBuffer position(int var1) {
+      final int[] widths;
+      final int[] heights;
+      final ByteBuffer[] pixels;
+      private int pos;
+
+      Buffer(int capacity) {
+         this.widths = new int[capacity];
+         this.heights = new int[capacity];
+         this.pixels = new ByteBuffer[capacity];
+      }
+
+      public CustomBuffer position(int index) {
+         this.pos = index;
          return null;
       }
 
-      public CompatGLFWImage.Buffer width(int var1) {
+      public CompatGLFWImage.Buffer width(int width) {
+         if (this.pos >= 0 && this.pos < this.widths.length) {
+            this.widths[this.pos] = width;
+         }
+
          return this;
       }
 
-      public CompatGLFWImage.Buffer height(int var1) {
+      public CompatGLFWImage.Buffer height(int height) {
+         if (this.pos >= 0 && this.pos < this.heights.length) {
+            this.heights[this.pos] = height;
+         }
+
          return this;
       }
 
-      public CompatGLFWImage.Buffer pixels(ByteBuffer var1) {
+      public CompatGLFWImage.Buffer pixels(ByteBuffer buf) {
+         if (this.pos >= 0 && this.pos < this.pixels.length) {
+            this.pixels[this.pos] = buf;
+         }
+
          return this;
       }
    }
