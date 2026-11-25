@@ -658,7 +658,7 @@ public class aE {
    }
 
    private void clear() {
-      if ((AutismLiteVariant.enabled() || autismclient.e.BitSetUtil.init()) && this.open_Z() && !autismclient.modules.aD.read_Z()) {
+      if (this.open_Z() && !autismclient.modules.aD.read_Z()) {
          aE.Inner_NetHelper ctx = this.init_aE_NetHelper;
          if (ctx != null) {
             Minecraft mc = Minecraft.getInstance();

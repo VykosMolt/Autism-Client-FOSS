@@ -88,7 +88,7 @@ public class bk {
    }
 
    private static boolean sync_Z() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.PacketUtil.init();
+      return false;
    }
 
    public String init_Str() {

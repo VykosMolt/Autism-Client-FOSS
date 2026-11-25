@@ -296,7 +296,6 @@ public final class ar {
                   tick_I = 0;
                   Minecraft mc = Minecraft.getInstance();
                   if (!aD.init_Z()
-                     && (AutismLiteVariant.enabled() || autismclient.e.UiHelper.init())
                      && mc != null
                      && mc.level != null
                      && mc.player != null

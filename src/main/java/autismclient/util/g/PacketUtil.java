@@ -215,9 +215,6 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
    }
 
    public synchronized PacketUtil.Inner_TextFormat init_PacketUtil_TextFor_FieldCache(FieldCache source) {
-      if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
-         return PacketUtil.Inner_TextFormat.init("Autism is locked: early access requires the donator role.");
-      }
 
       if (source == null) {
          return PacketUtil.Inner_TextFormat.init("Profile is missing");
@@ -3320,30 +3317,28 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
    }
 
    private void poll() {
-      if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
-         long now = System.currentTimeMillis();
-         List<ClassCache> snapshot;
-         long tickGeneration;
-         synchronized (this) {
-            if (!this.load_Z) {
-               return;
-            }
-
-            snapshot = this.init_List;
-            tickGeneration = this.tick_J;
+      long now = System.currentTimeMillis();
+      List<ClassCache> snapshot;
+      long tickGeneration;
+      synchronized (this) {
+         if (!this.load_Z) {
+            return;
          }
 
-         for (ClassCache session : snapshot) {
-            init_V_ClassCache_J(session, now);
-         }
+         snapshot = this.init_List;
+         tickGeneration = this.tick_J;
+      }
 
-         synchronized (this) {
-            if (this.load_Z && this.tick_J == tickGeneration) {
-               this.read_V_List(snapshot);
-               if (now - this.set >= 100L) {
-                  this.init_V_Z(false);
-                  this.set = now;
-               }
+      for (ClassCache session : snapshot) {
+         init_V_ClassCache_J(session, now);
+      }
+
+      synchronized (this) {
+         if (this.load_Z && this.tick_J == tickGeneration) {
+            this.read_V_List(snapshot);
+            if (now - this.set >= 100L) {
+               this.init_V_Z(false);
+               this.set = now;
             }
          }
       }

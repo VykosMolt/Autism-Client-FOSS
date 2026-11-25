@@ -1,6 +1,5 @@
 package autismclient.modules;
 
-import autismclient.util.AutismLiteVariant;
 
 public final class bc {
    private static volatile boolean close_Z;
@@ -40,7 +39,7 @@ public final class bc {
    }
 
    private static boolean open_Z() {
-      return AutismLiteVariant.enabled() || autismclient.e.HashUtil.init();
+      return true;
    }
 
    public static boolean init_Z() {

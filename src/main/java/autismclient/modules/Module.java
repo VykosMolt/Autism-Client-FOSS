@@ -4,7 +4,6 @@ import autismclient.api.module.Setting;
 import autismclient.api.module.SettingOwner;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
-import autismclient.util.AutismLiteVariant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -93,7 +92,7 @@ public abstract class Module implements SettingOwner {
    }
 
    public final boolean isEnabled() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init() ? false : this.temporaryActivation.init_Z();
+      return this.temporaryActivation.init_Z();
    }
 
    final boolean isEnabledRaw() {

@@ -4,7 +4,6 @@ import autismclient.api.module.BoolSetting;
 import autismclient.api.module.StringListSetting;
 import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismItemStackRenderStateAccessor;
-import autismclient.util.AutismLiteVariant;
 import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -232,6 +231,6 @@ public final class M extends Module {
    }
 
    private static boolean read() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.ListPool.init() ? false : init_Z;
+      return init_Z;
    }
 }

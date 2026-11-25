@@ -1,6 +1,5 @@
 package autismclient.modules;
 
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.PkgCls_c;
 import autismclient.util.cA;
 import autismclient.util.cI;
@@ -39,9 +38,7 @@ public final class NodeWalker {
    }
 
    public static boolean init_Z() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.HashUtil.init()
-         ? false
-         : init_Minecraft.level != null
+      return init_Minecraft.level != null
             && init_Minecraft.player != null
             && !init_List().isEmpty()
             && !aD.init_Z()

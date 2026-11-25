@@ -1625,7 +1625,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics) {
       if (!AutismLiteVariant.enabled()) {
          aa aura = init_aa();
-         if (aura != null && aura.bool("fov-circle") && MC.player != null && !MC.player.isSpectator() && autismclient.e.HashUtil.init()) {
+         if (aura != null && aura.bool("fov-circle") && MC.player != null && !MC.player.isSpectator()) {
             CameraRenderState camera = MC.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
             if (camera.initialized) {
                Window window = MC.getWindow();

@@ -996,9 +996,6 @@ public class MacroExecutor {
    }
 
    public static long init_J_aM_MacroExecutor_Pool(autismclient.util.aM macro, MacroExecutor.Inner_PoolEntry options) {
-      if (!AutismLiteVariant.enabled() && !autismclient.e.ByteReader.init()) {
-         return -1L;
-      }
 
       if (autismclient.modules.aD.read_Z()) {
          return -1L;
@@ -1169,7 +1166,7 @@ public class MacroExecutor {
          init_ThreadLocal.set(runState);
 
          try {
-            while (close_Z() && (AutismLiteVariant.enabled() || autismclient.e.BitSetUtil.init())) {
+            while (close_Z()) {
                if (!init_CopyOnWriteArrayLi().isEmpty() || !init_ConcurrentHashMap().isEmpty()) {
                   MacroExecutor.Inner_TableIndex scheduledRunx = init_ThreadLocal.get();
                   mc.execute(() -> init_V_MacroExecutor_Tabl_Runnable(scheduledRunx, () -> {
@@ -1242,10 +1239,6 @@ public class MacroExecutor {
             runState.read_I = 0;
 
             for (int i = 0; i < macro.init_List.size() && close_Z(); i++) {
-               if (!AutismLiteVariant.enabled() && !autismclient.e.RingBuffer.init()) {
-                  flush_V();
-                  break;
-               }
 
                init_V_I_I(i, macro.init_List.size());
                init_V_MacroExecutor_Tabl_I(runState, i);

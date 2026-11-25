@@ -75,9 +75,6 @@ public final class cg {
    }
 
    public static boolean init_Z() {
-      if (!AutismLiteVariant.enabled() && !autismclient.e.ListPool.init()) {
-         return false;
-      }
 
       if (autismclient.modules.aD.read_Z()) {
          return false;

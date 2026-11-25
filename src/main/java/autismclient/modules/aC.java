@@ -37,7 +37,7 @@ public final class aC {
    }
 
    public static boolean init_Z() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.TextFormat.init() ? false : init_Z;
+      return init_Z;
    }
 
    public static boolean load_Z() {

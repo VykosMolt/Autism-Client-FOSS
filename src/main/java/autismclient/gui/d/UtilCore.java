@@ -9,7 +9,6 @@ import autismclient.modules.Module;
 import autismclient.modules.aD;
 import autismclient.modules.ae;
 import autismclient.modules.al;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismProfilesOverlay;
 import autismclient.util.aJ;
 import autismclient.util.aR;
@@ -280,7 +279,7 @@ public class UtilCore extends Screen implements TaskQueue {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      if (aS.init_Z_Minecraft(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
+      if (aS.init_Z_Minecraft(this.minecraft)) {
          List<autismclient.gui.f.NetHelper> avoid = new ArrayList<>();
          avoid.add(autismclient.gui.f.NetHelper.init(this.put, this.add, this.clear, this.reset));
          if (this.flush_Z) {

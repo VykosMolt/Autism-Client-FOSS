@@ -25,7 +25,7 @@ public final class au {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {
-               if (!autismclient.modules.aD.read_Z() && (AutismLiteVariant.enabled() || autismclient.e.ListPool.init())) {
+               if (!autismclient.modules.aD.read_Z()) {
                   BlockPos pos = init_BlockPos;
                   String shape = init_Str;
                   int renderColor = init_I;

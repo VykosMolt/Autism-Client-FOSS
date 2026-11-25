@@ -19,7 +19,7 @@ public final class cd {
    }
 
    public static boolean init_Z() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.TableIndex.init() ? false : init_UUID != null;
+      return init_UUID != null;
    }
 
    public static String init_Str() {

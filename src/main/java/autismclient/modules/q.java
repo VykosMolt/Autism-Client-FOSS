@@ -1,6 +1,5 @@
 package autismclient.modules;
 
-import autismclient.util.AutismLiteVariant;
 
 public final class q {
    private static volatile q.Inner_DataUtil init;
@@ -22,7 +21,7 @@ public final class q {
    }
 
    private static boolean init_Z() {
-      return AutismLiteVariant.enabled() || autismclient.e.PathHelper.init();
+      return true;
    }
 
    public record Inner_DataUtil(

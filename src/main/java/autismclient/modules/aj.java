@@ -1,6 +1,5 @@
 package autismclient.modules;
 
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.bK;
 import autismclient.util.cA;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -93,7 +92,7 @@ public final class aj {
    }
 
    public static void init(GuiGraphicsExtractor context) {
-      if (!aD.init_Z() && (AutismLiteVariant.enabled() || autismclient.e.PathHelper.init())) {
+      if (!aD.init_Z()) {
          if (init_Minecraft == null || init_Minecraft.level == null || init_Minecraft.player == null) {
             init_V();
          } else if (!init_Minecraft.gui.hud.isHidden()) {
@@ -243,10 +242,6 @@ public final class aj {
       }
 
       if (aD.init_Z()) {
-         return false;
-      }
-
-      if (!AutismLiteVariant.enabled() && !autismclient.e.TextFormat.init()) {
          return false;
       }
 
