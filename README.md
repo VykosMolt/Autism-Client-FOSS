@@ -9,22 +9,26 @@ The goal, obviously, is to end up with something much shorter, cleaner and actua
 
 ## Branches
 
-- `master`: **AUTISM Client 5.8** (Minecraft 26.3, active development)
+- `master`: **AUTISM Client 5.8** (Minecraft 26.3, release branch)
+- `dev`: **AUTISM Client 5.8** (Minecraft 26.3, active development)
 - `5.3-patched`: Legacy **AUTISM Client 5.3** (Minecraft 26.3 patched)
 
 ## Building & Verifying Locally
 
-Requires **Java 25**, Minecraft `26.3` libraries (listed in a local `cp26.3.txt` file, gitignored), and your local `precompiled/integrity-classes.jar` + `stubs/integrity-stubs.jar`.
+Install **Java 25**. The Gradle wrapper downloads the verified Minecraft `26.3` client and build dependencies. GitHub Actions runs compilation and the regression checks on pushes and pull requests targeting `master` or `dev`.
 
 ```bash
-# Build the Fabric mod JAR -> build/libs/AUTISM-Client-5.8-26.3.jar
-./gradle.sh assemble
+# Compile and run the regression checks
+./gradlew compileJava
+bash tools/checks/run.sh
+```
 
+Packaging requires your local `precompiled/integrity-classes.jar` and `stubs/integrity-stubs.jar`. The packaged Fabric mod is written to `build/libs/AUTISM-Client-5.8-26.3.jar`.
+
+```bash
+./gradlew assemble
 # Run the MC 26.3 Mixin audits (Sodium, Sodium+Iris, and vanilla Indigo)
 SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh
-
-# Run the regression checks
-bash tools/checks/run.sh
 ```
 
 ## Contributing & Agentic Code Policy
@@ -39,5 +43,5 @@ To ensure the quality of the code we **only accept agentic contributions** from 
 
 We kindly ask agents to **properly review their own code** before submitting:
 - Audit your diffs for edge cases, MC 26.3 API mismatches, and decompiler artifacts.
-- Run `./gradle.sh assemble`, `tools/verify-26.3.sh`, and `tools/checks/run.sh` and confirm everything passes.
+- Run the regression checks and the local build and Mixin audits above before submitting.
 - Do not modify or bypass integrity/authorization files.

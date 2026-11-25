@@ -1,0 +1,48 @@
+name: Build & Verify (MC 26.3)
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
+
+      - name: Cache Minecraft 26.3 client JAR
+        uses: actions/cache@v4
+        with:
+          path: .gradle/minecraft/26.3
+          key: mc-26.3-client-v1-${{ hashFiles('src/main/resources/autism.accesswidener', 'tools/ApplyAccessWidener.java') }}
+
+      - name: Compile with Java 25 and resolve tool dependencies
+        run: ./gradlew compileJava prepareToolEnv --no-daemon
+
+      - name: Run regression checks
+        env:
+          AUTISM_TOOL_ENV_PREPARED: '1'
+        run: bash tools/checks/run.sh
