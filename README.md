@@ -9,9 +9,11 @@ The goal, obviously, is to end up with something much shorter, cleaner and actua
 
 ## Branches
 
-- `master`: **AUTISM Client 5.8** (Minecraft 26.3, release branch)
+- `master`: **AUTISM Client 5.8** (Minecraft 26.3, stable and verified release branch)
 - `dev`: **AUTISM Client 5.8** (Minecraft 26.3, active development)
 - `5.3-patched`: Legacy **AUTISM Client 5.3** (Minecraft 26.3 patched)
+
+Open pull requests against `dev`.
 
 ## Building & Verifying Locally
 
