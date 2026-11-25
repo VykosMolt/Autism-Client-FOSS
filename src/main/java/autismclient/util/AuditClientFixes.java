@@ -50,6 +50,10 @@ public final class AuditClientFixes {
       return autismclient.modules.am.update();
    }
 
+   public static boolean isFreecamActive() {
+      return autismclient.modules.aC.init_Z();
+   }
+
    public static boolean isNoRenderInWallOverlay() {
       return autismclient.modules.az.close();
    }
@@ -63,7 +67,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean shouldSuppressInWallOverlay() {
-      return isNoRenderInWallOverlay() || shouldKeepNoPhysics();
+      return isNoRenderInWallOverlay() || shouldKeepNoPhysics() || isFreecamActive();
    }
 
    public static boolean isBoatFlyEnabled() {
