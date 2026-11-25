@@ -14,7 +14,7 @@ The goal, obviously, is to end up with something much shorter, cleaner and actua
 
 ## Building & Verifying Locally
 
-Requires **Java 25**, Minecraft `26.3` libraries (listed in a local `cp26.3.txt` file, gitignored), and your local `precompiled/integrity-classes.jar` + `stubs/integrity-stubs.jar`.
+Requires **Java 25** (Minecraft `26.3` and all mod dependencies are downloaded automatically via Mojang and Maven; optional local `cp26.3.txt` is still supported for offline builds).
 
 ```bash
 # Build the Fabric mod JAR -> build/libs/AUTISM-Client-5.8-26.3.jar

@@ -191,7 +191,6 @@ dependencies {
     }
 
     compileOnly files('stubs/compat-stubs.jar')
-    compileOnly files('stubs/integrity-stubs.jar')
     compileOnly files('src/main/resources/autism-ai/worker.jar')
     compileOnly fileTree(dir: 'src/main/resources/META-INF/jars', include: ['*.jar'])
     compileOnly fileTree(dir: 'libs', include: ['**/*.jar'])
@@ -209,7 +208,7 @@ tasks.withType(JavaCompile).configureEach {
 tasks.register('packageModJar', Exec) {
     dependsOn tasks.named('compileJava')
     group = 'build'
-    description = 'Reverse-remaps compiled classes back to runtime ABI, overlays untouched stock classes, and packages the runnable Fabric mod JAR.'
+    description = 'Reverse-remaps compiled classes back to runtime ABI and packages the runnable Fabric mod JAR.'
     def javaBin = "${System.getProperty('java.home')}/bin/java"
     def classesDir = layout.buildDirectory.dir('classes/java/main').get().asFile
     def outJar = layout.buildDirectory.file("libs/AUTISM-Client-${version}.jar").get().asFile
@@ -217,8 +216,6 @@ tasks.register('packageModJar', Exec) {
     inputs.dir(file('src/main/resources'))
     inputs.files(
         file('tools/ReverseRemapJar.java'),
-        file('stubs/integrity-stubs.jar'),
-        file('precompiled/integrity-classes.jar'),
         file('mappings/disambig.tsv'),
         file('mappings/enum-names.tsv'),
         file('mappings/record-names.tsv')
@@ -230,8 +227,8 @@ tasks.register('packageModJar', Exec) {
             '-cp', configurations.asmTools.asPath,
             file('tools/ReverseRemapJar.java').absolutePath,
             classesDir.absolutePath,
-            file('stubs/integrity-stubs.jar').absolutePath,
-            file('precompiled/integrity-classes.jar').absolutePath,
+            '-',
+            '-',
             file('src/main/resources').absolutePath,
             file('mappings/disambig.tsv').absolutePath,
             outJar.absolutePath

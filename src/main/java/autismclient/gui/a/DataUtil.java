@@ -1296,7 +1296,6 @@ public final class DataUtil {
    private void start() {
       this.init_BufferHelper.close_V();
       L.load_V();
-      autismclient.a.DataUtil.load_V();
       bi.init("Signed out of matchmaking.", -14249);
    }
 

@@ -1,8 +1,6 @@
 package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
-import autismclient.e.PoolEntry;
-import autismclient.gui.d.JsonUtil;
 import autismclient.gui.d.ListPool;
 import autismclient.gui.d.RefQueue;
 import autismclient.gui.d.UtilCore;
@@ -85,10 +83,7 @@ public class AutismGuiSetScreenMixin {
          cx.update();
       }
 
-      if (!AutismLiteVariant.enabled() && screen instanceof JsonUtil) {
-         cx.update();
-         BitSetUtil.init_V();
-      } else if (!this.autism$replacingScreen && cx.init(this.minecraft, this.screen, screen)) {
+      if (!this.autism$replacingScreen && cx.init(this.minecraft, this.screen, screen)) {
          ci.cancel();
       } else {
          if (!cx.read_Z()) {
@@ -104,10 +99,7 @@ public class AutismGuiSetScreenMixin {
                this.autism$setScreen(new ListPool());
                ci.cancel();
             } else if (screen instanceof TitleScreen) {
-               if (!aD.init_Z() && !AutismLiteVariant.enabled() && !PoolEntry.init()) {
-                  this.autism$setScreen(new JsonUtil());
-                  ci.cancel();
-               } else if (aD.init_Z()) {
+               if (aD.init_Z()) {
                   this.autism$setScreen(new RefQueue());
                   ci.cancel();
                } else if (!AutismLiteVariant.enabled() && aT.init()) {
