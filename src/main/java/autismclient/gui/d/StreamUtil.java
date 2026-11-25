@@ -5,7 +5,7 @@ import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismHttp;
-import autismclient.util.MicrosoftAuth;
+import autismclient.util.aW;
 import autismclient.util.cA;
 import autismclient.util.ct;
 import autismclient.util.cz;
@@ -478,7 +478,7 @@ public class StreamUtil extends KeyHolder {
 
    private void write_V_11() {
       int id = this.init_I_StreamUtil_CachePo(StreamUtil.Inner_CachePool.write);
-      MicrosoftAuth.init(refreshToken -> {
+      aW.init(refreshToken -> {
          if (!this.init_Z_I_3(id)) {
             if (refreshToken != null && !refreshToken.isBlank()) {
                autismclient.util.BitSetUtil account = new autismclient.util.BitSetUtil();
@@ -556,7 +556,7 @@ public class StreamUtil extends KeyHolder {
    private void init_V_BitSetUtil_I(autismclient.util.BitSetUtil account, int id) {
       this.minecraft.execute(() -> {
          if (!this.init_Z_I_3(id)) {
-            MicrosoftAuth.init(refreshToken -> {
+            aW.init(refreshToken -> {
                if (!this.init_Z_I_3(id)) {
                   if (refreshToken != null && !refreshToken.isBlank()) {
                      account.load_Str = refreshToken;
@@ -884,7 +884,7 @@ public class StreamUtil extends KeyHolder {
          }
 
          if (this.init_StreamUtil_CachePo == StreamUtil.Inner_CachePool.write) {
-            MicrosoftAuth.init_V();
+            aW.init_V();
          }
 
          if (this.init_StreamUtil_CachePo == StreamUtil.Inner_CachePool.update) {

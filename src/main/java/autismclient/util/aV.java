@@ -168,9 +168,9 @@ public final class aV {
          if (root != null) {
             for (Tag element : root.getListOrEmpty("proxies")) {
                if (element instanceof CompoundTag tag) {
-                  ProxyEntry proxy = init_bW(tag);
+                  bW proxy = init_bW(tag);
                   if (proxy != null && proxy.init_Z() && state.load_Set.add(init(proxy))) {
-                     ProxyManager.init_bY().init_Z_bW(proxy);
+                     bY.init_bY().init_Z_bW(proxy);
                   }
                }
             }
@@ -184,12 +184,12 @@ public final class aV {
       return true;
    }
 
-   private static ProxyEntry init_bW(CompoundTag proxyTag) {
+   private static bW init_bW(CompoundTag proxyTag) {
       Optional<CompoundTag> settings = proxyTag.getCompound("settings");
       return settings.isPresent() ? load(settings.get()) : read(proxyTag);
    }
 
-   private static ProxyEntry load(CompoundTag settings) {
+   private static bW load(CompoundTag settings) {
       Map<String, CompoundTag> byName = new HashMap<>();
 
       for (Tag groupTag : settings.getListOrEmpty("groups")) {
@@ -215,7 +215,7 @@ public final class aV {
       );
    }
 
-   private static ProxyEntry read(CompoundTag tag) {
+   private static bW read(CompoundTag tag) {
       return init(
          tag.getStringOr("address", ""),
          tag.getIntOr("port", 0),
@@ -226,15 +226,15 @@ public final class aV {
       );
    }
 
-   private static ProxyEntry init(String address, int port, String name, String username, String password, String type) {
+   private static bW init(String address, int port, String name, String username, String password, String type) {
       if (address != null && !address.isBlank() && port > 0) {
-         ProxyEntry proxy = new ProxyEntry();
+         bW proxy = new bW();
          proxy.read = address.trim();
          proxy.init_I = port;
          proxy.load_Str = name == null ? "" : name;
          proxy.write = username == null ? "" : username;
          proxy.update = password == null ? "" : password;
-         proxy.init_bZ = type != null && type.toLowerCase(Locale.ROOT).contains("4") ? ProxyType.init : ProxyType.load;
+         proxy.init_bZ = type != null && type.toLowerCase(Locale.ROOT).contains("4") ? bZ.init : bZ.load;
          proxy.init_Z = false;
          return proxy;
       } else {
@@ -252,7 +252,7 @@ public final class aV {
       return setting == null ? def : setting.getIntOr("value", def);
    }
 
-   private static String init(ProxyEntry proxy) {
+   private static String init(bW proxy) {
       return proxy.init_bZ.name() + "|" + proxy.read.trim().toLowerCase(Locale.ROOT) + "|" + proxy.init_I;
    }
 

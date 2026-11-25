@@ -1,6 +1,7 @@
 package autismclient.modules;
 
 import autismclient.util.AuditClientFixes;
+import autismclient.util.AutismLiteVariant;
 import autismclient.util.PkgCls_g;
 import autismclient.util.PkgCls_h;
 import autismclient.util.bk;
@@ -110,7 +111,7 @@ public final class am {
    }
 
    static boolean init_Z() {
-      return aD.init_Z();
+      return aD.init_Z() ? true : !AutismLiteVariant.enabled() && !autismclient.e.RenderState.init();
    }
 
    public static boolean load_Z() {

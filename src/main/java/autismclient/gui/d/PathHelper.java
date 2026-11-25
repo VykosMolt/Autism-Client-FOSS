@@ -3,8 +3,8 @@ package autismclient.gui.d;
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.l;
-import autismclient.util.ProxyEntry;
-import autismclient.util.ProxyManager;
+import autismclient.util.bW;
+import autismclient.util.bY;
 import autismclient.util.cA;
 import autismclient.util.ct;
 import autismclient.util.k;
@@ -749,7 +749,7 @@ public final class PathHelper extends KeyHolder {
          return "Best Proxy";
       }
 
-      ProxyEntry proxy = ProxyManager.init_bY().init_bW_Str(proxyId);
+      bW proxy = bY.init_bY().init_bW_Str(proxyId);
       return proxy == null ? "Missing" : proxy.init_Str();
    }
 

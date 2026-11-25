@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.modules.ScaffoldModule;
+import autismclient.modules.aI;
 import autismclient.util.cn;
 import autismclient.util.macro.g;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -40,7 +40,7 @@ public class AutismKillAuraRotationMixin {
          return g.init((LocalPlayer)camera, original);
       }
 
-      Vec3 scaffold = ScaffoldModule.init_Vec3_LocalPlayer_Vec3((LocalPlayer)camera, original);
+      Vec3 scaffold = aI.init_Vec3_LocalPlayer_Vec3((LocalPlayer)camera, original);
       return cn.init((LocalPlayer)camera, scaffold);
    }
 }

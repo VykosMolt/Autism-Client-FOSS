@@ -7,7 +7,7 @@ import autismclient.ai.ca;
 import autismclient.ai.cc;
 import autismclient.ai.a.IoWorker;
 import autismclient.ai.a.a;
-import autismclient.modules.AnchorAuraModule;
+import autismclient.modules.BufferHelper;
 import autismclient.modules.ByteReader;
 import autismclient.modules.E;
 import autismclient.modules.PoolEntry;
@@ -16,7 +16,7 @@ import autismclient.modules.StateCache;
 import autismclient.modules.SyncManager;
 import autismclient.modules.X;
 import autismclient.modules.aD;
-import autismclient.modules.ScaffoldModule;
+import autismclient.modules.aI;
 import autismclient.modules.ac;
 import autismclient.modules.af;
 import autismclient.modules.al;
@@ -39,6 +39,7 @@ import autismclient.util.e.DataUtil;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.h.CachePool;
 import autismclient.util.macro.b;
+import autismclient.util.mm.TaskQueue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -302,8 +303,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$aiBlockApplied(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
       af.init_V_Packet(packet);
       if (!AutismLiteVariant.enabled()) {
-         ScaffoldModule.init_V_BlockPos_BlockState_2(packet.getPos(), packet.getBlockState());
-         AnchorAuraModule.init_V_BlockPos_BlockState(packet.getPos(), packet.getBlockState());
+         aI.init_V_BlockPos_BlockState_2(packet.getPos(), packet.getBlockState());
+         BufferHelper.init_V_BlockPos_BlockState(packet.getPos(), packet.getBlockState());
          ca.init(packet.getPos(), packet.getBlockState());
          IoWorker.init(packet.getPos());
          a.init(packet.getPos(), packet.getBlockState());
@@ -316,8 +317,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          boolean[] bumped = new boolean[]{false};
          packet.runUpdates((pos, state) -> {
-            ScaffoldModule.init_V_BlockPos_BlockState_2(pos, state);
-            AnchorAuraModule.init_V_BlockPos_BlockState(pos, state);
+            aI.init_V_BlockPos_BlockState_2(pos, state);
+            BufferHelper.init_V_BlockPos_BlockState(pos, state);
             ca.init(pos, state);
             a.init(pos, state);
             if (!bumped[0]) {
@@ -463,9 +464,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
    @Inject(method = "handleBlockChangedAck", at = @At("RETURN"))
    private void autism$onBlockPredictionAckApplied(ClientboundBlockChangedAckPacket packet, CallbackInfo ci) {
-      ScaffoldModule.init_V_I_8(packet.sequence());
+      aI.init_V_I_8(packet.sequence());
       if (!AutismLiteVariant.enabled()) {
-         AnchorAuraModule.init_V_I(packet.sequence());
+         BufferHelper.init_V_I(packet.sequence());
       }
 
       if (!AutismLiteVariant.enabled()) {
@@ -507,7 +508,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$captureView() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
-         ce.Inner_DataUtil wire = ScaffoldModule.load_ce_DataUtil_3();
+         ce.Inner_DataUtil wire = aI.load_ce_DataUtil_3();
          if (wire != null) {
             this.autism$viewYaw = mc.player.getYRot();
             this.autism$viewPitch = mc.player.getXRot();
@@ -525,7 +526,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (this.autism$viewCaptured) {
          this.autism$viewCaptured = false;
          if (mc.player != null) {
-            ScaffoldModule.init_V_F_F(mc.player.getYRot(), mc.player.getXRot());
+            aI.init_V_F_F(mc.player.getYRot(), mc.player.getXRot());
             mc.player.setYRot(this.autism$viewYaw);
             mc.player.setXRot(this.autism$viewPitch);
             mc.player.yRotO = this.autism$viewYawO;
@@ -584,7 +585,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
          this.autism$clutchCorrectionFrom = null;
          PkgCls_a.init_V_J_Vec3(correctionToken, mc.player.position());
-         ScaffoldModule.sync_V_6();
+         aI.sync_V_6();
       }
    }
 
@@ -621,6 +622,13 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          if (overlay != null) {
             overlay.set_V_9();
          }
+      }
+   }
+
+   @Inject(method = "sendUnattendedCommand", at = @At("HEAD"), cancellable = true)
+   private void autism$interceptCardClick(String command, Screen screen, CallbackInfo ci) {
+      if (!AutismLiteVariant.enabled() && TaskQueue.init(command)) {
+         ci.cancel();
       }
    }
 

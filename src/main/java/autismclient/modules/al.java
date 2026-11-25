@@ -362,6 +362,9 @@ public final class al {
    }
 
    public static boolean init_Z_Str_ak_StreamUtil(String idOrName, autismclient.util.macro.ak.Inner_StreamUtil mode) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
+         return false;
+      }
 
       Module module = init_Module_Str(idOrName);
       if (module == null) {
@@ -668,6 +671,9 @@ public final class al {
 
    public static void update_V() {
       boolean locked = false;
+      if (!AutismLiteVariant.enabled() && !autismclient.e.PacketUtil.init()) {
+         locked = true;
+      }
 
       if (locked != load_Z) {
          load_Z = locked;
@@ -682,7 +688,7 @@ public final class al {
    }
 
    public static void sync_V() {
-      if (init_Z && init_Minecraft != null && !aD.init_Z() && read_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.FileCache.init()) && init_Z && init_Minecraft != null && !aD.init_Z() && read_Z()) {
          if (!flush_List().isEmpty()) {
             get_V();
          }
@@ -751,7 +757,7 @@ public final class al {
    }
 
    public static void flush_V() {
-      if (init_Z && init_Minecraft != null && !aD.init_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.ArrayUtil.init()) && init_Z && init_Minecraft != null && !aD.init_Z()) {
          for (Module module : get_List()) {
             if (module.isAddon()) {
                init_V_Module(module, "preMovementTick", module::preMovementTick);
@@ -763,7 +769,7 @@ public final class al {
    }
 
    public static void close_V() {
-      if (init_Z && init_Minecraft != null && !aD.init_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.MethodUtil.init()) && init_Z && init_Minecraft != null && !aD.init_Z()) {
          for (Module module : set()) {
             if (module.isAddon()) {
                init_V_Module(module, "onNetworkMovementTickPre", module::onNetworkMovementTickPre);
@@ -775,7 +781,7 @@ public final class al {
    }
 
    public static void open_V() {
-      if (init_Z && init_Minecraft != null && !aD.init_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.FileCache.init()) && init_Z && init_Minecraft != null && !aD.init_Z()) {
          for (Module module : put()) {
             if (module.isAddon()) {
                init_V_Module(module, "onPacketProcessFrame", module::onPacketProcessFrame);
@@ -787,7 +793,7 @@ public final class al {
    }
 
    public static void poll_V() {
-      if (init_Z && init_Minecraft != null && !aD.init_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.PoolEntry.init()) && init_Z && init_Minecraft != null && !aD.init_Z()) {
          for (Module module : run.init_Obj()) {
             if (module.isAddon()) {
                init_V_Module(module, "onInputFrame", module::onInputFrame);
@@ -799,6 +805,9 @@ public final class al {
    }
 
    public static boolean run_Z() {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.ArrayUtil.init()) {
+         return false;
+      }
 
       if (init_Z && init_Minecraft != null && !aD.init_Z()) {
          for (Module module : add()) {
@@ -817,7 +826,8 @@ public final class al {
    }
 
    public static void init_V_F(float partialTick) {
-      if (init_Z
+      if ((AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init())
+         && init_Z
          && init_Minecraft != null
          && init_Minecraft.level != null
          && init_Minecraft.player != null
@@ -835,7 +845,7 @@ public final class al {
    }
 
    public static void init_V_D_D(double deltaYaw, double deltaPitch) {
-      if (init_Z && init_Minecraft != null && !aD.init_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.PoolEntry.init()) && init_Z && init_Minecraft != null && !aD.init_Z()) {
          for (Module module : reset()) {
             if (module.isAddon()) {
                init_V_Module(module, "onMouseRotation", () -> module.onMouseRotation(deltaYaw, deltaPitch));
@@ -847,6 +857,9 @@ public final class al {
    }
 
    public static Vec3 init_Vec3_MoverType_Vec3(MoverType type, Vec3 movement) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init()) {
+         return movement;
+      }
 
       if (init_Z && init_Minecraft != null && movement != null) {
          if (aD.init_Z()) {
@@ -891,18 +904,22 @@ public final class al {
    }
 
    public static void push_V() {
-      read_Z = false;
-      run_V();
-      boolean profileJoin = bK.load_Z();
+      if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
+         read_Z = true;
+      } else {
+         read_Z = false;
+         run_V();
+         boolean profileJoin = bK.load_Z();
 
-      for (Module module : init_Map.values()) {
-         if (module.isEnabled() || module.ticksWhenDisabled()) {
-            if (profileJoin) {
-               long perf = bK.read_J();
-               read(module);
-               bK.load("join.module.onGameJoin." + module.id(), perf);
-            } else {
-               read(module);
+         for (Module module : init_Map.values()) {
+            if (module.isEnabled() || module.ticksWhenDisabled()) {
+               if (profileJoin) {
+                  long perf = bK.read_J();
+                  read(module);
+                  bK.load("join.module.onGameJoin." + module.id(), perf);
+               } else {
+                  read(module);
+               }
             }
          }
       }
@@ -918,21 +935,26 @@ public final class al {
 
    public static void pop_V() {
       read_Z = false;
-      for (Module module : init_Map.values()) {
-         if (module.isEnabled() || module.ticksWhenDisabled()) {
-            if (module.isAddon()) {
-               init_V_Module(module, "onGameLeft", module::onGameLeft);
-            } else {
-               module.onGameLeft();
+      if (AutismLiteVariant.enabled() || autismclient.e.FileCache.init()) {
+         for (Module module : init_Map.values()) {
+            if (module.isEnabled() || module.ticksWhenDisabled()) {
+               if (module.isAddon()) {
+                  init_V_Module(module, "onGameLeft", module::onGameLeft);
+               } else {
+                  module.onGameLeft();
+               }
             }
          }
-      }
 
-      load_Map.clear();
-      write_Z = false;
+         load_Map.clear();
+         write_Z = false;
+      }
    }
 
    public static boolean init_Z_Packet(Packet<?> packet) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.FileCache.init()) {
+         return false;
+      }
 
       if (aD.init_Z()) {
          return false;
@@ -953,6 +975,9 @@ public final class al {
    }
 
    public static boolean load_Z_Packet(Packet<?> packet) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.SyncManager.init()) {
+         return false;
+      }
 
       if (aD.init_Z()) {
          return false;
@@ -980,7 +1005,7 @@ public final class al {
    }
 
    public static void init_V_ClientboundSoundPa(ClientboundSoundPacket packet) {
-      if (init_Z && !aD.init_Z() && poll_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.RefQueue.init()) && init_Z && !aD.init_Z() && poll_Z()) {
          for (Module module : push_List()) {
             if (module.isAddon()) {
                init_V_Module(module, "onSoundPacket", () -> module.onSoundPacket(packet));
@@ -992,7 +1017,7 @@ public final class al {
    }
 
    public static void init_V_BlockPos_Direction(BlockPos pos, Direction direction) {
-      if (init_Z && !aD.init_Z() && push_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.ArrayUtil.init()) && init_Z && !aD.init_Z() && push_Z()) {
          for (Module module : tick_List()) {
             if (module.isAddon()) {
                init_V_Module(module, "onBlockBreakingProgress", () -> module.onBlockBreakingProgress(pos, direction));
@@ -1054,6 +1079,9 @@ public final class al {
    }
 
    public static float init_F_F_BlockPos(float original, BlockPos pos) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.PacketUtil.init()) {
+         return original;
+      }
 
       if (init_Z && !aD.init_Z()) {
          if (init_Module_Str("fast-break") instanceof f.Inner_RenderState fastBreak
@@ -1072,6 +1100,9 @@ public final class al {
    }
 
    public static boolean init_Z_BlockPos_Direction(BlockPos pos, Direction direction) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
+         return false;
+      }
 
       if (init_Z && !aD.init_Z()) {
          if (!pop_Z()) {
@@ -1094,6 +1125,9 @@ public final class al {
    }
 
    public static boolean load_Z_BlockPos_Direction(BlockPos pos, Direction direction) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init()) {
+         return false;
+      }
 
       if (init_Z && !aD.read_Z() && pop_Z()) {
          for (Module module : run_List()) {
@@ -1118,6 +1152,9 @@ public final class al {
    }
 
    public static boolean init_Z_HitResult(HitResult hitResult) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.MethodUtil.init()) {
+         return false;
+      }
 
       if (init_Z && !aD.read_Z() && open_Z()) {
          for (Module module : stop()) {
@@ -1140,6 +1177,9 @@ public final class al {
    }
 
    public static boolean init_Z_HitResult(HitResult hitResult, InteractionHand hand, String excludedModuleId) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.SyncManager.init()) {
+         return false;
+      }
 
       if (init_Z && !aD.read_Z() && open_Z()) {
          for (Module module : stop()) {
@@ -1160,7 +1200,7 @@ public final class al {
    }
 
    public static void init_V_ItemStack_List(ItemStack stack, List<?> lines) {
-      if (init_Z && !aD.read_Z() && close_Z()) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.ArrayUtil.init()) && init_Z && !aD.read_Z() && close_Z()) {
          for (Module module : start()) {
             if (module.isAddon()) {
                init_V_Module(module, "appendTooltip", () -> module.appendTooltip(stack, lines));

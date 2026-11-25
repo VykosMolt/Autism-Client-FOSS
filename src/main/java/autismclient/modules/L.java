@@ -1,5 +1,6 @@
 package autismclient.modules;
 
+import autismclient.util.AutismLiteVariant;
 import java.util.Locale;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ public final class L {
    }
 
    private static boolean update() {
-      return true;
+      return AutismLiteVariant.enabled() || autismclient.e.RenderState.init();
    }
 
    public static boolean init_Z() {

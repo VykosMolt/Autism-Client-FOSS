@@ -95,7 +95,7 @@ public final class ListPool {
          && !f.load()
          && !cn.init_Z()
          && !autismclient.modules.HashUtil.init_Z()
-         && !autismclient.modules.AutoTotemModule.init_Z_6()
+         && !autismclient.modules.FieldCache.init_Z_6()
          && !autismclient.modules.TableIndex.init_Z_20();
    }
 
@@ -334,7 +334,7 @@ public final class ListPool {
          && open()
          && !s.flush_Z()
          && !autismclient.modules.aa.init_Z_31()
-         && !autismclient.modules.ScaffoldModule.init_Z_26()
+         && !autismclient.modules.aI.init_Z_26()
          && !f.load()
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.aC.init_Z()

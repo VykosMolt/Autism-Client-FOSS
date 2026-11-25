@@ -16,6 +16,7 @@ import autismclient.util.AutismLANSyncOverlay;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismMacroEditorOverlay;
 import autismclient.util.AutismMacroListOverlay;
+import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismPacketSelectorOverlay;
 import autismclient.util.AutismQueueEditorOverlay;
@@ -686,6 +687,20 @@ public class HashUtil extends KeyHolder implements autismclient.gui.f.StreamUtil
                   this.load(globalx.init_AutismServerInfoOv());
                }
                break;
+            case "matchmaking":
+               autismclient.modules.PoolEntry global = autismclient.modules.PoolEntry.init_PoolEntry();
+               if (global != null) {
+                  cX mm = global.init_cX();
+                  if (mm != null) {
+                     bk.init_bk().init_V(mm);
+                     ((AutismMatchmakingOverlay)mm).load(true);
+                     mm.init_V_Z(true);
+                     if (this.minecraft != null) {
+                        this.minecraft.gui.setScreen(new TaskTimer(mm, this, true));
+                     }
+                  }
+               }
+               break;
             case "multi":
                if (this.minecraft != null) {
                   RingBuffer.init(this.minecraft, this, () -> this.minecraft.gui.setScreen(new PathHelper(this, "")));
@@ -720,6 +735,14 @@ public class HashUtil extends KeyHolder implements autismclient.gui.f.StreamUtil
                   if (serverInfo != null) {
                      bk.init_bk().init_V(serverInfo);
                      this.load(serverInfo);
+                  }
+                  break;
+               case "matchmaking":
+                  cX matchmaking = global.init_cX();
+                  if (matchmaking != null) {
+                     bk.init_bk().init_V(matchmaking);
+                     ((AutismMatchmakingOverlay)matchmaking).load(false);
+                     this.load(matchmaking);
                   }
                   break;
                case "multi":

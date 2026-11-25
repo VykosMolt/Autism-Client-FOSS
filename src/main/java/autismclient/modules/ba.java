@@ -266,12 +266,12 @@ final class ba extends Module {
          || MC.player == null
          || MC.level == null
          || MC.gui.screen() != null
-         || ScaffoldModule.read_Z_12()
-         || ScaffoldModule.update_Z_5()
+         || aI.read_Z_12()
+         || aI.update_Z_5()
          || cn.init_ce_DataUtil() != null
-         || ScaffoldModule.flush_Z_5()
+         || aI.flush_Z_5()
          || f.load()
-         || AutoTotemModule.init_Z_6()
+         || FieldCache.init_Z_6()
          || !this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
    }
 

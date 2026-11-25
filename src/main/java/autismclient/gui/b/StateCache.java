@@ -15,8 +15,8 @@ import autismclient.util.MethodUtil;
 import autismclient.util.TokenStore;
 import autismclient.util.aM;
 import autismclient.util.aN;
-import autismclient.util.ProxyEntry;
-import autismclient.util.ProxyManager;
+import autismclient.util.bW;
+import autismclient.util.bY;
 import autismclient.util.bi;
 import autismclient.util.bw;
 import autismclient.util.cY;
@@ -3526,7 +3526,7 @@ public final class StateCache {
          return "Best Proxy";
       }
 
-      ProxyEntry proxy = ProxyManager.init_bY().init_bW_Str(id);
+      bW proxy = bY.init_bY().init_bW_Str(id);
       return proxy == null ? "Missing" : proxy.init_Str();
    }
 

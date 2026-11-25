@@ -2,7 +2,12 @@ package autismclient.api.event;
 
 import autismclient.AutismClientAddon;
 import autismclient.b.DataUtil;
+import autismclient.e.CharEncoder;
+import autismclient.e.FileCache;
+import autismclient.e.PacketUtil;
+import autismclient.e.PoolEntry;
 import autismclient.modules.aD;
+import autismclient.util.AutismLiteVariant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,6 +116,10 @@ public final class AddonEvents {
          return false;
       }
 
+      if (!AutismLiteVariant.enabled() && !PoolEntry.init()) {
+         return false;
+      }
+
       if (PACKET_SEND.isEmpty()) {
          return false;
       }
@@ -129,7 +138,7 @@ public final class AddonEvents {
    }
 
    public static void firePacketReceive(Packet<?> packet) {
-      if (!aD.read_Z() && !PACKET_RECEIVE.isEmpty()) {
+      if (!aD.read_Z() && (AutismLiteVariant.enabled() || PacketUtil.init()) && !PACKET_RECEIVE.isEmpty()) {
          for (AddonEvents.OwnedConsumer<Packet<?>> l : PACKET_RECEIVE) {
             try {
                l.listener().accept(packet);
@@ -141,7 +150,7 @@ public final class AddonEvents {
    }
 
    public static void fireGameJoin() {
-      if (!aD.read_Z() && !GAME_JOIN.isEmpty()) {
+      if (!aD.read_Z() && (AutismLiteVariant.enabled() || FileCache.init()) && !GAME_JOIN.isEmpty()) {
          for (AddonEvents.OwnedRunnable l : GAME_JOIN) {
             try {
                l.listener().run();
@@ -153,7 +162,7 @@ public final class AddonEvents {
    }
 
    public static void fireGameLeft() {
-      if (!aD.read_Z() && !GAME_LEFT.isEmpty()) {
+      if (!aD.read_Z() && (AutismLiteVariant.enabled() || CharEncoder.init()) && !GAME_LEFT.isEmpty()) {
          for (AddonEvents.OwnedRunnable l : GAME_LEFT) {
             try {
                l.listener().run();

@@ -49,7 +49,7 @@ public final class cJ {
    }
 
    public static boolean init_Z() {
-      return init_Z && !autismclient.modules.aD.read_Z();
+      return !AutismLiteVariant.enabled() && !autismclient.e.TokenStore.init() ? false : init_Z && !autismclient.modules.aD.read_Z();
    }
 
    public static void load() {

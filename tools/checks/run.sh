@@ -3,18 +3,14 @@
 set -uo pipefail
 ROOT="${ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 REAL_HOME="${REAL_HOME:-$HOME}"
-JDK_DIR="${JAVA_HOME:-$(find "$REAL_HOME/.gradle/jdks" "$REAL_HOME/.local/share/gradle/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' 2>/dev/null | head -n 1 || true)}"
+JDK_DIR="${JAVA_HOME:-$(find "$REAL_HOME/.local/share/gradle/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' 2>/dev/null | head -n 1 || true)}"
 JDK="${JDK_DIR:+$JDK_DIR/bin}"
 JDK="${JDK:-$(dirname "$(readlink -f "$(command -v javac)")")}"
-
-ENV_FILE="$ROOT/build/tool-env.sh"
-if [[ ! -f "$ENV_FILE" ]]; then
-  "$ROOT/gradle.sh" prepareToolEnv >/dev/null || exit 1
-fi
-# shellcheck source=/dev/null
-source "$ENV_FILE"
-
-CP="$CHECK_CP"
+GAME_CP="$(cat "$ROOT/cp26.3.txt")"
+LWJGL="$(find "$REAL_HOME/.local/share/PrismLauncher/libraries/org/lwjgl" -name '*3.4.3.jar' ! -name '*natives*' | paste -sd:)"
+JARS="$(find "$ROOT/libs" "$ROOT/src/main/resources/META-INF/jars" -name '*.jar' | paste -sd:)"
+LOADER="$REAL_HOME/.local/share/PrismLauncher/libraries/net/fabricmc"
+CP="$ROOT/build/classes/java/main:$GAME_CP:$LWJGL:$JARS:$LOADER/sponge-mixin/0.17.5+mixin.0.8.7/sponge-mixin-0.17.5+mixin.0.8.7.jar:$LOADER/fabric-loader/0.20.1/fabric-loader-0.20.1.jar:$ROOT/stubs/compat-stubs.jar"
 fail=0
 files=("$@")
 [ ${#files[@]} -eq 0 ] && files=("$ROOT"/tools/checks/*Check.java)

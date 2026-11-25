@@ -1,6 +1,6 @@
 package autismclient.util.g;
 
-import autismclient.util.ProxyEntry;
+import autismclient.util.bW;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -58,7 +58,7 @@ final class StreamGate {
       return serverOverride != null && serverOverride.init_Obj() != null ? serverOverride : global;
    }
 
-   static StreamGate.Inner_CachePool init(StreamGate.Inner_CachePool selected, InetSocketAddress address, String host, int port, ProxyEntry proxy) throws Exception {
+   static StreamGate.Inner_CachePool init(StreamGate.Inner_CachePool selected, InetSocketAddress address, String host, int port, bW proxy) throws Exception {
       return init(
          selected,
          () -> {

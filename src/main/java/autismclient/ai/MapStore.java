@@ -835,16 +835,16 @@ final class MapStore {
       String action = init(args, "list");
       return init(
          () -> {
-            autismclient.util.ProxyManager m = autismclient.util.ProxyManager.init_bY();
+            autismclient.util.bY m = autismclient.util.bY.init_bY();
             switch (action) {
                case "list":
                   break;
                case "add": {
-                  autismclient.util.ProxyEntry proxy = new autismclient.util.ProxyEntry();
+                  autismclient.util.bW proxy = new autismclient.util.bW();
                   proxy.load_Str = ag.init_Str_JsonObject(args, "name", load(args, "address"));
                   proxy.init_bZ = ag.init_Str_JsonObject(args, "type", "Socks5").equalsIgnoreCase("Socks4")
-                     ? autismclient.util.ProxyType.init
-                     : autismclient.util.ProxyType.load;
+                     ? autismclient.util.bZ.init
+                     : autismclient.util.bZ.load;
                   proxy.read = load(args, "address");
                   proxy.init_I = ag.init_I_JsonObject(args, "port", 0);
                   if (proxy.init_I < 1 || proxy.init_I > 65535) {
@@ -860,7 +860,7 @@ final class MapStore {
                }
                case "enable":
                case "disable": {
-                  autismclient.util.ProxyEntry proxy = init(m, args);
+                  autismclient.util.bW proxy = init(m, args);
                   m.init_V_bW_Z(proxy, action.equals("enable"));
                   break;
                }
@@ -872,9 +872,9 @@ final class MapStore {
             }
 
             JsonArray list = new JsonArray();
-            autismclient.util.ProxyEntry active = m.init_bW();
+            autismclient.util.bW active = m.init_bW();
 
-            for (autismclient.util.ProxyEntry p : m) {
+            for (autismclient.util.bW p : m) {
                list.add(
                   ag.init_JsonObject_ObjArr(
                      "id",
@@ -902,14 +902,14 @@ final class MapStore {
       );
    }
 
-   private static autismclient.util.ProxyEntry init(autismclient.util.ProxyManager m, JsonObject args) {
+   private static autismclient.util.bW init(autismclient.util.bY m, JsonObject args) {
       String key = load(args, "proxy");
-      autismclient.util.ProxyEntry byId = m.init_bW_Str(key);
+      autismclient.util.bW byId = m.init_bW_Str(key);
       if (byId != null) {
          return byId;
       }
 
-      for (autismclient.util.ProxyEntry p : m) {
+      for (autismclient.util.bW p : m) {
          if (key.equalsIgnoreCase(p.load_Str) || key.equalsIgnoreCase(p.read + ":" + p.init_I)) {
             return p;
          }
@@ -994,6 +994,99 @@ final class MapStore {
 
          return out;
       });
+   }
+
+   static JsonObject push(JsonObject args) {
+      String action = init(args, "status");
+      return init(
+         () -> {
+            autismclient.util.mm.BufferHelper mm = autismclient.util.mm.BufferHelper.init_BufferHelper();
+            long now = System.currentTimeMillis();
+            switch (action) {
+               case "status":
+                  break;
+               case "browse":
+                  mm.open_V();
+                  JsonArray lobbies = new JsonArray();
+
+                  for (autismclient.util.mm.StreamUtil l : mm.read_List()) {
+                     lobbies.add(
+                        ag.init_JsonObject_ObjArr(
+                           "lobbyId",
+                           l.init_Str,
+                           "name",
+                           l.load_Str,
+                           "members",
+                           l.init_I,
+                           "maxMembers",
+                           l.load_I,
+                           "official",
+                           l.load_Z,
+                           "server",
+                           l.read_Str,
+                           "full",
+                           l.init()
+                        )
+                     );
+                  }
+
+                  return ag.init_JsonObject_ObjArr("lobbies", lobbies);
+               case "join":
+                  mm.init_V_Str(load(args, "lobbyId"));
+                  return ag.init_JsonObject_ObjArr(
+                     "joining", ag.init_Str_JsonObject(args, "lobbyId", ""), "note", "Joining runs in the background; check status"
+                  );
+               case "leave":
+                  mm.close_V();
+                  break;
+               case "chat":
+                  if (!mm.read_Z()) {
+                     throw new IllegalStateException("Not in a lobby, or the chat is not ready");
+                  }
+
+                  mm.load_V_Str(load(args, "text"));
+                  break;
+               default:
+                  throw new IllegalArgumentException("Unknown action '" + action + "'; use status, browse, join, leave or chat");
+            }
+
+            JsonObject out = ag.init_JsonObject_ObjArr(
+               "connection",
+               mm.init_BufferHelper_DataU().name(),
+               "ready",
+               mm.open_Z(),
+               "inLobby",
+               mm.init_Z(),
+               "host",
+               mm.load_Z(),
+               "canSend",
+               mm.read_Z(),
+               "members",
+               mm.init_I(),
+               "joinPhase",
+               mm.init_BufferHelper_Strea().name()
+            );
+            if (!mm.flush_Str().isBlank()) {
+               out.addProperty("error", mm.flush_Str());
+            }
+
+            autismclient.util.mm.DataUtil lobby = mm.init_DataUtil();
+            if (lobby != null) {
+               out.add(
+                  "lobby", ag.init_JsonObject_ObjArr("name", lobby.load_Str, "public", lobby.init_Z, "maxPlayers", lobby.init_I, "shareCode", lobby.update)
+               );
+               JsonArray peers = new JsonArray();
+
+               for (autismclient.util.mm.RenderState p : mm.load_List()) {
+                  peers.add(ag.init_JsonObject_ObjArr("name", p.init(), "online", p.init_Z_J(now)));
+               }
+
+               out.add("peers", peers);
+            }
+
+            return out;
+         }
+      );
    }
 
    static JsonObject pop(JsonObject args) {

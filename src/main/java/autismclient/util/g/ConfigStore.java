@@ -1,8 +1,8 @@
 package autismclient.util.g;
 
 import autismclient.util.C;
-import autismclient.util.ProxyEntry;
-import autismclient.util.ProxyType;
+import autismclient.util.bW;
+import autismclient.util.bZ;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 import java.util.Map;
@@ -47,7 +47,7 @@ public final class ConfigStore {
    private ConfigStore() {
    }
 
-   public static void init(Connection connection, ProxyEntry proxy) {
+   public static void init(Connection connection, bW proxy) {
       if (connection != null) {
          ConfigStore.Inner_DataUtil spec = ConfigStore.Inner_DataUtil.init(proxy);
          if (connection instanceof C marker) {
@@ -95,8 +95,8 @@ public final class ConfigStore {
       }
    }
 
-   public record Inner_DataUtil(ProxyType init_bZ, String init_Str, int init_I, String load, String read) {
-      public static ConfigStore.Inner_DataUtil init(ProxyEntry proxy) {
+   public record Inner_DataUtil(bZ init_bZ, String init_Str, int init_I, String load, String read) {
+      public static ConfigStore.Inner_DataUtil init(bW proxy) {
          return proxy == null
             ? null
             : new ConfigStore.Inner_DataUtil(
@@ -108,8 +108,8 @@ public final class ConfigStore {
             );
       }
 
-      public ProxyEntry init_bW() {
-         ProxyEntry proxy = new ProxyEntry();
+      public bW init_bW() {
+         bW proxy = new bW();
          proxy.init_bZ = this.init_bZ;
          proxy.read = this.init_Str == null ? "" : this.init_Str;
          proxy.init_I = this.init_I;

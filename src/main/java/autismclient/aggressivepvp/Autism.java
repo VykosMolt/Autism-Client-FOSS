@@ -2,7 +2,7 @@ package autismclient.aggressivepvp;
 
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.modules.ByteReader;
-import autismclient.modules.AutoTotemModule;
+import autismclient.modules.FieldCache;
 import autismclient.modules.Module;
 import autismclient.modules.aL;
 import autismclient.modules.al;
@@ -48,7 +48,7 @@ public final class Autism {
 
     /** AUTISM's own Auto Totem is in the middle of a swap or click sequence. */
     public static boolean defaultTotemBusy() {
-        return AutoTotemModule.init_Z_6();
+        return FieldCache.init_Z_6();
     }
 
     public static boolean enabled(String moduleId) {

@@ -129,7 +129,7 @@ public final class cG {
          ScreenEvents.AFTER_INIT.register((mc, screen, width, height) -> {
             if (screen instanceof AbstractContainerScreen) {
                ScreenEvents.afterExtract(screen).register((shown, graphics, mouseX, mouseY, delta) -> {
-                  if (load_Z() && !mc.gui.hud.isHidden() && !autismclient.modules.aD.init_Z()) {
+                  if (load_Z() && !mc.gui.hud.isHidden() && !autismclient.modules.aD.init_Z() && autismclient.e.TokenStore.init()) {
                      graphics.nextStratum();
                      autismclient.util.cA.init_V_GuiGraphicsExtract(graphics);
 
@@ -829,7 +829,7 @@ public final class cG {
    private static void init(Vec3 camera) {
       long started = System.nanoTime();
       Minecraft mc = Minecraft.getInstance();
-      if ((!init_Map.isEmpty() || aP.init_cU() != null) && mc.level != null && !autismclient.modules.aD.init_Z()) {
+      if ((!init_Map.isEmpty() || aP.init_cU() != null) && mc.level != null && !autismclient.modules.aD.init_Z() && autismclient.e.ListPool.init()) {
          int cap = init_I(init_AiSettings.visualizationBlocks);
          int distance = Math.max(16, Math.min(256, init_AiSettings.visualizationDistance));
          double range = (double)distance * distance;

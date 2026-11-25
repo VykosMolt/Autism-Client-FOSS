@@ -196,6 +196,11 @@ public abstract class AutismDialogScreenMixin extends Screen {
       }
 
       if (!AutismLiteVariant.enabled()) {
+         cX matchmakingOverlay = PoolEntry.init_PoolEntry().init_cX();
+         if (matchmakingOverlay != null && matchmakingOverlay.sync_Z()) {
+            manager.init_V(matchmakingOverlay);
+         }
+
          cX profilesOverlay = PoolEntry.init_PoolEntry().load_cX();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
             manager.init_V(profilesOverlay);

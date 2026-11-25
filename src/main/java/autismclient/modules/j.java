@@ -789,7 +789,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
          && hit == clutch.init_BlockHitResult
          && i.init_Z_I(clutch.read_I_9(), clutch.chunk, 1)) {
          if (result != null && result.consumesAction()) {
-            ScaffoldModule.init_V_I_I(clutch.frame, clutch.block);
+            aI.init_V_I_I(clutch.frame, clutch.block);
             if (clutch.update_BlockPos != null && MC.level != null && !MC.level.getBlockState(clutch.update_BlockPos).isAir()) {
                cg.init(cg.Inner_DataUtil.load, clutch.update_BlockPos);
             }
@@ -822,7 +822,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
          && !HashUtil.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
-         && !AutoTotemModule.init_Z_6();
+         && !FieldCache.init_Z_6();
    }
 
    private static boolean put() {
@@ -1300,13 +1300,13 @@ public final class j extends Module implements cn.Inner_DataUtil {
                                           route, new k.Inner_NetHelper(link.init_BlockPos(), link.load_BlockPos(), link.init_Direction(), 0, 0), this.prev
                                        );
                                     if (current != null
-                                       && ScaffoldModule.init_Z_Vec3(
+                                       && aI.init_Z_Vec3(
                                           previousEye,
                                           this.init_j_ConfigStore.init_ce_DataUtil,
                                           current.init_U_CachePool.init_U_TaskQueue().load_BlockPos(),
                                           reach
                                        )
-                                       && ScaffoldModule.init_Z_Vec3(
+                                       && aI.init_Z_Vec3(
                                           previousEye,
                                           current.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil(),
                                           current.init_U_CachePool.init_U_TaskQueue().load_BlockPos(),
@@ -1318,7 +1318,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
                                  }
 
                                  if (!this.init_j_DataUtil.read
-                                    && ScaffoldModule.init_Z_Vec3(
+                                    && aI.init_Z_Vec3(
                                        previousEye,
                                        this.init_j_ConfigStore.init_ce_DataUtil,
                                        this.init_j_DataUtil.init_U_CachePool.init_U_TaskQueue().load_BlockPos(),
@@ -1815,7 +1815,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             && this.prev == selected
             && this.init_Z_ItemStack_9(MC.player.getInventory().getItem(selected))
             && !autismclient.util.ah.init(selected, this.id())
-            && ScaffoldModule.load_I_I(selected) > 0
+            && aI.load_I_I(selected) > 0
          ? selected
          : this.sync_I_2();
    }
@@ -1827,7 +1827,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
       for (int i = 0; i < 9; i++) {
          if (this.init_Z_ItemStack_9(MC.player.getInventory().getItem(i)) && !autismclient.util.ah.init(i, this.id())) {
-            int available = ScaffoldModule.load_I_I(i);
+            int available = aI.load_I_I(i);
             if (i == selected && available >= 8) {
                return selected;
             }
@@ -1911,7 +1911,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
                this.load_BlockPos,
                this.flush_I_2(),
                turnCost,
-               Math.max(0, ScaffoldModule.load_I_I(slot) - (assumed == null ? 0 : 1)),
+               Math.max(0, aI.load_I_I(slot) - (assumed == null ? 0 : 1)),
                this.init_DoubleUnaryOperato(),
                bestEffort ? range : 0.0,
                this.init_D_i_ConfigStore(forecast),
@@ -1947,7 +1947,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             this.load_BlockPos,
             this.flush_I_2(),
             null,
-            ScaffoldModule.load_I_I(slot),
+            aI.load_I_I(slot),
             this.init_DoubleUnaryOperato(),
             this.init_D_i_ConfigStore(forecast),
             forecast.load(),
@@ -1960,7 +1960,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
    }
 
    private j.Inner_BufferHelper init_j_BufferHelper_i_ConfigStore(i.Inner_ConfigStore forecast, int slot, int reserve) {
-      if (forecast.init_Z() && this.push_Z && i.load(this.init_i_TaskQueue) && slot >= 0 && !forecast.init_List().isEmpty() && ScaffoldModule.load_I_I(slot) > reserve) {
+      if (forecast.init_Z() && this.push_Z && i.load(this.init_i_TaskQueue) && slot >= 0 && !forecast.init_List().isEmpty() && aI.load_I_I(slot) > reserve) {
          List<AABB> bodies = new ArrayList<>(forecast.init_List().size() + 1);
          bodies.add(MC.player.getBoundingBox());
 
@@ -2346,7 +2346,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             }
          }
 
-         if (!ScaffoldModule.init_Z_Vec3(wireEye, rotation, support, reach)) {
+         if (!aI.init_Z_Vec3(wireEye, rotation, support, reach)) {
             return this.init_Z_Str_3("Corrected cube look");
          } else {
             Vec3 eye = MC.player.getEyePosition();
@@ -2878,7 +2878,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             }
 
             this.get++;
-            ce.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
+            ce.Inner_DataUtil resume = aI.read_ce_DataUtil();
             boolean bridge = this.valid();
             if (this.update_Z) {
                this.load_V_Z_3(bridge);
@@ -2903,7 +2903,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean valid() {
-      return ScaffoldModule.read_ce_DataUtil() != null || put();
+      return aI.read_ce_DataUtil() != null || put();
    }
 
    private void load_V_Z_3(boolean bridge) {
@@ -2911,7 +2911,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
       boolean ours = "clutch".equals(autismclient.util.aD.init_Str());
       if (bridge && end != null) {
          if (ours) {
-            float offset = ScaffoldModule.load_F_F_F(end.init(), MC.player.getYRot());
+            float offset = aI.load_F_F_F(end.init(), MC.player.getYRot());
             if (offset != 0.0F && Float.isFinite(offset)) {
                MC.player.setYRot(MC.player.getYRot() + offset);
                MC.player.yRotO += offset;
@@ -2924,7 +2924,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             }
          }
 
-         ScaffoldModule.load_V_ce_DataUtil(end);
+         aI.load_V_ce_DataUtil(end);
          if (ours) {
             autismclient.util.aD.load_V();
          }

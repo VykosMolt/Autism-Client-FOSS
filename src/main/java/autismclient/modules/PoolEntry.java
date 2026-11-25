@@ -6,6 +6,7 @@ import autismclient.compat263.CompatSwingPacket;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
+import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismMultiOverlay;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismPayloadSupport;
@@ -115,6 +116,7 @@ public final class PoolEntry {
    private volatile boolean poll;
    private volatile boolean push;
    private AutismServerInfoOverlay init_AutismServerInfoOv;
+   private cX init_cX;
    private cX load_cX;
    private cX read_cX;
    private final Deque<PoolEntry.Inner_StreamUtil> init_Deque = new ArrayDeque<>(96);
@@ -283,98 +285,100 @@ public final class PoolEntry {
    }
 
    private void pop_V() {
-      autismclient.util.bg.init_V_PoolEntry(this);
-      if (!AutismLiteVariant.enabled()) {
-         bV.init_bV().load();
-      }
-
-      autismclient.util.macro.J.update();
-      HashUtil.update();
-      autismclient.util.m.init(init_Minecraft);
-      boolean hidden = aD.init_Z();
-      if (hidden) {
-         this.run = false;
-         this.update_J = 0L;
-         bI.init_V();
-         bF.load();
-         AutismServerInfoOverlay hiddenServerInfo = this.load_AutismServerInfoOv();
-         if (hiddenServerInfo != null) {
-            hiddenServerInfo.poll_V_9();
+      if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
+         autismclient.util.bg.init_V_PoolEntry(this);
+         if (!AutismLiteVariant.enabled()) {
+            bV.init_bV().load();
          }
-      }
 
-      bK.read_V();
-      bF.init();
-      if (!hidden) {
-         bD.init(init_Minecraft, this.open_Z());
-      }
+         autismclient.util.macro.J.update();
+         HashUtil.update();
+         autismclient.util.m.init(init_Minecraft);
+         boolean hidden = aD.init_Z();
+         if (hidden) {
+            this.run = false;
+            this.update_J = 0L;
+            bI.init_V();
+            bF.load();
+            AutismServerInfoOverlay hiddenServerInfo = this.load_AutismServerInfoOv();
+            if (hiddenServerInfo != null) {
+               hiddenServerInfo.poll_V_9();
+            }
+         }
 
-      autismclient.util.aE lanSync = autismclient.util.aE.init_aE();
-      if (!hidden && lanSync.read_Z()) {
-         long perf = bK.read_J();
-         lanSync.poll();
-         bK.load("join.lanSync.tick", perf);
-      }
+         bK.read_V();
+         bF.init();
+         if (!hidden) {
+            bD.init(init_Minecraft, this.open_Z());
+         }
 
-      if (!hidden && autismclient.util.macro.b.init_Z()) {
-         long perf = bK.read_J();
-         autismclient.util.macro.b.load(init_Minecraft);
-         bK.load("join.macroConditions.tick", perf);
-      }
+         autismclient.util.aE lanSync = autismclient.util.aE.init_aE();
+         if (!hidden && lanSync.read_Z()) {
+            long perf = bK.read_J();
+            lanSync.poll();
+            bK.load("join.lanSync.tick", perf);
+         }
 
-      ck shared = ck.init_ck();
-      IoWorker.read();
-      if (!hidden && shared.push_Z()) {
-         shared.read_V();
-      }
+         if (!hidden && autismclient.util.macro.b.init_Z()) {
+            long perf = bK.read_J();
+            autismclient.util.macro.b.load(init_Minecraft);
+            bK.load("join.macroConditions.tick", perf);
+         }
 
-      if (!hidden && cf.init_Z_J(1L)) {
-         long perf = bK.read_J();
-         al.sync_V();
-         bK.init("join.modules.tick", perf, 8000000L);
-      }
+         ck shared = ck.init_ck();
+         IoWorker.read();
+         if (!hidden && shared.push_Z()) {
+            shared.read_V();
+         }
 
-      if (!hidden) {
-         aB.load_V();
-      }
+         if (!hidden && cf.init_Z_J(1L)) {
+            long perf = bK.read_J();
+            al.sync_V();
+            bK.init("join.modules.tick", perf, 8000000L);
+         }
 
-      this.put_V();
-      AutismServerInfoOverlay serverInfo = this.load_AutismServerInfoOv();
-      if (!hidden && serverInfo != null && (serverInfo.sync_Z() || serverInfo.run_Z_5())) {
-         serverInfo.close_V_15();
-      }
+         if (!hidden) {
+            aB.load_V();
+         }
 
-      if (shared.write_Z() && init_Minecraft.getConnection() != null) {
-         if (this.read_I++ >= 1) {
+         this.put_V();
+         AutismServerInfoOverlay serverInfo = this.load_AutismServerInfoOv();
+         if (!hidden && serverInfo != null && (serverInfo.sync_Z() || serverInfo.run_Z_5())) {
+            serverInfo.close_V_15();
+         }
+
+         if (shared.write_Z() && init_Minecraft.getConnection() != null) {
+            if (this.read_I++ >= 1) {
+               this.read_I = 0;
+            }
+         } else {
             this.read_I = 0;
          }
-      } else {
-         this.read_I = 0;
-      }
 
-      if (autismclient.util.at.init()) {
-         this.start_V();
-      } else {
-         this.read_Z = false;
-         this.write_Z = false;
-         this.update_Z = false;
-         this.sync_Z = false;
-         this.flush_Z = false;
-         this.close_Z = false;
-         this.init_Map.clear();
-      }
+         if (autismclient.util.at.init()) {
+            this.start_V();
+         } else {
+            this.read_Z = false;
+            this.write_Z = false;
+            this.update_Z = false;
+            this.sync_Z = false;
+            this.flush_Z = false;
+            this.close_Z = false;
+            this.init_Map.clear();
+         }
 
-      this.write_I++;
-      AutismPacketLoggerOverlay logger = this.load_AutismPacketLogger();
-      if (logger != null) {
-         logger.init_V_I_8(this.write_I);
-      }
+         this.write_I++;
+         AutismPacketLoggerOverlay logger = this.load_AutismPacketLogger();
+         if (logger != null) {
+            logger.init_V_I_8(this.write_I);
+         }
 
-      if (!hidden && AddonEvents.hasTickListeners()) {
-         AddonEvents.fireTick(init_Minecraft);
-      }
+         if (!hidden && AddonEvents.hasTickListeners()) {
+            AddonEvents.fireTick(init_Minecraft);
+         }
 
-      this.init(hidden, shared, serverInfo);
+         this.init(hidden, shared, serverInfo);
+      }
    }
 
    private void init(boolean hidden, ck shared, AutismServerInfoOverlay serverInfo) {
@@ -1587,11 +1591,41 @@ public final class PoolEntry {
    }
 
    public cX init_cX() {
-      return null;
+      if (AutismLiteVariant.enabled()) {
+         return null;
+      }
+
+      if (this.init_cX == null && init_Minecraft != null && init_Minecraft.font != null) {
+         this.init_cX = new AutismMatchmakingOverlay(init_Minecraft.font);
+         this.init_cX.b__V();
+      }
+
+      return this.init_cX;
    }
 
    public boolean queue() {
-      return false;
+      if (AutismLiteVariant.enabled()) {
+         return false;
+      }
+
+      cX overlay = this.init_cX();
+      if (overlay == null) {
+         return false;
+      }
+
+      if (overlay.sync_Z()) {
+         overlay.init_V_Z(false);
+         return true;
+      }
+
+      bk.init_bk().init_V(overlay);
+      ((AutismMatchmakingOverlay)overlay).update_V_12();
+      bk.init_bk().update_V(overlay);
+      if (init_Minecraft != null) {
+         init_Minecraft.gui.setScreen(new autismclient.gui.d.TaskTimer(overlay, null, false, true));
+      }
+
+      return true;
    }
 
    public cX load_cX() {
@@ -1621,7 +1655,7 @@ public final class PoolEntry {
    }
 
    public cX write_cX() {
-      return null;
+      return this.init_cX;
    }
 
    public cX update_cX() {
@@ -1634,6 +1668,13 @@ public final class PoolEntry {
 
    public void close_V() {
       if (!cx.load_Z() && !AutismLiteVariant.enabled()) {
+         try {
+            if (this.init_cX != null && this.init_cX.sync_Z()) {
+               this.init_cX.init_V_Z(false);
+            }
+         } catch (Throwable var3) {
+         }
+
          try {
             if (this.load_cX != null && this.load_cX.sync_Z()) {
                this.load_cX.init_V_Z(false);
@@ -1872,7 +1913,7 @@ public final class PoolEntry {
    }
 
    private void clear_V() {
-      if (this.run) {
+      if ((AutismLiteVariant.enabled() || autismclient.e.FileCache.init()) && this.run) {
          long waited = System.currentTimeMillis() - this.sync_J;
          if (waited > 25000L) {
             this.run = false;

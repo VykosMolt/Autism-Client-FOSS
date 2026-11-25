@@ -19,7 +19,7 @@ import autismclient.modules.IoWorker;
 import autismclient.modules.P;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.aB;
-import autismclient.modules.ScaffoldModule;
+import autismclient.modules.aI;
 import autismclient.modules.ak;
 import autismclient.util.AuditJoinSend;
 import autismclient.util.AutismConfig;
@@ -28,6 +28,7 @@ import autismclient.util.AutismMacroEditorOverlay;
 import autismclient.util.H;
 import autismclient.util.J;
 import autismclient.util.KeyHolder;
+import autismclient.util.L;
 import autismclient.util.NodeWalker;
 import autismclient.util.StreamGate;
 import autismclient.util.W;
@@ -58,6 +59,7 @@ import autismclient.util.w;
 import autismclient.util.c.CachePool;
 import autismclient.util.g.ValueSink;
 import autismclient.util.macro.MacroExecutor;
+import autismclient.util.mm.EventBus;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -217,7 +219,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            ScaffoldModule.init_V_22();
+            aI.init_V_22();
          } catch (Throwable t) {
             logTickError("scaffoldEndClick", t);
          }
@@ -296,6 +298,14 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
+            if (!AutismLiteVariant.enabled() && L.load_Z() && EventBus.init_EventBus().read_Z()) {
+               autismclient.util.mm.BufferHelper.init_BufferHelper().flush_V();
+            }
+         } catch (Throwable t) {
+            logTickError("mmAutoJoin", t);
+         }
+
+         try {
             autismclient.ai.AuditBuilderLifeguard.tickClient(client);
          } catch (Throwable t) {
             logTickError("builderLifeguard", t);
@@ -371,6 +381,10 @@ public final class AutismClientMod implements ClientModInitializer {
          PoolEntry.init_PoolEntry().init(stack, lines);
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+         if (!AutismLiteVariant.enabled()) {
+            autismclient.util.mm.BufferHelper.init_BufferHelper().poll_V();
+         }
+
          try {
             aN.init_V_Z(true);
          } catch (Throwable t) {
@@ -379,6 +393,12 @@ public final class AutismClientMod implements ClientModInitializer {
 
          AutismConfig.flushPendingSaves(2000L);
       });
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> AutismConfig.flushPendingSaves(2000L), "autism-shutdown-save"));
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+         if (!AutismLiteVariant.enabled()) {
+            autismclient.util.mm.BufferHelper.init_BufferHelper().poll_V();
+         }
+
+         AutismConfig.flushPendingSaves(2000L);
+      }, "mm-shutdown-leave"));
    }
 }

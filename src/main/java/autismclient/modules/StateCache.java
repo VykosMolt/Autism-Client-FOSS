@@ -135,7 +135,7 @@ public final class StateCache extends Module {
          return original;
       }
 
-      if (m.init_Z_17() && !j.read_Z_20() && !z.sync_Z_12() && !ScaffoldModule.write_Z_5() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6() && !TableIndex.init_Z_20()) {
+      if (m.init_Z_17() && !j.read_Z_20() && !z.sync_Z_12() && !aI.write_Z_5() && !aI.update_Z_5() && !FieldCache.init_Z_6() && !TableIndex.init_Z_20()) {
          int age = m.init_I_10() - m.read_I;
          if (m.read_I != -2147483648 && age >= 0 && age <= 6) {
             boolean ground = MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() == 0;

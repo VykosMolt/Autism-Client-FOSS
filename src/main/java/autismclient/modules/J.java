@@ -261,7 +261,7 @@ public final class J extends Module {
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand ignoredHand) {
       if (MC != null && MC.level != null && MC.player != null && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())) {
-         if (AutoTotemModule.init_Z_6()) {
+         if (FieldCache.init_Z_6()) {
             return false;
          }
 
@@ -366,7 +366,7 @@ public final class J extends Module {
          return false;
       }
 
-      if (AutoTotemModule.init_Z_6()) {
+      if (FieldCache.init_Z_6()) {
          return false;
       }
 
@@ -403,7 +403,7 @@ public final class J extends Module {
       }
 
       if (packet instanceof ServerboundPickItemFromBlockPacket pick) {
-         if (!AutoTotemModule.init_Z_6()) {
+         if (!FieldCache.init_Z_6()) {
             this.init(pick.pos(), pick.includeData());
          }
 

@@ -63,8 +63,8 @@ public class SlowToolsCheck {
       } else {
          check(net.minecraft.util.Util.getPlatform() == net.minecraft.util.Util.OS.LINUX, "premise: Util loads and reports Linux");
          long start = System.nanoTime();
-         MusicHudService.load_V();
-         MusicHudService.init_V();
+         cq.load_V();
+         cq.init_V();
          long ms = (System.nanoTime() - start) / 1000000L;
          check(ms < 500L, "Spotify probes blocked the caller for " + ms + " ms");
       }

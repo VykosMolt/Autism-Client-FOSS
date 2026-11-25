@@ -3,7 +3,7 @@ package autismclient.mixin;
 import autismclient.modules.G;
 import autismclient.modules.X;
 import autismclient.modules.aA;
-import autismclient.modules.ScaffoldModule;
+import autismclient.modules.aI;
 import autismclient.modules.aa;
 import autismclient.modules.ac;
 import autismclient.modules.ai;
@@ -57,7 +57,7 @@ public class AutismLocalPlayerMovementMixin {
    private float autism$scaffoldSilentMovementYaw(float original) {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.init(player, original);
-      float scaffold = ScaffoldModule.init_F_LocalPlayer_F(player, fastExp);
+      float scaffold = aI.init_F_LocalPlayer_F(player, fastExp);
       float yaw = cn.init(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
          yaw = ac.init_F_LocalPlayer_F_2(player, yaw);
@@ -71,7 +71,7 @@ public class AutismLocalPlayerMovementMixin {
    private float autism$scaffoldSilentMovementPitch(float original) {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.load(player, original);
-      float scaffold = ScaffoldModule.load_F_LocalPlayer_F(player, fastExp);
+      float scaffold = aI.load_F_LocalPlayer_F(player, fastExp);
       float pitch = cn.load(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
          pitch = ac.load_F_LocalPlayer_F_2(player, pitch);
@@ -90,12 +90,12 @@ public class AutismLocalPlayerMovementMixin {
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;canStartSprinting()Z"))
    private boolean autism$sprintDecisionMovementTick(boolean original) {
-      return !AutismLiteVariant.enabled() && z.push() ? false : ai.init(original, true) && !aa.close_Z_6() && !ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && z.push() ? false : ai.init(original, true) && !aa.close_Z_6() && !aI.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Input;sprint()Z"))
    private boolean autism$sprintDecisionInput(boolean original) {
-      return !AutismLiteVariant.enabled() && z.push() ? false : ai.init(original, false) && !aa.close_Z_6() && !ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && z.push() ? false : ai.init(original, false) && !aa.close_Z_6() && !aI.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "sendIsSprintingIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprinting()Z"))
@@ -120,7 +120,7 @@ public class AutismLocalPlayerMovementMixin {
 
    @ModifyReturnValue(method = "shouldStopRunSprinting", at = @At("RETURN"))
    private boolean autism$sprintForceStop(boolean shouldStop) {
-      return !AutismLiteVariant.enabled() && z.push() ? true : shouldStop || ai.update() || aa.close_Z_6() || ScaffoldModule.close_Z_4();
+      return !AutismLiteVariant.enabled() && z.push() ? true : shouldStop || ai.update() || aa.close_Z_6() || aI.close_Z_4();
    }
 
    @ModifyExpressionValue(method = "isSprintingPossible", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isMobilityRestricted()Z"))

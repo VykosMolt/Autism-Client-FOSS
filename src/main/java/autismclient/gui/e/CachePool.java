@@ -318,6 +318,35 @@ public final class CachePool {
          }
       ),
       new CachePool.Inner_DataUtil(
+         "matchmaking",
+         new float[]{
+            2.5F,
+            5.0F,
+            11.5F,
+            5.0F,
+            9.0F,
+            2.5F,
+            11.5F,
+            5.0F,
+            11.5F,
+            5.0F,
+            9.0F,
+            7.5F,
+            13.5F,
+            11.0F,
+            4.5F,
+            11.0F,
+            7.0F,
+            8.5F,
+            4.5F,
+            11.0F,
+            4.5F,
+            11.0F,
+            7.0F,
+            13.5F
+         }
+      ),
+      new CachePool.Inner_DataUtil(
          "multi",
          new float[]{
             2.5F,

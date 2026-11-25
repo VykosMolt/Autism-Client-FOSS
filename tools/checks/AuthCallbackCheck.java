@@ -22,13 +22,13 @@ public class AuthCallbackCheck {
    }
 
    public static void main(String[] args) throws Exception {
-      Method handler = MicrosoftAuth.class.getDeclaredMethod("init", HttpExchange.class);
+      Method handler = aW.class.getDeclaredMethod("init", HttpExchange.class);
       handler.setAccessible(true);
-      Field state = MicrosoftAuth.class.getDeclaredField("flush");
+      Field state = aW.class.getDeclaredField("flush");
       state.setAccessible(true);
       state.set(null, "expected-state");
       List<String> results = new ArrayList<>();
-      Field consumer = MicrosoftAuth.class.getDeclaredField("init_Consumer");
+      Field consumer = aW.class.getDeclaredField("init_Consumer");
       consumer.setAccessible(true);
       consumer.set(null, (Consumer<String>) results::add);
 

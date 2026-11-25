@@ -4,8 +4,8 @@ import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.util.ProxyEntry;
-import autismclient.util.ProxyManager;
+import autismclient.util.bW;
+import autismclient.util.bY;
 import autismclient.util.cA;
 import autismclient.util.ct;
 import java.util.ArrayList;
@@ -96,9 +96,9 @@ public final class FieldCache extends KeyHolder {
          this.load_V_10();
       });
       this.addRenderableWidget(this.init_EditBox);
-      ProxyManager manager = ProxyManager.init_bY();
+      bY manager = bY.init_bY();
       manager.init_Z_Z(false);
-      ProxyManager.Inner_TaskQueue refresh = manager.init_bY_TaskQueue();
+      bY.Inner_TaskQueue refresh = manager.init_bY_TaskQueue();
       this.load_Z = refresh.init_Z();
       this.read_J = refresh.init_J();
       this.load_V_10();
@@ -107,9 +107,9 @@ public final class FieldCache extends KeyHolder {
    @Override
    public void tick() {
       super.tick();
-      ProxyManager manager = ProxyManager.init_bY();
+      bY manager = bY.init_bY();
       long listRevision = manager.init_J();
-      ProxyManager.Inner_TaskQueue refresh = manager.init_bY_TaskQueue();
+      bY.Inner_TaskQueue refresh = manager.init_bY_TaskQueue();
       long statusRevision = refresh.load_J();
       if (this.load_Z && !refresh.init_Z() && refresh.init_J() == this.read_J) {
          if (refresh.init_I() >= refresh.load_I()) {
@@ -148,7 +148,7 @@ public final class FieldCache extends KeyHolder {
             manageX, headerY, manageW, ctl, Component.literal("Manage Proxies"), button -> this.sync_V_5()
          )
          .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-      ProxyManager.Inner_TaskQueue refreshStatus = ProxyManager.init_bY().init_bY_TaskQueue();
+      bY.Inner_TaskQueue refreshStatus = bY.init_bY().init_bY_TaskQueue();
       autismclient.gui.f.b.ByteReader refresh = autismclient.gui.f.b.ByteReader.init(
             manageX - gap - refreshW, headerY, refreshW, ctl, Component.literal(refreshStatus.init_Z() ? "Cancel" : "Refresh"), button -> this.write_V_6()
          )
@@ -170,17 +170,17 @@ public final class FieldCache extends KeyHolder {
          FieldCache.Inner_DataUtil choice = choices.get(i);
          autismclient.gui.f.b.ByteReader check = null;
          if (choice.init_bW() != null) {
-            ProxyEntry proxy = choice.init_bW();
+            bW proxy = choice.init_bW();
             check = autismclient.gui.f.b.ByteReader.init(
                   this.add() - checkW - 4,
                   y + checkY,
                   checkW,
                   ctl,
-                  Component.literal(proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.load ? "..." : "Check"),
+                  Component.literal(proxy.init_bW_CachePool == bW.Inner_CachePool.load ? "..." : "Check"),
                   button -> this.init_V_bW_2(proxy)
                )
                .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-            check.init_Z = !refreshStatus.init_Z() && proxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.load;
+            check.init_Z = !refreshStatus.init_Z() && proxy.init_bW_CachePool != bW.Inner_CachePool.load;
          }
 
          this.load_List.add(new FieldCache.Inner_StreamUtil(choice, y, check));
@@ -191,7 +191,7 @@ public final class FieldCache extends KeyHolder {
    private void read_V_7() {
       int valid = 0;
 
-      for (ProxyEntry proxy : ProxyManager.init_bY().init_List()) {
+      for (bW proxy : bY.init_bY().init_List()) {
          if (proxy != null && proxy.init_Z()) {
             valid++;
          }
@@ -255,8 +255,8 @@ public final class FieldCache extends KeyHolder {
    }
 
    private void write_V_6() {
-      ProxyManager manager = ProxyManager.init_bY();
-      ProxyManager.Inner_TaskQueue current = manager.init_bY_TaskQueue();
+      bY manager = bY.init_bY();
+      bY.Inner_TaskQueue current = manager.init_bY_TaskQueue();
       if (current.init_Z()) {
          if (manager.update_Z()) {
             this.init_V_Str_I("Proxy refresh canceled.", -14249);
@@ -269,7 +269,7 @@ public final class FieldCache extends KeyHolder {
       } else if (!manager.init(true, this.load_Str, this.sync)) {
          this.init_V_Str_I(manager.close_I() == 0 ? "No proxies to refresh." : "Proxy refresh could not start.", -14249);
       } else {
-         ProxyManager.Inner_TaskQueue started = manager.init_bY_TaskQueue();
+         bY.Inner_TaskQueue started = manager.init_bY_TaskQueue();
          this.load_Z = true;
          this.read_J = started.init_J();
          this.update_V_6();
@@ -278,30 +278,30 @@ public final class FieldCache extends KeyHolder {
       }
    }
 
-   private void init_V_bW_2(ProxyEntry proxy) {
-      if (proxy != null && !ProxyManager.init_bY().init_bY_TaskQueue().init_Z()) {
+   private void init_V_bW_2(bW proxy) {
+      if (proxy != null && !bY.init_bY().init_bY_TaskQueue().init_Z()) {
          if (!this.load_Str.isBlank() && this.sync > 0) {
-            proxy.init_bW_CachePool = ProxyEntry.Inner_CachePool.load;
+            proxy.init_bW_CachePool = bW.Inner_CachePool.load;
             proxy.init_J = 0L;
             this.update_V_6();
             this.load_V_10();
             autismclient.util.ClassCache.init_Future_Str_Runnable(
                "Autism-Multi-Proxy-Check",
                () -> {
-                  int attempts = Math.max(1, ProxyManager.init_bY().update_I() + 1);
+                  int attempts = Math.max(1, bY.init_bY().update_I() + 1);
                   autismclient.util.g.RefQueue.Inner_DataUtil verified = new autismclient.util.g.RefQueue.Inner_DataUtil(false, 0L);
 
                   for (int attempt = 0; attempt < attempts && !verified.init_Z(); attempt++) {
-                     verified = autismclient.util.g.RefQueue.init(proxy, this.load_Str, this.sync, ProxyManager.init_bY().read_I());
+                     verified = autismclient.util.g.RefQueue.init(proxy, this.load_Str, this.sync, bY.init_bY().read_I());
                   }
 
-                  ProxyEntry.Inner_DataUtil result = verified.init_Z()
-                     ? new ProxyEntry.Inner_DataUtil(ProxyEntry.Inner_CachePool.write, verified.init_J(), 1)
-                     : new ProxyEntry.Inner_DataUtil(ProxyEntry.Inner_CachePool.read, 0L, 2);
+                  bW.Inner_DataUtil result = verified.init_Z()
+                     ? new bW.Inner_DataUtil(bW.Inner_CachePool.write, verified.init_J(), 1)
+                     : new bW.Inner_DataUtil(bW.Inner_CachePool.read, 0L, 2);
                   autismclient.util.g.RefQueue.Inner_DataUtil completed = verified;
                   if (this.minecraft != null) {
                      this.minecraft.execute(() -> {
-                        if (ProxyManager.init_bY().init(proxy, result, completed.init_bZ())) {
+                        if (bY.init_bY().init(proxy, result, completed.init_bZ())) {
                            this.init_V_Str_I(proxy.init_Str() + " is " + init_Str_bW_2(proxy) + ".", load(proxy));
                         }
 
@@ -340,7 +340,7 @@ public final class FieldCache extends KeyHolder {
    }
 
    private List<FieldCache.Inner_DataUtil> init_List_5() {
-      ProxyManager manager = ProxyManager.init_bY();
+      bY manager = bY.init_bY();
       long listRevision = manager.init_J();
       long statusRevision = manager.init_bY_TaskQueue().load_J();
       String query = this.write_Str.toLowerCase(Locale.ROOT);
@@ -348,24 +348,24 @@ public final class FieldCache extends KeyHolder {
          return this.read_List;
       }
 
-      List<ProxyEntry> proxies = manager.init_List()
+      List<bW> proxies = manager.init_List()
          .stream()
          .filter(proxyx -> proxyx != null && proxyx.init_Z())
          .sorted(
             Comparator.comparingInt(FieldCache::init_I_bW)
-               .thenComparingLong(proxyx -> proxyx.init_bW_CachePool == ProxyEntry.Inner_CachePool.write && proxyx.init_J > 0L ? proxyx.init_J : 9223372036854775807L)
-               .thenComparing(ProxyEntry::init_Str, String.CASE_INSENSITIVE_ORDER)
+               .thenComparingLong(proxyx -> proxyx.init_bW_CachePool == bW.Inner_CachePool.write && proxyx.init_J > 0L ? proxyx.init_J : 9223372036854775807L)
+               .thenComparing(bW::init_Str, String.CASE_INSENSITIVE_ORDER)
                .thenComparing(proxyx -> init_Str_Str(proxyx.read), String.CASE_INSENSITIVE_ORDER)
                .thenComparingInt(proxyx -> proxyx.init_I)
          )
          .toList();
       List<FieldCache.Inner_DataUtil> choices = new ArrayList<>(proxies.size() + 2);
       init(choices, new FieldCache.Inner_DataUtil("", "Proxy Off", "Connect directly without a proxy", null), query);
-      if (proxies.stream().anyMatch(proxyx -> proxyx.init_bW_CachePool != ProxyEntry.Inner_CachePool.read)) {
+      if (proxies.stream().anyMatch(proxyx -> proxyx.init_bW_CachePool != bW.Inner_CachePool.read)) {
          init(choices, new FieldCache.Inner_DataUtil("best", "Best Proxy", "Balance usable proxies across Best Proxy accounts", null), query);
       }
 
-      for (ProxyEntry proxy : proxies) {
+      for (bW proxy : proxies) {
          String auth = proxy.write != null && !proxy.write.isBlank() ? "  Auth" : "";
          FieldCache.Inner_DataUtil choice = new FieldCache.Inner_DataUtil(
             proxy.write(), proxy.init_Str(), proxy.init_bZ + "  " + proxy.read + ":" + proxy.init_I + auth, proxy
@@ -386,7 +386,7 @@ public final class FieldCache extends KeyHolder {
       }
    }
 
-   private static int init_I_bW(ProxyEntry proxy) {
+   private static int init_I_bW(bW proxy) {
       if (proxy != null && proxy.init_bW_CachePool != null) {
          byte var10000;
          switch (proxy.init_bW_CachePool) {
@@ -549,24 +549,24 @@ public final class FieldCache extends KeyHolder {
 
    private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics) {
       List<FieldCache.Inner_DataUtil> choices = this.init_List_5();
-      ProxyManager.Inner_TaskQueue refresh = ProxyManager.init_bY().init_bY_TaskQueue();
-      int totalUsable = (int)ProxyManager.init_bY()
+      bY.Inner_TaskQueue refresh = bY.init_bY().init_bY_TaskQueue();
+      int totalUsable = (int)bY.init_bY()
          .init_List()
          .stream()
-         .filter(proxy -> proxy != null && proxy.init_Z() && proxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.read)
+         .filter(proxy -> proxy != null && proxy.init_Z() && proxy.init_bW_CachePool != bW.Inner_CachePool.read)
          .count();
-      ProxyEntry selectedProxy = this.read_Str != null && !this.read_Str.isBlank() && !"best".equals(this.read_Str) ? ProxyManager.init_bY().init_bW_Str(this.read_Str) : null;
+      bW selectedProxy = this.read_Str != null && !this.read_Str.isBlank() && !"best".equals(this.read_Str) ? bY.init_bY().init_bW_Str(this.read_Str) : null;
       boolean selectedVisible = this.read_Str == null
          || this.read_Str.isBlank()
          || "best".equals(this.read_Str) && totalUsable > 0
-         || selectedProxy != null && selectedProxy.init_Z() && selectedProxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.read;
+         || selectedProxy != null && selectedProxy.init_Z() && selectedProxy.init_bW_CachePool != bW.Inner_CachePool.read;
       int headerTextY = this.init_I_3(this.poll() + 2, flush());
       if (refresh.init_Z()) {
          String progress = "Refreshing " + refresh.init_I() + "/" + refresh.load_I() + " against " + this.load_Str + ":" + this.sync;
          this.init(graphics, progress, this.put(), headerTextY, Math.max(20, this.add() - this.put()), prev());
       } else if (!selectedVisible) {
          this.init(graphics, "Current proxy is missing; choose a replacement", this.put(), headerTextY, Math.max(20, this.add() - this.put()), data());
-      } else if (selectedProxy != null && selectedProxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.read) {
+      } else if (selectedProxy != null && selectedProxy.init_bW_CachePool == bW.Inner_CachePool.read) {
          this.init(
             graphics,
             "Selected proxy failed its last check; manual selection is still preserved",
@@ -621,7 +621,7 @@ public final class FieldCache extends KeyHolder {
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.put(), row.init_I(), 2, frameH), -14249);
       }
 
-      ProxyEntry proxy = choice.init_bW();
+      bW proxy = choice.init_bW();
       int checkX = row.init_ByteReader() == null ? this.add() - 4 : row.init_ByteReader().init_I();
       int metaWidth = proxy == null ? 84 : Math.min(86, Math.max(48, (this.add() - this.put()) / 4));
       int metaX = checkX - metaWidth - 4;
@@ -646,8 +646,8 @@ public final class FieldCache extends KeyHolder {
    private int pop() {
       int count = 0;
 
-      for (ProxyEntry proxy : ProxyManager.init_bY().init_List()) {
-         if (proxy != null && proxy.init_Z() && proxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.read) {
+      for (bW proxy : bY.init_bY().init_List()) {
+         if (proxy != null && proxy.init_Z() && proxy.init_bW_CachePool != bW.Inner_CachePool.read) {
             count++;
          }
       }
@@ -655,7 +655,7 @@ public final class FieldCache extends KeyHolder {
       return count;
    }
 
-   private static String init_Str_bW_2(ProxyEntry proxy) {
+   private static String init_Str_bW_2(bW proxy) {
       if (proxy != null && proxy.init_bW_CachePool != null) {
          String var10000;
          switch (proxy.init_bW_CachePool) {
@@ -681,7 +681,7 @@ public final class FieldCache extends KeyHolder {
       }
    }
 
-   private static int load(ProxyEntry proxy) {
+   private static int load(bW proxy) {
       if (proxy != null && proxy.init_bW_CachePool != null) {
          int var10000;
          switch (proxy.init_bW_CachePool) {
@@ -800,7 +800,7 @@ public final class FieldCache extends KeyHolder {
       return -14249;
    }
 
-   private record Inner_DataUtil(String init_Str, String load, String read, ProxyEntry init_bW) {
+   private record Inner_DataUtil(String init_Str, String load, String read, bW init_bW) {
       private String write() {
          String proxyText = this.init_bW == null ? "" : this.init_bW.read() + " " + this.init_bW.init_bW_CachePool;
          return (KeyHolder.init_Str_Str(this.load) + " " + KeyHolder.init_Str_Str(this.read) + " " + proxyText).toLowerCase(Locale.ROOT);

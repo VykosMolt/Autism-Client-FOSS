@@ -209,7 +209,7 @@ final class bf {
             && !j.init_Z_49()
             && !z.sync_Z_12()
             && !UtilCore.init_Z_23()
-            && !AutoTotemModule.init_Z_6()
+            && !FieldCache.init_Z_6()
             && !TableIndex.init_Z_20()
             && !autismclient.util.macro.g.init_Z()
             && !cn.init_Z();

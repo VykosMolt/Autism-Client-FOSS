@@ -30,9 +30,13 @@ public final class F {
    }
 
    private static E init_E() {
-      return init_Minecraft.level != null && init_Minecraft.player != null && !init_Minecraft.gui.hud.isHidden() && !aD.init_Z() && !am.clear()
-         ? E.init_E()
-         : null;
+      if (!AutismLiteVariant.enabled() && !autismclient.e.PathHelper.init()) {
+         return null;
+      } else {
+         return init_Minecraft.level != null && init_Minecraft.player != null && !init_Minecraft.gui.hud.isHidden() && !aD.init_Z() && !am.clear()
+            ? E.init_E()
+            : null;
+      }
    }
 
    public static boolean init_Z() {

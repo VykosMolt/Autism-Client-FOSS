@@ -197,7 +197,7 @@ public final class TokenStore extends df<BitSetUtil> implements Iterable<BitSetU
 
    public void update(BitSetUtil account) {
       if (account != null && account.init_MethodUtil == MethodUtil.read) {
-         MicrosoftAuth.init(refreshToken -> {
+         aW.init(refreshToken -> {
             if (refreshToken == null) {
                AutismClientMessaging.sendPrefixed("Microsoft login cancelled or failed.");
             } else {

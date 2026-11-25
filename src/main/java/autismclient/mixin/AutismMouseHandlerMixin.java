@@ -4,7 +4,7 @@ import autismclient.ai.aP;
 import autismclient.ai.cc;
 import autismclient.compat263.Compat263;
 import autismclient.compat263.CompatGLFW;
-import autismclient.modules.AutoTotemModule;
+import autismclient.modules.FieldCache;
 import autismclient.modules.I;
 import autismclient.modules.TableIndex;
 import autismclient.modules.aC;
@@ -200,7 +200,7 @@ public abstract class AutismMouseHandlerMixin {
          }
       }
 
-      if (AutoTotemModule.init_Z_6() || TableIndex.init_Z_20()) {
+      if (FieldCache.init_Z_6() || TableIndex.init_Z_20()) {
          ci.cancel();
       } else if (aC.init_Z_D(yOffset)) {
          ci.cancel();
@@ -254,7 +254,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
    private void autism$swallowTurnDuringTotemOperation(double deltaTime, CallbackInfo ci) {
-      if (AutoTotemModule.init_Z_6() || TableIndex.load_Z_9()) {
+      if (FieldCache.init_Z_6() || TableIndex.load_Z_9()) {
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;
          this.autism$simulatedDX = 0.0;

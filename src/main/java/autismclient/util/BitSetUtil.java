@@ -176,7 +176,7 @@ public class BitSetUtil {
       } else if (this.write_Z()) {
          return true;
       } else {
-         MicrosoftAuth.Inner_StreamUtil data = MicrosoftAuth.init_aW_StreamUtil(this.load_Str);
+         aW.Inner_StreamUtil data = aW.init_aW_StreamUtil(this.load_Str);
          if (data.load != null && !data.load.isBlank() && !data.load.equals(this.load_Str)) {
             this.load_Str = data.load;
             this.init_Z = true;

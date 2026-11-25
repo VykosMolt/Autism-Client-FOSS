@@ -5,7 +5,7 @@ import autismclient.modules.ByteReader;
 import autismclient.modules.TaskTimer;
 import autismclient.modules.UtilCore;
 import autismclient.modules.X;
-import autismclient.modules.ScaffoldModule;
+import autismclient.modules.aI;
 import autismclient.modules.af;
 import autismclient.modules.al;
 import autismclient.modules.bg;
@@ -123,7 +123,7 @@ public class AutismMultiPlayerGameModeMixin {
    private void autism$observeVanillaUseItemOnResult(
       LocalPlayer player, InteractionHand hand, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir
    ) {
-      ScaffoldModule.init_V_InteractionHand(hand, hit, cir.getReturnValue());
+      aI.init_V_InteractionHand(hand, hit, cir.getReturnValue());
       if (!AutismLiteVariant.enabled()) {
          j.init_V_InteractionHand_2(hand, hit, cir.getReturnValue());
       }

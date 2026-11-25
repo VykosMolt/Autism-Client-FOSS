@@ -27,7 +27,7 @@ public final class ax {
    public static boolean init(KeyEvent input, boolean pressed) {
       if (input == null) {
          return false;
-      } else if (autismclient.modules.AutoTotemModule.init_Z_6()) {
+      } else if (autismclient.modules.FieldCache.init_Z_6()) {
          load_V();
          return false;
       } else {
@@ -86,7 +86,7 @@ public final class ax {
 
    public static void read() {
       if (init_Minecraft != null && init_Minecraft.options != null) {
-         if (autismclient.modules.AutoTotemModule.init_Z_6()) {
+         if (autismclient.modules.FieldCache.init_Z_6()) {
             load_V();
          } else if (bk.init_bk().update_Z()
             || init_Minecraft.gui.screen() instanceof ChatScreen
@@ -162,7 +162,7 @@ public final class ax {
    }
 
    private static boolean load_Z() {
-      if (autismclient.modules.AutoTotemModule.init_Z_6()) {
+      if (autismclient.modules.FieldCache.init_Z_6()) {
          load_V();
          return false;
       }

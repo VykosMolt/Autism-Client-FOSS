@@ -2,6 +2,7 @@ package autismclient.util.g;
 
 import autismclient.AutismClientAddon;
 import autismclient.modules.aC;
+import autismclient.util.AutismLiteVariant;
 import autismclient.util.ax;
 import autismclient.util.bi;
 import autismclient.util.bk;
@@ -27,7 +28,7 @@ public final class ValueSink {
    }
 
    public static boolean init_Z() {
-      return init_ValueSink_DataUtil != ValueSink.Inner_DataUtil.init;
+      return !AutismLiteVariant.enabled() && !autismclient.e.FileCache.init() ? false : init_ValueSink_DataUtil != ValueSink.Inner_DataUtil.init;
    }
 
    public static boolean init_Z(String accountId) {

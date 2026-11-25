@@ -2,6 +2,7 @@ package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
 import autismclient.ai.cG;
+import autismclient.e.PathHelper;
 import autismclient.gui.f.HashUtil;
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.UiHelper;
@@ -77,7 +78,7 @@ public abstract class AutismInGameHudMixin {
 
    @Unique
    private void autism$renderHudBody(GuiGraphicsExtractor context) {
-      if (this.isAutismActive()) {
+      if (this.isAutismActive() && (AutismLiteVariant.enabled() || PathHelper.init())) {
          boolean macroFrameWork = MacroExecutor.flush_Z();
          cf.Inner_DataUtil activity = cf.init_cf_DataUtil();
          long hudWork = 31168L;

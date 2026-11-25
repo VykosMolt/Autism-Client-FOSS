@@ -788,7 +788,7 @@ public final class X extends Module implements cn.Inner_DataUtil {
          || z.sync_Z_12()
          || cn.init_Z()
          || UtilCore.init_Z_23()
-         || AutoTotemModule.init_Z_6()
+         || FieldCache.init_Z_6()
          || TableIndex.init_Z_20()
          || autismclient.util.macro.g.init_Z()) {
          return false;

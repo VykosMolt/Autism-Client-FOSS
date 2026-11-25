@@ -1,12 +1,12 @@
 package autismclient.mixin;
 
 import autismclient.ai.a.PacketUtil;
-import autismclient.modules.AutoTotemModule;
+import autismclient.modules.FieldCache;
 import autismclient.modules.ListPool;
 import autismclient.modules.StateCache;
 import autismclient.modules.TableIndex;
 import autismclient.modules.aH;
-import autismclient.modules.ScaffoldModule;
+import autismclient.modules.aI;
 import autismclient.modules.bg;
 import autismclient.modules.j;
 import autismclient.modules.z;
@@ -35,7 +35,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
          original = j.init_Input_Input_3(original);
       }
 
-      Input scaffold = ScaffoldModule.init_Input_ClientInput_Input_4(this, original);
+      Input scaffold = aI.init_Input_ClientInput_Input_4(this, original);
       Input aura = cn.init(this, scaffold);
       if (!AutismLiteVariant.enabled()) {
          aura = z.init_Input_Input_4(aura);
@@ -47,7 +47,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
          safe = PacketUtil.init(this, safe);
       }
 
-      Input totem = AutoTotemModule.init_Input_ClientInput_Input(this, safe);
+      Input totem = FieldCache.init_Input_ClientInput_Input(this, safe);
       return TableIndex.init_Input_ClientInput_Input_3(this, totem);
    }
 }

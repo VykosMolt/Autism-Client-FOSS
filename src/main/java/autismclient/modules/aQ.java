@@ -106,10 +106,10 @@ public final class aQ extends Module {
          && !cd.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PoolEntry.init_Z())
-         && !AutoTotemModule.init_Z_6()
+         && !FieldCache.init_Z_6()
          && !TableIndex.init_Z_20()
          && !autismclient.util.aD.read_Z()
-         && !ScaffoldModule.update_Z_5();
+         && !aI.update_Z_5();
    }
 
    @Override
@@ -119,7 +119,7 @@ public final class aQ extends Module {
             int tick = ck.init_ck().state_I();
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.write != -2147483648 && selected != this.load) {
-               if (!t.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected) && !aa.load_Z_I_3(selected)) {
+               if (!t.init_Z_I_10(selected) && !BufferHelper.init_Z_I(selected) && !aa.load_Z_I_3(selected)) {
                   this.init_V_24();
                }
             } else if (!this.init_Z

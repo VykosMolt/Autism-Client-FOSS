@@ -489,7 +489,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
       this.init_l_BufferHelper.init(this.load_D_2());
       this.poll_V_4();
       if (MC.gui.screen() == null && MC.gui.overlay() == null && (AutismLiteVariant.enabled() || !autismclient.ai.aP.load_Z())) {
-         if (!cn.init_Z() && !ScaffoldModule.update_Z_5()) {
+         if (!cn.init_Z() && !aI.update_Z_5()) {
             if (!AutismLiteVariant.enabled() && autismclient.util.ListPool.write()) {
                this.load_Str = "manualInteraction";
                this.load_V_Z_2(false);
@@ -1571,18 +1571,18 @@ public final class aa extends Module implements cn.Inner_DataUtil {
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !f.load()
          && (AutismLiteVariant.enabled() || !z.sync_Z_12() && !j.init_Z_49())
-         && !ScaffoldModule.write_Z_5()
-         && !ScaffoldModule.flush_Z_5()
-         && !ScaffoldModule.update_Z_5()
+         && !aI.write_Z_5()
+         && !aI.flush_Z_5()
+         && !aI.update_Z_5()
          && !ListPool.init_Z_10()
-         && !SurroundModule.init_Z_27()
+         && !aK.init_Z_27()
          && !t.init_Z_51()
-         && !AnchorAuraModule.init_Z_2()
+         && !BufferHelper.init_Z_2()
          && !start_Z_2()
          && (AutismLiteVariant.enabled() || bedBudget || !X.init_Z_24())
          && (AutismLiteVariant.enabled() || bedBudget || !UtilCore.init_Z_23())
          && !HashUtil.load_Z()
-         && !AutoTotemModule.init_Z_6()
+         && !FieldCache.init_Z_6()
          && !TableIndex.init_Z_20();
    }
 
@@ -1625,7 +1625,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics) {
       if (!AutismLiteVariant.enabled()) {
          aa aura = init_aa();
-         if (aura != null && aura.bool("fov-circle") && MC.player != null && !MC.player.isSpectator()) {
+         if (aura != null && aura.bool("fov-circle") && MC.player != null && !MC.player.isSpectator() && autismclient.e.HashUtil.init()) {
             CameraRenderState camera = MC.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
             if (camera.initialized) {
                Window window = MC.getWindow();
@@ -2172,7 +2172,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
       } else if (!this.init_Z_LivingEntity_3(target)) {
          this.init_aa_ConfigStore.read_V();
          this.init_aa_CachePool.write_V();
-      } else if (ScaffoldModule.flush_Z_5()) {
+      } else if (aI.flush_Z_5()) {
          this.init_aa_CachePool.load("scaffold");
          this.init_aa_ConfigStore.read_V();
       } else if (this.push_Z_3() || !this.init_aa_ConfigStore.init_Z() || !this.read_Z_LivingEntity(target)) {
@@ -2658,7 +2658,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
       if (this.add_Z_2() && this.clear_I >= 0 && this.start_I <= 0) {
          if (this.reset_I >= 0 && MC.player.getInventory().getSelectedSlot() != this.reset_I) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!t.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected)) {
+            if (!t.init_Z_I_10(selected) && !BufferHelper.init_Z_I(selected)) {
                this.clear_I = -1;
                this.reset_I = -1;
                return false;
@@ -2705,7 +2705,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
          return false;
       } else if (MC.player.cannotAttackWithItem(stack, 0)) {
          return false;
-      } else if (ScaffoldModule.flush_Z_5()) {
+      } else if (aI.flush_Z_5()) {
          return false;
       } else if (this.data > 0) {
          return false;
@@ -3216,7 +3216,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
       if (this.add_Z_2() && this.clear_I >= 0 && this.start_I > 0) {
          if (this.reset_I >= 0 && MC.player.getInventory().getSelectedSlot() != this.reset_I) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!t.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected)) {
+            if (!t.init_Z_I_10(selected) && !BufferHelper.init_Z_I(selected)) {
                this.clear_I = -1;
                this.reset_I = -1;
                this.start_I = 0;
@@ -3229,7 +3229,7 @@ public final class aa extends Module implements cn.Inner_DataUtil {
                && (AutismLiteVariant.enabled() || !UtilCore.init_Z_23())
                && !t.init_Z_51()
                && !t.sync_Z_11()
-               && !AnchorAuraModule.init_Z_2()
+               && !BufferHelper.init_Z_2()
                && !autismclient.util.ah.init(this.clear_I, this.id())) {
                int tick = ck.init_ck().state_I();
                if (tick != this.stop_I && autismclient.util.ah.write_Z(this.id())) {

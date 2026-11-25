@@ -142,12 +142,12 @@ public final class TableIndex extends Module {
       if (MC != null && MC.player != null && MC.level != null && !aD.read_Z() && !MC.player.isSpectator()) {
          this.sync_V_4();
          if (this.load_Z) {
-            if (AutoTotemModule.init_Z_6()) {
+            if (FieldCache.init_Z_6()) {
                this.init(true);
             } else {
                this.read_V_9();
             }
-         } else if (!AutoTotemModule.init_Z_6()) {
+         } else if (!FieldCache.init_Z_6()) {
             if (!this.update_Z_4()) {
                this.load_V_15();
             } else if (MC.player.containerMenu != MC.player.inventoryMenu) {

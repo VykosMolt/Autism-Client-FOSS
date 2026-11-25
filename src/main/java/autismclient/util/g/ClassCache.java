@@ -19,7 +19,7 @@ import autismclient.util.N;
 import autismclient.util.aA;
 import autismclient.util.aM;
 import autismclient.util.aN;
-import autismclient.util.ProxyEntry;
+import autismclient.util.bW;
 import autismclient.util.bm;
 import autismclient.util.bw;
 import autismclient.util.ck;
@@ -349,7 +349,7 @@ public final class ClassCache implements EventBus {
    };
    private final long poll_J;
    private final FieldCache.Inner_BufferHelper init_FieldCache_BufferH;
-   private final ProxyEntry init_bW;
+   private final bW init_bW;
    private final String init_Str;
    private volatile IoWorker init_IoWorker;
    private final ClassCache.Inner_TokenStore init_ClassCache_TokenSt;
@@ -617,7 +617,7 @@ public final class ClassCache implements EventBus {
    ClassCache(
       long generation,
       FieldCache.Inner_BufferHelper spec,
-      ProxyEntry proxy,
+      bW proxy,
       String proxyName,
       IoWorker policy,
       FieldCache.Inner_DataUtil loginMode,

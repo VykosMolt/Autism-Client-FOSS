@@ -1,28 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 export REAL_HOME="${REAL_HOME:-$HOME}"
-export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$REAL_HOME/.gradle}"
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$REAL_HOME/.local/share/gradle}"
 if [[ -z "${JAVA_HOME:-}" ]]; then
-  JDK_DIR="$(find "$GRADLE_USER_HOME/jdks" "$REAL_HOME/.local/share/gradle/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' -print -quit 2>/dev/null || true)"
+  JDK_DIR="$(find "$GRADLE_USER_HOME/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' -print -quit 2>/dev/null || true)"
   if [[ -n "$JDK_DIR" ]]; then
     export JAVA_HOME="$JDK_DIR"
   fi
 fi
-SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
-cd -- "$SCRIPT_DIR"
-OFFLINE_FLAG=()
-if [[ "${GRADLE_OFFLINE:-0}" == "1" ]]; then
-  OFFLINE_FLAG=(--offline)
-fi
-if [[ -z "${GRADLE_BIN:-}" && -x "$SCRIPT_DIR/gradlew" ]]; then
-  exec "$SCRIPT_DIR/gradlew" "${OFFLINE_FLAG[@]}" --no-daemon "$@"
-fi
-GRADLE_BIN="${GRADLE_BIN:-$(command -v gradle 2>/dev/null || true)}"
+GRADLE_BIN="${GRADLE_BIN:-$(find "$GRADLE_USER_HOME/wrapper/dists" -maxdepth 6 -type f -path '*/bin/gradle' -print -quit 2>/dev/null || true)}"
 if [[ -z "$GRADLE_BIN" ]]; then
-  GRADLE_BIN="$(find "$GRADLE_USER_HOME/wrapper/dists" "$REAL_HOME/.local/share/gradle/wrapper/dists" -maxdepth 6 -type f -path '*/bin/gradle' -print -quit 2>/dev/null || true)"
+  GRADLE_BIN="$(command -v gradle)"
 fi
-if [[ -z "$GRADLE_BIN" ]]; then
-  echo "ERROR: gradle not found on PATH or in Gradle wrapper caches (set GRADLE_BIN or install Gradle)." >&2
-  exit 1
-fi
-exec "$GRADLE_BIN" "${OFFLINE_FLAG[@]}" --no-daemon "$@"
+cd -- "$(dirname -- "$0")"
+exec "$GRADLE_BIN" --offline --no-daemon "$@"

@@ -4,6 +4,7 @@ import autismclient.api.module.BoolSetting;
 import autismclient.api.module.StringListSetting;
 import autismclient.api.module.StringSetting;
 import autismclient.mixin.accessor.AutismChatComponentAccessor;
+import autismclient.util.AutismLiteVariant;
 import com.mojang.authlib.GameProfile;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -255,6 +256,9 @@ public final class as extends Module {
    }
 
    public static boolean init(GameProfile profile) {
+      if (!AutismLiteVariant.enabled() && !autismclient.e.TokenStore.init()) {
+         return false;
+      }
 
       if (load_Z) {
          return true;
@@ -777,7 +781,7 @@ public final class as extends Module {
    }
 
    public static boolean init_Z_33() {
-      return init_Z;
+      return !AutismLiteVariant.enabled() && !autismclient.e.TextFormat.init() ? false : init_Z;
    }
 
    private static Module init_Module() {

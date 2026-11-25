@@ -417,7 +417,7 @@ final class i {
       double forward = wanted.z * Math.cos(yaw) - wanted.x * Math.sin(yaw);
       double side = wanted.x * Math.cos(yaw) + wanted.z * Math.sin(yaw);
       Input keys = new Input(forward > 0.08, forward < -0.08, side > 0.08, side < -0.08, false, false, false);
-      keys = ScaffoldModule.init_Input_Input_2(keys, cameraYaw, outgoingYaw);
+      keys = aI.init_Input_Input_2(keys, cameraYaw, outgoingYaw);
       Vec2 input = new Vec2((keys.left() ? 1 : 0) - (keys.right() ? 1 : 0), (keys.forward() ? 1 : 0) - (keys.backward() ? 1 : 0))
          .normalized()
          .scale(0.98F)

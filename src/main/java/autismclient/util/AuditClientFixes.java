@@ -38,7 +38,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean isPhaseSpiderActive() {
-      return autismclient.modules.PhaseModule.audit$isSpiderActive();
+      return autismclient.modules.aF.audit$isSpiderActive();
    }
 
    public static boolean isAutismActive() {
@@ -48,10 +48,6 @@ public final class AuditClientFixes {
 
    public static boolean isXrayOrFreecamOcclusionBypass() {
       return autismclient.modules.am.update();
-   }
-
-   public static boolean isFreecamActive() {
-      return autismclient.modules.aC.init_Z();
    }
 
    public static boolean isNoRenderInWallOverlay() {
@@ -67,7 +63,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean shouldSuppressInWallOverlay() {
-      return isNoRenderInWallOverlay() || shouldKeepNoPhysics() || isFreecamActive();
+      return isNoRenderInWallOverlay() || shouldKeepNoPhysics();
    }
 
    public static boolean isBoatFlyEnabled() {

@@ -24,7 +24,7 @@ public final class KeyHolder {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {
-               if (!autismclient.modules.aD.init_Z()) {
+               if ((AutismLiteVariant.enabled() || autismclient.e.UiHelper.init()) && !autismclient.modules.aD.init_Z()) {
                   Module module = autismclient.modules.al.init_Module_Str("bed-defender");
                   Minecraft mc = Minecraft.getInstance();
                   if (module instanceof autismclient.modules.ListPool bed

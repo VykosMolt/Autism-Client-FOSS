@@ -132,7 +132,7 @@ public final class aP {
    }
 
    public static boolean init_Z_Z_cy_CachePool(boolean parkour, cy.Inner_CachePool options) {
-      if (!autismclient.modules.aD.init_Z()) {
+      if (!autismclient.modules.aD.init_Z() && autismclient.e.MethodUtil.init()) {
          az selection = new az(parkour, options);
          init_V_aR_Runnable(selection, selection::write);
          return init_aP != null && init_aP.init_aR == selection;

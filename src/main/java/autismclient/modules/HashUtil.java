@@ -2,6 +2,7 @@ package autismclient.modules;
 
 import autismclient.AutismClientAddon;
 import autismclient.compat263.CompatSwingPacket;
+import autismclient.util.AutismLiteVariant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -327,6 +328,10 @@ public final class HashUtil {
 
    public static boolean load(Packet<?> packet) {
       if (update(packet)) {
+         return false;
+      }
+
+      if (!AutismLiteVariant.enabled() && !autismclient.e.PacketUtil.init()) {
          return false;
       }
 

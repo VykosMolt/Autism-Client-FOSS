@@ -15,13 +15,17 @@ public final class m {
    }
 
    public static void init_V() {
-      Minecraft mc = Minecraft.getInstance();
-      LocalPlayer player = mc.player;
-      if (player != null) {
-         init_J = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
-         init_Z = true;
-         init(player);
-         load(mc);
+      if (!AutismLiteVariant.enabled() && !autismclient.e.RefQueue.init()) {
+         AutismClientMessaging.sendPrefixed("§cAutism is locked: early access requires the donator role. Sign in to unlock.");
+      } else {
+         Minecraft mc = Minecraft.getInstance();
+         LocalPlayer player = mc.player;
+         if (player != null) {
+            init_J = player.getSleepingPos().map(BlockPos::asLong).orElse(-9223372036854775808L);
+            init_Z = true;
+            init(player);
+            load(mc);
+         }
       }
    }
 

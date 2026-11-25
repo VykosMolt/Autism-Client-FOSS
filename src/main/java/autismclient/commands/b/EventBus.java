@@ -1,0 +1,33 @@
+package autismclient.commands.b;
+
+import autismclient.commands.AutismCommandSource;
+import autismclient.commands.Command;
+import autismclient.util.AutismClientMessaging;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+
+public class EventBus extends Command {
+   public EventBus() {
+      super("disconnect", "Disconnect from the current server.");
+   }
+
+   @Override
+   public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
+      root.executes(ctx -> {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.getConnection() == null) {
+            AutismClientMessaging.sendPrefixed("§cNot connected.");
+            return 1;
+         }
+
+         try {
+            mc.getConnection().getConnection().disconnect(Component.literal("Disconnected via .disconnect"));
+         } catch (Throwable t) {
+            AutismClientMessaging.sendPrefixed("§cDisconnect failed: " + t.getMessage());
+         }
+
+         return 1;
+      });
+   }
+}

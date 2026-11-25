@@ -1,6 +1,7 @@
 package autismclient.util.macro;
 
 import autismclient.AutismClientAddon;
+import autismclient.util.AutismLiteVariant;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Queue;
@@ -281,6 +282,10 @@ public final class J {
 
    public static boolean load_Z(Packet<?> packet) {
       if (read_Z(packet)) {
+         return false;
+      }
+
+      if (!AutismLiteVariant.enabled() && !autismclient.e.MethodUtil.init()) {
          return false;
       }
 

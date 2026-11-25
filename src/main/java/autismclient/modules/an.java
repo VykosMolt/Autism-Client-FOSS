@@ -1,5 +1,6 @@
 package autismclient.modules;
 
+import autismclient.util.AutismLiteVariant;
 import autismclient.util.bK;
 import autismclient.util.cA;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -31,6 +32,7 @@ public final class an {
 
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context) {
       if (!aD.init_Z()
+         && (AutismLiteVariant.enabled() || autismclient.e.ListPool.init())
          && init_Minecraft != null
          && init_Minecraft.level != null
          && init_Minecraft.player != null

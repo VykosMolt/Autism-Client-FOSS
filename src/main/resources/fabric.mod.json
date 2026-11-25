@@ -41,6 +41,9 @@
     },
     {
       "file": "META-INF/jars/netty-handler-proxy-4.1.118.Final.jar"
+    },
+    {
+      "file": "META-INF/jars/org.eclipse.paho.client.mqttv3-1.2.5.jar"
     }
   ]
 }

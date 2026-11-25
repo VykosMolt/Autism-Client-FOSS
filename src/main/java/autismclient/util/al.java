@@ -638,7 +638,7 @@ public final class al {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            MusicHudService.init_V();
+            cq.init_V();
          }
       } catch (Throwable t) {
          long now = System.currentTimeMillis();
@@ -850,7 +850,7 @@ public final class al {
          width = pad * 2 + tick(id);
          height = pad * 2 + 18;
       } else if ("spotify".equals(id) && !AutismLiteVariant.enabled()) {
-         MusicHudService.Inner_ConfigStore snapshot = MusicHudService.init_cq_ConfigStore();
+         cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
          boolean live = init_Z_cq_ConfigStore(snapshot);
          boolean artSlot = load_Z(id, "spotify-part-art")
             && (!live || init_Identifier_Str(snapshot.read(), snapshot.init_J(), snapshot.init_Str() + "|" + snapshot.load_Str()) != null);
@@ -1564,9 +1564,9 @@ public final class al {
          init(context, font, id, cached, editor, selected, hovered, alpha);
       } else {
          if ("spotify".equals(id) && !editor && !AutismLiteVariant.enabled()) {
-            MusicHudService.init_V();
-            MusicHudService.Inner_ConfigStore gateSnapshot = MusicHudService.init_cq_ConfigStore();
-            if (!MusicHudService.init_Z()) {
+            cq.init_V();
+            cq.Inner_ConfigStore gateSnapshot = cq.init_cq_ConfigStore();
+            if (!cq.init_Z()) {
                if (!update_Z && init_Minecraft.player != null) {
                }
 
@@ -1930,9 +1930,9 @@ public final class al {
       }
    }
 
-   private static boolean init_Z_cq_ConfigStore(MusicHudService.Inner_ConfigStore snapshot) {
+   private static boolean init_Z_cq_ConfigStore(cq.Inner_ConfigStore snapshot) {
       return snapshot != null
-         && (snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.init || snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.load)
+         && (snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init || snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.load)
          && snapshot.load_Str() != null
          && !snapshot.load_Str().isBlank();
    }
@@ -1941,7 +1941,7 @@ public final class al {
       return init_Z_Str_Str(id, key);
    }
 
-   private static al.Inner_PacketUtil init_al_PacketUtil_Font_cq_ConfigStore(Font font, MusicHudService.Inner_ConfigStore snapshot) {
+   private static al.Inner_PacketUtil init_al_PacketUtil_Font_cq_ConfigStore(Font font, cq.Inner_ConfigStore snapshot) {
       long stamp = snapshot == null ? -9223372036854775808L : snapshot.init_J();
       int metricsGen = autismclient.gui.f.b.k.init_I();
       if (init_al_PacketUtil != null && init_aR_DataUtil.init(stamp, "", font, metricsGen)) {
@@ -1991,7 +1991,7 @@ public final class al {
       return g;
    }
 
-   private static double load(MusicHudService.Inner_ConfigStore snapshot) {
+   private static double load(cq.Inner_ConfigStore snapshot) {
       double polled = snapshot.init_D();
       long nowMs = System.currentTimeMillis();
       if (Double.isNaN(update_D) || polled != update_D) {
@@ -1999,15 +1999,15 @@ public final class al {
          flush_J = nowMs;
       }
 
-      return aR.init_D_D(update_D, flush_J, snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.init, snapshot.load_D(), nowMs);
+      return aR.init_D_D(update_D, flush_J, snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init, snapshot.load_D(), nowMs);
    }
 
-   private static double read(MusicHudService.Inner_ConfigStore snapshot) {
+   private static double read(cq.Inner_ConfigStore snapshot) {
       double duration = snapshot.load_D();
       return duration <= 0.0 ? 0.0 : Math.max(0.0, Math.min(1.0, load(snapshot) / duration));
    }
 
-   public static al.Inner_TextFormat init_al_TextFormat_cq_ConfigStore(MusicHudService.Inner_ConfigStore snapshot) {
+   public static al.Inner_TextFormat init_al_TextFormat_cq_ConfigStore(cq.Inner_ConfigStore snapshot) {
       if (snapshot != null && snapshot.read() != null && !snapshot.read().isEmpty()) {
          Identifier id = init_Identifier_Str(snapshot.read(), snapshot.init_J(), snapshot.init_Str() + "|" + snapshot.load_Str());
          return id == null ? null : new al.Inner_TextFormat(id, cache_I, state_I);
@@ -2016,11 +2016,11 @@ public final class al {
       }
    }
 
-   public static double init_D_cq_ConfigStore(MusicHudService.Inner_ConfigStore snapshot) {
+   public static double init_D_cq_ConfigStore(cq.Inner_ConfigStore snapshot) {
       return snapshot == null ? 0.0 : read(snapshot);
    }
 
-   private static String init_Str_cq_ConfigStore(MusicHudService.Inner_ConfigStore snapshot, Font font, Identifier fontId) {
+   private static String init_Str_cq_ConfigStore(cq.Inner_ConfigStore snapshot, Font font, Identifier fontId) {
       double position = load(snapshot);
       long wholeSec = (long)position;
       double duration = snapshot.load_D();
@@ -2217,10 +2217,10 @@ public final class al {
    ) {
       if (!AutismLiteVariant.enabled()) {
          write_V(id);
-         MusicHudService.init_V();
-         MusicHudService.Inner_ConfigStore snapshot = MusicHudService.init_cq_ConfigStore();
+         cq.init_V();
+         cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
          boolean live = init_Z_cq_ConfigStore(snapshot);
-         if (editor || MusicHudService.init_Z()) {
+         if (editor || cq.init_Z()) {
             Identifier fontId = init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read);
             boolean artOn = load_Z(id, "spotify-part-art");
             boolean artistOn = load_Z(id, "spotify-part-artist");
@@ -2341,7 +2341,7 @@ public final class al {
          return false;
       } else if (init_Minecraft.player == null) {
          return false;
-      } else if (init_AutismConfig_HudEl_Str("spotify").enabled && (AutismLiteVariant.enabled() || MusicHudService.init_Z())) {
+      } else if (init_AutismConfig_HudEl_Str("spotify").enabled && (AutismLiteVariant.enabled() || cq.init_Z())) {
          Module hud = autismclient.modules.al.init_Module_Str("hud");
          return hud != null && init_Z_Screen_Module(screen, hud);
       } else {
@@ -3922,7 +3922,7 @@ public final class al {
       if (source != index_I) {
          index_I = source;
          if (!AutismLiteVariant.enabled()) {
-            MusicHudService.load(source == 1);
+            cq.load(source == 1);
          }
       }
    }
@@ -4258,7 +4258,7 @@ public final class al {
          String id = init_List.get(i);
          boolean hiddenSpotify = false;
          if (!editor && "spotify".equals(id) && !AutismLiteVariant.enabled()) {
-            hiddenSpotify = !MusicHudService.init_Z();
+            hiddenSpotify = !cq.init_Z();
          }
 
          boolean hiddenBedDanger = "bed_danger".equals(id) && !editor;

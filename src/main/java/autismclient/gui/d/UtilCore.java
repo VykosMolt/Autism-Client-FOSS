@@ -9,7 +9,10 @@ import autismclient.modules.Module;
 import autismclient.modules.aD;
 import autismclient.modules.ae;
 import autismclient.modules.al;
+import autismclient.util.AutismLiteVariant;
+import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismProfilesOverlay;
+import autismclient.util.L;
 import autismclient.util.aJ;
 import autismclient.util.aR;
 import autismclient.util.aS;
@@ -18,7 +21,7 @@ import autismclient.util.bK;
 import autismclient.util.bk;
 import autismclient.util.cA;
 import autismclient.util.cX;
-import autismclient.util.MusicHudService;
+import autismclient.util.cq;
 import autismclient.util.ct;
 import autismclient.util.cu;
 import autismclient.util.p;
@@ -87,6 +90,7 @@ public class UtilCore extends Screen implements TaskQueue {
    private static final Identifier poll_Identifier = Identifier.fromNamespaceAndPath("replaymod", "logo_button.png");
    private static final Identifier push_Identifier = Identifier.fromNamespaceAndPath("flashback", "icon.png");
    private static final Identifier pop_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/discord.png");
+   private static final Identifier tick_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/donate.png");
    private static final int read_I = 32;
    private static final int write_I = 32;
    private static final Identifier run_Identifier = Identifier.fromNamespaceAndPath("minecraft", "icon/language");
@@ -279,7 +283,7 @@ public class UtilCore extends Screen implements TaskQueue {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      if (aS.init_Z_Minecraft(this.minecraft)) {
+      if (aS.init_Z_Minecraft(this.minecraft) && (AutismLiteVariant.enabled() || autismclient.e.HashUtil.init())) {
          List<autismclient.gui.f.NetHelper> avoid = new ArrayList<>();
          avoid.add(autismclient.gui.f.NetHelper.init(this.put, this.add, this.clear, this.reset));
          if (this.flush_Z) {
@@ -506,7 +510,7 @@ public class UtilCore extends Screen implements TaskQueue {
             int supportRowH = Math.max(compact ? 16 : 20, k.init(autismclient.gui.f.a.DataUtil.load) + 8);
             int supportRowGap = 3;
             int supportIcon = Math.min(14, supportRowH - 6);
-            String[] supportLabels = new String[]{"AUTISM INC", "AUTISM CLIENT"};
+            String[] supportLabels = new String[]{"Card/PayPal", "Crypto", "AUTISM INC", "AUTISM CLIENT"};
             int supportTextW = 0;
 
             for (String label : supportLabels) {
@@ -514,7 +518,7 @@ public class UtilCore extends Screen implements TaskQueue {
             }
 
             this.next = supportTextW + supportIcon + 22;
-            this.prev = 5 + 2 * supportRowH + supportRowGap + 5;
+            this.prev = 5 + 4 * supportRowH + 3 * supportRowGap + 5;
             this.start = margin;
             this.stop = this.size + this.value + 6;
             int supportRowY = this.stop + 5;
@@ -524,9 +528,9 @@ public class UtilCore extends Screen implements TaskQueue {
                this.next - 8,
                supportRowH,
                supportLabels[0],
-               pop_Identifier,
-               () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
-               "https://discord.gg/V8GsKP6k5u"
+               tick_Identifier,
+               () -> aJ.init_V("https://ko-fi.com/melonik"),
+               "https://ko-fi.com/melonik"
             );
             this.init(
                this.start + 4,
@@ -534,6 +538,26 @@ public class UtilCore extends Screen implements TaskQueue {
                this.next - 8,
                supportRowH,
                supportLabels[1],
+               tick_Identifier,
+               () -> aJ.init_V("https://nowpayments.io/donation/melonikautismclient"),
+               "https://nowpayments.io/donation/melonikautismclient"
+            );
+            this.init(
+               this.start + 4,
+               supportRowY + (supportRowH + supportRowGap) * 2,
+               this.next - 8,
+               supportRowH,
+               supportLabels[2],
+               pop_Identifier,
+               () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
+               "https://discord.gg/V8GsKP6k5u"
+            );
+            this.init(
+               this.start + 4,
+               supportRowY + (supportRowH + supportRowGap) * 3,
+               this.next - 8,
+               supportRowH,
+               supportLabels[3],
                pop_Identifier,
                () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu"),
                "https://discord.com/invite/JZ7XgUCtBu"
@@ -614,6 +638,18 @@ public class UtilCore extends Screen implements TaskQueue {
             this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.load));
          }
       }, Component.literal("Modules & Macros")));
+      all.add(new UtilCore.Inner_TaskQueue("MATCHMAKING", "", autismclient.gui.f.a.DataUtil.set, null, 32, () -> {
+         if (!aD.read_Z()) {
+            autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
+            cX overlay = mod == null ? null : mod.init_cX();
+            if (overlay != null) {
+               bk.init_bk().init_V(overlay);
+               ((AutismMatchmakingOverlay)overlay).load(true);
+               overlay.init_V_Z(true);
+               this.minecraft.gui.setScreen(new TaskTimer(overlay, this, true));
+            }
+         }
+      }, Component.literal("Matchmaking")));
       all.add(new UtilCore.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
          if (!aD.read_Z()) {
             autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
@@ -737,15 +773,8 @@ public class UtilCore extends Screen implements TaskQueue {
    }
 
    private static String init_Str() {
-      try {
-         String version = net.fabricmc.loader.api.FabricLoader.getInstance()
-            .getModContainer("autism")
-            .map(m -> m.getMetadata().getVersion().getFriendlyString())
-            .orElse("unknown");
-         return version != null && !version.isBlank() ? version : "unknown";
-      } catch (Throwable t) {
-         return "unknown";
-      }
+      String version = L.read_Str();
+      return version != null && !version.isBlank() ? version : "unknown";
    }
 
    private float init_F_I(int delayMs) {
@@ -901,10 +930,10 @@ public class UtilCore extends Screen implements TaskQueue {
          int screenW = cA.init_I();
          int screenH = cA.load_I();
          if (screenH >= 200) {
-            MusicHudService.init_V();
-            MusicHudService.Inner_ConfigStore snapshot = MusicHudService.init_cq_ConfigStore();
-            boolean playing = snapshot != null && snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.init;
-            boolean paused = snapshot != null && snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.load;
+            cq.init_V();
+            cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
+            boolean playing = snapshot != null && snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init;
+            boolean paused = snapshot != null && snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.load;
             if (playing || paused) {
                String track = aR.init(snapshot);
                if (!track.isEmpty()) {

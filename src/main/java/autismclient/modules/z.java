@@ -568,16 +568,16 @@ public final class z extends Module implements cn.Inner_DataUtil {
    }
 
    private static boolean run() {
-      return MC.player.onGround() && ScaffoldModule.read_Z_12() && ScaffoldModule.read_ce_DataUtil() != null;
+      return MC.player.onGround() && aI.read_Z_12() && aI.read_ce_DataUtil() != null;
    }
 
    private boolean get() {
-      return !MC.player.onGround() && !MC.player.getAbilities().flying && ScaffoldModule.read_ce_DataUtil() != null;
+      return !MC.player.onGround() && !MC.player.getAbilities().flying && aI.read_ce_DataUtil() != null;
    }
 
    private boolean init_Z_I_D_2(int turn, double strike) {
       if (!MC.player.onGround() && !MC.player.getAbilities().flying) {
-         ce.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
+         ce.Inner_DataUtil resume = aI.read_ce_DataUtil();
          if (resume == null) {
             return true;
          }
@@ -1008,7 +1008,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                }
 
                this.load_Z = true;
-               ce.Inner_DataUtil bridgeResume = ScaffoldModule.read_ce_DataUtil();
+               ce.Inner_DataUtil bridgeResume = aI.read_ce_DataUtil();
                Module scaffold = al.init_Module_Str("scaffold");
                if (bridgeResume != null || scaffold != null && scaffold.isEnabled()) {
                   ce.Inner_DataUtil resume = bridgeResume != null ? bridgeResume : ce.init(MC.player);
@@ -1017,7 +1017,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                   ce.Inner_DataUtil endpoint = autismclient.util.aD.init_ce_DataUtil();
                   if (endpoint != null && ce.load(endpoint, resume) <= 1.0F) {
                      if (bridgeResume != null) {
-                        ScaffoldModule.init_V_ce_DataUtil_3(endpoint);
+                        aI.init_V_ce_DataUtil_3(endpoint);
                      }
 
                      autismclient.util.aD.load_V();
@@ -1103,11 +1103,11 @@ public final class z extends Module implements cn.Inner_DataUtil {
          && MC != null
          && MC.player != null
          && MC.level != null
-         && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold
+         && al.init_Module_Str("scaffold") instanceof aI scaffold
          && scaffold.isEnabled()) {
          Vec3 step = MC.player.getDeltaMovement();
          AABB support = MC.player.getBoundingBox().move(step.x * 3.0, -0.25, step.z * 3.0).deflate(0.05).setMaxY(MC.player.getY() - 0.02);
-         boolean edge = MC.player.onGround() && !ScaffoldModule.read_Z_12() && MC.level.noCollision(MC.player, support);
+         boolean edge = MC.player.onGround() && !aI.read_Z_12() && MC.level.noCollision(MC.player, support);
          if (MC.player.onGround() && input.jump()) {
             MC.player.setSprinting(false);
          }

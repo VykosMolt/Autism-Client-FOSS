@@ -120,7 +120,7 @@ public final class aH extends Module {
       Vec3 probe = player.position().add(direction.scale(distance));
       BlockPos underProbe = BlockPos.containing(probe).below();
       if (!init_Minecraft.level.isOutsideBuildHeight(underProbe)
-         && ScaffoldModule.init_Z_BlockState_3(init_Minecraft.level.getBlockState(underProbe), init_Minecraft.level, underProbe, CollisionContext.of(player))) {
+         && aI.init_Z_BlockState_3(init_Minecraft.level.getBlockState(underProbe), init_Minecraft.level, underProbe, CollisionContext.of(player))) {
          return false;
       }
 

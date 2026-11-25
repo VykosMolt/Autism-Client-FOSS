@@ -7,5 +7,4 @@ stubs/integrity-stubs.jar
 libs/
 *.jar
 !stubs/compat-stubs.jar
-!gradle/wrapper/gradle-wrapper.jar
 !src/main/resources/**
