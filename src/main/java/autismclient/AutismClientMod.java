@@ -19,7 +19,7 @@ import autismclient.modules.IoWorker;
 import autismclient.modules.P;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.aB;
-import autismclient.modules.aI;
+import autismclient.modules.ScaffoldModule;
 import autismclient.modules.ak;
 import autismclient.util.AuditJoinSend;
 import autismclient.util.AutismConfig;
@@ -217,7 +217,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            aI.init_V_22();
+            ScaffoldModule.init_V_22();
          } catch (Throwable t) {
             logTickError("scaffoldEndClick", t);
          }

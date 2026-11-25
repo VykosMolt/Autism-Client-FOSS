@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.DataUtil;
-import autismclient.modules.aF;
+import autismclient.modules.PhaseModule;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
@@ -40,6 +40,6 @@ public abstract class AutismBlockCollisionsMixin {
       if (!(this.context instanceof EntityCollisionContext ecc) || ecc.getEntity() != mc.player) {
          return original;
       }
-      return aF.init(DataUtil.init(original, this.pos), state, this.pos);
+      return PhaseModule.init(DataUtil.init(original, this.pos), state, this.pos);
    }
 }

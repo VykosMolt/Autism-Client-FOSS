@@ -379,7 +379,7 @@ public final class TaskTimer extends Module {
             if (module != null && module.isEnabled()) {
                LivingEntity enemy = module instanceof aa aura
                   ? aura.load_LivingEntity_3()
-                  : (module instanceof t aura ? aura.load_LivingEntity_4() : (module instanceof BufferHelper aura ? aura.load_LivingEntity() : null));
+                  : (module instanceof t aura ? aura.load_LivingEntity_4() : (module instanceof AnchorAuraModule aura ? aura.load_LivingEntity() : null));
                if (enemy != null && this.init_Z_LivingEntity(enemy)) {
                   return this.init_LivingEntity_LivingEntity_Str(enemy, id);
                }

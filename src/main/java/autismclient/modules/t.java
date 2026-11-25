@@ -755,8 +755,8 @@ public final class t extends Module implements cn.Inner_DataUtil {
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !HashUtil.load_Z()
          && !cn.init_Z()
-         && !aI.update_Z_5()
-         && !FieldCache.init_Z_6()
+         && !ScaffoldModule.update_Z_5()
+         && !AutoTotemModule.init_Z_6()
          && !TableIndex.init_Z_20();
    }
 
@@ -921,7 +921,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
 
          this.init(enemy, destroy, place, obsidian);
          if (destroy != null || place != null || obsidian != null || defend != null) {
-            if (defend != null ? BufferHelper.read_Z() : !this.pop() && BufferHelper.init_Z_2()) {
+            if (defend != null ? AnchorAuraModule.read_Z() : !this.pop() && AnchorAuraModule.init_Z_2()) {
                this.load_V_34();
                return;
             }
@@ -965,7 +965,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
                : null;
             boolean fire = ready
                && (destroy != null ? destroyHit != null : (place != null ? placeHit != null : (obsidian != null ? obsidianHit != null : defendHit != null)));
-            fire = fire && !ListPool.init_Z_10() && !aK.init_Z_27();
+            fire = fire && !ListPool.init_Z_10() && !SurroundModule.init_Z_27();
             this.init_StateCache.init("crystal-aura", 18, MC.player, enemy, this.decimal("rotation-speed-multiplier"), fire ? wire : goal, fire);
             if (!fire) {
                return;
@@ -1015,9 +1015,9 @@ public final class t extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_LivingEntity_4(LivingEntity enemy) {
-      return !aK.init_Z_27()
+      return !SurroundModule.init_Z_27()
          && !ListPool.init_Z_10()
-         && (this.pop() || !BufferHelper.init_Z_2())
+         && (this.pop() || !AnchorAuraModule.init_Z_2())
          && this.init_StateCache.init("crystal-aura", 18, MC.player, enemy, this.init_ce_DataUtil_7());
    }
 
@@ -1878,7 +1878,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
                   }
                }
             } else if (MC.level.getBlockState(cursor).canBeReplaced()
-               && !BufferHelper.init_Z_BlockPos(cursor)
+               && !AnchorAuraModule.init_Z_BlockPos(cursor)
                && MC.level.isUnobstructed(obsidianState, cursor, CollisionContext.empty())
                && !solidNextBox.intersects(new AABB(cursor))
                && (AutismLiteVariant.enabled() || !TaskTimer.init_Z_AABB_2(new AABB(cursor)))) {
@@ -2127,7 +2127,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
       }
 
       LocalPlayer player = MC.player;
-      if (!aK.init_Z_27() && !ListPool.init_Z_10()) {
+      if (!SurroundModule.init_Z_27() && !ListPool.init_Z_10()) {
          if (!imminentOnly && this.pop()) {
             return null;
          }
@@ -2220,9 +2220,9 @@ public final class t extends Module implements cn.Inner_DataUtil {
       if (this.bool("defend")
          && this.bool("place")
          && this.put()
-         && !aK.init_Z_27()
+         && !SurroundModule.init_Z_27()
          && !ListPool.init_Z_10()
-         && !BufferHelper.read_Z()
+         && !AnchorAuraModule.read_Z()
          && !this.load_List.isEmpty()) {
          int tick = ck.init_ck().state_I();
          if (this.chunk != tick) {
@@ -2298,7 +2298,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
 
    private boolean init_Z_BlockPos_9(BlockPos cell, Vec3 eye, double rangeSq) {
       if (MC.level.getBlockState(cell).canBeReplaced()
-         && !BufferHelper.init_Z_BlockPos(cell)
+         && !AnchorAuraModule.init_Z_BlockPos(cell)
          && MC.level.isUnobstructed(Blocks.OBSIDIAN.defaultBlockState(), cell, CollisionContext.empty())
          && !(eye.distanceToSqr(Vec3.atCenterOf(cell)) > rangeSq)) {
          if (!AutismLiteVariant.enabled() && TaskTimer.init_Z_AABB_2(new AABB(cell))) {
@@ -2392,7 +2392,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
       for (int i = 0; i + 2 < offsets.length; i += 3) {
          cursor.set(origin.getX() + offsets[i], origin.getY() + offsets[i + 1], origin.getZ() + offsets[i + 2]);
          BlockState state = MC.level.getBlockState(cursor);
-         if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0 && !BufferHelper.init_Z_BlockPos(cursor)) {
+         if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0 && !AnchorAuraModule.init_Z_BlockPos(cursor)) {
             Boolean works = MC.level.environmentAttributes().getValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, cursor);
             if (!Boolean.TRUE.equals(works)) {
                BlockPos cell = cursor.immutable();
@@ -2750,7 +2750,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_I_Z_3(int slot, boolean defensive) {
-      if (!ListPool.init_Z_10() && !aK.init_Z_27() && (this.pop() || (defensive ? !BufferHelper.read_Z() : !BufferHelper.init_Z_2()))) {
+      if (!ListPool.init_Z_10() && !SurroundModule.init_Z_27() && (this.pop() || (defensive ? !AnchorAuraModule.read_Z() : !AnchorAuraModule.init_Z_2()))) {
          int tick = ck.init_ck().state_I();
          if (tick == this.valid) {
             return false;
@@ -2799,7 +2799,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
       if (this.stop >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
          if (this.next >= 0 && MC.player.getInventory().getSelectedSlot() != this.next) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!BufferHelper.init_Z_I(selected) && !aa.load_Z_I_3(selected)) {
+            if (!AnchorAuraModule.init_Z_I(selected) && !aa.load_Z_I_3(selected)) {
                this.stop = -1;
                this.next = -1;
                this.prev = 0;

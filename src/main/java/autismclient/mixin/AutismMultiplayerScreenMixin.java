@@ -17,8 +17,8 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.aA;
 import autismclient.util.aN;
-import autismclient.util.bW;
-import autismclient.util.bY;
+import autismclient.util.ProxyEntry;
+import autismclient.util.ProxyManager;
 import autismclient.util.cA;
 import autismclient.util.g.PacketUtil;
 import java.lang.reflect.InvocationTargetException;
@@ -506,7 +506,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Str
             graphics.text(this.font, this.autism$fitPlain("Logged in as " + username, leftTextWidth), 4, 4, -1, false);
          }
 
-         bW proxy = bY.init_bY().init_bW();
+         ProxyEntry proxy = ProxyManager.init_bY().init_bW();
          int statusY = 16;
          if (proxy != null) {
             String proxyLabel = "Using proxy " + proxy.read + ":" + proxy.init_I;

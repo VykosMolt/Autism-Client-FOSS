@@ -38,7 +38,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean isPhaseSpiderActive() {
-      return autismclient.modules.aF.audit$isSpiderActive();
+      return autismclient.modules.PhaseModule.audit$isSpiderActive();
    }
 
    public static boolean isAutismActive() {

@@ -10,7 +10,7 @@ import net.minecraft.world.phys.Vec3;
 final class aW {
    private static final x init_x = new x();
    private static final aV init_aV = new aV();
-   private static List<aS.Inner_CachePool> init_List = List.of();
+   private static List<TrajectoriesModule.Inner_CachePool> init_List = List.of();
    private static List<x.Inner_DataUtil> load = List.of();
    private static Level init_Level;
    private static Object init_Obj;
@@ -21,13 +21,13 @@ final class aW {
    private aW() {
    }
 
-   static void init(Minecraft mc, List<aS.Inner_CachePool> paths) {
+   static void init(Minecraft mc, List<TrajectoriesModule.Inner_CachePool> paths) {
       if (init(mc)) {
          init_List = paths;
          Vec3 explosion = null;
 
-         for (aS.Inner_CachePool path : paths) {
-            if (path.init_aS_StreamUtil() == aS.Inner_StreamUtil.pop && path.init_HitResult() != null) {
+         for (TrajectoriesModule.Inner_CachePool path : paths) {
+            if (path.init_aS_StreamUtil() == TrajectoriesModule.Inner_StreamUtil.pop && path.init_HitResult() != null) {
                explosion = path.init_HitResult().getLocation();
             }
          }
@@ -50,7 +50,7 @@ final class aW {
             init(mc, remembered.init_Vec3(), threshold);
          }
 
-         for (aS.Inner_CachePool path : paths) {
+         for (TrajectoriesModule.Inner_CachePool path : paths) {
             if (path.load_Vec3() != null) {
                init(mc, path.load_Vec3(), threshold);
             }
@@ -62,7 +62,7 @@ final class aW {
       }
    }
 
-   static List<x.Inner_DataUtil> init(List<aS.Inner_CachePool> paths) {
+   static List<x.Inner_DataUtil> init(List<TrajectoriesModule.Inner_CachePool> paths) {
       return init_List == paths ? load : List.of();
    }
 

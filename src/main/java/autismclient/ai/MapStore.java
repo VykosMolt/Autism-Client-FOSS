@@ -835,16 +835,16 @@ final class MapStore {
       String action = init(args, "list");
       return init(
          () -> {
-            autismclient.util.bY m = autismclient.util.bY.init_bY();
+            autismclient.util.ProxyManager m = autismclient.util.ProxyManager.init_bY();
             switch (action) {
                case "list":
                   break;
                case "add": {
-                  autismclient.util.bW proxy = new autismclient.util.bW();
+                  autismclient.util.ProxyEntry proxy = new autismclient.util.ProxyEntry();
                   proxy.load_Str = ag.init_Str_JsonObject(args, "name", load(args, "address"));
                   proxy.init_bZ = ag.init_Str_JsonObject(args, "type", "Socks5").equalsIgnoreCase("Socks4")
-                     ? autismclient.util.bZ.init
-                     : autismclient.util.bZ.load;
+                     ? autismclient.util.ProxyType.init
+                     : autismclient.util.ProxyType.load;
                   proxy.read = load(args, "address");
                   proxy.init_I = ag.init_I_JsonObject(args, "port", 0);
                   if (proxy.init_I < 1 || proxy.init_I > 65535) {
@@ -860,7 +860,7 @@ final class MapStore {
                }
                case "enable":
                case "disable": {
-                  autismclient.util.bW proxy = init(m, args);
+                  autismclient.util.ProxyEntry proxy = init(m, args);
                   m.init_V_bW_Z(proxy, action.equals("enable"));
                   break;
                }
@@ -872,9 +872,9 @@ final class MapStore {
             }
 
             JsonArray list = new JsonArray();
-            autismclient.util.bW active = m.init_bW();
+            autismclient.util.ProxyEntry active = m.init_bW();
 
-            for (autismclient.util.bW p : m) {
+            for (autismclient.util.ProxyEntry p : m) {
                list.add(
                   ag.init_JsonObject_ObjArr(
                      "id",
@@ -902,14 +902,14 @@ final class MapStore {
       );
    }
 
-   private static autismclient.util.bW init(autismclient.util.bY m, JsonObject args) {
+   private static autismclient.util.ProxyEntry init(autismclient.util.ProxyManager m, JsonObject args) {
       String key = load(args, "proxy");
-      autismclient.util.bW byId = m.init_bW_Str(key);
+      autismclient.util.ProxyEntry byId = m.init_bW_Str(key);
       if (byId != null) {
          return byId;
       }
 
-      for (autismclient.util.bW p : m) {
+      for (autismclient.util.ProxyEntry p : m) {
          if (key.equalsIgnoreCase(p.load_Str) || key.equalsIgnoreCase(p.read + ":" + p.init_I)) {
             return p;
          }

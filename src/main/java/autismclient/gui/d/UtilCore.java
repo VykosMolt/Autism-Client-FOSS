@@ -18,7 +18,7 @@ import autismclient.util.bK;
 import autismclient.util.bk;
 import autismclient.util.cA;
 import autismclient.util.cX;
-import autismclient.util.cq;
+import autismclient.util.MusicHudService;
 import autismclient.util.ct;
 import autismclient.util.cu;
 import autismclient.util.p;
@@ -901,10 +901,10 @@ public class UtilCore extends Screen implements TaskQueue {
          int screenW = cA.init_I();
          int screenH = cA.load_I();
          if (screenH >= 200) {
-            cq.init_V();
-            cq.Inner_ConfigStore snapshot = cq.init_cq_ConfigStore();
-            boolean playing = snapshot != null && snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.init;
-            boolean paused = snapshot != null && snapshot.init_cq_TaskQueue() == cq.Inner_TaskQueue.load;
+            MusicHudService.init_V();
+            MusicHudService.Inner_ConfigStore snapshot = MusicHudService.init_cq_ConfigStore();
+            boolean playing = snapshot != null && snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.init;
+            boolean paused = snapshot != null && snapshot.init_cq_TaskQueue() == MusicHudService.Inner_TaskQueue.load;
             if (playing || paused) {
                String track = aR.init(snapshot);
                if (!track.isEmpty()) {

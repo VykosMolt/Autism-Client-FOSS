@@ -283,7 +283,7 @@ public final class bA {
          init_V_D(px, py, pz, feetY);
       } else if (needPlan) {
          update();
-         if (!autismclient.modules.FieldCache.read_Z_3() && !autismclient.modules.TableIndex.load_Z_9()) {
+         if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.TableIndex.load_Z_9()) {
             double movedX = px - poll_D;
             double movedZ = pz - push_D;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {
@@ -368,7 +368,7 @@ public final class bA {
          int sprint = (mask & 1) != 0 && !jump ? 32 : 0;
          init_V_I(mask | (jump ? 16 : 0) | sprint);
          pool = jump ? pool + 1 : 0;
-         if (!autismclient.modules.FieldCache.read_Z_3() && !autismclient.modules.TableIndex.load_Z_9()) {
+         if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.TableIndex.load_Z_9()) {
             double movedX = px - poll_D;
             double movedZ = pz - push_D;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {

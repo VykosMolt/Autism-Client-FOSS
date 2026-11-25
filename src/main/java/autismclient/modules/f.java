@@ -191,7 +191,7 @@ public final class f {
          al.init_V_Module(new N());
          al.init_V_Module(new aZ());
          al.init_V_Module(new av());
-         al.init_V_Module(new aF());
+         al.init_V_Module(new PhaseModule());
          al.init_V_Module(new CachePool());
          al.init_V_Module(new bh());
          al.init_V_Module(new f.Inner_EventBus());
@@ -199,22 +199,22 @@ public final class f {
          al.init_V_Module(new f.Inner_StreamUtil());
          al.init_V_Module(new f.Inner_CachePool());
          al.init_V_Module(new ba());
-         al.init_V_Module(new FieldCache());
+         al.init_V_Module(new AutoTotemModule());
          al.init_V_Module(new j());
          al.init_V_Module(new StateCache());
          al.init_V_Module(new bg());
          al.init_V_Module(new z());
          al.init_V_Module(new ListPool());
-         al.init_V_Module(new aK());
-         al.init_V_Module(new BufferHelper());
+         al.init_V_Module(new SurroundModule());
+         al.init_V_Module(new AnchorAuraModule());
          al.init_V_Module(new t());
          al.init_V_Module(new TaskTimer());
          al.init_V_Module(new aQ());
-         al.init_V_Module(new PathHelper());
+         al.init_V_Module(new AutoTrapModule());
          al.init_V_Module(new UtilCore());
          al.init_V_Module(new X());
          al.init_V_Module(new aa());
-         al.init_V_Module(new RingBuffer());
+         al.init_V_Module(new AutoFarmModule());
          al.init_V_Module(new MethodUtil());
          al.init_V_Module(new bd());
          AutismConfig leafConfig = AutismConfig.getGlobal();
@@ -233,7 +233,7 @@ public final class f {
          al.init_V_Module(new f.Inner_BufferHelper());
          al.init_V_Module(new f.Inner_PoolEntry());
          al.init_V_Module(new f.Inner_TaskQueue());
-         al.init_V_Module(new aI());
+         al.init_V_Module(new ScaffoldModule());
          al.init_V_Module(new f.Inner_BitSetUtil());
          al.init_V_Module(new f.Inner_CharEncoder());
          al.init_V_Module(new StreamUtil());
@@ -263,7 +263,7 @@ public final class f {
          al.init_V_Module(new f.Inner_RingBuffer());
          al.init_V_Module(new au());
          al.init_V_Module(new f.Inner_ClassCache());
-         al.init_V_Module(new aS());
+         al.init_V_Module(new TrajectoriesModule());
          al.init_V_Module(new f.Inner_ArrayUtil());
          al.init_V_Module(new f.Inner_JsonUtil());
          al.init_V_Module(new ClassCache());
@@ -971,7 +971,7 @@ public final class f {
                this.init_Obj = MC.level;
             }
 
-            if (!FieldCache.init_Z_6() && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())) {
+            if (!AutoTotemModule.init_Z_6() && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())) {
                this.pop();
                if (this.isEnabled()) {
                   if (MC.gui.screen() == null && MC.gui.overlay() == null) {
@@ -1223,7 +1223,7 @@ public final class f {
             && !MC.player.isUsingItem()
             && !MC.player.isHandsBusy()
             && !HashUtil.load_Z()
-            && !FieldCache.init_Z_6()
+            && !AutoTotemModule.init_Z_6()
             && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())
             && autismclient.util.ah.read_Z(this.id())
             && this.init_Z_38();
@@ -2120,11 +2120,11 @@ public final class f {
             || MC.player == null
             || MC.level == null
             || MC.gui.screen() != null
-            || aI.read_Z_12()
-            || aI.update_Z_5()
+            || ScaffoldModule.read_Z_12()
+            || ScaffoldModule.update_Z_5()
             || cn.init_ce_DataUtil() != null
-            || aI.flush_Z_5()
-            || FieldCache.init_Z_6()
+            || ScaffoldModule.flush_Z_5()
+            || AutoTotemModule.init_Z_6()
             || !this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
       }
 
@@ -4561,7 +4561,7 @@ public final class f {
       public void preMovementTick() {
          if (MC == null || MC.player == null || MC.gameMode == null || MC.getConnection() == null) {
             this.update_V_14();
-         } else if (FieldCache.init_Z_6()) {
+         } else if (AutoTotemModule.init_Z_6()) {
             this.read_V_19();
          } else if (MC.player.isUsingItem()) {
             this.read_V_19();
@@ -4622,7 +4622,7 @@ public final class f {
       }
 
       private boolean load_Z_20() {
-         if (cn.init_ce_DataUtil() == null && !cn.init_Z() && !aI.update_Z_5() && !FieldCache.init_Z_6()) {
+         if (cn.init_ce_DataUtil() == null && !cn.init_Z() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6()) {
             return this.load_Z
                ? this.init_InteractionHand_4() != null && this.load_ce_DataUtil_4() != null && autismclient.util.as.init_Z()
                : this.read && this.sync() && autismclient.util.as.load_Z();
@@ -6601,7 +6601,7 @@ public final class f {
             && MC.level != null
             && MC.getConnection() != null
             && this.init_BlockPos != null
-            && !FieldCache.init_Z_6()) {
+            && !AutoTotemModule.init_Z_6()) {
             if (!this.bool("render")) {
                autismclient.util.au.load();
             } else {
@@ -7314,11 +7314,11 @@ public final class f {
             && MC.player != null
             && MC.level != null
             && MC.gui.screen() == null
-            && !aI.read_Z_12()
-            && !aI.update_Z_5()
+            && !ScaffoldModule.read_Z_12()
+            && !ScaffoldModule.update_Z_5()
             && cn.init_ce_DataUtil() == null
-            && !aI.flush_Z_5()
-            && !FieldCache.init_Z_6()
+            && !ScaffoldModule.flush_Z_5()
+            && !AutoTotemModule.init_Z_6()
             && (AutismLiteVariant.enabled() || !j.init_Z_49())
             && !autismclient.util.DataPipe.init()
             && this.init_O.init_Z_ItemStack(MC.player.getMainHandItem())
@@ -8167,7 +8167,7 @@ public final class f {
             && MC.player != null
             && MC.level != null
             && MC.gameMode != null
-            && !FieldCache.init_Z_6()
+            && !AutoTotemModule.init_Z_6()
             && MC.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor) {
             boolean destroying = accessor.autism$isDestroying();
             if (destroying) {
@@ -8557,7 +8557,7 @@ public final class f {
                   return false;
                }
 
-               if (FieldCache.init_Z_6()) {
+               if (AutoTotemModule.init_Z_6()) {
                   return false;
                }
 

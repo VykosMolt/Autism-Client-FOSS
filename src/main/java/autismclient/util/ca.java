@@ -14,13 +14,13 @@ public final class ca {
    private ca() {
    }
 
-   public static ca.Inner_DataUtil init(bW proxy, String destHost, int destPort, int timeoutMs) {
+   public static ca.Inner_DataUtil init(ProxyEntry proxy, String destHost, int destPort, int timeoutMs) {
       if (proxy != null && proxy.init_bZ != null && proxy.init_Z()) {
          String host = destHost == null ? "" : destHost.trim();
          if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !init(proxy)) {
             int timeout = Math.max(1, timeoutMs);
-            bZ primary = proxy.init_bZ == bZ.init ? bZ.init : bZ.load;
-            bZ secondary = primary == bZ.init ? bZ.load : bZ.init;
+            ProxyType primary = proxy.init_bZ == ProxyType.init ? ProxyType.init : ProxyType.load;
+            ProxyType secondary = primary == ProxyType.init ? ProxyType.load : ProxyType.init;
             ca.Inner_DataUtil first = init(proxy, primary, host, destPort, timeout);
             if (first.init_Z()) {
                return first;
@@ -43,7 +43,7 @@ public final class ca {
       }
    }
 
-   private static boolean init(bW proxy) {
+   private static boolean init(ProxyEntry proxy) {
       if (proxy.write != null && !proxy.write.isBlank()) {
          byte[] user = proxy.write.getBytes(StandardCharsets.UTF_8);
          byte[] pass = (proxy.update == null ? "" : proxy.update).getBytes(StandardCharsets.UTF_8);
@@ -53,7 +53,7 @@ public final class ca {
       }
    }
 
-   private static ca.Inner_DataUtil init(bW proxy, bZ type, String host, int port, int timeout) {
+   private static ca.Inner_DataUtil init(ProxyEntry proxy, ProxyType type, String host, int port, int timeout) {
       long started = System.nanoTime();
 
       try (Socket socket = new Socket()) {
@@ -61,7 +61,7 @@ public final class ca {
          socket.connect(new InetSocketAddress(proxy.read, proxy.init_I), timeout);
          OutputStream out = socket.getOutputStream();
          InputStream in = socket.getInputStream();
-         ca.Inner_StreamUtil state = type == bZ.init ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
+         ca.Inner_StreamUtil state = type == ProxyType.init ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
          if (state != ca.Inner_StreamUtil.update) {
             return ca.Inner_DataUtil.init(state);
          }
@@ -77,7 +77,7 @@ public final class ca {
       }
    }
 
-   private static ca.Inner_StreamUtil init(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
+   private static ca.Inner_StreamUtil init(OutputStream out, InputStream in, ProxyEntry proxy, String host, int port) throws IOException {
       boolean hasAuth = proxy.write != null && !proxy.write.isBlank();
       if (hasAuth) {
          out.write(new byte[]{5, 2, 0, 2});
@@ -151,7 +151,7 @@ public final class ca {
       }
    }
 
-   private static ca.Inner_StreamUtil init(OutputStream out, InputStream in, bW proxy) throws IOException {
+   private static ca.Inner_StreamUtil init(OutputStream out, InputStream in, ProxyEntry proxy) throws IOException {
       byte[] user = (proxy.write == null ? "" : proxy.write).getBytes(StandardCharsets.UTF_8);
       byte[] pass = (proxy.update == null ? "" : proxy.update).getBytes(StandardCharsets.UTF_8);
       ByteArrayOutputStream auth = new ByteArrayOutputStream(3 + user.length + pass.length);
@@ -170,7 +170,7 @@ public final class ca {
       }
    }
 
-   private static ca.Inner_StreamUtil load(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
+   private static ca.Inner_StreamUtil load(OutputStream out, InputStream in, ProxyEntry proxy, String host, int port) throws IOException {
       byte[] user = (proxy.write == null ? "" : proxy.write).getBytes(StandardCharsets.UTF_8);
       ByteArrayOutputStream request = new ByteArrayOutputStream();
       request.write(4);
@@ -233,8 +233,8 @@ public final class ca {
       return out;
    }
 
-   public record Inner_DataUtil(boolean init_Z, long init_J, bZ init_bZ, ca.Inner_StreamUtil init_ca_StreamUtil) {
-      public Inner_DataUtil(boolean ok, long latencyMs, bZ workingType) {
+   public record Inner_DataUtil(boolean init_Z, long init_J, ProxyType init_bZ, ca.Inner_StreamUtil init_ca_StreamUtil) {
+      public Inner_DataUtil(boolean ok, long latencyMs, ProxyType workingType) {
          this(ok, latencyMs, workingType, ok ? ca.Inner_StreamUtil.update : ca.Inner_StreamUtil.load);
       }
 

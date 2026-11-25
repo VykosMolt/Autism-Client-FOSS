@@ -1607,7 +1607,7 @@ public final class cc {
             }
          }
 
-         if (!autismclient.modules.FieldCache.init_Z_6()) {
+         if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
             this.close_V();
          }
       } catch (Throwable t) {

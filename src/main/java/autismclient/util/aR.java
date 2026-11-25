@@ -113,7 +113,7 @@ public final class aR {
       return durationSec > 0.0 ? Math.max(0.0, Math.min(durationSec, position)) : Math.max(0.0, position);
    }
 
-   public static String init(cq.Inner_ConfigStore snapshot) {
+   public static String init(MusicHudService.Inner_ConfigStore snapshot) {
       if (snapshot != null && snapshot.load_Str() != null && !snapshot.load_Str().isBlank()) {
          String title = snapshot.load_Str().trim();
          String artist = snapshot.init_Str() == null ? "" : snapshot.init_Str().trim();

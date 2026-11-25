@@ -1,6 +1,6 @@
 package autismclient.g;
 
-import autismclient.util.bZ;
+import autismclient.util.ProxyType;
 import io.netty.channel.local.LocalAddress;
 import java.io.IOException;
 import java.net.Socket;
@@ -458,8 +458,8 @@ public final class BufferHelper {
       load;
    }
 
-   public record Inner_ConfigStore(bZ init_bZ, String init_Str, int init_I, String load, String read) {
-      public Inner_ConfigStore(bZ init_bZ, String init_Str, int init_I, String load, String read) {
+   public record Inner_ConfigStore(ProxyType init_bZ, String init_Str, int init_I, String load, String read) {
+      public Inner_ConfigStore(ProxyType init_bZ, String init_Str, int init_I, String load, String read) {
          Objects.requireNonNull(init_bZ, "type");
          if (init_Str != null && !init_Str.isBlank() && init_I >= 1 && init_I <= 65535) {
             load = load == null ? "" : load;

@@ -3,7 +3,7 @@ package autismclient.gui.d;
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.util.bY;
+import autismclient.util.ProxyManager;
 import autismclient.util.cA;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,7 @@ public class ClassCache extends KeyHolder {
       int panelX = this.close();
       int panelW = this.open();
       int y = this.add() - this.write_I;
-      bY mgr = bY.init_bY();
+      ProxyManager mgr = ProxyManager.init_bY();
       this.init("Timeout", "How long each proxy check can take.", mgr.read_I(), mgr::init_V_I, init_IArr, this::init_Str_I, panelX, panelW, y);
       y += this.flush();
       this.init("Threads", "How many proxies can be checked at once.", mgr.write_I(), mgr::load_V_I, load_IArr, Integer::toString, panelX, panelW, y);
@@ -162,7 +162,7 @@ public class ClassCache extends KeyHolder {
    }
 
    private void read_V_5() {
-      bY mgr = bY.init_bY();
+      ProxyManager mgr = ProxyManager.init_bY();
       mgr.init_V_I(3000);
       mgr.load_V_I(64);
       mgr.read_V_I(0);

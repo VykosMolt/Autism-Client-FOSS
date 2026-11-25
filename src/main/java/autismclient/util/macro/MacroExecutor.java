@@ -8311,7 +8311,7 @@ public class MacroExecutor {
    }
 
    public static void load_V() {
-      if (!autismclient.modules.FieldCache.init_Z_6()) {
+      if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
          Runnable task;
          while ((task = init_ConcurrentLinkedQu.poll()) != null) {
             try {

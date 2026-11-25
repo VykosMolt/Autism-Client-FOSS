@@ -31,14 +31,14 @@ public final class aT {
       init_I = 0;
       Minecraft mc = Minecraft.getInstance();
       Module module = al.init_Module_Str("trajectories");
-      if (module instanceof aS trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && Q.init(init_Matrix4f)) {
+      if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && Q.init(init_Matrix4f)) {
          Vec3 camera = Q.init();
          aV.Inner_DataUtil remembered = aW.init_aV_DataUtil();
          if (remembered != null) {
             init(graphics, mc, remembered.init_Vec3(), camera, -8329771);
          }
 
-         for (aS.Inner_CachePool path : trajectories.init_List_12()) {
+         for (TrajectoriesModule.Inner_CachePool path : trajectories.init_List_12()) {
             if (init_I >= 3) {
                break;
             }

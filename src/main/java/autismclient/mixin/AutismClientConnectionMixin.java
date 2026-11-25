@@ -13,7 +13,7 @@ import autismclient.modules.Module;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.TaskTimer;
 import autismclient.modules.aD;
-import autismclient.modules.aI;
+import autismclient.modules.ScaffoldModule;
 import autismclient.modules.ac;
 import autismclient.modules.al;
 import autismclient.modules.f;
@@ -204,7 +204,7 @@ public abstract class AutismClientConnectionMixin implements C {
          }
       } else if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
          ch.init_V();
-         aI.update_V_10();
+         ScaffoldModule.update_V_10();
          if (!AutismLiteVariant.enabled()) {
             ac.load_V_21();
          }
@@ -250,7 +250,7 @@ public abstract class AutismClientConnectionMixin implements C {
             DataUtil.init((Connection)(Object)this, packet);
          }
 
-         aI.read_V_Packet(packet);
+         ScaffoldModule.read_V_Packet(packet);
          if (!AutismLiteVariant.enabled()) {
             aq.init(packet);
          }
@@ -353,7 +353,7 @@ public abstract class AutismClientConnectionMixin implements C {
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;)V", at = @At("HEAD"), cancellable = true)
    private void yang$onSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
       if (!this.autism$isMultiConnectionOrChannel()) {
-         aI.init_V_Packet(packet);
+         ScaffoldModule.init_V_Packet(packet);
          if (!AutismLiteVariant.enabled()) {
             w.load(packet);
          }
@@ -406,11 +406,11 @@ public abstract class AutismClientConnectionMixin implements C {
                   ck shared = ck.init_ck();
                   if (packet instanceof ServerboundUseItemOnPacket pibp
                      && shared.init_Z_BlockPos_Direction(pibp.hitResult().getBlockPos(), pibp.hitResult().getDirection())) {
-                     aI.load_V_Packet(packet);
+                     ScaffoldModule.load_V_Packet(packet);
                      ci.cancel();
                   } else if (packet instanceof ServerboundInteractPacket && shared.frame()) {
                      shared.init_Z_Entity(Minecraft.getInstance().crosshairPickEntity);
-                     aI.load_V_Packet(packet);
+                     ScaffoldModule.load_V_Packet(packet);
                      ci.cancel();
                   } else {
                      if (packet instanceof ServerboundContainerClosePacket closeForHold) {
@@ -479,13 +479,13 @@ public abstract class AutismClientConnectionMixin implements C {
                               && al.load_Z_BlockPos_Direction(actionPacket.getPos(), actionPacket.getDirection())) {
                               ci.cancel();
                            } else if (module.init(packet, payloadLoggedEarly)) {
-                              aI.load_V_Packet(packet);
+                              ScaffoldModule.load_V_Packet(packet);
                               ci.cancel();
                            } else if (!forceBookOrSignPacket) {
                               if (!shared.get_Z()) {
                                  autismclient.util.macro.C.Inner_StreamUtil gateResult = autismclient.util.macro.C.init(packet, "C2S");
                                  if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.load) {
-                                    aI.load_V_Packet(packet);
+                                    ScaffoldModule.load_V_Packet(packet);
                                     ci.cancel();
                                     return;
                                  }
@@ -523,7 +523,7 @@ public abstract class AutismClientConnectionMixin implements C {
                                           AutismClientAddon.LOG.debug("[Autism] CANCELLED packet (send disabled)");
                                        }
 
-                                       aI.load_V_Packet(packet);
+                                       ScaffoldModule.load_V_Packet(packet);
                                        ci.cancel();
                                     } else if (shared.write_Z()) {
                                        if (AUTISM_PACKET_TRACE) {
@@ -734,7 +734,7 @@ public abstract class AutismClientConnectionMixin implements C {
    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;Z)V", at = @At("HEAD"), cancellable = true)
    private void autism$onSendPacketWithFlush(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
       if (!this.autism$isMultiConnectionOrChannel()) {
-         aI.init_V_Packet(packet);
+         ScaffoldModule.init_V_Packet(packet);
          if (!AutismLiteVariant.enabled()) {
             w.load(packet);
          }

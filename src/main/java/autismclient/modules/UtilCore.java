@@ -266,15 +266,15 @@ public final class UtilCore extends Module implements cn.Inner_DataUtil {
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
          && !cn.init_Z()
-         && !aI.update_Z_5()
+         && !ScaffoldModule.update_Z_5()
          && !j.init_Z_49()
          && !z.sync_Z_12()
          && !ListPool.init_Z_10()
-         && !aK.init_Z_27()
-         && !BufferHelper.init_Z_2()
+         && !SurroundModule.init_Z_27()
+         && !AnchorAuraModule.init_Z_2()
          && !t.init_Z_51()
          && !"auto-trap".equals(autismclient.util.aD.init_Str())
-         && !FieldCache.init_Z_6()
+         && !AutoTotemModule.init_Z_6()
          && !TableIndex.init_Z_20()
          && !HashUtil.load_Z()
          && !autismclient.util.DataPipe.init();

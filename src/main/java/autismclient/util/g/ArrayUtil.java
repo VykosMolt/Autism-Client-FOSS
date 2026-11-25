@@ -1,6 +1,6 @@
 package autismclient.util.g;
 
-import autismclient.util.bZ;
+import autismclient.util.ProxyType;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
@@ -66,7 +66,7 @@ final class ArrayUtil {
    }
 
    private static ArrayUtil.Inner_StreamUtil init_ArrayUtil_StreamUt(ConfigStore.Inner_DataUtil spec) throws IOException {
-      if (spec.init_bZ() != bZ.load) {
+      if (spec.init_bZ() != ProxyType.load) {
          throw new IOException("Multi resource-pack downloads support only SOCKS5 proxies");
       }
 
