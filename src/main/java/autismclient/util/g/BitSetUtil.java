@@ -6,7 +6,7 @@ import java.util.Set;
 
 public final class BitSetUtil {
    private static final Set<String> init = Set.of("click-slot", "click-item", "change-slot", "drop", "send", "say", "damage", "hclip", "vclip", "tp");
-   private static final Set<String> load = Set.of("delay", "gamemode", "server", "plugins", "matchmaking", "mm", "dismount");
+   private static final Set<String> load = Set.of("delay", "gamemode", "server", "plugins", "dismount");
 
    private BitSetUtil() {
    }

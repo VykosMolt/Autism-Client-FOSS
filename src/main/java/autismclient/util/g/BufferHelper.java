@@ -5,7 +5,7 @@ import java.util.Set;
 import net.minecraft.world.inventory.ContainerInput;
 
 public final class BufferHelper {
-   private static final Set<String> init = Set.of("matchmaking", "mm", "nbt", "server", "plugins", "multi");
+   private static final Set<String> init = Set.of("nbt", "server", "plugins", "multi");
    private static final Set<String> load = Set.of(
       "toggle",
       "t",

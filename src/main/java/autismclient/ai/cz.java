@@ -65,7 +65,6 @@ final class cz {
       "client:proxies",
       "client:join_macro",
       "client:server_info",
-      "client:matchmaking",
       "client:connect",
       "client:disconnect",
       "client:addon",
@@ -1951,23 +1950,6 @@ final class cz {
       );
       out.add(
          AiCatalog.init(
-            "client:matchmaking",
-            "autism",
-            "matchmaking",
-            "The AUTISM matchmaking lobby browser (an encrypted relay, separate from LAN Sync). action status (connection, whether in a lobby, members, the current lobby and peers); browse (refresh and list public lobbies); join {lobbyId}; leave; chat {text}. Creating and hosting a lobby is done in the Matchmaking window.",
-            List.of("matchmaking", "lobby"),
-            init_JsonObject_ObjArr("action", "string", "lobbyId", "string", "text", "string").toString(),
-            "None; connects to the matchmaking relay on demand.",
-            "Joining connects you to a lobby's shared server context; chat is visible to the lobby.",
-            List.of(),
-            "The matchmaking status after the action.",
-            "Joining and connecting run in the background; poll status.",
-            ag.init_JsonObject_ObjArr("id", "client:matchmaking", "arguments", ag.init_JsonObject_ObjArr("action", "browse")).toString(),
-            AiCapabilityDescriptor.Classification.ACTION
-         )
-      );
-      out.add(
-         AiCatalog.init(
             "client:server_info",
             "autism",
             "server-intel",
@@ -3805,10 +3787,6 @@ final class cz {
 
          if (id.equals("client:server_info")) {
             return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Server info", MapStore.poll(args));
-         }
-
-         if (id.equals("client:matchmaking")) {
-            return R.init_AiOperation(AiOperation.Status.SUCCEEDED, "Matchmaking", MapStore.push(args));
          }
 
          if (id.equals("client:profiles")) {

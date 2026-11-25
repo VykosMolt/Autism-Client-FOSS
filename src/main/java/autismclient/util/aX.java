@@ -183,7 +183,6 @@ public final class aX {
       init_V_Str("title");
       init_V_I(60, "title: PASS", mc -> init_JsonArray.add("title"));
       init_V_Str_2("title", () -> init_Screen, autismclient.gui.d.HashUtil.Inner_DataUtil.load);
-      init_V_Str("matchmaking", m -> m.init_cX(), o -> ((AutismMatchmakingOverlay)o).load(true));
       init_V_Str("profiles", m -> m.load_cX(), o -> ((AutismProfilesOverlay)o).load(true));
    }
 

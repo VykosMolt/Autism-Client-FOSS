@@ -1441,13 +1441,7 @@ public class AutismPacketLoggerOverlay extends bj {
             : new String[]{"Block", "+WAIT", "+ Filter", "- Filter", "Copy", "Inspect"};
       }
 
-      if (e != null && e.init_Packet != null && !AutismLiteVariant.enabled()) {
-         String[] withShare = Arrays.copyOf(base, base.length + 1);
-         withShare[base.length] = "Share to Lobby";
-         return withShare;
-      } else {
-         return base;
-      }
+      return base;
    }
 
    private void init_V_AutismPacketLogger_2(AutismPacketLoggerOverlay.Inner_JsonUtil entry, int mouseX, int mouseY) {
@@ -1726,32 +1720,6 @@ public class AutismPacketLoggerOverlay extends bj {
                break;
             case "Inspect":
                this.init_AutismPacketInspec.init_V_AutismPacketLogger(e, this.init_I_2 + this.reset + 10, this.load_I + 8);
-               break;
-            case "Share to Lobby":
-               this.init_V_AutismPacketLogger(e);
-         }
-      }
-   }
-
-   private void init_V_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil e) {
-      if (!AutismLiteVariant.enabled()) {
-         autismclient.util.mm.BufferHelper mm = autismclient.util.mm.BufferHelper.init_BufferHelper();
-         if (!mm.init_Z()) {
-            AutismClientMessaging.sendPrefixed("§cNot in a Matchmaking lobby. Open Matchmaking and join one first.");
-         } else if (e != null && e.init_Packet != null) {
-            String data = o.init_Str(List.of(new ck.Inner_CachePool(e.init_Packet, 0)));
-            if (data == null) {
-               AutismClientMessaging.sendPrefixed("§cFailed to serialize packet for sharing.");
-            } else {
-               autismclient.util.mm.b.DataUtil.StateCache offer = new autismclient.util.mm.b.DataUtil.StateCache();
-               offer.init = e.load_Str;
-               offer.load = e.init_Str;
-               offer.read = data;
-               mm.init_V_DataUtil_StateCach(offer);
-               bi.init("Shared packet to lobby: " + e.load_Str, -13248397);
-            }
-         } else {
-            AutismClientMessaging.sendPrefixed("§cThis entry has no replayable packet to share.");
          }
       }
    }
