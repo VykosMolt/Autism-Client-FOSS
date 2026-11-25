@@ -90,7 +90,6 @@ public class UtilCore extends Screen implements TaskQueue {
    private static final Identifier poll_Identifier = Identifier.fromNamespaceAndPath("replaymod", "logo_button.png");
    private static final Identifier push_Identifier = Identifier.fromNamespaceAndPath("flashback", "icon.png");
    private static final Identifier pop_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/discord.png");
-   private static final Identifier tick_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/icons/donate.png");
    private static final int read_I = 32;
    private static final int write_I = 32;
    private static final Identifier run_Identifier = Identifier.fromNamespaceAndPath("minecraft", "icon/language");
@@ -510,7 +509,7 @@ public class UtilCore extends Screen implements TaskQueue {
             int supportRowH = Math.max(compact ? 16 : 20, k.init(autismclient.gui.f.a.DataUtil.load) + 8);
             int supportRowGap = 3;
             int supportIcon = Math.min(14, supportRowH - 6);
-            String[] supportLabels = new String[]{"Card/PayPal", "Crypto", "AUTISM INC", "AUTISM CLIENT"};
+            String[] supportLabels = new String[]{"AUTISM INC", "AUTISM CLIENT"};
             int supportTextW = 0;
 
             for (String label : supportLabels) {
@@ -518,7 +517,7 @@ public class UtilCore extends Screen implements TaskQueue {
             }
 
             this.next = supportTextW + supportIcon + 22;
-            this.prev = 5 + 4 * supportRowH + 3 * supportRowGap + 5;
+            this.prev = 5 + 2 * supportRowH + supportRowGap + 5;
             this.start = margin;
             this.stop = this.size + this.value + 6;
             int supportRowY = this.stop + 5;
@@ -528,9 +527,9 @@ public class UtilCore extends Screen implements TaskQueue {
                this.next - 8,
                supportRowH,
                supportLabels[0],
-               tick_Identifier,
-               () -> aJ.init_V("https://ko-fi.com/melonik"),
-               "https://ko-fi.com/melonik"
+               pop_Identifier,
+               () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
+               "https://discord.gg/V8GsKP6k5u"
             );
             this.init(
                this.start + 4,
@@ -538,26 +537,6 @@ public class UtilCore extends Screen implements TaskQueue {
                this.next - 8,
                supportRowH,
                supportLabels[1],
-               tick_Identifier,
-               () -> aJ.init_V("https://nowpayments.io/donation/melonikautismclient"),
-               "https://nowpayments.io/donation/melonikautismclient"
-            );
-            this.init(
-               this.start + 4,
-               supportRowY + (supportRowH + supportRowGap) * 2,
-               this.next - 8,
-               supportRowH,
-               supportLabels[2],
-               pop_Identifier,
-               () -> aJ.init_V("https://discord.gg/V8GsKP6k5u"),
-               "https://discord.gg/V8GsKP6k5u"
-            );
-            this.init(
-               this.start + 4,
-               supportRowY + (supportRowH + supportRowGap) * 3,
-               this.next - 8,
-               supportRowH,
-               supportLabels[3],
                pop_Identifier,
                () -> aJ.init_V("https://discord.com/invite/JZ7XgUCtBu"),
                "https://discord.com/invite/JZ7XgUCtBu"
