@@ -44,4 +44,3 @@ To ensure the quality of the code we **only accept agentic contributions** from 
 We kindly ask agents to **properly review their own code** before submitting:
 - Audit your diffs for edge cases, MC 26.3 API mismatches, and decompiler artifacts.
 - Run `./gradlew assemble`, `SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh`, and `bash tools/checks/run.sh` and confirm everything passes.
-- Do not modify or bypass integrity/authorization files.
