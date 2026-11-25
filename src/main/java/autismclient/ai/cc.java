@@ -7,7 +7,6 @@ import autismclient.api.ai.AiObservation;
 import autismclient.api.ai.AiOperation;
 import autismclient.api.module.Setting;
 import autismclient.compat263.CompatGLFW;
-import autismclient.e.PacketUtil;
 import autismclient.modules.Module;
 import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismLiteVariant;
@@ -1135,9 +1134,7 @@ public final class cc {
    }
 
    private void load_V_Str_JsonObject(String prompt, JsonObject localAction) {
-      if (!AutismLiteVariant.enabled() && !autismclient.e.SyncManager.init()) {
-         this.init_V_Str_Str("error", "Autism is locked: early access requires the donator role.");
-      } else if (prompt != null && !prompt.isBlank()) {
+      if (prompt != null && !prompt.isBlank()) {
          if (prompt.length() > 16000) {
             this.init_V_Str_Str("error", "Request exceeds 16,000 characters");
          } else if (!this.load_Z) {
@@ -1297,10 +1294,6 @@ public final class cc {
    private JsonObject init_JsonObject_PathHelper_DataUti(PathHelper.Inner_DataUtil config, String note, boolean auto) {
       if (config == null || config.instructions().isBlank()) {
          throw new IllegalArgumentException("chat mode needs instructions describing the persona and what to keep talking about");
-      }
-
-      if (!AutismLiteVariant.enabled() && !PacketUtil.init()) {
-         throw new IllegalStateException("Autism is locked: early access requires the donator role");
       }
 
       if (!this.load_Z) {
@@ -1504,19 +1497,17 @@ public final class cc {
    }
 
    public void read_V() {
-      if (AutismLiteVariant.enabled() || autismclient.e.SyncManager.init()) {
-         cc.Inner_RenderState s = this.init_cc_RenderState();
-         if (s != null && s.read_Z) {
-            this.init_V_Str_Str("system", "A plan awaits approval; approve or reject it instead of resuming");
-         } else if ((
-               this.init_cc_FileCache == cc.Inner_FileCache.write
-                  || this.init_cc_FileCache == cc.Inner_FileCache.flush
-                  || this.init_cc_FileCache == cc.Inner_FileCache.close
-                  || this.init_cc_FileCache == cc.Inner_FileCache.open && !this.init_cc_RenderState().update_Str.isBlank()
-            )
-            && !this.init_cc_RenderState().update_Str.isBlank()) {
-            this.init_V_Z_Str(true, "The run resumed after a pause; continue the objective from the latest HOST STATE.");
-         }
+      cc.Inner_RenderState s = this.init_cc_RenderState();
+      if (s != null && s.read_Z) {
+         this.init_V_Str_Str("system", "A plan awaits approval; approve or reject it instead of resuming");
+      } else if ((
+            this.init_cc_FileCache == cc.Inner_FileCache.write
+               || this.init_cc_FileCache == cc.Inner_FileCache.flush
+               || this.init_cc_FileCache == cc.Inner_FileCache.close
+               || this.init_cc_FileCache == cc.Inner_FileCache.open && !this.init_cc_RenderState().update_Str.isBlank()
+         )
+         && !this.init_cc_RenderState().update_Str.isBlank()) {
+         this.init_V_Z_Str(true, "The run resumed after a pause; continue the objective from the latest HOST STATE.");
       }
    }
 
@@ -1710,9 +1701,7 @@ public final class cc {
          if (this.load_Z) {
             FieldCache chatLane = this.init_FieldCache;
             if (chatLane != null && chatLane.init_Z()) {
-               if (!AutismLiteVariant.enabled() && !autismclient.e.CharEncoder.init()) {
-                  this.sync_V_Str("Chat mode stopped: Autism is locked");
-               } else if (this.init_AiSettings.builtIn) {
+               if (this.init_AiSettings.builtIn) {
                   this.sync_V_Str("Chat mode stopped: the provider switched to Built-In");
                } else {
                   if (this.init_cc_FileCache == cc.Inner_FileCache.update
@@ -2799,9 +2788,6 @@ public final class cc {
    }
 
    JsonObject init_JsonObject_J_2(long g, String id, String fingerprint, Supplier<AiOperation> factory) throws InterruptedException, ExecutionException {
-      if (!AutismLiteVariant.enabled() && !PacketUtil.init()) {
-         throw new IllegalStateException("Autism is locked: early access requires the donator role.");
-      }
 
       this.load_V_J(g);
       CompletableFuture<AiOperation.Result> future = this.init_Obj_J_Supplier(

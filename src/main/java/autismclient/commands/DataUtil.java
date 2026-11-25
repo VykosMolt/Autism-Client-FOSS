@@ -386,11 +386,6 @@ public final class DataUtil {
          return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.update, "Client commands are blocked while the client is hidden (panic mode)");
       }
 
-      if (!AutismLiteVariant.enabled() && !autismclient.e.RingBuffer.init()) {
-         AutismClientMessaging.sendPrefixed("§cAutism is locked: early access requires the donator role. Sign in to unlock.");
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.update, "Autism is locked: early access requires the donator role");
-      }
-
       if (body == null) {
          return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.sync, "");
       }

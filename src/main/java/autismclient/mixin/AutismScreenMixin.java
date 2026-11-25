@@ -1,13 +1,11 @@
 package autismclient.mixin;
 
 import autismclient.c.StreamUtil;
-import autismclient.e.TableIndex;
 import autismclient.gui.f.b.DataPipe;
 import autismclient.mixin.accessor.AutismScreenAccessor;
 import autismclient.modules.PoolEntry;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
-import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismQueueEditorOverlay;
 import autismclient.util.aH;
@@ -98,7 +96,7 @@ public abstract class AutismScreenMixin {
 
    @Inject(method = "extractRenderState", at = @At("TAIL"))
    private void autism$renderMenuMacroProgress(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (aS.init_Z_Minecraft(MC) && (AutismLiteVariant.enabled() || TableIndex.init())) {
+      if (aS.init_Z_Minecraft(MC)) {
          context.nextStratum();
          cA.init_V_GuiGraphicsExtract(context);
 

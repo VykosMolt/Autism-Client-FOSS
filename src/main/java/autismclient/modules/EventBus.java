@@ -12,7 +12,6 @@ public final class EventBus extends Module {
 
    public static float init(float width, float height) {
       if (height > 0.0F
-         && autismclient.e.RenderState.init()
          && !aD.read_Z()
          && al.init_Module_Str("aspect-ratio") instanceof EventBus module
          && module.isEnabled()) {

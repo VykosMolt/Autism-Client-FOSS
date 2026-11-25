@@ -113,7 +113,7 @@ public final class cV {
             loadedChunkLevel = null;
          }
 
-         if (init_cV == null && client.level != null && autismclient.e.FileCache.init()) {
+         if (init_cV == null && client.level != null) {
             init_cV();
          }
 
@@ -177,7 +177,7 @@ public final class cV {
    }
 
    private static boolean close_Z() {
-      return !autismclient.modules.aD.init_Z() && autismclient.e.CharEncoder.init();
+      return !autismclient.modules.aD.init_Z();
    }
 
    private cV(Minecraft mc) {

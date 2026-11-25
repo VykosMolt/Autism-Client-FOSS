@@ -497,47 +497,45 @@ public abstract class AutismClientConnectionMixin implements C {
                                  }
                               }
 
-                              if (AutismLiteVariant.enabled() || autismclient.e.RefQueue.init()) {
-                                 boolean anyFeatureActive = shared.write_Z() || !shared.read_Z() || shared.reset_Z();
-                                 if (anyFeatureActive && !shared.get_Z() && !autism$isTransactionSync(packet)) {
-                                    boolean shouldHandle = false;
-                                    if (shared.reset_Z()) {
-                                       shouldHandle = shared.load_Set().contains(packet.getClass());
-                                    } else {
-                                       shouldHandle = this.isGuiPacket(packet);
+                              boolean anyFeatureActive = shared.write_Z() || !shared.read_Z() || shared.reset_Z();
+                              if (anyFeatureActive && !shared.get_Z() && !autism$isTransactionSync(packet)) {
+                                 boolean shouldHandle = false;
+                                 if (shared.reset_Z()) {
+                                    shouldHandle = shared.load_Set().contains(packet.getClass());
+                                 } else {
+                                    shouldHandle = this.isGuiPacket(packet);
+                                 }
+
+                                 if (shouldHandle) {
+                                    if (AUTISM_PACKET_TRACE) {
+                                       AutismClientAddon.LOG
+                                          .debug(
+                                             "[Autism] Packet detected: {} | Send={} Delay={} | Custom={}",
+                                             packet.getClass().getSimpleName(),
+                                             shared.read_Z(),
+                                             shared.write_Z(),
+                                             shared.reset_Z()
+                                          );
                                     }
 
-                                    if (shouldHandle) {
+                                    if (!shared.read_Z()) {
                                        if (AUTISM_PACKET_TRACE) {
-                                          AutismClientAddon.LOG
-                                             .debug(
-                                                "[Autism] Packet detected: {} | Send={} Delay={} | Custom={}",
-                                                packet.getClass().getSimpleName(),
-                                                shared.read_Z(),
-                                                shared.write_Z(),
-                                                shared.reset_Z()
-                                             );
+                                          AutismClientAddon.LOG.debug("[Autism] CANCELLED packet (send disabled)");
                                        }
 
-                                       if (!shared.read_Z()) {
-                                          if (AUTISM_PACKET_TRACE) {
-                                             AutismClientAddon.LOG.debug("[Autism] CANCELLED packet (send disabled)");
-                                          }
-
-                                          aI.load_V_Packet(packet);
-                                          ci.cancel();
-                                       } else if (shared.write_Z()) {
-                                          if (AUTISM_PACKET_TRACE) {
-                                             AutismClientAddon.LOG.debug("[Autism] QUEUED packet (delay enabled)");
-                                          }
-
-                                          PoolEntry captureModule = PoolEntry.init_PoolEntry();
-                                          ck.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
-                                             ? ck.Inner_BufferHelper.load
-                                             : ck.Inner_BufferHelper.init;
-                                          shared.init_V_Packet_ck_BufferHelper(packet, captureMode);
-                                          ci.cancel();
+                                       aI.load_V_Packet(packet);
+                                       ci.cancel();
+                                    } else if (shared.write_Z()) {
+                                       if (AUTISM_PACKET_TRACE) {
+                                          AutismClientAddon.LOG.debug("[Autism] QUEUED packet (delay enabled)");
                                        }
+
+                                       PoolEntry captureModule = PoolEntry.init_PoolEntry();
+                                       ck.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
+                                          ? ck.Inner_BufferHelper.load
+                                          : ck.Inner_BufferHelper.init;
+                                       shared.init_V_Packet_ck_BufferHelper(packet, captureMode);
+                                       ci.cancel();
                                     }
                                  }
                               }
@@ -660,7 +658,7 @@ public abstract class AutismClientConnectionMixin implements C {
                         } else if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.read) {
                            shared.init_V_Packet(packet);
                            ci.cancel();
-                        } else if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {
+                        } else {
                            boolean anyFeatureActive = shared.write_Z() || !shared.read_Z() || shared.reset_Z();
                            if (anyFeatureActive && !autism$isTransactionSync(packet)) {
                               boolean shouldHandle = false;

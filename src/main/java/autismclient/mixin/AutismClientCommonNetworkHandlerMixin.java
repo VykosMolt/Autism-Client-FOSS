@@ -1,6 +1,5 @@
 package autismclient.mixin;
 
-import autismclient.e.FileCache;
 import autismclient.g.BufferHelper;
 import autismclient.g.RefQueue;
 import autismclient.modules.PoolEntry;
@@ -61,11 +60,6 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
             boolean forceDeny = shared.clear_Z() || module != null && module.set_Z();
             boolean sharedBypass = shared.add_Z();
             boolean serializedBypass = module != null ? module.pop_Z() : AutismConfig.getGlobal().pretendPackAccepted;
-            if (!AutismLiteVariant.enabled() && !FileCache.init()) {
-               forceDeny = false;
-               sharedBypass = false;
-               serializedBypass = false;
-            }
 
             autismclient.g.FileCache.Inner_DataUtil selectedPolicy = RefQueue.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
             RefQueue.Inner_StreamUtil verdict = RefQueue.init(packet, forceDeny, selectedPolicy != null);

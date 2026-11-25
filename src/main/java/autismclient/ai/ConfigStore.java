@@ -83,7 +83,7 @@ public final class ConfigStore implements autismclient.util.cn.Inner_DataUtil {
    }
 
    public void write_V() {
-      if (!autismclient.modules.aD.init_Z() && autismclient.e.SyncManager.init()) {
+      if (!autismclient.modules.aD.init_Z()) {
          if (this.init_AiAssistantOverlay == null) {
             this.init_AiAssistantOverlay = new AiAssistantOverlay(cc.init_cc());
          }
@@ -176,7 +176,7 @@ public final class ConfigStore implements autismclient.util.cn.Inner_DataUtil {
       boolean pressed = bind != -1 && autismclient.util.ValueSink.init(init_Minecraft, bind);
       boolean openFromKey = pressed && !this.load;
       this.load = pressed;
-      if (!autismclient.modules.aD.init_Z() && autismclient.e.RefQueue.init()) {
+      if (!autismclient.modules.aD.init_Z()) {
          cM.init(init_Minecraft);
          if (openFromKey && autismclient.util.at.init()) {
             this.read();

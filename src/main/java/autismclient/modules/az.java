@@ -1,6 +1,5 @@
 package autismclient.modules;
 
-import autismclient.util.AutismLiteVariant;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.particles.ParticleType;
@@ -83,7 +82,7 @@ public final class az {
    }
 
    private static boolean bind() {
-      return AutismLiteVariant.enabled() || autismclient.e.TokenStore.init();
+      return true;
    }
 
    public static boolean init_Z() {

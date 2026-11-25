@@ -1,12 +1,10 @@
 package autismclient.mixin;
 
 import autismclient.commands.DataUtil;
-import autismclient.e.RefQueue;
 import autismclient.modules.PoolEntry;
 import autismclient.util.AuditHideOff;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
-import autismclient.util.AutismLiteVariant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -25,14 +23,14 @@ public abstract class AutismChatScreenMixin {
 
    @Inject(method = "init()V", at = @At("TAIL"))
    private void autism$infiniChatMaxLength(CallbackInfo ci) {
-      if ((AutismLiteVariant.enabled() || RefQueue.init()) && this.input != null && AutismConfig.getGlobal().infiniChat) {
+      if (this.input != null && AutismConfig.getGlobal().infiniChat) {
          this.input.setMaxLength(2147483647);
       }
    }
 
    @Inject(method = "normalizeChatMessage", at = @At("HEAD"), cancellable = true)
    private void autism$infiniChatNoTruncate(String message, CallbackInfoReturnable<String> cir) {
-      if ((AutismLiteVariant.enabled() || RefQueue.init()) && AutismConfig.getGlobal().infiniChat) {
+      if (AutismConfig.getGlobal().infiniChat) {
          cir.setReturnValue(StringUtils.normalizeSpace(message.trim()));
       }
    }

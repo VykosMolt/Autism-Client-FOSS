@@ -11,9 +11,6 @@ public final class aH {
 
    public static List<autismclient.gui.f.b.DataPipe> init(Minecraft client, AutismQueueEditorOverlay queueEditorOverlay) {
       List<autismclient.gui.f.b.DataPipe> buttons = new ArrayList<>();
-      if (!AutismLiteVariant.enabled() && !autismclient.e.FileCache.init()) {
-         return buttons;
-      }
 
       ck shared = ck.init_ck();
       int baseX = 5;
