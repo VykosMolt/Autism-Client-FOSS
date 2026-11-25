@@ -1,8 +1,8 @@
 package autismclient.compat.a;
 
-import autismclient.util.bW;
-import autismclient.util.bY;
-import autismclient.util.bZ;
+import autismclient.util.ProxyEntry;
+import autismclient.util.ProxyManager;
+import autismclient.util.ProxyType;
 import com.google.common.net.InetAddresses;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
@@ -74,7 +74,7 @@ public final class DataUtil {
          );
       }
 
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       DataUtil.ConfigStore route;
       synchronized (manager) {
          route = DataUtil.ConfigStore.init(manager.init_bW());
@@ -83,11 +83,11 @@ public final class DataUtil {
       return init(host, port, route, original);
    }
 
-   public static DataUtil.CachePool init(bW proxy, InetSocketAddress address) throws IOException {
+   public static DataUtil.CachePool init(ProxyEntry proxy, InetSocketAddress address) throws IOException {
       return init(proxy, address, 10000L);
    }
 
-   static DataUtil.CachePool init(bW proxy, InetSocketAddress address, long timeoutMs) throws IOException {
+   static DataUtil.CachePool init(ProxyEntry proxy, InetSocketAddress address, long timeoutMs) throws IOException {
       if (address == null || address.isUnresolved()) {
          throw new IOException("AUTO protocol destination is unresolved");
       }
@@ -120,7 +120,7 @@ public final class DataUtil {
       return socket;
    }
 
-   static Socket init(String host, int port, bW proxy, DataUtil.BufferHelper original) throws IOException {
+   static Socket init(String host, int port, ProxyEntry proxy, DataUtil.BufferHelper original) throws IOException {
       return init(host, port, DataUtil.ConfigStore.init(proxy), original);
    }
 
@@ -153,7 +153,7 @@ public final class DataUtil {
                   socket.connect(new InetSocketAddress(proxy.init_Str(), proxy.init_I()), 3000);
                   DataInputStream input = new DataInputStream(socket.getInputStream());
                   OutputStream output = socket.getOutputStream();
-                  if (proxy.init_bZ() == bZ.init) {
+                  if (proxy.init_bZ() == ProxyType.init) {
                      if (literal && address.length != 4) {
                         throw new IOException("SOCKS4 does not support IPv6 destinations");
                      }
@@ -289,8 +289,8 @@ public final class DataUtil {
       void close();
    }
 
-   private record ConfigStore(bZ init_bZ, String init_Str, int init_I, String load, String read) {
-      private static DataUtil.ConfigStore init(bW proxy) throws IOException {
+   private record ConfigStore(ProxyType init_bZ, String init_Str, int init_I, String load, String read) {
+      private static DataUtil.ConfigStore init(ProxyEntry proxy) throws IOException {
          if (proxy == null) {
             return null;
          } else if (proxy.init_bZ != null && proxy.read != null && !proxy.read.isBlank() && proxy.init_I >= 1 && proxy.init_I <= 65535) {

@@ -81,23 +81,23 @@ public class LoginProxyCheck {
       });
       Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", socks.getLocalPort()));
 
-      aW.Inner_DataUtil post = aW.auditSend(proxy, url + "/token", "application/json", "{\"a\":1}", null);
+      MicrosoftAuth.Inner_DataUtil post = MicrosoftAuth.auditSend(proxy, url + "/token", "application/json", "{\"a\":1}", null);
       check(post.init_I() == 200 && "POST|application/json|{\"a\":1}|null".equals(post.init_Str()), "POST through the proxy, got " + post);
       check(used.get() == 1, "the POST went through the SOCKS proxy");
-      aW.Inner_DataUtil get = aW.auditSend(proxy, url + "/profile", null, null, "tok");
+      MicrosoftAuth.Inner_DataUtil get = MicrosoftAuth.auditSend(proxy, url + "/profile", null, null, "tok");
       check(get.init_I() == 200 && get.init_Str().equals("GET|null||Bearer tok") && used.get() == 2, "GET with a bearer through the proxy, got " + get);
-      aW.Inner_DataUtil refused = aW.auditSend(proxy, url + "/refused", "application/x-www-form-urlencoded", "x=1", null);
+      MicrosoftAuth.Inner_DataUtil refused = MicrosoftAuth.auditSend(proxy, url + "/refused", "application/x-www-form-urlencoded", "x=1", null);
       check(refused.init_I() == 401 && refused.init_Str().startsWith("POST|"), "an error answer keeps its status and body, got " + refused);
 
       // without a proxy nothing changes: java.net.http, direct
-      aW.Inner_DataUtil direct = aW.auditSend(Proxy.NO_PROXY, url + "/token", "application/json", "{}", null);
+      MicrosoftAuth.Inner_DataUtil direct = MicrosoftAuth.auditSend(Proxy.NO_PROXY, url + "/token", "application/json", "{}", null);
       check(direct.init_I() == 200 && used.get() == 3, "no proxy: direct, got " + direct);
 
       // a SOCKS proxy that is down fails the request; it must not fall back to a direct connection
       int deadPort = socks.getLocalPort();
       socks.close();
       acceptor.join();
-      aW.Inner_DataUtil down = aW.auditSend(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", deadPort)), url + "/token", "application/json", "{}", null);
+      MicrosoftAuth.Inner_DataUtil down = MicrosoftAuth.auditSend(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", deadPort)), url + "/token", "application/json", "{}", null);
       check(down.init_I() == -1, "proxy down: the request fails, got " + down);
       web.stop(0);
       System.out.println("PASS LoginProxyCheck");

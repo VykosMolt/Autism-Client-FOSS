@@ -454,7 +454,7 @@ public final class v {
             frame.addProperty("guard_owner", s.init_Str());
             frame.addProperty("rotation_owner", aD.init_Str());
             frame.addProperty("clutch_reserves_movement", j.read_Z_20());
-            frame.addProperty("scaffold_rotation", autismclient.modules.aI.flush_Z_5());
+            frame.addProperty("scaffold_rotation", autismclient.modules.ScaffoldModule.flush_Z_5());
             frame.addProperty("attack_input_owned", s.close_Z());
             ch.Inner_CachePool wire = ch.init_ch_CachePool();
             frame.addProperty("wire_yaw", wire.init_Z() ? wire.read() : mc.player.getYRot());

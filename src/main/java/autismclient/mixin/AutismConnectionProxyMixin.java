@@ -2,9 +2,9 @@ package autismclient.mixin;
 
 import autismclient.g.BufferHelper;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bW;
-import autismclient.util.bY;
-import autismclient.util.bZ;
+import autismclient.util.ProxyEntry;
+import autismclient.util.ProxyManager;
+import autismclient.util.ProxyType;
 import autismclient.util.g.ConfigStore;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.local.LocalChannel;
@@ -50,10 +50,10 @@ public abstract class AutismConnectionProxyMixin {
                autism$installProxy(pipeline, proxy.init_bZ(), proxy.init_Str(), proxy.init_I(), proxy.load(), proxy.read());
             }
          } else {
-            bY manager = bY.init_bY();
+            ProxyManager manager = ProxyManager.init_bY();
             BufferHelper.Inner_ConfigStore route;
             synchronized (manager) {
-               bW main = manager.init_bW();
+               ProxyEntry main = manager.init_bW();
                route = main == null ? null : new BufferHelper.Inner_ConfigStore(main.init_bZ, main.read, main.init_I, main.write, main.update);
             }
 
@@ -67,7 +67,7 @@ public abstract class AutismConnectionProxyMixin {
    }
 
    @Unique
-   private static void autism$installProxy(ChannelPipeline pipeline, bZ type, String address, int port, String username, String password) {
+   private static void autism$installProxy(ChannelPipeline pipeline, ProxyType type, String address, int port, String username, String password) {
       if (address != null && !address.isBlank() && port > 0) {
          InetSocketAddress target = new InetSocketAddress(address, port);
          String user = username == null ? "" : username;

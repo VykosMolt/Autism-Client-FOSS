@@ -87,7 +87,7 @@ public final class ar {
    private static ar.Inner_CachePool push_ar_CachePool = ar.Inner_CachePool.init_ar_CachePool();
    private static ar.Inner_CachePool pop_ar_CachePool = ar.Inner_CachePool.init_ar_CachePool();
    private static ar.Inner_CachePool tick_ar_CachePool = ar.Inner_CachePool.init_ar_CachePool();
-   private static List<aS.Inner_CachePool> read_List = List.of();
+   private static List<TrajectoriesModule.Inner_CachePool> read_List = List.of();
    private static AABB init_AABB;
    private static int write_I;
    private static List<AABB> write_List = List.of();
@@ -344,7 +344,7 @@ public final class ar {
                      List<FileCache> auraPreviewBoxes = List.of();
                      if (!AutismLiteVariant.enabled()) {
                         List<FileCache> a1 = t.init_List_18();
-                        List<FileCache> a2 = BufferHelper.init_List();
+                        List<FileCache> a2 = AnchorAuraModule.init_List();
                         List<FileCache> a3 = TaskTimer.init_List_9();
                         if (!a1.isEmpty() || !a2.isEmpty() || !a3.isEmpty()) {
                            auraPreviewBoxes = new ArrayList<>(a1.size() + a2.size() + a3.size());
@@ -507,7 +507,7 @@ public final class ar {
                            write_Vec3 = camera;
 
                            try {
-                              aS.init_V_F_2(tickDelta);
+                              TrajectoriesModule.init_V_F_2(tickDelta);
                            } catch (Throwable error) {
                               init_V_List(List.of());
                               AutismClientAddon.LOG.debug("Trajectory collect failed", error);
@@ -558,7 +558,7 @@ public final class ar {
       }
    }
 
-   public static void init_V_List(List<aS.Inner_CachePool> paths) {
+   public static void init_V_List(List<TrajectoriesModule.Inner_CachePool> paths) {
       read_List = paths == null ? List.of() : paths;
    }
 
@@ -620,7 +620,7 @@ public final class ar {
       boolean tpClickWire = close_Z;
       boolean ghostFill = update_Z;
       boolean ghostWire = sync_Z;
-      List<aS.Inner_CachePool> trajectories = read_List;
+      List<TrajectoriesModule.Inner_CachePool> trajectories = read_List;
       read_List = List.of();
       get_Z = false;
       pop_Z = false;

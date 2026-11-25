@@ -6,9 +6,9 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.aL;
 import autismclient.util.aM;
 import autismclient.util.aN;
-import autismclient.util.bW;
-import autismclient.util.bY;
-import autismclient.util.bZ;
+import autismclient.util.ProxyEntry;
+import autismclient.util.ProxyManager;
+import autismclient.util.ProxyType;
 import autismclient.util.bi;
 import autismclient.util.bw;
 import autismclient.util.cf;
@@ -110,7 +110,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
    private volatile long open_J;
    private volatile long poll_J;
    private final Map<String, FieldCache.Inner_BufferHelper> read_Map = new HashMap<>();
-   private final Map<String, bW> write_Map = new HashMap<>();
+   private final Map<String, ProxyEntry> write_Map = new HashMap<>();
    private final Set<String> init_Set = ConcurrentHashMap.newKeySet();
    private static final int open_I = 1;
    private final Map<String, PacketUtil.Inner_JsonUtil> update_Map = new HashMap<>();
@@ -284,7 +284,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
                   var10000 = this.init_Map_J(startedGeneration, profile, server.getHost(), server.getPort());
                   break;
                case read:
-                  var10000 = init_Map_FieldCache_List(profile, bY.init_bY().init_List());
+                  var10000 = init_Map_FieldCache_List(profile, ProxyManager.init_bY().init_List());
                   break;
                case init:
                   var10000 = Map.of();
@@ -293,7 +293,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
                   throw new MatchException(null, null);
             }
 
-            Map<String, bW> assignment = var10000;
+            Map<String, ProxyEntry> assignment = var10000;
             if (!this.init_Z_J(startedGeneration)) {
                return;
             }
@@ -308,16 +308,16 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return PacketUtil.Inner_TextFormat.init_PacketUtil_TextFor();
    }
 
-   private synchronized void init_V_J(long gen, FieldCache profile, Map<String, bW> assignment, InetSocketAddress resolved, ServerAddress server) {
+   private synchronized void init_V_J(long gen, FieldCache profile, Map<String, ProxyEntry> assignment, InetSocketAddress resolved, ServerAddress server) {
       if (this.load_Z && this.tick_J == gen) {
          boolean dnsOk = resolved != null;
          this.close_V_Str(dnsOk ? "Starting " + profile.write_Str + " on " + profile.update_Str : "Unknown server address");
 
          for (FieldCache.Inner_BufferHelper spec : profile.init_List) {
-            bW proxy = init_bW_FieldCache(profile, spec, assignment);
+            ProxyEntry proxy = init_bW_FieldCache(profile, spec, assignment);
             boolean proxyRequired = profile.init_FieldCache_CachePo != FieldCache.Inner_CachePool.init && !spec.init_Z();
             boolean missingProxy = proxyRequired && proxy == null;
-            bW snapshot = init_bW_bW(proxy);
+            ProxyEntry snapshot = init_bW_bW(proxy);
             String proxyName = snapshot != null ? snapshot.init_Str() : (proxyRequired ? "No proxy" : "Proxy Off");
             ClassCache session = new ClassCache(
                this.tick_J,
@@ -411,8 +411,8 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private static bW init_bW_FieldCache(FieldCache profile, FieldCache.Inner_BufferHelper spec, Map<String, bW> assignment) {
-      bW var10000;
+   private static ProxyEntry init_bW_FieldCache(FieldCache profile, FieldCache.Inner_BufferHelper spec, Map<String, ProxyEntry> assignment) {
+      ProxyEntry var10000;
       switch (profile.init_FieldCache_CachePo) {
          case load:
             var10000 = assignment.get(spec.init_Str());
@@ -430,7 +430,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return var10000;
    }
 
-   private static FieldCache.Inner_BufferHelper init_FieldCache_BufferH_FieldCache(FieldCache profile, FieldCache.Inner_BufferHelper spec, bW proxy) {
+   private static FieldCache.Inner_BufferHelper init_FieldCache_BufferH_FieldCache(FieldCache profile, FieldCache.Inner_BufferHelper spec, ProxyEntry proxy) {
       FieldCache.Inner_BufferHelper var10000;
       switch (profile.init_FieldCache_CachePo) {
          case load:
@@ -504,7 +504,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
             if (spec.load_Z()) {
                manualBestRows++;
             } else if (!spec.init_Z()) {
-               bW proxy = bY.init_bY().init_bW_Str(spec.load_Str());
+               ProxyEntry proxy = ProxyManager.init_bY().init_bW_Str(spec.load_Str());
                if (proxy == null || !proxy.init_Z()) {
                   return PacketUtil.Inner_TextFormat.init("Missing proxy for " + poll(spec.init_Str()));
                }
@@ -512,7 +512,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
          }
       }
 
-      List<bW> usableProxies = init_List_List(bY.init_bY().init_List());
+      List<ProxyEntry> usableProxies = init_List_List(ProxyManager.init_bY().init_List());
       if (profile.init_FieldCache_CachePo == FieldCache.Inner_CachePool.load && usableProxies.isEmpty()) {
          return PacketUtil.Inner_TextFormat.init("Add proxies or set Proxy: Off");
       } else {
@@ -652,19 +652,19 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   static Map<String, bW> init_Map_FieldCache_List(FieldCache profile, List<bW> available) {
+   static Map<String, ProxyEntry> init_Map_FieldCache_List(FieldCache profile, List<ProxyEntry> available) {
       if (profile == null) {
          return Map.of();
       }
 
-      List<bW> usable = init_List_List(available);
-      List<bW> allValid = available == null ? List.of() : available.stream().filter(proxy -> proxy != null && proxy.init_Z()).toList();
-      Map<String, bW> assignment = new LinkedHashMap<>();
+      List<ProxyEntry> usable = init_List_List(available);
+      List<ProxyEntry> allValid = available == null ? List.of() : available.stream().filter(proxy -> proxy != null && proxy.init_Z()).toList();
+      Map<String, ProxyEntry> assignment = new LinkedHashMap<>();
       Set<String> explicitlyUsed = new HashSet<>();
 
       for (FieldCache.Inner_BufferHelper spec : profile.init_List) {
          if (!spec.init_Z() && !spec.load_Z()) {
-            bW selected = init_bW_List_Str(allValid, spec.load_Str());
+            ProxyEntry selected = init_bW_List_Str(allValid, spec.load_Str());
             if (selected != null) {
                assignment.put(spec.init_Str(), selected);
                explicitlyUsed.add(init_Str_bW(selected));
@@ -672,15 +672,15 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
          }
       }
 
-      List<bW> bestOrder = new ArrayList<>(usable.size());
+      List<ProxyEntry> bestOrder = new ArrayList<>(usable.size());
 
-      for (bW candidate : usable) {
+      for (ProxyEntry candidate : usable) {
          if (!explicitlyUsed.contains(init_Str_bW(candidate))) {
             bestOrder.add(candidate);
          }
       }
 
-      for (bW candidate : usable) {
+      for (ProxyEntry candidate : usable) {
          if (explicitlyUsed.contains(init_Str_bW(candidate))) {
             bestOrder.add(candidate);
          }
@@ -690,7 +690,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
 
       for (FieldCache.Inner_BufferHelper spec : profile.init_List) {
          if (spec.load_Z()) {
-            bW selected = bestOrder.isEmpty() ? null : bestOrder.get(bestIndex++ % bestOrder.size());
+            ProxyEntry selected = bestOrder.isEmpty() ? null : bestOrder.get(bestIndex++ % bestOrder.size());
             if (selected != null) {
                assignment.put(spec.init_Str(), selected);
             }
@@ -700,9 +700,9 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return assignment;
    }
 
-   private static bW init_bW_List_Str(List<bW> proxies, String id) {
+   private static ProxyEntry init_bW_List_Str(List<ProxyEntry> proxies, String id) {
       if (proxies != null && id != null && !id.isBlank()) {
-         for (bW proxy : proxies) {
+         for (ProxyEntry proxy : proxies) {
             if (id.equals(proxy.write())) {
                return proxy;
             }
@@ -802,7 +802,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
                return PacketUtil.Inner_EventBus.init("Verifying proxy");
             }
          } else {
-            bW previous = this.write_Map.get(accountId);
+            ProxyEntry previous = this.write_Map.get(accountId);
             String currentProxyId = previous == null ? spec.load_Str() : previous.write();
             boolean proxyEnabled = this.init_FieldCache.init_FieldCache_CachePo == FieldCache.Inner_CachePool.read && !spec.init_Z();
             if (!proxyEnabled) {
@@ -810,12 +810,12 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
             }
 
             String lastFailedProxyId = this.close_Map.getOrDefault(accountId, currentProxyId == null ? "" : currentProxyId);
-            bW selectedProxy = null;
+            ProxyEntry selectedProxy = null;
             if (proxyEnabled) {
                if (spec.load_Z()) {
                   selectedProxy = this.init_bW_Str(accountId, currentProxyId, lastFailedProxyId);
                } else {
-                  bW configured = bY.init_bY().init_bW_Str(spec.load_Str());
+                  ProxyEntry configured = ProxyManager.init_bY().init_bW_Str(spec.load_Str());
                   selectedProxy = configured != null ? configured : previous;
                }
             }
@@ -829,7 +829,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
             FieldCache.Inner_BufferHelper retrySpec = this.init_FieldCache.init_FieldCache_CachePo == FieldCache.Inner_CachePool.read
                ? spec
                : new FieldCache.Inner_BufferHelper(accountId, "");
-            bW proxy = init_bW_bW(selectedProxy);
+            ProxyEntry proxy = init_bW_bW(selectedProxy);
             this.read_Map.put(accountId, retrySpec);
             this.write_Map.put(accountId, proxy);
             ClassCache replacement = new ClassCache(
@@ -892,21 +892,21 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
    private synchronized PacketUtil.Inner_RenderState init_PacketUtil_RenderS_Str(String accountId) {
       Set<String> inUseByOthers = new HashSet<>();
 
-      for (Entry<String, bW> entry : this.write_Map.entrySet()) {
+      for (Entry<String, ProxyEntry> entry : this.write_Map.entrySet()) {
          if (!entry.getKey().equals(accountId) && entry.getValue() != null) {
             inUseByOthers.add(init_Str_bW(entry.getValue()));
          }
       }
 
-      return init_PacketUtil_RenderS_List(init_List_List(bY.init_bY().init_List()), inUseByOthers, this.close_Map.getOrDefault(accountId, ""));
+      return init_PacketUtil_RenderS_List(init_List_List(ProxyManager.init_bY().init_List()), inUseByOthers, this.close_Map.getOrDefault(accountId, ""));
    }
 
-   static PacketUtil.Inner_RenderState init_PacketUtil_RenderS_List(List<bW> orderedDistinct, Set<String> inUseLeaseKeys, String lastFailedProxyId) {
-      List<bW> unused = new ArrayList<>();
-      List<bW> fallback = new ArrayList<>();
+   static PacketUtil.Inner_RenderState init_PacketUtil_RenderS_List(List<ProxyEntry> orderedDistinct, Set<String> inUseLeaseKeys, String lastFailedProxyId) {
+      List<ProxyEntry> unused = new ArrayList<>();
+      List<ProxyEntry> fallback = new ArrayList<>();
       String failed = lastFailedProxyId == null ? "" : lastFailedProxyId;
 
-      for (bW proxy : orderedDistinct == null ? List.<bW>of() : orderedDistinct) {
+      for (ProxyEntry proxy : orderedDistinct == null ? List.<ProxyEntry>of() : orderedDistinct) {
          if (proxy != null) {
             boolean shared = !failed.isBlank() && failed.equals(proxy.write());
             if (!shared && inUseLeaseKeys != null) {
@@ -920,19 +920,19 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return new PacketUtil.Inner_RenderState(List.copyOf(unused), List.copyOf(fallback));
    }
 
-   private synchronized bW init_bW_Str(String accountId, String currentProxyId, String lastFailedProxyId) {
+   private synchronized ProxyEntry init_bW_Str(String accountId, String currentProxyId, String lastFailedProxyId) {
       Set<String> inUseByOthers = new HashSet<>();
 
-      for (Entry<String, bW> entry : this.write_Map.entrySet()) {
+      for (Entry<String, ProxyEntry> entry : this.write_Map.entrySet()) {
          if (!entry.getKey().equals(accountId) && entry.getValue() != null) {
             inUseByOthers.add(init_Str_bW(entry.getValue()));
          }
       }
 
-      List<bW> preferred = new ArrayList<>();
-      List<bW> shared = new ArrayList<>();
+      List<ProxyEntry> preferred = new ArrayList<>();
+      List<ProxyEntry> shared = new ArrayList<>();
 
-      for (bW proxy : init_List_List(bY.init_bY().init_List())) {
+      for (ProxyEntry proxy : init_List_List(ProxyManager.init_bY().init_List())) {
          if (inUseByOthers.contains(init_Str_bW(proxy))) {
             shared.add(proxy);
          } else {
@@ -947,10 +947,10 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
    private void init_V_J_2(long gen, long retryToken, String accountId, PacketUtil.Inner_RenderState candidates, ServerAddress server, int target) {
       int timeout = init_I_I(target);
       PacketUtil.Inner_FileCache best = null;
-      List<bW> failedUnused = new ArrayList<>();
+      List<ProxyEntry> failedUnused = new ArrayList<>();
       int tries = 0;
 
-      for (bW candidate : candidates.init()) {
+      for (ProxyEntry candidate : candidates.init()) {
          if (!this.init_Z_J(gen, retryToken, accountId)) {
             return;
          }
@@ -985,7 +985,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       if (best == null) {
          int sharedTries = 0;
 
-         for (bW candidate : candidates.load()) {
+         for (ProxyEntry candidate : candidates.load()) {
             if (!this.init_Z_J(gen, retryToken, accountId)) {
                return;
             }
@@ -1014,18 +1014,18 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
 
       if (this.init_Z_J(gen, retryToken, accountId)) {
          InetSocketAddress resolved = ServerNameResolver.DEFAULT.resolveAddress(server).map(ResolvedServerAddress::asInetSocketAddress).orElse(null);
-         bW chosenFinal = best == null ? null : best.init_bW();
+         ProxyEntry chosenFinal = best == null ? null : best.init_bW();
          Minecraft.getInstance().execute(() -> this.init_V_J(gen, retryToken, accountId, chosenFinal, resolved, server));
       }
    }
 
    private PacketUtil.Inner_FileCache init_PacketUtil_FileCac_J(
-      long gen, long retryToken, String accountId, List<bW> failed, ServerAddress server, int target, int timeout
+      long gen, long retryToken, String accountId, List<ProxyEntry> failed, ServerAddress server, int target, int timeout
    ) {
       PacketUtil.Inner_FileCache best = null;
       int tries = 0;
 
-      for (bW candidate : failed) {
+      for (ProxyEntry candidate : failed) {
          if (!this.init_Z_J(gen, retryToken, accountId)) {
             return null;
          }
@@ -1053,7 +1053,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return best;
    }
 
-   private synchronized void init_V_J(long gen, long retryToken, String accountId, bW chosen, InetSocketAddress resolved, ServerAddress server) {
+   private synchronized void init_V_J(long gen, long retryToken, String accountId, ProxyEntry chosen, InetSocketAddress resolved, ServerAddress server) {
       if (this.load_Z && this.tick_J == gen && this.init_FieldCache != null && this.poll_Map.getOrDefault(accountId, -1L) == retryToken) {
          this.read_Set.remove(accountId);
          ClassCache old = this.init_Map.get(accountId);
@@ -1071,7 +1071,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
             } else {
                this.init_ArrayDeque.removeIf(next -> next.init_ClassCache() == old);
                this.load_Set.remove(old);
-               bW proxy = init_bW_bW(chosen);
+               ProxyEntry proxy = init_bW_bW(chosen);
                FieldCache.Inner_BufferHelper retrySpec = new FieldCache.Inner_BufferHelper(accountId, chosen.write());
                this.read_Map.put(accountId, retrySpec);
                this.write_Map.put(accountId, proxy);
@@ -1106,13 +1106,13 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private boolean init_Z_Str_bW(String accountId, bW proxy) {
+   private boolean init_Z_Str_bW(String accountId, ProxyEntry proxy) {
       String key = init_Str_bW(proxy);
       if (key.isBlank()) {
          return false;
       }
 
-      for (Entry<String, bW> entry : this.write_Map.entrySet()) {
+      for (Entry<String, ProxyEntry> entry : this.write_Map.entrySet()) {
          if (!entry.getKey().equals(accountId) && key.equals(init_Str_bW(entry.getValue()))) {
             return true;
          }
@@ -1144,13 +1144,13 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private Map<String, bW> init_Map_J(long gen, FieldCache profile, String host, int port) {
-      List<bW> candidates = new ArrayList<>();
-      List<bW> deadCandidates = new ArrayList<>();
+   private Map<String, ProxyEntry> init_Map_J(long gen, FieldCache profile, String host, int port) {
+      List<ProxyEntry> candidates = new ArrayList<>();
+      List<ProxyEntry> deadCandidates = new ArrayList<>();
 
-      for (bW proxy : bY.init_bY().init_List()) {
+      for (ProxyEntry proxy : ProxyManager.init_bY().init_List()) {
          if (proxy != null && proxy.init_Z()) {
-            if (proxy.init_bW_CachePool == bW.Inner_CachePool.read) {
+            if (proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.read) {
                deadCandidates.add(proxy);
             } else {
                candidates.add(proxy);
@@ -1160,11 +1160,11 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
 
       write_V_List(candidates);
       write_V_List(deadCandidates);
-      Comparator<bW> bestFirst = Comparator.comparingInt(PacketUtil::init_I_bW)
-         .thenComparingLong(proxy -> proxy.init_bW_CachePool == bW.Inner_CachePool.write && proxy.init_J > 0L ? proxy.init_J : 9223372036854775807L);
+      Comparator<ProxyEntry> bestFirst = Comparator.comparingInt(PacketUtil::init_I_bW)
+         .thenComparingLong(proxy -> proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.write && proxy.init_J > 0L ? proxy.init_J : 9223372036854775807L);
       candidates.sort(bestFirst);
       deadCandidates.sort(bestFirst);
-      Map<String, bW> assignment = new LinkedHashMap<>();
+      Map<String, ProxyEntry> assignment = new LinkedHashMap<>();
       if (candidates.isEmpty() && deadCandidates.isEmpty()) {
          this.init_V_J_Str(gen, "No proxies to verify");
          return assignment;
@@ -1172,7 +1172,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
 
       int needed = (int)profile.init_List.stream().filter(spec -> !spec.init_Z()).count();
       int target = profile.update_I;
-      List<bW> poolList = new ArrayList<>(candidates.subList(0, Math.min(candidates.size(), 500)));
+      List<ProxyEntry> poolList = new ArrayList<>(candidates.subList(0, Math.min(candidates.size(), 500)));
       int timeout = init_I_I(target);
       int parallelism = Math.min(32, Math.max(8, poolList.size()));
       ExecutorService probePool = Executors.newFixedThreadPool(parallelism, runnable -> {
@@ -1185,7 +1185,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
          ExecutorCompletionService<PacketUtil.Inner_FileCache> service = new ExecutorCompletionService<>(probePool);
          List<Future<PacketUtil.Inner_FileCache>> probeTasks = new ArrayList<>(poolList.size());
 
-         for (bW candidate : poolList) {
+         for (ProxyEntry candidate : poolList) {
             probeTasks.add(service.submit(() -> this.init_PacketUtil_FileCac_J(gen, candidate, host, port, timeout)));
          }
 
@@ -1253,15 +1253,15 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
                workingIds.add(sample.init_bW().write());
             }
 
-            List<bW> suspects = new ArrayList<>();
+            List<ProxyEntry> suspects = new ArrayList<>();
 
-            for (bW candidate : poolList) {
+            for (ProxyEntry candidate : poolList) {
                if (!workingIds.contains(candidate.write()) && heldLeases.add(init_Str_bW(candidate))) {
                   suspects.add(candidate);
                }
             }
 
-            for (bW candidate : deadCandidates) {
+            for (ProxyEntry candidate : deadCandidates) {
                if (heldLeases.add(init_Str_bW(candidate))) {
                   suspects.add(candidate);
                }
@@ -1352,13 +1352,13 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
    }
 
    private List<PacketUtil.Inner_FileCache> init_List_J(
-      long gen, List<bW> suspects, String host, int port, int timeout, int quitAfter, ExecutorService probePool, long budgetMs
+      long gen, List<ProxyEntry> suspects, String host, int port, int timeout, int quitAfter, ExecutorService probePool, long budgetMs
    ) {
       if (suspects != null && !suspects.isEmpty() && quitAfter > 0) {
          ExecutorCompletionService<PacketUtil.Inner_FileCache> service = new ExecutorCompletionService<>(probePool);
          List<Future<PacketUtil.Inner_FileCache>> tasks = new ArrayList<>(suspects.size());
 
-         for (bW suspect : suspects) {
+         for (ProxyEntry suspect : suspects) {
             tasks.add(service.submit(() -> this.init_PacketUtil_FileCac_J(gen, suspect, host, port, timeout)));
          }
 
@@ -1405,10 +1405,10 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private PacketUtil.Inner_FileCache init_PacketUtil_FileCac_J(long gen, bW proxy, String host, int port, int timeout) {
+   private PacketUtil.Inner_FileCache init_PacketUtil_FileCac_J(long gen, ProxyEntry proxy, String host, int port, int timeout) {
       long[] pings = new long[3];
       int ok = 0;
-      bZ workingType = proxy == null ? null : proxy.init_bZ;
+      ProxyType workingType = proxy == null ? null : proxy.init_bZ;
 
       for (int i = 0; i < 3; i++) {
          if (!this.init_Z_J(gen)) {
@@ -1430,7 +1430,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
 
       Arrays.sort(pings, 0, ok);
-      bW verified = init_bW_bW(proxy);
+      ProxyEntry verified = init_bW_bW(proxy);
       if (workingType != null) {
          verified.init_bZ = workingType;
       }
@@ -2982,7 +2982,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
          String accountId = session.open_Str();
          ClassCache.Inner_PathHelper previous = this.open_Map.put(accountId, current);
          if (previous != current && (current == ClassCache.Inner_PathHelper.open || current == ClassCache.Inner_PathHelper.close)) {
-            bW proxy = this.write_Map.get(accountId);
+            ProxyEntry proxy = this.write_Map.get(accountId);
             this.close_Map.put(accountId, proxy == null ? "" : proxy.write());
             String reason = TaskQueue.init_Str_Str_I(session.poll_Str(), 512);
             if (!reason.isBlank()) {
@@ -3582,12 +3582,12 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return account == null ? accountId : account.init_Str();
    }
 
-   private static bW init_bW_bW(bW source) {
+   private static ProxyEntry init_bW_bW(ProxyEntry source) {
       if (source == null) {
          return null;
       }
 
-      bW copy = new bW();
+      ProxyEntry copy = new ProxyEntry();
       copy.init_Str = source.write();
       copy.load_Str = source.load_Str;
       copy.init_bZ = source.init_bZ;
@@ -3598,15 +3598,15 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       return copy;
    }
 
-   static String init_Str_bW(bW proxy) {
+   static String init_Str_bW(ProxyEntry proxy) {
       return proxy != null && proxy.init_Z() ? (proxy.read == null ? "" : proxy.read.trim().toLowerCase(Locale.ROOT)) + ":" + proxy.init_I : "";
    }
 
-   static List<bW> init_List_List(List<bW> proxies) {
+   static List<ProxyEntry> init_List_List(List<ProxyEntry> proxies) {
       if (proxies != null && !proxies.isEmpty()) {
-         List<bW> ordered = new ArrayList<>();
+         List<ProxyEntry> ordered = new ArrayList<>();
 
-         for (bW proxy : proxies) {
+         for (ProxyEntry proxy : proxies) {
             if (init_Z_bW(proxy)) {
                ordered.add(proxy);
             }
@@ -3614,13 +3614,13 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
 
          ordered.sort(
             Comparator.comparingInt(PacketUtil::init_I_bW)
-               .thenComparingLong(proxyx -> proxyx.init_bW_CachePool == bW.Inner_CachePool.write && proxyx.init_J > 0L ? proxyx.init_J : 9223372036854775807L)
+               .thenComparingLong(proxyx -> proxyx.init_bW_CachePool == ProxyEntry.Inner_CachePool.write && proxyx.init_J > 0L ? proxyx.init_J : 9223372036854775807L)
                .thenComparing(proxyx -> proxyx.init_Str().toLowerCase(Locale.ROOT))
          );
          write_V_List(ordered);
-         Map<String, bW> distinct = new LinkedHashMap<>();
+         Map<String, ProxyEntry> distinct = new LinkedHashMap<>();
 
-         for (bW proxy : ordered) {
+         for (ProxyEntry proxy : ordered) {
             distinct.putIfAbsent(init_Str_bW(proxy), proxy);
          }
 
@@ -3630,9 +3630,9 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private static void write_V_List(List<bW> candidates) {
+   private static void write_V_List(List<ProxyEntry> candidates) {
       if (candidates != null && candidates.size() >= 2 && Minecraft.getInstance() != null) {
-         bW mainProxy = bY.init_bY().init_bW();
+         ProxyEntry mainProxy = ProxyManager.init_bY().init_bW();
          if (mainProxy != null) {
             String reserved = init_Str_bW(mainProxy);
             if (!reserved.isBlank()) {
@@ -3645,13 +3645,13 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   static Map<String, bW> init_Map_List_List(List<FieldCache.Inner_BufferHelper> sessions, List<bW> candidates) {
+   static Map<String, ProxyEntry> init_Map_List_List(List<FieldCache.Inner_BufferHelper> sessions, List<ProxyEntry> candidates) {
       if (sessions != null && !sessions.isEmpty()) {
          if (candidates != null && !candidates.isEmpty()) {
-            List<bW> distinct = new ArrayList<>();
+            List<ProxyEntry> distinct = new ArrayList<>();
             Set<String> leases = new HashSet<>();
 
-            for (bW candidate : candidates) {
+            for (ProxyEntry candidate : candidates) {
                String key = init_Str_bW(candidate);
                if (!key.isBlank() && leases.add(key)) {
                   distinct.add(candidate);
@@ -3662,7 +3662,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
                return Map.of();
             }
 
-            Map<String, bW> assignment = new LinkedHashMap<>();
+            Map<String, ProxyEntry> assignment = new LinkedHashMap<>();
             int index = 0;
 
             for (FieldCache.Inner_BufferHelper spec : sessions) {
@@ -3680,7 +3680,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   static bW init_bW_List(List<bW> proxies, String currentProxyId, String lastFailedProxyId, boolean currentDirect) {
+   static ProxyEntry init_bW_List(List<ProxyEntry> proxies, String currentProxyId, String lastFailedProxyId, boolean currentDirect) {
       if (currentDirect) {
          return null;
       }
@@ -3688,7 +3688,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       if (proxies != null && !proxies.isEmpty()) {
          String current = currentProxyId == null ? "" : currentProxyId;
          String failed = lastFailedProxyId == null ? "" : lastFailedProxyId;
-         bW candidate = init_bW_List(proxies, current, failed);
+         ProxyEntry candidate = init_bW_List(proxies, current, failed);
          if (candidate != null) {
             return candidate;
          }
@@ -3700,7 +3700,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private static bW init_bW_List(List<bW> proxies, String avoidCurrent, String avoidFailed) {
+   private static ProxyEntry init_bW_List(List<ProxyEntry> proxies, String avoidCurrent, String avoidFailed) {
       if (proxies != null && !proxies.isEmpty()) {
          String current = avoidCurrent == null ? "" : avoidCurrent;
          String failed = avoidFailed == null ? "" : avoidFailed;
@@ -3712,7 +3712,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
             })
             .min(
                Comparator.comparingInt(PacketUtil::init_I_bW)
-                  .thenComparingLong(proxy -> proxy.init_bW_CachePool == bW.Inner_CachePool.write && proxy.init_J > 0L ? proxy.init_J : 9223372036854775807L)
+                  .thenComparingLong(proxy -> proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.write && proxy.init_J > 0L ? proxy.init_J : 9223372036854775807L)
                   .thenComparing(proxy -> proxy.init_Str().toLowerCase(Locale.ROOT))
             )
             .orElse(null);
@@ -3721,11 +3721,11 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private static boolean init_Z_bW(bW proxy) {
-      return proxy != null && proxy.init_Z() && proxy.init_bW_CachePool != bW.Inner_CachePool.read;
+   private static boolean init_Z_bW(ProxyEntry proxy) {
+      return proxy != null && proxy.init_Z() && proxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.read;
    }
 
-   private static int init_I_bW(bW proxy) {
+   private static int init_I_bW(ProxyEntry proxy) {
       if (proxy != null && proxy.init_bW_CachePool != null) {
          byte var10000;
          switch (proxy.init_bW_CachePool) {
@@ -3782,7 +3782,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   private record Inner_FileCache(bW init_bW, boolean init_Z, long init_J) {
+   private record Inner_FileCache(ProxyEntry init_bW, boolean init_Z, long init_J) {
    }
 
    private static final class Inner_HashUtil {
@@ -3831,7 +3831,7 @@ public final class PacketUtil implements ClassCache.Inner_TokenStore {
       }
    }
 
-   record Inner_RenderState(List<bW> init, List<bW> load) {
+   record Inner_RenderState(List<ProxyEntry> init, List<ProxyEntry> load) {
    }
 
    private final class Inner_StateCache {

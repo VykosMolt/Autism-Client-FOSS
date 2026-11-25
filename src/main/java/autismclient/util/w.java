@@ -608,7 +608,7 @@ public final class w {
                var10000 = !autismclient.modules.t.init_List_18().isEmpty();
                break;
             case "anchor-aura":
-               var10000 = !autismclient.modules.BufferHelper.init_List().isEmpty();
+               var10000 = !autismclient.modules.AnchorAuraModule.init_List().isEmpty();
                break;
             default:
                var10000 = true;
@@ -925,7 +925,7 @@ public final class w {
             Module scaffold = autismclient.modules.al.init_Module_Str("scaffold");
             state.addProperty("scaffoldEnabled", scaffold != null && scaffold.isEnabled());
             state.addProperty("scaffoldMode", scaffold == null ? "" : scaffold.value("mode"));
-            state.addProperty("tellyOwnsInput", autismclient.modules.aI.read_Z_12());
+            state.addProperty("tellyOwnsInput", autismclient.modules.ScaffoldModule.read_Z_12());
             state.addProperty("physicalForward", aB.init(mc.options.keyUp).autism$isActuallyDown());
 
             for (String id : new String[]{"kb-displacement", "w-tapping"}) {
@@ -1143,7 +1143,7 @@ public final class w {
             Module scaffold = autismclient.modules.al.init_Module_Str("scaffold");
             state.addProperty("enabled", scaffold != null && scaffold.isEnabled());
             state.addProperty("mode", scaffold == null ? "" : scaffold.value("mode"));
-            state.addProperty("ownsInput", autismclient.modules.aI.read_Z_12());
+            state.addProperty("ownsInput", autismclient.modules.ScaffoldModule.read_Z_12());
             if (scaffold != null) {
                if (init_Method == null) {
                   init_Method = scaffold.getClass().getDeclaredMethod("canRun");
@@ -1256,7 +1256,7 @@ public final class w {
             gates.addProperty("multiPilot", autismclient.util.g.PoolEntry.init_Z());
             gates.addProperty("packetTeleport", autismclient.util.g.PkgCls_a.init_Z());
             gates.addProperty("macro", MacroExecutor.write_Z());
-            gates.addProperty("autoTotem", autismclient.modules.FieldCache.init_Z_6());
+            gates.addProperty("autoTotem", autismclient.modules.AutoTotemModule.init_Z_6());
             gates.addProperty("autoArmor", autismclient.modules.TableIndex.init_Z_20());
             gates.addProperty("dangerRotation", autismclient.modules.z.read_Z_22());
             state.add("blockingGates", gates);
@@ -1360,7 +1360,7 @@ public final class w {
          row.addProperty("immediatePlacement", bL.init_Z());
          row.addProperty("wireYaw", wire.read());
          row.addProperty("wirePitch", wire.write());
-         ce.Inner_DataUtil clicked = autismclient.modules.aI.init_ce_DataUtil_Packet(packet);
+         ce.Inner_DataUtil clicked = autismclient.modules.ScaffoldModule.init_ce_DataUtil_Packet(packet);
          ce.Inner_DataUtil captured = init_Map.remove(packet);
          if (clicked == null) {
             clicked = captured;

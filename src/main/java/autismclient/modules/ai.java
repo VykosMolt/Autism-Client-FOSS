@@ -68,15 +68,15 @@ public final class ai {
    }
 
    public static boolean load() {
-      return init_ai_StreamUtil().init_Z() && !aI.open_Z_3();
+      return init_ai_StreamUtil().init_Z() && !ScaffoldModule.open_Z_3();
    }
 
    public static boolean read() {
-      return init_ai_StreamUtil().load() && !aI.open_Z_3();
+      return init_ai_StreamUtil().load() && !ScaffoldModule.open_Z_3();
    }
 
    public static boolean write() {
-      return init_ai_StreamUtil().read() && !aI.open_Z_3();
+      return init_ai_StreamUtil().read() && !ScaffoldModule.open_Z_3();
    }
 
    public static boolean init(boolean original, boolean movementTick) {
@@ -88,7 +88,7 @@ public final class ai {
          return false;
       } else if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
          return original;
-      } else if (aI.open_Z_3()) {
+      } else if (ScaffoldModule.open_Z_3()) {
          return original;
       } else {
          return al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() ? sprint.init(original, movementTick) : original;
@@ -101,7 +101,7 @@ public final class ai {
       } else if (!AutismLiteVariant.enabled() && autismclient.util.g.PoolEntry.init_Z()) {
          return false;
       } else {
-         return aI.open_Z_3() ? false : al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.init();
+         return ScaffoldModule.open_Z_3() ? false : al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled() && sprint.init();
       }
    }
 
@@ -203,7 +203,7 @@ public final class ai {
          || !PkgCls_a.init_Z()
          || init_Minecraft.player == null
          || entity != init_Minecraft.player && entity != init_Minecraft.player.getVehicle()) {
-         if (FieldCache.init_Z_6()) {
+         if (AutoTotemModule.init_Z_6()) {
             return movement;
          }
 

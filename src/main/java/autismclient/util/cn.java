@@ -29,7 +29,7 @@ public final class cn {
       } else {
          return !AutismLiteVariant.enabled() && autismclient.modules.z.read_Z_22()
             ? false
-            : autismclient.modules.aI.write_Z_5() || autismclient.modules.aI.flush_Z_5();
+            : autismclient.modules.ScaffoldModule.write_Z_5() || autismclient.modules.ScaffoldModule.flush_Z_5();
       }
    }
 
@@ -57,7 +57,7 @@ public final class cn {
             return input;
          }
 
-         if (!AutismLiteVariant.enabled() && autismclient.modules.z.read_Z_22() && autismclient.modules.aI.sync_Z_6()) {
+         if (!AutismLiteVariant.enabled() && autismclient.modules.z.read_Z_22() && autismclient.modules.ScaffoldModule.sync_Z_6()) {
             return input;
          }
 
@@ -93,7 +93,7 @@ public final class cn {
             }
 
             read_bb.init();
-            return autismclient.modules.aI.init_Input_Input_2(input, mc.player.getYRot(), rotation.init());
+            return autismclient.modules.ScaffoldModule.init_Input_Input_2(input, mc.player.getYRot(), rotation.init());
          } else {
             return init_bb.load(input, mc.player.getYRot(), rotation.init(), ck.init_ck().state_I(), cD.init(mc.player));
          }
@@ -119,7 +119,7 @@ public final class cn {
                   && !aD.init_Z()
                   && !autismclient.modules.aC.write()
             )
-            || autismclient.modules.al.init_Module_Str("scaffold") instanceof autismclient.modules.aI scaffold && scaffold.isEnabled()
+            || autismclient.modules.al.init_Module_Str("scaffold") instanceof autismclient.modules.ScaffoldModule scaffold && scaffold.isEnabled()
          ? false
          : AutismLiteVariant.enabled() || !j.sync_Z_10();
    }
@@ -219,7 +219,7 @@ public final class cn {
          return init_ce_DataUtil();
       }
 
-      ce.Inner_DataUtil scaffold = autismclient.modules.aI.init_ce_DataUtil_3();
+      ce.Inner_DataUtil scaffold = autismclient.modules.ScaffoldModule.init_ce_DataUtil_3();
       return scaffold != null ? scaffold : init_ce_DataUtil();
    }
 

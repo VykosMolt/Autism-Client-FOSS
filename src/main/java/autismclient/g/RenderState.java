@@ -1,6 +1,6 @@
 package autismclient.g;
 
-import autismclient.util.bZ;
+import autismclient.util.ProxyType;
 import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -541,7 +541,7 @@ public class RenderState extends HttpURLConnection {
                   throw new IOException("Invalid connection proxy credentials");
                }
 
-               if (frozen.init_bZ() == bZ.init) {
+               if (frozen.init_bZ() == ProxyType.init) {
                   byte[] address = target.init_List().getFirst().getAddress();
                   if (address.length != 4) {
                      throw new IOException("SOCKS4 resource packs require an IPv4 target");

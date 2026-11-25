@@ -3,9 +3,9 @@ package autismclient.gui.d;
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.util.bW;
-import autismclient.util.bY;
-import autismclient.util.bZ;
+import autismclient.util.ProxyEntry;
+import autismclient.util.ProxyManager;
+import autismclient.util.ProxyType;
 import autismclient.util.cA;
 import autismclient.util.ct;
 import autismclient.util.cz;
@@ -43,9 +43,9 @@ public class ArrayUtil extends KeyHolder {
    private EditBox write_EditBox;
    private EditBox update_EditBox;
    private EditBox sync_EditBox;
-   private bZ init_bZ = bZ.load;
+   private ProxyType init_bZ = ProxyType.load;
    private ArrayUtil.Inner_DataUtil init_ArrayUtil_DataUtil = ArrayUtil.Inner_DataUtil.init;
-   private bW init_bW;
+   private ProxyEntry init_bW;
    private String init_Str = "";
    private int update_I;
    private boolean init_Z;
@@ -59,12 +59,12 @@ public class ArrayUtil extends KeyHolder {
    private long write_J = -9223372036854775808L;
    private String load_Str = null;
    private ArrayUtil.Inner_DataUtil load_ArrayUtil_DataUtil = null;
-   private List<bW> read_List = List.of();
+   private List<ProxyEntry> read_List = List.of();
    private long update_J = -9223372036854775808L;
-   private bW load_bW;
-   private List<bW> write_List;
-   private bW read_bW;
-   private List<bW> update_List = List.of();
+   private ProxyEntry load_bW;
+   private List<ProxyEntry> write_List;
+   private ProxyEntry read_bW;
+   private List<ProxyEntry> update_List = List.of();
 
    public ArrayUtil(Screen parent) {
       super(Component.literal("Proxies"));
@@ -95,7 +95,7 @@ public class ArrayUtil extends KeyHolder {
          this.load_V();
       });
       this.init_V_Z(!this.init_Z());
-      bY.init_bY().init_Z_Z(false);
+      ProxyManager.init_bY().init_Z_Z(false);
       this.load_V();
    }
 
@@ -122,9 +122,9 @@ public class ArrayUtil extends KeyHolder {
       if (!this.init_Z()) {
          int actionGap = 2;
          int usableW = this.poll_I();
-         bY manager = bY.init_bY();
-         bY.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
-         bY.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
+         ProxyManager manager = ProxyManager.init_bY();
+         ProxyManager.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
+         ProxyManager.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
          boolean refreshRunning = refreshStatus.init_Z();
          boolean importRunning = importStatus.init_Z();
          String typeLabel = "Type: " + this.init_bZ;
@@ -136,7 +136,7 @@ public class ArrayUtil extends KeyHolder {
          int[] actionWidths = this.init_IArr_I_2(usableW, actionGap, typeLabel, addLabel, clearLabel, refreshLabel, "Cleanup", importLabel, "Config");
          int actionX = this.open_I();
          this.init_List.add(autismclient.gui.f.b.ByteReader.init(actionX, actionY, actionWidths[0], ctl, Component.literal(typeLabel), b -> {
-            this.init_bZ = this.init_bZ == bZ.load ? bZ.init : bZ.load;
+            this.init_bZ = this.init_bZ == ProxyType.load ? ProxyType.init : ProxyType.load;
             this.load_V();
          }).init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init));
          actionX += actionWidths[0] + actionGap;
@@ -214,7 +214,7 @@ public class ArrayUtil extends KeyHolder {
             .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load);
          clearAll.init_Z = !refreshRunning && !importRunning && manager.close_I() > 0;
          this.init_List.add(clearAll);
-         List<bW> proxies = this.load_List();
+         List<ProxyEntry> proxies = this.load_List();
          boolean hasActiveSection = proxies.size() > this.init_List().size();
          int maxScroll = this.init_I_I(proxies.size());
          this.update_I = load(this.update_I, maxScroll);
@@ -227,7 +227,7 @@ public class ArrayUtil extends KeyHolder {
          int rowY = top - this.update_I % pitch;
 
          for (int i = firstVisible; i < proxies.size() && rowY + rowH <= bottom; i++) {
-            bW proxy = proxies.get(i);
+            ProxyEntry proxy = proxies.get(i);
             if (rowY + rowH <= top) {
                rowY += pitch;
             } else {
@@ -238,7 +238,7 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private ArrayUtil.Inner_StreamUtil init_ArrayUtil_StreamUt_bW(bW proxy, int rowY, boolean activeSection) {
+   private ArrayUtil.Inner_StreamUtil init_ArrayUtil_StreamUt_bW(ProxyEntry proxy, int rowY, boolean activeSection) {
       int btnH = this.sync_I();
       int btnY = rowY + (this.write_I() - btnH) / 2;
       int toggleW = Math.max(this.load_I_Str("ON"), this.load_I_Str("OFF"));
@@ -254,10 +254,10 @@ public class ArrayUtil extends KeyHolder {
       int deleteX = this.state() - 1 - btnH;
       int checkX = deleteX - 2 - checkW;
       autismclient.gui.f.b.ByteReader check = autismclient.gui.f.b.ByteReader.init(
-         checkX, btnY, checkW, btnH, Component.literal(proxy.init_bW_CachePool == bW.Inner_CachePool.load ? "..." : "Check"), b -> this.read_V_bW(proxy)
+         checkX, btnY, checkW, btnH, Component.literal(proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.load ? "..." : "Check"), b -> this.read_V_bW(proxy)
       );
       check.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-      check.init_Z = proxy.init_bW_CachePool != bW.Inner_CachePool.load;
+      check.init_Z = proxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.load;
       autismclient.gui.f.b.ByteReader delete = autismclient.gui.f.b.ByteReader.init(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.load_V_bW(proxy));
       delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load).init_ByteReader_Identifier(cz.open);
       return new ArrayUtil.Inner_StreamUtil(proxy, rowY, activeSection, toggle, check, delete);
@@ -282,13 +282,13 @@ public class ArrayUtil extends KeyHolder {
       int maxScroll = this.init_I_I(this.load_List().size());
       this.update_I = load(this.update_I, maxScroll);
       this.init_CacheEntry.load(this.update_I, maxScroll);
-      bY.Inner_TaskQueue status = bY.init_bY().init_bY_TaskQueue();
+      ProxyManager.Inner_TaskQueue status = ProxyManager.init_bY().init_bY_TaskQueue();
       if (status.load_J() != this.init_J) {
          this.init_J = status.load_J();
          this.load_V();
       }
 
-      bY.Inner_BufferHelper importStatus = bY.init_bY().init_bY_BufferHelper();
+      ProxyManager.Inner_BufferHelper importStatus = ProxyManager.init_bY().init_bY_BufferHelper();
       if (importStatus.load_J() != this.load_J) {
          this.load_J = importStatus.load_J();
          this.load_V();
@@ -296,9 +296,9 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void read_V() {
-      bW proxy = this.init_bW();
+      ProxyEntry proxy = this.init_bW();
       if (proxy != null) {
-         if (bY.init_bY().init_Z_bW(proxy)) {
+         if (ProxyManager.init_bY().init_Z_bW(proxy)) {
             this.init_bW = null;
             this.run_V();
             this.init_V_Str_I("Added proxy " + proxy.read + ":" + proxy.init_I + ".", ValueSink.open);
@@ -313,9 +313,9 @@ public class ArrayUtil extends KeyHolder {
 
    private void write_V() {
       if (this.init_bW != null) {
-         bW updated = this.init_bW();
+         ProxyEntry updated = this.init_bW();
          if (updated != null) {
-            if (bY.init_bY().init_Z_bW_bW(this.init_bW, updated)) {
+            if (ProxyManager.init_bY().init_Z_bW_bW(this.init_bW, updated)) {
                this.init_V_Str_I("Updated " + this.init_bW.init_Str() + ".", ValueSink.open);
                this.get_V();
             } else {
@@ -326,10 +326,10 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private void init_V_bW(bW proxy) {
+   private void init_V_bW(ProxyEntry proxy) {
       if (proxy != null) {
          int sectionsBefore = this.load_List().size() - this.init_List().size();
-         bY.init_bY().init_V_bW_Z(proxy, !proxy.init_Z);
+         ProxyManager.init_bY().init_V_bW_Z(proxy, !proxy.init_Z);
          this.init_V_I(sectionsBefore);
          this.init_V_Str_I(proxy.init_Z ? "Enabled " + proxy.init_Str() + "." : "Disabled proxy.", proxy.init_Z ? ValueSink.open : ValueSink.close);
          this.load_V();
@@ -345,9 +345,9 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private void load_V_bW(bW proxy) {
+   private void load_V_bW(ProxyEntry proxy) {
       if (proxy != null) {
-         bY.init_bY().init_V_bW(proxy);
+         ProxyManager.init_bY().init_V_bW(proxy);
          if (proxy.equals(this.init_bW)) {
             this.init_bW = null;
          }
@@ -357,13 +357,13 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private void read_V_bW(bW proxy) {
-      if (proxy != null && proxy.init_bW_CachePool != bW.Inner_CachePool.load) {
-         proxy.init_bW_CachePool = bW.Inner_CachePool.load;
+   private void read_V_bW(ProxyEntry proxy) {
+      if (proxy != null && proxy.init_bW_CachePool != ProxyEntry.Inner_CachePool.load) {
+         proxy.init_bW_CachePool = ProxyEntry.Inner_CachePool.load;
          proxy.init_J = 0L;
          this.load_V();
          autismclient.util.ClassCache.init_Future_Str_Runnable("Autism-Proxy-Check", () -> {
-            proxy.init_I_I(bY.init_bY().read_I());
+            proxy.init_I_I(ProxyManager.init_bY().read_I());
             if (this.minecraft != null) {
                this.minecraft.execute(() -> {
                   this.init_V_Str_I(proxy.init_Str() + " is " + this.init_Str_bW(proxy) + ".", proxy.init_bW_CachePool.init_I());
@@ -375,11 +375,11 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void update_V() {
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       if (manager.init_bY_BufferHelper().init_Z()) {
          this.init_V_Str_I("Finish import before refreshing.", -14249);
       } else {
-         bY.Inner_TaskQueue currentStatus = manager.init_bY_TaskQueue();
+         ProxyManager.Inner_TaskQueue currentStatus = manager.init_bY_TaskQueue();
          if (currentStatus.init_Z()) {
             if (manager.update_Z()) {
                this.init_V_Str_I("Proxy refresh canceled.", -14249);
@@ -396,7 +396,7 @@ public class ArrayUtil extends KeyHolder {
             autismclient.util.ClassCache.init("Autism-Proxy-Refresh-Watch", () -> !manager.init_bY_TaskQueue().init_Z(), () -> {
                if (this.minecraft != null) {
                   this.minecraft.execute(() -> {
-                     bY.Inner_TaskQueue finished = manager.init_bY_TaskQueue();
+                     ProxyManager.Inner_TaskQueue finished = manager.init_bY_TaskQueue();
                      if (finished.init_J() == generation && finished.init_I() >= finished.load_I()) {
                         this.init_V_Str_I("Proxy refresh finished.", ValueSink.open);
                      }
@@ -410,7 +410,7 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void sync_V() {
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       if (manager.init_bY_TaskQueue().init_Z()) {
          this.init_V_Str_I("Cancel refresh before cleanup.", -14249);
       } else if (manager.init_bY_BufferHelper().init_Z()) {
@@ -427,7 +427,7 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void flush_V() {
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       if (manager.init_bY_TaskQueue().init_Z()) {
          this.init_V_Str_I("Cancel refresh before sorting proxies.", -14249);
       } else if (manager.init_bY_BufferHelper().init_Z()) {
@@ -444,7 +444,7 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void close_V() {
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       if (manager.init_bY_TaskQueue().init_Z()) {
          this.init_V_Str_I("Cancel refresh before clearing proxies.", -14249);
       } else if (manager.init_bY_BufferHelper().init_Z()) {
@@ -461,8 +461,8 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void open_V() {
-      bY manager = bY.init_bY();
-      bY.Inner_BufferHelper status = manager.init_bY_BufferHelper();
+      ProxyManager manager = ProxyManager.init_bY();
+      ProxyManager.Inner_BufferHelper status = manager.init_bY_BufferHelper();
       if (status.init_Z()) {
          if (manager.sync_Z()) {
             this.init_V_Str_I("Proxy import canceled.", -14249);
@@ -477,7 +477,7 @@ public class ArrayUtil extends KeyHolder {
 
    private void poll_V() {
       this.load_Z = false;
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       PointerBuffer filters = BufferUtils.createPointerBuffer(1);
       ByteBuffer txtFilter = MemoryUtil.memASCII("*.txt");
       try {
@@ -499,7 +499,7 @@ public class ArrayUtil extends KeyHolder {
 
    private void push_V() {
       this.load_Z = false;
-      bY manager = bY.init_bY();
+      ProxyManager manager = ProxyManager.init_bY();
       String clipboard = this.minecraft != null ? this.minecraft.keyboardHandler.getClipboard() : null;
       if (clipboard == null || clipboard.isBlank()) {
          this.init_V_Str_I("Clipboard is empty.", -14249);
@@ -510,13 +510,13 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private void init_V_bY_J(bY manager, long generation) {
+   private void init_V_bY_J(ProxyManager manager, long generation) {
       this.init_V_Str_I("Importing proxies...", -7429889);
       this.load_V();
       autismclient.util.ClassCache.init("Autism-Proxy-Import-Watch", () -> !manager.init_bY_BufferHelper().init_Z(), () -> {
          if (this.minecraft != null) {
             this.minecraft.execute(() -> {
-               bY.Inner_BufferHelper finished = manager.init_bY_BufferHelper();
+               ProxyManager.Inner_BufferHelper finished = manager.init_bY_BufferHelper();
                if (finished.init_J() == generation && !finished.read_Z()) {
                   this.init_V_Str_I("Imported " + finished.read_I() + " proxies.", finished.read_I() > 0 ? ValueSink.open : -14249);
                   this.update_I = 0;
@@ -597,8 +597,8 @@ public class ArrayUtil extends KeyHolder {
       this.load_V();
    }
 
-   private bW init_bW() {
-      bW proxy = new bW();
+   private ProxyEntry init_bW() {
+      ProxyEntry proxy = new ProxyEntry();
       proxy.load_Str = init_Str_Str(this.init_EditBox.getValue());
       proxy.read = init_Str_Str(this.load_EditBox.getValue());
       proxy.write = init_Str_Str(this.write_EditBox.getValue());
@@ -643,12 +643,12 @@ public class ArrayUtil extends KeyHolder {
             );
          }
 
-         List<bW> proxies = this.init_List();
-         bY manager = bY.init_bY();
+         List<ProxyEntry> proxies = this.init_List();
+         ProxyManager manager = ProxyManager.init_bY();
          int total = manager.close_I();
          int enabled = manager.init_I_2();
-         bY.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
-         bY.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
+         ProxyManager.Inner_TaskQueue refreshStatus = manager.init_bY_TaskQueue();
+         ProxyManager.Inner_BufferHelper importStatus = manager.init_bY_BufferHelper();
          String summary = proxies.size() == total ? total + " proxies  enabled " + enabled : proxies.size() + " / " + total + " proxies  enabled " + enabled;
          String workLabel = this.init_Str_bY_BufferHelper(importStatus);
          int workColor = importStatus.init_Z() ? -7429889 : -14249;
@@ -726,7 +726,7 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, ArrayUtil.Inner_StreamUtil row, int mouseX, int mouseY) {
-      bW proxy = row.init_bW;
+      ProxyEntry proxy = row.init_bW;
       boolean selected = proxy.equals(this.init_bW);
       int x = this.cache();
       int y = row.init_I;
@@ -926,7 +926,7 @@ public class ArrayUtil extends KeyHolder {
       this.minecraft.gui.setScreen(this.init_Screen);
    }
 
-   private void write(bW proxy) {
+   private void write(ProxyEntry proxy) {
       this.init_bW = proxy;
       if (proxy != null) {
          this.init_EditBox.setValue(init_Str_Str(proxy.load_Str));
@@ -934,14 +934,14 @@ public class ArrayUtil extends KeyHolder {
          this.read_EditBox.setValue(proxy.init_I <= 0 ? "" : Integer.toString(proxy.init_I));
          this.write_EditBox.setValue(init_Str_Str(proxy.write));
          this.update_EditBox.setValue(proxy.update == null ? "" : proxy.update);
-         this.init_bZ = proxy.init_bZ == null ? bZ.load : proxy.init_bZ;
+         this.init_bZ = proxy.init_bZ == null ? ProxyType.load : proxy.init_bZ;
       }
 
       this.load_V();
    }
 
-   private List<bW> init_List() {
-      bY manager = bY.init_bY();
+   private List<ProxyEntry> init_List() {
+      ProxyManager manager = ProxyManager.init_bY();
       long listRevision = manager.init_J();
       long refreshRevision = manager.init_bY_TaskQueue().load_J();
       String query = load_Str_Str(this.init_Str);
@@ -954,14 +954,14 @@ public class ArrayUtil extends KeyHolder {
          return this.read_List;
       }
 
-      List<bW> proxies = manager.init_List();
-      List<bW> filtered;
+      List<ProxyEntry> proxies = manager.init_List();
+      List<ProxyEntry> filtered;
       if (query.isEmpty() && this.init_ArrayUtil_DataUtil == ArrayUtil.Inner_DataUtil.init) {
          filtered = proxies;
       } else {
          filtered = new ArrayList<>();
 
-         for (bW proxy : proxies) {
+         for (ProxyEntry proxy : proxies) {
             if (proxy != null && this.init_Z_bW(proxy) && (query.isEmpty() || this.init_Z_bW_Str(proxy, query))) {
                filtered.add(proxy);
             }
@@ -976,8 +976,8 @@ public class ArrayUtil extends KeyHolder {
       return this.read_List;
    }
 
-   private bW load_bW() {
-      bY manager = bY.init_bY();
+   private ProxyEntry load_bW() {
+      ProxyManager manager = ProxyManager.init_bY();
       long revision = manager.init_J();
       if (revision != this.update_J) {
          this.load_bW = manager.init_bW();
@@ -987,14 +987,14 @@ public class ArrayUtil extends KeyHolder {
       return this.load_bW;
    }
 
-   private List<bW> load_List() {
-      List<bW> filtered = this.init_List();
-      bW active = this.load_bW();
+   private List<ProxyEntry> load_List() {
+      List<ProxyEntry> filtered = this.init_List();
+      ProxyEntry active = this.load_bW();
       if (filtered == this.write_List && active == this.read_bW) {
          return this.update_List;
       }
 
-      List<bW> display = filtered;
+      List<ProxyEntry> display = filtered;
       if (active != null && filtered.indexOf(active) > 0) {
          display = new ArrayList<>(filtered.size() + 1);
          display.add(active);
@@ -1007,20 +1007,20 @@ public class ArrayUtil extends KeyHolder {
       return display;
    }
 
-   private boolean init_Z_bW(bW proxy) {
+   private boolean init_Z_bW(ProxyEntry proxy) {
       boolean var10000;
       switch (this.init_ArrayUtil_DataUtil) {
          case init:
             var10000 = true;
             break;
          case load:
-            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.write;
+            var10000 = proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.write;
             break;
          case read:
-            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.read;
+            var10000 = proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.read;
             break;
          case write:
-            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.init || proxy.init_bW_CachePool == bW.Inner_CachePool.load;
+            var10000 = proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.init || proxy.init_bW_CachePool == ProxyEntry.Inner_CachePool.load;
             break;
          case update:
             var10000 = proxy.init_Z;
@@ -1032,7 +1032,7 @@ public class ArrayUtil extends KeyHolder {
       return var10000;
    }
 
-   private boolean init_Z_bW_Str(bW proxy, String query) {
+   private boolean init_Z_bW_Str(ProxyEntry proxy, String query) {
       String haystack = load_Str_Str(
          proxy.init_Str()
             + " "
@@ -1051,7 +1051,7 @@ public class ArrayUtil extends KeyHolder {
       return haystack.contains(query);
    }
 
-   private String init_Str_bW(bW proxy) {
+   private String init_Str_bW(ProxyEntry proxy) {
       if (proxy == null) {
          return "";
       }
@@ -1077,7 +1077,7 @@ public class ArrayUtil extends KeyHolder {
       return var10000;
    }
 
-   private String init_Str_bY_TaskQueue(bY.Inner_TaskQueue status) {
+   private String init_Str_bY_TaskQueue(ProxyManager.Inner_TaskQueue status) {
       if (status == null) {
          return "";
       } else if (status.init_Z()) {
@@ -1087,7 +1087,7 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private String init_Str_bY_BufferHelper(bY.Inner_BufferHelper status) {
+   private String init_Str_bY_BufferHelper(ProxyManager.Inner_BufferHelper status) {
       if (status == null) {
          return "";
       } else if (status.init_Z()) {
@@ -1097,7 +1097,7 @@ public class ArrayUtil extends KeyHolder {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, bY.Inner_TaskQueue refreshStatus, bY.Inner_BufferHelper importStatus) {
+   private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor graphics, ProxyManager.Inner_TaskQueue refreshStatus, ProxyManager.Inner_BufferHelper importStatus) {
       boolean importing = importStatus != null && importStatus.init_Z();
       boolean refreshing = refreshStatus != null && refreshStatus.init_Z();
       if (importing || refreshing) {
@@ -1407,7 +1407,7 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private record Inner_StreamUtil(
-      bW init_bW,
+      ProxyEntry init_bW,
       int init_I,
       boolean init_Z,
       autismclient.gui.f.b.ByteReader init_ByteReader,

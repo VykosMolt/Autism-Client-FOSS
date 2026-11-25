@@ -392,8 +392,8 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
          && (AutismLiteVariant.enabled() || !j.init_Z_49() && !z.sync_Z_12())
          && !MC.player.isHandsBusy()
          && !cn.init_Z()
-         && !aI.update_Z_5()
-         && !FieldCache.init_Z_6()
+         && !ScaffoldModule.update_Z_5()
+         && !AutoTotemModule.init_Z_6()
          && !TableIndex.init_Z_20();
    }
 

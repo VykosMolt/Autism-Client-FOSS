@@ -101,7 +101,7 @@ public final class aY {
       poll = -1;
    }
 
-   public static void init(PoseStack matrices, PkgCls_c buffers, Vec3 camera, List<aS.Inner_CachePool> paths) {
+   public static void init(PoseStack matrices, PkgCls_c buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
       Minecraft mc = Minecraft.getInstance();
       CameraRenderState state = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
       if (state.initialized && mc.level != null && mc.player != null && mc.getWindow().getHeight() >= 1) {
@@ -125,7 +125,7 @@ public final class aY {
                hidden ? net.minecraft.client.renderer.rendertype.BufferHelper.read() : net.minecraft.client.renderer.rendertype.BufferHelper.init()
             );
 
-            for (aS.Inner_CachePool path : paths) {
+            for (TrajectoriesModule.Inner_CachePool path : paths) {
                init_V_PoseStack_Pose(pose, lines, path, camera, forward, near, opacity);
             }
 
@@ -133,7 +133,7 @@ public final class aY {
                hidden ? net.minecraft.client.renderer.rendertype.BufferHelper.write() : net.minecraft.client.renderer.rendertype.BufferHelper.load()
             );
 
-            for (aS.Inner_CachePool path : paths) {
+            for (TrajectoriesModule.Inner_CachePool path : paths) {
                if (path.init_aS_BufferHelper() != null) {
                   init(pose, markers, path, camera, opacity);
                }
@@ -148,7 +148,7 @@ public final class aY {
 
          LinkedHashSet<Entity> hitTargets = new LinkedHashSet<>();
 
-         for (aS.Inner_CachePool path : paths) {
+         for (TrajectoriesModule.Inner_CachePool path : paths) {
             if (path.init_HitResult() instanceof EntityHitResult hit
                && init(path.init_aS_StreamUtil())
                && hit.getEntity().isAlive()
@@ -185,7 +185,7 @@ public final class aY {
          Vec3 rememberedGhost = remembered == null ? null : remembered.init_Vec3();
          Vec3 heldGhost = null;
 
-         for (aS.Inner_CachePool path : paths) {
+         for (TrajectoriesModule.Inner_CachePool path : paths) {
             if (path.load_Vec3() != null) {
                heldGhost = path.load_Vec3();
                break;
@@ -214,8 +214,8 @@ public final class aY {
       }
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, aS.Inner_CachePool path, Vec3 camera, double opacityScale) {
-      aS.Inner_BufferHelper surface = path.init_aS_BufferHelper();
+   private static void init(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, double opacityScale) {
+      TrajectoriesModule.Inner_BufferHelper surface = path.init_aS_BufferHelper();
       Vec3 normal = surface.load_Vec3();
       int var10000;
       switch (path.init_aS_StreamUtil()) {
@@ -242,7 +242,7 @@ public final class aY {
       }
 
       int style = var10000;
-      int opacity = surface.load_Z() ? 240 : (path.init_aS_StreamUtil() == aS.Inner_StreamUtil.write ? 225 : 230);
+      int opacity = surface.load_Z() ? 240 : (path.init_aS_StreamUtil() == TrajectoriesModule.Inner_StreamUtil.write ? 225 : 230);
       if (!path.load_Z()) {
          opacity = (int)(opacity * 0.86);
       }
@@ -262,28 +262,28 @@ public final class aY {
       init_V_PoseStack_Pose_3(pose, buffer, center.subtract(camera), tangent.scale(extent), bitangent.scale(extent), color, style);
    }
 
-   private static int init(aS.Inner_CachePool path) {
+   private static int init(TrajectoriesModule.Inner_CachePool path) {
       return path.init_HitResult() != null && path.init_HitResult().getType() == Type.ENTITY ? -44976 : path.init_I();
    }
 
-   private static boolean init(aS.Inner_StreamUtil item) {
-      return item == aS.Inner_StreamUtil.init_aS_StreamUtil
-         || item == aS.Inner_StreamUtil.load_aS_StreamUtil
-         || item == aS.Inner_StreamUtil.read
-         || item == aS.Inner_StreamUtil.update
-         || item == aS.Inner_StreamUtil.sync;
+   private static boolean init(TrajectoriesModule.Inner_StreamUtil item) {
+      return item == TrajectoriesModule.Inner_StreamUtil.init_aS_StreamUtil
+         || item == TrajectoriesModule.Inner_StreamUtil.load_aS_StreamUtil
+         || item == TrajectoriesModule.Inner_StreamUtil.read
+         || item == TrajectoriesModule.Inner_StreamUtil.update
+         || item == TrajectoriesModule.Inner_StreamUtil.sync;
    }
 
    private static AABB init(Entity entity, Vec3 camera, float partial, double margin) {
       return entity.getBoundingBox().inflate(margin).move(entity.getPosition(partial).subtract(entity.position()).subtract(camera));
    }
 
-   private static Vec3 init(aS.Inner_CachePool path, int index) {
+   private static Vec3 init(TrajectoriesModule.Inner_CachePool path, int index) {
       int ease = Math.min(2, path.init_List().size() - 1);
       return index < ease ? path.init_List().get(index).add(path.init_Vec3().scale(1.0 - (double)index / ease)) : path.init_List().get(index);
    }
 
-   private static void init_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, aS.Inner_CachePool path, Vec3 camera, Vec3 forward, double near, double opacity) {
+   private static void init_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, Vec3 forward, double near, double opacity) {
       if (path.init_List().size() >= 2) {
          Vec3 previous = init(path, 0).subtract(camera);
          int count = path.init_List().size() - 1;

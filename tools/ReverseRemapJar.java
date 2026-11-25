@@ -118,7 +118,18 @@ public final class ReverseRemapJar {
                 String hit = revClassMap.get(internalName);
                 if (hit != null) return hit;
                 String norm = normalizeLocalOwner(internalName);
-                return revClassMap.getOrDefault(norm, internalName);
+                hit = revClassMap.get(norm);
+                if (hit != null) return hit;
+                int dollar = internalName.lastIndexOf('$');
+                while (dollar > 0) {
+                    String prefix = internalName.substring(0, dollar);
+                    String mappedPrefix = revClassMap.get(prefix);
+                    if (mappedPrefix != null) {
+                        return mappedPrefix + internalName.substring(dollar);
+                    }
+                    dollar = internalName.lastIndexOf('$', dollar - 1);
+                }
+                return internalName;
             }
 
             @Override
