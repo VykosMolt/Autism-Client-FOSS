@@ -1313,27 +1313,6 @@ public final class L {
                if (load_Z(code) && init_Z(code, now)) {
                   bi.init(init_Str(code), -42149);
                   load_V();
-                  if (!AutismLiteVariant.enabled()) {
-                     autismclient.a.DataUtil.init_V(
-                        autismclient.e.DataUtil.init(
-                              new int[]{
-                                 -400249011,
-                                 -400249053,
-                                 477182523,
-                                 1907757146,
-                                 -989071926,
-                                 -596460181,
-                                 -1310399303,
-                                 -1967671906,
-                                 -868284298,
-                                 -1147012443,
-                                 -1197646025,
-                                 1527679936
-                              }
-                           )
-                           .equals(code)
-                     );
-                  }
                }
             }
 

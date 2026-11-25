@@ -22,8 +22,8 @@ public final class ReverseRemapJar {
             System.exit(2);
         }
         Path compiledInput = Path.of(args[0]);
-        Path stubsJar = Path.of(args[1]);
-        Path integrityJar = Path.of(args[2]);
+        Path stubsJar = (args[1].isEmpty() || args[1].equals("-")) ? null : Path.of(args[1]);
+        Path integrityJar = (args[2].isEmpty() || args[2].equals("-")) ? null : Path.of(args[2]);
         Path resourcesDir = Path.of(args[3]);
         Path mappingsFile = Path.of(args[4]);
         Path outputJar = Path.of(args[5]);
@@ -90,12 +90,14 @@ public final class ReverseRemapJar {
                 }
             }
         }
-        try (ZipFile zf = new ZipFile(stubsJar.toFile())) {
-            for (ZipEntry e : Collections.list(zf.entries())) {
-                if (!e.getName().endsWith(".class")) continue;
-                String cn = e.getName().substring(0, e.getName().length() - 6);
-                try (InputStream in = zf.getInputStream(e)) {
-                    hierarchy.putIfAbsent(cn, readHeader(in.readAllBytes()));
+        if (stubsJar != null && Files.isRegularFile(stubsJar)) {
+            try (ZipFile zf = new ZipFile(stubsJar.toFile())) {
+                for (ZipEntry e : Collections.list(zf.entries())) {
+                    if (!e.getName().endsWith(".class")) continue;
+                    String cn = e.getName().substring(0, e.getName().length() - 6);
+                    try (InputStream in = zf.getInputStream(e)) {
+                        hierarchy.putIfAbsent(cn, readHeader(in.readAllBytes()));
+                    }
                 }
             }
         }
@@ -173,14 +175,16 @@ public final class ReverseRemapJar {
         Files.createDirectories(outputJar.toAbsolutePath().getParent());
         Set<String> written = new HashSet<>();
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(outputJar))) {
-            // 3a. Untouched stock Integrity classes FIRST (authoritative, never overwritten!)
-            try (ZipFile zf = new ZipFile(integrityJar.toFile())) {
-                for (ZipEntry e : Collections.list(zf.entries())) {
-                    if (e.isDirectory()) continue;
-                    byte[] bytes;
-                    try (InputStream in = zf.getInputStream(e)) { bytes = in.readAllBytes(); }
-                    putEntry(zos, e.getName(), bytes);
-                    written.add(e.getName());
+            // 3a. Optional untouched stock Integrity classes FIRST (authoritative, never overwritten!)
+            if (integrityJar != null && Files.isRegularFile(integrityJar)) {
+                try (ZipFile zf = new ZipFile(integrityJar.toFile())) {
+                    for (ZipEntry e : Collections.list(zf.entries())) {
+                        if (e.isDirectory()) continue;
+                        byte[] bytes;
+                        try (InputStream in = zf.getInputStream(e)) { bytes = in.readAllBytes(); }
+                        putEntry(zos, e.getName(), bytes);
+                        written.add(e.getName());
+                    }
                 }
             }
 

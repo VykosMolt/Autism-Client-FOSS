@@ -1,5 +1,4 @@
 # AUTISM 5.3 lossless bidirectional disambiguation mappings
-I	autismclient/obf/Integrity
 C	autismclient/a/CachePool$DataUtil	autismclient/a/CachePool$Inner_DataUtil
 C	autismclient/a/DataUtil$DataUtil	autismclient/a/DataUtil$Inner_DataUtil
 C	autismclient/a/DataUtil$StreamUtil	autismclient/a/DataUtil$Inner_StreamUtil
