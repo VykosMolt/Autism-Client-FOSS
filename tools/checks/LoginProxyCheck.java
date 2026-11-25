@@ -69,7 +69,7 @@ public class LoginProxyCheck {
 
       AtomicInteger used = new AtomicInteger();
       ServerSocket socks = new ServerSocket(0, 50, java.net.InetAddress.getLoopbackAddress());
-      Thread.ofVirtual().start(() -> {
+      Thread acceptor = Thread.ofVirtual().start(() -> {
          while (true) {
             try {
                Socket client = socks.accept();
@@ -96,6 +96,7 @@ public class LoginProxyCheck {
       // a SOCKS proxy that is down fails the request; it must not fall back to a direct connection
       int deadPort = socks.getLocalPort();
       socks.close();
+      acceptor.join();
       aW.Inner_DataUtil down = aW.auditSend(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", deadPort)), url + "/token", "application/json", "{}", null);
       check(down.init_I() == -1, "proxy down: the request fails, got " + down);
       web.stop(0);
