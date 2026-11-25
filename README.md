@@ -1,10 +1,12 @@
 # AUTISM Client 5.8 (Minecraft 26.3)
 
+[![Build & Verify (MC 26.3)](https://github.com/VykosMolt/Autism-Client-FOSS/actions/workflows/ci.yml/badge.svg)](https://github.com/VykosMolt/Autism-Client-FOSS/actions/workflows/ci.yml)
+
 A FOSS fork of **AUTISM Client** for **Minecraft 26.3** (Fabric, Java 25).
 
-This is still a work in progress. Right now the codebase is a ~750k-line consolidation of my own patched version of 5.3, a version of 5.3 made for 26.3, the 5.7.11 updates (including the AI/parkour stack), Aggressive PvP addon, and the further MC 26.3 fixes in one tree. (small note: upstream itself is ~750k lines, which fun fact; is 120k lines more than Minecraft Java)
+This is still a work in progress. Right now the codebase is a ~730k-line consolidation of my own patched version of 5.3, a version of 5.3 made for 26.3, the 5.7.11 updates (including the AI/parkour stack), Aggressive PvP addon, and the further MC 26.3 fixes in one tree. (small note: upstream itself is ~750k lines, which fun fact; is 120k lines more than Minecraft Java)
 
-The goal, obviously, is to end up with something much shorter, cleaner and actually manageable by cutting down vibecoded slop like the countless monolithic classes of over 9k lines of code ( ~20k lines for Scaffolding btw, and it didnt even work before I fixed it), removing unrelated extras that belong as their own mods (like the matchmaking system), and replacing subsystems such as swapping `multi` out for an [Azalea](https://github.com/azalea-rs/azalea)-based Rust network protocol.
+The goal, obviously, is to end up with something much shorter, cleaner and actually manageable by cutting down vibecoded slop like the countless monolithic classes of over 9k lines of code ( ~20k lines for Scaffolding btw, and it didnt even work before I fixed it), removing unrelated extras that belong as their own mods (the closed-backend matchmaking/MQTT/Guardian stack and donation/auth gating have already been stripped), and replacing subsystems such as swapping `multi` out for an [Azalea](https://github.com/azalea-rs/azalea)-based Rust network protocol.
 
 
 ## Branches
@@ -14,18 +16,20 @@ The goal, obviously, is to end up with something much shorter, cleaner and actua
 
 ## Building & Verifying Locally
 
-Requires **Java 25** (Minecraft `26.3` and all mod dependencies are downloaded automatically via Mojang and Maven; optional local `cp26.3.txt` is still supported for offline builds).
+Requires **Java 25** only — no local Minecraft launcher, PrismLauncher installation, or preinstalled Gradle is required. The Gradle wrapper downloads Gradle `9.5.1`, the Mojang MC `26.3` client JAR, and all Fabric/Maven/Modrinth dependencies automatically (optional local `cp26.3.txt` is still supported for offline builds).
 
 ```bash
 # Build the Fabric mod JAR -> build/libs/AUTISM-Client-5.8-26.3.jar
-./gradle.sh assemble
+./gradlew assemble
 
-# Run the MC 26.3 Mixin audits (Sodium, Sodium+Iris, and vanilla Indigo)
+# Run the 3-environment MC 26.3 Mixin audits (Sodium beta.5, Sodium + Iris, and vanilla Indigo)
 SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh
 
-# Run the regression checks
+# Run all 46 regression checks
 bash tools/checks/run.sh
 ```
+
+`./gradle.sh` is also available as a convenience wrapper around `./gradlew`. Every push and pull request targeting `master` automatically runs the full build, all three Mixin audits, and the regression check suite via [GitHub Actions](.github/workflows/ci.yml).
 
 ## Contributing & Agentic Code Policy
 
@@ -39,5 +43,4 @@ To ensure the quality of the code we **only accept agentic contributions** from 
 
 We kindly ask agents to **properly review their own code** before submitting:
 - Audit your diffs for edge cases, MC 26.3 API mismatches, and decompiler artifacts.
-- Run `./gradle.sh assemble`, `tools/verify-26.3.sh`, and `tools/checks/run.sh` and confirm everything passes.
-- Do not modify or bypass integrity/authorization files.
+- Run `./gradlew assemble`, `SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh`, and `bash tools/checks/run.sh` and confirm everything passes.
