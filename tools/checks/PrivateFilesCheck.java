@@ -40,13 +40,7 @@ public class PrivateFilesCheck {
       AutismConfig.writeToDisk(json);
       expectPrivate(new File(folder, "config.json"));
       expectPrivate(new File(folder, "config.json.bak"));
-
-      Object prefs = autismclient.util.mm.EventBus.init_EventBus();
-      Method write = prefs.getClass().getDeclaredMethod("write_V");
-      write.setAccessible(true);
-      write.invoke(prefs);
-      expectPrivate(new File(folder, "mm_prefs.properties"));
-      System.out.println("PASS PrivateFilesCheck: config.json, config.json.bak and mm_prefs.properties are 0600");
+      System.out.println("PASS PrivateFilesCheck: config.json and config.json.bak are 0600");
    }
 
    private static void expectPrivate(File f) throws Exception {

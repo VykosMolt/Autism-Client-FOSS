@@ -10,9 +10,7 @@ import autismclient.modules.aD;
 import autismclient.modules.ae;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismProfilesOverlay;
-import autismclient.util.L;
 import autismclient.util.aJ;
 import autismclient.util.aR;
 import autismclient.util.aS;
@@ -617,18 +615,6 @@ public class UtilCore extends Screen implements TaskQueue {
             this.minecraft.gui.setScreen(new HashUtil(this, HashUtil.Inner_DataUtil.load));
          }
       }, Component.literal("Modules & Macros")));
-      all.add(new UtilCore.Inner_TaskQueue("MATCHMAKING", "", autismclient.gui.f.a.DataUtil.set, null, 32, () -> {
-         if (!aD.read_Z()) {
-            autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
-            cX overlay = mod == null ? null : mod.init_cX();
-            if (overlay != null) {
-               bk.init_bk().init_V(overlay);
-               ((AutismMatchmakingOverlay)overlay).load(true);
-               overlay.init_V_Z(true);
-               this.minecraft.gui.setScreen(new TaskTimer(overlay, this, true));
-            }
-         }
-      }, Component.literal("Matchmaking")));
       all.add(new UtilCore.Inner_TaskQueue("PROFILES", "", autismclient.gui.f.a.DataUtil.add, null, 32, () -> {
          if (!aD.read_Z()) {
             autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
@@ -752,8 +738,15 @@ public class UtilCore extends Screen implements TaskQueue {
    }
 
    private static String init_Str() {
-      String version = L.read_Str();
-      return version != null && !version.isBlank() ? version : "unknown";
+      try {
+         String version = net.fabricmc.loader.api.FabricLoader.getInstance()
+            .getModContainer("autism")
+            .map(m -> m.getMetadata().getVersion().getFriendlyString())
+            .orElse("unknown");
+         return version != null && !version.isBlank() ? version : "unknown";
+      } catch (Throwable t) {
+         return "unknown";
+      }
    }
 
    private float init_F_I(int delayMs) {

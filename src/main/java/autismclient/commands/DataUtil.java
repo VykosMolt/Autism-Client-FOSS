@@ -3,7 +3,6 @@ package autismclient.commands;
 import autismclient.AutismClientAddon;
 import autismclient.api.AddonRegistrationResult;
 import autismclient.commands.b.ArrayUtil;
-import autismclient.commands.b.BitSetUtil;
 import autismclient.commands.b.BufferHelper;
 import autismclient.commands.b.ByteReader;
 import autismclient.commands.b.CacheEntry;
@@ -11,7 +10,6 @@ import autismclient.commands.b.ClassCache;
 import autismclient.commands.b.ConfigStore;
 import autismclient.commands.b.DataPipe;
 import autismclient.commands.b.EventBus;
-import autismclient.commands.b.FieldCache;
 import autismclient.commands.b.FileCache;
 import autismclient.commands.b.HashUtil;
 import autismclient.commands.b.IoWorker;
@@ -108,10 +106,8 @@ public final class DataUtil {
          init_V(new PoolEntry());
          init_V(new UiHelper());
          if (!AutismLiteVariant.enabled()) {
-            init_V(new BitSetUtil());
             init_V(new CacheEntry());
             init_V(new autismclient.commands.b.DataUtil());
-            init_V(new FieldCache());
             init_V(new PathHelper());
             init_V(new StreamGate());
             init_V(new MethodUtil());

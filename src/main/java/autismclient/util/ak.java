@@ -127,11 +127,6 @@ public final class ak {
       }
 
       if (!AutismLiteVariant.enabled() && autismModule != null) {
-         cX matchmakingOverlay = autismModule.init_cX();
-         if (matchmakingOverlay != null && matchmakingOverlay.sync_Z()) {
-            manager.init_V(matchmakingOverlay);
-         }
-
          cX profilesOverlay = autismModule.load_cX();
          if (profilesOverlay != null && profilesOverlay.sync_Z()) {
             manager.init_V(profilesOverlay);

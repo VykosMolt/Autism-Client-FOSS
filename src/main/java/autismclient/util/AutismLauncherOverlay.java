@@ -259,25 +259,14 @@ public class AutismLauncherOverlay extends bj {
          })
       );
       if (!AutismLiteVariant.enabled()) {
-         autismclient.gui.f.c.ByteReader matchmakingButton = this.init(
-            "Matchmaking", autismclient.gui.f.a.DataUtil.set, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
-               autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
-               if (mod != null) {
-                  cX ov = mod.init_cX();
-                  if (ov != null) {
-                     ((AutismMatchmakingOverlay)ov).load(false);
-                     this.init_V_cX(ov);
-                  }
-               }
-            }
-         );
          this.read_ByteReader = this.init("Multi", autismclient.gui.f.a.DataUtil.put, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
             autismclient.modules.PoolEntry mod = autismclient.modules.PoolEntry.init_PoolEntry();
             if (mod != null) {
                mod.buffer();
             }
          });
-         this.init_V_PacketUtil(this.init_DataUtil.init_PacketUtil_2(), matchmakingButton, this.read_ByteReader);
+         this.read_ByteReader.read_ByteReader_Z(true);
+         this.init_DataUtil.init_PacketUtil_2().init_TableIndex_TableIndex(this.read_ByteReader);
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
             this.init("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
@@ -801,7 +790,6 @@ public class AutismLauncherOverlay extends bj {
       pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Server Info", autismclient.gui.f.a.DataUtil.push));
       pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Settings", autismclient.gui.f.a.DataUtil.write));
       if (!AutismLiteVariant.enabled()) {
-         pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Matchmaking", autismclient.gui.f.a.DataUtil.set));
          pairWidth = Math.max(pairWidth, this.init_I_Str_Identifier("Multi 500", autismclient.gui.f.a.DataUtil.put));
       }
 

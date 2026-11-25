@@ -88,7 +88,6 @@ public final class ConfigStore {
       new ConfigStore.Inner_ConfigStore("packets", "Packets", autismclient.gui.f.a.DataUtil.close),
       new ConfigStore.Inner_ConfigStore("server", "Server Info", autismclient.gui.f.a.DataUtil.push),
       new ConfigStore.Inner_ConfigStore("keys", "Settings", autismclient.gui.f.a.DataUtil.write),
-      new ConfigStore.Inner_ConfigStore("matchmaking", "Matchmaking", autismclient.gui.f.a.DataUtil.set),
       new ConfigStore.Inner_ConfigStore("multi", "Multi", autismclient.gui.f.a.DataUtil.put)
    );
    private static final ConfigStore.Inner_DataUtil[] init_ConfigStore_DataUtArr = new ConfigStore.Inner_DataUtil[]{

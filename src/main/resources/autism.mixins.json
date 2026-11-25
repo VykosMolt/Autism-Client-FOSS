@@ -277,9 +277,7 @@
     "compat.AutismEssentialOverlayGuardMixin",
     "via.AutismViaConnectionMixin",
     "via.AutismViaVersionPlatformMixin",
-    "via.AutismViaProtocolVersionDetectorMixin",
-    "guardian.AutismLoginProofMixin",
-    "guardian.AutismLobbyKeyMixin"
+    "via.AutismViaProtocolVersionDetectorMixin"
   ],
   "injectors": {
     "defaultRequire": 0

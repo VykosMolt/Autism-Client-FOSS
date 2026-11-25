@@ -6,7 +6,6 @@ import autismclient.compat263.CompatSwingPacket;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.AutismMatchmakingOverlay;
 import autismclient.util.AutismMultiOverlay;
 import autismclient.util.AutismPacketLoggerOverlay;
 import autismclient.util.AutismPayloadSupport;
@@ -116,7 +115,6 @@ public final class PoolEntry {
    private volatile boolean poll;
    private volatile boolean push;
    private AutismServerInfoOverlay init_AutismServerInfoOv;
-   private cX init_cX;
    private cX load_cX;
    private cX read_cX;
    private final Deque<PoolEntry.Inner_StreamUtil> init_Deque = new ArrayDeque<>(96);
@@ -1591,41 +1589,11 @@ public final class PoolEntry {
    }
 
    public cX init_cX() {
-      if (AutismLiteVariant.enabled()) {
-         return null;
-      }
-
-      if (this.init_cX == null && init_Minecraft != null && init_Minecraft.font != null) {
-         this.init_cX = new AutismMatchmakingOverlay(init_Minecraft.font);
-         this.init_cX.b__V();
-      }
-
-      return this.init_cX;
+      return null;
    }
 
    public boolean queue() {
-      if (AutismLiteVariant.enabled()) {
-         return false;
-      }
-
-      cX overlay = this.init_cX();
-      if (overlay == null) {
-         return false;
-      }
-
-      if (overlay.sync_Z()) {
-         overlay.init_V_Z(false);
-         return true;
-      }
-
-      bk.init_bk().init_V(overlay);
-      ((AutismMatchmakingOverlay)overlay).update_V_12();
-      bk.init_bk().update_V(overlay);
-      if (init_Minecraft != null) {
-         init_Minecraft.gui.setScreen(new autismclient.gui.d.TaskTimer(overlay, null, false, true));
-      }
-
-      return true;
+      return false;
    }
 
    public cX load_cX() {
@@ -1655,7 +1623,7 @@ public final class PoolEntry {
    }
 
    public cX write_cX() {
-      return this.init_cX;
+      return null;
    }
 
    public cX update_cX() {
@@ -1668,13 +1636,6 @@ public final class PoolEntry {
 
    public void close_V() {
       if (!cx.load_Z() && !AutismLiteVariant.enabled()) {
-         try {
-            if (this.init_cX != null && this.init_cX.sync_Z()) {
-               this.init_cX.init_V_Z(false);
-            }
-         } catch (Throwable var3) {
-         }
-
          try {
             if (this.load_cX != null && this.load_cX.sync_Z()) {
                this.load_cX.init_V_Z(false);
