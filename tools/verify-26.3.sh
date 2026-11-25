@@ -10,12 +10,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJ_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REAL_HOME="${REAL_HOME:-$HOME}"
-JDK_DIR="${JAVA_HOME:-$(find "$REAL_HOME/.local/share/gradle/jdks" -maxdepth 1 -mindepth 1 -type d -name '*25*' 2>/dev/null | head -n 1 || true)}"
-JDK="${JDK_DIR:+$JDK_DIR/bin}"
-JDK="${JDK:-$(dirname "$(readlink -f "$(command -v javac)")")}"
-LIB="${PRISM_LIBS:-$REAL_HOME/.local/share/PrismLauncher/libraries}"
-MODS_DIR="${MC_MODS_DIR:-$REAL_HOME/.local/share/PrismLauncher/mods}"
-IRIS_MODS_DIR="${IRIS_MODS_DIR:-$MODS_DIR}"
 
 JAR_PATH="${1:-$PROJ_DIR/build/libs/AUTISM-Client-5.8-26.3.jar}"
 STOCK_JAR="${2:-$REAL_HOME/Downloads/AUTISM-Client-5.3-26.3.jar}"
@@ -29,11 +23,16 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 if [[ ! -f "$JAR_PATH" ]]; then
-  echo "ERROR: Built JAR not found at $JAR_PATH (run ./gradle.sh assemble first)" >&2
+  echo "ERROR: Built JAR not found at $JAR_PATH (run ./gradlew assemble first)" >&2
   exit 1
 fi
 
-ASM="$LIB/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar:$LIB/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar"
+ENV_FILE="$PROJ_DIR/build/tool-env.sh"
+if [[ "${AUTISM_TOOL_ENV_PREPARED:-0}" != 1 || ! -f "$ENV_FILE" ]]; then
+  "$PROJ_DIR/gradle.sh" -q prepareToolEnv
+fi
+# shellcheck source=/dev/null
+source "$ENV_FILE"
 
 if [[ "${SKIP_JAR_CHECK:-0}" != "1" ]]; then
   if [[ ! -f "$STOCK_JAR" ]]; then
@@ -41,12 +40,8 @@ if [[ "${SKIP_JAR_CHECK:-0}" != "1" ]]; then
     exit 1
   fi
   echo "== [1/4] Jar check against 26.3 stock =="
-  "$JDK/java" -cp "$ASM" "$PROJ_DIR/tools/JarCheck.java" "$STOCK_JAR" "$JAR_PATH"
+  "$JDK/java" -cp "$ASM_CP" "$PROJ_DIR/tools/JarCheck.java" "$STOCK_JAR" "$JAR_PATH"
 fi
-
-LOADER="$LIB/net/fabricmc/fabric-loader/0.20.1/fabric-loader-0.20.1.jar:$LIB/net/fabricmc/sponge-mixin/0.17.5+mixin.0.8.7/sponge-mixin-0.17.5+mixin.0.8.7.jar:$LIB/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar:$LIB/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar:$LIB/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar:$LIB/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar:$LIB/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar"
-LWJGL="$(find "$LIB/org/lwjgl" -name '*3.4.3.jar' ! -name '*natives*' | paste -sd:)"
-GAME="$(cat "$PROJ_DIR/cp26.3.txt"):$LWJGL"
 
 run_mixin_audit() {
   local label="$1"
@@ -56,14 +51,11 @@ run_mixin_audit() {
   CURRENT_WORK="$work"
   mkdir -p "$work/mods" "$work/classes"
   cp "$JAR_PATH" "$work/mods/AUTISM-Client-5.8-26.3.jar"
-  cp "$MODS_DIR/fabric-api-0.166.2+26.3.jar" "$work/mods/"
-  cp "$MODS_DIR/lithium-fabric-0.26.3+mc26.3.jar" "$work/mods/"
-  cp "$MODS_DIR/modmenu-21.0.1.jar" "$work/mods/"
+  cp "$MOD_FABRIC_API" "$MOD_LITHIUM" "$MOD_MODMENU" "$work/mods/"
   if [[ "$with_sodium" == "beta5" ]]; then
-    cp "$MODS_DIR/sodium-fabric-0.9.3-beta.5+mc26.3.jar" "$work/mods/"
+    cp "$MOD_SODIUM_BETA5" "$work/mods/"
   elif [[ "$with_sodium" == "iris" ]]; then
-    cp "$IRIS_MODS_DIR/sodium-fabric-0.9.3-beta.3+mc26.3.jar" "$work/mods/"
-    cp "$IRIS_MODS_DIR/iris-fabric-1.11.7+mc26.3.jar" "$work/mods/"
+    cp "$MOD_SODIUM_IRIS" "$MOD_IRIS" "$work/mods/"
   fi
 
   cat > "$work/AuditRunner.java" <<'JAVA'
@@ -115,9 +107,9 @@ public final class AuditRunner {
 }
 JAVA
 
-  "$JDK/javac" -cp "$LOADER:$GAME" -d "$work/classes" "$work/AuditRunner.java"
+  "$JDK/javac" -cp "$LOADER_CP:$GAME_CP" -d "$work/classes" "$work/AuditRunner.java"
   echo "== $label =="
-  if ! ( cd "$work" && "$JDK/java" -cp "$LOADER:$GAME:$work/classes" AuditRunner "$work" > "$work/audit.log" 2>&1 ); then
+  if ! ( cd "$work" && "$JDK/java" -cp "$LOADER_CP:$GAME_CP:$work/classes" AuditRunner "$work" > "$work/audit.log" 2>&1 ); then
     grep -E 'MIXIN|Exception|Error|Caused by' "$work/audit.log" | head -40
     rm -rf "$work"
     exit 1
