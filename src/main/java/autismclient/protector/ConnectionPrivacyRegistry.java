@@ -22,15 +22,15 @@ import net.minecraft.network.protocol.PacketFlow;
 
 public final class ConnectionPrivacyRegistry {
    static final int init_I = 1024;
-   private static final Object init_Obj = new Object();
-   private static final Map<Connection, ConnectionPrivacyRegistry.ConnectionSession> init_Map = new IdentityHashMap<>();
-   private static final Map<PacketListener, ConnectionPrivacyRegistry.ConnectionSession> load = new IdentityHashMap<>();
-   private static final AtomicLong init_AtomicLong = new AtomicLong();
+   private static final Object LOCK = new Object();
+   private static final Map<Connection, ConnectionPrivacyRegistry.ConnectionSession> SESSIONS_BY_CONNECTION = new IdentityHashMap<>();
+   private static final Map<PacketListener, ConnectionPrivacyRegistry.ConnectionSession> SESSIONS_BY_LISTENER = new IdentityHashMap<>();
+   private static final AtomicLong NEXT_LIFECYCLE_ID = new AtomicLong();
 
    private ConnectionPrivacyRegistry() {
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, ConnectionPrivacyRegistry.PrivacyMode mode, boolean multi, SocketAddress peerAddress) {
+   public static ConnectionPrivacyRegistry.ConnectionSession register(Connection connection, ConnectionPrivacyRegistry.PrivacyMode mode, boolean multi, SocketAddress peerAddress) {
       Objects.requireNonNull(connection, "connection");
       Objects.requireNonNull(mode, "mode");
       if (peerAddress instanceof LocalAddress || connection.isMemoryConnection() || connection.getReceiving() == PacketFlow.SERVERBOUND) {
@@ -39,68 +39,68 @@ public final class ConnectionPrivacyRegistry {
 
       List<Socket> retired = List.of();
       ConnectionPrivacyRegistry.ConnectionSession created;
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession existing = init_Map.get(connection);
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession existing = SESSIONS_BY_CONNECTION.get(connection);
          if (existing != null) {
-            if (existing.read) {
+            if (existing.active) {
                if (peerAddress instanceof LocalAddress) {
-                  existing.write = true;
+                  existing.localAddress = true;
                }
 
                return existing;
             }
 
-            retired = load_List(existing);
+            retired = deactivateSessionLocked(existing);
          }
 
-         if (init_Map.size() >= 1024) {
+         if (SESSIONS_BY_CONNECTION.size() >= 1024) {
             throw new IllegalStateException("Connection privacy registry is full (1024)");
          }
 
-         created = new ConnectionPrivacyRegistry.ConnectionSession(init_AtomicLong.incrementAndGet(), mode, multi, connection, peerAddress);
-         if (created.read()) {
-            created.init_ServerData_Type = Type.OTHER;
+         created = new ConnectionPrivacyRegistry.ConnectionSession(NEXT_LIFECYCLE_ID.incrementAndGet(), mode, multi, connection, peerAddress);
+         if (created.isLocalOrMemory()) {
+            created.serverType = Type.OTHER;
          }
 
-         init_Map.put(connection, created);
+         SESSIONS_BY_CONNECTION.put(connection, created);
       }
 
-      init(retired);
+      closeSocketsQuietly(retired);
       return created;
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea(Connection connection) {
+   public static ConnectionPrivacyRegistry.ConnectionSession getActive(Connection connection) {
       if (connection == null) {
          return null;
       }
 
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession context = init_Map.get(connection);
-         return context != null && context.read ? context : null;
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession context = SESSIONS_BY_CONNECTION.get(connection);
+         return context != null && context.active ? context : null;
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(PacketListener listener) {
+   public static ConnectionPrivacyRegistry.ConnectionSession getByListener(PacketListener listener) {
       if (listener == null) {
          return null;
       }
 
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession context = load.get(listener);
-         return context != null && context.read ? context : null;
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession context = SESSIONS_BY_LISTENER.get(listener);
+         return context != null && context.active ? context : null;
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(ServerPackManager manager) {
+   public static ConnectionPrivacyRegistry.ConnectionSession getByPackManager(ServerPackManager manager) {
       if (manager == null) {
          return null;
       }
 
-      synchronized (init_Obj) {
+      synchronized (LOCK) {
          ConnectionPrivacyRegistry.ConnectionSession found = null;
 
-         for (ConnectionPrivacyRegistry.ConnectionSession context : init_Map.values()) {
-            if (context.read && context.init_ServerPackManager == manager) {
+         for (ConnectionPrivacyRegistry.ConnectionSession context : SESSIONS_BY_CONNECTION.values()) {
+            if (context.active && context.serverPackManager == manager) {
                if (found != null) {
                   return null;
                }
@@ -113,53 +113,53 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession load(Connection connection) {
-      synchronized (init_Obj) {
-         return read(connection);
+   public static ConnectionPrivacyRegistry.ConnectionSession requireActive(Connection connection) {
+      synchronized (LOCK) {
+         return requireActiveLocked(connection);
       }
    }
 
-   public static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
-      if (context != null && context.read) {
-         synchronized (init_Obj) {
-            return context.read && init_Map.get(context.init_Connection) == context;
+   public static boolean isActive(ConnectionPrivacyRegistry.ConnectionSession context) {
+      if (context != null && context.active) {
+         synchronized (LOCK) {
+            return context.active && SESSIONS_BY_CONNECTION.get(context.connection) == context;
          }
       } else {
          return false;
       }
    }
 
-   public static boolean init(
+   public static boolean isCurrentDownload(
       ConnectionPrivacyRegistry.ConnectionSession context, long lifecycleId, ServerPackManager manager, PacketListener listener, long downloadGeneration
    ) {
-      if (context != null && context.read) {
-         synchronized (init_Obj) {
-            return context.read
-               && context.init_J == lifecycleId
-               && context.load_J == downloadGeneration
-               && context.init_ServerPackManager == manager
-               && context.init_PacketListener == listener
-               && init_Map.get(context.init_Connection) == context;
+      if (context != null && context.active) {
+         synchronized (LOCK) {
+            return context.active
+               && context.lifecycleId == lifecycleId
+               && context.downloadGeneration == downloadGeneration
+               && context.serverPackManager == manager
+               && context.packetListener == listener
+               && SESSIONS_BY_CONNECTION.get(context.connection) == context;
          }
       } else {
          return false;
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, String host, int port, Type serverKind, ServerPackManager manager) {
-      ConnectionPrivacyRegistry.ConnectionSession context = init(connection, host, port);
-      init(connection, serverKind);
-      init(connection, manager);
+   public static ConnectionPrivacyRegistry.ConnectionSession bindServerContext(Connection connection, String host, int port, Type serverKind, ServerPackManager manager) {
+      ConnectionPrivacyRegistry.ConnectionSession context = bindEndpoint(connection, host, port);
+      bindServerKind(connection, serverKind);
+      bindPackManager(connection, manager);
       return context;
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, String host, int port) {
+   public static ConnectionPrivacyRegistry.ConnectionSession bindEndpoint(Connection connection, String host, int port) {
       ConnectionPrivacyRegistry.ServerEndpoint endpoint = new ConnectionPrivacyRegistry.ServerEndpoint(host, port);
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession context = read(connection);
-         ConnectionPrivacyRegistry.ServerEndpoint existing = context.init_BufferHelper_Buffe;
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession context = requireActiveLocked(connection);
+         ConnectionPrivacyRegistry.ServerEndpoint existing = context.serverEndpoint;
          if (existing == null) {
-            context.init_BufferHelper_Buffe = endpoint;
+            context.serverEndpoint = endpoint;
          } else if (!existing.equals(endpoint)) {
             throw new IllegalStateException("Original endpoint is already bound for this connection lifecycle");
          }
@@ -168,42 +168,42 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, Type serverKind) {
+   public static ConnectionPrivacyRegistry.ConnectionSession bindServerKind(Connection connection, Type serverKind) {
       Objects.requireNonNull(serverKind, "serverKind");
       List<Socket> retired = List.of();
       boolean conflict = false;
       ConnectionPrivacyRegistry.ConnectionSession context;
-      synchronized (init_Obj) {
-         context = read(connection);
-         Type existing = context.init_ServerData_Type;
+      synchronized (LOCK) {
+         context = requireActiveLocked(connection);
+         Type existing = context.serverType;
          if (existing == null) {
-            context.init_ServerData_Type = serverKind;
+            context.serverType = serverKind;
          } else if (existing != serverKind) {
-            retired = init_List(context);
+            retired = bumpDownloadGenerationLocked(context);
             conflict = true;
          }
       }
 
       if (conflict) {
-         init(retired);
+         closeSocketsQuietly(retired);
          throw new IllegalStateException("Server kind is already bound for this connection lifecycle");
       } else {
          return context;
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, ServerPackManager manager) {
+   public static ConnectionPrivacyRegistry.ConnectionSession bindPackManager(Connection connection, ServerPackManager manager) {
       Objects.requireNonNull(manager, "manager");
       List<Socket> retired = List.of();
       boolean conflict = false;
       ConnectionPrivacyRegistry.ConnectionSession context;
-      synchronized (init_Obj) {
-         context = read(connection);
-         ServerPackManager existing = context.init_ServerPackManager;
+      synchronized (LOCK) {
+         context = requireActiveLocked(connection);
+         ServerPackManager existing = context.serverPackManager;
          ConnectionPrivacyRegistry.ConnectionSession previousOwner = null;
 
-         for (ConnectionPrivacyRegistry.ConnectionSession candidate : init_Map.values()) {
-            if (candidate != context && candidate.read && candidate.init_ServerPackManager == manager) {
+         for (ConnectionPrivacyRegistry.ConnectionSession candidate : SESSIONS_BY_CONNECTION.values()) {
+            if (candidate != context && candidate.active && candidate.serverPackManager == manager) {
                if (previousOwner != null) {
                   throw new IllegalStateException("Pack manager has multiple connection owners");
                }
@@ -217,34 +217,34 @@ public final class ConnectionPrivacyRegistry {
          }
 
          if (existing != null && existing != manager) {
-            retired = init_List(context);
+            retired = bumpDownloadGenerationLocked(context);
             conflict = true;
          } else {
             if (previousOwner != null) {
-               retired = init_List(previousOwner);
-               previousOwner.init_ServerPackManager = null;
+               retired = bumpDownloadGenerationLocked(previousOwner);
+               previousOwner.serverPackManager = null;
             }
 
-            context.init_ServerPackManager = manager;
+            context.serverPackManager = manager;
          }
       }
 
       if (conflict) {
-         init(retired);
+         closeSocketsQuietly(retired);
          throw new IllegalStateException("Pack manager is already bound for this connection lifecycle");
       } else {
-         init(retired);
+         closeSocketsQuietly(retired);
          return context;
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, UUID profileId, String username) {
+   public static ConnectionPrivacyRegistry.ConnectionSession bindAccount(Connection connection, UUID profileId, String username) {
       ConnectionPrivacyRegistry.AccountIdentity account = new ConnectionPrivacyRegistry.AccountIdentity(profileId, username);
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession context = read(connection);
-         ConnectionPrivacyRegistry.AccountIdentity existing = context.init_BufferHelper_DataU;
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession context = requireActiveLocked(connection);
+         ConnectionPrivacyRegistry.AccountIdentity existing = context.accountIdentity;
          if (existing == null) {
-            context.init_BufferHelper_DataU = account;
+            context.accountIdentity = account;
          } else if (!existing.equals(account)) {
             throw new IllegalStateException("Account is already bound for this connection lifecycle");
          }
@@ -253,169 +253,169 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static void init(Connection connection, ConnectionPrivacyRegistry.ProxyEndpoint route) {
+   public static void bindProxy(Connection connection, ConnectionPrivacyRegistry.ProxyEndpoint route) {
       List<Socket> retired = List.of();
       boolean conflict = false;
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession context = read(connection);
-         if (!context.load_Z) {
-            context.init_BufferHelper_Confi = route;
-            context.load_Z = true;
-            retired = init_List(context);
-         } else if (!Objects.equals(context.init_BufferHelper_Confi, route)) {
-            retired = init_List(context);
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession context = requireActiveLocked(connection);
+         if (!context.proxyBound) {
+            context.proxyEndpoint = route;
+            context.proxyBound = true;
+            retired = bumpDownloadGenerationLocked(context);
+         } else if (!Objects.equals(context.proxyEndpoint, route)) {
+            retired = bumpDownloadGenerationLocked(context);
             conflict = true;
          }
       }
 
-      init(retired);
+      closeSocketsQuietly(retired);
       if (conflict) {
          throw new IllegalStateException("Proxy is already bound for this connection lifecycle");
       }
    }
 
-   public static ConnectionPrivacyRegistry.ConnectionSession init(Connection connection, PacketListener listener) {
+   public static ConnectionPrivacyRegistry.ConnectionSession bindListener(Connection connection, PacketListener listener) {
       Objects.requireNonNull(listener, "listener");
       ConnectionPrivacyRegistry.ConnectionSession context;
       List<Socket> retired;
-      synchronized (init_Obj) {
-         context = read(connection);
-         PacketListener previous = context.init_PacketListener;
+      synchronized (LOCK) {
+         context = requireActiveLocked(connection);
+         PacketListener previous = context.packetListener;
          if (previous == listener) {
             return context;
          }
 
-         ConnectionPrivacyRegistry.ConnectionSession owner = load.get(listener);
+         ConnectionPrivacyRegistry.ConnectionSession owner = SESSIONS_BY_LISTENER.get(listener);
          if (owner != null && owner != context) {
             throw new IllegalStateException("Packet listener is already bound to another connection lifecycle");
          }
 
-         retired = init_List(context);
+         retired = bumpDownloadGenerationLocked(context);
          if (previous != null) {
-            load.remove(previous, context);
+            SESSIONS_BY_LISTENER.remove(previous, context);
          }
 
-         load.put(listener, context);
-         context.init_PacketListener = listener;
+         SESSIONS_BY_LISTENER.put(listener, context);
+         context.packetListener = listener;
       }
 
-      init(retired);
+      closeSocketsQuietly(retired);
       return context;
    }
 
-   public static void init(ConnectionPrivacyRegistry.ConnectionSession context, long downloadGeneration, Socket socket) throws IOException {
+   public static void trackDownloadSocket(ConnectionPrivacyRegistry.ConnectionSession context, long downloadGeneration, Socket socket) throws IOException {
       Objects.requireNonNull(socket, "socket");
-      synchronized (init_Obj) {
-         if (!init(context, context.init_J(), context.init_ServerPackManager, context.init_PacketListener, downloadGeneration)) {
+      synchronized (LOCK) {
+         if (!isCurrentDownload(context, context.lifecycleId(), context.serverPackManager, context.packetListener, downloadGeneration)) {
             throw new IOException("The resource-pack connection is no longer current");
          }
 
-         context.init_Set.add(socket);
+         context.activeSockets.add(socket);
       }
    }
 
-   public static void init(ConnectionPrivacyRegistry.ConnectionSession context, Socket socket) {
+   public static void untrackDownloadSocket(ConnectionPrivacyRegistry.ConnectionSession context, Socket socket) {
       if (context != null && socket != null) {
-         synchronized (init_Obj) {
-            context.init_Set.remove(socket);
+         synchronized (LOCK) {
+            context.activeSockets.remove(socket);
          }
       }
    }
 
-   public static boolean load_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static boolean retireDownloadSockets(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context == null) {
          return false;
       }
 
       List<Socket> retired;
-      synchronized (init_Obj) {
-         if (!context.read) {
+      synchronized (LOCK) {
+         if (!context.active) {
             return false;
          }
 
-         retired = init_List(context);
+         retired = bumpDownloadGenerationLocked(context);
       }
 
-      init(retired);
+      closeSocketsQuietly(retired);
       return true;
    }
 
-   public static boolean init_Z(Connection connection) {
+   public static boolean unregister(Connection connection) {
       if (connection == null) {
          return false;
       }
 
       List<Socket> retired;
-      synchronized (init_Obj) {
-         ConnectionPrivacyRegistry.ConnectionSession context = init_Map.get(connection);
+      synchronized (LOCK) {
+         ConnectionPrivacyRegistry.ConnectionSession context = SESSIONS_BY_CONNECTION.get(connection);
          if (context == null) {
             return false;
          }
 
-         retired = load_List(context);
+         retired = deactivateSessionLocked(context);
       }
 
-      init(retired);
+      closeSocketsQuietly(retired);
       return true;
    }
 
-   public static boolean read_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static boolean unregisterSession(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context == null) {
          return false;
       }
 
       List<Socket> retired;
-      synchronized (init_Obj) {
-         if (init_Map.get(context.init_Connection) != context) {
+      synchronized (LOCK) {
+         if (SESSIONS_BY_CONNECTION.get(context.connection) != context) {
             return false;
          }
 
-         retired = load_List(context);
+         retired = deactivateSessionLocked(context);
       }
 
-      init(retired);
+      closeSocketsQuietly(retired);
       return true;
    }
 
-   private static ConnectionPrivacyRegistry.ConnectionSession read(Connection connection) {
+   private static ConnectionPrivacyRegistry.ConnectionSession requireActiveLocked(Connection connection) {
       Objects.requireNonNull(connection, "connection");
-      ConnectionPrivacyRegistry.ConnectionSession context = init_Map.get(connection);
-      if (context != null && context.read) {
+      ConnectionPrivacyRegistry.ConnectionSession context = SESSIONS_BY_CONNECTION.get(connection);
+      if (context != null && context.active) {
          return context;
       } else {
          throw new IllegalStateException("No active privacy context for this connection");
       }
    }
 
-   private static List<Socket> init_List(ConnectionPrivacyRegistry.ConnectionSession context) {
-      context.load_J++;
-      return read_List(context);
+   private static List<Socket> bumpDownloadGenerationLocked(ConnectionPrivacyRegistry.ConnectionSession context) {
+      context.downloadGeneration++;
+      return drainSocketsLocked(context);
    }
 
-   private static List<Socket> load_List(ConnectionPrivacyRegistry.ConnectionSession context) {
-      init_Map.remove(context.init_Connection, context);
-      PacketListener listener = context.init_PacketListener;
+   private static List<Socket> deactivateSessionLocked(ConnectionPrivacyRegistry.ConnectionSession context) {
+      SESSIONS_BY_CONNECTION.remove(context.connection, context);
+      PacketListener listener = context.packetListener;
       if (listener != null) {
-         load.remove(listener, context);
-         context.init_PacketListener = null;
+         SESSIONS_BY_LISTENER.remove(listener, context);
+         context.packetListener = null;
       }
 
-      context.read = false;
-      context.load_J++;
-      return read_List(context);
+      context.active = false;
+      context.downloadGeneration++;
+      return drainSocketsLocked(context);
    }
 
-   private static List<Socket> read_List(ConnectionPrivacyRegistry.ConnectionSession context) {
-      if (context.init_Set.isEmpty()) {
+   private static List<Socket> drainSocketsLocked(ConnectionPrivacyRegistry.ConnectionSession context) {
+      if (context.activeSockets.isEmpty()) {
          return List.of();
       }
 
-      List<Socket> sockets = new ArrayList<>(context.init_Set);
-      context.init_Set.clear();
+      List<Socket> sockets = new ArrayList<>(context.activeSockets);
+      context.activeSockets.clear();
       return sockets;
    }
 
-   private static void init(List<Socket> sockets) {
+   private static void closeSocketsQuietly(List<Socket> sockets) {
       for (Socket socket : sockets) {
          try {
             socket.close();
@@ -424,31 +424,31 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public static void init() {
+   public static void clearAll() {
       List<Socket> sockets = new ArrayList<>();
-      synchronized (init_Obj) {
-         for (ConnectionPrivacyRegistry.ConnectionSession context : init_Map.values()) {
-            context.init_PacketListener = null;
-            context.read = false;
-            context.load_J++;
-            sockets.addAll(read_List(context));
+      synchronized (LOCK) {
+         for (ConnectionPrivacyRegistry.ConnectionSession context : SESSIONS_BY_CONNECTION.values()) {
+            context.packetListener = null;
+            context.active = false;
+            context.downloadGeneration++;
+            sockets.addAll(drainSocketsLocked(context));
          }
 
-         init_Map.clear();
-         load.clear();
+         SESSIONS_BY_CONNECTION.clear();
+         SESSIONS_BY_LISTENER.clear();
       }
 
-      init(sockets);
+      closeSocketsQuietly(sockets);
    }
 
-   public record ServerEndpoint(String init_Str, int init_I) {
-      public ServerEndpoint(String init_Str, int init_I) {
-         Objects.requireNonNull(init_Str, "host");
-         if (init_I >= 0 && init_I <= 65535) {
-            this.init_Str = init_Str;
-            this.init_I = init_I;
+   public record ServerEndpoint(String host, int port) {
+      public ServerEndpoint(String host, int port) {
+         Objects.requireNonNull(host, "host");
+         if (port >= 0 && port <= 65535) {
+            this.host = host;
+            this.port = port;
          } else {
-            throw new IllegalArgumentException("Invalid server port: " + init_I);
+            throw new IllegalArgumentException("Invalid server port: " + port);
          }
       }
    }
@@ -458,17 +458,17 @@ public final class ConnectionPrivacyRegistry {
       MODDED;
    }
 
-   public record ProxyEndpoint(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
-      public ProxyEndpoint(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
-         Objects.requireNonNull(init_bZ, "type");
-         if (init_Str != null && !init_Str.isBlank() && init_I >= 1 && init_I <= 65535) {
-            load = load == null ? "" : load;
-            read = read == null ? "" : read;
-            this.init_bZ = init_bZ;
-            this.init_Str = init_Str;
-            this.init_I = init_I;
-            this.load = load;
-            this.read = read;
+   public record ProxyEndpoint(ProxyProtocolType type, String host, int port, String username, String password) {
+      public ProxyEndpoint(ProxyProtocolType type, String host, int port, String username, String password) {
+         Objects.requireNonNull(type, "type");
+         if (host != null && !host.isBlank() && port >= 1 && port <= 65535) {
+            username = username == null ? "" : username;
+            password = password == null ? "" : password;
+            this.type = type;
+            this.host = host;
+            this.port = port;
+            this.username = username;
+            this.password = password;
          } else {
             throw new IllegalArgumentException("Invalid connection proxy endpoint");
          }
@@ -480,95 +480,95 @@ public final class ConnectionPrivacyRegistry {
       }
    }
 
-   public record AccountIdentity(UUID init_UUID, String init_Str) {
+   public record AccountIdentity(UUID profileId, String username) {
       public AccountIdentity {
-         if (init_UUID == null && init_Str == null) {
+         if (profileId == null && username == null) {
             throw new IllegalArgumentException("An account name or profile id is required");
          }
       }
    }
 
    public static final class ConnectionSession {
-      private final long init_J;
-      private final ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache;
-      private final boolean init_Z;
-      private final Connection init_Connection;
-      private final SocketAddress init_SocketAddress;
-      private final Set<Socket> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
-      private volatile ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe;
-      private volatile ConnectionPrivacyRegistry.AccountIdentity init_BufferHelper_DataU;
-      private volatile PacketListener init_PacketListener;
-      private volatile Type init_ServerData_Type;
-      private volatile ServerPackManager init_ServerPackManager;
-      private volatile ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi;
-      private boolean load_Z;
-      private volatile long load_J;
-      private volatile boolean read = true;
-      private volatile boolean write;
+      private final long lifecycleId;
+      private final ConnectionPrivacyRegistry.PrivacyMode privacyMode;
+      private final boolean multiConnection;
+      private final Connection connection;
+      private final SocketAddress peerAddress;
+      private final Set<Socket> activeSockets = Collections.newSetFromMap(new IdentityHashMap<>());
+      private volatile ConnectionPrivacyRegistry.ServerEndpoint serverEndpoint;
+      private volatile ConnectionPrivacyRegistry.AccountIdentity accountIdentity;
+      private volatile PacketListener packetListener;
+      private volatile Type serverType;
+      private volatile ServerPackManager serverPackManager;
+      private volatile ConnectionPrivacyRegistry.ProxyEndpoint proxyEndpoint;
+      private boolean proxyBound;
+      private volatile long downloadGeneration;
+      private volatile boolean active = true;
+      private volatile boolean localAddress;
 
       private ConnectionSession(long lifecycleId, ConnectionPrivacyRegistry.PrivacyMode mode, boolean multi, Connection connection, SocketAddress peerAddress) {
-         this.init_J = lifecycleId;
-         this.init_BufferHelper_Cache = mode;
-         this.init_Z = multi;
-         this.init_Connection = connection;
-         this.init_SocketAddress = peerAddress;
-         this.write = peerAddress instanceof LocalAddress;
+         this.lifecycleId = lifecycleId;
+         this.privacyMode = mode;
+         this.multiConnection = multi;
+         this.connection = connection;
+         this.peerAddress = peerAddress;
+         this.localAddress = peerAddress instanceof LocalAddress;
       }
 
-      public long init_J() {
-         return this.init_J;
+      public long lifecycleId() {
+         return this.lifecycleId;
       }
 
-      public ConnectionPrivacyRegistry.PrivacyMode init_BufferHelper_Cache() {
-         return this.read() ? ConnectionPrivacyRegistry.PrivacyMode.MODDED : this.init_BufferHelper_Cache;
+      public ConnectionPrivacyRegistry.PrivacyMode privacyMode() {
+         return this.isLocalOrMemory() ? ConnectionPrivacyRegistry.PrivacyMode.MODDED : this.privacyMode;
       }
 
-      public boolean init_Z() {
-         return this.init_Z;
+      public boolean isMultiConnection() {
+         return this.multiConnection;
       }
 
-      public Connection init_Connection() {
-         return this.init_Connection;
+      public Connection connection() {
+         return this.connection;
       }
 
-      public SocketAddress init_SocketAddress() {
-         return this.init_SocketAddress == null && this.read() ? this.init_Connection.getRemoteAddress() : this.init_SocketAddress;
+      public SocketAddress peerAddress() {
+         return this.peerAddress == null && this.isLocalOrMemory() ? this.connection.getRemoteAddress() : this.peerAddress;
       }
 
-      public ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe() {
-         return this.init_BufferHelper_Buffe;
+      public ConnectionPrivacyRegistry.ServerEndpoint serverEndpoint() {
+         return this.serverEndpoint;
       }
 
-      public ConnectionPrivacyRegistry.AccountIdentity init_BufferHelper_DataU() {
-         return this.init_BufferHelper_DataU;
+      public ConnectionPrivacyRegistry.AccountIdentity accountIdentity() {
+         return this.accountIdentity;
       }
 
-      public PacketListener init_PacketListener() {
-         return this.init_PacketListener;
+      public PacketListener packetListener() {
+         return this.packetListener;
       }
 
-      public Type init_ServerData_Type() {
-         return this.init_ServerData_Type == null && this.read() ? Type.OTHER : this.init_ServerData_Type;
+      public Type serverType() {
+         return this.serverType == null && this.isLocalOrMemory() ? Type.OTHER : this.serverType;
       }
 
-      public ServerPackManager init_ServerPackManager() {
-         return this.init_ServerPackManager;
+      public ServerPackManager serverPackManager() {
+         return this.serverPackManager;
       }
 
-      public ConnectionPrivacyRegistry.ProxyEndpoint init_BufferHelper_Confi() {
-         return this.init_BufferHelper_Confi;
+      public ConnectionPrivacyRegistry.ProxyEndpoint proxyEndpoint() {
+         return this.proxyEndpoint;
       }
 
-      public long load_J() {
-         return this.load_J;
+      public long downloadGeneration() {
+         return this.downloadGeneration;
       }
 
-      public boolean load_Z() {
-         return this.read;
+      public boolean isActive() {
+         return this.active;
       }
 
-      public boolean read() {
-         return this.write || this.init_Connection.isMemoryConnection();
+      public boolean isLocalOrMemory() {
+         return this.localAddress || this.connection.isMemoryConnection();
       }
    }
 }

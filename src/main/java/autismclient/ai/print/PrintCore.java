@@ -3225,7 +3225,7 @@ public final class PrintCore {
       autismclient.ai.engine.AiPhysics.PhysicsWorld physics = this.init_EventBus.init_NodeWalker_CachePo();
 
       while (true) {
-         autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.init(at, still, physics);
+         autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.stepCompat(at, still, physics);
          if (!next.onGround() || Math.abs(next.y() - body.y()) > 0.01 || this.init_ArrayUtil.load_Z_AABB(next.box(false).expandTowards(0.0, -0.01, 0.0))) {
             return false;
          }
@@ -9235,7 +9235,7 @@ public final class PrintCore {
                                                 autismclient.ai.engine.AiPhysics.PhysicsWorld world = this.init_ArrayUtil.init_NodeWalker_CachePo();
 
                                                 for (int tick = 0; tick < 40; tick++) {
-                                                   body = autismclient.ai.engine.AiPhysics.init(
+                                                   body = autismclient.ai.engine.AiPhysics.stepCompat(
                                                       body, PrintMover.init(autismclient.ai.print.PrintMover.Inner_StreamUtil.CROUCH, 0.0F), world
                                                    );
                                                    if (feet.y - body.y() > 3.0 || !this.read_Z_NodeWalker_StreamU(body)) {
@@ -9574,7 +9574,7 @@ public final class PrintCore {
       }
 
       autismclient.ai.engine.AiPhysics.MotionState body = autismclient.ai.engine.AiPhysics.MotionState.standing(point.x, point.y, point.z);
-      autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.init(
+      autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.stepCompat(
          body, PrintMover.init(autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE, 0.0F), this.init_ArrayUtil.init_NodeWalker_CachePo()
       );
       return next.onGround() && next.position().distanceToSqr(point) < 1.0E-6 && !this.init_ArrayUtil.load_Z_AABB(next.box(false));

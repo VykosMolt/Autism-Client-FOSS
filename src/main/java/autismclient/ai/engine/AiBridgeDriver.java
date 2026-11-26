@@ -128,8 +128,8 @@ public final class AiBridgeDriver {
          return AiBridgeDriver.Inner_DataUtil.DONE;
       }
 
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.AimProfile.TELLY);
-      this.init_DataUtil.init_V_ce_DataUtil(new RotationMath.Rotation(cmd.yaw(), cmd.pitch()));
+      this.init_DataUtil.setProfile(AiAim.AimProfile.TELLY);
+      this.init_DataUtil.setTargetRotation(new RotationMath.Rotation(cmd.yaw(), cmd.pitch()));
       boolean failedPlace = false;
       if (cmd.place() > 0 && slot >= 0) {
          BlockPos cell = new BlockPos(lane.cellX(cmd.place()), lane.floorY(), lane.cellZ(cmd.place()));
@@ -141,7 +141,7 @@ public final class AiBridgeDriver {
          }
       }
 
-      this.init_DataUtil.load_V();
+      this.init_DataUtil.tick();
       this.init_Minecraft.options.keyUp.setDown(cmd.forward() > 0);
       this.init_Minecraft.options.keyDown.setDown(cmd.forward() < 0);
       this.init_Minecraft.options.keyLeft.setDown(cmd.left() > 0);
@@ -185,7 +185,7 @@ public final class AiBridgeDriver {
    }
 
    private boolean init_Z_LocalPlayer(LocalPlayer player, BlockPos cell, int slot, IntConsumer select) {
-      BlockHitResult hit = AiAim.init_BlockHitResult();
+      BlockHitResult hit = AiAim.raycastLookBlock();
       if (hit != null && hit.getBlockPos().relative(hit.getDirection()).equals(cell)) {
          BlockState face = this.init_Minecraft.level.getBlockState(hit.getBlockPos());
          if (BlockPlacementPlanner.init(face, hit.getBlockPos(), true)) {

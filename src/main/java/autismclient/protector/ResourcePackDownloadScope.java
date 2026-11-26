@@ -46,33 +46,33 @@ public final class ResourcePackDownloadScope {
 
    public static ResourcePackDownloadScope.Inner_BufferHelper init_UiHelper_BufferHel(ServerPackManager manager) throws IOException {
       Objects.requireNonNull(manager, "manager");
-      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(manager);
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByPackManager(manager);
       if (context != null
-         && context.init_BufferHelper_DataU() != null
-         && context.init_BufferHelper_DataU().init_UUID() != null
-         && context.init_SocketAddress() != null
-         && context.init_PacketListener() != null
-         && context.init_ServerData_Type() != null) {
-         String peer = PackUrlValidator.init_Str_SocketAddress(context.init_SocketAddress());
-         Connection connection = context.init_Connection();
+         && context.accountIdentity() != null
+         && context.accountIdentity().profileId() != null
+         && context.peerAddress() != null
+         && context.packetListener() != null
+         && context.serverType() != null) {
+         String peer = PackUrlValidator.init_Str_SocketAddress(context.peerAddress());
+         Connection connection = context.connection();
          Minecraft minecraft = Minecraft.getInstance();
          boolean integrated = connection.isMemoryConnection()
             && minecraft != null
             && minecraft.hasSingleplayerServer()
-            && minecraft.getConnection() == context.init_PacketListener();
-         if (!integrated && context.init_BufferHelper_Buffe() == null) {
+            && minecraft.getConnection() == context.packetListener();
+         if (!integrated && context.serverEndpoint() == null) {
             throw new IOException("Resource-pack download has no original remote endpoint");
          }
 
          String origin = init(context, integrated);
-         boolean multiLoopbackFixture = context.init_Z() && init_Z;
+         boolean multiLoopbackFixture = context.isMultiConnection() && init_Z;
          UUID connectionIdentity;
          synchronized (init_Obj) {
             connectionIdentity = load_Map.computeIfAbsent(context, ignored -> UUID.randomUUID());
          }
 
          ResourcePackDownloadScope.Inner_BufferHelper snapshot = new ResourcePackDownloadScope.Inner_BufferHelper(
-            context, manager, context.init_BufferHelper_DataU().init_UUID(), origin, peer, connectionIdentity, integrated, multiLoopbackFixture
+            context, manager, context.accountIdentity().profileId(), origin, peer, connectionIdentity, integrated, multiLoopbackFixture
          );
          snapshot.init_V();
          return snapshot;
@@ -82,7 +82,7 @@ public final class ResourcePackDownloadScope {
    }
 
    static String init(ConnectionPrivacyRegistry.ConnectionSession context, boolean integrated) throws IOException {
-      return integrated && context.read() ? "integrated:" + context.init_J() : PackUrlValidator.init_Str_BufferHelper_Buffe(context.init_BufferHelper_Buffe());
+      return integrated && context.isLocalOrMemory() ? "integrated:" + context.lifecycleId() : PackUrlValidator.init_Str_BufferHelper_Buffe(context.serverEndpoint());
    }
 
    public static ResourcePackDownloadScope.Inner_CachePool init_UiHelper_CachePool(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
@@ -285,9 +285,9 @@ public final class ResourcePackDownloadScope {
             snapshot.load_V();
          }
 
-         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(manager);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByPackManager(manager);
          if (context != null) {
-            ConnectionPrivacyRegistry.load_Z(context);
+            ConnectionPrivacyRegistry.retireDownloadSockets(context);
          }
       }
    }
@@ -429,20 +429,20 @@ public final class ResourcePackDownloadScope {
          boolean multiLoopbackFixture
       ) {
          this.init_BufferHelper_Strea = context;
-         this.init_J = context.init_J();
+         this.init_J = context.lifecycleId();
          this.init_ServerPackManager = manager;
-         this.init_PacketListener = context.init_PacketListener();
-         this.load_J = context.load_J();
+         this.init_PacketListener = context.packetListener();
+         this.load_J = context.downloadGeneration();
          this.init_UUID = accountId;
          this.init_Str = origin;
-         this.init_SocketAddress = context.init_SocketAddress();
+         this.init_SocketAddress = context.peerAddress();
          this.load_Str = canonicalPeer;
          this.load_UUID = connectionIdentity;
-         this.init_BufferHelper_Cache = context.init_BufferHelper_Cache();
-         this.init_ServerData_Type = context.init_ServerData_Type();
+         this.init_BufferHelper_Cache = context.privacyMode();
+         this.init_ServerData_Type = context.serverType();
          this.init_Z = integrated;
          this.load_Z = multiLoopbackFixture;
-         this.init_BufferHelper_Confi = context.init_BufferHelper_Confi();
+         this.init_BufferHelper_Confi = context.proxyEndpoint();
       }
 
       public ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
@@ -498,7 +498,7 @@ public final class ResourcePackDownloadScope {
       }
 
       public boolean load_Z() {
-         if (this.read || !ConnectionPrivacyRegistry.init(this.init_BufferHelper_Strea, this.init_J, this.init_ServerPackManager, this.init_PacketListener, this.load_J)) {
+         if (this.read || !ConnectionPrivacyRegistry.isCurrentDownload(this.init_BufferHelper_Strea, this.init_J, this.init_ServerPackManager, this.init_PacketListener, this.load_J)) {
             return false;
          }
 
@@ -509,7 +509,7 @@ public final class ResourcePackDownloadScope {
          Minecraft minecraft = Minecraft.getInstance();
          return minecraft != null
             && minecraft.hasSingleplayerServer()
-            && this.init_BufferHelper_Strea.init_Connection().isMemoryConnection()
+            && this.init_BufferHelper_Strea.connection().isMemoryConnection()
             && minecraft.getConnection() == this.init_PacketListener;
       }
 
@@ -524,11 +524,11 @@ public final class ResourcePackDownloadScope {
          boolean close = false;
          synchronized (this.init_Set) {
             if (!this.read && this.load_Z()) {
-               ConnectionPrivacyRegistry.init(this.init_BufferHelper_Strea, this.load_J, socket);
+               ConnectionPrivacyRegistry.trackDownloadSocket(this.init_BufferHelper_Strea, this.load_J, socket);
                if (!this.read && this.load_Z()) {
                   this.init_Set.add(socket);
                } else {
-                  ConnectionPrivacyRegistry.init(this.init_BufferHelper_Strea, socket);
+                  ConnectionPrivacyRegistry.untrackDownloadSocket(this.init_BufferHelper_Strea, socket);
                   close = true;
                }
             } else {
@@ -551,7 +551,7 @@ public final class ResourcePackDownloadScope {
                this.init_Set.remove(socket);
             }
 
-            ConnectionPrivacyRegistry.init(this.init_BufferHelper_Strea, socket);
+            ConnectionPrivacyRegistry.untrackDownloadSocket(this.init_BufferHelper_Strea, socket);
          }
       }
 
@@ -568,7 +568,7 @@ public final class ResourcePackDownloadScope {
          }
 
          for (Socket socket : retired) {
-            ConnectionPrivacyRegistry.init(this.init_BufferHelper_Strea, socket);
+            ConnectionPrivacyRegistry.untrackDownloadSocket(this.init_BufferHelper_Strea, socket);
 
             try {
                socket.close();

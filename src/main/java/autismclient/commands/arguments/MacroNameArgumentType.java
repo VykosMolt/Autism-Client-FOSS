@@ -48,8 +48,8 @@ public class MacroNameArgumentType implements ArgumentType<String> {
    }
 
    private static List<MacroNameArgumentType.Inner_DataUtil> init_List() {
-      MacroLibraryManager manager = MacroLibraryManager.init_aN();
-      long revision = manager.init_J();
+      MacroLibraryManager manager = MacroLibraryManager.getInstance();
+      long revision = manager.getRevision();
       List<MacroNameArgumentType.Inner_DataUtil> hit = init_List;
       if (init_J == revision) {
          return hit;
@@ -57,9 +57,9 @@ public class MacroNameArgumentType implements ArgumentType<String> {
 
       List<MacroNameArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>();
 
-      for (AutismMacro macro : manager.init_List()) {
-         if (macro != null && macro.init_Str != null) {
-            String name = macro.init_Str;
+      for (AutismMacro macro : manager.getMacros()) {
+         if (macro != null && macro.name != null) {
+            String name = macro.name;
             String value = name.contains(" ") ? "\"" + name + "\"" : name;
             rebuilt.add(new MacroNameArgumentType.Inner_DataUtil(value, name.toLowerCase(Locale.ROOT)));
          }

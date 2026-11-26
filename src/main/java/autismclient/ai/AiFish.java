@@ -52,12 +52,12 @@ final class AiFish {
             throw new IllegalStateException("The auto-fish module is not installed");
          }
 
-         final String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final AiItems.ItemSpec wanted = spec.isBlank() ? null : AiItems.load_af_DataUtil(spec);
-         int count = Math.max(1, Math.min(2304, AiJson.init_I_JsonObject(args, "count", 1)));
-         boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
-         final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
-         final int held = wanted == null ? init_I() : AiItems.init_I(wanted);
+         final String spec = AiJson.getString(args, "item", "");
+         final AiItems.ItemSpec wanted = spec.isBlank() ? null : AiItems.resolveItem(spec);
+         int count = Math.max(1, Math.min(2304, AiJson.getInt(args, "count", 1)));
+         boolean additional = AiJson.getBoolean(args, "additional", false);
+         final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
+         final int held = wanted == null ? init_I() : AiItems.countInInventory(wanted);
          final int goal = additional ? held + count : count;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -86,10 +86,10 @@ final class AiFish {
 
                   ItemStack rod = mc.player.getMainHandItem();
                   if (!rod.is(Items.FISHING_ROD)) {
-                     if (AiItems.read(AiItems.load_af_DataUtil("minecraft:fishing_rod")) < 0) {
+                     if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:fishing_rod")) < 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:fishing_rod", 1);
-                        return this.init(AiOperation.Status.FAILED, "No fishing rod in inventory", AiJson.init_JsonObject_ObjArr("missing", missing));
+                        return this.init(AiOperation.Status.FAILED, "No fishing rod in inventory", AiJson.objectOf("missing", missing));
                      } else {
                         return this.init("Holding the fishing rod");
                      }
@@ -101,7 +101,7 @@ final class AiFish {
                         );
                      }
 
-                     if (AiItems.init_I() < 1) {
+                     if (AiItems.countFreeSlots() < 1) {
                         return this.init(AiOperation.Status.FAILED, "Inventory is full; further catches would be lost");
                      }
 
@@ -134,12 +134,12 @@ final class AiFish {
             }
 
             int init_I_6() {
-               return wanted == null ? AiFish.init_I() : AiItems.init_I(wanted);
+               return wanted == null ? AiFish.init_I() : AiItems.countInInventory(wanted);
             }
 
             JsonObject init_JsonObject_12() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
-                  "item", spec.isBlank() ? "any catch" : spec, "goal", goal, "have", this.init_I_6(), "startedWith", held, "freeSlots", AiItems.init_I()
+               JsonObject out = AiJson.objectOf(
+                  "item", spec.isBlank() ? "any catch" : spec, "goal", goal, "have", this.init_I_6(), "startedWith", held, "freeSlots", AiItems.countFreeSlots()
                );
                ItemStack rod = mc.player == null ? ItemStack.EMPTY : mc.player.getMainHandItem();
                if (rod.isDamageableItem()) {
@@ -150,7 +150,7 @@ final class AiFish {
                AiFish.init_Map().forEach((item, amount) -> {
                   int delta = amount - this.init_Map.getOrDefault(item, 0);
                   if (delta > 0) {
-                     caught.add(AiJson.init_JsonObject_ObjArr("item", item, "count", delta));
+                     caught.add(AiJson.objectOf("item", item, "count", delta));
                   }
                });
                out.add("caught", caught);
@@ -201,7 +201,7 @@ final class AiFish {
       int total = 0;
 
       for (String id : init_List) {
-         total += AiGameState.init_I_Str(id);
+         total += AiGameState.countInventoryItem(id);
       }
 
       return total;
@@ -211,7 +211,7 @@ final class AiFish {
       Map<String, Integer> counts = new LinkedHashMap<>();
 
       for (String id : init_List) {
-         int amount = AiGameState.init_I_Str(id);
+         int amount = AiGameState.countInventoryItem(id);
          if (amount > 0) {
             counts.put(id, amount);
          }

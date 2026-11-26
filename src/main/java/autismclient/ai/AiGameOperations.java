@@ -42,14 +42,14 @@ final class AiGameOperations {
    private AiGameOperations() {
    }
 
-   static AiOperation.Result init_AiOperation_Result(AiOperation.Status s, String message, JsonObject data) {
+   static AiOperation.Result result(AiOperation.Status s, String message, JsonObject data) {
       return new AiOperation.Result(s, message, data.toString(), List.of());
    }
 
-   static AiOperation init_AiOperation(JsonObject args) {
+   static AiOperation placeItem(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         String spec = AiJson.init_Str_JsonObject(args, "item", "").trim();
+         String spec = AiJson.getString(args, "item", "").trim();
          Item item = null;
          if (spec.isEmpty()) {
             Item held = mc.player.getMainHandItem().getItem();
@@ -59,13 +59,13 @@ final class AiGameOperations {
          } else {
             Item fallback = null;
 
-            for (Item candidate : AiItems.load_af_DataUtil(spec).items()) {
+            for (Item candidate : AiItems.resolveItem(spec).items()) {
                if (candidate instanceof BlockItem) {
                   if (fallback == null) {
                      fallback = candidate;
                   }
 
-                  if (AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(candidate).toString()) > 0) {
+                  if (AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(candidate).toString()) > 0) {
                      item = candidate;
                      break;
                   }
@@ -78,18 +78,18 @@ final class AiGameOperations {
          }
 
          if (item == null) {
-            return init_AiOperation(AiOperation.Status.FAILED, "Name a block or station to put down (item)", new JsonObject());
+            return immediate(AiOperation.Status.FAILED, "Name a block or station to put down (item)", new JsonObject());
          }
 
          final String id = BuiltInRegistries.ITEM.getKey(item).toString();
-         if (AiGameState.init_I_Str(id) <= 0) {
-            return init_AiOperation(
-               AiOperation.Status.FAILED, "No " + id + " in the bag; obtain it first", AiJson.init_JsonObject_ObjArr("missing", AiJson.init_JsonObject_ObjArr(id, 1))
+         if (AiGameState.countInventoryItem(id) <= 0) {
+            return immediate(
+               AiOperation.Status.FAILED, "No " + id + " in the bag; obtain it first", AiJson.objectOf("missing", AiJson.objectOf(id, 1))
             );
          }
 
          final AiStationPlacer placer = new AiStationPlacer(item, BuiltInRegistries.ITEM.getKey(item).getPath().replace('_', ' '));
-         final long deadline = System.nanoTime() + Math.max(5, Math.min(120, AiJson.init_I_JsonObject(args, "timeoutSeconds", 30))) * 1000000000L;
+         final long deadline = System.nanoTime() + Math.max(5, Math.min(120, AiJson.getInt(args, "timeoutSeconds", 30))) * 1000000000L;
          return new AiOperation() {
             boolean init;
 
@@ -98,24 +98,24 @@ final class AiGameOperations {
                if (!this.init && mc.player != null && mc.level != null) {
                   if (System.nanoTime() > deadline) {
                      placer.init_V();
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "No spot for " + id + " before the timeout", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "No spot for " + id + " before the timeout", new JsonObject());
                   } else {
                      AiStationPlacer.Inner_DataUtil status = placer.init_cn_DataUtil();
                      if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                         BlockPos at = placer.init_BlockPos();
-                        return AiGameOperations.init_AiOperation_Result(
+                        return AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
                            "Placed " + id + " at " + at.toShortString(),
-                           AiJson.init_JsonObject_ObjArr("item", id, "x", at.getX(), "y", at.getY(), "z", at.getZ())
+                           AiJson.objectOf("item", id, "x", at.getX(), "y", at.getY(), "z", at.getZ())
                         );
                      } else {
                         return status == AiStationPlacer.Inner_DataUtil.FAILED
-                           ? AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Could not place " + id + ": " + placer.load_Str(), new JsonObject())
-                           : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, placer.init_Str(), new JsonObject());
+                           ? AiGameOperations.result(AiOperation.Status.FAILED, "Could not place " + id + ": " + placer.load_Str(), new JsonObject())
+                           : AiGameOperations.result(AiOperation.Status.RUNNING, placer.init_Str(), new JsonObject());
                      }
                   }
                } else {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Placement cancelled", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.CANCELLED, "Placement cancelled", new JsonObject());
                }
             }
 
@@ -136,15 +136,15 @@ final class AiGameOperations {
             }
          };
       } else {
-         return init_AiOperation(AiOperation.Status.FAILED, "No live player", new JsonObject());
+         return immediate(AiOperation.Status.FAILED, "No live player", new JsonObject());
       }
    }
 
-   static AiOperation init_AiOperation(final AiOperation.Status status, final String message, final JsonObject data) {
+   static AiOperation immediate(final AiOperation.Status status, final String message, final JsonObject data) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            return AiGameOperations.init_AiOperation_Result(status, message, data);
+            return AiGameOperations.result(status, message, data);
          }
 
          @Override
@@ -153,7 +153,7 @@ final class AiGameOperations {
       };
    }
 
-   static AiOperation init(AiOperation.Status status, final AiFailure failure, final String message, final JsonObject data) {
+   static AiOperation immediateFailure(AiOperation.Status status, final AiFailure failure, final String message, final JsonObject data) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
@@ -166,22 +166,22 @@ final class AiGameOperations {
       };
    }
 
-   static BlockPos init_BlockPos(JsonObject args) {
+   static BlockPos requireBlockPos(JsonObject args) {
       if (args.has("x") && args.has("y") && args.has("z")) {
-         return new BlockPos(AiJson.init_I_JsonObject(args, "x", 0), AiJson.init_I_JsonObject(args, "y", 0), AiJson.init_I_JsonObject(args, "z", 0));
+         return new BlockPos(AiJson.getInt(args, "x", 0), AiJson.getInt(args, "y", 0), AiJson.getInt(args, "z", 0));
       } else {
          throw new IllegalArgumentException("Explicit x,y,z coordinates required");
       }
    }
 
-   static void init(autismclient.ai.engine.AiAim aim, Vec3 target) {
+   static void aimAndStep(autismclient.ai.engine.AiAim aim, Vec3 target) {
       if (Minecraft.getInstance().player != null) {
-         aim.init_V_Vec3(target);
-         aim.load_V();
+         aim.aimAt(target);
+         aim.tick();
       }
    }
 
-   static void init(Vec3 target) {
+   static void snapLookAt(Vec3 target) {
       LocalPlayer p = Minecraft.getInstance().player;
       if (p != null) {
          Vec3 d = target.subtract(p.getEyePosition());
@@ -190,20 +190,20 @@ final class AiGameOperations {
       }
    }
 
-   private static BlockHitResult init(Minecraft mc, Vec3 point) {
+   private static BlockHitResult clipOutline(Minecraft mc, Vec3 point) {
       BlockHitResult hit = mc.level.clip(new ClipContext(mc.player.getEyePosition(), point, Block.OUTLINE, Fluid.NONE, mc.player));
       return hit != null && hit.getType() != Type.MISS ? hit : null;
    }
 
-   static AiOperation init(String kind, JsonObject args) {
-      return init(kind, args, Set.of());
+   static AiOperation blockAction(String kind, JsonObject args) {
+      return blockAction(kind, args, Set.of());
    }
 
-   static AiOperation init(final String kind, final JsonObject args, final Set<Long> protectedCells) {
-      final BlockPos target = init_BlockPos(args);
+   static AiOperation blockAction(final String kind, final JsonObject args, final Set<Long> protectedCells) {
+      final BlockPos target = requireBlockPos(args);
       return kind.equals("break")
          ? autismclient.ai.engine.AiBreakBlock.init(
-            target, AiJson.init_I_JsonObject(args, "timeoutSeconds", 30), AiJson.init_Z_JsonObject(args, "requireDrops", true), protectedCells
+            target, AiJson.getInt(args, "timeoutSeconds", 30), AiJson.getBoolean(args, "requireDrops", true), protectedCells
          )
          : new AiActedOperation() {
             AiOperation init_AiOperation;
@@ -218,20 +218,20 @@ final class AiGameOperations {
             @Override
             public AiOperation.Result tick() {
                if (this.init_Z) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Interaction cancelled", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.CANCELLED, "Interaction cancelled", new JsonObject());
                }
 
                Minecraft mc = Minecraft.getInstance();
                if (mc.player == null || mc.level == null) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "World unavailable", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.CANCELLED, "World unavailable", new JsonObject());
                }
 
                if (this.load != null) {
                   return this.load.tick();
                }
 
-               Direction face = args.has("face") ? Direction.valueOf(AiJson.init_Str_JsonObject(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
-               if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.init(mc, target, face) == null) {
+               Direction face = args.has("face") ? Direction.valueOf(AiJson.getString(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
+               if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target, face) == null) {
                   this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_4(target, 30, protectedCells, true, face);
                }
 
@@ -247,7 +247,7 @@ final class AiGameOperations {
                   }
                }
 
-               this.load = AiGameOperations.load(kind, args);
+               this.load = AiGameOperations.performBlockInteraction(kind, args);
                return this.load.tick();
             }
 
@@ -265,10 +265,10 @@ final class AiGameOperations {
          };
    }
 
-   private static AiOperation load(final String kind, final JsonObject args) {
+   private static AiOperation performBlockInteraction(final String kind, final JsonObject args) {
       return new AiActedOperation() {
          final Minecraft init_Minecraft = Minecraft.getInstance();
-         final BlockPos init_BlockPos = AiGameOperations.init_BlockPos(args);
+         final BlockPos init_BlockPos = AiGameOperations.requireBlockPos(args);
          final long init_J = System.nanoTime() + 30000000000L;
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          BlockState init_BlockState;
@@ -289,27 +289,27 @@ final class AiGameOperations {
             if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
                if (System.nanoTime() > this.init_J) {
                   this.cancel();
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "No verified block interaction before timeout", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "No verified block interaction before timeout", new JsonObject());
                }
 
-               if (!AiTerrain.init(this.init_Minecraft.level, this.init_BlockPos)) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Target is in unloaded terrain", new JsonObject());
+               if (!AiTerrain.isLoaded(this.init_Minecraft.level, this.init_BlockPos)) {
+                  return AiGameOperations.result(AiOperation.Status.FAILED, "Target is in unloaded terrain", new JsonObject());
                }
 
                if (this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.init_BlockPos))
                   > Math.pow(this.init_Minecraft.player.blockInteractionRange() + 0.9, 2.0)) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Target outside reach; navigate closer", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.FAILED, "Target outside reach; navigate closer", new JsonObject());
                }
 
                if (this.init_BlockState == null) {
                   this.init_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos);
                   this.init_I = this.init_Minecraft.player.containerMenu.containerId;
-                  this.load_J = AiServerEvidence.init_J_BlockPos(this.init_BlockPos);
-                  this.read_J = AiServerEvidence.read_J();
+                  this.load_J = AiServerEvidence.blockRevision(this.init_BlockPos);
+                  this.read_J = AiServerEvidence.serverMessageRevision();
                }
 
-               Direction desiredFace = args.has("face") ? Direction.valueOf(AiJson.init_Str_JsonObject(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
-               double aimY = args.has("aimY") ? AiJson.init_D_JsonObject(args, "aimY", 0.5) : -1.0;
+               Direction desiredFace = args.has("face") ? Direction.valueOf(AiJson.getString(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
+               double aimY = args.has("aimY") ? AiJson.getDouble(args, "aimY", 0.5) : -1.0;
                Vec3 aimPoint = aimY >= 0.0
                   ? new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + aimY, this.init_BlockPos.getZ() + 0.5)
                   : (
@@ -318,49 +318,49 @@ final class AiGameOperations {
                            .add(desiredFace.getStepX() * 0.499, desiredFace.getStepY() * 0.499, desiredFace.getStepZ() * 0.499)
                         : (kind.equals("place") ? Vec3.atCenterOf(this.init_BlockPos).add(0.0, 0.499, 0.0) : Vec3.atCenterOf(this.init_BlockPos))
                   );
-               BlockHitResult reachableHit = autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos);
+               BlockHitResult reachableHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.init_BlockPos);
                if (kind.equals("interact") && aimY < 0.0 && desiredFace == null && reachableHit != null) {
                   aimPoint = reachableHit.getLocation();
                }
 
-               BlockHitResult hit = kind.equals("interact") && aimY < 0.0 && desiredFace == null ? reachableHit : AiGameOperations.init(this.init_Minecraft, aimPoint);
-               if (!this.load_Z && !this.init_DataUtil.load_Z()) {
-                  AiGameOperations.init(this.init_DataUtil, aimPoint);
+               BlockHitResult hit = kind.equals("interact") && aimY < 0.0 && desiredFace == null ? reachableHit : AiGameOperations.clipOutline(this.init_Minecraft, aimPoint);
+               if (!this.load_Z && !this.init_DataUtil.isSettled()) {
+                  AiGameOperations.aimAndStep(this.init_DataUtil, aimPoint);
                   if (++this.write <= 40) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Turning toward " + this.init_BlockPos.toShortString(), new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Turning toward " + this.init_BlockPos.toShortString(), new JsonObject());
                   }
                }
 
                if (!this.load_Z
                   && (kind.equals("place") || desiredFace != null)
                   && (hit == null || !hit.getBlockPos().equals(this.init_BlockPos) || desiredFace != null && hit.getDirection() != desiredFace)) {
-                  BlockHitResult solved = autismclient.ai.engine.AiBlockInteraction.init(
+                  BlockHitResult solved = autismclient.ai.engine.AiBlockInteraction.findFaceHit(
                      this.init_Minecraft, this.init_BlockPos, desiredFace == null ? Direction.UP : desiredFace
                   );
                   if (solved == null) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Target is occluded", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.FAILED, "Target is occluded", new JsonObject());
                   }
 
                   aimPoint = solved.getLocation();
                   hit = solved;
-                  AiGameOperations.init(this.init_DataUtil, aimPoint);
+                  AiGameOperations.aimAndStep(this.init_DataUtil, aimPoint);
                } else if (!this.load_Z) {
-                  AiGameOperations.init(this.init_DataUtil, aimPoint);
+                  AiGameOperations.aimAndStep(this.init_DataUtil, aimPoint);
                }
 
                if (this.load_Z || hit != null && hit.getBlockPos().equals(this.init_BlockPos)) {
                   if (!this.load_Z
                      && this.init_Minecraft.player.getEyePosition().distanceToSqr(hit.getLocation())
                         > Math.pow(this.init_Minecraft.player.blockInteractionRange(), 2.0)) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Target outside interaction reach", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.FAILED, "Target outside interaction reach", new JsonObject());
                   }
 
                   if (!this.load_Z && desiredFace != null && hit.getDirection() != desiredFace) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Requested placement face is occluded", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.FAILED, "Requested placement face is occluded", new JsonObject());
                   }
 
                   if (!this.load_Z) {
-                     int slot = AiJson.init_I_JsonObject(args, "slot", -1);
+                     int slot = AiJson.getInt(args, "slot", -1);
                      if (slot < -1 || slot > 8) {
                         throw new IllegalArgumentException("Hotbar slot must be 0..8");
                      }
@@ -377,7 +377,7 @@ final class AiGameOperations {
 
                         this.load_BlockPos = this.init_BlockPos.relative(hit.getDirection());
                         this.load_BlockState = this.init_Minecraft.level.getBlockState(this.load_BlockPos);
-                        this.load_J = AiServerEvidence.init_J_BlockPos(this.load_BlockPos);
+                        this.load_J = AiServerEvidence.blockRevision(this.load_BlockPos);
                      }
 
                      this.init_Minecraft.gameMode.useItemOn(this.init_Minecraft.player, InteractionHand.MAIN_HAND, hit);
@@ -390,7 +390,7 @@ final class AiGameOperations {
                         && !this.init_Minecraft.level.getBlockState(this.load_BlockPos).equals(this.load_BlockState)
                         && (this.init_Block == null || this.init_Minecraft.level.getBlockState(this.load_BlockPos).is(this.init_Block))
                      : !this.init_Minecraft.level.getBlockState(this.init_BlockPos).equals(this.init_BlockState);
-                  boolean serverApplied = AiServerEvidence.init_J_BlockPos(kind.equals("place") && this.load_BlockPos != null ? this.load_BlockPos : this.init_BlockPos)
+                  boolean serverApplied = AiServerEvidence.blockRevision(kind.equals("place") && this.load_BlockPos != null ? this.load_BlockPos : this.init_BlockPos)
                      > this.load_J;
                   boolean menuChanged = !kind.equals("place") && this.init_Minecraft.player.containerMenu.containerId != this.init_I;
                   if (!changed && !menuChanged) {
@@ -400,10 +400,10 @@ final class AiGameOperations {
                   }
 
                   if (this.read_I >= 5 && (changed && serverApplied || menuChanged)) {
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.SUCCEEDED,
                         "Observed block/menu state changed",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "block",
                            this.init_Minecraft.level.getBlockState(this.init_BlockPos).toString(),
                            "containerId",
@@ -411,28 +411,28 @@ final class AiGameOperations {
                         )
                      );
                   } else if (!kind.equals("place") && this.init_Minecraft.player.isSleeping()) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Now sleeping", AiJson.init_JsonObject_ObjArr("sleeping", true));
+                     return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Now sleeping", AiJson.objectOf("sleeping", true));
                   } else {
-                     String reply = !kind.equals("place") && this.load_I >= 5 && this.read_I == 0 ? AiGameOperations.init(this.read_J) : null;
+                     String reply = !kind.equals("place") && this.load_I >= 5 && this.read_I == 0 ? AiGameOperations.latestServerReplyAfter(this.read_J) : null;
                      if (reply != null) {
-                        return AiGameOperations.init_AiOperation_Result(
+                        return AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
                            "The server answered the click: " + reply,
-                           AiJson.init_JsonObject_ObjArr("serverMessage", reply, "block", this.init_Minecraft.level.getBlockState(this.init_BlockPos).toString())
+                           AiJson.objectOf("serverMessage", reply, "block", this.init_Minecraft.level.getBlockState(this.init_BlockPos).toString())
                         );
                      } else {
                         return this.load_I > 60
-                           ? AiGameOperations.init_AiOperation_Result(
+                           ? AiGameOperations.result(
                               AiOperation.Status.UNCERTAIN, "Click sent; no block change, menu or server reply followed", new JsonObject()
                            )
-                           : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Waiting for observed interaction outcome", new JsonObject());
+                           : AiGameOperations.result(AiOperation.Status.RUNNING, "Waiting for observed interaction outcome", new JsonObject());
                      }
                   }
                } else {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Target is occluded", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.FAILED, "Target is occluded", new JsonObject());
                }
             } else {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Interaction cancelled", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.CANCELLED, "Interaction cancelled", new JsonObject());
             }
          }
 
@@ -448,10 +448,10 @@ final class AiGameOperations {
       };
    }
 
-   private static String init(long revision) {
+   private static String latestServerReplyAfter(long revision) {
       String reply = null;
 
-      for (Map<String, Object> m : AiServerEvidence.init_List_I(8)) {
+      for (Map<String, Object> m : AiServerEvidence.recentServerMessages(8)) {
          if (((Number)m.get("revision")).longValue() > revision) {
             reply = String.valueOf(m.get("text"));
          }
@@ -460,7 +460,7 @@ final class AiGameOperations {
       return reply != null && !reply.isBlank() ? reply : null;
    }
 
-   private static ContainerInput init(String name) {
+   private static ContainerInput parseClickAction(String name) {
       try {
          return ContainerInput.valueOf(name.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException bad) {
@@ -468,27 +468,27 @@ final class AiGameOperations {
       }
    }
 
-   static AiOperation load(JsonObject args) {
+   static AiOperation clickContainerSlot(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         int container = AiJson.init_I_JsonObject(args, "containerId", -1);
-         int slot = AiJson.init_I_JsonObject(args, "slot", -1);
+         int container = AiJson.getInt(args, "containerId", -1);
+         int slot = AiJson.getInt(args, "slot", -1);
          if (container != mc.player.containerMenu.containerId) {
             throw new IllegalArgumentException("Stale container; observe again");
          }
 
          if (slot >= 0 && slot < mc.player.containerMenu.slots.size()) {
-            ContainerInput type = init(AiJson.init_Str_JsonObject(args, "click", "PICKUP"));
-            int button = AiJson.init_I_JsonObject(args, "button", 0);
+            ContainerInput type = parseClickAction(AiJson.getString(args, "click", "PICKUP"));
+            int button = AiJson.getInt(args, "button", 0);
             if (button >= 0 && button <= 8) {
                AiOperation expected = args.has("expected") ? new AiExpectations(args) : null;
                AiContainerTransactions.init(container, slot, button, type);
                return expected != null
                   ? expected
-                  : init_AiOperation(
+                  : immediate(
                      AiOperation.Status.UNCERTAIN,
                      "Inventory click sent; reobserve slots before the next step",
-                     AiJson.init_JsonObject_ObjArr("containerId", container, "slot", slot)
+                     AiJson.objectOf("containerId", container, "slot", slot)
                   );
             } else {
                throw new IllegalArgumentException("Invalid click button");
@@ -501,22 +501,22 @@ final class AiGameOperations {
       }
    }
 
-   static AiOperation read(JsonObject args) {
-      return init(args, "minecraft:wheat", "minecraft:wheat");
+   static AiOperation farmWheat(JsonObject args) {
+      return farmCrop(args, "minecraft:wheat", "minecraft:wheat");
    }
 
-   static AiOperation init(JsonObject args, String cropBlock, String cropItem) {
+   static AiOperation farmCrop(JsonObject args, String cropBlock, String cropItem) {
       return AiFarm.init(args, cropBlock, cropItem);
    }
 
-   static AiOperation init(final JsonObject args, final boolean village) {
+   static AiOperation explore(final JsonObject args, final boolean village) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition();
-            final int init_I = Math.max(64, Math.min(16000, AiJson.init_I_JsonObject(args, "maxDistance", 2048)));
-            final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 1800))) * 1000000000L;
+            final int init_I = Math.max(64, Math.min(16000, AiJson.getInt(args, "maxDistance", 2048)));
+            final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800))) * 1000000000L;
             final Set<String> init_Set = new HashSet<>();
             final Set<String> load_Set = new HashSet<>();
             String init_Str = "";
@@ -539,10 +539,10 @@ final class AiGameOperations {
             @Override
             public AiOperation.Result tick() {
                if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-                  if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
+                  if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                      return this.init(
                         AiOperation.Status.FAILED,
-                        AiGuard.init_Str_Str("exploration", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                        AiGuard.formatLowHealthAbort("exploration", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                      );
                   }
 
@@ -587,7 +587,7 @@ final class AiGameOperations {
                      int z = this.load_I / width % width - 16;
                      int y = this.load_I / (width * width) - 5;
                      BlockPos p = this.read_BlockPos.offset(x, y, z);
-                     if (AiTerrain.init(this.init_Minecraft.level, p)) {
+                     if (AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
                         net.minecraft.world.level.block.Block b = this.init_Minecraft.level.getBlockState(p).getBlock();
                         if (b instanceof BedBlock && this.init_Minecraft.level.getBlockState(p).getValue(BedBlock.PART) == BedPart.HEAD) {
                            this.read_I++;
@@ -618,8 +618,8 @@ final class AiGameOperations {
                   }
 
                   if (this.load_I < total) {
-                     return AiGameOperations.init_AiOperation_Result(
-                        AiOperation.Status.RUNNING, "Surveying loaded terrain", AiJson.init_JsonObject_ObjArr("visited", this.init_Set.size())
+                     return AiGameOperations.result(
+                        AiOperation.Status.RUNNING, "Surveying loaded terrain", AiJson.objectOf("visited", this.init_Set.size())
                      );
                   }
 
@@ -647,10 +647,10 @@ final class AiGameOperations {
                      && this.close >= 16) {
                      this.write_BlockPos = this.read_BlockPos;
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.write_BlockPos, 3.0, false, false, false, 60);
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
                         "Village evidence cluster found; checking arrival",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "beds",
                            this.read_I,
                            "bells",
@@ -670,7 +670,7 @@ final class AiGameOperations {
                   }
 
                   this.init_Set.add(regionCell);
-                  if (!village && this.init_Set.size() >= Math.max(1, AiJson.init_I_JsonObject(args, "regions", 8))) {
+                  if (!village && this.init_Set.size() >= Math.max(1, AiJson.getInt(args, "regions", 8))) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Requested regions explored");
                   }
 
@@ -701,8 +701,8 @@ final class AiGameOperations {
 
                   this.load_BlockPos = next;
                   this.init_AiOperation = AiTravelFar.init(next, 4.0, true, false, false, false, 180);
-                  return AiGameOperations.init_AiOperation_Result(
-                     AiOperation.Status.RUNNING, "Exploring a new frontier", AiJson.init_JsonObject_ObjArr("target", next.toShortString())
+                  return AiGameOperations.result(
+                     AiOperation.Status.RUNNING, "Exploring a new frontier", AiJson.objectOf("target", next.toShortString())
                   );
                } else {
                   return this.init(AiOperation.Status.CANCELLED, "Exploration cancelled");
@@ -711,10 +711,10 @@ final class AiGameOperations {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   status,
                   message,
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "visitedRegions",
                      this.init_Set.size(),
                      "villageCandidate",

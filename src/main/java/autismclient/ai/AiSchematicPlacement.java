@@ -295,7 +295,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    JsonObject init_JsonObject_2() {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "ready",
          this.load_Z(),
          "searching",
@@ -412,7 +412,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             Vec3 end = eye.add(direction.scale(loadedReach));
             BlockHitResult hit = this.init_ClientLevel.clip(new ClipContext(eye, end, Block.OUTLINE, Fluid.NONE, mc.player));
             BlockPos before = this.init_BlockPos;
-            if (hit.getType() == Type.BLOCK && AiTerrain.init(this.init_ClientLevel, hit.getBlockPos())) {
+            if (hit.getType() == Type.BLOCK && AiTerrain.isLoaded(this.init_ClientLevel, hit.getBlockPos())) {
                this.init_BlockPos = hit.getBlockPos().relative(hit.getDirection());
                this.init_D = Vec3.atCenterOf(this.init_BlockPos).distanceTo(eye);
             } else {
@@ -597,7 +597,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             for (int dz = -24; dz <= 24; dz += 4) {
                if (dx * dx + dz * dz >= 16 && dx * dx + dz * dz <= 576) {
                   BlockPos anchor = player.offset(dx, 0, dz);
-                  if (AiTerrain.init(this.init_ClientLevel, anchor)) {
+                  if (AiTerrain.isLoaded(this.init_ClientLevel, anchor)) {
                      int height = this.init_ClientLevel.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, anchor.getX(), anchor.getZ());
                      if (height > this.init_ClientLevel.getMinY() + 1) {
                         for (int dy = 0; dy >= -1; dy--) {
@@ -650,7 +650,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       return new AiPlacementSearch.Inner_ConfigStore() {
          @Override
          public AiPlacementSearch.Inner_StreamUtil init_aQ_StreamUtil(BlockPos p, AiBuilder.CellSpec cell) {
-            if (AiTerrain.init(AiSchematicPlacement.this.init_ClientLevel, p)
+            if (AiTerrain.isLoaded(AiSchematicPlacement.this.init_ClientLevel, p)
                && !AiSchematicPlacement.this.init_ClientLevel.isOutsideBuildHeight(p)
                && AiSchematicPlacement.this.init_ClientLevel.getWorldBorder().isWithinBounds(p)) {
                BlockState live = AiSchematicPlacement.this.init_ClientLevel.getBlockState(p);
@@ -722,11 +722,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    static JsonObject init(String name, BlockPos origin, int rotation, String mirror, boolean clearTerrain, boolean assumeFly, int cellCount) {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "schematic",
          name,
          "origin",
-         AiJson.init_JsonObject_ObjArr("x", origin.getX(), "y", origin.getY(), "z", origin.getZ()),
+         AiJson.objectOf("x", origin.getX(), "y", origin.getY(), "z", origin.getZ()),
          "rotation",
          rotation,
          "mirror",
@@ -829,7 +829,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    static int init_I_Inventory_Str(Inventory inventory, String itemSpec) {
-      AiItems.ItemSpec target = AiItems.load_af_DataUtil(itemSpec);
+      AiItems.ItemSpec target = AiItems.resolveItem(itemSpec);
       int count = 0;
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {

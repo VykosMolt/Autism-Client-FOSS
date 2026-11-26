@@ -652,16 +652,16 @@ public final class AiToolCallParser {
          String a = args.get(0).toLowerCase(Locale.ROOT);
          String b = args.get(1).toLowerCase(Locale.ROOT);
          if (init_Set.contains(a) && b.matches("\\d+(\\.\\d+)?")) {
-            return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.init_JsonObject_ObjArr("direction", a, "distance", Double.parseDouble(b)));
+            return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("direction", a, "distance", Double.parseDouble(b)));
          }
 
          if (init_Set.contains(b) && a.matches("\\d+(\\.\\d+)?")) {
-            return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.init_JsonObject_ObjArr("direction", b, "distance", Double.parseDouble(a)));
+            return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("direction", b, "distance", Double.parseDouble(a)));
          }
       }
 
       if (args.size() == 1 && !args.get(0).matches("-?~?\\d.*")) {
-         return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.init_JsonObject_ObjArr("waypoint", args.get(0)));
+         return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("waypoint", args.get(0)));
       }
 
       if (args.size() >= 3 && args.size() <= 5) {

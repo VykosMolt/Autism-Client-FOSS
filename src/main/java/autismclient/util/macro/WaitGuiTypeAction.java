@@ -78,10 +78,10 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.waitMode = MacroNbtCodecHelper.init(WaitGuiTypeAction.Inner_DataUtil.class, tag.getStringOr("waitMode", "OPEN"), WaitGuiTypeAction.Inner_DataUtil.OPEN);
+      this.waitMode = MacroNbtCodecHelper.parseEnum(WaitGuiTypeAction.Inner_DataUtil.class, tag.getStringOr("waitMode", "OPEN"), WaitGuiTypeAction.Inner_DataUtil.OPEN);
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.title = tag.getStringOr("title", "");
-      this.matchMode = MacroNbtCodecHelper.init(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
+      this.matchMode = MacroNbtCodecHelper.parseEnum(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       ListenDuringPreviousSerializer.load(tag, this);

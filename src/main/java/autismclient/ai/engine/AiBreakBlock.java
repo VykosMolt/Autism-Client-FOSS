@@ -77,10 +77,10 @@ public final class AiBreakBlock {
          final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                this.init_Minecraft,
                s -> this.init_Minecraft.player.getInventory().setSelectedSlot(s),
-               this.init_DataUtil::init_V_Vec3,
+               this.init_DataUtil::aimAt,
                true,
                requireDrops,
-               this.init_DataUtil::load_V
+               this.init_DataUtil::tick
             )
             .init_RefQueue_DataUtil_Set(sealedWater)
             .init_RefQueue_DataUtil_BiPredicate(acceptedTool);
@@ -127,7 +127,7 @@ public final class AiBreakBlock {
                return this.init(AiOperation.Status.FAILED, AiFailure.LAVA_DETECTED, "Its drop would fall into lava below it");
             }
 
-            if (!this.init_RefQueue_DataUtil.init_Z_BlockPos(target) && AiBlockInteraction.load(this.init_Minecraft, target, null) == null) {
+            if (!this.init_RefQueue_DataUtil.init_Z_BlockPos(target) && AiBlockInteraction.findClimbSafeFaceHit(this.init_Minecraft, target, null) == null) {
                if (this.init_Minecraft.level.getChunkSource().getChunk(target.getX() >> 4, target.getZ() >> 4, ChunkStatus.FULL, false) != null
                   && this.init_Minecraft.level.getBlockState(target).isAir()) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Block already absent");
@@ -158,7 +158,7 @@ public final class AiBreakBlock {
 
                boolean wasDigging = this.init_RefQueue_DataUtil.init_Z_BlockPos(target);
                AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(target);
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.tick();
                if (status == AiBlockDigger.Inner_DataUtil_2.load) {
                   return this.init(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
                }
@@ -237,7 +237,7 @@ public final class AiBreakBlock {
                }
 
                this.init_RefQueue_DataUtil.init_V();
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
                this.init();
                if (this.init_Minecraft.player != null && this.init_I >= 0) {
                   this.init_Minecraft.player.getInventory().setSelectedSlot(this.init_I);

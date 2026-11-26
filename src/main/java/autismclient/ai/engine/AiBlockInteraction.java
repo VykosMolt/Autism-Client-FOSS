@@ -22,48 +22,48 @@ public final class AiBlockInteraction {
    private AiBlockInteraction() {
    }
 
-   public static BlockHitResult init(Minecraft mc, BlockPos target) {
-      return mc.player == null ? null : init(mc, target, mc.player.getEyePosition());
+   public static BlockHitResult findReachableHit(Minecraft mc, BlockPos target) {
+      return mc.player == null ? null : findReachableHitFrom(mc, target, mc.player.getEyePosition());
    }
 
-   public static BlockHitResult init(Minecraft mc, BlockPos target, Direction face) {
-      return mc.player != null && mc.level != null ? init(mc, target, face, mc.player.getEyePosition()) : null;
+   public static BlockHitResult findFaceHit(Minecraft mc, BlockPos target, Direction face) {
+      return mc.player != null && mc.level != null ? findFaceHitFrom(mc, target, face, mc.player.getEyePosition()) : null;
    }
 
-   static BlockHitResult load(Minecraft mc, BlockPos target, Direction face) {
-      BlockHitResult current = init(mc, target, face);
+   static BlockHitResult findClimbSafeFaceHit(Minecraft mc, BlockPos target, Direction face) {
+      BlockHitResult current = findFaceHit(mc, target, face);
       if (current != null && mc.player.onClimbable() && !mc.player.onGround()) {
-         return init(mc, target, face, init(mc)) != null ? current : null;
+         return findFaceHitFrom(mc, target, face, conservativeEyePos(mc)) != null ? current : null;
       } else {
          return current;
       }
    }
 
-   static Vec3 init(Minecraft mc) {
+   static Vec3 conservativeEyePos(Minecraft mc) {
       Vec3 eye = mc.player.getEyePosition();
-      double y = init(eye.y, mc.player.getY(), mc.player.getDimensions(Pose.CROUCHING).eyeHeight(), mc.player.onClimbable(), mc.player.onGround());
+      double y = conservativeEyeY(eye.y, mc.player.getY(), mc.player.getDimensions(Pose.CROUCHING).eyeHeight(), mc.player.onClimbable(), mc.player.onGround());
       return new Vec3(eye.x, y, eye.z);
    }
 
-   static double init(double actual, double feet, double crouchedHeight, boolean climbable, boolean grounded) {
+   static double conservativeEyeY(double actual, double feet, double crouchedHeight, boolean climbable, boolean grounded) {
       return climbable && !grounded ? Math.min(actual, feet + crouchedHeight) - 0.15 : actual;
    }
 
-   private static BlockHitResult init(Minecraft mc, BlockPos target, Direction face, Vec3 eye) {
+   private static BlockHitResult findFaceHitFrom(Minecraft mc, BlockPos target, Direction face, Vec3 eye) {
       if (face == null) {
-         return init(mc, target, eye);
+         return findReachableHitFrom(mc, target, eye);
       }
 
       ArrayList<Vec3> points = new ArrayList<>();
 
       for (AABB box : mc.level.getBlockState(target).getShape(mc.level, target).toAabbs()) {
-         points.addAll(init(box, target, face));
+         points.addAll(sampleFacePoints(box, target, face));
       }
 
       points.sort(Comparator.comparingDouble(eye::distanceToSqr));
 
       for (Vec3 point : points) {
-         BlockHitResult hit = init(mc, target, point, eye);
+         BlockHitResult hit = clipBlockTarget(mc, target, point, eye);
          if (hit != null && hit.getDirection() == face) {
             return hit;
          }
@@ -72,7 +72,7 @@ public final class AiBlockInteraction {
       return null;
    }
 
-   static List<Vec3> init(AABB box, BlockPos target, Direction face) {
+   static List<Vec3> sampleFacePoints(AABB box, BlockPos target, Direction face) {
       ArrayList<Vec3> points = new ArrayList<>(9);
 
       for (double a : new double[]{0.2, 0.5, 0.8}) {
@@ -99,7 +99,7 @@ public final class AiBlockInteraction {
       return points;
    }
 
-   public static BlockHitResult init(Minecraft mc, BlockPos target, Vec3 eye) {
+   public static BlockHitResult findReachableHitFrom(Minecraft mc, BlockPos target, Vec3 eye) {
       if (mc.player != null && mc.level != null && mc.level.getChunkSource().getChunk(target.getX() >> 4, target.getZ() >> 4, ChunkStatus.FULL, false) != null) {
          VoxelShape shape = mc.level.getBlockState(target).getShape(mc.level, target);
          if (shape.isEmpty()) {
@@ -115,7 +115,7 @@ public final class AiBlockInteraction {
             && !(eye.z < target.getZ() + bounds.minZ - reach)
             && !(eye.z > target.getZ() + bounds.maxZ + reach)) {
             Vec3 center = bounds.getCenter().add(target.getX(), target.getY(), target.getZ());
-            BlockHitResult hit = init(mc, target, center, eye);
+            BlockHitResult hit = clipBlockTarget(mc, target, center, eye);
             if (hit != null) {
                return hit;
             }
@@ -129,7 +129,7 @@ public final class AiBlockInteraction {
                      face.getStepY() * (box.maxY - box.minY) * 0.49,
                      face.getStepZ() * (box.maxZ - box.minZ) * 0.49
                   );
-                  hit = init(mc, target, point, eye);
+                  hit = clipBlockTarget(mc, target, point, eye);
                   if (hit != null) {
                      return hit;
                   }
@@ -138,8 +138,8 @@ public final class AiBlockInteraction {
 
             for (AABB box : shape.toAabbs()) {
                for (Direction face : Direction.values()) {
-                  for (Vec3 point : init(box, target, face)) {
-                     hit = init(mc, target, point, eye);
+                  for (Vec3 point : sampleFacePoints(box, target, face)) {
+                     hit = clipBlockTarget(mc, target, point, eye);
                      if (hit != null) {
                         return hit;
                      }
@@ -156,7 +156,7 @@ public final class AiBlockInteraction {
       }
    }
 
-   static Vec3 init(Vec3 eye, Vec3 entry, Vec3 middle, Predicate<Vec3> visible) {
+   static Vec3 findVisibleEntryPoint(Vec3 eye, Vec3 entry, Vec3 middle, Predicate<Vec3> visible) {
       if (visible.test(middle)) {
          return middle;
       }
@@ -173,12 +173,12 @@ public final class AiBlockInteraction {
       return entry.add(entry.subtract(eye).normalize().scale(0.02));
    }
 
-   private static BlockHitResult init(Minecraft mc, BlockPos target, Vec3 point, Vec3 eye) {
+   private static BlockHitResult clipBlockTarget(Minecraft mc, BlockPos target, Vec3 point, Vec3 eye) {
       BlockHitResult hit = mc.level.clip(new ClipContext(eye, point, Block.OUTLINE, Fluid.NONE, mc.player));
-      return init(eye, target, hit, mc.player.blockInteractionRange()) ? hit : null;
+      return isValidTargetHit(eye, target, hit, mc.player.blockInteractionRange()) ? hit : null;
    }
 
-   static boolean init(Vec3 eye, BlockPos target, BlockHitResult hit, double reach) {
+   static boolean isValidTargetHit(Vec3 eye, BlockPos target, BlockHitResult hit, double reach) {
       return hit != null && hit.getType() == Type.BLOCK && hit.getBlockPos().equals(target) && eye.distanceToSqr(hit.getLocation()) <= reach * reach;
    }
 }

@@ -147,7 +147,7 @@ public final class AutismProfileManager {
       p.createdAt = p.updatedAt = System.currentTimeMillis();
       p.snapshot = this.init_AutismConfig();
       if (ownMacroLibrary) {
-         MacroLibraryManager.init_V_File(this.init_File_AutismProfile(p));
+         MacroLibraryManager.writeEmptyLibrary(this.init_File_AutismProfile(p));
       }
 
       this.init_List.add(p);
@@ -224,12 +224,12 @@ public final class AutismProfileManager {
             this.load_V(fallback);
          }
 
-         if (AuditMacroRead.sameFile(MacroLibraryManager.init_aN().load_File(), this.init_File_AutismProfile(p))) {
+         if (AuditMacroRead.sameFile(MacroLibraryManager.getInstance().getLibraryFile(), this.init_File_AutismProfile(p))) {
             AutismProfile var10000 = this.init_AutismProfile();
             if (var10000 != null) {
                this.update(var10000);
             } else {
-               MacroLibraryManager.init_aN().write();
+               MacroLibraryManager.getInstance().resetToDefaultLibraryFile();
             }
          }
 
@@ -266,9 +266,9 @@ public final class AutismProfileManager {
          this.sync(p);
          if (p.id.equals(this.load_Str)) {
             if (own) {
-               MacroLibraryManager.init_aN().init(this.init_File_AutismProfile(p), false, true);
+               MacroLibraryManager.getInstance().switchLibraryFile(this.init_File_AutismProfile(p), false, true);
             } else {
-               MacroLibraryManager.init_aN().write();
+               MacroLibraryManager.getInstance().resetToDefaultLibraryFile();
             }
          }
 
@@ -585,7 +585,7 @@ public final class AutismProfileManager {
       if (!comp.exists() && !bak.exists()) {
          try {
             this.init_File.mkdirs();
-            File shared = MacroLibraryManager.init_File();
+            File shared = MacroLibraryManager.defaultLibraryFile();
             if (shared.exists()) {
                Files.copy(shared.toPath(), comp.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
@@ -598,9 +598,9 @@ public final class AutismProfileManager {
    private void update(AutismProfile p) {
       if (p.ownMacroLibrary) {
          this.write(p);
-         MacroLibraryManager.init_aN().init(this.init_File_AutismProfile(p), false, false);
+         MacroLibraryManager.getInstance().switchLibraryFile(this.init_File_AutismProfile(p), false, false);
       } else {
-         MacroLibraryManager.init_aN().write();
+         MacroLibraryManager.getInstance().resetToDefaultLibraryFile();
       }
    }
 

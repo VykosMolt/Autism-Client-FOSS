@@ -117,17 +117,17 @@ public final class InventorySlotHelper {
    }
 
    public static int findInventorySlot(Minecraft mc, String itemName) {
-      return findInventorySlot(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
+      return findInventorySlot(mc, autismclient.util.macro.MacroItemTarget.parse(itemName));
    }
 
    public static int findInventorySlot(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
-      if (mc != null && mc.player != null && target != null && target.update()) {
+      if (mc != null && mc.player != null && target != null && target.hasItemFilter()) {
          int bestSlot = -1;
          int bestScore = -1;
 
          for (int slot = 0; slot < 36; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
-            int score = target.init_I_ItemStack_I(stack, slot);
+            int score = target.matchScore(stack, slot);
             if (score > bestScore) {
                bestScore = score;
                bestSlot = slot;
@@ -141,11 +141,11 @@ public final class InventorySlotHelper {
    }
 
    public static int findVisibleSlot(Minecraft mc, String itemName) {
-      return findVisibleSlot(mc, autismclient.util.macro.MacroItemTarget.update(itemName));
+      return findVisibleSlot(mc, autismclient.util.macro.MacroItemTarget.parse(itemName));
    }
 
    public static int findVisibleSlot(Minecraft mc, autismclient.util.macro.MacroItemTarget target) {
-      if (mc != null && mc.player != null && target != null && target.update()) {
+      if (mc != null && mc.player != null && target != null && target.hasItemFilter()) {
          int bestSlot = -1;
          int bestScore = -1;
          AbstractContainerMenu handler = mc.player.containerMenu;
@@ -154,7 +154,7 @@ public final class InventorySlotHelper {
                Slot slot = handler.slots.get(i);
                if (slot != null) {
                   int visibleSlot = toVisibleSlot(mc, i);
-                  int score = target.init_I_ItemStack_I(slot.getItem(), visibleSlot);
+                  int score = target.matchScore(slot.getItem(), visibleSlot);
                   if (score > bestScore) {
                      bestScore = score;
                      bestSlot = visibleSlot;
@@ -170,16 +170,16 @@ public final class InventorySlotHelper {
    }
 
    public static int ensureItemInHotbar(Minecraft mc, String itemName, int preferredHotbarSlot) {
-      return ensureItemInHotbar(mc, autismclient.util.macro.MacroItemTarget.update(itemName), preferredHotbarSlot);
+      return ensureItemInHotbar(mc, autismclient.util.macro.MacroItemTarget.parse(itemName), preferredHotbarSlot);
    }
 
    public static int ensureItemInHotbar(Minecraft mc, autismclient.util.macro.MacroItemTarget target, int preferredHotbarSlot) {
-      if (mc != null && mc.player != null && target != null && target.update()) {
+      if (mc != null && mc.player != null && target != null && target.hasItemFilter()) {
          int bestHotbarSlot = -1;
          int bestHotbarScore = -1;
 
          for (int slot = 0; slot < 9; slot++) {
-            int score = target.init_I_ItemStack_I(mc.player.getInventory().getItem(slot), slot);
+            int score = target.matchScore(mc.player.getInventory().getItem(slot), slot);
             if (score > bestHotbarScore) {
                bestHotbarScore = score;
                bestHotbarSlot = slot;
@@ -195,7 +195,7 @@ public final class InventorySlotHelper {
          int bestInventoryScore = -1;
 
          for (int slot = 9; slot < 36; slot++) {
-            int score = target.init_I_ItemStack_I(mc.player.getInventory().getItem(slot), slot);
+            int score = target.matchScore(mc.player.getInventory().getItem(slot), slot);
             if (score > bestInventoryScore) {
                bestInventoryScore = score;
                bestInventorySlot = slot;

@@ -14,7 +14,7 @@ public class WaitForCooldownAction implements MacroAction {
 
    public WaitForCooldownAction(String itemName, boolean checkMainHand) {
       this.itemName = itemName;
-      this.itemTarget = MacroItemTarget.update(itemName);
+      this.itemTarget = MacroItemTarget.parse(itemName);
       this.checkMainInteractionHand = checkMainHand;
    }
 
@@ -27,8 +27,8 @@ public class WaitForCooldownAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       MacroItemTarget target = this.init();
-      if (target.init_Z() || target.update()) {
-         tag.put("itemName", target.init_CompoundTag());
+      if (target.hasSlot() || target.hasItemFilter()) {
+         tag.put("itemName", target.toTag());
       }
 
       tag.putBoolean("checkMainHand", this.checkMainInteractionHand);
@@ -39,9 +39,9 @@ public class WaitForCooldownAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.itemTarget = tag.getCompound("itemName")
-         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("itemName", "")));
-      this.itemName = this.itemTarget.write_Str();
+         .map(MacroItemTarget::fromTag)
+         .orElseGet(() -> MacroItemTarget.parse(tag.getStringOr("itemName", "")));
+      this.itemName = this.itemTarget.toSpecString();
       if (tag.contains("checkMainHand")) {
          this.checkMainInteractionHand = tag.getBooleanOr("checkMainHand", true);
       }
@@ -57,7 +57,7 @@ public class WaitForCooldownAction implements MacroAction {
    @Override
    public String getDisplayName() {
       MacroItemTarget target = this.init();
-      String base = !target.init_Z() && !target.update() ? (this.checkMainInteractionHand ? "Main Hand" : "Off Hand") : target.load_Str();
+      String base = !target.hasSlot() && !target.hasItemFilter() ? (this.checkMainInteractionHand ? "Main Hand" : "Off Hand") : target.formatSummary();
       if (base.length() > 10) {
          base = base.substring(0, 8) + "..";
       }
@@ -71,11 +71,11 @@ public class WaitForCooldownAction implements MacroAction {
    }
 
    private MacroItemTarget init() {
-      if (this.itemTarget != null && (this.itemTarget.init_Z() || this.itemTarget.update())) {
+      if (this.itemTarget != null && (this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter())) {
          return this.itemTarget;
       }
 
-      this.itemTarget = MacroItemTarget.update(this.itemName);
+      this.itemTarget = MacroItemTarget.parse(this.itemName);
       return this.itemTarget;
    }
 }

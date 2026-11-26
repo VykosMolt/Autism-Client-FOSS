@@ -564,7 +564,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             int stableSlot = Integer.parseInt(text);
             int slotId = InventorySlotHelper.resolveConfiguredSlot(init_Minecraft, stableSlot);
             autismclient.util.macro.MacroItemTarget slotTarget = this.init_ArrayUtil_I(slotId);
-            String itemName = slotTarget.init_Str();
+            String itemName = slotTarget.rawLabel();
             if (!itemName.isEmpty()) {
                this.init_ArrayUtil = slotTarget;
                this.read_Str = itemName;
@@ -584,13 +584,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.load_k.init_V_Str(this.read_Str);
       this.load_k.load(50);
       this.load_k.init_V_Function(value -> {
-         Component rich = this.init_ArrayUtil == null ? null : this.init_ArrayUtil.init_Component_Str(value);
+         Component rich = this.init_ArrayUtil == null ? null : this.init_ArrayUtil.restyleText(value);
          return rich != null && value != null && value.equals(rich.getString()) ? rich.copy() : null;
       });
       this.load_k.init_V_Consumer(text -> {
          this.read_Str = text;
-         if (this.init_ArrayUtil != null && !text.equals(this.init_ArrayUtil.init_Str())) {
-            this.init_ArrayUtil = this.init_ArrayUtil.write_Z() ? this.init_ArrayUtil.init_ArrayUtil_Str(text) : autismclient.util.macro.MacroItemTarget.update(text);
+         if (this.init_ArrayUtil != null && !text.equals(this.init_ArrayUtil.rawLabel())) {
+            this.init_ArrayUtil = this.init_ArrayUtil.hasTextJson() ? this.init_ArrayUtil.withManualDisplay(text) : autismclient.util.macro.MacroItemTarget.parse(text);
          }
 
          this.reset_V_2();
@@ -994,7 +994,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private String init_Str_I_2(int slotId) {
       autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil_I(slotId);
-      return target.init_Str();
+      return target.rawLabel();
    }
 
    private autismclient.util.macro.MacroItemTarget init_ArrayUtil_I(int slotId) {
@@ -1003,7 +1003,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          Slot slot = handler.slots.get(slotId);
          if (slot != null && !slot.getItem().isEmpty()) {
             int visibleSlot = InventorySlotHelper.toVisibleSlot(init_Minecraft, slot.index);
-            return autismclient.util.macro.MacroItemTarget.init_ArrayUtil_ItemStack_I(slot.getItem(), visibleSlot);
+            return autismclient.util.macro.MacroItemTarget.fromItemStack(slot.getItem(), visibleSlot);
          } else {
             return new autismclient.util.macro.MacroItemTarget();
          }
@@ -1144,7 +1144,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                || this.task >= 0 && option.load_I == this.task) {
                this.init_J_TaskQueue = option;
                this.init_ItemStack = option.init_ItemStack.copy();
-               this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.init_ArrayUtil_ItemStack_I(option.init_ItemStack, -1);
+               this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.fromItemStack(option.init_ItemStack, -1);
                this.read_Str = option.load_Str;
                this.sync_Str = option.init_Str;
                this.task = option.init_I;
@@ -1209,7 +1209,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       if (option != null) {
          this.init_J_TaskQueue = option;
          this.init_ItemStack = option.init_ItemStack.copy();
-         this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.init_ArrayUtil_ItemStack_I(option.init_ItemStack, -1);
+         this.init_ArrayUtil = autismclient.util.macro.MacroItemTarget.fromItemStack(option.init_ItemStack, -1);
          this.read_Str = option.load_Str;
          this.task = option.init_I;
          this.sync_Str = option.init_Str;
@@ -1829,7 +1829,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       if (slot != null && !this.poll_Z_5()) {
          int stableSlotId = InventorySlotHelper.toVisibleSlot(init_Minecraft, slot.index);
          autismclient.util.macro.MacroItemTarget clickedTarget = this.init_ArrayUtil_I(slot.index);
-         String itemName = clickedTarget.init_Str();
+         String itemName = clickedTarget.rawLabel();
          if (this.init_AutismFabricatorOv.write()) {
             AbstractContainerMenu handler = this.init_AbstractContainerM();
             if (handler == null) {
@@ -1934,7 +1934,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             String entry = enteredSlot != null ? "#" + enteredSlot + (!itemName.isEmpty() ? "|" + itemName : "") : itemName;
             if (!entry.isBlank()) {
                autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil_Integer_Str(enteredSlot, itemName);
-               entry = target.write_Str();
+               entry = target.toSpecString();
                dropAction.itemTargets.add(target);
                dropAction.itemNames.add(entry);
                dropAction.itemCounts.add(this.flush_Z ? 0 : repeats);
@@ -1957,7 +1957,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          if (!itemName.isEmpty()) {
             autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil_Integer_Str(enteredSlot, itemName);
             itemAction.itemTargets.add(target);
-            itemAction.itemNames.add(target.write_Str());
+            itemAction.itemNames.add(target.toSpecString());
             itemAction.itemTimes.add(repeats);
             itemAction.itemActionIdx.add(itemAction.actionIndex);
             itemAction.itemButtons.add(itemAction.button);
@@ -1972,11 +1972,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private autismclient.util.macro.MacroItemTarget init_ArrayUtil_Integer_Str(Integer enteredSlot, String itemName) {
       String safeName = itemName == null ? "" : itemName.trim();
-      autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil != null && safeName.equals(this.init_ArrayUtil.init_Str())
-         ? this.init_ArrayUtil.init_ArrayUtil()
-         : autismclient.util.macro.MacroItemTarget.update(safeName);
+      autismclient.util.macro.MacroItemTarget target = this.init_ArrayUtil != null && safeName.equals(this.init_ArrayUtil.rawLabel())
+         ? this.init_ArrayUtil.copy()
+         : autismclient.util.macro.MacroItemTarget.parse(safeName);
       if (enteredSlot != null) {
-         target.init_I = enteredSlot;
+         target.slot = enteredSlot;
       }
 
       return target;
@@ -2322,7 +2322,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private boolean init_Z_ItemStack_Str(ItemStack stack, String query) {
       return stack != null && !stack.isEmpty() && query != null && !query.isBlank()
-         ? autismclient.util.macro.MacroItemTarget.update(query).init_I_ItemStack_I(stack, -1) >= 0
+         ? autismclient.util.macro.MacroItemTarget.parse(query).matchScore(stack, -1) >= 0
          : false;
    }
 
@@ -2479,13 +2479,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             return null;
          }
 
-         autismclient.util.macro.MacroItemTarget target = autismclient.util.macro.MacroItemTarget.update(searchName);
+         autismclient.util.macro.MacroItemTarget target = autismclient.util.macro.MacroItemTarget.parse(searchName);
          Integer bestMatch = null;
          int bestScore = -1;
 
          for (Slot slot : handler.slots) {
             if (slot != null && !slot.getItem().isEmpty()) {
-               int score = target.init_I_ItemStack_I(slot.getItem(), -1);
+               int score = target.matchScore(slot.getItem(), -1);
                if (score > bestScore) {
                   bestScore = score;
                   bestMatch = slot.index;

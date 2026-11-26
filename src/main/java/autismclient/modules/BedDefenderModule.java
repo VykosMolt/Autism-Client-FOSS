@@ -381,7 +381,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !MacroExecutor.write_Z()

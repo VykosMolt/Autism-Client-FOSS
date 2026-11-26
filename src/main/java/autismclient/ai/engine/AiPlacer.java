@@ -45,11 +45,11 @@ public final class AiPlacer {
 
    public AiPlacer() {
       this.init_U_JsonUtil = BlockPlacementPlanner.RejectReason.NONE;
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.AimProfile.NORMAL);
+      this.init_DataUtil.setProfile(AiAim.AimProfile.NORMAL);
    }
 
    public AiPlacer init_DataPipe() {
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.AimProfile.FAST);
+      this.init_DataUtil.setProfile(AiAim.AimProfile.FAST);
       return this;
    }
 
@@ -65,10 +65,10 @@ public final class AiPlacer {
       this.sync = 0;
       this.open = 0;
       this.init_Z = false;
-      this.init_J = target == null ? 0L : AiServerEvidence.init_J_BlockPos(target);
+      this.init_J = target == null ? 0L : AiServerEvidence.blockRevision(target);
       this.init_Str = "";
       this.init_U_JsonUtil = BlockPlacementPlanner.RejectReason.NONE;
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.clear();
    }
 
    public void init_V_BlockPos_ItemStack(BlockPos target, ItemStack stack) {
@@ -102,7 +102,7 @@ public final class AiPlacer {
          || mc.level == null
          || this.init_BlockPos == null
          || mc.level.getBlockState(this.init_BlockPos).getBlock() != this.init_Block
-         || AiServerEvidence.init_J_BlockPos(this.init_BlockPos) <= this.init_J;
+         || AiServerEvidence.blockRevision(this.init_BlockPos) <= this.init_J;
    }
 
    public String init_Str() {
@@ -201,8 +201,8 @@ public final class AiPlacer {
                   return AiPlacer.PlaceStatus.WORKING;
                }
             } else {
-               AiItems.ItemSpec held = AiItems.init_af_DataUtil(BuiltInRegistries.ITEM.getKey(this.init_Item).toString());
-               if (AiItems.read(held) < 0) {
+               AiItems.ItemSpec held = AiItems.resolve(BuiltInRegistries.ITEM.getKey(this.init_Item).toString());
+               if (AiItems.equipHotbar(held) < 0) {
                   return this.init("No " + BuiltInRegistries.ITEM.getKey(this.init_Item) + " in inventory");
                }
             }
@@ -218,13 +218,13 @@ public final class AiPlacer {
                this.sync = 0;
             }
 
-            this.init_DataUtil.init_V_Vec3(this.init_U_CachePool.init_U_DataUtil().init_Vec3());
-            this.init_DataUtil.load_V();
-            if (!AiAim.init_Z_BlockPos(this.init_U_CachePool.init_BlockHitResult().getBlockPos())) {
+            this.init_DataUtil.aimAt(this.init_U_CachePool.init_U_DataUtil().init_Vec3());
+            this.init_DataUtil.tick();
+            if (!AiAim.isLookingAtBlock(this.init_U_CachePool.init_BlockHitResult().getBlockPos())) {
                return AiPlacer.PlaceStatus.WORKING;
             }
 
-            BlockHitResult ray = AiAim.init_BlockHitResult();
+            BlockHitResult ray = AiAim.raycastLookBlock();
             BlockHitResult click = ray != null
                   && ray.getBlockPos().equals(this.init_U_CachePool.init_BlockHitResult().getBlockPos())
                   && ray.getDirection() == this.init_U_CachePool.init_BlockHitResult().getDirection()
@@ -240,7 +240,7 @@ public final class AiPlacer {
                return this.init("Another block occupied the portable container's cell");
             }
 
-            if (++this.open < 2 || this.init_Z && AiServerEvidence.init_J_BlockPos(this.init_BlockPos) <= this.init_J) {
+            if (++this.open < 2 || this.init_Z && AiServerEvidence.blockRevision(this.init_BlockPos) <= this.init_J) {
                return ++this.close > 80 ? this.init("Placement was not confirmed by the server") : AiPlacer.PlaceStatus.WORKING;
             }
 
@@ -254,7 +254,7 @@ public final class AiPlacer {
    }
 
    public void init_V() {
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.clear();
       this.init_BlockPos = null;
    }
 

@@ -280,10 +280,10 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
          }
       }
 
-      this.direction = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
+      this.direction = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
       this.packetName = tag.getStringOr("packetName", "");
       this.fieldName = tag.getStringOr("fieldName", "");
-      this.operator = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
+      this.operator = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
       this.value = tag.getStringOr("value", "");
       if (this.rules.isEmpty() && (tag.contains("packetName") || tag.contains("fieldName"))) {
          this.rules.add(this.init_aM_CachePool());
@@ -355,10 +355,10 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
 
       static WaitPacketMatchAction.Inner_CachePool init(CompoundTag tag) {
          WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
-         rule.init_aM_DataUtil = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
+         rule.init_aM_DataUtil = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
          rule.init_Str = tag.getStringOr("packetName", "");
          rule.load = tag.getStringOr("fieldName", "");
-         rule.init_aM_StreamUtil = MacroNbtCodecHelper.init(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
+         rule.init_aM_StreamUtil = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
          rule.read = tag.getStringOr("value", "");
          return rule;
       }

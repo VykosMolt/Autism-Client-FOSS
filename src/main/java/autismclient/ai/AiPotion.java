@@ -112,7 +112,7 @@ final class AiPotion {
          }
 
          AiOperation.Result init(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, new JsonObject());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
@@ -121,7 +121,7 @@ final class AiPotion {
                mc.player.getInventory().setSelectedSlot(this.read);
             }
 
-            return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+            return AiGameOperations.result(status, message, new JsonObject());
          }
 
          @Override

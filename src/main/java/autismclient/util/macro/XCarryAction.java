@@ -402,11 +402,11 @@ public class XCarryAction implements MacroAction {
    private boolean init_Z_Slot_I(Slot slot, int slotId) {
       for (MacroItemTarget entryTarget : this.write()) {
          if (entryTarget != null) {
-            if (entryTarget.init_Z()) {
-               if (init_Z_I_I(entryTarget.init_I, slotId) && (!entryTarget.update() || init_Z_ItemStack_ArrayUtil(slot.getItem(), entryTarget))) {
+            if (entryTarget.hasSlot()) {
+               if (init_Z_I_I(entryTarget.slot, slotId) && (!entryTarget.hasItemFilter() || init_Z_ItemStack_ArrayUtil(slot.getItem(), entryTarget))) {
                   return true;
                }
-            } else if (entryTarget.update() && init_Z_ItemStack(slot.getItem(), entryTarget, slotId)) {
+            } else if (entryTarget.hasItemFilter() && init_Z_ItemStack(slot.getItem(), entryTarget, slotId)) {
                return true;
             }
          }
@@ -659,7 +659,7 @@ public class XCarryAction implements MacroAction {
          init_V_InventoryMenu(playerHandler, rows, this.init_Set());
 
          for (XCarryAction.Inner_BufferHelper row : rows) {
-            if (row.sync > 0 && row.init_ArrayUtil != null && row.init_ArrayUtil.update()) {
+            if (row.sync > 0 && row.init_ArrayUtil != null && row.init_ArrayUtil.hasItemFilter()) {
                String key = init_Str_ArrayUtil(row.init_ArrayUtil);
                neededByKey.put(key, neededByKey.getOrDefault(key, 0) + row.sync);
             }
@@ -670,7 +670,7 @@ public class XCarryAction implements MacroAction {
 
       for (int i = 0; i < limit; i++) {
          MacroItemTarget itemTarget = targets.get(i);
-         if (itemTarget != null && !itemTarget.init_Z() && itemTarget.update()) {
+         if (itemTarget != null && !itemTarget.hasSlot() && itemTarget.hasItemFilter()) {
             String key = init_Str_ArrayUtil(itemTarget);
             if (playerHandler == null || neededByKey.isEmpty() || neededByKey.getOrDefault(key, 0) > 0) {
                for (Slot slot : containerHandler.slots) {
@@ -709,7 +709,7 @@ public class XCarryAction implements MacroAction {
       tag.putBoolean("useOffhand", true);
       List<MacroItemTarget> targets = this.read_List();
       int savedCount = Math.min(this.init_I_5(), targets.size());
-      tag.put("entries", MacroItemTarget.init_ListTag_List(targets.subList(0, savedCount)));
+      tag.put("entries", MacroItemTarget.toListTag(targets.subList(0, savedCount)));
       this.init_V_I_2(savedCount);
       this.load_V_I(savedCount);
       ListTag destinations = new ListTag();
@@ -759,8 +759,8 @@ public class XCarryAction implements MacroAction {
       if (tag.contains("entries")) {
          ListTag list = tag.getList("entries").orElse(new ListTag());
 
-         for (MacroItemTarget target : MacroItemTarget.init_List_ListTag(list)) {
-            if (target != null && (target.init_Z() || target.update())) {
+         for (MacroItemTarget target : MacroItemTarget.fromListTag(list)) {
+            if (target != null && (target.hasSlot() || target.hasItemFilter())) {
                this.entryTargets.add(target);
                if (this.entryTargets.size() >= this.init_I_5()) {
                   break;
@@ -932,8 +932,8 @@ public class XCarryAction implements MacroAction {
       }
 
       Set<Integer> excluded = excludedSlotIds == null ? Set.of() : excludedSlotIds;
-      if (target.init_Z()) {
-         int exactSlot = init_I_AbstractContainerM_I(handler, target.init_I);
+      if (target.hasSlot()) {
+         int exactSlot = init_I_AbstractContainerM_I(handler, target.slot);
          if (exactSlot < 0) {
             return -1;
          }
@@ -942,12 +942,12 @@ public class XCarryAction implements MacroAction {
             return -1;
          }
 
-         if (!target.update()) {
+         if (!target.hasItemFilter()) {
             return exactSlot;
          }
 
          Slot slot = handler.slots.get(exactSlot);
-         return init_Z_ItemStack(slot.getItem(), target, target.init_I) ? exactSlot : -1;
+         return init_Z_ItemStack(slot.getItem(), target, target.slot) ? exactSlot : -1;
       } else {
          for (Slot slot : handler.slots) {
             if (!excluded.contains(slot.index) && init_Z_Slot(slot)) {
@@ -1475,7 +1475,7 @@ public class XCarryAction implements MacroAction {
 
    private static boolean init_Z_ItemStack(ItemStack stack, MacroItemTarget target, int visibleSlot) {
       if (stack != null && !stack.isEmpty()) {
-         return target != null && target.update() ? target.init_Z_ItemStack_I(stack, visibleSlot) : true;
+         return target != null && target.hasItemFilter() ? target.matches(stack, visibleSlot) : true;
       } else {
          return false;
       }
@@ -1484,7 +1484,7 @@ public class XCarryAction implements MacroAction {
    private static boolean init_Z_InventoryMenu_2(InventoryMenu handler, Slot slot, MacroItemTarget target) {
       if (handler != null && slot != null && target != null && !slot.getItem().isEmpty()) {
          int visibleSlot = init_I_InventoryMenu_I(handler, slot.index);
-         return target.init_Z() && target.init_I != visibleSlot ? false : init_Z_ItemStack(slot.getItem(), target, visibleSlot);
+         return target.hasSlot() && target.slot != visibleSlot ? false : init_Z_ItemStack(slot.getItem(), target, visibleSlot);
       } else {
          return false;
       }
@@ -1497,10 +1497,10 @@ public class XCarryAction implements MacroAction {
    private static boolean init_Z_ItemStack_ArrayUtil(ItemStack stack, MacroItemTarget target) {
       if (stack == null || stack.isEmpty()) {
          return false;
-      } else if (target != null && target.update()) {
-         MacroItemTarget identityOnly = target.init_ArrayUtil();
-         identityOnly.init_I = -1;
-         return identityOnly.init_Z_ItemStack_I(stack, -1);
+      } else if (target != null && target.hasItemFilter()) {
+         MacroItemTarget identityOnly = target.copy();
+         identityOnly.slot = -1;
+         return identityOnly.matches(stack, -1);
       } else {
          return true;
       }
@@ -1510,13 +1510,13 @@ public class XCarryAction implements MacroAction {
       if (target == null) {
          return "";
       } else {
-         String legacy = init_Str_Str_7(target.write_Str());
+         String legacy = init_Str_Str_7(target.toSpecString());
          if (legacy != null && !legacy.isBlank()) {
             return legacy.toLowerCase(Locale.ROOT);
-         } else if (target.init_Z()) {
-            return "#slot:" + target.init_I;
+         } else if (target.hasSlot()) {
+            return "#slot:" + target.slot;
          } else {
-            return target.init_Str() == null ? "" : target.init_Str().toLowerCase(Locale.ROOT);
+            return target.rawLabel() == null ? "" : target.rawLabel().toLowerCase(Locale.ROOT);
          }
       }
    }
@@ -1566,8 +1566,8 @@ public class XCarryAction implements MacroAction {
       for (String entry : this.entries) {
          String normalized = init_Str_Str_7(entry);
          if (normalized != null) {
-            MacroItemTarget target = MacroItemTarget.update(normalized);
-            if (target.init_Z() || target.update()) {
+            MacroItemTarget target = MacroItemTarget.parse(normalized);
+            if (target.hasSlot() || target.hasItemFilter()) {
                this.entryTargets.add(target);
             }
 
@@ -1586,8 +1586,8 @@ public class XCarryAction implements MacroAction {
 
       for (MacroItemTarget target : this.read_List()) {
          if (target != null) {
-            MacroItemTarget resolved = target.init_ArrayUtil_Minecraft(mc);
-            if (resolved != null && (resolved.init_Z() || resolved.update())) {
+            MacroItemTarget resolved = target.resolveTemplates(mc);
+            if (resolved != null && (resolved.hasSlot() || resolved.hasItemFilter())) {
                runtime.add(resolved);
             }
          }
@@ -1601,7 +1601,7 @@ public class XCarryAction implements MacroAction {
 
       for (MacroItemTarget target : this.entryTargets) {
          if (target != null) {
-            String entry = init_Str_Str_7(target.write_Str());
+            String entry = init_Str_Str_7(target.toSpecString());
             if (entry != null) {
                this.entries.add(entry);
                if (this.entries.size() >= this.init_I_5()) {

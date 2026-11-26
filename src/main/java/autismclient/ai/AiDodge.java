@@ -60,9 +60,9 @@ final class AiDodge {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final boolean deflect = AiJson.init_Z_JsonObject(args, "deflect", true);
-         final boolean shieldOk = AiJson.init_Z_JsonObject(args, "shield", false);
-         final long deadline = System.nanoTime() + Math.min(10, Math.max(1, AiJson.init_I_JsonObject(args, "timeoutSeconds", 4))) * 1000000000L;
+         final boolean deflect = AiJson.getBoolean(args, "deflect", true);
+         final boolean shieldOk = AiJson.getBoolean(args, "shield", false);
+         final long deadline = System.nanoTime() + Math.min(10, Math.max(1, AiJson.getInt(args, "timeoutSeconds", 4))) * 1000000000L;
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final Object init_Obj = this.init_Minecraft.level;
@@ -94,7 +94,7 @@ final class AiDodge {
             float read_F;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
+               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
                this.update = -1;
                this.close = -100;
                this.read_Set = new HashSet<>();
@@ -219,7 +219,7 @@ final class AiDodge {
                            Vec3 back = owner != null && owner.isAlive() ? owner.getBoundingBox().getCenter() : null;
                            boolean onLine = back != null
                               && fireball.getBoundingBox().inflate(0.2).clip(eye, eye.add(back.subtract(eye).normalize().scale(6.0))).isPresent();
-                           AiGameOperations.init(onLine ? back : fireball.getBoundingBox().getCenter());
+                           AiGameOperations.snapLookAt(onLine ? back : fireball.getBoundingBox().getCenter());
                            double reach = AiDefense.init_D(this.init_Minecraft);
                            BlockHitResult blockRay = this.init_Minecraft
                               .level
@@ -250,8 +250,8 @@ final class AiDodge {
                         && AiDefense.init(this.init_Minecraft, dominant.secondsToClosest() * 20.0)
                         && this.init(dominant, threats)) {
                         this.load();
-                        this.init_DataUtil.init_V_Vec3(new Vec3(dominant.x(), dominant.y(), dominant.z()));
-                        this.init_DataUtil.load_V();
+                        this.init_DataUtil.aimAt(new Vec3(dominant.x(), dominant.y(), dominant.z()));
+                        this.init_DataUtil.tick();
                         if (!this.read_Z) {
                            this.read_Z = true;
                            this.init_Minecraft.options.keyUse.setDown(true);
@@ -432,7 +432,7 @@ final class AiDodge {
 
                for (AiProjectiles.IncomingProjectile t : threats) {
                   remaining.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "id", t.entityId(), "type", t.type(), "closestApproach", t.closestApproach(), "secondsToClosest", t.secondsToClosest()
                      )
                   );
@@ -446,11 +446,11 @@ final class AiDodge {
                }
 
                for (String counter : List.of("serverConfirmedReflections", "ghastDeathsObserved", "missedAttempts", "defensiveBats", "movementTicks")) {
-                  reflection.addProperty(counter, this.init_List.stream().mapToInt(r -> AiJson.init_I_JsonObject(r.init_JsonObject(), counter, 0)).sum());
+                  reflection.addProperty(counter, this.init_List.stream().mapToInt(r -> AiJson.getInt(r.init_JsonObject(), counter, 0)).sum());
                }
 
                reflection.add("shots", shots);
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "defenseTicks",
                   this.read_I,
                   "defenseMs",
@@ -477,12 +477,12 @@ final class AiDodge {
             }
 
             AiOperation.Result init(String message, List<AiProjectiles.IncomingProjectile> threats) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject(threats));
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject(threats));
             }
 
             AiOperation.Result init(AiOperation.Status status, String message, List<AiProjectiles.IncomingProjectile> threats) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject(threats));
+               return AiGameOperations.result(status, message, this.init_JsonObject(threats));
             }
 
             void load() {
@@ -518,7 +518,7 @@ final class AiDodge {
                   }
 
                   this.read_Z = false;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
             }
          };

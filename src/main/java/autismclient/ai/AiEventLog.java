@@ -89,17 +89,17 @@ final class AiEventLog {
       JsonArray array = new JsonArray();
 
       for (AiEventLog.Inner_DataUtil event : this.init_List(since, kinds, limit)) {
-         array.add(AiJson.init_JsonObject_ObjArr("seq", event.seq(), "tick", event.tick(), "kind", event.kind(), "data", event.data()));
+         array.add(AiJson.objectOf("seq", event.seq(), "tick", event.tick(), "kind", event.kind(), "data", event.data()));
       }
 
-      return AiJson.init_JsonObject_ObjArr("events", array, "latestSeq", this.init_J, "dropped", this.init_J_J(since));
+      return AiJson.objectOf("events", array, "latestSeq", this.init_J, "dropped", this.init_J_J(since));
    }
 
    static JsonObject init_JsonObject_JsonObject(JsonObject args) {
-      long since = Math.max(0, AiJson.init_I_JsonObject(args, "since", 0));
-      int limit = Math.max(1, Math.min(256, AiJson.init_I_JsonObject(args, "limit", 50)));
+      long since = Math.max(0, AiJson.getInt(args, "since", 0));
+      int limit = Math.max(1, Math.min(256, AiJson.getInt(args, "limit", 50)));
       Set<String> kinds = null;
-      String raw = AiJson.init_Str_JsonObject(args, "kinds", "").trim();
+      String raw = AiJson.getString(args, "kinds", "").trim();
       if (!raw.isEmpty()) {
          kinds = new LinkedHashSet<>();
 

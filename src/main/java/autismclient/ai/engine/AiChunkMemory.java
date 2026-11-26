@@ -391,7 +391,7 @@ public final class AiChunkMemory {
          this.auditReadFailedAt.clear();
          this.load_Obj = level;
          Path base = load_Path;
-         this.init_Path = level != null && mc.player != null && base != null ? base.resolve(AiJson.init_Str_Str(AiWorldIdentity.init(mc) + "/dimension/" + AiWorldIdentity.load(mc))) : null;
+         this.init_Path = level != null && mc.player != null && base != null ? base.resolve(AiJson.sha256Hex(AiWorldIdentity.init(mc) + "/dimension/" + AiWorldIdentity.load(mc))) : null;
       }
 
       if (this.init_Path != null && System.nanoTime() - this.write_J >= 20000000000L) {

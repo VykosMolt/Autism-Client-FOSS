@@ -138,7 +138,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
       for (AABB box : boxes) {
          Vec3 centre = box.getCenter().add(this.init_BlockPos.getX(), this.init_BlockPos.getY(), this.init_BlockPos.getZ());
          if (this.init_Direction != null) {
-            for (Vec3 point : AiBlockInteraction.init(box, this.init_BlockPos, this.init_Direction)) {
+            for (Vec3 point : AiBlockInteraction.sampleFacePoints(box, this.init_BlockPos, this.init_Direction)) {
                if (init(planned, this.init_BlockPos, x, y, z, this.load, point.x, point.y, point.z, this.init_D, this.init_Direction, null)) {
                   return true;
                }
@@ -160,7 +160,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
             }
 
             for (Direction face : Direction.values()) {
-               for (Vec3 point : AiBlockInteraction.init(box, this.init_BlockPos, face)) {
+               for (Vec3 point : AiBlockInteraction.sampleFacePoints(box, this.init_BlockPos, face)) {
                   if (load(planned, this.init_BlockPos, x, y, z, this.load, point.x, point.y, point.z, this.init_D)) {
                      return true;
                   }

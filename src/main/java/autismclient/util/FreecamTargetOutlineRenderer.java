@@ -35,7 +35,7 @@ public final class FreecamTargetOutlineRenderer {
    }
 
    public static boolean init_Z() {
-      return autismclient.modules.FreecamController.init_Z() && (autismclient.modules.FreecamController.load_Z() || autismclient.modules.FreecamController.write()) && !autismclient.modules.aD.read_Z();
+      return autismclient.modules.FreecamController.isActive() && (autismclient.modules.FreecamController.isInteractionAllowed() || autismclient.modules.FreecamController.isAiControllingBody()) && !autismclient.modules.aD.read_Z();
    }
 
    public static void init_V() {
@@ -49,7 +49,7 @@ public final class FreecamTargetOutlineRenderer {
                      Vec3 camera = cameraState.pos;
                      Vec3 origin = camera;
                      Vec3 direction = Vec3.directionFromRotation(cameraState.xRot, cameraState.yRot);
-                     if (autismclient.modules.FreecamController.write()) {
+                     if (autismclient.modules.FreecamController.isAiControllingBody()) {
                         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
                         origin = mc.player.getEyePosition(partialTick);
                         direction = mc.player.getViewVector(partialTick);

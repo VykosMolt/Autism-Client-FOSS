@@ -46,13 +46,13 @@ public class AutismProtectorConnectionTrackingMixin {
    private void autism$trackInboundListener(ProtocolInfo<?> protocol, PacketListener listener, CallbackInfo ci) {
       Connection connection = (Connection)(Object)this;
       this.autism$context(connection.getRemoteAddress(), false);
-      this.autism$privacyContext = ConnectionPrivacyRegistry.init(connection, listener);
+      this.autism$privacyContext = ConnectionPrivacyRegistry.bindListener(connection, listener);
    }
 
    @Inject(method = "doSendPacket", at = @At("HEAD"))
    private void autism$trackAccount(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
       if (packet instanceof ServerboundHelloPacket hello) {
-         ConnectionPrivacyRegistry.init((Connection)(Object)this, hello.profileId(), hello.name());
+         ConnectionPrivacyRegistry.bindAccount((Connection)(Object)this, hello.profileId(), hello.name());
       }
    }
 
@@ -66,7 +66,7 @@ public class AutismProtectorConnectionTrackingMixin {
       Connection connection = (Connection)(Object)this;
       ConnectionPrivacyRegistry.ConnectionSession context = this.autism$privacyContext;
       if (context == null) {
-         context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+         context = ConnectionPrivacyRegistry.getActive(connection);
       }
 
       autism$disconnectClosedConnection(connection, context);
@@ -82,7 +82,7 @@ public class AutismProtectorConnectionTrackingMixin {
    private void autism$disconnectExactContext() {
       ConnectionPrivacyRegistry.ConnectionSession context = this.autism$privacyContext;
       if (context == null) {
-         context = ConnectionPrivacyRegistry.init_BufferHelper_Strea((Connection)(Object)this);
+         context = ConnectionPrivacyRegistry.getActive((Connection)(Object)this);
       }
 
       autism$disconnectExactContext(context);
@@ -96,17 +96,17 @@ public class AutismProtectorConnectionTrackingMixin {
    private ConnectionPrivacyRegistry.ConnectionSession autism$context(SocketAddress peerAddress, boolean multiChannel) {
       Connection connection = (Connection)(Object)this;
       ConnectionPrivacyRegistry.PrivacyMode mode = ProtectorFeatureFlags.sync() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
-      this.autism$privacyContext = ConnectionPrivacyRegistry.init(connection, mode, false, peerAddress);
+      this.autism$privacyContext = ConnectionPrivacyRegistry.register(connection, mode, false, peerAddress);
       return this.autism$privacyContext;
    }
 
    private void autism$bindHandshake(String host, int port, PacketListener listener) {
       Connection connection = (Connection)(Object)this;
       ConnectionPrivacyRegistry.ConnectionSession context = this.autism$context(connection.getRemoteAddress(), false);
-      if (context.init_BufferHelper_Buffe() == null) {
-         ConnectionPrivacyRegistry.init(connection, host, port);
+      if (context.serverEndpoint() == null) {
+         ConnectionPrivacyRegistry.bindEndpoint(connection, host, port);
       }
 
-      this.autism$privacyContext = ConnectionPrivacyRegistry.init(connection, listener);
+      this.autism$privacyContext = ConnectionPrivacyRegistry.bindListener(connection, listener);
    }
 }

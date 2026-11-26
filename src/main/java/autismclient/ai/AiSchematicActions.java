@@ -260,8 +260,8 @@ final class AiSchematicActions {
                   }
                }
 
-               autismclient.ai.engine.AiMotionSafety.putAt_V();
-               if (!autismclient.ai.engine.AiMotionSafety.fill_Z()) {
+               autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+               if (!autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Landing inside the access shaft", "{}", List.of());
                }
 
@@ -282,7 +282,7 @@ final class AiSchematicActions {
                      || floor.getY() >= top.getY()
                      || protectedCells.contains(floor.asLong())) {
                      return this.init(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
-                  } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.putAt(floor)) {
+                  } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.isSafeToBreakSupport(floor)) {
                      this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(floor, 10, true, digProtected, false);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Opening the next floor of the access shaft", "{}", List.of());
                   } else {
@@ -315,7 +315,7 @@ final class AiSchematicActions {
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation == null ? autismclient.ai.engine.AiMotionSafety.fill_Z() : this.init_AiOperation.canInterruptNow();
+            return this.init_AiOperation == null ? autismclient.ai.engine.AiMotionSafety.isPlayerSupported() : this.init_AiOperation.canInterruptNow();
          }
 
          @Override
@@ -325,7 +325,7 @@ final class AiSchematicActions {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.ai.engine.AiMotionSafety.putAt_V();
+            autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
          }
       };
    }
@@ -342,7 +342,7 @@ final class AiSchematicActions {
             Direction face = Direction.getNearest(dx, 0, dz, Direction.NORTH);
             if (constraint.acceptsFace(face) && constraint.acceptsRay(-dx * 0.2, -1.5, -dz * 0.2)) {
                final Vec3 edge = Vec3.atBottomCenterOf(floor.above()).add(dx * 0.7, 0.0, dz * 0.7);
-               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
+               if (!autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), edge)) {
                   return null;
                }
 
@@ -360,7 +360,7 @@ final class AiSchematicActions {
 
                   @Override
                   public AiOperation.Result tick() {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      mc.player.setSprinting(false);
                      mc.options.keyShift.setDown(true);
                      if (mc.player.onGround() && ++this.init_I <= 60) {
@@ -369,7 +369,7 @@ final class AiSchematicActions {
                         }
 
                         Vec3 remaining = edge.subtract(mc.player.position());
-                        if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
+                        if (!autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), edge)) {
                            return this.init(AiOperation.Status.FAILED, "Support-edge alignment would touch lava");
                         }
 
@@ -383,9 +383,9 @@ final class AiSchematicActions {
                            }
                         }
 
-                        this.init_DataUtil.init_V_Vec3(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
-                        this.init_DataUtil.load_V();
-                        mc.options.keyUp.setDown(this.init_DataUtil.load_Z());
+                        this.init_DataUtil.aimAt(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
+                        this.init_DataUtil.tick();
+                        mc.options.keyUp.setDown(this.init_DataUtil.isSettled());
                         return new AiOperation.Result(AiOperation.Status.RUNNING, "Exposing the support side", "{}", List.of());
                      } else {
                         return this.init(AiOperation.Status.FAILED, "Support-edge alignment failed");
@@ -393,13 +393,13 @@ final class AiSchematicActions {
                   }
 
                   AiOperation.Result init(AiOperation.Status status, String message) {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      return new AiOperation.Result(status, message, "{}", List.of());
                   }
 
                   @Override
                   public void cancel() {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                   }
                };
             } else {
@@ -484,7 +484,7 @@ final class AiSchematicActions {
                   pos -> Block.isShapeFullBlock(mc.level.getBlockState(pos).getCollisionShape(mc.level, pos))
                      && mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(pos.above()).subtract(mc.player.position())))
                )
-         ? AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Existing access stairs verified", new JsonObject())
+         ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Existing access stairs verified", new JsonObject())
          : new AiOperation() {
             AiOperation init_AiOperation;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -553,7 +553,7 @@ final class AiSchematicActions {
                               return this.init("Exposing the next step's support face");
                            }
 
-                           autismclient.ai.engine.AiMotionSafety.putAt_V();
+                           autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                            mc.options.keyShift.setDown(true);
                            this.load_I = 2;
                            this.read = 0;
@@ -606,7 +606,7 @@ final class AiSchematicActions {
                               return this.init("Leaning out for the stair landing");
                            }
 
-                           autismclient.ai.engine.AiMotionSafety.putAt_V();
+                           autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                            mc.options.keyShift.setDown(true);
                            this.load_Z = true;
                            this.init_AiOperation = this.load(landing, keep);
@@ -687,19 +687,19 @@ final class AiSchematicActions {
                      }
                   };
                } else {
-                  return AiGameOperations.init_AiOperation(AiOperation.Status.FAILED, "Access route is occupied at " + pos.toShortString(), new JsonObject());
+                  return AiGameOperations.immediate(AiOperation.Status.FAILED, "Access route is occupied at " + pos.toShortString(), new JsonObject());
                }
             }
 
             boolean init(Vec3 point, boolean sneak) {
-               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), point)) {
+               if (!autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), point)) {
                   this.init_Str = "Access alignment would touch lava";
                   return false;
                } else {
                   double dx = point.x - mc.player.getX();
                   double dz = point.z - mc.player.getZ();
                   if (dx * dx + dz * dz < (sneak ? 1.0E-4 : 0.01)) {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      return true;
                   } else if (++this.read > 90) {
                      this.init_Str = "Access alignment could not reach " + point + " from " + mc.player.position();
@@ -712,21 +712,21 @@ final class AiSchematicActions {
                      mc.options.keyDown.setDown(false);
                      mc.options.keyLeft.setDown(false);
                      mc.options.keyRight.setDown(false);
-                     this.init_DataUtil.init_V_Vec3(point.add(0.0, mc.player.getEyeHeight(), 0.0));
-                     this.init_DataUtil.load_V();
-                     mc.options.keyUp.setDown(this.init_DataUtil.load_Z());
+                     this.init_DataUtil.aimAt(point.add(0.0, mc.player.getEyeHeight(), 0.0));
+                     this.init_DataUtil.tick();
+                     mc.options.keyUp.setDown(this.init_DataUtil.isSettled());
                      return false;
                   }
                }
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Step " + this.init_I + "/" + (steps.size() - 1) + ": " + message, new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "Step " + this.init_I + "/" + (steps.size() - 1) + ": " + message, new JsonObject());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+               return AiGameOperations.result(status, message, new JsonObject());
             }
 
             @Override
@@ -736,7 +736,7 @@ final class AiSchematicActions {
                   this.init_AiOperation.cancel();
                }
 
-               autismclient.ai.engine.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
             }
          };
    }
@@ -1100,18 +1100,18 @@ final class AiSchematicActions {
 
                BlockState live = mc.level.getBlockState(target);
                if (AiBuilder.read(cell, live)) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Interaction state verified", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Interaction state verified", new JsonObject());
                }
 
                if (++this.init_I > (cell.properties().containsKey("note") ? 30 : (cell.properties().containsKey("delay") ? 6 : 2))) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Interaction state did not settle", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.FAILED, "Interaction state did not settle", new JsonObject());
                }
 
                if (AiBuilder.flush(cell, live)) {
-                  BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(mc, target);
+                  BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, target);
                   if (hit != null && !(mc.player.getEyePosition().distanceToSqr(hit.getLocation()) > 16.0)) {
                      this.init_AiOperation = AiBucket.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "action",
                            "true".equals(cell.properties().get("waterlogged")) ? "empty" : "fill",
                            "fluid",
@@ -1126,28 +1126,28 @@ final class AiSchematicActions {
                            10
                         )
                      );
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Restoring waterlogging with a bucket", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Restoring waterlogging with a bucket", new JsonObject());
                   } else {
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(target, 30, protectedCells);
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Approaching the waterlogged block", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Approaching the waterlogged block", new JsonObject());
                   }
                } else {
-                  JsonObject args = AiJson.init_JsonObject_ObjArr("x", target.getX(), "y", target.getY(), "z", target.getZ());
+                  JsonObject args = AiJson.objectOf("x", target.getX(), "y", target.getY(), "z", target.getZ());
                   String itemSpec = AiSchematicActions.init_Str(cell, live);
                   if (itemSpec != null) {
-                     int slot = AiItems.read(AiItems.load_af_DataUtil(itemSpec));
+                     int slot = AiItems.equipHotbar(AiItems.resolveItem(itemSpec));
                      if (slot < 0) {
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Missing " + itemSpec, new JsonObject());
+                        return AiGameOperations.result(AiOperation.Status.FAILED, "Missing " + itemSpec, new JsonObject());
                      }
 
                      args.addProperty("slot", slot);
                   }
 
-                  this.init_AiOperation = AiGameOperations.init("interact", args, protectedCells);
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Approaching the block's interaction face", new JsonObject());
+                  this.init_AiOperation = AiGameOperations.blockAction("interact", args, protectedCells);
+                  return AiGameOperations.result(AiOperation.Status.RUNNING, "Approaching the block's interaction face", new JsonObject());
                }
             } else {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "World unavailable", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.CANCELLED, "World unavailable", new JsonObject());
             }
          }
 
@@ -1321,8 +1321,8 @@ final class AiSchematicActions {
                               && live.getBlock() == lower.getBlock()
                               && !String.valueOf(lower.getValue(DoorBlock.OPEN)).equals(cell.properties().getOrDefault("open", "false"))) {
                               mc.options.keyShift.setDown(false);
-                              this.init_AiOperation = AiGameOperations.init(
-                                 "interact", AiJson.init_JsonObject_ObjArr("x", root.getX(), "y", root.getY(), "z", root.getZ()), protectedCells
+                              this.init_AiOperation = AiGameOperations.blockAction(
+                                 "interact", AiJson.objectOf("x", root.getX(), "y", root.getY(), "z", root.getZ()), protectedCells
                               );
                               return this.init_AiOperation_Result_11("Restoring the paired door's open state");
                            } else {
@@ -1362,7 +1362,7 @@ final class AiSchematicActions {
                            return this.init_AiOperation_Result_11("Approaching a visible receiving face for the water cell");
                         } else {
                            this.init_AiOperation = AiBucket.init(
-                              AiJson.init_JsonObject_ObjArr("action", "empty", "fluid", fluid, "x", target.getX(), "y", target.getY(), "z", target.getZ())
+                              AiJson.objectOf("action", "empty", "fluid", fluid, "x", target.getX(), "y", target.getY(), "z", target.getZ())
                            );
                            return this.init_AiOperation_Result_11("Emptying a " + fluid + " bucket");
                         }
@@ -1389,7 +1389,7 @@ final class AiSchematicActions {
                            BlockPos above = target.above();
                            BlockState cover = mc.level.getBlockState(above);
                            if (cover.isAir()) {
-                              BlockHitResult top = autismclient.ai.engine.AiBlockInteraction.init(mc, target, Direction.UP);
+                              BlockHitResult top = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target, Direction.UP);
                               if ((top == null || mc.player.getEyePosition().distanceTo(top.getLocation()) > mc.player.blockInteractionRange() - 0.3)
                                  && this.read++ < 3) {
                                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(target, 30, protectedCells, true, Direction.UP, 1.25);
@@ -1510,7 +1510,7 @@ final class AiSchematicActions {
          AiOperation init_AiOperation(String action) {
             BlockPos pos = target.above();
             return AiBucket.init(
-               AiJson.init_JsonObject_ObjArr("action", action, "fluid", "water", "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 10)
+               AiJson.objectOf("action", action, "fluid", "water", "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 10)
             );
          }
 
@@ -1519,21 +1519,21 @@ final class AiSchematicActions {
                return AiGoto.init_AiOperation_BlockPos(pos, 30, protectedCells);
             }
 
-            int slot = AiItems.read(AiItems.load_af_DataUtil(item));
+            int slot = AiItems.equipHotbar(AiItems.resolveItem(item));
             if (slot < 0) {
-               return AiGameOperations.init_AiOperation(AiOperation.Status.FAILED, "Missing " + item, new JsonObject());
+               return AiGameOperations.immediate(AiOperation.Status.FAILED, "Missing " + item, new JsonObject());
             }
 
-            JsonObject args = AiJson.init_JsonObject_ObjArr("x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "slot", slot);
+            JsonObject args = AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "slot", slot);
             if (top) {
                args.addProperty("face", "UP");
             }
 
-            return AiGameOperations.init(top ? "use" : "interact", args, protectedCells);
+            return AiGameOperations.blockAction(top ? "use" : "interact", args, protectedCells);
          }
 
          AiOperation.Result init_AiOperation_Result_11(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, new JsonObject());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
@@ -1542,13 +1542,13 @@ final class AiSchematicActions {
                   this.init_AiOperation.cancel();
                }
 
-               this.init_AiOperation_Result = AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+               this.init_AiOperation_Result = AiGameOperations.result(status, message, new JsonObject());
                this.load = 3;
                this.init_AiOperation = this.init_AiOperation("empty");
                return this.init_AiOperation_Result_11("Restoring borrowed water before reporting the failed soil conversion");
             } else {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+               return AiGameOperations.result(status, message, new JsonObject());
             }
          }
 
@@ -1582,7 +1582,7 @@ final class AiSchematicActions {
       }
 
       try {
-         return AiJson.init_I_JsonObject(AiJson.init_JsonObject_Str(result.dataJson()), "placed", 0) > 0;
+         return AiJson.getInt(AiJson.parseObject(result.dataJson()), "placed", 0) > 0;
       } catch (RuntimeException ignored) {
          return false;
       }
@@ -1628,7 +1628,7 @@ final class AiSchematicActions {
                      && mc.level.getBlockState(support).canBeReplaced()
                      && mc.level.getBlockState(support).getFluidState().isEmpty()
                      && autismclient.ai.engine.PlacementGoal.init(mc, support, Items.DIRT, null, 72) != null) {
-                     this.load_J = AiServerEvidence.init_J_BlockPos(support);
+                     this.load_J = AiServerEvidence.blockRevision(support);
                      this.init_DataPipe.init_V_BlockPos_Item(support, Items.DIRT);
                      this.read = true;
                   } else {
@@ -1642,7 +1642,7 @@ final class AiSchematicActions {
                         return this.init("Placing the reachable temporary support without climbing onto it");
                      case PLACED:
                         Block live = mc.level.getBlockState(support).getBlock();
-                        AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.init_DataPipe.init_Z(), live, this.load_J, AiServerEvidence.init_J_BlockPos(support)));
+                        AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.init_DataPipe.init_Z(), live, this.load_J, AiServerEvidence.blockRevision(support)));
                         return this.init(AiOperation.Status.SUCCEEDED, "Reachable temporary support verified");
                      case FAILED:
                         this.update = this.init_DataPipe.init_Z();
@@ -1681,7 +1681,7 @@ final class AiSchematicActions {
                }
 
                Block live = mc.level.getBlockState(support).getBlock();
-               AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.update, live, this.load_J, AiServerEvidence.init_J_BlockPos(support)));
+               AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.update, live, this.load_J, AiServerEvidence.blockRevision(support)));
                if (support.getY() == target.getY()) {
                   Direction side = Direction.getNearest(target.getX() - support.getX(), 0, target.getZ() - support.getZ(), Direction.NORTH);
                   Vec3 edge = Vec3.atBottomCenterOf(support.above()).add(side.getStepX() * 0.7, 0.0, side.getStepZ() * 0.7);
@@ -1693,9 +1693,9 @@ final class AiSchematicActions {
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
                         mc.options.keyRight.setDown(false);
-                        this.init_DataUtil.init_V_Vec3(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
-                        this.init_DataUtil.load_V();
-                        mc.options.keyUp.setDown(this.init_DataUtil.load_Z());
+                        this.init_DataUtil.aimAt(edge.add(0.0, mc.player.getEyeHeight(), 0.0));
+                        this.init_DataUtil.tick();
+                        mc.options.keyUp.setDown(this.init_DataUtil.isSettled());
                         return this.init("Leaning over the scaffold to expose its side face");
                      }
 
@@ -1710,12 +1710,12 @@ final class AiSchematicActions {
          }
 
          AiOperation.Result init(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, new JsonObject());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+            return AiGameOperations.result(status, message, new JsonObject());
          }
 
          @Override

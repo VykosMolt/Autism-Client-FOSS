@@ -78,10 +78,10 @@ final class AiPrintPreparation implements AiOperation {
          AiPrintSupply.init_V_TableIndex_ConfigS(power);
          this.init_TableIndex_ConfigS = power;
          this.load_BlockPos = AiBuilder.auditOrigin(args, this.init_BlockPos);
-         this.init_Path = AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.init_Str_JsonObject(args, "schematic", ""));
-         this.init_Z = AiJson.init_Z_JsonObject(args, "skipUnknown", false);
-         this.load_Z = AiJson.init_Z_JsonObject(args, "verify", true);
-         int seconds = args.has("timeoutSeconds") ? AiJson.init_I_JsonObject(args, "timeoutSeconds", 0) : 0;
+         this.init_Path = AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(args, "schematic", ""));
+         this.init_Z = AiJson.getBoolean(args, "skipUnknown", false);
+         this.load_Z = AiJson.getBoolean(args, "verify", true);
+         int seconds = args.has("timeoutSeconds") ? AiJson.getInt(args, "timeoutSeconds", 0) : 0;
          this.load_J = seconds > 0 ? System.nanoTime() + seconds * 1000000000L : 0L;
          this.init_Future = this.init_bg_SyncManager.init(this::init_bg_DataUtil);
       } else {
@@ -237,7 +237,7 @@ final class AiPrintPreparation implements AiOperation {
                         .init(
                            4096,
                            System.nanoTime() + 2000000L,
-                           pos -> AiTerrain.init(this.init_Minecraft.level, pos) ? this.init_Minecraft.level.getBlockState(pos) : Blocks.AIR.defaultBlockState()
+                           pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos) ? this.init_Minecraft.level.getBlockState(pos) : Blocks.AIR.defaultBlockState()
                         );
                      this.write_J = this.write_J + (this.init_bg_StreamUtil.init_I - before);
                      if (this.init_bg_StreamUtil.init_Z()) {
@@ -263,7 +263,7 @@ final class AiPrintPreparation implements AiOperation {
                         AiBuilder.CellSpec cell = issue.cell();
                         this.init_JsonArray
                            .add(
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "kind",
                                  issue.kind().name(),
                                  "block",
@@ -320,7 +320,7 @@ final class AiPrintPreparation implements AiOperation {
                      } else {
                         long beforeUpdate = this.init_bg_NetHelper.init_J;
                         this.init_bg_NetHelper
-                           .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.init(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
+                           .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
                         this.write_J = this.write_J + (this.init_bg_NetHelper.init_J - beforeUpdate);
                         if (this.init_bg_NetHelper.init_Z) {
                            this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
@@ -465,7 +465,7 @@ final class AiPrintPreparation implements AiOperation {
             )
             + ": "
             + this.init_JsonObject,
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
                "missing",
                this.init_JsonObject,
                "placed",
@@ -488,7 +488,7 @@ final class AiPrintPreparation implements AiOperation {
       return new AiOperation.Result(
          AiOperation.Status.RUNNING,
          message,
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
                "preparing", this.init_AiOperation == null, "stage", "prepare", "phase", this.init_bg_BufferHelper.name(), "cells", this.read_I
             )
             .toString(),

@@ -38,14 +38,14 @@ public class BranchAction implements MacroAction {
             var10000 = GuiScreenMatcher.init(mc.gui.screen(), resolved);
             break;
          case INVENTORY_ITEM:
-            var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update(resolved));
+            var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(resolved));
             break;
          case ENTITY_TARGET:
             var10000 = mc.crosshairPickEntity != null;
             break;
          case HELD_ITEM:
             var10000 = mc.player != null
-               && MacroItemTarget.update(resolved).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot()) >= 0;
+               && MacroItemTarget.parse(resolved).matchScore(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot()) >= 0;
             break;
          default:
             throw new MatchException(null, null);
@@ -67,7 +67,7 @@ public class BranchAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.conditionKind = MacroNbtCodecHelper.init(BranchAction.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), BranchAction.Inner_DataUtil.ALWAYS);
+      this.conditionKind = MacroNbtCodecHelper.parseEnum(BranchAction.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), BranchAction.Inner_DataUtil.ALWAYS);
       this.value = tag.getStringOr("value", "");
       this.thenSteps = tag.getIntOr("thenSteps", 1);
       this.elseSteps = tag.getIntOr("elseSteps", 0);

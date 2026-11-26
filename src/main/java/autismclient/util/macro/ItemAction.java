@@ -312,10 +312,10 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                eiButton = eiAction.init_I();
             }
 
-            MacroItemTarget entryTarget = this.init_ArrayUtil_I(ei).init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget entryTarget = this.init_ArrayUtil_I(ei).resolveTemplates(mc);
             if (entryTarget != null) {
-               String entryName = init_Str_Str(entryTarget.write_Str());
-               int configuredEntrySlot = entryTarget.init_Z() ? entryTarget.init_I : -1;
+               String entryName = init_Str_Str(entryTarget.toSpecString());
+               int configuredEntrySlot = entryTarget.hasSlot() ? entryTarget.slot : -1;
                if (eiAction == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
                   out.add(new ItemAction.Inner_StreamUtil(eiAction, eiButton, -1, entryTarget, clickCount));
                } else {
@@ -354,7 +354,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          }
 
          if (action == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
-            out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, -1, MacroItemTarget.init_ArrayUtil_I(this.targetSlot), this.times));
+            out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, -1, MacroItemTarget.ofSlot(this.targetSlot), this.times));
             return out;
          }
 
@@ -439,7 +439,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private int init_I_AbstractContainerM_Str(AbstractContainerMenu handler, String name) {
-      return this.init_I_AbstractContainerM_ArrayUtil(handler, MacroItemTarget.update(name));
+      return this.init_I_AbstractContainerM_ArrayUtil(handler, MacroItemTarget.parse(name));
    }
 
    private int init_I_AbstractContainerM_ArrayUtil(AbstractContainerMenu handler, MacroItemTarget target) {
@@ -447,7 +447,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private int init(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_DataUtil searchScope, ItemAction.Inner_CachePool amountMode) {
-      if (!target.update()) {
+      if (!target.hasItemFilter()) {
          return -1;
       }
 
@@ -486,7 +486,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             }
 
             int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, slot.index);
-            int score = target.init_I_ItemStack_I(slot.getItem(), visibleSlot);
+            int score = target.matchScore(slot.getItem(), visibleSlot);
             if (score >= 0) {
                int count = slot.getItem().getCount();
                if (this.init(mode, score, count, bestScore, bestCount)) {
@@ -514,7 +514,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private int init(AbstractContainerMenu handler, String name, int requiredSlot) {
-      return this.init(handler, MacroItemTarget.update(name), requiredSlot);
+      return this.init(handler, MacroItemTarget.parse(name), requiredSlot);
    }
 
    private int init(AbstractContainerMenu handler, MacroItemTarget target, int requiredSlot) {
@@ -524,12 +524,12 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             return -1;
          }
 
-         if (!target.update()) {
+         if (!target.hasItemFilter()) {
             return requiredSlot;
          }
 
          int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(init_Minecraft, requiredSlot);
-         return target.init_Z_ItemStack_I(slot.getItem(), visibleSlot) ? requiredSlot : -1;
+         return target.matches(slot.getItem(), visibleSlot) ? requiredSlot : -1;
       } else {
          return -1;
       }
@@ -579,7 +579,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "ITEM");
-      tag.put("itemNames", MacroItemTarget.init_ListTag_List(this.load_List_3()));
+      tag.put("itemNames", MacroItemTarget.toListTag(this.load_List_3()));
       ListTag times2 = new ListTag();
 
       for (int t : this.itemTimes) {
@@ -639,11 +639,11 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       this.itemNames.clear();
       if (tag.contains("itemNames")) {
          ListTag nl = tag.getList("itemNames").orElse(new ListTag());
-         this.itemTargets.addAll(MacroItemTarget.init_List_ListTag(nl));
+         this.itemTargets.addAll(MacroItemTarget.fromListTag(nl));
       } else if (tag.contains("itemName")) {
          String old = tag.getStringOr("itemName", "");
          if (!old.isEmpty()) {
-            this.itemTargets.add(MacroItemTarget.update(old));
+            this.itemTargets.add(MacroItemTarget.parse(old));
          }
       }
 
@@ -797,7 +797,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       String actionName = this.init_N_I(0).load_Str;
-      String e0 = targets.get(0).write_Str();
+      String e0 = targets.get(0).toSpecString();
       int slotNumber = init_I_Str(e0);
       String itemName = init_Str_Str(e0);
       String first;
@@ -1007,8 +1007,8 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       for (String itemName : this.itemNames) {
-         MacroItemTarget target = MacroItemTarget.update(itemName);
-         if (target.init_Z() || target.update()) {
+         MacroItemTarget target = MacroItemTarget.parse(itemName);
+         if (target.hasSlot() || target.hasItemFilter()) {
             this.itemTargets.add(target);
          }
       }
@@ -1026,7 +1026,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
 
       for (MacroItemTarget target : this.itemTargets) {
          if (target != null) {
-            String entry = target.write_Str();
+            String entry = target.toSpecString();
             if (!entry.isBlank()) {
                this.itemNames.add(entry);
             }

@@ -66,7 +66,7 @@ public final class ResourcePackSessionTracker {
       List<ResourcePackSessionTracker.PackSession> replaced = new ArrayList<>(2);
       ResourcePackSessionTracker.PackSession session;
       synchronized (init_Obj) {
-         Object resolvedManager = manager != null ? manager : context.init_ServerPackManager();
+         Object resolvedManager = manager != null ? manager : context.serverPackManager();
          session = init_Map.get(context);
          if (session != null && session.load_Z && init(session, source, resolvedManager)) {
             if (session.init_Obj == null && source != null) {
@@ -114,11 +114,11 @@ public final class ResourcePackSessionTracker {
       ConnectionPrivacyRegistry.ConnectionSession context = session.init_BufferHelper_Strea;
       return (source == null || session.init_Obj == null || session.init_Obj == source)
          && (manager == null || session.load_Obj == null || session.load_Obj == manager)
-         && session.load_J == context.init_J()
-         && session.init_PacketListener == context.init_PacketListener()
-         && Objects.equals(session.init_BufferHelper_DataU, context.init_BufferHelper_DataU())
-         && Objects.equals(session.init_BufferHelper_Buffe, context.init_BufferHelper_Buffe())
-         && session.read == context.load_J();
+         && session.load_J == context.lifecycleId()
+         && session.init_PacketListener == context.packetListener()
+         && Objects.equals(session.init_BufferHelper_DataU, context.accountIdentity())
+         && Objects.equals(session.init_BufferHelper_Buffe, context.serverEndpoint())
+         && session.read == context.downloadGeneration();
    }
 
    private static void init(List<ResourcePackSessionTracker.PackSession> replaced) {
@@ -155,13 +155,13 @@ public final class ResourcePackSessionTracker {
             ConnectionPrivacyRegistry.ConnectionSession context = session.init_BufferHelper_Strea;
             return session.load_Z
                && init_Map.get(context) == session
-               && ConnectionPrivacyRegistry.init_Z(context)
-               && session.load_J == context.init_J()
-               && session.init_PacketListener == context.init_PacketListener()
-               && Objects.equals(session.init_BufferHelper_DataU, context.init_BufferHelper_DataU())
-               && Objects.equals(session.init_BufferHelper_Buffe, context.init_BufferHelper_Buffe())
-               && session.read == context.load_J()
-               && session.load_Obj == context.init_ServerPackManager();
+               && ConnectionPrivacyRegistry.isActive(context)
+               && session.load_J == context.lifecycleId()
+               && session.init_PacketListener == context.packetListener()
+               && Objects.equals(session.init_BufferHelper_DataU, context.accountIdentity())
+               && Objects.equals(session.init_BufferHelper_Buffe, context.serverEndpoint())
+               && session.read == context.downloadGeneration()
+               && session.load_Obj == context.serverPackManager();
          }
       } else {
          return false;
@@ -466,7 +466,7 @@ public final class ResourcePackSessionTracker {
    }
 
    private static void write_V(ResourcePackSessionTracker.PackSession session) {
-      init(!session.init_BufferHelper_Strea.init_Z());
+      init(!session.init_BufferHelper_Strea.isMultiConnection());
    }
 
    private static void init(boolean includePrimary) {
@@ -542,7 +542,7 @@ public final class ResourcePackSessionTracker {
       List<ResourcePackSessionTracker.ResponseEvent> sends = new ArrayList<>();
       synchronized (init_Obj) {
          for (ResourcePackSessionTracker.PackSession session : init_Map.values()) {
-            if ((includePrimary || session.init_BufferHelper_Strea.init_Z()) && init_Z(session)) {
+            if ((includePrimary || session.init_BufferHelper_Strea.isMultiConnection()) && init_Z(session)) {
                for (ResourcePackSessionTracker.PackEntry push : session.init_Map.values()) {
                   Action action = init_ServerboundResourc(push);
                   if (action != null) {
@@ -973,11 +973,11 @@ public final class ResourcePackSessionTracker {
       private PackSession(long id, ConnectionPrivacyRegistry.ConnectionSession context, Object source, Object manager, Runnable disconnectHandler) {
          this.init_J = id;
          this.init_BufferHelper_Strea = context;
-         this.load_J = context.init_J();
-         this.init_PacketListener = context.init_PacketListener();
-         this.init_BufferHelper_DataU = context.init_BufferHelper_DataU();
-         this.init_BufferHelper_Buffe = context.init_BufferHelper_Buffe();
-         this.read = context.load_J();
+         this.load_J = context.lifecycleId();
+         this.init_PacketListener = context.packetListener();
+         this.init_BufferHelper_DataU = context.accountIdentity();
+         this.init_BufferHelper_Buffe = context.serverEndpoint();
+         this.read = context.downloadGeneration();
          this.init_Obj = source;
          this.load_Obj = manager;
          this.init_Runnable = disconnectHandler;

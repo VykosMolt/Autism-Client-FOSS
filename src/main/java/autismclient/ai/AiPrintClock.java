@@ -162,7 +162,7 @@ final class AiPrintClock {
          if (this.prepare() == autismclient.ai.print.PrintMachineJob.JobStatus.READY
             && !this.init_DataUtil.load_Z()
             && !this.init_NetHelper.sweptVolume().intersects(this.init_DataUtil.init_AABB())) {
-            this.init_J = AiServerEvidence.init_J_BlockPos(this.position());
+            this.init_J = AiServerEvidence.blockRevision(this.position());
             this.load_J = this.init_DataUtil.load_J();
             this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.SENT;
             this.init_Str = "Waiting for the clock lever's native server receipt";
@@ -183,7 +183,7 @@ final class AiPrintClock {
             return this.init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
          }
 
-         AiServerEvidence.Inner_DataUtil reply = AiServerEvidence.init_ca_DataUtil_BlockPos(this.position());
+         AiServerEvidence.Inner_DataUtil reply = AiServerEvidence.lastBlockUpdate(this.position());
          if (reply == null
             || reply.revision() <= this.init_J
             || reply.state() != this.load_BlockState

@@ -33,12 +33,12 @@ final class AiRegions {
             }
 
             JsonObject root = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
-            if (AiJson.init_I_JsonObject(root, "version", 0) != 1) {
+            if (AiJson.getInt(root, "version", 0) != 1) {
                throw new IllegalArgumentException("Unsupported region map version");
             }
 
             for (JsonElement raw : root.getAsJsonArray("regions")) {
-               AiRegions.Region region = AiJson.init.fromJson(raw, AiRegions.Region.class);
+               AiRegions.Region region = AiJson.GSON.fromJson(raw, AiRegions.Region.class);
                if (region.scope() == null || region.evidenceId() == null || region.session() == null || region.reachedFrom() == null) {
                   throw new IllegalArgumentException("Incomplete region observation");
                }
@@ -112,7 +112,7 @@ final class AiRegions {
          snapshot = this.init_List;
       }
 
-      AiJson.init_V_Path_Obj(directory.resolve("regions.json"), AiJson.init_JsonObject_ObjArr("version", 1, "regions", snapshot));
+      AiJson.writeAtomicJson(directory.resolve("regions.json"), AiJson.objectOf("version", 1, "regions", snapshot));
       synchronized (this) {
          this.load = captured;
       }

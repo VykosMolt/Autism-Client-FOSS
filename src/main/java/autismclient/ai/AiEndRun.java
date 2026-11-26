@@ -49,7 +49,7 @@ final class AiEndRun {
    }
 
    static AiOperation init_AiOperation(Minecraft mc) {
-      if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES) || AiGameState.init_I_Str("minecraft:water_bucket") <= 0) {
+      if (mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES) || AiGameState.countInventoryItem("minecraft:water_bucket") <= 0) {
          return null;
       }
 
@@ -60,9 +60,9 @@ final class AiEndRun {
       BlockPos feet = mc.player.blockPosition();
       return AiNetherRun.init_AiOperation_AiOperation_Supplier(
          AiBucket.init(
-            AiJson.init_JsonObject_ObjArr("action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5)
+            AiJson.objectOf("action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5)
          ),
-         () -> AiBucket.init(AiJson.init_JsonObject_ObjArr("action", "fill", "fluid", "water", "timeoutSeconds", 5))
+         () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
       );
    }
 
@@ -147,7 +147,7 @@ final class AiEndRun {
          }
       }
 
-      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
+      return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
    static AiOperation init(final Minecraft mc, final BlockPos portal) {
@@ -188,12 +188,12 @@ final class AiEndRun {
                   return this.init(AiOperation.Status.FAILED, "did not reach the portal");
                }
 
-               this.init_DataUtil.init_V_Vec3(new Vec3(portal.getX() + 0.5, portal.getY(), portal.getZ() + 0.5));
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.aimAt(new Vec3(portal.getX() + 0.5, portal.getY(), portal.getZ() + 0.5));
+               this.init_DataUtil.tick();
                AiFallGuard.load();
                mc.options.keyUp.setDown(true);
                mc.options.keyJump.setDown(mc.player.onGround() && mc.player.horizontalCollision);
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "stepping onto the portal", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "stepping onto the portal", new JsonObject());
             } else {
                return this.init(AiOperation.Status.CANCELLED, "cancelled");
             }
@@ -202,14 +202,14 @@ final class AiEndRun {
          AiOperation.Result init(AiOperation.Status status, String message) {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
-            this.init_DataUtil.init_V();
-            return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+            this.init_DataUtil.clear();
+            return AiGameOperations.result(status, message, new JsonObject());
          }
 
          @Override
          public void cancel() {
             this.init_Z = true;
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
          }
@@ -219,13 +219,13 @@ final class AiEndRun {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int timeoutSeconds = Math.max(120, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 1800)));
+         final int timeoutSeconds = Math.max(120, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800)));
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final String init_Str = AiWorldIdentity.init(mc);
             final Object init_Obj = mc.getConnection();
             final UUID init_UUID = mc.player.getUUID();
-            final long load_J = AiServerEvidence.load_J();
+            final long load_J = AiServerEvidence.deathRevision();
             final JsonArray init_JsonArray = new JsonArray();
             final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.GuardPolicy.standard().withoutFlee(), "end");
             AiOperation init_AiOperation;
@@ -265,7 +265,7 @@ final class AiEndRun {
                      return this.init(AiOperation.Status.UNCERTAIN, "Player changed during End traversal");
                   }
 
-                  if (mc.player.isAlive() && this.load_J == AiServerEvidence.load_J()) {
+                  if (mc.player.isAlive() && this.load_J == AiServerEvidence.deathRevision()) {
                      if (mc.gui.screen() instanceof WinScreen credits) {
                         if (this.load_Z && this.read_Z) {
                            this.write_Z = true;
@@ -299,7 +299,7 @@ final class AiEndRun {
                         }
 
                         autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(5000000000L);
-                        autismclient.ai.engine.AiMotionSafety.putAt_V_F_J(25.0F, 5000000000L);
+                        autismclient.ai.engine.AiMotionSafety.setPitchFloor(25.0F, 5000000000L);
                         if (mc.player.onGround() && mc.player.tickCount % 40 == 0) {
                            AiMlg.init(mc.player, Items.WATER_BUCKET);
                         }
@@ -332,7 +332,7 @@ final class AiEndRun {
                            this.init_AiOperation = null;
                            AiSpeedrun.init_V_Str_ObjArr("[AI] end step {}: {} - {}", r.status(), this.load_Str, AiSpeedrun.init_Str_Str(r.message()));
                            this.init_JsonArray
-                              .add(AiJson.init_JsonObject_ObjArr("step", this.load_Str, "status", r.status().name(), "message", AiSpeedrun.init_Str_Str(r.message())));
+                              .add(AiJson.objectOf("step", this.load_Str, "status", r.status().name(), "message", AiSpeedrun.init_Str_Str(r.message())));
                            if (r.status() == AiOperation.Status.CANCELLED) {
                               return this.init(AiOperation.Status.CANCELLED, "Cancelled at " + this.load_Str, r);
                            }
@@ -342,7 +342,7 @@ final class AiEndRun {
                            }
 
                            if (this.load_Str.startsWith("fight the dragon") && r.status() == AiOperation.Status.SUCCEEDED) {
-                              this.load_Z = this.load_Z | AiJson.init_Z_JsonObject(AiRunResources.init_JsonObject(r.dataJson()), "dragonDead", false);
+                              this.load_Z = this.load_Z | AiJson.getBoolean(AiRunResources.parseEvidenceJson(r.dataJson()), "dragonDead", false);
                            }
 
                            if (this.load_Str.equals("heal in a hole") && r.status() != AiOperation.Status.SUCCEEDED && this.read_BlockPos != null) {
@@ -404,7 +404,7 @@ final class AiEndRun {
                   this.update = System.nanoTime() + 15000000000L;
                   return this.init(
                      "heal in a hole here",
-                     AiBurrow.init(AiJson.init_JsonObject_ObjArr("healTo", Math.max(18.0F, this.init_F), "stay", false, "towerOk", false, "timeoutSeconds", 120))
+                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.init_F), "stay", false, "towerOk", false, "timeoutSeconds", 120))
                   );
                }
 
@@ -413,27 +413,27 @@ final class AiEndRun {
                   if (System.nanoTime() < this.write_J) {
                      return this.init(
                         "wait to walk to the heal spot (health " + String.format("%.0f", mc.player.getHealth()) + ")",
-                        AiNetherRun.init_AiOperation_I_AiOperation(20, AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "waited", new JsonObject()))
+                        AiNetherRun.init_AiOperation_I_AiOperation(20, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "waited", new JsonObject()))
                      );
                   }
 
                   this.write_J = System.nanoTime() + 3000000000L;
                   return this.init(
                      "to the heal spot at " + this.read_BlockPos.toShortString(),
-                     AiGuard.init(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
+                     AiGuard.allowDuringLowHealth(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST, true))
                   );
                } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
-                  return this.init("eat before the fight", AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 20)));
+                  return this.init("eat before the fight", AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 20)));
                } else if (System.nanoTime() > this.read_J) {
                   this.read_J = System.nanoTime() + 20000000000L;
                   return this.init(
                      "heal in a hole",
-                     AiBurrow.init(AiJson.init_JsonObject_ObjArr("healTo", Math.max(18.0F, this.init_F), "stay", false, "towerOk", false, "timeoutSeconds", 120))
+                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.init_F), "stay", false, "towerOk", false, "timeoutSeconds", 120))
                   );
                } else {
                   return this.init(
                      "rest to heal (health " + String.format("%.0f", mc.player.getHealth()) + ")",
-                     AiNetherRun.init_AiOperation_I_AiOperation(100, AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "rested", new JsonObject()))
+                     AiNetherRun.init_AiOperation_I_AiOperation(100, AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "rested", new JsonObject()))
                   );
                }
             }
@@ -484,7 +484,7 @@ final class AiEndRun {
 
             BlockPos init(int x, int z) {
                BlockPos probe = new BlockPos(x, 64, z);
-               if (!AiTerrain.init(mc.level, probe)) {
+               if (!AiTerrain.isLoaded(mc.level, probe)) {
                   return null;
                }
 
@@ -496,7 +496,7 @@ final class AiEndRun {
                BlockPos portal = this.load_BlockPos_7();
                if (this.load_Z && portal != null) {
                   this.init_BlockPos = portal.immutable();
-                  this.load_JsonObject = AiJson.init_JsonObject_ObjArr(
+                  this.load_JsonObject = AiJson.objectOf(
                      "kind",
                      "central_end_exit",
                      "dimension",
@@ -545,18 +545,18 @@ final class AiEndRun {
                   return this.init("Waiting for the exit portal to open");
                }
 
-               if (AiRunResources.load_Z()) {
-                  Map<String, Integer> missing = AiRunResources.init_Map();
+               if (AiRunResources.isCampaignActive()) {
+                  Map<String, Integer> missing = AiRunResources.missingMandatoryGear();
                   if (!missing.isEmpty()) {
                      return this.init(AiOperation.Status.FAILED, "Required campaign equipment is unavailable in the End: " + missing);
                   }
 
-                  if (!AiRunResources.init_Z()) {
+                  if (!AiRunResources.isMandatoryArmorEquipped()) {
                      if (this.load_I++ >= 2) {
                         return this.init(AiOperation.Status.FAILED, "Required End armor could not be equipped; readiness remains unresolved");
                      }
 
-                     return this.init("equip the required End armor", AiEquip.init(AiJson.init_JsonObject_ObjArr("what", "armor")));
+                     return this.init("equip the required End armor", AiEquip.init(AiJson.objectOf("what", "armor")));
                   }
                }
 
@@ -587,11 +587,11 @@ final class AiEndRun {
                   return healed;
                }
 
-               int beds = AiItems.init_I(AiItems.init_af_DataUtil("bed"));
+               int beds = AiItems.countInInventory(AiItems.resolve("bed"));
                return this.init(
                   "fight the dragon",
                   AiDragon.init_AiOperation(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "beds",
                         beds,
                         "melee",
@@ -655,7 +655,7 @@ final class AiEndRun {
             }
 
             JsonObject init_JsonObject_61() {
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "dragonDead",
                   this.load_Z,
                   "centralExitAttempted",
@@ -674,7 +674,7 @@ final class AiEndRun {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_61());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_61());
             }
 
             void init_V_33() {
@@ -682,7 +682,7 @@ final class AiEndRun {
                   boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();
                   this.init_Z |= pending;
                   if (pending && this.init_AiOperation_Result != null) {
-                     this.init_JsonObject = AiRunResources.load_JsonObject(this.init_AiOperation_Result.dataJson());
+                     this.init_JsonObject = AiRunResources.compactEvidenceJson(this.init_AiOperation_Result.dataJson());
                   }
 
                   this.init_AiOperation.cancel();
@@ -697,7 +697,7 @@ final class AiEndRun {
             AiOperation.Result init(AiOperation.Status status, String message, AiOperation.Result child) {
                boolean pending = this.requiresReconciliationAfterEmergency();
                AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, this.init_JsonObject_61(), pending, child);
-               this.init_Z = this.init_Z | (pending || AiJson.init_Z_JsonObject(AiRunResources.init_JsonObject(result.dataJson()), "reobserveBeforeResuming", false));
+               this.init_Z = this.init_Z | (pending || AiJson.getBoolean(AiRunResources.parseEvidenceJson(result.dataJson()), "reobserveBeforeResuming", false));
                this.init_V_33();
                this.init_Y.init_V();
                autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);

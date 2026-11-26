@@ -81,8 +81,8 @@ public class WaitFreeSlotsAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.countMode = MacroNbtCodecHelper.init(WaitFreeSlotsAction.Inner_StreamUtil.class, tag.getStringOr("countMode", WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS.name()), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
-      this.comparison = MacroNbtCodecHelper.init(WaitFreeSlotsAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitFreeSlotsAction.Inner_DataUtil.AT_MOST.name()), WaitFreeSlotsAction.Inner_DataUtil.AT_MOST);
+      this.countMode = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Inner_StreamUtil.class, tag.getStringOr("countMode", WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS.name()), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
+      this.comparison = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitFreeSlotsAction.Inner_DataUtil.AT_MOST.name()), WaitFreeSlotsAction.Inner_DataUtil.AT_MOST);
       this.slots = Math.max(0, Math.min(36, tag.getIntOr("slots", 0)));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {

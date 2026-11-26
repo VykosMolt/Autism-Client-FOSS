@@ -28,24 +28,24 @@ public class CloseGuiAction implements MacroAction {
          }
 
          boolean matchItem = true;
-         MacroItemTarget target = this.init().init_ArrayUtil_Minecraft(mc);
+         MacroItemTarget target = this.init().resolveTemplates(mc);
          if (!this.useItemFilter || target != null) {
-            if (this.useItemFilter && (target.init_Z() || target.update())) {
+            if (this.useItemFilter && (target.hasSlot() || target.hasItemFilter())) {
                matchItem = false;
                if (mc.player.containerMenu != null) {
-                  int effectiveSlot = target.init_Z() ? target.init_I : this.targetSlot;
+                  int effectiveSlot = target.hasSlot() ? target.slot : this.targetSlot;
                   int resolvedTargetSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, effectiveSlot);
                   if (resolvedTargetSlot >= 0 && resolvedTargetSlot < mc.player.containerMenu.slots.size()) {
                      ItemStack stack = mc.player.containerMenu.slots.get(resolvedTargetSlot).getItem();
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, resolvedTargetSlot);
-                     if (!stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot)) {
+                     if (!stack.isEmpty() && target.matches(stack, visibleSlot)) {
                         matchItem = true;
                      }
                   } else if (effectiveSlot == -1) {
                      for (Slot slot : mc.player.containerMenu.slots) {
                         ItemStack stack = slot.getItem();
                         int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                        if (!stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot)) {
+                        if (!stack.isEmpty() && target.matches(stack, visibleSlot)) {
                            matchItem = true;
                            break;
                         }
@@ -72,8 +72,8 @@ public class CloseGuiAction implements MacroAction {
       tag.putString("type", "CLOSE_GUI");
       tag.putString("guiName", this.guiName);
       MacroItemTarget target = this.init();
-      if (target.init_Z() || target.update()) {
-         tag.put("itemName", target.init_CompoundTag());
+      if (target.hasSlot() || target.hasItemFilter()) {
+         tag.put("itemName", target.toTag());
       }
 
       tag.putBoolean("useItemFilter", this.useItemFilter);
@@ -88,21 +88,21 @@ public class CloseGuiAction implements MacroAction {
          this.guiName = tag.getStringOr("guiName", "");
       }
 
-      this.itemTarget = tag.getCompound("itemName").map(MacroItemTarget::init_ArrayUtil_CompoundTag).orElseGet(() -> {
+      this.itemTarget = tag.getCompound("itemName").map(MacroItemTarget::fromTag).orElseGet(() -> {
          int legacySlot = tag.contains("targetSlot") ? tag.getIntOr("targetSlot", -1) : -1;
          String legacyName = tag.getStringOr("itemName", "");
          if (legacySlot >= 0 && !legacyName.isBlank()) {
-            return MacroItemTarget.update("#" + legacySlot + "|" + legacyName);
+            return MacroItemTarget.parse("#" + legacySlot + "|" + legacyName);
          } else {
-            return legacySlot >= 0 ? MacroItemTarget.init_ArrayUtil_I(legacySlot) : MacroItemTarget.update(legacyName);
+            return legacySlot >= 0 ? MacroItemTarget.ofSlot(legacySlot) : MacroItemTarget.parse(legacyName);
          }
       });
-      this.itemName = this.itemTarget.write_Str();
-      this.targetSlot = this.itemTarget.init_Z() ? this.itemTarget.init_I : -1;
+      this.itemName = this.itemTarget.toSpecString();
+      this.targetSlot = this.itemTarget.hasSlot() ? this.itemTarget.slot : -1;
       if (tag.contains("useItemFilter")) {
          this.useItemFilter = tag.getBooleanOr("useItemFilter", false);
       } else {
-         this.useItemFilter = this.itemTarget.init_Z() || this.itemTarget.update();
+         this.useItemFilter = this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter();
       }
 
       if (tag.contains("sendPacket")) {
@@ -136,13 +136,13 @@ public class CloseGuiAction implements MacroAction {
    }
 
    private MacroItemTarget init() {
-      if (this.itemTarget == null || !this.itemTarget.init_Z() && !this.itemTarget.update()) {
+      if (this.itemTarget == null || !this.itemTarget.hasSlot() && !this.itemTarget.hasItemFilter()) {
          if (this.targetSlot >= 0 && !this.itemName.isBlank()) {
-            this.itemTarget = MacroItemTarget.update("#" + this.targetSlot + "|" + this.itemName);
+            this.itemTarget = MacroItemTarget.parse("#" + this.targetSlot + "|" + this.itemName);
          } else if (this.targetSlot >= 0) {
-            this.itemTarget = MacroItemTarget.init_ArrayUtil_I(this.targetSlot);
+            this.itemTarget = MacroItemTarget.ofSlot(this.targetSlot);
          } else {
-            this.itemTarget = MacroItemTarget.update(this.itemName);
+            this.itemTarget = MacroItemTarget.parse(this.itemName);
          }
 
          return this.itemTarget;

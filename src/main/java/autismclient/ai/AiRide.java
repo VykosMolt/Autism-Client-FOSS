@@ -33,13 +33,13 @@ final class AiRide {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiRide.Inner_DataUtil action = init(AiJson.init_Str_JsonObject(args, "action", "mount"));
-         final int entityId = AiJson.init_I_JsonObject(args, "entityId", -1);
-         final boolean place = AiJson.init_Z_JsonObject(args, "place", true);
-         final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
+         final AiRide.Inner_DataUtil action = init(AiJson.getString(args, "action", "mount"));
+         final int entityId = AiJson.getInt(args, "entityId", -1);
+         final boolean place = AiJson.getBoolean(args, "place", true);
+         final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 180)));
          boolean hasTarget = args.has("x") && args.has("z");
          final BlockPos destination = hasTarget
-            ? new BlockPos(AiJson.init_I_JsonObject(args, "x", 0), AiJson.init_I_JsonObject(args, "y", 64), AiJson.init_I_JsonObject(args, "z", 0))
+            ? new BlockPos(AiJson.getInt(args, "x", 0), AiJson.getInt(args, "y", 64), AiJson.getInt(args, "z", 0))
             : null;
          if (action == AiRide.Inner_DataUtil.TRAVEL && destination == null) {
             throw new IllegalArgumentException("travel needs x and z (y is optional for a boat)");
@@ -104,16 +104,16 @@ final class AiRide {
                            JsonObject missing = new JsonObject();
                            missing.addProperty("minecraft:oak_boat", 1);
                            return this.init(
-                              AiOperation.Status.FAILED, "No vehicle nearby and none in the inventory", AiJson.init_JsonObject_ObjArr("missing", missing)
+                              AiOperation.Status.FAILED, "No vehicle nearby and none in the inventory", AiJson.objectOf("missing", missing)
                            );
                         }
 
-                        if (AiItems.read(AiItems.init_af_DataUtil(BuiltInRegistries.ITEM.getKey(carried).toString())) < 0) {
+                        if (AiItems.equipHotbar(AiItems.resolve(BuiltInRegistries.ITEM.getKey(carried).toString())) < 0) {
                            return this.init(AiOperation.Status.FAILED, "Could not hold the vehicle item");
                         }
 
-                        this.init_DataUtil.init_V_Vec3(mc.player.position().add(mc.player.getLookAngle().x * 3.0, -1.2, mc.player.getLookAngle().z * 3.0));
-                        this.init_DataUtil.load_V();
+                        this.init_DataUtil.aimAt(mc.player.position().add(mc.player.getLookAngle().x * 3.0, -1.2, mc.player.getLookAngle().z * 3.0));
+                        this.init_DataUtil.tick();
                         mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                         Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
                         this.init_Z = true;
@@ -152,13 +152,13 @@ final class AiRide {
                            this.init_AiOperation = null;
                         }
 
-                        this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
-                        this.init_DataUtil.load_V();
+                        this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
+                        this.init_DataUtil.tick();
                         if (++this.init_I > 80) {
                            return this.init(AiOperation.Status.FAILED, "The vehicle did not accept the player");
                         }
 
-                        if (!autismclient.ai.engine.AiAim.init_Z_Entity(this.init_Entity)) {
+                        if (!autismclient.ai.engine.AiAim.isLookingAtEntity(this.init_Entity)) {
                            return this.init("Turning toward the vehicle");
                         }
 
@@ -166,7 +166,7 @@ final class AiRide {
                            .interact(
                               mc.player,
                               this.init_Entity,
-                              new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_Entity)),
+                              new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.defaultEntityAimPoint(this.init_Entity)),
                               InteractionHand.MAIN_HAND
                            );
                         return mc.player.getVehicle() != null
@@ -199,9 +199,9 @@ final class AiRide {
                      );
                   }
 
-                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
-                  this.init_DataUtil.init_V_Vec3(new Vec3(target.x, riding.getEyeY(), target.z));
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+                  this.init_DataUtil.aimAt(new Vec3(target.x, riding.getEyeY(), target.z));
+                  this.init_DataUtil.tick();
                   mc.options.keyUp.setDown(true);
                   return this.init("Sailing (" + (int)distance + "m to go)");
                }
@@ -241,10 +241,10 @@ final class AiRide {
                }
 
                Item init_Item_3() {
-                  AiItems.ItemSpec boats = AiItems.init_af_DataUtil("boat");
+                  AiItems.ItemSpec boats = AiItems.resolve("boat");
 
                   for (Item item : boats.items()) {
-                     if (AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
+                     if (AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
                         return item;
                      }
                   }
@@ -263,12 +263,12 @@ final class AiRide {
                }
 
                JsonObject init_JsonObject_41() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr("action", action.name().toLowerCase(Locale.ROOT));
+                  JsonObject out = AiJson.objectOf("action", action.name().toLowerCase(Locale.ROOT));
                   Entity riding = mc.player == null ? null : mc.player.getVehicle();
                   if (riding != null) {
                      out.add(
                         "riding",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "entityId",
                            riding.getId(),
                            "type",
@@ -292,7 +292,7 @@ final class AiRide {
                      for (Entity entity : mc.level.entitiesForRendering()) {
                         if (nearby.size() < 8 && entity.isAlive() && AiRide.init(entity) && !(entity.distanceToSqr(mc.player) > 576.0)) {
                            nearby.add(
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "entityId",
                                  entity.getId(),
                                  "type",
@@ -336,7 +336,7 @@ final class AiRide {
                   if (!this.load_Z) {
                      this.load_Z = true;
                      this.init_V_22();
-                     this.init_DataUtil.init_V();
+                     this.init_DataUtil.clear();
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;

@@ -26,20 +26,20 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
 final class AiGameState {
-   private static Map<String, Integer> init_Map = Map.of();
-   private static long init_J = -1L;
-   private static LocalPlayer init_LocalPlayer;
+   private static Map<String, Integer> cachedItemCounts = Map.of();
+   private static long cachedInventoryRevision = -1L;
+   private static LocalPlayer cachedPlayer;
 
    private AiGameState() {
    }
 
-   static AiObservation init(String session, String scope, String source) {
-      return init(session, scope, source, -1L, 0);
+   static AiObservation observe(String session, String scope, String source) {
+      return observe(session, scope, source, -1L, 0);
    }
 
-   static AiObservation init(String session, String scope, String source, long taskElapsedSeconds, int taskMinutes) {
+   static AiObservation observe(String session, String scope, String source, long taskElapsedSeconds, int taskMinutes) {
       Minecraft mc = Minecraft.getInstance();
-      JsonObject state = AiJson.init_JsonObject_ObjArr("connected", mc.player != null && mc.level != null);
+      JsonObject state = AiJson.objectOf("connected", mc.player != null && mc.level != null);
       if (taskElapsedSeconds >= 0L) {
          state.addProperty("taskElapsedSeconds", taskElapsedSeconds);
          state.addProperty("taskRemainingSeconds", Math.max(0L, taskMinutes * 60L - taskElapsedSeconds));
@@ -51,17 +51,17 @@ final class AiGameState {
       if (mc.player != null && mc.level != null) {
          state.add(
             "position",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "x",
-               init(mc.player.getX(), 1000.0),
+               roundToScale(mc.player.getX(), 1000.0),
                "y",
-               init(mc.player.getY(), 1000.0),
+               roundToScale(mc.player.getY(), 1000.0),
                "z",
-               init(mc.player.getZ(), 1000.0),
+               roundToScale(mc.player.getZ(), 1000.0),
                "yaw",
-               init(mc.player.getYRot(), 10.0),
+               roundToScale(mc.player.getYRot(), 10.0),
                "pitch",
-               init(mc.player.getXRot(), 10.0)
+               roundToScale(mc.player.getXRot(), 10.0)
             )
          );
          state.addProperty("health", mc.player.getHealth());
@@ -73,7 +73,7 @@ final class AiGameState {
          state.addProperty("weather", mc.level.isThundering() ? "thunder" : (mc.level.isRaining() ? "rain" : "clear"));
          long dayTime = mc.level.getOverworldClockTime();
          state.addProperty("dayTime", dayTime);
-         state.addProperty("timeOfDay", init_Str_J(dayTime));
+         state.addProperty("timeOfDay", timeOfDayLabel(dayTime));
          state.addProperty("difficulty", mc.level.getDifficulty().getSerializedName());
          state.addProperty("gameMode", mc.gameMode.getPlayerMode().getName());
          JsonArray effects = new JsonArray();
@@ -83,7 +83,7 @@ final class AiGameState {
                break;
             }
 
-            effects.add(init(BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect().value()).toString(), effect.getAmplifier(), effect.getDuration()));
+            effects.add(formatEffect(BuiltInRegistries.MOB_EFFECT.getKey(effect.getEffect().value()).toString(), effect.getAmplifier(), effect.getDuration()));
          }
 
          state.add("effects", effects);
@@ -93,7 +93,7 @@ final class AiGameState {
             ItemStack stack = mc.player.getInventory().getItem(i);
             if (!stack.isEmpty()) {
                inventory.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "slot",
                      i,
                      "item",
@@ -120,18 +120,18 @@ final class AiGameState {
          state.add("bossBars", AiWorldReaders.read(mc));
          state.add("vitals", AiWorldReaders.load_JsonObject(mc));
          state.add("customMenu", AiGameplay.init());
-         state.add("recentServerMessages", AiJson.init.toJsonTree(AiServerEvidence.init_List_I(6)));
+         state.add("recentServerMessages", AiJson.GSON.toJsonTree(AiServerEvidence.recentServerMessages(6)));
          JsonArray chatLines = new JsonArray();
 
          for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(8)) {
             JsonArray actions = new JsonArray();
 
             for (AiChatLedger.ClickAction click : entry.clicks()) {
-               actions.add(AiJson.init_JsonObject_ObjArr("action", click.action(), "value", click.value()));
+               actions.add(AiJson.objectOf("action", click.action(), "value", click.value()));
             }
 
             chatLines.add(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "source", entry.source(), "sender", entry.sender(), "text", entry.text(), "hoverText", entry.hoverText(), "clicks", actions
                )
             );
@@ -144,7 +144,7 @@ final class AiGameState {
             ItemStack stack = slot.getItem();
             if (!stack.isEmpty()) {
                slots.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "slot",
                      slot.index,
                      "item",
@@ -162,7 +162,7 @@ final class AiGameState {
 
          state.add(
             "container",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "id",
                mc.player.containerMenu.containerId,
                "type",
@@ -178,7 +178,7 @@ final class AiGameState {
          for (Entity e : mc.level.entitiesForRendering()) {
             if (e != mc.player && e.distanceToSqr(mc.player) < 2304.0 && entities.size() < 20) {
                String entityType = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString();
-               JsonObject entry = AiJson.init_JsonObject_ObjArr(
+               JsonObject entry = AiJson.objectOf(
                   "id",
                   e.getId(),
                   "uuid",
@@ -186,11 +186,11 @@ final class AiGameState {
                   "type",
                   entityType,
                   "x",
-                  init(e.getX(), 100.0),
+                  roundToScale(e.getX(), 100.0),
                   "y",
-                  init(e.getY(), 100.0),
+                  roundToScale(e.getY(), 100.0),
                   "z",
-                  init(e.getZ(), 100.0)
+                  roundToScale(e.getZ(), 100.0)
                );
                if (e instanceof LivingEntity living) {
                   entry.addProperty("health", Math.round(living.getHealth() * 10.0F) / 10.0);
@@ -208,7 +208,7 @@ final class AiGameState {
          for (AiProjectiles.IncomingProjectile tracked : AiProjectiles.init(mc)) {
             if (projectiles.size() < 16) {
                projectiles.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "id",
                      tracked.entityId(),
                      "type",
@@ -246,7 +246,7 @@ final class AiGameState {
             for (int z = -5; z <= 5; z++) {
                for (int y = -2; y <= 3; y++) {
                   BlockPos p = origin.offset(x, y, z);
-                  if (AiTerrain.init(mc.level, p) && !mc.level.getBlockState(p).isAir()) {
+                  if (AiTerrain.isLoaded(mc.level, p) && !mc.level.getBlockState(p).isAir()) {
                      solid.add(p);
                   }
                }
@@ -261,7 +261,7 @@ final class AiGameState {
             }
 
             BlockState b = mc.level.getBlockState(p);
-            JsonObject entry = AiJson.init_JsonObject_ObjArr(
+            JsonObject entry = AiJson.objectOf(
                "x", p.getX(), "y", p.getY(), "z", p.getZ(), "block", BuiltInRegistries.BLOCK.getKey(b.getBlock()).toString()
             );
             if (!b.getProperties().isEmpty()) {
@@ -272,8 +272,8 @@ final class AiGameState {
          }
 
          state.add("nearbyBlocks", blocks);
-         state.add("activeModules", AiJson.init.toJsonTree(autismclient.modules.al.load_List().stream().map(m -> m.id()).toList()));
-         state.add("waypoints", AiJson.init.toJsonTree(AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))));
+         state.add("activeModules", AiJson.GSON.toJsonTree(autismclient.modules.al.load_List().stream().map(m -> m.id()).toList()));
+         state.add("waypoints", AiJson.GSON.toJsonTree(AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))));
          state.addProperty(
             "observationLimits",
             "Nearby blocks are capped at 48 within 5 blocks horizontally (use game:survey for wider/detail). Entities capped at 20 within 48 blocks; health is living-only, hostile follows game:entities classification (bosses included). Effects capped at 12. Projectiles (capped at 16) are ballistic predictions, not guarantees. Danger is a client-side damage prediction, not a guarantee. Unloaded terrain and remote inventories are unknown."
@@ -283,18 +283,18 @@ final class AiGameState {
       return new AiObservation(UUID.randomUUID().toString(), session, scope, System.currentTimeMillis(), source, state.toString());
    }
 
-   static double init(double value, double scale) {
+   static double roundToScale(double value, double scale) {
       return Math.round(value * scale) / scale;
    }
 
-   static int init_I_Str(String item) {
+   static int countInventoryItem(String item) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
       }
 
-      long revision = AiServerEvidence.init_J();
-      if (init_LocalPlayer != mc.player || init_J != revision) {
+      long revision = AiServerEvidence.inventoryRevision();
+      if (cachedPlayer != mc.player || cachedInventoryRevision != revision) {
          Map<String, Integer> rebuilt = new HashMap<>();
 
          for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
@@ -304,15 +304,15 @@ final class AiGameState {
             }
          }
 
-         init_Map = rebuilt;
-         init_J = revision;
-         init_LocalPlayer = mc.player;
+         cachedItemCounts = rebuilt;
+         cachedInventoryRevision = revision;
+         cachedPlayer = mc.player;
       }
 
-      return init_Map.getOrDefault(item, 0);
+      return cachedItemCounts.getOrDefault(item, 0);
    }
 
-   static int load(String item) {
+   static int countMainInventoryItem(String item) {
       Minecraft mc = Minecraft.getInstance();
       int count = 0;
       if (mc.player != null) {
@@ -327,7 +327,7 @@ final class AiGameState {
       return count;
    }
 
-   static String init_Str_J(long dayTime) {
+   static String timeOfDayLabel(long dayTime) {
       long t = Math.floorMod(dayTime, 24000L);
       if (t > 23460L) {
          return "sunrise";
@@ -340,11 +340,11 @@ final class AiGameState {
       }
    }
 
-   static String init(String id, int amplifier, int durationTicks) {
-      return id + " " + load(amplifier + 1) + " (" + init_Str_I(durationTicks) + ")";
+   static String formatEffect(String id, int amplifier, int durationTicks) {
+      return id + " " + toRomanNumeral(amplifier + 1) + " (" + formatDuration(durationTicks) + ")";
    }
 
-   static String init_Str_I(int durationTicks) {
+   static String formatDuration(int durationTicks) {
       if (durationTicks < 0) {
          return "inf";
       }
@@ -353,7 +353,7 @@ final class AiGameState {
       return seconds / 60 + ":" + String.format(Locale.ROOT, "%02d", seconds % 60);
    }
 
-   static String load(int value) {
+   static String toRomanNumeral(int value) {
       String var10000;
       switch (value) {
          case 1:
@@ -393,7 +393,7 @@ final class AiGameState {
       return var10000;
    }
 
-   static JsonObject init_JsonObject_JsonObject(JsonObject state) {
+   static JsonObject compactState(JsonObject state) {
       JsonObject out = state.deepCopy();
 
       for (String key : List.of("nearbyBlocks", "entities", "scoreboard", "tabList", "bossBars")) {

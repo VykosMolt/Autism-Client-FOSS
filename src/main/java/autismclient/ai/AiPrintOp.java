@@ -157,8 +157,8 @@ final class AiPrintOp implements AiOperation {
       };
       this.load_J = Math.max(0, timeoutSeconds) * 1000000000L;
       this.sync_I = this.init_Minecraft.player == null ? 0 : this.init_Minecraft.player.getInventory().getSelectedSlot();
-      AiServerEvidence.init_V_Consumer(this.init_Consumer);
-      AiServerEvidence.init_V_LongConsumer(this.init_LongConsumer);
+      AiServerEvidence.addBlockObserver(this.init_Consumer);
+      AiServerEvidence.addChunkObserver(this.init_LongConsumer);
       AiPrintOp.Inner_DataUtil.init("[AI] print v2: {} cells", this.init_List.size());
    }
 
@@ -179,7 +179,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       if (result.terminal()) {
-         JsonObject data = AiJson.init_JsonObject_Str(result.dataJson());
+         JsonObject data = AiJson.parseObject(result.dataJson());
          data.addProperty("maxOperationTickMs", this.write_J / 1000000L);
          return new AiOperation.Result(result.status(), result.message(), data.toString(), result.evidence(), result.failure());
       } else {
@@ -337,7 +337,7 @@ final class AiPrintOp implements AiOperation {
             && !this.init_UiHelper.flush_Z()
             && this.init_Minecraft.player.getFoodData().getFoodLevel() <= 14
             && !this.init_UiHelper.close_Z()) {
-            AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
+            AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
             if (vitals.hasFood() && vitals.hostilesNear() == 0 && AiSurvival.init_Z(vitals.food())) {
                return this.load("Settling before a meal");
             }
@@ -624,7 +624,7 @@ final class AiPrintOp implements AiOperation {
                } else {
                   this.init_V_AiOperation(
                      AiGameplay.write(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "item", init_Str_Item(this.load_Item), "count", Math.min(remaining, 2304), "additional", true, "radius", 16, "timeoutSeconds", 20
                         )
                      )
@@ -758,7 +758,7 @@ final class AiPrintOp implements AiOperation {
       autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(3000000000L);
       autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(3000000000L);
       AiOperation.Result result = this.init_AiOperation.tick();
-      this.init_JsonObject = AiJson.init_JsonObject_Str(result.dataJson());
+      this.init_JsonObject = AiJson.parseObject(result.dataJson());
       if (!result.terminal()) {
          return this.init_AiOperation_Result_Str_9(
             (
@@ -1041,8 +1041,8 @@ final class AiPrintOp implements AiOperation {
          autismclient.ai.engine.AiPathfinder.MoveCosts.init_V_J(0L);
          autismclient.ai.engine.AiPathfinder.MoveCosts.load_V_J(0L);
          autismclient.ai.engine.AiRoutePolicy.putAt_V();
-         AiServerEvidence.load_V_Consumer(this.init_Consumer);
-         AiServerEvidence.load_V_LongConsumer(this.init_LongConsumer);
+         AiServerEvidence.removeBlockObserver(this.init_Consumer);
+         AiServerEvidence.removeChunkObserver(this.init_LongConsumer);
          this.init_DataUtil.read_V();
          this.load_a_StreamUtil.close();
          if (this.init_Minecraft.player == this.init_LocalPlayer
@@ -1076,7 +1076,7 @@ final class AiPrintOp implements AiOperation {
          BlockPos center = AiPrintOp.this.init_Minecraft.player.blockPosition();
 
          for (BlockPos pos : BlockPos.betweenClosed(center.offset(-32, -4, -32), center.offset(32, 4, 32))) {
-            if (AiTerrain.init(AiPrintOp.this.init_Minecraft.level, pos) && !AiPrintOp.this.init_Set_7().contains(pos.asLong()) && !AiPrintOp.this.init_Set.contains(pos.asLong())) {
+            if (AiTerrain.isLoaded(AiPrintOp.this.init_Minecraft.level, pos) && !AiPrintOp.this.init_Set_7().contains(pos.asLong()) && !AiPrintOp.this.init_Set.contains(pos.asLong())) {
                BlockState state = AiPrintOp.this.init_Minecraft.level.getBlockState(pos);
                if ((
                      state.is(Blocks.DIRT)

@@ -72,7 +72,7 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> read(String itemName) {
-      return init(MacroItemTarget.update(itemName));
+      return init(MacroItemTarget.parse(itemName));
    }
 
    public static CompletableFuture<Void> init(MacroItemTarget target) {
@@ -115,7 +115,7 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> init_CompletableFuture_Str_Z(String itemName, boolean checkMainHand) {
-      return init_CompletableFuture_ArrayUtil_Z(MacroItemTarget.update(itemName), checkMainHand);
+      return init_CompletableFuture_ArrayUtil_Z(MacroItemTarget.parse(itemName), checkMainHand);
    }
 
    public static CompletableFuture<Void> init_CompletableFuture_ArrayUtil_Z(MacroItemTarget target, boolean checkMainHand) {
@@ -482,7 +482,7 @@ public class MacroWaitRegistry {
    }
 
    public static CompletableFuture<Void> write(String itemName) {
-      return load(MacroItemTarget.update(itemName));
+      return load(MacroItemTarget.parse(itemName));
    }
 
    public static CompletableFuture<Void> load(MacroItemTarget target) {
@@ -539,8 +539,8 @@ public class MacroWaitRegistry {
             for (int i = 0; i < action.entries.size(); i++) {
                WaitForSlotChangeAction.Inner_DataUtil e = action.entries.get(i);
                MacroItemTarget entryTarget = e.init_ArrayUtil();
-               if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.init_Z()) {
-                  int slotNum = entryTarget.init_I;
+               if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.hasSlot()) {
+                  int slotNum = entryTarget.slot;
                   int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                      ItemStack s = handler.slots.get(handlerSlot).getItem();
@@ -838,8 +838,8 @@ public class MacroWaitRegistry {
             entryTarget = new MacroItemTarget();
          }
 
-         if (entryTarget.init_Z()) {
-            int slotNum = entryTarget.init_I;
+         if (entryTarget.hasSlot()) {
+            int slotNum = entryTarget.slot;
             if (handler == null) {
                return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
             } else {
@@ -856,7 +856,7 @@ public class MacroWaitRegistry {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, s.index);
-                     if (!entryTarget.update() || entryTarget.init_Z_ItemStack_I(s.getItem(), visibleSlot)) {
+                     if (!entryTarget.hasItemFilter() || entryTarget.matches(s.getItem(), visibleSlot)) {
                         return false;
                      }
                   }
@@ -864,7 +864,7 @@ public class MacroWaitRegistry {
             } else {
                for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
                   ItemStack stack = mc.player.getInventory().getItem(i);
-                  if (!stack.isEmpty() && (!entryTarget.update() || entryTarget.init_Z_ItemStack_I(stack, i))) {
+                  if (!stack.isEmpty() && (!entryTarget.hasItemFilter() || entryTarget.matches(stack, i))) {
                      return false;
                   }
                }
@@ -877,7 +877,7 @@ public class MacroWaitRegistry {
                   if (s != null && !s.getItem().isEmpty()) {
                      ItemStack stack = s.getItem();
                      int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, s.index);
-                     if ((!entryTarget.update() || entryTarget.init_Z_ItemStack_I(stack, visibleSlot))
+                     if ((!entryTarget.hasItemFilter() || entryTarget.matches(stack, visibleSlot))
                         && this.init(stack, entryTarget, visibleSlot, e, entryIdx)) {
                         return true;
                      }
@@ -886,7 +886,7 @@ public class MacroWaitRegistry {
             } else {
                for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
                   ItemStack stack = mc.player.getInventory().getItem(i);
-                  if (!stack.isEmpty() && (!entryTarget.update() || entryTarget.init_Z_ItemStack_I(stack, i)) && this.init(stack, entryTarget, i, e, entryIdx)) {
+                  if (!stack.isEmpty() && (!entryTarget.hasItemFilter() || entryTarget.matches(stack, i)) && this.init(stack, entryTarget, i, e, entryIdx)) {
                      return true;
                   }
                }
@@ -897,7 +897,7 @@ public class MacroWaitRegistry {
       }
 
       private boolean init(ItemStack stack, MacroItemTarget target, int visibleSlot, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
-         boolean nameMatches = target == null || !target.update() || !stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot);
+         boolean nameMatches = target == null || !target.hasItemFilter() || !stack.isEmpty() && target.matches(stack, visibleSlot);
          boolean var10000;
          switch (e.init_aD_StreamUtil) {
             case NOT_EMPTY:
@@ -948,7 +948,7 @@ public class MacroWaitRegistry {
       final CompletableFuture<Void> init_CompletableFuture;
 
       WaitCooldownEntry(MacroItemTarget target, boolean checkMainHand, CompletableFuture<Void> future) {
-         this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.init_ArrayUtil();
+         this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.copy();
          this.init_Z = checkMainHand;
          this.init_CompletableFuture = future;
       }
@@ -959,12 +959,12 @@ public class MacroWaitRegistry {
             return false;
          }
 
-         if (this.init_ArrayUtil.update()) {
+         if (this.init_ArrayUtil.hasItemFilter()) {
             boolean foundAny = false;
 
             for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
                ItemStack stack = mc.player.getInventory().getItem(i);
-               if (!stack.isEmpty() && this.init_ArrayUtil.init_Z_ItemStack_I(stack, i)) {
+               if (!stack.isEmpty() && this.init_ArrayUtil.matches(stack, i)) {
                   foundAny = true;
                   if (mc.player.getCooldowns().isOnCooldown(stack)) {
                      return false;
@@ -1570,13 +1570,13 @@ public class MacroWaitRegistry {
       private volatile boolean init_Z = false;
 
       WaitContainerItemEntry(MacroItemTarget target, CompletableFuture<Void> future) {
-         this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.init_ArrayUtil();
+         this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.copy();
          this.init_CompletableFuture = future;
       }
 
       @Override
       public boolean init_Z_Minecraft(Minecraft mc) {
-         if (mc.player != null && this.init_ArrayUtil.update()) {
+         if (mc.player != null && this.init_ArrayUtil.hasItemFilter()) {
             AbstractContainerMenu handler = mc.player.containerMenu;
             if (handler == null) {
                return false;
@@ -1585,7 +1585,7 @@ public class MacroWaitRegistry {
             for (Slot slot : handler.slots) {
                if (slot != null && !slot.getItem().isEmpty()) {
                   int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, slot.index);
-                  if (this.init_ArrayUtil.init_Z_ItemStack_I(slot.getItem(), visibleSlot)) {
+                  if (this.init_ArrayUtil.matches(slot.getItem(), visibleSlot)) {
                      return true;
                   }
                }
@@ -1882,16 +1882,16 @@ public class MacroWaitRegistry {
       final CompletableFuture<Void> init_CompletableFuture;
 
       WaitInventoryItemEntry(MacroItemTarget target, CompletableFuture<Void> future) {
-         this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.init_ArrayUtil();
+         this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.copy();
          this.init_CompletableFuture = future;
       }
 
       @Override
       public boolean init_Z_Minecraft(Minecraft mc) {
-         if (mc.player != null && this.init_ArrayUtil.update()) {
+         if (mc.player != null && this.init_ArrayUtil.hasItemFilter()) {
             for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
                ItemStack stack = mc.player.getInventory().getItem(i);
-               if (!stack.isEmpty() && this.init_ArrayUtil.init_Z_ItemStack_I(stack, i)) {
+               if (!stack.isEmpty() && this.init_ArrayUtil.matches(stack, i)) {
                   return true;
                }
             }

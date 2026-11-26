@@ -71,7 +71,7 @@ final class AiFurnaceWork implements AiOperation {
    static boolean init_Z_Q_DataUtil(AiFurnaceWork.Inner_DataUtil plan) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
+         AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
 
          for (Entry<String, Integer> preparation : plan.crafts().entrySet()) {
             AiCraftPlanner.CraftPlan craft = AiCraftPlanner.init(graph, preparation.getKey(), preparation.getValue());
@@ -83,10 +83,10 @@ final class AiFurnaceWork implements AiOperation {
          BlockPos home = mc.player.blockPosition();
 
          for (BlockPos p : BlockPos.betweenClosed(home.offset(-8, -2, -8), home.offset(8, 3, 8))) {
-            if (AiTerrain.init(mc.level, p)) {
+            if (AiTerrain.isLoaded(mc.level, p)) {
                for (Entry<String, Integer> resource : plan.resources().entrySet()) {
-                  if (AiGameState.init_I_Str(resource.getKey()) < resource.getValue()
-                     && AiItems.load_af_DataUtil(resource.getKey()).items().stream().anyMatch(item -> AiItems.init(item).contains(mc.level.getBlockState(p).getBlock()))
+                  if (AiGameState.countInventoryItem(resource.getKey()) < resource.getValue()
+                     && AiItems.resolveItem(resource.getKey()).items().stream().anyMatch(item -> AiItems.sourceBlocksFor(item).contains(mc.level.getBlockState(p).getBlock()))
                      && autismclient.ai.engine.MiningCost.load(mc, mc.level.getBlockState(p), true) >= 0) {
                      return true;
                   }
@@ -113,10 +113,10 @@ final class AiFurnaceWork implements AiOperation {
       this.init_RefQueue_DataUtil = new autismclient.ai.engine.AiBlockDigger(
          this.init_Minecraft,
          slot -> this.init_Minecraft.player.getInventory().setSelectedSlot(slot),
-         this.init_DataUtil::init_V_Vec3,
+         this.init_DataUtil::aimAt,
          true,
          true,
-         this.init_DataUtil::load_V
+         this.init_DataUtil::tick
       );
    }
 
@@ -179,7 +179,7 @@ final class AiFurnaceWork implements AiOperation {
    }
 
    private boolean init_Z_BlockPos_2(BlockPos p) {
-      if (!AiTerrain.init(this.init_Minecraft.level, p)) {
+      if (!AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
          return false;
       }
 
@@ -188,7 +188,7 @@ final class AiFurnaceWork implements AiOperation {
    }
 
    private boolean load(BlockPos p) {
-      if (this.init_Z_BlockPos_2(p) && this.init_Z_BlockPos_2(p.above()) && AiTerrain.init(this.init_Minecraft.level, p.below())) {
+      if (this.init_Z_BlockPos_2(p) && this.init_Z_BlockPos_2(p.above()) && AiTerrain.isLoaded(this.init_Minecraft.level, p.below())) {
          BlockState floor = this.init_Minecraft.level.getBlockState(p.below());
          return floor.isCollisionShapeFullBlock(this.init_Minecraft.level, p.below())
             && floor.getFluidState().isEmpty()
@@ -230,7 +230,7 @@ final class AiFurnaceWork implements AiOperation {
             return this.init_AiOperation_Result_Str_3("Preparing " + this.load_Str + " while the furnace cooks: " + r.message());
          }
 
-         this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("item", this.load_Str, "status", r.status().name(), "receipt", AiRunResources.init_JsonObject(r.dataJson())));
+         this.init_JsonArray.add(AiJson.objectOf("item", this.load_Str, "status", r.status().name(), "receipt", AiRunResources.parseEvidenceJson(r.dataJson())));
          boolean unsettled = r.status() == AiOperation.Status.UNCERTAIN || this.write_AiOperation.requiresReconciliationAfterEmergency();
          this.write_AiOperation.cancel();
          this.write_AiOperation = null;
@@ -239,7 +239,7 @@ final class AiFurnaceWork implements AiOperation {
             : this.init_AiOperation_Result_Str_3("Furnace-time preparation finished; continue useful work");
       } else if (this.init_Z) {
          this.init_RefQueue_DataUtil.init_V();
-         this.init_DataUtil.init_V();
+         this.init_DataUtil.clear();
          if (this.init_AiOperation != null) {
             if (!this.init_AiOperation.canInterruptNow()) {
                AiOperation.Result flight = this.init_AiOperation.tick();
@@ -304,9 +304,9 @@ final class AiFurnaceWork implements AiOperation {
                this.read_I++;
                this.read_BlockPos = null;
                this.init_RefQueue_DataUtil.init_V();
-            } else if (this.update(this.read_BlockPos) && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.read_BlockPos) != null) {
+            } else if (this.update(this.read_BlockPos) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.read_BlockPos) != null) {
                autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.read_BlockPos);
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.tick();
                if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.init) {
                   return this.init_AiOperation_Result_Str_3("Mining needed " + this.init_Str_BlockPos(this.read_BlockPos) + " while the furnace cooks");
                }
@@ -323,8 +323,8 @@ final class AiFurnaceWork implements AiOperation {
             }
          }
 
-         if (this.init_Q_DataUtil.resources().entrySet().stream().allMatch(e -> AiGameState.init_I_Str(e.getKey()) >= e.getValue())
-            && this.init_Q_DataUtil.crafts().entrySet().stream().allMatch(e -> this.load_Set.contains(e.getKey()) || AiGameState.init_I_Str(e.getKey()) >= e.getValue())) {
+         if (this.init_Q_DataUtil.resources().entrySet().stream().allMatch(e -> AiGameState.countInventoryItem(e.getKey()) >= e.getValue())
+            && this.init_Q_DataUtil.crafts().entrySet().stream().allMatch(e -> this.load_Set.contains(e.getKey()) || AiGameState.countInventoryItem(e.getKey()) >= e.getValue())) {
             this.init_Z = true;
             return this.tick();
          }
@@ -332,7 +332,7 @@ final class AiFurnaceWork implements AiOperation {
          if (this.load_I + init_I_Map_BlockPos(this.init_Map, this.init_Minecraft.player.blockPosition()) + 120 < this.init_I) {
             for (Entry<String, Integer> preparation : this.init_Q_DataUtil.crafts().entrySet()) {
                if (this.load_Set.add(preparation.getKey())) {
-                  AiCraftPlanner.CraftPlan recipe = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), preparation.getKey(), preparation.getValue());
+                  AiCraftPlanner.CraftPlan recipe = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), preparation.getKey(), preparation.getValue());
                   if (recipe.complete()
                      && !recipe.satisfied()
                      && !recipe.requiresTable()
@@ -340,7 +340,7 @@ final class AiFurnaceWork implements AiOperation {
                         .stream()
                         .anyMatch(s -> !s.recipe().station().isEmpty() || s.recipe().inputs().stream().anyMatch(variants -> variants.contains(this.init_Str)))) {
                      this.load_Str = preparation.getKey();
-                     this.write_AiOperation = AiCraft.init(AiJson.init_JsonObject_ObjArr("item", this.load_Str, "count", preparation.getValue(), "timeoutSeconds", 6));
+                     this.write_AiOperation = AiCraft.craft(AiJson.objectOf("item", this.load_Str, "count", preparation.getValue(), "timeoutSeconds", 6));
                      return this.init_AiOperation_Result_Str_3("Prepare " + this.load_Str + " during furnace time");
                   }
                }
@@ -364,7 +364,7 @@ final class AiFurnaceWork implements AiOperation {
             }
          }
 
-         if (this.load_I >= this.sync && AiItems.init_I() > 0 && this.read_I < 8) {
+         if (this.load_I >= this.sync && AiItems.countFreeSlots() > 0 && this.read_I < 8) {
             this.sync = this.load_I + 20;
             BlockPos best = null;
             BlockPos bestStand = null;
@@ -407,12 +407,12 @@ final class AiFurnaceWork implements AiOperation {
 
          if (this.flush >= 4 && !this.read_Z) {
             if (this.read_AiOperation == null) {
-               this.read_AiOperation = AiGameplay.sync(AiJson.init_JsonObject_ObjArr("block", "ore", "radius", 64, "limit", 32));
+               this.read_AiOperation = AiGameplay.sync(AiJson.objectOf("block", "ore", "radius", 64, "limit", 32));
             }
 
             AiOperation.Result scan = this.read_AiOperation.tick();
             if (scan.terminal()) {
-               JsonObject found = AiRunResources.init_JsonObject(scan.dataJson());
+               JsonObject found = AiRunResources.parseEvidenceJson(scan.dataJson());
                if (found.has("results")) {
                   for (JsonElement lead : found.getAsJsonArray("results")) {
                      if (this.load_JsonArray.size() < 32) {
@@ -456,24 +456,24 @@ final class AiFurnaceWork implements AiOperation {
                   blocks.add(id);
                }
 
-               this.load_AiOperation = AiGameplay.flush(AiJson.init_JsonObject_ObjArr("blocks", blocks, "radius", 16));
+               this.load_AiOperation = AiGameplay.flush(AiJson.objectOf("blocks", blocks, "radius", 16));
             }
 
             this.init_DataUtil
-               .init_V_Vec3(
+               .aimAt(
                   this.init_Minecraft
                      .player
                      .getEyePosition()
                      .add(Vec3.atCenterOf(this.write_BlockPos).subtract(Vec3.atCenterOf(this.load_BlockPos)).normalize().scale(8.0))
                );
-            this.init_DataUtil.load_V();
+            this.init_DataUtil.tick();
             AiOperation.Result scan = this.load_AiOperation.tick();
             if (scan.terminal()) {
-               JsonObject observed = AiRunResources.init_JsonObject(scan.dataJson());
+               JsonObject observed = AiRunResources.parseEvidenceJson(scan.dataJson());
                if (observed.has("matches")) {
                   for (JsonElement match : observed.getAsJsonArray("matches")) {
                      JsonObject fact = match.getAsJsonObject();
-                     AiWorldMemory.init(new BlockPos(AiJson.init_I_JsonObject(fact, "x", 0), AiJson.init_I_JsonObject(fact, "y", 0), AiJson.init_I_JsonObject(fact, "z", 0)));
+                     AiWorldMemory.init(new BlockPos(AiJson.getInt(fact, "x", 0), AiJson.getInt(fact, "y", 0), AiJson.getInt(fact, "z", 0)));
                      if (this.load_JsonArray.size() < 32) {
                         this.load_JsonArray.add(fact.deepCopy());
                      }
@@ -516,12 +516,12 @@ final class AiFurnaceWork implements AiOperation {
    }
 
    private boolean write(BlockPos at) {
-      if (!AiTerrain.init(this.init_Minecraft.level, at)) {
+      if (!AiTerrain.isLoaded(this.init_Minecraft.level, at)) {
          return false;
       }
 
       String resource = this.init_Str_BlockPos(at);
-      return this.init_Q_DataUtil.resources().containsKey(resource) && AiGameState.init_I_Str(resource) < this.init_Q_DataUtil.resources().get(resource);
+      return this.init_Q_DataUtil.resources().containsKey(resource) && AiGameState.countInventoryItem(resource) < this.init_Q_DataUtil.resources().get(resource);
    }
 
    private boolean update(BlockPos at) {
@@ -536,7 +536,7 @@ final class AiFurnaceWork implements AiOperation {
          )) {
          for (Direction d : Direction.values()) {
             BlockPos near = at.relative(d);
-            if (!AiTerrain.init(this.init_Minecraft.level, near)
+            if (!AiTerrain.isLoaded(this.init_Minecraft.level, near)
                || !this.init_Minecraft.level.getFluidState(near).isEmpty()
                || this.init_Minecraft.level.getBlockState(near).getBlock() instanceof FallingBlock) {
                return false;
@@ -604,7 +604,7 @@ final class AiFurnaceWork implements AiOperation {
    }
 
    JsonObject init() {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "activity",
          this.read_Str,
          "home",
@@ -624,7 +624,7 @@ final class AiFurnaceWork implements AiOperation {
          "returnRouteCells",
          this.init_Map.size(),
          "returnEditsAllowed",
-         this.init_P != null && AiJson.init_Z_JsonObject(this.init_P.init(), "returnEditsAllowed", false),
+         this.init_P != null && AiJson.getBoolean(this.init_P.init(), "returnEditsAllowed", false),
          "returnRecovery",
          this.init_P == null ? new JsonObject() : this.init_P.init(),
          "preparations",
@@ -643,13 +643,13 @@ final class AiFurnaceWork implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_Str_3(String message) {
-      return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init());
+      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init());
    }
 
    private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_3(AiOperation.Status s, String message) {
       JsonObject d = this.init();
       this.cancel();
-      return AiGameOperations.init_AiOperation_Result(s, message, d);
+      return AiGameOperations.result(s, message, d);
    }
 
    @Override
@@ -670,7 +670,7 @@ final class AiFurnaceWork implements AiOperation {
    public void cancel() {
       this.load_Z = true;
       this.init_RefQueue_DataUtil.init_V();
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.clear();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();
       }
@@ -700,7 +700,7 @@ final class AiFurnaceWork implements AiOperation {
 
       static AiFurnaceWork.Inner_DataUtil forInput(String input) {
          Map<String, Integer> resources = new LinkedHashMap<>();
-         resources.put(input, AiGameState.init_I_Str(input) + 8);
+         resources.put(input, AiGameState.countInventoryItem(input) + 8);
          resources.merge("minecraft:coal", 8, Math::max);
          return new AiFurnaceWork.Inner_DataUtil(resources, Map.of());
       }

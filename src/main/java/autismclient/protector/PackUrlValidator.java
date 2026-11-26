@@ -180,7 +180,7 @@ public final class PackUrlValidator {
 
    public static String init_Str_BufferHelper_Buffe(ConnectionPrivacyRegistry.ServerEndpoint endpoint) throws IOException {
       Objects.requireNonNull(endpoint, "endpoint");
-      String host = endpoint.init_Str();
+      String host = endpoint.host();
       if (host != null && !host.isBlank() && !init_Z_Str(host) && host.indexOf(37) < 0) {
          host = init_Str_Str(host.trim());
 
@@ -192,7 +192,7 @@ public final class PackUrlValidator {
             throw new IOException("Invalid original Minecraft origin");
          }
 
-         int port = endpoint.init_I() == 0 ? 25565 : endpoint.init_I();
+         int port = endpoint.port() == 0 ? 25565 : endpoint.port();
          if (port >= 1 && port <= 65535) {
             try {
                if (host.indexOf(58) >= 0) {

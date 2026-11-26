@@ -388,7 +388,7 @@ final class AiFarmBuild {
 
       final AiFarmArea.Inner_DataUtil selectedArea = AiFarmArea.init_C_DataUtil(args);
       final String substrate = AiFarmArea.init_Str(args, cropBlock);
-      AiFarmBuild.Inner_StreamUtil sized = init(AiJson.init_I_JsonObject(args, "count", 80), AiJson.init_I_JsonObject(args, "width", 0), AiJson.init_I_JsonObject(args, "length", 0));
+      AiFarmBuild.Inner_StreamUtil sized = init(AiJson.getInt(args, "count", 80), AiJson.getInt(args, "width", 0), AiJson.getInt(args, "length", 0));
       final AiFarmBuild.Inner_StreamUtil layout = selectedArea != null
          ? selectedArea.layout(substrate)
          : (AiFarmArea.init_Z(substrate) ? new AiFarmBuild.Inner_StreamUtil(sized.width(), sized.length(), List.of()) : sized);
@@ -403,7 +403,7 @@ final class AiFarmBuild {
          throw new IllegalArgumentException("The farm layout leaves no room for a crop beside its water");
       }
 
-      final int timeoutSeconds = Math.max(60, Math.min(7200, AiJson.init_I_JsonObject(args, "timeoutSeconds", 3600)));
+      final int timeoutSeconds = Math.max(60, Math.min(7200, AiJson.getInt(args, "timeoutSeconds", 3600)));
       return new AiOperation() {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          final JsonArray init_JsonArray = new JsonArray();
@@ -556,7 +556,7 @@ final class AiFarmBuild {
             boolean ok = r.status() == AiOperation.Status.SUCCEEDED;
             this.init_V(this.init_D_CachePool + ": " + r.message());
             if (!ok) {
-               JsonObject data = AiJson.init_JsonObject_Str(r.dataJson());
+               JsonObject data = AiJson.parseObject(r.dataJson());
                if (data.has("failed")) {
                   this.init_V(
                      this.init_D_CachePool
@@ -576,11 +576,11 @@ final class AiFarmBuild {
 
             switch (this.init_D_CachePool) {
                case SEEDS:
-                  if (AiGameState.init_I_Str(seedItem) <= 0) {
+                  if (AiGameState.countInventoryItem(seedItem) <= 0) {
                      if (AiFarmBuild.init_Set.contains(seedItem) && !this.read_Z) {
                         this.read_Z = true;
                         this.init_AiOperation = new AiOperation() {
-                           AiOperation init_AiOperation = AiGameOperations.init(AiJson.init_JsonObject_ObjArr("maxDistance", 1500, "timeoutSeconds", 900), true);
+                           AiOperation init_AiOperation = AiGameOperations.explore(AiJson.objectOf("maxDistance", 1500, "timeoutSeconds", 900), true);
                            boolean init_Z;
 
                            @Override
@@ -594,7 +594,7 @@ final class AiFarmBuild {
 
                                  this.init_Z = true;
                                  this.init_AiOperation = init(seedItem, Math.min(layout.plots(), 24), 600);
-                                 return AiGameOperations.init_AiOperation_Result(
+                                 return AiGameOperations.result(
                                     AiOperation.Status.RUNNING, "Village found; taking " + seedItem + " from its fields", new JsonObject()
                                  );
                               } else {
@@ -634,7 +634,7 @@ final class AiFarmBuild {
 
                   return this.init_AiOperation_Result_3("Fence materials ready");
                case DIRT:
-                  if (!ok && AiCraft.init_I(AiFarmArea.load(this.init_Str)) < this.init_I_2()) {
+                  if (!ok && AiCraft.countItem(AiFarmArea.load(this.init_Str)) < this.init_I_2()) {
                      return this.init(r.status(), "Could not get " + AiFarmArea.load(this.init_Str) + " to level the field: " + r.message());
                   }
 
@@ -662,7 +662,7 @@ final class AiFarmBuild {
                      }
 
                      if (missing != null && this.sync_I++ < 3) {
-                        this.init_AiOperation = this.init(missing, AiCraft.init_I(missing) + (missing.equals("minecraft:dirt") ? 16 : 1), 600);
+                        this.init_AiOperation = this.init(missing, AiCraft.countItem(missing) + (missing.equals("minecraft:dirt") ? 16 : 1), 600);
                         this.write_Z = true;
                         this.update_Z = true;
                         return this.init_AiOperation_Result_3("Getting more " + missing);
@@ -733,7 +733,7 @@ final class AiFarmBuild {
          }
 
          AiOperation.Result init_AiOperation_Result_4() {
-            int held = AiGameState.init_I_Str(seedItem);
+            int held = AiGameState.countInventoryItem(seedItem);
             int want = Math.min(layout.plots(), 24);
             if (this.init_JsonArray.isEmpty()) {
                this.init_V("start: " + held + " " + seedItem + " in the bag, " + layout.plots() + " plots");
@@ -769,14 +769,14 @@ final class AiFarmBuild {
 
             BlockPos feet = this.init_BlockPos;
             this.load_BlockPos = this.init_Z ? null : this.init_BlockPos(feet);
-            int waterHeld = this.init_Z ? 0 : AiCraft.init_I("minecraft:water_bucket");
+            int waterHeld = this.init_Z ? 0 : AiCraft.countItem("minecraft:water_bucket");
             boolean pool = AiFarmBuild.init(this.init_Str, layout.water().size(), waterHeld, this.load_BlockPos != null, this.init_C_DataUtil == null);
             HashMap<Long, AiFarmBuild.Inner_DataUtil> cache = new HashMap<>();
             int fromY = (this.init_C_DataUtil == null ? feet.getY() : this.init_C_DataUtil.maxY()) + 8;
             int toY = (this.init_C_DataUtil == null ? feet.getY() : this.init_C_DataUtil.minY()) - 12;
             BiFunction<Integer, Integer, AiFarmBuild.Inner_DataUtil> columns = (x, z) -> cache.computeIfAbsent(
                BlockPos.asLong(x, 0, z),
-               k -> AiTerrain.init(mc.level, new BlockPos(x, feet.getY(), z)) ? AiFarmBuild.init(mc.level::getBlockState, x, z, fromY, toY) : AiFarmBuild.Inner_DataUtil.NONE
+               k -> AiTerrain.isLoaded(mc.level, new BlockPos(x, feet.getY(), z)) ? AiFarmBuild.init(mc.level::getBlockState, x, z, fromY, toY) : AiFarmBuild.Inner_DataUtil.NONE
             );
             this.init_D_ConfigStore = this.init_C_DataUtil == null
                ? AiFarmBuild.init(layout, feet, pool, columns)
@@ -828,11 +828,11 @@ final class AiFarmBuild {
          AiOperation.Result write_AiOperation_Result() {
             if (this.write_I() < layout.water().size()) {
                this.init_AiOperation = this.init(
-                  this.init_Str_2(this.load_Str + "_slab"), AiCraft.init_I(this.init_Str_2(this.load_Str + "_slab")) + layout.water().size() - this.write_I(), 600
+                  this.init_Str_2(this.load_Str + "_slab"), AiCraft.countItem(this.init_Str_2(this.load_Str + "_slab")) + layout.water().size() - this.write_I(), 600
                );
                return this.init_AiOperation_Result_3("Getting slabs to cover the water");
             } else if (this.read_I() < this.load_I() && this.open++ < 4) {
-               this.init_AiOperation = this.init(this.init_Str_3(), AiCraft.init_I(this.init_Str_3()) + 1, 600);
+               this.init_AiOperation = this.init(this.init_Str_3(), AiCraft.countItem(this.init_Str_3()) + 1, 600);
                return this.init_AiOperation_Result_3("Making another hoe: " + this.read_I() + " uses for " + this.load_I() + " plots");
             } else {
                this.init_D_CachePool = AiFarmBuild.Inner_CachePool.DIRT;
@@ -843,15 +843,15 @@ final class AiFarmBuild {
          AiOperation.Result update() {
             int need = this.init_I_2();
             String base = AiFarmArea.load(this.init_Str);
-            if (AiCraft.init_I(base) >= need) {
+            if (AiCraft.countItem(base) >= need) {
                this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.FOUNDATION : AiFarmBuild.Inner_CachePool.BUCKETS;
                return this.init_AiOperation_Result_3(base + " in the bag");
             } else if (this.init_Z) {
-               this.init_AiOperation = this.init(base, AiCraft.init_I(base) + need, 900);
+               this.init_AiOperation = this.init(base, AiCraft.countItem(base) + need, 900);
                return this.init_AiOperation_Result_3("Getting soul sand for the field");
             } else {
                this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "blocks",
                      autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:dirt", "minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:rooted_dirt")),
                      "drops",
@@ -874,8 +874,8 @@ final class AiFarmBuild {
 
          AiOperation.Result sync() {
             int need = layout.water().size();
-            int water = AiCraft.init_I("minecraft:water_bucket");
-            int empty = AiCraft.init_I("minecraft:bucket");
+            int water = AiCraft.countItem("minecraft:water_bucket");
+            int empty = AiCraft.countItem("minecraft:bucket");
             if (!this.init_D_ConfigStore.pool() && water >= need) {
                this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CLEAR;
                return this.init_AiOperation_Result_3("Water in the bag");
@@ -1048,9 +1048,9 @@ final class AiFarmBuild {
          }
 
          AiOperation.Result open() {
-            int water = AiCraft.init_I("minecraft:water_bucket");
+            int water = AiCraft.countItem("minecraft:water_bucket");
             if (water < 2 && !this.init_Z_2()) {
-               List<BlockPos> sources = AiTerrain.init(mc, Blocks.WATER, 160, 64, true);
+               List<BlockPos> sources = AiTerrain.findFluidSources(mc, Blocks.WATER, 160, 64, true);
                if (sources.isEmpty()) {
                   return this.init(AiOperation.Status.FAILED, "No water anywhere in loaded terrain to start the farm's pool; bring two water buckets");
                }
@@ -1144,14 +1144,14 @@ final class AiFarmBuild {
                return this.init_AiOperation_Result_3("Covering the source");
             }
 
-            if (AiCraft.init_I("minecraft:water_bucket") > 0) {
+            if (AiCraft.countItem("minecraft:water_bucket") > 0) {
                this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_DIG;
                return this.init_AiOperation_Result_3("Water in hand");
             }
 
             List<BlockPos> sources = this.init_D_ConfigStore.pool()
                ? this.init_D_ConfigStore.poolCells()
-               : (this.load_BlockPos != null ? List.of(this.load_BlockPos) : AiTerrain.init(mc, Blocks.WATER, 160, 64, true));
+               : (this.load_BlockPos != null ? List.of(this.load_BlockPos) : AiTerrain.findFluidSources(mc, Blocks.WATER, 160, 64, true));
             if (sources.isEmpty()) {
                return this.init(AiOperation.Status.FAILED, "No water source to fill a bucket from");
             }
@@ -1230,7 +1230,7 @@ final class AiFarmBuild {
             int tills = this.load_I();
             int uses = this.read_I();
             if (uses < tills && this.open++ < 4) {
-               this.init_AiOperation = this.init(this.init_Str_3(), AiCraft.init_I(this.init_Str_3()) + 1, 600);
+               this.init_AiOperation = this.init(this.init_Str_3(), AiCraft.countItem(this.init_Str_3()) + 1, 600);
                this.write_Z = true;
                this.update_Z = true;
                return this.init_AiOperation_Result_3("Making another hoe: " + uses + " uses left for " + tills + " plots");
@@ -1249,7 +1249,7 @@ final class AiFarmBuild {
          }
 
          String init_Str_3() {
-            return AiCraft.init_I("minecraft:cobblestone") + AiCraft.init_I("minecraft:cobbled_deepslate") >= 2 ? "minecraft:stone_hoe" : "minecraft:wooden_hoe";
+            return AiCraft.countItem("minecraft:cobblestone") + AiCraft.countItem("minecraft:cobbled_deepslate") >= 2 ? "minecraft:stone_hoe" : "minecraft:wooden_hoe";
          }
 
          int load_I() {
@@ -1363,7 +1363,7 @@ final class AiFarmBuild {
 
          AiOperation init(String item, int count, int seconds) {
             return AiObtain.init(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "item",
                   item,
                   "count",
@@ -1389,7 +1389,7 @@ final class AiFarmBuild {
 
                   this.init_AiOperation.cancel();
                   if (r.status() == AiOperation.Status.SUCCEEDED && !this.init_Z) {
-                     JsonObject data = AiJson.init_JsonObject_Str(r.dataJson());
+                     JsonObject data = AiJson.parseObject(r.dataJson());
                      if (data.has("fluidSourceX")) {
                         this.init_BlockPos = new BlockPos(
                            data.get("fluidSourceX").getAsInt(), data.get("fluidSourceY").getAsInt(), data.get("fluidSourceZ").getAsInt()
@@ -1398,7 +1398,7 @@ final class AiFarmBuild {
 
                      this.init_Z = true;
                      this.init_AiOperation = AiBucket.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "action",
                            "fill",
                            "fluid",
@@ -1413,7 +1413,7 @@ final class AiFarmBuild {
                            10
                         )
                      );
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Filling the bucket", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Filling the bucket", new JsonObject());
                   } else {
                      return r;
                   }
@@ -1434,7 +1434,7 @@ final class AiFarmBuild {
                @Override
                public AiOperation.Result tick() {
                   if (this.init_AiOperation == null) {
-                     BlockHitResult floor = autismclient.ai.engine.AiBlockInteraction.init(mc, cell.below(), Direction.UP);
+                     BlockHitResult floor = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, cell.below(), Direction.UP);
                      this.init_AiOperation = floor != null
                            && !(mc.player.getEyePosition().distanceTo(floor.getLocation()) > mc.player.blockInteractionRange() - 1.0)
                         ? this.init()
@@ -1452,9 +1452,9 @@ final class AiFarmBuild {
                         return r;
                      } else if (!this.init_Z) {
                         this.init_AiOperation = this.init();
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Pouring", new JsonObject());
+                        return AiGameOperations.result(AiOperation.Status.RUNNING, "Pouring", new JsonObject());
                      } else {
-                        return AiGameOperations.init_AiOperation_Result(
+                        return AiGameOperations.result(
                            AiOperation.Status.UNCERTAIN,
                            "The bucket changed, but the water source was not confirmed; reobserve before pouring again",
                            new JsonObject()
@@ -1466,7 +1466,7 @@ final class AiFarmBuild {
                AiOperation init() {
                   this.init_Z = true;
                   return AiBucket.init(
-                     AiJson.init_JsonObject_ObjArr("action", "empty", "fluid", "water", "x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "timeoutSeconds", 15)
+                     AiJson.objectOf("action", "empty", "fluid", "water", "x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "timeoutSeconds", 15)
                   );
                }
 
@@ -1482,7 +1482,7 @@ final class AiFarmBuild {
          BlockPos init_BlockPos(BlockPos from) {
             double limit = 150.5;
 
-            for (BlockPos p : AiTerrain.init(mc, Blocks.WATER, (int)Math.min(160.0, limit + 8.0), 64)) {
+            for (BlockPos p : AiTerrain.findFluidSources(mc, Blocks.WATER, (int)Math.min(160.0, limit + 8.0), 64)) {
                if (!(Math.sqrt(p.distSqr(from)) > limit) && mc.level.getBlockState(p.above()).isAir() && AiFarmBuild.init(mc.level::getBlockState, p)) {
                   return p;
                }
@@ -1588,7 +1588,7 @@ final class AiFarmBuild {
                   for (int dy = -6; dy <= 16; dy++) {
                      p.set(feet.getX() + dx, feet.getY() + dy, feet.getZ() + dz);
                      double sq = dx * dx + dz * dz + dy * dy;
-                     if (!(sq >= bestSq) && AiTerrain.init(mc.level, p)) {
+                     if (!(sq >= bestSq) && AiTerrain.isLoaded(mc.level, p)) {
                         BlockState s = mc.level.getBlockState(p);
                         if (s.is(BlockTags.LOGS)) {
                            String sp = AiFarmBuild.init(BuiltInRegistries.BLOCK.getKey(s.getBlock()).toString());
@@ -1643,7 +1643,7 @@ final class AiFarmBuild {
          }
 
          JsonObject init_JsonObject_5() {
-            JsonObject out = AiJson.init_JsonObject_ObjArr(
+            JsonObject out = AiJson.objectOf(
                "phase",
                this.init_D_CachePool.name(),
                "crop",
@@ -1672,7 +1672,7 @@ final class AiFarmBuild {
             if (this.init_D_ConfigStore != null) {
                out.add(
                   "site",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "x",
                      this.init_D_ConfigStore.origin().getX(),
                      "y",
@@ -1691,7 +1691,7 @@ final class AiFarmBuild {
          }
 
          AiOperation.Result init_AiOperation_Result_3(String message) {
-            return AiGameOperations.init_AiOperation_Result(
+            return AiGameOperations.result(
                AiOperation.Status.RUNNING, "Farm (" + this.init_D_CachePool.name().toLowerCase(Locale.ROOT) + "): " + message, this.init_JsonObject_5()
             );
          }
@@ -1702,7 +1702,7 @@ final class AiFarmBuild {
             }
 
             this.init_AiOperation = null;
-            return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_5());
+            return AiGameOperations.result(status, message, this.init_JsonObject_5());
          }
 
          @Override
@@ -1877,7 +1877,7 @@ final class AiFarmBuild {
             }
          }
 
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "minX", minX - 1, "minY", this.ground() - 3, "minZ", minZ - 1, "maxX", maxX + 1, "maxY", this.ground() + 3, "maxZ", maxZ + 1
          );
       }

@@ -159,7 +159,7 @@ final class AiWorldMemory {
 
    static void init(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.level == init_Obj && mc.getConnection() == load_Obj && AiTerrain.init(mc.level, pos)) {
+      if (mc.level == init_Obj && mc.getConnection() == load_Obj && AiTerrain.isLoaded(mc.level, pos)) {
          AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
          if (load_Map.remove(pos.asLong()) != null) {
             load_J++;
@@ -205,18 +205,18 @@ final class AiWorldMemory {
                   for (JsonElement entry : stored) {
                      try {
                         JsonObject saved = entry.getAsJsonObject();
-                        String[] xyz = AiJson.init_Str_JsonObject(saved, "position", "").split(",");
+                        String[] xyz = AiJson.getString(saved, "position", "").split(",");
                         if (xyz.length == 3) {
                            BlockPos pos = new BlockPos(Integer.parseInt(xyz[0].trim()), Integer.parseInt(xyz[1].trim()), Integer.parseInt(xyz[2].trim()));
                            if (Math.abs((long)pos.getX()) <= 30000000L && Math.abs((long)pos.getZ()) <= 30000000L) {
-                              String block = AiJson.init_Str_JsonObject(saved, "block", "");
-                              String category = AiJson.init_Str_JsonObject(saved, "category", "");
+                              String block = AiJson.getString(saved, "block", "");
+                              String category = AiJson.getString(saved, "category", "");
                               if (!block.isEmpty() && !category.isEmpty() && block.length() <= 256 && category.length() <= 64) {
                                  long observed = saved.has("observedAtMs") ? saved.get("observedAtMs").getAsLong() : 0L;
                                  if (observed >= 0L && observed <= System.currentTimeMillis()) {
                                     AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
                                     if ((indexed == null || !indexed.init_Map.containsKey(pos.asLong()))
-                                       && (!AiTerrain.init(client.level, pos) || block.equals(AiWorldScan.init(client.level.getBlockState(pos))))) {
+                                       && (!AiTerrain.isLoaded(client.level, pos) || block.equals(AiWorldScan.init(client.level.getBlockState(pos))))) {
                                        load_Map.put(pos.asLong(), new AiWorldMemory.Inner_StreamUtil(pos, category, block, -1L, -1L, observed));
                                     }
                                  }
@@ -285,7 +285,7 @@ final class AiWorldMemory {
          for (AiWorldMemory.Inner_StreamUtil fact : ordered) {
             if (counts.getOrDefault(fact.category, 0) < 32) {
                saved.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "position", fact.pos.toShortString(), "category", fact.category, "block", fact.block, "observedAtMs", fact.observedAtMillis
                   )
                );
@@ -357,7 +357,7 @@ final class AiWorldMemory {
 
    static JsonObject init_JsonObject() {
       Minecraft mc = Minecraft.getInstance();
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "world",
          AiWorldIdentity.init(mc),
          "dimension",
@@ -412,7 +412,7 @@ final class AiWorldMemory {
                while (true) {
                   if (var12.hasNext()) {
                      AiWorldMemory.Inner_StreamUtil fact = (AiWorldMemory.Inner_StreamUtil)var12.next();
-                     if (!AiTerrain.init(mc.level, fact.pos) || !target.test(mc.level.getBlockState(fact.pos))) {
+                     if (!AiTerrain.isLoaded(mc.level, fact.pos) || !target.test(mc.level.getBlockState(fact.pos))) {
                         continue;
                      }
 
@@ -441,9 +441,9 @@ final class AiWorldMemory {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null) {
          load(mc);
-         String requested = AiJson.init_Str_JsonObject(args, "category", "");
-         int limit = Math.max(1, Math.min(32, AiJson.init_I_JsonObject(args, "limit", 12)));
-         int radius = Math.max(16, Math.min(192, AiJson.init_I_JsonObject(args, "radius", 96)));
+         String requested = AiJson.getString(args, "category", "");
+         int limit = Math.max(1, Math.min(32, AiJson.getInt(args, "limit", 12)));
+         int radius = Math.max(16, Math.min(192, AiJson.getInt(args, "radius", 96)));
          BlockPos origin = mc.player.blockPosition();
          List<AiWorldMemory.Inner_StreamUtil> found = new ArrayList<>();
          int available = 0;
@@ -474,13 +474,13 @@ final class AiWorldMemory {
             if ((requested.isEmpty() || requested.equals(fact.category)) && !(fact.pos.distSqr(origin) > (double)radius * radius)) {
                AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
                if ((indexed == null || !indexed.init_Map.containsKey(fact.pos.asLong()))
-                  && (!AiTerrain.init(mc.level, fact.pos) || fact.block.equals(AiWorldScan.init(mc.level.getBlockState(fact.pos))))) {
+                  && (!AiTerrain.isLoaded(mc.level, fact.pos) || fact.block.equals(AiWorldScan.init(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
                }
             }
          }
 
-         found.sort(Comparator.comparingDouble(factx -> factx.pos.distSqr(origin) + (AiTerrain.init(mc.level, factx.pos) ? 0 : 4096)));
+         found.sort(Comparator.comparingDouble(factx -> factx.pos.distSqr(origin) + (AiTerrain.isLoaded(mc.level, factx.pos) ? 0 : 4096)));
          JsonArray candidates = new JsonArray();
 
          for (AiWorldMemory.Inner_StreamUtil fact : found.subList(0, Math.min(limit, found.size()))) {
@@ -493,7 +493,7 @@ final class AiWorldMemory {
             if (entity.isAlive() && !(entity.distanceToSqr(mc.player) > radius * radius) && entities.size() < limit) {
                String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
                if (entity instanceof LivingEntity || AiProjectiles.init_Z(entity) || entity instanceof EndCrystal) {
-                  JsonObject observed = AiJson.init_JsonObject_ObjArr(
+                  JsonObject observed = AiJson.objectOf(
                      "world",
                      init_Str,
                      "dimension",
@@ -524,7 +524,7 @@ final class AiWorldMemory {
                   if (entity instanceof EnderDragon dragon) {
                      observed.add(
                         "dragonHead",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "position",
                            dragon.head.blockPosition().toShortString(),
                            "phase",
@@ -540,7 +540,7 @@ final class AiWorldMemory {
             }
          }
 
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "capabilities",
             init_JsonObject(),
             "indexRevision",
@@ -554,7 +554,7 @@ final class AiWorldMemory {
             "frontiers",
             init(mc, limit),
             "coverage",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "indexedChunks",
                init_LinkedHashMap.size(),
                "availableChunks",
@@ -575,8 +575,8 @@ final class AiWorldMemory {
    }
 
    private static JsonObject init(Minecraft mc, AiWorldMemory.Inner_StreamUtil fact) {
-      boolean live = AiTerrain.init(mc.level, fact.pos);
-      JsonObject out = AiJson.init_JsonObject_ObjArr(
+      boolean live = AiTerrain.isLoaded(mc.level, fact.pos);
+      JsonObject out = AiJson.objectOf(
          "world",
          init_Str,
          "dimension",
@@ -627,9 +627,9 @@ final class AiWorldMemory {
 
             for (int slot = 0; slot < 36; slot++) {
                ItemStack stack = mc.player.getInventory().getItem(slot);
-               if (!stack.isEmpty() && AiRunResources.init(stack, 0) && stack.isCorrectToolForDrops(state)) {
+               if (!stack.isEmpty() && AiRunResources.hasMinDurability(stack, 0) && stack.isCorrectToolForDrops(state)) {
                   tools.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "slot", slot, "item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), "destroySpeed", stack.getDestroySpeed(state)
                      )
                   );
@@ -662,9 +662,9 @@ final class AiWorldMemory {
 
          for (Direction direction : Plane.HORIZONTAL) {
             BlockPos stand = fact.pos.relative(direction);
-            if (AiTerrain.init(mc.level, stand)
-               && AiTerrain.init(mc.level, stand.below())
-               && AiTerrain.init(mc.level, stand.above())
+            if (AiTerrain.isLoaded(mc.level, stand)
+               && AiTerrain.isLoaded(mc.level, stand.below())
+               && AiTerrain.isLoaded(mc.level, stand.above())
                && AiCombat.init_Z_Minecraft_BlockPos(mc, stand)
                && !autismclient.ai.engine.AiEnvironmentHazards.init(mc.level, stand)
                && !mc.level.getBlockState(stand.below()).getCollisionShape(mc.level, stand.below()).isEmpty()
@@ -695,7 +695,7 @@ final class AiWorldMemory {
       while (!pending.isEmpty() && examined.size() < 128) {
          BlockPos pos = pending.removeFirst();
          if (examined.add(pos)) {
-            if (!AiTerrain.init(mc.level, pos)) {
+            if (!AiTerrain.isLoaded(mc.level, pos)) {
                partial = true;
             } else {
                BlockState state = mc.level.getBlockState(pos);
@@ -710,7 +710,7 @@ final class AiWorldMemory {
          }
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "knownOreBlocks",
          cells.size(),
          "positions",
@@ -766,7 +766,7 @@ final class AiWorldMemory {
 
       for (BlockPos pos : borders.subList(0, Math.min(limit, borders.size()))) {
          result.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "position", pos.toShortString(), "goal", "load and inspect adjacent unindexed terrain", "knowledge", "UNOBSERVED", "routeMustBeVerified", true
             )
          );

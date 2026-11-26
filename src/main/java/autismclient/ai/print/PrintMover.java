@@ -77,12 +77,12 @@ final class PrintMover {
          );
          if ((!keys.moving() || !autismclient.ai.engine.AiFallGuard.init(world, start, init(keys, yaw)))
             && Double.isFinite(init_D_NodeWalker_StreamU(start, world, yaw, keys, goal, true))) {
-            AiPhysics.MotionState state = AiPhysics.init(start, init(keys, yaw), world);
+            AiPhysics.MotionState state = AiPhysics.stepCompat(start, init(keys, yaw), world);
             boolean workable = works.test(state);
             AiPhysics.MoveInput coast = init(goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE, yaw);
 
             for (int tick = 1; tick < 7; tick++) {
-               state = AiPhysics.init(state, coast, world);
+               state = AiPhysics.stepCompat(state, coast, world);
             }
 
             double distance = state.position().distanceToSqr(goal.feet());
@@ -131,7 +131,7 @@ final class PrintMover {
       long startB = BlockPos.asLong((int)Math.floor(start.x()), (int)Math.floor(start.y() - 0.2), (int)Math.floor(start.z()));
 
       for (int t = 1; t <= 7; t++) {
-         AiPhysics.MotionState next = AiPhysics.init(s, t == 1 ? held : (t <= heldTicks ? moving : released), world);
+         AiPhysics.MotionState next = AiPhysics.stepCompat(s, t == 1 ? held : (t <= heldTicks ? moving : released), world);
          if (next.y() < goal.floor() - 0.05) {
             return 1.0 / 0.0;
          }
@@ -164,7 +164,7 @@ final class PrintMover {
       }
 
       for (int t = 0; !s.onGround() && t < 60; t++) {
-         s = AiPhysics.init(s, jumpless, world);
+         s = AiPhysics.stepCompat(s, jumpless, world);
          peak = Math.max(peak, s.y());
          if (s.onGround() && peak - s.y() > 3.000001) {
             return 1.0 / 0.0;

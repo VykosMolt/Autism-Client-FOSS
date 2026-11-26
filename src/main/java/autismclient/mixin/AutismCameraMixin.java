@@ -55,7 +55,7 @@ public abstract class AutismCameraMixin {
             && mc.options.getCameraType().isFirstPerson()
             && mc.gui.screen() == null
             && !mc.player.isPassenger()
-            && !FreecamController.init_Z()
+            && !FreecamController.isActive()
             && FreeLookModule.init_I_4() == null) {
             rotation = AiCameraTurn.putAt(mc.player);
          } else {
@@ -91,11 +91,11 @@ public abstract class AutismCameraMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;alignWithEntity(F)V", shift = Shift.AFTER)
    )
    private void autism$freecamCamera(DeltaTracker deltaTracker, CallbackInfo ci) {
-      if (FreecamController.init_Z()) {
+      if (FreecamController.isActive()) {
          float partialTicks = deltaTracker.getGameTimeDeltaPartialTick(true);
          this.detached = true;
-         this.setPosition(new Vec3(FreecamController.init_D_F(partialTicks), FreecamController.load_D_F(partialTicks), FreecamController.read(partialTicks)));
-         this.setRotation(FreecamController.init_F_F(partialTicks), FreecamController.load_F_F(partialTicks));
+         this.setPosition(new Vec3(FreecamController.getInterpolatedX(partialTicks), FreecamController.getInterpolatedY(partialTicks), FreecamController.getInterpolatedZ(partialTicks)));
+         this.setRotation(FreecamController.getInterpolatedYaw(partialTicks), FreecamController.getInterpolatedPitch(partialTicks));
       }
    }
 
@@ -105,7 +105,7 @@ public abstract class AutismCameraMixin {
    )
    private void autism$freeLookCamera(DeltaTracker deltaTracker, CallbackInfo ci) {
       FreeLookModule freeLook = FreeLookModule.init_I_4();
-      if (freeLook != null && !FreecamController.init_Z()) {
+      if (freeLook != null && !FreecamController.isActive()) {
          float partialTicks = deltaTracker.getGameTimeDeltaPartialTick(true);
          this.detached = true;
          this.setPosition(
@@ -128,7 +128,7 @@ public abstract class AutismCameraMixin {
 
    @Inject(method = "extractRenderState", at = @At("TAIL"))
    private void autism$disableSmartCull(CameraRenderState cameraState, DeltaTracker deltaTracker, CallbackInfo ci) {
-      if (AuditClientFixes.shouldDisableOcclusion() || FreecamController.init_Z()) {
+      if (AuditClientFixes.shouldDisableOcclusion() || FreecamController.isActive()) {
          cameraState.smartCull = false;
       }
    }
@@ -139,6 +139,6 @@ public abstract class AutismCameraMixin {
       require = 0
    )
    private float autism$freecamNoBodyFov(float modifier) {
-      return FreecamController.init_Z() ? 1.0F : modifier;
+      return FreecamController.isActive() ? 1.0F : modifier;
    }
 }

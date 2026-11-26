@@ -678,7 +678,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
                if (playerOnly == playerSlot) {
                   int visible = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, candidate.index);
                   if ((this.slot < 0 || this.slot == visible || this.slot == candidate.index)
-                     && (filter == null || !filter.update() || filter.init_I_ItemStack_I(candidate.getItem(), visible) >= 0)) {
+                     && (filter == null || !filter.hasItemFilter() || filter.matchScore(candidate.getItem(), visible) >= 0)) {
                      return this.init_TaskQueue_DataUtil_ItemStack_I(candidate.getItem(), visible);
                   }
                }
@@ -703,7 +703,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
          for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
-            if (!stack.isEmpty() && (this.slot < 0 || this.slot == i) && (filter == null || !filter.update() || filter.init_I_ItemStack_I(stack, i) >= 0)) {
+            if (!stack.isEmpty() && (this.slot < 0 || this.slot == i) && (filter == null || !filter.hasItemFilter() || filter.matchScore(stack, i) >= 0)) {
                return this.init_TaskQueue_DataUtil_ItemStack_I(stack, i);
             }
          }
@@ -718,7 +718,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       if (this.itemFilter != null && !this.itemFilter.isBlank()) {
          MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(this.itemFilter, mc);
          return resolution.init_Z()
-            ? new CaptureValueAction.Inner_StreamUtil(true, MacroItemTarget.update(resolution.init_Str()))
+            ? new CaptureValueAction.Inner_StreamUtil(true, MacroItemTarget.parse(resolution.init_Str()))
             : new CaptureValueAction.Inner_StreamUtil(false, null);
       } else {
          return new CaptureValueAction.Inner_StreamUtil(true, null);
@@ -888,9 +888,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.source = MacroNbtCodecHelper.init(CaptureValueAction.Inner_StateCache.class, tag.getStringOr("source", "GUI_TITLE"), CaptureValueAction.Inner_StateCache.GUI_TITLE);
+      this.source = MacroNbtCodecHelper.parseEnum(CaptureValueAction.Inner_StateCache.class, tag.getStringOr("source", "GUI_TITLE"), CaptureValueAction.Inner_StateCache.GUI_TITLE);
       this.saveAs = tag.getStringOr("saveAs", "value");
-      this.matchMode = MacroNbtCodecHelper.init(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
+      this.matchMode = MacroNbtCodecHelper.parseEnum(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
       this.pattern = tag.getStringOr("pattern", "");
       this.exampleText = tag.getStringOr("exampleText", "");
       this.selectedText = tag.getStringOr("selectedText", "");
@@ -899,18 +899,18 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       this.scoreboardRowIndex = tag.getIntOr("scoreboardRowIndex", -1);
       this.scoreboardObjective = tag.getStringOr("scoreboardObjective", "");
       this.slot = tag.getIntOr("slot", -1);
-      this.itemText = MacroNbtCodecHelper.init(CaptureValueAction.Inner_CachePool.class, tag.getStringOr("itemText", "NAME"), CaptureValueAction.Inner_CachePool.NAME);
+      this.itemText = MacroNbtCodecHelper.parseEnum(CaptureValueAction.Inner_CachePool.class, tag.getStringOr("itemText", "NAME"), CaptureValueAction.Inner_CachePool.NAME);
       this.numberMode = tag.contains("numberMode")
-         ? MacroNbtCodecHelper.init(CaptureValueAction.Inner_BufferHelper.class, tag.getStringOr("numberMode", "OFF"), CaptureValueAction.Inner_BufferHelper.OFF)
+         ? MacroNbtCodecHelper.parseEnum(CaptureValueAction.Inner_BufferHelper.class, tag.getStringOr("numberMode", "OFF"), CaptureValueAction.Inner_BufferHelper.OFF)
          : (tag.getBooleanOr("normalizeNumbers", false) ? CaptureValueAction.Inner_BufferHelper.SUFFIX_KMB : CaptureValueAction.Inner_BufferHelper.OFF);
-      this.numberModifier = MacroNbtCodecHelper.init(CaptureValueAction.Inner_TaskQueue.class, tag.getStringOr("numberModifier", "NONE"), CaptureValueAction.Inner_TaskQueue.NONE);
+      this.numberModifier = MacroNbtCodecHelper.parseEnum(CaptureValueAction.Inner_TaskQueue.class, tag.getStringOr("numberModifier", "NONE"), CaptureValueAction.Inner_TaskQueue.NONE);
       this.numberModifierAmount = tag.getDoubleOr("numberModifierAmount", 1.0);
       this.waitForTrigger = tag.getBooleanOr("waitForTrigger", init_Z_TaskQueue_StateCac(this.source));
       this.autofillCommand = tag.getStringOr("autofillCommand", "");
       this.autofillTimeoutMs = tag.getIntOr("autofillTimeoutMs", 5000);
       this.autofillCacheList = tag.getBooleanOr("autofillCacheList", true);
-      this.listSelection = MacroNbtCodecHelper.init(CandidatePoolSelector.Inner_CachePool.class, tag.getStringOr("listSelection", "RANDOM"), CandidatePoolSelector.Inner_CachePool.RANDOM);
-      this.listFilter = MacroNbtCodecHelper.init(CandidatePoolSelector.Inner_DataUtil.class, tag.getStringOr("listFilter", "NONE"), CandidatePoolSelector.Inner_DataUtil.NONE);
+      this.listSelection = MacroNbtCodecHelper.parseEnum(CandidatePoolSelector.Inner_CachePool.class, tag.getStringOr("listSelection", "RANDOM"), CandidatePoolSelector.Inner_CachePool.RANDOM);
+      this.listFilter = MacroNbtCodecHelper.parseEnum(CandidatePoolSelector.Inner_DataUtil.class, tag.getStringOr("listFilter", "NONE"), CandidatePoolSelector.Inner_DataUtil.NONE);
       this.listFilterText = tag.getStringOr("listFilterText", "");
       this.listExcludeText = tag.getStringOr("listExcludeText", "");
       this.listPickPosition = tag.getIntOr("listPickPosition", 1);

@@ -243,12 +243,12 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    public static boolean init_Z_49() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && !clutch.update_Z && !aD.init_Z() && !FreecamController.init_Z();
+      return clutch != null && clutch.init_Z && !clutch.update_Z && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean read_Z_20() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && !clutch.load_Z && clutch.push_Z_4() && clutch.state != 3 && !aD.init_Z() && !FreecamController.init_Z();
+      return clutch != null && clutch.init_Z && !clutch.load_Z && clutch.push_Z_4() && clutch.state != 3 && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean sync_Z_10() {
@@ -266,7 +266,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    public static boolean close_Z_8() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && !aD.init_Z() && !FreecamController.init_Z();
+      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean open_Z_5() {
@@ -276,7 +276,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    @Override
    public boolean load_Z_23() {
-      return (close_Z_8() || this.tick_Z_6()) && !aD.init_Z() && !FreecamController.init_Z();
+      return (close_Z_8() || this.tick_Z_6()) && !aD.init_Z() && !FreecamController.isActive();
    }
 
    @Override
@@ -812,7 +812,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && MC.gui.screen() == null
          && MC.gui.overlay() == null
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && !BlinkPacketManager.init_Z()
          && !PkgCls_a.init_Z()
@@ -1740,7 +1740,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          MC.options.keyShift.isDown() ? 64 : (!start && this.read_I_9() != this.queue ? 0 : 1),
          MC.player.getYRot(),
          this.init_D_13(),
-         autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
+         autismclient.ai.engine.AiPhysics.createLiveWorld(MC.level, MC.player),
          (body, motion, supported) -> this.init_Vec3_AABB(body, motion, axis, mode, supported),
          this::init_i_BufferHelper_AABB,
          extra.stream().flatMap(shape -> shape.toAabbs().stream()).toList(),
@@ -1781,7 +1781,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       return ClutchFallPhysics.init_i_ConfigStore_NodeWalker_StreamU(
          autismclient.ai.engine.AiPhysics.MotionState.of(MC.player),
          pressed,
-         autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
+         autismclient.ai.engine.AiPhysics.createLiveWorld(MC.level, MC.player),
          this.init_D_13(),
          this::init_i_BufferHelper_AABB
       );
@@ -2652,7 +2652,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          input.shift(),
          SilentMovementCoordinator.getMovementYaw(MC.player)
       );
-      autismclient.ai.engine.AiPhysics.PhysicsWorld world = autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
+      autismclient.ai.engine.AiPhysics.PhysicsWorld world = autismclient.ai.engine.AiPhysics.createLiveWorld(MC.level, MC.player);
       boolean unsafe = this.init_Z_NodeWalker_StreamU(start, pressed, world);
       if (!unsafe && !input.shift() && start.pose() != 0) {
          unsafe = this.init_Z_NodeWalker_StreamU(ClutchFallPhysics.init_NodeWalker_StreamU_NodeWalker_StreamU(start), pressed, world);

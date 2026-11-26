@@ -93,7 +93,7 @@ public class WaitEntityTargetAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = MacroNbtCodecHelper.init(WaitEntityTargetAction.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), WaitEntityTargetAction.Inner_DataUtil.LOOKING_AT);
+      this.condition = MacroNbtCodecHelper.parseEnum(WaitEntityTargetAction.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), WaitEntityTargetAction.Inner_DataUtil.LOOKING_AT);
       this.entityId = tag.getStringOr("entityId", "");
       this.range = tag.getDoubleOr("range", 5.0);
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);

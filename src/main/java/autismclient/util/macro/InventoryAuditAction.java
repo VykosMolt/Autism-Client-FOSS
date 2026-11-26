@@ -56,7 +56,7 @@ public class InventoryAuditAction implements MacroAction {
 
    public boolean load_Z_2() {
       for (MacroItemTarget target : this.init_List_3()) {
-         if (target != null && (target.init_Z() || target.update())) {
+         if (target != null && (target.hasSlot() || target.hasItemFilter())) {
             return true;
          }
       }
@@ -175,8 +175,8 @@ public class InventoryAuditAction implements MacroAction {
       List<MacroItemTarget> targets = this.load_List_2();
       if (!targets.isEmpty()) {
          for (MacroItemTarget target : targets) {
-            if (target != null && target.init_Z()) {
-               slots.add(target.init_I);
+            if (target != null && target.hasSlot()) {
+               slots.add(target.slot);
             }
          }
       }
@@ -991,14 +991,14 @@ public class InventoryAuditAction implements MacroAction {
       }
 
       for (MacroItemTarget itemTarget : targets) {
-         if (!itemTarget.init_Z() || itemTarget.init_I == visibleSlot) {
-            if (!itemTarget.update() || itemTarget.init_Z_ItemStack_I(stack, visibleSlot)) {
+         if (!itemTarget.hasSlot() || itemTarget.slot == visibleSlot) {
+            if (!itemTarget.hasItemFilter() || itemTarget.matches(stack, visibleSlot)) {
                return true;
             }
-         } else if (itemTarget.update()) {
-            MacroItemTarget identityTarget = itemTarget.init_ArrayUtil();
-            identityTarget.init_I = -1;
-            if (identityTarget.init_Z_ItemStack_I(stack, visibleSlot)) {
+         } else if (itemTarget.hasItemFilter()) {
+            MacroItemTarget identityTarget = itemTarget.copy();
+            identityTarget.slot = -1;
+            if (identityTarget.matches(stack, visibleSlot)) {
                return true;
             }
          }
@@ -1098,12 +1098,12 @@ public class InventoryAuditAction implements MacroAction {
    private boolean init_Z_ArrayUtil(MacroItemTarget itemTarget, ItemStack stack, int visibleSlot) {
       if (itemTarget == null) {
          return false;
-      } else if (itemTarget.update()) {
-         MacroItemTarget identityTarget = itemTarget.init_ArrayUtil();
-         identityTarget.init_I = -1;
-         return identityTarget.init_Z_ItemStack_I(stack, visibleSlot);
+      } else if (itemTarget.hasItemFilter()) {
+         MacroItemTarget identityTarget = itemTarget.copy();
+         identityTarget.slot = -1;
+         return identityTarget.matches(stack, visibleSlot);
       } else {
-         return itemTarget.init_Z_ItemStack_I(stack, visibleSlot);
+         return itemTarget.matches(stack, visibleSlot);
       }
    }
 
@@ -1357,7 +1357,7 @@ public class InventoryAuditAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("mode", this.mode.name());
-      tag.put("targetItems", MacroItemTarget.init_ListTag_List(this.init_List_3()));
+      tag.put("targetItems", MacroItemTarget.toListTag(this.init_List_3()));
       tag.putString("openCommand", this.init_Str_2());
       tag.putString("openMode", this.openMode.name());
       tag.putInt("containerX", this.containerPos.getX());
@@ -1399,7 +1399,7 @@ public class InventoryAuditAction implements MacroAction {
       this.targetItems.clear();
       if (tag.contains("targetItems")) {
          ListTag list = tag.getList("targetItems").orElse(new ListTag());
-         this.itemTargets.addAll(MacroItemTarget.init_List_ListTag(list));
+         this.itemTargets.addAll(MacroItemTarget.fromListTag(list));
       }
 
       this.load_V_2();
@@ -1514,8 +1514,8 @@ public class InventoryAuditAction implements MacroAction {
       }
 
       for (String target : this.targetItems) {
-         MacroItemTarget parsed = MacroItemTarget.update(target);
-         if (parsed.init_Z() || parsed.update()) {
+         MacroItemTarget parsed = MacroItemTarget.parse(target);
+         if (parsed.hasSlot() || parsed.hasItemFilter()) {
             this.itemTargets.add(parsed);
          }
       }
@@ -1529,8 +1529,8 @@ public class InventoryAuditAction implements MacroAction {
 
       for (MacroItemTarget target : this.init_List_3()) {
          if (target != null) {
-            MacroItemTarget resolved = target.init_ArrayUtil_Minecraft(mc);
-            if (resolved != null && (resolved.init_Z() || resolved.update())) {
+            MacroItemTarget resolved = target.resolveTemplates(mc);
+            if (resolved != null && (resolved.hasSlot() || resolved.hasItemFilter())) {
                runtime.add(resolved);
             }
          }
@@ -1544,7 +1544,7 @@ public class InventoryAuditAction implements MacroAction {
 
       for (MacroItemTarget target : this.itemTargets) {
          if (target != null) {
-            String entry = target.write_Str();
+            String entry = target.toSpecString();
             if (!entry.isBlank()) {
                this.targetItems.add(entry);
             }

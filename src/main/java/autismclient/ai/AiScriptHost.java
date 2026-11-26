@@ -52,18 +52,18 @@ final class AiScriptHost implements AutoCloseable {
 
    JsonObject init(String source, JsonArray fixtures, BooleanSupplier cancelled) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (fixtures.size() <= 4 && fixtures.toString().length() <= 64000) {
-         this.init(source, 3, cancelled, AiJson.init_JsonObject_ObjArr("validateOnly", true));
+         this.init(source, 3, cancelled, AiJson.objectOf("validateOnly", true));
          JsonArray results = new JsonArray();
 
          for (JsonElement fixture : fixtures) {
-            results.add(this.init(source, 2, cancelled, AiJson.init_JsonObject_ObjArr("fixture", fixture)));
+            results.add(this.init(source, 2, cancelled, AiJson.objectOf("fixture", fixture)));
          }
 
-         JsonObject report = AiJson.init_JsonObject_ObjArr(
+         JsonObject report = AiJson.objectOf(
             "status",
             "CHECKED",
             "sourceFingerprint",
-            AiJson.init_Str_Str(source),
+            AiJson.sha256Hex(source),
             "fixtureResults",
             results,
             "coverage",
@@ -72,7 +72,7 @@ final class AiScriptHost implements AutoCloseable {
                : "Supplied tool fixtures only; live game and unrestricted Java effects are not simulated"
          );
          Path checks = this.init_Path.resolve("script-checks");
-         AiJson.init_V_Path_Obj(checks.resolve(AiJson.init_Str_Str(source) + ".json"), report);
+         AiJson.writeAtomicJson(checks.resolve(AiJson.sha256Hex(source) + ".json"), report);
          AiMemoryStore.init_V_Path_I(checks, 100);
          return report;
       } else {
@@ -113,7 +113,7 @@ final class AiScriptHost implements AutoCloseable {
 
          Path scripts = this.init_Path.resolve("scripts");
          Files.createDirectories(scripts);
-         String fingerprint = AiJson.init_Str_Str(source);
+         String fingerprint = AiJson.sha256Hex(source);
          Path saved = scripts.resolve(fingerprint + ".js");
          AiJson.auditPrivateFile(saved);
          Files.writeString(saved, source);
@@ -181,13 +181,13 @@ final class AiScriptHost implements AutoCloseable {
                      throw new IOException("Script output limit exceeded");
                   }
 
-                  JsonObject message = AiJson.init_JsonObject_Str(line);
+                  JsonObject message = AiJson.parseObject(line);
                   if (message.has("error")) {
                      throw new IllegalStateException(message.get("error").getAsString());
                   }
 
                   if (message.has("result")) {
-                     return AiJson.init_JsonObject_ObjArr(
+                     return AiJson.objectOf(
                         "status",
                         "EXECUTED",
                         "message",
@@ -199,12 +199,12 @@ final class AiScriptHost implements AutoCloseable {
                      );
                   }
 
-                  String name = AiJson.init_Str_JsonObject(message, "tool", "");
+                  String name = AiJson.getString(message, "tool", "");
                   if (!name.equals("script_run") && !name.equals("script_check") && !name.equals("finish")) {
                      try {
                         output.println(this.init_bZ_DataUtil.call(name, message.getAsJsonObject("arguments")));
                      } catch (Exception e) {
-                        output.println(AiJson.init_JsonObject_ObjArr("status", "FAILED", "error", e.getMessage()));
+                        output.println(AiJson.objectOf("status", "FAILED", "error", e.getMessage()));
                      }
                      continue label165;
                   }

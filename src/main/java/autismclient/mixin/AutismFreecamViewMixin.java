@@ -16,21 +16,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismFreecamViewMixin {
    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$freecamNoBob(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-      if (FreecamController.init_Z()) {
+      if (FreecamController.isActive()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$freecamNoHurtTilt(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-      if (FreecamController.init_Z()) {
+      if (FreecamController.isActive()) {
          ci.cancel();
       }
    }
 
    @Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$freecamNoHandWhileDriven(CameraRenderState cameraState, PlayerRenderState playerRenderState, GpuTextureView lightmap, CallbackInfo ci) {
-      if (FreecamController.init_Z() && FreecamController.write()) {
+      if (FreecamController.isActive() && FreecamController.isAiControllingBody()) {
          ci.cancel();
       }
    }
@@ -45,6 +45,6 @@ public abstract class AutismFreecamViewMixin {
       require = 0
    )
    private boolean autism$freecamNoBodyOverlays(boolean isHudHidden) {
-      return isHudHidden || FreecamController.init_Z();
+      return isHudHidden || FreecamController.isActive();
    }
 }

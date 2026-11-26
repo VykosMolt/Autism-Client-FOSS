@@ -55,12 +55,12 @@ final class AiDeathLog {
    static JsonObject init_JsonObject() {
       AiDeathLog.Inner_DataUtil death = init_j_DataUtil;
       if (death == null) {
-         return AiJson.init_JsonObject_ObjArr("recorded", false);
+         return AiJson.objectOf("recorded", false);
       }
 
       JsonArray carried = new JsonArray();
-      death.inventory().forEach((item, count) -> carried.add(AiJson.init_JsonObject_ObjArr("item", item, "count", count)));
-      return AiJson.init_JsonObject_ObjArr(
+      death.inventory().forEach((item, count) -> carried.add(AiJson.objectOf("item", item, "count", count)));
+      return AiJson.objectOf(
          "recorded",
          true,
          "dimension",

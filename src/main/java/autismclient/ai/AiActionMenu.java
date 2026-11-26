@@ -770,7 +770,7 @@ final class AiActionMenu {
 
          try {
             JsonObject quotas = this.init_ad_BufferHelper().arguments().getAsJsonObject("counts");
-            this.read_Map.forEach((key, row) -> extended.add(row.label() + ": " + AiJson.init_I_JsonObject(quotas, key, 1)));
+            this.read_Map.forEach((key, row) -> extended.add(row.label() + ": " + AiJson.getInt(quotas, key, 1)));
          } catch (RuntimeException e) {
             extended.add(e.getMessage());
          }
@@ -1076,9 +1076,9 @@ final class AiActionMenu {
                   return;
                }
 
-               this.write_Z = "build".equals(AiJson.init_Str_JsonObject(farmStep.arguments(), "action", "build"));
+               this.write_Z = "build".equals(AiJson.getString(farmStep.arguments(), "action", "build"));
                this.load_StreamUtil_CachePo = null;
-               this.write_Str = AiFarmArea.init_Str(AiJson.init_Str_JsonObject(farmStep.arguments(), "crop", "minecraft:wheat"));
+               this.write_Str = AiFarmArea.init_Str(AiJson.getString(farmStep.arguments(), "crop", "minecraft:wheat"));
                if (this.init_E != null) {
                   this.init_E.read_V();
                }
@@ -1096,7 +1096,7 @@ final class AiActionMenu {
                }
 
                try {
-                  this.init_bW = new AiSchematicPlacement(AiJson.init_Str_JsonObject(step.arguments(), "schematic", ""));
+                  this.init_bW = new AiSchematicPlacement(AiJson.getString(step.arguments(), "schematic", ""));
                } catch (RuntimeException e) {
                   this.read_Str = e.getMessage();
                   return;
@@ -1154,8 +1154,8 @@ final class AiActionMenu {
                return;
             }
 
-            String crop = AiJson.init_Str_JsonObject(step.arguments(), "crop", "minecraft:wheat");
-            AiFarmArea.init_Str(AiJson.init_JsonObject_ObjArr("substrate", this.write_Str), crop);
+            String crop = AiJson.getString(step.arguments(), "crop", "minecraft:wheat");
+            AiFarmArea.init_Str(AiJson.objectOf("substrate", this.write_Str), crop);
             if (this.init_E == null || !this.init_E.init_Str().equals(crop) || !this.init_E.load_Str().equals(this.write_Str)) {
                this.init_E = new AiFarmPlacement(crop, this.write_Str);
             }
@@ -1227,7 +1227,7 @@ final class AiActionMenu {
                }
 
                JsonObject argsx = stepx.arguments().deepCopy();
-               String key = AiJson.init_Str_JsonObject(argsx, "block", "");
+               String key = AiJson.getString(argsx, "block", "");
                Integer custom = AiLocalRequest.init(this.init_BitSetUtil_Str(key).init_Str(), 640);
                if (custom != null) {
                   argsx.addProperty("mineAmount", custom);
@@ -1256,7 +1256,7 @@ final class AiActionMenu {
 
          JsonObject selectedArea = this.init_E.init_JsonObject();
          selectedArea.entrySet().forEach(entry -> args.add(entry.getKey(), entry.getValue()));
-         String crop = AiJson.init_Str_JsonObject(args, "crop", "minecraft:wheat");
+         String crop = AiJson.getString(args, "crop", "minecraft:wheat");
          AiFarmArea.init_Str(args, crop);
          AiFarmArea.Inner_DataUtil area = AiFarmArea.init_C_DataUtil(args);
          String issue = area.validate(this.write_Str);
@@ -1290,7 +1290,7 @@ final class AiActionMenu {
                AiIntents.Inner_BufferHelper step = this.init_ad_BufferHelper();
                if (this.read_Z() && this.write_Z()) {
                   JsonObject args = AiLocalRequest.init(
-                     step.arguments(), AiItems.init_I(AiItems.load_af_DataUtil(AiJson.init_Str_JsonObject(step.arguments(), "item", ""))), this.write_I()
+                     step.arguments(), AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(step.arguments(), "item", ""))), this.write_I()
                   );
                   step = new AiIntents.Inner_BufferHelper(step.clause() + " more", step.capability(), args, step.describe());
                }
@@ -1512,14 +1512,14 @@ final class AiActionMenu {
    private AiActionMenu.Inner_CachePool init_StreamUtil_CachePo_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil a, AiActionMenu.Inner_StreamUtil c, Set<String> seen) {
       for (Function<Integer, String> form : c.forms()) {
          AiIntents.Inner_BufferHelper step = this.init_ad_BufferHelper_Str_Str(form.apply(null), a.load_Str);
-         if (step != null && (c.expect() == null || init_Z_Str_Str(AiJson.init_Str_JsonObject(step.arguments(), c.key(), ""), c.expect()))) {
+         if (step != null && (c.expect() == null || init_Z_Str_Str(AiJson.getString(step.arguments(), c.key(), ""), c.expect()))) {
             if (seen != null && !seen.add(init_Str_ad_BufferHelper_Str(step, c.key()))) {
                return null;
             }
 
             int amount;
             try {
-               amount = AiJson.init_I_JsonObject(step.arguments(), "count", -1);
+               amount = AiJson.getInt(step.arguments(), "count", -1);
             } catch (RuntimeException e) {
                amount = -1;
             }
@@ -1531,7 +1531,7 @@ final class AiActionMenu {
                form,
                amount > 0 ? Integer.toString(amount) : "Auto",
                c.order(),
-               a == AiActionMenu.Inner_DataUtil.MINE ? AiJson.init_Str_JsonObject(step.arguments(), "block", "") : ""
+               a == AiActionMenu.Inner_DataUtil.MINE ? AiJson.getString(step.arguments(), "block", "") : ""
             );
          }
       }
@@ -1560,10 +1560,10 @@ final class AiActionMenu {
    private static String init_Str_ad_BufferHelper_Str(AiIntents.Inner_BufferHelper step, String key) {
       JsonObject args = step.arguments().deepCopy();
       args.remove("count");
-      String value = key == null ? null : AiJson.init_Str_JsonObject(args, key, null);
+      String value = key == null ? null : AiJson.getString(args, key, null);
       if (value != null) {
          try {
-            AiItems.ItemSpec target = AiItems.init_af_DataUtil(value);
+            AiItems.ItemSpec target = AiItems.resolve(value);
             args.addProperty(key, String.join(",", target.itemIds()) + "|" + String.join(",", target.blockIds()));
          } catch (RuntimeException var5) {
          }
@@ -1616,8 +1616,8 @@ final class AiActionMenu {
                   String shortId = AiToolsSuggest.init(id);
                   boolean route = craft.contains(shortId)
                      || smelt.contains(shortId)
-                     || !AiItems.load(item).isEmpty()
-                     || mined.contains(id.toString()) && AiItems.init(item).stream().anyMatch(AiToolsSuggest::init);
+                     || !AiItems.sourceEntitiesFor(item).isEmpty()
+                     || mined.contains(id.toString()) && AiItems.sourceBlocksFor(item).stream().anyMatch(AiToolsSuggest::init);
                   if (route) {
                      out.add(init_StreamUtil_StreamU_Str_2("get", item, "item"));
                   }
@@ -1627,7 +1627,7 @@ final class AiActionMenu {
             init_V_List(out);
             List<AiActionMenu.Inner_StreamUtil> families = new ArrayList<>();
 
-            for (String family : AiItems.init_List()) {
+            for (String family : AiItems.familyNames()) {
                families.add(init_StreamUtil_StreamU_Str("get", family, "item"));
             }
 
@@ -1850,7 +1850,7 @@ final class AiActionMenu {
       ItemStack icon = ItemStack.EMPTY;
 
       try {
-         AiItems.ItemSpec target = AiItems.init_af_DataUtil(family);
+         AiItems.ItemSpec target = AiItems.resolve(family);
          if (!target.items().isEmpty()) {
             icon = autismclient.util.DisplayItemStackFactory.init_ItemStack(target.items().iterator().next());
          }

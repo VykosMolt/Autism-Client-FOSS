@@ -29,8 +29,8 @@ public final class AiSeek {
    public static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         int timeoutSeconds = Math.max(5, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
-         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.init_Str_JsonObject(args, "strategy", "fastest")));
+         int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
+         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.getString(args, "strategy", "fastest")));
       } else {
          throw new IllegalArgumentException("Surface travel requires a connected living player");
       }
@@ -39,9 +39,9 @@ public final class AiSeek {
    public static AiOperation load(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         int timeoutSeconds = Math.max(5, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
-         Integer maxY = args.has("maxY") ? AiJson.init_I_JsonObject(args, "maxY", 0) : null;
-         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.init_Str_JsonObject(args, "strategy", "fastest")), maxY);
+         int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
+         Integer maxY = args.has("maxY") ? AiJson.getInt(args, "maxY", 0) : null;
+         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.RouteStrategy.init(AiJson.getString(args, "strategy", "fastest")), maxY);
       } else {
          throw new IllegalArgumentException("Cave travel requires a connected living player");
       }
@@ -212,7 +212,7 @@ public final class AiSeek {
       JsonObject init_JsonObject_29() {
          JsonObject out = new JsonObject();
          if (this.init_BlockPos != null) {
-            out.add("candidate", AiJson.init_JsonObject_ObjArr("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+            out.add("candidate", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
          }
 
          out.addProperty("attempt", this.load + 1);

@@ -358,7 +358,7 @@ public final class AiService {
       return new AiOperation.Result(
          pending ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
          message,
-         AiJson.init_JsonObject_ObjArr("interruptedActionNeedsReconciliation", pending, "reobserveBeforeResuming", true).toString(),
+         AiJson.objectOf("interruptedActionNeedsReconciliation", pending, "reobserveBeforeResuming", true).toString(),
          List.of(),
          cause
       );
@@ -402,9 +402,9 @@ public final class AiService {
       } else if (p.tickCount < 40) {
          return false;
       } else if (!(p.getDeltaMovement().y > -0.5) && !(p.fallDistance < 3.0)) {
-         boolean water = AiGameState.init_I_Str("minecraft:water_bucket") > 0
+         boolean water = AiGameState.countInventoryItem("minecraft:water_bucket") > 0
             && !mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES);
-         return !water && AiGameState.init_I_Str("minecraft:cobweb") <= 0 ? false : AiDanger.init_i_DataUtil_Minecraft(mc).fallDamage() >= 4.0F;
+         return !water && AiGameState.countInventoryItem("minecraft:cobweb") <= 0 ? false : AiDanger.init_i_DataUtil_Minecraft(mc).fallDamage() >= 4.0F;
       } else {
          return false;
       }
@@ -531,7 +531,7 @@ public final class AiService {
                      if (Files.exists(task)) {
                         try {
                            AiSessions.Inner_DataUtil migrated = AiSessions.init(
-                              AiJson.init_JsonObject_Str(Files.readString(task)),
+                              AiJson.parseObject(Files.readString(task)),
                               UUID.randomUUID().toString(),
                               System.currentTimeMillis(),
                               this.init_AiSettings.maxMinutes
@@ -605,7 +605,7 @@ public final class AiService {
       }
 
       JsonObject saved = this.init_JsonObject;
-      return saved != null && !saved.isEmpty() ? saved.deepCopy() : AiJson.init_JsonObject_ObjArr("active", false, "summary", "Chat mode off");
+      return saved != null && !saved.isEmpty() ? saved.deepCopy() : AiJson.objectOf("active", false, "summary", "Chat mode off");
    }
 
    boolean write_Z() {
@@ -613,7 +613,7 @@ public final class AiService {
    }
 
    void init_V() {
-      AiObservation snapshot = AiGameState.init(this.flush_Str, this.close_Str, "qualification-smoke");
+      AiObservation snapshot = AiGameState.observe(this.flush_Str, this.close_Str, "qualification-smoke");
       AiCatalog.Snapshot contracts = this.init_AiCatalog_Snapshot();
       this.init_ExecutorService
          .execute(
@@ -624,9 +624,9 @@ public final class AiService {
                      throw new IllegalStateException("Missing catalog revision in mandatory context");
                   }
 
-                  AiJson.init_V_Path_Obj(
+                  AiJson.writeAtomicJson(
                      this.init_AiMemoryStore.init_Path().resolve("qualification-smoke.json"),
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "at",
                         System.currentTimeMillis(),
                         "catalogEntries",
@@ -745,7 +745,7 @@ public final class AiService {
          from.isBlank() ? List.of() : List.of(from)
       );
       this.init_AiRegions.init(region);
-      AiObservation proof = new AiObservation(evidenceId, this.flush_Str, this.close_Str, System.currentTimeMillis(), "terrain-survey", AiJson.init.toJson(region));
+      AiObservation proof = new AiObservation(evidenceId, this.flush_Str, this.close_Str, System.currentTimeMillis(), "terrain-survey", AiJson.GSON.toJson(region));
       this.load_ExecutorService.execute(() -> {
          try {
             this.init_AiMemoryStore.init(proof);
@@ -1125,7 +1125,7 @@ public final class AiService {
 
       if (capability.equals("game:build") && arguments.has("schematic")) {
          try {
-            AiLocalRequest.init_V(local, AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.init_Str_JsonObject(arguments, "schematic", "")));
+            AiLocalRequest.init_V(local, AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(arguments, "schematic", "")));
          } catch (IOException e) {
             throw new IllegalArgumentException("Schematic is no longer available: " + e.getMessage(), e);
          }
@@ -1264,7 +1264,7 @@ public final class AiService {
          return this.init_JsonObject_Str_JsonObject("Chat mode is active", this.init_JsonObject_PathHelper_DataUti(config, null, false));
       } catch (Exception error) {
          this.init_V_Str_Str("error", "Chat mode: " + error.getMessage());
-         return AiJson.init_JsonObject_ObjArr("status", "FAILED", "error", Objects.toString(error.getMessage(), "Chat mode could not start"), "active", false);
+         return AiJson.objectOf("status", "FAILED", "error", Objects.toString(error.getMessage(), "Chat mode could not start"), "active", false);
       }
    }
 
@@ -1365,7 +1365,7 @@ public final class AiService {
    }
 
    JsonObject init_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
-      String action = AiJson.init_Str_JsonObject(args, "action", "status").trim().toLowerCase(Locale.ROOT);
+      String action = AiJson.getString(args, "action", "status").trim().toLowerCase(Locale.ROOT);
       if (action.isEmpty()) {
          action = "status";
       }
@@ -1390,7 +1390,7 @@ public final class AiService {
    }
 
    JsonObject load_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
-      String raw = AiJson.init_Str_JsonObject(args, "text", "");
+      String raw = AiJson.getString(args, "text", "");
       if (raw.strip().startsWith("/")) {
          throw new IllegalArgumentException("chat_send is plain chat; a leading '/' would be a server command. Use game:command for commands.");
       } else {
@@ -1406,7 +1406,7 @@ public final class AiService {
 
                mc.getConnection().sendChat(text);
                this.update_V_Str(text);
-               return AiJson.init_JsonObject_ObjArr("status", "SUCCEEDED", "message", "Chat line sent", "text", text, "backgroundChat", this.read_Z());
+               return AiJson.objectOf("status", "SUCCEEDED", "message", "Chat line sent", "text", text, "backgroundChat", this.read_Z());
             });
          }
       }
@@ -1417,7 +1417,7 @@ public final class AiService {
    }
 
    private JsonObject init_JsonObject_Str_JsonObject(String message, JsonObject chat) {
-      return AiJson.init_JsonObject_ObjArr("status", "SUCCEEDED", "message", message, "chat", chat);
+      return AiJson.objectOf("status", "SUCCEEDED", "message", message, "chat", chat);
    }
 
    void update_V_Str(String text) {
@@ -1441,7 +1441,7 @@ public final class AiService {
       if (s != null) {
          synchronized (s) {
             JsonObject next = s.init_JsonObject.deepCopy();
-            if (!copy.isEmpty() && AiJson.init_Z_JsonObject(copy, "active", false)) {
+            if (!copy.isEmpty() && AiJson.getBoolean(copy, "active", false)) {
                next.add("hostChatMode", copy.deepCopy());
             } else {
                next.remove("hostChatMode");
@@ -1452,7 +1452,7 @@ public final class AiService {
       }
 
       if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
-         this.sync_Str = copy.isEmpty() ? "Chat mode off" : AiJson.init_Str_JsonObject(copy, "summary", "Chatting");
+         this.sync_Str = copy.isEmpty() ? "Chat mode off" : AiJson.getString(copy, "summary", "Chatting");
       }
    }
 
@@ -1659,7 +1659,7 @@ public final class AiService {
                this.sync_V_Str("Chat mode stopped: world/session changed");
             }
 
-            AiServerEvidence.read_V();
+            AiServerEvidence.clearAll();
             AiChatLedger.init_V();
             autismclient.ai.engine.AiGridRevisions.init_V();
             AiScaffold.init_V();
@@ -1667,7 +1667,7 @@ public final class AiService {
             this.flush_Str = UUID.randomUUID().toString();
             this.update_Map = null;
             AiEventLog.init_x().auditReset(mc.getConnection());
-            AiEventLog.init_x().init("dimension_changed", AiJson.init_JsonObject_ObjArr("dimension", AiWorldIdentity.load(mc)));
+            AiEventLog.init_x().init("dimension_changed", AiJson.objectOf("dimension", AiWorldIdentity.load(mc)));
             AiRunTrace trace = AiRunTrace.init_bL();
             if (trace != null && (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.RunState.PAUSED)) {
                String nowDimension = AiWorldIdentity.load(mc);
@@ -1684,7 +1684,7 @@ public final class AiService {
                if (current != null && !AiDirectOps.init_Z(current.id())) {
                   this.init_V_cc_SyncManager_Z(current, true);
                   current.result()
-                     .complete(AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "World/session changed during operation", new JsonObject()));
+                     .complete(AiGameOperations.result(AiOperation.Status.CANCELLED, "World/session changed during operation", new JsonObject()));
                   this.init_cc_SyncManager = null;
                }
 
@@ -1863,7 +1863,7 @@ public final class AiService {
                      this.load_JsonObject = this.init_aM.init();
                      if (Boolean.getBoolean("autism.ai.smoke")) {
                         try {
-                           AiJson.init_V_Path_Obj(this.init_AiMemoryStore.init_Path().resolve("qualification-performance.json"), this.load_JsonObject);
+                           AiJson.writeAtomicJson(this.init_AiMemoryStore.init_Path().resolve("qualification-performance.json"), this.load_JsonObject);
                         } catch (Exception ex) {
                            this.init_V_Str_Str("error", ex.getMessage());
                         }
@@ -1895,7 +1895,7 @@ public final class AiService {
                         AiEventLog.init_x()
                            .init(
                               "player_damaged",
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "amount", Math.round((this.init_F - health) * 10.0F) / 10.0, "health", Math.round(health * 10.0F) / 10.0
                               )
                            );
@@ -1917,7 +1917,7 @@ public final class AiService {
                            this.init_Z_Minecraft(
                               mc,
                               "game:mlg",
-                              AiJson.init_JsonObject_ObjArr("method", "auto", "collect", true, "timeoutSeconds", 15),
+                              AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15),
                               "fall_save",
                               "Falling - clutching the landing."
                            );
@@ -1929,7 +1929,7 @@ public final class AiService {
                      String urgentHazard = AiHazardEscape.init(mc);
                      if (!this.init_AiSettings.planMode
                         && urgentHazard != null
-                        && !AiGuard.init_Z()
+                        && !AiGuard.isSuppressed()
                         && (hazardPending == null || !hazardPending.id().equals("game:escape_hazard"))
                         && (hazardPending == null || hazardPending.resources().contains("INPUT"))) {
                         if (hazardPending != null) {
@@ -1941,11 +1941,11 @@ public final class AiService {
                            this.init_cc_SyncManager = null;
                         }
 
-                        AiEventLog.init_x().init("hazard_reflex", AiJson.init_JsonObject_ObjArr("hazard", urgentHazard, "priority", "before-combat"));
+                        AiEventLog.init_x().init("hazard_reflex", AiJson.objectOf("hazard", urgentHazard, "priority", "before-combat"));
                         if (this.init_Z_Minecraft(
                            mc,
                            "game:escape_hazard",
-                           AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25),
+                           AiJson.objectOf("timeoutSeconds", 25),
                            "environmental_escape",
                            "Environmental danger - " + urgentHazard + "; escaping before resuming work."
                         )) {
@@ -1956,7 +1956,7 @@ public final class AiService {
                      AiService.ActiveOperation threatPending = this.init_cc_SyncManager;
                      if (threatPending != null
                         && init_Z_Str(threatPending.id())
-                        && !AiGuard.init_Z()
+                        && !AiGuard.isSuppressed()
                         && init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                         long now = System.currentTimeMillis();
                         String hazard = init_Str_Player(mc.player);
@@ -1969,7 +1969,7 @@ public final class AiService {
                            this.init_V_cc_SyncManager_Z(threatPending, true);
                            threatPending.result().complete(interrupted);
                            this.init_cc_SyncManager = null;
-                           AiEventLog.init_x().init("hazard_interrupt", AiJson.init_JsonObject_ObjArr("hazard", hazard));
+                           AiEventLog.init_x().init("hazard_interrupt", AiJson.objectOf("hazard", hazard));
                            AiRunTrace trace = AiRunTrace.init_bL();
                            if (trace != null) {
                               trace.load("hazard");
@@ -1986,7 +1986,7 @@ public final class AiService {
 
                            if (AiBreathe.init(mc.player)) {
                               this.init_Z_Minecraft(
-                                 mc, "game:breathe", AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25), "breathe", "Out of air - swimming up to breathe."
+                                 mc, "game:breathe", AiJson.objectOf("timeoutSeconds", 25), "breathe", "Out of air - swimming up to breathe."
                               );
                            }
 
@@ -2037,7 +2037,7 @@ public final class AiService {
                            AiEventLog.init_x()
                               .init(
                                  "threat_interrupt",
-                                 AiJson.init_JsonObject_ObjArr("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
+                                 AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
                               );
                            AiRunTrace trace = AiRunTrace.init_bL();
                            if (trace != null) {
@@ -2050,7 +2050,7 @@ public final class AiService {
                               if (this.init_Z_Minecraft(
                                  mc,
                                  "game:flee",
-                                 AiJson.init_JsonObject_ObjArr("radius", 24, "distance", 48, "timeoutSeconds", 30),
+                                 AiJson.objectOf("radius", 24, "distance", 48, "timeoutSeconds", 30),
                                  "threat_escalation_flee",
                                  "Repeated threats - leaving the area."
                               )) {
@@ -2076,7 +2076,7 @@ public final class AiService {
                               this.init_Z_Minecraft(
                                  mc,
                                  "game:dodge",
-                                 AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4),
+                                 AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4),
                                  "projectile_reflex",
                                  "Incoming projectile - reacting immediately, then resuming the objective."
                               );
@@ -2124,11 +2124,11 @@ public final class AiService {
                                  )
                               );
                            this.init_cc_SyncManager = null;
-                           AiEventLog.init_x().init("hunger_interrupt", AiJson.init_JsonObject_ObjArr("food", food));
+                           AiEventLog.init_x().init("hunger_interrupt", AiJson.objectOf("food", food));
                            this.init_Z_Minecraft(
                               mc,
                               "game:eat",
-                              AiJson.init_JsonObject_ObjArr("timeoutSeconds", 15),
+                              AiJson.objectOf("timeoutSeconds", 15),
                               "food_reflex",
                               "Critical hunger - eating safely before resuming work."
                            );
@@ -2153,7 +2153,7 @@ public final class AiService {
                      long idleNow = System.currentTimeMillis();
                      if (threatPending == null
                         && !this.init_AiSettings.planMode
-                        && !AiGuard.init_Z()
+                        && !AiGuard.isSuppressed()
                         && idleNow - this.set_J > 1000L
                         && init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                         int hostiles = 0;
@@ -2179,13 +2179,13 @@ public final class AiService {
                            AiEventLog.init_x()
                               .init(
                                  "idle_threat",
-                                 AiJson.init_JsonObject_ObjArr("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
+                                 AiJson.objectOf("hostiles", hostiles, "ranged", ranged, "lethal", lethalImminent, "projectile", projectileThreat)
                               );
                            if (projectileThreat) {
                               this.init_Z_Minecraft(
                                  mc,
                                  "game:dodge",
-                                 AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4),
+                                 AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4),
                                  "projectile_reflex",
                                  "Incoming projectile - reacting while the objective thinks."
                               );
@@ -2217,7 +2217,7 @@ public final class AiService {
                      if (dayIndex != this.close_J
                         && nowMs - this.open_J >= 30000L
                         && this.init_Z_Minecraft(
-                           mc, "game:burrow", AiJson.init_JsonObject_ObjArr("timeoutSeconds", 600), "night_burrow", "Night falls - burrowing until dawn."
+                           mc, "game:burrow", AiJson.objectOf("timeoutSeconds", 600), "night_burrow", "Night falls - burrowing until dawn."
                         )) {
                         this.close_J = dayIndex;
                         this.open_J = nowMs;
@@ -2232,7 +2232,7 @@ public final class AiService {
                      && mc.player.isAlive()
                      && load_Z_cc_FileCache(this.init_cc_FileCache)
                      && AiBreathe.init(mc.player)
-                     && (this.init_cc_SyncManager == null || this.init_cc_SyncManager.hostParked() || !AiGuard.init_Z())) {
+                     && (this.init_cc_SyncManager == null || this.init_cc_SyncManager.hostParked() || !AiGuard.isSuppressed())) {
                      AiService.ActiveOperation reflex = this.init_cc_SyncManager;
                      if (reflex != null && reflex.hostParked() && !reflex.id().equals("game:breathe") && !reflex.id().equals("game:escape_hazard")) {
                         this.init_V_cc_SyncManager_Z(reflex, true);
@@ -2249,7 +2249,7 @@ public final class AiService {
 
                      if (this.init_cc_SyncManager == null) {
                         this.init_Z_Minecraft(
-                           mc, "game:breathe", AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25), "breathe", "Out of air - swimming up to breathe."
+                           mc, "game:breathe", AiJson.objectOf("timeoutSeconds", 25), "breathe", "Out of air - swimming up to breathe."
                         );
                      }
                   }
@@ -2272,7 +2272,7 @@ public final class AiService {
                         && nowMs - this.push_J >= 30000L
                         && write_Z_Minecraft(mc)
                         && this.init_Z_Minecraft(
-                           mc, "game:sleep", AiJson.init_JsonObject_ObjArr("timeoutSeconds", 60), "night_sleep", "Night falls - sleeping in the bed nearby."
+                           mc, "game:sleep", AiJson.objectOf("timeoutSeconds", 60), "night_sleep", "Night falls - sleeping in the bed nearby."
                         )) {
                         this.poll_J = dayIndex;
                         this.push_J = nowMs;
@@ -2307,17 +2307,17 @@ public final class AiService {
                                     JsonObject old = next.has("activeOperation") && next.get("activeOperation").isJsonObject()
                                        ? next.getAsJsonObject("activeOperation")
                                        : null;
-                                    JsonObject active = old != null && current.id().equals(AiJson.init_Str_JsonObject(old, "id", "")) ? old : new JsonObject();
+                                    JsonObject active = old != null && current.id().equals(AiJson.getString(old, "id", "")) ? old : new JsonObject();
                                     active.addProperty("id", current.id());
                                     active.addProperty("progress", result.message());
-                                    JsonObject data = AiJson.init_JsonObject_Str(result.dataJson());
+                                    JsonObject data = AiJson.parseObject(result.dataJson());
 
                                     for (Entry<String, JsonElement> entry : data.entrySet()) {
                                        active.add(entry.getKey(), entry.getValue());
                                     }
 
                                     if (active.toString().length() >= 16000) {
-                                       active = AiJson.init_JsonObject_ObjArr("id", current.id(), "progress", result.message());
+                                       active = AiJson.objectOf("id", current.id(), "progress", result.message());
                                     }
 
                                     next.add("activeOperation", active);
@@ -2353,7 +2353,7 @@ public final class AiService {
                         } else {
                            this.init_V_cc_SyncManager_Z(current, true);
                            current.result()
-                              .complete(AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Capability changed during execution", new JsonObject()));
+                              .complete(AiGameOperations.result(AiOperation.Status.CANCELLED, "Capability changed during execution", new JsonObject()));
                            this.init_cc_SyncManager = null;
                         }
                      } else {
@@ -2373,7 +2373,7 @@ public final class AiService {
    public void flush_V(String reason) {
       if (!Boolean.getBoolean("autism.ai.livetask")
          && this.init_AiSettings.stopOnInput
-         && !autismclient.modules.FreecamController.init_Z()
+         && !autismclient.modules.FreecamController.isActive()
          && load_Z_cc_FileCache(this.init_cc_FileCache)
          && this.init_cc_SyncManager != null) {
          this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, reason);
@@ -2392,7 +2392,7 @@ public final class AiService {
    }
 
    private boolean load_Z_Minecraft(Minecraft mc) {
-      if (mc.gui.screen() == null && !autismclient.modules.FreecamController.init_Z()) {
+      if (mc.gui.screen() == null && !autismclient.modules.FreecamController.isActive()) {
          for (KeyMapping key : List.of(
             mc.options.keyUp, mc.options.keyDown, mc.options.keyLeft, mc.options.keyRight, mc.options.keyJump, mc.options.keyAttack, mc.options.keyUse
          )) {
@@ -2413,11 +2413,11 @@ public final class AiService {
             this.write_Z = false;
             BlockPos p = mc.player.blockPosition();
             AiEventLog.init_x()
-               .init("death", AiJson.init_JsonObject_ObjArr("x", p.getX(), "y", p.getY(), "z", p.getZ(), "dimension", mc.level.dimension().identifier().toString()));
+               .init("death", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ(), "dimension", mc.level.dimension().identifier().toString()));
          } else if (mc.player.isAlive() && !this.write_Z) {
             this.write_Z = true;
             BlockPos p = mc.player.blockPosition();
-            AiEventLog.init_x().init("respawn", AiJson.init_JsonObject_ObjArr("x", p.getX(), "y", p.getY(), "z", p.getZ()));
+            AiEventLog.init_x().init("respawn", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
          }
 
          if (this.update_I % 5 == 0) {
@@ -2429,7 +2429,7 @@ public final class AiService {
                   if (this.read_Set.add(e.getId())) {
                      AiEventLog.init_x()
                         .init(
-                           "entity_attacking", AiJson.init_JsonObject_ObjArr("id", e.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString())
+                           "entity_attacking", AiJson.objectOf("id", e.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString())
                         );
                   }
                }
@@ -2453,9 +2453,9 @@ public final class AiService {
                this.update_Map.forEach((item, count) -> merged.merge(item, -count, Integer::sum));
                merged.forEach((item, delta) -> {
                   if (delta > 0) {
-                     AiEventLog.init_x().init("item_obtained", AiJson.init_JsonObject_ObjArr("item", item, "count", delta));
+                     AiEventLog.init_x().init("item_obtained", AiJson.objectOf("item", item, "count", delta));
                   } else if (delta < 0) {
-                     AiEventLog.init_x().init("item_lost", AiJson.init_JsonObject_ObjArr("item", item, "count", -delta));
+                     AiEventLog.init_x().init("item_lost", AiJson.objectOf("item", item, "count", -delta));
                   }
                });
             }
@@ -2522,7 +2522,7 @@ public final class AiService {
             this.init_V_Str_Str("error", "Operation cleanup: " + e.getMessage());
          } finally {
             if (current.resources().contains("INPUT")) {
-               autismclient.ai.engine.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                Minecraft mc = Minecraft.getInstance();
                if (mc.options != null) {
                   for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {
@@ -2548,7 +2548,7 @@ public final class AiService {
       this.init_Z_Minecraft(
          mc,
          "game:flee",
-         AiJson.init_JsonObject_ObjArr("radius", 16, "distance", 48, "timeoutSeconds", 25),
+         AiJson.objectOf("radius", 16, "distance", 48, "timeoutSeconds", 25),
          "respawn_stabilize",
          "Respawned into danger; moving to safety first."
       );
@@ -2559,8 +2559,8 @@ public final class AiService {
    }
 
    private static boolean write_Z_Minecraft(Minecraft mc) {
-      for (Item item : AiItems.init_af_DataUtil("bed").items()) {
-         if (AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
+      for (Item item : AiItems.resolve("bed").items()) {
+         if (AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
             return true;
          }
       }
@@ -2568,7 +2568,7 @@ public final class AiService {
       BlockPos origin = mc.player.blockPosition();
 
       for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-6, -4, -6), origin.offset(6, 4, 6))) {
-         if (AiTerrain.init(mc.level, pos) && mc.level.getBlockState(pos).getBlock() instanceof BedBlock) {
+         if (AiTerrain.isLoaded(mc.level, pos) && mc.level.getBlockState(pos).getBlock() instanceof BedBlock) {
             return true;
          }
       }
@@ -2582,7 +2582,7 @@ public final class AiService {
    }
 
    private void init_V_Minecraft(Minecraft mc, AiService.ActiveOperation interrupted, float health, int hostiles) {
-      int weaponSlot = AiItems.read();
+      int weaponSlot = AiItems.bestHotbarWeaponSlot();
       boolean armed = weaponSlot >= 0 && load_Z_Str(BuiltInRegistries.ITEM.getKey(mc.player.getInventory().getItem(weaponSlot).getItem()).toString());
       String reflex = init_Str_F(
          health, armed, this.init_AiSettings.planMode, interrupted != null && interrupted.hostParked() && !interrupted.id().equals("game:eat")
@@ -2592,7 +2592,7 @@ public final class AiService {
          reflex = "game:flee";
       }
 
-      if (reflex.equals("game:flee") && health >= 8.0F && AiGuard.sync_Z()) {
+      if (reflex.equals("game:flee") && health >= 8.0F && AiGuard.isOnlySmallFastMeleeThreat()) {
          reflex = "game:fight";
       }
 
@@ -2600,7 +2600,7 @@ public final class AiService {
          this.init_Z_Minecraft(
             mc,
             "game:fight",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "target",
                BuiltInRegistries.ENTITY_TYPE.getKey(mealThreat.getType()).toString(),
                "entityId",
@@ -2619,7 +2619,7 @@ public final class AiService {
          this.init_Z_Minecraft(
             mc,
             "game:fight",
-            AiJson.init_JsonObject_ObjArr("target", "hostiles", "count", Math.max(1, hostiles), "radius", 12, "timeoutSeconds", 15),
+            AiJson.objectOf("target", "hostiles", "count", Math.max(1, hostiles), "radius", 12, "timeoutSeconds", 15),
             "threat_reflex_fight",
             "Under attack - defending while the objective thinks."
          );
@@ -2627,7 +2627,7 @@ public final class AiService {
          this.init_Z_Minecraft(
             mc,
             "game:flee",
-            AiJson.init_JsonObject_ObjArr("radius", 16, "distance", 40, "timeoutSeconds", 20),
+            AiJson.objectOf("radius", 16, "distance", 40, "timeoutSeconds", 20),
             "threat_reflex_flee",
             "Under attack - moving away while the objective thinks."
          );
@@ -2649,7 +2649,7 @@ public final class AiService {
             try {
                inner = AiModuleScope.load(() -> {
                   AiModuleScope.init();
-                  return AiGuard.init(Objects.requireNonNull(AiTools.init_AiOperation_Str_JsonObject(id, args)));
+                  return AiGuard.allowDuringLowHealth(Objects.requireNonNull(AiTools.init_AiOperation_Str_JsonObject(id, args)));
                });
             } catch (Exception e) {
                try {
@@ -2762,10 +2762,10 @@ public final class AiService {
          }
 
          if (s.load_I < 0) {
-            s.load_I = AiGameState.init_I_Str("minecraft:wheat");
+            s.load_I = AiGameState.countInventoryItem("minecraft:wheat");
          }
 
-         return AiGameState.init(this.flush_Str, this.close_Str, source, this.write_J() / 1000000000L, s.init_I);
+         return AiGameState.observe(this.flush_Str, this.close_Str, source, this.write_J() / 1000000000L, s.init_I);
       });
       this.init_AiObservation = o;
 
@@ -2872,7 +2872,7 @@ public final class AiService {
             }
          }
       );
-      AiEventLog.init_x().init("op_started", AiJson.init_JsonObject_ObjArr("id", id));
+      AiEventLog.init_x().init("op_started", AiJson.objectOf("id", id));
 
       AiOperation.Result result;
       while (true) {
@@ -2886,9 +2886,9 @@ public final class AiService {
       }
 
       if (result.status() == AiOperation.Status.SUCCEEDED) {
-         AiEventLog.init_x().init("op_completed", AiJson.init_JsonObject_ObjArr("id", id, "status", result.status().name()));
+         AiEventLog.init_x().init("op_completed", AiJson.objectOf("id", id, "status", result.status().name()));
       } else {
-         AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", id, "status", result.status().name(), "failure", result.failure().name()));
+         AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", id, "status", result.status().name(), "failure", result.failure().name()));
       }
 
       AiObservation full = this.init_AiObservation_J_Str(g, result.status() == AiOperation.Status.SUCCEEDED ? "verified-operation" : "operation-result");
@@ -2898,7 +2898,7 @@ public final class AiService {
          full.scope(),
          full.observedAt(),
          full.source(),
-         AiGameState.init_JsonObject_JsonObject(AiJson.init_JsonObject_Str(full.dataJson()).getAsJsonObject()).toString()
+         AiGameState.compactState(AiJson.parseObject(full.dataJson()).getAsJsonObject()).toString()
       );
       if (result.status() == AiOperation.Status.SUCCEEDED) {
          this.load_Map.put(evidence.id(), evidence);
@@ -2920,28 +2920,28 @@ public final class AiService {
          }
       }
 
-      JsonObject output = AiJson.init_JsonObject_ObjArr(
+      JsonObject output = AiJson.objectOf(
          "status",
          result.status().name(),
          "message",
          result.message(),
          "data",
-         AiJson.init_JsonObject_Str(result.dataJson()),
+         AiJson.parseObject(result.dataJson()),
          "evidence",
-         AiJson.init_JsonObject_ObjArr("id", evidence.id(), "observedAt", evidence.observedAt())
+         AiJson.objectOf("id", evidence.id(), "observedAt", evidence.observedAt())
       );
       if (result.status() == AiOperation.Status.FAILED || result.status() == AiOperation.Status.TIMED_OUT) {
          AiFailure failure = result.status() == AiOperation.Status.TIMED_OUT && result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
          output.add(
             "failure",
-            AiJson.init_JsonObject_ObjArr("code", failure.name(), "recoverable", failure.init_Z(), "suggestedActions", AiJson.init.toJsonTree(failure.init_List()))
+            AiJson.objectOf("code", failure.name(), "recoverable", failure.init_Z(), "suggestedActions", AiJson.GSON.toJsonTree(failure.init_List()))
          );
       }
 
       try {
          JsonObject journaled = output.deepCopy();
-         journaled.add("evidence", AiJson.init.toJsonTree(evidence));
-         JsonObject entry = AiJson.init_JsonObject_ObjArr("capability", id, "result", journaled);
+         journaled.add("evidence", AiJson.GSON.toJsonTree(evidence));
+         JsonObject entry = AiJson.objectOf("capability", id, "result", journaled);
          entry.addProperty("sessionId", this.write_Str);
          this.init_AiMemoryStore.init_V_Str_JsonElement("operation", entry);
       } catch (IOException e) {
@@ -2954,7 +2954,7 @@ public final class AiService {
    AiOperation init_AiOperation_Str_JsonObject(String id, final JsonObject args) {
       final Module m = autismclient.modules.al.init_Module_Str(id);
       if (m != null && m.settingsShareable() && !id.equals("ai-assistant")) {
-         if (AiJson.init_Z_JsonObject(args, "enabled", false)) {
+         if (AiJson.getBoolean(args, "enabled", false)) {
             String restricted = init_Str_Str_AiSettings(id, this.init_AiSettings);
             if (restricted != null) {
                throw new IllegalArgumentException(restricted);
@@ -2967,7 +2967,7 @@ public final class AiService {
             }
          }
 
-         boolean persistent = AiJson.init_Z_JsonObject(args, "persistent", false);
+         boolean persistent = AiJson.getBoolean(args, "persistent", false);
          List<Runnable> actions = new ArrayList<>();
          if (args.has("actions") && args.get("actions").isJsonArray()) {
             for (JsonElement a : args.getAsJsonArray("actions")) {
@@ -3034,7 +3034,7 @@ public final class AiService {
             }
          });
          if (args.has("keybind")) {
-            int code = AiJson.init_I_JsonObject(args, "keybind", -1);
+            int code = AiJson.getInt(args, "keybind", -1);
             if (code < -1) {
                throw new IllegalArgumentException("keybind must be a GLFW key code, or -1 to unbind");
             }
@@ -3043,7 +3043,7 @@ public final class AiService {
          }
 
          if (args.has("enabled")) {
-            boolean desired = AiJson.init_Z_JsonObject(args, "enabled", false);
+            boolean desired = AiJson.getBoolean(args, "enabled", false);
             if (persistent) {
                m.setEnabled(desired);
             } else {
@@ -3059,11 +3059,11 @@ public final class AiService {
             @Override
             public AiOperation.Result tick() {
                if (this.init_Z) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Module verification cancelled", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.CANCELLED, "Module verification cancelled", new JsonObject());
                }
 
                JsonObject actual = new JsonObject();
-               boolean match = !args.has("enabled") || m.isEnabled() == AiJson.init_Z_JsonObject(args, "enabled", false);
+               boolean match = !args.has("enabled") || m.isEnabled() == AiJson.getBoolean(args, "enabled", false);
 
                for (Entry<String, String> entry : values.entrySet()) {
                   String value = m.setting(entry.getKey()).serialize();
@@ -3073,10 +3073,10 @@ public final class AiService {
                   }
                }
 
-               JsonObject data = AiJson.init_JsonObject_ObjArr("enabled", m.isEnabled(), "settings", actual);
+               JsonObject data = AiJson.objectOf("enabled", m.isEnabled(), "settings", actual);
                return ++this.init_I < 2
-                  ? AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Checking settings after owning module validation", data)
-                  : AiGameOperations.init_AiOperation_Result(
+                  ? AiGameOperations.result(AiOperation.Status.RUNNING, "Checking settings after owning module validation", data)
+                  : AiGameOperations.result(
                      match ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
                      match
                         ? "Module state verified after client ticks; gameplay outcome requires separate verification"
@@ -3123,7 +3123,7 @@ public final class AiService {
 
    private void set(String text) {
       this.load_AiObservation = new AiObservation(
-         UUID.randomUUID().toString(), this.flush_Str, "user", System.currentTimeMillis(), "user", AiJson.init_JsonObject_ObjArr("request", text).toString()
+         UUID.randomUUID().toString(), this.flush_Str, "user", System.currentTimeMillis(), "user", AiJson.objectOf("request", text).toString()
       );
 
       try {
@@ -3164,12 +3164,12 @@ public final class AiService {
       if (next.has("subgoals")) {
          for (JsonElement element : next.getAsJsonArray("subgoals")) {
             JsonObject goal = element.getAsJsonObject();
-            String status = AiJson.init_Str_JsonObject(goal, "status", "pending");
+            String status = AiJson.getString(goal, "status", "pending");
             if (!Set.of("pending", "running", "blocked", "verified").contains(status)) {
                throw new IllegalArgumentException("Unknown subgoal status");
             }
 
-            if (this.init_Z && status.equals("verified") && !this.load_Map.containsKey(AiJson.init_Str_JsonObject(goal, "evidenceId", ""))) {
+            if (this.init_Z && status.equals("verified") && !this.load_Map.containsKey(AiJson.getString(goal, "evidenceId", ""))) {
                throw new IllegalArgumentException("Verified subgoals need the evidence id of a SUCCEEDED perform; mark it running or pending until one exists");
             }
          }
@@ -3180,7 +3180,7 @@ public final class AiService {
          s.init_JsonObject = AiJson.auditKeepHostKeys(s.init_JsonObject, next);
       }
 
-      this.close_V(AiJson.init_Str_JsonObject(value, "state", s.sync_Str));
+      this.close_V(AiJson.getString(value, "state", s.sync_Str));
    }
 
    private AiService.PromptContextBundle init_cc_NetHelper_cc_RenderState(AiService.SessionState s, boolean planning, int promptBudget) {
@@ -3213,11 +3213,11 @@ public final class AiService {
    }
 
    private static long init_J_cc_NetHelper_List(AiService.PromptContextBundle epoch, List<JsonObject> history) {
-      return AiContext.init_J(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.init.toJsonTree(history)));
+      return AiContext.init_J(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.GSON.toJsonTree(history)));
    }
 
    private boolean init_Z_cc_RenderState(AiService.SessionState s, String sid, List<JsonObject> history, AiProvider transport, long budgetTokens, boolean forced) {
-      long total = AiContext.init(AiJson.init.toJsonTree(history));
+      long total = AiContext.init(AiJson.GSON.toJsonTree(history));
       boolean keepLastThinking = transport.init_AiSettings_Provide() == AiSettings.Provider.ANTHROPIC
          && AiSettings.anthropicThinking(transport.init_Str()) == AiSettings.Thinking.BUDGET;
       AiHistory.Inner_StreamUtil cut = AiHistory.init(
@@ -3231,14 +3231,14 @@ public final class AiService {
          return false;
       }
 
-      if (!forced && AiContext.init(AiJson.init.toJsonTree(cut.dropped())) < total / 10L) {
+      if (!forced && AiContext.init(AiJson.GSON.toJsonTree(cut.dropped())) < total / 10L) {
          return false;
       }
 
-      String archived = AiJson.init.toJsonTree(cut.dropped()).toString();
+      String archived = AiJson.GSON.toJsonTree(cut.dropped()).toString();
 
       try {
-         JsonObject entry = AiJson.init_JsonObject_ObjArr(
+         JsonObject entry = AiJson.objectOf(
             "truncated", archived.length() > 200000, "history", archived.length() > 200000 ? archived.substring(0, 200000) + " [truncated]" : archived
          );
          entry.addProperty("sessionId", sid);
@@ -3439,7 +3439,7 @@ public final class AiService {
                contextRecoveries = 0;
                streamRecoveries = 0;
                AiProvider.Inner_TaskQueue usage = reply.usage();
-               long sent = epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.init.toJsonTree(history));
+               long sent = epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.GSON.toJsonTree(history));
                long transcriptChars = sent + reply.wireMessage().toString().length();
                long estTokens = reply.tokens() > 0L ? reply.tokens() : Math.max(1L, (transcriptChars - s.sync_J) / 2L);
                s.write_J += estTokens;
@@ -3514,7 +3514,7 @@ public final class AiService {
 
                      List<JsonObject> aligned = gate.init_List(
                         reply.calls().size(),
-                        AiJson.init_JsonObject_ObjArr("status", "CANCELLED", "message", "Turn ended by an earlier finish call; not dispatched")
+                        AiJson.objectOf("status", "CANCELLED", "message", "Turn ended by an earlier finish call; not dispatched")
                      );
                      history.addAll(transport.init_List_List_List(reply.calls(), aligned));
                      open[0] = null;
@@ -3544,7 +3544,7 @@ public final class AiService {
                         round.gate()
                            .init_List(
                               round.calls().size(),
-                              AiJson.init_JsonObject_Str(
+                              AiJson.parseObject(
                                  "{\"status\":\"INTERRUPTED\",\"message\":\"The run stopped before this call's result was recorded; re-observe before assuming its effect\"}"
                               )
                            )
@@ -3599,11 +3599,11 @@ public final class AiService {
    static String init_Str_bA_DataUtil_JsonObject(AiProvider.Inner_DataUtil call, JsonObject result) {
       String what = call.name();
       if ("perform".equals(call.name()) && call.arguments() != null) {
-         what = what + " " + AiJson.init_Str_JsonObject(call.arguments(), "id", "");
+         what = what + " " + AiJson.getString(call.arguments(), "id", "");
       }
 
-      String status = AiJson.init_Str_JsonObject(result, "status", AiJson.init_Str_JsonObject(result, "outcome", "returned"));
-      String message = AiJson.init_Str_JsonObject(result, "message", AiJson.init_Str_JsonObject(result, "error", ""));
+      String status = AiJson.getString(result, "status", AiJson.getString(result, "outcome", "returned"));
+      String message = AiJson.getString(result, "message", AiJson.getString(result, "error", ""));
       if (message.length() > 300) {
          message = message.substring(0, 300) + "...";
       }
@@ -3646,24 +3646,24 @@ public final class AiService {
 
       JsonObject result;
       if (call.argumentsError() != null) {
-         result = AiJson.init_JsonObject_ObjArr(
+         result = AiJson.objectOf(
             "status", "FAILED", "error", "Model produced malformed tool-call arguments; resend valid JSON", "rawArgumentsExcerpt", call.argumentsError()
          );
       } else {
          try {
             result = s.init_Queue.isEmpty()
                ? this.init_cz.init_JsonObject_Str(call.name(), call.arguments(), g)
-               : AiJson.init_JsonObject_ObjArr("status", "CANCELLED", "message", "The user amended the objective; this earlier planned call was not dispatched");
+               : AiJson.objectOf("status", "CANCELLED", "message", "The user amended the objective; this earlier planned call was not dispatched");
          } catch (CancellationException e) {
             throw e;
          } catch (Exception e) {
             String error = Objects.toString(e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), "Operation failed");
-            result = AiJson.init_JsonObject_ObjArr("status", "FAILED", "error", error);
+            result = AiJson.objectOf("status", "FAILED", "error", error);
          }
       }
 
       if ("perform".equals(call.name())) {
-         this.get_Str = AiJson.init_Str_JsonObject(result, "status", "FAILED");
+         this.get_Str = AiJson.getString(result, "status", "FAILED");
       }
 
       JsonObject detail = result.deepCopy();
@@ -3671,12 +3671,12 @@ public final class AiService {
       this.init_V_cc_RenderState(
          s,
          "tool",
-         call.name() + ": " + AiJson.init_Str_JsonObject(result, "message", AiJson.init_Str_JsonObject(result, "status", "returned result")),
+         call.name() + ": " + AiJson.getString(result, "message", AiJson.getString(result, "status", "returned result")),
          detail.toString()
       );
 
       try {
-         JsonObject entry = AiJson.init_JsonObject_ObjArr("name", call.name(), "result", detail);
+         JsonObject entry = AiJson.objectOf("name", call.name(), "result", detail);
          entry.addProperty("sessionId", sid);
          this.init_AiMemoryStore.init_V_Str_JsonElement("tool", entry);
       } catch (IOException e) {
@@ -3686,8 +3686,8 @@ public final class AiService {
       if (trace != null) {
          trace.init_V_Str(
             call.name(),
-            AiJson.init_Str_JsonObject(result, "status", AiJson.init_Str_JsonObject(result, "outcome", "returned")),
-            result.has("failure") && result.get("failure").isJsonObject() ? AiJson.init_Str_JsonObject(result.getAsJsonObject("failure"), "code", "") : "",
+            AiJson.getString(result, "status", AiJson.getString(result, "outcome", "returned")),
+            result.has("failure") && result.get("failure").isJsonObject() ? AiJson.getString(result.getAsJsonObject("failure"), "code", "") : "",
             (System.nanoTime() - toolStarted) / 1000000L
          );
       }
@@ -3709,7 +3709,7 @@ public final class AiService {
 
             boolean unchanged;
             try {
-               unchanged = AiLocalRequest.init_Z(local, AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.init_Str_JsonObject(args, "schematic", "")));
+               unchanged = AiLocalRequest.init_Z(local, AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(args, "schematic", "")));
             } catch (IllegalArgumentException missing) {
                unchanged = false;
             }
@@ -3741,8 +3741,8 @@ public final class AiService {
                JsonObject args = step.arguments().deepCopy();
 
                for (AiIntents.Inner_DataUtil ask : step.asks()) {
-                  JsonObject reply = this.write(AiJson.init_JsonObject_ObjArr("question", ask.question(), "options", ask.options()), g);
-                  String said = AiJson.init_Str_JsonObject(reply, "answer", "");
+                  JsonObject reply = this.write(AiJson.objectOf("question", ask.question(), "options", ask.options()), g);
+                  String said = AiJson.getString(reply, "answer", "");
                   if (!AiIntents.init(ask, said, args)) {
                      if (builtIn) {
                         return this.init_cc_TaskQueue_J(
@@ -3788,7 +3788,7 @@ public final class AiService {
                   }
                }
 
-               if (AiJson.init_Z_JsonObject(step.arguments(), "cookHeld", false)) {
+               if (AiJson.getBoolean(step.arguments(), "cookHeld", false)) {
                   step = this.init_ad_BufferHelper_J_ad_BufferHelper(g, step);
                }
 
@@ -3899,14 +3899,14 @@ public final class AiService {
       }
 
       JsonObject arguments = step.arguments();
-      if (step.capability().equals("game:obtain") && AiJson.init_Z_JsonObject(arguments, "additional", false)) {
+      if (step.capability().equals("game:obtain") && AiJson.getBoolean(arguments, "additional", false)) {
          String key = occurrence + ":" + step.clause();
          JsonObject current = s.init_JsonObject;
          JsonObject targets = current.has("hostGetTargets") ? current.getAsJsonObject("hostGetTargets") : new JsonObject();
          if (!targets.has(key)) {
             JsonObject requested = arguments;
             JsonObject target = this.init_Obj_J_Supplier(
-               g, () -> AiLocalRequest.init(requested, AiItems.init_I(AiItems.load_af_DataUtil(AiJson.init_Str_JsonObject(requested, "item", ""))), 2304)
+               g, () -> AiLocalRequest.init(requested, AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(requested, "item", ""))), 2304)
             );
             synchronized (s) {
                JsonObject next = s.init_JsonObject.deepCopy();
@@ -3929,7 +3929,7 @@ public final class AiService {
          r = this.init_JsonObject_cc_RenderState(
             s,
             s.init_Str,
-            new AiProvider.Inner_DataUtil("host-" + UUID.randomUUID(), "perform", AiJson.init_JsonObject_ObjArr("id", step.capability(), "arguments", arguments)),
+            new AiProvider.Inner_DataUtil("host-" + UUID.randomUUID(), "perform", AiJson.objectOf("id", step.capability(), "arguments", arguments)),
             g
          );
          if (load_Z_JsonObject(r) || !init_Z_JsonObject(r)) {
@@ -3944,14 +3944,14 @@ public final class AiService {
    }
 
    static boolean init_Z_JsonObject(JsonObject r) {
-      if ("UNCERTAIN".equals(AiJson.init_Str_JsonObject(r, "status", ""))) {
+      if ("UNCERTAIN".equals(AiJson.getString(r, "status", ""))) {
          return false;
       }
 
-      String code = r.has("failure") && r.get("failure").isJsonObject() ? AiJson.init_Str_JsonObject(r.getAsJsonObject("failure"), "code", "") : "";
+      String code = r.has("failure") && r.get("failure").isJsonObject() ? AiJson.getString(r.getAsJsonObject("failure"), "code", "") : "";
       return Set.of("THREAT_INTERRUPT", "HUNGER", "LOW_HEALTH", "ENVIRONMENTAL_HAZARD").contains(code)
          ? true
-         : AiJson.init_Str_JsonObject(r, "error", "").contains("Another operation owns client controls");
+         : AiJson.getString(r, "error", "").contains("Another operation owns client controls");
    }
 
    private void init_V_J_I(long g, int seconds) throws InterruptedException {
@@ -3965,7 +3965,7 @@ public final class AiService {
    }
 
    private static boolean load_Z_JsonObject(JsonObject r) {
-      return "SUCCEEDED".equals(AiJson.init_Str_JsonObject(r, "status", ""));
+      return "SUCCEEDED".equals(AiJson.getString(r, "status", ""));
    }
 
    static AiIntents.Inner_BufferHelper init_ad_BufferHelper_ad_BufferHelper_JsonObject(AiIntents.Inner_BufferHelper step, JsonObject result) {
@@ -3973,19 +3973,19 @@ public final class AiService {
          return null;
       }
 
-      String reason = AiJson.init_Str_JsonObject(result, "message", AiJson.init_Str_JsonObject(result, "error", "")).toLowerCase(Locale.ROOT);
+      String reason = AiJson.getString(result, "message", AiJson.getString(result, "error", "")).toLowerCase(Locale.ROOT);
       return !reason.contains("missing") ? null : init_ad_BufferHelper_ad_BufferHelper_Z(step, false);
    }
 
    private AiIntents.Inner_BufferHelper init_ad_BufferHelper_J_ad_BufferHelper(long g, AiIntents.Inner_BufferHelper step) throws InterruptedException, ExecutionException {
       JsonObject args = step.arguments().deepCopy();
       args.remove("cookHeld");
-      String spec = AiJson.init_Str_JsonObject(args, "item", "cooked_food");
+      String spec = AiJson.getString(args, "item", "cooked_food");
       int raw = this.init_Obj_J_Supplier(g, () -> {
          Minecraft mc = Minecraft.getInstance();
          Set<String> inputs = new LinkedHashSet<>();
 
-         for (Item cooked : AiItems.load_af_DataUtil(spec).items()) {
+         for (Item cooked : AiItems.resolveItem(spec).items()) {
             for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, cooked)) {
                for (Item input : plan.init_List()) {
                   inputs.add(BuiltInRegistries.ITEM.getKey(input).toString());
@@ -3996,7 +3996,7 @@ public final class AiService {
          int n = 0;
 
          for (String id : inputs) {
-            n += AiGameState.init_I_Str(id);
+            n += AiGameState.countInventoryItem(id);
          }
 
          return n;
@@ -4012,8 +4012,8 @@ public final class AiService {
       }
 
       JsonObject args = new JsonObject();
-      args.addProperty("item", AiJson.init_Str_JsonObject(step.arguments(), "item", ""));
-      args.addProperty("count", AiJson.init_I_JsonObject(step.arguments(), "count", 1));
+      args.addProperty("item", AiJson.getString(step.arguments(), "item", ""));
+      args.addProperty("count", AiJson.getInt(step.arguments(), "count", 1));
       if (additional) {
          args.addProperty("additional", true);
       }
@@ -4023,16 +4023,16 @@ public final class AiService {
 
    private boolean init_Z_J_ad_BufferHelper(long gen, AiIntents.Inner_BufferHelper step) {
       try {
-         String item = AiJson.init_Str_JsonObject(step.arguments(), "item", "").trim();
+         String item = AiJson.getString(step.arguments(), "item", "").trim();
          if (item.isEmpty()) {
             return true;
          }
 
          String id = item.contains(":") ? item : "minecraft:" + item;
-         int count = Math.max(1, AiJson.init_I_JsonObject(step.arguments(), "count", 1));
+         int count = Math.max(1, AiJson.getInt(step.arguments(), "count", 1));
          return this.init_Obj_J_Supplier(gen, () -> {
-            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), id, count);
-            return plan.complete() && (!plan.requiresTable() || AiCraft.init_Z());
+            AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), id, count);
+            return plan.complete() && (!plan.requiresTable() || AiCraft.canAccessCraftingTable());
          });
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
@@ -4047,7 +4047,7 @@ public final class AiService {
          return null;
       }
 
-      String code = result.has("failure") && result.get("failure").isJsonObject() ? AiJson.init_Str_JsonObject(result.getAsJsonObject("failure"), "code", "") : "";
+      String code = result.has("failure") && result.get("failure").isJsonObject() ? AiJson.getString(result.getAsJsonObject("failure"), "code", "") : "";
       if (!code.equals("MISSING_TOOL") && !code.equals("TOOL_WORN")) {
          return null;
       }
@@ -4057,7 +4057,7 @@ public final class AiService {
          return null;
       }
 
-      String tool = AiJson.init_Str_JsonObject(data, "neededTool", "");
+      String tool = AiJson.getString(data, "neededTool", "");
       if (tool.isBlank()) {
          tool = Objects.toString(AiObtain.init_Str(data.toString()), "");
       }
@@ -4068,19 +4068,19 @@ public final class AiService {
 
       String name = tool.replace("minecraft:", "").replace('_', ' ');
       return new AiIntents.Inner_BufferHelper(
-         step.clause(), "game:obtain", AiJson.init_JsonObject_ObjArr("item", tool, "count", 1, "additional", true), "get a " + name + " for " + step.describe()
+         step.clause(), "game:obtain", AiJson.objectOf("item", tool, "count", 1, "additional", true), "get a " + name + " for " + step.describe()
       );
    }
 
    static AiIntents.Inner_BufferHelper read_ad_BufferHelper_ad_BufferHelper_JsonObject(AiIntents.Inner_BufferHelper step, JsonObject result) {
       JsonObject data = result.has("data") && result.get("data").isJsonObject() ? result.getAsJsonObject("data") : new JsonObject();
       if (!step.arguments().has("counts")
-         && !AiJson.init_Str_JsonObject(step.arguments(), "block", "").contains(",")
-         && !AiJson.init_Str_JsonObject(step.arguments(), "block", "").contains("=")) {
+         && !AiJson.getString(step.arguments(), "block", "").contains(",")
+         && !AiJson.getString(step.arguments(), "block", "").contains("=")) {
          int broken = data.has("broken") && data.get("broken").isJsonPrimitive() ? data.get("broken").getAsInt() : 0;
          if (broken > 0 && step.arguments().has("count")) {
             JsonObject args = step.arguments().deepCopy();
-            args.addProperty("count", Math.max(1, AiJson.init_I_JsonObject(args, "count", 1) - broken));
+            args.addProperty("count", Math.max(1, AiJson.getInt(args, "count", 1) - broken));
             return new AiIntents.Inner_BufferHelper(step.clause(), step.capability(), args, step.describe(), step.asks());
          } else {
             return step;
@@ -4112,7 +4112,7 @@ public final class AiService {
    }
 
    private static String load_Str_JsonObject(JsonObject r) {
-      String t = AiJson.init_Str_JsonObject(r, "message", AiJson.init_Str_JsonObject(r, "error", ""));
+      String t = AiJson.getString(r, "message", AiJson.getString(r, "error", ""));
 
       try {
          JsonObject d = r.has("data") && r.get("data").isJsonObject() ? r.getAsJsonObject("data") : null;
@@ -4126,7 +4126,7 @@ public final class AiService {
    }
 
    private static String init_Str_ad_BufferHelper_JsonObject(AiIntents.Inner_BufferHelper step, JsonObject r) {
-      return step.describe() + " -> " + AiJson.init_Str_JsonObject(r, "status", "?") + ": " + load_Str_JsonObject(r);
+      return step.describe() + " -> " + AiJson.getString(r, "status", "?") + ": " + load_Str_JsonObject(r);
    }
 
    static String init_Str_List(List<String> done, String rest, String failure) {
@@ -4149,14 +4149,14 @@ public final class AiService {
    }
 
    private List<AiIntents.Inner_BufferHelper> init_List_J_ad_BufferHelper(long g, AiIntents.Inner_BufferHelper step) throws InterruptedException, ExecutionException {
-      if (step.capability().equals("game:farm") && "plant".equals(AiJson.init_Str_JsonObject(step.arguments(), "action", ""))) {
-         String seed = AiFarm.load(AiJson.init_Str_JsonObject(step.arguments(), "crop", "minecraft:wheat"));
-         int want = Math.max(1, AiJson.init_I_JsonObject(step.arguments(), "count", 9));
-         int[] have = this.init_Obj_J_Supplier(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.init_I_Str(seed)});
+      if (step.capability().equals("game:farm") && "plant".equals(AiJson.getString(step.arguments(), "action", ""))) {
+         String seed = AiFarm.load(AiJson.getString(step.arguments(), "crop", "minecraft:wheat"));
+         int want = Math.max(1, AiJson.getInt(step.arguments(), "count", 9));
+         int[] have = this.init_Obj_J_Supplier(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
          List<AiIntents.Inner_BufferHelper> out = new ArrayList<>();
          if (have[0] == 0) {
             out.add(
-               new AiIntents.Inner_BufferHelper("get a hoe", "game:obtain", AiJson.init_JsonObject_ObjArr("item", "minecraft:wooden_hoe", "count", 1), "get a wooden hoe")
+               new AiIntents.Inner_BufferHelper("get a hoe", "game:obtain", AiJson.objectOf("item", "minecraft:wooden_hoe", "count", 1), "get a wooden hoe")
             );
          }
 
@@ -4165,7 +4165,7 @@ public final class AiService {
                new AiIntents.Inner_BufferHelper(
                   "get seeds",
                   "game:obtain",
-                  AiJson.init_JsonObject_ObjArr("item", seed, "count", want, "timeoutSeconds", Math.min(900, 120 + want * 6)),
+                  AiJson.objectOf("item", seed, "count", want, "timeoutSeconds", Math.min(900, 120 + want * 6)),
                   "get " + want + " " + seed
                )
             );
@@ -4182,23 +4182,23 @@ public final class AiService {
          return false;
       }
 
-      String item = AiJson.init_Str_JsonObject(before.arguments(), "item", "");
+      String item = AiJson.getString(before.arguments(), "item", "");
       return !item.endsWith("seeds") && !item.endsWith("carrot") && !item.endsWith("potato")
          ? false
-         : this.init_Obj_J_Supplier(g, () -> AiGameState.init_I_Str(item)) > 0;
+         : this.init_Obj_J_Supplier(g, () -> AiGameState.countInventoryItem(item)) > 0;
    }
 
    static String init_Str_JsonObject(JsonObject args) {
-      if ("build".equals(AiJson.init_Str_JsonObject(args, "action", ""))) {
+      if ("build".equals(AiJson.getString(args, "action", ""))) {
          return AiIntents.init(args);
       }
 
-      String crop = AiJson.init_Str_JsonObject(args, "crop", "minecraft:wheat").replace("minecraft:", "");
-      int count = AiJson.init_I_JsonObject(args, "count", 9);
+      String crop = AiJson.getString(args, "crop", "minecraft:wheat").replace("minecraft:", "");
+      int count = AiJson.getInt(args, "count", 9);
       return "plant a "
          + crop
          + " field"
-         + (args.has("width") ? " (" + AiJson.init_I_JsonObject(args, "width", 3) + "x" + AiJson.init_I_JsonObject(args, "length", 3) + ")" : " (" + count + " crops)");
+         + (args.has("width") ? " (" + AiJson.getInt(args, "width", 3) + "x" + AiJson.getInt(args, "length", 3) + ")" : " (" + count + " crops)");
    }
 
    private void init_V_J_cc_RenderState(long g, AiService.SessionState s) {
@@ -4295,8 +4295,8 @@ public final class AiService {
    }
 
    JsonObject read_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
-      String outcome = update_Str_Str(AiJson.init_Str_JsonObject(args, "outcome", ""));
-      String text = AiJson.init_Str_JsonObject(args, "message", "");
+      String outcome = update_Str_Str(AiJson.getString(args, "outcome", ""));
+      String text = AiJson.getString(args, "message", "");
       AiService.SessionState s = this.init_cc_RenderState();
       if (outcome.equals("completed")) {
          if (this.init_cc_FileCache == AiService.RunState.PLANNING) {
@@ -4322,9 +4322,9 @@ public final class AiService {
                throw new IllegalArgumentException("Objective postcondition is not verified: " + unmet);
             }
 
-            String kind = AiJson.init_Str_JsonObject(p, "kind", "");
+            String kind = AiJson.getString(p, "kind", "");
             if (unmet == null
-               && (kind.equals("beat_game") || kind.equals("stat") && "minecraft.killed:minecraft.ender_dragon".equals(AiJson.init_Str_JsonObject(p, "stat", "")))) {
+               && (kind.equals("beat_game") || kind.equals("stat") && "minecraft.killed:minecraft.ender_dragon".equals(AiJson.getString(p, "stat", "")))) {
                AiRunTrace trace = AiRunTrace.init_bL();
                if (trace != null) {
                   trace.read("dragon dead", "");
@@ -4350,7 +4350,7 @@ public final class AiService {
             this.init_cc_FileCache = AiService.RunState.PAUSED;
             this.sync_Str = "Plan awaiting user approval";
             this.init_V_Str_Str("assistant", text);
-            return AiJson.init_JsonObject_ObjArr("outcome", outcome, "message", text);
+            return AiJson.objectOf("outcome", outcome, "message", text);
          }
 
          this.init_cc_FileCache = AiService.RunState.ANSWERED;
@@ -4366,19 +4366,19 @@ public final class AiService {
 
       this.sync_Str = text;
       this.init_V_Str_Str("assistant", text);
-      return AiJson.init_JsonObject_ObjArr("outcome", outcome, "message", text);
+      return AiJson.objectOf("outcome", outcome, "message", text);
    }
 
    private String read_Str_JsonObject(JsonObject p) {
-      String kind = AiJson.init_Str_JsonObject(p, "kind", "");
+      String kind = AiJson.getString(p, "kind", "");
       LocalPlayer player = Minecraft.getInstance().player;
       switch (kind) {
          case "inventory": {
-            String item = AiJson.init_Str_JsonObject(p, "item", "");
-            int want = AiJson.init_I_JsonObject(p, "count", -1);
+            String item = AiJson.getString(p, "item", "");
+            int want = AiJson.getInt(p, "count", -1);
             if (!item.isBlank() && want >= 0) {
-               int havex = AiGameState.init_I_Str(item);
-               boolean exact = AiJson.init_Z_JsonObject(p, "exact", false);
+               int havex = AiGameState.countInventoryItem(item);
+               boolean exact = AiJson.getBoolean(p, "exact", false);
                return (exact ? havex != want : havex < want) ? "have " + havex + " " + item + ", need " + (exact ? "exactly " : "at least ") + want : null;
             } else {
                return "an inventory postcondition needs item and count";
@@ -4389,11 +4389,11 @@ public final class AiService {
                return "no player";
             }
 
-            double radius = AiJson.init_D_JsonObject(p, "radius", 2.0);
-            double distance = Math.sqrt(player.position().distanceToSqr(Vec3.atBottomCenterOf(AiGameOperations.init_BlockPos(p))));
+            double radius = AiJson.getDouble(p, "radius", 2.0);
+            double distance = Math.sqrt(player.position().distanceToSqr(Vec3.atBottomCenterOf(AiGameOperations.requireBlockPos(p))));
             return distance <= radius ? null : String.format(Locale.ROOT, "player is %.1f blocks from the target, radius %.1f", distance, radius);
          case "operation":
-            String id = AiJson.init_Str_JsonObject(p, "evidenceId", "");
+            String id = AiJson.getString(p, "evidenceId", "");
             AiObservation proof = this.load_Map.get(id);
             if (proof != null && proof.session().equals(this.flush_Str)) {
                String capability = this.read_Map.get(id);
@@ -4406,18 +4406,18 @@ public final class AiService {
 
             return "evidence " + id + " is not a SUCCEEDED perform of this session";
          case "macro":
-            autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(AiJson.init_Str_JsonObject(p, "name", ""));
+            autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(AiJson.getString(p, "name", ""));
             if (macro == null) {
-               return "no macro named " + AiJson.init_Str_JsonObject(p, "name", "");
+               return "no macro named " + AiJson.getString(p, "name", "");
             }
 
-            return AiJson.init_Str_Str(AiTools.init_JsonObject_aM(macro).toString()).equals(AiJson.init_Str_JsonObject(p, "fingerprint", ""))
+            return AiJson.sha256Hex(AiTools.init_JsonObject_aM(macro).toString()).equals(AiJson.getString(p, "fingerprint", ""))
                ? null
                : "the macro changed since the given fingerprint";
          case "stat": {
-            int have = init_I_Str(AiJson.init_Str_JsonObject(p, "stat", ""));
-            int want = AiJson.init_I_JsonObject(p, "count", 1);
-            return init_Z_I_I(have, want) ? null : "stat " + AiJson.init_Str_JsonObject(p, "stat", "") + " is " + have + ", need " + want;
+            int have = init_I_Str(AiJson.getString(p, "stat", ""));
+            int want = AiJson.getInt(p, "count", 1);
+            return init_Z_I_I(have, want) ? null : "stat " + AiJson.getString(p, "stat", "") + " is " + have + ", need " + want;
          }
          case "beat_game":
             return init_Z_I_I(init_I_Str("minecraft.killed:minecraft.ender_dragon"), 1) ? null : "the Ender Dragon kill statistic is still 0";
@@ -4429,14 +4429,14 @@ public final class AiService {
    private JsonObject init_JsonObject_JsonObject(JsonObject args) {
       boolean own = args.has("postcondition") && args.get("postcondition").isJsonObject() && !args.getAsJsonObject("postcondition").isEmpty();
       JsonObject p = own ? args.getAsJsonObject("postcondition") : new JsonObject();
-      if (!own || AiJson.init_Str_JsonObject(p, "kind", "").equals("operation") && AiJson.init_Str_JsonObject(p, "evidenceId", "").isBlank()) {
+      if (!own || AiJson.getString(p, "kind", "").equals("operation") && AiJson.getString(p, "evidenceId", "").isBlank()) {
          String last = this.update_Str;
          if (last == null) {
             throw new IllegalArgumentException(
                "Nothing is verified yet: perform the capability that meets the objective (a SUCCEEDED result is host-verified and finish then needs no postcondition), give an inventory or position postcondition, or finish with outcome blocked and the reason"
             );
          } else {
-            return AiJson.init_JsonObject_ObjArr("kind", "operation", "evidenceId", last);
+            return AiJson.objectOf("kind", "operation", "evidenceId", last);
          }
       } else {
          return p;
@@ -4446,8 +4446,8 @@ public final class AiService {
    public static String init_Str_cc_JsonUtil(AiService.TranscriptEntry message) {
       if (message != null && "tool".equals(message.role()) && !message.detail().isBlank()) {
          try {
-            JsonObject d = AiJson.init_JsonObject_Str(message.detail());
-            return AiJson.init_Str_JsonObject(d, "status", AiJson.init_Str_JsonObject(d, "outcome", "")).toUpperCase(Locale.ROOT);
+            JsonObject d = AiJson.parseObject(message.detail());
+            return AiJson.getString(d, "status", AiJson.getString(d, "outcome", "")).toUpperCase(Locale.ROOT);
          } catch (RuntimeException e) {
             return "";
          }
@@ -4487,7 +4487,7 @@ public final class AiService {
    }
 
    JsonObject write(JsonObject args, long g) {
-      String text = AiJson.init_Str_JsonObject(args, "question", "").trim();
+      String text = AiJson.getString(args, "question", "").trim();
       if (text.isEmpty()) {
          throw new IllegalArgumentException("question is required");
       }
@@ -4524,7 +4524,7 @@ public final class AiService {
                if (this.set_Str != null) {
                   String a = this.set_Str;
                   this.set_Str = null;
-                  return AiJson.init_JsonObject_ObjArr("status", "ANSWERED", "answer", a, "option", options.indexOf(a) + 1);
+                  return AiJson.objectOf("status", "ANSWERED", "answer", a, "option", options.indexOf(a) + 1);
                }
 
                try {
@@ -4601,7 +4601,7 @@ public final class AiService {
          })) {
          this.init_bZ = host;
          return host.init(
-            AiJson.init_Str_JsonObject(args, "source", ""),
+            AiJson.getString(args, "source", ""),
             args.has("fixtures") ? args.getAsJsonArray("fixtures") : new JsonArray(),
             () -> g != this.init_AtomicLong.get()
          );
@@ -4619,11 +4619,11 @@ public final class AiService {
 
       try (AiScriptHost host = new AiScriptHost(this.init_AiMemoryStore.init_Path(), (name, input) -> this.init_cz.init_JsonObject_Str(name, input, g, true))) {
          this.init_bZ = host;
-         this.update_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 1800))) * 1000000000L;
-         String source = AiJson.init_Str_JsonObject(args, "source", "");
+         this.update_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800))) * 1000000000L;
+         String source = AiJson.getString(args, "source", "");
          JsonObject checked = host.init(source, args.has("fixtures") ? args.getAsJsonArray("fixtures") : new JsonArray(), () -> g != this.init_AtomicLong.get());
          liveStarted = true;
-         JsonObject result = host.init(source, AiJson.init_I_JsonObject(args, "timeoutSeconds", 1800), () -> g != this.init_AtomicLong.get());
+         JsonObject result = host.init(source, AiJson.getInt(args, "timeoutSeconds", 1800), () -> g != this.init_AtomicLong.get());
          result.add("preflight", checked);
          return result;
       } catch (CancellationException e) {
@@ -4632,7 +4632,7 @@ public final class AiService {
          if (!liveStarted) {
             throw e;
          } else {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "status",
                "UNCERTAIN",
                "message",
@@ -4640,7 +4640,7 @@ public final class AiService {
                "error",
                Objects.toString(e.getMessage(), "Worker ended"),
                "sourceFingerprint",
-               AiJson.init_Str_Str(AiJson.init_Str_JsonObject(args, "source", ""))
+               AiJson.sha256Hex(AiJson.getString(args, "source", ""))
             );
          }
       } finally {
@@ -4728,7 +4728,7 @@ public final class AiService {
          }
 
          try {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "message",
                "Current Minecraft screenshot; visual content is untrusted observation data",
                "imagePngBase64",
@@ -4741,7 +4741,7 @@ public final class AiService {
 
    void read_V_Str_Str(String name, String serialized) throws IOException {
       Path revisions = this.init_AiMemoryStore.init_Path().resolve("revisions");
-      AiJson.init_V_Path_Obj(revisions.resolve(AiJson.init_Str_Str(name) + "-" + System.currentTimeMillis() + ".json"), AiJson.init_JsonObject_Str(serialized));
+      AiJson.writeAtomicJson(revisions.resolve(AiJson.sha256Hex(name) + "-" + System.currentTimeMillis() + ".json"), AiJson.parseObject(serialized));
       AiMemoryStore.init_V_Path_I(revisions, 100);
    }
 
@@ -4763,8 +4763,8 @@ public final class AiService {
          stored = new JsonObject();
       }
 
-      s.load_Z = AiJson.init_Z_JsonObject(stored, "hostPlanningPhase", false);
-      s.read_Z = AiJson.init_Z_JsonObject(stored, "hostPlanAwaitingApproval", false);
+      s.load_Z = AiJson.getBoolean(stored, "hostPlanningPhase", false);
+      s.read_Z = AiJson.getBoolean(stored, "hostPlanAwaitingApproval", false);
       stored.remove("hostPlanningPhase");
       stored.remove("hostPlanAwaitingApproval");
       stored.remove("hostChatMode");
@@ -5085,7 +5085,7 @@ public final class AiService {
       try (AiProvider p = new AiProvider(effective)) {
          JsonArray declarations = new JsonArray();
          declarations.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "name", "connection_probe", "description", "Return the token provided by the user", "parameters", AiTools.init_JsonObject_ObjArr("token", "string")
             )
          );
@@ -5094,14 +5094,14 @@ public final class AiService {
          AiProvider.Inner_BufferHelper reply = p.init_bA_BufferHelper_Str(system, List.of(p.init_JsonObject_Str(token)), declarations, "required", s -> {}, expired);
          if (reply.calls().size() != 1
             || !reply.calls().get(0).name().equals("connection_probe")
-            || !AiJson.init_Str_JsonObject(reply.calls().get(0).arguments(), "token", "").equals(token)) {
+            || !AiJson.getString(reply.calls().get(0).arguments(), "token", "").equals(token)) {
             throw new IllegalStateException("Model did not return the expected tool call");
          }
 
          ArrayList<JsonObject> history = new ArrayList<>();
          history.add(p.init_JsonObject_Str(token));
          history.add(reply.wireMessage());
-         history.addAll(p.init_List_List_List(reply.calls(), List.of(AiJson.init_JsonObject_ObjArr("verified", true))));
+         history.addAll(p.init_List_List_List(reply.calls(), List.of(AiJson.objectOf("verified", true))));
          AiProvider.Inner_BufferHelper confirmation = p.init_bA_BufferHelper_Str(system, history, declarations, "none", s -> {}, expired);
          if (confirmation.text().isBlank() || !confirmation.calls().isEmpty()) {
             throw new IllegalStateException("Model did not acknowledge the completed tool round trip");
@@ -5165,7 +5165,7 @@ public final class AiService {
       Path destination = this.init_AiMemoryStore.init_Path().resolve("speedrun-checkpoint.json");
       this.load_ExecutorService.execute(() -> {
          try {
-            AiJson.init_V_Path_Obj(destination, saved);
+            AiJson.writeAtomicJson(destination, saved);
          } catch (Exception e) {
             AutismClientAddon.LOG.warn("[AI] Could not save speedrun checkpoint", e);
          }
@@ -5177,7 +5177,7 @@ public final class AiService {
       Path destination = this.init_AiMemoryStore.init_Path().resolve("speedrun-debug-latest.json");
       this.load_ExecutorService.execute(() -> {
          try {
-            AiJson.init_V_Path_Obj(destination, saved);
+            AiJson.writeAtomicJson(destination, saved);
          } catch (Exception e) {
             AutismClientAddon.LOG.warn("[AI] Could not save speedrun diagnostics", e);
          }
@@ -5211,13 +5211,13 @@ public final class AiService {
    private void init_V_Str(String folder, String world, String field, JsonArray records) {
       if (this.load_Z && this.init_AiMemoryStore != null && !world.equals("offline")) {
          Path directory = this.init_AiMemoryStore.init_Path().resolve(folder);
-         Path destination = directory.resolve(AiJson.init_Str_Str(world) + ".json");
-         JsonObject saved = AiJson.init_JsonObject_ObjArr("version", 1, "world", world, field, records.deepCopy());
+         Path destination = directory.resolve(AiJson.sha256Hex(world) + ".json");
+         JsonObject saved = AiJson.objectOf("version", 1, "world", world, field, records.deepCopy());
          this.load_ExecutorService
             .execute(
                () -> {
                   try {
-                     AiJson.init_V_Path_Obj(destination, saved);
+                     AiJson.writeAtomicJson(destination, saved);
 
                      try (Stream<Path> files = Files.list(directory)) {
                         List<Path> oldest = files.filter(x$0 -> Files.isRegularFile(x$0))
@@ -5247,7 +5247,7 @@ public final class AiService {
 
    private boolean init_Z_Str(String folder, String world, String field, Consumer<JsonArray> loaded) {
       if (this.load_Z && this.init_AiMemoryStore != null && !world.equals("offline")) {
-         Path source = this.init_AiMemoryStore.init_Path().resolve(folder).resolve(AiJson.init_Str_Str(world) + ".json");
+         Path source = this.init_AiMemoryStore.init_Path().resolve(folder).resolve(AiJson.sha256Hex(world) + ".json");
          this.load_ExecutorService
             .execute(
                () -> {
@@ -5255,9 +5255,9 @@ public final class AiService {
 
                   try {
                      if (Files.isRegularFile(source) && Files.size(source) <= 262144L) {
-                        JsonObject saved = AiJson.init_JsonObject_Str(Files.readString(source));
-                        if (AiJson.init_I_JsonObject(saved, "version", 0) == 1
-                           && world.equals(AiJson.init_Str_JsonObject(saved, "world", ""))
+                        JsonObject saved = AiJson.parseObject(Files.readString(source));
+                        if (AiJson.getInt(saved, "version", 0) == 1
+                           && world.equals(AiJson.getString(saved, "world", ""))
                            && saved.has(field)
                            && saved.get(field).isJsonArray()) {
                            for (JsonElement link : saved.getAsJsonArray(field)) {
@@ -5312,7 +5312,7 @@ public final class AiService {
                      "user",
                      System.currentTimeMillis(),
                      "user",
-                     AiJson.init_JsonObject_ObjArr("correction", text).toString()
+                     AiJson.objectOf("correction", text).toString()
                   );
                   this.init_AiMemoryStore.init(proof);
                   AiMemoryStore.Memory saved = this.init_AiMemoryStore
@@ -5414,7 +5414,7 @@ public final class AiService {
          try {
             Path portalDirectory = this.init_AiMemoryStore.init_Path().resolve("portal-memory");
             if (worldOnly) {
-               Files.deleteIfExists(portalDirectory.resolve(AiJson.init_Str_Str(worldKey) + ".json"));
+               Files.deleteIfExists(portalDirectory.resolve(AiJson.sha256Hex(worldKey) + ".json"));
             } else if (Files.isDirectory(portalDirectory)) {
                try (Stream<Path> files = Files.list(portalDirectory)) {
                   for (Path file : files.filter(x$0 -> Files.isRegularFile(x$0)).filter(p -> p.toString().endsWith(".json")).toList()) {
@@ -5431,7 +5431,7 @@ public final class AiService {
                         Files.deleteIfExists(file);
                      } else if (Files.size(file) <= 262144L) {
                         try {
-                           if (AiJson.init_Str_JsonObject(AiJson.init_JsonObject_Str(Files.readString(file)), "world", "").startsWith(worldKey + "/dimension/")) {
+                           if (AiJson.getString(AiJson.parseObject(Files.readString(file)), "world", "").startsWith(worldKey + "/dimension/")) {
                               Files.deleteIfExists(file);
                            }
                         } catch (RuntimeException var12) {

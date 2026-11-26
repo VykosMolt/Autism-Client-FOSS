@@ -31,18 +31,18 @@ final class AiFill {
 
    static AiFill.Inner_DataUtil init_J_DataUtil(JsonObject args) {
       if (args.has("x") && args.has("y") && args.has("z")) {
-         int x = AiJson.init_I_JsonObject(args, "x", 0);
-         int y = AiJson.init_I_JsonObject(args, "y", 0);
-         int z = AiJson.init_I_JsonObject(args, "z", 0);
+         int x = AiJson.getInt(args, "x", 0);
+         int y = AiJson.getInt(args, "y", 0);
+         int z = AiJson.getInt(args, "z", 0);
          boolean corner2 = args.has("x2") && args.has("y2") && args.has("z2");
          boolean extents = args.has("dx") && args.has("dy") && args.has("dz");
          if (!corner2 && !extents) {
             throw new IllegalArgumentException("Supply the second corner x2,y2,z2 or extents dx,dy,dz");
          }
 
-         long x2 = corner2 ? AiJson.init_I_JsonObject(args, "x2", 0) : (long)x + Math.max(1, AiJson.init_I_JsonObject(args, "dx", 1)) - 1L;
-         long y2 = corner2 ? AiJson.init_I_JsonObject(args, "y2", 0) : (long)y + Math.max(1, AiJson.init_I_JsonObject(args, "dy", 1)) - 1L;
-         long z2 = corner2 ? AiJson.init_I_JsonObject(args, "z2", 0) : (long)z + Math.max(1, AiJson.init_I_JsonObject(args, "dz", 1)) - 1L;
+         long x2 = corner2 ? AiJson.getInt(args, "x2", 0) : (long)x + Math.max(1, AiJson.getInt(args, "dx", 1)) - 1L;
+         long y2 = corner2 ? AiJson.getInt(args, "y2", 0) : (long)y + Math.max(1, AiJson.getInt(args, "dy", 1)) - 1L;
+         long z2 = corner2 ? AiJson.getInt(args, "z2", 0) : (long)z + Math.max(1, AiJson.getInt(args, "dz", 1)) - 1L;
          long ex = Math.abs(x2 - x) + 1L;
          long ey = Math.abs(y2 - y) + 1L;
          long ez = Math.abs(z2 - z) + 1L;
@@ -195,19 +195,19 @@ final class AiFill {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
 
-         Block block = init_Block(AiJson.init_Str_JsonObject(args, "block", ""), "block");
+         Block block = init_Block(AiJson.getString(args, "block", ""), "block");
          Map<String, String> properties = AiBuilder.init_Map_JsonObject(args, "fill", block);
-         String shape = AiJson.init_Str_JsonObject(args, "shape", AiJson.init_Z_JsonObject(args, "hollow", false) ? "shell" : "box").trim().toLowerCase(Locale.ROOT);
+         String shape = AiJson.getString(args, "shape", AiJson.getBoolean(args, "hollow", false) ? "shell" : "box").trim().toLowerCase(Locale.ROOT);
          if (!init_Set.contains(shape)) {
             throw new IllegalArgumentException("shape must be one of " + String.join(", ", init_Set) + ", got \"" + shape + "\"");
          }
 
-         String axis = AiJson.init_Str_JsonObject(args, "axis", "y").trim().toLowerCase(Locale.ROOT);
+         String axis = AiJson.getString(args, "axis", "y").trim().toLowerCase(Locale.ROOT);
          if (!axis.equals("x") && !axis.equals("y") && !axis.equals("z")) {
             throw new IllegalArgumentException("axis must be x, y or z, got \"" + axis + "\"");
          }
 
-         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
+         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          Minecraft mc = Minecraft.getInstance();
          String blockId = BuiltInRegistries.BLOCK.getKey(block).toString();
          List<AiBuilder.CellSpec> cells = new ArrayList<>();
@@ -224,11 +224,11 @@ final class AiFill {
          AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
          JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
          return missing.size() > 0
-            ? AiGameOperations.init(
+            ? AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
                AiFailure.MISSING_MATERIALS,
                "Missing materials: " + missing,
-               AiJson.init_JsonObject_ObjArr("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
+               AiJson.objectOf("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
             )
             : AiBuilder.init_AiOperation_TableIndex_DataUti(blueprint, true, timeoutSeconds);
       } else {
@@ -244,13 +244,13 @@ final class AiFill {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
 
-         String name = AiClipboard.init_Str(AiJson.init_Str_JsonObject(args, "name", ""));
+         String name = AiClipboard.init_Str(AiJson.getString(args, "name", ""));
          List<AiBuilder.CellSpec> cells = init(box, Minecraft.getInstance().level);
          AiClipboard.init(name, List.copyOf(cells));
-         return AiGameOperations.init_AiOperation(
+         return AiGameOperations.immediate(
             AiOperation.Status.SUCCEEDED,
             "Copied " + cells.size() + " cells to clipboard \"" + name + "\"",
-            AiJson.init_JsonObject_ObjArr("name", name, "cells", cells.size(), "persisted", true)
+            AiJson.objectOf("name", name, "cells", cells.size(), "persisted", true)
          );
       } else {
          throw new IllegalArgumentException("Copying requires a connected living player");
@@ -265,7 +265,7 @@ final class AiFill {
          for (int z = box.minZ(); z <= box.maxZ(); z++) {
             for (int x = box.minX(); x <= box.maxX(); x++) {
                BlockPos pos = new BlockPos(x, y, z);
-               if (!AiTerrain.init(level, pos)) {
+               if (!AiTerrain.isLoaded(level, pos)) {
                   unloaded++;
                } else {
                   BlockState state = level.getBlockState(pos);
@@ -295,15 +295,15 @@ final class AiFill {
    static AiOperation read(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         String name = AiClipboard.init_Str(AiJson.init_Str_JsonObject(args, "name", ""));
+         String name = AiClipboard.init_Str(AiJson.getString(args, "name", ""));
          List<AiBuilder.CellSpec> stored = AiClipboard.init_List(name);
          AiBuilder.BuildOptions power = AiBuilder.init_TableIndex_ConfigS(args);
          if (power.repeat() == null && !power.layers() && power.substitutes().isEmpty()) {
-            boolean air = AiJson.init_Z_JsonObject(args, "air", false);
+            boolean air = AiJson.getBoolean(args, "air", false);
             Minecraft mc = Minecraft.getInstance();
             BlockPos origin = mc.player.blockPosition();
             if (args.has("x") || args.has("y") || args.has("z")) {
-               origin = AiGameOperations.init_BlockPos(args);
+               origin = AiGameOperations.requireBlockPos(args);
             }
 
             List<AiBuilder.CellSpec> transformed = AiBuilder.init(AiBuilder.init_List_List_2(stored, power.rotation(), power.mirror()), 4096);
@@ -316,7 +316,7 @@ final class AiFill {
                   place.add(cell);
                } else if (air) {
                   BlockPos pos = origin.offset(cell.dx(), cell.dy(), cell.dz());
-                  if (AiTerrain.init(mc.level, pos) && !mc.level.getBlockState(pos).isAir()) {
+                  if (AiTerrain.isLoaded(mc.level, pos) && !mc.level.getBlockState(pos).isAir()) {
                      clearCells.add(pos);
                   }
                }
@@ -325,16 +325,16 @@ final class AiFill {
             AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(origin, List.copyOf(place));
             JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
             if (missing.size() > 0) {
-               return AiGameOperations.init(
+               return AiGameOperations.immediateFailure(
                   AiOperation.Status.FAILED,
                   AiFailure.MISSING_MATERIALS,
                   "Missing materials: " + missing,
-                  AiJson.init_JsonObject_ObjArr("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
+                  AiJson.objectOf("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
                );
             }
 
-            int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
-            boolean verify = AiJson.init_Z_JsonObject(args, "verify", true);
+            int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
+            boolean verify = AiJson.getBoolean(args, "verify", true);
             return !clearCells.isEmpty()
                ? new AiFill.Inner_BufferHelper(clearCells, blueprint, timeoutSeconds)
                : AiBuilder.init_AiOperation_TableIndex_DataUti(blueprint, verify, timeoutSeconds);
@@ -593,21 +593,21 @@ final class AiFill {
    static AiOperation write(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         String action = AiJson.init_Str_JsonObject(args, "action", "").trim().toLowerCase(Locale.ROOT);
+         String action = AiJson.getString(args, "action", "").trim().toLowerCase(Locale.ROOT);
          if (!load_Set.contains(action)) {
             throw new IllegalArgumentException("action must be one of " + String.join(", ", load_Set) + ", got \"" + action + "\"");
          }
 
-         int[] step = init(AiJson.init_Str_JsonObject(args, "direction", ""));
+         int[] step = init(AiJson.getString(args, "direction", ""));
          if (step == null) {
             throw new IllegalArgumentException(
-               "direction must be north, south, east, west, up or down, got \"" + AiJson.init_Str_JsonObject(args, "direction", "") + "\""
+               "direction must be north, south, east, west, up or down, got \"" + AiJson.getString(args, "direction", "") + "\""
             );
          }
 
-         int amount = AiJson.init_I_JsonObject(args, "amount", 1);
+         int amount = AiJson.getInt(args, "amount", 1);
          if (amount >= 1 && amount <= 64) {
-            String clipboard = AiJson.init_Str_JsonObject(args, "clipboard", "").trim();
+            String clipboard = AiJson.getString(args, "clipboard", "").trim();
             boolean hasBox = args.has("x") && args.has("y") && args.has("z");
             if (hasBox == !clipboard.isEmpty()) {
                throw new IllegalArgumentException("Supply a box (x,y,z + x2,y2,z2 or dx,dy,dz) or clipboard:\"name\", not both");
@@ -623,7 +623,7 @@ final class AiFill {
                   throw new IllegalArgumentException("Transformed box volume " + out.volume() + " exceeds 4096 cells; expand in smaller steps");
                }
 
-               JsonObject data = AiJson.init_JsonObject_ObjArr(
+               JsonObject data = AiJson.objectOf(
                   "action",
                   action,
                   "x",
@@ -643,9 +643,9 @@ final class AiFill {
                   "clamped",
                   transformed.clamped()
                );
-               String store = AiJson.init_Str_JsonObject(args, "store", "").trim();
+               String store = AiJson.getString(args, "store", "").trim();
                if (store.isEmpty()) {
-                  return AiGameOperations.init_AiOperation(
+                  return AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Region "
                         + action
@@ -671,7 +671,7 @@ final class AiFill {
                data.addProperty("name", name);
                data.addProperty("cells", cells.size());
                data.addProperty("persisted", true);
-               return AiGameOperations.init_AiOperation(
+               return AiGameOperations.immediate(
                   AiOperation.Status.SUCCEEDED, "Region " + action + "ed and stored " + cells.size() + " cells to clipboard \"" + name + "\"", data
                );
             } else {
@@ -685,10 +685,10 @@ final class AiFill {
                AiFill.Inner_CachePool transformed = init(AiClipboard.init_List(name), action, step, amount, 4096);
                AiClipboard.init(name, transformed.cells());
                int[] extents = init(transformed.cells());
-               return AiGameOperations.init_AiOperation(
+               return AiGameOperations.immediate(
                   AiOperation.Status.SUCCEEDED,
                   "Clipboard \"" + name + "\" " + action + "ed by " + amount,
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "name",
                      name,
                      "action",
@@ -724,14 +724,14 @@ final class AiFill {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
 
-         String from = AiJson.init_Str_JsonObject(args, "from", "").trim();
+         String from = AiJson.getString(args, "from", "").trim();
          if (from.isEmpty()) {
             throw new IllegalArgumentException("from is required: a block spec or \"any\"");
          }
 
-         Block to = init_Block(AiJson.init_Str_JsonObject(args, "to", ""), "to");
+         Block to = init_Block(AiJson.getString(args, "to", ""), "to");
          Map<String, String> properties = AiBuilder.init_Map_JsonObject(args, "replace", to);
-         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
+         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          Minecraft mc = Minecraft.getInstance();
          String toId = BuiltInRegistries.BLOCK.getKey(to).toString();
          List<AiBuilder.CellSpec> cells = new ArrayList<>();
@@ -751,11 +751,11 @@ final class AiFill {
          AiBuilder.Blueprint blueprint = new AiBuilder.Blueprint(new BlockPos(box.minX(), box.minY(), box.minZ()), cells);
          JsonObject missing = AiBuilder.init(blueprint, mc.player.getInventory());
          return missing.size() > 0
-            ? AiGameOperations.init(
+            ? AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
                AiFailure.MISSING_MATERIALS,
                "Missing materials: " + missing,
-               AiJson.init_JsonObject_ObjArr("missing", missing, "replaced", 0, "dug", 0, "failed", new JsonArray())
+               AiJson.objectOf("missing", missing, "replaced", 0, "dug", 0, "failed", new JsonArray())
             )
             : new AiFill.Inner_BufferHelper(digCells, blueprint, timeoutSeconds);
       } else {
@@ -767,7 +767,7 @@ final class AiFill {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
-         AiItems.ItemSpec target = AiItems.read_af_DataUtil(spec);
+         AiItems.ItemSpec target = AiItems.resolveBlock(spec);
          if (target.blocks().size() != 1) {
             throw new IllegalArgumentException(
                arg + " must resolve to a single block id, got " + target.blocks().size() + " from \"" + spec + "\"; use a full registry id"
@@ -802,11 +802,11 @@ final class AiFill {
       @Override
       public AiOperation.Result tick() {
          if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
+            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                return this.init(
                   AiOperation.Status.FAILED,
                   AiFailure.LOW_HEALTH,
-                  AiGuard.init_Str_Str("replacing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                  AiGuard.formatLowHealthAbort("replacing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                );
             }
 
@@ -872,7 +872,7 @@ final class AiFill {
 
                this.load_AiOperation.cancel();
                this.load_AiOperation = null;
-               JsonObject buildData = AiJson.init_JsonObject_Str(r.dataJson());
+               JsonObject buildData = AiJson.parseObject(r.dataJson());
                this.write = buildData.has("placed") ? buildData.get("placed").getAsInt() : 0;
                if (buildData.has("failed")) {
                   this.init_JsonArray.addAll(buildData.getAsJsonArray("failed"));
@@ -890,7 +890,7 @@ final class AiFill {
 
       void init(BlockPos cell, String reason) {
          if (this.init_JsonArray.size() < 32) {
-            this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
+            this.init_JsonArray.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
          }
       }
 
@@ -899,7 +899,7 @@ final class AiFill {
       }
 
       JsonObject init_JsonObject_10() {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "replaced",
             this.write,
             "dug",

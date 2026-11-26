@@ -265,7 +265,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                h2 += this.write(listContentHeight);
                h2 += 4 + this.reset + this.add + 4;
             } else {
-               int macros = MacroLibraryManager.init_aN().init_List().size();
+               int macros = MacroLibraryManager.getInstance().getMacros().size();
                h2 += 12 + (macros == 0 ? this.reset : this.load(macros)) + 4;
                if (this.init_Str_2 != null) {
                   h2 += 3 * this.reset;
@@ -449,11 +449,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
    private int init_I_aE_Str(LanSyncManager sync, String peer) {
       int contentHeight = 0;
-      List<AutismMacro> myMacroList = MacroLibraryManager.init_aN().init_List();
+      List<AutismMacro> myMacroList = MacroLibraryManager.getInstance().getMacros();
       Set<String> myMacroKeys = new LinkedHashSet<>();
 
       for (AutismMacro macro : myMacroList) {
-         myMacroKeys.add(MacroNameNormalizer.init(macro.init_Str));
+         myMacroKeys.add(MacroNameNormalizer.init(macro.name));
       }
 
       if (peer.equals(sync.load_Str())) {
@@ -466,7 +466,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       for (AutismMacro macro : peerMacroData.values()) {
          if (macro != null) {
-            peerMacroKeys.add(MacroNameNormalizer.init(macro.init_Str));
+            peerMacroKeys.add(MacroNameNormalizer.init(macro.name));
          }
       }
 
@@ -477,7 +477,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       for (String key : peerMacroKeys) {
          if (myMacroKeys.contains(key)) {
-            int diffs = init_I_aM_aM(MacroLibraryManager.init_aN().init_aM_Str(key), peerMacroData.get(key));
+            int diffs = init_I_aM_aM(MacroLibraryManager.getInstance().findByName(key), peerMacroData.get(key));
             if (diffs == 0) {
                shared.add(key);
             } else {
@@ -1190,7 +1190,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    private int init(GuiGraphicsExtractor ctx, int mx, int my, int cy, int lx, int btnW, LanSyncManager sync) {
       autismclient.gui.ui.widgets.ListRowRenderer.init(ctx, this.init_Font, "Local Macros", lx, cy);
       cy += 12;
-      List<AutismMacro> localMacros = MacroLibraryManager.init_aN().init_List();
+      List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
       if (localMacros.isEmpty()) {
          this.sync_V_7();
          this.init(ctx, "No macros", autismclient.gui.f.b.l.write, UiColorPalette.bind(), lx, cy);
@@ -1206,14 +1206,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             || this.init_RenderState.update() != this.buffer
             || this.init_RenderState.sync() != this.entry) {
             this.init_RenderState = new autismclient.gui.ui.layout.SelectableListBox<>(
-               this.state, this.queue, this.buffer, this.entry, this.run_I_10(), 3, macro -> macro.init_Str, (macro, selected) -> {
+               this.state, this.queue, this.buffer, this.entry, this.run_I_10(), 3, macro -> macro.name, (macro, selected) -> {
                   if (selected) {
-                     this.init_Str_2 = macro.init_Str;
+                     this.init_Str_2 = macro.name;
                   }
                }
             );
             this.init_RenderState.init(macro -> {
-               int actionCount = macro.init_List != null ? macro.init_List.size() : 0;
+               int actionCount = macro.actions != null ? macro.actions.size() : 0;
                return "(" + actionCount + ")";
             });
             this.init_RenderState.init_V(-1);
@@ -1222,7 +1222,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.init_RenderState.init(localMacros);
 
          for (int i = 0; i < localMacros.size(); i++) {
-            if (localMacros.get(i).init_Str.equals(this.init_Str_2)) {
+            if (localMacros.get(i).name.equals(this.init_Str_2)) {
                this.init_RenderState.init_V(i);
                break;
             }
@@ -1394,20 +1394,20 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             if (isExpanded) {
                int detailLx = lx + 6;
                int detailRx = this.pop + this.run - this.start - 4;
-               List<AutismMacro> myMacroList = MacroLibraryManager.init_aN().init_List();
+               List<AutismMacro> myMacroList = MacroLibraryManager.getInstance().getMacros();
                Map<String, String> displayNames = new LinkedHashMap<>();
                Set<String> myMacroKeys = new LinkedHashSet<>();
 
                for (AutismMacro m : myMacroList) {
-                  String key = MacroNameNormalizer.init(m.init_Str);
+                  String key = MacroNameNormalizer.init(m.name);
                   myMacroKeys.add(key);
-                  displayNames.put(key, m.init_Str);
+                  displayNames.put(key, m.name);
                }
 
                if (isMe) {
                   for (AutismMacro macro : myMacroList) {
                      cy = this.init(
-                        ctx, mx, my, cy, detailLx, detailRx, rowW, macro.init_Str, assigned, null, peerKey, sync, false, clipTop, clipBottom, rowPitch
+                        ctx, mx, my, cy, detailLx, detailRx, rowW, macro.name, assigned, null, peerKey, sync, false, clipTop, clipBottom, rowPitch
                      );
                   }
                } else {
@@ -1417,9 +1417,9 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
                   for (AutismMacro m : peerMacroData.values()) {
                      if (m != null) {
-                        String key = MacroNameNormalizer.init(m.init_Str);
+                        String key = MacroNameNormalizer.init(m.name);
                         peerMacroKeys.add(key);
-                        displayNames.putIfAbsent(key, m.init_Str);
+                        displayNames.putIfAbsent(key, m.name);
                      }
                   }
 
@@ -1431,7 +1431,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   for (String key : peerMacroKeys) {
                      String name = displayNames.getOrDefault(key, key);
                      if (myMacroKeys.contains(key)) {
-                        int diffs = init_I_aM_aM(MacroLibraryManager.init_aN().init_aM_Str(key), peerMacroData.get(key));
+                        int diffs = init_I_aM_aM(MacroLibraryManager.getInstance().findByName(key), peerMacroData.get(key));
                         if (diffs == 0) {
                            shared.add(name);
                         } else {
@@ -1569,7 +1569,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       List<String> missingPeers = new ArrayList<>(sync.init_List_Str(macroName));
       Map<String, Integer> differentPeers = new LinkedHashMap<>();
       if (macroName != null && !macroName.isBlank()) {
-         AutismMacro localMacro = MacroLibraryManager.init_aN().init_aM_Str(macroName);
+         AutismMacro localMacro = MacroLibraryManager.getInstance().findByName(macroName);
          if (localMacro == null) {
             return new AutismLANSyncOverlay.Inner_CachePool(missingPeers, differentPeers);
          }
@@ -1618,7 +1618,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       LinkedHashSet<String> shareable = new LinkedHashSet<>();
 
       for (String macroName : status.load.values()) {
-         if (macroName != null && !macroName.isBlank() && MacroLibraryManager.init_aN().init_aM_Str(macroName) != null) {
+         if (macroName != null && !macroName.isBlank() && MacroLibraryManager.getInstance().findByName(macroName) != null) {
             shareable.add(macroName);
          }
       }
@@ -1757,11 +1757,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                if (sourceMacro == null) {
                   AutismClientMessaging.sendPrefixed("§cMacro not found: " + mName);
                } else {
-                  AutismMacro imported = MacroLibraryManager.init_aN().init_aM_aM_Str(sourceMacro, sourceMacro.init_Str);
+                  AutismMacro imported = MacroLibraryManager.getInstance().importMacro(sourceMacro, sourceMacro.name);
                   if (imported == null) {
                      AutismClientMessaging.sendPrefixed("§cFailed to import macro: " + mName);
                   } else {
-                     AutismClientMessaging.sendPrefixed("§aImported macro: " + imported.init_Str);
+                     AutismClientMessaging.sendPrefixed("§aImported macro: " + imported.name);
                   }
                }
             }));
@@ -1773,8 +1773,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
    private static int init_I_aM_aM(AutismMacro a, AutismMacro b) {
       if (a != null && b != null) {
-         List<MacroAction> aActions = a.init_List != null ? a.init_List : Collections.emptyList();
-         List<MacroAction> bActions = b.init_List != null ? b.init_List : Collections.emptyList();
+         List<MacroAction> aActions = a.actions != null ? a.actions : Collections.emptyList();
+         List<MacroAction> bActions = b.actions != null ? b.actions : Collections.emptyList();
          int diffs = 0;
          int maxLen = Math.max(aActions.size(), bActions.size());
 
@@ -1855,7 +1855,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             if (!this.init_RenderState.read_Z()) {
                AutismMacro selected = this.init_RenderState.init_Obj();
                if (selected != null) {
-                  this.init_Str_2 = selected.init_Str;
+                  this.init_Str_2 = selected.name;
                   this.read_V_5();
                }
             }

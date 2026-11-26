@@ -22,7 +22,7 @@ public class AutismProtectorPacketProcessorMixin {
          if (!PacketDecodeOriginStack.init(instance)) {
             original.call(instance, listener);
          } else {
-            PacketDecodeOriginStack.init(ConnectionPrivacyRegistry.init(listener));
+            PacketDecodeOriginStack.init(ConnectionPrivacyRegistry.getByListener(listener));
 
             try {
                original.call(instance, listener);

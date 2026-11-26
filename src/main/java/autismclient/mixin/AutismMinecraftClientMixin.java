@@ -95,7 +95,7 @@ public class AutismMinecraftClientMixin {
          float fcXRot = 0.0F;
          float fcYRotO = 0.0F;
          float fcXRotO = 0.0F;
-         if (FreecamController.read()) {
+         if (FreecamController.canInteractAsPlayer()) {
             Entity cam = self.getCameraEntity();
             if (cam != null) {
                double eyeOffset = cam.getEyeY() - cam.getY();
@@ -109,11 +109,11 @@ public class AutismMinecraftClientMixin {
                fcXRot = cam.getXRot();
                fcYRotO = cam.yRotO;
                fcXRotO = cam.xRotO;
-               double fx = FreecamController.init_D_F(partialTicks);
-               double fy = FreecamController.load_D_F(partialTicks) - eyeOffset;
-               double fz = FreecamController.read(partialTicks);
-               float fyaw = FreecamController.init_F_F(partialTicks);
-               float fpitch = FreecamController.load_F_F(partialTicks);
+               double fx = FreecamController.getInterpolatedX(partialTicks);
+               double fy = FreecamController.getInterpolatedY(partialTicks) - eyeOffset;
+               double fz = FreecamController.getInterpolatedZ(partialTicks);
+               float fyaw = FreecamController.getInterpolatedYaw(partialTicks);
+               float fpitch = FreecamController.getInterpolatedPitch(partialTicks);
                cam.setPos(fx, fy, fz);
                cam.xOld = fx;
                cam.yOld = fy;
@@ -384,7 +384,7 @@ public class AutismMinecraftClientMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isWithinEntityInteractionRange(Lnet/minecraft/world/entity/Entity;D)Z")
    )
    private boolean autism$freecamEntityUseReach(boolean original) {
-      return original || FreecamController.read();
+      return original || FreecamController.canInteractAsPlayer();
    }
 
    @ModifyExpressionValue(
@@ -395,7 +395,7 @@ public class AutismMinecraftClientMixin {
       )
    )
    private boolean autism$freecamEntityAttackReach(boolean original) {
-      return original || FreecamController.read();
+      return original || FreecamController.canInteractAsPlayer();
    }
 
    @ModifyExpressionValue(

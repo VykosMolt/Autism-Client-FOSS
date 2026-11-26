@@ -37,9 +37,9 @@ public class RaceAction implements MacroAction {
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putString("conditionType", this.conditionType == null ? RaceAction.Inner_DataUtil.WAIT_PACKET.name() : this.conditionType);
       tag.putString("actionType", this.actionType == null ? MacroActionType.PACKET_CLICK.name() : this.actionType);
-      tag.put("raceSteps", MacroNbtCodecHelper.init(this.read()));
-      tag.put("conditionTypes", MacroNbtCodecHelper.init(this.init_List_2()));
-      tag.put("actionTypes", MacroNbtCodecHelper.init(this.write()));
+      tag.put("raceSteps", MacroNbtCodecHelper.toStringListTag(this.read()));
+      tag.put("conditionTypes", MacroNbtCodecHelper.toStringListTag(this.init_List_2()));
+      tag.put("actionTypes", MacroNbtCodecHelper.toStringListTag(this.write()));
       MacroAction trigger = this.triggerAction == null ? new DelayAction(0) : this.triggerAction;
       if (!this.init_List_2().isEmpty()) {
          tag.put("triggerAction", trigger.toTag());
@@ -56,16 +56,16 @@ public class RaceAction implements MacroAction {
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 10000));
       this.conditionType = read_Str(tag.getStringOr("conditionType", tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name())));
       this.actionType = tag.getStringOr("actionType", MacroActionType.PACKET_CLICK.name());
-      this.raceSteps = MacroNbtCodecHelper.init(tag.getList("raceSteps").orElse(new ListTag()));
+      this.raceSteps = MacroNbtCodecHelper.fromStringListTag(tag.getList("raceSteps").orElse(new ListTag()));
       this.raceSteps.removeIf(s -> s == null || s.isBlank());
       boolean hasConditionTypes = tag.contains("conditionTypes");
-      this.conditionTypes = MacroNbtCodecHelper.init(tag.getList("conditionTypes").orElse(new ListTag()));
+      this.conditionTypes = MacroNbtCodecHelper.fromStringListTag(tag.getList("conditionTypes").orElse(new ListTag()));
       this.conditionTypes.removeIf(s -> s == null || s.isBlank());
       if (!hasConditionTypes && this.conditionType != null && !this.conditionType.isBlank()) {
          this.conditionTypes.add(this.conditionType);
       }
 
-      this.actionTypes = MacroNbtCodecHelper.init(tag.getList("actionTypes").orElse(new ListTag()));
+      this.actionTypes = MacroNbtCodecHelper.fromStringListTag(tag.getList("actionTypes").orElse(new ListTag()));
       if (this.actionTypes.isEmpty() && this.actionType != null && !this.actionType.isBlank()) {
          this.actionTypes.add(this.actionType);
       }
@@ -95,7 +95,7 @@ public class RaceAction implements MacroAction {
 
       this.conditionType = this.conditionTypes.isEmpty() ? "" : this.conditionTypes.get(0);
       this.actionType = this.actionTypes.get(0);
-      MacroAction nested = tag.getCompound("triggerAction").map(autismclient.util.AutismMacro::init_MacroAction_CompoundTag).orElse(null);
+      MacroAction nested = tag.getCompound("triggerAction").map(autismclient.util.AutismMacro::deserializeAction).orElse(null);
       if (init_Z(nested)) {
          this.triggerAction = nested;
       }
@@ -573,7 +573,7 @@ public class RaceAction implements MacroAction {
    private static MacroAction init(CompoundTag tag) {
       RaceAction.Inner_DataUtil type = init_L_DataUtil(tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.DELAY.name()));
       MacroAction action = init(type);
-      CompoundTag actionTag = autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action);
+      CompoundTag actionTag = autismclient.util.AutismMacro.serializeAction(action);
       switch (type) {
          case DELAY:
             actionTag.putBoolean("useTicks", tag.getBooleanOr("useTicks", false));
@@ -733,7 +733,7 @@ public class RaceAction implements MacroAction {
    private static void init_V_CompoundTag_MacroAction(CompoundTag tag, MacroAction action) {
       RaceAction.Inner_DataUtil type = init_L_DataUtil(action);
       tag.putString("triggerType", type.name());
-      CompoundTag src = autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action);
+      CompoundTag src = autismclient.util.AutismMacro.serializeAction(action);
 
       for (String key : src.keySet()) {
          if (!"type".equals(key) && !tag.contains(key)) {

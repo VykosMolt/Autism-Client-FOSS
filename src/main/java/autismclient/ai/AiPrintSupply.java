@@ -85,7 +85,7 @@ final class AiPrintSupply {
       this.init_bj_CachePool = new AiPrintSupply.Inner_CachePool(
          blueprint,
          world,
-         p -> AiTerrain.init(world, p),
+         p -> AiTerrain.isLoaded(world, p),
          this.init_Minecraft.player == null ? BlockPos.ZERO : this.init_Minecraft.player.blockPosition(),
          clearTerrain
       );
@@ -264,7 +264,7 @@ final class AiPrintSupply {
          return false;
       } else if (this.init_bj_BufferHelper.load_Z
          && this.init_bj_BufferHelper.init_BlockPos != null
-         && AiTerrain.init(this.init_Minecraft.level, this.init_bj_BufferHelper.init_BlockPos)
+         && AiTerrain.isLoaded(this.init_Minecraft.level, this.init_bj_BufferHelper.init_BlockPos)
          && !(this.init_Minecraft.level.getBlockState(this.init_bj_BufferHelper.init_BlockPos).getBlock() instanceof ShulkerBoxBlock)) {
          this.init_bj_TaskQueue.init(this.init_bj_BufferHelper.init_BlockPos.asLong());
          this.init_bj_BufferHelper = null;
@@ -302,13 +302,13 @@ final class AiPrintSupply {
                }
 
                JsonArray items = new JsonArray();
-               items.add(AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(this.init_bj_TaskQueue.init_Item).toString(), "count", need));
-               AiOperation approach = AiTerrain.init(this.init_Minecraft.level, source) && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, source) != null
+               items.add(AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(this.init_bj_TaskQueue.init_Item).toString(), "count", need));
+               AiOperation approach = AiTerrain.isLoaded(this.init_Minecraft.level, source) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, source) != null
                   ? null
                   : AiContainer.init(AiGoto.load(source, 60, keep, false));
                return new AiPrintSupply.Inner_NetHelper(
                   approach,
-                  () -> !AiTerrain.init(this.init_Minecraft.level, source)
+                  () -> !AiTerrain.isLoaded(this.init_Minecraft.level, source)
                      ? AiPrintSupply.Inner_StreamUtil.UNKNOWN
                      : (
                         this.init_Minecraft.level.getBlockState(source).getBlock() instanceof ShulkerBoxBlock
@@ -316,7 +316,7 @@ final class AiPrintSupply {
                            : AiPrintSupply.Inner_StreamUtil.REPLACED
                      ),
                   () -> AiContainer.init(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "action",
                         "withdraw",
                         "x",
@@ -352,7 +352,7 @@ final class AiPrintSupply {
 
       for (int checked = 0; this.read < this.init_List.size() && checked < 64; checked++) {
          BlockPos p = this.init_List.get(this.read++);
-         if (!AiTerrain.init(this.init_Minecraft.level, p)) {
+         if (!AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
             throw new IllegalStateException("Terrain is not loaded at " + p.toShortString());
          }
 
@@ -1108,7 +1108,7 @@ final class AiPrintSupply {
             }
 
             if (result.status() != AiOperation.Status.SUCCEEDED) {
-               return this.init(AiContainer.init(result, AiJson.init_JsonObject_ObjArr("action", "withdraw")));
+               return this.init(AiContainer.init(result, AiJson.objectOf("action", "withdraw")));
             }
 
             if (this.init_AiOperation.requiresReconciliationAfterEmergency() || !this.init_AiOperation.canInterruptNow()) {

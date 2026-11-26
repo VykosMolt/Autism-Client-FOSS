@@ -75,7 +75,7 @@ public final class ModdedParticleGuard {
    public static boolean init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context) {
       return provider != null
          && context != null
-         && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA
+         && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA
          && !provider.getClass().getName().startsWith("net.minecraft.client.particle.");
    }
 

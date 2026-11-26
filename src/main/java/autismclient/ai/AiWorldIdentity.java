@@ -26,7 +26,7 @@ public final class AiWorldIdentity {
          normalized = normalized.toLowerCase(Locale.ROOT);
       }
 
-      return "local/" + AiJson.init_Str_Str(normalized) + "/" + name;
+      return "local/" + AiJson.sha256Hex(normalized) + "/" + name;
    }
 
    public static synchronized String init(Minecraft mc) {
@@ -40,7 +40,7 @@ public final class AiWorldIdentity {
             try {
                BasicFileAttributes attributes = Files.readAttributes(root, BasicFileAttributes.class);
                init_Str = attributes.creationTime().toMillis() > 0L
-                  ? base + "/created/" + AiJson.init_Str_Str(attributes.creationTime().toString())
+                  ? base + "/created/" + AiJson.sha256Hex(attributes.creationTime().toString())
                   : base + "/session/" + UUID.randomUUID();
             } catch (IOException | SecurityException unavailable) {
                init_Str = base + "/session/" + UUID.randomUUID();

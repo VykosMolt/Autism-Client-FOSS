@@ -113,7 +113,7 @@ public class WaitMovementAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = MacroNbtCodecHelper.init(WaitMovementAction.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), WaitMovementAction.Inner_DataUtil.POSITION);
+      this.mode = MacroNbtCodecHelper.parseEnum(WaitMovementAction.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), WaitMovementAction.Inner_DataUtil.POSITION);
       this.f_x_D = tag.getDoubleOr("x", 0.0);
       this.f_y_D = tag.getDoubleOr("y", 0.0);
       this.f_z_D = tag.getDoubleOr("z", 0.0);

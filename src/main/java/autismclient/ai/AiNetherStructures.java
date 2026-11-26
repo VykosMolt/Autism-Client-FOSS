@@ -91,7 +91,7 @@ final class AiNetherStructures {
       }
 
       for (BlockPos p : BlockPos.betweenClosed(at.offset(-12, -8, -12), at.offset(12, 8, 12))) {
-         if (AiTerrain.init(mc.level, p)) {
+         if (AiTerrain.isLoaded(mc.level, p)) {
             BlockState state = mc.level.getBlockState(p);
             if (state.is(Blocks.GILDED_BLACKSTONE)
                || state.is(Blocks.POLISHED_BLACKSTONE_BRICKS)
@@ -125,7 +125,7 @@ final class AiNetherStructures {
       Set<Integer> floors = new HashSet<>();
 
       for (BlockPos p : BlockPos.betweenClosed(at.offset(-12, -8, -12), at.offset(12, 8, 12))) {
-         if (!AiTerrain.init(mc.level, p)) {
+         if (!AiTerrain.isLoaded(mc.level, p)) {
             partial = true;
          } else {
             BlockState state = mc.level.getBlockState(p);
@@ -155,7 +155,7 @@ final class AiNetherStructures {
 
          for (int distance = 1; distance <= 10; distance++) {
             BlockPos p = at.relative(axis, distance);
-            if (AiTerrain.init(mc.level, p)
+            if (AiTerrain.isLoaded(mc.level, p)
                && AiNetherRun.read_Predicate.test(mc.level.getBlockState(p.below()))
                && mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()) {
                floor++;
@@ -173,19 +173,19 @@ final class AiNetherStructures {
       JsonArray variants = new JsonArray();
       if (confidence >= 0.5) {
          if (gold >= 3 && lava >= 12) {
-            variants.add(AiJson.init_JsonObject_ObjArr("variant", "treasure_room", "confidence", 0.65));
+            variants.add(AiJson.objectOf("variant", "treasure_room", "confidence", 0.65));
          }
 
          if (hoglins > 0 && floors.size() >= 3) {
-            variants.add(AiJson.init_JsonObject_ObjArr("variant", "hoglin_stables", "confidence", 0.55));
+            variants.add(AiJson.objectOf("variant", "hoglin_stables", "confidence", 0.55));
          }
 
          if (corridors > 0) {
-            variants.add(AiJson.init_JsonObject_ObjArr("variant", "bridge", "confidence", 0.55));
+            variants.add(AiJson.objectOf("variant", "bridge", "confidence", 0.55));
          }
 
          if (floors.size() >= 3 && chests > 0) {
-            variants.add(AiJson.init_JsonObject_ObjArr("variant", "housing_units", "confidence", 0.5));
+            variants.add(AiJson.objectOf("variant", "housing_units", "confidence", 0.5));
          }
       }
 
@@ -235,7 +235,7 @@ final class AiNetherStructures {
       long revision
    ) {
       JsonObject data() {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "at",
             this.at.toShortString(),
             "bricks",

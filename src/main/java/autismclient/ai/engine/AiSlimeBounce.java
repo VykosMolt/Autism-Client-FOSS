@@ -252,7 +252,7 @@ public final class AiSlimeBounce {
 
       for (int var11 = 0; var11 < 38; var11++) {
          AiPhysics.MoveInput var12 = var11 == var3 ? var10 : var9;
-         AiPhysics.MotionState var13 = AiPhysics.putAt(var6, var12, var0);
+         AiPhysics.MotionState var13 = AiPhysics.step(var6, var12, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var6, var13, var7, var1.y()) || AiJumpSolver.putAt(var0, var13)) {
             return null;
          }
@@ -315,7 +315,7 @@ public final class AiSlimeBounce {
          var17 = putAt_F_F_F(var17, var30);
          boolean var31 = var28 == var21 && var5 || var23 && var9 && var10.onGround() && var10.vy() > 0.2;
          AiPhysics.MoveInput var32 = new AiPhysics.MoveInput(1.0, 0.0, var31, var4, false, var17);
-         AiPhysics.MotionState var33 = AiPhysics.putAt(var10, var32, var0);
+         AiPhysics.MotionState var33 = AiPhysics.step(var10, var32, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var10, var33, var13, var1.y())) {
             return new AiSlimeBounce.Inner_TableCache(null, !var24 && var15 > var11 + 4.5, var27, var25, var26);
          }
@@ -401,7 +401,7 @@ public final class AiSlimeBounce {
          float var24 = var23 >= var6 ? var17 : var16;
          var15 = putAt_F_F_F(var15, var24);
          AiPhysics.MoveInput var25 = new AiPhysics.MoveInput(1.0, 0.0, var22 == var18 && var5, var4, false, var15);
-         AiPhysics.MotionState var26 = AiPhysics.putAt(var8, var25, var0);
+         AiPhysics.MotionState var26 = AiPhysics.step(var8, var25, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var8, var26, var11, var1.y())) {
             return null;
          }
@@ -461,7 +461,7 @@ public final class AiSlimeBounce {
          var12 = putAt_F_F_F(var12, var4);
          boolean var19 = var6 && var7.onGround() && var7.vy() > 0.2;
          AiPhysics.MoveInput var20 = new AiPhysics.MoveInput(1.0, 0.0, var19, var5, false, var12);
-         AiPhysics.MotionState var21 = AiPhysics.putAt(var7, var20, var0);
+         AiPhysics.MotionState var21 = AiPhysics.step(var7, var20, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var7, var21, var10, var1.y())) {
             return new AiSlimeBounce.Inner_TableCache(null, false, true, var16, var17);
          }
@@ -536,7 +536,7 @@ public final class AiSlimeBounce {
 
    static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiJumpManeuver var2, int var3, BlockPos var4, double var5) {
       for (int var7 = var3; var7 < var2.inputs().size() + 4; var7++) {
-         AiPhysics.MotionState var8 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7), var0);
+         AiPhysics.MotionState var8 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7), var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var1, var8, var5, var2.start().y())) {
             return false;
          }
@@ -590,13 +590,13 @@ public final class AiSlimeBounce {
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, double var3, double var5
    ) {
       return var2.y() >= var5 - 24.0
-         && !AiPhysics.fill(var0, var1, var2)
+         && !AiPhysics.hitsStrictHazard(var0, var1, var2)
          && (!var2.onGround() || putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var2) || var3 - var2.y() <= var0.putAt_D());
    }
 
    static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       if (var1.onGround() && !(var1.vy() < 0.2)) {
-         long var2 = var1.support() == -9223372036854775808L ? AiPhysics.putAt_J_AABB(var1.box(false), var1.x(), var1.y(), var1.z(), var0) : var1.support();
+         long var2 = var1.support() == -9223372036854775808L ? AiPhysics.findSupportBlock(var1.box(false), var1.x(), var1.y(), var1.z(), var0) : var1.support();
          BlockPos var4 = var2 == -9223372036854775808L ? BlockPos.containing(var1.x(), var1.y() - 0.15, var1.z()) : BlockPos.of(var2);
          return var0.readEx_D(var4.getX(), var4.getY(), var4.getZ()) >= 0.9;
       } else {

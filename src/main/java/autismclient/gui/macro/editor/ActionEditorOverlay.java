@@ -617,7 +617,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.f_d_I = Math.max(1, editCount);
       this.load_Runnable = onPreSave;
       this.init_Runnable = onSave;
-      this.init_CompoundTag = AutismMacro.init_CompoundTag_MacroAction(action);
+      this.init_CompoundTag = AutismMacro.serializeAction(action);
       this.init_ActionFieldSchema = ActionFieldRegistry.init(action);
       this.f_e_I = 0;
       this.task();
@@ -1113,7 +1113,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (placeTarget != null) {
-            slotF.init_V_Str(placeTarget.init_Z() ? String.valueOf(placeTarget.init_I) : "");
+            slotF.init_V_Str(placeTarget.hasSlot() ? String.valueOf(placeTarget.slot) : "");
          }
 
          ThemedTextInputBox nameF = this.init_Map.get("itemName");
@@ -1409,7 +1409,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.init_StreamUtil.init_Z() && (!itemName.isEmpty() || visibleSlot >= 0)) {
          boolean useSlot = slotMode && visibleSlot >= 0;
          if (useSlot) {
-            capturedTarget = MacroItemTarget.init_ArrayUtil_I(Math.max(0, visibleSlot));
+            capturedTarget = MacroItemTarget.ofSlot(Math.max(0, visibleSlot));
          }
 
          String key = this.init_StreamUtil.init_Str();
@@ -1428,7 +1428,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          if ("_wsc_entries".equals(key)) {
-            String rawTarget = capturedTarget.write_Str();
+            String rawTarget = capturedTarget.toSpecString();
             if (rawTarget == null) {
                this.init_V_Str_I("Nothing to add from that slot", -38037);
                return true;
@@ -1441,7 +1441,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   if (!this.init_Z_Str_I(norm, this.f_l_I)) {
                      WaitForSlotChangeAction.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
                      entry.init_Str = norm;
-                     entry.init_ArrayUtil = capturedTarget.init_ArrayUtil();
+                     entry.init_ArrayUtil = capturedTarget.copy();
                      this.init_V_aD_DataUtil(entry);
                      this.init_V_Str_I("Updated: " + disp, -10035062);
                   } else {
@@ -1451,7 +1451,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.init_V_Str_I("Already added: " + disp, -38037);
                } else {
                   WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil(norm, this.init_aD_StreamUtil, this.f_m_I);
-                  entry.init_ArrayUtil = capturedTarget.init_ArrayUtil();
+                  entry.init_ArrayUtil = capturedTarget.copy();
                   entry.init_Str = norm;
                   this.run_List.add(entry);
                   this.init_V_Str_I("Added: " + disp, -10035062);
@@ -1474,25 +1474,25 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if ("itemName".equals(key) && this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.USE_ITEM) {
                ThemedTextInputBox itemField = this.init_Map.get("itemName");
                ThemedTextInputBox slotField = this.init_Map.get("slot");
-               if (capturedTarget.update()) {
+               if (capturedTarget.hasItemFilter()) {
                   MacroItemTarget nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
                   if (itemField != null) {
-                     itemField.init_V_Str(nameOnly.init_Str());
+                     itemField.init_V_Str(nameOnly.rawLabel());
                   }
 
-                  this.update_Map.put("itemName", nameOnly.init_ArrayUtil());
-                  this.init_V_Str_I("Item set: " + nameOnly.read_Str(), -10035062);
-               } else if (capturedTarget.init_Z()) {
+                  this.update_Map.put("itemName", nameOnly.copy());
+                  this.init_V_Str_I("Item set: " + nameOnly.resolvedDisplayName(), -10035062);
+               } else if (capturedTarget.hasSlot()) {
                   if (itemField != null) {
                      itemField.init_V_Str("");
                   }
 
                   this.update_Map.remove("itemName");
                   if (slotField != null) {
-                     slotField.init_V_Str(String.valueOf(Math.max(0, capturedTarget.init_I)));
+                     slotField.init_V_Str(String.valueOf(Math.max(0, capturedTarget.slot)));
                   }
 
-                  this.init_V_Str_I("Slot set: " + Math.max(0, capturedTarget.init_I), -10035062);
+                  this.init_V_Str_I("Slot set: " + Math.max(0, capturedTarget.slot), -10035062);
                } else {
                   this.init_V_Str_I("Nothing to capture from that slot", -38037);
                }
@@ -1513,14 +1513,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      key,
                      list,
                      useSlot
-                        ? capturedTarget.write_Str()
+                        ? capturedTarget.toSpecString()
                         : (
                            this.put_Z(key)
-                              ? capturedTarget.write_Str()
+                              ? capturedTarget.toSpecString()
                               : (
                                  this.run_Z(key)
-                                    ? init_ArrayUtil_ArrayUtil(capturedTarget).write_Str()
-                                    : (this.get_Z(key) ? capturedTarget.write_Str() : itemName)
+                                    ? init_ArrayUtil_ArrayUtil(capturedTarget).toSpecString()
+                                    : (this.get_Z(key) ? capturedTarget.toSpecString() : itemName)
                               )
                         )
                   );
@@ -1546,15 +1546,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (field != null && field.type() == FieldType.SLOT) {
                   tf.init_V_Str(String.valueOf(Math.max(0, visibleSlot)));
                } else if (useSlot) {
-                  tf.init_V_Str(capturedTarget.write_Str());
+                  tf.init_V_Str(capturedTarget.toSpecString());
                   if ("itemName".equals(key) || "fromItemName".equals(key) || "toItemName".equals(key) || this.update_Map.containsKey(key)) {
-                     this.update_Map.put(key, capturedTarget.init_ArrayUtil());
+                     this.update_Map.put(key, capturedTarget.copy());
                   }
                } else {
                   MacroItemTarget nameOnly = init_ArrayUtil_ArrayUtil(capturedTarget);
-                  tf.init_V_Str(nameOnly.init_Str());
+                  tf.init_V_Str(nameOnly.rawLabel());
                   if ("itemName".equals(key) || "fromItemName".equals(key) || "toItemName".equals(key) || this.update_Map.containsKey(key)) {
-                     this.update_Map.put(key, nameOnly.init_ArrayUtil());
+                     this.update_Map.put(key, nameOnly.copy());
                   }
                }
 
@@ -2330,7 +2330,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private boolean reset_Z() {
       if (this.init_MapStore != null && this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
          MacroItemTarget target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
-         return target.update() && !target.init_Z()
+         return target.hasItemFilter() && !target.hasSlot()
             ? this.init_MapStore.init_N_I(this.f_j_I) != ContainerClickType.PICKUP_ALL
                || !this.load_Map.getOrDefault("item_useCursorItemForPickupAll", this.init_MapStore.useCursorItemForPickupAll)
             : false;
@@ -2441,8 +2441,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.stop_Z = true;
          if (this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
             MacroItemTarget target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
-            addF.init_V_Str(target.init_Str());
-            slotF.init_V_Str(target.init_Z() ? String.valueOf(target.init_I) : "");
+            addF.init_V_Str(target.rawLabel());
+            slotF.init_V_Str(target.hasSlot() ? String.valueOf(target.slot) : "");
             this.stop_Z = false;
          } else {
             addF.init_V_Str("");
@@ -2472,7 +2472,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             MacroItemTarget target = this.init_ArrayUtil_Str_2(
                nameText, slotText, this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I)
             );
-            String entry = target.write_Str();
+            String entry = target.toSpecString();
             if (entry != null && !entry.isBlank()) {
                if (this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
                   if (!this.init_Z_List_2(this.init_MapStore.itemNames, entry, this.f_j_I)) {
@@ -2493,23 +2493,23 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void load_V_ArrayUtil(MacroItemTarget rawTarget) {
       if (this.init_MapStore != null) {
          MacroItemTarget target = load_ArrayUtil_ArrayUtil(rawTarget);
-         String entry = target == null ? "" : target.write_Str();
+         String entry = target == null ? "" : target.toSpecString();
          if (!entry.isBlank()) {
             int targetIndex = this.f_j_I;
             if (targetIndex < 0 || targetIndex >= this.init_MapStore.itemNames.size()) {
                targetIndex = this.init_MapStore.itemNames.indexOf(entry);
                if (targetIndex < 0) {
-                  this.init_V_ArrayUtil(target.init_ArrayUtil());
+                  this.init_V_ArrayUtil(target.copy());
                   targetIndex = this.init_MapStore.itemNames.size() - 1;
                }
             } else if (!this.init_Z_List_2(this.init_MapStore.itemNames, entry, targetIndex)) {
-               this.init_V_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, targetIndex, target.init_ArrayUtil());
+               this.init_V_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, targetIndex, target.copy());
             }
 
             this.f_j_I = targetIndex;
             ThemedTextInputBox addF = this.flush_Map.get("_item_add");
             if (addF != null) {
-               addF.init_V_Str(target.init_Str());
+               addF.init_V_Str(target.rawLabel());
             }
          }
       }
@@ -3036,7 +3036,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_ArrayUtil_I(MacroItemTarget target, int count) {
       if (target != null) {
-         String entry = target.write_Str();
+         String entry = target.toSpecString();
          if (!entry.isEmpty()) {
             this.init_V_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, target);
             int safeCount = Math.max(0, count);
@@ -3120,8 +3120,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.next_Z = true;
          if (this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size()) {
             MacroItemTarget target = this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, this.f_k_I);
-            addF.init_V_Str(target.init_Str());
-            slotF.init_V_Str(target.init_Z() ? String.valueOf(target.init_I) : "");
+            addF.init_V_Str(target.rawLabel());
+            slotF.init_V_Str(target.hasSlot() ? String.valueOf(target.slot) : "");
             this.next_Z = false;
             this.next_V();
          } else {
@@ -3152,7 +3152,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             MacroItemTarget target = this.init_ArrayUtil_Str_2(
                nameText, slotText, this.init_ArrayUtil_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, this.f_k_I)
             );
-            String entry = target.write_Str();
+            String entry = target.toSpecString();
             if (!entry.isBlank()) {
                if (this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size()) {
                   if (!this.init_Z_List_2(this.init_PacketUtil.itemNames, entry, this.f_k_I)) {
@@ -3173,17 +3173,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void read(MacroItemTarget rawTarget) {
       if (this.init_PacketUtil != null) {
          MacroItemTarget target = load_ArrayUtil_ArrayUtil(rawTarget);
-         String entry = target == null ? "" : target.write_Str();
+         String entry = target == null ? "" : target.toSpecString();
          if (!entry.isBlank()) {
             int targetIndex = this.f_k_I;
             if (targetIndex < 0 || targetIndex >= this.init_PacketUtil.itemNames.size()) {
                targetIndex = this.init_PacketUtil.itemNames.indexOf(entry);
                if (targetIndex < 0) {
-                  this.init_V_ArrayUtil_I(target.init_ArrayUtil(), this.pop_I_2());
+                  this.init_V_ArrayUtil_I(target.copy(), this.pop_I_2());
                   targetIndex = this.init_PacketUtil.itemNames.size() - 1;
                }
             } else if (!this.init_Z_List_2(this.init_PacketUtil.itemNames, entry, targetIndex)) {
-               this.init_V_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, targetIndex, target.init_ArrayUtil());
+               this.init_V_List(this.init_PacketUtil.itemTargets, this.init_PacketUtil.itemNames, targetIndex, target.copy());
             }
 
             this.f_k_I = targetIndex;
@@ -7181,11 +7181,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void task() {
       LinkedHashSet<String> tokens = new LinkedHashSet<>();
-      if (this.init_aM != null && this.init_aM.init_List != null) {
-         int limit = this.f_f_I < 0 ? this.init_aM.init_List.size() : Math.min(this.f_f_I, this.init_aM.init_List.size());
+      if (this.init_aM != null && this.init_aM.actions != null) {
+         int limit = this.f_f_I < 0 ? this.init_aM.actions.size() : Math.min(this.f_f_I, this.init_aM.actions.size());
 
          for (int i = limit - 1; i >= 0 && tokens.size() < 4; i--) {
-            init_V_Set(tokens, this.init_aM.init_List.get(i), 4);
+            init_V_Set(tokens, this.init_aM.actions.get(i), 4);
          }
       }
 
@@ -7309,8 +7309,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, FieldDef field, ThemedTextInputBox backingField, int x, int y, int w, int mx, int my) {
       backingField.read(-10000);
       backingField.write(-10000);
-      List<MacroFolderLayout.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.MacroLibraryManager.init_aN().init_List_Str(""));
-      if (backingField.load_Str() != null && !backingField.load_Str().isBlank() && autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(backingField.load_Str()) == null) {
+      List<MacroFolderLayout.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.MacroLibraryManager.getInstance().getFolderEntries(""));
+      if (backingField.load_Str() != null && !backingField.load_Str().isBlank() && autismclient.util.MacroLibraryManager.getInstance().findByName(backingField.load_Str()) == null) {
          macros.add(0, new MacroFolderLayout.Inner_DataUtil("", new AutismMacro(backingField.load_Str()), 0, false));
       }
 
@@ -7353,7 +7353,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.valid_List
                         .add(
                            new ActionEditorOverlay.Inner_StreamUtil(
-                              x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.MacroLibraryManager.init_aN().init_V_Str(folderRow.load_Str())
+                              x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.MacroLibraryManager.getInstance().toggleFolderCollapsed(folderRow.load_Str())
                            )
                         );
                   }
@@ -7725,8 +7725,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                         }
 
                         if (fSlotF2 != null) {
-                           MacroItemTarget parsed = MacroItemTarget.update(raw);
-                           fSlotF2.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
+                           MacroItemTarget parsed = MacroItemTarget.parse(raw);
+                           fSlotF2.init_V_Str(parsed.hasSlot() ? String.valueOf(parsed.slot) : "");
                         }
 
                         ThemedTextInputBox countField = this.init_Map.get(key + "_xcarry_count");
@@ -8017,7 +8017,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String poll_Str() {
-      if (this.init_aM != null && this.init_aM.init_List != null && this.f_f_I >= 0) {
+      if (this.init_aM != null && this.init_aM.actions != null && this.f_f_I >= 0) {
          Set<String> used = new LinkedHashSet<>();
 
          for (ThemedTextInputBox field : this.init_Map.values()) {
@@ -8042,9 +8042,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          Map<String, Integer> providerIndex = new LinkedHashMap<>();
 
-         for (int i = 0; i < this.init_aM.init_List.size(); i++) {
+         for (int i = 0; i < this.init_aM.actions.size(); i++) {
             LinkedHashSet<String> supplied = new LinkedHashSet<>();
-            init_V_Set_MacroAction(supplied, this.init_aM.init_List.get(i));
+            init_V_Set_MacroAction(supplied, this.init_aM.actions.get(i));
 
             for (String token : supplied) {
                LinkedHashSet<String> roots = new LinkedHashSet<>();
@@ -8143,9 +8143,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int load_I_I(int index) {
-      if (this.init_aM != null && this.init_aM.init_List != null && index >= 0) {
-         for (int i = 0; i < Math.min(index, this.init_aM.init_List.size()); i++) {
-            MacroAction action = this.init_aM.init_List.get(i);
+      if (this.init_aM != null && this.init_aM.actions != null && index >= 0) {
+         for (int i = 0; i < Math.min(index, this.init_aM.actions.size()); i++) {
+            MacroAction action = this.init_aM.actions.get(i);
             if (action instanceof RaceAction race) {
                int end = i + Math.max(0, race.bodyCount);
                if (index > i && index <= end) {
@@ -8873,8 +8873,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      for (WaitForSlotChangeAction.Inner_DataUtil e : this.run_List) {
                         CompoundTag ec = new CompoundTag();
                         MacroItemTarget target = e.init_ArrayUtil();
-                        if (target.init_Z() || target.update()) {
-                           ec.put("target", target.init_CompoundTag());
+                        if (target.hasSlot() || target.hasItemFilter()) {
+                           ec.put("target", target.toTag());
                         }
 
                         ec.putString("mode", e.init_aD_StreamUtil.name());
@@ -9795,21 +9795,21 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void table() {
       if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
          MacroItemTarget target = this.init_ArrayUtil();
-         if (!target.init_Z() && !target.update()) {
+         if (!target.hasSlot() && !target.hasItemFilter()) {
             this.update_Map.remove("itemName");
          } else {
-            this.update_Map.put("itemName", target.init_ArrayUtil());
+            this.update_Map.put("itemName", target.copy());
          }
       }
    }
 
    private void init_V_Str(String key, MacroItemTarget source, String legacyValue, String slotKey) {
       MacroItemTarget resolved = this.init_ArrayUtil_ArrayUtil_Str(source, legacyValue);
-      if (resolved.init_Z() || resolved.update()) {
-         this.update_Map.put(key, resolved.init_ArrayUtil());
-         this.init_CompoundTag.putString(key, resolved.init_Str());
-         if (slotKey != null && resolved.init_Z()) {
-            this.init_CompoundTag.putInt(slotKey, resolved.init_I);
+      if (resolved.hasSlot() || resolved.hasItemFilter()) {
+         this.update_Map.put(key, resolved.copy());
+         this.init_CompoundTag.putString(key, resolved.rawLabel());
+         if (slotKey != null && resolved.hasSlot()) {
+            this.init_CompoundTag.putInt(slotKey, resolved.slot);
          }
       }
    }
@@ -9887,7 +9887,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<MacroItemTarget> targets = this.init_List_Str("targetItems");
       if (index >= 0 && index < targets.size()) {
          MacroItemTarget target = targets.get(index);
-         if (target != null && (target.init_Z() || target.update())) {
+         if (target != null && (target.hasSlot() || target.hasItemFilter())) {
             return target;
          }
       }
@@ -9900,7 +9900,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      Component rich = target.init_Component_Str(value);
+      Component rich = target.restyleText(value);
       if (rich == null) {
          return null;
       }
@@ -9912,12 +9912,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_Str_3(String key, List<MacroItemTarget> source, List<String> legacyValues) {
       List<MacroItemTarget> resolved = this.init_List_List_List(source, legacyValues);
       if (!resolved.isEmpty()) {
-         this.sync_Map.put(key, MacroItemTarget.init_List_List(resolved));
+         this.sync_Map.put(key, MacroItemTarget.copyList(resolved));
          ListTag listTag = new ListTag();
 
          for (MacroItemTarget target : resolved) {
             if (target != null) {
-               String entry = target.write_Str();
+               String entry = target.toSpecString();
                if (!entry.isBlank()) {
                   listTag.add(StringTag.valueOf(entry));
                }
@@ -9929,11 +9929,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private MacroItemTarget init_ArrayUtil_ArrayUtil_Str(MacroItemTarget source, String legacyValue) {
-      return source != null && (source.init_Z() || source.update()) ? source.init_ArrayUtil() : MacroItemTarget.update(legacyValue);
+      return source != null && (source.hasSlot() || source.hasItemFilter()) ? source.copy() : MacroItemTarget.parse(legacyValue);
    }
 
    private List<MacroItemTarget> init_List_List_List(List<MacroItemTarget> source, List<String> legacyValues) {
-      List<MacroItemTarget> resolved = MacroItemTarget.init_List_List(source);
+      List<MacroItemTarget> resolved = MacroItemTarget.copyList(source);
       if (!resolved.isEmpty()) {
          return resolved;
       }
@@ -9944,8 +9944,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       for (String legacyValue : legacyValues) {
-         MacroItemTarget target = MacroItemTarget.update(legacyValue);
-         if (target.init_Z() || target.update()) {
+         MacroItemTarget target = MacroItemTarget.parse(legacyValue);
+         if (target.hasSlot() || target.hasItemFilter()) {
             parsed.add(target);
          }
       }
@@ -9963,24 +9963,24 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ThemedTextInputBox slotField = this.init_Map.get(slotKey);
          slot = slotField == null ? -1 : this.load_I_Str_I(slotField.load_Str(), -1);
          slotDriven = true;
-      } else if (previous != null && previous.init_Z()) {
-         slot = previous.init_I;
+      } else if (previous != null && previous.hasSlot()) {
+         slot = previous.slot;
       }
 
       if (!text.isEmpty() || slotDriven && slot >= 0) {
-         if (previous != null && text.equals(previous.init_Str())) {
-            MacroItemTarget preserved = previous.init_ArrayUtil();
+         if (previous != null && text.equals(previous.rawLabel())) {
+            MacroItemTarget preserved = previous.copy();
             if (slotDriven) {
-               preserved.init_I = slot;
+               preserved.slot = slot;
             }
 
             return preserved;
-         } else if (previous != null && previous.write_Z() && !text.isEmpty()) {
-            MacroItemTarget preserved = previous.load_ArrayUtil_Str(text);
+         } else if (previous != null && previous.hasTextJson() && !text.isEmpty()) {
+            MacroItemTarget preserved = previous.withStyledDisplay(text);
             if (slot >= 0) {
-               preserved.init_I = slot;
+               preserved.slot = slot;
             } else if (slotDriven) {
-               preserved.init_I = -1;
+               preserved.slot = -1;
             }
 
             return preserved;
@@ -9994,7 +9994,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                raw = text;
             }
 
-            return MacroItemTarget.update(raw);
+            return MacroItemTarget.parse(raw);
          }
       } else {
          return new MacroItemTarget();
@@ -10014,28 +10014,28 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             for (int i = 0; i < previous.size(); i++) {
                MacroItemTarget candidate = previous.get(i);
-               if (!used[i] && candidate != null && entry.equals(candidate.write_Str())) {
-                  preserved = candidate.init_ArrayUtil();
+               if (!used[i] && candidate != null && entry.equals(candidate.toSpecString())) {
+                  preserved = candidate.copy();
                   used[i] = true;
                   break;
                }
             }
 
             if (preserved == null) {
-               preserved = MacroItemTarget.update(entry);
+               preserved = MacroItemTarget.parse(entry);
             }
 
-            if (this.put_Z(key) && preserved.update()) {
-               preserved.init_I = -1;
+            if (this.put_Z(key) && preserved.hasItemFilter()) {
+               preserved.slot = -1;
             }
 
-            if (preserved.init_Z() || preserved.update()) {
+            if (preserved.hasSlot() || preserved.hasItemFilter()) {
                rebuilt.add(preserved);
             }
          }
       }
 
-      this.sync_Map.put(key, MacroItemTarget.init_List_List(rebuilt));
+      this.sync_Map.put(key, MacroItemTarget.copyList(rebuilt));
       return rebuilt;
    }
 
@@ -10085,17 +10085,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Str_ArrayUtil(String key, MacroItemTarget target) {
-      if (target == null || !target.init_Z() && !target.update()) {
+      if (target == null || !target.hasSlot() && !target.hasItemFilter()) {
          this.init_CompoundTag.remove(key);
          this.update_Map.remove(key);
       } else {
-         this.init_CompoundTag.put(key, target.init_CompoundTag());
-         this.update_Map.put(key, target.init_ArrayUtil());
+         this.init_CompoundTag.put(key, target.toTag());
+         this.update_Map.put(key, target.copy());
       }
    }
 
    private void init_V_Str_List(String key, List<MacroItemTarget> targets) {
-      this.init_CompoundTag.put(key, MacroItemTarget.init_ListTag_List(targets));
+      this.init_CompoundTag.put(key, MacroItemTarget.toListTag(targets));
    }
 
    private void fill() {
@@ -10132,8 +10132,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (addF != null && slotF != null) {
          this.prev_Z = true;
          MacroItemTarget target = e.init_ArrayUtil();
-         addF.init_V_Str(target.init_Str());
-         slotF.init_V_Str(target.init_Z() ? String.valueOf(target.init_I) : "");
+         addF.init_V_Str(target.rawLabel());
+         slotF.init_V_Str(target.hasSlot() ? String.valueOf(target.slot) : "");
          if (countF != null) {
             countF.init_V_Str(String.valueOf(Math.max(1, e.init_I)));
          }
@@ -10171,7 +10171,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String slotText = slotF.load_Str().strip();
             WaitForSlotChangeAction.Inner_DataUtil entry = this.run_List.get(this.f_l_I);
             MacroItemTarget target = this.init_ArrayUtil_Str_2(nameText, slotText, entry.init_ArrayUtil());
-            String rawTarget = target.write_Str();
+            String rawTarget = target.toSpecString();
             String norm = rawTarget.isEmpty() ? "" : StoreItemAction.init_Str_Str_8(rawTarget);
             if (norm == null) {
                norm = "";
@@ -10211,7 +10211,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          String nameText = addF.load_Str().strip();
          String slotText = slotF.load_Str().strip();
          MacroItemTarget target = this.init_ArrayUtil_Str_2(nameText, slotText, null);
-         String rawTarget = target.write_Str();
+         String rawTarget = target.toSpecString();
          String norm = rawTarget.isEmpty() ? "" : StoreItemAction.init_Str_Str_8(rawTarget);
          if (norm == null) {
             norm = "";
@@ -10286,15 +10286,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private MacroItemTarget init_ArrayUtil_Slot(Slot slot, String itemName, String registryId, int visibleSlot) {
       if (slot != null && slot.getItem() != null && !slot.getItem().isEmpty()) {
-         return MacroItemTarget.init_ArrayUtil_ItemStack_I(slot.getItem(), visibleSlot);
+         return MacroItemTarget.fromItemStack(slot.getItem(), visibleSlot);
       }
 
       if (visibleSlot >= 0) {
-         return MacroItemTarget.init_ArrayUtil_I(visibleSlot);
+         return MacroItemTarget.ofSlot(visibleSlot);
       }
 
       String fallback = registryId != null && !registryId.isBlank() ? registryId.trim() : (itemName == null ? "" : itemName.trim());
-      return MacroItemTarget.update(fallback);
+      return MacroItemTarget.parse(fallback);
    }
 
    private static MacroItemTarget init_ArrayUtil_ArrayUtil(MacroItemTarget target) {
@@ -10302,12 +10302,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return new MacroItemTarget();
       }
 
-      if (!target.init_Z()) {
+      if (!target.hasSlot()) {
          return target;
       }
 
-      MacroItemTarget copy = target.init_ArrayUtil();
-      copy.init_I = -1;
+      MacroItemTarget copy = target.copy();
+      copy.slot = -1;
       return copy;
    }
 
@@ -10315,7 +10315,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (target == null) {
          return new MacroItemTarget();
       } else {
-         return target.update() ? init_ArrayUtil_ArrayUtil(target) : target.init_ArrayUtil();
+         return target.hasItemFilter() ? init_ArrayUtil_ArrayUtil(target) : target.copy();
       }
    }
 
@@ -10326,15 +10326,15 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return new MacroItemTarget();
       }
 
-      if (previous != null && trimmedName.equals(previous.init_Str())) {
-         MacroItemTarget kept = previous.init_ArrayUtil();
-         kept.init_I = slot;
+      if (previous != null && trimmedName.equals(previous.rawLabel())) {
+         MacroItemTarget kept = previous.copy();
+         kept.slot = slot;
          return kept;
       }
 
-      if (previous != null && previous.write_Z() && !trimmedName.isEmpty()) {
-         MacroItemTarget preserved = previous.load_ArrayUtil_Str(trimmedName);
-         preserved.init_I = slot;
+      if (previous != null && previous.hasTextJson() && !trimmedName.isEmpty()) {
+         MacroItemTarget preserved = previous.withStyledDisplay(trimmedName);
+         preserved.slot = slot;
          return preserved;
       }
 
@@ -10347,23 +10347,23 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          raw = trimmedName;
       }
 
-      return MacroItemTarget.update(raw);
+      return MacroItemTarget.parse(raw);
    }
 
    private MacroItemTarget init_ArrayUtil_List(List<MacroItemTarget> targets, List<String> legacyEntries, int index) {
       if (targets != null && index >= 0 && index < targets.size()) {
          MacroItemTarget target = targets.get(index);
-         if (target != null && (target.init_Z() || target.update())) {
+         if (target != null && (target.hasSlot() || target.hasItemFilter())) {
             return target;
          }
       }
 
-      return legacyEntries != null && index >= 0 && index < legacyEntries.size() ? MacroItemTarget.update(legacyEntries.get(index)) : new MacroItemTarget();
+      return legacyEntries != null && index >= 0 && index < legacyEntries.size() ? MacroItemTarget.parse(legacyEntries.get(index)) : new MacroItemTarget();
    }
 
    private void init_V_Str_2(String key, List<String> entries, MacroItemTarget capturedTarget) {
       if (key != null && entries != null && capturedTarget != null) {
-         String normalized = capturedTarget.write_Str();
+         String normalized = capturedTarget.toSpecString();
          if (this.get_Z(key) || this.pop_Z(key)) {
             normalized = StoreItemAction.init_Str_Str_8(normalized);
          } else if (this.put_Z(key)) {
@@ -10379,17 +10379,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   targets.add(new MacroItemTarget());
                }
 
-               MacroItemTarget stored = this.put_Z(key) ? init_ArrayUtil_ArrayUtil(capturedTarget) : capturedTarget.init_ArrayUtil();
-               if (!normalized.equals(stored.write_Str())) {
-                  MacroItemTarget normalizedTarget = MacroItemTarget.update(normalized);
-                  stored.init_I = normalizedTarget.init_I;
-                  if (!normalizedTarget.init_Z() && !stored.update()) {
+               MacroItemTarget stored = this.put_Z(key) ? init_ArrayUtil_ArrayUtil(capturedTarget) : capturedTarget.copy();
+               if (!normalized.equals(stored.toSpecString())) {
+                  MacroItemTarget normalizedTarget = MacroItemTarget.parse(normalized);
+                  stored.slot = normalizedTarget.slot;
+                  if (!normalizedTarget.hasSlot() && !stored.hasItemFilter()) {
                      stored = normalizedTarget;
                   }
                }
 
                targets.set(index, stored);
-               this.sync_Map.put(key, MacroItemTarget.init_List_List(targets));
+               this.sync_Map.put(key, MacroItemTarget.copyList(targets));
             }
          }
       }
@@ -10407,14 +10407,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          MacroItemTarget stored = target == null ? new MacroItemTarget() : target;
          targets.set(index, stored);
-         legacyEntries.set(index, stored.write_Str());
+         legacyEntries.set(index, stored.toSpecString());
       }
    }
 
    private void init_V_List(List<MacroItemTarget> targets, List<String> legacyEntries, MacroItemTarget target) {
       if (targets != null && legacyEntries != null && target != null) {
          targets.add(target);
-         legacyEntries.add(target.write_Str());
+         legacyEntries.add(target.toSpecString());
       }
    }
 
@@ -10453,9 +10453,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    ) {
       if (slot != null && visibleSlot >= 0) {
          MacroItemTarget captured = slotMode
-            ? MacroItemTarget.init_ArrayUtil_I(visibleSlot)
+            ? MacroItemTarget.ofSlot(visibleSlot)
             : load_ArrayUtil_ArrayUtil(this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot));
-         if (!captured.update()) {
+         if (!captured.hasItemFilter()) {
             String mode = this.tick_Str("mode");
             boolean playerInventorySlot = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(init_Minecraft, slot);
             if ("LOOT".equals(mode) && playerInventorySlot) {
@@ -10467,7 +10467,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_ActionEditorOverla_FieldDef(this.read_FieldDef("targetItems"), "targetItems", entries, captured.write_Str());
+         return this.init_ActionEditorOverla_FieldDef(this.read_FieldDef("targetItems"), "targetItems", entries, captured.toSpecString());
       } else {
          return new ActionEditorOverlay.Inner_DataUtil(false, "Could not read that slot", -38037);
       }
@@ -10483,16 +10483,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      MacroItemTarget parsed = MacroItemTarget.update(trimmed);
-      if (!parsed.update()) {
+      MacroItemTarget parsed = MacroItemTarget.parse(trimmed);
+      if (!parsed.hasItemFilter()) {
          if (!trimmed.startsWith("#") && trimmed.matches("\\d+")) {
             trimmed = "#" + trimmed;
          }
 
          return XCarryAction.init_Str_Str_7(trimmed);
       } else {
-         parsed.init_I = -1;
-         String entry = parsed.write_Str();
+         parsed.slot = -1;
+         String entry = parsed.toSpecString();
          return entry != null && !entry.isBlank() ? entry : null;
       }
    }
@@ -10803,13 +10803,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<MacroItemTarget> targets = this.init_List_Str(key);
       if (index >= 0 && index < targets.size()) {
          MacroItemTarget target = targets.get(index);
-         if (target != null && (target.init_Z() || target.update())) {
-            return target.init_ArrayUtil();
+         if (target != null && (target.hasSlot() || target.hasItemFilter())) {
+            return target.copy();
          }
       }
 
-      MacroItemTarget parsed = MacroItemTarget.update(entry);
-      return !parsed.init_Z() && !parsed.update() ? null : parsed;
+      MacroItemTarget parsed = MacroItemTarget.parse(entry);
+      return !parsed.hasSlot() && !parsed.hasItemFilter() ? null : parsed;
    }
 
    private boolean reset_Z(String key) {
@@ -10822,18 +10822,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return Component.literal(safeFallback);
       }
 
-      boolean hasSlot = target.init_Z();
-      boolean hasIdentity = target.update();
+      boolean hasSlot = target.hasSlot();
+      boolean hasIdentity = target.hasItemFilter();
       if (hasSlot && hasIdentity) {
-         return Component.literal(target.init_I + ": ").append(target.load_Component().copy());
+         return Component.literal(target.slot + ": ").append(target.toDisplayComponent().copy());
       }
 
       if (hasSlot) {
-         return Component.literal("#" + target.init_I);
+         return Component.literal("#" + target.slot);
       }
 
       if (hasIdentity) {
-         Component display = target.load_Component();
+         Component display = target.toDisplayComponent();
          if (display != null && !display.getString().isBlank()) {
             return display.copy();
          }
@@ -11285,8 +11285,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                search.init_V_Str(this.get_Str(pendingText));
             }
 
-            MacroItemTarget parsed = MacroItemTarget.update(pendingText);
-            storeSlotF.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
+            MacroItemTarget parsed = MacroItemTarget.parse(pendingText);
+            storeSlotF.init_V_Str(parsed.hasSlot() ? String.valueOf(parsed.slot) : "");
          }
 
          if (search != null) {
@@ -11432,8 +11432,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                search.init_V_Str(this.get_Str(pendingText));
             }
 
-            MacroItemTarget parsed = MacroItemTarget.update(pendingText);
-            auditSlotF.init_V_Str(parsed.init_Z() ? String.valueOf(parsed.init_I) : "");
+            MacroItemTarget parsed = MacroItemTarget.parse(pendingText);
+            auditSlotF.init_V_Str(parsed.hasSlot() ? String.valueOf(parsed.slot) : "");
          }
 
          if (search != null) {
@@ -14027,9 +14027,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                field.init_V_Str("");
                this.update_Map.remove("itemName");
             } else {
-               MacroItemTarget target = init_ArrayUtil_ArrayUtil(MacroItemTarget.init_ArrayUtil_ItemStack_I(init_Minecraft.player.getMainHandItem(), -1));
+               MacroItemTarget target = init_ArrayUtil_ArrayUtil(MacroItemTarget.fromItemStack(init_Minecraft.player.getMainHandItem(), -1));
                this.update_Map.put("itemName", target);
-               field.init_V_Str(target.init_Str());
+               field.init_V_Str(target.rawLabel());
             }
          }
       }
@@ -14043,11 +14043,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                field.init_V_Str("");
                this.update_Map.remove("itemName");
             } else {
-               MacroItemTarget target = MacroItemTarget.init_ArrayUtil_ItemStack_I(
+               MacroItemTarget target = MacroItemTarget.fromItemStack(
                   init_Minecraft.player.getMainHandItem(), init_Minecraft.player.getInventory().getSelectedSlot()
                );
                this.update_Map.put("itemName", target);
-               field.init_V_Str(target.init_Str());
+               field.init_V_Str(target.rawLabel());
             }
          }
       }
@@ -14119,11 +14119,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                field.init_V_Str("");
                this.update_Map.remove("itemName");
             } else {
-               MacroItemTarget target = MacroItemTarget.init_ArrayUtil_ItemStack_I(
+               MacroItemTarget target = MacroItemTarget.fromItemStack(
                   init_Minecraft.player.getMainHandItem(), init_Minecraft.player.getInventory().getSelectedSlot()
                );
                this.update_Map.put("itemName", target);
-               field.init_V_Str(target.init_Str());
+               field.init_V_Str(target.rawLabel());
             }
          }
       }

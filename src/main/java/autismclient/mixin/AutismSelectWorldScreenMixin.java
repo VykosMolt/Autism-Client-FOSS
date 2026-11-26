@@ -91,7 +91,7 @@ public abstract class AutismSelectWorldScreenMixin extends Screen implements Ext
          if (macroName.isBlank()) {
             macroLabel = "Join Macro: none";
             macroColor = -7370102;
-         } else if (MacroLibraryManager.init_aN().init_aM_Str(macroName) == null) {
+         } else if (MacroLibraryManager.getInstance().findByName(macroName) == null) {
             macroLabel = "Join Macro missing: " + macroName;
             macroColor = -38037;
          } else {

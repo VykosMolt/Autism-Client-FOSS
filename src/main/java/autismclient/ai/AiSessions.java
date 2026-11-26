@@ -50,7 +50,7 @@ public final class AiSessions {
          try (Stream<Path> entries = Files.list(this.init_Path)) {
             for (Path file : entries.filter(p -> p.getFileName().toString().endsWith(".json")).sorted().toList()) {
                try {
-                  AiSessions.Inner_DataUtil d = init_cd_DataUtil_JsonObject(AiJson.init_JsonObject_Str(Files.readString(file)));
+                  AiSessions.Inner_DataUtil d = init_cd_DataUtil_JsonObject(AiJson.parseObject(Files.readString(file)));
                   this.load(d);
                } catch (Exception var6) {
                }
@@ -98,12 +98,12 @@ public final class AiSessions {
       if (!Files.isRegularFile(file)) {
          throw new IOException("Unknown session " + id);
       } else {
-         return init_cd_DataUtil_JsonObject(AiJson.init_JsonObject_Str(Files.readString(file)));
+         return init_cd_DataUtil_JsonObject(AiJson.parseObject(Files.readString(file)));
       }
    }
 
    public synchronized void init_V_cd_DataUtil(AiSessions.Inner_DataUtil d) throws IOException {
-      AiJson.init_V_Path_Obj(this.init_Path_Str(d.init_Str), init_JsonObject_cd_DataUtil(d));
+      AiJson.writeAtomicJson(this.init_Path_Str(d.init_Str), init_JsonObject_cd_DataUtil(d));
       this.load(d);
    }
 
@@ -185,9 +185,9 @@ public final class AiSessions {
    }
 
    private static String init_Str_JsonObject(JsonObject line) {
-      String text = AiJson.init.toJson(line);
+      String text = AiJson.GSON.toJson(line);
       return text.length() > 1000000
-         ? AiJson.init.toJson(AiJson.init_JsonObject_ObjArr("role", "user", "content", "[transcript line elided: " + text.length() + " characters]"))
+         ? AiJson.GSON.toJson(AiJson.objectOf("role", "user", "content", "[transcript line elided: " + text.length() + " characters]"))
          : text;
    }
 
@@ -230,7 +230,7 @@ public final class AiSessions {
          tail.add(0, line);
       }
 
-      while (!tail.isEmpty() && (plainHead ? !init_Z_JsonObject(tail.get(0)) : !"user".equals(AiJson.init_Str_JsonObject(tail.get(0), "role", "")))) {
+      while (!tail.isEmpty() && (plainHead ? !init_Z_JsonObject(tail.get(0)) : !"user".equals(AiJson.getString(tail.get(0), "role", "")))) {
          tail.remove(0);
       }
 
@@ -238,7 +238,7 @@ public final class AiSessions {
    }
 
    static boolean init_Z_JsonObject(JsonObject message) {
-      if (!"user".equals(AiJson.init_Str_JsonObject(message, "role", ""))) {
+      if (!"user".equals(AiJson.getString(message, "role", ""))) {
          return false;
       }
 
@@ -258,7 +258,7 @@ public final class AiSessions {
             }
 
             JsonObject o = part.getAsJsonObject();
-            if (!o.has("text") && !"text".equals(AiJson.init_Str_JsonObject(o, "type", ""))) {
+            if (!o.has("text") && !"text".equals(AiJson.getString(o, "type", ""))) {
                return false;
             }
          }
@@ -304,17 +304,17 @@ public final class AiSessions {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
       d.init_Str = newId;
       d.init_J = d.load_J = now;
-      d.sync_Str = AiJson.init_Str_JsonObject(legacy, "objective", "");
+      d.sync_Str = AiJson.getString(legacy, "objective", "");
       d.load_Str = d.sync_Str.isBlank() ? "First session" : init_Str_Str(d.sync_Str);
-      d.flush_Str = AiJson.init_Str_JsonObject(legacy, "taskState", "");
-      d.close_Str = AiJson.init_Str_JsonObject(legacy, "scope", "");
-      d.update_Str = AiJson.init_Str_JsonObject(legacy, "taskId", UUID.randomUUID().toString());
-      d.write_Str = AiJson.init_Str_JsonObject(legacy, "state", "PAUSED");
+      d.flush_Str = AiJson.getString(legacy, "taskState", "");
+      d.close_Str = AiJson.getString(legacy, "scope", "");
+      d.update_Str = AiJson.getString(legacy, "taskId", UUID.randomUUID().toString());
+      d.write_Str = AiJson.getString(legacy, "state", "PAUSED");
       d.read_J = legacy.has("requests") ? legacy.get("requests").getAsLong() : 0L;
       d.write_J = legacy.has("tokens") ? legacy.get("tokens").getAsLong() : 0L;
       d.update_J = legacy.has("elapsedMillis") ? legacy.get("elapsedMillis").getAsLong() : 0L;
-      d.load_I = AiJson.init_I_JsonObject(legacy, "wheatBaseline", -1);
-      d.init_I = legacy.has("taskMinutes") ? AiJson.init_I_JsonObject(legacy, "taskMinutes", defaultTaskMinutes) : defaultTaskMinutes;
+      d.load_I = AiJson.getInt(legacy, "wheatBaseline", -1);
+      d.init_I = legacy.has("taskMinutes") ? AiJson.getInt(legacy, "taskMinutes", defaultTaskMinutes) : defaultTaskMinutes;
       if (legacy.has("structuredTask")) {
          d.init_JsonObject = legacy.getAsJsonObject("structuredTask");
       }
@@ -333,7 +333,7 @@ public final class AiSessions {
    }
 
    static JsonObject init_JsonObject_cd_StreamUtil(AiSessions.Inner_StreamUtil m) {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "id",
          m.id(),
          "title",
@@ -353,13 +353,13 @@ public final class AiSessions {
 
    static AiSessions.Inner_StreamUtil init_cd_StreamUtil_JsonObject(JsonObject o) {
       return new AiSessions.Inner_StreamUtil(
-         AiJson.init_Str_JsonObject(o, "id", ""),
-         AiJson.init_Str_JsonObject(o, "title", "New session"),
+         AiJson.getString(o, "id", ""),
+         AiJson.getString(o, "title", "New session"),
          o.has("createdAt") ? o.get("createdAt").getAsLong() : 0L,
          o.has("lastActiveAt") ? o.get("lastActiveAt").getAsLong() : 0L,
-         AiJson.init_Str_JsonObject(o, "parentId", "").isBlank() ? null : AiJson.init_Str_JsonObject(o, "parentId", ""),
-         AiJson.init_Str_JsonObject(o, "state", "IDLE"),
-         AiJson.init_I_JsonObject(o, "messageCount", 0)
+         AiJson.getString(o, "parentId", "").isBlank() ? null : AiJson.getString(o, "parentId", ""),
+         AiJson.getString(o, "state", "IDLE"),
+         AiJson.getInt(o, "messageCount", 0)
       );
    }
 
@@ -389,10 +389,10 @@ public final class AiSessions {
       JsonArray messages = new JsonArray();
 
       for (AiService.TranscriptEntry m : init_List_List_I(d.load_List, 1000000)) {
-         messages.add(AiJson.init_JsonObject_ObjArr("at", m.at(), "role", m.role(), "text", m.text(), "detail", m.detail()));
+         messages.add(AiJson.objectOf("at", m.at(), "role", m.role(), "text", m.text(), "detail", m.detail()));
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "version",
          2,
          "id",
@@ -436,7 +436,7 @@ public final class AiSessions {
          "updates",
          updates,
          "usage",
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "input", d.sync_J, "cachedInput", d.flush_J, "cacheWrite", d.close_J, "output", d.open_J, "requests", d.poll, "lastPrompt", d.push
          ),
          "wireProvider",
@@ -446,27 +446,27 @@ public final class AiSessions {
 
    static AiSessions.Inner_DataUtil init_cd_DataUtil_JsonObject(JsonObject o) {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
-      d.init_Str = AiJson.init_Str_JsonObject(o, "id", UUID.randomUUID().toString());
-      d.load_Str = AiJson.init_Str_JsonObject(o, "title", "New session");
-      String parent = AiJson.init_Str_JsonObject(o, "parentId", "");
+      d.init_Str = AiJson.getString(o, "id", UUID.randomUUID().toString());
+      d.load_Str = AiJson.getString(o, "title", "New session");
+      String parent = AiJson.getString(o, "parentId", "");
       d.read_Str = parent.isBlank() ? null : parent;
       d.init_J = o.has("createdAt") ? o.get("createdAt").getAsLong() : 0L;
       d.load_J = o.has("lastActiveAt") ? o.get("lastActiveAt").getAsLong() : d.init_J;
-      d.write_Str = AiJson.init_Str_JsonObject(o, "state", "IDLE");
-      d.update_Str = AiJson.init_Str_JsonObject(o, "taskId", UUID.randomUUID().toString());
-      d.sync_Str = AiJson.init_Str_JsonObject(o, "objective", "");
-      d.flush_Str = AiJson.init_Str_JsonObject(o, "taskState", "");
-      d.close_Str = AiJson.init_Str_JsonObject(o, "scope", "");
+      d.write_Str = AiJson.getString(o, "state", "IDLE");
+      d.update_Str = AiJson.getString(o, "taskId", UUID.randomUUID().toString());
+      d.sync_Str = AiJson.getString(o, "objective", "");
+      d.flush_Str = AiJson.getString(o, "taskState", "");
+      d.close_Str = AiJson.getString(o, "scope", "");
       if (o.has("structuredTask")) {
          d.init_JsonObject = o.getAsJsonObject("structuredTask");
       }
 
-      d.init_I = AiJson.init_I_JsonObject(o, "taskMinutes", 60);
-      d.load_I = AiJson.init_I_JsonObject(o, "wheatBaseline", -1);
+      d.init_I = AiJson.getInt(o, "taskMinutes", 60);
+      d.load_I = AiJson.getInt(o, "wheatBaseline", -1);
       d.read_J = o.has("requests") ? o.get("requests").getAsLong() : 0L;
       d.write_J = o.has("tokens") ? o.get("tokens").getAsLong() : 0L;
       d.update_J = o.has("elapsedMillis") ? o.get("elapsedMillis").getAsLong() : 0L;
-      d.init_Z = AiJson.init_Z_JsonObject(o, "attemptedAction", false);
+      d.init_Z = AiJson.getBoolean(o, "attemptedAction", false);
       d.init_List = new ArrayList<>();
       if (o.has("queue")) {
          for (JsonElement item : o.getAsJsonArray("queue")) {
@@ -482,9 +482,9 @@ public final class AiSessions {
                .add(
                   new AiService.TranscriptEntry(
                      m.has("at") ? m.get("at").getAsLong() : 0L,
-                     AiJson.init_Str_JsonObject(m, "role", ""),
-                     AiJson.init_Str_JsonObject(m, "text", ""),
-                     AiJson.init_Str_JsonObject(m, "detail", "")
+                     AiJson.getString(m, "role", ""),
+                     AiJson.getString(m, "text", ""),
+                     AiJson.getString(m, "detail", "")
                   )
                );
          }
@@ -507,7 +507,7 @@ public final class AiSessions {
          d.push = init_J_JsonObject_Str(u, "lastPrompt");
       }
 
-      String wire = AiJson.init_Str_JsonObject(o, "wireProvider", "");
+      String wire = AiJson.getString(o, "wireProvider", "");
       d.open_Str = wire.isBlank() ? null : wire;
       return d;
    }

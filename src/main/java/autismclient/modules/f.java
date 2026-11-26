@@ -1648,22 +1648,22 @@ public final class f {
                if (macro != null) {
                   this.init(macro, AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS);
                   this.setValue("stop-macro-enabled", "true");
-                  this.setValue("stop-macro", macro.init_Str);
+                  this.setValue("stop-macro", macro.name);
                }
             } else if (Boolean.parseBoolean(this.value("stop-out-of-rods"))) {
                autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Inner_DataUtil.DURABILITY);
                if (macro != null) {
                   this.init(macro, AutoFishMacroPresets.Inner_DataUtil.DURABILITY);
                   this.setValue("stop-macro-enabled", "true");
-                  this.setValue("stop-macro", macro.init_Str);
+                  this.setValue("stop-macro", macro.name);
                }
             }
          }
       }
 
       private void init(autismclient.util.AutismMacro macro, AutoFishMacroPresets.Inner_DataUtil preset) {
-         if (macro != null && macro.init_List != null && !macro.init_List.isEmpty() && preset != null) {
-            if (preset == AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
+         if (macro != null && macro.actions != null && !macro.actions.isEmpty() && preset != null) {
+            if (preset == AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS && macro.actions.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
                boolean changed = wait.countMode != autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS
                   || wait.comparison != autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST
@@ -1672,9 +1672,9 @@ public final class f {
                wait.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
                wait.slots = slots;
                if (changed) {
-                  autismclient.util.MacroLibraryManager.init_aN().read_V();
+                  autismclient.util.MacroLibraryManager.getInstance().scheduleSave();
                }
-            } else if (preset == AutoFishMacroPresets.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
+            } else if (preset == AutoFishMacroPresets.Inner_DataUtil.DURABILITY && macro.actions.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
                int value = Math.max(1, this.integer("min-durability"));
                boolean changed = wait.targetMode != autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM
                   || !"minecraft:fishing_rod".equals(wait.itemName)
@@ -1689,7 +1689,7 @@ public final class f {
                wait.value = value;
                wait.useNext = true;
                if (changed) {
-                  autismclient.util.MacroLibraryManager.init_aN().read_V();
+                  autismclient.util.MacroLibraryManager.getInstance().scheduleSave();
                }
             }
          }
@@ -1703,15 +1703,15 @@ public final class f {
             if (macroName.isBlank()) {
                this.load("AutoFish auto stop rule missing.");
             } else {
-               autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macroName);
+               autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(macroName);
                if (macro == null) {
                   this.load("AutoFish auto stop rule not found: " + macroName);
                } else if (!AutoFishMacroPresets.init(macro)) {
                   this.load("AutoFish auto stop rule must start with a conditional.");
                } else {
                   autismclient.util.AutismMacro runtimeMacro = this.init_aM_aM(macro);
-                  if (runtimeMacro != null && runtimeMacro.init_List != null && !runtimeMacro.init_List.isEmpty()) {
-                     runtimeMacro.load_V();
+                  if (runtimeMacro != null && runtimeMacro.actions != null && !runtimeMacro.actions.isEmpty()) {
+                     runtimeMacro.regeneratePackets();
                      this.init_J = MacroExecutor.init_J_aM_MacroExecutor_Pool(runtimeMacro, MacroExecutor.ExecutionFlags.init_MacroExecutor_Pool());
                      if (this.init_J < 0L) {
                         this.load("AutoFish auto stop could not start.");
@@ -1728,7 +1728,7 @@ public final class f {
          String macroName = this.value("stop-macro").trim();
          AutoFishMacroPresets.Inner_DataUtil preset = AutoFishMacroPresets.init_cL_DataUtil(macroName);
          if (preset != null) {
-            autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macroName);
+            autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(macroName);
             if (macro != null) {
                this.init(macro, preset);
             }
@@ -1736,12 +1736,12 @@ public final class f {
       }
 
       private autismclient.util.AutismMacro init_aM_aM(autismclient.util.AutismMacro source) {
-         if (source != null && source.init_List != null) {
-            autismclient.util.AutismMacro runtime = source.init_aM_Str(source.init_Str);
-            runtime.load_I = -1;
-            runtime.init_Z = false;
-            runtime.init_I = -1;
-            int conditionIndex = this.init_I_List_2(runtime.init_List);
+         if (source != null && source.actions != null) {
+            autismclient.util.AutismMacro runtime = source.copyWithName(source.name);
+            runtime.keyCode = -1;
+            runtime.loop = false;
+            runtime.loopCount = -1;
+            int conditionIndex = this.init_I_List_2(runtime.actions);
             if (conditionIndex < 0) {
                return null;
             }
@@ -1749,14 +1749,14 @@ public final class f {
             f.Inner_BufferHelper.Inner_StreamUtil trigger = f.Inner_BufferHelper.Inner_StreamUtil.init(this.choice("stop-macro-trigger"));
             boolean injectStop = trigger != f.Inner_BufferHelper.Inner_StreamUtil.RUN_STEPS_ONLY;
             boolean skipImmediateDuplicateDisable = injectStop
-               && conditionIndex + 1 < runtime.init_List.size()
-               && AutoFishMacroPresets.load(runtime.init_List.get(conditionIndex + 1));
+               && conditionIndex + 1 < runtime.actions.size()
+               && AutoFishMacroPresets.load(runtime.actions.get(conditionIndex + 1));
             boolean injectResume = trigger == f.Inner_BufferHelper.Inner_StreamUtil.STOP_RUN_RESUME
-               && !this.init(runtime.init_List, conditionIndex, skipImmediateDuplicateDisable);
+               && !this.init(runtime.actions, conditionIndex, skipImmediateDuplicateDisable);
             ArrayList<MacroAction> rebuilt = new ArrayList<>();
 
-            for (int i = 0; i < runtime.init_List.size(); i++) {
-               MacroAction action = runtime.init_List.get(i);
+            for (int i = 0; i < runtime.actions.size(); i++) {
+               MacroAction action = runtime.actions.get(i);
                if (i == conditionIndex) {
                   rebuilt.add(action);
                   if (injectStop) {
@@ -1771,7 +1771,7 @@ public final class f {
                rebuilt.add(new f.Inner_BufferHelper.Inner_DataUtil(this, true));
             }
 
-            runtime.init_List = rebuilt;
+            runtime.actions = rebuilt;
             return runtime;
          } else {
             return null;
@@ -1928,19 +1928,19 @@ public final class f {
 
       @Override
       public void onEnable() {
-         FreecamController.load_V_Z(this.bool("reload-chunks"));
-         FreecamController.init_V_Z(this.bool("interact"));
+         FreecamController.enable(this.bool("reload-chunks"));
+         FreecamController.setInteractionAllowed(this.bool("interact"));
       }
 
       @Override
       public void onDisable() {
-         FreecamController.init_V();
+         FreecamController.disable();
       }
 
       @Override
       public void onOptionValueChanged(String settingId) {
          if ("interact".equals(settingId)) {
-            FreecamController.init_V_Z(this.bool("interact"));
+            FreecamController.setInteractionAllowed(this.bool("interact"));
          }
       }
 
@@ -1958,12 +1958,12 @@ public final class f {
 
       @Override
       public void preMovementTick() {
-         FreecamController.init(this.decimal("speed"), this.decimal("vertical-speed"));
+         FreecamController.tick(this.decimal("speed"), this.decimal("vertical-speed"));
       }
 
       @Override
       public Vec3 onPlayerMove(MoverType type, Vec3 movement) {
-         return FreecamController.init(type, movement);
+         return FreecamController.filterMovement(type, movement);
       }
 
       @Override
@@ -4635,7 +4635,7 @@ public final class f {
             && !MC.player.isDeadOrDying()
             && !MC.player.isSpectator()
             && !aD.read_Z()
-            && !FreecamController.init_Z()
+            && !FreecamController.isActive()
             && !RemoteViewController.init_Z()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.write_Z();

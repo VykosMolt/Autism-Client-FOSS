@@ -21,7 +21,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          List<MacroItemTarget> targets = new ArrayList<>();
 
          for (MacroItemTarget candidate : this.init_List_7()) {
-            MacroItemTarget resolved = candidate.init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget resolved = candidate.resolveTemplates(mc);
             if (resolved != null) {
                targets.add(resolved);
             }
@@ -79,8 +79,8 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       tag.putString("strategy", this.strategy.name());
       tag.putString("outputVariable", this.outputVariable);
       MacroItemTarget target = this.init_ArrayUtil_2();
-      if (target.init_Z() || target.update()) {
-         tag.put("itemName", target.init_CompoundTag());
+      if (target.hasSlot() || target.hasItemFilter()) {
+         tag.put("itemName", target.toTag());
       }
 
       PacketOrderAware.init_V_CompoundTag_D(tag, this.packetOrder);
@@ -90,19 +90,19 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.slot = tag.getIntOr("slot", 0);
-      this.strategy = MacroNbtCodecHelper.init(SelectSlotAction.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), SelectSlotAction.Inner_DataUtil.FIRST_MATCH);
+      this.strategy = MacroNbtCodecHelper.parseEnum(SelectSlotAction.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), SelectSlotAction.Inner_DataUtil.FIRST_MATCH);
       this.outputVariable = tag.getStringOr("outputVariable", "");
       this.itemTarget = tag.getCompound("itemName")
-         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("itemName", "")));
-      this.itemName = this.itemTarget.write_Str();
+         .map(MacroItemTarget::fromTag)
+         .orElseGet(() -> MacroItemTarget.parse(tag.getStringOr("itemName", "")));
+      this.itemName = this.itemTarget.toSpecString();
       this.packetOrder = PacketOrderAware.init_D_CompoundTag(tag);
    }
 
    @Override
    public String getDisplayName() {
       MacroItemTarget target = this.init_ArrayUtil_2();
-      return !target.init_Z() && !target.update() ? "Select Slot " + (this.slot + 1) : "Select " + this.strategy + " \"" + target.load_Str() + "\"";
+      return !target.hasSlot() && !target.hasItemFilter() ? "Select Slot " + (this.slot + 1) : "Select " + this.strategy + " \"" + target.formatSummary() + "\"";
    }
 
    @Override
@@ -111,11 +111,11 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
    }
 
    private MacroItemTarget init_ArrayUtil_2() {
-      if (this.itemTarget != null && (this.itemTarget.init_Z() || this.itemTarget.update())) {
+      if (this.itemTarget != null && (this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter())) {
          return this.itemTarget;
       }
 
-      this.itemTarget = MacroItemTarget.update(this.init_Str_Str_6(this.itemName));
+      this.itemTarget = MacroItemTarget.parse(this.init_Str_Str_6(this.itemName));
       return this.itemTarget;
    }
 
@@ -162,14 +162,14 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       if (raw != null && !raw.isBlank()) {
          if (!raw.contains("|")) {
             MacroItemTarget target = this.init_ArrayUtil_2();
-            return !target.init_Z() && !target.update() ? List.of() : List.of(target);
+            return !target.hasSlot() && !target.hasItemFilter() ? List.of() : List.of(target);
          }
 
          ArrayList<MacroItemTarget> out = new ArrayList<>();
 
          for (String part : raw.split("\\|")) {
-            MacroItemTarget target = MacroItemTarget.update(part.trim());
-            if (target.init_Z() || target.update()) {
+            MacroItemTarget target = MacroItemTarget.parse(part.trim());
+            if (target.hasSlot() || target.hasItemFilter()) {
                out.add(target);
             }
          }
@@ -177,7 +177,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          return out;
       } else {
          MacroItemTarget target = this.init_ArrayUtil_2();
-         return !target.init_Z() && !target.update() ? List.of() : List.of(target);
+         return !target.hasSlot() && !target.hasItemFilter() ? List.of() : List.of(target);
       }
    }
 
@@ -190,7 +190,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          boolean matches = false;
 
          for (MacroItemTarget target : targets) {
-            if (target.init_I_ItemStack_I(stack, i) >= 0) {
+            if (target.matchScore(stack, i) >= 0) {
                matches = true;
                break;
             }

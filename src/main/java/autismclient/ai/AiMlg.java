@@ -141,13 +141,13 @@ final class AiMlg {
    static AiOperation init_AiOperation_JsonObject(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final String requested = AiJson.init_Str_JsonObject(args, "method", "auto").toLowerCase(Locale.ROOT);
+         final String requested = AiJson.getString(args, "method", "auto").toLowerCase(Locale.ROOT);
          if (!requested.equals("water") && !requested.equals("cobweb") && !requested.equals("auto")) {
             throw new IllegalArgumentException("method must be water, cobweb or auto");
          }
 
-         final boolean collect = AiJson.init_Z_JsonObject(args, "collect", true);
-         final long deadline = System.nanoTime() + Math.max(1, Math.min(30, AiJson.init_I_JsonObject(args, "timeoutSeconds", 10))) * 1000000000L;
+         final boolean collect = AiJson.getBoolean(args, "collect", true);
+         final long deadline = System.nanoTime() + Math.max(1, Math.min(30, AiJson.getInt(args, "timeoutSeconds", 10))) * 1000000000L;
          final boolean waterUsable = !client.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES);
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
@@ -357,7 +357,7 @@ final class AiMlg {
                BlockPos cell = forecast.support().above();
                this.init_BlockPos = cell;
                if ("water".equals(this.init_Str)) {
-                  AiGameOperations.init(Vec3.atCenterOf(cell.below()).add(0.0, 0.5, 0.0));
+                  AiGameOperations.snapLookAt(Vec3.atCenterOf(cell.below()).add(0.0, 0.5, 0.0));
                   this.init_Minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
                } else {
                   ItemStack stack = player.getInventory().getItem(slot);
@@ -373,7 +373,7 @@ final class AiMlg {
                      this.init_Minecraft.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());
                   } else {
                      Vec3 hitPos = Vec3.atCenterOf(forecast.support()).add(0.0, 0.5, 0.0);
-                     AiGameOperations.init(hitPos);
+                     AiGameOperations.snapLookAt(hitPos);
                      this.init_Minecraft
                         .gameMode
                         .useItemOn(player, InteractionHand.MAIN_HAND, new BlockHitResult(hitPos, Direction.UP, forecast.support(), false));
@@ -446,7 +446,7 @@ final class AiMlg {
                      }
 
                      this.init(player, slot);
-                     AiGameOperations.init(Vec3.atCenterOf(cell));
+                     AiGameOperations.snapLookAt(Vec3.atCenterOf(cell));
                      this.init_Minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
                      this.update_I++;
                      return this.init("Collecting the placed water");
@@ -495,11 +495,11 @@ final class AiMlg {
             }
 
             JsonObject init_JsonObject_37() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "method", this.init_Str == null ? requested : this.init_Str, "placed", this.load_Z, "damageBefore", this.read_F, "damageAfter", this.write_F
                );
                if (this.read_BlockPos != null) {
-                  out.add("landing", AiJson.init_JsonObject_ObjArr("x", this.read_BlockPos.getX(), "y", this.read_BlockPos.getY(), "z", this.read_BlockPos.getZ()));
+                  out.add("landing", AiJson.objectOf("x", this.read_BlockPos.getX(), "y", this.read_BlockPos.getY(), "z", this.read_BlockPos.getZ()));
                }
 
                if ("water".equals(this.init_Str) && this.load_Z) {
@@ -514,7 +514,7 @@ final class AiMlg {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_37());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_37());
             }
 
             boolean init(LocalPlayer player, Item item) {
@@ -529,19 +529,19 @@ final class AiMlg {
                         "[AI] clutch {}: {} (water buckets {}, hotbar water {})",
                         status,
                         message,
-                        AiGameState.init_I_Str("minecraft:water_bucket"),
+                        AiGameState.countInventoryItem("minecraft:water_bucket"),
                         this.init_Minecraft.player == null ? -1 : AiMlg.init_I(AiMlg.init_List_LocalPlayer(this.init_Minecraft.player), "water_bucket")
                      );
                }
 
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_37());
+               return AiGameOperations.result(status, message, this.init_JsonObject_37());
             }
 
             @Override
             public void cancel() {
                if (!this.init_Z) {
                   this.init_Z = true;
-                  autismclient.ai.engine.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                   if (this.init_Minecraft.player != null && this.flush >= 0 && this.init_Minecraft.player.getInventory().getSelectedSlot() == this.flush) {
                      this.init_Minecraft.player.getInventory().setSelectedSlot(this.init_I);
                   }

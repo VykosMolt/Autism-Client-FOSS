@@ -163,8 +163,8 @@ final class AiCrystals {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int timeoutSeconds = Math.max(30, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
-         final boolean skipCaged = AiJson.init_Z_JsonObject(args, "skipCaged", false);
+         final int timeoutSeconds = Math.max(30, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600)));
+         final boolean skipCaged = AiJson.getBoolean(args, "skipCaged", false);
          AiService service = AiService.load_cc();
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
          return new AiOperation() {
@@ -205,8 +205,8 @@ final class AiCrystals {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
-               this.init_DataUtil.init_V_Z(silentAim);
+               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+               this.init_DataUtil.setSilent(silentAim);
             }
 
             @Override
@@ -230,8 +230,8 @@ final class AiCrystals {
                   }
 
                   if (!this.init_Z_26()) {
-                     if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                        return this.init(AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("crystal clearing", mc.player.getHealth(), mc.player.getMaxHealth()));
+                     if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+                        return this.init(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("crystal clearing", mc.player.getHealth(), mc.player.getMaxHealth()));
                      }
 
                      AiOperation.Result guarded = this.init_AiOperation_Result_40();
@@ -303,13 +303,13 @@ final class AiCrystals {
                   this.load_AiOperation = null;
                   return this.load("Resuming after " + this.load_Str);
                } else {
-                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
-                  AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.load_I_14());
+                  AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
+                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.load_I_14());
                   if (action == null) {
                      return null;
                   }
 
-                  this.load_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                  this.load_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                   this.load_I++;
                   this.init_V_30();
                   this.load_AiOperation = action;
@@ -373,7 +373,7 @@ final class AiCrystals {
                      next.caged(),
                      entity.isInvulnerable(),
                      chosen,
-                     AiRunResources.write()
+                     AiRunResources.totalArrowCount()
                   );
                   if (chosen == null) {
                      return this.init(next, "shoot", "no_ranged");
@@ -475,7 +475,7 @@ final class AiCrystals {
                } else {
                   if (this.init_AiOperation == null) {
                      this.init_AiOperation = AiRanged.init(
-                        AiJson.init_JsonObject_ObjArr("entityId", this.init_h_DataUtil.entityId(), "count", 1, "timeoutSeconds", Math.min(8, this.init_I_I_4(45)))
+                        AiJson.objectOf("entityId", this.init_h_DataUtil.entityId(), "count", 1, "timeoutSeconds", Math.min(8, this.init_I_I_4(45)))
                      );
                   }
 
@@ -543,9 +543,9 @@ final class AiCrystals {
                   this.init_h_StreamUtil = this.load_Z ? AiCrystals.Inner_StreamUtil.SHOOT : AiCrystals.Inner_StreamUtil.APPROACH;
                   return this.load("Blast would be lethal point-blank; switching to the bow");
                } else {
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_Entity(entity));
-                  this.init_DataUtil.load_V();
-                  if (!this.init_DataUtil.load_Z() && ++this.sync < 25) {
+                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity));
+                  this.init_DataUtil.tick();
+                  if (!this.init_DataUtil.isSettled() && ++this.sync < 25) {
                      return this.load("Aiming at the crystal");
                   }
 
@@ -615,9 +615,9 @@ final class AiCrystals {
 
                if (this.load_BlockPos != null) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGameOperations.init(
+                     this.init_AiOperation = AiGameOperations.blockAction(
                         "break",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "x",
                            this.load_BlockPos.getX(),
                            "y",
@@ -643,9 +643,9 @@ final class AiCrystals {
                   BlockPos eyeBar = this.read_BlockPos.above();
                   if (this.read(eyeBar)) {
                      if (this.init_AiOperation == null) {
-                        this.init_AiOperation = AiGameOperations.init(
+                        this.init_AiOperation = AiGameOperations.blockAction(
                            "break",
-                           AiJson.init_JsonObject_ObjArr("x", eyeBar.getX(), "y", eyeBar.getY(), "z", eyeBar.getZ(), "timeoutSeconds", this.init_I_I_4(30))
+                           AiJson.objectOf("x", eyeBar.getX(), "y", eyeBar.getY(), "z", eyeBar.getZ(), "timeoutSeconds", this.init_I_I_4(30))
                         );
                      }
 
@@ -663,10 +663,10 @@ final class AiCrystals {
                   if (this.read_BlockPos != null && !this.init_Z && mc.level.getBlockState(this.read_BlockPos).canBeReplaced()) {
                      if (this.init_AiOperation == null) {
                         String block = this.init_Str_18();
-                        if (block != null && AiItems.read(AiItems.load_af_DataUtil(block)) >= 0) {
-                           this.init_AiOperation = AiGameOperations.init(
+                        if (block != null && AiItems.equipHotbar(AiItems.resolveItem(block)) >= 0) {
+                           this.init_AiOperation = AiGameOperations.blockAction(
                               "place",
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "x", this.read_BlockPos.getX(), "y", this.read_BlockPos.getY() - 1, "z", this.read_BlockPos.getZ(), "timeoutSeconds", 6
                               )
                            );
@@ -721,7 +721,7 @@ final class AiCrystals {
                } else if (this.load_Z_15()) {
                   return this.open();
                } else {
-                  return this.push < 2 && ("mlg".equals(AiCrystals.init_Str(AiCrystals.init(mc.player))) || !AiThreats.init_Z() && AiGameState.init_I_Str("minecraft:water_bucket") > 0)
+                  return this.push < 2 && ("mlg".equals(AiCrystals.init_Str(AiCrystals.init(mc.player))) || !AiThreats.init_Z() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0)
                      ? this.init_AiOperation_Result_BlockPos(feet)
                      : this.load_AiOperation_Result_3(feet);
                }
@@ -736,15 +736,15 @@ final class AiCrystals {
                         return this.load("Could not step off cleanly; digging down instead");
                      }
 
-                     this.init_DataUtil.init_V_Vec3(this.init_Vec3_8());
-                     this.init_DataUtil.load_V();
+                     this.init_DataUtil.aimAt(this.init_Vec3_8());
+                     this.init_DataUtil.tick();
                      AiFallGuard.load();
                      mc.options.keyUp.setDown(true);
                      return this.load("Stepping off for the water clutch");
                   }
 
                   mc.options.keyUp.setDown(false);
-                  this.init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.init_JsonObject_ObjArr("method", "auto", "collect", true, "timeoutSeconds", 15));
+                  this.init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
                   this.update_Z = true;
                }
 
@@ -812,7 +812,7 @@ final class AiCrystals {
                this.read_Z = false;
                this.init_JsonArray
                   .add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "id", t.entityId(), "caged", t.caged(), "method", this.init_Str.isEmpty() ? "shoot" : this.init_Str, "result", "cleared"
                      )
                   );
@@ -832,7 +832,7 @@ final class AiCrystals {
             AiOperation.Result init_AiOperation_Result_Str_12(String planned) {
                AiCrystals.Inner_DataUtil t = this.init_h_DataUtil;
                this.read_Z = false;
-               this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "cleared"));
+               this.init_JsonArray.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "cleared"));
                this.init_I++;
                if (!this.load_Z_15()) {
                   this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
@@ -848,7 +848,7 @@ final class AiCrystals {
             AiOperation.Result init(AiCrystals.Inner_DataUtil t, String planned, String reason) {
                this.init_V_30();
                this.init_Set.add(t.entityId());
-               this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "skipped:" + reason));
+               this.init_JsonArray.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "skipped:" + reason));
                this.init_h_CachePool.init(reason);
                this.init_h_DataUtil = null;
                this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
@@ -859,7 +859,7 @@ final class AiCrystals {
                this.init_Set.add(t.entityId());
                this.init_JsonArray
                   .add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "id", t.entityId(), "caged", t.caged(), "method", this.init_Str.isEmpty() ? "cage" : this.init_Str, "result", "skipped:" + reason
                      )
                   );
@@ -872,7 +872,7 @@ final class AiCrystals {
             AiOperation.Result load(AiCrystals.Inner_DataUtil t, String planned, String reason) {
                this.init_V_30();
                this.init_Set.add(t.entityId());
-               this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "failed:" + reason));
+               this.init_JsonArray.add(AiJson.objectOf("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "failed:" + reason));
                if (this.load_Z && mc.player.blockPosition().getY() > this.flush + 1) {
                   this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
@@ -891,7 +891,7 @@ final class AiCrystals {
                   this.init_JsonObject = AiCrystals.init();
                   return this.init(AiFailure.NO_RANGED, "No ranged weapon or arrows for the remaining uncaged crystals" + suffix);
                } else if (this.init_h_CachePool.load > 0) {
-                  this.init_JsonObject = AiJson.init_JsonObject_ObjArr("minecraft:dirt", Math.max(1, this.open));
+                  this.init_JsonObject = AiJson.objectOf("minecraft:dirt", Math.max(1, this.open));
                   return this.init(AiFailure.MISSING_MATERIALS, "No throwaway construction blocks for pillaring to the caged crystals" + suffix);
                } else {
                   return this.init(AiFailure.EXECUTION_FAILED, this.init_h_CachePool.init(this.init_I));
@@ -1033,11 +1033,11 @@ final class AiCrystals {
 
             boolean write_Z_8() {
                return AiCrystals.init_Z_I(
-                  AiGameState.init_I_Str("minecraft:bow"),
-                  AiGameState.init_I_Str("minecraft:crossbow"),
-                  AiRunResources.write(),
-                  AiGameState.init_I_Str("minecraft:trident"),
-                  AiGameState.init_I_Str("minecraft:snowball") + AiGameState.init_I_Str("minecraft:egg")
+                  AiGameState.countInventoryItem("minecraft:bow"),
+                  AiGameState.countInventoryItem("minecraft:crossbow"),
+                  AiRunResources.totalArrowCount(),
+                  AiGameState.countInventoryItem("minecraft:trident"),
+                  AiGameState.countInventoryItem("minecraft:snowball") + AiGameState.countInventoryItem("minecraft:egg")
                );
             }
 
@@ -1131,7 +1131,7 @@ final class AiCrystals {
             }
 
             JsonObject init_JsonObject_58() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "cleared",
                   this.init_I,
                   "remaining",
@@ -1147,7 +1147,7 @@ final class AiCrystals {
                if (this.init_h_DataUtil != null) {
                   out.add(
                      "current",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "id",
                         this.init_h_DataUtil.entityId(),
                         "caged",
@@ -1164,7 +1164,7 @@ final class AiCrystals {
                   );
                }
 
-               out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.load_I, this.load_Str));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.load_I, this.load_Str));
                if (this.init_JsonObject != null) {
                   out.add("missing", this.init_JsonObject);
                }
@@ -1177,7 +1177,7 @@ final class AiCrystals {
             }
 
             AiOperation.Result load(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_58());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_58());
             }
 
             AiOperation.Result init(AiOperation.Status status, AiFailure failure, String message) {
@@ -1220,7 +1220,7 @@ final class AiCrystals {
                      this.load_AiOperation = null;
                   }
 
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
             }
          };

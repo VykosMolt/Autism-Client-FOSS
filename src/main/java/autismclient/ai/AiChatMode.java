@@ -237,7 +237,7 @@ final class AiChatMode {
 
    JsonObject init_JsonObject() {
       synchronized (this) {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "active",
             this.init_Z,
             "replies",

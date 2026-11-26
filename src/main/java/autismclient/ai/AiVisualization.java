@@ -258,13 +258,13 @@ public final class AiVisualization {
             autismclient.ai.engine.AiPathfinder.UiHelper m = path.get(i);
 
             for (BlockPos p : m.cellsToBreak()) {
-               if (edits.size() < 64 && AiTerrain.init(mc.level, p)) {
+               if (edits.size() < 64 && AiTerrain.isLoaded(mc.level, p)) {
                   edits.add(init(p, mc.level.getBlockState(p), false));
                }
             }
 
             for (BlockPos p : m.cellsToPlace()) {
-               if (edits.size() < 64 && AiTerrain.init(mc.level, p)) {
+               if (edits.size() < 64 && AiTerrain.isLoaded(mc.level, p)) {
                   edits.add(init(p, support == null ? Blocks.AIR.defaultBlockState() : support, support == null ? -885830 : -11093505));
                }
             }
@@ -612,7 +612,7 @@ public final class AiVisualization {
                break;
             }
 
-            if (AiTerrain.init(l.init_ClientLevel, p)) {
+            if (AiTerrain.isLoaded(l.init_ClientLevel, p)) {
                BlockState state = l.init_ClientLevel.getBlockState(p);
                if (!state.isAir()) {
                   out.add(init(p, state, false));
@@ -629,7 +629,7 @@ public final class AiVisualization {
 
    public static void init(Object owner, BlockPos target) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
-      if (l != null && init_AiSettings.visualizeTargets && AiTerrain.init(l.init_ClientLevel, target)) {
+      if (l != null && init_AiSettings.visualizeTargets && AiTerrain.isLoaded(l.init_ClientLevel, target)) {
          BlockState state = l.init_ClientLevel.getBlockState(target);
          l.read_Z = true;
          l.load_I = 30;
@@ -655,7 +655,7 @@ public final class AiVisualization {
                   init(
                      state.equals(l.init_ClientLevel.getBlockState(target)),
                      l.init_ClientLevel.getBlockState(target).canBeReplaced(),
-                     AiTerrain.init(l.init_ClientLevel, target)
+                     AiTerrain.isLoaded(l.init_ClientLevel, target)
                   )
                )
             );
@@ -727,7 +727,7 @@ public final class AiVisualization {
             for (int i = fullPlan ? 0 : Math.max(0, cursor - 32); i < cells.size() && out.size() < cap; i += stride) {
                AiBuilder.CellSpec c = cells.get(i);
                BlockPos at = origin.offset(c.dx(), c.dy(), c.dz());
-               boolean loaded = AiTerrain.init(l.init_ClientLevel, at);
+               boolean loaded = AiTerrain.isLoaded(l.init_ClientLevel, at);
                BlockState live = loaded ? l.init_ClientLevel.getBlockState(at) : Blocks.AIR.defaultBlockState();
                boolean satisfied = loaded && AiBuilder.update(c, live);
                int color = init(satisfied, live.canBeReplaced(), loaded);
@@ -1315,7 +1315,7 @@ public final class AiVisualization {
          .stream()
          .filter(l -> l.init_Z && l.init_ClientLevel == Minecraft.getInstance().level && now - l.init_J <= 450000000L)
          .toList();
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "ghosts",
          tick,
          "quads",

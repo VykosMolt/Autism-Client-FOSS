@@ -287,15 +287,15 @@ final class AiIntents {
 
       for (int i = 1; i < out.size(); i++) {
          AiIntents.Inner_BufferHelper step = out.get(i);
-         if (step.capability().equals("game:place_near") && AiJson.init_Str_JsonObject(step.arguments(), "item", "").isEmpty()) {
-            String item = AiJson.init_Str_JsonObject(out.get(i - 1).arguments(), "item", "");
+         if (step.capability().equals("game:place_near") && AiJson.getString(step.arguments(), "item", "").isEmpty()) {
+            String item = AiJson.getString(out.get(i - 1).arguments(), "item", "");
             if (!item.isEmpty() && !item.contains(",")) {
                out.set(
                   i,
                   new AiIntents.Inner_BufferHelper(
                      step.clause(),
                      step.capability(),
-                     AiJson.init_JsonObject_ObjArr("item", item),
+                     AiJson.objectOf("item", item),
                      "put " + item.replace("minecraft:", "") + " down beside the player",
                      step.asks()
                   )
@@ -314,12 +314,12 @@ final class AiIntents {
          AiIntents.Inner_BufferHelper step = out.get(i);
          AiIntents.Inner_BufferHelper before = out.get(i - 1);
          if (!init_Z(step.clause()) && step.arguments().has("count")) {
-            String output = AiJson.init_Str_JsonObject(step.arguments(), "item", "");
-            String input = AiJson.init_Str_JsonObject(before.arguments(), "item", AiJson.init_Str_JsonObject(before.arguments(), "block", ""))
+            String output = AiJson.getString(step.arguments(), "item", "");
+            String input = AiJson.getString(before.arguments(), "item", AiJson.getString(before.arguments(), "block", ""))
                .replace("minecraft:", "")
                .replace('_', ' ');
             if (!output.isEmpty() && !input.isEmpty() && output.equals(load_Map.get(input)) && before.arguments().has("count")) {
-               int count = Math.max(1, AiJson.init_I_JsonObject(before.arguments(), "count", 1));
+               int count = Math.max(1, AiJson.getInt(before.arguments(), "count", 1));
                JsonObject args = step.arguments().deepCopy();
                args.addProperty("count", count);
                out.set(
@@ -357,13 +357,13 @@ final class AiIntents {
             boolean usedLater = false;
 
             for (AiIntents.Inner_BufferHelper later : out.subList(i + 1, out.size())) {
-               usedLater |= later.capability().equals("game:eat") || AiJson.init_Z_JsonObject(later.arguments(), "cookHeld", false);
+               usedLater |= later.capability().equals("game:eat") || AiJson.getBoolean(later.arguments(), "cookHeld", false);
             }
 
             if (usedLater) {
                List<String> meats = new ArrayList<>();
 
-               for (String target : AiJson.init_Str_JsonObject(step.arguments(), "target", "").split(",")) {
+               for (String target : AiJson.getString(step.arguments(), "target", "").split(",")) {
                   String meat = read_Map.get(target);
                   if (meat == null) {
                      meats = null;
@@ -376,13 +376,13 @@ final class AiIntents {
                }
 
                if (meats != null && !meats.isEmpty()) {
-                  int kills = Math.max(1, AiJson.init_I_JsonObject(step.arguments(), "count", 1));
+                  int kills = Math.max(1, AiJson.getInt(step.arguments(), "count", 1));
                   out.set(
                      i,
                      new AiIntents.Inner_BufferHelper(
                         step.clause(),
                         "game:obtain",
-                        AiJson.init_JsonObject_ObjArr("item", String.join(",", meats), "count", kills, "additional", true),
+                        AiJson.objectOf("item", String.join(",", meats), "count", kills, "additional", true),
                         "hunt for " + String.join(" or ", meats).replace("minecraft:", "") + (kills > 1 ? " x" + kills : "")
                      )
                   );
@@ -410,10 +410,10 @@ final class AiIntents {
 
       try {
          String name = AiSchematic.init_Str(m.group(1) != null ? m.group(1) : m.group(2));
-         JsonObject args = AiJson.init_JsonObject_ObjArr("schematic", name, "craftMissing", false, "timeoutSeconds", 2592000);
+         JsonObject args = AiJson.objectOf("schematic", name, "craftMissing", false, "timeoutSeconds", 2592000);
          if (m.group(3) != null) {
             args.add(
-               "origin", AiJson.init_JsonObject_ObjArr("x", Integer.parseInt(m.group(3)), "y", Integer.parseInt(m.group(4)), "z", Integer.parseInt(m.group(5)))
+               "origin", AiJson.objectOf("x", Integer.parseInt(m.group(3)), "y", Integer.parseInt(m.group(4)), "z", Integer.parseInt(m.group(5)))
             );
          }
 
@@ -466,14 +466,14 @@ final class AiIntents {
          String id = lookups.moduleId().apply(name.trim());
          return id == null
             ? null
-            : new AiIntents.Inner_BufferHelper(raw, "module:" + id, AiJson.init_JsonObject_ObjArr("enabled", on, "persistent", true), (on ? "turn on " : "turn off ") + id);
+            : new AiIntents.Inner_BufferHelper(raw, "module:" + id, AiJson.objectOf("enabled", on, "persistent", true), (on ? "turn on " : "turn off ") + id);
       } else {
          if (set.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.init_JsonObject_ObjArr("body", "drop fullinventory"), "drop the whole inventory");
+            return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", "drop fullinventory"), "drop the whole inventory");
          }
 
          if (put.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.init_JsonObject_ObjArr("body", "drop hand"), "drop the held item");
+            return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", "drop hand"), "drop the held item");
          }
 
          if (reset.matcher(c).find()) {
@@ -494,19 +494,19 @@ final class AiIntents {
 
          if ((m = valid.matcher(c)).matches()) {
             if (m.group(1) != null) {
-               return new AiIntents.Inner_BufferHelper(raw, "game:place_near", AiJson.init_JsonObject_ObjArr("item", ""), "put it down beside the player");
+               return new AiIntents.Inner_BufferHelper(raw, "game:place_near", AiJson.objectOf("item", ""), "put it down beside the player");
             }
 
             String id = read(load(m.group(2)));
             return id == null
                ? null
                : new AiIntents.Inner_BufferHelper(
-                  raw, "game:place_near", AiJson.init_JsonObject_ObjArr("item", id), "put " + id.replace("minecraft:", "") + " down beside the player"
+                  raw, "game:place_near", AiJson.objectOf("item", id), "put " + id.replace("minecraft:", "") + " down beside the player"
                );
          } else {
             if (size.matcher(c).matches()) {
                return new AiIntents.Inner_BufferHelper(
-                  raw, "game:obtain", AiJson.init_JsonObject_ObjArr("item", "minecraft:water_bucket", "count", 1), "fill a bucket with water"
+                  raw, "game:obtain", AiJson.objectOf("item", "minecraft:water_bucket", "count", 1), "fill a bucket with water"
                );
             }
 
@@ -522,7 +522,7 @@ final class AiIntents {
                return new AiIntents.Inner_BufferHelper(
                   raw,
                   "game:tidy",
-                  AiJson.init_JsonObject_ObjArr("action", "drop", "freeSlots", 9),
+                  AiJson.objectOf("action", "drop", "freeSlots", 9),
                   "throw out junk to free 9 slots (tools, food and valuables stay)"
                );
             }
@@ -542,7 +542,7 @@ final class AiIntents {
                }
 
                String what = var10000;
-               return new AiIntents.Inner_BufferHelper(raw, "game:equip", AiJson.init_JsonObject_ObjArr("what", what), "equip the best " + what);
+               return new AiIntents.Inner_BufferHelper(raw, "game:equip", AiJson.objectOf("what", what), "equip the best " + what);
             } else {
                AiIntents.Inner_BufferHelper field = init(raw, c);
                if (field != null) {
@@ -553,7 +553,7 @@ final class AiIntents {
                   String crop = update(m.group(1) != null ? m.group(1) : m.group(2));
                   return crop == null
                      ? null
-                     : new AiIntents.Inner_BufferHelper(raw, "game:farm", AiJson.init_JsonObject_ObjArr("action", "plant", "crop", crop), "plant a " + crop + " field");
+                     : new AiIntents.Inner_BufferHelper(raw, "game:farm", AiJson.objectOf("action", "plant", "crop", crop), "plant a " + crop + " field");
                }
 
                if ((m = pop.matcher(c)).matches()) {
@@ -587,12 +587,12 @@ final class AiIntents {
 
                      Integer count = init(m);
                      return new AiIntents.Inner_BufferHelper(
-                        raw, "game:farm", AiJson.init_JsonObject_ObjArr("action", "harvest", "crop", crop, "count", count == null ? 16 : count), "harvest " + crop
+                        raw, "game:farm", AiJson.objectOf("action", "harvest", "crop", crop, "count", count == null ? 16 : count), "harvest " + crop
                      );
                   } else if ((m = poll.matcher(c)).matches()) {
                      if (read_Set.contains(m.group(5).trim())) {
                         return new AiIntents.Inner_BufferHelper(
-                           raw, "game:smelt_auto", AiJson.init_JsonObject_ObjArr("item", "cooked_food", "count", 1, "cookHeld", true), "cook the raw food held"
+                           raw, "game:smelt_auto", AiJson.objectOf("item", "cooked_food", "count", 1, "cookHeld", true), "cook the raw food held"
                         );
                      }
 
@@ -612,7 +612,7 @@ final class AiIntents {
 
                      int count = init(m, output, what);
                      return new AiIntents.Inner_BufferHelper(
-                        raw, "game:smelt_auto", AiJson.init_JsonObject_ObjArr("item", output, "count", count), "smelt " + count + " " + output
+                        raw, "game:smelt_auto", AiJson.objectOf("item", output, "count", count), "smelt " + count + " " + output
                      );
                   } else if ((m = add.matcher(c)).matches()) {
                      String what = load(m.group(5));
@@ -623,7 +623,7 @@ final class AiIntents {
 
                      Integer count = init(m);
                      String body = "drop " + (count == null ? "" : count + " ") + id.replace("minecraft:", "");
-                     return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.init_JsonObject_ObjArr("body", body), body);
+                     return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", body), body);
                   } else if ((m = flush.matcher(c)).matches()) {
                      String what = load(m.group(5));
                      String block = open(what);
@@ -635,12 +635,12 @@ final class AiIntents {
 
                         int count = init(m, id, what);
                         return new AiIntents.Inner_BufferHelper(
-                           raw, "game:obtain", AiJson.init_JsonObject_ObjArr("item", id, "count", count, "additional", true), "get " + count + " " + id
+                           raw, "game:obtain", AiJson.objectOf("item", id, "count", count, "additional", true), "get " + count + " " + id
                         );
                      } else {
                         int count = init(m, block, what);
                         return new AiIntents.Inner_BufferHelper(
-                           raw, "game:mine", AiJson.init_JsonObject_ObjArr("block", block, "count", count), "mine " + count + " " + block
+                           raw, "game:mine", AiJson.objectOf("block", block, "count", count), "mine " + count + " " + block
                         );
                      }
                   } else if ((m = open.matcher(c)).matches()) {
@@ -651,7 +651,7 @@ final class AiIntents {
                      }
 
                      int count = init(m, id, what);
-                     return new AiIntents.Inner_BufferHelper(raw, "game:craft", AiJson.init_JsonObject_ObjArr("item", id, "count", count), "craft " + count + " " + id);
+                     return new AiIntents.Inner_BufferHelper(raw, "game:craft", AiJson.objectOf("item", id, "count", count), "craft " + count + " " + id);
                   } else if ((m = sync_Pattern.matcher(c)).matches()) {
                      String what = load(m.group(5));
                      String spec = close(what);
@@ -661,7 +661,7 @@ final class AiIntents {
 
                      int count = init(m, spec, what);
                      return new AiIntents.Inner_BufferHelper(
-                        raw, "game:obtain", AiJson.init_JsonObject_ObjArr("item", spec, "count", count, "additional", true), "get " + count + " " + spec
+                        raw, "game:obtain", AiJson.objectOf("item", spec, "count", count, "additional", true), "get " + count + " " + spec
                      );
                   } else if ((m = close.matcher(c)).matches()) {
                      String what = load(m.group(5));
@@ -672,7 +672,7 @@ final class AiIntents {
 
                      int count = init(m, spec, what);
                      return new AiIntents.Inner_BufferHelper(
-                        raw, "game:obtain", AiJson.init_JsonObject_ObjArr("item", spec, "count", count, "additional", true), "get " + count + " " + spec
+                        raw, "game:obtain", AiJson.objectOf("item", spec, "count", count, "additional", true), "get " + count + " " + spec
                      );
                   } else {
                      return null;
@@ -694,7 +694,7 @@ final class AiIntents {
 
                   String target = String.join(",", targets);
                   Integer count = init(m);
-                  JsonObject args = AiJson.init_JsonObject_ObjArr("target", target);
+                  JsonObject args = AiJson.objectOf("target", target);
                   if (count != null && count > 1) {
                      args.addProperty("count", count);
                   }
@@ -764,7 +764,7 @@ final class AiIntents {
 
    static String read(String words) {
       try {
-         AiItems.ItemSpec target = AiItems.load_af_DataUtil(words.replace(' ', '_'));
+         AiItems.ItemSpec target = AiItems.resolveItem(words.replace(' ', '_'));
          if (target.items().size() == 1) {
             return BuiltInRegistries.ITEM.getKey(target.items().iterator().next()).toString();
          } else {
@@ -839,7 +839,7 @@ final class AiIntents {
 
    private static String open(String words) {
       try {
-         AiItems.ItemSpec target = AiItems.read_af_DataUtil(words.replace(' ', '_'));
+         AiItems.ItemSpec target = AiItems.resolveBlock(words.replace(' ', '_'));
          if (target.blocks().size() == 1) {
             return BuiltInRegistries.BLOCK.getKey(target.blocks().iterator().next()).toString();
          } else {
@@ -857,7 +857,7 @@ final class AiIntents {
       }
 
       String words = (m.group(1) + " " + m.group(2)).trim().replaceAll("\\s+", " ");
-      JsonObject args = AiJson.init_JsonObject_ObjArr("action", "build");
+      JsonObject args = AiJson.objectOf("action", "build");
       Matcher dims = queue.matcher(words);
       if (dims.find()) {
          int w = Math.max(1, Math.min(15, Integer.parseInt(dims.group(1))));
@@ -934,10 +934,10 @@ final class AiIntents {
    }
 
    static String init(JsonObject args) {
-      String crop = AiJson.init_Str_JsonObject(args, "crop", "");
+      String crop = AiJson.getString(args, "crop", "");
       String name = crop.isEmpty() ? "" : crop.substring(crop.indexOf(58) + 1) + " ";
-      int count = AiJson.init_I_JsonObject(args, "count", 80);
-      String size = args.has("width") ? AiJson.init_I_JsonObject(args, "width", 9) + "x" + AiJson.init_I_JsonObject(args, "length", 9) + ", " : "";
+      int count = AiJson.getInt(args, "count", 80);
+      String size = args.has("width") ? AiJson.getInt(args, "width", 9) + "x" + AiJson.getInt(args, "length", 9) + ", " : "";
       return "build a " + name + "farm (" + size + count + " plots)";
    }
 

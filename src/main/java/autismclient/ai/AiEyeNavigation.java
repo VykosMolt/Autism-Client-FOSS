@@ -92,8 +92,8 @@ final class AiEyeNavigation {
 
    JsonObject init_JsonObject() {
       return this.init_z_DataUtil == null
-         ? AiJson.init_JsonObject_ObjArr("rays", this.init_List.size(), "triangulated", false, "possibleTargetChanges", this.init_I)
-         : AiJson.init_JsonObject_ObjArr(
+         ? AiJson.objectOf("rays", this.init_List.size(), "triangulated", false, "possibleTargetChanges", this.init_I)
+         : AiJson.objectOf(
             "rays",
             this.init_List.size(),
             "triangulated",

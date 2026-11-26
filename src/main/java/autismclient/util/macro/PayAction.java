@@ -211,12 +211,12 @@ public class PayAction implements MacroAction {
          return true;
       }
 
-      autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macroName);
+      autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(macroName);
       if (macro == null) {
          return true;
       }
 
-      long runId = macro.init_J();
+      long runId = macro.executeWithRunId();
       if (runId < 0L) {
          return true;
       }

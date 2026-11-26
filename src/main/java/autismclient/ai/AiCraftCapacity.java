@@ -52,7 +52,7 @@ final class AiCraftCapacity {
 
       JsonArray ids = new JsonArray();
       keep.forEach(ids::add);
-      return AiJson.init_JsonObject_ObjArr("action", "drop", "freeSlots", 2, "maxDrops", 2, "timeoutSeconds", Math.max(5, Math.min(15, seconds)), "keep", ids);
+      return AiJson.objectOf("action", "drop", "freeSlots", 2, "maxDrops", 2, "timeoutSeconds", Math.max(5, Math.min(15, seconds)), "keep", ids);
    }
 
    static AiOperation init_AiOperation_AiOperation_Result(
@@ -83,13 +83,13 @@ final class AiCraftCapacity {
                return this.init_AiOperation_Result;
             }
 
-            JsonObject evidence = AiRunResources.init_JsonObject(this.init_AiOperation_Result.dataJson());
+            JsonObject evidence = AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson());
             this.read_Z = this.read_Z
                | (
                   this.init_AiOperation.requiresReconciliationAfterEmergency()
                      || this.init_AiOperation_Result.status() != AiOperation.Status.SUCCEEDED && before
-                     || AiJson.init_Z_JsonObject(evidence, "reobserveBeforeResuming", false)
-                     || AiJson.init_Z_JsonObject(evidence, "interruptedActionNeedsReconciliation", false)
+                     || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false)
+                     || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false)
                );
             this.init_AiOperation_Result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(this.read_Z, this.init_AiOperation_Result);
             this.init_AiOperation.cancel();
@@ -114,9 +114,9 @@ final class AiCraftCapacity {
 
          AiOperation.Result init(AiOperation.Result actual) {
             AiOperation.Result receipt = this.load_Z && this.init_AiOperation_Result != null ? this.init_AiOperation_Result : actual;
-            JsonObject data = AiJson.init_JsonObject_ObjArr(
+            JsonObject data = AiJson.objectOf(
                "capacityFailure",
-               AiRunResources.init_JsonObject(rejection.dataJson()),
+               AiRunResources.parseEvidenceJson(rejection.dataJson()),
                "capacityFailureMessage",
                rejection.message(),
                "capacityFailureCode",
@@ -125,11 +125,11 @@ final class AiCraftCapacity {
                this.init_Z
             );
             if (this.load_AiOperation_Result != null) {
-               data.add("capacityCleanup", AiRunResources.init_JsonObject(this.load_AiOperation_Result.dataJson()));
+               data.add("capacityCleanup", AiRunResources.parseEvidenceJson(this.load_AiOperation_Result.dataJson()));
             }
 
             if (this.read_Z && this.init_AiOperation_Result != null) {
-               data.add("pendingCapacityChild", AiRunResources.init_JsonObject(this.init_AiOperation_Result.dataJson()));
+               data.add("pendingCapacityChild", AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson()));
             }
 
             AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(

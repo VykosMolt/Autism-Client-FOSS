@@ -47,7 +47,7 @@ public class PacketGateAction implements MacroAction {
       tag.putString("scope", this.scope == null ? PacketGateAction.Inner_BufferHelper.END_MARKER.name() : this.scope.name());
       tag.putString("direction", PacketGateAction.Inner_DataUtil.ANY.name());
       tag.putString("gateId", this.gateId);
-      tag.put("packetNames", MacroNbtCodecHelper.init(this.packetNames));
+      tag.put("packetNames", MacroNbtCodecHelper.toStringListTag(this.packetNames));
       tag.putString("durationMode", this.durationMode == null ? PacketGateAction.Inner_StreamUtil.UNTIL_DISABLED.name() : this.durationMode.name());
       tag.putInt("durationValue", Math.max(0, this.durationValue));
       tag.putString("untilPacketName", this.untilPacketName == null ? "" : this.untilPacketName);
@@ -66,17 +66,17 @@ public class PacketGateAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = MacroNbtCodecHelper.init(PacketGateAction.Inner_CachePool.class, tag.getStringOr("mode", "CANCEL"), PacketGateAction.Inner_CachePool.CANCEL);
+      this.mode = MacroNbtCodecHelper.parseEnum(PacketGateAction.Inner_CachePool.class, tag.getStringOr("mode", "CANCEL"), PacketGateAction.Inner_CachePool.CANCEL);
       String rawScope = tag.getStringOr("scope", "END_MARKER");
       if ("MACRO_RUN".equalsIgnoreCase(rawScope)) {
          rawScope = PacketGateAction.Inner_BufferHelper.MACRO_PASS.name();
       }
 
-      this.scope = MacroNbtCodecHelper.init(PacketGateAction.Inner_BufferHelper.class, rawScope, PacketGateAction.Inner_BufferHelper.END_MARKER);
+      this.scope = MacroNbtCodecHelper.parseEnum(PacketGateAction.Inner_BufferHelper.class, rawScope, PacketGateAction.Inner_BufferHelper.END_MARKER);
       this.direction = PacketGateAction.Inner_DataUtil.ANY;
       this.gateId = tag.getStringOr("gateId", "auto");
-      this.packetNames = MacroNbtCodecHelper.init(tag.getList("packetNames").orElse(new ListTag()));
-      this.durationMode = MacroNbtCodecHelper.init(PacketGateAction.Inner_StreamUtil.class, tag.getStringOr("durationMode", "UNTIL_DISABLED"), PacketGateAction.Inner_StreamUtil.UNTIL_DISABLED);
+      this.packetNames = MacroNbtCodecHelper.fromStringListTag(tag.getList("packetNames").orElse(new ListTag()));
+      this.durationMode = MacroNbtCodecHelper.parseEnum(PacketGateAction.Inner_StreamUtil.class, tag.getStringOr("durationMode", "UNTIL_DISABLED"), PacketGateAction.Inner_StreamUtil.UNTIL_DISABLED);
       this.durationValue = Math.max(0, tag.getIntOr("durationValue", 0));
       this.untilPacketName = tag.getStringOr("untilPacketName", "");
       this.untilPacketField = tag.getStringOr("untilPacketField", "");

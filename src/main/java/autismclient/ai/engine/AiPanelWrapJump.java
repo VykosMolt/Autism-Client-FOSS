@@ -79,8 +79,8 @@ final class AiPanelWrapJump {
                if (!(Math.abs(Mth.wrapDegrees(var19 - var17)) > 56.0F)) {
                   for (int var23 : putAt_IArr) {
                      AiPhysics.MoveInput var24 = new AiPhysics.MoveInput(1.0, var23, true, true, false, var19);
-                     AiPhysics.MotionState var25 = AiPhysics.putAt(var16, var24, var0);
-                     if (!var25.onGround() && !(var25.y() < var2 + 0.12) && !AiPhysics.fill(var0, var16, var25)) {
+                     AiPhysics.MotionState var25 = AiPhysics.step(var16, var24, var0);
+                     if (!var25.onGround() && !(var25.y() < var2 + 0.12) && !AiPhysics.hitsStrictHazard(var0, var16, var25)) {
                         putAt(var9, new AiPanelWrapJump.Inner_StreamUtil(var25, var24, var15, var12, var8.score(var25, var5)));
                      }
                   }
@@ -90,11 +90,11 @@ final class AiPanelWrapJump {
             for (int var57 : fill_IArr) {
                for (int var66 : putAt_IArr) {
                   AiPhysics.MoveInput var26 = new AiPhysics.MoveInput(1.0, var66, false, true, false, var8.yaw() + var57);
-                  AiPhysics.MotionState var27 = AiPhysics.putAt(var16, var26, var0);
+                  AiPhysics.MotionState var27 = AiPhysics.step(var16, var26, var0);
                   if (var27.onGround()
                      && !(Math.abs(var27.y() - var2) > 0.02)
                      && !(var8.along(var27) > var8.launchLimit())
-                     && !AiPhysics.fill(var0, var16, var27)) {
+                     && !AiPhysics.hitsStrictHazard(var0, var16, var27)) {
                      putAt(var13, new AiPanelWrapJump.Inner_StreamUtil(var27, var26, var15, var12, 0.0));
                   }
                }
@@ -130,8 +130,8 @@ final class AiPanelWrapJump {
                         if (var28 != 0 || var32 != 0 || var65 == 0 || var36) {
                            float var37 = var52.input().yaw() + var65;
                            AiPhysics.MoveInput var38 = new AiPhysics.MoveInput(var28, var32, false, var28 > 0 && !var36, var36, var37);
-                           AiPhysics.MotionState var39 = AiPhysics.putAt(var52.state(), var38, var0);
-                           if ((!(var39.y() < var5 - 0.02) || !(var39.vy() < 0.0)) && !AiPhysics.fill(var0, var52.state(), var39)) {
+                           AiPhysics.MotionState var39 = AiPhysics.step(var52.state(), var38, var0);
+                           if ((!(var39.y() < var5 - 0.02) || !(var39.vy() < 0.0)) && !AiPhysics.hitsStrictHazard(var0, var52.state(), var39)) {
                               int var40 = var36 ? var56 + 1 : 0;
                               if (var40 >= 3 || var39.pose() == 0 || !AiPaceScript.putAt_Z_TokenCore_TaskStat_2(var0, var52.state(), var39)) {
                                  AiPanelWrapJump.Inner_StreamUtil var41 = new AiPanelWrapJump.Inner_StreamUtil(

@@ -119,7 +119,7 @@ final class AiGhastReflect {
             Entity projectile = this.init_Minecraft.level.getEntity(this.read_I);
             Ghast ghast = source instanceof Ghast g && g.getUUID().equals(this.load_UUID) ? g : null;
             LargeFireball ball = projectile instanceof LargeFireball b && b.getUUID().equals(this.init_UUID) ? b : null;
-            AiServerEvidence.Inner_StreamUtil motion = AiServerEvidence.init_ca_StreamUtil_I(this.read_I);
+            AiServerEvidence.Inner_StreamUtil motion = AiServerEvidence.lastEntityVelocity(this.read_I);
             if (!this.init_Z
                && motion != null
                && motion.identity().equals(this.init_UUID)
@@ -242,7 +242,7 @@ final class AiGhastReflect {
             return null;
          }
 
-         AiGameOperations.init(eye.add(this.init_V_StreamUtil.flight.direction.scale(16.0)));
+         AiGameOperations.snapLookAt(eye.add(this.init_V_StreamUtil.flight.direction.scale(16.0)));
          if (this.init_V_StreamUtil.interceptTicks == 0 && AiDefense.load(this.init_Minecraft, ball)) {
             autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
             if (!wire.init_Z()) {
@@ -272,7 +272,7 @@ final class AiGhastReflect {
                this.init_Minecraft.options.keySprint.setDown(false);
                this.init_Vec3 = ball.getDeltaMovement();
                this.load_Vec3 = direction;
-               AiServerEvidence.Inner_StreamUtil evidence = AiServerEvidence.init_ca_StreamUtil_I(this.read_I);
+               AiServerEvidence.Inner_StreamUtil evidence = AiServerEvidence.lastEntityVelocity(this.read_I);
                this.init_J = evidence == null ? 0L : evidence.revision();
                this.update_I = this.init_Minecraft.player.tickCount;
                this.tick = actual.ticks;
@@ -309,7 +309,7 @@ final class AiGhastReflect {
                return this.init_Str();
             }
 
-            this.init_JsonObject = AiJson.init_JsonObject_ObjArr(
+            this.init_JsonObject = AiJson.objectOf(
                "alive",
                ball.isAlive(),
                "charged",
@@ -317,7 +317,7 @@ final class AiGhastReflect {
                "range",
                this.init_Minecraft.player.isWithinAttackRange(this.init_Minecraft.player.getMainHandItem(), ball.getBoundingBox(), 0.0),
                "ray",
-               autismclient.ai.engine.AiAim.init_Z_Entity(ball),
+               autismclient.ai.engine.AiAim.isLookingAtEntity(ball),
                "eye",
                init_JsonObject_Vec3(this.init_Minecraft.player.getEyePosition()),
                "look",
@@ -735,7 +735,7 @@ final class AiGhastReflect {
    }
 
    private boolean init_Z_Vec3(Vec3 point) {
-      return AiTerrain.init(this.init_Minecraft.level, BlockPos.containing(point));
+      return AiTerrain.isLoaded(this.init_Minecraft.level, BlockPos.containing(point));
    }
 
    private boolean init_Z_AABB(AABB body) {
@@ -772,7 +772,7 @@ final class AiGhastReflect {
       if (this.init_JsonArray.size() < 8) {
          this.init_JsonArray
             .add(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "projectileId",
                   this.read_I,
                   "ghastId",
@@ -808,7 +808,7 @@ final class AiGhastReflect {
    }
 
    JsonObject init_JsonObject() {
-      JsonObject out = AiJson.init_JsonObject_ObjArr(
+      JsonObject out = AiJson.objectOf(
          "phase",
          this.init_Str,
          "reason",
@@ -842,11 +842,11 @@ final class AiGhastReflect {
          "outcomes",
          this.init_JsonArray
       );
-      out.add("rejections", AiJson.init.toJsonTree(this.update_Map));
+      out.add("rejections", AiJson.GSON.toJsonTree(this.update_Map));
       if (this.init_V_StreamUtil != null) {
          out.add(
             "plan",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "interceptTicks",
                this.init_V_StreamUtil.interceptTicks,
                "returnFlightTicks",
@@ -873,7 +873,7 @@ final class AiGhastReflect {
    }
 
    private static JsonObject init_JsonObject_Vec3(Vec3 v) {
-      return AiJson.init_JsonObject_ObjArr("x", v.x, "y", v.y, "z", v.z);
+      return AiJson.objectOf("x", v.x, "y", v.y, "z", v.z);
    }
 
    private void write() {

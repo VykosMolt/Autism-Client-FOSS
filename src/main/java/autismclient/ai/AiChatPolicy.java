@@ -542,15 +542,15 @@ final class AiChatPolicy {
             return defaults("");
          }
 
-         String instructions = AiJson.init_Str_JsonObject(args, "instructions", "");
+         String instructions = AiJson.getString(args, "instructions", "");
          List<String> players = parsePlayers(args);
-         boolean onlyMentions = AiJson.init_Z_JsonObject(args, "onlyMentions", false);
-         boolean includeServerChat = AiJson.init_Z_JsonObject(args, "includeServerChat", false);
-         boolean includePrivateChat = AiJson.init_Z_JsonObject(args, "includePrivateChat", false);
-         int perMinute = AiJson.init_I_JsonObject(args, "maxRepliesPerMinute", 8);
-         double minGapSeconds = AiJson.init_D_JsonObject(args, "minGapSeconds", 2.0);
-         int debounceMs = AiJson.init_I_JsonObject(args, "debounceMs", 1200);
-         int maxReplyChars = AiJson.init_I_JsonObject(args, "maxReplyChars", 220);
+         boolean onlyMentions = AiJson.getBoolean(args, "onlyMentions", false);
+         boolean includeServerChat = AiJson.getBoolean(args, "includeServerChat", false);
+         boolean includePrivateChat = AiJson.getBoolean(args, "includePrivateChat", false);
+         int perMinute = AiJson.getInt(args, "maxRepliesPerMinute", 8);
+         double minGapSeconds = AiJson.getDouble(args, "minGapSeconds", 2.0);
+         int debounceMs = AiJson.getInt(args, "debounceMs", 1200);
+         int maxReplyChars = AiJson.getInt(args, "maxReplyChars", 220);
          return new AiChatPolicy.Inner_DataUtil(
             instructions,
             players,
@@ -597,7 +597,7 @@ final class AiChatPolicy {
       }
 
       JsonObject json() {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "instructions",
             this.instructions,
             "players",

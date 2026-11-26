@@ -136,14 +136,14 @@ public final class JoinMacroController {
       init_ClientConfiguratio = listener;
       init_I++;
       if (load_Z() && init_aA_CachePool().init_Z_I(init_I)) {
-         AutismMacro selected = MacroLibraryManager.init_aN().init_aM_Str(init_Str());
+         AutismMacro selected = MacroLibraryManager.getInstance().findByName(init_Str());
          if (selected != null) {
-            AutismMacro copy = selected.init_aM();
+            AutismMacro copy = selected.copy();
             int prefix = 0;
             boolean sawCustomMenu = false;
 
-            while (prefix < copy.init_List.size()) {
-               MacroAction action = copy.init_List.get(prefix);
+            while (prefix < copy.actions.size()) {
+               MacroAction action = copy.actions.get(prefix);
                if (action instanceof autismclient.util.macro.CustomMenuAction) {
                   sawCustomMenu = true;
                } else if (!init_Z(action)) {
@@ -153,13 +153,13 @@ public final class JoinMacroController {
                prefix++;
             }
 
-            init_aM = copy.init_aM();
+            init_aM = copy.copy();
             if (prefix > 0) {
-               init_aM.init_List.subList(0, prefix).clear();
+               init_aM.actions.subList(0, prefix).clear();
             }
 
             if (prefix != 0 && sawCustomMenu) {
-               List<MacroAction> leading = List.copyOf(copy.init_List.subList(0, prefix));
+               List<MacroAction> leading = List.copyOf(copy.actions.subList(0, prefix));
                Connection connection = ((ClientCommonNetworkHandlerAccessor) listener).getConnection();
                Thread worker = new Thread(() -> init(leading, connection), "AUTISM-Join-CustomMenu");
                worker.setDaemon(true);
@@ -389,7 +389,7 @@ public final class JoinMacroController {
       if (load_Z() && !init_Z && init_aA_CachePool().init_Z_I(init_I)) {
          init_Z = true;
          String macroName = init_Str();
-         AutismMacro macro = init_aM != null ? init_aM : MacroLibraryManager.init_aN().init_aM_Str(macroName);
+         AutismMacro macro = init_aM != null ? init_aM : MacroLibraryManager.getInstance().findByName(macroName);
          if (macro == null) {
             bi.read("Join macro missing: " + macroName);
             init_V("");
@@ -407,11 +407,11 @@ public final class JoinMacroController {
             Minecraft mc = Minecraft.getInstance();
             Runnable run = () -> {
                try {
-                  if (!macro.init_List.isEmpty()) {
-                     macro.init_V();
+                  if (!macro.actions.isEmpty()) {
+                     macro.execute();
                   }
 
-                  bi.init("Join macro: " + macro.init_Str, -13248397);
+                  bi.init("Join macro: " + macro.name, -13248397);
                } catch (Throwable t) {
                   bi.write("Join macro failed.");
                }

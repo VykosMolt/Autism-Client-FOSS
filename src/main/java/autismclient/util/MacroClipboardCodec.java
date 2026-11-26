@@ -90,12 +90,12 @@ public class MacroClipboardCodec {
          CompoundTag rootTag = new CompoundTag();
          rootTag.putInt("version", 1);
          rootTag.putString("type", "autism_macro");
-         rootTag.put("macro", macro.init_CompoundTag());
+         rootTag.put("macro", macro.toSharedTag());
          ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
          NbtIo.writeCompressed(rootTag, outputStream);
          String base64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
          Minecraft.getInstance().keyboardHandler.setClipboard(base64);
-         AutismClientAddon.LOG.info("[Autism] Copied macro '{}' to clipboard", macro.init_Str);
+         AutismClientAddon.LOG.info("[Autism] Copied macro '{}' to clipboard", macro.name);
          return true;
       } catch (Exception e) {
          AutismClientAddon.LOG.error("[Autism] Failed to copy macro to clipboard", e);
@@ -129,7 +129,7 @@ public class MacroClipboardCodec {
                ListTag macroList = new ListTag();
 
                for (AutismMacro macro : live) {
-                  macroList.add(macro.init_CompoundTag());
+                  macroList.add(macro.toSharedTag());
                }
 
                rootTag.put("macros", macroList);
@@ -154,7 +154,7 @@ public class MacroClipboardCodec {
       List<AutismMacro> copies = new ArrayList<>(macros.size());
 
       for (AutismMacro macro : macros) {
-         copies.add(macro.init_aM());
+         copies.add(macro.copy());
       }
 
       init_List = List.copyOf(copies);
@@ -179,9 +179,9 @@ public class MacroClipboardCodec {
          List<AutismMacro> out = new ArrayList<>(init_List.size());
 
          for (AutismMacro macro : init_List) {
-            AutismMacro copy = macro.init_aM();
+            AutismMacro copy = macro.copy();
             if (!init_Z) {
-               copy.load_I = -1;
+               copy.keyCode = -1;
             }
 
             out.add(copy);
@@ -245,10 +245,10 @@ public class MacroClipboardCodec {
 
       for (int i = 0; i < actionList.size(); i++) {
          if (actionList.get(i) instanceof CompoundTag actionTag) {
-            if (!AutismMacro.init_Z_Str(actionTag.getStringOr("type", ""))) {
+            if (!AutismMacro.isBuiltInActionType(actionTag.getStringOr("type", ""))) {
                dropped++;
             } else {
-               MacroAction action = AutismMacro.init_MacroAction_CompoundTag(actionTag);
+               MacroAction action = AutismMacro.deserializeAction(actionTag);
                if (action != null) {
                   action.sanitizeForSharing();
                   actions.add(action);
@@ -262,9 +262,9 @@ public class MacroClipboardCodec {
    }
 
    private static AutismMacro init_aM(CompoundTag macroTag) {
-      int dropped = AutismMacro.init_I_CompoundTag(macroTag);
-      AutismMacro macro = new AutismMacro().init_aM_CompoundTag(macroTag).load_aM();
-      macro.load_I = -1;
+      int dropped = AutismMacro.pruneUnknownActions(macroTag);
+      AutismMacro macro = new AutismMacro().fromTag(macroTag).sanitizeForSharing();
+      macro.keyCode = -1;
       init(dropped);
       return macro;
    }
@@ -297,7 +297,7 @@ public class MacroClipboardCodec {
          }
 
          AutismMacro macro = new AutismMacro();
-         macro.init_List = actions;
+         macro.actions = actions;
          return macro;
       } else {
          AutismClientAddon.LOG.warn("[Autism] Clipboard data is not a Autism macro payload");
@@ -351,7 +351,7 @@ public class MacroClipboardCodec {
          CompoundTag rootTag = new CompoundTag();
          rootTag.putInt("version", 1);
          rootTag.putString("type", "autism_macro");
-         rootTag.put("macro", macro.init_CompoundTag());
+         rootTag.put("macro", macro.toSharedTag());
          ByteArrayOutputStream out = new ByteArrayOutputStream();
          NbtIo.writeCompressed(rootTag, out);
          return Base64.getEncoder().encodeToString(out.toByteArray());
@@ -380,7 +380,7 @@ public class MacroClipboardCodec {
          }
 
          AutismMacro macro = new AutismMacro();
-         macro.init_List = actions;
+         macro.actions = actions;
          return macro;
       } else {
          return null;
@@ -411,7 +411,7 @@ public class MacroClipboardCodec {
 
             for (MacroAction action : actions) {
                if (action != null) {
-                  MacroAction copy = AutismMacro.init_MacroAction_CompoundTag(action.toTag());
+                  MacroAction copy = AutismMacro.deserializeAction(action.toTag());
                   if (copy != null) {
                      copy.sanitizeForSharing();
                      actionList.add(copy.toTag());

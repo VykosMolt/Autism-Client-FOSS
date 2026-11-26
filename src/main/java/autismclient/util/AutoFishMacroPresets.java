@@ -42,7 +42,7 @@ public final class AutoFishMacroPresets {
    }
 
    public static boolean load(AutismMacro macro) {
-      return macro != null && init_Z(macro.init_Str);
+      return macro != null && init_Z(macro.name);
    }
 
    public static AutoFishMacroPresets.Inner_DataUtil init_cL_DataUtil(String name) {
@@ -66,26 +66,26 @@ public final class AutoFishMacroPresets {
    }
 
    private static AutismMacro init(String preferredName, MacroAction firstCondition) {
-      MacroLibraryManager manager = MacroLibraryManager.init_aN();
-      AutismMacro existing = manager.init_aM_Str(preferredName);
+      MacroLibraryManager manager = MacroLibraryManager.getInstance();
+      AutismMacro existing = manager.findByName(preferredName);
       if (existing != null) {
          boolean changed = false;
          if (!init(existing)) {
-            existing.init_List.add(0, firstCondition);
+            existing.actions.add(0, firstCondition);
             changed = true;
          }
 
          changed |= read(existing);
          if (changed) {
-            manager.load_V();
+            manager.save();
          }
 
          return existing;
       } else {
-         AutismMacro macro = new AutismMacro(manager.init_Str_Str(preferredName));
-         macro.load_Str = "AutoFish stop macro";
-         macro.init_List.add(firstCondition);
-         manager.init_V_aM(macro);
+         AutismMacro macro = new AutismMacro(manager.generateUniqueName(preferredName));
+         macro.description = "AutoFish stop macro";
+         macro.actions.add(firstCondition);
+         manager.saveMacro(macro);
          return macro;
       }
    }
@@ -127,13 +127,13 @@ public final class AutoFishMacroPresets {
    }
 
    private static boolean read(AutismMacro macro) {
-      if (macro != null && macro.init_List != null) {
-         for (int i = 0; i < macro.init_List.size(); i++) {
-            MacroAction action = macro.init_List.get(i);
+      if (macro != null && macro.actions != null) {
+         for (int i = 0; i < macro.actions.size(); i++) {
+            MacroAction action = macro.actions.get(i);
             if (action != null && action.isEnabled() && RaceEligibilityChecker.init(action)) {
                int next = i + 1;
-               if (next < macro.init_List.size() && init(macro.init_List.get(next))) {
-                  macro.init_List.remove(next);
+               if (next < macro.actions.size() && init(macro.actions.get(next))) {
+                  macro.actions.remove(next);
                   return true;
                }
 

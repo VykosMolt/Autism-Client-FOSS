@@ -508,7 +508,7 @@ final class SchematicPaste {
    }
 
    private void load(String error) {
-      JsonObject cursor = AiJson.init_JsonObject_ObjArr(
+      JsonObject cursor = AiJson.objectOf(
          "operation",
          this.load_Str,
          "phase",

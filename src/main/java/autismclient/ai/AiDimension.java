@@ -102,7 +102,7 @@ final class AiDimension {
       Minecraft mc = Minecraft.getInstance();
       BlockPos origin = init_BlockPos;
       Direction axis = init_Direction;
-      if (mc.level != null && origin != null && axis != null && init_Str.equals(AiWorldIdentity.init(mc)) && load_Str.equals(init_Str()) && AiTerrain.init(mc.level, origin)) {
+      if (mc.level != null && origin != null && axis != null && init_Str.equals(AiWorldIdentity.init(mc)) && load_Str.equals(init_Str()) && AiTerrain.isLoaded(mc.level, origin)) {
          if (mc.level.getBlockState(origin).is(Blocks.NETHER_PORTAL)) {
             return 0;
          }
@@ -134,11 +134,11 @@ final class AiDimension {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiDimension.Inner_DataUtil action = init_n_DataUtil(AiJson.init_Str_JsonObject(args, "action", "enter"));
+         final AiDimension.Inner_DataUtil action = init_n_DataUtil(AiJson.getString(args, "action", "enter"));
          init_V();
-         final String target = init_Str(AiJson.init_Str_JsonObject(args, "target", "minecraft:the_nether"));
-         final boolean build = AiJson.init_Z_JsonObject(args, "build", false);
-         final int timeoutSeconds = Math.max(10, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)));
+         final String target = init_Str(AiJson.getString(args, "target", "minecraft:the_nether"));
+         final boolean build = AiJson.getBoolean(args, "build", false);
+         final int timeoutSeconds = Math.max(10, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 300)));
          final Block portalBlock = init_Map.get(target);
          if (portalBlock == null) {
             throw new IllegalArgumentException("Unknown dimension '" + target + "'; known: " + String.join(", ", init_Map.keySet()));
@@ -295,7 +295,7 @@ final class AiDimension {
                            this.write_I = 0;
                            mc.options.keyUp.setDown(false);
                            mc.options.keyJump.setDown(false);
-                           this.load_DataUtil.init_V();
+                           this.load_DataUtil.clear();
                         }
 
                         if (++this.flush_I < 40) {
@@ -421,8 +421,8 @@ final class AiDimension {
                                     this.load_BlockPos = null;
                                     return this.init("Lost the portal's plane; looking again");
                                  } else {
-                                    this.load_DataUtil.init_V_Vec3(Vec3.atCenterOf(bottom));
-                                    this.load_DataUtil.load_V();
+                                    this.load_DataUtil.aimAt(Vec3.atCenterOf(bottom));
+                                    this.load_DataUtil.tick();
                                     mc.options.keyUp.setDown(true);
                                     mc.options.keyJump.setDown(mc.player.horizontalCollision && mc.player.onGround());
                                     this.read_I = 0;
@@ -433,7 +433,7 @@ final class AiDimension {
                                     this.write_I = 0;
                                     mc.options.keyUp.setDown(false);
                                     mc.options.keyJump.setDown(false);
-                                    this.load_DataUtil.init_V();
+                                    this.load_DataUtil.clear();
                                  }
 
                                  if (this.read_I > 200 && this.read_I % 20 < 2 && mc.player.onGround()) {
@@ -504,11 +504,11 @@ final class AiDimension {
                      }
                   }
 
-                  return AiDimension.init(armor) ? null : AiJson.init_JsonObject_ObjArr("warning", "No gold armor equipped; piglins attack on sight in the nether");
+                  return AiDimension.init(armor) ? null : AiJson.objectOf("warning", "No gold armor equipped; piglins attack on sight in the nether");
                }
 
                AiOperation.Result init_AiOperation_Result_41() {
-                  int obsidian = AiGameState.init_I_Str("minecraft:obsidian");
+                  int obsidian = AiGameState.countInventoryItem("minecraft:obsidian");
                   BlockPos reused = this.init_BlockPos_18();
                   int needed = reused == null ? 10 : 10 - this.init_I(reused, this.init_Direction);
                   if (obsidian < needed) {
@@ -517,14 +517,14 @@ final class AiDimension {
                      return this.init(
                         AiOperation.Status.FAILED,
                         "A nether portal needs " + needed + " more obsidian; holding " + obsidian,
-                        AiJson.init_JsonObject_ObjArr("missing", missing)
+                        AiJson.objectOf("missing", missing)
                      );
                   }
 
-                  if (AiGameState.init_I_Str("minecraft:flint_and_steel") <= 0 && AiGameState.init_I_Str("minecraft:fire_charge") <= 0) {
+                  if (AiGameState.countInventoryItem("minecraft:flint_and_steel") <= 0 && AiGameState.countInventoryItem("minecraft:fire_charge") <= 0) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty("minecraft:flint_and_steel", 1);
-                     return this.init(AiOperation.Status.FAILED, "Nothing to light the portal with", AiJson.init_JsonObject_ObjArr("missing", missing));
+                     return this.init(AiOperation.Status.FAILED, "Nothing to light the portal with", AiJson.objectOf("missing", missing));
                   }
 
                   BlockPos site = this.init_BlockPos_18();
@@ -757,7 +757,7 @@ final class AiDimension {
                      if (!mc.level.getBlockState(this.read_BlockPos).is(Blocks.NETHER_PORTAL)
                         || this.init_BlockPos != null
                            && !this.init_n_CachePool.load()
-                           && AiServerEvidence.init_J_BlockPos(this.read_BlockPos) <= this.init_n_CachePool.init_J()) {
+                           && AiServerEvidence.blockRevision(this.read_BlockPos) <= this.init_n_CachePool.init_J()) {
                         if (this.close_I % 20 == 0 && this.push < 3) {
                            List<BlockPos> missing = this.load_List_4();
                            if (!missing.isEmpty()) {
@@ -810,7 +810,7 @@ final class AiDimension {
                               );
                            return this.init(AiOperation.Status.FAILED, "The frame is complete but the portal did not light");
                         } else {
-                           if (AiItems.read(AiItems.load_af_DataUtil("minecraft:flint_and_steel")) < 0 && AiItems.read(AiItems.load_af_DataUtil("minecraft:fire_charge")) < 0) {
+                           if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:flint_and_steel")) < 0 && AiItems.equipHotbar(AiItems.resolveItem("minecraft:fire_charge")) < 0) {
                               this.load_Z = false;
                               return this.init(AiOperation.Status.FAILED, "Lost the lighter before the portal was lit");
                            }
@@ -824,9 +824,9 @@ final class AiDimension {
                            Direction[] faces = new Direction[]{Direction.UP, Direction.UP, this.init_Direction, this.init_Direction.getOpposite()};
                            int k = Math.floorMod(this.get, 4);
                            BlockPos floor = blocks[k];
-                           this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_BlockPos_Direction(floor, faces[k]));
-                           this.init_DataUtil.load_V();
-                           BlockHitResult seen = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                           this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.aimPointForBlockFace(floor, faces[k]));
+                           this.init_DataUtil.tick();
+                           BlockHitResult seen = autismclient.ai.engine.AiAim.raycastLookBlock();
                            boolean onFace = seen != null && seen.getBlockPos().equals(floor) && seen.getDirection() == faces[k];
                            if (!onFace) {
                               if (this.tick % 10 == 9) {
@@ -860,7 +860,7 @@ final class AiDimension {
 
                               return this.init("Turning to light the portal");
                            } else {
-                              BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                              BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                               if (hit == null) {
                                  return this.init("Turning to light the portal");
                               }
@@ -868,7 +868,7 @@ final class AiDimension {
                               this.init_BlockPos = hit.getBlockPos().relative(hit.getDirection()).immutable();
                               this.init_BlockState = mc.level.getBlockState(this.init_BlockPos);
                               BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)mc.level).autism$getBlockPredictionHandler();
-                              this.init_n_CachePool.init(prediction.currentSequence(), AiServerEvidence.init_J_BlockPos(this.init_BlockPos));
+                              this.init_n_CachePool.init(prediction.currentSequence(), AiServerEvidence.blockRevision(this.init_BlockPos));
                               InteractionResult used = mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                               this.init_n_CachePool.init(prediction.currentSequence());
                               Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
@@ -908,7 +908,7 @@ final class AiDimension {
                            state.is(Blocks.NETHER_PORTAL),
                            state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE),
                            state == this.init_BlockState,
-                           AiServerEvidence.init_J_BlockPos(this.init_BlockPos),
+                           AiServerEvidence.blockRevision(this.init_BlockPos),
                            autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_n_CachePool.init_I())
                         );
                      if (!this.init_n_CachePool.init_Z() && !this.init_n_CachePool.load()) {
@@ -920,13 +920,13 @@ final class AiDimension {
                void init(BlockPos cell, Item item) {
                   if (this.init_n_BufferHelper == null || !cell.equals(this.init_DataPipe.init_BlockPos())) {
                      this.load_V_14();
-                     long before = AiServerEvidence.init_J_BlockPos(cell);
+                     long before = AiServerEvidence.blockRevision(cell);
                      this.init_DataPipe.init_V_BlockPos_Item(cell, item);
                      this.init_Block = item instanceof BlockItem block ? block.getBlock() : null;
                      this.init_n_BufferHelper = new AiDimension.Inner_BufferHelper(
                         this.init_DataPipe::init_DataPipe_DataUtil,
                         this.init_DataPipe::load_Z,
-                        () -> AiJson.init_JsonObject_ObjArr(
+                        () -> AiJson.objectOf(
                            "cell",
                            cell.toShortString(),
                            "item",
@@ -934,7 +934,7 @@ final class AiDimension {
                            "blockRevisionBefore",
                            before,
                            "blockRevisionNow",
-                           AiServerEvidence.init_J_BlockPos(cell),
+                           AiServerEvidence.blockRevision(cell),
                            "state",
                            this.init_DataPipe.load_Str(),
                            "pending",
@@ -1094,7 +1094,7 @@ final class AiDimension {
                   }
 
                   for (BlockPos support : AiDimension.read(origin, axis)) {
-                     if (!AiTerrain.init(mc.level, support)) {
+                     if (!AiTerrain.isLoaded(mc.level, support)) {
                         return false;
                      }
 
@@ -1107,7 +1107,7 @@ final class AiDimension {
                }
 
                boolean init_Z_9(BlockPos cell) {
-                  if (!AiTerrain.init(mc.level, cell)) {
+                  if (!AiTerrain.isLoaded(mc.level, cell)) {
                      return false;
                   }
 
@@ -1179,7 +1179,7 @@ final class AiDimension {
                                     cells.addAll(AiDimension.write(origin, axis));
 
                                     for (BlockPos cell : cells) {
-                                       if (!AiTerrain.init(mc.level, cell)) {
+                                       if (!AiTerrain.isLoaded(mc.level, cell)) {
                                           ok = false;
                                           break;
                                        }
@@ -1417,7 +1417,7 @@ final class AiDimension {
                }
 
                boolean update(BlockPos cell) {
-                  if (!AiTerrain.init(mc.level, cell)) {
+                  if (!AiTerrain.isLoaded(mc.level, cell)) {
                      return false;
                   }
 
@@ -1432,7 +1432,7 @@ final class AiDimension {
                   int vertical = Math.min(48, 32);
 
                   for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-48, -vertical, -48), origin.offset(48, vertical, 48))) {
-                     if (AiTerrain.init(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wanted) {
+                     if (AiTerrain.isLoaded(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wanted) {
                         double distance = mc.player.distanceToSqr(Vec3.atCenterOf(pos));
                         if (distance < bestDistance) {
                            bestDistance = distance;
@@ -1449,7 +1449,7 @@ final class AiDimension {
                }
 
                JsonObject load_JsonObject_4() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
+                  JsonObject out = AiJson.objectOf(
                      "action",
                      action.name().toLowerCase(Locale.ROOT),
                      "target",
@@ -1457,7 +1457,7 @@ final class AiDimension {
                      "dimension",
                      AiDimension.init_Str(),
                      "obsidian",
-                     AiGameState.init_I_Str("minecraft:obsidian"),
+                     AiGameState.countInventoryItem("minecraft:obsidian"),
                      "framePlaced",
                      this.init_I,
                      "frameBlocks",
@@ -1499,7 +1499,7 @@ final class AiDimension {
                      BlockPos nearest = this.init(candidate);
                      if (nearest != null) {
                         found.add(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "block",
                               BuiltInRegistries.BLOCK.getKey(candidate).toString(),
                               "x",
@@ -1571,8 +1571,8 @@ final class AiDimension {
                   if (!this.write_Z) {
                      this.read_V_9();
                      this.write_Z = true;
-                     this.init_DataUtil.init_V();
-                     this.load_DataUtil.init_V();
+                     this.init_DataUtil.clear();
+                     this.load_DataUtil.clear();
                      if (this.write_I > 0 && mc.options != null) {
                         mc.options.keyUp.setDown(false);
                         mc.options.keyJump.setDown(false);
@@ -1710,7 +1710,7 @@ final class AiDimension {
             return new AiOperation.Result(
                ++this.init_I > 120 ? AiOperation.Status.TIMED_OUT : AiOperation.Status.RUNNING,
                "Waiting for the portal frame placement acknowledgement",
-               AiJson.init_JsonObject_ObjArr("placementReceipt", this.load_Supplier.get()).toString(),
+               AiJson.objectOf("placementReceipt", this.load_Supplier.get()).toString(),
                List.of()
             );
          }
@@ -1722,7 +1722,7 @@ final class AiDimension {
                ? AiOperation.Status.RUNNING
                : (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED),
             status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED ? this.read.get() : "Portal frame placement",
-            AiJson.init_JsonObject_ObjArr("placementReceipt", this.load_Supplier.get()).toString(),
+            AiJson.objectOf("placementReceipt", this.load_Supplier.get()).toString(),
             List.of()
          );
       }
@@ -1801,7 +1801,7 @@ final class AiDimension {
       }
 
       JsonObject init_JsonObject() {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "beforeSequence", this.init_I, "sentSequence", this.load, "blockRevisionBefore", this.init_J, "pending", this.init_Z, "outcome", this.init_Str
          );
       }
@@ -1840,8 +1840,8 @@ final class AiDimension {
             return false;
          }
 
-         JsonObject data = AiRunResources.init_JsonObject(result.dataJson());
-         return AiJson.init_Z_JsonObject(data, "interruptedActionNeedsReconciliation", false) || AiJson.init_Z_JsonObject(data, "reobserveBeforeResuming", false);
+         JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
+         return AiJson.getBoolean(data, "interruptedActionNeedsReconciliation", false) || AiJson.getBoolean(data, "reobserveBeforeResuming", false);
       }
 
       private void init_V_AiOperation(AiOperation child, boolean unresolved, AiOperation.Result actual) {
@@ -1879,19 +1879,19 @@ final class AiDimension {
 
       void init_V_JsonObject(JsonObject data) {
          if (this.init_AiOperation_Result != null) {
-            data.add("dimensionChild", AiRunResources.load_JsonObject(this.init_AiOperation_Result.dataJson()));
+            data.add("dimensionChild", AiRunResources.compactEvidenceJson(this.init_AiOperation_Result.dataJson()));
             data.addProperty("dimensionChildStatus", this.init_AiOperation_Result.status().name());
          }
 
          if (this.load != null) {
-            data.add("pendingChild", AiRunResources.load_JsonObject(this.load.dataJson()));
+            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.load.dataJson()));
             data.addProperty("pendingChildStatus", this.load.status().name());
             data.addProperty("pendingChildFailure", this.load.failure().name());
          }
       }
 
       AiOperation.Result init_AiOperation_Result_AiOperation_Result_Z(AiOperation.Result boundary, boolean interactionPending) {
-         JsonObject data = AiRunResources.init_JsonObject(boundary.dataJson());
+         JsonObject data = AiRunResources.parseEvidenceJson(boundary.dataJson());
          this.init_V_JsonObject(data);
          AiOperation.Result actual = this.init_AiOperation_Result != null ? this.init_AiOperation_Result : this.load;
          AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(

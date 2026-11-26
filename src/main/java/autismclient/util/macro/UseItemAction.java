@@ -27,9 +27,9 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.getConnection() != null) {
          MacroItemTarget target = this.init_ArrayUtil_3();
-         target = target.init_ArrayUtil_Minecraft(mc);
+         target = target.resolveTemplates(mc);
          if (target != null) {
-            if (target.init_Z() || target.update()) {
+            if (target.hasSlot() || target.hasItemFilter()) {
                autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, target, mc.player.getInventory().getSelectedSlot());
             }
 
@@ -54,8 +54,8 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "USE_ITEM");
       MacroItemTarget target = this.init_ArrayUtil_3();
-      if (target.init_Z() || target.update()) {
-         tag.put("itemName", target.init_CompoundTag());
+      if (target.hasSlot() || target.hasItemFilter()) {
+         tag.put("itemName", target.toTag());
       }
 
       if (this.slot >= 0) {
@@ -77,11 +77,11 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    @Override
    public void fromTag(CompoundTag tag) {
       this.itemTarget = tag.getCompound("itemName")
-         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("itemName", "")));
-      this.slot = tag.contains("slot") ? Math.max(-1, tag.getIntOr("slot", -1)) : this.itemTarget.init_I;
-      this.itemTarget.init_I = -1;
-      this.itemName = this.itemTarget.write_Str();
+         .map(MacroItemTarget::fromTag)
+         .orElseGet(() -> MacroItemTarget.parse(tag.getStringOr("itemName", "")));
+      this.slot = tag.contains("slot") ? Math.max(-1, tag.getIntOr("slot", -1)) : this.itemTarget.slot;
+      this.itemTarget.slot = -1;
+      this.itemName = this.itemTarget.toSpecString();
       if (tag.contains("useMode")) {
          String modeName = tag.getStringOr("useMode", "AUTOMATIC");
          if ("INSTANT".equals(modeName)) {
@@ -155,7 +155,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    @Override
    public String getDisplayName() {
       MacroItemTarget target = this.init_ArrayUtil_3();
-      String item = !target.init_Z() && !target.update() ? "current" : target.load_Str();
+      String item = !target.hasSlot() && !target.hasItemFilter() ? "current" : target.formatSummary();
       String count = this.useCount > 1 ? " x" + this.useCount : "";
       String wait = this.waitForFinish ? ", wait" : "";
       String sneakLabel = this.sneak ? ", sneak" : "";
@@ -181,12 +181,12 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    }
 
    private MacroItemTarget init_ArrayUtil_3() {
-      MacroItemTarget target = this.itemTarget != null ? this.itemTarget.init_ArrayUtil() : MacroItemTarget.update(this.itemName);
-      if (!target.init_Z() && !target.update()) {
-         target = MacroItemTarget.update(this.itemName);
+      MacroItemTarget target = this.itemTarget != null ? this.itemTarget.copy() : MacroItemTarget.parse(this.itemName);
+      if (!target.hasSlot() && !target.hasItemFilter()) {
+         target = MacroItemTarget.parse(this.itemName);
       }
 
-      target.init_I = this.slot;
+      target.slot = this.slot;
       return target;
    }
 

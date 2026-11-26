@@ -56,7 +56,7 @@ public final class AiCatalog {
 
             for (Setting<?, ?> s : m.settings()) {
                settings.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "id",
                      s.id(),
                      "label",
@@ -84,7 +84,7 @@ public final class AiCatalog {
                }
             }
 
-            String schema = AiJson.init_JsonObject_ObjArr(
+            String schema = AiJson.objectOf(
                   "enabled",
                   "boolean, optional",
                   "settings",
@@ -109,7 +109,7 @@ public final class AiCatalog {
                List.of("MODULES"),
                "Module activation and setting readback match the requested values; gameplay outcomes require separate observations.",
                "Inspect current state and availability after rejection. Do not repeatedly enable a self-disabling module.",
-               AiJson.init_JsonObject_ObjArr("capability", "module:" + m.id(), "arguments", AiJson.init_JsonObject_ObjArr("enabled", true)).toString(),
+               AiJson.objectOf("capability", "module:" + m.id(), "arguments", AiJson.objectOf("enabled", true)).toString(),
                m.settingsShareable() && !m.id().equals("ai-assistant")
                   ? AiCapabilityDescriptor.Classification.CONFIGURE
                   : AiCapabilityDescriptor.Classification.DISCOVER_ONLY
@@ -120,7 +120,7 @@ public final class AiCatalog {
          for (MacroActionType type : MacroActionType.values()) {
             CompoundTag tag = new CompoundTag();
             tag.putString("type", type.name());
-            MacroAction action = autismclient.util.AutismMacro.init_MacroAction_CompoundTag(tag);
+            MacroAction action = autismclient.util.AutismMacro.deserializeAction(tag);
             if (action == null) {
                throw new IllegalStateException("Built-in macro type has no catalog adapter: " + type.name());
             }
@@ -196,7 +196,7 @@ public final class AiCatalog {
             }
          }
 
-         this.init_AiCatalog_Snapshot = new AiCatalog.Snapshot(AiJson.init_Str_Str(AiJson.init.toJson(unique)), unique);
+         this.init_AiCatalog_Snapshot = new AiCatalog.Snapshot(AiJson.sha256Hex(AiJson.GSON.toJson(unique)), unique);
          this.init_J = source;
       }
    }
@@ -218,20 +218,20 @@ public final class AiCatalog {
 
       for (String form : shown) {
          if (!form.contains("<")) {
-            calls.add(AiJson.init_JsonObject_ObjArr("capability", "command:" + name, "arguments", AiJson.init_JsonObject_ObjArr("body", form)));
+            calls.add(AiJson.objectOf("capability", "command:" + name, "arguments", AiJson.objectOf("body", form)));
          }
       }
 
       if (calls.isEmpty()) {
-         calls.add(AiJson.init_JsonObject_ObjArr("capability", "command:" + name, "arguments", AiJson.init_JsonObject_ObjArr("body", shown.get(0))));
+         calls.add(AiJson.objectOf("capability", "command:" + name, "arguments", AiJson.objectOf("body", shown.get(0))));
       }
 
-      String schema = AiJson.init_JsonObject_ObjArr(
+      String schema = AiJson.objectOf(
             "type",
             "object",
             "properties",
-            AiJson.init_JsonObject_ObjArr(
-               "body", AiJson.init_JsonObject_ObjArr("type", "string", "description", "Chat line without the client prefix. Forms: " + syntax)
+            AiJson.objectOf(
+               "body", AiJson.objectOf("type", "string", "description", "Chat line without the client prefix. Forms: " + syntax)
             )
          )
          .toString();
@@ -247,18 +247,18 @@ public final class AiCatalog {
          List.of("NETWORK", "WORLD_ACTION"),
          "SUCCEEDED means the client parsed and ran the line; data.replies[] holds the command's own chat replies (a red reply FAILS the call with its text). Read them for the outcome instead of re-observing.",
          "A parse FAILURE lists every accepted form: fix the body and perform again. Never repeat a refused line unchanged.",
-         AiJson.init_JsonObject_ObjArr("note", "replace <placeholders> with values", "calls", calls).toString(),
+         AiJson.objectOf("note", "replace <placeholders> with values", "calls", calls).toString(),
          AiCapabilityDescriptor.Classification.ACTION
       );
    }
 
    static void init(List<AiCatalog.Entry> entries, String id, MacroAction action, ActionFieldSchema schema, String owner, String tip) {
-      String defaults = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action)).toString();
-      String fields = AiJson.init_JsonObject_ObjArr(
+      String defaults = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.serializeAction(action)).toString();
+      String fields = AiJson.objectOf(
             "fields",
             schema == null ? List.of() : schema.fields(),
             "serializedDefaults",
-            AiJson.init_JsonObject_Str(defaults),
+            AiJson.parseObject(defaults),
             "dynamicBindings",
             "Optional _dynamicBindings object maps schema fields marked dynamic to native {variable} templates. Keep typed fallback values in ordinary fields."
          )
@@ -431,7 +431,7 @@ public final class AiCatalog {
    }
 
    private static void init(List<AiCatalog.Entry> entries, AiCapabilityDescriptor d, String defaults, String dependency) {
-      entries.add(new AiCatalog.Entry(d, AiJson.init_Str_Str(AiJson.init.toJson(d) + defaults + dependency), defaults));
+      entries.add(new AiCatalog.Entry(d, AiJson.sha256Hex(AiJson.GSON.toJson(d) + defaults + dependency), defaults));
    }
 
    public record Entry(AiCapabilityDescriptor contract, String fingerprint, String defaultsJson) {

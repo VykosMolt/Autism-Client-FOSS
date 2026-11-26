@@ -50,7 +50,7 @@ final class AiClipboard {
       }
 
       try {
-         AiJson.init_V_Path_Obj(directory.resolve(name + ".json"), init(cells));
+         AiJson.writeAtomicJson(directory.resolve(name + ".json"), init(cells));
       } catch (IOException e) {
          throw new IllegalStateException("Could not persist clipboard \"" + name + "\": " + e.getMessage(), e);
       }
@@ -76,7 +76,7 @@ final class AiClipboard {
             throw new IllegalArgumentException("Clipboard \"" + name + "\" exceeds the supported size");
          }
 
-         cells = init(AiJson.init_JsonObject_Str(Files.readString(file)));
+         cells = init(AiJson.parseObject(Files.readString(file)));
       } catch (IllegalArgumentException e) {
          throw e;
       } catch (Exception e) {
@@ -107,7 +107,7 @@ final class AiClipboard {
       JsonArray array = new JsonArray();
 
       for (AiBuilder.CellSpec cell : cells) {
-         JsonObject entry = AiJson.init_JsonObject_ObjArr("dx", cell.dx(), "dy", cell.dy(), "dz", cell.dz(), "block", cell.block());
+         JsonObject entry = AiJson.objectOf("dx", cell.dx(), "dy", cell.dy(), "dz", cell.dz(), "block", cell.block());
          if (!cell.properties().isEmpty()) {
             JsonObject properties = new JsonObject();
             cell.properties().forEach(properties::addProperty);
@@ -117,11 +117,11 @@ final class AiClipboard {
          array.add(entry);
       }
 
-      return AiJson.init_JsonObject_ObjArr("version", 1, "cells", array);
+      return AiJson.objectOf("version", 1, "cells", array);
    }
 
    static List<AiBuilder.CellSpec> init(JsonObject root) {
-      if (AiJson.init_I_JsonObject(root, "version", 0) != 1) {
+      if (AiJson.getInt(root, "version", 0) != 1) {
          throw new IllegalArgumentException("Unsupported clipboard version");
       }
 
@@ -136,14 +136,14 @@ final class AiClipboard {
          for (int i = 0; i < array.size(); i++) {
             JsonObject entry = array.get(i).getAsJsonObject();
             String context = "cells[" + i + "]";
-            int dx = AiJson.init_I_JsonObject(entry, "dx", 0);
-            int dy = AiJson.init_I_JsonObject(entry, "dy", 0);
-            int dz = AiJson.init_I_JsonObject(entry, "dz", 0);
+            int dx = AiJson.getInt(entry, "dx", 0);
+            int dy = AiJson.getInt(entry, "dy", 0);
+            int dz = AiJson.getInt(entry, "dz", 0);
             if (Math.abs(dx) > 256 || Math.abs(dy) > 256 || Math.abs(dz) > 256) {
                throw new IllegalArgumentException(context + " offsets must be within +/-256");
             }
 
-            String block = AiJson.init_Str_JsonObject(entry, "block", "");
+            String block = AiJson.getString(entry, "block", "");
             Identifier id = Identifier.tryParse(block);
             Block blockObj = id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
             if (blockObj == null) {

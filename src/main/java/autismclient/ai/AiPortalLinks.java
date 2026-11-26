@@ -65,10 +65,10 @@ final class AiPortalLinks {
                   for (JsonElement entry : stored) {
                      try {
                         JsonObject saved = entry.getAsJsonObject();
-                        String from = AiJson.init_Str_JsonObject(saved, "fromDimension", "");
-                        String to = AiJson.init_Str_JsonObject(saved, "toDimension", "");
-                        BlockPos entrance = init_BlockPos(AiJson.init_Str_JsonObject(saved, "entrance", ""));
-                        BlockPos arrival = init_BlockPos(AiJson.init_Str_JsonObject(saved, "arrival", ""));
+                        String from = AiJson.getString(saved, "fromDimension", "");
+                        String to = AiJson.getString(saved, "toDimension", "");
+                        BlockPos entrance = init_BlockPos(AiJson.getString(saved, "entrance", ""));
+                        BlockPos arrival = init_BlockPos(AiJson.getString(saved, "arrival", ""));
                         if (entrance != null
                            && arrival != null
                            && !from.isEmpty()
@@ -95,7 +95,7 @@ final class AiPortalLinks {
                                  -1L,
                                  saved.has("observedAtMs") ? saved.get("observedAtMs").getAsLong() : 0L,
                                  true,
-                                 AiJson.init_Z_JsonObject(saved, "safeAtObservation", false),
+                                 AiJson.getBoolean(saved, "safeAtObservation", false),
                                  before.deepCopy(),
                                  after.deepCopy()
                               )
@@ -149,7 +149,7 @@ final class AiPortalLinks {
          );
          AiRunTrace.init_V_Str_JsonObject(
             "portal_link",
-            AiJson.init_JsonObject_ObjArr("from", from, "entrance", entrance.toShortString(), "to", to, "arrival", arrival.toShortString(), "safe", safe)
+            AiJson.objectOf("from", from, "entrance", entrance.toShortString(), "to", to, "arrival", arrival.toShortString(), "safe", safe)
          );
          init_List.sort(Comparator.comparingLong(AiPortalLinks.Inner_DataUtil::observedAtMillis));
 
@@ -170,7 +170,7 @@ final class AiPortalLinks {
          BlockPos seed = null;
 
          for (BlockPos p : BlockPos.betweenClosed(near.offset(-3, -3, -3), near.offset(3, 3, 3))) {
-            if (AiTerrain.init(mc.level, p) && mc.level.getBlockState(p).is(Blocks.NETHER_PORTAL)) {
+            if (AiTerrain.isLoaded(mc.level, p) && mc.level.getBlockState(p).is(Blocks.NETHER_PORTAL)) {
                seed = p.immutable();
                break;
             }
@@ -182,7 +182,7 @@ final class AiPortalLinks {
             boolean partial = false;
 
             for (BlockPos p : BlockPos.betweenClosed(near.offset(-3, -3, -3), near.offset(3, 3, 3))) {
-               if (!AiTerrain.init(mc.level, p)) {
+               if (!AiTerrain.isLoaded(mc.level, p)) {
                   partial = true;
                } else if (mc.level.getBlockState(p).is(Blocks.END_PORTAL)) {
                   active++;
@@ -192,7 +192,7 @@ final class AiPortalLinks {
                }
             }
 
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "observed",
                endPortal != null,
                "kind",
@@ -225,7 +225,7 @@ final class AiPortalLinks {
 
             while (!queue.isEmpty() && cells.size() < 441) {
                BlockPos cell = queue.removeFirst();
-               if (!AiTerrain.init(mc.level, cell)) {
+               if (!AiTerrain.isLoaded(mc.level, cell)) {
                   partial = true;
                } else {
                   BlockState state = mc.level.getBlockState(cell);
@@ -259,7 +259,7 @@ final class AiPortalLinks {
                         BlockPos border = axis == Axis.X
                            ? new BlockPos(minX + horizontal, minY + vertical, minZ)
                            : new BlockPos(minX, minY + vertical, minZ + horizontal);
-                        if (!AiTerrain.init(mc.level, border)) {
+                        if (!AiTerrain.isLoaded(mc.level, border)) {
                            frameComplete = false;
                            partial = true;
                         } else if (!mc.level.getBlockState(border).is(Blocks.OBSIDIAN)) {
@@ -272,7 +272,7 @@ final class AiPortalLinks {
 
             BlockPos frameMin = axis == Axis.X ? new BlockPos(minX - 1, minY - 1, minZ) : new BlockPos(minX, minY - 1, minZ - 1);
             BlockPos frameMax = axis == Axis.X ? new BlockPos(maxX + 1, maxY + 1, maxZ) : new BlockPos(maxX, maxY + 1, maxZ + 1);
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "observed",
                true,
                "dimension",
@@ -300,7 +300,7 @@ final class AiPortalLinks {
             );
          }
       } else {
-         return AiJson.init_JsonObject_ObjArr("observed", false);
+         return AiJson.objectOf("observed", false);
       }
    }
 
@@ -320,7 +320,7 @@ final class AiPortalLinks {
          return "there is lava at the player's feet";
       } else if (mc.player.isInWall()) {
          return "the player is suffocating inside a block";
-      } else if (!AiTerrain.init(mc.level, mc.player.blockPosition())) {
+      } else if (!AiTerrain.isLoaded(mc.level, mc.player.blockPosition())) {
          return "arrival terrain is unavailable";
       } else if (AiEndRun.init_Z(mc) || mc.player.isOnFire()) {
          return "the arrival is burning";
@@ -339,7 +339,7 @@ final class AiPortalLinks {
       Double targetScale = init_Map.get(to);
       if (sourceScale != null && targetScale != null && Double.isFinite(sourceScale) && Double.isFinite(targetScale) && !(targetScale <= 0.0)) {
          double factor = sourceScale / targetScale;
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "available",
             true,
             "x",
@@ -360,7 +360,7 @@ final class AiPortalLinks {
             true
          );
       } else {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "available",
             false,
             "verified",
@@ -384,7 +384,7 @@ final class AiPortalLinks {
       init_V();
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null && mc.level != null
-         ? init(load(), AiWorldIdentity.load(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.init(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
+         ? init(load(), AiWorldIdentity.load(mc), mc.player.blockPosition(), radius, at -> !AiTerrain.isLoaded(mc.level, at) || mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL))
          : null;
    }
 
@@ -401,15 +401,15 @@ final class AiPortalLinks {
             JsonObject record = entry.getAsJsonObject();
 
             for (String side : List.of("entrance", "arrival")) {
-               if (dimension.equals(AiJson.init_Str_JsonObject(record, side.equals("entrance") ? "fromDimension" : "toDimension", ""))
+               if (dimension.equals(AiJson.getString(record, side.equals("entrance") ? "fromDimension" : "toDimension", ""))
                   && record.has(side + "Evidence")
                   && record.get(side + "Evidence").isJsonObject()) {
                   JsonObject evidence = record.getAsJsonObject(side + "Evidence");
-                  if (AiJson.init_Z_JsonObject(evidence, "observed", false)
-                     && AiJson.init_Z_JsonObject(evidence, "interiorRectangle", false)
-                     && AiJson.init_I_JsonObject(evidence, "activeCells", 0) >= 6
-                     && !AiJson.init_Z_JsonObject(evidence, "partialCoverage", true)) {
-                     BlockPos at = init_BlockPos(AiJson.init_Str_JsonObject(evidence, "interiorMin", ""));
+                  if (AiJson.getBoolean(evidence, "observed", false)
+                     && AiJson.getBoolean(evidence, "interiorRectangle", false)
+                     && AiJson.getInt(evidence, "activeCells", 0) >= 6
+                     && !AiJson.getBoolean(evidence, "partialCoverage", true)) {
+                     BlockPos at = init_BlockPos(AiJson.getString(evidence, "interiorMin", ""));
                      if (at != null && at.distSqr(origin) <= distance && accepted.test(at)) {
                         best = at;
                         distance = at.distSqr(origin);
@@ -429,7 +429,7 @@ final class AiPortalLinks {
 
       for (AiPortalLinks.Inner_DataUtil link : init_List) {
          out.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "fromDimension",
                link.fromDimension,
                "entrance",

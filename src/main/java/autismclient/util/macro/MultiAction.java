@@ -27,7 +27,7 @@ public class MultiAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.put("accounts", MacroNbtCodecHelper.init(this.init_List_12()));
+      tag.put("accounts", MacroNbtCodecHelper.toStringListTag(this.init_List_12()));
       tag.putInt("stepCount", Math.max(0, this.stepCount));
       tag.putBoolean("connectIfDown", this.connectIfDown);
       tag.putBoolean("disconnectAfter", this.disconnectAfter);
@@ -38,7 +38,7 @@ public class MultiAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.accounts = MacroNbtCodecHelper.init(tag.getList("accounts").orElse(new ListTag()));
+      this.accounts = MacroNbtCodecHelper.fromStringListTag(tag.getList("accounts").orElse(new ListTag()));
       this.accounts.removeIf(s -> s == null || s.isBlank());
       this.accountIds = new LinkedHashSet<>();
 

@@ -23,17 +23,17 @@ final class AiTerrain {
    private AiTerrain() {
    }
 
-   static boolean init(ClientLevel level, BlockPos position) {
+   static boolean isLoaded(ClientLevel level, BlockPos position) {
       return level != null
          && level.isInsideBuildHeight(position)
          && level.getChunkSource().getChunk(position.getX() >> 4, position.getZ() >> 4, ChunkStatus.FULL, false) != null;
    }
 
-   static List<BlockPos> init(Minecraft mc, Block block, int radius, int vertical) {
-      return init(mc, block, radius, vertical, false);
+   static List<BlockPos> findFluidSources(Minecraft mc, Block block, int radius, int vertical) {
+      return findFluidSources(mc, block, radius, vertical, false);
    }
 
-   static List<BlockPos> init(Minecraft mc, Block block, int radius, int vertical, boolean separateShores) {
+   static List<BlockPos> findFluidSources(Minecraft mc, Block block, int radius, int vertical, boolean separateShores) {
       if (mc.player != null && mc.level != null) {
          BlockPos origin = mc.player.blockPosition();
          int low = Math.max(mc.level.getMinY(), origin.getY() - vertical);
@@ -78,7 +78,7 @@ final class AiTerrain {
                            if (sites == null) {
                               result.add(new BlockPos(wx, wy, wz));
                            } else {
-                              sites.init(wx, wy, wz);
+                              sites.record(wx, wy, wz);
                            }
                         }
                      }
@@ -92,7 +92,7 @@ final class AiTerrain {
          }
 
          if (sites != null) {
-            return sites.init(64);
+            return sites.closest(64);
          }
 
          result.sort(Comparator.comparingDouble(origin::distSqr));
@@ -102,11 +102,11 @@ final class AiTerrain {
       }
    }
 
-   static double init(Minecraft mc, Collection<Block> blocks, int radius) {
-      return init(mc, blocks, radius, pos -> true);
+   static double nearestBlockDistSqr(Minecraft mc, Collection<Block> blocks, int radius) {
+      return nearestBlockDistSqr(mc, blocks, radius, pos -> true);
    }
 
-   static double init(Minecraft mc, Collection<Block> blocks, int radius, Predicate<BlockPos> accept) {
+   static double nearestBlockDistSqr(Minecraft mc, Collection<Block> blocks, int radius, Predicate<BlockPos> accept) {
       if (mc.player != null && mc.level != null && !blocks.isEmpty()) {
          Set<Block> wanted = Collections.newSetFromMap(new IdentityHashMap<>());
          wanted.addAll(blocks);
@@ -183,26 +183,26 @@ final class AiTerrain {
    }
 
    static final class Inner_CachePool {
-      final BlockPos init_BlockPos;
-      final Map<Long, BlockPos> init_Map = new HashMap<>();
+      final BlockPos origin;
+      final Map<Long, BlockPos> nearestPerCell = new HashMap<>();
 
       Inner_CachePool(BlockPos origin) {
-         this.init_BlockPos = origin;
+         this.origin = origin;
       }
 
-      void init(int x, int y, int z) {
+      void record(int x, int y, int z) {
          long key = BlockPos.asLong(x >> 3, y >> 3, z >> 3);
-         BlockPos old = this.init_Map.get(key);
-         double dx = x - this.init_BlockPos.getX();
-         double dy = y - this.init_BlockPos.getY();
-         double dz = z - this.init_BlockPos.getZ();
-         if (old == null || dx * dx + dy * dy + dz * dz < this.init_BlockPos.distSqr(old)) {
-            this.init_Map.put(key, new BlockPos(x, y, z));
+         BlockPos old = this.nearestPerCell.get(key);
+         double dx = x - this.origin.getX();
+         double dy = y - this.origin.getY();
+         double dz = z - this.origin.getZ();
+         if (old == null || dx * dx + dy * dy + dz * dz < this.origin.distSqr(old)) {
+            this.nearestPerCell.put(key, new BlockPos(x, y, z));
          }
       }
 
-      List<BlockPos> init(int limit) {
-         return this.init_Map.values().stream().sorted(Comparator.comparingDouble(this.init_BlockPos::distSqr)).limit(limit).toList();
+      List<BlockPos> closest(int limit) {
+         return this.nearestPerCell.values().stream().sorted(Comparator.comparingDouble(this.origin::distSqr)).limit(limit).toList();
       }
    }
 }

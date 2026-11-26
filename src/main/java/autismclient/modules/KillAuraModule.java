@@ -965,7 +965,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (this.read_InteractionHand != null) {
          int tick = AutismSessionState.init_ck().state_I();
          long age = (long)tick - this.pool;
-         if (!AutismLiteVariant.enabled() && FreecamController.write()) {
+         if (!AutismLiteVariant.enabled() && FreecamController.isAiControllingBody()) {
             this.open_V_4();
          } else if (!this.pop_Z_2()
             || !this.init_Z_Z_3(true)
@@ -1451,7 +1451,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          && (bedBudget ? this.next() : this.get_Z_2())
          && (bedBudget || this.level != AutismSessionState.init_ck().state_I())
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())

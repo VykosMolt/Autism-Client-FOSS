@@ -178,7 +178,7 @@ public abstract class AutismMouseHandlerMixin {
 
       if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          ci.cancel();
-      } else if (FreecamController.init_Z_D(yOffset)) {
+      } else if (FreecamController.handleMouseScroll(yOffset)) {
          ci.cancel();
       } else {
          if (!AutismLiteVariant.enabled()) {

@@ -181,7 +181,7 @@ public final class AiRestock {
    public static int init(Item item) {
       int held = System.nanoTime() < update_J ? init_Map.getOrDefault(item, 0) : 0;
       if (!AutismLiteVariant.enabled()) {
-         held = Math.max(held, AiRunResources.load(item));
+         held = Math.max(held, AiRunResources.mandatoryReservedCount(item));
       }
 
       return held;
@@ -312,7 +312,7 @@ public final class AiRestock {
             ItemStack stack = mc.player.getInventory().getItem(hotbarSlot);
             return !stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId);
          }
-      }, () -> mc.player == null ? -1L : AiServerEvidence.init_J_I(mc.player.containerMenu.containerId), System::nanoTime);
+      }, () -> mc.player == null ? -1L : AiServerEvidence.containerRevision(mc.player.containerMenu.containerId), System::nanoTime);
    }
 
    public AiRestock(AiRestock.Inner_StreamUtil slots, LongSupplier inventoryRevision, LongSupplier clock) {

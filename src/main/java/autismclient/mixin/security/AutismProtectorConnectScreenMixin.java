@@ -33,7 +33,7 @@ public abstract class AutismProtectorConnectScreenMixin {
    )
    private void autism$associatePreSrvOrigin(DownloadedPackSource source, Connection connection, PackPromptStatus status, Operation<Void> original) {
       ServerPackManager manager = ((AutismDownloadedPackSourceAccessor)source).autism$manager();
-      ConnectionPrivacyRegistry.init(
+      ConnectionPrivacyRegistry.bindServerContext(
          connection,
          this.val$hostAndPort.getHost(),
          this.val$hostAndPort.getPort(),

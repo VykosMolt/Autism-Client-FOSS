@@ -84,7 +84,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       ConnectionPrivacyRegistry.ProxyEndpoint connectionProxy = snapshot.init_BufferHelper_Confi();
       this.init_Proxy = connectionProxy == null
          ? (proxy == null ? Proxy.NO_PROXY : proxy)
-         : new Proxy(Type.SOCKS, InetSocketAddress.createUnresolved(connectionProxy.init_Str(), connectionProxy.init_I()));
+         : new Proxy(Type.SOCKS, InetSocketAddress.createUnresolved(connectionProxy.host(), connectionProxy.port()));
       this.init_TextFormat_StreamU = Objects.requireNonNull(resolver, "resolver");
       this.init_RenderState_NetHel = Objects.requireNonNull(socketFactory, "socketFactory");
       this.init_RenderState_SyncMa = Objects.requireNonNull(tlsFactory, "tlsFactory");
@@ -526,8 +526,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.init_UiHelper_BufferHel.init_BufferHelper_Confi();
       if (frozen == null
          || route.init_Z()
-            && frozen.init_I() == route.init_TextFormat_CachePo().init_I()
-            && frozen.init_Str().equalsIgnoreCase(route.init_TextFormat_CachePo().load())) {
+            && frozen.port() == route.init_TextFormat_CachePo().init_I()
+            && frozen.host().equalsIgnoreCase(route.init_TextFormat_CachePo().load())) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.init_UiHelper_BufferHel, route) : null;
          byte[] username = null;
          byte[] password = null;
@@ -535,13 +535,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
          try {
             if (frozen != null) {
-               username = frozen.load().getBytes(StandardCharsets.UTF_8);
-               password = frozen.read().getBytes(StandardCharsets.UTF_8);
-               if (username.length > 255 || password.length > 255 || frozen.load().indexOf(0) >= 0) {
+               username = frozen.username().getBytes(StandardCharsets.UTF_8);
+               password = frozen.password().getBytes(StandardCharsets.UTF_8);
+               if (username.length > 255 || password.length > 255 || frozen.username().indexOf(0) >= 0) {
                   throw new IOException("Invalid connection proxy credentials");
                }
 
-               if (frozen.init_bZ() == ProxyProtocolType.Socks4) {
+               if (frozen.type() == ProxyProtocolType.Socks4) {
                   byte[] address = target.init_List().getFirst().getAddress();
                   if (address.length != 4) {
                      throw new IOException("SOCKS4 resource packs require an IPv4 target");

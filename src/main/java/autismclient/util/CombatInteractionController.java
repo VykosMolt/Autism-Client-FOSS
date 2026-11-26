@@ -87,7 +87,7 @@ public final class CombatInteractionController {
          && mc.gui.screen() == null
          && mc.gui.overlay() == null
          && !autismclient.modules.aD.init_Z()
-         && !autismclient.modules.FreecamController.init_Z()
+         && !autismclient.modules.FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
@@ -336,7 +336,7 @@ public final class CombatInteractionController {
          && !autismclient.modules.ScaffoldModule.init_Z_26()
          && !f.load()
          && !autismclient.modules.aD.init_Z()
-         && !autismclient.modules.FreecamController.init_Z()
+         && !autismclient.modules.FreecamController.isActive()
          && !RemoteViewController.init_Z()) {
          AutismSessionState state = AutismSessionState.init_ck();
          return !state.frame() && !state.pool();

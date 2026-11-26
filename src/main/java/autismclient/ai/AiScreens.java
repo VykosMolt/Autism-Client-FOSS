@@ -178,7 +178,7 @@ final class AiScreens {
          throw new IllegalArgumentException("No screen is open");
       }
 
-      boolean sendPacket = AiJson.init_Z_JsonObject(args, "sendPacket", true);
+      boolean sendPacket = AiJson.getBoolean(args, "sendPacket", true);
       String title = init(screen.getTitle() == null ? screen.getClass().getSimpleName() : screen.getTitle().getString(), 256);
       boolean closed = sendPacket ? autismclient.util.GuiDesyncHelper.init(mc, true, false) : autismclient.util.GuiDesyncHelper.read(mc, false);
       if (!closed) {
@@ -195,7 +195,7 @@ final class AiScreens {
 
    static JsonObject read(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
-      String action = AiJson.init_Str_JsonObject(args, "action", "save").trim().toLowerCase(Locale.ROOT);
+      String action = AiJson.getString(args, "action", "save").trim().toLowerCase(Locale.ROOT);
       switch (action) {
          case "save":
             if (mc.gui.screen() == null) {
@@ -225,7 +225,7 @@ final class AiScreens {
 
    static JsonObject write(JsonObject args) {
       String text = init_Str(args);
-      boolean append = AiJson.init_Z_JsonObject(args, "append", false);
+      boolean append = AiJson.getBoolean(args, "append", false);
       Minecraft mc = Minecraft.getInstance();
       AiScreens.Inner_DataUtil live = init_bY_DataUtil(mc);
       int position = init(live.infos(), args);
@@ -246,7 +246,7 @@ final class AiScreens {
          }
 
          JsonObject out = init_JsonObject(mc);
-         out.add("typed", AiJson.init_JsonObject_ObjArr("index", position, "value", init(box.getValue(), 256), "truncated", !box.getValue().equals(requested)));
+         out.add("typed", AiJson.objectOf("index", position, "value", init(box.getValue(), 256), "truncated", !box.getValue().equals(requested)));
          return out;
       } else {
          throw new IllegalArgumentException("Widget " + position + " (" + live.infos().get(position).type() + ") is not a text field");
@@ -270,7 +270,7 @@ final class AiScreens {
 
          int matchIndex;
          if (hasIndex) {
-            matchIndex = AiJson.init_I_JsonObject(args, "index", -1);
+            matchIndex = AiJson.getInt(args, "index", -1);
             if (matchIndex < 0 || matchIndex >= size) {
                throw new IllegalArgumentException("Server index " + matchIndex + " out of range; " + size + " servers (0.." + (size - 1) + ")");
             }
@@ -316,7 +316,7 @@ final class AiScreens {
 
    static AiOperation init_AiOperation(JsonObject args) {
       final String address = load_Str(args);
-      String name = init(AiJson.init_Str_JsonObject(args, "name", "").trim(), 64);
+      String name = init(AiJson.getString(args, "name", "").trim(), 64);
       if (name.isEmpty()) {
          name = address;
       }
@@ -343,12 +343,12 @@ final class AiScreens {
          @Override
          public AiOperation.Result tick() {
             if (this.init_Z) {
-               return this.init(AiOperation.Status.CANCELLED, "Connection to " + address + " cancelled", AiJson.init_JsonObject_ObjArr("server", address));
+               return this.init(AiOperation.Status.CANCELLED, "Connection to " + address + " cancelled", AiJson.objectOf("server", address));
             } else if (mc.player != null && mc.level != null && mc.level != initialLevel) {
                return this.init(
                   AiOperation.Status.SUCCEEDED,
                   "Connected to " + address + "; world observed",
-                  AiJson.init_JsonObject_ObjArr("server", address, "worldObserved", true)
+                  AiJson.objectOf("server", address, "worldObserved", true)
                );
             } else {
                Screen screen = autismclient.util.OverlayScreenController.init_Screen(mc);
@@ -357,20 +357,20 @@ final class AiScreens {
                   return this.init(
                      AiOperation.Status.FAILED,
                      "Connection to " + address + " rejected: " + AiScreens.init(reason, 256),
-                     AiJson.init_JsonObject_ObjArr("server", address, "reason", reason, "screen", "DisconnectedScreen")
+                     AiJson.objectOf("server", address, "reason", reason, "screen", "DisconnectedScreen")
                   );
                } else if (System.nanoTime() > this.init_J) {
                   this.cancel();
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      AiOperation.Status.TIMED_OUT,
                      "Connection to " + address + " not established within " + timeout + "s",
-                     AiJson.init_JsonObject_ObjArr("server", address, "screen", AiScreens.init_JsonObject(mc))
+                     AiJson.objectOf("server", address, "screen", AiScreens.init_JsonObject(mc))
                   );
                } else {
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      AiOperation.Status.RUNNING,
                      "Connecting to " + address,
-                     AiJson.init_JsonObject_ObjArr("server", address, "screen", screen == null ? "none" : screen.getClass().getSimpleName())
+                     AiJson.objectOf("server", address, "screen", screen == null ? "none" : screen.getClass().getSimpleName())
                   );
                }
             }
@@ -378,7 +378,7 @@ final class AiScreens {
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject datax) {
             this.init_Z = true;
-            return AiGameOperations.init_AiOperation_Result(status, message, datax);
+            return AiGameOperations.result(status, message, datax);
          }
 
          @Override
@@ -413,7 +413,7 @@ final class AiScreens {
       }
 
       if (hasIndex) {
-         int index = AiJson.init_I_JsonObject(args, "index", -1);
+         int index = AiJson.getInt(args, "index", -1);
          if (index >= 0 && index < widgets.size()) {
             return index;
          } else {
@@ -450,7 +450,7 @@ final class AiScreens {
    }
 
    static String load_Str(JsonObject args) {
-      String address = AiJson.init_Str_JsonObject(args, "address", "").trim();
+      String address = AiJson.getString(args, "address", "").trim();
       if (address.isEmpty()) {
          throw new IllegalArgumentException("address required (host or host:port)");
       } else if (address.length() > 255) {
@@ -468,7 +468,7 @@ final class AiScreens {
    }
 
    static int init(JsonObject args, int fallback, int max) {
-      return Math.max(1, Math.min(max, AiJson.init_I_JsonObject(args, "timeoutSeconds", fallback)));
+      return Math.max(1, Math.min(max, AiJson.getInt(args, "timeoutSeconds", fallback)));
    }
 
    static boolean init(String a, String b) {
@@ -576,7 +576,7 @@ final class AiScreens {
    }
 
    private static JsonObject init(ServerData data, int index) {
-      JsonObject out = AiJson.init_JsonObject_ObjArr(
+      JsonObject out = AiJson.objectOf(
          "index", index, "name", init(data.name, 128), "ip", init(data.ip, 128), "motd", init(init(data.motd), 256), "state", data.state().name()
       );
       if (data.players != null) {
@@ -632,7 +632,7 @@ final class AiScreens {
 
    record Inner_CachePool(int index, String type, String label, String value, boolean active, boolean visible, int x, int y, int width, int height) {
       JsonObject json() {
-         JsonObject out = AiJson.init_JsonObject_ObjArr(
+         JsonObject out = AiJson.objectOf(
             "index",
             this.index,
             "type",

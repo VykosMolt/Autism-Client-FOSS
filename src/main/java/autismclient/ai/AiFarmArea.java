@@ -31,7 +31,7 @@ final class AiFarmArea {
 
    static String init_Str(JsonObject args, String cropBlock) {
       String expected = init_Str(cropBlock);
-      String raw = AiJson.init_Str_JsonObject(args, "substrate", expected).trim().toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+      String raw = AiJson.getString(args, "substrate", expected).trim().toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
       String var10000;
       switch (raw) {
          case "":
@@ -108,7 +108,7 @@ final class AiFarmArea {
    }
 
    private static JsonObject init(BlockPos pos) {
-      return AiJson.init_JsonObject_ObjArr("x", pos.getX(), "y", pos.getY(), "z", pos.getZ());
+      return AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ());
    }
 
    record Inner_DataUtil(BlockPos from, BlockPos to) {
@@ -184,7 +184,7 @@ final class AiFarmArea {
       }
 
       JsonObject arguments(String substrate) {
-         return AiJson.init_JsonObject_ObjArr("substrate", substrate, "from", AiFarmArea.init(this.from), "to", AiFarmArea.init(this.to));
+         return AiJson.objectOf("substrate", substrate, "from", AiFarmArea.init(this.from), "to", AiFarmArea.init(this.to));
       }
    }
 }

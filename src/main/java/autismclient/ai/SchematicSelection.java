@@ -77,12 +77,12 @@ final class SchematicSelection extends AiPlacementSession {
    }
 
    static Vec3 init_Vec3_Minecraft(Minecraft mc) {
-      return autismclient.modules.FreecamController.init_Z() ? autismclient.modules.FreecamController.init_Vec3_F(1.0F) : mc.player.getEyePosition();
+      return autismclient.modules.FreecamController.isActive() ? autismclient.modules.FreecamController.getInterpolatedEyePos(1.0F) : mc.player.getEyePosition();
    }
 
    static Vec3 load_Vec3_Minecraft(Minecraft mc) {
-      return autismclient.modules.FreecamController.init_Z()
-         ? Vec3.directionFromRotation(autismclient.modules.FreecamController.load_F_F(1.0F), autismclient.modules.FreecamController.init_F_F(1.0F))
+      return autismclient.modules.FreecamController.isActive()
+         ? Vec3.directionFromRotation(autismclient.modules.FreecamController.getInterpolatedPitch(1.0F), autismclient.modules.FreecamController.getInterpolatedYaw(1.0F))
          : mc.player.getViewVector(1.0F);
    }
 

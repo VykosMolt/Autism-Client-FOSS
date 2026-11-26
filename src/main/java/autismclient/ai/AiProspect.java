@@ -71,8 +71,8 @@ final class AiProspect {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final AiItems.ItemSpec target = AiItems.init_af_DataUtil(spec);
+         final String spec = AiJson.getString(args, "item", "");
+         final AiItems.ItemSpec target = AiItems.resolve(spec);
          final String kind = init_Str(target);
          if (kind == null) {
             throw new IllegalArgumentException(
@@ -80,12 +80,12 @@ final class AiProspect {
             );
          }
 
-         int requested = Math.max(1, Math.min(2304, AiJson.init_I_JsonObject(args, "count", 1)));
-         boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
-         final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 900)));
-         final int maxDistance = Math.max(16, Math.min(512, AiJson.init_I_JsonObject(args, "maxDistance", 256)));
+         int requested = Math.max(1, Math.min(2304, AiJson.getInt(args, "count", 1)));
+         boolean additional = AiJson.getBoolean(args, "additional", false);
+         final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 900)));
+         final int maxDistance = Math.max(16, Math.min(512, AiJson.getInt(args, "maxDistance", 256)));
          final List<String> oreBlocks = init_List(kind);
-         final int held = AiItems.init_I(target);
+         final int held = AiItems.countInInventory(target);
          final int goal = additional ? held + requested : requested;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -108,17 +108,17 @@ final class AiProspect {
                if (!this.init_Z && mc.player != null && mc.level != null) {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(
-                        AiItems.init_I(target) > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
-                        "Prospect deadline reached with " + AiItems.init_I(target) + "/" + goal
+                        AiItems.countInInventory(target) > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
+                        "Prospect deadline reached with " + AiItems.countInInventory(target) + "/" + goal
                      );
                   }
 
-                  if (AiItems.init_I(target) >= goal) {
+                  if (AiItems.countInInventory(target) >= goal) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + goal + " " + spec);
                   }
 
-                  if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiOperation.Status.FAILED, AiGuard.init_Str_Str("prospecting", mc.player.getHealth(), mc.player.getMaxHealth()));
+                  if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+                     return this.init(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("prospecting", mc.player.getHealth(), mc.player.getMaxHealth()));
                   }
 
                   AiOperation.Result tier = this.load();
@@ -143,7 +143,7 @@ final class AiProspect {
                         return this.init(AiOperation.Status.FAILED, "Could not predict " + kind + " positions: " + result.message());
                      }
 
-                     this.init(AiJson.init_JsonObject_Str(result.dataJson()).getAsJsonObject());
+                     this.init(AiJson.parseObject(result.dataJson()).getAsJsonObject());
                      if (this.init_List.isEmpty()) {
                         return this.init(AiOperation.Status.FAILED, "No predicted " + kind + " within " + maxDistance + " blocks of the player");
                      }
@@ -160,7 +160,7 @@ final class AiProspect {
                      this.load_AiOperation = null;
                      this.init_JsonArray
                         .add(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "site",
                               this.init_BlockPos == null ? "" : this.init_BlockPos.toShortString(),
                               "phase",
@@ -175,7 +175,7 @@ final class AiProspect {
                         return this.init(AiOperation.Status.CANCELLED, "Prospect cancelled");
                      }
 
-                     if (AiItems.init_I(target) >= goal) {
+                     if (AiItems.countInInventory(target) >= goal) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + goal + " " + spec);
                      }
 
@@ -196,15 +196,15 @@ final class AiProspect {
                         return this.init("Site exhausted; trying the next prediction");
                      }
                   } else if (this.init_bz_1_DataUtil == Inner_DataUtil.LOCATE) {
-                     this.init_AiOperation = AiOracle.init_AiOperation_JsonObject(AiJson.init_JsonObject_ObjArr("query", kind, "cap", 16));
+                     this.init_AiOperation = AiOracle.init_AiOperation_JsonObject(AiJson.objectOf("query", kind, "cap", 16));
                      return this.init("Predicting " + kind + " positions from the world seed");
                   } else if (this.init_bz_1_DataUtil == Inner_DataUtil.EXTRACT) {
                      this.load_AiOperation = autismclient.ai.engine.AiMine.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "block",
                            AiProspect.init_Str(kind),
                            "count",
-                           Math.max(1, goal - AiItems.init_I(target)),
+                           Math.max(1, goal - AiItems.countInInventory(target)),
                            "radius",
                            24,
                            "timeoutSeconds",
@@ -244,13 +244,13 @@ final class AiProspect {
                   this.read = null;
                   return this.init("Resuming after " + this.init_Str);
                } else {
-                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
-                  AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_30());
+                  AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
+                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.init_I_30());
                   if (action == null) {
                      return null;
                   }
 
-                  this.init_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                  this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                   this.init_I++;
                   if (this.load_AiOperation != null) {
                      this.load_AiOperation.cancel();
@@ -273,11 +273,11 @@ final class AiProspect {
                }
 
                BlockState state = block.defaultBlockState();
-               if (AiItems.init_Z(state)) {
+               if (AiItems.hasUsableToolFor(state)) {
                   return null;
                }
 
-               Item needed = AiItems.init_Item(state);
+               Item needed = AiItems.cheapestRequiredTool(state);
                JsonObject missing = new JsonObject();
                missing.addProperty(needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString(), 1);
                return this.init(
@@ -287,7 +287,7 @@ final class AiProspect {
                      + "; craft "
                      + (needed == null ? "a better pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString())
                      + " first",
-                  AiJson.init_JsonObject_ObjArr("missing", missing)
+                  AiJson.objectOf("missing", missing)
                );
             }
 
@@ -298,7 +298,7 @@ final class AiProspect {
                      if (element.isJsonObject()) {
                         JsonObject entry = element.getAsJsonObject();
                         BlockPos pos = new BlockPos(
-                           AiJson.init_I_JsonObject(entry, "x", 0), AiJson.init_I_JsonObject(entry, "y", 0), AiJson.init_I_JsonObject(entry, "z", 0)
+                           AiJson.getInt(entry, "x", 0), AiJson.getInt(entry, "y", 0), AiJson.getInt(entry, "z", 0)
                         );
                         if (!this.init_Set.contains(pos.asLong()) && !(mc.player.blockPosition().distSqr(pos) > (double)maxDistance * maxDistance)) {
                            this.init_List.add(pos);
@@ -334,7 +334,7 @@ final class AiProspect {
             }
 
             JsonObject init_JsonObject_46() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "item",
                   spec,
                   "ore",
@@ -342,7 +342,7 @@ final class AiProspect {
                   "goal",
                   goal,
                   "held",
-                  AiItems.init_I(target),
+                  AiItems.countInInventory(target),
                   "startedWith",
                   held,
                   "phase",
@@ -357,7 +357,7 @@ final class AiProspect {
                }
 
                out.add("attempts", this.init_JsonArray);
-               out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.init_I, this.init_Str));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));
                out.addProperty("provenance", "Oracle positions are seed predictions, confirmed only by the extraction phase");
                return out;
             }

@@ -52,7 +52,7 @@ public abstract class AutismRegistryDataCollectorMixin {
       }
 
       ConnectionPrivacyRegistry.ConnectionSession connection = RegistryCompatGuard.init_BufferHelper_Strea();
-      TimelineTagCompatFix.init(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.init_Connection()));
+      TimelineTagCompatFix.init(entries, connection != null && ViaFabricPlusBridge.init_Z(connection.connection()));
       if (connection == null) {
          return entries;
       }

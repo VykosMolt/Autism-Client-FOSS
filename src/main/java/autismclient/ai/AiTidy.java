@@ -138,28 +138,28 @@ final class AiTidy {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiTidy.Inner_DataUtil action = init_cx_DataUtil(AiJson.init_Str_JsonObject(args, "action", "inspect"));
-         final int wantFree = Math.max(1, Math.min(36, AiJson.init_I_JsonObject(args, "freeSlots", 4)));
-         final int maxDrops = Math.max(1, Math.min(36, AiJson.init_I_JsonObject(args, "maxDrops", 9)));
-         final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)));
+         AiTidy.Inner_DataUtil action = init_cx_DataUtil(AiJson.getString(args, "action", "inspect"));
+         final int wantFree = Math.max(1, Math.min(36, AiJson.getInt(args, "freeSlots", 4)));
+         final int maxDrops = Math.max(1, Math.min(36, AiJson.getInt(args, "maxDrops", 9)));
+         final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
          final List<AiItems.ItemSpec> keep = new ArrayList<>();
          if (args.has("keep") && args.get("keep").isJsonArray()) {
             for (JsonElement element : args.getAsJsonArray("keep")) {
-               keep.add(AiItems.init_af_DataUtil(element.getAsString()));
+               keep.add(AiItems.resolve(element.getAsString()));
             }
          } else if (args.has("keep") && args.get("keep").isJsonPrimitive()) {
             for (String part : args.get("keep").getAsString().split(",")) {
                if (!part.isBlank()) {
-                  keep.add(AiItems.init_af_DataUtil(part.trim()));
+                  keep.add(AiItems.resolve(part.trim()));
                }
             }
          }
 
          return action == AiTidy.Inner_DataUtil.INSPECT
-            ? AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Ranked " + AiItems.init_I() + " free slot(s) and the current inventory", init(mc, keep, wantFree))
+            ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Ranked " + AiItems.countFreeSlots() + " free slot(s) and the current inventory", init(mc, keep, wantFree))
             : new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-               final int init_I = AiItems.init_I();
+               final int init_I = AiItems.countFreeSlots();
                final Object init_Obj = mc.level;
                final Object load_Obj = mc.getConnection();
                final Object read_Obj = mc.player;
@@ -192,11 +192,11 @@ final class AiTidy {
                      }
 
                      if (this.load_I >= 0) {
-                        OptionalInt confirmedCount = AiServerEvidence.init_OptionalInt_I(mc.player.inventoryMenu.containerId, this.load_J, this.init_cx_StreamUtil.item());
+                        OptionalInt confirmedCount = AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.init_cx_StreamUtil.item());
                         if (confirmedCount.isPresent() && confirmedCount.getAsInt() <= this.write - this.init_cx_StreamUtil.count()) {
                            this.init_JsonArray
                               .add(
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                     "slot",
                                     this.init_cx_StreamUtil.slot(),
                                     "item",
@@ -220,9 +220,9 @@ final class AiTidy {
                               : this.init("Waiting for the drop to apply");
                         }
                      } else {
-                        if (AiItems.init_I() >= wantFree) {
+                        if (AiItems.countFreeSlots() >= wantFree) {
                            return this.init(
-                              AiOperation.Status.SUCCEEDED, "Inventory has " + AiItems.init_I() + " free slot(s) after dropping " + this.update + " stack(s)"
+                              AiOperation.Status.SUCCEEDED, "Inventory has " + AiItems.countFreeSlots() + " free slot(s) after dropping " + this.update + " stack(s)"
                            );
                         }
 
@@ -231,7 +231,7 @@ final class AiTidy {
                               "Dropped the allowed "
                                  + maxDrops
                                  + " stack(s) and still have only "
-                                 + AiItems.init_I()
+                                 + AiItems.countFreeSlots()
                                  + " free slot(s); raise maxDrops or deposit into a container"
                            );
                         }
@@ -241,10 +241,10 @@ final class AiTidy {
                            return this.load("Nothing left is safe to drop; everything remaining is kept, equipped or high value");
                         }
 
-                        this.load_J = AiServerEvidence.load_J_I(mc.player.inventoryMenu.containerId);
+                        this.load_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
                         this.load_I = worst.slot();
                         this.init_cx_StreamUtil = worst;
-                        this.write = AiCraft.init_I(worst.item());
+                        this.write = AiCraft.countItem(worst.item());
                         AiContainerTransactions.init(mc.player.containerMenu.containerId, AiTidy.init(mc, worst.slot()), 1, ContainerInput.THROW);
                         return this.init("Dropping " + worst.count() + " " + worst.item());
                      }
@@ -254,13 +254,13 @@ final class AiTidy {
                }
 
                JsonObject init() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
-                     "freeSlots", AiItems.init_I(), "target", wantFree, "startedWith", this.init_I, "drops", this.update, "maxDrops", maxDrops
+                  JsonObject out = AiJson.objectOf(
+                     "freeSlots", AiItems.countFreeSlots(), "target", wantFree, "startedWith", this.init_I, "drops", this.update, "maxDrops", maxDrops
                   );
                   if (this.init_cx_StreamUtil != null) {
                      out.add(
                         "pendingDrop",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "slot",
                            this.load_I,
                            "item",
@@ -270,13 +270,13 @@ final class AiTidy {
                            "beforeCount",
                            this.write,
                            "currentCount",
-                           AiCraft.init_I(this.init_cx_StreamUtil.item()),
+                           AiCraft.countItem(this.init_cx_StreamUtil.item()),
                            "minimumServerCountAfterClick",
-                           AiServerEvidence.init_OptionalInt_I(mc.player.inventoryMenu.containerId, this.load_J, this.init_cx_StreamUtil.item()).orElse(-1),
+                           AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.init_cx_StreamUtil.item()).orElse(-1),
                            "repliesBefore",
                            this.load_J,
                            "repliesNow",
-                           AiServerEvidence.load_J_I(mc.player.inventoryMenu.containerId),
+                           AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId),
                            "confirmed",
                            false
                         )
@@ -323,12 +323,12 @@ final class AiTidy {
 
       for (AiTidy.Inner_StreamUtil entry : init_List(mc, keep)) {
          ranked.add(
-            AiJson.init_JsonObject_ObjArr("slot", entry.slot(), "item", entry.item(), "count", entry.count(), "rank", entry.rank(), "tier", init(entry.rank()))
+            AiJson.objectOf("slot", entry.slot(), "item", entry.item(), "count", entry.count(), "rank", entry.rank(), "tier", init(entry.rank()))
          );
       }
 
       AiTidy.Inner_StreamUtil worst = init_cx_StreamUtil(mc, keep);
-      JsonObject out = AiJson.init_JsonObject_ObjArr("freeSlots", AiItems.init_I(), "wanted", wantFree, "wouldDropFirst", worst == null ? null : worst.item());
+      JsonObject out = AiJson.objectOf("freeSlots", AiItems.countFreeSlots(), "wanted", wantFree, "wouldDropFirst", worst == null ? null : worst.item());
       out.add("inventory", ranked);
       out.addProperty(
          "policy",
@@ -376,8 +376,8 @@ final class AiTidy {
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (!stack.isEmpty() && slot != selected && !init_Z(stack, keep)) {
-            int reserved = Math.max(AiRunResources.init(stack.getItem()), autismclient.ai.engine.AiRestock.init(stack.getItem()));
-            if ((reserved <= 0 || AiGameState.load(load_Str(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
+            int reserved = Math.max(AiRunResources.totalReservedCount(stack.getItem()), autismclient.ai.engine.AiRestock.init(stack.getItem()));
+            if ((reserved <= 0 || AiGameState.countMainInventoryItem(load_Str(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
                int stackWood = stack.is(ItemTags.PLANKS) ? stack.getCount() : (stack.is(ItemTags.LOGS) ? 4 * stack.getCount() : 0);
                if ((stackWood <= 0 || wood - stackWood >= keptWood)
                   && (!stack.is(Items.STICK) || sticks - stack.getCount() >= 2)
@@ -428,7 +428,7 @@ final class AiTidy {
    }
 
    static int init_I(ItemStack stack, List<ItemStack> held) {
-      if (AiItems.load_Z(stack)) {
+      if (AiItems.isDisposableTierTool(stack)) {
          for (ItemStack replacement : held) {
             if (replacement != stack && init(stack, replacement)) {
                return 0;
@@ -440,7 +440,7 @@ final class AiTidy {
    }
 
    static boolean init(ItemStack stack, ItemStack replacement) {
-      if (AiItems.load_Z(stack) && replacement != null && AiItems.init(replacement, 2) && stack.has(DataComponents.TOOL) && replacement.has(DataComponents.TOOL)) {
+      if (AiItems.isDisposableTierTool(stack) && replacement != null && AiItems.hasEnoughDurability(replacement, 2) && stack.has(DataComponents.TOOL) && replacement.has(DataComponents.TOOL)) {
          String kind = init_Str(stack);
          int tier = read(stack);
          int otherTier = read(replacement);

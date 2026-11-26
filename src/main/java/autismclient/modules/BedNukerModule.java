@@ -256,8 +256,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
-         && !FreecamController.init_Z()
-         && !FreecamController.write()
+         && !FreecamController.isActive()
+         && !FreecamController.isAiControllingBody()
          && !RemoteViewController.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
@@ -521,7 +521,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             SilentMovementCoordinator.getMovementYaw(MC.player)
          );
          return BedTargetAimSolver.init(
-            state, input, autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player), MC.player.getEyeHeight()
+            state, input, autismclient.ai.engine.AiPhysics.createLiveWorld(MC.level, MC.player), MC.player.getEyeHeight()
          );
       } else {
          return MC.player.getEyePosition();

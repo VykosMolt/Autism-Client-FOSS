@@ -133,7 +133,7 @@ public final class AiDragonZones {
    }
 
    static AiOperation init_AiOperation(final Minecraft mc) {
-      if (mc.player != null && mc.player.onGround() && AiGameState.init_I_Str("minecraft:water_bucket") > 0) {
+      if (mc.player != null && mc.player.onGround() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
          List<double[]> clouds = AiDragon.init_List(mc);
          if (clouds.isEmpty()) {
             return null;
@@ -157,7 +157,7 @@ public final class AiDragonZones {
          final double uz = len < 0.001 ? 0.0 : dz / len;
          return new AiOperation() {
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            AiOperation init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.init_JsonObject_ObjArr("method", "auto", "collect", true, "timeoutSeconds", 15));
+            AiOperation init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
             int init_I;
             boolean init_Z;
 
@@ -171,15 +171,15 @@ public final class AiDragonZones {
                            return this.init(AiOperation.Status.FAILED, "Could not step off the pillar");
                         }
 
-                        this.init_DataUtil.init_V_Vec3(mc.player.getEyePosition().add(ux * 4.0, -1.5, uz * 4.0));
-                        this.init_DataUtil.load_V();
+                        this.init_DataUtil.aimAt(mc.player.getEyePosition().add(ux * 4.0, -1.5, uz * 4.0));
+                        this.init_DataUtil.tick();
                         AiFallGuard.load();
                         mc.options.keyUp.setDown(true);
                      } else {
                         mc.options.keyUp.setDown(false);
                      }
 
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Off the pillar out of the cloud", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Off the pillar out of the cloud", new JsonObject());
                   } else {
                      return this.init(r.status(), "Dropped off out of the cloud: " + r.message());
                   }
@@ -190,8 +190,8 @@ public final class AiDragonZones {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                mc.options.keyUp.setDown(false);
-               this.init_DataUtil.init_V();
-               return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+               this.init_DataUtil.clear();
+               return AiGameOperations.result(status, message, new JsonObject());
             }
 
             @Override
@@ -257,7 +257,7 @@ public final class AiDragonZones {
             }
          }
 
-         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
+         return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
       } else {
          return null;
       }

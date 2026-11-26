@@ -101,7 +101,7 @@ final class AiAttachments {
       Matcher build = init.matcher(text.trim());
       return files.size() == 1 && (text.isBlank() || build.matches())
          ? "build \"" + files.getFirst().name() + "\"" + (!text.isBlank() && build.group(1) != null ? " " + build.group(1) : "")
-         : text + "\nAttached schematic files: " + AiJson.init.toJson(files.stream().map(AiAttachments.Inner_DataUtil::name).toList());
+         : text + "\nAttached schematic files: " + AiJson.GSON.toJson(files.stream().map(AiAttachments.Inner_DataUtil::name).toList());
    }
 
    record Inner_DataUtil(String name, String format, int cells, long bytes) {

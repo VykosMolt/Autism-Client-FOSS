@@ -122,7 +122,7 @@ public final class CustomMenuAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", MacroActionType.CUSTOM_MENU.name());
-      tag.put("fieldValues", MacroNbtCodecHelper.init(this.fieldValues));
+      tag.put("fieldValues", MacroNbtCodecHelper.toStringListTag(this.fieldValues));
       tag.putString("clickButton", this.clickButton);
       tag.putInt("timeoutMs", this.init());
       tag.putBoolean("enabled", this.init_Z);
@@ -134,14 +134,14 @@ public final class CustomMenuAction implements MacroAction {
       this.fieldValues.clear();
       this.clickButton = tag.getStringOr("clickButton", "");
       if (tag.getList("fieldValues").isPresent()) {
-         this.fieldValues.addAll(MacroNbtCodecHelper.init(tag.getList("fieldValues").orElse(new ListTag())));
+         this.fieldValues.addAll(MacroNbtCodecHelper.fromStringListTag(tag.getList("fieldValues").orElse(new ListTag())));
       } else {
          String primary = tag.getStringOr("primaryValue", "");
          if (!primary.isBlank()) {
             this.fieldValues.add(primary);
          }
 
-         this.fieldValues.addAll(MacroNbtCodecHelper.init(tag.getList("inputValues").orElse(new ListTag())));
+         this.fieldValues.addAll(MacroNbtCodecHelper.fromStringListTag(tag.getList("inputValues").orElse(new ListTag())));
          if (this.clickButton.isBlank()) {
             String buttonMode = tag.getStringOr("buttonMode", "SAFE_AUTO");
             String selector = tag.getStringOr("buttonSelector", "");

@@ -48,9 +48,9 @@ final class AiCover {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int timeoutSeconds = Math.max(10, Math.min(120, AiJson.init_I_JsonObject(args, "timeoutSeconds", 45)));
-         final float healTo = (float)AiJson.init_D_JsonObject(args, "healTo", 0.0);
-         final boolean sealOnly = AiJson.init_Z_JsonObject(args, "sealOnly", false);
+         final int timeoutSeconds = Math.max(10, Math.min(120, AiJson.getInt(args, "timeoutSeconds", 45)));
+         final float healTo = (float)AiJson.getDouble(args, "healTo", 0.0);
+         final boolean sealOnly = AiJson.getBoolean(args, "sealOnly", false);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final Object init_Obj = mc.level;
@@ -79,7 +79,7 @@ final class AiCover {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
+               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
             }
 
             @Override
@@ -144,7 +144,7 @@ final class AiCover {
                   }
 
                   if (this.init_HashUtil_CachePool == null
-                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
+                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      this.write();
                      if (this.init_Z) {
                         this.init_DataPipe.init_V();
@@ -346,7 +346,7 @@ final class AiCover {
                            }
                         }
 
-                        if (autismclient.ai.engine.AiMotionSafety.fill_Z()) {
+                        if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Escape tunnel sealed out of the creeper's sight");
                         }
                      }
@@ -386,7 +386,7 @@ final class AiCover {
                         )) {
                         if (this.init_AiOperation == null) {
                            this.close++;
-                           this.init_AiOperation = AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 10));
+                           this.init_AiOperation = AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
                         }
 
                         AiOperation.Result r = this.init_AiOperation.tick();
@@ -549,18 +549,18 @@ final class AiCover {
             }
 
             boolean init_Z(Entity mob) {
-               int slot = AiItems.read();
+               int slot = AiItems.bestHotbarWeaponSlot();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
                }
 
-               this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(mob));
-               this.init_DataUtil.load_V();
-               boolean onTarget = this.init_DataUtil.load_Z_Entity(mob);
+               this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(mob));
+               this.init_DataUtil.tick();
+               boolean onTarget = this.init_DataUtil.isAimedAtEntity(mob);
                if (onTarget && mc.player.getAttackStrengthScale(0.0F) >= 0.92F) {
                   AiRunTrace.init_V_Str_JsonObject(
                      "cover_attack",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "targetId",
                         mob.getId(),
                         "targetUuid",
@@ -618,7 +618,7 @@ final class AiCover {
             }
 
             JsonObject init_JsonObject_55() {
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "shooters",
                   this.load_Set.size(),
                   "plans",
@@ -633,11 +633,11 @@ final class AiCover {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_55());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_55());
             }
 
             AiOperation.Result load(String message) {
-               AiGuard.update_V();
+               AiGuard.noteCoverBackoff();
                return this.init(AiOperation.Status.FAILED, message);
             }
 
@@ -651,8 +651,8 @@ final class AiCover {
                   this.init_Z = false;
                }
 
-               this.init_DataUtil.init_V();
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_55());
+               this.init_DataUtil.clear();
+               return AiGameOperations.result(status, message, this.init_JsonObject_55());
             }
 
             @Override
@@ -677,7 +677,7 @@ final class AiCover {
                this.write();
                this.update();
                this.init_DataPipe.init_V();
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
             }
          };
       } else {

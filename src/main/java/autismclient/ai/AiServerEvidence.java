@@ -22,156 +22,156 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiServerEvidence {
-   private static final Map<Long, Long> init_Map = new LinkedHashMap<>();
-   private static final Map<Long, Long> load_Map = new LinkedHashMap<>();
-   private static final Map<Long, AiServerEvidence.Inner_DataUtil> read_Map = new HashMap<>();
-   private static final List<Consumer<BlockPos>> init_List = new ArrayList<>();
-   private static final List<LongConsumer> load_List = new ArrayList<>();
-   private static long init_J;
-   private static long load_J;
-   private static long read_J;
-   private static long write_J;
-   private static Object init_Obj;
-   private static Object load_Obj;
-   private static UUID init_UUID;
-   private static int init_I;
-   private static int load_I;
-   private static int read_I;
-   private static float init_F;
-   private static boolean init_Z;
-   private static AiServerEvidence.Inner_BufferHelper init_ca_BufferHelper;
-   private static long update_J;
-   private static final Map<Integer, AiServerEvidence.Inner_StreamUtil> write_Map = new LinkedHashMap<>();
-   private static final Map<Integer, Long> update_Map = new LinkedHashMap<>();
-   private static final Map<Integer, Long> sync = new LinkedHashMap<>();
-   private static final Map<Integer, Deque<AiServerEvidence.Inner_CachePool>> flush = new LinkedHashMap<>();
-   private static final Deque<Map<String, Object>> init_Deque = new ArrayDeque<>();
-   private static final Long2ObjectLinkedOpenHashMap<BlockState> init_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
+   private static final Map<Long, Long> blockRevisions = new LinkedHashMap<>();
+   private static final Map<Long, Long> chunkRevisions = new LinkedHashMap<>();
+   private static final Map<Long, AiServerEvidence.Inner_DataUtil> blockStates = new HashMap<>();
+   private static final List<Consumer<BlockPos>> blockObservers = new ArrayList<>();
+   private static final List<LongConsumer> chunkObservers = new ArrayList<>();
+   private static long blockRevisionCounter;
+   private static long inventoryRevisionCounter;
+   private static long serverMessageRevisionCounter;
+   private static long deathRevisionCounter;
+   private static Object burnTrackLevel;
+   private static Object burnTrackPlayer;
+   private static UUID burnTrackIdentity;
+   private static int burnDamageTick;
+   private static int burnDamageCount;
+   private static int burnLastTick;
+   private static float burnPreHealth;
+   private static boolean burnOnFire;
+   private static AiServerEvidence.Inner_BufferHelper lastBurnDamage;
+   private static long velocityRevisionCounter;
+   private static final Map<Integer, AiServerEvidence.Inner_StreamUtil> entityVelocities = new LinkedHashMap<>();
+   private static final Map<Integer, Long> containerRevisions = new LinkedHashMap<>();
+   private static final Map<Integer, Long> containerReplyCounts = new LinkedHashMap<>();
+   private static final Map<Integer, Deque<AiServerEvidence.Inner_CachePool>> containerReplyHistory = new LinkedHashMap<>();
+   private static final Deque<Map<String, Object>> recentServerMessages = new ArrayDeque<>();
+   private static final Long2ObjectLinkedOpenHashMap<BlockState> preChangeBlockStates = new Long2ObjectLinkedOpenHashMap<>();
 
    private AiServerEvidence() {
    }
 
-   static void init_V_Consumer(Consumer<BlockPos> observer) {
-      if (!init_List.contains(observer)) {
-         init_List.add(observer);
+   static void addBlockObserver(Consumer<BlockPos> observer) {
+      if (!blockObservers.contains(observer)) {
+         blockObservers.add(observer);
       }
    }
 
-   static void load_V_Consumer(Consumer<BlockPos> observer) {
-      init_List.remove(observer);
+   static void removeBlockObserver(Consumer<BlockPos> observer) {
+      blockObservers.remove(observer);
    }
 
-   public static void init_V_BlockPos(BlockPos pos) {
+   public static void snapshotBeforeBlockChange(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc != null && mc.level != null && mc.isSameThread() && !init_List.isEmpty()) {
+      if (mc != null && mc.level != null && mc.isSameThread() && !blockObservers.isEmpty()) {
          long key = pos.asLong();
-         if (!init_Long2ObjectLinkedO.containsKey(key)) {
-            init_Long2ObjectLinkedO.put(key, mc.level.getBlockState(pos));
+         if (!preChangeBlockStates.containsKey(key)) {
+            preChangeBlockStates.put(key, mc.level.getBlockState(pos));
          }
 
-         while (init_Long2ObjectLinkedO.size() > 4096) {
-            init_Long2ObjectLinkedO.removeFirst();
+         while (preChangeBlockStates.size() > 4096) {
+            preChangeBlockStates.removeFirst();
          }
       }
    }
 
-   public static BlockState init_BlockState_J(long key) {
-      return init_Long2ObjectLinkedO.remove(key);
+   public static BlockState consumePreChangeState(long key) {
+      return preChangeBlockStates.remove(key);
    }
 
-   static void load_V_BlockPos(BlockPos pos) {
-      if (!init_List.isEmpty()) {
-         for (Consumer<BlockPos> observer : List.copyOf(init_List)) {
+   static void notifyBlockObservers(BlockPos pos) {
+      if (!blockObservers.isEmpty()) {
+         for (Consumer<BlockPos> observer : List.copyOf(blockObservers)) {
             observer.accept(pos);
          }
       }
    }
 
-   static void init_V_LongConsumer(LongConsumer observer) {
-      if (!load_List.contains(observer)) {
-         load_List.add(observer);
+   static void addChunkObserver(LongConsumer observer) {
+      if (!chunkObservers.contains(observer)) {
+         chunkObservers.add(observer);
       }
    }
 
-   static void load_V_LongConsumer(LongConsumer observer) {
-      load_List.remove(observer);
+   static void removeChunkObserver(LongConsumer observer) {
+      chunkObservers.remove(observer);
    }
 
-   private static void read(int x, int z) {
+   private static void notifyChunkObservers(int x, int z) {
       long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
 
-      for (LongConsumer observer : List.copyOf(load_List)) {
+      for (LongConsumer observer : List.copyOf(chunkObservers)) {
          observer.accept(key);
       }
    }
 
-   public static void init_V(int x, int z) {
-      write(x, z);
-      read(x, z);
+   public static void recordChunkUnload(int x, int z) {
+      evictChunkBlockStates(x, z);
+      notifyChunkObservers(x, z);
    }
 
-   public static void read(BlockPos pos) {
-      load(pos, null);
+   public static void recordBlockUpdate(BlockPos pos) {
+      applyBlockUpdate(pos, null);
    }
 
-   public static void init(BlockPos pos, BlockState state) {
-      load(pos, Objects.requireNonNull(state));
+   public static void recordBlockStateUpdate(BlockPos pos, BlockState state) {
+      applyBlockUpdate(pos, Objects.requireNonNull(state));
    }
 
-   private static void load(BlockPos pos, BlockState state) {
+   private static void applyBlockUpdate(BlockPos pos, BlockState state) {
       long key = pos.asLong();
-      long stamp = ++init_J;
-      init_Map.put(key, stamp);
+      long stamp = ++blockRevisionCounter;
+      blockRevisions.put(key, stamp);
       if (state == null) {
-         read_Map.remove(key);
+         blockStates.remove(key);
       } else {
-         read_Map.put(key, new AiServerEvidence.Inner_DataUtil(stamp, state));
+         blockStates.put(key, new AiServerEvidence.Inner_DataUtil(stamp, state));
       }
 
       if (Minecraft.getInstance() != null) {
          AiWorldMemory.init(pos);
       }
 
-      while (init_Map.size() > 4096) {
-         long oldest = init_Map.keySet().iterator().next();
-         init_Map.remove(oldest);
-         read_Map.remove(oldest);
+      while (blockRevisions.size() > 4096) {
+         long oldest = blockRevisions.keySet().iterator().next();
+         blockRevisions.remove(oldest);
+         blockStates.remove(oldest);
       }
 
-      load_V_BlockPos(pos);
+      notifyBlockObservers(pos);
    }
 
-   public static AiServerEvidence.Inner_DataUtil init_ca_DataUtil_BlockPos(BlockPos pos) {
-      return read_Map.get(pos.asLong());
+   public static AiServerEvidence.Inner_DataUtil lastBlockUpdate(BlockPos pos) {
+      return blockStates.get(pos.asLong());
    }
 
-   private static void write(int x, int z) {
-      read_Map.keySet().removeIf(key -> BlockPos.getX(key) >> 4 == x && BlockPos.getZ(key) >> 4 == z);
+   private static void evictChunkBlockStates(int x, int z) {
+      blockStates.keySet().removeIf(key -> BlockPos.getX(key) >> 4 == x && BlockPos.getZ(key) >> 4 == z);
    }
 
-   public static void init_V() {
-      load_J++;
+   public static void bumpInventoryRevision() {
+      inventoryRevisionCounter++;
    }
 
-   public static void init_V_I(int id) {
-      load_J++;
-      update_Map.put(id, load_J);
-      sync.merge(id, 1L, Long::sum);
+   public static void recordContainerUpdate(int id) {
+      inventoryRevisionCounter++;
+      containerRevisions.put(id, inventoryRevisionCounter);
+      containerReplyCounts.merge(id, 1L, Long::sum);
 
-      while (update_Map.size() > 32) {
-         int oldest = update_Map.keySet().iterator().next();
-         update_Map.remove(oldest);
-         sync.remove(oldest);
-         flush.remove(oldest);
+      while (containerRevisions.size() > 32) {
+         int oldest = containerRevisions.keySet().iterator().next();
+         containerRevisions.remove(oldest);
+         containerReplyCounts.remove(oldest);
+         containerReplyHistory.remove(oldest);
       }
    }
 
-   public static void init(int id, List<ItemStack> contents) {
+   public static void recordContainerContents(int id, List<ItemStack> contents) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && id == mc.player.inventoryMenu.containerId) {
          InventoryMenu menu = mc.player.inventoryMenu;
          if (contents.size() != menu.slots.size()) {
-            init_V_I(id);
+            recordContainerUpdate(id);
          } else {
             Map<String, Integer> counts = new HashMap<>();
 
@@ -183,187 +183,187 @@ public final class AiServerEvidence {
                }
             }
 
-            init(id, counts);
+            recordContainerItemCounts(id, counts);
          }
       } else {
-         init_V_I(id);
+         recordContainerUpdate(id);
       }
    }
 
-   static void init(int id, Map<String, Integer> counts) {
-      init_V_I(id);
-      Deque<AiServerEvidence.Inner_CachePool> history = flush.computeIfAbsent(id, key -> new ArrayDeque<>());
-      history.addLast(new AiServerEvidence.Inner_CachePool(load_J_I(id), Map.copyOf(counts)));
+   static void recordContainerItemCounts(int id, Map<String, Integer> counts) {
+      recordContainerUpdate(id);
+      Deque<AiServerEvidence.Inner_CachePool> history = containerReplyHistory.computeIfAbsent(id, key -> new ArrayDeque<>());
+      history.addLast(new AiServerEvidence.Inner_CachePool(containerReplyCount(id), Map.copyOf(counts)));
 
       while (history.size() > 16) {
          history.removeFirst();
       }
    }
 
-   static OptionalInt init_OptionalInt_I(int id, long afterReply, String item) {
-      Deque<AiServerEvidence.Inner_CachePool> history = flush.get(id);
+   static OptionalInt minItemCountAfterReply(int id, long afterReply, String item) {
+      Deque<AiServerEvidence.Inner_CachePool> history = containerReplyHistory.get(id);
       return history == null
          ? OptionalInt.empty()
          : history.stream().filter(reply -> reply.reply() > afterReply).mapToInt(reply -> reply.counts().getOrDefault(item, 0)).min();
    }
 
-   public static long init_J_I(int id) {
-      return update_Map.getOrDefault(id, 0L);
+   public static long containerRevision(int id) {
+      return containerRevisions.getOrDefault(id, 0L);
    }
 
-   public static long load_J_I(int id) {
-      return sync.getOrDefault(id, 0L);
+   public static long containerReplyCount(int id) {
+      return containerReplyCounts.getOrDefault(id, 0L);
    }
 
-   public static void load(int x, int z) {
-      write(x, z);
-      load_Map.put(autismclient.ai.engine.AiGridRevisions.init_J(x, z), ++init_J);
+   public static void recordChunkUpdate(int x, int z) {
+      evictChunkBlockStates(x, z);
+      chunkRevisions.put(autismclient.ai.engine.AiGridRevisions.init_J(x, z), ++blockRevisionCounter);
 
-      while (load_Map.size() > 512) {
-         load_Map.remove(load_Map.keySet().iterator().next());
+      while (chunkRevisions.size() > 512) {
+         chunkRevisions.remove(chunkRevisions.keySet().iterator().next());
       }
 
-      read(x, z);
+      notifyChunkObservers(x, z);
    }
 
-   public static long init_J_BlockPos(BlockPos pos) {
-      return Math.max(init_Map.getOrDefault(pos.asLong(), 0L), load_Map.getOrDefault(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4), 0L));
+   public static long blockRevision(BlockPos pos) {
+      return Math.max(blockRevisions.getOrDefault(pos.asLong(), 0L), chunkRevisions.getOrDefault(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4), 0L));
    }
 
-   public static long init_J() {
-      return load_J;
+   public static long inventoryRevision() {
+      return inventoryRevisionCounter;
    }
 
-   public static void init_V_I(int id, UUID identity, Vec3 velocity) {
-      write_Map.put(id, new AiServerEvidence.Inner_StreamUtil(++update_J, identity, velocity));
+   public static void recordEntityVelocity(int id, UUID identity, Vec3 velocity) {
+      entityVelocities.put(id, new AiServerEvidence.Inner_StreamUtil(++velocityRevisionCounter, identity, velocity));
 
-      while (write_Map.size() > 256) {
-         write_Map.remove(write_Map.keySet().iterator().next());
+      while (entityVelocities.size() > 256) {
+         entityVelocities.remove(entityVelocities.keySet().iterator().next());
       }
    }
 
-   public static AiServerEvidence.Inner_StreamUtil init_ca_StreamUtil_I(int id) {
-      return write_Map.get(id);
+   public static AiServerEvidence.Inner_StreamUtil lastEntityVelocity(int id) {
+      return entityVelocities.get(id);
    }
 
-   public static void init(Object level, Object player, UUID identity, int tick, float preHealth, boolean onFire) {
-      if (init_Z_Obj(level, player, identity, tick)) {
-         init_ca_BufferHelper = null;
-         if (load_I != 0 && init_Z(tick, init_I)) {
-            load_I = Math.min(2, load_I + 1);
+   public static void recordDamageEvent(Object level, Object player, UUID identity, int tick, float preHealth, boolean onFire) {
+      if (syncBurnTracker(level, player, identity, tick)) {
+         lastBurnDamage = null;
+         if (burnDamageCount != 0 && isWithinTwoTicks(tick, burnDamageTick)) {
+            burnDamageCount = Math.min(2, burnDamageCount + 1);
          } else {
-            load_I = 1;
-            init_I = tick;
-            init_F = preHealth;
-            init_Z = onFire;
+            burnDamageCount = 1;
+            burnDamageTick = tick;
+            burnPreHealth = preHealth;
+            burnOnFire = onFire;
          }
       }
    }
 
-   public static void init(Object level, Object player, UUID identity, int tick, float health) {
-      if (init_Z_Obj(level, player, identity, tick)) {
-         init_ca_BufferHelper = null;
-         float loss = init_F - health;
-         if (load_I == 1 && init_Z && init_Z(tick, init_I) && Float.isFinite(init_F) && Float.isFinite(health) && loss > 0.0F && loss <= 1.0F) {
-            init_ca_BufferHelper = new AiServerEvidence.Inner_BufferHelper(identity, init_I, tick, init_F, health);
+   public static void recordHealthAfterDamage(Object level, Object player, UUID identity, int tick, float health) {
+      if (syncBurnTracker(level, player, identity, tick)) {
+         lastBurnDamage = null;
+         float loss = burnPreHealth - health;
+         if (burnDamageCount == 1 && burnOnFire && isWithinTwoTicks(tick, burnDamageTick) && Float.isFinite(burnPreHealth) && Float.isFinite(health) && loss > 0.0F && loss <= 1.0F) {
+            lastBurnDamage = new AiServerEvidence.Inner_BufferHelper(identity, burnDamageTick, tick, burnPreHealth, health);
          }
 
-         load_I = 0;
-         init_Z = false;
+         burnDamageCount = 0;
+         burnOnFire = false;
       }
    }
 
-   public static boolean init_Z_UUID(UUID identity, int tick, float health) {
-      return init_ca_BufferHelper != null
-         && init_ca_BufferHelper.identity().equals(identity)
-         && init_Z(tick, init_ca_BufferHelper.sourceTick())
-         && init_Z(tick, init_ca_BufferHelper.healthTick())
-         && Float.compare(health, init_ca_BufferHelper.health()) == 0;
+   public static boolean matchesRecentBurnDamage(UUID identity, int tick, float health) {
+      return lastBurnDamage != null
+         && lastBurnDamage.identity().equals(identity)
+         && isWithinTwoTicks(tick, lastBurnDamage.sourceTick())
+         && isWithinTwoTicks(tick, lastBurnDamage.healthTick())
+         && Float.compare(health, lastBurnDamage.health()) == 0;
    }
 
-   public static boolean init_Z_UUID(UUID identity, int tick, float previousHealth, float health) {
-      return init_Z_UUID(identity, tick, health) && Float.compare(previousHealth, init_ca_BufferHelper.before()) == 0;
+   public static boolean matchesRecentBurnDamage(UUID identity, int tick, float previousHealth, float health) {
+      return matchesRecentBurnDamage(identity, tick, health) && Float.compare(previousHealth, lastBurnDamage.before()) == 0;
    }
 
-   private static boolean init_Z(int tick, int before) {
+   private static boolean isWithinTwoTicks(int tick, int before) {
       long age = (long)tick - before;
       return age >= 0L && age <= 2L;
    }
 
-   private static boolean init_Z_Obj(Object level, Object player, UUID identity, int tick) {
+   private static boolean syncBurnTracker(Object level, Object player, UUID identity, int tick) {
       if (level != null && player != null && identity != null) {
-         if (level != init_Obj || player != load_Obj || !identity.equals(init_UUID) || tick < read_I) {
-            write();
-            init_Obj = level;
-            load_Obj = player;
-            init_UUID = identity;
+         if (level != burnTrackLevel || player != burnTrackPlayer || !identity.equals(burnTrackIdentity) || tick < burnLastTick) {
+            resetBurnTracker();
+            burnTrackLevel = level;
+            burnTrackPlayer = player;
+            burnTrackIdentity = identity;
          }
 
-         read_I = tick;
+         burnLastTick = tick;
          return true;
       } else {
-         write();
+         resetBurnTracker();
          return false;
       }
    }
 
-   private static void write() {
-      load_Obj = null;
-      init_Obj = null;
-      init_UUID = null;
-      read_I = 0;
-      load_I = 0;
-      init_I = 0;
-      init_F = 0.0F;
-      init_Z = false;
-      init_ca_BufferHelper = null;
+   private static void resetBurnTracker() {
+      burnTrackPlayer = null;
+      burnTrackLevel = null;
+      burnTrackIdentity = null;
+      burnLastTick = 0;
+      burnDamageCount = 0;
+      burnDamageTick = 0;
+      burnPreHealth = 0.0F;
+      burnOnFire = false;
+      lastBurnDamage = null;
    }
 
-   public static void load_V() {
-      write_J++;
+   public static void recordPlayerDeath() {
+      deathRevisionCounter++;
    }
 
-   public static long load_J() {
-      return write_J;
+   public static long deathRevision() {
+      return deathRevisionCounter;
    }
 
-   public static void init_V_Str(String text) {
-      init_Deque.addLast(
+   public static void recordServerMessage(String text) {
+      recentServerMessages.addLast(
          Map.of(
-            "at", System.currentTimeMillis(), "revision", ++read_J, "source", "server-system-chat", "text", text.substring(0, Math.min(2048, text.length()))
+            "at", System.currentTimeMillis(), "revision", ++serverMessageRevisionCounter, "source", "server-system-chat", "text", text.substring(0, Math.min(2048, text.length()))
          )
       );
 
-      while (init_Deque.size() > 32) {
-         init_Deque.removeFirst();
+      while (recentServerMessages.size() > 32) {
+         recentServerMessages.removeFirst();
       }
    }
 
-   public static long read_J() {
-      return read_J;
+   public static long serverMessageRevision() {
+      return serverMessageRevisionCounter;
    }
 
-   public static List<Map<String, Object>> init_List_I(int limit) {
-      return init_Deque.stream().skip(Math.max(0, init_Deque.size() - limit)).toList();
+   public static List<Map<String, Object>> recentServerMessages(int limit) {
+      return recentServerMessages.stream().skip(Math.max(0, recentServerMessages.size() - limit)).toList();
    }
 
-   public static void read_V() {
-      init_Map.clear();
-      load_Map.clear();
-      read_Map.clear();
-      init_List.clear();
-      load_List.clear();
-      init_Deque.clear();
-      update_Map.clear();
-      sync.clear();
-      flush.clear();
+   public static void clearAll() {
+      blockRevisions.clear();
+      chunkRevisions.clear();
+      blockStates.clear();
+      blockObservers.clear();
+      chunkObservers.clear();
+      recentServerMessages.clear();
+      containerRevisions.clear();
+      containerReplyCounts.clear();
+      containerReplyHistory.clear();
       AiContainerTransactions.read();
-      write_Map.clear();
-      write();
-      update_J++;
-      init_J++;
-      load_J++;
-      read_J++;
+      entityVelocities.clear();
+      resetBurnTracker();
+      velocityRevisionCounter++;
+      blockRevisionCounter++;
+      inventoryRevisionCounter++;
+      serverMessageRevisionCounter++;
    }
 
    private record Inner_BufferHelper(UUID identity, int sourceTick, int healthTick, float before, float health) {

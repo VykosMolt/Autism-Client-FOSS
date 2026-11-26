@@ -145,26 +145,26 @@ final class AiTelly {
             @Override
             public AiOperation.Result tick() {
                if (!this.init_Z && mc.player != null && mc.level != null) {
-                  if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiOperation.Status.FAILED, AiGuard.init_Str_Str("bridging", mc.player.getHealth(), mc.player.getMaxHealth()));
+                  if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+                     return this.init(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("bridging", mc.player.getHealth(), mc.player.getMaxHealth()));
                   }
 
                   if (System.nanoTime() > this.init_J) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Telly bridge deadline reached");
                   }
 
-                  if (!AiTerrain.init(mc.level, mc.player.blockPosition())) {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
-                     return AiGameOperations.init_AiOperation_Result(
-                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size())
+                  if (!AiTerrain.isLoaded(mc.level, mc.player.blockPosition())) {
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+                     return AiGameOperations.result(
+                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.objectOf("placed", this.init_List.size())
                      );
                   }
 
                   if (this.update >= 0) {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      if (++this.update < 20) {
-                        return AiGameOperations.init_AiOperation_Result(
-                           AiOperation.Status.RUNNING, "Verifying the supports", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size())
+                        return AiGameOperations.result(
+                           AiOperation.Status.RUNNING, "Verifying the supports", AiJson.objectOf("placed", this.init_List.size())
                         );
                      }
 
@@ -178,8 +178,8 @@ final class AiTelly {
                         if (this.init_NetHelper == null) {
                            if (plan.verify()) {
                               this.update = 0;
-                              return AiGameOperations.init_AiOperation_Result(
-                                 AiOperation.Status.RUNNING, "Verifying the supports", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size())
+                              return AiGameOperations.result(
+                                 AiOperation.Status.RUNNING, "Verifying the supports", AiJson.objectOf("placed", this.init_List.size())
                               );
                            }
 
@@ -194,7 +194,7 @@ final class AiTelly {
 
                      int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), AiTelly.init_List(mc));
                      if (slot < 0 && support != null) {
-                        autismclient.ai.engine.AiMotionSafety.putAt_V();
+                        autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
@@ -204,8 +204,8 @@ final class AiTelly {
                         Vec3 v = mc.player.getDeltaMovement();
                         return mc.player.onGround() && v.x * v.x + v.z * v.z < 1.0E-4
                            ? this.init(AiOperation.Status.FAILED, "Out of blocks")
-                           : AiGameOperations.init_AiOperation_Result(
-                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the bridge", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size())
+                           : AiGameOperations.result(
+                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the bridge", AiJson.objectOf("placed", this.init_List.size())
                            );
                      }
 
@@ -219,8 +219,8 @@ final class AiTelly {
                         String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
                         if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
                            this.init_NetHelper = null;
-                           return AiGameOperations.init_AiOperation_Result(
-                              AiOperation.Status.RUNNING, "Lane done", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size(), "mode", style)
+                           return AiGameOperations.result(
+                              AiOperation.Status.RUNNING, "Lane done", AiJson.objectOf("placed", this.init_List.size(), "mode", style)
                            );
                         }
 
@@ -235,10 +235,10 @@ final class AiTelly {
 
                         this.init_D = pos.x;
                         this.load_D = pos.z;
-                        return AiGameOperations.init_AiOperation_Result(
+                        return AiGameOperations.result(
                            AiOperation.Status.RUNNING,
                            "Bridging (" + style + "), " + this.init_List.size() + " placed",
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "placed",
                               this.init_List.size(),
                               "mode",
@@ -266,10 +266,10 @@ final class AiTelly {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   status,
                   message,
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "placed",
                      this.init_List.size(),
                      "from",
@@ -284,8 +284,8 @@ final class AiTelly {
             public void cancel() {
                if (!this.init_Z) {
                   this.init_Z = true;
-                  autismclient.ai.engine.AiMotionSafety.putAt_V();
-                  this.init_DataUtil.init_V();
+                  autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+                  this.init_DataUtil.clear();
                   if (mc.player != null && this.write >= 0 && mc.player.getInventory().getSelectedSlot() == this.write) {
                      mc.player.getInventory().setSelectedSlot(this.read);
                   }
@@ -313,7 +313,7 @@ final class AiTelly {
          }
 
          AiTelly.Inner_StreamUtil var10000;
-         switch (AiJson.init_Str_JsonObject(args, "mode", "telly").toLowerCase(Locale.ROOT)) {
+         switch (AiJson.getString(args, "mode", "telly").toLowerCase(Locale.ROOT)) {
             case "walk":
                var10000 = AiTelly.Inner_StreamUtil.WALK;
                break;
@@ -329,13 +329,13 @@ final class AiTelly {
 
          AiTelly.Inner_StreamUtil mode = var10000;
          return new AiTelly.Inner_CachePool(
-            hasX ? AiJson.init_I_JsonObject(args, "x", 0) : null,
-            hasX ? AiJson.init_I_JsonObject(args, "z", 0) : null,
-            hasDirection ? AiJson.init_D_JsonObject(args, "direction", 0.0) : null,
-            Math.max(1, Math.min(256, AiJson.init_I_JsonObject(args, "blocks", 32))),
+            hasX ? AiJson.getInt(args, "x", 0) : null,
+            hasX ? AiJson.getInt(args, "z", 0) : null,
+            hasDirection ? AiJson.getDouble(args, "direction", 0.0) : null,
+            Math.max(1, Math.min(256, AiJson.getInt(args, "blocks", 32))),
             mode,
-            AiJson.init_Z_JsonObject(args, "verify", false),
-            Math.max(1, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)))
+            AiJson.getBoolean(args, "verify", false),
+            Math.max(1, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)))
          );
       }
 

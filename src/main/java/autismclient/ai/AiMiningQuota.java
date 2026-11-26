@@ -17,7 +17,7 @@ public final class AiMiningQuota {
    }
 
    public static JsonObject init_JsonObject_JsonObject(JsonObject args) {
-      AiMiningTargets targets = AiMiningTargets.parse(AiJson.init_Str_JsonObject(args, "block", ""));
+      AiMiningTargets targets = AiMiningTargets.parse(AiJson.getString(args, "block", ""));
       int count = init(args.has("count") ? args.get("count") : new JsonPrimitive(1), "default");
       LinkedHashMap<String, Integer> overrides = new LinkedHashMap<>(targets.counts());
       if (args.has("counts")) {
@@ -137,7 +137,7 @@ public final class AiMiningQuota {
 
       for (Entry<String, JsonElement> e : normalized.getAsJsonObject("counts").entrySet()) {
          int n = e.getValue().getAsInt();
-         int done = Math.max(0, AiJson.init_I_JsonObject(progress, e.getKey(), 0));
+         int done = Math.max(0, AiJson.getInt(progress, e.getKey(), 0));
          if (done < n) {
             left.addProperty(e.getKey(), n - done);
          }

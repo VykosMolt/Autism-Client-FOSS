@@ -288,7 +288,7 @@ public final class AiScaffold {
                (cell, block) -> {
                   BlockPos pos = BlockPos.of(cell);
                   rows.add(
-                     AiJson.init_JsonObject_ObjArr("x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "block", BuiltInRegistries.BLOCK.getKey(block).toString())
+                     AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "block", BuiltInRegistries.BLOCK.getKey(block).toString())
                   );
                }
             );
@@ -296,7 +296,7 @@ public final class AiScaffold {
             CompletableFuture<Void> previous = AiScaffold.load_Map.getOrDefault(this.init_Path, CompletableFuture.completedFuture(null));
             this.init_CompletableFuture = previous.handle((ignored, failure) -> null).thenRunAsync(() -> {
                try {
-                  AiJson.init_V_Path_Obj(this.init_Path, rows);
+                  AiJson.writeAtomicJson(this.init_Path, rows);
                } catch (IOException e) {
                   AutismClientAddon.LOG.warn("[AI] Could not save scaffold ownership: {}", e.getMessage());
                   throw new CompletionException(e);

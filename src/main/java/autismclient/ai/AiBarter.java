@@ -77,23 +77,23 @@ final class AiBarter {
    static AiOperation load(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int pearlsTarget = Math.max(0, Math.min(64, AiJson.init_I_JsonObject(args, "pearls", 0)));
-         final int goldArg = Math.max(0, Math.min(2304, AiJson.init_I_JsonObject(args, "gold", 0)));
-         final int timeoutSeconds = Math.max(10, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)));
-         if (AiGameState.load("minecraft:gold_ingot") <= 0) {
+         final int pearlsTarget = Math.max(0, Math.min(64, AiJson.getInt(args, "pearls", 0)));
+         final int goldArg = Math.max(0, Math.min(2304, AiJson.getInt(args, "gold", 0)));
+         final int timeoutSeconds = Math.max(10, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 300)));
+         if (AiGameState.countMainInventoryItem("minecraft:gold_ingot") <= 0) {
             JsonObject missing = new JsonObject();
             missing.addProperty("minecraft:gold_ingot", 1);
-            return AiGameOperations.init(
+            return AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
                AiFailure.MISSING_MATERIALS,
                "NO_GOLD: no gold ingots in the inventory to barter with; smelt or mine gold first",
-               AiJson.init_JsonObject_ObjArr("reason", "no_gold", "missing", missing)
+               AiJson.objectOf("reason", "no_gold", "missing", missing)
             );
          } else {
             return new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-               final int init_I = AiBarter.init(goldArg, AiGameState.load("minecraft:gold_ingot"));
-               final int load_I = AiGameState.init_I_Str("minecraft:ender_pearl");
+               final int init_I = AiBarter.init(goldArg, AiGameState.countMainInventoryItem("minecraft:gold_ingot"));
+               final int load_I = AiGameState.countInventoryItem("minecraft:ender_pearl");
                final int read_I = mc.player.getInventory().getSelectedSlot();
                final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard();
@@ -133,7 +133,7 @@ final class AiBarter {
                @Override
                public AiOperation.Result tick() {
                   if (!this.read_Z && mc.player != null && mc.level != null) {
-                     if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
+                     if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                         return this.init(
                            AiFailure.LOW_HEALTH,
                            "low_health",
@@ -145,7 +145,7 @@ final class AiBarter {
 
                      int pearlsGained = this.load_I_4();
                      AiBarter.Inner_StreamUtil decision = AiBarter.init(
-                        pearlsTarget, pearlsGained, AiGameState.load("minecraft:gold_ingot"), this.poll, this.init_I, System.nanoTime() > this.init_J
+                        pearlsTarget, pearlsGained, AiGameState.countMainInventoryItem("minecraft:gold_ingot"), this.poll, this.init_I, System.nanoTime() > this.init_J
                      );
                      if (decision == AiBarter.Inner_StreamUtil.GOLD_OUT
                         && (
@@ -165,7 +165,7 @@ final class AiBarter {
                               + " ender pearls after "
                               + this.open
                               + " barter(s), gold left "
-                              + AiGameState.load("minecraft:gold_ingot");
+                              + AiGameState.countMainInventoryItem("minecraft:gold_ingot");
                            AiRunTrace.init_V_Str_Str("pearls_met", detail);
                            return this.init_AiOperation_Result_AiOperation_Status_Str_2(AiOperation.Status.SUCCEEDED, "Pearl target met: " + detail);
                         case GOLD_OUT:
@@ -217,7 +217,7 @@ final class AiBarter {
                               if (!this.init_Z) {
                                  this.init_Z = true;
                                  if (!this.init_Z_5()) {
-                                    this.read_AiOperation = AiEquip.init(AiJson.init_JsonObject_ObjArr("what", "armor", "prefer", "golden_*"));
+                                    this.read_AiOperation = AiEquip.init(AiJson.objectOf("what", "armor", "prefer", "golden_*"));
                                     return this.init_AiOperation_Result_Str_2("Equipping a gold armor piece for piglin neutrality");
                                  }
                               }
@@ -309,7 +309,7 @@ final class AiBarter {
                      }
 
                      if (this.load_J >= 0L) {
-                        int now = AiGameState.load("minecraft:gold_ingot");
+                        int now = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
                         if (now < this.run) {
                            int spent = this.run - now;
                            this.poll += spent;
@@ -319,7 +319,7 @@ final class AiBarter {
                            this.init_NetHelper_DataUtil = AiBarter.Inner_DataUtil.AWAIT;
                            this.write = 0;
                            return this.init_AiOperation_Result_Str_2("Ingot thrown; waiting for the piglin to pick it up");
-                        } else if (AiServerEvidence.init_J() > this.load_J) {
+                        } else if (AiServerEvidence.inventoryRevision() > this.load_J) {
                            this.load_J = -1L;
                            this.write = 0;
                            return ++this.pop >= 3
@@ -343,9 +343,9 @@ final class AiBarter {
                            return this.init_AiOperation_Result_Str_2("A piglin is already admiring an ingot");
                         }
 
-                        this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Piglin));
-                        this.init_DataUtil.load_V();
-                        if (!this.init_DataUtil.load_Z() && ++this.write <= 30) {
+                        this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Piglin));
+                        this.init_DataUtil.tick();
+                        if (!this.init_DataUtil.isSettled() && ++this.write <= 30) {
                            return this.init_AiOperation_Result_Str_2("Turning toward the piglin");
                         }
 
@@ -375,8 +375,8 @@ final class AiBarter {
                            }
 
                            this.load_V_3();
-                           this.run = AiGameState.load("minecraft:gold_ingot");
-                           this.load_J = AiServerEvidence.init_J();
+                           this.run = AiGameState.countMainInventoryItem("minecraft:gold_ingot");
+                           this.load_J = AiServerEvidence.inventoryRevision();
                            AiContainerTransactions.init(mc.player.containerMenu.containerId, this.init_I_I(slot), 0, ContainerInput.THROW);
                            return this.init_AiOperation_Result_Str_2("Throwing one gold ingot at the piglin");
                         }
@@ -465,7 +465,7 @@ final class AiBarter {
                AiOperation.Result write() {
                   if (this.init_AiOperation == null) {
                      this.init_AiOperation = AiGameplay.write(
-                        AiJson.init_JsonObject_ObjArr("item", "minecraft:gold_ingot", "count", 1, "additional", true, "timeoutSeconds", 25)
+                        AiJson.objectOf("item", "minecraft:gold_ingot", "count", 1, "additional", true, "timeoutSeconds", 25)
                      );
                      return this.init_AiOperation_Result_Str_2("Walking back onto the thrown ingot");
                   }
@@ -518,12 +518,12 @@ final class AiBarter {
                      if (next != null) {
                         this.load_Str = next;
                         int onGround = this.init_I_Str(next);
-                        this.init_AiOperation = AiGameplay.write(AiJson.init_JsonObject_ObjArr("item", next, "count", onGround, "additional", true, "timeoutSeconds", 25));
+                        this.init_AiOperation = AiGameplay.write(AiJson.objectOf("item", next, "count", onGround, "additional", true, "timeoutSeconds", 25));
                         return this.init_AiOperation_Result_Str_2("Collecting " + onGround + " " + next);
                      }
 
                      for (Entry<String, Integer> entry : this.load_Map.entrySet()) {
-                        int gained = AiGameState.init_I_Str(entry.getKey()) - entry.getValue();
+                        int gained = AiGameState.countInventoryItem(entry.getKey()) - entry.getValue();
                         if (gained > 0) {
                            this.init_Map.merge(entry.getKey(), gained, Integer::sum);
                         }
@@ -555,15 +555,15 @@ final class AiBarter {
                      this.load_AiOperation = null;
                      return this.init_AiOperation_Result_Str_2("Resuming after " + this.init_Str);
                   } else {
-                     AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
+                     AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
                      AiGuard.GuardPolicy policy = mc.level.dimension() != Level.OVERWORLD ? this.init_X_CachePool.withoutFlee() : this.init_X_CachePool;
-                     AiOperation action = AiGuard.init_AiOperation_X_CachePool(policy, vitals, this.read_I_2());
+                     AiOperation action = AiGuard.createResponseOperation(policy, vitals, this.read_I_2());
                      if (action == null) {
                         return null;
                      }
 
                      this.load_AiOperation = action;
-                     this.init_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                     this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                      this.update++;
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
@@ -721,7 +721,7 @@ final class AiBarter {
                         if (entity instanceof ItemEntity drop && drop.isAlive() && !this.load_Set.contains(drop.getId())) {
                            String itemId = BuiltInRegistries.ITEM.getKey(drop.getItem().getItem()).toString();
                            if (!"minecraft:gold_ingot".equals(itemId) && !(drop.position().distanceToSqr(center) > 144.0)) {
-                              this.load_Map.putIfAbsent(itemId, AiGameState.init_I_Str(itemId));
+                              this.load_Map.putIfAbsent(itemId, AiGameState.countInventoryItem(itemId));
                            }
                         }
                      }
@@ -775,7 +775,7 @@ final class AiBarter {
                }
 
                int load_I_4() {
-                  return AiGameState.init_I_Str("minecraft:ender_pearl") - this.load_I;
+                  return AiGameState.countInventoryItem("minecraft:ender_pearl") - this.load_I;
                }
 
                int read_I_2() {
@@ -790,7 +790,7 @@ final class AiBarter {
                   }
 
                   int pearlsGained = this.load_I_4();
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
+                  JsonObject out = AiJson.objectOf(
                      "bartered",
                      this.open,
                      "thrown",
@@ -804,7 +804,7 @@ final class AiBarter {
                      "goldBudget",
                      this.init_I,
                      "goldLeft",
-                     AiGameState.load("minecraft:gold_ingot"),
+                     AiGameState.countMainInventoryItem("minecraft:gold_ingot"),
                      "pearlsGained",
                      pearlsGained,
                      "pearlsTarget",
@@ -822,18 +822,18 @@ final class AiBarter {
                   }
 
                   if (!this.init_List.isEmpty()) {
-                     out.add("uncollected", AiJson.init.toJsonTree(this.init_List));
+                     out.add("uncollected", AiJson.GSON.toJsonTree(this.init_List));
                   }
 
                   Piglin piglin = this.load_Piglin != null ? this.load_Piglin : this.init_Piglin;
                   if (piglin != null) {
                      out.add(
                         "piglin",
-                        AiJson.init_JsonObject_ObjArr("entityId", piglin.getId(), "x", piglin.getBlockX(), "y", piglin.getBlockY(), "z", piglin.getBlockZ())
+                        AiJson.objectOf("entityId", piglin.getId(), "x", piglin.getBlockX(), "y", piglin.getBlockY(), "z", piglin.getBlockZ())
                      );
                   }
 
-                  out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.update, this.init_Str));
+                  out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.update, this.init_Str));
                   return out;
                }
 
@@ -861,7 +861,7 @@ final class AiBarter {
                   if (!this.read_Z) {
                      this.read_Z = true;
                      this.init_V_7();
-                     this.init_DataUtil.init_V();
+                     this.init_DataUtil.clear();
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;

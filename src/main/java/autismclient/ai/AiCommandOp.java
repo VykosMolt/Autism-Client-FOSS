@@ -26,7 +26,7 @@ public final class AiCommandOp {
    }
 
    static AiCommandOp.Inner_StreamUtil init_UtilCore_StreamUti(JsonObject args) {
-      String send = AiJson.init_Str_JsonObject(args, "send", "");
+      String send = AiJson.getString(args, "send", "");
       if (send.startsWith("/")) {
          send = send.substring(1);
       }
@@ -53,9 +53,9 @@ public final class AiCommandOp {
          );
       }
 
-      boolean chat = AiJson.init_Z_JsonObject(args, "chat", false);
-      String match = AiJson.init_Str_JsonObject(args, "match", "");
-      String regex = AiJson.init_Str_JsonObject(args, "regex", "");
+      boolean chat = AiJson.getBoolean(args, "chat", false);
+      String match = AiJson.getString(args, "match", "");
+      String regex = AiJson.getString(args, "regex", "");
       if (!match.isEmpty() && !regex.isEmpty()) {
          throw new IllegalArgumentException("match and regex are mutually exclusive; provide exactly one correlation pattern");
       }
@@ -69,8 +69,8 @@ public final class AiCommandOp {
          }
       }
 
-      int timeout = Math.max(1, Math.min(120, AiJson.init_I_JsonObject(args, "timeoutSeconds", 10)));
-      return new AiCommandOp.Inner_StreamUtil(send, chat, match.isEmpty() ? null : match, compiled, timeout, AiJson.init_Z_JsonObject(args, "capture", true));
+      int timeout = Math.max(1, Math.min(120, AiJson.getInt(args, "timeoutSeconds", 10)));
+      return new AiCommandOp.Inner_StreamUtil(send, chat, match.isEmpty() ? null : match, compiled, timeout, AiJson.getBoolean(args, "capture", true));
    }
 
    static AiCommandOp.Inner_DataUtil init(AiCommandOp.Inner_StreamUtil parsed) {
@@ -181,7 +181,7 @@ public final class AiCommandOp {
                            AiOperation.Status.TIMED_OUT,
                            "No chat line matched before the deadline; partial lines are reported and silence proves neither success nor failure"
                         )
-                        : AiGameOperations.init_AiOperation_Result(
+                        : AiGameOperations.result(
                            AiOperation.Status.RUNNING,
                            matcher == null ? "Sent; watching briefly for immediate echoes" : "Waiting for a chat line matching the correlation pattern",
                            this.init_JsonObject_22()
@@ -248,7 +248,7 @@ public final class AiCommandOp {
                   }
                }
 
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "sent",
                   this.init_Z,
                   "send",
@@ -268,7 +268,7 @@ public final class AiCommandOp {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.load_Z = true;
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_22());
+               return AiGameOperations.result(status, message, this.init_JsonObject_22());
             }
 
             @Override
@@ -282,7 +282,7 @@ public final class AiCommandOp {
    }
 
    private static JsonObject init(AiChatLedger.ChatEntry entry) {
-      return AiJson.init_JsonObject_ObjArr("source", entry.source(), "sender", entry.sender(), "text", entry.text(), "untrusted", true);
+      return AiJson.objectOf("source", entry.source(), "sender", entry.sender(), "text", entry.text(), "untrusted", true);
    }
 
    interface Inner_DataUtil {

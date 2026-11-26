@@ -31,13 +31,13 @@ final class AiNativeSearch {
       JsonObject var10000;
       switch (settings.provider) {
          case OPENAI:
-            var10000 = AiJson.init_JsonObject_ObjArr(
+            var10000 = AiJson.objectOf(
                "model",
                settings.model,
                "input",
                prompt,
                "tools",
-               List.of(AiJson.init_JsonObject_ObjArr("type", "web_search")),
+               List.of(AiJson.objectOf("type", "web_search")),
                "max_output_tokens",
                Math.min(4096, settings.outputTokens),
                "store",
@@ -45,25 +45,25 @@ final class AiNativeSearch {
             );
             break;
          case ANTHROPIC:
-            var10000 = AiJson.init_JsonObject_ObjArr(
+            var10000 = AiJson.objectOf(
                "model",
                settings.model,
                "messages",
-               List.of(AiJson.init_JsonObject_ObjArr("role", "user", "content", prompt)),
+               List.of(AiJson.objectOf("role", "user", "content", prompt)),
                "max_tokens",
                Math.min(4096, settings.outputTokens),
                "tools",
-               List.of(AiJson.init_JsonObject_ObjArr("type", "web_search_20250305", "name", "web_search", "max_uses", 3))
+               List.of(AiJson.objectOf("type", "web_search_20250305", "name", "web_search", "max_uses", 3))
             );
             break;
          case GEMINI:
-            var10000 = AiJson.init_JsonObject_ObjArr(
+            var10000 = AiJson.objectOf(
                "contents",
-               List.of(AiJson.init_JsonObject_ObjArr("role", "user", "parts", List.of(AiJson.init_JsonObject_ObjArr("text", prompt)))),
+               List.of(AiJson.objectOf("role", "user", "parts", List.of(AiJson.objectOf("text", prompt)))),
                "tools",
-               List.of(AiJson.init_JsonObject_ObjArr("google_search", AiJson.init_JsonObject_ObjArr())),
+               List.of(AiJson.objectOf("google_search", AiJson.objectOf())),
                "generationConfig",
-               AiJson.init_JsonObject_ObjArr("maxOutputTokens", Math.min(4096, settings.outputTokens))
+               AiJson.objectOf("maxOutputTokens", Math.min(4096, settings.outputTokens))
             );
             break;
          default:
@@ -113,7 +113,7 @@ final class AiNativeSearch {
             throw new IOException("Native search HTTP " + response.statusCode() + "; check model search support or configure Brave");
          }
 
-         JsonObject json = AiJson.init_JsonObject_Str(new String(response.body(), StandardCharsets.UTF_8));
+         JsonObject json = AiJson.parseObject(new String(response.body(), StandardCharsets.UTF_8));
          JsonArray content = new JsonArray();
          long tokens = 0L;
          if (settings.provider == AiSettings.Provider.GEMINI) {
@@ -130,24 +130,24 @@ final class AiNativeSearch {
                      : null;
                   if (partsArr != null) {
                      for (JsonElement part : partsArr) {
-                        if (part != null && part.isJsonObject() && part.getAsJsonObject().has("text") && !AiJson.init_Z_JsonObject(part.getAsJsonObject(), "thought", false)) {
+                        if (part != null && part.isJsonObject() && part.getAsJsonObject().has("text") && !AiJson.getBoolean(part.getAsJsonObject(), "thought", false)) {
                            texts.add(part);
                         }
                      }
                   }
 
-                  content.add(AiJson.init_JsonObject_ObjArr("text", texts, "sources", c.get("groundingMetadata")));
+                  content.add(AiJson.objectOf("text", texts, "sources", c.get("groundingMetadata")));
                }
             }
 
             if (json.has("usageMetadata")) {
-               tokens = AiJson.init_I_JsonObject(json.getAsJsonObject("usageMetadata"), "totalTokenCount", 0);
+               tokens = AiJson.getInt(json.getAsJsonObject("usageMetadata"), "totalTokenCount", 0);
             }
          } else {
             JsonArray parts = json.getAsJsonArray(settings.provider == AiSettings.Provider.OPENAI ? "output" : "content");
             if (parts != null) {
                for (JsonElement item : parts) {
-                  String type = AiJson.init_Str_JsonObject(item.getAsJsonObject(), "type", "");
+                  String type = AiJson.getString(item.getAsJsonObject(), "type", "");
                   if (Set.of("message", "text", "web_search_tool_result").contains(type)) {
                      content.add(item);
                   }
@@ -156,11 +156,11 @@ final class AiNativeSearch {
 
             if (json.has("usage")) {
                JsonObject u = json.getAsJsonObject("usage");
-               tokens = AiJson.init_I_JsonObject(u, "total_tokens", AiJson.init_I_JsonObject(u, "input_tokens", 0) + AiJson.init_I_JsonObject(u, "output_tokens", 0));
+               tokens = AiJson.getInt(u, "total_tokens", AiJson.getInt(u, "input_tokens", 0) + AiJson.getInt(u, "output_tokens", 0));
             }
          }
 
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "source",
             settings.provider.name() + " native search",
             "retrievedAt",

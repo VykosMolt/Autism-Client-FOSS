@@ -40,25 +40,25 @@ public final class AiPhysics {
    private static final double nextBy = 1.0E-7;
    public static final int prev_I = 1;
    public static final int chunkAt_I = 2;
-   private static final ThreadLocal<AiPhysics.ScratchBuffers> putAt_ThreadLocal = ThreadLocal.withInitial(AiPhysics.ScratchBuffers::new);
-   private static final double dataEx = Math.cos(0.13962633907794952);
+   private static final ThreadLocal<AiPhysics.ScratchBuffers> SCRATCH_BUFFERS = ThreadLocal.withInitial(AiPhysics.ScratchBuffers::new);
+   private static final double MINOR_COLLISION_COS_LIMIT = Math.cos(0.13962633907794952);
 
    private AiPhysics() {
    }
 
-   public static AiPhysics.PhysicsWorld putAt_TokenCore_TaskStat_ClientLevel_Entity(ClientLevel var0, Entity var1) {
+   public static AiPhysics.PhysicsWorld liveWorld(ClientLevel var0, Entity var1) {
       return new AiLiveWorld(var0, var1);
    }
 
-   static boolean putAt_Z(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
-      return putAt_Z_TokenCore_TaskStat(var0, var1, var2, false);
+   static boolean hitsHazard(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
+      return checkHazardSweep(var0, var1, var2, false);
    }
 
-   static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
-      return putAt_Z_TokenCore_TaskStat(var0, var1, var2, true);
+   static boolean hitsStrictHazard(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
+      return checkHazardSweep(var0, var1, var2, true);
    }
 
-   static int[] putAt_IArr(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
+   static int[] findHazardCell(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       double var3 = 0.33999999999999997;
       double var5 = Math.min(var1.x(), var2.x()) - var3;
       double var7 = Math.max(var1.x(), var2.x()) + var3;
@@ -74,9 +74,9 @@ public final class AiPhysics {
             int var22 = (int)Math.floor(var16);
 
             while (var22 <= (int)Math.floor(var18 - 1.0E-5)) {
-               boolean var23 = readEx(var1, var20, var21, var22);
+               boolean var23 = bodyOverlapsCell(var1, var20, var21, var22);
                if (var23 || (var21 < var15 ? !var0.chunkAt(var20, var21, var22) : !var0.prev(var20, var21, var22))) {
-                  if (var21 < var15 || !var0.putAt_Z_I_2(var20, var21, var22) || var23 && !fill(var2, var20, var21, var22)) {
+                  if (var21 < var15 || !var0.putAt_Z_I_2(var20, var21, var22) || var23 && !bodyOverlapsCellStrict(var2, var20, var21, var22)) {
                      var22++;
                      continue;
                   }
@@ -100,7 +100,7 @@ public final class AiPhysics {
          for (int var33 = (int)Math.floor(var24); var33 <= (int)Math.floor(var26 - 1.0E-5); var33++) {
             for (int var34 = (int)Math.floor(var28); var34 <= (int)Math.floor(var30 - 1.0E-5); var34++) {
                if (var0.readEx_Z(var32, var33, var34)
-                  && (!putAt_Z_TokenCore_TableCac(var1, var32, var33, var34) || putAt_Z_TokenCore_TableCac(var2, var32, var33, var34))) {
+                  && (!feetInsideCell(var1, var32, var33, var34) || feetInsideCell(var2, var32, var33, var34))) {
                   return new int[]{var32, var33, var34, 1};
                }
             }
@@ -110,7 +110,7 @@ public final class AiPhysics {
       return null;
    }
 
-   private static boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var0, int var1, int var2, int var3) {
+   private static boolean feetInsideCell(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       return var1 >= (int)Math.floor(var0.x() - 0.04)
          && var1 <= (int)Math.floor(var0.x() + 0.04 - 1.0E-5)
          && var3 >= (int)Math.floor(var0.z() - 0.04)
@@ -119,7 +119,7 @@ public final class AiPhysics {
          && var2 <= (int)Math.floor(var0.y() + 0.06 - 1.0E-5);
    }
 
-   private static boolean fill(AiPhysics.MotionState var0, int var1, int var2, int var3) {
+   private static boolean bodyOverlapsCellStrict(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       double var4 = 0.33999999999999997;
       return var1 >= (int)Math.floor(var0.x() - var4)
          && var1 <= (int)Math.floor(var0.x() + var4 - 1.0E-5)
@@ -129,7 +129,7 @@ public final class AiPhysics {
          && var2 <= (int)Math.floor(var0.y() + 1.8 - 1.0E-5);
    }
 
-   private static boolean readEx(AiPhysics.MotionState var0, int var1, int var2, int var3) {
+   private static boolean bodyOverlapsCell(AiPhysics.MotionState var0, int var1, int var2, int var3) {
       double var4 = 0.33999999999999997;
       return var1 >= (int)Math.floor(var0.x() - var4)
          && var1 <= (int)Math.floor(var0.x() + var4 - 1.0E-5)
@@ -139,7 +139,7 @@ public final class AiPhysics {
          && var2 <= (int)Math.floor(var0.y() + 1.8 - 1.0E-5);
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat(
+   private static boolean checkHazardSweep(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, boolean var3
    ) {
       double var4 = 0.33999999999999997;
@@ -164,12 +164,12 @@ public final class AiPhysics {
       for (int var27 = var21; var27 <= var22; var27++) {
          for (int var28 = var23; var28 <= var24; var28++) {
             for (int var29 = var25; var29 <= var26; var29++) {
-               if ((var28 < var16 ? var0.chunkAt(var27, var28, var29) : var0.prev(var27, var28, var29)) && (var3 || !readEx(var1, var27, var28, var29))) {
+               if ((var28 < var16 ? var0.chunkAt(var27, var28, var29) : var0.prev(var27, var28, var29)) && (var3 || !bodyOverlapsCell(var1, var27, var28, var29))) {
                   return true;
                }
 
                if (var28 >= var16) {
-                  if (var0.putAt_Z_I_2(var27, var28, var29) && (!readEx(var1, var27, var28, var29) || fill(var2, var27, var28, var29))) {
+                  if (var0.putAt_Z_I_2(var27, var28, var29) && (!bodyOverlapsCell(var1, var27, var28, var29) || bodyOverlapsCellStrict(var2, var27, var28, var29))) {
                      return true;
                   }
 
@@ -192,7 +192,7 @@ public final class AiPhysics {
          for (int var40 = (int)Math.floor(var31); var40 <= (int)Math.floor(var33 - 1.0E-5); var40++) {
             for (int var41 = (int)Math.floor(var35); var41 <= (int)Math.floor(var37 - 1.0E-5); var41++) {
                if (var0.readEx_Z(var39, var40, var41)
-                  && (var3 || !putAt_Z_TokenCore_TableCac(var1, var39, var40, var41) || putAt_Z_TokenCore_TableCac(var2, var39, var40, var41))) {
+                  && (var3 || !feetInsideCell(var1, var39, var40, var41) || feetInsideCell(var2, var39, var40, var41))) {
                   return true;
                }
             }
@@ -202,27 +202,27 @@ public final class AiPhysics {
       return false;
    }
 
-   static double putAt_D_I(int var0) {
+   static double stuckHorizontalScale(int var0) {
       return var0 == 1 ? 0.25 : (var0 == 2 ? 0.8 : 1.0);
    }
 
-   static double fill(int var0) {
+   static double stuckVerticalScale(int var0) {
       return var0 == 1 ? 0.05 : (var0 == 2 ? 0.75 : 1.0);
    }
 
-   public static AiPhysics.MotionState putAt(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
-      return putAt_TokenCore_TableCac_TokenCore_TableCac(var0, var1, var2, true, false);
+   public static AiPhysics.MotionState step(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
+      return stepInternal(var0, var1, var2, true, false);
    }
 
-   static AiPhysics.MotionState fill(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
-      return putAt_TokenCore_TableCac_TokenCore_TableCac(var0, var1, var2, true, true);
+   static AiPhysics.MotionState stepWithClimbable(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
+      return stepInternal(var0, var1, var2, true, true);
    }
 
-   public static AiPhysics.MotionState readEx(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
-      return putAt_TokenCore_TableCac_TokenCore_TableCac(var0, var1, var2, false, false);
+   public static AiPhysics.MotionState stepUnclipped(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2) {
+      return stepInternal(var0, var1, var2, false, false);
    }
 
-   private static AiPhysics.MotionState putAt_TokenCore_TableCac_TokenCore_TableCac(
+   private static AiPhysics.MotionState stepInternal(
       AiPhysics.MotionState var0, AiPhysics.MoveInput var1, AiPhysics.PhysicsWorld var2, boolean var3, boolean var4
    ) {
       double var5 = 0.3;
@@ -234,7 +234,7 @@ public final class AiPhysics {
       double var17 = var0.y() + var7;
       double var19 = var0.z() + var5;
       long var21 = var0.onGround()
-         ? (var0.support() != -9223372036854775808L ? var0.support() : putAt(var9, var11, var13, var15, var19, var0.x(), var0.y(), var0.z(), var2))
+         ? (var0.support() != -9223372036854775808L ? var0.support() : findSupportBlockBounds(var9, var11, var13, var15, var19, var0.x(), var0.y(), var0.z(), var2))
          : -9223372036854775808L;
       int var23 = Math.max(0, var0.jumpDelay() - 1);
       double var24 = var0.vx();
@@ -258,7 +258,7 @@ public final class AiPhysics {
          if (var0.onGround() && var23 == 0) {
             double var37 = var2.value_D((int)Math.floor(var0.x()), (int)Math.floor(var0.y()), (int)Math.floor(var0.z()));
             if (var37 == 1.0) {
-               var37 = var2.value_D(putAt_I_J_D(var21, var0.x()), (int)Math.floor(var0.y() - 0.5000001), fill(var21, var0.z()));
+               var37 = var2.value_D(supportBlockX(var21, var0.x()), (int)Math.floor(var0.y() - 0.5000001), supportBlockZ(var21, var0.z()));
             }
 
             var26 = Math.max(0.42 * var37, var26);
@@ -277,9 +277,9 @@ public final class AiPhysics {
          var23 = 0;
       }
 
-      int var109 = putAt_I_J_D(var21, var0.x());
+      int var109 = supportBlockX(var21, var0.x());
       int var38 = (int)Math.floor(var0.y() - 0.5000001);
-      int var110 = fill(var21, var0.z());
+      int var110 = supportBlockZ(var21, var0.z());
       double var40 = var0.onGround() ? var2.putAt_D_I(var109, var38, var110) : 0.6;
       double var42 = var0.onGround() ? var40 * 0.91 : 0.91;
       double var44 = var0.onGround() ? var2.movementSpeed() * (var31 ? 1.3 : 1.0) * (0.21600002 / (var40 * var40 * var40)) : (var31 ? 0.026 : 0.02);
@@ -315,9 +315,9 @@ public final class AiPhysics {
       double var112 = var26;
       double var113 = var28;
       if (var0.stuck() != 0) {
-         double var114 = putAt_D_I(var0.stuck());
+         double var114 = stuckHorizontalScale(var0.stuck());
          var111 = var24 * var114;
-         var112 = var26 * fill(var0.stuck());
+         var112 = var26 * stuckVerticalScale(var0.stuck());
          var113 = var28 * var114;
       }
 
@@ -330,29 +330,29 @@ public final class AiPhysics {
          var60 = var115.fill_DArr;
          var61 = var115.putAt_FArr;
       } else {
-         AiPhysics.ScratchBuffers var62 = putAt_ThreadLocal.get();
-         var116 = var62.putAt_DArr;
-         var60 = var62.fill;
-         var61 = var62.putAt_FArr;
+         AiPhysics.ScratchBuffers var62 = SCRATCH_BUFFERS.get();
+         var116 = var62.moveResult;
+         var60 = var62.stepCandidate;
+         var61 = var62.stepHeights;
       }
 
       if (var3 && var1.sneak() && var0.onGround() && var112 <= 0.0) {
-         putAt_V_DArr(var116, var111, var112, var113, var9, var11, var13, var15, var19, var2);
+         clipSneakEdge(var116, var111, var112, var113, var9, var11, var13, var15, var19, var2);
          var111 = var116[0];
          var112 = var116[1];
          var113 = var116[2];
       }
 
-      long var117 = putAt(var116, var60, var61, var115, var111, var112, var113, var9, var11, var13, var15, var17, var19, var0.onGround(), var2);
+      long var117 = collideAndStepRaw(var116, var60, var61, var115, var111, var112, var113, var9, var11, var13, var15, var17, var19, var0.onGround(), var2);
       double var64 = var116[0];
       double var66 = var116[1];
       double var68 = var116[2];
       double var70 = var0.x() + var64;
       double var72 = var0.y() + var66;
       double var74 = var0.z() + var68;
-      boolean var76 = !putAt_Z_D_D(var111, var64);
-      boolean var77 = !putAt_Z_D_D(var113, var68);
-      boolean var78 = !putAt_Z_D_D(var112, var66);
+      boolean var76 = !isApproxEqual(var111, var64);
+      boolean var77 = !isApproxEqual(var113, var68);
+      boolean var78 = !isApproxEqual(var112, var66);
       boolean var79 = var78 && var112 < 0.0;
       if (var76) {
          var24 = 0.0;
@@ -368,15 +368,15 @@ public final class AiPhysics {
          double var84 = var70 + var5;
          double var86 = var74 - var5;
          double var88 = var74 + var5;
-         var80 = putAt(var82, var72, var86, var84, var88, var70, var72, var74, var2);
+         var80 = findSupportBlockBounds(var82, var72, var86, var84, var88, var70, var72, var74, var2);
          if (var80 == -9223372036854775808L) {
-            var80 = putAt(var82 - var64, var72, var86 - var68, var84 - var64, var88 - var68, var70, var72, var74, var2);
+            var80 = findSupportBlockBounds(var82 - var64, var72, var86 - var68, var84 - var64, var88 - var68, var70, var72, var74, var2);
          }
       }
 
-      int var118 = putAt_I_J_D(var80, var70);
+      int var118 = supportBlockX(var80, var70);
       int var83 = (int)Math.floor(var72 - 0.2);
-      int var119 = fill(var80, var74);
+      int var119 = supportBlockZ(var80, var74);
       double var85 = 0.0;
       boolean var87 = false;
       if (var78) {
@@ -408,7 +408,7 @@ public final class AiPhysics {
 
       double var122 = var2.fill_D((int)Math.floor(var70), (int)Math.floor(var72), (int)Math.floor(var74));
       if (var122 == 1.0) {
-         var122 = var2.fill_D(putAt_I_J_D(var80, var70), (int)Math.floor(var72 - 0.5000001), fill(var80, var74));
+         var122 = var2.fill_D(supportBlockX(var80, var70), (int)Math.floor(var72 - 0.5000001), supportBlockZ(var80, var74));
       }
 
       var24 *= var122;
@@ -444,29 +444,29 @@ public final class AiPhysics {
       double var100 = var1.sneak() ? 1.5 : 1.8;
       if (var117 >= 0L && var7 >= var100 && var115 != null) {
          AABB[] var102 = var115.putAt_AABBArr();
-         if (var117 != 0L && (var102 == null || putAt(var102, var117, var92, var72 + 1.0E-7, var96, var94, var72 + var100 - 1.0E-7, var98))) {
+         if (var117 != 0L && (var102 == null || intersectsAnyBitmask(var102, var117, var92, var72 + 1.0E-7, var96, var94, var72 + var100 - 1.0E-7, var98))) {
             if (var102 != null) {
-               if (!var1.sneak() && !putAt(var102, var117, var92, var72 + 1.0E-7, var96, var94, var72 + 1.5 - 1.0E-7, var98)) {
+               if (!var1.sneak() && !intersectsAnyBitmask(var102, var117, var92, var72 + 1.0E-7, var96, var94, var72 + 1.5 - 1.0E-7, var98)) {
                   var124 = 1;
-               } else if (!putAt(var102, var117, var92, var72 + 1.0E-7, var96, var94, var72 + 0.6 - 1.0E-7, var98)) {
+               } else if (!intersectsAnyBitmask(var102, var117, var92, var72 + 1.0E-7, var96, var94, var72 + 0.6 - 1.0E-7, var98)) {
                   var124 = 2;
                }
             } else {
-               var124 = putAt_I_TokenCore_TaskStat(var2, var1, var79, var124, var92, var72, var96, var94, var98, var100);
+               var124 = resolveNextPose(var2, var1, var79, var124, var92, var72, var96, var94, var98, var100);
             }
          } else {
             var124 = var1.sneak() ? (var79 ? 4 : 1) : 0;
          }
       } else {
-         var124 = putAt_I_TokenCore_TaskStat(var2, var1, var79, var124, var92, var72, var96, var94, var98, var100);
+         var124 = resolveNextPose(var2, var1, var79, var124, var92, var72, var96, var94, var98, var100);
       }
 
       return new AiPhysics.MotionState(
-         var70, var72, var74, var24, var26, var28, var79, var23, var76 || var77, var78, var80, (var76 || var77) && !putAt(var1, var64, var68), var124, var123
+         var70, var72, var74, var24, var26, var28, var79, var23, var76 || var77, var78, var80, (var76 || var77) && !isMinorHorizontalCollisionDelta(var1, var64, var68), var124, var123
       );
    }
 
-   private static int putAt_I_TokenCore_TaskStat(
+   private static int resolveNextPose(
       AiPhysics.PhysicsWorld var0,
       AiPhysics.MoveInput var1,
       boolean var2,
@@ -487,7 +487,7 @@ public final class AiPhysics {
       }
    }
 
-   private static boolean putAt(AABB[] var0, long var1, double var3, double var5, double var7, double var9, double var11, double var13) {
+   private static boolean intersectsAnyBitmask(AABB[] var0, long var1, double var3, double var5, double var7, double var9, double var11, double var13) {
       while (var1 != 0L) {
          if (var0[Long.numberOfTrailingZeros(var1)].intersects(var3, var5, var7, var9, var11, var13)) {
             return true;
@@ -499,11 +499,11 @@ public final class AiPhysics {
       return false;
    }
 
-   static boolean putAt_Z_TokenCore_CacheHel_Vec3(AiPhysics.MoveInput var0, Vec3 var1) {
-      return putAt(var0, var1.x, var1.z);
+   static boolean isMinorHorizontalCollision(AiPhysics.MoveInput var0, Vec3 var1) {
+      return isMinorHorizontalCollisionDelta(var0, var1.x, var1.z);
    }
 
-   private static boolean putAt(AiPhysics.MoveInput var0, double var1, double var3) {
+   private static boolean isMinorHorizontalCollisionDelta(AiPhysics.MoveInput var0, double var1, double var3) {
       float var5 = var0.yaw() * 0.017453292F;
       double var6 = Math.sin(var5);
       double var8 = Math.cos(var5);
@@ -513,33 +513,33 @@ public final class AiPhysics {
       double var16 = var1 * var1 + var3 * var3;
       if (!(var14 < 9.999999747378752E-6) && !(var16 < 9.999999747378752E-6)) {
          double var18 = (var10 * var1 + var12 * var3) / Math.sqrt(var14 * var16);
-         return var18 > dataEx && var18 <= 1.0;
+         return var18 > MINOR_COLLISION_COS_LIMIT && var18 <= 1.0;
       } else {
          return false;
       }
    }
 
-   static int putAt_I_J_D(long var0, double var2) {
+   static int supportBlockX(long var0, double var2) {
       return var0 == -9223372036854775808L ? (int)Math.floor(var2) : BlockPos.getX(var0);
    }
 
-   static int fill(long var0, double var2) {
+   static int supportBlockZ(long var0, double var2) {
       return var0 == -9223372036854775808L ? (int)Math.floor(var2) : BlockPos.getZ(var0);
    }
 
-   static long putAt_J_AABB(AABB var0, double var1, double var3, double var5, AiPhysics.PhysicsWorld var7) {
-      return putAt(var0.minX, var0.minY, var0.minZ, var0.maxX, var0.maxZ, var1, var3, var5, var7);
+   static long findSupportBlock(AABB var0, double var1, double var3, double var5, AiPhysics.PhysicsWorld var7) {
+      return findSupportBlockBounds(var0.minX, var0.minY, var0.minZ, var0.maxX, var0.maxZ, var1, var3, var5, var7);
    }
 
-   static long putAt(double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, AiPhysics.PhysicsWorld var16) {
+   static long findSupportBlockBounds(double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, AiPhysics.PhysicsWorld var16) {
       return var16.putAt(var0, var2 - 1.0E-6, var4, var6, var2, var8, var10, var12, var14);
    }
 
-   static long putAt(AABB var0, double var1, double var3, double var5, List<AABB> var7, AABB[] var8) {
-      return putAt(var0.minX, var0.minY, var0.minZ, var0.maxX, var0.maxY, var0.maxZ, var1, var3, var5, var7, var8);
+   static long findSupportInBoxes(AABB var0, double var1, double var3, double var5, List<AABB> var7, AABB[] var8) {
+      return findSupportInBoxesRaw(var0.minX, var0.minY, var0.minZ, var0.maxX, var0.maxY, var0.maxZ, var1, var3, var5, var7, var8);
    }
 
-   static long putAt(
+   static long findSupportInBoxesRaw(
       double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, double var16, List<AABB> var18, AABB[] var19
    ) {
       long var20 = -9223372036854775808L;
@@ -573,11 +573,11 @@ public final class AiPhysics {
       return var20;
    }
 
-   private static boolean putAt_Z_D_D(double var0, double var2) {
+   private static boolean isApproxEqual(double var0, double var2) {
       return Math.abs(var2 - var0) < 1.0E-5;
    }
 
-   static Vec3 putAt_Vec3_Vec3(Vec3 var0, AABB var1, boolean var2, AiPhysics.PhysicsWorld var3) {
+   static Vec3 collideAndStep(Vec3 var0, AABB var1, boolean var2, AiPhysics.PhysicsWorld var3) {
       if (var0.lengthSqr() == 0.0) {
          return var0;
       }
@@ -591,17 +591,17 @@ public final class AiPhysics {
          var6 = var4.fill_DArr;
          var7 = var4.putAt_FArr;
       } else {
-         AiPhysics.ScratchBuffers var8 = putAt_ThreadLocal.get();
-         var9 = var8.putAt_DArr;
-         var6 = var8.fill;
-         var7 = var8.putAt_FArr;
+         AiPhysics.ScratchBuffers var8 = SCRATCH_BUFFERS.get();
+         var9 = var8.moveResult;
+         var6 = var8.stepCandidate;
+         var7 = var8.stepHeights;
       }
 
-      putAt(var9, var6, var7, var4, var0.x, var0.y, var0.z, var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var3);
+      collideAndStepRaw(var9, var6, var7, var4, var0.x, var0.y, var0.z, var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var3);
       return new Vec3(var9[0], var9[1], var9[2]);
    }
 
-   private static long putAt(
+   private static long collideAndStepRaw(
       double[] var0,
       double[] var1,
       float[] var2,
@@ -645,9 +645,9 @@ public final class AiPhysics {
       double var75 = var0[0];
       double var40 = var0[1];
       double var42 = var0[2];
-      boolean var44 = !putAt_Z_D_D(var4, var75);
-      boolean var45 = !putAt_Z_D_D(var8, var42);
-      boolean var46 = !putAt_Z_D_D(var6, var40);
+      boolean var44 = !isApproxEqual(var4, var75);
+      boolean var45 = !isApproxEqual(var8, var42);
+      boolean var46 = !isApproxEqual(var6, var40);
       boolean var47 = var46 && var6 < 0.0;
       if ((var22 || var47) && (var44 || var45)) {
          double var48 = var47 ? var12 + var40 : var12;
@@ -687,16 +687,16 @@ public final class AiPhysics {
             while (var80 != 0L) {
                AABB var84 = var64[Long.numberOfTrailingZeros(var80)];
                var80 &= var80 - 1L;
-               var76 = putAt_I_FArr(var2, var76, (float)(var84.minY - var48), var79, var70);
-               var76 = putAt_I_FArr(var2, var76, (float)(var84.maxY - var48), var79, var70);
+               var76 = appendUniqueStepHeight(var2, var76, (float)(var84.minY - var48), var79, var70);
+               var76 = appendUniqueStepHeight(var2, var76, (float)(var84.maxY - var48), var79, var70);
             }
          } else {
             int var71 = 0;
 
             for (int var72 = var67.size(); var71 < var72; var71++) {
                AABB var73 = (AABB)var67.get(var71);
-               var76 = putAt_I_FArr(var2, var76, (float)(var73.minY - var48), var79, var70);
-               var76 = putAt_I_FArr(var2, var76, (float)(var73.maxY - var48), var79, var70);
+               var76 = appendUniqueStepHeight(var2, var76, (float)(var73.minY - var48), var79, var70);
+               var76 = appendUniqueStepHeight(var2, var76, (float)(var73.maxY - var48), var79, var70);
             }
          }
 
@@ -716,9 +716,9 @@ public final class AiPhysics {
          for (int var86 = 0; var86 < var76; var86++) {
             float var74 = var2[var86];
             if (var64 != null) {
-               putAt(var1, var4, var74, var8, var10, var48, var14, var16, var50, var20, var64, var65);
+               resolveCollisionsBitmask(var1, var4, var74, var8, var10, var48, var14, var16, var50, var20, var64, var65);
             } else {
-               putAt(var1, var4, var74, var8, var10, var48, var14, var16, var50, var20, var67);
+               resolveCollisionsList(var1, var4, var74, var8, var10, var48, var14, var16, var50, var20, var67);
             }
 
             if (var1[0] * var1[0] + var1[2] * var1[2] > var82) {
@@ -733,7 +733,7 @@ public final class AiPhysics {
       return var36;
    }
 
-   private static int putAt_I_FArr(float[] var0, int var1, float var2, float var3, float var4) {
+   private static int appendUniqueStepHeight(float[] var0, int var1, float var2, float var3, float var4) {
       if (!(var2 < 0.0F) && var2 != var3 && !(var2 > var4) && var1 < var0.length) {
          for (int var5 = 0; var5 < var1; var5++) {
             if (var0[var5] == var2) {
@@ -748,39 +748,39 @@ public final class AiPhysics {
       }
    }
 
-   static Vec3 putAt(Vec3 var0, AABB var1, List<AABB> var2) {
+   static Vec3 collideWithBoxes(Vec3 var0, AABB var1, List<AABB> var2) {
       if (var2.isEmpty()) {
          return var0;
       }
 
-      double[] var3 = putAt_ThreadLocal.get().fill;
-      putAt(var3, var0.x, var0.y, var0.z, var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2);
+      double[] var3 = SCRATCH_BUFFERS.get().stepCandidate;
+      resolveCollisionsList(var3, var0.x, var0.y, var0.z, var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2);
       return new Vec3(var3[0], var3[1], var3[2]);
    }
 
-   static Vec3 putAt_Vec3_Vec3_2(Vec3 var0, AABB var1, AABB[] var2, long var3) {
+   static Vec3 collideWithBitmaskBoxes(Vec3 var0, AABB var1, AABB[] var2, long var3) {
       if (var3 == 0L) {
          return var0;
       }
 
-      double[] var5 = putAt_ThreadLocal.get().fill;
-      putAt(var5, var0.x, var0.y, var0.z, var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var3);
+      double[] var5 = SCRATCH_BUFFERS.get().stepCandidate;
+      resolveCollisionsBitmask(var5, var0.x, var0.y, var0.z, var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var3);
       return new Vec3(var5[0], var5[1], var5[2]);
    }
 
-   static Vec3 putAt(
+   static Vec3 collideRawWithBitmask(
       double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, double var16, AABB[] var18, long var19
    ) {
       if (var19 == 0L) {
          return new Vec3(var0, var2, var4);
       }
 
-      double[] var21 = putAt_ThreadLocal.get().fill;
-      putAt(var21, var0, var2, var4, var6, var8, var10, var12, var14, var16, var18, var19);
+      double[] var21 = SCRATCH_BUFFERS.get().stepCandidate;
+      resolveCollisionsBitmask(var21, var0, var2, var4, var6, var8, var10, var12, var14, var16, var18, var19);
       return new Vec3(var21[0], var21[1], var21[2]);
    }
 
-   static void putAt(
+   static void resolveCollisionsBitmask(
       double[] var0,
       double var1,
       double var3,
@@ -800,7 +800,7 @@ public final class AiPhysics {
          var0[2] = var5;
       } else {
          if (var3 != 0.0) {
-            var3 = fill(var7, var9, var11, var13, var15, var17, null, var19, var20, var3);
+            var3 = clipAxisY(var7, var9, var11, var13, var15, var17, null, var19, var20, var3);
             if (var3 != 0.0) {
                var9 += var3;
                var15 += var3;
@@ -809,7 +809,7 @@ public final class AiPhysics {
 
          boolean var22 = Math.abs(var1) < Math.abs(var5);
          if (var22 && var5 != 0.0) {
-            var5 = readEx(var7, var9, var11, var13, var15, var17, null, var19, var20, var5);
+            var5 = clipAxisZ(var7, var9, var11, var13, var15, var17, null, var19, var20, var5);
             if (var5 != 0.0) {
                var11 += var5;
                var17 += var5;
@@ -817,7 +817,7 @@ public final class AiPhysics {
          }
 
          if (var1 != 0.0) {
-            var1 = putAt_D_D(var7, var9, var11, var13, var15, var17, null, var19, var20, var1);
+            var1 = clipAxisX(var7, var9, var11, var13, var15, var17, null, var19, var20, var1);
             if (!var22 && var1 != 0.0) {
                var7 += var1;
                var13 += var1;
@@ -825,7 +825,7 @@ public final class AiPhysics {
          }
 
          if (!var22 && var5 != 0.0) {
-            var5 = readEx(var7, var9, var11, var13, var15, var17, null, var19, var20, var5);
+            var5 = clipAxisZ(var7, var9, var11, var13, var15, var17, null, var19, var20, var5);
          }
 
          var0[0] = var1;
@@ -834,7 +834,7 @@ public final class AiPhysics {
       }
    }
 
-   private static void putAt(
+   private static void resolveCollisionsList(
       double[] var0, double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17, List<AABB> var19
    ) {
       if (var19.isEmpty()) {
@@ -843,7 +843,7 @@ public final class AiPhysics {
          var0[2] = var5;
       } else {
          if (var3 != 0.0) {
-            var3 = fill(var7, var9, var11, var13, var15, var17, var19, null, 0L, var3);
+            var3 = clipAxisY(var7, var9, var11, var13, var15, var17, var19, null, 0L, var3);
             if (var3 != 0.0) {
                var9 += var3;
                var15 += var3;
@@ -852,7 +852,7 @@ public final class AiPhysics {
 
          boolean var20 = Math.abs(var1) < Math.abs(var5);
          if (var20 && var5 != 0.0) {
-            var5 = readEx(var7, var9, var11, var13, var15, var17, var19, null, 0L, var5);
+            var5 = clipAxisZ(var7, var9, var11, var13, var15, var17, var19, null, 0L, var5);
             if (var5 != 0.0) {
                var11 += var5;
                var17 += var5;
@@ -860,7 +860,7 @@ public final class AiPhysics {
          }
 
          if (var1 != 0.0) {
-            var1 = putAt_D_D(var7, var9, var11, var13, var15, var17, var19, null, 0L, var1);
+            var1 = clipAxisX(var7, var9, var11, var13, var15, var17, var19, null, 0L, var1);
             if (!var20 && var1 != 0.0) {
                var7 += var1;
                var13 += var1;
@@ -868,7 +868,7 @@ public final class AiPhysics {
          }
 
          if (!var20 && var5 != 0.0) {
-            var5 = readEx(var7, var9, var11, var13, var15, var17, var19, null, 0L, var5);
+            var5 = clipAxisZ(var7, var9, var11, var13, var15, var17, var19, null, 0L, var5);
          }
 
          var0[0] = var1;
@@ -877,7 +877,7 @@ public final class AiPhysics {
       }
    }
 
-   private static double putAt_D_D(
+   private static double clipAxisX(
       double var0, double var2, double var4, double var6, double var8, double var10, List<AABB> var12, AABB[] var13, long var14, double var16
    ) {
       if (var13 == null) {
@@ -918,7 +918,7 @@ public final class AiPhysics {
       return Math.abs(var16) < 1.0E-7 ? 0.0 : var16;
    }
 
-   private static double fill(
+   private static double clipAxisY(
       double var0, double var2, double var4, double var6, double var8, double var10, List<AABB> var12, AABB[] var13, long var14, double var16
    ) {
       if (var13 == null) {
@@ -959,7 +959,7 @@ public final class AiPhysics {
       return Math.abs(var16) < 1.0E-7 ? 0.0 : var16;
    }
 
-   private static double readEx(
+   private static double clipAxisZ(
       double var0, double var2, double var4, double var6, double var8, double var10, List<AABB> var12, AABB[] var13, long var14, double var16
    ) {
       if (var13 == null) {
@@ -1000,20 +1000,20 @@ public final class AiPhysics {
       return Math.abs(var16) < 1.0E-7 ? 0.0 : var16;
    }
 
-   private static void putAt_V_DArr(
+   private static void clipSneakEdge(
       double[] var0, double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, AiPhysics.PhysicsWorld var17
    ) {
-      while (var1 != 0.0 && !putAt(var7 + var1, var9, var11, var13 + var1, var15, var17)) {
-         var1 = putAt_D_D(var1);
+      while (var1 != 0.0 && !hasSupportBelowOffset(var7 + var1, var9, var11, var13 + var1, var15, var17)) {
+         var1 = shrinkTowardZero(var1);
       }
 
-      while (var5 != 0.0 && !putAt(var7, var9, var11 + var5, var13, var15 + var5, var17)) {
-         var5 = putAt_D_D(var5);
+      while (var5 != 0.0 && !hasSupportBelowOffset(var7, var9, var11 + var5, var13, var15 + var5, var17)) {
+         var5 = shrinkTowardZero(var5);
       }
 
-      while (var1 != 0.0 && var5 != 0.0 && !putAt(var7 + var1, var9, var11 + var5, var13 + var1, var15 + var5, var17)) {
-         var1 = putAt_D_D(var1);
-         var5 = putAt_D_D(var5);
+      while (var1 != 0.0 && var5 != 0.0 && !hasSupportBelowOffset(var7 + var1, var9, var11 + var5, var13 + var1, var15 + var5, var17)) {
+         var1 = shrinkTowardZero(var1);
+         var5 = shrinkTowardZero(var5);
       }
 
       var0[0] = var1;
@@ -1021,28 +1021,28 @@ public final class AiPhysics {
       var0[2] = var5;
    }
 
-   private static double putAt_D_D(double var0) {
+   private static double shrinkTowardZero(double var0) {
       return Math.abs(var0) <= 0.05 ? 0.0 : var0 - Math.copySign(0.05, var0);
    }
 
-   private static boolean putAt(double var0, double var2, double var4, double var6, double var8, AiPhysics.PhysicsWorld var10) {
+   private static boolean hasSupportBelowOffset(double var0, double var2, double var4, double var6, double var8, AiPhysics.PhysicsWorld var10) {
       return var10.putAt_Z_D(var0 + 1.0E-7, var2 - 0.6 - 1.0E-7, var4 + 1.0E-7, var6 - 1.0E-7, var2, var8 - 1.0E-7);
    }
 
-   public static List<AiPhysics.MotionState> putAt(AiPhysics.MotionState var0, List<AiPhysics.MoveInput> var1, AiPhysics.PhysicsWorld var2) {
+   public static List<AiPhysics.MotionState> simulate(AiPhysics.MotionState var0, List<AiPhysics.MoveInput> var1, AiPhysics.PhysicsWorld var2) {
       ArrayList var3 = new ArrayList(var1.size() + 1);
       var3.add(var0);
       AiPhysics.MotionState var4 = var0;
 
       for (AiPhysics.MoveInput var6 : var1) {
-         var4 = putAt(var4, var6, var2);
+         var4 = step(var4, var6, var2);
          var3.add(var4);
       }
 
       return var3;
    }
 
-   public static float putAt_F_D(double var0, double var2, double var4, double var6) {
+   public static float yawBetween(double var0, double var2, double var4, double var6) {
       return (float)(Math.toDegrees(Math.atan2(var6 - var2, var4 - var0)) - 90.0);
    }
 
@@ -1071,9 +1071,9 @@ public final class AiPhysics {
    }
 
    private static final class ScratchBuffers {
-      final double[] putAt_DArr = new double[3];
-      final double[] fill = new double[3];
-      final float[] putAt_FArr = new float[16];
+      final double[] moveResult = new double[3];
+      final double[] stepCandidate = new double[3];
+      final float[] stepHeights = new float[16];
    }
 
    public record MotionState(
@@ -1278,7 +1278,7 @@ public final class AiPhysics {
       }
 
       default Vec3 putAt_Vec3_Vec3(Vec3 var1, AABB var2, AABB var3) {
-         return AiPhysics.putAt(var1, var2, this.collisions(var3));
+         return AiPhysics.collideWithBoxes(var1, var2, this.collisions(var3));
       }
 
       default Vec3 putAt(
@@ -1318,7 +1318,7 @@ public final class AiPhysics {
       }
 
       default long putAt_J_AABB(AABB var1, double var2, double var4, double var6) {
-         return AiPhysics.putAt(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var4, var6, this.collisions(var1), null);
+         return AiPhysics.findSupportInBoxesRaw(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var4, var6, this.collisions(var1), null);
       }
 
       default long putAt(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
@@ -1391,27 +1391,27 @@ public final class AiPhysics {
    }
 
    // 5.3 external ABI bridges
-   public static AiPhysics.PhysicsWorld init_NodeWalker_CachePo_ClientLevel_Entity(ClientLevel level, Entity body) {
-      return putAt_TokenCore_TaskStat_ClientLevel_Entity(level, body);
+   public static AiPhysics.PhysicsWorld createLiveWorld(ClientLevel level, Entity body) {
+      return liveWorld(level, body);
    }
 
-   public static AiPhysics.MotionState init(AiPhysics.MotionState s, AiPhysics.MoveInput in, AiPhysics.PhysicsWorld world) {
-      return putAt(s, in, world);
+   public static AiPhysics.MotionState stepCompat(AiPhysics.MotionState s, AiPhysics.MoveInput in, AiPhysics.PhysicsWorld world) {
+      return step(s, in, world);
    }
 
-   public static AiPhysics.MotionState load(AiPhysics.MotionState s, AiPhysics.MoveInput in, AiPhysics.PhysicsWorld world) {
-      return readEx(s, in, world);
+   public static AiPhysics.MotionState stepUnclippedCompat(AiPhysics.MotionState s, AiPhysics.MoveInput in, AiPhysics.PhysicsWorld world) {
+      return stepUnclipped(s, in, world);
    }
 
-   public static List<AiPhysics.MotionState> init(AiPhysics.MotionState start, List<AiPhysics.MoveInput> inputs, AiPhysics.PhysicsWorld world) {
-      return putAt(start, inputs, world);
+   public static List<AiPhysics.MotionState> simulateCompat(AiPhysics.MotionState start, List<AiPhysics.MoveInput> inputs, AiPhysics.PhysicsWorld world) {
+      return simulate(start, inputs, world);
    }
 
-   public static float init_F_D(double fromX, double fromZ, double toX, double toZ) {
-      return putAt_F_D(fromX, fromZ, toX, toZ);
+   public static float yawTowards(double fromX, double fromZ, double toX, double toZ) {
+      return yawBetween(fromX, fromZ, toX, toZ);
    }
 
-   static boolean init_Z(AiPhysics.PhysicsWorld world, AiPhysics.MotionState from, AiPhysics.MotionState to) {
-      return putAt_Z(world, from, to);
+   static boolean hitsHazardCompat(AiPhysics.PhysicsWorld world, AiPhysics.MotionState from, AiPhysics.MotionState to) {
+      return hitsHazard(world, from, to);
    }
 }

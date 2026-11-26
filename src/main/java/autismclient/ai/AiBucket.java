@@ -44,22 +44,22 @@ final class AiBucket {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiBucket.Inner_DataUtil action = init_TextFormat_DataUti(AiJson.init_Str_JsonObject(args, "action", "fill"));
-         final String fluid = AiJson.init_Str_JsonObject(args, "fluid", "water").trim().toLowerCase(Locale.ROOT);
+         final AiBucket.Inner_DataUtil action = init_TextFormat_DataUti(AiJson.getString(args, "action", "fill"));
+         final String fluid = AiJson.getString(args, "fluid", "water").trim().toLowerCase(Locale.ROOT);
          if (!fluid.equals("water") && !fluid.equals("lava")) {
             throw new IllegalArgumentException("fluid must be water or lava");
          }
 
          boolean hasTarget = args.has("x") && args.has("y") && args.has("z");
-         final BlockPos explicit = hasTarget ? AiGameOperations.init_BlockPos(args) : null;
-         final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)));
+         final BlockPos explicit = hasTarget ? AiGameOperations.requireBlockPos(args) : null;
+         final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
          if (action == AiBucket.Inner_DataUtil.EMPTY
             && fluid.equals("water")
             && mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
-            return AiGameOperations.init_AiOperation(
+            return AiGameOperations.immediate(
                AiOperation.Status.FAILED,
                "Water evaporates in this dimension; the water bucket stays full",
-               AiJson.init_JsonObject_ObjArr("refused", "water_evaporates")
+               AiJson.objectOf("refused", "water_evaporates")
             );
          }
 
@@ -69,7 +69,7 @@ final class AiBucket {
             final Object init_Obj = mc.level;
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final int init_I = AiGameState.init_I_Str(resultId);
+            final int init_I = AiGameState.countInventoryItem(resultId);
             BlockPos init_BlockPos;
             int load_I;
             int read;
@@ -103,7 +103,7 @@ final class AiBucket {
                }
 
                if (this.init_Z) {
-                  if (AiGameState.init_I_Str(resultId) > this.init_I && AiServerEvidence.init_J() > this.load_J) {
+                  if (AiGameState.countInventoryItem(resultId) > this.init_I && AiServerEvidence.inventoryRevision() > this.load_J) {
                      return this.init(
                         AiOperation.Status.SUCCEEDED,
                         action == AiBucket.Inner_DataUtil.FILL ? "Filled a bucket with " + fluid : "Emptied the " + fluid + " bucket"
@@ -114,13 +114,13 @@ final class AiBucket {
                         : this.init("Waiting for the bucket to change");
                   }
                } else {
-                  if (AiGameState.init_I_Str(bucketId) <= 0) {
+                  if (AiGameState.countInventoryItem(bucketId) <= 0) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty(bucketId, 1);
-                     return this.init(AiOperation.Status.FAILED, "No " + bucketId + " in inventory", AiJson.init_JsonObject_ObjArr("missing", missing));
+                     return this.init(AiOperation.Status.FAILED, "No " + bucketId + " in inventory", AiJson.objectOf("missing", missing));
                   }
 
-                  if (AiItems.read(AiItems.load_af_DataUtil(bucketId)) < 0) {
+                  if (AiItems.equipHotbar(AiItems.resolveItem(bucketId)) < 0) {
                      return this.init(AiOperation.Status.FAILED, "Could not hold the " + bucketId);
                   }
 
@@ -143,8 +143,8 @@ final class AiBucket {
                      return this.init(AiOperation.Status.FAILED, "No visible source face within reach at " + this.init_BlockPos.toShortString());
                   }
 
-                  this.init_DataUtil.init_V_ce_DataUtil(autismclient.util.RotationMath.lookAt(point, mc.player.getEyePosition()));
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.setTargetRotation(autismclient.util.RotationMath.lookAt(point, mc.player.getEyePosition()));
+                  this.init_DataUtil.tick();
                   if (++this.load_I > 60) {
                      return this.init(AiOperation.Status.FAILED, "Could not aim at " + this.init_BlockPos.toShortString());
                   }
@@ -189,7 +189,7 @@ final class AiBucket {
                      }
                   }
 
-                  this.load_J = AiServerEvidence.init_J();
+                  this.load_J = AiServerEvidence.inventoryRevision();
                   InteractionResult used = mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                   if (Boolean.getBoolean("autism.navigation.debug")) {
                      AutismClientAddon.LOG
@@ -277,7 +277,7 @@ final class AiBucket {
             }
 
             boolean init(BlockPos pos) {
-               if (!AiTerrain.init(mc.level, pos)) {
+               if (!AiTerrain.isLoaded(mc.level, pos)) {
                   return false;
                } else {
                   FluidState state = mc.level.getFluidState(pos);
@@ -298,7 +298,7 @@ final class AiBucket {
 
                for (Direction side : Plane.HORIZONTAL) {
                   BlockPos candidate = feet.relative(side);
-                  if (AiTerrain.init(mc.level, candidate)) {
+                  if (AiTerrain.isLoaded(mc.level, candidate)) {
                      BlockState state = mc.level.getBlockState(candidate);
                      if (state.canBeReplaced() && state.getFluidState().isEmpty()) {
                         BlockPos below = candidate.below();
@@ -313,7 +313,7 @@ final class AiBucket {
             }
 
             JsonObject init_JsonObject_20() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "action",
                   action.name().toLowerCase(Locale.ROOT),
                   "fluid",
@@ -323,7 +323,7 @@ final class AiBucket {
                   "expecting",
                   resultId,
                   "have",
-                  AiGameState.init_I_Str(resultId),
+                  AiGameState.countInventoryItem(resultId),
                   "startedWith",
                   this.init_I
                );
@@ -358,7 +358,7 @@ final class AiBucket {
             public void cancel() {
                if (!this.load_Z) {
                   this.load_Z = true;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
             }
          };
@@ -409,14 +409,14 @@ final class AiBucket {
    static BlockHitResult init(Minecraft mc, BlockPos target, boolean waterlog, boolean water) {
       if (mc.player != null && mc.level != null) {
          if (waterlog) {
-            return autismclient.ai.engine.AiBlockInteraction.init(mc, target);
+            return autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, target);
          }
 
          BlockHitResult best = null;
 
          for (Direction face : Direction.values()) {
             if (!water || !init(mc.level.getBlockState(target.relative(face.getOpposite())))) {
-               BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(mc, target.relative(face.getOpposite()), face);
+               BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target.relative(face.getOpposite()), face);
                if (init(AiBucket.Inner_DataUtil.EMPTY, hit, target)
                   && (
                      best == null || mc.player.getEyePosition().distanceToSqr(hit.getLocation()) < mc.player.getEyePosition().distanceToSqr(best.getLocation())

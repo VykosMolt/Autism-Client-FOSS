@@ -64,12 +64,12 @@ public final class SyncCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");
          return 1;
       } else {
-         AutismMacro macro = MacroLibraryManager.init_aN().init_aM_Str(name);
+         AutismMacro macro = MacroLibraryManager.getInstance().findByName(name);
          if (macro == null) {
             AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
             return 1;
          } else {
-            sync.load_V(macro.init_Str);
+            sync.load_V(macro.name);
             return 1;
          }
       }

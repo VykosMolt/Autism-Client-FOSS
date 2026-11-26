@@ -219,7 +219,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            MacroLibraryManager.init_V_Z(false);
+            MacroLibraryManager.flushScheduledSave(false);
          } catch (Throwable t) {
             logTickError("macroSettledSave", t);
          }
@@ -281,7 +281,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("cfg.fakeGamemode", FakeGamemodeManager::init_V);
          runSafe("cfg.instaBreak", BlockPreviewRenderer::load);
          runSafe("cfg.packFailureGuard", PackFailureGuard::load);
-         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.init(listener), null));
+         runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(listener), null));
          runSafe("cfg.hideOverlays", () -> {
             if (!OverlayScreenController.load_Z()) {
                OverlayManager.getInstance().minimizeAll();
@@ -314,7 +314,7 @@ public final class AutismClientMod implements ClientModInitializer {
          runSafe("leave.fakeGamemode", FakeGamemodeManager::init_V);
          runSafe("leave.instaBreak", BlockPreviewRenderer::load);
          runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
-         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.init(handler), null));
+         runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(handler), null));
          runSafe("leave.packFailureGuard", PackFailureGuard::load);
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::flush_V_9);
          runSafe("leave.lanSync", () -> LanSyncManager.init_aE().sync_V());
@@ -337,7 +337,7 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
          try {
-            MacroLibraryManager.init_V_Z(true);
+            MacroLibraryManager.flushScheduledSave(true);
          } catch (Throwable t) {
             logTickError("macroSettledSave", t);
          }

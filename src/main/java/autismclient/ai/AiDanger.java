@@ -186,7 +186,7 @@ final class AiDanger {
       JsonArray out = new JsonArray();
 
       for (AiDanger.Inner_ConfigStore s : sources) {
-         out.add(AiJson.init_JsonObject_ObjArr("kind", s.kind(), "x", s.x(), "y", s.y(), "z", s.z(), "damage", s.damage(), "etaTicks", s.etaTicks()));
+         out.add(AiJson.objectOf("kind", s.kind(), "x", s.x(), "y", s.y(), "z", s.z(), "damage", s.damage(), "etaTicks", s.etaTicks()));
       }
 
       return out;
@@ -204,7 +204,7 @@ final class AiDanger {
       try {
          AiDanger.Inner_BufferHelper snap = init_i_BufferHelper_Minecraft(mc);
          AiDanger.Inner_DataUtil a = snap.assessment();
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "sources",
             init_JsonArray_List(init_List_List_I(a.sources(), cap)),
             "worstSource",
@@ -245,15 +245,15 @@ final class AiDanger {
             "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively"
          );
       } catch (Throwable t) {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "sources", new JsonArray(), "note", "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively"
          );
       }
    }
 
    static AiOperation init_AiOperation_JsonObject(JsonObject args) {
-      int cap = args == null ? 12 : AiJson.init_I_JsonObject(args, "cap", 12);
-      return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Predicted danger assessment", init_JsonObject_Minecraft_I(Minecraft.getInstance(), cap));
+      int cap = args == null ? 12 : AiJson.getInt(args, "cap", 12);
+      return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Predicted danger assessment", init_JsonObject_Minecraft_I(Minecraft.getInstance(), cap));
    }
 
    private static AiDanger.Inner_BufferHelper init_i_BufferHelper_Minecraft(Minecraft mc) {

@@ -45,7 +45,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 final class AiCraft {
-   private static final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(runnable -> {
+   private static final ExecutorService CRAFT_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
       Thread thread = new Thread(runnable, "ai-craft");
       thread.setDaemon(true);
       return thread;
@@ -59,22 +59,22 @@ final class AiCraft {
    private AiCraft() {
    }
 
-   static AiOperation init(JsonObject args) {
-      return init(args, true);
+   static AiOperation craft(JsonObject args) {
+      return craft(args, true);
    }
 
-   private static AiOperation init(final JsonObject args, final boolean capacityRecoveryAllowed) {
+   private static AiOperation craft(final JsonObject args, final boolean capacityRecoveryAllowed) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final int requested = AiJson.init_I_JsonObject(args, "count", 1);
+         String spec = AiJson.getString(args, "item", "");
+         final int requested = AiJson.getInt(args, "count", 1);
          if (requested >= 1 && requested <= 2304) {
-            Item output = init_Item(spec);
+            Item output = resolveCraftableItem(spec);
             final String outputId = BuiltInRegistries.ITEM.getKey(output).toString();
             final String statusTitle = "Crafting " + output.getDefaultInstance().getHoverName().getString();
-            boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
-            final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
-            final int held = init_I(outputId);
+            boolean additional = AiJson.getBoolean(args, "additional", false);
+            final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 180)));
+            final int held = countItem(outputId);
             final int target = additional ? held + requested : requested;
             return new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -100,7 +100,7 @@ final class AiCraft {
                boolean init_Z;
                boolean load_Z;
                boolean read_Z;
-               final boolean write_Z = AiJson.init_Z_JsonObject(args, "reclaimTable", false);
+               final boolean write_Z = AiJson.getBoolean(args, "reclaimTable", false);
                AiOperation read_AiOperation;
                AiOperation write_AiOperation;
                int read_I;
@@ -141,7 +141,7 @@ final class AiCraft {
                      AiOperation.Result ended = this.init(
                         this.init_AiOperation_Result.status(),
                         this.init_AiOperation_Result.message(),
-                        AiJson.init_JsonObject_ObjArr("capacityRecovery", AiRunResources.init_JsonObject(this.init_AiOperation_Result.dataJson()))
+                        AiJson.objectOf("capacityRecovery", AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson()))
                      );
                      return new AiOperation.Result(
                         ended.status(), ended.message(), ended.dataJson(), this.init_AiOperation_Result.evidence(), this.init_AiOperation_Result.failure()
@@ -173,9 +173,9 @@ final class AiCraft {
                            "Crafted "
                               + outputId
                               + " to target"
-                              + (AiCraft.init_I("minecraft:crafting_table") > 0 ? "; the crafting table it set down is back in the bag" : "")
+                              + (AiCraft.countItem("minecraft:crafting_table") > 0 ? "; the crafting table it set down is back in the bag" : "")
                         );
-                     } else if (AiCraft.init_I(outputId) < target || this.init_CompletableFuture != null || this.init_AiOperation != null) {
+                     } else if (AiCraft.countItem(outputId) < target || this.init_CompletableFuture != null || this.init_AiOperation != null) {
                         this.load_I = 0;
                         if (this.init_CompletableFuture != null) {
                            if (!this.init_CompletableFuture.isDone()) {
@@ -189,7 +189,7 @@ final class AiCraft {
 
                            this.init_List
                               .add(
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                     "recipe",
                                     this.init_g_CachePool.steps().get(this.init_I).recipe().key(),
                                     "crafts",
@@ -225,7 +225,7 @@ final class AiCraft {
                               AiOperation.Result rejection = AiOperation.Result.failed(
                                  AiFailure.INVENTORY_FULL,
                                  result.init_Str,
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                        "recipe",
                                        this.init_g_CachePool.steps().get(this.init_I).recipe().key(),
                                        "output",
@@ -242,21 +242,21 @@ final class AiCraft {
                                  }
 
                                  JsonObject tidy = AiCraftCapacity.init_JsonObject_g_CachePool(
-                                    this.init_g_CachePool, this.init_I, outputId, remaining, AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), outputId, target)
+                                    this.init_g_CachePool, this.init_I, outputId, remaining, AiCraftPlanner.init(AiCraft.buildRecipeGraph(), outputId, target)
                                  );
                                  this.load_AiOperation = AiCraftCapacity.init_AiOperation_AiOperation_Result(rejection, AiTidy.init(tidy), () -> {
                                     JsonObject retry = args.deepCopy();
                                     retry.addProperty("count", target);
                                     retry.addProperty("additional", false);
                                     retry.addProperty("timeoutSeconds", Math.max(5L, (this.init_J - System.nanoTime()) / 1000000000L));
-                                    return AiCraft.init(retry, false);
-                                 }, AiItems::init_I);
+                                    return AiCraft.craft(retry, false);
+                                 }, AiItems::countFreeSlots);
                                  return this.init("Making room for the craft before one retry");
                               } else {
                                  AiOperation.Result ended = this.init(
                                     rejection.status(),
                                     rejection.message(),
-                                    AiJson.init_JsonObject_ObjArr("capacityFailure", AiRunResources.init_JsonObject(rejection.dataJson()))
+                                    AiJson.objectOf("capacityFailure", AiRunResources.parseEvidenceJson(rejection.dataJson()))
                                  );
                                  return new AiOperation.Result(ended.status(), ended.message(), ended.dataJson(), rejection.evidence(), rejection.failure());
                               }
@@ -278,7 +278,7 @@ final class AiCraft {
                            this.init_AiOperation = null;
                            this.init_List
                               .add(
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                     "recipe",
                                     step.recipe().key(),
                                     "crafts",
@@ -301,7 +301,7 @@ final class AiCraft {
                            return this.init("Crafted step " + this.init_I + "/" + this.init_g_CachePool.steps().size());
                         } else {
                            if (this.init_g_CachePool == null || this.init_I >= this.init_g_CachePool.steps().size()) {
-                              this.init_g_CachePool = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), outputId, target);
+                              this.init_g_CachePool = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), outputId, target);
                               this.init_I = 0;
                               if (this.init_g_CachePool.satisfied()) {
                                  return this.init(
@@ -313,7 +313,7 @@ final class AiCraft {
                               if (!this.init_g_CachePool.complete()) {
                                  StringBuilder inputs = new StringBuilder();
 
-                                 for (AiCraftPlanner.RecipeSpec recipe : AiCraft.init_g_StreamUtil().init_List(outputId)) {
+                                 for (AiCraftPlanner.RecipeSpec recipe : AiCraft.buildRecipeGraph().init_List(outputId)) {
                                     inputs.append(recipe.key()).append(recipe.inputs()).append(' ');
                                  }
 
@@ -326,8 +326,8 @@ final class AiCraft {
                                  return this.init(AiOperation.Status.FAILED, "No craftable route to " + outputId + "; obtain the missing materials first");
                               }
 
-                              if (this.init_g_CachePool.requiresTable() && !AiCraft.load() && AiCraft.init_I("minecraft:crafting_table") <= 0) {
-                                 AiCraftPlanner.CraftPlan table = AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), "minecraft:crafting_table", 1);
+                              if (this.init_g_CachePool.requiresTable() && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") <= 0) {
+                                 AiCraftPlanner.CraftPlan table = AiCraftPlanner.init(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1);
                                  if (table.complete() && !table.requiresTable() && !table.steps().isEmpty()) {
                                     this.init_g_CachePool = table;
                                     return this.init("Crafting a crafting table first (" + outputId + " needs a 3x3 grid)");
@@ -345,12 +345,12 @@ final class AiCraft {
                                     AiOperation.Status.FAILED,
                                     "This craft needs a 3x3 grid; no crafting table is in reach or in the bag"
                                        + (table.missing().isEmpty() ? "" : ", and crafting one needs " + table.missing()),
-                                    AiJson.init_JsonObject_ObjArr("missing", missing)
+                                    AiJson.objectOf("missing", missing)
                                  );
                               }
                            }
 
-                           if (this.init_g_CachePool.requiresTable() && !AiCraft.load()) {
+                           if (this.init_g_CachePool.requiresTable() && !AiCraft.isCraftingTableInReach()) {
                               AiOperation.Result station = this.load();
                               if (station != null) {
                                  return station;
@@ -360,7 +360,7 @@ final class AiCraft {
                            AiCraftPlanner.CraftStep step = this.init_g_CachePool.steps().get(this.init_I);
                            this.write_J = System.nanoTime();
                            if (step.recipe().stonecutting()) {
-                              this.init_AiOperation = AiCraft.init(step, (int)Math.max(5L, (this.init_J - System.nanoTime()) / 1000000000L));
+                              this.init_AiOperation = AiCraft.stonecutStep(step, (int)Math.max(5L, (this.init_J - System.nanoTime()) / 1000000000L));
                               return this.init("Stonecutting " + step.recipe().output() + " x" + step.produced());
                            } else {
                               this.init_Str = "Crafting "
@@ -376,7 +376,7 @@ final class AiCraft {
                               this.init_CompletableFuture = future;
                               String recipeKey = step.recipe().key();
                               int produced = step.produced();
-                              AiCraft.init_ExecutorService.execute(() -> {
+                              AiCraft.CRAFT_EXECUTOR.execute(() -> {
                                  this.init_Thread = Thread.currentThread();
                                  Thread.interrupted();
 
@@ -406,7 +406,7 @@ final class AiCraft {
                            return this.init(
                               AiOperation.Status.SUCCEEDED,
                               "Already holding "
-                                 + AiCraft.init_I(outputId)
+                                 + AiCraft.countItem(outputId)
                                  + " "
                                  + outputId
                                  + " (target "
@@ -417,7 +417,7 @@ final class AiCraft {
                            );
                         }
 
-                        if (this.write_Z && this.read_Z && AiCraft.init_I("minecraft:crafting_table") == 0 && !outputId.equals("minecraft:crafting_table")) {
+                        if (this.write_Z && this.read_Z && AiCraft.countItem("minecraft:crafting_table") == 0 && !outputId.equals("minecraft:crafting_table")) {
                            this.read_AiOperation = AiProgression.init((int)Math.max(5L, Math.min(30L, (this.init_J - System.nanoTime()) / 1000000000L)), true);
                            if (this.read_AiOperation != null) {
                               return this.init("Picking the crafting table back up");
@@ -447,14 +447,14 @@ final class AiCraft {
                }
 
                AiOperation.Result load() {
-                  if (AiCraft.init_I("minecraft:crafting_table") <= 0) {
+                  if (AiCraft.countItem("minecraft:crafting_table") <= 0) {
                      AiOperation.Result walk = this.init_AiOperation_Result_38();
                      return walk != null
                         ? walk
                         : this.init(
                            AiOperation.Status.FAILED,
                            "This craft needs a 3x3 grid and no crafting table is in reach or in the bag",
-                           AiJson.init_JsonObject_ObjArr("missing", AiJson.init_JsonObject_ObjArr("minecraft:crafting_table", 1))
+                           AiJson.objectOf("missing", AiJson.objectOf("minecraft:crafting_table", 1))
                         );
                   }
 
@@ -503,31 +503,31 @@ final class AiCraft {
                         out.append(", ");
                      }
 
-                     out.append(AiJson.init_Str_JsonObject(entry, "recipe", "?")).append(' ').append(AiJson.init_I_JsonObject(entry, "ms", 0)).append(" ms");
+                     out.append(AiJson.getString(entry, "recipe", "?")).append(' ').append(AiJson.getInt(entry, "ms", 0)).append(" ms");
                   }
 
                   return out.length() == 0 ? "none" : out.toString();
                }
 
                JsonObject init_JsonObject_56() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
+                  JsonObject out = AiJson.objectOf(
                      "item",
                      outputId,
                      "target",
                      target,
                      "held",
-                     AiCraft.init_I(outputId),
+                     AiCraft.countItem(outputId),
                      "startedWith",
                      held,
                      "timings",
-                     AiJson.init_JsonObject_ObjArr("totalMs", this.init(this.load_J), "tablePlaceMs", this.update)
+                     AiJson.objectOf("totalMs", this.init(this.load_J), "tablePlaceMs", this.update)
                   );
                   if (this.init_g_CachePool != null) {
                      JsonArray steps = new JsonArray();
 
                      for (AiCraftPlanner.CraftStep step : this.init_g_CachePool.steps()) {
                         steps.add(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "recipe",
                               step.recipe().key(),
                               "output",
@@ -564,14 +564,14 @@ final class AiCraft {
 
                   out.add("executed", done);
                   if (this.init_AiOperation_Result != null) {
-                     out.add("capacityRecovery", AiRunResources.init_JsonObject(this.init_AiOperation_Result.dataJson()));
+                     out.add("capacityRecovery", AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson()));
                   }
 
                   return out;
                }
 
                AiOperation.Result init(String message) {
-                  AiVisualization.init(this, statusTitle, AiTaskStatus.init(message, "Preparing the recipe"), AiCraft.init_I(outputId), target);
+                  AiVisualization.init(this, statusTitle, AiTaskStatus.init(message, "Preparing the recipe"), AiCraft.countItem(outputId), target);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_56().toString(), List.of());
                }
 
@@ -669,7 +669,7 @@ final class AiCraft {
       }
    }
 
-   private static AiOperation init(AiCraftPlanner.CraftStep step, final int timeoutSeconds) {
+   private static AiOperation stonecutStep(AiCraftPlanner.CraftStep step, final int timeoutSeconds) {
       final Minecraft mc = Minecraft.getInstance();
       final String outputId = step.recipe().output();
       final List<String> accepted = step.recipe().inputs().isEmpty() ? List.of() : step.recipe().inputs().get(0);
@@ -699,9 +699,9 @@ final class AiCraft {
 
                if (mc.player.containerMenu instanceof StonecutterMenu menu) {
                   if (this.load_J >= 0L) {
-                     if (AiServerEvidence.init_J_I(menu.containerId) > this.load_J) {
+                     if (AiServerEvidence.containerRevision(menu.containerId) > this.load_J) {
                         if (this.sync > 0) {
-                           int actual = AiCraft.init_I(outputId) - this.update;
+                           int actual = AiCraft.countItem(outputId) - this.update;
                            if (actual < this.sync) {
                               return this.init(AiOperation.Status.UNCERTAIN, "Stonecutter reply did not confirm the expected output");
                            }
@@ -728,9 +728,9 @@ final class AiCraft {
                         if (slot < 0) {
                            JsonObject missing = new JsonObject();
                            missing.addProperty(accepted.isEmpty() ? "unknown" : accepted.get(0), 1);
-                           return this.init(AiOperation.Status.FAILED, "Stonecutting input exhausted", AiJson.init_JsonObject_ObjArr("missing", missing));
+                           return this.init(AiOperation.Status.FAILED, "Stonecutting input exhausted", AiJson.objectOf("missing", missing));
                         } else {
-                           this.load_J = AiServerEvidence.init_J_I(menu.containerId);
+                           this.load_J = AiServerEvidence.containerRevision(menu.containerId);
                            AiContainerTransactions.init(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
                            return this.init("Loading the stonecutter");
                         }
@@ -750,8 +750,8 @@ final class AiCraft {
                            return this.init("Waiting for the result slot");
                         }
 
-                        this.load_J = AiServerEvidence.init_J_I(menu.containerId);
-                        this.update = AiCraft.init_I(outputId);
+                        this.load_J = AiServerEvidence.containerRevision(menu.containerId);
+                        this.update = AiCraft.countItem(outputId);
                         this.sync = result.getCount();
                         AiContainerTransactions.init(menu.containerId, 1, 0, ContainerInput.QUICK_MOVE);
                         return this.init("Cutting " + this.read + "/" + wanted);
@@ -778,10 +778,10 @@ final class AiCraft {
 
             if (this.init_BlockPos == null) {
                if (!this.init_Z) {
-                  if (AiCraft.init_I("minecraft:stonecutter") <= 0) {
+                  if (AiCraft.countItem("minecraft:stonecutter") <= 0) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty("minecraft:stonecutter", 1);
-                     return this.init(AiOperation.Status.FAILED, "No stonecutter in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
+                     return this.init(AiOperation.Status.FAILED, "No stonecutter in reach or in the bag", AiJson.objectOf("missing", missing));
                   }
 
                   this.init_cn = new AiStationPlacer(BuiltInRegistries.ITEM.getOptional(Identifier.parse("minecraft:stonecutter")).orElseThrow(), "stonecutter");
@@ -806,17 +806,17 @@ final class AiCraft {
                   return this.init(AiOperation.Status.FAILED, "The stonecutter fell out of reach");
                }
 
-               this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(this.init_BlockPos));
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.aimAt(Vec3.atCenterOf(this.init_BlockPos));
+               this.init_DataUtil.tick();
                if (++this.init_I > 80) {
                   return this.init(AiOperation.Status.FAILED, "Could not open the stonecutter");
                }
 
-               if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+               if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.init_BlockPos)) {
                   return this.init("Turning toward the stonecutter");
                }
 
-               BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+               BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                if (hit == null) {
                   return this.init("Turning toward the stonecutter");
                }
@@ -828,14 +828,14 @@ final class AiCraft {
          }
 
          BlockPos init_BlockPos_17() {
-            Block wantedx = AiCraft.init_Block("minecraft:stonecutter");
+            Block wantedx = AiCraft.requireBlock("minecraft:stonecutter");
             BlockPos origin = mc.player.blockPosition();
             BlockPos best = null;
             double bestDistance = 1.7976931348623157E308;
             int radius = 16;
 
             for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
-               if (AiTerrain.init(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wantedx) {
+               if (AiTerrain.isLoaded(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wantedx) {
                   double distance = mc.player.distanceToSqr(Vec3.atCenterOf(pos));
                   if (distance < bestDistance) {
                      bestDistance = distance;
@@ -877,7 +877,7 @@ final class AiCraft {
          }
 
          JsonObject init_JsonObject_57() {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "output", outputId, "produced", this.read, "wanted", wanted, "stationAt", this.init_BlockPos == null ? null : this.init_BlockPos.toShortString()
             );
          }
@@ -906,7 +906,7 @@ final class AiCraft {
          public void cancel() {
             if (!this.load_Z) {
                this.load_Z = true;
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
                this.init_DataPipe.init_V();
                if (this.init_cn != null) {
                   this.init_cn.init_V();
@@ -921,7 +921,7 @@ final class AiCraft {
       };
    }
 
-   static AiCraftPlanner.RecipeGraph init_g_StreamUtil() {
+   static AiCraftPlanner.RecipeGraph buildRecipeGraph() {
       Minecraft mc = Minecraft.getInstance();
       final Map<String, List<AiCraftPlanner.RecipeSpec>> byOutput = new HashMap<>();
 
@@ -964,25 +964,25 @@ final class AiCraft {
 
          @Override
          public int init_I(String itemId) {
-            return counts.computeIfAbsent(itemId, AiCraft::init_I);
+            return counts.computeIfAbsent(itemId, AiCraft::countItem);
          }
       });
    }
 
-   static boolean init_Z() {
+   static boolean canAccessCraftingTable() {
       Minecraft mc = Minecraft.getInstance();
-      if (init_I("minecraft:crafting_table") > 0) {
+      if (countItem("minecraft:crafting_table") > 0) {
          return true;
       } else {
          return mc.player != null
                && mc.level != null
                && autismclient.ai.engine.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE)) != null
             ? true
-            : AiCraftPlanner.init(init_g_StreamUtil(), "minecraft:crafting_table", 1).complete();
+            : AiCraftPlanner.init(buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
       }
    }
 
-   static int init_I(String itemId) {
+   static int countItem(String itemId) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -1000,7 +1000,7 @@ final class AiCraft {
       return total;
    }
 
-   static boolean load() {
+   static boolean isCraftingTableInReach() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          double reach = Math.max(4.5, mc.player.blockInteractionRange());
@@ -1019,12 +1019,12 @@ final class AiCraft {
       }
    }
 
-   static BlockPos init_BlockPos() {
-      List<BlockPos> spots = init_List();
+   static BlockPos findPlacementSpot() {
+      List<BlockPos> spots = candidatePlacementSpots();
       return spots.isEmpty() ? null : spots.get(0);
    }
 
-   static BlockPos init(int radius) {
+   static BlockPos findOpenStationSpot(int radius) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
@@ -1032,7 +1032,7 @@ final class AiCraft {
          double bestSq = 1.7976931348623157E308;
 
          for (BlockPos p : BlockPos.betweenClosed(feet.offset(-radius, -3, -radius), feet.offset(radius, 3, radius))) {
-            if ((p.getX() != feet.getX() || p.getZ() != feet.getZ()) && init(mc, p)) {
+            if ((p.getX() != feet.getX() || p.getZ() != feet.getZ()) && isValidFlatSpot(mc, p)) {
                int free = 0;
 
                for (Direction side : Plane.HORIZONTAL) {
@@ -1060,7 +1060,7 @@ final class AiCraft {
       }
    }
 
-   static BlockPos load(int radius) {
+   static BlockPos findFlatStationSpot(int radius) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
@@ -1068,7 +1068,7 @@ final class AiCraft {
          double bestSq = 1.7976931348623157E308;
 
          for (BlockPos p : BlockPos.betweenClosed(feet.offset(-radius, -1, -radius), feet.offset(radius, 1, radius))) {
-            if ((p.getX() != feet.getX() || p.getZ() != feet.getZ()) && init(mc, p)) {
+            if ((p.getX() != feet.getX() || p.getZ() != feet.getZ()) && isValidFlatSpot(mc, p)) {
                double sq = p.distSqr(feet);
                if (sq < bestSq) {
                   bestSq = sq;
@@ -1083,7 +1083,7 @@ final class AiCraft {
       }
    }
 
-   private static boolean init(Minecraft mc, BlockPos p) {
+   private static boolean isValidFlatSpot(Minecraft mc, BlockPos p) {
       return mc.level.getBlockState(p).getCollisionShape(mc.level, p).isEmpty()
          && mc.level.getFluidState(p).isEmpty()
          && mc.level.getBlockState(p.above()).getCollisionShape(mc.level, p.above()).isEmpty()
@@ -1091,7 +1091,7 @@ final class AiCraft {
          && !mc.level.getBlockState(p.below()).is(BlockTags.LEAVES);
    }
 
-   static boolean read() {
+   static boolean isStandingOnLeaves() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos under = BlockPos.containing(mc.player.getX(), mc.player.getY() - 0.2, mc.player.getZ());
@@ -1101,7 +1101,7 @@ final class AiCraft {
       }
    }
 
-   static List<BlockPos> init_List() {
+   static List<BlockPos> candidatePlacementSpots() {
       Minecraft mc = Minecraft.getInstance();
       List<BlockPos> out = new ArrayList<>();
       if (mc.player != null && mc.level != null) {
@@ -1132,7 +1132,7 @@ final class AiCraft {
          List<BlockPos> wet = new ArrayList<>();
 
          for (BlockPos candidate : candidates) {
-            if (AiTerrain.init(mc.level, candidate)) {
+            if (AiTerrain.isLoaded(mc.level, candidate)) {
                BlockState state = mc.level.getBlockState(candidate);
                boolean water = state.getFluidState().is(FluidTags.WATER);
                if (state.canBeReplaced() && (state.getFluidState().isEmpty() || water) && !mc.player.getBoundingBox().intersects(new AABB(candidate))) {
@@ -1148,7 +1148,7 @@ final class AiCraft {
          Vec3 look = mc.player.getLookAngle();
          out.sort(
             Comparator.<BlockPos>comparingInt(c -> autismclient.ai.engine.AiEditLedger.write_Z(c) ? 1 : 0)
-               .thenComparingInt(c -> init(mc, eye, c) ? 0 : 1)
+               .thenComparingInt(c -> hasClearTopFaceSupport(mc, eye, c) ? 0 : 1)
                .thenComparingInt(c -> c.getY() < feet.getY() ? 1 : 0)
                .thenComparingDouble(c -> -new Vec3(c.getX() + 0.5, c.getY(), c.getZ() + 0.5).subtract(eye).normalize().dot(look))
          );
@@ -1159,7 +1159,7 @@ final class AiCraft {
       }
    }
 
-   static boolean init(Minecraft mc, Vec3 eye, BlockPos cell) {
+   static boolean hasClearTopFaceSupport(Minecraft mc, Vec3 eye, BlockPos cell) {
       Vec3 target = new Vec3(cell.getX() + 0.5, cell.getY() - 0.05, cell.getZ() + 0.5);
       if (eye.distanceToSqr(target) > 19.360000000000003) {
          return false;
@@ -1169,8 +1169,8 @@ final class AiCraft {
       return hit.getType() == Type.BLOCK && hit.getBlockPos().equals(cell.below()) && hit.getDirection() == Direction.UP;
    }
 
-   private static Item init_Item(String spec) {
-      AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
+   private static Item resolveCraftableItem(String spec) {
+      AiItems.ItemSpec target = AiItems.resolveItem(spec);
       if (target.items().size() == 1) {
          return target.items().iterator().next();
       }
@@ -1192,7 +1192,7 @@ final class AiCraft {
       throw new IllegalArgumentException("'" + spec + "' names " + target.items().size() + " items and none has a known recipe; name the exact item to craft");
    }
 
-   static Block init_Block(String blockId) {
+   static Block requireBlock(String blockId) {
       return BuiltInRegistries.BLOCK.getOptional(Identifier.parse(blockId)).orElseThrow(() -> new IllegalArgumentException("Unknown block " + blockId));
    }
 }

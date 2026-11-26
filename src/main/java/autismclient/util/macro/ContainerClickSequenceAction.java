@@ -52,7 +52,7 @@ public class ContainerClickSequenceAction implements MacroAction {
          } catch (Exception var6) {
          }
 
-         ContainerInput input = MacroNbtCodecHelper.init(ContainerInput.class, this.containerInput, ContainerInput.PICKUP);
+         ContainerInput input = MacroNbtCodecHelper.parseEnum(ContainerInput.class, this.containerInput, ContainerInput.PICKUP);
          mc.gameMode.handleContainerInput(this.init(mc), handlerSlot, buttonNum, input, mc.player);
          return true;
       } else {
@@ -131,7 +131,7 @@ public class ContainerClickSequenceAction implements MacroAction {
       tag.putInt("slot", this.slot);
       tag.putInt("startSlot", this.startSlot);
       tag.putInt("endSlot", this.endSlot);
-      tag.put("slots", MacroNbtCodecHelper.init(this.slots));
+      tag.put("slots", MacroNbtCodecHelper.toStringListTag(this.slots));
       tag.putInt("manualContainerId", this.manualContainerId);
       tag.putInt("savedContainerId", this.savedContainerId);
       tag.putString("button", this.button);
@@ -143,12 +143,12 @@ public class ContainerClickSequenceAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.slotSource = MacroNbtCodecHelper.init(ContainerClickSequenceAction.Inner_StreamUtil.class, tag.getStringOr("slotSource", "SINGLE"), ContainerClickSequenceAction.Inner_StreamUtil.SINGLE);
-      this.containerSource = MacroNbtCodecHelper.init(ContainerClickSequenceAction.Inner_DataUtil.class, tag.getStringOr("containerSource", "CURRENT"), ContainerClickSequenceAction.Inner_DataUtil.CURRENT);
+      this.slotSource = MacroNbtCodecHelper.parseEnum(ContainerClickSequenceAction.Inner_StreamUtil.class, tag.getStringOr("slotSource", "SINGLE"), ContainerClickSequenceAction.Inner_StreamUtil.SINGLE);
+      this.containerSource = MacroNbtCodecHelper.parseEnum(ContainerClickSequenceAction.Inner_DataUtil.class, tag.getStringOr("containerSource", "CURRENT"), ContainerClickSequenceAction.Inner_DataUtil.CURRENT);
       this.slot = tag.getIntOr("slot", 0);
       this.startSlot = tag.getIntOr("startSlot", 0);
       this.endSlot = tag.getIntOr("endSlot", 0);
-      this.slots = MacroNbtCodecHelper.init(tag.getList("slots").orElse(new ListTag()));
+      this.slots = MacroNbtCodecHelper.fromStringListTag(tag.getList("slots").orElse(new ListTag()));
       this.manualContainerId = tag.getIntOr("manualContainerId", 0);
       this.savedContainerId = tag.getIntOr("savedContainerId", -1);
       String btnStr = tag.getStringOr("button", "");

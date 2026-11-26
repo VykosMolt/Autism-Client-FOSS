@@ -336,13 +336,13 @@ public class LanSyncManager {
 
             AutismMacro macro = null;
             if (isMacro && myMacroName != null) {
-               macro = MacroLibraryManager.init_aN().init_aM_Str(myMacroName);
+               macro = MacroLibraryManager.getInstance().findByName(myMacroName);
                if (macro == null) {
                   AutismClientMessaging.sendPrefixed("§cMacro not found: " + myMacroName);
                   return;
                }
 
-               macro.load_V();
+               macro.regeneratePackets();
             }
 
             LanSyncManager.Inner_StreamUtil method = this.init_aE_StreamUtil;
@@ -592,9 +592,9 @@ public class LanSyncManager {
 
          AutismMacro macro = null;
          if (isMacro && myMacroName != null && !myMacroName.isEmpty()) {
-            macro = MacroLibraryManager.init_aN().init_aM_Str(myMacroName);
+            macro = MacroLibraryManager.getInstance().findByName(myMacroName);
             if (macro != null) {
-               macro.load_V();
+               macro.regeneratePackets();
             }
          } else if ("__QUEUE_FLUSH__".equals(command)) {
             AutismSessionState.init_ck().load_V();
@@ -690,7 +690,7 @@ public class LanSyncManager {
                      AutismClientAddon.LOG.info("[Sync] Chat sent: {}", chatMsg);
                   }
                } else if (ctx.init_Z && ctx.init_aM != null) {
-                  ctx.init_aM.init_V_Z(false);
+                  ctx.init_aM.execute(false);
                }
 
                AutismClientAddon.LOG.info("[Sync] EXECUTED at {} tick {}", executedAtMs, actualTick);
@@ -1637,7 +1637,7 @@ public class LanSyncManager {
 
    private void load(Socket clientSocket, String clientUsername) {
       try {
-         List<AutismMacro> localMacros = MacroLibraryManager.init_aN().init_List();
+         List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
          Object lock = this.push.computeIfAbsent(clientUsername, k -> new Object());
          OutputStream out = clientSocket.getOutputStream();
 
@@ -1668,7 +1668,7 @@ public class LanSyncManager {
                      for (AutismMacro macro : peerMacros.values()) {
                         if (macro != null) {
                            this.init(out, lock, peer, macro, (byte)0);
-                           names.add(macro.init_Str);
+                           names.add(macro.name);
                         }
                      }
                   }
@@ -1789,7 +1789,7 @@ public class LanSyncManager {
 
    private void init_V_DataOutputStream(DataOutputStream out) {
       try {
-         List<AutismMacro> localMacros = MacroLibraryManager.init_aN().init_List();
+         List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
          synchronized (this.init_Obj) {
             for (AutismMacro macro : localMacros) {
                this.init(out, null, this.write_Str, macro, (byte)0);
@@ -1815,9 +1815,9 @@ public class LanSyncManager {
 
    private void init(OutputStream out, Object lock, String senderUsername, AutismMacro macro, byte sourceType) throws IOException {
       if (macro != null) {
-         String nbtString = macro.init_CompoundTag().toString();
+         String nbtString = macro.toSharedTag().toString();
 
-         for (autismclient.util.sync.LanSyncPacket packet : this.init(senderUsername, macro.init_Str, nbtString, sourceType)) {
+         for (autismclient.util.sync.LanSyncPacket packet : this.init(senderUsername, macro.name, nbtString, sourceType)) {
             this.init_V_OutputStream(out, lock, packet);
          }
       }
@@ -1944,7 +1944,7 @@ public class LanSyncManager {
    public void push() {
       String session = this.read_Str;
       if (session != null) {
-         List<AutismMacro> localMacros = MacroLibraryManager.init_aN().init_List();
+         List<AutismMacro> localMacros = MacroLibraryManager.getInstance().getMacros();
          String sender = this.write_Str;
          List<autismclient.util.sync.LanSyncPacket> packets = new ArrayList<>();
 
@@ -1974,8 +1974,8 @@ public class LanSyncManager {
       List<String> names = new ArrayList<>(local.size());
 
       for (AutismMacro macro : local) {
-         if (macro != null && macro.init_Str != null) {
-            names.add(macro.init_Str);
+         if (macro != null && macro.name != null) {
+            names.add(macro.name);
          }
       }
 
@@ -1989,7 +1989,7 @@ public class LanSyncManager {
    }
 
    private List<autismclient.util.sync.LanSyncPacket> init_List_Str(String senderUsername, AutismMacro macro, byte sourceType) {
-      return macro != null && this.read_Str != null ? this.init(senderUsername, macro.init_Str, macro.init_CompoundTag().toString(), sourceType) : List.of();
+      return macro != null && this.read_Str != null ? this.init(senderUsername, macro.name, macro.toSharedTag().toString(), sourceType) : List.of();
    }
 
    private List<autismclient.util.sync.LanSyncPacket> init(String senderUsername, String macroName, String nbtData, byte sourceType) {
@@ -2049,10 +2049,10 @@ public class LanSyncManager {
             try {
                CompoundTag nbt = TagParser.parseCompoundFully(p.write);
                AutismMacro macro = new AutismMacro();
-               macro.init_aM_CompoundTag(nbt);
-               String relayNbt = macro.load_CompoundTag().toString();
+               macro.fromTag(nbt);
+               String relayNbt = macro.toTag().toString();
                if (p.init_B != 1) {
-                  this.init_ConcurrentHashMap.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(MacroNameNormalizer.init(macro.init_Str), macro);
+                  this.init_ConcurrentHashMap.computeIfAbsent(sender, k -> new ConcurrentHashMap<>()).put(MacroNameNormalizer.init(macro.name), macro);
                }
 
                this.init_AtomicLong.incrementAndGet();
@@ -2061,7 +2061,7 @@ public class LanSyncManager {
                }
 
                if (relayIfHost && this.load_Z && sender != null && !sender.isBlank()) {
-                  this.init_V_DataUtil_Str(new autismclient.util.sync.LanSyncPacket.RenderState(this.read_Str, sender, macro.init_Str, relayNbt, p.init_B), sender);
+                  this.init_V_DataUtil_Str(new autismclient.util.sync.LanSyncPacket.RenderState(this.read_Str, sender, macro.name, relayNbt, p.init_B), sender);
                }
             } catch (Exception e) {
                AutismClientAddon.LOG.error("[Autism-LAN] Failed to deserialize macro", e);
@@ -2107,29 +2107,29 @@ public class LanSyncManager {
    }
 
    private void init_V_aM_Str(AutismMacro macro, String sender) {
-      if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
+      if (macro != null && macro.name != null && !macro.name.isBlank()) {
          Minecraft.getInstance().execute(() -> this.load(macro, sender));
       }
    }
 
    private void load(AutismMacro macro, String sender) {
-      MacroLibraryManager manager = MacroLibraryManager.init_aN();
-      AutismMacro existing = manager.init_aM_Str(macro.init_Str);
+      MacroLibraryManager manager = MacroLibraryManager.getInstance();
+      AutismMacro existing = manager.findByName(macro.name);
       if (existing != null) {
-         AutismMacro fresh = macro.init_aM_Str(macro.init_Str);
-         existing.init_Str = fresh.init_Str;
-         existing.load_Str = fresh.load_Str;
-         existing.read = fresh.read;
-         existing.load_I = fresh.load_I;
-         existing.init_List = new ArrayList<>(fresh.init_List);
-         existing.init_Z = fresh.init_Z;
-         existing.init_I = fresh.init_I;
-         manager.load_V();
-         AutismClientMessaging.sendPrefixed("§aUpdated macro from " + sender + ": " + existing.init_Str);
+         AutismMacro fresh = macro.copyWithName(macro.name);
+         existing.name = fresh.name;
+         existing.description = fresh.description;
+         existing.folder = fresh.folder;
+         existing.keyCode = fresh.keyCode;
+         existing.actions = new ArrayList<>(fresh.actions);
+         existing.loop = fresh.loop;
+         existing.loopCount = fresh.loopCount;
+         manager.save();
+         AutismClientMessaging.sendPrefixed("§aUpdated macro from " + sender + ": " + existing.name);
       } else {
-         AutismMacro installed = macro.init_aM_Str(macro.init_Str);
-         manager.init_V_aM(installed);
-         AutismClientMessaging.sendPrefixed("§aReceived macro from " + sender + ": " + installed.init_Str);
+         AutismMacro installed = macro.copyWithName(macro.name);
+         manager.saveMacro(installed);
+         AutismClientMessaging.sendPrefixed("§aReceived macro from " + sender + ": " + installed.name);
       }
    }
 
@@ -2138,7 +2138,7 @@ public class LanSyncManager {
          autismclient.util.sync.LanSyncPacket.RingBuffer p = (autismclient.util.sync.LanSyncPacket.RingBuffer)packet;
          String requestedName = p.load == null ? "" : p.load.trim();
          if (!requestedName.isEmpty()) {
-            AutismMacro macro = MacroLibraryManager.init_aN().init_aM_Str(requestedName);
+            AutismMacro macro = MacroLibraryManager.getInstance().findByName(requestedName);
             if (macro != null) {
                this.init_V_Str(this.write_Str, macro, (byte)2);
             }
@@ -2637,7 +2637,7 @@ public class LanSyncManager {
             String macroName = entry.getValue();
             if (username != null && !username.isBlank() && macroName != null && !macroName.isBlank()) {
                if (username.equals(this.write_Str)) {
-                  if (MacroLibraryManager.init_aN().init_aM_Str(macroName) == null) {
+                  if (MacroLibraryManager.getInstance().findByName(macroName) == null) {
                      missing.put(username, macroName);
                   }
                } else {
@@ -2662,8 +2662,8 @@ public class LanSyncManager {
          if (!entry.getKey().equals(this.write_Str)) {
             for (AutismMacro macro : entry.getValue().values()) {
                if (macro != null) {
-                  String key = MacroNameNormalizer.init(macro.init_Str);
-                  remoteMacros.putIfAbsent(key, macro.init_Str);
+                  String key = MacroNameNormalizer.init(macro.name);
+                  remoteMacros.putIfAbsent(key, macro.name);
                }
             }
          }
@@ -2680,15 +2680,15 @@ public class LanSyncManager {
       } else {
          String newName = macroName;
 
-         for (int suffix = 1; MacroLibraryManager.init_aN().init_aM_Str(newName) != null; suffix++) {
+         for (int suffix = 1; MacroLibraryManager.getInstance().findByName(newName) != null; suffix++) {
             newName = macroName + " (" + suffix + ")";
          }
 
          AutismMacro newMacro = new AutismMacro(newName);
-         newMacro.init_List.addAll(remoteMacro.init_List);
-         newMacro.read = MacroFolderLayout.init_Str_Str(remoteMacro.read);
-         MacroLibraryManager.init_aN().init_V_aM(newMacro);
-         MacroLibraryManager.init_aN().load_V();
+         newMacro.actions.addAll(remoteMacro.actions);
+         newMacro.folder = MacroFolderLayout.init_Str_Str(remoteMacro.folder);
+         MacroLibraryManager.getInstance().saveMacro(newMacro);
+         MacroLibraryManager.getInstance().save();
          AutismClientMessaging.sendPrefixed("§aImported macro: " + newName);
          AutismClientAddon.LOG.info("[Autism-LAN] Imported macro '{}' from {}", newName, clientUsername);
       }
@@ -2746,7 +2746,7 @@ public class LanSyncManager {
 
          for (AutismMacro macro : peerMacros.values()) {
             if (macro != null) {
-               names.add(macro.init_Str);
+               names.add(macro.name);
             }
          }
 
@@ -2763,13 +2763,13 @@ public class LanSyncManager {
       }
 
       if (macroName != null && !macroName.isBlank()) {
-         AutismMacro macro = MacroLibraryManager.init_aN().init_aM_Str(macroName);
+         AutismMacro macro = MacroLibraryManager.getInstance().findByName(macroName);
          if (macro == null) {
             AutismClientMessaging.sendPrefixed("§cMacro not found: " + macroName);
             return false;
          } else {
             this.init_V_Str(this.write_Str, macro, (byte)2);
-            AutismClientMessaging.sendPrefixed("§aSent macro to peers: " + macro.init_Str);
+            AutismClientMessaging.sendPrefixed("§aSent macro to peers: " + macro.name);
             return true;
          }
       } else {

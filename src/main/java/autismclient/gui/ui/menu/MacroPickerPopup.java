@@ -227,9 +227,9 @@ final class MacroPickerPopup {
          }
       }
 
-      for (AutismMacro macro : MacroLibraryManager.init_aN().init_List()) {
-         if (macro != null && macro.init_Str != null && (needle.isEmpty() || macro.init_Str.toLowerCase(Locale.ROOT).contains(needle))) {
-            names.add(macro.init_Str);
+      for (AutismMacro macro : MacroLibraryManager.getInstance().getMacros()) {
+         if (macro != null && macro.name != null && (needle.isEmpty() || macro.name.toLowerCase(Locale.ROOT).contains(needle))) {
+            names.add(macro.name);
          }
       }
 

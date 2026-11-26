@@ -22,7 +22,7 @@ final class AiPerfMetrics {
       int size = (int)Math.min(this.load, this.init_JArr.length);
       long[] copy = Arrays.copyOf(this.init_JArr, size);
       Arrays.sort(copy);
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "samples",
          size,
          "p95Milliseconds",

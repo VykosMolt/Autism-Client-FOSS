@@ -172,15 +172,15 @@ public final class AiServerIntel {
       entry.addProperty("evidence", plugin.evidence());
       entry.addProperty("radarEligible", load_Z(plugin.confidence()) && !init_Z(plugin.evidence()));
       if (!plugin.commands().isEmpty()) {
-         entry.add("commands", AiJson.init.toJsonTree(plugin.commands()));
+         entry.add("commands", AiJson.GSON.toJsonTree(plugin.commands()));
       }
 
       if (!plugin.channels().isEmpty()) {
-         entry.add("channels", AiJson.init.toJsonTree(plugin.channels()));
+         entry.add("channels", AiJson.GSON.toJsonTree(plugin.channels()));
       }
 
       if (!plugin.guis().isEmpty()) {
-         entry.add("guis", AiJson.init.toJsonTree(plugin.guis()));
+         entry.add("guis", AiJson.GSON.toJsonTree(plugin.guis()));
       }
 
       return entry;
@@ -272,8 +272,8 @@ public final class AiServerIntel {
          throw new IllegalArgumentException(precondition);
       }
 
-      boolean force = AiJson.init_Z_JsonObject(args, "force", false);
-      final int timeoutSeconds = Math.max(1, Math.min(150, AiJson.init_I_JsonObject(args, "timeoutSeconds", 150)));
+      boolean force = AiJson.getBoolean(args, "force", false);
+      final int timeoutSeconds = Math.max(1, Math.min(150, AiJson.getInt(args, "timeoutSeconds", 150)));
       final AutismServerInfoOverlay overlay = ModuleRuntimeManager.init_PoolEntry().init_AutismServerInfoOv();
       if (force) {
          overlay.open_V_12();
@@ -293,17 +293,17 @@ public final class AiServerIntel {
          @Override
          public AiOperation.Result tick() {
             if (this.load_Z) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Plugin scan cancelled", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.CANCELLED, "Plugin scan cancelled", new JsonObject());
             }
 
             String now = AiServerIntel.init_Str(Minecraft.getInstance());
             if (!now.equals(address)) {
                this.load_Z = true;
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Left the server during the plugin scan", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.CANCELLED, "Left the server during the plugin scan", new JsonObject());
             }
 
             if (autismclient.modules.aD.init_Z()) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Client is hidden (panic mode); plugin probing is suspended", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.FAILED, "Client is hidden (panic mode); plugin probing is suspended", new JsonObject());
             }
 
             AutismConfig config = AutismConfig.getGlobal();
@@ -321,11 +321,11 @@ public final class AiServerIntel {
             this.load_I++;
             if (!scanning && this.init_I >= 5) {
                if (entry != null) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Plugin scan results cached for " + address, this.init(entry, false));
+                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan results cached for " + address, this.init(entry, false));
                }
 
                if (this.init_Z || revision != startRevision) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Plugin scan completed with no detected plugins", this.init(null, false));
+                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan completed with no detected plugins", this.init(null, false));
                }
 
                if (this.load_I % 20 == 0) {
@@ -335,14 +335,14 @@ public final class AiServerIntel {
 
             if (System.nanoTime() > this.init_J) {
                this.load_Z = true;
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   AiOperation.Status.TIMED_OUT, "Plugin scan did not finish in time; returning cached partial results", this.init(entry, true)
                );
             } else {
                JsonObject progress = new JsonObject();
                progress.addProperty("scanning", scanning);
                progress.addProperty("cachedEntry", entry != null);
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, scanning ? "Probing server plugins" : "Waiting for plugin scan results", progress);
+               return AiGameOperations.result(AiOperation.Status.RUNNING, scanning ? "Probing server plugins" : "Waiting for plugin scan results", progress);
             }
          }
 
@@ -360,7 +360,7 @@ public final class AiServerIntel {
    public static JsonObject init_JsonObject(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       AutismConfig config = AutismConfig.getGlobal();
-      String requested = AiJson.init_Str_JsonObject(args, "address", "").trim().toLowerCase(Locale.ROOT);
+      String requested = AiJson.getString(args, "address", "").trim().toLowerCase(Locale.ROOT);
       String address = requested;
       AutismConfig.PluginScanCacheEntry entry = address.isBlank() ? null : config.getPluginScanByAddress(address);
       if (entry == null && requested.isBlank()) {
@@ -446,7 +446,7 @@ public final class AiServerIntel {
       out.addProperty("fresh", entry.scannedAtMs > 0L && System.currentTimeMillis() - entry.scannedAtMs < 5184000000L);
       out.add(
          "probes",
-         AiJson.init_JsonObject_ObjArr("total", entry.totalProbes, "answered", entry.answeredProbes, "retried", entry.retriedProbes, "failed", entry.failedProbes)
+         AiJson.objectOf("total", entry.totalProbes, "answered", entry.answeredProbes, "retried", entry.retriedProbes, "failed", entry.failedProbes)
       );
       List<AiServerIntel.Inner_DataUtil> plugins = init(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40);
       out.addProperty("pluginCount", plugins.size());
@@ -479,7 +479,7 @@ public final class AiServerIntel {
                }
 
                array.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "plugin",
                      read(fingerprint.init_Str()),
                      "key",

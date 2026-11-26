@@ -24,25 +24,25 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 
 public class MacroLibraryManager {
-   private static MacroLibraryManager init_aN;
-   private List<AutismMacro> init_List = new ArrayList<>();
-   private MacroFolderLayout init_cY = new MacroFolderLayout();
-   private volatile File init_File;
-   private volatile long init_J;
-   private volatile boolean init_Z = false;
+   private static MacroLibraryManager instance;
+   private List<AutismMacro> macros = new ArrayList<>();
+   private MacroFolderLayout folderLayout = new MacroFolderLayout();
+   private volatile File libraryFile;
+   private volatile long revision;
+   private volatile boolean suppressLanBroadcast = false;
    private static final long load = 300L;
-   private static volatile long read = -1L;
+   private static volatile long debouncedSaveDeadlineMs = -1L;
 
    private MacroLibraryManager() {
-      this.init_File = init_File();
-      this.update();
+      this.libraryFile = defaultLibraryFile();
+      this.load();
    }
 
-   public static File init_File() {
+   public static File defaultLibraryFile() {
       return new File(AutismClientAddon.FOLDER, "autism_macros.nbt");
    }
 
-   public static void init_V_File(File file) {
+   public static void writeEmptyLibrary(File file) {
       if (file != null) {
          try {
             CompoundTag tag = new CompoundTag();
@@ -55,45 +55,45 @@ public class MacroLibraryManager {
       }
    }
 
-   public static synchronized MacroLibraryManager init_aN() {
-      if (init_aN == null) {
-         init_aN = new MacroLibraryManager();
+   public static synchronized MacroLibraryManager getInstance() {
+      if (instance == null) {
+         instance = new MacroLibraryManager();
       }
 
-      return init_aN;
+      return instance;
    }
 
-   public synchronized String init_Str_Str(String preferredName) {
+   public synchronized String generateUniqueName(String preferredName) {
       String baseName = preferredName != null && !preferredName.isBlank() ? preferredName.trim() : "New Macro";
       String candidate = baseName;
       int suffix = 1;
 
-      while (this.init_aM_Str(candidate) != null) {
+      while (this.findByName(candidate) != null) {
          candidate = baseName + " (" + suffix++ + ")";
       }
 
       return candidate;
    }
 
-   public synchronized AutismMacro init_aM_aM_Str(AutismMacro source, String preferredName) {
+   public synchronized AutismMacro importMacro(AutismMacro source, String preferredName) {
       if (source == null) {
          return null;
       }
 
-      AutismMacro copy = source.init_aM();
-      copy.load_aM();
-      copy.init_Str = this.init_Str_Str(preferredName != null && !preferredName.isBlank() ? preferredName : source.init_Str);
-      this.init_V_aM(copy);
+      AutismMacro copy = source.copy();
+      copy.sanitizeForSharing();
+      copy.name = this.generateUniqueName(preferredName != null && !preferredName.isBlank() ? preferredName : source.name);
+      this.saveMacro(copy);
       return copy;
    }
 
-   public synchronized List<AutismMacro> init(List<AutismMacro> copies, boolean imported, AutismMacro anchor) {
+   public synchronized List<AutismMacro> insertMacros(List<AutismMacro> copies, boolean imported, AutismMacro anchor) {
       List<AutismMacro> added = new ArrayList<>();
       if (copies != null && !copies.isEmpty()) {
          int anchorIndex = -1;
          if (anchor != null) {
-            for (int i = 0; i < this.init_List.size(); i++) {
-               if (this.init_List.get(i) == anchor) {
+            for (int i = 0; i < this.macros.size(); i++) {
+               if (this.macros.get(i) == anchor) {
                   anchorIndex = i;
                   break;
                }
@@ -102,7 +102,7 @@ public class MacroLibraryManager {
 
          Set<String> folderKeys = new HashSet<>();
 
-         for (String folder : this.load_List()) {
+         for (String folder : this.getFolders()) {
             folderKeys.add(MacroFolderLayout.load_Str_Str(folder));
          }
 
@@ -110,41 +110,41 @@ public class MacroLibraryManager {
             if (source != null) {
                AutismMacro copy = source;
                if (imported) {
-                  copy.load_aM();
+                  copy.sanitizeForSharing();
                }
 
-               copy.init_Str = this.init_Str_Str(copy.init_Str);
+               copy.name = this.generateUniqueName(copy.name);
                String folder;
                if (anchorIndex >= 0) {
-                  folder = anchor.read == null ? "" : anchor.read;
+                  folder = anchor.folder == null ? "" : anchor.folder;
                } else {
-                  folder = copy.read != null && folderKeys.contains(MacroFolderLayout.load_Str_Str(copy.read)) ? this.init_cY.read(copy.read) : "";
+                  folder = copy.folder != null && folderKeys.contains(MacroFolderLayout.load_Str_Str(copy.folder)) ? this.folderLayout.read(copy.folder) : "";
                }
 
-               copy.read = folder;
+               copy.folder = folder;
                int index;
                if (anchorIndex >= 0) {
                   index = anchorIndex + 1 + added.size();
                } else {
-                  index = this.init_List.size();
+                  index = this.macros.size();
                   String key = MacroFolderLayout.load_Str_Str(folder);
 
-                  for (int i = this.init_List.size() - 1; i >= 0; i--) {
-                     AutismMacro macro = this.init_List.get(i);
-                     if (macro != null && MacroFolderLayout.load_Str_Str(macro.read).equals(key)) {
+                  for (int i = this.macros.size() - 1; i >= 0; i--) {
+                     AutismMacro macro = this.macros.get(i);
+                     if (macro != null && MacroFolderLayout.load_Str_Str(macro.folder).equals(key)) {
                         index = i + 1;
                         break;
                      }
                   }
                }
 
-               this.init_List.add(Math.min(index, this.init_List.size()), copy);
+               this.macros.add(Math.min(index, this.macros.size()), copy);
                added.add(copy);
             }
          }
 
          if (!added.isEmpty()) {
-            this.load_V();
+            this.save();
          }
 
          return added;
@@ -153,23 +153,23 @@ public class MacroLibraryManager {
       }
    }
 
-   public synchronized void init_V_aM(AutismMacro macro) {
+   public synchronized void saveMacro(AutismMacro macro) {
       if (macro != null) {
-         AutismMacro existing = this.init_aM_Str(macro.init_Str);
+         AutismMacro existing = this.findByName(macro.name);
          if (existing != null && existing != macro) {
-            this.init_Z_aM(existing);
+            this.removeMacroByIdentity(existing);
          }
 
          if (existing != macro) {
-            this.init_List.add(macro);
+            this.macros.add(macro);
          }
 
-         this.load_V();
+         this.save();
       }
    }
 
-   private boolean init_Z_aM(AutismMacro macro) {
-      Iterator<AutismMacro> it = this.init_List.iterator();
+   private boolean removeMacroByIdentity(AutismMacro macro) {
+      Iterator<AutismMacro> it = this.macros.iterator();
 
       while (it.hasNext()) {
          if (it.next() == macro) {
@@ -181,13 +181,13 @@ public class MacroLibraryManager {
       return false;
    }
 
-   public synchronized AutismMacro init_aM_Str(String name) {
+   public synchronized AutismMacro findByName(String name) {
       if (name == null) {
          return null;
       }
 
-      for (AutismMacro macro : this.init_List) {
-         if (macro != null && MacroNameNormalizer.init(macro.init_Str, name)) {
+      for (AutismMacro macro : this.macros) {
+         if (macro != null && MacroNameNormalizer.init(macro.name, name)) {
             return macro;
          }
       }
@@ -195,73 +195,73 @@ public class MacroLibraryManager {
       return null;
    }
 
-   public synchronized List<AutismMacro> init_List() {
-      return new ArrayList<>(this.init_List);
+   public synchronized List<AutismMacro> getMacros() {
+      return new ArrayList<>(this.macros);
    }
 
-   public synchronized List<String> load_List() {
-      return this.init_cY.init_List();
+   public synchronized List<String> getFolders() {
+      return this.folderLayout.init_List();
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> init_List_Str(String query) {
-      return this.init(query, false, macro -> true);
+   public synchronized List<MacroFolderLayout.Inner_DataUtil> getFolderEntries(String query) {
+      return this.getFilteredFolderEntries(query, false, macro -> true);
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> init(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
-      return this.init_cY.init(this.init_List.stream().filter(filter).toList(), query, includeEmpty);
+   public synchronized List<MacroFolderLayout.Inner_DataUtil> getFilteredFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
+      return this.folderLayout.init(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> load(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
-      return this.init_cY.load(this.init_List.stream().filter(filter).toList(), query, includeEmpty);
+   public synchronized List<MacroFolderLayout.Inner_DataUtil> getCollapsedFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
+      return this.folderLayout.load(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 
-   public synchronized boolean init_Z_Str(String name) {
-      if (!this.init_cY.init_Z_Str(name)) {
+   public synchronized boolean createFolder(String name) {
+      if (!this.folderLayout.init_Z_Str(name)) {
          return false;
       }
 
-      this.load_V();
+      this.save();
       return true;
    }
 
-   public synchronized boolean init_Z_Str_Str(String oldName, String newName) {
-      if (!this.init_cY.init(oldName, newName, this.init_List)) {
+   public synchronized boolean renameFolder(String oldName, String newName) {
+      if (!this.folderLayout.init(oldName, newName, this.macros)) {
          return false;
       }
 
-      this.load_V();
+      this.save();
       return true;
    }
 
-   public synchronized boolean load(String folder, String beforeFolder) {
-      if (!this.init_cY.init_Z_Str_Str(folder, beforeFolder)) {
+   public synchronized boolean reorderFolder(String folder, String beforeFolder) {
+      if (!this.folderLayout.init_Z_Str_Str(folder, beforeFolder)) {
          return false;
       }
 
-      this.load_V();
+      this.save();
       return true;
    }
 
-   public synchronized boolean init(String folder, String beforeFolder, String anchorMacro) {
-      if (this.load_List().stream().noneMatch(f -> MacroFolderLayout.load_Str_Str(f).equals(MacroFolderLayout.load_Str_Str(folder)))) {
+   public synchronized boolean reorderFolderWithAnchor(String folder, String beforeFolder, String anchorMacro) {
+      if (this.getFolders().stream().noneMatch(f -> MacroFolderLayout.load_Str_Str(f).equals(MacroFolderLayout.load_Str_Str(folder)))) {
          return false;
       }
 
-      this.init_cY.init_Z_Str_Str(folder, beforeFolder);
-      this.init_cY.init_V_Str_Str(folder, anchorMacro);
-      this.load_V();
+      this.folderLayout.init_Z_Str_Str(folder, beforeFolder);
+      this.folderLayout.init_V_Str_Str(folder, anchorMacro);
+      this.save();
       return true;
    }
 
-   public synchronized String load_Str(String folder) {
-      return this.init_cY.write(folder);
+   public synchronized String getFolderAnchor(String folder) {
+      return this.folderLayout.write(folder);
    }
 
-   private List<AutismMacro> read_List() {
+   private List<AutismMacro> getRootMacros() {
       List<AutismMacro> out = new ArrayList<>();
 
-      for (AutismMacro macro : this.init_List) {
-         if (macro != null && macro.init_Str != null && (macro.read == null || macro.read.isEmpty())) {
+      for (AutismMacro macro : this.macros) {
+         if (macro != null && macro.name != null && (macro.folder == null || macro.folder.isEmpty())) {
             out.add(macro);
          }
       }
@@ -269,49 +269,49 @@ public class MacroLibraryManager {
       return out;
    }
 
-   private void init_V_Collection(Collection<AutismMacro> leaving) {
+   private void detachRootFolderAnchors(Collection<AutismMacro> leaving) {
       Set<String> keys = new HashSet<>();
 
       for (AutismMacro macro : leaving) {
-         if (macro != null && macro.init_Str != null && (macro.read == null || macro.read.isEmpty())) {
-            keys.add(MacroNameNormalizer.init(macro.init_Str));
+         if (macro != null && macro.name != null && (macro.folder == null || macro.folder.isEmpty())) {
+            keys.add(MacroNameNormalizer.init(macro.name));
          }
       }
 
       if (!keys.isEmpty()) {
-         this.init_cY.init_V_List_Set(this.read_List(), keys);
+         this.folderLayout.init_V_List_Set(this.getRootMacros(), keys);
       }
    }
 
-   public synchronized boolean load_Z(String name) {
-      if (!this.init_cY.init_Z_Str_Collection(name, this.init_List)) {
+   public synchronized boolean deleteFolder(String name) {
+      if (!this.folderLayout.init_Z_Str_Collection(name, this.macros)) {
          return false;
       }
 
-      this.load_V();
+      this.save();
       return true;
    }
 
-   public synchronized boolean init_Z_aM_Str(AutismMacro macro, String folder) {
-      if (macro != null && !this.init_List.stream().noneMatch(m -> m == macro)) {
+   public synchronized boolean moveMacroToFolder(AutismMacro macro, String folder) {
+      if (macro != null && !this.macros.stream().noneMatch(m -> m == macro)) {
          String target = MacroFolderLayout.init_Str_Str(folder);
-         if (!target.isEmpty() && this.load_List().stream().noneMatch(f -> MacroFolderLayout.load_Str_Str(f).equals(MacroFolderLayout.load_Str_Str(target)))) {
+         if (!target.isEmpty() && this.getFolders().stream().noneMatch(f -> MacroFolderLayout.load_Str_Str(f).equals(MacroFolderLayout.load_Str_Str(target)))) {
             return false;
          }
 
-         macro.read = this.init_cY.read(target);
-         this.load_V();
+         macro.folder = this.folderLayout.read(target);
+         this.save();
          return true;
       } else {
          return false;
       }
    }
 
-   public synchronized boolean init(Collection<AutismMacro> moving, String targetFolder, String insertBeforeName) {
-      return this.init(moving, targetFolder, insertBeforeName, List.of());
+   public synchronized boolean moveMacros(Collection<AutismMacro> moving, String targetFolder, String insertBeforeName) {
+      return this.moveMacros(moving, targetFolder, insertBeforeName, List.of());
    }
 
-   public synchronized boolean init(Collection<AutismMacro> moving, String targetFolder, String insertBeforeName, List<String> foldersAbove) {
+   public synchronized boolean moveMacros(Collection<AutismMacro> moving, String targetFolder, String insertBeforeName, List<String> foldersAbove) {
       if (moving != null && !moving.isEmpty()) {
          Set<AutismMacro> block = new LinkedHashSet<>();
 
@@ -326,28 +326,28 @@ public class MacroLibraryManager {
          }
 
          for (AutismMacro macro : block) {
-            if (this.init_List.stream().noneMatch(m -> m == macro)) {
+            if (this.macros.stream().noneMatch(m -> m == macro)) {
                return false;
             }
          }
 
          String target = MacroFolderLayout.init_Str_Str(targetFolder);
-         if (!target.isEmpty() && this.load_List().stream().noneMatch(f -> MacroFolderLayout.load_Str_Str(f).equals(MacroFolderLayout.load_Str_Str(target)))) {
+         if (!target.isEmpty() && this.getFolders().stream().noneMatch(f -> MacroFolderLayout.load_Str_Str(f).equals(MacroFolderLayout.load_Str_Str(target)))) {
             return false;
          }
 
-         String canonical = this.init_cY.read(target);
-         this.init_V_Collection(block);
+         String canonical = this.folderLayout.read(target);
+         this.detachRootFolderAnchors(block);
 
          for (AutismMacro macro : block) {
-            this.init_Z_aM(macro);
+            this.removeMacroByIdentity(macro);
          }
 
          int index = -1;
          if (insertBeforeName != null) {
-            for (int i = 0; i < this.init_List.size(); i++) {
-               AutismMacro macro = this.init_List.get(i);
-               if (macro != null && MacroNameNormalizer.init(macro.init_Str, insertBeforeName)) {
+            for (int i = 0; i < this.macros.size(); i++) {
+               AutismMacro macro = this.macros.get(i);
+               if (macro != null && MacroNameNormalizer.init(macro.name, insertBeforeName)) {
                   index = i;
                   break;
                }
@@ -357,68 +357,68 @@ public class MacroLibraryManager {
          if (index < 0) {
             String targetKey = MacroFolderLayout.load_Str_Str(canonical);
 
-            for (int i = this.init_List.size() - 1; i >= 0; i--) {
-               AutismMacro macro = this.init_List.get(i);
-               if (macro != null && MacroFolderLayout.load_Str_Str(macro.read).equals(targetKey)) {
+            for (int i = this.macros.size() - 1; i >= 0; i--) {
+               AutismMacro macro = this.macros.get(i);
+               if (macro != null && MacroFolderLayout.load_Str_Str(macro.folder).equals(targetKey)) {
                   index = i + 1;
                   break;
                }
             }
 
             if (index < 0) {
-               index = this.init_List.size();
+               index = this.macros.size();
             }
          }
 
          for (AutismMacro macro : block) {
-            macro.read = canonical;
+            macro.folder = canonical;
          }
 
-         this.init_List.addAll(index, block);
+         this.macros.addAll(index, block);
          if (canonical.isEmpty() && foldersAbove != null && !foldersAbove.isEmpty()) {
-            String first = block.iterator().next().init_Str;
+            String first = block.iterator().next().name;
 
             for (String folder : foldersAbove) {
-               this.init_cY.init_V_Str_Str(folder, first);
+               this.folderLayout.init_V_Str_Str(folder, first);
             }
          }
 
-         this.load_V();
+         this.save();
          return true;
       } else {
          return false;
       }
    }
 
-   public synchronized void init_V_Str(String folder) {
-      this.init_cY.init_V_Str(folder);
-      this.load(false);
+   public synchronized void toggleFolderCollapsed(String folder) {
+      this.folderLayout.init_V_Str(folder);
+      this.saveInternal(false);
    }
 
-   public long init_J() {
-      return this.init_J;
+   public long getRevision() {
+      return this.revision;
    }
 
-   public synchronized void load(AutismMacro macro) {
-      if (macro != null && this.init_Z_aM_Z(macro, true)) {
-         this.load_V();
+   public synchronized void deleteMacro(AutismMacro macro) {
+      if (macro != null && this.deleteMacroInternal(macro, true)) {
+         this.save();
       }
    }
 
-   private boolean init_Z_aM_Z(AutismMacro macro, boolean announce) {
-      if (MacroExecutor.init_Z_Str(macro.init_Str)) {
-         MacroExecutor.init_V_Str(macro.init_Str);
-         AutismClientMessaging.sendPrefixed("§eStopped running macro before deletion: " + macro.init_Str);
+   private boolean deleteMacroInternal(AutismMacro macro, boolean announce) {
+      if (MacroExecutor.init_Z_Str(macro.name)) {
+         MacroExecutor.init_V_Str(macro.name);
+         AutismClientMessaging.sendPrefixed("§eStopped running macro before deletion: " + macro.name);
       }
 
-      this.init_V_Collection(List.of(macro));
-      if (!this.init_Z_aM(macro)) {
+      this.detachRootFolderAnchors(List.of(macro));
+      if (!this.removeMacroByIdentity(macro)) {
          return false;
       }
 
-      String deletedName = macro.init_Str == null ? "" : macro.init_Str;
+      String deletedName = macro.name == null ? "" : macro.name;
       if (announce) {
-         AutismClientMessaging.sendPrefixed("§aDeleted macro: " + macro.init_Str);
+         AutismClientMessaging.sendPrefixed("§aDeleted macro: " + macro.name);
       }
 
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
@@ -426,29 +426,29 @@ public class MacroLibraryManager {
          editor.update_V_10();
       }
 
-      if (!this.init_Z && LanSyncManager.init_aE().write_Z()) {
-         LanSyncManager.init_aE().read_V_Str(macro.init_Str);
+      if (!this.suppressLanBroadcast && LanSyncManager.init_aE().write_Z()) {
+         LanSyncManager.init_aE().read_V_Str(macro.name);
       }
 
       return true;
    }
 
-   public void read(AutismMacro macro) {
-      this.load(macro);
+   public void removeMacro(AutismMacro macro) {
+      this.deleteMacro(macro);
    }
 
-   public synchronized int init_I_Collection(Collection<AutismMacro> macros) {
+   public synchronized int deleteMacros(Collection<AutismMacro> macros) {
       if (macros != null && !macros.isEmpty()) {
          int removed = 0;
 
          for (AutismMacro macro : macros) {
-            if (macro != null && this.init_Z_aM_Z(macro, false)) {
+            if (macro != null && this.deleteMacroInternal(macro, false)) {
                removed++;
             }
          }
 
          if (removed > 0) {
-            this.load_V();
+            this.save();
          }
 
          return removed;
@@ -457,31 +457,31 @@ public class MacroLibraryManager {
       }
    }
 
-   public synchronized List<AutismMacro> init_List_Collection(Collection<AutismMacro> macros) {
+   public synchronized List<AutismMacro> duplicateMacros(Collection<AutismMacro> macros) {
       List<AutismMacro> copies = new ArrayList<>();
       if (macros != null && !macros.isEmpty()) {
          for (AutismMacro macro : macros) {
             if (macro != null) {
                int index = -1;
 
-               for (int i = 0; i < this.init_List.size(); i++) {
-                  if (this.init_List.get(i) == macro) {
+               for (int i = 0; i < this.macros.size(); i++) {
+                  if (this.macros.get(i) == macro) {
                      index = i;
                      break;
                   }
                }
 
                if (index >= 0) {
-                  AutismMacro copy = macro.init_aM_Str(this.init_Str_Str(macro.init_Str));
-                  copy.load_I = -1;
-                  this.init_List.add(index + 1, copy);
+                  AutismMacro copy = macro.copyWithName(this.generateUniqueName(macro.name));
+                  copy.keyCode = -1;
+                  this.macros.add(index + 1, copy);
                   copies.add(copy);
                }
             }
          }
 
          if (!copies.isEmpty()) {
-            this.load_V();
+            this.save();
          }
 
          return copies;
@@ -490,17 +490,17 @@ public class MacroLibraryManager {
       }
    }
 
-   public void load_V(String name) {
-      AutismMacro macro = this.init_aM_Str(name);
+   public void executeMacroByName(String name) {
+      AutismMacro macro = this.findByName(name);
       if (macro != null) {
-         macro.init_V();
-         AutismClientMessaging.sendPrefixed("§aExecuting macro: " + macro.init_Str);
+         macro.execute();
+         AutismClientMessaging.sendPrefixed("§aExecuting macro: " + macro.name);
       } else {
          AutismClientMessaging.sendPrefixed("§cMacro not found: " + name);
       }
    }
 
-   public void init_V() {
+   public void stopRunningMacro() {
       if (MacroExecutor.load_Z()) {
          MacroExecutor.read_V();
       } else {
@@ -508,42 +508,42 @@ public class MacroLibraryManager {
       }
    }
 
-   public void load_V() {
-      this.load(true);
+   public void save() {
+      this.saveInternal(true);
    }
 
-   public void read_V() {
-      read = System.currentTimeMillis() + 300L;
+   public void scheduleSave() {
+      debouncedSaveDeadlineMs = System.currentTimeMillis() + 300L;
    }
 
-   public static void init_V_Z(boolean force) {
-      long due = read;
+   public static void flushScheduledSave(boolean force) {
+      long due = debouncedSaveDeadlineMs;
       if (due >= 0L && (force || System.currentTimeMillis() >= due)) {
-         init_aN().load_V();
+         getInstance().save();
       }
    }
 
-   private void load(boolean announce) {
-      read = -1L;
+   private void saveInternal(boolean announce) {
+      debouncedSaveDeadlineMs = -1L;
       boolean broadcast;
       synchronized (this) {
-         this.init_J++;
-         File target = this.init_File;
-         broadcast = announce && !this.init_Z;
-         this.init_cY.init_V_Collection(this.init_List);
-         this.init_cY.init_V_List(this.read_List());
+         this.revision++;
+         File target = this.libraryFile;
+         broadcast = announce && !this.suppressLanBroadcast;
+         this.folderLayout.init_V_Collection(this.macros);
+         this.folderLayout.init_V_List(this.getRootMacros());
          CompoundTag tag = new CompoundTag();
          ListTag list = new ListTag();
 
-         for (AutismMacro macro : this.init_List) {
+         for (AutismMacro macro : this.macros) {
             if (macro != null) {
-               list.add(macro.load_CompoundTag());
+               list.add(macro.toTag());
             }
          }
 
          tag.put("macros", list);
-         tag.put("folders", this.init_cY.init_ListTag());
-         DebouncedPersistenceScheduler.init("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> init_V_File_CompoundTag(target, tag), target, tag));
+         tag.put("folders", this.folderLayout.init_ListTag());
+         DebouncedPersistenceScheduler.init("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> writeAtomicNbt(target, tag), target, tag));
       }
 
       if (broadcast && LanSyncManager.init_aE().write_Z()) {
@@ -551,7 +551,7 @@ public class MacroLibraryManager {
       }
    }
 
-   private static void init_V_File_CompoundTag(File targetFile, CompoundTag tag) {
+   private static void writeAtomicNbt(File targetFile, CompoundTag tag) {
       Path target = targetFile.toPath();
       Path temp = target.resolveSibling(targetFile.getName() + ".tmp");
       Path backup = target.resolveSibling(targetFile.getName() + ".bak");
@@ -588,59 +588,59 @@ public class MacroLibraryManager {
       }
    }
 
-   public synchronized void init(File newFile, boolean seedIfMissing, boolean announce) {
+   public synchronized void switchLibraryFile(File newFile, boolean seedIfMissing, boolean announce) {
       if (newFile != null) {
-         File old = this.init_File;
+         File old = this.libraryFile;
          if (old == null || !old.equals(newFile)) {
-            boolean prevSuppress = this.init_Z;
-            this.init_Z = true;
+            boolean prevSuppress = this.suppressLanBroadcast;
+            this.suppressLanBroadcast = true;
 
             try {
-               this.load_V();
-               this.init_File = newFile;
+               this.save();
+               this.libraryFile = newFile;
                File backup = new File(newFile.getParentFile(), newFile.getName() + ".bak");
                if (AuditMacroRead.exists_Z_File(newFile) || backup.exists()) {
-                  this.init_List = new ArrayList<>();
-                  this.init_cY = new MacroFolderLayout();
-                  this.init_J++;
-                  this.update();
+                  this.macros = new ArrayList<>();
+                  this.folderLayout = new MacroFolderLayout();
+                  this.revision++;
+                  this.load();
                } else if (seedIfMissing) {
-                  this.load_V();
+                  this.save();
                } else {
-                  this.init_List = new ArrayList<>();
-                  this.init_cY = new MacroFolderLayout();
-                  this.init_J++;
+                  this.macros = new ArrayList<>();
+                  this.folderLayout = new MacroFolderLayout();
+                  this.revision++;
                }
             } finally {
-               this.init_Z = prevSuppress;
+               this.suppressLanBroadcast = prevSuppress;
             }
 
-            if (announce && !this.init_Z && LanSyncManager.init_aE().write_Z()) {
+            if (announce && !this.suppressLanBroadcast && LanSyncManager.init_aE().write_Z()) {
                LanSyncManager.init_aE().push();
             }
          }
       }
    }
 
-   public synchronized void write() {
-      this.init(init_File(), false, true);
+   public synchronized void resetToDefaultLibraryFile() {
+      this.switchLibraryFile(defaultLibraryFile(), false, true);
    }
 
-   public synchronized File load_File() {
-      return this.init_File;
+   public synchronized File getLibraryFile() {
+      return this.libraryFile;
    }
 
-   public synchronized void update() {
-      Path target = this.init_File.toPath();
-      Path backup = target.resolveSibling(this.init_File.getName() + ".bak");
+   public synchronized void load() {
+      Path target = this.libraryFile.toPath();
+      Path backup = target.resolveSibling(this.libraryFile.getName() + ".bak");
       if (AuditMacroRead.exists_Z_Path_LinkOptionArr(target) || Files.exists(backup)) {
          try {
             if (!AuditMacroRead.exists_Z_Path_LinkOptionArr(target)) {
                throw new IllegalStateException("Main macro file is missing");
             }
 
-            this.init_List = this.init_List_Path(target);
-            this.init_J++;
+            this.macros = this.readMacrosFromPath(target);
+            this.revision++;
          } catch (Exception e) {
             AutismClientAddon.LOG.error("Failed to load Autism macros; trying backup", e);
             if (!Files.exists(backup)) {
@@ -648,8 +648,8 @@ public class MacroLibraryManager {
             }
 
             try {
-               this.init_List = this.init_List_Path(backup);
-               this.init_J++;
+               this.macros = this.readMacrosFromPath(backup);
+               this.revision++;
                AutismClientAddon.LOG.warn("Recovered Autism macros from {}", backup);
             } catch (Exception backupError) {
                AutismClientAddon.LOG.error("Failed to load Autism macro backup", backupError);
@@ -658,7 +658,7 @@ public class MacroLibraryManager {
       }
    }
 
-   private List<AutismMacro> init_List_Path(Path path) throws IOException {
+   private List<AutismMacro> readMacrosFromPath(Path path) throws IOException {
       CompoundTag tag = AuditMacroRead.read(path);
       if (tag == null) {
          throw new IllegalStateException("Macro file was empty");
@@ -671,13 +671,13 @@ public class MacroLibraryManager {
          for (Tag element : list) {
             if (element instanceof CompoundTag macroTag) {
                try {
-                  AutismMacro macro = new AutismMacro().init_aM_CompoundTag(macroTag);
-                  Integer previous = (Integer)seen.get(MacroNameNormalizer.init(macro.init_Str));
+                  AutismMacro macro = new AutismMacro().fromTag(macroTag);
+                  Integer previous = (Integer)seen.get(MacroNameNormalizer.init(macro.name));
                   if (previous != null) {
-                     AutismClientAddon.LOG.warn("Dropping macro '{}' shadowed by a name that differs only in case", ((AutismMacro)var12.get(previous)).init_Str);
+                     AutismClientAddon.LOG.warn("Dropping macro '{}' shadowed by a name that differs only in case", ((AutismMacro)var12.get(previous)).name);
                      var12.set(previous, macro);
                   } else {
-                     seen.put(MacroNameNormalizer.init(macro.init_Str), var12.size());
+                     seen.put(MacroNameNormalizer.init(macro.name), var12.size());
                      var12.add(macro);
                   }
                } catch (Throwable macroError) {
@@ -686,7 +686,7 @@ public class MacroLibraryManager {
             }
          }
 
-         this.init_cY = MacroFolderLayout.init_cY_Tag_Collection(tag.get("folders"), var12);
+         this.folderLayout = MacroFolderLayout.init_cY_Tag_Collection(tag.get("folders"), var12);
          return var12;
       } else {
          throw new IllegalStateException("Macro file has no macro list");

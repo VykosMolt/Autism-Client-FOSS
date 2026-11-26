@@ -12,6 +12,6 @@ public final class AiOps {
    }
 
    public static AiOperation init_AiOperation(BlockPos pos) {
-      return AiGameOperations.init("interact", AiJson.init_JsonObject_ObjArr("x", pos.getX(), "y", pos.getY(), "z", pos.getZ()));
+      return AiGameOperations.blockAction("interact", AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ()));
    }
 }

@@ -1939,33 +1939,33 @@ public final class ModuleRuntimeManager {
             }
 
             for (autismclient.util.AutismMacro macro : this.init_List) {
-               boolean pressed = this.init_Z_I(macro.load_I);
-               boolean wasPressed = this.init_Map.getOrDefault(macro.init_Str, false);
+               boolean pressed = this.init_Z_I(macro.keyCode);
+               boolean wasPressed = this.init_Map.getOrDefault(macro.name, false);
                if (pressed && !wasPressed) {
                   if (MacroExecutor.init_Z_aM(macro)) {
                      MacroExecutor.load_V_aM(macro);
                   } else {
-                     macro.init_V();
+                     macro.execute();
                   }
                }
 
-               this.init_Map.put(macro.init_Str, pressed);
+               this.init_Map.put(macro.name, pressed);
             }
          }
       }
    }
 
    private void stop_V() {
-      autismclient.util.MacroLibraryManager macroManager = autismclient.util.MacroLibraryManager.init_aN();
-      long revision = macroManager.init_J();
+      autismclient.util.MacroLibraryManager macroManager = autismclient.util.MacroLibraryManager.getInstance();
+      long revision = macroManager.getRevision();
       if (revision != this.load_J) {
          List<autismclient.util.AutismMacro> keyboundMacros = new ArrayList<>();
          Set<String> activeMacroNames = new HashSet<>();
 
-         for (autismclient.util.AutismMacro macro : macroManager.init_List()) {
-            if (macro != null && macro.load_I != -1) {
+         for (autismclient.util.AutismMacro macro : macroManager.getMacros()) {
+            if (macro != null && macro.keyCode != -1) {
                keyboundMacros.add(macro);
-               activeMacroNames.add(macro.init_Str);
+               activeMacroNames.add(macro.name);
             }
          }
 

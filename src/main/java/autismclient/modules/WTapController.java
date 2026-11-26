@@ -202,8 +202,8 @@ final class WTapController {
          && !init_Minecraft.player.onClimbable()
          && (!this.init_bf_DataUtil.load_Z() || init_Minecraft.player.onGround())
          && !aD.init_Z()
-         && !FreecamController.init_Z()
-         && !FreecamController.write()) {
+         && !FreecamController.isActive()
+         && !FreecamController.isAiControllingBody()) {
          Module scaffold = al.init_Module_Str("scaffold");
          return (scaffold == null || !scaffold.isEnabled())
             && !ClutchModule.init_Z_49()

@@ -224,26 +224,26 @@ public final class AiGoto {
       Minecraft var3 = Minecraft.getInstance();
       if (var3.player != null && var3.level != null) {
          BlockPos var4 = putAt(var0, var3);
-         double var5 = Math.max(0.6, Math.min(8.0, AiJson.init_D_JsonObject(var0, "radius", 1.5)));
-         boolean var7 = !AutismLiteVariant.enabled() && AiJson.init_Z_JsonObject(var0, "parkour", false);
-         boolean var8 = !var7 && AiJson.init_Z_JsonObject(var0, "allowDig", true);
-         boolean var9 = !var7 && AiJson.init_Z_JsonObject(var0, "allowPillar", true);
-         boolean var10 = !var7 && AiJson.init_Z_JsonObject(var0, "allowBridge", true);
-         boolean var11 = AiJson.init_Z_JsonObject(var0, "allowInventory", false);
-         boolean var12 = AiJson.init_Z_JsonObject(var0, "yOnly", false);
-         boolean var13 = AiJson.init_Z_JsonObject(var0, "interactOnArrival", false);
-         int var14 = var0.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(var0, "timeoutSeconds", 300))) : 0;
-         int var15 = Math.max(0, Math.min(60, AiJson.init_I_JsonObject(var0, "digReluctance", 2)));
-         AiPathfinder.RouteStrategy var16 = AiPathfinder.RouteStrategy.putAt(AiJson.init_Str_JsonObject(var0, "strategy", "fastest"));
+         double var5 = Math.max(0.6, Math.min(8.0, AiJson.getDouble(var0, "radius", 1.5)));
+         boolean var7 = !AutismLiteVariant.enabled() && AiJson.getBoolean(var0, "parkour", false);
+         boolean var8 = !var7 && AiJson.getBoolean(var0, "allowDig", true);
+         boolean var9 = !var7 && AiJson.getBoolean(var0, "allowPillar", true);
+         boolean var10 = !var7 && AiJson.getBoolean(var0, "allowBridge", true);
+         boolean var11 = AiJson.getBoolean(var0, "allowInventory", false);
+         boolean var12 = AiJson.getBoolean(var0, "yOnly", false);
+         boolean var13 = AiJson.getBoolean(var0, "interactOnArrival", false);
+         int var14 = var0.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.getInt(var0, "timeoutSeconds", 300))) : 0;
+         int var15 = Math.max(0, Math.min(60, AiJson.getInt(var0, "digReluctance", 2)));
+         AiPathfinder.RouteStrategy var16 = AiPathfinder.RouteStrategy.putAt(AiJson.getString(var0, "strategy", "fastest"));
          AiGoto.GotoOptions var17 = new AiGoto.GotoOptions(
-            AiJson.init_Z_JsonObject(var0, "sprint", true),
-            AiJson.init_Z_JsonObject(var0, "bunnyhop", true),
-            Math.max(0, Math.min(3, AiJson.init_I_JsonObject(var0, "maxFall", 3))),
-            AiJson.init_Z_JsonObject(var0, "avoidWater", false),
-            AiJson.init_Z_JsonObject(var0, "allowClimb", true),
-            AiJson.init_Z_JsonObject(var0, "allowDoors", true)
+            AiJson.getBoolean(var0, "sprint", true),
+            AiJson.getBoolean(var0, "bunnyhop", true),
+            Math.max(0, Math.min(3, AiJson.getInt(var0, "maxFall", 3))),
+            AiJson.getBoolean(var0, "avoidWater", false),
+            AiJson.getBoolean(var0, "allowClimb", true),
+            AiJson.getBoolean(var0, "allowDoors", true)
          );
-         int var18 = var7 ? AiJson.init_I_JsonObject(var0, "parkourSpeed", -1) : -1;
+         int var18 = var7 ? AiJson.getInt(var0, "parkourSpeed", -1) : -1;
          if (!var7 || !var0.has("parkourSpeed") || var18 >= 0 && var18 <= 2) {
             AiGoto.GotoOp var19 = putAt(
                var4,
@@ -260,11 +260,11 @@ public final class AiGoto {
                false,
                true,
                var7,
-               var7 && (AiJson.init_Z_JsonObject(var0, "assumeNoFallDamage", false) || var2 != null && var2.putAt_Z),
+               var7 && (AiJson.getBoolean(var0, "assumeNoFallDamage", false) || var2 != null && var2.putAt_Z),
                var1,
                var2,
                var18,
-               var7 && AiJson.init_Z_JsonObject(var0, "parkourRecordPace", false)
+               var7 && AiJson.getBoolean(var0, "parkourRecordPace", false)
             );
             return !AutismLiteVariant.enabled() && var13 ? putAt(var19, var4) : var19;
          } else {
@@ -278,30 +278,30 @@ public final class AiGoto {
    static BlockPos putAt(JsonObject var0, Minecraft var1) {
       BlockPos var2 = var1.player.blockPosition();
       if (var0.has("x") && var0.has("y") && var0.has("z")) {
-         return new BlockPos(AiJson.init_I_JsonObject(var0, "x", 0), AiJson.init_I_JsonObject(var0, "y", 0), AiJson.init_I_JsonObject(var0, "z", 0));
+         return new BlockPos(AiJson.getInt(var0, "x", 0), AiJson.getInt(var0, "y", 0), AiJson.getInt(var0, "z", 0));
       }
 
       if (var0.has("x") && var0.has("z")) {
-         BlockPos var13 = new BlockPos(AiJson.init_I_JsonObject(var0, "x", 0), var2.getY(), AiJson.init_I_JsonObject(var0, "z", 0));
+         BlockPos var13 = new BlockPos(AiJson.getInt(var0, "x", 0), var2.getY(), AiJson.getInt(var0, "z", 0));
          BlockPos var15 = putAt_BlockPos(var13, 24);
          return var15 != null ? var15 : var13;
       }
 
       if (var0.has("dx") || var0.has("dy") || var0.has("dz")) {
          return var2.offset(
-            AiJson.init_I_JsonObject(var0, "dx", 0), AiJson.init_I_JsonObject(var0, "dy", 0), AiJson.init_I_JsonObject(var0, "dz", 0)
+            AiJson.getInt(var0, "dx", 0), AiJson.getInt(var0, "dy", 0), AiJson.getInt(var0, "dz", 0)
          );
       }
 
       if (var0.has("direction")) {
-         double var12 = AiJson.init_D_JsonObject(var0, "distance", 10.0);
+         double var12 = AiJson.getDouble(var0, "distance", 10.0);
          if (var12 > 0.0 && !(var12 > 512.0)) {
-            return var2.offset(putAt_BlockPos_Str(AiJson.init_Str_JsonObject(var0, "direction", ""), var1.player.getYRot(), var12));
+            return var2.offset(putAt_BlockPos_Str(AiJson.getString(var0, "direction", ""), var1.player.getYRot(), var12));
          } else {
             throw new IllegalArgumentException("distance must be 1-512 blocks");
          }
       } else if (var0.has("waypoint")) {
-         String var11 = AiJson.init_Str_JsonObject(var0, "waypoint", "").trim();
+         String var11 = AiJson.getString(var0, "waypoint", "").trim();
          AutismWaypoints var14 = AutismWaypoints.init_AutismWaypoints();
          String var16 = autismclient.util.AuditWaypointScope.current(var1);
          AutismWaypoints.Waypoint var6 = var14.init_AutismWaypoints_Wa(var16, var11);
@@ -317,9 +317,9 @@ public final class AiGoto {
 
          throw new IllegalArgumentException("No waypoint named '" + var11 + "' in this world; known: " + var7);
       } else if (var0.has("entity")) {
-         Entity var10 = var1.level.getEntity(AiJson.init_I_JsonObject(var0, "entity", -1));
+         Entity var10 = var1.level.getEntity(AiJson.getInt(var0, "entity", -1));
          if (var10 == null) {
-            throw new IllegalArgumentException("No loaded entity with id " + AiJson.init_I_JsonObject(var0, "entity", -1));
+            throw new IllegalArgumentException("No loaded entity with id " + AiJson.getInt(var0, "entity", -1));
          } else {
             return var10.blockPosition();
          }
@@ -328,7 +328,7 @@ public final class AiGoto {
             throw new IllegalArgumentException("A destination is required: x,y,z (or x,z), dx/dy/dz, direction+distance, waypoint, entity or player");
          }
 
-         String var3 = AiJson.init_Str_JsonObject(var0, "player", "").trim();
+         String var3 = AiJson.getString(var0, "player", "").trim();
 
          for (AbstractClientPlayer var5 : var1.level.players()) {
             if (var5.getName().getString().equalsIgnoreCase(var3) || var5.getGameProfile().name().equalsIgnoreCase(var3)) {
@@ -726,7 +726,7 @@ public final class AiGoto {
          AiPathfinder.RouteStrategy.FASTEST,
          true,
          2.0,
-         readEx(new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var5), AiBlockInteraction.init(var7).y - var7.player.getY(), var4), var2)
+         readEx(new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var5), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY(), var4), var2)
       );
    }
 
@@ -741,7 +741,7 @@ public final class AiGoto {
    public static AiOperation putAt_AiOperation_BlockPos_2(BlockPos var0, int var1, Set<Long> var2, boolean var3, double var4, boolean var6) {
       Minecraft var7 = Minecraft.getInstance();
       AiPathfinder.PathGoal var8 = readEx(
-         new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var4), AiBlockInteraction.init(var7).y - var7.player.getY()).init_q(), var2
+         new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var4), AiBlockInteraction.conservativeEyePos(var7).y - var7.player.getY()).init_q(), var2
       );
       return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.RouteStrategy.FASTEST, true, 2.0, var6 ? fill(var8) : var8);
    }
@@ -2678,8 +2678,8 @@ public final class AiGoto {
                   double var3x = var1x.getX() + 0.5 - var2.getX();
                   double var5x = var1x.getZ() + 0.5 - var2.getZ();
                   if (var3x * var3x + var5x * var5x >= 1.5625) {
-                     this.putAt_CacheHelper.init_V_Vec3(Vec3.atCenterOf(var1x));
-                     this.putAt_CacheHelper.load_V();
+                     this.putAt_CacheHelper.aimAt(Vec3.atCenterOf(var1x));
+                     this.putAt_CacheHelper.tick();
                      this.putAt_Minecraft.options.keyUp.setDown(true);
                   } else {
                      double var7x = Math.toRadians(var2.getYRot());
@@ -3229,7 +3229,7 @@ public final class AiGoto {
             }
 
             ItemStack[] putAt_ItemStackArr_2() {
-               long var1x = AiServerEvidence.init_J();
+               long var1x = AiServerEvidence.inventoryRevision();
                if (this.putAt_ItemStackArr != null && var1x == this.chunkAt_J) {
                   return this.putAt_ItemStackArr;
                }
@@ -3279,12 +3279,12 @@ public final class AiGoto {
                         ? false
                         : var6x.init(this.putAt_Minecraft);
                   } else if (var1x instanceof InteractionGoal var3x) {
-                     if (var3x.load_Z() && !AiMotionSafety.putAt(var3x.load_BlockPos())) {
+                     if (var3x.load_Z() && !AiMotionSafety.isSafeToBreakSupport(var3x.load_BlockPos())) {
                         var3x.init_V(var5x);
                         return false;
                      } else {
-                        BlockHitResult var4x = AiBlockInteraction.load(this.putAt_Minecraft, var3x.load_BlockPos(), var3x.init_Direction());
-                        return var4x != null && AiBlockInteraction.init(this.putAt_Minecraft).distanceTo(var4x.getLocation()) <= var3x.load_D() + 0.25;
+                        BlockHitResult var4x = AiBlockInteraction.findClimbSafeFaceHit(this.putAt_Minecraft, var3x.load_BlockPos(), var3x.init_Direction());
+                        return var4x != null && AiBlockInteraction.conservativeEyePos(this.putAt_Minecraft).distanceTo(var4x.getLocation()) <= var3x.load_D() + 0.25;
                      }
                   } else if (!this.putAt_FileStore_TokenCod.putAt_Z_I(var5x.getX(), var5x.getY(), var5x.getZ(), this.putAt_FileStore_TextStor)) {
                      return false;
@@ -3302,7 +3302,7 @@ public final class AiGoto {
             }
 
             boolean chunkAt_Z_6() {
-               return AiMotionSafety.fill_Z();
+               return AiMotionSafety.isPlayerSupported();
             }
 
             boolean state_Z_4() {
@@ -3401,7 +3401,7 @@ public final class AiGoto {
                                        && this.putAt_Minecraft.level.noCollision(var1x, var1x.getBoundingBox().move(var22x).deflate(0.001))) {
                                        boolean var23 = var22x.y > 0.6;
                                        if ((!var23 || !AiPathfinder.MoveCosts.putAt() || !this.fill_Z_8(var1x.blockPosition()))
-                                          && (var23 || AiMotionSafety.putAt_Z_Vec3_Vec3(var1x.position(), var21x))) {
+                                          && (var23 || AiMotionSafety.isSegmentHazardFree(var1x.position(), var21x))) {
                                           if (var23) {
                                              float var24x = (float)(Math.toDegrees(Math.atan2(var22x.z, var22x.x)) - 90.0);
                                              AiJumpSolver.UiHelper var25 = AiJumpSolver.putAt_IoUtil_IoPool_TokenCore_TaskStat(
@@ -3494,16 +3494,16 @@ public final class AiGoto {
                boolean var6x = this.nextBy_Z && var1x.onClimbable() && var4x < 0.03;
                double var7x = this.dataEx_Z ? 0.0025 : 0.03;
                if ((!var1x.onGround() || !(var2 < var7x)) && !var6x && ++this.state_I <= (this.dataEx_Z ? 48 : 24)) {
-                  this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.AimProfile.NORMAL);
+                  this.putAt_CacheHelper.setProfile(AiAim.AimProfile.NORMAL);
                   if (var4x >= var7x) {
-                     this.putAt_CacheHelper.init_V_ce_DataUtil(
-                           new RotationMath.Rotation(AiPhysics.putAt_F_D(var1x.getX(), var1x.getZ(), this.putAt_Vec3.x, this.putAt_Vec3.z), 0.0F)
+                     this.putAt_CacheHelper.setTargetRotation(
+                           new RotationMath.Rotation(AiPhysics.yawBetween(var1x.getX(), var1x.getZ(), this.putAt_Vec3.x, this.putAt_Vec3.z), 0.0F)
                         );
                   }
 
-                  this.putAt_CacheHelper.load_V();
-                  this.putAt_Minecraft.options.keyUp.setDown(var4x >= var7x && this.putAt_CacheHelper.load_Z());
-                  if (this.store_Z && this.putAt_CacheHelper.load_Z()) {
+                  this.putAt_CacheHelper.tick();
+                  this.putAt_Minecraft.options.keyUp.setDown(var4x >= var7x && this.putAt_CacheHelper.isSettled());
+                  if (this.store_Z && this.putAt_CacheHelper.isSettled()) {
                      AiLiveWorld var9x = new AiLiveWorld(this.putAt_Minecraft.level, var1x);
                      AiPhysics.MotionState var10 = AiPhysics.MotionState.of(var1x);
                      BlockPos var11x = BlockPos.containing(this.putAt_Vec3.x, Math.ceil(this.putAt_Vec3.y - 0.001), this.putAt_Vec3.z);
@@ -3525,8 +3525,8 @@ public final class AiGoto {
 
                   double var13x = this.putAt_Minecraft.options.keyUp.isDown() ? 1.0 : 0.0;
                   double var14x = (this.putAt_Minecraft.options.keyLeft.isDown() ? 1 : 0) - (this.putAt_Minecraft.options.keyRight.isDown() ? 1 : 0);
-                  if (!AiMotionSafety.putAt_Z_D(var13x, var14x, this.putAt_Minecraft.options.keyJump.isDown(), false)) {
-                     AiMotionSafety.fill_V();
+                  if (!AiMotionSafety.isPlayerMoveSafe(var13x, var14x, this.putAt_Minecraft.options.keyJump.isDown(), false)) {
+                     AiMotionSafety.applyEmergencyBrake();
                      this.putAt_Vec3 = null;
                      this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
                      return this.fill("Partial-block exit became unsafe; replanning");
@@ -3554,7 +3554,7 @@ public final class AiGoto {
                if (var2.onGround() && !this.putAt_Set.contains(var1.asLong())) {
                   Vec3 var3x = new Vec3(var1.getX() + 0.5, var2.getY(), var1.getZ() + 0.5);
                   Vec3 var4x = var3x.subtract(var2.position());
-                  if (!(var4x.lengthSqr() < 0.0025) && AiMotionSafety.putAt_Z_Vec3_Vec3(var2.position(), var3x)) {
+                  if (!(var4x.lengthSqr() < 0.0025) && AiMotionSafety.isSegmentHazardFree(var2.position(), var3x)) {
                      for (int var5x = 1; var5x <= 8; var5x++) {
                         AABB var6x = var2.getBoundingBox().move(var4x.scale(var5x / 8.0)).deflate(0.001);
                         if (!this.putAt_Minecraft.level.noCollision(var2, var6x) || this.putAt_Minecraft.level.noCollision(var2, var6x.move(0.0, -0.08, 0.0))) {
@@ -3592,7 +3592,7 @@ public final class AiGoto {
                   }
 
                   if (!AiGoto.putAt(this.putAt_RingCache.putAt_RingCache_TableCac(), this.putAt_Minecraft.player.getDeltaMovement())) {
-                     AiMotionSafety.putAt_V();
+                     AiMotionSafety.releaseMovementKeys();
                      return true;
                   }
 
@@ -3610,7 +3610,7 @@ public final class AiGoto {
                      return false;
                   }
 
-                  if (AiBlockInteraction.load(this.putAt_Minecraft, var1x.load_BlockPos(), var1x.init_Direction()) != null) {
+                  if (AiBlockInteraction.findClimbSafeFaceHit(this.putAt_Minecraft, var1x.load_BlockPos(), var1x.init_Direction()) != null) {
                      return false;
                   }
 
@@ -3624,7 +3624,7 @@ public final class AiGoto {
             }
 
             JsonObject putAt_JsonObject_61() {
-               JsonObject var1x = AiJson.init_JsonObject_ObjArr(
+               JsonObject var1x = AiJson.objectOf(
                   "x",
                   var0.getX(),
                   "y",
@@ -3680,7 +3680,7 @@ public final class AiGoto {
                   AiPathfinder.CellInfo var5x = this.putAt_FileStore_TextStor.probe(var10.getX(), var10.getY() - 1, var10.getZ());
                   var1x.add(
                      "construction",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "blocks",
                         var8x.constructionBlocks(),
                         "pillar",
@@ -3711,7 +3711,7 @@ public final class AiGoto {
                if (var2 != null) {
                   var1x.add(
                      "search",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "elapsedMs",
                         var2.elapsedNanos() / 1000000.0,
                         "rounds",

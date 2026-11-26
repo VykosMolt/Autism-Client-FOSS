@@ -34,8 +34,8 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.match = MacroNbtCodecHelper.init(WaitGamemodeChangeAction.Inner_DataUtil.class, tag.getStringOr("match", WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE.name()), WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE);
-      this.gameMode = MacroNbtCodecHelper.init(WaitGamemodeChangeAction.Inner_StreamUtil.class, tag.getStringOr("gameMode", WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL.name()), WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL);
+      this.match = MacroNbtCodecHelper.parseEnum(WaitGamemodeChangeAction.Inner_DataUtil.class, tag.getStringOr("match", WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE.name()), WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE);
+      this.gameMode = MacroNbtCodecHelper.parseEnum(WaitGamemodeChangeAction.Inner_StreamUtil.class, tag.getStringOr("gameMode", WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL.name()), WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL);
       this.detectFake = tag.getBooleanOr("detectFake", false);
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {

@@ -177,7 +177,7 @@ final class ClutchFallPhysics {
          }
 
          double beforeY = state.y();
-         state = jump ? autismclient.ai.engine.AiPhysics.init(state, input, world) : autismclient.ai.engine.AiPhysics.load(state, input, world);
+         state = jump ? autismclient.ai.engine.AiPhysics.stepCompat(state, input, world) : autismclient.ai.engine.AiPhysics.stepUnclippedCompat(state, input, world);
          AABB body = state.box(false);
          if (!state.onGround()) {
             airborne = true;
@@ -374,7 +374,7 @@ final class ClutchFallPhysics {
             Math.abs(forward) > 0.08 ? Math.signum(forward) : 0.0, Math.abs(side) > 0.08 ? Math.signum(side) : 0.0, false, false, tick <= sneakTicks, yaw
          );
          double previousY = state.y();
-         state = autismclient.ai.engine.AiPhysics.init(state, keys, collisionWorld);
+         state = autismclient.ai.engine.AiPhysics.stepCompat(state, keys, collisionWorld);
          AABB body = state.box(false);
          if (!state.onGround() && edge == 2147483647) {
             edge = tick;
@@ -675,7 +675,7 @@ final class ClutchFallPhysics {
 
       for (int tick = 0; tick < 64; tick++) {
          double before = state.y();
-         state = autismclient.ai.engine.AiPhysics.load(state, autismclient.ai.engine.AiPhysics.MoveInput.NONE, world);
+         state = autismclient.ai.engine.AiPhysics.stepUnclippedCompat(state, autismclient.ai.engine.AiPhysics.MoveInput.NONE, world);
          AABB body = state.box(false);
          ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
          if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD) {

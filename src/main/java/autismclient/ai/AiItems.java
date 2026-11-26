@@ -33,17 +33,17 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class AiItems {
-   private static final Map<String, List<String>> init_Map = new LinkedHashMap<>();
-   private static final Set<String> init_Set = Set.of("food", "fuel");
+   private static final Map<String, List<String>> FAMILY_ALIASES = new LinkedHashMap<>();
+   private static final Set<String> DYNAMIC_FAMILIES = Set.of("food", "fuel");
    private static final int init_I = 32;
-   private static final Map<String, AiItems.ItemSpec> load_Map = new LinkedHashMap<String, AiItems.ItemSpec>(16, 0.75F, true) {
+   private static final Map<String, AiItems.ItemSpec> SPEC_CACHE = new LinkedHashMap<String, AiItems.ItemSpec>(16, 0.75F, true) {
       @Override
       protected boolean removeEldestEntry(Entry<String, AiItems.ItemSpec> eldest) {
          return this.size() > 32;
       }
    };
-   private static Object init_Obj;
-   private static final Map<String, List<String>> read_Map = Map.ofEntries(
+   private static Object cachedLevel;
+   private static final Map<String, List<String>> TAG_FALLBACK_SUFFIXES = Map.ofEntries(
       Map.entry("logs", List.of("_log", "_wood", "_stem", "_hyphae")),
       Map.entry("planks", List.of("_planks")),
       Map.entry("saplings", List.of("_sapling")),
@@ -68,7 +68,7 @@ public final class AiItems {
       Map.entry("leg_armor", List.of("_leggings")),
       Map.entry("foot_armor", List.of("_boots"))
    );
-   private static final List<String> init_List = List.of(
+   private static final List<String> FALLBACK_FUELS = List.of(
       "minecraft:coal",
       "minecraft:charcoal",
       "minecraft:coal_block",
@@ -77,7 +77,7 @@ public final class AiItems {
       "minecraft:dried_kelp_block",
       "minecraft:stick"
    );
-   private static final List<String> load_List = List.of(
+   private static final List<String> FALLBACK_FOODS = List.of(
       "minecraft:bread",
       "minecraft:cooked_beef",
       "minecraft:cooked_porkchop",
@@ -109,7 +109,7 @@ public final class AiItems {
       "minecraft:rabbit_stew",
       "minecraft:beetroot_soup"
    );
-   private static final List<String> read_List = List.of(
+   private static final List<String> TOOL_PROGRESSION = List.of(
       "minecraft:wooden_pickaxe",
       "minecraft:wooden_shovel",
       "minecraft:wooden_axe",
@@ -132,8 +132,8 @@ public final class AiItems {
       "minecraft:netherite_hoe",
       "minecraft:shears"
    );
-   private static Set<String> load_Set;
-   private static final Set<String> read_Set = Set.of(
+   private static Set<String> directMineableItems;
+   private static final Set<String> SILK_OR_UNOBTAINABLE_BLOCKS = Set.of(
       "minecraft:ice",
       "minecraft:packed_ice",
       "minecraft:blue_ice",
@@ -150,7 +150,7 @@ public final class AiItems {
       "minecraft:suspicious_sand",
       "minecraft:suspicious_gravel"
    );
-   private static final Map<String, List<String>> write = Map.ofEntries(
+   private static final Map<String, List<String>> ITEM_SOURCE_BLOCKS = Map.ofEntries(
       Map.entry("minecraft:cobblestone", List.of("minecraft:stone")),
       Map.entry("minecraft:cobbled_deepslate", List.of("minecraft:deepslate")),
       Map.entry("minecraft:raw_iron", List.of("minecraft:iron_ore", "minecraft:deepslate_iron_ore")),
@@ -179,7 +179,7 @@ public final class AiItems {
       Map.entry("minecraft:string", List.of("minecraft:cobweb")),
       Map.entry("minecraft:snowball", List.of("minecraft:snow", "minecraft:snow_block"))
    );
-   private static final Map<String, List<String>> update = Map.ofEntries(
+   private static final Map<String, List<String>> ITEM_SOURCE_MOBS = Map.ofEntries(
       Map.entry("minecraft:ender_pearl", List.of("minecraft:enderman")),
       Map.entry("minecraft:blaze_rod", List.of("minecraft:blaze")),
       Map.entry("minecraft:string", List.of("minecraft:spider", "minecraft:cave_spider")),
@@ -216,20 +216,20 @@ public final class AiItems {
    private AiItems() {
    }
 
-   public static AiItems.ItemSpec init_af_DataUtil(String spec) {
-      String clean = init_Str(spec);
+   public static AiItems.ItemSpec resolve(String spec) {
+      String clean = normalizeSpec(spec);
       if (clean.isEmpty()) {
          throw new IllegalArgumentException("An item or block spec is required");
       }
 
       Minecraft mc = Minecraft.getInstance();
       Object level = mc == null ? null : mc.level;
-      if (level != init_Obj) {
-         load_Map.clear();
-         init_Obj = level;
+      if (level != cachedLevel) {
+         SPEC_CACHE.clear();
+         cachedLevel = level;
       }
 
-      AiItems.ItemSpec memoized = load_Map.get(clean);
+      AiItems.ItemSpec memoized = SPEC_CACHE.get(clean);
       if (memoized != null) {
          return memoized;
       }
@@ -237,11 +237,11 @@ public final class AiItems {
       Set<Item> items = new LinkedHashSet<>();
       Set<Block> blocks = new LinkedHashSet<>();
       boolean[] usedFallback = new boolean[1];
-      init(clean, items, blocks, 0, usedFallback);
+      expandSpec(clean, items, blocks, 0, usedFallback);
       if (items.isEmpty() && blocks.isEmpty()) {
-         String loose = load_Str(clean);
+         String loose = resolveLooseSpec(clean);
          if (loose != null) {
-            init(loose, items, blocks, 0, usedFallback);
+            expandSpec(loose, items, blocks, 0, usedFallback);
          }
       }
 
@@ -250,33 +250,33 @@ public final class AiItems {
             "Unknown item or block '"
                + spec
                + "'"
-               + read_Str(clean)
+               + suggestNearMatches(clean)
                + ". Use a registry id (minecraft:oak_log), a tag (#minecraft:logs), or a family name ("
-               + String.join(", ", init_Map.keySet())
+               + String.join(", ", FAMILY_ALIASES.keySet())
                + ", food, fuel)."
          );
       }
 
       AiItems.ItemSpec target = new AiItems.ItemSpec(clean, items, blocks);
       if (!usedFallback[0]) {
-         load_Map.put(clean, target);
+         SPEC_CACHE.put(clean, target);
       }
 
       return target;
    }
 
-   static String init_Str(String spec) {
+   static String normalizeSpec(String spec) {
       return autismclient.commands.RegistrySuggestions.init_Str(spec);
    }
 
-   static String load_Str(String clean) {
+   static String resolveLooseSpec(String clean) {
       if (clean.startsWith("#")) {
          return null;
       }
 
       if (clean.indexOf(58) < 0) {
          for (String form : autismclient.commands.RegistrySuggestions.init_List(clean)) {
-            if (init_Map.containsKey(form)) {
+            if (FAMILY_ALIASES.containsKey(form)) {
                return form;
             }
          }
@@ -286,12 +286,12 @@ public final class AiItems {
       return id == null ? null : id.toString();
    }
 
-   public static List<String> init_List() {
-      return List.copyOf(init_Map.keySet());
+   public static List<String> familyNames() {
+      return List.copyOf(FAMILY_ALIASES.keySet());
    }
 
-   public static AiItems.ItemSpec load_af_DataUtil(String spec) {
-      AiItems.ItemSpec target = init_af_DataUtil(spec);
+   public static AiItems.ItemSpec resolveItem(String spec) {
+      AiItems.ItemSpec target = resolve(spec);
       if (target.items().isEmpty()) {
          throw new IllegalArgumentException("'" + spec + "' names blocks but no obtainable item");
       } else {
@@ -299,8 +299,8 @@ public final class AiItems {
       }
    }
 
-   public static AiItems.ItemSpec read_af_DataUtil(String spec) {
-      AiItems.ItemSpec target = init_af_DataUtil(spec);
+   public static AiItems.ItemSpec resolveBlock(String spec) {
+      AiItems.ItemSpec target = resolve(spec);
       if (target.blocks().isEmpty()) {
          throw new IllegalArgumentException("'" + spec + "' names items but no placeable or mineable block");
       } else {
@@ -308,19 +308,19 @@ public final class AiItems {
       }
    }
 
-   private static void init(String spec, Set<Item> items, Set<Block> blocks, int depth, boolean[] usedFallback) {
+   private static void expandSpec(String spec, Set<Item> items, Set<Block> blocks, int depth, boolean[] usedFallback) {
       if (depth <= 4) {
          if (spec.indexOf(44) >= 0) {
             for (String part : spec.split(",")) {
                String one = part.replaceAll("^_+|_+$", "");
                if (!one.isEmpty()) {
-                  init(one, items, blocks, depth + 1, usedFallback);
+                  expandSpec(one, items, blocks, depth + 1, usedFallback);
                }
             }
          } else if (spec.startsWith("#")) {
-            init(spec.substring(1), items, blocks, usedFallback);
-         } else if (init_Set.contains(spec)) {
-            init(spec, items, usedFallback);
+            expandTag(spec.substring(1), items, blocks, usedFallback);
+         } else if (DYNAMIC_FAMILIES.contains(spec)) {
+            expandDynamicFamily(spec, items, usedFallback);
          } else {
             Identifier id = Identifier.tryParse(spec.contains(":") ? spec : "minecraft:" + spec);
             boolean exact = false;
@@ -339,10 +339,10 @@ public final class AiItems {
             }
 
             if (!exact) {
-               List<String> alias = init_Map.get(spec);
+               List<String> alias = FAMILY_ALIASES.get(spec);
                if (alias != null) {
                   for (String nested : alias) {
-                     init(nested, items, blocks, depth + 1, usedFallback);
+                     expandSpec(nested, items, blocks, depth + 1, usedFallback);
                   }
                }
             }
@@ -350,7 +350,7 @@ public final class AiItems {
       }
    }
 
-   private static void init(String tagSpec, Set<Item> items, Set<Block> blocks, boolean[] usedFallback) {
+   private static void expandTag(String tagSpec, Set<Item> items, Set<Block> blocks, boolean[] usedFallback) {
       Identifier id = Identifier.tryParse(tagSpec.contains(":") ? tagSpec : "minecraft:" + tagSpec);
       if (id != null) {
          TagKey<Item> itemTag = TagKey.create(Registries.ITEM, id);
@@ -367,29 +367,29 @@ public final class AiItems {
 
          if (items.size() + blocks.size() == before) {
             usedFallback[0] = true;
-            init(id.getPath(), items, blocks);
+            expandTagFallback(id.getPath(), items, blocks);
          }
       }
    }
 
-   private static void init(String tagPath, Set<Item> items, Set<Block> blocks) {
-      List<String> suffixes = read_Map.get(tagPath);
+   private static void expandTagFallback(String tagPath, Set<Item> items, Set<Block> blocks) {
+      List<String> suffixes = TAG_FALLBACK_SUFFIXES.get(tagPath);
       if (suffixes != null) {
          for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
-            if (init(key.getPath(), suffixes)) {
+            if (matchesAnySuffix(key.getPath(), suffixes)) {
                BuiltInRegistries.ITEM.getOptional(key).ifPresent(items::add);
             }
          }
 
          for (Identifier key : BuiltInRegistries.BLOCK.keySet()) {
-            if (init(key.getPath(), suffixes)) {
+            if (matchesAnySuffix(key.getPath(), suffixes)) {
                BuiltInRegistries.BLOCK.getOptional(key).ifPresent(blocks::add);
             }
          }
       }
    }
 
-   private static boolean init(String path, List<String> suffixes) {
+   private static boolean matchesAnySuffix(String path, List<String> suffixes) {
       for (String suffix : suffixes) {
          if (suffix.startsWith("=") ? path.equals(suffix.substring(1)) : path.endsWith(suffix)) {
             return true;
@@ -399,7 +399,7 @@ public final class AiItems {
       return false;
    }
 
-   private static void init(String spec, Set<Item> items, boolean[] usedFallback) {
+   private static void expandDynamicFamily(String spec, Set<Item> items, boolean[] usedFallback) {
       for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
          Item item = BuiltInRegistries.ITEM.getOptional(key).orElse(null);
          if (item != null) {
@@ -408,7 +408,7 @@ public final class AiItems {
                   if (item.components().has(DataComponents.FOOD) && item.components().has(DataComponents.CONSUMABLE)) {
                      items.add(item);
                   }
-               } else if (spec.equals("fuel") && init_I(new ItemStack(item)) > 0) {
+               } else if (spec.equals("fuel") && fuelBurnTime(new ItemStack(item)) > 0) {
                   items.add(item);
                }
             } catch (RuntimeException var7) {
@@ -419,13 +419,13 @@ public final class AiItems {
       if (items.isEmpty()) {
          usedFallback[0] = true;
 
-         for (String fallback : spec.equals("fuel") ? init_List : load_List) {
+         for (String fallback : spec.equals("fuel") ? FALLBACK_FUELS : FALLBACK_FOODS) {
             BuiltInRegistries.ITEM.getOptional(Identifier.parse(fallback)).ifPresent(items::add);
          }
       }
    }
 
-   private static String read_Str(String spec) {
+   private static String suggestNearMatches(String spec) {
       List<String> near = new ArrayList<>();
 
       for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
@@ -441,7 +441,7 @@ public final class AiItems {
       return near.isEmpty() ? "" : " (did you mean " + String.join(", ", near) + "?)";
    }
 
-   public static int init_I(AiItems.ItemSpec target) {
+   public static int countInInventory(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -459,7 +459,7 @@ public final class AiItems {
       return total;
    }
 
-   public static int init_I() {
+   public static int countFreeSlots() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -476,7 +476,7 @@ public final class AiItems {
       return free;
    }
 
-   public static int init(AiItems.ItemSpec target, int limit) {
+   public static int findSlot(AiItems.ItemSpec target, int limit) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return -1;
@@ -493,17 +493,17 @@ public final class AiItems {
       return -1;
    }
 
-   public static boolean init_Z(ItemStack stack) {
+   public static boolean isPlainItem(ItemStack stack) {
       return stack != null && !stack.isEmpty() && !stack.has(DataComponents.CUSTOM_NAME) && stack.getEnchantments().isEmpty();
    }
 
-   public static int load(AiItems.ItemSpec target) {
+   public static int ensureInHotbar(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return -1;
       }
 
-      int hotbar = init(target, 9);
+      int hotbar = findSlot(target, 9);
       if (hotbar >= 0) {
          return hotbar;
       }
@@ -520,7 +520,7 @@ public final class AiItems {
       if (inventory < 0) {
          return -1;
       } else {
-         int destination = load();
+         int destination = pickHotbarDestination();
          if (!autismclient.util.InventorySlotHelper.swapToHotbar(mc, inventory, destination)) {
             return -1;
          } else {
@@ -529,9 +529,9 @@ public final class AiItems {
       }
    }
 
-   public static int read(AiItems.ItemSpec target) {
+   public static int equipHotbar(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
-      int slot = load(target);
+      int slot = ensureInHotbar(target);
       if (slot >= 0 && mc.player != null) {
          autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
          return slot;
@@ -540,7 +540,7 @@ public final class AiItems {
       }
    }
 
-   public static boolean init_Z(AiItems.ItemSpec target) {
+   public static boolean equipOffhand(AiItems.ItemSpec target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return false;
@@ -550,11 +550,11 @@ public final class AiItems {
          return true;
       }
 
-      int slot = init(target, 36);
+      int slot = findSlot(target, 36);
       return slot < 0 ? false : autismclient.util.InventorySlotHelper.swapToOffhand(mc, slot);
    }
 
-   static int load() {
+   static int pickHotbarDestination() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 8;
@@ -571,7 +571,7 @@ public final class AiItems {
 
       for (int slot = 0; slot < 9; slot++) {
          ItemStack stack = mc.player.getInventory().getItem(slot);
-         int score = load_I(stack);
+         int score = hotbarKeepScore(stack);
          if (score < worstScore) {
             worstScore = score;
             worst = slot;
@@ -581,7 +581,7 @@ public final class AiItems {
       return worst;
    }
 
-   private static int load_I(ItemStack stack) {
+   private static int hotbarKeepScore(ItemStack stack) {
       if (stack.isEmpty()) {
          return 0;
       } else if (stack.has(DataComponents.FOOD)) {
@@ -593,15 +593,15 @@ public final class AiItems {
       }
    }
 
-   public static int init_I(BlockState state) {
+   public static int bestHotbarToolFor(BlockState state) {
       return BlockBreakSpeedHelper.init(Minecraft.getInstance(), state, 9, false);
    }
 
-   public static int init(BlockState state, int limit) {
+   public static int bestToolFor(BlockState state, int limit) {
       return BlockBreakSpeedHelper.init(Minecraft.getInstance(), state, limit, false);
    }
 
-   public static boolean init_Z(BlockState state) {
+   public static boolean hasUsableToolFor(BlockState state) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && state != null) {
          if (!state.requiresCorrectToolForDrops()) {
@@ -610,7 +610,7 @@ public final class AiItems {
 
          for (int slot = 0; slot < 36; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
-            if (stack.isCorrectToolForDrops(state) && init(stack, 2)) {
+            if (stack.isCorrectToolForDrops(state) && hasEnoughDurability(stack, 2)) {
                return true;
             }
          }
@@ -621,12 +621,12 @@ public final class AiItems {
       }
    }
 
-   public static boolean init(ItemStack stack, int durability) {
-      return !stack.isEmpty() && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > (load_Z(stack) ? 0 : durability));
+   public static boolean hasEnoughDurability(ItemStack stack, int durability) {
+      return !stack.isEmpty() && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > (isDisposableTierTool(stack) ? 0 : durability));
    }
 
-   public static boolean load_Z(ItemStack stack) {
-      if (stack != null && !stack.isEmpty() && stack.isDamageableItem() && init_Z(stack)) {
+   public static boolean isDisposableTierTool(ItemStack stack) {
+      if (stack != null && !stack.isEmpty() && stack.isDamageableItem() && isPlainItem(stack)) {
          String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
          return (path.startsWith("wooden_") || path.startsWith("stone_") || path.startsWith("iron_"))
             && (path.endsWith("_pickaxe") || path.endsWith("_axe") || path.endsWith("_shovel") || path.endsWith("_hoe") || path.endsWith("_sword"));
@@ -635,9 +635,9 @@ public final class AiItems {
       }
    }
 
-   public static Item init_Item(BlockState state) {
+   public static Item cheapestRequiredTool(BlockState state) {
       if (state != null && state.requiresCorrectToolForDrops()) {
-         for (String candidate : read_List) {
+         for (String candidate : TOOL_PROGRESSION) {
             Item tool = BuiltInRegistries.ITEM.getOptional(Identifier.parse(candidate)).orElse(null);
             if (tool != null) {
                try {
@@ -655,18 +655,18 @@ public final class AiItems {
       }
    }
 
-   public static int read() {
-      return init(9);
+   public static int bestHotbarWeaponSlot() {
+      return bestWeaponSlot(9);
    }
 
-   public static int init(int limit) {
+   public static int bestWeaponSlot(int limit) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return -1;
       }
 
-      AiItems.ItemSpec swords = init_af_DataUtil("#minecraft:swords");
-      AiItems.ItemSpec axes = init_af_DataUtil("#minecraft:axes");
+      AiItems.ItemSpec swords = resolve("#minecraft:swords");
+      AiItems.ItemSpec axes = resolve("#minecraft:axes");
       int best = -1;
       double bestDamage = -1.0;
 
@@ -674,7 +674,7 @@ public final class AiItems {
          ItemStack stack = mc.player.getInventory().getItem(slot);
          if (!stack.isEmpty()) {
             boolean weapon = swords.matches(stack) || axes.matches(stack);
-            double damage = init_D(stack) + (weapon ? 0.5 : 0.0);
+            double damage = attackDamageBonus(stack) + (weapon ? 0.5 : 0.0);
             if (damage > bestDamage) {
                bestDamage = damage;
                best = slot;
@@ -685,11 +685,11 @@ public final class AiItems {
       return bestDamage > 0.0 ? best : -1;
    }
 
-   public static int load(int slot) {
+   public static int selectOrMoveToHotbar(int slot) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && slot >= 0 && slot < 36) {
          if (slot >= 9) {
-            int destination = load();
+            int destination = pickHotbarDestination();
             if (!autismclient.util.InventorySlotHelper.swapToHotbar(mc, slot, destination)) {
                return -1;
             }
@@ -704,7 +704,7 @@ public final class AiItems {
       }
    }
 
-   public static double init_D(ItemStack stack) {
+   public static double attackDamageBonus(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          ItemAttributeModifiers modifiers = stack.get(DataComponents.ATTRIBUTE_MODIFIERS);
          if (modifiers == null) {
@@ -725,7 +725,7 @@ public final class AiItems {
       }
    }
 
-   public static int init_I(ItemStack stack) {
+   public static int fuelBurnTime(ItemStack stack) {
       Minecraft mc = Minecraft.getInstance();
       if (stack != null && !stack.isEmpty() && mc.level != null) {
          CookingFuel fuel = stack.get(DataComponents.COOKING_FUEL);
@@ -735,14 +735,14 @@ public final class AiItems {
       }
    }
 
-   public static boolean init(Minecraft mc, BlockState state, ItemStack tool, Set<Item> wanted) {
+   public static boolean canDropWantedItem(Minecraft mc, BlockState state, ItemStack tool, Set<Item> wanted) {
       if (!wanted.isEmpty() && mc.player != null && !mc.player.hasInfiniteMaterials()) {
          boolean silk = BlockBreakSpeedHelper.init_Z(mc, tool);
 
          for (Item item : wanted) {
-            if (init(item).contains(state.getBlock())) {
+            if (sourceBlocksFor(item).contains(state.getBlock())) {
                boolean blockForm = state.getBlock().asItem() == item;
-               if (silk && blockForm || !silk && (!blockForm || init_Set().contains(BuiltInRegistries.ITEM.getKey(item).toString()))) {
+               if (silk && blockForm || !silk && (!blockForm || directMineableItems().contains(BuiltInRegistries.ITEM.getKey(item).toString()))) {
                   return true;
                }
             }
@@ -754,15 +754,15 @@ public final class AiItems {
       }
    }
 
-   public static BiPredicate<BlockState, ItemStack> init(Minecraft mc, Set<Item> wanted) {
+   public static BiPredicate<BlockState, ItemStack> dropFilterFor(Minecraft mc, Set<Item> wanted) {
       if (!wanted.isEmpty() && mc.player != null && !mc.player.hasInfiniteMaterials()) {
-         Set<String> mineable = init_Set();
+         Set<String> mineable = directMineableItems();
          Map<Block, Integer> allowed = new HashMap<>();
 
          for (Item item : wanted) {
             boolean direct = mineable.contains(BuiltInRegistries.ITEM.getKey(item).toString());
 
-            for (Block source : init(item)) {
+            for (Block source : sourceBlocksFor(item)) {
                boolean blockForm = source.asItem() == item;
                int mask = (blockForm ? 2 : 0) | (blockForm && !direct ? 0 : 1);
                allowed.merge(source, mask, (a, b) -> a | b);
@@ -787,9 +787,9 @@ public final class AiItems {
       }
    }
 
-   static Set<String> init_Set() {
-      if (load_Set != null) {
-         return load_Set;
+   static Set<String> directMineableItems() {
+      if (directMineableItems != null) {
+         return directMineableItems;
       }
 
       Map<Block, String> claimedDrop = new HashMap<>();
@@ -797,7 +797,7 @@ public final class AiItems {
       for (Item item : BuiltInRegistries.ITEM) {
          Block form = item instanceof BlockItem blockItem ? blockItem.getBlock() : null;
 
-         for (Block block : init(item)) {
+         for (Block block : sourceBlocksFor(item)) {
             if (block != form) {
                claimedDrop.putIfAbsent(block, BuiltInRegistries.ITEM.getKey(item).toString());
             }
@@ -808,10 +808,10 @@ public final class AiItems {
 
       for (Item item : BuiltInRegistries.ITEM) {
          String id = BuiltInRegistries.ITEM.getKey(item).toString();
-         if (!init_Z(id)) {
+         if (!requiresSilkTouchOrUnobtainable(id)) {
             Block form = item instanceof BlockItem blockItem ? blockItem.getBlock() : null;
 
-            for (Block block : init(item)) {
+            for (Block block : sourceBlocksFor(item)) {
                String claimed = claimedDrop.get(block);
                if (block != form || claimed == null || claimed.equals(id)) {
                   mineable.add(id);
@@ -821,33 +821,33 @@ public final class AiItems {
          }
       }
 
-      load_Set = Set.copyOf(mineable);
-      return load_Set;
+      directMineableItems = Set.copyOf(mineable);
+      return directMineableItems;
    }
 
-   public static boolean init_Z(String id) {
-      return !read_Set.contains(id) && !id.startsWith("minecraft:infested_")
+   public static boolean requiresSilkTouchOrUnobtainable(String id) {
+      return !SILK_OR_UNOBTAINABLE_BLOCKS.contains(id) && !id.startsWith("minecraft:infested_")
          ? (id.endsWith("glass") || id.endsWith("glass_pane")) && !id.equals("minecraft:tinted_glass")
          : true;
    }
 
-   public static List<Block> init(Item item) {
+   public static List<Block> sourceBlocksFor(Item item) {
       LinkedHashSet<Block> sources = new LinkedHashSet<>();
       if (item instanceof BlockItem blockItem) {
          sources.add(blockItem.getBlock());
       }
 
-      for (String blockId : write.getOrDefault(BuiltInRegistries.ITEM.getKey(item).toString(), List.of())) {
+      for (String blockId : ITEM_SOURCE_BLOCKS.getOrDefault(BuiltInRegistries.ITEM.getKey(item).toString(), List.of())) {
          BuiltInRegistries.BLOCK.getOptional(Identifier.parse(blockId)).ifPresent(sources::add);
       }
 
       return List.copyOf(sources);
    }
 
-   public static List<EntityType<?>> load(Item item) {
+   public static List<EntityType<?>> sourceEntitiesFor(Item item) {
       List<EntityType<?>> types = new ArrayList<>();
 
-      for (String typeId : update.getOrDefault(BuiltInRegistries.ITEM.getKey(item).toString(), List.of())) {
+      for (String typeId : ITEM_SOURCE_MOBS.getOrDefault(BuiltInRegistries.ITEM.getKey(item).toString(), List.of())) {
          BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.parse(typeId)).ifPresent(types::add);
       }
 
@@ -855,22 +855,22 @@ public final class AiItems {
    }
 
    static {
-      init_Map.put("wood", List.of("#minecraft:logs"));
-      init_Map.put("log", List.of("#minecraft:logs"));
-      init_Map.put("logs", List.of("#minecraft:logs"));
-      init_Map.put("planks", List.of("#minecraft:planks"));
-      init_Map.put("plank", List.of("#minecraft:planks"));
-      init_Map.put("sapling", List.of("#minecraft:saplings"));
-      init_Map.put("leaves", List.of("#minecraft:leaves"));
-      init_Map.put("wool", List.of("#minecraft:wool"));
-      init_Map.put("bed", List.of("#minecraft:beds"));
-      init_Map.put("boat", List.of("#minecraft:boats"));
-      init_Map.put("door", List.of("#minecraft:doors"));
-      init_Map.put("fence", List.of("#minecraft:fences"));
-      init_Map.put("wall", List.of("#minecraft:walls"));
-      init_Map.put("slab", List.of("#minecraft:slabs"));
-      init_Map.put("stairs", List.of("#minecraft:stairs"));
-      init_Map.put(
+      FAMILY_ALIASES.put("wood", List.of("#minecraft:logs"));
+      FAMILY_ALIASES.put("log", List.of("#minecraft:logs"));
+      FAMILY_ALIASES.put("logs", List.of("#minecraft:logs"));
+      FAMILY_ALIASES.put("planks", List.of("#minecraft:planks"));
+      FAMILY_ALIASES.put("plank", List.of("#minecraft:planks"));
+      FAMILY_ALIASES.put("sapling", List.of("#minecraft:saplings"));
+      FAMILY_ALIASES.put("leaves", List.of("#minecraft:leaves"));
+      FAMILY_ALIASES.put("wool", List.of("#minecraft:wool"));
+      FAMILY_ALIASES.put("bed", List.of("#minecraft:beds"));
+      FAMILY_ALIASES.put("boat", List.of("#minecraft:boats"));
+      FAMILY_ALIASES.put("door", List.of("#minecraft:doors"));
+      FAMILY_ALIASES.put("fence", List.of("#minecraft:fences"));
+      FAMILY_ALIASES.put("wall", List.of("#minecraft:walls"));
+      FAMILY_ALIASES.put("slab", List.of("#minecraft:slabs"));
+      FAMILY_ALIASES.put("stairs", List.of("#minecraft:stairs"));
+      FAMILY_ALIASES.put(
          "stone",
          List.of(
             "minecraft:stone",
@@ -885,48 +885,48 @@ public final class AiItems {
             "minecraft:basalt"
          )
       );
-      init_Map.put("cobblestone", List.of("minecraft:cobblestone", "minecraft:cobbled_deepslate"));
-      init_Map.put("dirt", List.of("#minecraft:dirt"));
-      init_Map.put("sand", List.of("#minecraft:sand"));
-      init_Map.put("gravel", List.of("minecraft:gravel"));
-      init_Map.put("clay", List.of("minecraft:clay", "minecraft:clay_ball"));
-      init_Map.put("coal", List.of("minecraft:coal", "minecraft:coal_ore", "minecraft:deepslate_coal_ore"));
-      init_Map.put("iron", List.of("minecraft:iron_ingot", "minecraft:raw_iron", "minecraft:iron_ore", "minecraft:deepslate_iron_ore"));
-      init_Map.put("copper", List.of("minecraft:copper_ingot", "minecraft:raw_copper", "minecraft:copper_ore", "minecraft:deepslate_copper_ore"));
-      init_Map.put(
+      FAMILY_ALIASES.put("cobblestone", List.of("minecraft:cobblestone", "minecraft:cobbled_deepslate"));
+      FAMILY_ALIASES.put("dirt", List.of("#minecraft:dirt"));
+      FAMILY_ALIASES.put("sand", List.of("#minecraft:sand"));
+      FAMILY_ALIASES.put("gravel", List.of("minecraft:gravel"));
+      FAMILY_ALIASES.put("clay", List.of("minecraft:clay", "minecraft:clay_ball"));
+      FAMILY_ALIASES.put("coal", List.of("minecraft:coal", "minecraft:coal_ore", "minecraft:deepslate_coal_ore"));
+      FAMILY_ALIASES.put("iron", List.of("minecraft:iron_ingot", "minecraft:raw_iron", "minecraft:iron_ore", "minecraft:deepslate_iron_ore"));
+      FAMILY_ALIASES.put("copper", List.of("minecraft:copper_ingot", "minecraft:raw_copper", "minecraft:copper_ore", "minecraft:deepslate_copper_ore"));
+      FAMILY_ALIASES.put(
          "gold", List.of("minecraft:gold_ingot", "minecraft:raw_gold", "minecraft:gold_ore", "minecraft:deepslate_gold_ore", "minecraft:nether_gold_ore")
       );
-      init_Map.put("redstone", List.of("minecraft:redstone", "minecraft:redstone_ore", "minecraft:deepslate_redstone_ore"));
-      init_Map.put("lapis", List.of("minecraft:lapis_lazuli", "minecraft:lapis_ore", "minecraft:deepslate_lapis_ore"));
-      init_Map.put("diamond", List.of("minecraft:diamond", "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore"));
-      init_Map.put("emerald", List.of("minecraft:emerald", "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore"));
-      init_Map.put("quartz", List.of("minecraft:quartz", "minecraft:nether_quartz_ore"));
-      init_Map.put("netherite", List.of("minecraft:netherite_ingot", "minecraft:netherite_scrap", "minecraft:ancient_debris"));
-      init_Map.put("ancient_debris", List.of("minecraft:ancient_debris"));
-      init_Map.put("ore", List.of("coal", "iron", "copper", "gold", "redstone", "lapis", "diamond", "emerald", "quartz", "ancient_debris"));
-      init_Map.put("pickaxe", List.of("#minecraft:pickaxes"));
-      init_Map.put("axe", List.of("#minecraft:axes"));
-      init_Map.put("shovel", List.of("#minecraft:shovels"));
-      init_Map.put("hoe", List.of("#minecraft:hoes"));
-      init_Map.put("sword", List.of("#minecraft:swords"));
-      init_Map.put("helmet", List.of("#minecraft:head_armor"));
-      init_Map.put("chestplate", List.of("#minecraft:chest_armor"));
-      init_Map.put("leggings", List.of("#minecraft:leg_armor"));
-      init_Map.put("boots", List.of("#minecraft:foot_armor"));
-      init_Map.put("armor", List.of("helmet", "chestplate", "leggings", "boots"));
-      init_Map.put("tool", List.of("pickaxe", "axe", "shovel", "hoe"));
-      init_Map.put("weapon", List.of("sword", "axe", "minecraft:trident", "minecraft:bow", "minecraft:crossbow"));
-      init_Map.put(
+      FAMILY_ALIASES.put("redstone", List.of("minecraft:redstone", "minecraft:redstone_ore", "minecraft:deepslate_redstone_ore"));
+      FAMILY_ALIASES.put("lapis", List.of("minecraft:lapis_lazuli", "minecraft:lapis_ore", "minecraft:deepslate_lapis_ore"));
+      FAMILY_ALIASES.put("diamond", List.of("minecraft:diamond", "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore"));
+      FAMILY_ALIASES.put("emerald", List.of("minecraft:emerald", "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore"));
+      FAMILY_ALIASES.put("quartz", List.of("minecraft:quartz", "minecraft:nether_quartz_ore"));
+      FAMILY_ALIASES.put("netherite", List.of("minecraft:netherite_ingot", "minecraft:netherite_scrap", "minecraft:ancient_debris"));
+      FAMILY_ALIASES.put("ancient_debris", List.of("minecraft:ancient_debris"));
+      FAMILY_ALIASES.put("ore", List.of("coal", "iron", "copper", "gold", "redstone", "lapis", "diamond", "emerald", "quartz", "ancient_debris"));
+      FAMILY_ALIASES.put("pickaxe", List.of("#minecraft:pickaxes"));
+      FAMILY_ALIASES.put("axe", List.of("#minecraft:axes"));
+      FAMILY_ALIASES.put("shovel", List.of("#minecraft:shovels"));
+      FAMILY_ALIASES.put("hoe", List.of("#minecraft:hoes"));
+      FAMILY_ALIASES.put("sword", List.of("#minecraft:swords"));
+      FAMILY_ALIASES.put("helmet", List.of("#minecraft:head_armor"));
+      FAMILY_ALIASES.put("chestplate", List.of("#minecraft:chest_armor"));
+      FAMILY_ALIASES.put("leggings", List.of("#minecraft:leg_armor"));
+      FAMILY_ALIASES.put("boots", List.of("#minecraft:foot_armor"));
+      FAMILY_ALIASES.put("armor", List.of("helmet", "chestplate", "leggings", "boots"));
+      FAMILY_ALIASES.put("tool", List.of("pickaxe", "axe", "shovel", "hoe"));
+      FAMILY_ALIASES.put("weapon", List.of("sword", "axe", "minecraft:trident", "minecraft:bow", "minecraft:crossbow"));
+      FAMILY_ALIASES.put(
          "crop", List.of("minecraft:wheat", "minecraft:carrot", "minecraft:potato", "minecraft:beetroot", "minecraft:melon_slice", "minecraft:pumpkin")
       );
-      init_Map.put("meat", List.of("minecraft:beef", "minecraft:porkchop", "minecraft:chicken", "minecraft:mutton", "minecraft:rabbit"));
-      init_Map.put("raw_meat", List.of("meat"));
-      init_Map.put(
+      FAMILY_ALIASES.put("meat", List.of("minecraft:beef", "minecraft:porkchop", "minecraft:chicken", "minecraft:mutton", "minecraft:rabbit"));
+      FAMILY_ALIASES.put("raw_meat", List.of("meat"));
+      FAMILY_ALIASES.put(
          "cooked_meat",
          List.of("minecraft:cooked_beef", "minecraft:cooked_porkchop", "minecraft:cooked_chicken", "minecraft:cooked_mutton", "minecraft:cooked_rabbit")
       );
-      init_Map.put("cooked_food", List.of("cooked_meat", "minecraft:cooked_cod", "minecraft:cooked_salmon", "minecraft:baked_potato"));
-      init_Map.put(
+      FAMILY_ALIASES.put("cooked_food", List.of("cooked_meat", "minecraft:cooked_cod", "minecraft:cooked_salmon", "minecraft:baked_potato"));
+      FAMILY_ALIASES.put(
          "seed",
          List.of("minecraft:wheat_seeds", "minecraft:beetroot_seeds", "minecraft:melon_seeds", "minecraft:pumpkin_seeds", "minecraft:torchflower_seeds")
       );

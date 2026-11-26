@@ -301,7 +301,7 @@ final class AiCarriedShulker implements AiOperation {
 
          for (int sourcePass = 0; sourcePass < 2; sourcePass++) {
             for (ItemStack stack : stored) {
-               if (matches.test(stack) && AiItems.init_Z(stack) == (sourcePass == 0)) {
+               if (matches.test(stack) && AiItems.isPlainItem(stack) == (sourcePass == 0)) {
                   int left = Math.min(stack.getCount(), wanted - accepted);
 
                   for (int pass = 0; pass < 2 && left > 0; pass++) {
@@ -708,8 +708,8 @@ final class AiCarriedShulker implements AiOperation {
 
                this.sync = init_I_Container_ItemStack(this.init_Minecraft.player.getInventory(), this.read_ItemStack);
                this.read_List = init_List_Container(this.init_Minecraft.player.getInventory());
-               this.load_J = AiServerEvidence.init_J();
-               this.read_J = AiServerEvidence.init_J_BlockPos(this.init_BlockPos);
+               this.load_J = AiServerEvidence.inventoryRevision();
+               this.read_J = AiServerEvidence.blockRevision(this.init_BlockPos);
                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 25, true, this.init_Set, false);
                this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.BREAK;
                return this.init_AiOperation_Result_Str("Recovering the owned stock shulker");
@@ -738,7 +738,7 @@ final class AiCarriedShulker implements AiOperation {
                return this.init_AiOperation_Result_Str("Waiting for the server to confirm the stock shulker removal");
             } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL) {
                AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 observed = this.init_BitSetUtil_DataUti
-                  .init(AiTerrain.init(this.init_Minecraft.level, this.init_BlockPos), AiServerEvidence.init_ca_DataUtil_BlockPos(this.init_BlockPos), System.nanoTime());
+                  .init(AiTerrain.isLoaded(this.init_Minecraft.level, this.init_BlockPos), AiServerEvidence.lastBlockUpdate(this.init_BlockPos), System.nanoTime());
                if (observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
                   return this.init_AiOperation_Result_Str("Waiting for the server to confirm the stock shulker removal");
                }
@@ -757,7 +757,7 @@ final class AiCarriedShulker implements AiOperation {
             } else {
                if (!init(
                   this.init_Minecraft.level,
-                  p -> AiTerrain.init(this.init_Minecraft.level, p),
+                  p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
                   this.init_BlockPos,
                   this.init_Minecraft.player.getBoundingBox(),
                   this.init_Set,
@@ -781,7 +781,7 @@ final class AiCarriedShulker implements AiOperation {
                   }
                }
 
-               if (AiServerEvidence.init_J() > this.load_J
+               if (AiServerEvidence.inventoryRevision() > this.load_J
                   && init_I_Container_ItemStack(this.init_Minecraft.player.getInventory(), this.read_ItemStack) == this.sync + 1
                   && this.init_Minecraft.player.onGround()
                   && this.init_Minecraft.player.getDeltaMovement().horizontalDistanceSqr() <= 4.0E-4) {
@@ -880,7 +880,7 @@ final class AiCarriedShulker implements AiOperation {
                   BlockPos candidate = feet.relative(side, radius);
                   BlockPos stance = candidate.relative(side.getOpposite());
                   AABB body = this.init_Minecraft.player.getBoundingBox().move(Vec3.atBottomCenterOf(stance).subtract(this.init_Minecraft.player.position()));
-                  if (init(this.init_Minecraft.level, p -> AiTerrain.init(this.init_Minecraft.level, p), candidate, body, this.init_Set)
+                  if (init(this.init_Minecraft.level, p -> AiTerrain.isLoaded(this.init_Minecraft.level, p), candidate, body, this.init_Set)
                      && this.init_Z_BlockPos(candidate)) {
                      this.init_BlockPos = candidate.immutable();
                      this.init_AiOperation = AiGoto.init(
@@ -911,7 +911,7 @@ final class AiCarriedShulker implements AiOperation {
 
          if (!init(
                this.init_Minecraft.level,
-               p -> AiTerrain.init(this.init_Minecraft.level, p),
+               p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
                this.init_BlockPos,
                this.init_Minecraft.player.getBoundingBox(),
                this.init_Set
@@ -929,7 +929,7 @@ final class AiCarriedShulker implements AiOperation {
       if (this.init_DataPipe.init_Z()
          || init(
                this.init_Minecraft.level,
-               p -> AiTerrain.init(this.init_Minecraft.level, p),
+               p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
                this.init_BlockPos,
                this.init_Minecraft.player.getBoundingBox(),
                this.init_Set
@@ -948,9 +948,9 @@ final class AiCarriedShulker implements AiOperation {
             this.write_Obj = this.init_Minecraft.level.getBlockEntity(this.init_BlockPos);
             if (this.write_Obj != null && this.init_BlockState.getValue(ShulkerBoxBlock.FACING) == Direction.UP) {
                this.init_DataPipe.init_V();
-               this.write_J = AiServerEvidence.init_J();
+               this.write_J = AiServerEvidence.inventoryRevision();
                this.init_AiOperation = AiContainer.init(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "action",
                      "inspect",
                      "x",
@@ -989,7 +989,7 @@ final class AiCarriedShulker implements AiOperation {
                for (int dz = -radius; dz <= radius; dz++) {
                   if (Math.max(Math.abs(dx), Math.abs(dz)) == radius) {
                      BlockPos at = feet.offset(dx, 0, dz);
-                     if (init(mc.level, p -> AiTerrain.init(mc.level, p), at, body, protectedCells)
+                     if (init(mc.level, p -> AiTerrain.isLoaded(mc.level, p), at, body, protectedCells)
                         && mc.level.getEntitiesOfClass(ItemEntity.class, init_AABB_BlockPos(at).inflate(1.0)).isEmpty()) {
                         return at;
                      }
@@ -1041,7 +1041,7 @@ final class AiCarriedShulker implements AiOperation {
          return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "The claimed stock shulker menu changed");
       }
 
-      if (AiServerEvidence.init_J_I(this.init_ShulkerBoxMenu.containerId) <= this.write_J || this.init_CompletableFuture != null && !this.init_CompletableFuture.isDone()) {
+      if (AiServerEvidence.containerRevision(this.init_ShulkerBoxMenu.containerId) <= this.write_J || this.init_CompletableFuture != null && !this.init_CompletableFuture.isDone()) {
          return this.init_AiOperation_Result_Str("Waiting for the stock shulker server contents");
       }
 
@@ -1076,11 +1076,11 @@ final class AiCarriedShulker implements AiOperation {
                }
 
                int inventoryTarget = this.load_ItemStack.isEmpty()
-                  ? AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(this.init_Item).toString()) + amount
+                  ? AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_Item).toString()) + amount
                   : this.write_I + amount;
                this.init_AiOperation = this.load_ItemStack.isEmpty()
                   ? new AiInventoryController(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "item",
                         BuiltInRegistries.ITEM.getKey(this.init_Item).toString(),
                         "count",
@@ -1156,7 +1156,7 @@ final class AiCarriedShulker implements AiOperation {
 
    private boolean init_Z() {
       return this.init_BlockPos != null
-         && AiTerrain.init(this.init_Minecraft.level, this.init_BlockPos)
+         && AiTerrain.isLoaded(this.init_Minecraft.level, this.init_BlockPos)
          && this.init_Minecraft.level.getBlockState(this.init_BlockPos).equals(this.init_BlockState)
          && this.init_Minecraft.level.getBlockEntity(this.init_BlockPos) == this.write_Obj;
    }
@@ -1182,14 +1182,14 @@ final class AiCarriedShulker implements AiOperation {
          && this.init_Minecraft.level.getBlockState(this.init_BlockPos.below()).equals(this.load_BlockState)
          && init(
             this.init_Minecraft.level,
-            p -> AiTerrain.init(this.init_Minecraft.level, p),
+            p -> AiTerrain.isLoaded(this.init_Minecraft.level, p),
             this.init_BlockPos,
             this.init_Minecraft.player.getBoundingBox(),
             this.init_Set,
             true
          )
          && this.init_Z_BlockPos(this.init_BlockPos)
-         && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos) != null;
+         && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.init_BlockPos) != null;
    }
 
    private List<ItemStack> init_List() {
@@ -1215,7 +1215,7 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    private JsonObject init_JsonObject_3() {
-      JsonObject data = AiJson.init_JsonObject_ObjArr(
+      JsonObject data = AiJson.objectOf(
          "carriedShulker",
          true,
          "recovered",
@@ -1230,11 +1230,11 @@ final class AiCarriedShulker implements AiOperation {
          !this.load_ItemStack.isEmpty()
       );
       if (this.init_BlockPos != null) {
-         data.add("stockPosition", AiJson.init_JsonObject_ObjArr("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+         data.add("stockPosition", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
       }
 
       if (this.load_AiOperation_Result != null) {
-         data.add("transfer", AiJson.init_JsonObject_Str(this.load_AiOperation_Result.dataJson()));
+         data.add("transfer", AiJson.parseObject(this.load_AiOperation_Result.dataJson()));
       }
 
       if (this.push >= 0) {

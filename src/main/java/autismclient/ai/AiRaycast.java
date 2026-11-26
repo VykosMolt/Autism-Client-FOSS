@@ -25,13 +25,13 @@ final class AiRaycast {
    static JsonObject init(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         double maxDistance = Math.max(1.0, Math.min(128.0, AiJson.init_D_JsonObject(args, "maxDistance", 32.0)));
-         boolean fluids = AiJson.init_Z_JsonObject(args, "fluids", false);
+         double maxDistance = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "maxDistance", 32.0)));
+         boolean fluids = AiJson.getBoolean(args, "fluids", false);
          Vec3 eye = mc.player.getEyePosition();
          Vec3 direction;
          if (args.has("x") && args.has("y") && args.has("z")) {
             direction = new Vec3(
-               AiJson.init_D_JsonObject(args, "x", 0.0) - eye.x, AiJson.init_D_JsonObject(args, "y", 0.0) - eye.y, AiJson.init_D_JsonObject(args, "z", 0.0) - eye.z
+               AiJson.getDouble(args, "x", 0.0) - eye.x, AiJson.getDouble(args, "y", 0.0) - eye.y, AiJson.getDouble(args, "z", 0.0) - eye.z
             );
             if (direction.lengthSqr() < 1.0E-8) {
                throw new IllegalArgumentException("Target point is at the eye position");
@@ -42,7 +42,7 @@ final class AiRaycast {
             direction = mc.player.getLookAngle();
          } else {
             direction = Vec3.directionFromRotation(
-               (float)AiJson.init_D_JsonObject(args, "pitch", mc.player.getXRot()), (float)AiJson.init_D_JsonObject(args, "yaw", mc.player.getYRot())
+               (float)AiJson.getDouble(args, "pitch", mc.player.getXRot()), (float)AiJson.getDouble(args, "yaw", mc.player.getYRot())
             );
          }
 
@@ -112,7 +112,7 @@ final class AiRaycast {
 
    static JsonObject init(double x, double y, double z, double distance, int id, String typeId) {
       JsonObject out = init("entity", x, y, z, distance);
-      out.add("entity", AiJson.init_JsonObject_ObjArr("id", id, "type", typeId));
+      out.add("entity", AiJson.objectOf("id", id, "type", typeId));
       return out;
    }
 
@@ -123,7 +123,7 @@ final class AiRaycast {
    private static JsonObject init(String hit, double x, double y, double z, double distance) {
       JsonObject out = new JsonObject();
       out.addProperty("hit", hit);
-      out.add("pos", AiJson.init_JsonObject_ObjArr("x", init(x), "y", init(y), "z", init(z)));
+      out.add("pos", AiJson.objectOf("x", init(x), "y", init(y), "z", init(z)));
       out.addProperty("distance", init(distance));
       return out;
    }

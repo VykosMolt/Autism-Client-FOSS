@@ -111,7 +111,7 @@ public final class GuiMovementPassThrough {
          return false;
       }
 
-      if (autismclient.modules.FreecamController.init_Z_KeyMapping(binding)) {
+      if (autismclient.modules.FreecamController.shouldSuppressKey(binding)) {
          return true;
       }
 
@@ -126,7 +126,7 @@ public final class GuiMovementPassThrough {
    }
 
    private static void init(KeyMapping binding) {
-      if (binding != null && !autismclient.modules.FreecamController.init_Z_KeyMapping(binding)) {
+      if (binding != null && !autismclient.modules.FreecamController.shouldSuppressKey(binding)) {
          boolean physical = KeyMappingControl.of(binding).autism$isActuallyDown();
          boolean pressed = physical || binding == init_Minecraft.options.keyShift && autismclient.modules.al.tick_Z();
          binding.setDown(pressed);

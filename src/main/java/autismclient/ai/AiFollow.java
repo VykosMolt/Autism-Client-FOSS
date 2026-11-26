@@ -24,15 +24,15 @@ final class AiFollow {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final int entityId = AiJson.init_I_JsonObject(args, "entityId", -1);
-         String spec = AiJson.init_Str_JsonObject(args, "type", "");
+         final int entityId = AiJson.getInt(args, "entityId", -1);
+         String spec = AiJson.getString(args, "type", "");
          if (entityId < 0 && spec.isBlank()) {
             throw new IllegalArgumentException("entityId or type required");
          }
 
          final Set<EntityType<?>> types = entityId >= 0 ? Set.of() : AiCombat.init(spec);
-         final double distance = Math.max(1.0, Math.min(8.0, AiJson.init_D_JsonObject(args, "distance", 2.5)));
-         final Integer timeout = args.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60))) : null;
+         final double distance = Math.max(1.0, Math.min(8.0, AiJson.getDouble(args, "distance", 2.5)));
+         final Integer timeout = args.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 60))) : null;
          final long deadline = timeout == null ? 9223372036854775807L : System.nanoTime() + timeout.intValue() * 1000000000L;
          AiService service = AiService.load_cc();
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
@@ -48,8 +48,8 @@ final class AiFollow {
             boolean init_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
-               this.init_DataUtil.init_V_Z(silentAim);
+               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+               this.init_DataUtil.setSilent(silentAim);
             }
 
             @Override
@@ -79,8 +79,8 @@ final class AiFollow {
                   }
 
                   this.init_Vec3 = this.init_Entity.position();
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
+                  this.init_DataUtil.tick();
                   if (this.init_Minecraft.player.distanceTo(this.init_Entity) <= distance) {
                      this.init_V_6();
                      return timeout == null && ++this.init_I >= 60
@@ -162,11 +162,11 @@ final class AiFollow {
             }
 
             JsonObject init_JsonObject_13() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr("distance", this.init_D(), "followDistance", distance);
+               JsonObject out = AiJson.objectOf("distance", this.init_D(), "followDistance", distance);
                if (this.init_Entity != null) {
                   out.add(
                      "target",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "entityId", this.init_Entity.getId(), "type", BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).toString()
                      )
                   );
@@ -174,7 +174,7 @@ final class AiFollow {
 
                if (this.init_Vec3 != null) {
                   BlockPos p = BlockPos.containing(this.init_Vec3);
-                  out.add("lastKnown", AiJson.init_JsonObject_ObjArr("x", p.getX(), "y", p.getY(), "z", p.getZ()));
+                  out.add("lastKnown", AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ()));
                }
 
                return out;
@@ -201,7 +201,7 @@ final class AiFollow {
                if (!this.init_Z) {
                   this.init_Z = true;
                   this.init_V_6();
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
             }
          };

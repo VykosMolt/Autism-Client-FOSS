@@ -44,15 +44,15 @@ final class AiRedstone {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiRedstone.Inner_DataUtil action = init(AiJson.init_Str_JsonObject(args, "action", "inspect"));
+         final AiRedstone.Inner_DataUtil action = init(AiJson.getString(args, "action", "inspect"));
          if (action == AiRedstone.Inner_DataUtil.INSPECT) {
-            int radius = Math.max(1, Math.min(24, AiJson.init_I_JsonObject(args, "radius", 8)));
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read redstone components within " + radius + " blocks", init(mc, radius));
+            int radius = Math.max(1, Math.min(24, AiJson.getInt(args, "radius", 8)));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read redstone components within " + radius + " blocks", init(mc, radius));
          } else {
-            final BlockPos pos = AiGameOperations.init_BlockPos(args);
-            final boolean desired = AiJson.init_Z_JsonObject(args, "state", true);
-            final boolean navigate = AiJson.init_Z_JsonObject(args, "navigate", true);
-            final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)));
+            final BlockPos pos = AiGameOperations.requireBlockPos(args);
+            final boolean desired = AiJson.getBoolean(args, "state", true);
+            final boolean navigate = AiJson.getBoolean(args, "navigate", true);
+            final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
             return new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
                final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -70,7 +70,7 @@ final class AiRedstone {
                         return this.init(AiOperation.Status.TIMED_OUT, "Redstone action did not complete before the deadline");
                      }
 
-                     if (!AiTerrain.init(mc.level, pos)) {
+                     if (!AiTerrain.isLoaded(mc.level, pos)) {
                         return this.init(AiOperation.Status.FAILED, "Target is in unloaded terrain");
                      }
 
@@ -89,7 +89,7 @@ final class AiRedstone {
                      }
 
                      if (!this.init_Z) {
-                        BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, pos);
+                        BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, pos);
                         if (interactionHit == null) {
                            if (!navigate) {
                               return this.init(AiOperation.Status.FAILED, "Component is out of reach and navigate is disabled");
@@ -115,17 +115,17 @@ final class AiRedstone {
                               this.init_AiOperation = null;
                            }
 
-                           this.init_DataUtil.init_V_Vec3(interactionHit.getLocation());
-                           this.init_DataUtil.load_V();
+                           this.init_DataUtil.aimAt(interactionHit.getLocation());
+                           this.init_DataUtil.tick();
                            if (++this.init_I > 60) {
                               return this.init(AiOperation.Status.FAILED, "Could not aim at " + pos.toShortString());
                            }
 
-                           if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(pos)) {
+                           if (!autismclient.ai.engine.AiAim.isLookingAtBlock(pos)) {
                               return this.init("Turning toward the component");
                            }
 
-                           BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                           BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                            if (hit == null) {
                               return this.init("Turning toward the component");
                            }
@@ -159,10 +159,10 @@ final class AiRedstone {
                }
 
                JsonObject init_JsonObject_40() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
+                  JsonObject out = AiJson.objectOf(
                      "action", action.name().toLowerCase(Locale.ROOT), "x", pos.getX(), "y", pos.getY(), "z", pos.getZ()
                   );
-                  if (mc.level != null && AiTerrain.init(mc.level, pos)) {
+                  if (mc.level != null && AiTerrain.isLoaded(mc.level, pos)) {
                      out.add("component", AiRedstone.init_JsonObject(mc, pos));
                   }
 
@@ -187,7 +187,7 @@ final class AiRedstone {
                public void cancel() {
                   if (!this.load_Z) {
                      this.load_Z = true;
-                     this.init_DataUtil.init_V();
+                     this.init_DataUtil.clear();
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;
@@ -211,7 +211,7 @@ final class AiRedstone {
             break;
          }
 
-         if (AiTerrain.init(mc.level, pos)) {
+         if (AiTerrain.isLoaded(mc.level, pos)) {
             BlockState state = mc.level.getBlockState(pos);
             if (init_Z(state)) {
                components.add(init_JsonObject(mc, pos.immutable()));
@@ -219,7 +219,7 @@ final class AiRedstone {
          }
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "radius", radius, "components", components, "limits", "Loaded terrain only, at most 128 components, vertical radius capped at 8."
       );
    }
@@ -234,7 +234,7 @@ final class AiRedstone {
          }
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "x",
          pos.getX(),
          "y",

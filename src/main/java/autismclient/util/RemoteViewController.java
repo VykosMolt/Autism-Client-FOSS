@@ -37,7 +37,7 @@ public final class RemoteViewController {
             return new RemoteViewController.Inner_DataUtil(false, "You cannot remote-view yourself.");
          }
 
-         if (autismclient.modules.FreecamController.init_Z()) {
+         if (autismclient.modules.FreecamController.isActive()) {
             return new RemoteViewController.Inner_DataUtil(false, "Disable Freecam first.");
          }
 

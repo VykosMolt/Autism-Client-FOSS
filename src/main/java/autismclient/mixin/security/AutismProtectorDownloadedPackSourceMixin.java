@@ -72,7 +72,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
    @Inject(method = "configureForServerControl", at = @At("HEAD"))
    private void autism$registerPackSession(Connection connection, PackPromptStatus promptStatus, CallbackInfo ci) {
-      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
       if (context != null) {
          ResourcePackSessionTracker.PackSession contextSession = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
          ResourcePackSessionTracker.PackSession sourceSession = ResourcePackSessionTracker.init(this);
@@ -86,7 +86,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
          }
 
          this.autism$restoreDownloader();
-         ConnectionPrivacyRegistry.init(connection, this.manager);
+         ConnectionPrivacyRegistry.bindPackManager(connection, this.manager);
          ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init(context, this, this.manager, this::autism$recoverAfterDisconnect);
          this.autism$installDownloader(session);
       }
@@ -130,7 +130,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
 
    @Inject(method = "createPackResponseSender", at = @At("RETURN"), cancellable = true)
    private static void autism$scopePackResponses(Connection connection, CallbackInfoReturnable<PackLoadFeedback> cir) {
-      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
+      ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(ConnectionPrivacyRegistry.getActive(connection));
       if (session != null) {
          cir.setReturnValue(IsolatedPackDownloader.init(session, cir.getReturnValue()));
       }

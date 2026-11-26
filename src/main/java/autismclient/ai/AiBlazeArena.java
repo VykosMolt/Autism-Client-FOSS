@@ -72,7 +72,7 @@ final class AiBlazeArena implements AiOperation {
 
             for (int n = 1; n <= rise; n++) {
                BlockPos base = this.load_BlockPos.relative(direction, n);
-               if (!AiTerrain.init(this.init_Minecraft.level, base)
+               if (!AiTerrain.isLoaded(this.init_Minecraft.level, base)
                   || !this.init_Minecraft.level.getBlockState(base.below()).isCollisionShapeFullBlock(this.init_Minecraft.level, base.below())) {
                   safe = false;
                   break;
@@ -191,7 +191,7 @@ final class AiBlazeArena implements AiOperation {
             if (r.terminal()) {
                this.load_JsonArray
                   .add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "kind",
                         "placement-face",
                         "cell",
@@ -208,7 +208,7 @@ final class AiBlazeArena implements AiOperation {
                this.load_AiOperation = null;
                if (r.status() != AiOperation.Status.SUCCEEDED) {
                   this.init_JsonArray
-                     .add(AiJson.init_JsonObject_ObjArr("cell", this.init_List.get(this.write).toShortString(), "result", "kept", "reason", r.message()));
+                     .add(AiJson.objectOf("cell", this.init_List.get(this.write).toShortString(), "result", "kept", "reason", r.message()));
                   this.sync++;
                   this.write++;
                }
@@ -242,7 +242,7 @@ final class AiBlazeArena implements AiOperation {
             if (r.terminal()) {
                this.load_JsonArray
                   .add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "stand", stand.toShortString(), "result", r.status(), "message", r.message(), "body", this.init_Minecraft.player.position().toString()
                      )
                   );
@@ -262,7 +262,7 @@ final class AiBlazeArena implements AiOperation {
             if (!this.init_Z) {
                String refusal = this.init_Str_BlockPos_2(cell);
                if (!refusal.isEmpty() && !refusal.equals("outside current placement reach")) {
-                  this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("cell", cell.toShortString(), "result", "kept", "reason", refusal));
+                  this.init_JsonArray.add(AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", refusal));
                   this.sync++;
                   this.write++;
                   return this.init_AiOperation_Result_Str_4("Reusing existing cover or preserving the open exit");
@@ -281,7 +281,7 @@ final class AiBlazeArena implements AiOperation {
 
                   this.init_JsonArray
                      .add(
-                        AiJson.init_JsonObject_ObjArr("cell", cell.toShortString(), "result", "kept", "reason", "no reachable support face after bounded approach")
+                        AiJson.objectOf("cell", cell.toShortString(), "result", "kept", "reason", "no reachable support face after bounded approach")
                      );
                   this.sync++;
                   this.write++;
@@ -302,7 +302,7 @@ final class AiBlazeArena implements AiOperation {
 
                this.init_JsonArray
                   .add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "cell",
                         cell.toShortString(),
                         "result",
@@ -332,7 +332,7 @@ final class AiBlazeArena implements AiOperation {
    }
 
    private String init_Str_BlockPos_2(BlockPos cell) {
-      if (!AiTerrain.init(this.init_Minecraft.level, cell)) {
+      if (!AiTerrain.isLoaded(this.init_Minecraft.level, cell)) {
          return "unobserved cell";
       }
 
@@ -375,13 +375,13 @@ final class AiBlazeArena implements AiOperation {
    }
 
    private Item init_Item() {
-      if (AiRunResources.load_Z() && AiRunResources.update() <= 32) {
+      if (AiRunResources.isCampaignActive() && AiRunResources.spareBuildingBlockCount() <= 32) {
          return null;
       }
 
       for (int i = 0; i < 36; i++) {
          ItemStack stack = this.init_Minecraft.player.getInventory().getItem(i);
-         if (AiItems.init_Z(stack) && stack.getItem() instanceof BlockItem block) {
+         if (AiItems.isPlainItem(stack) && stack.getItem() instanceof BlockItem block) {
             Block b = block.getBlock();
             if (b == Blocks.COBBLESTONE || b == Blocks.COBBLED_DEEPSLATE || b == Blocks.NETHERRACK || b == Blocks.NETHER_BRICKS || b == Blocks.STONE) {
                return stack.getItem();
@@ -393,7 +393,7 @@ final class AiBlazeArena implements AiOperation {
    }
 
    private JsonObject init_JsonObject_16() {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "spawner",
          this.init_BlockPos.toShortString(),
          "blocksConfirmed",
@@ -424,13 +424,13 @@ final class AiBlazeArena implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_Str_4(String m) {
-      return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, m, this.init_JsonObject_16());
+      return AiGameOperations.result(AiOperation.Status.RUNNING, m, this.init_JsonObject_16());
    }
 
    private AiOperation.Result init(AiOperation.Status s, String m) {
       JsonObject d = this.init_JsonObject_16();
       this.cancel();
-      return AiGameOperations.init_AiOperation_Result(s, m, d);
+      return AiGameOperations.result(s, m, d);
    }
 
    private boolean init_Z_7() {

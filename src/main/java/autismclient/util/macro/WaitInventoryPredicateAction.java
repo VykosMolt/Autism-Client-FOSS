@@ -32,7 +32,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
             return false;
          }
 
-         MacroItemTarget target = MacroItemTarget.update(resolution.init_Str());
+         MacroItemTarget target = MacroItemTarget.parse(resolution.init_Str());
          this.init_V_Minecraft_ArrayUtil(mc, target);
          boolean var10000;
          switch (this.condition) {
@@ -67,7 +67,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
                var10000 = read(mc);
                break;
             case CURSOR_MATCHES:
-               var10000 = target.init_I_ItemStack_I(mc.player.containerMenu.getCarried(), -1) >= 0;
+               var10000 = target.matchScore(mc.player.containerMenu.getCarried(), -1) >= 0;
                break;
             case CURSOR_EMPTY:
                var10000 = mc.player.containerMenu.getCarried().isEmpty();
@@ -105,12 +105,12 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
    }
 
    static int init_I_Minecraft_ArrayUtil(Minecraft mc, MacroItemTarget target) {
-      if (mc != null && mc.player != null && target != null && target.update()) {
+      if (mc != null && mc.player != null && target != null && target.hasItemFilter()) {
          int total = 0;
 
          for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
-            if (target.init_I_ItemStack_I(stack, i) >= 0) {
+            if (target.matchScore(stack, i) >= 0) {
                total += stack.getCount();
             }
          }
@@ -166,7 +166,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = MacroNbtCodecHelper.init(WaitInventoryPredicateAction.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS);
+      this.condition = MacroNbtCodecHelper.parseEnum(WaitInventoryPredicateAction.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS);
       this.itemName = tag.getStringOr("itemName", "");
       this.count = tag.getIntOr("count", 1);
       this.slot = tag.getIntOr("slot", 0);

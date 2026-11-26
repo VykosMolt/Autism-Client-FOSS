@@ -728,11 +728,11 @@ public final class SchematicWorkspace {
                      throw new IllegalArgumentException("This schematic contains only air");
                   }
 
-                  JsonObject args = AiJson.init_JsonObject_ObjArr(
+                  JsonObject args = AiJson.objectOf(
                      "schematic",
                      "sc_" + entry.id(),
                      "origin",
-                     AiJson.init_JsonObject_ObjArr("x", at.getX(), "y", at.getY(), "z", at.getZ()),
+                     AiJson.objectOf("x", at.getX(), "y", at.getY(), "z", at.getZ()),
                      "rotation",
                      p.rotation(),
                      "mirror",
@@ -1019,7 +1019,7 @@ public final class SchematicWorkspace {
       }
 
       ServerData server = mc.getCurrentServer();
-      return server != null && !server.ip.isBlank() ? "server/" + AiJson.init_Str_Str(server.ip.trim().toLowerCase(Locale.ROOT)) : AiWorldIdentity.init(mc);
+      return server != null && !server.ip.isBlank() ? "server/" + AiJson.sha256Hex(server.ip.trim().toLowerCase(Locale.ROOT)) : AiWorldIdentity.init(mc);
    }
 
    private BlockPos init_BlockPos_Z_D(boolean surface, double depth) {

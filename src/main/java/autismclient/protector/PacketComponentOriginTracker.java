@@ -44,8 +44,8 @@ public final class PacketComponentOriginTracker {
          return true;
       }
 
-      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(minecraft.getConnection());
-      return context == null || context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA;
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(minecraft.getConnection());
+      return context == null || context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA;
    }
 
    public static void init_V(Component component) {

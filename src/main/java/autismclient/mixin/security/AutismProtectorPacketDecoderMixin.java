@@ -32,7 +32,7 @@ public class AutismProtectorPacketDecoderMixin {
       StreamCodec instance, Object buffer, Operation<Object> original, @Local(argsOnly = true) ChannelHandlerContext channelContext
    ) {
       ConnectionPrivacyRegistry.ConnectionSession context = autism$connectionContext(channelContext);
-      boolean modded = context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
+      boolean modded = context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       PacketDecodeOriginStack.init(context);
       ModdedParticleGuard.init(modded);
 
@@ -48,7 +48,7 @@ public class AutismProtectorPacketDecoderMixin {
    private static ConnectionPrivacyRegistry.ConnectionSession autism$connectionContext(ChannelHandlerContext channelContext) {
       if (channelContext != null && channelContext.channel() != null) {
          Connection connection = channelContext.channel().pipeline().get(Connection.class);
-         return ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+         return ConnectionPrivacyRegistry.getActive(connection);
       } else {
          return null;
       }

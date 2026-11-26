@@ -67,7 +67,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
          this.useRegex = tag.getBooleanOr("useRegex", false);
       }
 
-      this.matchMode = MacroNbtCodecHelper.init(
+      this.matchMode = MacroNbtCodecHelper.parseEnum(
          PatternCaptureMatcher.MatchMode.class,
          tag.getStringOr("matchMode", this.useRegex ? "REGEX" : "MATCH"),
          this.useRegex ? PatternCaptureMatcher.MatchMode.REGEX : PatternCaptureMatcher.MatchMode.MATCH

@@ -72,12 +72,12 @@ final class AiScaffoldWalk {
             }
 
             boolean init(BlockPos cell) {
-               return AiTerrain.init(mc.level, cell) && !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty();
+               return AiTerrain.isLoaded(mc.level, cell) && !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty();
             }
 
             boolean init(int bx, int bz) {
                BlockPos cell = new BlockPos(bx, (int)Math.floor(this.update_D - 1.0), bz);
-               return !AiTerrain.init(mc.level, cell) ? true : !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty();
+               return !AiTerrain.isLoaded(mc.level, cell) ? true : !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty();
             }
 
             boolean load(BlockPos support) {
@@ -171,18 +171,18 @@ final class AiScaffoldWalk {
             @Override
             public AiOperation.Result tick() {
                if (!this.update_Z && mc.player != null && mc.level != null) {
-                  if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiOperation.Status.FAILED, AiGuard.init_Str_Str("scaffolding", mc.player.getHealth(), mc.player.getMaxHealth()));
+                  if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+                     return this.init(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("scaffolding", mc.player.getHealth(), mc.player.getMaxHealth()));
                   }
 
                   if (System.nanoTime() > this.init_J) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Scaffold deadline reached");
                   }
 
-                  if (!AiTerrain.init(mc.level, mc.player.blockPosition())) {
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
-                     return AiGameOperations.init_AiOperation_Result(
-                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.init_JsonObject_ObjArr("placed", this.sync_I)
+                  if (!AiTerrain.isLoaded(mc.level, mc.player.blockPosition())) {
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+                     return AiGameOperations.result(
+                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.objectOf("placed", this.sync_I)
                      );
                   }
 
@@ -197,7 +197,7 @@ final class AiScaffoldWalk {
                            this.read_Z = true;
                         }
 
-                        if (plan.verify() && AiServerEvidence.init_J_BlockPos(this.load_BlockPos) <= this.load_J) {
+                        if (plan.verify() && AiServerEvidence.blockRevision(this.load_BlockPos) <= this.load_J) {
                            if (++this.close_I > 60) {
                               return this.init(AiOperation.Status.UNCERTAIN, "Placement dispatched; no applied server block confirmation");
                            }
@@ -259,7 +259,7 @@ final class AiScaffoldWalk {
                      }
 
                      this.init("bridge leg done");
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.init_JsonObject_ObjArr("placed", this.sync_I));
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.objectOf("placed", this.sync_I));
                   }
 
                   BlockPos feet = mc.player.blockPosition();
@@ -286,7 +286,7 @@ final class AiScaffoldWalk {
                   } else {
                      int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.init_List_7());
                      if (slot < 0 && support != null) {
-                        autismclient.ai.engine.AiMotionSafety.putAt_V();
+                        autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
@@ -296,8 +296,8 @@ final class AiScaffoldWalk {
                         Vec3 v = mc.player.getDeltaMovement();
                         return mc.player.onGround() && v.x * v.x + v.z * v.z < 1.0E-4
                            ? this.init(AiOperation.Status.FAILED, "Out of blocks")
-                           : AiGameOperations.init_AiOperation_Result(
-                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.init_JsonObject_ObjArr("placed", this.sync_I)
+                           : AiGameOperations.result(
+                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.objectOf("placed", this.sync_I)
                            );
                      } else {
                         autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, cell -> {
@@ -314,14 +314,14 @@ final class AiScaffoldWalk {
                            if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
                               this.read_BlockPos = mc.player.blockPosition();
                               this.init_NetHelper = null;
-                              return AiGameOperations.init_AiOperation_Result(
-                                 AiOperation.Status.RUNNING, "Leg done", AiJson.init_JsonObject_ObjArr("placed", this.sync_I, "leg", this.open_I)
+                              return AiGameOperations.result(
+                                 AiOperation.Status.RUNNING, "Leg done", AiJson.objectOf("placed", this.sync_I, "leg", this.open_I)
                               );
                            } else {
-                              return AiGameOperations.init_AiOperation_Result(
+                              return AiGameOperations.result(
                                  AiOperation.Status.RUNNING,
                                  this.init_Str + ", " + this.sync_I + " placed",
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                     "placed",
                                     this.sync_I,
                                     "mode",
@@ -348,7 +348,7 @@ final class AiScaffoldWalk {
                   }
 
                   this.init("tower done");
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.init_JsonObject_ObjArr("placed", this.sync_I));
+                  return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced", AiJson.objectOf("placed", this.sync_I));
                } else {
                   BlockPos feet = mc.player.blockPosition();
                   boolean onGround = mc.player.onGround();
@@ -358,7 +358,7 @@ final class AiScaffoldWalk {
                      }
 
                      this.init("ceiling reached");
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Leg advanced (ceiling)", AiJson.init_JsonObject_ObjArr("placed", this.sync_I));
+                     return AiGameOperations.result(AiOperation.Status.RUNNING, "Leg advanced (ceiling)", AiJson.objectOf("placed", this.sync_I));
                   } else {
                      boolean jump = false;
                      if (onGround) {
@@ -380,7 +380,7 @@ final class AiScaffoldWalk {
 
                         if (this.read(this.write_BlockPos)) {
                            this.load_BlockPos = this.write_BlockPos;
-                           this.load_J = AiServerEvidence.init_J_BlockPos(this.write_BlockPos);
+                           this.load_J = AiServerEvidence.blockRevision(this.write_BlockPos);
                            this.close_I = 0;
                            this.init_Z = false;
                            this.load_Z = false;
@@ -404,10 +404,10 @@ final class AiScaffoldWalk {
                         mc.player.setXRot(60.0F);
                      }
 
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
                         this.init_Str + " (tower), " + this.sync_I + " placed",
-                        AiJson.init_JsonObject_ObjArr("placed", this.sync_I, "mode", "tower", "leg", this.open_I, "remainingBlocks", this.init_I_27())
+                        AiJson.objectOf("placed", this.sync_I, "mode", "tower", "leg", this.open_I, "remainingBlocks", this.init_I_27())
                      );
                   }
                }
@@ -415,10 +415,10 @@ final class AiScaffoldWalk {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   status,
                   message,
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "placed",
                      this.sync_I,
                      "from",
@@ -433,8 +433,8 @@ final class AiScaffoldWalk {
             public void cancel() {
                if (!this.update_Z) {
                   this.update_Z = true;
-                  autismclient.ai.engine.AiMotionSafety.putAt_V();
-                  this.init_DataUtil.init_V();
+                  autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+                  this.init_DataUtil.clear();
                   if (mc.player != null && this.flush_I >= 0 && mc.player.getInventory().getSelectedSlot() == this.flush_I) {
                      mc.player.getInventory().setSelectedSlot(this.update_I);
                   }
@@ -449,15 +449,15 @@ final class AiScaffoldWalk {
    record Inner_CachePool(List<AiScaffoldWalk.Inner_DataUtil> legs, boolean follow, int blocks, AiScaffoldWalk.Inner_StreamUtil mode, boolean verify, int timeoutSeconds) {
       static AiScaffoldWalk.Inner_CachePool parse(JsonObject args) {
          boolean hasDirection = args.has("direction");
-         boolean follow = AiJson.init_Z_JsonObject(args, "follow", false);
-         boolean tower = AiJson.init_Z_JsonObject(args, "tower", false);
+         boolean follow = AiJson.getBoolean(args, "follow", false);
+         boolean tower = AiJson.getBoolean(args, "tower", false);
          boolean hasLegs = args.has("legs");
          int kinds = (hasDirection ? 1 : 0) + (follow ? 1 : 0) + (tower ? 1 : 0) + (hasLegs ? 1 : 0);
          if (kinds != 1) {
             throw new IllegalArgumentException("Pass exactly one of direction, follow:true, tower:true or legs");
          }
 
-         int total = Math.max(1, Math.min(256, AiJson.init_I_JsonObject(args, "blocks", 32)));
+         int total = Math.max(1, Math.min(256, AiJson.getInt(args, "blocks", 32)));
          List<AiScaffoldWalk.Inner_DataUtil> legs = new ArrayList<>();
          if (hasLegs) {
             JsonArray raw = args.getAsJsonArray("legs");
@@ -471,22 +471,22 @@ final class AiScaffoldWalk {
                }
 
                JsonObject leg = element.getAsJsonObject();
-               boolean legTower = AiJson.init_Z_JsonObject(leg, "tower", false);
-               int legBlocks = Math.max(1, Math.min(256, AiJson.init_I_JsonObject(leg, "blocks", 1)));
+               boolean legTower = AiJson.getBoolean(leg, "tower", false);
+               int legBlocks = Math.max(1, Math.min(256, AiJson.getInt(leg, "blocks", 1)));
                if (!legTower && !leg.has("direction")) {
                   throw new IllegalArgumentException("a bridge leg needs direction (yaw degrees)");
                }
 
-               legs.add(new AiScaffoldWalk.Inner_DataUtil(legTower, legTower ? 0.0 : AiJson.init_D_JsonObject(leg, "direction", 0.0), legBlocks));
+               legs.add(new AiScaffoldWalk.Inner_DataUtil(legTower, legTower ? 0.0 : AiJson.getDouble(leg, "direction", 0.0), legBlocks));
             }
          } else if (tower) {
             legs.add(new AiScaffoldWalk.Inner_DataUtil(true, 0.0, total));
          } else {
-            legs.add(new AiScaffoldWalk.Inner_DataUtil(false, hasDirection ? AiJson.init_D_JsonObject(args, "direction", 0.0) : 0.0, total));
+            legs.add(new AiScaffoldWalk.Inner_DataUtil(false, hasDirection ? AiJson.getDouble(args, "direction", 0.0) : 0.0, total));
          }
 
          AiScaffoldWalk.Inner_StreamUtil var10000;
-         switch (AiJson.init_Str_JsonObject(args, "mode", "walk").toLowerCase(Locale.ROOT)) {
+         switch (AiJson.getString(args, "mode", "walk").toLowerCase(Locale.ROOT)) {
             case "walk":
                var10000 = AiScaffoldWalk.Inner_StreamUtil.WALK;
                break;
@@ -506,8 +506,8 @@ final class AiScaffoldWalk {
             follow,
             total,
             mode,
-            AiJson.init_Z_JsonObject(args, "verify", false),
-            Math.max(1, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)))
+            AiJson.getBoolean(args, "verify", false),
+            Math.max(1, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)))
          );
       }
    }

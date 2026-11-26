@@ -165,10 +165,10 @@ public final class ContainerPickUpAllHelper {
    }
 
    private static boolean init(autismclient.util.macro.MacroItemTarget target, ItemStack carried) {
-      if (target != null && target.update()) {
-         autismclient.util.macro.MacroItemTarget identityOnly = target.init_ArrayUtil();
-         identityOnly.init_I = -1;
-         return identityOnly.init_Z_ItemStack_I(carried, -1);
+      if (target != null && target.hasItemFilter()) {
+         autismclient.util.macro.MacroItemTarget identityOnly = target.copy();
+         identityOnly.slot = -1;
+         return identityOnly.matches(carried, -1);
       } else {
          return true;
       }

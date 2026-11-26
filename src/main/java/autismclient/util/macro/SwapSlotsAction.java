@@ -21,12 +21,12 @@ public class SwapSlotsAction implements MacroAction {
          int resolvedFrom = this.fromSlot;
          int resolvedTo = this.toSlot;
          if (this.fromUseItemName) {
-            MacroItemTarget target = this.init().init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget target = this.init().resolveTemplates(mc);
             if (target == null) {
                return;
             }
 
-            if (!target.init_Z() && !target.update()) {
+            if (!target.hasSlot() && !target.hasItemFilter()) {
                return;
             }
 
@@ -37,12 +37,12 @@ public class SwapSlotsAction implements MacroAction {
          }
 
          if (this.toUseItemName) {
-            MacroItemTarget target = this.load().init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget target = this.load().resolveTemplates(mc);
             if (target == null) {
                return;
             }
 
-            if (!target.init_Z() && !target.update()) {
+            if (!target.hasSlot() && !target.hasItemFilter()) {
                return;
             }
 
@@ -73,12 +73,12 @@ public class SwapSlotsAction implements MacroAction {
       tag.putInt("toSlot", this.toSlot);
       MacroItemTarget fromTarget = this.init();
       MacroItemTarget toTarget = this.load();
-      if (fromTarget.init_Z() || fromTarget.update()) {
-         tag.put("fromItemName", fromTarget.init_CompoundTag());
+      if (fromTarget.hasSlot() || fromTarget.hasItemFilter()) {
+         tag.put("fromItemName", fromTarget.toTag());
       }
 
-      if (toTarget.init_Z() || toTarget.update()) {
-         tag.put("toItemName", toTarget.init_CompoundTag());
+      if (toTarget.hasSlot() || toTarget.hasItemFilter()) {
+         tag.put("toItemName", toTarget.toTag());
       }
 
       tag.putBoolean("fromUseItemName", this.fromUseItemName);
@@ -92,13 +92,13 @@ public class SwapSlotsAction implements MacroAction {
       this.fromSlot = tag.getIntOr("fromSlot", -1);
       this.toSlot = tag.getIntOr("toSlot", -1);
       this.fromItemTarget = tag.getCompound("fromItemName")
-         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("fromItemName", "")));
+         .map(MacroItemTarget::fromTag)
+         .orElseGet(() -> MacroItemTarget.parse(tag.getStringOr("fromItemName", "")));
       this.toItemTarget = tag.getCompound("toItemName")
-         .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
-         .orElseGet(() -> MacroItemTarget.update(tag.getStringOr("toItemName", "")));
-      this.fromItemName = this.fromItemTarget.write_Str();
-      this.toItemName = this.toItemTarget.write_Str();
+         .map(MacroItemTarget::fromTag)
+         .orElseGet(() -> MacroItemTarget.parse(tag.getStringOr("toItemName", "")));
+      this.fromItemName = this.fromItemTarget.toSpecString();
+      this.toItemName = this.toItemTarget.toSpecString();
       this.fromUseItemName = tag.contains("fromUseItemName") ? tag.getBooleanOr("fromUseItemName", false) : !this.fromItemName.isEmpty();
       this.toUseItemName = tag.contains("toUseItemName") ? tag.getBooleanOr("toUseItemName", false) : !this.toItemName.isEmpty();
       this.useHandlerSlots = true;
@@ -109,8 +109,8 @@ public class SwapSlotsAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String from = this.fromUseItemName ? "\"" + this.init().load_Str() + "\"" : String.valueOf(this.fromSlot);
-      String to = this.toUseItemName ? "\"" + this.load().load_Str() + "\"" : String.valueOf(this.toSlot);
+      String from = this.fromUseItemName ? "\"" + this.init().formatSummary() + "\"" : String.valueOf(this.fromSlot);
+      String to = this.toUseItemName ? "\"" + this.load().formatSummary() + "\"" : String.valueOf(this.toSlot);
       return "Swap " + from + " <-> " + to;
    }
 
@@ -130,20 +130,20 @@ public class SwapSlotsAction implements MacroAction {
    }
 
    private MacroItemTarget init() {
-      if (this.fromItemTarget != null && (this.fromItemTarget.init_Z() || this.fromItemTarget.update())) {
+      if (this.fromItemTarget != null && (this.fromItemTarget.hasSlot() || this.fromItemTarget.hasItemFilter())) {
          return this.fromItemTarget;
       }
 
-      this.fromItemTarget = MacroItemTarget.update(this.fromItemName);
+      this.fromItemTarget = MacroItemTarget.parse(this.fromItemName);
       return this.fromItemTarget;
    }
 
    private MacroItemTarget load() {
-      if (this.toItemTarget != null && (this.toItemTarget.init_Z() || this.toItemTarget.update())) {
+      if (this.toItemTarget != null && (this.toItemTarget.hasSlot() || this.toItemTarget.hasItemFilter())) {
          return this.toItemTarget;
       }
 
-      this.toItemTarget = MacroItemTarget.update(this.toItemName);
+      this.toItemTarget = MacroItemTarget.parse(this.toItemName);
       return this.toItemTarget;
    }
 }

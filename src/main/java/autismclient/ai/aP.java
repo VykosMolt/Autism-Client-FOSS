@@ -493,7 +493,7 @@ public final class aP {
          keyboard.autism$invokeKeyPress(window, 1, Compat263.newGlfwKeyEvent(69, 0, 0));
          keyboard.autism$invokeKeyPress(window, 0, Compat263.newGlfwKeyEvent(69, 0, 0));
          mode.load_I++;
-         return AiJson.init_JsonObject_ObjArr("confirmation", mode.load_I, "active", init_Z(), "report", farm.load_JsonObject());
+         return AiJson.objectOf("confirmation", mode.load_I, "active", init_Z(), "report", farm.load_JsonObject());
       } else {
          Minecraft mc = Minecraft.getInstance();
          if (mode.init_JsonObject != null) {
@@ -504,7 +504,7 @@ public final class aP {
             }
 
             if (!mode.init_aR.load_Z()) {
-               return AiJson.init_JsonObject_ObjArr("pending", true);
+               return AiJson.objectOf("pending", true);
             }
 
             AutismKeyboardHandlerAccessor keyboard = (AutismKeyboardHandlerAccessor)mc.keyboardHandler;
@@ -551,7 +551,7 @@ public final class aP {
             mc.player.turn(12.0, -3.0);
             mode.init_Vec3 = mc.player.position();
             autismclient.util.KeyMappingControl.of(mc.options.keyUp).autism$simulatePress(true);
-            mode.init_JsonObject = AiJson.init_JsonObject_ObjArr(
+            mode.init_JsonObject = AiJson.objectOf(
                "moved",
                moved,
                "rotated",
@@ -571,7 +571,7 @@ public final class aP {
                "unlimitedMath",
                AiPlacementControls.init_D_D_D(128.0, 1.0) == 129.0
             );
-            return AiJson.init_JsonObject_ObjArr("pending", true);
+            return AiJson.objectOf("pending", true);
          }
       }
    }

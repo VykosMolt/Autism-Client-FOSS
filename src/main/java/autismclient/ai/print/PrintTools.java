@@ -54,7 +54,7 @@ final class PrintTools {
          if (slot != 36 && slot != 37 && slot != 38 && slot != 39) {
             ItemStack stack = env.init_ItemStack_I(slot);
             if (!stack.isEmpty()
-               && AiItems.init(stack, 2)
+               && AiItems.hasEnoughDurability(stack, 2)
                && (!state.requiresCorrectToolForDrops() || stack.isCorrectToolForDrops(state))
                && (wantedDrop == null || init_Item(env, state, stack) == wantedDrop)) {
                float speed = stack.getDestroySpeed(state);
@@ -148,7 +148,7 @@ final class PrintTools {
             }
 
             String id = BuiltInRegistries.ITEM.getKey(blockItem).toString();
-            return AiItems.init_Z(id) ? Items.AIR : blockItem;
+            return AiItems.requiresSilkTouchOrUnobtainable(id) ? Items.AIR : blockItem;
          } else {
             return !env.init_Z_ItemStack(stack) && !stack.is(Items.SHEARS) ? Items.AIR : blockItem;
          }

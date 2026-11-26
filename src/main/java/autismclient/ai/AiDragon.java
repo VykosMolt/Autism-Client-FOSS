@@ -80,7 +80,7 @@ final class AiDragon {
 
    static int init_I(JsonObject evidence) {
       return evidence.has("missing") && evidence.get("missing").isJsonObject()
-         ? Math.max(0, AiJson.init_I_JsonObject(evidence.getAsJsonObject("missing"), "minecraft:dirt", 0))
+         ? Math.max(0, AiJson.getInt(evidence.getAsJsonObject("missing"), "minecraft:dirt", 0))
          : 0;
    }
 
@@ -214,7 +214,7 @@ final class AiDragon {
          }
       }
 
-      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
+      return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
    static boolean init_Z(double x, double z, List<double[]> clouds) {
@@ -280,10 +280,10 @@ final class AiDragon {
             throw new IllegalArgumentException("The dragon fight requires the End; beds must never be used as explosions in the Overworld");
          }
 
-         final int bedsMax = Math.max(0, Math.min(64, AiJson.init_I_JsonObject(args, "beds", 0)));
-         final boolean melee = AiJson.init_Z_JsonObject(args, "melee", true);
-         final boolean bow = AiJson.init_Z_JsonObject(args, "bow", true);
-         final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 900)));
+         final int bedsMax = Math.max(0, Math.min(64, AiJson.getInt(args, "beds", 0)));
+         final boolean melee = AiJson.getBoolean(args, "melee", true);
+         final boolean bow = AiJson.getBoolean(args, "bow", true);
+         final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 900)));
          AiService service = AiService.load_cc();
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
          return new AiOperation() {
@@ -291,7 +291,7 @@ final class AiDragon {
             final Object init_Obj = mc.level;
             final Object load_Obj = mc.getConnection();
             final UUID init_UUID = mc.player.getUUID();
-            final long load_J = AiServerEvidence.load_J();
+            final long load_J = AiServerEvidence.deathRevision();
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiDragon.Inner_StreamUtil init_q_StreamUtil = new AiDragon.Inner_StreamUtil();
             final AiGuard.GuardPolicy init_X_CachePool = AiGuard.GuardPolicy.standard().withoutFlee();
@@ -339,7 +339,7 @@ final class AiDragon {
             int add;
             boolean load_Z;
             boolean read_Z;
-            boolean write_Z = AiJson.init_Z_JsonObject(args, "crystalsFirst", this.init_I_38() < 4);
+            boolean write_Z = AiJson.getBoolean(args, "crystalsFirst", this.init_I_38() < 4);
             BlockPos close_BlockPos;
             BlockPos open_BlockPos;
             int clear = -1000;
@@ -371,13 +371,13 @@ final class AiDragon {
             String write_Str = "";
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
-               this.init_DataUtil.init_V_Z(silentAim);
+               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+               this.init_DataUtil.setSilent(silentAim);
             }
 
             @Override
             public AiOperation.Result tick() {
-               AiGuard.init_V();
+               AiGuard.suppressBriefly();
                if (this.tick_Z || mc.player == null || mc.level == null) {
                   return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Dragon fight cancelled");
                }
@@ -390,7 +390,7 @@ final class AiDragon {
                   return this.init(AiOperation.Status.UNCERTAIN, null, "Dragon fight world, connection or player changed");
                }
 
-               if (!mc.player.isAlive() || this.load_J != AiServerEvidence.load_J()) {
+               if (!mc.player.isAlive() || this.load_J != AiServerEvidence.deathRevision()) {
                   return this.init(AiOperation.Status.FAILED, AiFailure.LOW_HEALTH, "Death ended this dragon fight");
                }
 
@@ -404,7 +404,7 @@ final class AiDragon {
 
                if (!this.open_Z) {
                   this.open_Z = true;
-                  if (!AiDragon.init_Z_I(this.init_I_38(), AiGameState.init_I_Str("minecraft:bow"), AiGameState.init_I_Str("minecraft:crossbow"), AiRunResources.write()) && !this.flush_Z_4()) {
+                  if (!AiDragon.init_Z_I(this.init_I_38(), AiGameState.countInventoryItem("minecraft:bow"), AiGameState.countInventoryItem("minecraft:crossbow"), AiRunResources.totalArrowCount()) && !this.flush_Z_4()) {
                      this.init_JsonObject = AiDragon.init();
                      return this.init(
                         AiFailure.MISSING_MATERIALS,
@@ -440,7 +440,7 @@ final class AiDragon {
                   if (AiDragon.init_Z_F(
                      mc.player.getHealth(),
                      this.flush_Z,
-                     AiGuard.close(),
+                     AiGuard.isLowHealthOverrideActive(),
                      this.init_q_1_DataUtil == Inner_DataUtil.CRYSTALS && this.init_AiOperation != null && !this.init_AiOperation.canInterruptNow()
                   )) {
                      return this.init(AiFailure.LOW_HEALTH, "Health " + String.format("%.1f", mc.player.getHealth()) + ": healing before the next perch");
@@ -717,17 +717,17 @@ final class AiDragon {
                   this.load_AiOperation = null;
                   return this.init("Resuming after " + this.load_Str);
                } else {
-                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
+                  AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
                   if (!this.canInterruptNow()) {
                      return null;
                   }
 
-                  AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.read_I_7());
+                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.read_I_7());
                   if (action == null) {
                      return null;
                   }
 
-                  this.load_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                  this.load_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                   this.sync_I++;
                   this.load_V_15();
                   this.load_AiOperation = action;
@@ -813,7 +813,7 @@ final class AiDragon {
 
                   this.load_V_15();
                   this.update_I++;
-                  this.read_AiOperation = AiDodge.init(AiJson.init_JsonObject_ObjArr("deflect", true, "timeoutSeconds", 4));
+                  this.read_AiOperation = AiDodge.init(AiJson.objectOf("deflect", true, "timeoutSeconds", 4));
                   return this.init("Dragon fireball inbound; dodging");
                }
             }
@@ -904,7 +904,7 @@ final class AiDragon {
                         return this.init(AiFailure.TIMEOUT, "Too little time left to clear the remaining crystals");
                      }
 
-                     this.init_AiOperation = AiCrystals.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.init(600), "skipCaged", !AiThreats.init_Z()));
+                     this.init_AiOperation = AiCrystals.init(AiJson.objectOf("timeoutSeconds", this.init(600), "skipCaged", !AiThreats.init_Z()));
                   }
 
                   AiOperation.Result r = this.init_q_StreamUtil.init_AiOperation_Result_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.LEG, this.init_AiOperation);
@@ -924,10 +924,10 @@ final class AiDragon {
 
                   if (r.failure() == AiFailure.MISSING_MATERIALS && !AiThreats.init_Z()) {
                      this.init_V(r);
-                     int shortage = AiDragon.init_I(AiRunResources.init_JsonObject(r.dataJson()));
+                     int shortage = AiDragon.init_I(AiRunResources.parseEvidenceJson(r.dataJson()));
                      if (shortage > 0 && this.put < 3 && this.read_I_7() >= 45) {
                         this.put++;
-                        this.add = AiDragon.init_I_I_I(AiGameState.init_I_Str("minecraft:end_stone"), shortage);
+                        this.add = AiDragon.init_I_I_I(AiGameState.countInventoryItem("minecraft:end_stone"), shortage);
                         this.init_q_1_DataUtil = Inner_DataUtil.CRYSTAL_STOCK;
                         return this.init("Gathering nearby End stone for the remaining crystal towers");
                      } else {
@@ -968,7 +968,7 @@ final class AiDragon {
             AiOperation.Result close() {
                if (this.init_AiOperation == null) {
                   this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "block",
                         "minecraft:end_stone",
                         "drop",
@@ -994,7 +994,7 @@ final class AiDragon {
                   this.load_V_15();
                   if (r.status() == AiOperation.Status.UNCERTAIN || r.status() == AiOperation.Status.CANCELLED) {
                      return this.init(r.status(), r.failure(), r.message());
-                  } else if (r.status() == AiOperation.Status.SUCCEEDED && AiGameState.init_I_Str("minecraft:end_stone") >= this.add) {
+                  } else if (r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem("minecraft:end_stone") >= this.add) {
                      this.init_JsonObject = null;
                      this.read_Str = null;
                      this.load_Z = false;
@@ -1085,7 +1085,7 @@ final class AiDragon {
 
                   if (this.init_AiOperation == null) {
                      String bedId = this.load_Str_5();
-                     if (bedId == null || AiItems.read(AiItems.load_af_DataUtil(bedId)) < 0) {
+                     if (bedId == null || AiItems.equipHotbar(AiItems.resolveItem(bedId)) < 0) {
                         this.write_BlockPos = null;
                         this.update_BlockPos = null;
                         this.poll_Z = false;
@@ -1128,9 +1128,9 @@ final class AiDragon {
                         );
                         this.update_Z = true;
                      } else {
-                        this.init_AiOperation = AiGameOperations.init(
+                        this.init_AiOperation = AiGameOperations.blockAction(
                            "place",
-                           AiJson.init_JsonObject_ObjArr("x", this.write_BlockPos.getX(), "y", this.write_BlockPos.getY(), "z", this.write_BlockPos.getZ())
+                           AiJson.objectOf("x", this.write_BlockPos.getX(), "y", this.write_BlockPos.getY(), "z", this.write_BlockPos.getZ())
                         );
                         this.update_Z = false;
                      }
@@ -1338,7 +1338,7 @@ final class AiDragon {
                   boolean open = mc.level.getBlockState(this.sync_BlockPos).canBeReplaced()
                      && !mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty();
                   String block = this.init_Str_20();
-                  if (!open || block == null || AiItems.read(AiItems.load_af_DataUtil(block)) < 0) {
+                  if (!open || block == null || AiItems.equipHotbar(AiItems.resolveItem(block)) < 0) {
                      if (!mc.level.getBlockState(this.sync_BlockPos).getCollisionShape(mc.level, this.sync_BlockPos).isEmpty()) {
                         this.pop_BlockPos = this.sync_BlockPos.immutable();
                      }
@@ -1348,8 +1348,8 @@ final class AiDragon {
                      return this.init(open ? "No block to set as cover; waiting for the head" : "Cover cell taken; waiting for the head");
                   }
 
-                  this.init_AiOperation = AiGameOperations.init(
-                     "place", AiJson.init_JsonObject_ObjArr("x", support.getX(), "y", support.getY(), "z", support.getZ(), "face", "UP", "timeoutSeconds", 6)
+                  this.init_AiOperation = AiGameOperations.blockAction(
+                     "place", AiJson.objectOf("x", support.getX(), "y", support.getY(), "z", support.getZ(), "face", "UP", "timeoutSeconds", 6)
                   );
                }
 
@@ -1388,7 +1388,7 @@ final class AiDragon {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty()
-                     && AiRunResources.init(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), 0) > autismclient.ai.engine.AiRestock.init(stack.getItem())) {
+                     && AiRunResources.countUsableItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), 0) > autismclient.ai.engine.AiRestock.init(stack.getItem())) {
                      String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
                      int rank = autismclient.ai.engine.AiRestock.init_I(id);
                      if (id.equals("minecraft:end_stone") || id.equals("minecraft:obsidian")) {
@@ -1481,8 +1481,8 @@ final class AiDragon {
                   boolean acknowledged = damaged
                      || this.poll_BlockPos != null
                         && this.push_BlockPos != null
-                        && AiServerEvidence.init_J_BlockPos(this.poll_BlockPos) > this.write_J
-                        && AiServerEvidence.init_J_BlockPos(this.push_BlockPos) > this.update_J
+                        && AiServerEvidence.blockRevision(this.poll_BlockPos) > this.write_J
+                        && AiServerEvidence.blockRevision(this.push_BlockPos) > this.update_J
                         && !this.load(this.poll_BlockPos)
                         && !this.load(this.push_BlockPos);
                   if (this.start >= 12 && acknowledged) {
@@ -1539,9 +1539,9 @@ final class AiDragon {
                         && !AiDragon.init_Z(mc)
                         && mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).destroyOnUse();
                      if (safeBlast) {
-                        this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(this.load_BlockPos));
-                        this.init_DataUtil.load_V();
-                        BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                        this.init_DataUtil.aimAt(Vec3.atCenterOf(this.load_BlockPos));
+                        this.init_DataUtil.tick();
+                        BlockHitResult ray = autismclient.ai.engine.AiAim.raycastLookBlock();
                         if (ray == null || !ray.getBlockPos().equals(head) && !ray.getBlockPos().equals(foot)) {
                            if (++this.start > 40) {
                               this.init_q_1_DataUtil = Inner_DataUtil.ARMED;
@@ -1553,8 +1553,8 @@ final class AiDragon {
                            this.load_F = this.init_EnderDragon.getHealth();
                            this.poll_BlockPos = head.immutable();
                            this.push_BlockPos = foot.immutable();
-                           this.write_J = AiServerEvidence.init_J_BlockPos(this.poll_BlockPos);
-                           this.update_J = AiServerEvidence.init_J_BlockPos(this.push_BlockPos);
+                           this.write_J = AiServerEvidence.blockRevision(this.poll_BlockPos);
+                           this.update_J = AiServerEvidence.blockRevision(this.push_BlockPos);
                            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, ray);
                            this.flush_Z = true;
                            this.start = 0;
@@ -1617,7 +1617,7 @@ final class AiDragon {
                      ? this.load_BlockPos
                      : this.load_BlockPos.relative(state.getValue(BedBlock.FACING));
                   BlockPos foot = head.relative(state.getValue(BedBlock.FACING).getOpposite());
-                  if (AiTerrain.init(mc.level, head) && AiTerrain.init(mc.level, foot)) {
+                  if (AiTerrain.isLoaded(mc.level, head) && AiTerrain.isLoaded(mc.level, foot)) {
                      BlockState headState = mc.level.getBlockState(head);
                      BlockState footState = mc.level.getBlockState(foot);
                      return headState.getBlock() == state.getBlock()
@@ -1667,7 +1667,7 @@ final class AiDragon {
                   if (this.init_AiOperation == null && !AiDragon.init_Z_D(mc.player.getX(), mc.player.getZ(), danger, 1.0)) {
                      BlockPos out = this.init(danger, zones);
                      if (out != null) {
-                        this.init_AiOperation = AiGuard.init(
+                        this.init_AiOperation = AiGuard.allowDuringLowHealth(
                            AiGoto.init(out, 0.35, false, false, false, this.init(8), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true)
                         );
                         this.get = 2;
@@ -1719,7 +1719,7 @@ final class AiDragon {
                      return this.init("No stand reaches the head clear of the wings");
                   }
 
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_EnderDragon.head));
+                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.defaultEntityAimPoint(this.init_EnderDragon.head));
                   this.init_V_32();
                   double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)) - 0.1;
                   boolean inReach = this.init_EnderDragon.head.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= reach * reach;
@@ -1749,9 +1749,9 @@ final class AiDragon {
 
                   this.load_V_15();
                   this.get = 0;
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.tick();
                   if (inReach
-                     && this.init_DataUtil.load_Z_Entity(this.init_EnderDragon.head)
+                     && this.init_DataUtil.isAimedAtEntity(this.init_EnderDragon.head)
                      && mc.player.getAttackStrengthScale(0.0F) >= 0.92F
                      && AiDefense.init(mc, this.init_EnderDragon.head, this.init_DataUtil)) {
                      mc.gameMode.attack(mc.player, this.init_EnderDragon.head);
@@ -1840,7 +1840,7 @@ final class AiDragon {
                   }
 
                   this.init_AiOperation = AiRanged.init(
-                     AiJson.init_JsonObject_ObjArr("entityId", this.init_EnderDragon.getId(), "count", 3, "timeoutSeconds", this.init(45))
+                     AiJson.objectOf("entityId", this.init_EnderDragon.getId(), "count", 3, "timeoutSeconds", this.init(45))
                   );
                }
 
@@ -2336,7 +2336,7 @@ final class AiDragon {
 
                for (int y = topY; y > topY - 16; y--) {
                   BlockPos p = new BlockPos(x, y, z);
-                  if (!AiTerrain.init(mc.level, p)) {
+                  if (!AiTerrain.isLoaded(mc.level, p)) {
                      return null;
                   }
 
@@ -2403,7 +2403,7 @@ final class AiDragon {
             }
 
             boolean sync_Z_6() {
-               return AiGameState.init_I_Str("minecraft:bow") + AiGameState.init_I_Str("minecraft:crossbow") > 0 && AiRunResources.write() > 0;
+               return AiGameState.countInventoryItem("minecraft:bow") + AiGameState.countInventoryItem("minecraft:crossbow") > 0 && AiRunResources.totalArrowCount() > 0;
             }
 
             boolean flush_Z_4() {
@@ -2419,7 +2419,7 @@ final class AiDragon {
             }
 
             void init_V_32() {
-               int slot = AiItems.read();
+               int slot = AiItems.bestHotbarWeaponSlot();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, slot);
                }
@@ -2486,7 +2486,7 @@ final class AiDragon {
             }
 
             JsonObject init_JsonObject_60() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "bedsUsed",
                   this.init_I,
                   "bedsLeft",
@@ -2528,14 +2528,14 @@ final class AiDragon {
                }
 
                if (this.init_BlockPos != null) {
-                  out.add("fountain", AiJson.init_JsonObject_ObjArr("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+                  out.add("fountain", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
                }
 
                if (this.load_BlockPos != null) {
-                  out.add("armedBed", AiJson.init_JsonObject_ObjArr("x", this.load_BlockPos.getX(), "y", this.load_BlockPos.getY(), "z", this.load_BlockPos.getZ()));
+                  out.add("armedBed", AiJson.objectOf("x", this.load_BlockPos.getX(), "y", this.load_BlockPos.getY(), "z", this.load_BlockPos.getZ()));
                }
 
-               out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.sync_I, this.load_Str));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.sync_I, this.load_Str));
                if (this.init_JsonObject != null) {
                   out.add("missing", this.init_JsonObject);
                }
@@ -2550,7 +2550,7 @@ final class AiDragon {
             AiOperation.Result init(String message) {
                return this.init_q_StreamUtil.init()
                   ? this.init(AiOperation.Status.UNCERTAIN, null, message)
-                  : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_60());
+                  : AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_60());
             }
 
             AiOperation.Result load(String message) {
@@ -2624,7 +2624,7 @@ final class AiDragon {
                      this.sync_AiOperation = null;
                   }
 
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
             }
 
@@ -2684,10 +2684,10 @@ final class AiDragon {
             AiOperation.Result result = last != null && last.child() == child ? last.result() : null;
             if (init_Z_AiOperation_AiOperation_Result(child, result)) {
                this.init_Z = true;
-               JsonObject receipt = AiJson.init_JsonObject_ObjArr("interruptedActionNeedsReconciliation", true);
+               JsonObject receipt = AiJson.objectOf("interruptedActionNeedsReconciliation", true);
                if (result != null) {
                   receipt.addProperty("status", result.status().name());
-                  receipt.add("receipt", AiRunResources.load_JsonObject(result.dataJson()));
+                  receipt.add("receipt", AiRunResources.compactEvidenceJson(result.dataJson()));
                }
 
                this.init_JsonObject.add(role.name().toLowerCase(Locale.ROOT), receipt);
@@ -2716,10 +2716,10 @@ final class AiDragon {
       }
 
       private static boolean init_Z_AiOperation_AiOperation_Result(AiOperation child, AiOperation.Result result) {
-         JsonObject evidence = result == null ? new JsonObject() : AiRunResources.init_JsonObject(result.dataJson());
+         JsonObject evidence = result == null ? new JsonObject() : AiRunResources.parseEvidenceJson(result.dataJson());
          return child.requiresReconciliationAfterEmergency()
-            || AiJson.init_Z_JsonObject(evidence, "interruptedActionNeedsReconciliation", false)
-            || AiJson.init_Z_JsonObject(evidence, "reobserveBeforeResuming", false);
+            || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false)
+            || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false);
       }
 
       private record Inner_DataUtil(AiOperation child, AiOperation.Result result) {

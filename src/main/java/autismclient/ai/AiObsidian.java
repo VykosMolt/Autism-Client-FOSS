@@ -78,7 +78,7 @@ final class AiObsidian {
                   return this.init(AiOperation.Status.FAILED, "Water cannot be prepared in a dimension where it evaporates");
                }
 
-               if (AiObsidian.init(want, AiCraft.init_I("minecraft:water_bucket"), this.init_AiOperation != null)) {
+               if (AiObsidian.init(want, AiCraft.countItem("minecraft:water_bucket"), this.init_AiOperation != null)) {
                   return this.init(AiOperation.Status.SUCCEEDED, want > 1 ? want + " water buckets ready" : "Water bucket ready");
                }
 
@@ -139,26 +139,26 @@ final class AiObsidian {
                   }
                }
 
-               if (AiObsidian.init(want, AiCraft.init_I("minecraft:water_bucket"), false)) {
+               if (AiObsidian.init(want, AiCraft.countItem("minecraft:water_bucket"), false)) {
                   return this.init(AiOperation.Status.SUCCEEDED, want > 1 ? want + " water buckets ready" : "Water bucket ready");
                }
 
-               AiObsidian.Inner_StreamUtil stock = AiObsidian.init(want, AiCraft.init_I("minecraft:water_bucket"), AiCraft.init_I("minecraft:bucket"));
+               AiObsidian.Inner_StreamUtil stock = AiObsidian.init(want, AiCraft.countItem("minecraft:water_bucket"), AiCraft.countItem("minecraft:bucket"));
                if (stock.craft() > 0) {
-                  if (AiCraft.init_I("minecraft:water_bucket") > 0 && AiCraft.init_I("minecraft:iron_ingot") < stock.iron()) {
+                  if (AiCraft.countItem("minecraft:water_bucket") > 0 && AiCraft.countItem("minecraft:iron_ingot") < stock.iron()) {
                      return this.init(
                         AiOperation.Status.FAILED,
                         "Need "
                            + want
                            + " filled water buckets; holding "
-                           + AiCraft.init_I("minecraft:water_bucket")
+                           + AiCraft.countItem("minecraft:water_bucket")
                            + " with "
                            + stock.iron()
                            + " more iron ingots needed for empty buckets"
                      );
                   }
 
-                  if (AiRunResources.load_Z() && !this.read_Z && !AiCraft.load() && AiCraft.init_I("minecraft:crafting_table") == 0) {
+                  if (AiRunResources.isCampaignActive() && !this.read_Z && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") == 0) {
                      this.read_Z = true;
                      AiOperation carry = AiProgression.init(Math.min(90, AiObsidian.init_I_J(this.init_J)));
                      if (carry != null) {
@@ -173,11 +173,11 @@ final class AiObsidian {
                   this.load_I++;
                   this.init_Str = "craft";
                   this.init_AiOperation = AiObtain.init(
-                     AiJson.init_JsonObject_ObjArr("item", "minecraft:bucket", "count", stock.emptyTarget(), "timeoutSeconds", AiObsidian.init_I_J(this.init_J))
+                     AiJson.objectOf("item", "minecraft:bucket", "count", stock.emptyTarget(), "timeoutSeconds", AiObsidian.init_I_J(this.init_J))
                   );
                   return AiObsidian.init_AiOperation_Result_Str("Preparing all empty water buckets before travelling");
                } else {
-                  if (AiRunResources.load_Z() && !this.write && AiCraft.init_I("minecraft:crafting_table") == 0) {
+                  if (AiRunResources.isCampaignActive() && !this.write && AiCraft.countItem("minecraft:crafting_table") == 0) {
                      this.write = true;
                      AiOperation carry = AiProgression.init(Math.min(90, AiObsidian.init_I_J(this.init_J)));
                      if (carry != null) {
@@ -188,7 +188,7 @@ final class AiObsidian {
                   }
 
                   if (this.init_BlockPos == null) {
-                     this.init_List = AiTerrain.init(this.init_Minecraft, Blocks.WATER, 96, 72, true)
+                     this.init_List = AiTerrain.findFluidSources(this.init_Minecraft, Blocks.WATER, 96, 72, true)
                         .stream()
                         .filter(p -> !this.init_Set.contains(p))
                         .filter(p -> this.init_Minecraft.level.getBlockState(p.above()).isAir())
@@ -199,7 +199,7 @@ final class AiObsidian {
                         this.load_Z = true;
                         this.init_I = -1;
                         this.init_Str = "surface";
-                        this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(150, AiObsidian.init_I_J(this.init_J))));
+                        this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", Math.min(150, AiObsidian.init_I_J(this.init_J))));
                         return AiObsidian.init_AiOperation_Result_Str("Up to open sky for water");
                      }
 
@@ -214,7 +214,7 @@ final class AiObsidian {
                   } else {
                      this.init_Str = "fill";
                      this.init_AiOperation = AiBucket.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "action",
                            "fill",
                            "fluid",
@@ -239,23 +239,23 @@ final class AiObsidian {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            JsonObject data = AiJson.init_JsonObject_ObjArr(
+            JsonObject data = AiJson.objectOf(
                "wantedWaterBuckets",
                want,
                "waterBuckets",
-               AiCraft.init_I("minecraft:water_bucket"),
+               AiCraft.countItem("minecraft:water_bucket"),
                "emptyBuckets",
-               AiCraft.init_I("minecraft:bucket"),
+               AiCraft.countItem("minecraft:bucket"),
                "bucketCraftAttempts",
                this.load_I,
                "acknowledgedFills",
                this.read_I,
                "carriedTable",
-               AiCraft.init_I("minecraft:crafting_table") > 0,
+               AiCraft.countItem("minecraft:crafting_table") > 0,
                "lastChild",
-               this.init_bb.init() == null ? new JsonObject() : AiRunResources.init_JsonObject(this.init_bb.init().dataJson())
+               this.init_bb.init() == null ? new JsonObject() : AiRunResources.parseEvidenceJson(this.init_bb.init().dataJson())
             );
-            AiOperation.Result result = AiGameOperations.init_AiOperation_Result(status, message, data);
+            AiOperation.Result result = AiGameOperations.result(status, message, data);
             result = this.init_bb.init(result, this.requiresReconciliationAfterEmergency());
             this.cancel();
             return result;
@@ -270,7 +270,7 @@ final class AiObsidian {
    }
 
    private static BlockPos init(AiOperation.Result result, BlockPos fallback) {
-      JsonObject data = AiJson.init_JsonObject_Str(result.dataJson());
+      JsonObject data = AiJson.parseObject(result.dataJson());
       return data.has("fluidSourceX") && data.has("fluidSourceY") && data.has("fluidSourceZ")
          ? new BlockPos(data.get("fluidSourceX").getAsInt(), data.get("fluidSourceY").getAsInt(), data.get("fluidSourceZ").getAsInt())
          : fallback;
@@ -287,7 +287,7 @@ final class AiObsidian {
                   this,
                   "Getting " + Items.OBSIDIAN.getDefaultInstance().getHoverName().getString(),
                   AiTaskStatus.init(result.message(), "Preparing obsidian"),
-                  AiCraft.init_I("minecraft:obsidian"),
+                  AiCraft.countItem("minecraft:obsidian"),
                   held
                );
             } else {
@@ -317,10 +317,10 @@ final class AiObsidian {
 
    private static AiOperation read(final int held, final int seconds) {
       Minecraft mc = Minecraft.getInstance();
-      if (AiCraft.init_I("minecraft:lava_bucket") > 0) {
+      if (AiCraft.countItem("minecraft:lava_bucket") > 0) {
          return write(held, seconds);
       } else {
-         return AiTerrain.init(mc, List.of(Blocks.OBSIDIAN), 48, pos -> {
+         return AiTerrain.nearestBlockDistSqr(mc, List.of(Blocks.OBSIDIAN), 48, pos -> {
                for (Direction d : Direction.values()) {
                   if (!mc.level.getFluidState(pos.relative(d)).isEmpty()) {
                      return false;
@@ -332,7 +332,7 @@ final class AiObsidian {
             ? new AiOperation() {
                final long init_J = System.nanoTime() + Math.max(10, seconds) * 1000000000L;
                AiOperation init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                  AiJson.init_JsonObject_ObjArr("block", "obsidian", "held", held, "timeoutSeconds", Math.min(120, seconds))
+                  AiJson.objectOf("block", "obsidian", "held", held, "timeoutSeconds", Math.min(120, seconds))
                );
                boolean init_Z;
 
@@ -385,7 +385,7 @@ final class AiObsidian {
          int load_I;
          int read_I;
          int write_I;
-         final int update_I = AiCraft.init_I("minecraft:obsidian");
+         final int update_I = AiCraft.countItem("minecraft:obsidian");
          int sync;
          boolean init_Z;
          boolean load_Z;
@@ -501,7 +501,7 @@ final class AiObsidian {
                         var10001 = AiObsidian.Inner_DataUtil.PICKUP;
                         break;
                      case PICKUP:
-                        var10001 = AiCraft.init_I("minecraft:obsidian") >= held
+                        var10001 = AiCraft.countItem("minecraft:obsidian") >= held
                            ? (this.init_Z_17() ? AiObsidian.Inner_DataUtil.SCOOP : AiObsidian.Inner_DataUtil.CLEAN)
                            : (this.init_Z_17() ? AiObsidian.Inner_DataUtil.SOURCE : AiObsidian.Inner_DataUtil.WATER);
                         break;
@@ -518,7 +518,7 @@ final class AiObsidian {
                      this.init_AiOperation = AiObsidian.init_AiOperation_I(AiObsidian.init_I_J(this.init_J));
                      break;
                   case SOURCE:
-                     List<BlockPos> exposed = AiTerrain.init(this.init_Minecraft, Blocks.LAVA, 96, 72)
+                     List<BlockPos> exposed = AiTerrain.findFluidSources(this.init_Minecraft, Blocks.LAVA, 96, 72)
                         .stream()
                         .filter(p -> !this.init_Set.contains(p))
                         .filter(p -> this.init_Minecraft.level.getBlockState(p.above()).isAir())
@@ -643,7 +643,7 @@ final class AiObsidian {
                               this.init_I++;
                            } else {
                               if (!this.load_Z) {
-                                 Item item = AiCraft.init_I("minecraft:cobblestone") > 0 ? Items.COBBLESTONE : Items.DIRT;
+                                 Item item = AiCraft.countItem("minecraft:cobblestone") > 0 ? Items.COBBLESTONE : Items.DIRT;
                                  if (!autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(cell, item) && this.load_Set.add(cell)) {
                                     this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WALL_APPROACH;
                                     this.init_AiOperation = AiGoto.init(
@@ -744,7 +744,7 @@ final class AiObsidian {
                      break;
                   case PICKUP:
                      this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "block",
                            "obsidian",
                            "drop",
@@ -752,7 +752,7 @@ final class AiObsidian {
                            "dropsOnly",
                            true,
                            "held",
-                           Math.min(held, AiCraft.init_I("minecraft:obsidian") + 1),
+                           Math.min(held, AiCraft.countItem("minecraft:obsidian") + 1),
                            "timeoutSeconds",
                            12,
                            "radius",
@@ -763,7 +763,7 @@ final class AiObsidian {
                      break;
                   case CLEAN:
                      if (this.init_List.isEmpty()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + AiCraft.init_I("minecraft:obsidian") + " obsidian safely");
+                        return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + AiCraft.countItem("minecraft:obsidian") + " obsidian safely");
                      }
 
                      if (this.load_BlockPos != null
@@ -799,7 +799,7 @@ final class AiObsidian {
          }
 
          boolean init(BlockPos pos) {
-            if (!AiTerrain.init(this.init_Minecraft.level, pos)) {
+            if (!AiTerrain.isLoaded(this.init_Minecraft.level, pos)) {
                return false;
             }
 
@@ -822,7 +822,7 @@ final class AiObsidian {
 
          boolean init(BlockPos candidate, boolean excavate) {
             for (BlockPos cell : List.of(candidate, candidate.north())) {
-               if (!AiTerrain.init(this.init_Minecraft.level, cell)
+               if (!AiTerrain.isLoaded(this.init_Minecraft.level, cell)
                   || !this.init(cell.below())
                   || !this.init_Minecraft.level.getBlockState(cell).isAir() && (!excavate || !this.init(cell))
                   || !this.init_Minecraft.level.getBlockState(cell.above()).isAir() && (!excavate || !this.init(cell.above()))
@@ -848,7 +848,7 @@ final class AiObsidian {
          }
 
          boolean load(BlockPos cell) {
-            if (!AiTerrain.init(this.init_Minecraft.level, cell)) {
+            if (!AiTerrain.isLoaded(this.init_Minecraft.level, cell)) {
                return false;
             }
 
@@ -952,8 +952,8 @@ final class AiObsidian {
                double right = dx * -Math.cos(yaw) + dz * -Math.sin(yaw);
                double f = forward > 0.01 ? 1.0 : (forward < -0.01 ? -1.0 : 0.0);
                double strafe = right > 0.01 ? -1.0 : (right < -0.01 ? 1.0 : 0.0);
-               if (autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(this.init_Minecraft.player.position(), center)
-                  && autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(f, strafe)) {
+               if (autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(this.init_Minecraft.player.position(), center)
+                  && autismclient.ai.engine.AiMotionSafety.isHorizontalMoveSafe(f, strafe)) {
                   this.init_Minecraft.options.keyUp.setDown(f > 0.0);
                   this.init_Minecraft.options.keyDown.setDown(f < 0.0);
                   this.init_Minecraft.options.keyRight.setDown(strafe < 0.0);
@@ -1001,18 +1001,18 @@ final class AiObsidian {
 
          AiOperation init(String action, String fluid, BlockPos pos) {
             return AiBucket.init(
-               AiJson.init_JsonObject_ObjArr("action", action, "fluid", fluid, "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 8)
+               AiJson.objectOf("action", action, "fluid", fluid, "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "timeoutSeconds", 8)
             );
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(
+            return AiGameOperations.result(
                status,
                message,
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "held",
-                  AiCraft.init_I("minecraft:obsidian"),
+                  AiCraft.countItem("minecraft:obsidian"),
                   "casts",
                   this.read_I,
                   "phase",
@@ -1026,7 +1026,7 @@ final class AiObsidian {
                   "stance",
                   this.init_Minecraft.player == null
                      ? null
-                     : AiJson.init_JsonObject_ObjArr(
+                     : AiJson.objectOf(
                         "grounded",
                         this.init_Minecraft.player.onGround(),
                         "pose",
@@ -1083,7 +1083,7 @@ final class AiObsidian {
    }
 
    private static AiOperation.Result init_AiOperation_Result_Str(String message) {
-      return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, new JsonObject());
+      return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
    }
 
    private enum Inner_DataUtil {

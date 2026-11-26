@@ -37,7 +37,7 @@ final class AiClientCommand {
 
       List<String> forms = autismclient.commands.CommandManager.getUsageForms(command);
       String typed = prefix + line;
-      JsonObject data = AiJson.init_JsonObject_ObjArr(
+      JsonObject data = AiJson.objectOf(
          "command", name, "body", line, "typed", typed, "dispatch", dispatch.status().name(), "replies", init(raw), "forms", forms
       );
       AiOperation var10000;
@@ -45,17 +45,17 @@ final class AiClientCommand {
          case EXECUTED:
             String refusal = init(raw, "error");
             if (refusal != null) {
-               var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " refused: " + refusal, data);
+               var10000 = AiGameOperations.immediateFailure(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " refused: " + refusal, data);
             } else {
                String said = raw.isEmpty()
                   ? "Client command " + typed + " executed" + (dispatch.message().isEmpty() ? "" : " (" + dispatch.message() + ")")
                   : "Client command " + typed + " executed: " + load(raw.get(0));
-               var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, said, data);
+               var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, said, data);
             }
             break;
          case SYNTAX_ERROR:
          case UNKNOWN_COMMAND:
-            var10000 = AiGameOperations.init(
+            var10000 = AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
                AiFailure.EXECUTION_FAILED,
                "Client command " + typed + " did not parse: " + dispatch.message() + ". Accepted forms: " + String.join(" | ", forms),
@@ -63,13 +63,13 @@ final class AiClientCommand {
             );
             break;
          case BLOCKED:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.IMPOSSIBLE_STATE, dispatch.message(), data);
+            var10000 = AiGameOperations.immediateFailure(AiOperation.Status.FAILED, AiFailure.IMPOSSIBLE_STATE, dispatch.message(), data);
             break;
          case ERROR:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " threw: " + dispatch.message(), data);
+            var10000 = AiGameOperations.immediateFailure(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " threw: " + dispatch.message(), data);
             break;
          case EMPTY:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Empty command line", data);
+            var10000 = AiGameOperations.immediateFailure(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Empty command line", data);
             break;
          default:
             throw new MatchException(null, null);
@@ -126,7 +126,7 @@ final class AiClientCommand {
 
          String text = load(line);
          if (!text.isEmpty()) {
-            out.add(AiJson.init_JsonObject_ObjArr("text", text, "tone", init(line)));
+            out.add(AiJson.objectOf("text", text, "tone", init(line)));
          }
       }
 

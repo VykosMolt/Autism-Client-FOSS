@@ -251,7 +251,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    private boolean init_Z_14() {
       if (MC == null || MC.player == null || MC.level == null || MC.gameMode == null) {
          return false;
-      } else if (aD.init_Z() || FreecamController.init_Z()) {
+      } else if (aD.init_Z() || FreecamController.isActive()) {
          return false;
       } else if (!MC.player.isAlive() || MC.player.isSpectator()) {
          return false;

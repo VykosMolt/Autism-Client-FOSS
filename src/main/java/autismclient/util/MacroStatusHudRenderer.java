@@ -91,7 +91,7 @@ public final class MacroStatusHudRenderer {
 
       MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
       AutismMacro macro = primary.init_aM();
-      if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
+      if (macro != null && macro.actions != null && !macro.actions.isEmpty()) {
          int total = init(primary, macro);
          int current = Math.max(0, primary.init_I());
          int rowsPerRun = Math.max(2, maxLines / Math.max(1, runs.size()));
@@ -111,7 +111,7 @@ public final class MacroStatusHudRenderer {
    }
 
    private static int init(MacroExecutor.ActiveRunSnapshot run, AutismMacro macro) {
-      int actionCount = macro != null && macro.init_List != null ? macro.init_List.size() : 0;
+      int actionCount = macro != null && macro.actions != null ? macro.actions.size() : 0;
       return Math.max(run.load_I(), actionCount);
    }
 
@@ -160,8 +160,8 @@ public final class MacroStatusHudRenderer {
 
       for (MacroExecutor.ActiveRunSnapshot run : runs) {
          AutismMacro macro = run.init_aM();
-         if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
-            List<MacroAction> actions = macro.init_List;
+         if (macro != null && macro.actions != null && !macro.actions.isEmpty()) {
+            List<MacroAction> actions = macro.actions;
             int total = init(run, macro);
             int current = Math.max(0, run.init_I());
             int visibleRows = init(total, rowsPerRun);

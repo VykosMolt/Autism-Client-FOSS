@@ -1094,12 +1094,12 @@ public final class AutismHudManager {
    }
 
    private static boolean load_Z() {
-      return autismclient.modules.FreecamController.init_Z();
+      return autismclient.modules.FreecamController.isActive();
    }
 
    private static Vec3 init_Vec3() {
       if (load_Z()) {
-         return autismclient.modules.FreecamController.load_Vec3_F(1.0F);
+         return autismclient.modules.FreecamController.getInterpolatedFeetPos(1.0F);
       } else {
          return init_Minecraft.player == null ? Vec3.ZERO : init_Minecraft.player.position();
       }
@@ -1107,7 +1107,7 @@ public final class AutismHudManager {
 
    private static BlockPos init_BlockPos() {
       if (load_Z()) {
-         return BlockPos.containing(autismclient.modules.FreecamController.load_Vec3_F(1.0F));
+         return BlockPos.containing(autismclient.modules.FreecamController.getInterpolatedFeetPos(1.0F));
       } else {
          return init_Minecraft.player == null ? BlockPos.ZERO : init_Minecraft.player.blockPosition();
       }
@@ -1115,7 +1115,7 @@ public final class AutismHudManager {
 
    private static float init_F() {
       if (load_Z()) {
-         return autismclient.modules.FreecamController.init_F_F(1.0F);
+         return autismclient.modules.FreecamController.getInterpolatedYaw(1.0F);
       } else {
          return init_Minecraft.player == null ? 180.0F : init_Minecraft.player.getYRot();
       }
@@ -1123,15 +1123,15 @@ public final class AutismHudManager {
 
    private static float load_F() {
       if (load_Z()) {
-         return autismclient.modules.FreecamController.load_F_F(1.0F);
+         return autismclient.modules.FreecamController.getInterpolatedPitch(1.0F);
       } else {
          return init_Minecraft.player == null ? 0.0F : init_Minecraft.player.getXRot();
       }
    }
 
    private static Vec3 load_Vec3() {
-      if (load_Z() && autismclient.modules.FreecamController.load_Z()) {
-         return autismclient.modules.FreecamController.load_Vec3_F(1.0F);
+      if (load_Z() && autismclient.modules.FreecamController.isInteractionAllowed()) {
+         return autismclient.modules.FreecamController.getInterpolatedFeetPos(1.0F);
       } else {
          return init_Minecraft.player == null ? Vec3.ZERO : init_Minecraft.player.position();
       }

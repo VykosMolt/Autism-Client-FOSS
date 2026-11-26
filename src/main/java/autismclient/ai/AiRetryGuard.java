@@ -84,7 +84,7 @@ final class AiRetryGuard {
    static boolean init_Z_JsonObject(JsonObject result) {
       return result != null && result.has("failure") && result.get("failure").isJsonObject()
          ? Set.of("THREAT_INTERRUPT", "HUNGER", "LOW_HEALTH", "ENVIRONMENTAL_HAZARD")
-            .contains(AiJson.init_Str_JsonObject(result.getAsJsonObject("failure"), "code", ""))
+            .contains(AiJson.getString(result.getAsJsonObject("failure"), "code", ""))
          : false;
    }
 
@@ -94,7 +94,7 @@ final class AiRetryGuard {
          copy.remove("fingerprint");
       }
 
-      return tool + ":" + AiJson.init_Str_Str(init_Str_JsonElement(copy));
+      return tool + ":" + AiJson.sha256Hex(init_Str_JsonElement(copy));
    }
 
    private static String init_Str_JsonElement(JsonElement value) {
@@ -102,7 +102,7 @@ final class AiRetryGuard {
          ArrayList<String> parts = new ArrayList<>();
 
          for (String key : new TreeSet<>(value.getAsJsonObject().keySet())) {
-            parts.add(AiJson.init.toJson(key) + ":" + init_Str_JsonElement(value.getAsJsonObject().get(key)));
+            parts.add(AiJson.GSON.toJson(key) + ":" + init_Str_JsonElement(value.getAsJsonObject().get(key)));
          }
 
          return "{" + String.join(",", parts) + "}";

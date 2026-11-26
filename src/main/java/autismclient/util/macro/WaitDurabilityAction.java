@@ -49,30 +49,30 @@ public class WaitDurabilityAction implements MacroAction {
    }
 
    private boolean load(Minecraft mc) {
-      MacroItemTarget target = MacroItemTarget.update(this.itemName).init_ArrayUtil_Minecraft(mc);
+      MacroItemTarget target = MacroItemTarget.parse(this.itemName).resolveTemplates(mc);
       if (target == null) {
          return false;
       }
 
-      if (!target.update() && !target.init_Z()) {
+      if (!target.hasItemFilter() && !target.hasSlot()) {
          return this.init_Z(mc.player.getMainHandItem()) || this.init_Z(mc.player.getOffhandItem());
       }
 
-      MacroItemTarget itemOnly = target.init_ArrayUtil();
-      if (itemOnly.update()) {
-         itemOnly.init_I = -1;
+      MacroItemTarget itemOnly = target.copy();
+      if (itemOnly.hasItemFilter()) {
+         itemOnly.slot = -1;
       }
 
       int size = Math.min(36, mc.player.getInventory().getContainerSize());
 
       for (int i = 0; i < size; i++) {
          ItemStack stack = mc.player.getInventory().getItem(i);
-         if (itemOnly.init_I_ItemStack_I(stack, i) >= 0 && this.init_Z(stack)) {
+         if (itemOnly.matchScore(stack, i) >= 0 && this.init_Z(stack)) {
             return true;
          }
       }
 
-      return itemOnly.init_I_ItemStack_I(mc.player.getOffhandItem(), 40) >= 0 && this.init_Z(mc.player.getOffhandItem());
+      return itemOnly.matchScore(mc.player.getOffhandItem(), 40) >= 0 && this.init_Z(mc.player.getOffhandItem());
    }
 
    private ItemStack init(Minecraft mc, int visibleSlot) {
@@ -168,11 +168,11 @@ public class WaitDurabilityAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_CachePool.class, tag.getStringOr("targetMode", WaitDurabilityAction.Inner_CachePool.HELD.name()), WaitDurabilityAction.Inner_CachePool.HELD);
+      this.targetMode = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_CachePool.class, tag.getStringOr("targetMode", WaitDurabilityAction.Inner_CachePool.HELD.name()), WaitDurabilityAction.Inner_CachePool.HELD);
       this.itemName = tag.getStringOr("itemName", "");
       this.slot = Math.max(0, Math.min(40, tag.getIntOr("slot", 0)));
-      this.measurement = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_StreamUtil.class, tag.getStringOr("measurement", WaitDurabilityAction.Inner_StreamUtil.REMAINING.name()), WaitDurabilityAction.Inner_StreamUtil.REMAINING);
-      this.comparison = MacroNbtCodecHelper.init(WaitDurabilityAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitDurabilityAction.Inner_DataUtil.AT_MOST.name()), WaitDurabilityAction.Inner_DataUtil.AT_MOST);
+      this.measurement = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_StreamUtil.class, tag.getStringOr("measurement", WaitDurabilityAction.Inner_StreamUtil.REMAINING.name()), WaitDurabilityAction.Inner_StreamUtil.REMAINING);
+      this.comparison = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitDurabilityAction.Inner_DataUtil.AT_MOST.name()), WaitDurabilityAction.Inner_DataUtil.AT_MOST);
       this.value = Math.max(0, tag.getIntOr("value", 2));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.useNext = tag.getBooleanOr("useNext", false);
@@ -195,7 +195,7 @@ public class WaitDurabilityAction implements MacroAction {
             var10000 = "Held";
             break;
          case ITEM:
-            var10000 = this.itemName != null && !this.itemName.isBlank() ? MacroItemTarget.update(this.itemName).load_Str() : "Held";
+            var10000 = this.itemName != null && !this.itemName.isBlank() ? MacroItemTarget.parse(this.itemName).formatSummary() : "Held";
             break;
          case SLOT:
             var10000 = "#" + Math.max(0, Math.min(40, this.slot));

@@ -133,7 +133,7 @@ public final class AiDirectOps {
          }
 
          AiSettings ai = init_AiSettings();
-         JsonObject schema = AiJson.init_JsonObject_Str(entry.contract().inputSchema());
+         JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
          JsonObject effective = init(id, args, schema);
          if (schema.has("type") || schema.has("properties")) {
             AiSchemas.init(schema, effective);
@@ -154,7 +154,7 @@ public final class AiDirectOps {
 
          Runnable prepare = () -> {
             if (requiredResources.contains("INPUT")) {
-               autismclient.ai.engine.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                AiAssistant.init_ConfigStore().pop();
             }
 
@@ -185,7 +185,7 @@ public final class AiDirectOps {
          }
 
          init_AiOperation_Result = null;
-         AiEventLog.init_x().init("op_started", AiJson.init_JsonObject_ObjArr("id", id, "source", "direct"));
+         AiEventLog.init_x().init("op_started", AiJson.objectOf("id", id, "source", "direct"));
          AutismClientMessaging.sendPrefixed("§7Running §f" + id + "§7 - §8" + read_Str() + "§7 cancels");
          return created.init_k_StreamUtil;
       } else {
@@ -367,8 +367,8 @@ public final class AiDirectOps {
 
             if (mc.player != null && mc.player.isAlive() && a.init_List.contains("INPUT") && a.init_List.contains("ROTATION")) {
                String hazard = AiHazardEscape.init(mc);
-               if (hazard != null && !a.load_Str.equals("environment") && !a.init_Str.equals("game:escape_hazard") && !AiGuard.init_Z()) {
-                  init(a, AiHazardEscape.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
+               if (hazard != null && !a.load_Str.equals("environment") && !a.init_Str.equals("game:escape_hazard") && !AiGuard.isSuppressed()) {
+                  init(a, AiHazardEscape.init(AiJson.objectOf("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
                }
 
                if (hazard == null
@@ -378,12 +378,12 @@ public final class AiDirectOps {
                   if (AiDodge.init(mc, false)) {
                      init(
                         a,
-                        AiDodge.init(AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4)),
+                        AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
                         AiFailure.THREAT_INTERRUPT,
                         "incoming projectile while eating"
                      );
-                  } else if (a.load_AiOperation.canInterruptNow() && (AiGuard.init_X_BufferHelper().hostilesNear() > 0 || AiSurvival.init_Entity(mc) != null)) {
+                  } else if (a.load_AiOperation.canInterruptNow() && (AiGuard.sampleStatus().hostilesNear() > 0 || AiSurvival.init_Entity(mc) != null)) {
                      init(a, AiSurvival.init_AiOperation(mc), "combat", AiFailure.THREAT_INTERRUPT, "approaching enemy interrupted eating");
                   }
                }
@@ -404,36 +404,36 @@ public final class AiDirectOps {
 
                if (a.load_AiOperation == null
                   && AiService.init_Z_Str(a.init_Str)
-                  && !AiGuard.init_Z()
+                  && !AiGuard.isSuppressed()
                   && AiService.init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                   boolean projectile = AiDodge.init(mc, mc.player.getDeltaMovement().horizontalDistance() >= 0.12);
                   if (projectile) {
                      init(
                         a,
-                        AiDodge.init(AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4)),
+                        AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
                         AiFailure.THREAT_INTERRUPT,
                         "incoming projectile"
                      );
                   } else if (a.init_AiOperation.canInterruptNow()) {
-                     AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
-                     boolean movingPast = AiGuard.init(mc, mc.player.getDeltaMovement());
+                     AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
+                     boolean movingPast = AiGuard.canSprintPastThreats(mc, mc.player.getDeltaMovement());
                      boolean unsafeMeal = a.init_Str.equals("game:eat") && AiSurvival.init_Entity(mc) != null;
                      if (unsafeMeal || !movingPast && vitals.hostilesNear() > 0 && (vitals.underAttack() || a.init_Str.equals("game:eat"))) {
                         AiOperation defense = a.init_Str.equals("game:eat")
                            ? AiSurvival.init_AiOperation(mc)
-                           : AiGuard.init_AiOperation_X_CachePool(AiGuard.GuardPolicy.standard(), vitals, 15);
+                           : AiGuard.createResponseOperation(AiGuard.GuardPolicy.standard(), vitals, 15);
                         if (defense != null) {
                            init(
                               a,
                               defense,
                               "combat",
                               AiFailure.THREAT_INTERRUPT,
-                              a.init_Str.equals("game:eat") ? "nearby enemy prevents a safe meal" : AiGuard.init_Str(AiGuard.GuardPolicy.standard(), vitals)
+                              a.init_Str.equals("game:eat") ? "nearby enemy prevents a safe meal" : AiGuard.decisionReason(AiGuard.GuardPolicy.standard(), vitals)
                            );
                         }
                      } else if (!a.init_Str.equals("game:eat") && vitals.food() <= 6 && vitals.hasFood() && vitals.hostilesNear() == 0) {
-                        init(a, AiSurvival.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
+                        init(a, AiSurvival.init(AiJson.objectOf("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
                      }
                   }
                }
@@ -443,8 +443,8 @@ public final class AiDirectOps {
             try {
                result = a.load_AiOperation == null ? a.init_AiOperation.tick() : a.load_AiOperation.tick();
                if (a.load_AiOperation != null && result.terminal()) {
-                  JsonObject receipt = AiRunResources.init_JsonObject(a.init_AiOperation_Result.dataJson());
-                  receipt.add("defense", AiRunResources.init_JsonObject(result.dataJson()));
+                  JsonObject receipt = AiRunResources.parseEvidenceJson(a.init_AiOperation_Result.dataJson());
+                  receipt.add("defense", AiRunResources.parseEvidenceJson(result.dataJson()));
                   receipt.addProperty("defenseKind", a.load_Str);
                   receipt.addProperty("defenseStatus", result.status().name());
                   AiOperation.Result defense = result;
@@ -471,7 +471,7 @@ public final class AiDirectOps {
                init_V(a);
                init_AiOperation_Result = AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
                init(a, true, init_AiOperation_Result);
-               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
+               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
                AutismClientMessaging.sendPrefixed(
                   "§c" + a.init_Str + " failed [UNKNOWN]: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage())
                );
@@ -493,7 +493,7 @@ public final class AiDirectOps {
 
       if (a.load_AiOperation != null) {
          if (a.load_AiOperation.requiresReconciliationAfterEmergency()) {
-            JsonObject receipt = AiRunResources.init_JsonObject(a.init_AiOperation_Result.dataJson());
+            JsonObject receipt = AiRunResources.parseEvidenceJson(a.init_AiOperation_Result.dataJson());
             receipt.addProperty("interruptedActionNeedsReconciliation", true);
             a.init_AiOperation_Result = new AiOperation.Result(
                AiOperation.Status.UNCERTAIN,
@@ -514,7 +514,7 @@ public final class AiDirectOps {
       AiEventLog.init_x()
          .init(
             "tools_survival_priority",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "id",
                a.init_Str,
                "defense",
@@ -549,9 +549,9 @@ public final class AiDirectOps {
       boolean pending = op.requiresReconciliationAfterEmergency()
          || reflex != null && reflex.requiresReconciliationAfterEmergency()
          || interrupted != null && interrupted.status() == AiOperation.Status.UNCERTAIN;
-      JsonObject data = AiRunResources.init_JsonObject(lastData == null ? "{}" : lastData);
+      JsonObject data = AiRunResources.parseEvidenceJson(lastData == null ? "{}" : lastData);
       if (interrupted != null) {
-         data.add("interruptedWork", AiRunResources.init_JsonObject(interrupted.dataJson()));
+         data.add("interruptedWork", AiRunResources.parseEvidenceJson(interrupted.dataJson()));
       }
 
       return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
@@ -568,8 +568,8 @@ public final class AiDirectOps {
          AiEventLog.init_x()
             .init(
                "op_failed",
-               AiJson.init_JsonObject_ObjArr(
-                  "id", a.init_Str, "status", result.status().name(), "failure", cause.name(), "data", AiRunResources.init_JsonObject(result.dataJson())
+               AiJson.objectOf(
+                  "id", a.init_Str, "status", result.status().name(), "failure", cause.name(), "data", AiRunResources.parseEvidenceJson(result.dataJson())
                )
             );
          if (result.status() == AiOperation.Status.UNCERTAIN) {
@@ -587,27 +587,27 @@ public final class AiDirectOps {
          String data = a.write == null ? "{}" : a.write;
          switch (result.status()) {
             case SUCCEEDED:
-               AiEventLog.init_x().init("op_completed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "SUCCEEDED"));
+               AiEventLog.init_x().init("op_completed", AiJson.objectOf("id", a.init_Str, "status", "SUCCEEDED"));
                AutismClientMessaging.sendPrefixed("§a" + a.init_Str + ": " + result.message());
                if (!data.isBlank() && !data.equals("{}")) {
                   AutismClientMessaging.sendPrefixed("§8" + init(data, init(verbosity)));
                }
                break;
             case UNCERTAIN:
-               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "UNCERTAIN", "failure", result.failure().name()));
+               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "UNCERTAIN", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " uncertain: " + result.message() + "§7 - reobserve before retrying");
                break;
             case CANCELLED:
-               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "CANCELLED", "failure", result.failure().name()));
+               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "CANCELLED", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " cancelled: " + result.message());
                break;
             case TIMED_OUT:
                AiFailure failure = result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
-               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "TIMED_OUT", "failure", failure.name()));
+               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "TIMED_OUT", "failure", failure.name()));
                AutismClientMessaging.sendPrefixed(init(a.init_Str, "timed out", failure, result.message(), verbosity));
                break;
             case FAILED:
-               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "FAILED", "failure", result.failure().name()));
+               AiEventLog.init_x().init("op_failed", AiJson.objectOf("id", a.init_Str, "status", "FAILED", "failure", result.failure().name()));
                AutismClientMessaging.sendPrefixed(init(a.init_Str, "failed", result.failure(), result.message(), verbosity));
          }
       }
@@ -689,7 +689,7 @@ public final class AiDirectOps {
 
    private static void load(AiDirectOps.Inner_DataUtil a) {
       if (a.init_AutoCloseable != null && a.init_List.contains("INPUT")) {
-         autismclient.ai.engine.AiMotionSafety.putAt_V();
+         autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
          Minecraft mc = Minecraft.getInstance();
          if (mc.options != null) {
             for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {

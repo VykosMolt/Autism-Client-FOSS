@@ -43,7 +43,7 @@ final class AiOreRoute {
 
    static AiOperation init(String family, String drop, int targetHeld, int blocks, int bestY, int seconds, BlockPos focus) {
       if (!init_Z) {
-         JsonObject args = AiJson.init_JsonObject_ObjArr("block", family, "drop", drop, "held", targetHeld, "radius", 64, "timeoutSeconds", Math.max(60, seconds));
+         JsonObject args = AiJson.objectOf("block", family, "drop", drop, "held", targetHeld, "radius", 64, "timeoutSeconds", Math.max(60, seconds));
          if (bestY != -2147483648) {
             args.addProperty("exploreY", bestY);
          }
@@ -61,7 +61,7 @@ final class AiOreRoute {
    }
 
    static AiOperation load(String family, String drop, int targetHeld, int radius, int bestY, int seconds) {
-      JsonObject args = AiJson.init_JsonObject_ObjArr("block", family, "drop", drop, "held", targetHeld, "radius", radius, "timeoutSeconds", Math.max(60, seconds));
+      JsonObject args = AiJson.objectOf("block", family, "drop", drop, "held", targetHeld, "radius", radius, "timeoutSeconds", Math.max(60, seconds));
       if (bestY != -2147483648) {
          args.addProperty("exploreY", bestY);
       }
@@ -87,8 +87,8 @@ final class AiOreRoute {
             @Override
             public AiOperation.Result tick() {
                if (!this.init_Z && mc.player != null) {
-                  if (AiCraft.init_I(drop) >= targetHeld) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Have " + AiCraft.init_I(drop) + " " + drop);
+                  if (AiCraft.countItem(drop) >= targetHeld) {
+                     return this.init(AiOperation.Status.SUCCEEDED, "Have " + AiCraft.countItem(drop) + " " + drop);
                   }
 
                   if (System.nanoTime() > this.init_J) {
@@ -112,8 +112,8 @@ final class AiOreRoute {
                         return r;
                      }
 
-                     if (AiCraft.init_I(drop) >= targetHeld) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Have " + AiCraft.init_I(drop) + " " + drop);
+                     if (AiCraft.countItem(drop) >= targetHeld) {
+                        return this.init(AiOperation.Status.SUCCEEDED, "Have " + AiCraft.countItem(drop) + " " + drop);
                      }
 
                      AutismClientAddon.LOG
@@ -124,12 +124,12 @@ final class AiOreRoute {
                            r.status(),
                            AiProgression.load_Str(r.message()),
                            mc.player.getBlockY(),
-                           AiCraft.init_I(drop),
+                           AiCraft.countItem(drop),
                            targetHeld
                         );
                      return this.init(r);
                   } else if (AiProgression.init_I(mc) < 3) {
-                     this.init_AiOperation = AiTidy.init(AiJson.init_JsonObject_ObjArr("action", "drop", "freeSlots", 6, "keep", this.init_JsonArray()));
+                     this.init_AiOperation = AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 6, "keep", this.init_JsonArray()));
                      return this.init("Making room in the bag");
                   } else {
                      return this.init_AiOperation_Result_18();
@@ -140,14 +140,14 @@ final class AiOreRoute {
             }
 
             AiOperation.Result init_AiOperation_Result_18() {
-               int missingBlocks = Math.max(1, blocks - Math.max(0, AiCraft.init_I(drop) - (targetHeld - blocks)));
+               int missingBlocks = Math.max(1, blocks - Math.max(0, AiCraft.countItem(drop) - (targetHeld - blocks)));
                int legSeconds = (int)Math.max(20L, Math.min(300L, (this.init_J - System.nanoTime()) / 1000000000L));
                switch (this.init_aH_DataUtil) {
                   case NEAR:
                   case DEEP:
                   case MINE_BRANCH:
                      this.init_AiOperation = autismclient.ai.engine.AiMine.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "block",
                            family,
                            "count",
@@ -163,7 +163,7 @@ final class AiOreRoute {
                      this.read = mc.player.getBlockY();
                      Direction d = AiOreRoute.init(this.init_Direction, this.load);
                      this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "shape", "staircase", "targetY", bestY, "direction", d.getName(), "timeoutSeconds", Math.max(60, legSeconds * 2)
                         )
                      );
@@ -172,7 +172,7 @@ final class AiOreRoute {
                   case BRANCH: {
                      Direction d = AiOreRoute.init(this.init_Direction, this.init_I);
                      this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
-                        AiJson.init_JsonObject_ObjArr("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
+                        AiJson.objectOf("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
                      );
                      return this.init("Branch tunnel " + (this.init_I + 1) + " " + d.getName() + " looking for " + family);
                   }
@@ -211,7 +211,7 @@ final class AiOreRoute {
                      if (++this.init_I >= 8) {
                         return this.init(
                            AiOperation.Status.FAILED,
-                           "No " + family + " after 8 branch tunnels at y " + mc.player.getBlockY() + " (" + AiCraft.init_I(drop) + "/" + targetHeld + ")"
+                           "No " + family + " after 8 branch tunnels at y " + mc.player.getBlockY() + " (" + AiCraft.countItem(drop) + "/" + targetHeld + ")"
                         );
                      }
 
@@ -236,7 +236,7 @@ final class AiOreRoute {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_33());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_33());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
@@ -245,15 +245,15 @@ final class AiOreRoute {
                   this.init_AiOperation = null;
                }
 
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_33());
+               return AiGameOperations.result(status, message, this.init_JsonObject_33());
             }
 
             JsonObject init_JsonObject_33() {
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "ore",
                   family,
                   "held",
-                  AiCraft.init_I(drop),
+                  AiCraft.countItem(drop),
                   "target",
                   targetHeld,
                   "phase",

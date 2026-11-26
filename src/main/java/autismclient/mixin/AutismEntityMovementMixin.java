@@ -66,8 +66,8 @@ public class AutismEntityMovementMixin {
    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
    private void autism$freecamTurn(double deltaYaw, double deltaPitch, CallbackInfo ci) {
       if ((Object)this == Minecraft.getInstance().player) {
-         if (FreecamController.init_Z()) {
-            FreecamController.load(deltaYaw, deltaPitch);
+         if (FreecamController.isActive()) {
+            FreecamController.applyMouseTurn(deltaYaw, deltaPitch);
             ci.cancel();
          } else if (RemoteViewController.init_Z()) {
             ci.cancel();

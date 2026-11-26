@@ -117,7 +117,7 @@ public final class SilentMovementCoordinator {
                autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Participant owner
                   && !owner.write_Z_10()
                   && !SilentRotationManager.init_Z()
-                  && !autismclient.modules.FreecamController.write()
+                  && !autismclient.modules.FreecamController.isAiControllingBody()
             )
             || autismclient.modules.al.init_Module_Str("scaffold") instanceof autismclient.modules.ScaffoldModule scaffold && scaffold.isEnabled()
          ? false

@@ -256,7 +256,7 @@ final class AiLavaEscape {
          boolean write_Z;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
+            this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
          }
 
          @Override
@@ -284,7 +284,7 @@ final class AiLavaEscape {
                      this.load_Z = false;
                   } else {
                      if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.write_I < 12) {
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
+                        return AiGameOperations.result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
                      }
 
                      if (Boolean.getBoolean("autism.ai.quick")) {
@@ -311,7 +311,7 @@ final class AiLavaEscape {
                               this.init_DataPipe.init_V_BlockPos_ItemStack(refuge, stack.copy());
                               this.read_Z = true;
                               this.write_I = 0;
-                              return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
+                              return AiGameOperations.result(AiOperation.Status.RUNNING, "Placing a lava refuge", new JsonObject());
                            }
                         }
                      }
@@ -359,17 +359,17 @@ final class AiLavaEscape {
                }
 
                if (this.init_BlockPos != null) {
-                  this.init_DataUtil.init_V_Vec3(new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 0.6, this.init_BlockPos.getZ() + 0.5));
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.aimAt(new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 0.6, this.init_BlockPos.getZ() + 0.5));
+                  this.init_DataUtil.tick();
                } else {
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
 
                mc.options.keyUp.setDown(true);
                mc.options.keyJump.setDown(true);
                mc.options.keySprint.setDown(true);
                mc.options.keyShift.setDown(false);
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   AiOperation.Status.RUNNING,
                   this.init_BlockPos == null ? "In lava; swimming outward" : "In lava; swimming to " + this.init_BlockPos.toShortString(),
                   new JsonObject()
@@ -381,14 +381,14 @@ final class AiLavaEscape {
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.init();
-            return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+            return AiGameOperations.result(status, message, new JsonObject());
          }
 
          void init() {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
             mc.options.keySprint.setDown(false);
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
          }
 
          @Override

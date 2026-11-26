@@ -100,12 +100,12 @@ final class AiParallelSmelt implements AiOperation {
       this.read_Str = "Smelting " + recipe.output().getDefaultInstance().getHoverName().getString();
       this.load_Str = BuiltInRegistries.ITEM.getKey(recipe.input()).toString();
       this.init_J = System.nanoTime() + seconds * 1000000000L;
-      this.flush = init_I_I_3(target - AiGameState.init_I_Str(this.init_Str));
+      this.flush = init_I_I_3(target - AiGameState.countInventoryItem(this.init_Str));
       BlockPos origin = this.init_Minecraft.player.blockPosition();
-      Block block = AiCraft.init_Block(recipe.stationId());
+      Block block = AiCraft.requireBlock(recipe.stationId());
 
       for (BlockPos p : BlockPos.betweenClosed(origin.offset(-16, -8, -16), origin.offset(16, 8, 16))) {
-         if (AiTerrain.init(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() == block) {
+         if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() == block) {
             this.init_List.add(p.immutable());
          }
       }
@@ -172,7 +172,7 @@ final class AiParallelSmelt implements AiOperation {
          this.init_AiOperation.cancel();
          this.init_AiOperation = null;
          this.init_JsonArray
-            .add(AiJson.init_JsonObject_ObjArr("activity", this.write_Str, "status", r.status().name(), "receipt", AiRunResources.init_JsonObject(r.dataJson())));
+            .add(AiJson.objectOf("activity", this.write_Str, "status", r.status().name(), "receipt", AiRunResources.parseEvidenceJson(r.dataJson())));
          if (uncertain) {
             return this.init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status.UNCERTAIN, r.message());
          }
@@ -197,7 +197,7 @@ final class AiParallelSmelt implements AiOperation {
                this.read_List
                   .set(
                      this.write_I,
-                     Math.min(this.load_List.get(this.write_I), this.read_List.get(this.write_I) + Math.max(0, AiGameState.init_I_Str(this.init_Str) - this.open))
+                     Math.min(this.load_List.get(this.write_I), this.read_List.get(this.write_I) + Math.max(0, AiGameState.countInventoryItem(this.init_Str) - this.open))
                   );
             }
 
@@ -210,14 +210,14 @@ final class AiParallelSmelt implements AiOperation {
          return this.init_AiOperation_Result_19();
       }
 
-      if (AiGameState.init_I_Str(this.init_Str) >= this.load_I) {
+      if (AiGameState.countInventoryItem(this.init_Str) >= this.load_I) {
          return this.init_AiOperation_Result_AiOperation_Status_Str_6(
             AiOperation.Status.SUCCEEDED, "Smelted " + this.init_Str + " using " + this.init_List.size() + " furnaces"
          );
       }
 
       if (this.load_List.isEmpty()) {
-         this.load_List = init_List_I_I(this.load_I - AiGameState.init_I_Str(this.init_Str), this.init_List.size());
+         this.load_List = init_List_I_I(this.load_I - AiGameState.countInventoryItem(this.init_Str), this.init_List.size());
          this.write_I = 0;
          this.read_Z = false;
          this.read_List.clear();
@@ -246,18 +246,18 @@ final class AiParallelSmelt implements AiOperation {
 
       BlockPos station = this.init_List.get(this.write_I);
       if (this.read_Z && this.close == 0) {
-         this.close = Math.min(this.load_I, AiGameState.init_I_Str(this.init_Str) + amount);
+         this.close = Math.min(this.load_I, AiGameState.countInventoryItem(this.init_Str) + amount);
       }
 
       Item availableFuel = this.read_Z ? this.init_ci_CachePool.fuel() : AiSmelt.init("", this.init_ci_CachePool.input(), amount);
       String fuel = BuiltInRegistries.ITEM.getKey(availableFuel == null ? this.init_ci_CachePool.fuel() : availableFuel).toString();
       if (!this.sync_Z) {
-         this.open = AiGameState.init_I_Str(this.init_Str);
+         this.open = AiGameState.countInventoryItem(this.init_Str);
       }
 
       this.sync_Z = false;
       this.init_AiOperation = AiSmelt.load(
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "item",
             this.init_Str,
             "input",
@@ -265,7 +265,7 @@ final class AiParallelSmelt implements AiOperation {
             "fuel",
             fuel,
             "count",
-            this.read_Z ? this.close : AiGameState.init_I_Str(this.init_Str) + amount,
+            this.read_Z ? this.close : AiGameState.countInventoryItem(this.init_Str) + amount,
             "batchSize",
             amount,
             "x",
@@ -319,7 +319,7 @@ final class AiParallelSmelt implements AiOperation {
          return this.tick();
       }
 
-      if (AiGameState.init_I_Str(this.init_ci_CachePool.stationId()) > 0) {
+      if (AiGameState.countInventoryItem(this.init_ci_CachePool.stationId()) > 0) {
          this.init_cn = new AiStationPlacer(
             this.init_ci_CachePool.stationId().equals("minecraft:furnace")
                ? Items.FURNACE
@@ -329,12 +329,12 @@ final class AiParallelSmelt implements AiOperation {
          return this.init_AiOperation_Result_Str_8("Place a carried smelting station");
       }
 
-      int missing = this.load_I - AiGameState.init_I_Str(this.init_Str);
+      int missing = this.load_I - AiGameState.countInventoryItem(this.init_Str);
       int neededCobble = 8 + (this.load_Str.equals("minecraft:cobblestone") ? missing : 0);
-      int deficit = Math.max(0, neededCobble - AiCraft.init_I("minecraft:cobblestone"));
-      boolean tableEasy = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0 || AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), "minecraft:crafting_table", 1).complete();
-      double stoneDistance = deficit == 0 ? 0.0 : AiTerrain.init(this.init_Minecraft, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8);
-      boolean localStone = deficit == 0 || stoneDistance <= 64.0 && AiItems.init_Z(Blocks.STONE.defaultBlockState());
+      int deficit = Math.max(0, neededCobble - AiCraft.countItem("minecraft:cobblestone"));
+      boolean tableEasy = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0 || AiCraftPlanner.init(AiCraft.buildRecipeGraph(), "minecraft:crafting_table", 1).complete();
+      double stoneDistance = deficit == 0 ? 0.0 : AiTerrain.nearestBlockDistSqr(this.init_Minecraft, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8);
+      boolean localStone = deficit == 0 || stoneDistance <= 64.0 && AiItems.hasUsableToolFor(Blocks.STONE.defaultBlockState());
       int setupTicks = 100 + deficit * 40 + (tableEasy ? 0 : 200);
       boolean easy = this.init_ci_CachePool.stationId().equals("minecraft:furnace")
          && tableEasy
@@ -344,7 +344,7 @@ final class AiParallelSmelt implements AiOperation {
          if (deficit > 0) {
             this.write_Str = "Mine nearby cobblestone for a faster smelt without spending the requested input";
             this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "blocks",
                   autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
                   "drops",
@@ -361,8 +361,8 @@ final class AiParallelSmelt implements AiOperation {
             );
          } else {
             this.write_Str = "Craft another furnace; its setup costs less than the cooking time saved";
-            this.init_AiOperation = AiCraft.init(
-               AiJson.init_JsonObject_ObjArr("item", this.init_ci_CachePool.stationId(), "count", 1, "timeoutSeconds", Math.min(30, this.init_I_20()))
+            this.init_AiOperation = AiCraft.craft(
+               AiJson.objectOf("item", this.init_ci_CachePool.stationId(), "count", 1, "timeoutSeconds", Math.min(30, this.init_I_20()))
             );
          }
 
@@ -370,7 +370,7 @@ final class AiParallelSmelt implements AiOperation {
       } else if (this.init_List.isEmpty()) {
          this.write_Str = "Obtain the first furnace and its prerequisites";
          this.init_AiOperation = AiObtain.init(
-            AiJson.init_JsonObject_ObjArr("item", this.init_ci_CachePool.stationId(), "count", 1, "staged", true, "timeoutSeconds", this.init_I_20())
+            AiJson.objectOf("item", this.init_ci_CachePool.stationId(), "count", 1, "staged", true, "timeoutSeconds", this.init_I_20())
          );
          this.update_Z = true;
          this.write_Z = true;
@@ -388,13 +388,13 @@ final class AiParallelSmelt implements AiOperation {
    }
 
    private JsonObject init_JsonObject_34() {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "item",
          this.init_Str,
          "target",
          this.load_I,
          "held",
-         AiGameState.init_I_Str(this.init_Str),
+         AiGameState.countInventoryItem(this.init_Str),
          "furnaceCount",
          this.init_List.size(),
          "builtFurnaces",
@@ -415,14 +415,14 @@ final class AiParallelSmelt implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_Str_8(String message) {
-      AiVisualization.init(this, this.read_Str, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.init_I_Str(this.init_Str), this.load_I);
-      return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_34());
+      AiVisualization.init(this, this.read_Str, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.init_Str), this.load_I);
+      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_34());
    }
 
    private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_6(AiOperation.Status status, String message) {
       JsonObject receipt = this.init_JsonObject_34();
       this.cancel();
-      return AiGameOperations.init_AiOperation_Result(status, message, receipt);
+      return AiGameOperations.result(status, message, receipt);
    }
 
    @Override

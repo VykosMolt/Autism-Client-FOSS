@@ -63,42 +63,42 @@ final class AiGuard {
    static final int read_I = 60;
    static final double load_D = 24.0;
    static final double read_D = 6.0;
-   private static long write_J = -1L;
-   private static Object init_Obj;
-   private static Object load_Obj;
-   private static final Map<Integer, UUID> init_Map = new HashMap<>();
+   private static long lastThreatTick = -1L;
+   private static Object trackedLevel;
+   private static Object trackedPlayer;
+   private static final Map<Integer, UUID> entityUuidsById = new HashMap<>();
    static final double write_D = 16.0;
-   private static volatile int sync_I;
-   private static volatile boolean update_Z;
-   private static volatile boolean sync_Z;
-   private static volatile boolean flush_Z;
-   private static volatile boolean close_Z;
-   private static volatile double close_D = 1.7976931348623157E308;
-   private static final List<Long> init_List = new CopyOnWriteArrayList<>();
+   private static volatile int rangedHostileCount;
+   private static volatile boolean zombiesOnlyNoRanged;
+   private static volatile boolean meleeZombiesOnly;
+   private static volatile boolean heavyMeleePresent;
+   private static volatile boolean creeperNearby;
+   private static volatile double nearestCreeperDistance = 1.7976931348623157E308;
+   private static final List<Long> recentCreeperAvoidNanos = new CopyOnWriteArrayList<>();
    static final double update_D = 8.0;
-   private static volatile boolean open_Z;
-   static volatile String init_Str = "{}";
-   private static volatile long update_J;
-   private static volatile long sync_J;
+   private static volatile boolean skeletonNearby;
+   static volatile String threatSummary = "{}";
+   private static volatile long suppressUntilNanos;
+   private static volatile long combatBackoffNanos;
    static final long init_J = 10000000000L;
-   private static volatile long flush_J;
-   private static volatile long close_J;
-   static volatile boolean init_Z;
-   private static volatile int flush_I = -1;
-   private static volatile boolean poll_Z;
-   private static volatile long open_J;
-   static volatile boolean load_Z;
-   static volatile boolean read_Z;
-   private static final Map<Integer, ArrayDeque<Long>> load_Map = new ConcurrentHashMap<>();
+   private static volatile long blockedRetreatNanos;
+   private static volatile long burrowBackoffNanos;
+   static volatile boolean burrowActive;
+   private static volatile int nearestShooterEntityId = -1;
+   private static volatile boolean nearestShooterApproachable;
+   private static volatile long coverBackoffNanos;
+   static volatile boolean coverActive;
+   static volatile boolean fleeActive;
+   private static final Map<Integer, ArrayDeque<Long>> shooterCoverTimestamps = new ConcurrentHashMap<>();
    static final long load_J = 90000000000L;
    static final double sync_D = 10.0;
    static final int write_I = 16;
-   static volatile boolean write_Z;
-   private static volatile long poll_J;
+   static volatile boolean perchCombatActive;
+   private static volatile long perchBackoffNanos;
    static final int update_I = 3;
    static final String load_Str = "under attack with nothing to fight back with";
-   private static long push;
-   private static long pop;
+   private static long lastEndermanWaterWardNanos;
+   private static long lastTidyNanos;
    static final long read_J = 60000000000L;
    static final double flush_D = 24.0;
    static final String read_Str = "recovery ops allowed at low health: game:fish, game:farm (harvest only), game:collect_drops, game:eat, game:sleep, game:flee, game:obtain <food> with allowCombat:false, and game:goto while no hostile is within 24 blocks";
@@ -106,39 +106,39 @@ final class AiGuard {
    private AiGuard() {
    }
 
-   static boolean init(Entity e) {
+   static boolean isPerchableMeleeMob(Entity e) {
       if (e instanceof Zombie) {
          return true;
       } else if (e instanceof PiglinBrute) {
          return true;
       } else {
-         return e instanceof Piglin piglin ? !piglin.getMainHandItem().is(Items.CROSSBOW) : load(e);
+         return e instanceof Piglin piglin ? !piglin.getMainHandItem().is(Items.CROSSBOW) : isHeavyNetherMob(e);
       }
    }
 
-   static boolean load(Entity e) {
+   static boolean isHeavyNetherMob(Entity e) {
       return e instanceof PiglinBrute || e instanceof Hoglin || e instanceof Zoglin || e instanceof WitherSkeleton;
    }
 
-   static void init_V() {
-      update_J = System.nanoTime() + 500000000L;
+   static void suppressBriefly() {
+      suppressUntilNanos = System.nanoTime() + 500000000L;
    }
 
-   static boolean init_Z() {
-      return System.nanoTime() < update_J;
+   static boolean isSuppressed() {
+      return System.nanoTime() < suppressUntilNanos;
    }
 
-   static void load_V() {
-      flush_J = System.nanoTime();
+   static void noteRetreatBlocked() {
+      blockedRetreatNanos = System.nanoTime();
    }
 
-   static void read_V() {
-      if (init_Z) {
-         close_J = System.nanoTime();
+   static void noteBurrowInterrupted() {
+      if (burrowActive) {
+         burrowBackoffNanos = System.nanoTime();
       }
    }
 
-   static boolean load_Z() {
+   static boolean isUnderground() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
@@ -148,30 +148,30 @@ final class AiGuard {
       }
    }
 
-   static void write_V() {
-      sync_J = System.nanoTime();
+   static void noteCombatBackoff() {
+      combatBackoffNanos = System.nanoTime();
    }
 
-   static void update_V() {
-      open_J = System.nanoTime();
+   static void noteCoverBackoff() {
+      coverBackoffNanos = System.nanoTime();
    }
 
-   static void init_V(int id) {
-      if (id >= 0 && load(id)) {
+   static void recordShooterCover(int id) {
+      if (id >= 0 && isTrackedEntityAlive(id)) {
          autismclient.ai.engine.AiSight.init(id);
          long now = System.nanoTime();
-         load_Map.values().forEach(q -> q.removeIf(t -> now - t > 90000000000L));
-         load_Map.values().removeIf(ArrayDeque::isEmpty);
-         load_Map.computeIfAbsent(id, k -> new ArrayDeque<>()).add(now);
+         shooterCoverTimestamps.values().forEach(q -> q.removeIf(t -> now - t > 90000000000L));
+         shooterCoverTimestamps.values().removeIf(ArrayDeque::isEmpty);
+         shooterCoverTimestamps.computeIfAbsent(id, k -> new ArrayDeque<>()).add(now);
       }
    }
 
-   static int init_I(int id) {
-      if (!load(id)) {
+   static int recentCoverCountFor(int id) {
+      if (!isTrackedEntityAlive(id)) {
          return 0;
       }
 
-      ArrayDeque<Long> q = load_Map.get(id);
+      ArrayDeque<Long> q = shooterCoverTimestamps.get(id);
       if (q == null) {
          return 0;
       }
@@ -188,12 +188,12 @@ final class AiGuard {
       return n;
    }
 
-   static Entity init_Entity() {
+   static Entity nearestShooterEntity() {
       Minecraft mc = Minecraft.getInstance();
-      return mc.level != null && flush_I >= 0 ? mc.level.getEntity(flush_I) : null;
+      return mc.level != null && nearestShooterEntityId >= 0 ? mc.level.getEntity(nearestShooterEntityId) : null;
    }
 
-   static boolean init(Minecraft mc, Entity shooter) {
+   static boolean isShooterApproachable(Minecraft mc, Entity shooter) {
       if (AiCombat.init(shooter)) {
          return false;
       } else {
@@ -203,7 +203,7 @@ final class AiGuard {
       }
    }
 
-   static AiGuard.GuardDecision init_X_StreamUtil(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
+   static AiGuard.GuardDecision decide(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
       boolean threatened = vitals.hostilesNear() > 0 && (vitals.underAttack() || vitals.health() <= policy.engageHealth());
       if (threatened && vitals.health() <= policy.fleeHealth()) {
          if (policy.flee()) {
@@ -213,7 +213,7 @@ final class AiGuard {
                ? new AiGuard.GuardDecision(AiGuard.GuardAction.FIGHT, "cornered at health " + (int)vitals.health())
                : AiGuard.GuardDecision.NONE;
          }
-      } else if (threatened && policy.flee() && load(vitals) && !init_Z(vitals)) {
+      } else if (threatened && policy.flee() && isOutnumbered(vitals) && !canStandGroundOutnumbered(vitals)) {
          return new AiGuard.GuardDecision(AiGuard.GuardAction.FLEE, vitals.hostilesNear() + " hostiles at health " + (int)vitals.health() + ": outnumbered");
       } else if (threatened && policy.fight() && vitals.hasWeapon()) {
          return new AiGuard.GuardDecision(AiGuard.GuardAction.FIGHT, vitals.hostilesNear() + " hostile(s) within 7 blocks");
@@ -228,12 +228,12 @@ final class AiGuard {
       }
    }
 
-   static boolean init_Z(AiGuard.StatusSnapshot vitals) {
+   static boolean canStandGroundOutnumbered(AiGuard.StatusSnapshot vitals) {
       Minecraft mc = Minecraft.getInstance();
       return !AiThreats.init_Z() && mc != null && mc.player != null ? mc.player.getArmorValue() >= 12 && vitals.health() >= 12.0F && vitals.hostilesNear() < 5 : false;
    }
 
-   static boolean read_Z() {
+   static boolean hasAvoidableThreatNearby() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
          for (Entity entity : mc.level.entitiesForRendering()) {
@@ -248,11 +248,11 @@ final class AiGuard {
       }
    }
 
-   static boolean load(AiGuard.StatusSnapshot vitals) {
+   static boolean isOutnumbered(AiGuard.StatusSnapshot vitals) {
       return vitals.hostilesNear() >= 3 || vitals.hostilesNear() >= 2 && vitals.health() < 14.0F;
    }
 
-   static String init_Str(AiGuard.StatusSnapshot vitals) {
+   static String describeConcern(AiGuard.StatusSnapshot vitals) {
       if (vitals.food() <= 6 && !vitals.hasFood()) {
          return "starving with no food in inventory";
       } else if (vitals.health() <= 7.0F && !vitals.hasFood()) {
@@ -266,16 +266,16 @@ final class AiGuard {
       }
    }
 
-   static void sync_V() {
-      poll_J = System.nanoTime();
+   static void notePerchBackoff() {
+      perchBackoffNanos = System.nanoTime();
    }
 
-   static boolean write_Z() {
+   static boolean hasSafeFootingAroundPlayer() {
       Minecraft mc = Minecraft.getInstance();
-      return mc.player != null && mc.level != null && init(mc.level, mc.player.blockPosition());
+      return mc.player != null && mc.level != null && hasSafeFootingAround(mc.level, mc.player.blockPosition());
    }
 
-   static boolean init(BlockGetter level, BlockPos feet) {
+   static boolean hasSafeFootingAround(BlockGetter level, BlockPos feet) {
       for (int dx = -1; dx <= 1; dx++) {
          for (int dz = -1; dz <= 1; dz++) {
             if (dx != 0 || dz != 0) {
@@ -303,7 +303,7 @@ final class AiGuard {
       return true;
    }
 
-   static boolean update_Z() {
+   static boolean canBuildCombatPerch() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
@@ -328,7 +328,7 @@ final class AiGuard {
          }
 
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity instanceof Mob mob && mob.isAlive() && load(entity) && mob.distanceToSqr(mc.player) <= 6.25) {
+            if (entity instanceof Mob mob && mob.isAlive() && isHeavyNetherMob(entity) && mob.distanceToSqr(mc.player) <= 6.25) {
                return false;
             }
          }
@@ -340,17 +340,17 @@ final class AiGuard {
             }
          }
 
-         return init(mc.level, feet);
+         return hasSafeFootingAround(mc.level, feet);
       } else {
          return false;
       }
    }
 
-   static boolean init(boolean creeper, boolean skeleton, int ranged, boolean footingSafe) {
+   static boolean isSafeToTower(boolean creeper, boolean skeleton, int ranged, boolean footingSafe) {
       return !creeper && !skeleton && ranged == 0 && footingSafe;
    }
 
-   static int init_I() {
+   static int countPerchBlocks() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -372,41 +372,41 @@ final class AiGuard {
       return n;
    }
 
-   private static void init(Minecraft mc) {
-      if (init_Obj != mc.level || load_Obj != mc.player) {
-         init_Obj = mc.level;
-         load_Obj = mc.player;
-         write_J = -1L;
-         load_Map.clear();
-         init_Map.clear();
-         init_List.clear();
-         poll_J = 0L;
-         open_J = 0L;
-         close_J = 0L;
-         flush_J = 0L;
-         sync_J = 0L;
-         pop = 0L;
-         push = 0L;
-         flush_I = -1;
-         poll_Z = false;
+   private static void resetIfSessionChanged(Minecraft mc) {
+      if (trackedLevel != mc.level || trackedPlayer != mc.player) {
+         trackedLevel = mc.level;
+         trackedPlayer = mc.player;
+         lastThreatTick = -1L;
+         shooterCoverTimestamps.clear();
+         entityUuidsById.clear();
+         recentCreeperAvoidNanos.clear();
+         perchBackoffNanos = 0L;
+         coverBackoffNanos = 0L;
+         burrowBackoffNanos = 0L;
+         blockedRetreatNanos = 0L;
+         combatBackoffNanos = 0L;
+         lastTidyNanos = 0L;
+         lastEndermanWaterWardNanos = 0L;
+         nearestShooterEntityId = -1;
+         nearestShooterApproachable = false;
       }
    }
 
-   private static boolean load(int id) {
+   private static boolean isTrackedEntityAlive(int id) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.level != null && mc.player != null) {
-         init(mc);
+         resetIfSessionChanged(mc);
          Entity entity = mc.level.getEntity(id);
          if (entity != null && entity.isAlive()) {
-            UUID previous = init_Map.put(id, entity.getUUID());
+            UUID previous = entityUuidsById.put(id, entity.getUUID());
             if (previous != null && !previous.equals(entity.getUUID())) {
-               load_Map.remove(id);
+               shooterCoverTimestamps.remove(id);
             }
 
             return true;
          } else {
-            load_Map.remove(id);
-            init_Map.remove(id);
+            shooterCoverTimestamps.remove(id);
+            entityUuidsById.remove(id);
             return false;
          }
       } else {
@@ -414,10 +414,10 @@ final class AiGuard {
       }
    }
 
-   static AiGuard.StatusSnapshot init_X_BufferHelper() {
+   static AiGuard.StatusSnapshot sampleStatus() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         init(mc);
+         resetIfSessionChanged(mc);
          int hostiles = 0;
          int ranged = 0;
          boolean zombiesOnly = true;
@@ -428,13 +428,13 @@ final class AiGuard {
          Map<String, Integer> kinds = new TreeMap<>();
          long now = autismclient.util.AutismSessionState.init_ck().state_I();
          if (mc.player.hurtTime > 0) {
-            write_J = now;
+            lastThreatTick = now;
          }
 
          for (Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof Ghast)) {
                if (entity instanceof Creeper creeper && creeper.isAlive() && creeper.distanceToSqr(mc.player) < 100.0 && mc.player.hasLineOfSight(creeper)) {
-                  write_J = now;
+                  lastThreatTick = now;
                   break;
                }
 
@@ -443,8 +443,8 @@ final class AiGuard {
                   && mob.isAlive()
                   && autismclient.ai.engine.AiSight.init(mob)
                   && mob.distanceToSqr(mc.player) < 256.0
-                  && load(mc, mob)) {
-                  write_J = now;
+                  && hasClearShotLine(mc, mob)) {
+                  lastThreatTick = now;
                   break;
                }
 
@@ -455,7 +455,7 @@ final class AiGuard {
                   && !(mob instanceof Creeper)
                   && mob.distanceToSqr(mc.player) < 25.0
                   && mc.player.hasLineOfSight(mob)) {
-                  write_J = now;
+                  lastThreatTick = now;
                   break;
                }
 
@@ -464,13 +464,13 @@ final class AiGuard {
                   && zombie.isAlive()
                   && zombie.distanceToSqr(mc.player) < 9.0
                   && mc.player.hasLineOfSight(zombie)) {
-                  write_J = now;
+                  lastThreatTick = now;
                   break;
                }
             }
          }
 
-         boolean hit = init(write_J, now);
+         boolean hit = wasRecentlyHurt(lastThreatTick, now);
          Entity nearestShooter = null;
          double nearestShooterSqr = 1.7976931348623157E308;
 
@@ -478,7 +478,7 @@ final class AiGuard {
             if (entity.isAlive() && !(entity instanceof Ghast) && !(entity instanceof EnderDragon)) {
                if (autismclient.ai.engine.AiSight.init(entity)) {
                   double d2 = entity.distanceToSqr(mc.player);
-                  boolean sees = d2 < 256.0 && load(mc, entity);
+                  boolean sees = d2 < 256.0 && hasClearShotLine(mc, entity);
                   boolean aiming = entity instanceof Mob mob && mob.isAggressive();
                   if (sees && (hit || aiming || d2 < 49.0) || d2 < 9.0) {
                      hostiles++;
@@ -515,11 +515,11 @@ final class AiGuard {
                         && (entity.distanceToSqr(mc.player) < 9.0 || mc.player.hasLineOfSight(entity))
                         && (AiThreats.init_Z() || AiThreats.init_Z(mc, entity))) {
                         hostiles++;
-                        if (AiThreats.init_Z() ? !(entity instanceof Zombie) : !init(entity)) {
+                        if (AiThreats.init_Z() ? !(entity instanceof Zombie) : !isPerchableMeleeMob(entity)) {
                            zombiesOnly = false;
                         }
 
-                        if (!AiThreats.init_Z() && load(entity)) {
+                        if (!AiThreats.init_Z() && isHeavyNetherMob(entity)) {
                            heavy = true;
                         }
 
@@ -528,7 +528,7 @@ final class AiGuard {
                         }
 
                         kinds.merge(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).getPath(), 1, Integer::sum);
-                     } else if (init(entity, mc) && entity.distanceToSqr(mc.player) < Math.pow(AiThreats.init_Z() ? 24.0 : 6.0, 2.0)) {
+                     } else if (isAngryEnderman(entity, mc) && entity.distanceToSqr(mc.player) < Math.pow(AiThreats.init_Z() ? 24.0 : 6.0, 2.0)) {
                         hostiles++;
                         if (!AiThreats.init_Z()) {
                            zombiesOnly = false;
@@ -539,33 +539,33 @@ final class AiGuard {
             }
          }
 
-         sync_I = ranged;
-         flush_I = nearestShooter == null ? -1 : nearestShooter.getId();
-         poll_Z = nearestShooter != null && init(mc, nearestShooter);
-         update_Z = zombiesOnly && ranged == 0 && hostiles > 0;
-         sync_Z = zombiesOnly && hostiles > ranged;
-         flush_Z = heavy && zombiesOnly && hostiles > ranged;
-         close_Z = creeperSeen;
-         close_D = nearestCreeper;
-         open_Z = skeletonSeen;
-         init_Str = kinds.toString() + (ranged > 0 ? " +" + ranged + " shooting" : "");
+         rangedHostileCount = ranged;
+         nearestShooterEntityId = nearestShooter == null ? -1 : nearestShooter.getId();
+         nearestShooterApproachable = nearestShooter != null && isShooterApproachable(mc, nearestShooter);
+         zombiesOnlyNoRanged = zombiesOnly && ranged == 0 && hostiles > 0;
+         meleeZombiesOnly = zombiesOnly && hostiles > ranged;
+         heavyMeleePresent = heavy && zombiesOnly && hostiles > ranged;
+         creeperNearby = creeperSeen;
+         nearestCreeperDistance = nearestCreeper;
+         skeletonNearby = skeletonSeen;
+         threatSummary = kinds.toString() + (ranged > 0 ? " +" + ranged + " shooting" : "");
          return new AiGuard.StatusSnapshot(
             mc.player.getHealth(),
             mc.player.getMaxHealth(),
             mc.player.getFoodData().getFoodLevel(),
             hostiles,
-            init(write_J, now),
-            open(),
-            AiItems.read() >= 0,
-            AiItems.init_I(),
-            load_I()
+            wasRecentlyHurt(lastThreatTick, now),
+            hasEdibleFood(),
+            AiItems.bestHotbarWeaponSlot() >= 0,
+            AiItems.countFreeSlots(),
+            worstHotbarToolDurability()
          );
       } else {
          return new AiGuard.StatusSnapshot(0.0F, 20.0F, 20, 0, false, false, false, 0);
       }
    }
 
-   static boolean init(Minecraft mc, Vec3 motion) {
+   static boolean canSprintPastThreats(Minecraft mc, Vec3 motion) {
       if (mc.player != null && mc.level != null) {
          boolean unknown = motion == null;
          if (unknown) {
@@ -622,17 +622,17 @@ final class AiGuard {
       }
    }
 
-   private static boolean load(Minecraft mc, Entity shooter) {
+   private static boolean hasClearShotLine(Minecraft mc, Entity shooter) {
       return autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
          mc.level, shooter.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
       );
    }
 
-   static boolean init(long lastHurtAt, long now) {
+   static boolean wasRecentlyHurt(long lastHurtAt, long now) {
       return lastHurtAt >= 0L && now >= lastHurtAt && now - lastHurtAt < 60L;
    }
 
-   static boolean sync_Z() {
+   static boolean isOnlySmallFastMeleeThreat() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          Entity only = null;
@@ -653,7 +653,7 @@ final class AiGuard {
       }
    }
 
-   static boolean flush() {
+   static boolean isMeleeThreatStriking() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          for (Entity entity : mc.level.entitiesForRendering()) {
@@ -672,7 +672,7 @@ final class AiGuard {
       }
    }
 
-   private static boolean init(Entity entity, Minecraft mc) {
+   private static boolean isAngryEnderman(Entity entity, Minecraft mc) {
       if (!(entity instanceof Enderman enderman)) {
          return false;
       } else {
@@ -685,11 +685,11 @@ final class AiGuard {
       }
    }
 
-   static AiOperation init_AiOperation_X_CachePool(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals, int budgetSeconds) {
-      read_Z = false;
-      AiGuard.GuardDecision decision = init_X_StreamUtil(policy, vitals);
+   static AiOperation createResponseOperation(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals, int budgetSeconds) {
+      fleeActive = false;
+      AiGuard.GuardDecision decision = decide(policy, vitals);
       AiGuard.GuardAction action = decision.action();
-      boolean blockedRetreat = flush_J != 0L && System.nanoTime() - flush_J < 10000000000L;
+      boolean blockedRetreat = blockedRetreatNanos != 0L && System.nanoTime() - blockedRetreatNanos < 10000000000L;
       if (action == AiGuard.GuardAction.NONE && policy.flee() && blockedRetreat) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
@@ -711,74 +711,74 @@ final class AiGuard {
          && "under attack with nothing to fight back with".equals(decision.reason())
          && policy.fight()
          && vitals.health() >= 8.0F
-         && sync_Z()) {
+         && isOnlySmallFastMeleeThreat()) {
          action = AiGuard.GuardAction.FIGHT;
       }
 
-      if (action == AiGuard.GuardAction.FIGHT && policy.flee() && sync_J != 0L && System.nanoTime() - sync_J < 10000000000L) {
+      if (action == AiGuard.GuardAction.FIGHT && policy.flee() && combatBackoffNanos != 0L && System.nanoTime() - combatBackoffNanos < 10000000000L) {
          action = AiGuard.GuardAction.FLEE;
       }
 
       if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
-         && sync_I > 0
-         && vitals.hostilesNear() == sync_I
-         && !close_Z
-         && init_I(flush_I) >= 2
-         && AiCombat.init(init_Entity())
+         && rangedHostileCount > 0
+         && vitals.hostilesNear() == rangedHostileCount
+         && !creeperNearby
+         && recentCoverCountFor(nearestShooterEntityId) >= 2
+         && AiCombat.init(nearestShooterEntity())
          && vitals.health() >= 12.0F) {
          return null;
       }
 
-      int blocks = init_I();
-      boolean perchBackoff = poll_J != 0L && System.nanoTime() - poll_J < 10000000000L;
+      int blocks = countPerchBlocks();
+      boolean perchBackoff = perchBackoffNanos != 0L && System.nanoTime() - perchBackoffNanos < 10000000000L;
       if (action != AiGuard.GuardAction.NONE && action != AiGuard.GuardAction.EAT && action != AiGuard.GuardAction.TIDY) {
          AutismClientAddon.LOG
             .info(
                "[AI] guard: {} ({}) seeing {}, health {}, {} blocks, underground {}, zombies only {}{}{}{}",
                action,
                decision.reason(),
-               init_Str,
+               threatSummary,
                (int)vitals.health(),
                blocks,
-               load_Z(),
-               update_Z,
+               isUnderground(),
+               zombiesOnlyNoRanged,
                perchBackoff ? ", perch backing off" : "",
-               update_Z && !update_Z() ? ", a drop beside (no perch)" : "",
-               sync_I > 0 ? (poll_Z ? ", shooter in a straight run" : ", shooter out of a straight run") : ""
+               zombiesOnlyNoRanged && !canBuildCombatPerch() ? ", a drop beside (no perch)" : "",
+               rangedHostileCount > 0 ? (nearestShooterApproachable ? ", shooter in a straight run" : ", shooter out of a straight run") : ""
             );
       }
 
       if (action != AiGuard.GuardAction.FIGHT && action != AiGuard.GuardAction.FLEE
-         || !sync_Z
-         || !flush_Z && vitals.hostilesNear() < 2 && !(vitals.health() < 16.0F) && !load_Z()
+         || !meleeZombiesOnly
+         || !heavyMeleePresent && vitals.hostilesNear() < 2 && !(vitals.health() < 16.0F) && !isUnderground()
          || blocks < 3
          || perchBackoff
-         || !update_Z()
-         || !AiThreats.init_Z() && !flush_Z && Minecraft.getInstance().player.getArmorValue() >= 12 && !(vitals.health() < 12.0F)) {
-         write_Z = false;
-         load_Z = false;
+         || !canBuildCombatPerch()
+         || !AiThreats.init_Z() && !heavyMeleePresent && Minecraft.getInstance().player.getArmorValue() >= 12 && !(vitals.health() < 12.0F)) {
+         perchCombatActive = false;
+         coverActive = false;
          if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && !AiThreats.init_Z() && vitals.health() <= 12.0F) {
-            AiOperation ward = init_AiOperation();
+            AiOperation ward = createEndermanWaterWard();
             if (ward != null) {
-               init_Z = false;
+               burrowActive = false;
                AutismClientAddon.LOG.info("[AI] guard: water at the feet against an angry enderman, health {}", (int)vitals.health());
                return ward;
             }
          }
 
-         boolean striking = !AiThreats.init_Z() && flush();
+         boolean striking = !AiThreats.init_Z() && isMeleeThreatStriking();
          boolean swarmed = !AiThreats.init_Z()
             && vitals.hostilesNear() >= 3
-            && sync_I >= 1
+            && rangedHostileCount >= 1
             && vitals.health() < 14.0F
-            && (close_J == 0L || System.nanoTime() - close_J >= 10000000000L);
-         if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && sync_I > 0 && !close_Z && !striking && !swarmed) {
-            boolean coverBackoff = open_J != 0L && System.nanoTime() - open_J < 10000000000L;
-            boolean hunt = init_I(flush_I) >= 1
-               && !AiCombat.init(init_Entity())
+            && (burrowBackoffNanos == 0L || System.nanoTime() - burrowBackoffNanos >= 10000000000L);
+         if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && rangedHostileCount > 0 && !creeperNearby && !striking && !swarmed) {
+            boolean coverBackoff = coverBackoffNanos != 0L && System.nanoTime() - coverBackoffNanos < 10000000000L;
+            boolean hunt = recentCoverCountFor(nearestShooterEntityId) >= 1
+               && !AiCombat.init(nearestShooterEntity())
                && vitals.health() >= 12.0F
-               && (sync_J == 0L || System.nanoTime() - sync_J >= 10000000000L);
-            Entity shooter = init_Entity();
+               && (combatBackoffNanos == 0L || System.nanoTime() - combatBackoffNanos >= 10000000000L);
+            Entity shooter = nearestShooterEntity();
             LocalPlayer self = Minecraft.getInstance().player;
             boolean upClose = shooter != null
                && self != null
@@ -790,22 +790,22 @@ final class AiGuard {
                upClose = false;
             }
 
-            if (policy.flee() && !blockedRetreat && init_I(flush_I) >= 2 && AiCombat.init(shooter)) {
-               init_Z = false;
-               read_Z = true;
+            if (policy.flee() && !blockedRetreat && recentCoverCountFor(nearestShooterEntityId) >= 2 && AiCombat.init(shooter)) {
+               burrowActive = false;
+               fleeActive = true;
                AutismClientAddon.LOG.info("[AI] cover: repeated cover from an unreachable shooter, leaving its range");
-               return init(AiSurvival.load(AiJson.init_JsonObject_ObjArr("radius", 16.0, "distance", 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds)))));
+               return allowDuringLowHealth(AiSurvival.load(AiJson.objectOf("radius", 16.0, "distance", 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds)))));
             }
 
             boolean blazeCharge = blazeShooter && !AiThreats.init_Z();
-            if (init(policy, vitals, upClose, poll_Z || hunt, sync_I) && (!blazeCharge || !(vitals.health() < 12.0F))) {
-               init_Z = false;
+            if (shouldChargeShooter(policy, vitals, upClose, nearestShooterApproachable || hunt, rangedHostileCount) && (!blazeCharge || !(vitals.health() < 12.0F))) {
+               burrowActive = false;
                AiOperation charge = blazeCharge
-                  ? AiBlazeFight.init(AiJson.init_JsonObject_ObjArr("count", 1, "radius", 16.0, "retreatHealth", 8, "timeoutSeconds", 20))
+                  ? AiBlazeFight.init(AiJson.objectOf("count", 1, "radius", 16.0, "retreatHealth", 8, "timeoutSeconds", 20))
                   : AiCombat.init(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "entityId",
-                        flush_I,
+                        nearestShooterEntityId,
                         "count",
                         1,
                         "radius",
@@ -816,46 +816,46 @@ final class AiGuard {
                         20
                      )
                   );
-               return upClose && vitals.health() < 8.0F ? init(charge) : charge;
+               return upClose && vitals.health() < 8.0F ? allowDuringLowHealth(charge) : charge;
             }
 
             if (!coverBackoff) {
-               init_Z = false;
-               load_Z = true;
-               init_V(flush_I);
-               return init(
-                  AiCover.init(AiJson.init_JsonObject_ObjArr("healTo", vitals.health() < 12.0F ? Math.min(vitals.maxHealth(), 16.0F) : 0.0F, "timeoutSeconds", 45))
+               burrowActive = false;
+               coverActive = true;
+               recordShooterCover(nearestShooterEntityId);
+               return allowDuringLowHealth(
+                  AiCover.init(AiJson.objectOf("healTo", vitals.health() < 12.0F ? Math.min(vitals.maxHealth(), 16.0F) : 0.0F, "timeoutSeconds", 45))
                );
             }
          }
 
-         boolean lavaBeside = close_Z && !AiThreats.init_Z() && init_Z(5);
-         boolean armouredCreeper = close_Z && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && init_Z(vitals) && !lavaBeside;
-         if (close_Z && !armouredCreeper && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)) {
+         boolean lavaBeside = creeperNearby && !AiThreats.init_Z() && hasLavaWithin(5);
+         boolean armouredCreeper = creeperNearby && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && canStandGroundOutnumbered(vitals) && !lavaBeside;
+         if (creeperNearby && !armouredCreeper && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)) {
             long now = System.nanoTime();
-            init_List.removeIf(t -> now - t > 60000000000L);
-            if (init_List.size() >= 3 && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && !lavaBeside) {
+            recentCreeperAvoidNanos.removeIf(t -> now - t > 60000000000L);
+            if (recentCreeperAvoidNanos.size() >= 3 && vitals.hostilesNear() <= 1 && vitals.hasWeapon() && vitals.health() >= 16.0F && !lavaBeside) {
                armouredCreeper = true;
-               AutismClientAddon.LOG.info("[AI] guard: a creeper avoided {} times in a minute; fighting it", init_List.size());
+               AutismClientAddon.LOG.info("[AI] guard: a creeper avoided {} times in a minute; fighting it", recentCreeperAvoidNanos.size());
             } else {
-               init_List.add(now);
+               recentCreeperAvoidNanos.add(now);
             }
          }
 
-         if (action == AiGuard.GuardAction.FIGHT && close_Z && policy.flee() && !armouredCreeper) {
+         if (action == AiGuard.GuardAction.FIGHT && creeperNearby && policy.flee() && !armouredCreeper) {
             action = AiGuard.GuardAction.FLEE;
          }
 
-         if (!AiThreats.init_Z() && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.NONE) && read_Z()) {
+         if (!AiThreats.init_Z() && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.NONE) && hasAvoidableThreatNearby()) {
             action = policy.flee() ? AiGuard.GuardAction.FLEE : action;
          }
 
-         boolean hide = action == AiGuard.GuardAction.FLEE && (load_Z() || blockedRetreat)
-            || action == AiGuard.GuardAction.FIGHT && load_Z() && (sync_I > 0 || open_Z || vitals.hostilesNear() >= 2 || vitals.health() < 12.0F)
+         boolean hide = action == AiGuard.GuardAction.FLEE && (isUnderground() || blockedRetreat)
+            || action == AiGuard.GuardAction.FIGHT && isUnderground() && (rangedHostileCount > 0 || skeletonNearby || vitals.hostilesNear() >= 2 || vitals.health() < 12.0F)
             || !AiThreats.init_Z()
                && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
                && vitals.hostilesNear() >= 3
-               && sync_I >= 1
+               && rangedHostileCount >= 1
                && vitals.health() < 14.0F;
          if (!hide
             && (action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE)
@@ -865,18 +865,18 @@ final class AiGuard {
             hide = true;
          }
 
-         if (hide && close_J != 0L && System.nanoTime() - close_J < 10000000000L) {
+         if (hide && burrowBackoffNanos != 0L && System.nanoTime() - burrowBackoffNanos < 10000000000L) {
             hide = false;
          }
 
-         if (hide && !AiThreats.init_Z() && flush()) {
+         if (hide && !AiThreats.init_Z() && isMeleeThreatStriking()) {
             hide = false;
             if (action == AiGuard.GuardAction.FLEE || action == AiGuard.GuardAction.NONE) {
                action = AiGuard.GuardAction.FIGHT;
             }
          }
 
-         if (hide && close_Z && close_D < 8.0) {
+         if (hide && creeperNearby && nearestCreeperDistance < 8.0) {
             hide = false;
             if (blockedRetreat && vitals.hasWeapon()) {
                action = AiGuard.GuardAction.FIGHT;
@@ -890,18 +890,18 @@ final class AiGuard {
             }
          }
 
-         init_Z = hide;
+         burrowActive = hide;
          if (hide) {
-            flush_J = 0L;
-            return init(
+            blockedRetreatNanos = 0L;
+            return allowDuringLowHealth(
                AiBurrow.init(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "healTo",
                      Math.min(vitals.maxHealth(), 16.0F),
                      "stay",
-                     load_Z(),
+                     isUnderground(),
                      "towerOk",
-                     Minecraft.getInstance().level.dimension() != Level.END && init(close_Z, open_Z, sync_I, update_Z()),
+                     Minecraft.getInstance().level.dimension() != Level.END && isSafeToTower(creeperNearby, skeletonNearby, rangedHostileCount, canBuildCombatPerch()),
                      "timeoutSeconds",
                      120
                   )
@@ -909,7 +909,7 @@ final class AiGuard {
             );
          }
 
-         read_Z = action == AiGuard.GuardAction.FLEE;
+         fleeActive = action == AiGuard.GuardAction.FLEE;
          AiOperation var10000;
          switch (action) {
             case NONE:
@@ -917,15 +917,15 @@ final class AiGuard {
                break;
             case FIGHT:
                var10000 = AiCombat.init(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "target",
                      "hostiles",
                      "hold",
-                     load_Z() && sync_I == 0 && write_Z(),
+                     isUnderground() && rangedHostileCount == 0 && hasSafeFootingAroundPlayer(),
                      "count",
                      Math.max(1, vitals.hostilesNear()),
                      "radius",
-                     sync_I > 0 ? 16.0 : 9.0,
+                     rangedHostileCount > 0 ? 16.0 : 9.0,
                      "retreatHealth",
                      vitals.health() <= policy.fleeHealth() ? 0.0F : policy.fleeHealth(),
                      "timeoutSeconds",
@@ -935,16 +935,16 @@ final class AiGuard {
                break;
             case FLEE:
                var10000 = AiSurvival.load(
-                  AiJson.init_JsonObject_ObjArr(
-                     "radius", close_Z ? 20 : 14, "distance", close_Z ? 40 : 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds))
+                  AiJson.objectOf(
+                     "radius", creeperNearby ? 20 : 14, "distance", creeperNearby ? 40 : 28, "timeoutSeconds", Math.max(15, Math.min(60, budgetSeconds))
                   )
                );
                break;
             case EAT:
-               var10000 = AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 19, "timeoutSeconds", Math.max(10, Math.min(40, budgetSeconds))));
+               var10000 = AiSurvival.init(AiJson.objectOf("food", 19, "timeoutSeconds", Math.max(10, Math.min(40, budgetSeconds))));
                break;
             case TIDY:
-               var10000 = init(policy);
+               var10000 = createTidyOperation(policy);
                break;
             default:
                throw new MatchException(null, null);
@@ -952,11 +952,11 @@ final class AiGuard {
 
          return var10000;
       } else {
-         init_Z = false;
-         write_Z = true;
-         return init(
+         burrowActive = false;
+         perchCombatActive = true;
+         return allowDuringLowHealth(
             AiCombat.init(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "target",
                   "hostiles",
                   "untilClear",
@@ -977,14 +977,14 @@ final class AiGuard {
       }
    }
 
-   static AiOperation init_AiOperation() {
+   static AiOperation createEndermanWaterWard() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && mc.player.onGround() && !mc.player.isInWater()) {
-         if (push != 0L && System.nanoTime() - push < 8000000000L) {
+         if (lastEndermanWaterWardNanos != 0L && System.nanoTime() - lastEndermanWaterWardNanos < 8000000000L) {
             return null;
          }
 
-         if (!mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES) && AiGameState.init_I_Str("minecraft:water_bucket") > 0) {
+         if (!mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES) && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
             boolean angry = false;
 
             for (Entity e : mc.level.entitiesForRendering()) {
@@ -999,15 +999,15 @@ final class AiGuard {
             } else {
                BlockPos feet = mc.player.blockPosition();
                if (mc.level.getBlockState(feet).canBeReplaced() && !mc.level.getBlockState(feet.below()).getCollisionShape(mc.level, feet.below()).isEmpty()) {
-                  push = System.nanoTime();
+                  lastEndermanWaterWardNanos = System.nanoTime();
                   return AiNetherRun.init_AiOperation_AiOperation_Supplier(
                      AiBucket.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "action", "empty", "fluid", "water", "x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "timeoutSeconds", 5
                         )
                      ),
                      () -> AiNetherRun.init_AiOperation_AiOperation_Supplier(
-                        AiCombat.init(100), () -> AiBucket.init(AiJson.init_JsonObject_ObjArr("action", "fill", "fluid", "water", "timeoutSeconds", 5))
+                        AiCombat.init(100), () -> AiBucket.init(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
                      )
                   );
                } else {
@@ -1022,7 +1022,7 @@ final class AiGuard {
       }
    }
 
-   static boolean init_Z(int r) {
+   static boolean hasLavaWithin(int r) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          BlockPos feet = mc.player.blockPosition();
@@ -1039,30 +1039,30 @@ final class AiGuard {
       }
    }
 
-   static boolean init(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals, boolean upClose, boolean approachable, int ranged) {
+   static boolean shouldChargeShooter(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals, boolean upClose, boolean approachable, int ranged) {
       return policy.fight()
          && vitals.hasWeapon()
          && (upClose && (ranged <= 1 || vitals.health() >= 14.0F) || approachable && ranged == 1 && vitals.hostilesNear() == ranged && vitals.health() >= 8.0F);
    }
 
-   private static AiOperation init(AiGuard.GuardPolicy policy) {
+   private static AiOperation createTidyOperation(AiGuard.GuardPolicy policy) {
       long now = System.nanoTime();
-      if (pop != 0L && now - pop < 60000000000L) {
+      if (lastTidyNanos != 0L && now - lastTidyNanos < 60000000000L) {
          return null;
       }
 
-      pop = now;
+      lastTidyNanos = now;
       JsonArray keep = new JsonArray();
       policy.keep().forEach(keep::add);
-      return AiTidy.init(AiJson.init_JsonObject_ObjArr("action", "drop", "freeSlots", 4, "keep", keep));
+      return AiTidy.init(AiJson.objectOf("action", "drop", "freeSlots", 4, "keep", keep));
    }
 
-   static String init_Str(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
-      return init_X_StreamUtil(policy, vitals).reason();
+   static String decisionReason(AiGuard.GuardPolicy policy, AiGuard.StatusSnapshot vitals) {
+      return decide(policy, vitals).reason();
    }
 
-   static JsonObject init_JsonObject_X_BufferHelper(AiGuard.StatusSnapshot vitals, int interruptions, String lastReason) {
-      JsonObject out = AiJson.init_JsonObject_ObjArr(
+   static JsonObject statusToJson(AiGuard.StatusSnapshot vitals, int interruptions, String lastReason) {
+      JsonObject out = AiJson.objectOf(
          "health",
          vitals.health(),
          "food",
@@ -1080,7 +1080,7 @@ final class AiGuard {
          out.addProperty("lastInterruption", lastReason);
       }
 
-      String concern = init_Str(vitals);
+      String concern = describeConcern(vitals);
       if (!concern.isEmpty()) {
          out.addProperty("concern", concern);
       }
@@ -1088,7 +1088,7 @@ final class AiGuard {
       return out;
    }
 
-   static boolean init(String id, JsonObject args) {
+   static boolean isLowHealthRecoveryOp(String id, JsonObject args) {
       boolean var10000;
       switch (id) {
          case "game:fish":
@@ -1101,10 +1101,10 @@ final class AiGuard {
             var10000 = true;
             break;
          case "game:farm":
-            var10000 = AiJson.init_Str_JsonObject(args, "action", "harvest").trim().equalsIgnoreCase("harvest");
+            var10000 = AiJson.getString(args, "action", "harvest").trim().equalsIgnoreCase("harvest");
             break;
          case "game:obtain":
-            var10000 = !AiJson.init_Z_JsonObject(args, "allowCombat", true) && load(AiJson.init_Str_JsonObject(args, "item", ""));
+            var10000 = !AiJson.getBoolean(args, "allowCombat", true) && isFoodOnlySpec(AiJson.getString(args, "item", ""));
             break;
          default:
             var10000 = false;
@@ -1113,7 +1113,7 @@ final class AiGuard {
       return var10000;
    }
 
-   static boolean init(String id) {
+   static boolean isSafeLowHealthNavigationOp(String id) {
       if (!id.equals("game:goto") && !id.equals("game:navigate")) {
          return false;
       }
@@ -1132,28 +1132,28 @@ final class AiGuard {
       }
    }
 
-   private static boolean load(String spec) {
+   private static boolean isFoodOnlySpec(String spec) {
       if (spec.isBlank()) {
          return false;
       }
 
       try {
-         AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
-         return !target.items().isEmpty() && AiItems.init_af_DataUtil("food").items().containsAll(target.items());
+         AiItems.ItemSpec target = AiItems.resolveItem(spec);
+         return !target.items().isEmpty() && AiItems.resolve("food").items().containsAll(target.items());
       } catch (RuntimeException unresolvable) {
          return false;
       }
    }
 
-   static boolean close() {
+   static boolean isLowHealthOverrideActive() {
       return autismclient.ai.engine.AiLowHealth.init_Z();
    }
 
-   static String init_Str_Str(String activity, float health, float maxHealth) {
+   static String formatLowHealthAbort(String activity, float health, float maxHealth) {
       return autismclient.ai.engine.AiLowHealth.init(activity, health, maxHealth);
    }
 
-   static AiOperation init(final AiOperation inner) {
+   static AiOperation allowDuringLowHealth(final AiOperation inner) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
@@ -1183,7 +1183,7 @@ final class AiGuard {
       };
    }
 
-   private static int load_I() {
+   private static int worstHotbarToolDurability() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 2147483647;
@@ -1201,7 +1201,7 @@ final class AiGuard {
       return worst;
    }
 
-   private static boolean open() {
+   private static boolean hasEdibleFood() {
       Minecraft mc = Minecraft.getInstance();
       return mc.player != null && AiSurvival.init(mc.player.getInventory()) >= 0;
    }

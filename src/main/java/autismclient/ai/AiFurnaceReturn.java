@@ -102,14 +102,14 @@ final class AiFurnaceReturn implements AiOperation {
          return this.init(AiOperation.Status.FAILED, "Player died returning to the furnace");
       }
 
-      if (AiTerrain.init(this.init_Minecraft.level, this.init_BlockPos)
+      if (AiTerrain.isLoaded(this.init_Minecraft.level, this.init_BlockPos)
          && !(this.init_Minecraft.level.getBlockState(this.init_BlockPos).getBlock() instanceof AbstractFurnaceBlock)) {
          return this.init(AiOperation.Status.FAILED, "The committed furnace was removed; its contents need reconciliation");
       }
 
       if ((this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
          && this.init_Minecraft.player.onGround()
-         && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos) != null) {
+         && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.init_BlockPos) != null) {
          this.read_Z = this.init_AiOperation != null;
          return this.init(
             AiOperation.Status.SUCCEEDED,
@@ -145,9 +145,9 @@ final class AiFurnaceReturn implements AiOperation {
       }
 
       AiOperation.Result r = this.init_AiOperation.tick();
-      this.init_JsonObject = AiRunResources.init_JsonObject(r.dataJson());
+      this.init_JsonObject = AiRunResources.parseEvidenceJson(r.dataJson());
       if (!r.terminal()) {
-         return AiGameOperations.init_AiOperation_Result(
+         return AiGameOperations.result(
             AiOperation.Status.RUNNING,
             (this.init_Z ? "Repairing a changed furnace return route: " : "Replanning a walk back to the furnace: ") + r.message(),
             this.init()
@@ -158,12 +158,12 @@ final class AiFurnaceReturn implements AiOperation {
          this.init_AiOperation = null;
          if (uncertain) {
             return this.init(AiOperation.Status.UNCERTAIN, "Furnace return has an unsettled action: " + r.message());
-         } else if (r.status() == AiOperation.Status.SUCCEEDED && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos) != null) {
+         } else if (r.status() == AiOperation.Status.SUCCEEDED && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.init_Minecraft, this.init_BlockPos) != null) {
             return this.init(AiOperation.Status.SUCCEEDED, "Returned to the furnace using a newly verified stance");
          } else if (r.status() != AiOperation.Status.CANCELLED && !this.init_Z) {
             this.init_Z = true;
             this.init_Str = "Existing walking return unavailable: " + r.message();
-            return AiGameOperations.init_AiOperation_Result(
+            return AiGameOperations.result(
                AiOperation.Status.RUNNING, "Walking route changed; allow bounded repairs without digging straight down", this.init()
             );
          } else {
@@ -173,7 +173,7 @@ final class AiFurnaceReturn implements AiOperation {
    }
 
    JsonObject init() {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "returnMode",
          this.init_Z ? "repair_changed_route" : "walk_existing_terrain",
          "returnReason",
@@ -196,7 +196,7 @@ final class AiFurnaceReturn implements AiOperation {
    private AiOperation.Result init(AiOperation.Status status, String message) {
       JsonObject data = this.init();
       this.cancel();
-      return AiGameOperations.init_AiOperation_Result(status, message, data);
+      return AiGameOperations.result(status, message, data);
    }
 
    @Override

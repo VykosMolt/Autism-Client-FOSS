@@ -22,9 +22,9 @@ final class AiPlan {
       if (mc.player != null && mc.level != null) {
          List<AiPlanRunner.Inner_BufferHelper> declared = init_List(args);
          final List<AiPlanRunner.Inner_BufferHelper> ordered = AiPlanRunner.init_List(declared);
-         final AiPlanRunner.Inner_DataUtil policy = init(AiJson.init_Str_JsonObject(args, "onFailure", "stop"));
-         final int timeoutSeconds = Math.max(30, Math.min(7200, AiJson.init_I_JsonObject(args, "timeoutSeconds", 1800)));
-         final boolean guarded = AiJson.init_Z_JsonObject(args, "survival", true);
+         final AiPlanRunner.Inner_DataUtil policy = init(AiJson.getString(args, "onFailure", "stop"));
+         final int timeoutSeconds = Math.max(30, Math.min(7200, AiJson.getInt(args, "timeoutSeconds", 1800)));
+         final boolean guarded = AiJson.getBoolean(args, "survival", true);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final List<AiPlanRunner.Inner_StreamUtil> init_List = AiPlan.init(ordered);
@@ -88,7 +88,7 @@ final class AiPlan {
                      try {
                         this.init_AiOperation = AiTools.init_AiOperation_Str_JsonObject(
                            this.init_aU_StreamUtil.init_aU_BufferHelper.capability(),
-                           AiJson.init_JsonObject_Str(this.init_aU_StreamUtil.init_aU_BufferHelper.argumentsJson()).getAsJsonObject()
+                           AiJson.parseObject(this.init_aU_StreamUtil.init_aU_BufferHelper.argumentsJson()).getAsJsonObject()
                         );
                      } catch (RuntimeException e) {
                         this.init_AiOperation = null;
@@ -153,13 +153,13 @@ final class AiPlan {
                      return null;
                   }
 
-                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
-                  AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_21());
+                  AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
+                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.init_I_21());
                   if (action == null) {
                      return null;
                   }
 
-                  this.init_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                  this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                   this.init_I++;
                   this.load_AiOperation = action;
                   return this.init("Interrupted between steps: " + this.init_Str);
@@ -187,7 +187,7 @@ final class AiPlan {
 
                for (AiPlanRunner.Inner_StreamUtil progress : this.init_List) {
                   steps.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "id",
                         progress.init_aU_BufferHelper.id(),
                         "capability",
@@ -199,12 +199,12 @@ final class AiPlan {
                         "message",
                         progress.init_Str,
                         "needs",
-                        AiJson.init.toJsonTree(progress.init_aU_BufferHelper.needs())
+                        AiJson.GSON.toJsonTree(progress.init_aU_BufferHelper.needs())
                      )
                   );
                }
 
-               JsonObject out = AiJson.init_JsonObject_ObjArr("onFailure", policy.name().toLowerCase(Locale.ROOT));
+               JsonObject out = AiJson.objectOf("onFailure", policy.name().toLowerCase(Locale.ROOT));
                out.add("steps", steps);
                JsonObject tally = new JsonObject();
                AiPlanRunner.init_Map(this.init_List).forEach(tally::addProperty);
@@ -213,7 +213,7 @@ final class AiPlan {
                   out.addProperty("currentStep", this.init_aU_StreamUtil.init_aU_BufferHelper.id());
                }
 
-               out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.init_I, this.init_Str));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));
                return out;
             }
 
@@ -274,12 +274,12 @@ final class AiPlan {
 
          for (JsonElement element : raw) {
             JsonObject entry = init(element, ++index);
-            String capability = AiJson.init_Str_JsonObject(entry, "capability", "");
-            if (capability.isBlank() && AiJson.init_Str_JsonObject(entry, "id", "").startsWith("game:")) {
-               capability = AiJson.init_Str_JsonObject(entry, "id", "");
+            String capability = AiJson.getString(entry, "capability", "");
+            if (capability.isBlank() && AiJson.getString(entry, "id", "").startsWith("game:")) {
+               capability = AiJson.getString(entry, "id", "");
             }
 
-            String id = capability.equals(AiJson.init_Str_JsonObject(entry, "id", "")) ? "step" + index : AiJson.init_Str_JsonObject(entry, "id", "step" + index);
+            String id = capability.equals(AiJson.getString(entry, "id", "")) ? "step" + index : AiJson.getString(entry, "id", "step" + index);
             AiPlanRunner.init(capability);
             JsonObject arguments = entry.has("arguments") && entry.get("arguments").isJsonObject() ? entry.getAsJsonObject("arguments") : new JsonObject();
             init(id, capability, arguments);
@@ -314,7 +314,7 @@ final class AiPlan {
                AiToolCallParser.Inner_StreamUtil call = AiToolCallParser.init(
                   sub, tokens, player == null ? 0.0 : player.getX(), player == null ? 0.0 : player.getY(), player == null ? 0.0 : player.getZ()
                );
-               return AiJson.init_JsonObject_ObjArr("id", "step" + index, "capability", call.id(), "arguments", call.arguments());
+               return AiJson.objectOf("id", "step" + index, "capability", call.id(), "arguments", call.arguments());
             } catch (IllegalArgumentException e) {
                throw new IllegalArgumentException("Plan step " + index + " '" + element.getAsString() + "': " + e.getMessage());
             }
@@ -329,7 +329,7 @@ final class AiPlan {
    private static void init(String id, String capability, JsonObject arguments) {
       AiCatalog.Entry entry = AiDirectOps.init_AiCatalog_Snapshot().get(capability);
       if (entry != null) {
-         JsonObject schema = AiJson.init_JsonObject_Str(entry.contract().inputSchema());
+         JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
          if (schema.has("type") || schema.has("properties")) {
             try {
                AiSchemas.init(schema, arguments);

@@ -507,7 +507,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())

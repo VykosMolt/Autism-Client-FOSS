@@ -527,7 +527,7 @@ public final class LeafDupeModule extends Module {
          this.sync();
          return false;
       } else {
-         BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(MC, current.init_BlockPos, this.init_Vec3_5());
+         BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, current.init_BlockPos, this.init_Vec3_5());
          if (hit == null) {
             this.read_Str = "Target obstructed";
             this.update();
@@ -821,7 +821,7 @@ public final class LeafDupeModule extends Module {
             List.of(this.init_BlockPos, this.load_BlockPos, this.read_BlockPos),
             MC.player.blockInteractionRange() - 0.05,
             this::init_AABB_BlockPos_2,
-            (pos, eye) -> autismclient.ai.engine.AiBlockInteraction.init(MC, pos, eye) != null
+            (pos, eye) -> autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, pos, eye) != null
          );
          return access != null ? access : null;
       } else {
@@ -956,7 +956,7 @@ public final class LeafDupeModule extends Module {
 
    private BlockPos init_BlockPos_List_Vec3(List<LeafDupeModule.Inner_StreamUtil> candidates, Vec3 eye) {
       for (LeafDupeModule.Inner_StreamUtil candidate : this.init_List_List_2(candidates)) {
-         if (autismclient.ai.engine.AiBlockInteraction.init(MC, candidate.init_BlockPos(), eye) != null) {
+         if (autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, candidate.init_BlockPos(), eye) != null) {
             return candidate.init_BlockPos();
          }
       }
@@ -969,11 +969,11 @@ public final class LeafDupeModule extends Module {
    }
 
    private boolean init_Z_BlockPos_Vec3_2(BlockPos pos, Vec3 eye) {
-      return pos != null && this.init_Str_BlockPos_3(pos) == null && autismclient.ai.engine.AiBlockInteraction.init(MC, pos, eye) != null;
+      return pos != null && this.init_Str_BlockPos_3(pos) == null && autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, pos, eye) != null;
    }
 
    private boolean load_Z_BlockPos_Vec3(BlockPos pos, Vec3 eye) {
-      return pos != null && this.read_Str_BlockPos(pos) == null && autismclient.ai.engine.AiBlockInteraction.init(MC, pos, eye) != null;
+      return pos != null && this.read_Str_BlockPos(pos) == null && autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, pos, eye) != null;
    }
 
    private boolean read_Z_BlockPos_Vec3(BlockPos pos, Vec3 eye) {
@@ -1013,7 +1013,7 @@ public final class LeafDupeModule extends Module {
          && autismclient.util.leafdupe.LeafDupePacketTracker.init(current.init_DataUtil_StreamUti, this.load_BlockPos)
          && init_Z_ItemStack_BlockState(MC.player.getInventory().getItem(current.init_I), current.init_BlockState)) {
          BlockHitResult reset = this.init_BlockHitResult_BlockPos_Vec3(this.read_BlockPos, eye);
-         BlockHitResult leaf = autismclient.ai.engine.AiBlockInteraction.init(MC, this.init_BlockPos, eye);
+         BlockHitResult leaf = autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, this.init_BlockPos, eye);
          if (reset != null && leaf != null) {
             current.init_ItemStack = MC.player.getInventory().getItem(current.init_I).copy();
             int mealSlot = MC.player.getInventory().getSelectedSlot();
@@ -1062,7 +1062,7 @@ public final class LeafDupeModule extends Module {
    }
 
    private BlockHitResult init_BlockHitResult_BlockPos_Vec3(BlockPos pos, Vec3 eye) {
-      BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(MC, pos, eye);
+      BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, pos, eye);
       return hit != null && MC.level.getFluidState(pos.relative(hit.getDirection())).isEmpty() ? hit : null;
    }
 
@@ -1487,8 +1487,8 @@ public final class LeafDupeModule extends Module {
                && !autismclient.util.InventorySlotArbiter.init(
                   this.init_InteractionHand == InteractionHand.OFF_HAND ? 40 : Module.MC.player.getInventory().getSelectedSlot(), "leaf-dupe"
                )
-            ? autismclient.ai.engine.AiBlockInteraction.init(Module.MC, this.init_BlockPos, LeafDupeModule.this.init_Vec3_5()) != null
-               && autismclient.ai.engine.AiBlockInteraction.init(Module.MC, this.init_BlockPos, Module.MC.player.getEyePosition()) != null
+            ? autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(Module.MC, this.init_BlockPos, LeafDupeModule.this.init_Vec3_5()) != null
+               && autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(Module.MC, this.init_BlockPos, Module.MC.player.getEyePosition()) != null
             : false;
       }
    }

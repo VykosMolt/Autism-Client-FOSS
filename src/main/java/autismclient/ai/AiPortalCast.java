@@ -89,7 +89,7 @@ final class AiPortalCast {
    }
 
    static AiPortalCast.Inner_ConfigStore init_aX_ConfigStore(ClientLevel level, BlockPos pos) {
-      if (!AiTerrain.init(level, pos)) {
+      if (!AiTerrain.isLoaded(level, pos)) {
          return AiPortalCast.Inner_ConfigStore.SOLID;
       }
 
@@ -121,7 +121,7 @@ final class AiPortalCast {
             break;
          }
 
-         if (AiTerrain.init(level, pos)) {
+         if (AiTerrain.isLoaded(level, pos)) {
             FluidState fluid = level.getFluidState(pos);
             if (fluid.isSource() && fluid.is(FluidTags.LAVA)) {
                sources.add(pos.immutable());
@@ -207,7 +207,7 @@ final class AiPortalCast {
    }
 
    static boolean read(ClientLevel level, BlockPos cell) {
-      if (!AiTerrain.init(level, cell)) {
+      if (!AiTerrain.isLoaded(level, cell)) {
          return false;
       } else if (load(level, cell)) {
          return false;
@@ -448,8 +448,8 @@ final class AiPortalCast {
       if (client.player != null && client.level != null) {
          boolean hasTarget = args.has("x") && args.has("y") && args.has("z");
          if (hasTarget || !args.has("x") && !args.has("y") && !args.has("z")) {
-            final BlockPos explicit = hasTarget ? AiGameOperations.init_BlockPos(args) : null;
-            final int timeoutSeconds = Math.max(30, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
+            final BlockPos explicit = hasTarget ? AiGameOperations.requireBlockPos(args) : null;
+            final int timeoutSeconds = Math.max(30, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600)));
             return new AiOperation() {
                final Minecraft init_Minecraft = Minecraft.getInstance();
                final Object init_Obj = this.init_Minecraft.level;
@@ -506,7 +506,7 @@ final class AiPortalCast {
                final Set<AiPortalCast.Inner_SyncManager> update_Set = new HashSet<>();
                String init_Str = "";
                String load_Str = "";
-               AiGuard.StatusSnapshot init_X_BufferHelper = AiGuard.init_X_BufferHelper();
+               AiGuard.StatusSnapshot init_X_BufferHelper = AiGuard.sampleStatus();
                boolean read_Z;
                boolean write_Z;
                boolean update_Z;
@@ -525,18 +525,18 @@ final class AiPortalCast {
                         && this.init_Minecraft.player.isAlive()) {
                         if (this.init_aX_JsonUtil.init_Z()) {
                            this.init_aX_JsonUtil
-                              .init(AiGameState.init_I_Str(this.init_aX_JsonUtil.init_Str()), AiServerEvidence.init_J(), AiServerEvidence.init_J_BlockPos(this.init_aX_JsonUtil.init_BlockPos()));
+                              .init(AiGameState.countInventoryItem(this.init_aX_JsonUtil.init_Str()), AiServerEvidence.inventoryRevision(), AiServerEvidence.blockRevision(this.init_aX_JsonUtil.init_BlockPos()));
                         }
 
                         if (this.init_Minecraft.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
                            return this.init(AiOperation.Status.FAILED, "Water casting prohibited by the current dimension attributes");
                         }
 
-                        if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
+                        if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                            this.cancel();
                            return AiOperation.Result.failed(
                               AiFailure.LOW_HEALTH,
-                              AiGuard.init_Str_Str("portal casting", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()),
+                              AiGuard.formatLowHealthAbort("portal casting", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()),
                               this.init_JsonObject_36().toString()
                            );
                         }
@@ -722,7 +722,7 @@ final class AiPortalCast {
                }
 
                AiOperation.Result write() {
-                  if (AiGameState.init_I_Str("minecraft:water_bucket") > 0) {
+                  if (AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
                      this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.CAST;
                      return this.load("Water ready");
                   }
@@ -773,7 +773,7 @@ final class AiPortalCast {
                      if (this.init_aX_RenderState.init()
                         && this.init_aX_CachePool != AiPortalCast.Inner_CachePool.SCOOP
                         && this.init_Minecraft.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN)
-                        && AiServerEvidence.init_J_BlockPos(step.cell()) > this.load_J) {
+                        && AiServerEvidence.blockRevision(step.cell()) > this.load_J) {
                         this.init_aX_CachePool = AiPortalCast.Inner_CachePool.SCOOP;
                         this.pop = 0;
                      }
@@ -807,7 +807,7 @@ final class AiPortalCast {
                }
 
                AiOperation.Result init(AiPortalCast.Inner_BufferHelper step) {
-                  this.load_J = AiServerEvidence.init_J_BlockPos(step.cell());
+                  this.load_J = AiServerEvidence.blockRevision(step.cell());
                   if (step.action() == AiPortalCast.Inner_DataUtil.WATER_OVER_LAVA && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                      return ++this.pop > 140
                         ? this.init(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + step.cell().toShortString() + " no longer holds a lava source", null)
@@ -961,7 +961,7 @@ final class AiPortalCast {
                }
 
                AiOperation.Result read(AiPortalCast.Inner_BufferHelper step) {
-                  if (AiGameState.init_I_Str("minecraft:lava_bucket") > 0) {
+                  if (AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
                      this.init_aX_CachePool = AiPortalCast.Inner_CachePool.LAVA_POUR;
                      this.pop = 0;
                      this.write_Z = false;
@@ -1012,7 +1012,7 @@ final class AiPortalCast {
                      return this.load("Lava in place at " + step.cell().toShortString());
                   }
 
-                  if (AiGameState.init_I_Str("minecraft:lava_bucket") <= 0) {
+                  if (AiGameState.countInventoryItem("minecraft:lava_bucket") <= 0) {
                      if (++this.pop > 40) {
                         if (++this.tick >= 2) {
                            return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Lava did not stay in frame cell " + step.cell().toShortString(), null);
@@ -1033,7 +1033,7 @@ final class AiPortalCast {
 
                      if (++this.pop > 60 * (this.tick + 1)) {
                         return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the lava pour face for " + step.cell().toShortString(), null);
-                     } else if (AiItems.read(AiItems.load_af_DataUtil("minecraft:lava_bucket")) < 0) {
+                     } else if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:lava_bucket")) < 0) {
                         this.init_aX_CachePool = AiPortalCast.Inner_CachePool.LAVA_REFILL;
                         return this.load("Refilling the lava bucket");
                      } else if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
@@ -1047,7 +1047,7 @@ final class AiPortalCast {
                }
 
                AiOperation.Result update(AiPortalCast.Inner_BufferHelper step) {
-                  if (this.init_Minecraft.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && AiServerEvidence.init_J_BlockPos(step.cell()) > this.load_J) {
+                  if (this.init_Minecraft.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && AiServerEvidence.blockRevision(step.cell()) > this.load_J) {
                      this.init_aX_CachePool = AiPortalCast.Inner_CachePool.SCOOP;
                      this.pop = 0;
                      return this.load("Obsidian confirmed at " + step.cell().toShortString());
@@ -1058,7 +1058,7 @@ final class AiPortalCast {
                      return stray;
                   }
 
-                  if (!this.init_aX_RenderState.init() && AiGameState.init_I_Str("minecraft:water_bucket") > 0) {
+                  if (!this.init_aX_RenderState.init() && AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
                      if (!this.write_Z && !this.init_aX_JsonUtil.init_Z()) {
                         AiOperation.Result approached = this.init(step.face(), false);
                         if (approached != null) {
@@ -1075,7 +1075,7 @@ final class AiPortalCast {
                         this.write_Z = false;
                      }
 
-                     if (AiItems.read(AiItems.load_af_DataUtil("minecraft:water_bucket")) < 0) {
+                     if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:water_bucket")) < 0) {
                         return this.init(AiFailure.MISSING_MATERIALS, "Lost the water bucket mid-cast", this.init_JsonObject_2("minecraft:water_bucket"));
                      }
 
@@ -1084,7 +1084,7 @@ final class AiPortalCast {
                         return this.load("Closing a screen before pouring");
                      }
 
-                     int filledBefore = AiGameState.init_I_Str("minecraft:water_bucket");
+                     int filledBefore = AiGameState.countInventoryItem("minecraft:water_bucket");
                      boolean alreadyClicked = this.write_Z;
                      AiOperation.Result poured = this.init(step.face());
                      if (!alreadyClicked && this.write_Z) {
@@ -1121,7 +1121,7 @@ final class AiPortalCast {
                   if (scooped == null) {
                      return this.load("Re-scooping the pour water");
                   } else if (this.init_aX_RenderState
-                     .init(step.waterCell(), AiGameState.init_I_Str("minecraft:water_bucket"), scooped.status() == AiOperation.Status.SUCCEEDED)) {
+                     .init(step.waterCell(), AiGameState.countInventoryItem("minecraft:water_bucket"), scooped.status() == AiOperation.Status.SUCCEEDED)) {
                      this.init_aX_JsonUtil.init(step.waterCell());
                      this.init_V_20();
                      return this.load("Water recovered; next cell");
@@ -1149,7 +1149,7 @@ final class AiPortalCast {
                   for (BlockPos interior : AiDimension.write(this.load_BlockPos, this.init_Direction)) {
                      BlockState state = this.init_Minecraft.level.getBlockState(interior);
                      if (!state.isAir() && !state.is(Blocks.FIRE)) {
-                        if (state.getFluidState().is(FluidTags.WATER) && AiGameState.init_I_Str("minecraft:bucket") > 0) {
+                        if (state.getFluidState().is(FluidTags.WATER) && AiGameState.countInventoryItem("minecraft:bucket") > 0) {
                            if (this.load_AiOperation == null) {
                               this.load_AiOperation = this.init("water", interior, 15);
                            }
@@ -1193,19 +1193,19 @@ final class AiPortalCast {
                }
 
                AiOperation.Result flush() {
-                  if (AiItems.read(AiItems.load_af_DataUtil("minecraft:" + this.load_Str)) < 0) {
+                  if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:" + this.load_Str)) < 0) {
                      this.load_Str = "";
                      return this.load("Re-selecting the lighter");
                   }
 
                   BlockPos floor = this.load_BlockPos.below();
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_BlockPos_Direction(floor, Direction.UP));
-                  this.init_DataUtil.load_V();
-                  if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(floor)) {
+                  this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.aimPointForBlockFace(floor, Direction.UP));
+                  this.init_DataUtil.tick();
+                  if (!autismclient.ai.engine.AiAim.isLookingAtBlock(floor)) {
                      return this.load("Turning to light the portal");
                   }
 
-                  BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                  BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (hit == null) {
                      return this.load("Turning to light the portal");
                   }
@@ -1289,7 +1289,7 @@ final class AiPortalCast {
                         return this.load("Lava beside the doorway; waiting for the wood to catch");
                      }
 
-                     if (!this.write_Z && !this.init_aX_JsonUtil.init_Z() && AiGameState.init_I_Str("minecraft:lava_bucket") > 0) {
+                     if (!this.write_Z && !this.init_aX_JsonUtil.init_Z() && AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
                         AiOperation.Result approached = this.init(this.load_aX_SyncManager, true);
                         if (approached != null) {
                            return approached;
@@ -1300,8 +1300,8 @@ final class AiPortalCast {
                         return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not pour lava beside the doorway", null);
                      }
 
-                     if (AiGameState.init_I_Str("minecraft:lava_bucket") > 0) {
-                        if (AiItems.read(AiItems.load_af_DataUtil("minecraft:lava_bucket")) < 0) {
+                     if (AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
+                        if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:lava_bucket")) < 0) {
                            return this.init(AiFailure.MISSING_MATERIALS, "Lost the lava bucket for the fire spread", this.init_JsonObject_2("minecraft:lava_bucket"));
                         } else if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
                            this.init_Minecraft.player.closeContainer();
@@ -1345,9 +1345,9 @@ final class AiPortalCast {
                      return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The planned pour face is unavailable", null);
                   }
 
-                  if (autismclient.ai.engine.AiMotionSafety.fill_Z()
+                  if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
                      && (!lava || AiPortalCast.init(this.init_Minecraft.player.blockPosition(), face.support().relative(face.face())))
-                     && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, face.support(), face.face()) != null) {
+                     && autismclient.ai.engine.AiBlockInteraction.findFaceHit(this.init_Minecraft, face.support(), face.face()) != null) {
                      return null;
                   }
 
@@ -1428,15 +1428,15 @@ final class AiPortalCast {
                         }
                      }
 
-                     BlockHitResult visible = autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, face.support(), face.face());
+                     BlockHitResult visible = autismclient.ai.engine.AiBlockInteraction.findFaceHit(this.init_Minecraft, face.support(), face.face());
                      if (visible == null) {
                         return null;
                      } else {
-                        this.init_DataUtil.init_V_Vec3(AiPortalCast.init(this.init_Minecraft.player.getEyePosition(), visible));
-                        this.init_DataUtil.load_V();
-                        BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                        this.init_DataUtil.aimAt(AiPortalCast.init(this.init_Minecraft.player.getEyePosition(), visible));
+                        this.init_DataUtil.tick();
+                        BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                         if (hit != null && hit.getBlockPos().equals(face.support()) && hit.getDirection() == face.face()) {
-                           this.init_aX_JsonUtil.init(pourCell, bucket, AiGameState.init_I_Str(bucket), AiServerEvidence.init_J(), AiServerEvidence.init_J_BlockPos(pourCell));
+                           this.init_aX_JsonUtil.init(pourCell, bucket, AiGameState.countInventoryItem(bucket), AiServerEvidence.inventoryRevision(), AiServerEvidence.blockRevision(pourCell));
                            this.init_Minecraft.gameMode.useItem(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
                            Compat263.swing(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
                            this.write_Z = true;
@@ -1518,7 +1518,7 @@ final class AiPortalCast {
 
                AiOperation init(String fluid, BlockPos source, int seconds) {
                   return AiBucket.init(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "action", "fill", "fluid", fluid, "x", source.getX(), "y", source.getY(), "z", source.getZ(), "timeoutSeconds", seconds
                      )
                   );
@@ -1539,13 +1539,13 @@ final class AiPortalCast {
                         return null;
                      }
 
-                     this.init_X_BufferHelper = AiGuard.init_X_BufferHelper();
-                     AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, this.init_X_BufferHelper, this.init_I_22());
+                     this.init_X_BufferHelper = AiGuard.sampleStatus();
+                     AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, this.init_X_BufferHelper, this.init_I_22());
                      if (action == null) {
                         return null;
                      }
 
-                     this.init_Str = AiGuard.init_Str(this.init_X_CachePool, this.init_X_BufferHelper);
+                     this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, this.init_X_BufferHelper);
                      this.put++;
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
@@ -1580,12 +1580,12 @@ final class AiPortalCast {
                }
 
                void load_V_11() {
-                  this.write_I = AiGameState.init_I_Str("minecraft:water_bucket");
-                  this.update_I = AiGameState.init_I_Str("minecraft:lava_bucket");
-                  this.sync_I = AiGameState.init_I_Str("minecraft:bucket");
+                  this.write_I = AiGameState.countInventoryItem("minecraft:water_bucket");
+                  this.update_I = AiGameState.countInventoryItem("minecraft:lava_bucket");
+                  this.sync_I = AiGameState.countInventoryItem("minecraft:bucket");
                   this.flush = this.init_I(AiPortalCast.init_List);
-                  this.close = AiGameState.init_I_Str("minecraft:flint_and_steel");
-                  this.open = AiGameState.init_I_Str("minecraft:fire_charge");
+                  this.close = AiGameState.countInventoryItem("minecraft:flint_and_steel");
+                  this.open = AiGameState.countInventoryItem("minecraft:fire_charge");
                   this.poll = this.init_I(AiPortalCast.load_List);
                }
 
@@ -1593,7 +1593,7 @@ final class AiPortalCast {
                   int total = 0;
 
                   for (String id : ids) {
-                     total += AiGameState.init_I_Str(id);
+                     total += AiGameState.countInventoryItem(id);
                   }
 
                   return total;
@@ -1601,7 +1601,7 @@ final class AiPortalCast {
 
                Item init_Item(List<String> ids) {
                   for (String id : ids) {
-                     if (AiGameState.init_I_Str(id) > 0) {
+                     if (AiGameState.countInventoryItem(id) > 0) {
                         Item item = BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).orElse(null);
                         if (item instanceof BlockItem
                            && (ids != AiPortalCast.init_List || autismclient.ai.engine.AiRestock.init(item.getDefaultInstance(), this.init_Minecraft.player.getInventory()))) {
@@ -1632,7 +1632,7 @@ final class AiPortalCast {
                   double bestDistance = 1.7976931348623157E308;
 
                   for (BlockPos pos : BlockPos.betweenClosed(center.offset(-radius, -vertical, -radius), center.offset(radius, vertical, radius))) {
-                     if (AiTerrain.init(this.init_Minecraft.level, pos)) {
+                     if (AiTerrain.isLoaded(this.init_Minecraft.level, pos)) {
                         FluidState fluid = this.init_Minecraft.level.getFluidState(pos);
                         if (fluid.isSource()
                            && fluid.is(lava ? FluidTags.LAVA : FluidTags.WATER)
@@ -1657,7 +1657,7 @@ final class AiPortalCast {
                         break;
                      }
 
-                     if (AiTerrain.init(this.init_Minecraft.level, pos)) {
+                     if (AiTerrain.isLoaded(this.init_Minecraft.level, pos)) {
                         FluidState fluid = this.init_Minecraft.level.getFluidState(pos);
                         if (fluid.isSource() && fluid.is(FluidTags.LAVA)) {
                            sources.add(pos.immutable());
@@ -1738,7 +1738,7 @@ final class AiPortalCast {
                }
 
                boolean load(BlockPos cell) {
-                  if (!AiTerrain.init(this.init_Minecraft.level, cell)) {
+                  if (!AiTerrain.isLoaded(this.init_Minecraft.level, cell)) {
                      return false;
                   } else if (AiPortalCast.load(this.init_Minecraft.level, cell)) {
                      return false;
@@ -1770,7 +1770,7 @@ final class AiPortalCast {
                            this.init_AiOperation.cancel();
                            this.init_Z = true;
                            this.init_AiOperation = load(target, 3.0, seconds);
-                           return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, r.message() + "; trying a wider stance", new JsonObject());
+                           return AiGameOperations.result(AiOperation.Status.RUNNING, r.message() + "; trying a wider stance", new JsonObject());
                         } else {
                            return r;
                         }
@@ -1848,7 +1848,7 @@ final class AiPortalCast {
                }
 
                AiPortalCast.Inner_ConfigStore init_aX_ConfigStore(BlockPos pos) {
-                  if (!AiTerrain.init(this.init_Minecraft.level, pos)) {
+                  if (!AiTerrain.isLoaded(this.init_Minecraft.level, pos)) {
                      return AiPortalCast.Inner_ConfigStore.SOLID;
                   }
 
@@ -1882,7 +1882,7 @@ final class AiPortalCast {
                }
 
                JsonObject init_JsonObject_36() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
+                  JsonObject out = AiJson.objectOf(
                      "phase",
                      this.init_aX_NetHelper.name().toLowerCase(Locale.ROOT),
                      "castCells",
@@ -1907,7 +1907,7 @@ final class AiPortalCast {
                   if (this.load_BlockPos != null) {
                      out.add(
                         "frame",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "x",
                            this.load_BlockPos.getX(),
                            "y",
@@ -1924,21 +1924,21 @@ final class AiPortalCast {
                      AiPortalCast.Inner_BufferHelper step = this.init_aX_StreamUtil.steps().get(this.push);
                      out.add(
                         "step",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "index", this.push, "action", step.action().name().toLowerCase(Locale.ROOT), "cell", step.cell().toShortString()
                         )
                      );
                   }
 
                   if (this.put > 0) {
-                     out.add("guard", AiGuard.init_JsonObject_X_BufferHelper(this.init_X_BufferHelper, this.put, this.init_Str));
+                     out.add("guard", AiGuard.statusToJson(this.init_X_BufferHelper, this.put, this.init_Str));
                   }
 
                   if (this.init_aX_StateCache != null && this.init_aX_StateCache.init() != null) {
                      AiOperation.Result receipt = this.init_aX_StateCache.init();
                      out.add(
                         "pourApproach",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "status",
                            receipt.status().name(),
                            "message",
@@ -1946,7 +1946,7 @@ final class AiPortalCast {
                            "pending",
                            this.init_aX_StateCache.requiresReconciliationAfterEmergency(),
                            "receipt",
-                           AiRunResources.init_JsonObject(receipt.dataJson())
+                           AiRunResources.parseEvidenceJson(receipt.dataJson())
                         )
                      );
                   }
@@ -2016,7 +2016,7 @@ final class AiPortalCast {
                public void cancel() {
                   if (!this.sync_Z) {
                      this.sync_Z = true;
-                     this.init_DataUtil.init_V();
+                     this.init_DataUtil.clear();
                      this.init_DataPipe.init_V();
                      if (this.init_aX_StateCache != null) {
                         this.init_aX_StateCache.cancel();

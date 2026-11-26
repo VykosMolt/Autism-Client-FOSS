@@ -86,18 +86,18 @@ final class AiEntityQuery {
       JsonObject out = new JsonObject();
       out.addProperty("id", id);
       out.addProperty("type", typeId);
-      out.add("pos", AiJson.init_JsonObject_ObjArr("x", init(x), "y", init(y), "z", init(z)));
+      out.add("pos", AiJson.objectOf("x", init(x), "y", init(y), "z", init(z)));
       out.addProperty("distance", init(distance));
-      out.add("health", health == null ? JsonNull.INSTANCE : AiJson.init.toJsonTree(init(health.floatValue())));
+      out.add("health", health == null ? JsonNull.INSTANCE : AiJson.GSON.toJsonTree(init(health.floatValue())));
       out.addProperty("hostile", hostile);
       out.addProperty("category", category);
       if (!equipment.isEmpty()) {
-         out.add("equipment", AiJson.init.toJsonTree(equipment));
+         out.add("equipment", AiJson.GSON.toJsonTree(equipment));
       }
 
       out.addProperty("lineOfSight", lineOfSight);
       if (itemId != null) {
-         out.add("item", AiJson.init_JsonObject_ObjArr("id", itemId, "count", itemCount));
+         out.add("item", AiJson.objectOf("id", itemId, "count", itemCount));
       }
 
       return out;
@@ -106,18 +106,18 @@ final class AiEntityQuery {
    static JsonObject init(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         double radius = Math.max(1.0, Math.min(128.0, AiJson.init_D_JsonObject(args, "radius", 32.0)));
+         double radius = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "radius", 32.0)));
          boolean boxMode = args.has("dx") || args.has("dy") || args.has("dz");
-         double dx = Math.max(1.0, Math.min(128.0, AiJson.init_D_JsonObject(args, "dx", 32.0)));
-         double dy = Math.max(1.0, Math.min(128.0, AiJson.init_D_JsonObject(args, "dy", 32.0)));
-         double dz = Math.max(1.0, Math.min(128.0, AiJson.init_D_JsonObject(args, "dz", 32.0)));
-         String spec = AiJson.init_Str_JsonObject(args, "type", "");
-         String category = AiJson.init_Str_JsonObject(args, "category", "all").trim().toLowerCase(Locale.ROOT);
+         double dx = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "dx", 32.0)));
+         double dy = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "dy", 32.0)));
+         double dz = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "dz", 32.0)));
+         String spec = AiJson.getString(args, "type", "");
+         String category = AiJson.getString(args, "category", "all").trim().toLowerCase(Locale.ROOT);
          if (!load.contains(category)) {
             throw new IllegalArgumentException("category must be one of hostile, passive, villager, player, item, projectile, boss, vehicle, all");
          }
 
-         int limit = Math.max(1, Math.min(128, AiJson.init_I_JsonObject(args, "limit", 32)));
+         int limit = Math.max(1, Math.min(128, AiJson.getInt(args, "limit", 32)));
 
          record Inner_DataUtil(JsonObject entry, double distance, int id) {
          }
@@ -186,7 +186,7 @@ final class AiEntityQuery {
             entities.add(row.entry());
          }
 
-         return AiJson.init_JsonObject_ObjArr("entities", entities, "count", entities.size(), "matched", matched, "mode", boxMode ? "box" : "radius");
+         return AiJson.objectOf("entities", entities, "count", entities.size(), "matched", matched, "mode", boxMode ? "box" : "radius");
       } else {
          throw new IllegalArgumentException("Entity query requires a connected living player");
       }

@@ -51,7 +51,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean isFreecamActive() {
-      return autismclient.modules.FreecamController.init_Z();
+      return autismclient.modules.FreecamController.isActive();
    }
 
    public static boolean isNoRenderInWallOverlay() {

@@ -25,12 +25,12 @@ public final class AiRunResources {
    static final int sync = 64;
    static final int flush = 40;
    static final int close = 32;
-   private static Object init_Obj;
-   private static String init_Str;
-   private static Object load_Obj;
-   private static Map<String, Integer> init_Map = Map.of();
-   private static Map<String, Integer> load_Map = Map.of();
-   private static final Set<String> init_Set = Set.of(
+   private static Object campaignToken;
+   private static String campaignWorldId;
+   private static Object campaignConnection;
+   private static Map<String, Integer> reservedItems = Map.of();
+   private static Map<String, Integer> protectedBuildingBlocks = Map.of();
+   private static final Set<String> UNSAFE_FOODS = Set.of(
       "minecraft:rotten_flesh",
       "minecraft:poisonous_potato",
       "minecraft:spider_eye",
@@ -42,22 +42,22 @@ public final class AiRunResources {
    private AiRunResources() {
    }
 
-   static AiRunResources.Inner_DataUtil init(int target, int activation, int mobilityPearls) {
-      int e = init("minecraft:ender_eye", 0);
-      int p = Math.max(0, init("minecraft:ender_pearl", 0) - mobilityPearls);
-      int b = init("minecraft:blaze_powder", 0);
-      int r = init("minecraft:blaze_rod", 0);
+   static AiRunResources.Inner_DataUtil eyeBudget(int target, int activation, int mobilityPearls) {
+      int e = countUsableItem("minecraft:ender_eye", 0);
+      int p = Math.max(0, countUsableItem("minecraft:ender_pearl", 0) - mobilityPearls);
+      int b = countUsableItem("minecraft:blaze_powder", 0);
+      int r = countUsableItem("minecraft:blaze_rod", 0);
       int equivalents = e + Math.min(p, b + 2 * r);
       return new AiRunResources.Inner_DataUtil(
          e, p, b, r, target, equivalents, Math.max(0, target - e - p), Math.max(0, target - e - b - 2 * r), Math.max(0, equivalents - activation)
       );
    }
 
-   static int init_I() {
-      return init("minecraft:ender_eye", 0) + init("minecraft:blaze_powder", 0) + 2 * init("minecraft:blaze_rod", 0);
+   static int blazePowderEquivalents() {
+      return countUsableItem("minecraft:ender_eye", 0) + countUsableItem("minecraft:blaze_powder", 0) + 2 * countUsableItem("minecraft:blaze_rod", 0);
    }
 
-   static int init(String id, int durability) {
+   static int countUsableItem(String id, int durability) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -68,7 +68,7 @@ public final class AiRunResources {
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
          ItemStack stack = inventory.getItem(slot);
-         if (id.equals(init_Str(stack)) && init(stack, durability)) {
+         if (id.equals(itemIdOf(stack)) && hasMinDurability(stack, durability)) {
             count += stack.getCount();
          }
       }
@@ -76,15 +76,15 @@ public final class AiRunResources {
       return count;
    }
 
-   static boolean init(ItemStack stack, int durability) {
-      return AiItems.init(stack, durability);
+   static boolean hasMinDurability(ItemStack stack, int durability) {
+      return AiItems.hasEnoughDurability(stack, durability);
    }
 
-   private static String init_Str(ItemStack stack) {
+   private static String itemIdOf(ItemStack stack) {
       return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   static Map<String, Integer> init_Map() {
+   static Map<String, Integer> missingMandatoryGear() {
       Map<String, Integer> out = new LinkedHashMap<>();
       Map<String, Integer> kit = new LinkedHashMap<>();
       kit.put("minecraft:diamond_pickaxe", 1);
@@ -92,51 +92,51 @@ public final class AiRunResources {
       kit.forEach(
          (id, count) -> {
             int have = id.equals("minecraft:bucket")
-               ? init(id, 0) + init("minecraft:water_bucket", 0) + init("minecraft:lava_bucket", 0)
-               : load(id, id.contains("boots") ? 16 : (id.contains("diamond_") ? 32 : 0));
+               ? countUsableItem(id, 0) + countUsableItem("minecraft:water_bucket", 0) + countUsableItem("minecraft:lava_bucket", 0)
+               : countTierOrNetherite(id, id.contains("boots") ? 16 : (id.contains("diamond_") ? 32 : 0));
             if (have < count) {
-               out.put(id, id.equals("minecraft:bucket") ? count : AiCraft.init_I(id) + count - have);
+               out.put(id, id.equals("minecraft:bucket") ? count : AiCraft.countItem(id) + count - have);
             }
          }
       );
       return out;
    }
 
-   static String init_Str(String id) {
+   static String netheriteUpgradeId(String id) {
       return id != null && id.startsWith("minecraft:diamond_") ? "minecraft:netherite_" + id.substring("minecraft:diamond_".length()) : null;
    }
 
-   static int load(String id, int durability) {
-      String better = init_Str(id);
-      return init(id, durability) + (better == null ? 0 : init(better, durability));
+   static int countTierOrNetherite(String id, int durability) {
+      String better = netheriteUpgradeId(id);
+      return countUsableItem(id, durability) + (better == null ? 0 : countUsableItem(better, durability));
    }
 
-   static boolean init_Z() {
+   static boolean isMandatoryArmorEquipped() {
       Minecraft mc = Minecraft.getInstance();
       return mc.player == null
          ? false
-         : init(mc, EquipmentSlot.HEAD, "minecraft:diamond_helmet")
-            && init(mc, EquipmentSlot.CHEST, "minecraft:diamond_chestplate")
-            && init(mc, EquipmentSlot.LEGS, "minecraft:diamond_leggings")
-            && init(mc, EquipmentSlot.FEET, "minecraft:golden_boots");
+         : isSlotEquippedWith(mc, EquipmentSlot.HEAD, "minecraft:diamond_helmet")
+            && isSlotEquippedWith(mc, EquipmentSlot.CHEST, "minecraft:diamond_chestplate")
+            && isSlotEquippedWith(mc, EquipmentSlot.LEGS, "minecraft:diamond_leggings")
+            && isSlotEquippedWith(mc, EquipmentSlot.FEET, "minecraft:golden_boots");
    }
 
-   private static boolean init(Minecraft mc, EquipmentSlot slot, String id) {
+   private static boolean isSlotEquippedWith(Minecraft mc, EquipmentSlot slot, String id) {
       ItemStack stack = mc.player.getItemBySlot(slot);
-      String wornId = init_Str(stack);
-      return (id.equals(wornId) || wornId.equals(init_Str(id))) && init(stack, id.startsWith("minecraft:diamond_") ? 32 : 16);
+      String wornId = itemIdOf(stack);
+      return (id.equals(wornId) || wornId.equals(netheriteUpgradeId(id))) && hasMinDurability(stack, id.startsWith("minecraft:diamond_") ? 32 : 16);
    }
 
-   static boolean init_Z(ItemStack stack) {
-      String id = init_Str(stack);
-      return stack.has(DataComponents.FOOD) && !init_Set.contains(id);
+   static boolean isSafeFood(ItemStack stack) {
+      String id = itemIdOf(stack);
+      return stack.has(DataComponents.FOOD) && !UNSAFE_FOODS.contains(id);
    }
 
-   static int init_I(ItemStack stack) {
-      return init_Z(stack) ? stack.getCount() : 0;
+   static int safeFoodCount(ItemStack stack) {
+      return isSafeFood(stack) ? stack.getCount() : 0;
    }
 
-   static int load_I() {
+   static int totalSafeFoodItems() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -145,13 +145,13 @@ public final class AiRunResources {
       int total = 0;
 
       for (int slot = 0; slot < 36; slot++) {
-         total += init_I(mc.player.getInventory().getItem(slot));
+         total += safeFoodCount(mc.player.getInventory().getItem(slot));
       }
 
       return total;
    }
 
-   static int read() {
+   static int totalSafeFoodNutrition() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          return 0;
@@ -162,8 +162,8 @@ public final class AiRunResources {
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = mc.player.getInventory().getItem(slot);
          FoodProperties food = stack.get(DataComponents.FOOD);
-         String id = init_Str(stack);
-         if (init_Z(stack) && !AiSpeedrun.read_Map.containsKey(id)) {
+         String id = itemIdOf(stack);
+         if (isSafeFood(stack) && !AiSpeedrun.read_Map.containsKey(id)) {
             total += food.nutrition() * stack.getCount();
          }
       }
@@ -171,11 +171,11 @@ public final class AiRunResources {
       return total;
    }
 
-   static int write() {
-      return init("minecraft:arrow", 0) + init("minecraft:spectral_arrow", 0) + init("minecraft:tipped_arrow", 0);
+   static int totalArrowCount() {
+      return countUsableItem("minecraft:arrow", 0) + countUsableItem("minecraft:spectral_arrow", 0) + countUsableItem("minecraft:tipped_arrow", 0);
    }
 
-   static int update() {
+   static int spareBuildingBlockCount() {
       Minecraft mc = Minecraft.getInstance();
       Map<Item, Integer> amounts = new LinkedHashMap<>();
       if (mc.player != null) {
@@ -187,10 +187,10 @@ public final class AiRunResources {
          }
       }
 
-      return amounts.entrySet().stream().mapToInt(entry -> Math.max(0, entry.getValue() - load(entry.getKey()))).sum();
+      return amounts.entrySet().stream().mapToInt(entry -> Math.max(0, entry.getValue() - mandatoryReservedCount(entry.getKey()))).sum();
    }
 
-   static JsonObject init(boolean mandatoryKit) {
+   static JsonObject readinessDeficits(boolean mandatoryKit) {
       Minecraft mc = Minecraft.getInstance();
       JsonObject out = new JsonObject();
       if (mc.player == null) {
@@ -199,13 +199,13 @@ public final class AiRunResources {
       }
 
       if (mandatoryKit) {
-         init_Map().forEach(out::addProperty);
-         if (!init_Z()) {
+         missingMandatoryGear().forEach(out::addProperty);
+         if (!isMandatoryArmorEquipped()) {
             out.addProperty("equipment", "equip the required armor and golden boots");
          }
       }
 
-      int water = init("minecraft:water_bucket", 0);
+      int water = countUsableItem("minecraft:water_bucket", 0);
       if (water < 2) {
          out.addProperty("waterBuckets", 2 - water);
       }
@@ -218,51 +218,51 @@ public final class AiRunResources {
          out.addProperty("hunger", 18 - mc.player.getFoodData().getFoodLevel());
       }
 
-      if (read() < 32) {
-         out.addProperty("foodNutrition", 32 - read());
+      if (totalSafeFoodNutrition() < 32) {
+         out.addProperty("foodNutrition", 32 - totalSafeFoodNutrition());
       }
 
-      if (update() < 32) {
-         out.addProperty("buildingBlocks", 32 - update());
+      if (spareBuildingBlockCount() < 32) {
+         out.addProperty("buildingBlocks", 32 - spareBuildingBlockCount());
       }
 
       if (!AiForage.load()) {
          out.addProperty("fightSupplies", "four beds or a usable bow with twelve arrows");
       }
 
-      if (init("minecraft:bow", 24) == 0 || write() < 12) {
+      if (countUsableItem("minecraft:bow", 24) == 0 || totalArrowCount() < 12) {
          out.addProperty("crystalFallback", "a usable bow and at least twelve arrows, in addition to the perch weapon");
       }
 
-      if (load("minecraft:diamond_axe", 16) == 0 && init("minecraft:iron_sword", 16) == 0 && load("minecraft:diamond_sword", 16) == 0) {
+      if (countTierOrNetherite("minecraft:diamond_axe", 16) == 0 && countUsableItem("minecraft:iron_sword", 16) == 0 && countTierOrNetherite("minecraft:diamond_sword", 16) == 0) {
          out.addProperty("fallbackWeapon", "a usable axe or sword for the perch and covered crystal route");
       }
 
       return out;
    }
 
-   static Object init_Obj() {
-      init_Obj = new Object();
-      init_Str = AiWorldIdentity.init(Minecraft.getInstance());
-      load_Obj = Minecraft.getInstance().getConnection();
-      init_V();
-      return init_Obj;
+   static Object beginCampaign() {
+      campaignToken = new Object();
+      campaignWorldId = AiWorldIdentity.init(Minecraft.getInstance());
+      campaignConnection = Minecraft.getInstance().getConnection();
+      refreshReservations();
+      return campaignToken;
    }
 
-   static boolean load_Z() {
+   static boolean isCampaignActive() {
       Minecraft mc = Minecraft.getInstance();
-      return init_Obj != null && mc.player != null && mc.level != null && load_Obj == mc.getConnection() && init_Str.equals(AiWorldIdentity.init(mc));
+      return campaignToken != null && mc.player != null && mc.level != null && campaignConnection == mc.getConnection() && campaignWorldId.equals(AiWorldIdentity.init(mc));
    }
 
-   static void init_V() {
-      if (load_Z()) {
+   static void refreshReservations() {
+      if (isCampaignActive()) {
          Map<String, Integer> next = new LinkedHashMap<>();
          next.put("minecraft:obsidian", 10);
-         next.put("minecraft:diamond", init_Map().isEmpty() ? 0 : init("minecraft:diamond", 0));
+         next.put("minecraft:diamond", missingMandatoryGear().isEmpty() ? 0 : countUsableItem("minecraft:diamond", 0));
 
          for (String id : AiSpeedrun.init_Map.keySet()) {
             next.put(id, id.equals("minecraft:bucket") ? 3 : 1);
-            String better = init_Str(id);
+            String better = netheriteUpgradeId(id);
             if (better != null) {
                next.put(better, 1);
             }
@@ -280,10 +280,10 @@ public final class AiRunResources {
             "minecraft:blaze_rod",
             "minecraft:fire_charge"
          )) {
-            next.put(id, init(id, 0));
+            next.put(id, countUsableItem(id, 0));
          }
 
-         if (!init_Map().isEmpty()) {
+         if (!missingMandatoryGear().isEmpty()) {
             for (String id : List.of(
                "minecraft:iron_ingot",
                "minecraft:raw_iron",
@@ -293,37 +293,37 @@ public final class AiRunResources {
                "minecraft:raw_gold",
                "minecraft:gold_nugget"
             )) {
-               next.put(id, init(id, 0));
+               next.put(id, countUsableItem(id, 0));
             }
          }
 
-         if (init("minecraft:golden_boots", 16) == 0) {
+         if (countUsableItem("minecraft:golden_boots", 16) == 0) {
             next.merge("minecraft:gold_ingot", 4, Math::max);
          }
 
          for (String id : List.of(
             "minecraft:bow", "minecraft:arrow", "minecraft:spectral_arrow", "minecraft:tipped_arrow", "minecraft:string", "minecraft:feather"
          )) {
-            next.put(id, init(id, 0));
+            next.put(id, countUsableItem(id, 0));
          }
 
          Minecraft mc = Minecraft.getInstance();
 
          for (int slot = 0; slot < 36; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
-            String itemId = init_Str(stack);
-            if (init_Z(stack) || itemId.endsWith("_bed") || itemId.endsWith("_wool")) {
-               next.put(itemId, init(itemId, 0));
+            String itemId = itemIdOf(stack);
+            if (isSafeFood(stack) || itemId.endsWith("_bed") || itemId.endsWith("_wool")) {
+               next.put(itemId, countUsableItem(itemId, 0));
             }
          }
 
-         init_Map = Map.copyOf(next);
+         reservedItems = Map.copyOf(next);
          Map<String, Integer> building = new LinkedHashMap<>();
 
          for (int slot = 0; slot < 36; slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
             if (AiTidy.init_Z(stack)) {
-               building.merge(init_Str(stack), stack.getCount(), Integer::sum);
+               building.merge(itemIdOf(stack), stack.getCount(), Integer::sum);
             }
          }
 
@@ -349,54 +349,54 @@ public final class AiRunResources {
             }
          }
 
-         load_Map = Map.copyOf(protectedBlocks);
+         protectedBuildingBlocks = Map.copyOf(protectedBlocks);
       }
    }
 
-   static int init(Item item) {
+   static int totalReservedCount(Item item) {
       String key = BuiltInRegistries.ITEM.getKey(item).toString();
-      return load_Z() ? init_Map.getOrDefault(key, 0) + load_Map.getOrDefault(key, 0) : 0;
+      return isCampaignActive() ? reservedItems.getOrDefault(key, 0) + protectedBuildingBlocks.getOrDefault(key, 0) : 0;
    }
 
-   public static int load(Item item) {
-      return load_Z() ? init_Map.getOrDefault(BuiltInRegistries.ITEM.getKey(item).toString(), 0) : 0;
+   public static int mandatoryReservedCount(Item item) {
+      return isCampaignActive() ? reservedItems.getOrDefault(BuiltInRegistries.ITEM.getKey(item).toString(), 0) : 0;
    }
 
-   static int init_I(String id) {
-      return load_Z() ? init_Map.getOrDefault(id, 0) : 0;
+   static int reservedItemCount(String id) {
+      return isCampaignActive() ? reservedItems.getOrDefault(id, 0) : 0;
    }
 
-   static int load_I(String id) {
-      return Math.max(0, init(id, 0) - (load_Z() ? init_Map.getOrDefault(id, 0) : 0));
+   static int unreservedItemCount(String id) {
+      return Math.max(0, countUsableItem(id, 0) - (isCampaignActive() ? reservedItems.getOrDefault(id, 0) : 0));
    }
 
-   static JsonObject init_JsonObject(String json) {
+   static JsonObject parseEvidenceJson(String json) {
       try {
-         return json != null && !json.isBlank() ? AiJson.init_JsonObject_Str(json) : new JsonObject();
+         return json != null && !json.isBlank() ? AiJson.parseObject(json) : new JsonObject();
       } catch (RuntimeException malformed) {
-         return AiJson.init_JsonObject_ObjArr("unparsedEvidence", json == null ? "" : AiSpeedrun.init_Str_Str(json));
+         return AiJson.objectOf("unparsedEvidence", json == null ? "" : AiSpeedrun.init_Str_Str(json));
       }
    }
 
-   static JsonObject load_JsonObject(String json) {
-      JsonObject out = init_JsonObject(json).deepCopy();
+   static JsonObject compactEvidenceJson(String json) {
+      JsonObject out = parseEvidenceJson(json).deepCopy();
       out.remove("steps");
       out.remove("trail");
       out.remove("transfers");
-      return out.toString().length() <= 12000 ? out : AiJson.init_JsonObject_ObjArr("detail", AiSpeedrun.init_Str_Str(json), "evidenceTruncated", true);
+      return out.toString().length() <= 12000 ? out : AiJson.objectOf("detail", AiSpeedrun.init_Str_Str(json), "evidenceTruncated", true);
    }
 
-   static void init(Object token) {
-      if (init_Obj == token) {
-         init_Obj = null;
-         init_Str = null;
-         load_Obj = null;
-         init_Map = Map.of();
-         load_Map = Map.of();
+   static void endCampaign(Object token) {
+      if (campaignToken == token) {
+         campaignToken = null;
+         campaignWorldId = null;
+         campaignConnection = null;
+         reservedItems = Map.of();
+         protectedBuildingBlocks = Map.of();
       }
    }
 
-   static JsonObject init_JsonObject() {
+   static JsonObject inventorySnapshotJson() {
       Minecraft mc = Minecraft.getInstance();
       JsonObject inventory = new JsonObject();
       JsonObject held = new JsonObject();
@@ -404,49 +404,49 @@ public final class AiRunResources {
          for (int slot = 0; slot < mc.player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
             if (!stack.isEmpty()) {
-               inventory.addProperty(init_Str(stack), AiJson.init_I_JsonObject(inventory, init_Str(stack), 0) + stack.getCount());
+               inventory.addProperty(itemIdOf(stack), AiJson.getInt(inventory, itemIdOf(stack), 0) + stack.getCount());
             }
          }
 
          ItemStack cursor = mc.player.containerMenu.getCarried();
          if (!cursor.isEmpty()) {
-            held.addProperty(init_Str(cursor), cursor.getCount());
+            held.addProperty(itemIdOf(cursor), cursor.getCount());
          }
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "observed",
          inventory,
          "campaignActive",
-         load_Z(),
+         isCampaignActive(),
          "reserved",
-         AiJson.init.toJsonTree(load_Z() ? init_Map : Map.of()),
+         AiJson.GSON.toJsonTree(isCampaignActive() ? reservedItems : Map.of()),
          "cleanupRouteBlocks",
-         AiJson.init.toJsonTree(load_Z() ? load_Map : Map.of()),
+         AiJson.GSON.toJsonTree(isCampaignActive() ? protectedBuildingBlocks : Map.of()),
          "inTransit",
          held,
          "missingGear",
-         AiJson.init.toJsonTree(init_Map()),
+         AiJson.GSON.toJsonTree(missingMandatoryGear()),
          "armorEquipped",
-         init_Z(),
+         isMandatoryArmorEquipped(),
          "convertiblePowder",
-         2 * init("minecraft:blaze_rod", 0),
+         2 * countUsableItem("minecraft:blaze_rod", 0),
          "activationEyeReserve",
          12,
          "eyes",
-         init(16, 12, 0).data(),
+         eyeBudget(16, 12, 0).data(),
          "foodNutrition",
-         read(),
+         totalSafeFoodNutrition(),
          "buildingBlocks",
-         update(),
+         spareBuildingBlockCount(),
          "inventoryRevision",
-         AiServerEvidence.init_J()
+         AiServerEvidence.inventoryRevision()
       );
    }
 
    record Inner_DataUtil(int eyes, int pearls, int powder, int rods, int target, int equivalents, int pearlDeficit, int powderDeficit, int navigationSpare) {
       JsonObject data() {
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "eyes",
             this.eyes,
             "pearls",

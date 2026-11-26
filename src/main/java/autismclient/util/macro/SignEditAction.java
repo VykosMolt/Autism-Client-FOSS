@@ -132,7 +132,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = MacroNbtCodecHelper.init(SignEditAction.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI);
+      this.targetMode = MacroNbtCodecHelper.parseEnum(SignEditAction.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI);
       this.line1 = tag.getStringOr("line1", "");
       this.line2 = tag.getStringOr("line2", "");
       this.line3 = tag.getStringOr("line3", "");
@@ -145,7 +145,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       this.waitForGuiAfter = tag.getBooleanOr("waitForGuiAfter", false);
       this.guiName = tag.getStringOr("guiName", "SIGN");
       if (tag.contains("closeMode")) {
-         this.closeMode = MacroNbtCodecHelper.init(SignEditAction.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), SignEditAction.Inner_DataUtil.STAY_OPEN);
+         this.closeMode = MacroNbtCodecHelper.parseEnum(SignEditAction.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), SignEditAction.Inner_DataUtil.STAY_OPEN);
       } else if (tag.getBooleanOr("sendClosePacketAfter", false)) {
          this.closeMode = SignEditAction.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY;
       } else if (tag.getBooleanOr("closeAfterEdit", false)) {

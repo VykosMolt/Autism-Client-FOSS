@@ -13,33 +13,33 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiMotionSafety {
-   private static final boolean putAt_Z = Boolean.getBoolean("autism.navigation.debug");
+   private static final boolean DEBUG_NAV = Boolean.getBoolean("autism.navigation.debug");
    static final double putAt_D = 0.5;
-   private static LocalPlayer putAt_LocalPlayer;
-   private static int flowState;
-   private static volatile float putAt_F;
-   private static volatile long putAt_J;
+   private static LocalPlayer activeNavPlayer;
+   private static int activeNavTick;
+   private static volatile float pitchFloorDegrees;
+   private static volatile long pitchFloorUntilNanos;
 
    private AiMotionSafety() {
    }
 
-   static void putAt_V_LocalPlayer_Z(LocalPlayer var0, boolean var1) {
-      putAt_LocalPlayer = var1 ? null : var0;
-      flowState = var0 == null ? 0 : var0.tickCount;
+   static void markNavigationControl(LocalPlayer var0, boolean var1) {
+      activeNavPlayer = var1 ? null : var0;
+      activeNavTick = var0 == null ? 0 : var0.tickCount;
    }
 
-   public static boolean putAt_Z() {
+   public static boolean isNavigationControlling() {
       LocalPlayer var0 = Minecraft.getInstance().player;
-      if (var0 != null && var0 == putAt_LocalPlayer) {
-         int var1 = var0.tickCount - flowState;
+      if (var0 != null && var0 == activeNavPlayer) {
+         int var1 = var0.tickCount - activeNavTick;
          return var1 >= 0 && var1 <= 1;
       } else {
          return false;
       }
    }
 
-   public static void putAt_V() {
-      putAt_LocalPlayer = null;
+   public static void releaseMovementKeys() {
+      activeNavPlayer = null;
       Minecraft var0 = Minecraft.getInstance();
       if (var0.options != null) {
          for (KeyMapping var2 : List.of(
@@ -56,11 +56,11 @@ public final class AiMotionSafety {
       }
    }
 
-   public static AiPhysics.MotionState putAt_TokenCore_TableCac(LocalPlayer var0) {
+   public static AiPhysics.MotionState snapshotPlayer(LocalPlayer var0) {
       return AiPhysics.MotionState.of(var0);
    }
 
-   public static boolean fill_Z() {
+   public static boolean isPlayerSupported() {
       Minecraft var0 = Minecraft.getInstance();
       LocalPlayer var1 = var0.player;
       return var1 != null
@@ -69,15 +69,15 @@ public final class AiMotionSafety {
                || var1.onClimbable()
                || var1.onGround()
                   && var0.level != null
-                  && putAt_Z_AABB_Predicate(var1.getBoundingBox(), var2 -> var0.level.getBlockCollisions(var1, var2).iterator().hasNext())
+                  && hasSupportBelowBox(var1.getBoundingBox(), var2 -> var0.level.getBlockCollisions(var1, var2).iterator().hasNext())
          );
    }
 
-   static boolean putAt_Z_AABB_Predicate(AABB var0, Predicate<AABB> var1) {
+   static boolean hasSupportBelowBox(AABB var0, Predicate<AABB> var1) {
       return var1.test(new AABB(var0.minX, var0.minY - 1.0E-6, var0.minZ, var0.maxX, var0.minY, var0.maxZ));
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
+   static boolean hasSolidSupport(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       AABB var2 = var1.box(false);
       AABB var3 = new AABB(var2.minX, var2.minY - 0.001, var2.minZ, var2.maxX, var2.minY, var2.maxZ);
 
@@ -90,7 +90,7 @@ public final class AiMotionSafety {
       return false;
    }
 
-   static AiPhysics.MoveInput putAt_TokenCore_CacheHel_TokenCore_TaskStat_2(
+   static AiPhysics.MoveInput findSafeBrakeInput(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, float var3, LongPredicate var4
    ) {
       double var5 = Math.toRadians(var2.yaw());
@@ -103,7 +103,7 @@ public final class AiMotionSafety {
       for (AiPhysics.MoveInput var15 : new AiPhysics.MoveInput[]{
          new AiPhysics.MoveInput(0.0, 0.0, false, false, var2.sneak(), var2.yaw()), var11
       }) {
-         if (putAt_Z_TokenCore_TaskStat(var0, var1, var15, var3, var4)) {
+         if (canRecoverFromInput(var0, var1, var15, var3, var4)) {
             return var15;
          }
       }
@@ -111,12 +111,12 @@ public final class AiMotionSafety {
       return null;
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(
+   static boolean canRecoverFromInput(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, float var3, LongPredicate var4
    ) {
       for (int var5 = 0; var5 < 2; var5++) {
-         AiPhysics.MotionState var6 = AiPhysics.putAt(var1, var2, var0);
-         if (AiPhysics.putAt_Z(var0, var1, var6)) {
+         AiPhysics.MotionState var6 = AiPhysics.step(var1, var2, var0);
+         if (AiPhysics.hitsHazard(var0, var1, var6)) {
             return false;
          }
 
@@ -138,7 +138,7 @@ public final class AiMotionSafety {
       return true;
    }
 
-   static AiPhysics.MoveInput putAt_TokenCore_CacheHel(LocalPlayer var0) {
+   static AiPhysics.MoveInput centerOnBlockInput(LocalPlayer var0) {
       double var1 = Math.floor(var0.getX()) + 0.5;
       double var3 = Math.floor(var0.getZ()) + 0.5;
       double var5 = var1 - var0.getX();
@@ -147,21 +147,21 @@ public final class AiMotionSafety {
          return null;
       }
 
-      int[] var9 = putAt_IArr_F_F(var0.getYRot(), AiPhysics.putAt_F_D(var0.getX(), var0.getZ(), var1, var3));
+      int[] var9 = relativeMoveAxes(var0.getYRot(), AiPhysics.yawBetween(var0.getX(), var0.getZ(), var1, var3));
       return new AiPhysics.MoveInput(var9[0], -var9[1], false, false, true, var0.getYRot());
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, int var3) {
+   static boolean isMoveSafe(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, int var3) {
       boolean var4 = !var1.onGround();
       int var5 = var4 ? Math.max(var3, 64) : var3;
 
       for (int var6 = 0; var6 < var5; var6++) {
-         AiPhysics.MotionState var7 = AiPhysics.putAt(var1, var6 == 0 ? var2 : var2.withJump(false), var0);
-         if (AiPhysics.putAt_Z(var0, var1, var7)) {
+         AiPhysics.MotionState var7 = AiPhysics.step(var1, var6 == 0 ? var2 : var2.withJump(false), var0);
+         if (AiPhysics.hitsHazard(var0, var1, var7)) {
             return false;
          }
 
-         if (var4 && var7.onGround() && putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var7)) {
+         if (var4 && var7.onGround() && hasSolidSupport(var0, var7)) {
             return true;
          }
 
@@ -176,15 +176,15 @@ public final class AiMotionSafety {
       return !var4;
    }
 
-   public static boolean putAt_Z_D_D(double var0, double var2) {
-      return putAt_Z_D(var0, var2, false, false);
+   public static boolean isHorizontalMoveSafe(double var0, double var2) {
+      return isPlayerMoveSafe(var0, var2, false, false);
    }
 
-   public static boolean putAt_Z_D(double var0, double var2, boolean var4, boolean var5) {
+   public static boolean isPlayerMoveSafe(double var0, double var2, boolean var4, boolean var5) {
       Minecraft var6 = Minecraft.getInstance();
       if (var6.player != null && var6.level != null) {
          LocalPlayer var7 = var6.player;
-         return putAt_Z_TokenCore_TaskStat_2(
+         return isMoveSafe(
             new AiLiveWorld(var6.level, var7),
             AiPhysics.MotionState.of(var7),
             new AiPhysics.MoveInput(var0, var2, var4, var5, var7.isShiftKeyDown(), var7.getYRot()),
@@ -195,7 +195,7 @@ public final class AiMotionSafety {
       }
    }
 
-   public static boolean putAt_Z_Vec3_Vec3(Vec3 var0, Vec3 var1) {
+   public static boolean isSegmentHazardFree(Vec3 var0, Vec3 var1) {
       Minecraft var2 = Minecraft.getInstance();
       if (var2.level == null) {
          return false;
@@ -208,7 +208,7 @@ public final class AiMotionSafety {
       for (int var6 = 1; var6 <= var4; var6++) {
          Vec3 var7 = var0.lerp(var1, (double)var6 / var4);
          AiPhysics.MotionState var8 = new AiPhysics.MotionState(var7.x, var7.y, var7.z, 0.0, 0.0, 0.0, true, 0, false, false);
-         if (AiPhysics.putAt_Z(var3, var5, var8)) {
+         if (AiPhysics.hitsHazard(var3, var5, var8)) {
             return false;
          }
 
@@ -218,11 +218,11 @@ public final class AiMotionSafety {
       return true;
    }
 
-   public static void fill_V() {
+   public static void applyEmergencyBrake() {
       Minecraft var0 = Minecraft.getInstance();
       if (var0.player != null) {
          LocalPlayer var1 = var0.player;
-         putAt_V();
+         releaseMovementKeys();
          var1.setSprinting(false);
          var0.options.keyShift.setDown(true);
          double var2 = Math.toRadians(var1.getYRot());
@@ -236,10 +236,10 @@ public final class AiMotionSafety {
       }
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2) {
+   static boolean canStopSafelyAfter(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2) {
       double var3 = var1.y();
-      AiPhysics.MotionState var5 = AiPhysics.putAt(var1, var2, var0);
-      if (AiPhysics.putAt_Z(var0, var1, var5)) {
+      AiPhysics.MotionState var5 = AiPhysics.step(var1, var2, var0);
+      if (AiPhysics.hitsHazard(var0, var1, var5)) {
          return false;
       }
 
@@ -256,8 +256,8 @@ public final class AiMotionSafety {
          }
 
          var1 = var5;
-         var5 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var0);
-         if (AiPhysics.putAt_Z(var0, var1, var5)) {
+         var5 = AiPhysics.step(var1, AiPhysics.MoveInput.NONE, var0);
+         if (AiPhysics.hitsHazard(var0, var1, var5)) {
             return false;
          }
       }
@@ -265,17 +265,17 @@ public final class AiMotionSafety {
       return false;
    }
 
-   static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
-      return putAt(var0, var1, 0.0);
+   static boolean canCoastToSafeStop(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
+      return canCoastToSafeStopWithFall(var0, var1, 0.0);
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2) {
+   static boolean canCoastToSafeStopWithFall(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2) {
       double var4 = var1.y() + Math.max(0.0, var2);
       int var6 = 0;
 
       for (int var7 = 0; var7 < 64; var7++) {
-         AiPhysics.MotionState var8 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var0);
-         if (AiPhysics.putAt_Z(var0, var1, var8)) {
+         AiPhysics.MotionState var8 = AiPhysics.step(var1, AiPhysics.MoveInput.NONE, var0);
+         if (AiPhysics.hitsHazard(var0, var1, var8)) {
             return false;
          }
 
@@ -299,7 +299,7 @@ public final class AiMotionSafety {
       return false;
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, List<AABB> var2) {
+   static boolean isSupportedByAnyBox(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, List<AABB> var2) {
       for (int var3 = 0; var3 < 64; var3++) {
          AABB var4 = var1.box(false);
 
@@ -313,13 +313,13 @@ public final class AiMotionSafety {
             return false;
          }
 
-         var1 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var0);
+         var1 = AiPhysics.step(var1, AiPhysics.MoveInput.NONE, var0);
       }
 
       return false;
    }
 
-   public static boolean putAt(BlockPos var0) {
+   public static boolean isSafeToBreakSupport(BlockPos var0) {
       Minecraft var1 = Minecraft.getInstance();
       if (var1.player != null && var1.level != null) {
          var var2 = var1.level
@@ -334,13 +334,13 @@ public final class AiMotionSafety {
             return true;
          }
 
-         AiPhysics.MotionState var3 = putAt_TokenCore_TableCac(var1.player);
-         if (!putAt(new AiLiveWorld(var1.level, var1.player), var3, var2)) {
+         AiPhysics.MotionState var3 = snapshotPlayer(var1.player);
+         if (!isSupportedByAnyBox(new AiLiveWorld(var1.level, var1.player), var3, var2)) {
             return true;
          }
 
-         boolean var4 = putAt(new AiLiveWorld(var1.level, var1.player, var0), var3, var1.player.onGround() ? 0.0 : var1.player.fallDistance);
-         if (putAt_Z && !var4) {
+         boolean var4 = canCoastToSafeStopWithFall(new AiLiveWorld(var1.level, var1.player, var0), var3, var1.player.onGround() ? 0.0 : var1.player.fallDistance);
+         if (DEBUG_NAV && !var4) {
             AiNavDebug.init("unsafe support removal target=" + var0 + " state=" + var3 + " fallen=" + var1.player.fallDistance);
          }
 
@@ -350,7 +350,7 @@ public final class AiMotionSafety {
       }
    }
 
-   static AiPhysics.MoveInput putAt_TokenCore_CacheHel_TokenCore_TaskStat(
+   static AiPhysics.MoveInput findSafeDropInput(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, double var3, LongPredicate var5
    ) {
       if (var1.y() - var3 > 3.00001) {
@@ -368,19 +368,19 @@ public final class AiMotionSafety {
          AiPhysics.MotionState var11 = var1;
 
          for (int var12 = 0; var12 < 24; var12++) {
-            AiPhysics.MotionState var13 = AiPhysics.putAt(var11, var12 == 0 ? var10 : var6, var0);
-            if (var13.y() < var3 - 0.02 || var13.y() > var1.y() + 0.02 || AiPhysics.fill(var0, var11, var13)) {
+            AiPhysics.MotionState var13 = AiPhysics.step(var11, var12 == 0 ? var10 : var6, var0);
+            if (var13.y() < var3 - 0.02 || var13.y() > var1.y() + 0.02 || AiPhysics.hitsStrictHazard(var0, var11, var13)) {
                break;
             }
 
-            if (putAt_Z_TokenCore_TaskStat(var0, var13, var3, var5)) {
+            if (isSafeLandingState(var0, var13, var3, var5)) {
                return var10;
             }
 
             if (!var13.onGround()) {
                for (AiPhysics.MoveInput var17 : var7) {
                   AiStride.Inner_TableCache var18 = AiStride.putAt(var13, var17, false, var0);
-                  if (var18.down() && putAt_Z_TokenCore_TaskStat(var0, var18.at(), var3, var5)) {
+                  if (var18.down() && isSafeLandingState(var0, var18.at(), var3, var5)) {
                      return var10;
                   }
                }
@@ -393,15 +393,15 @@ public final class AiMotionSafety {
       return null;
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2, LongPredicate var4) {
+   private static boolean isSafeLandingState(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2, LongPredicate var4) {
       return var1.onGround()
          && Math.abs(var1.y() - var2) <= 0.02
          && var4.test(AiStride.putAt_J_D_D(var1.x(), var1.z()))
-         && putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var1)
+         && hasSolidSupport(var0, var1)
          && AiStride.putAt(var1, var4, var0);
    }
 
-   public static int[] putAt_IArr_F_F(float var0, float var1) {
+   public static int[] relativeMoveAxes(float var0, float var1) {
       double var2 = Math.toRadians(Mth.wrapDegrees(var1 - var0));
       double var4 = Math.cos(var2);
       double var6 = Math.sin(var2);
@@ -409,33 +409,33 @@ public final class AiMotionSafety {
       return new int[]{var4 > var8 ? 1 : (var4 < -var8 ? -1 : 0), var6 > var8 ? 1 : (var6 < -var8 ? -1 : 0)};
    }
 
-   public static void putAt_V_F_J(float var0, long var1) {
-      putAt_F = var0;
-      putAt_J = var1 <= 0L ? 0L : System.nanoTime() + var1;
+   public static void setPitchFloor(float var0, long var1) {
+      pitchFloorDegrees = var0;
+      pitchFloorUntilNanos = var1 <= 0L ? 0L : System.nanoTime() + var1;
    }
 
-   static Vec3 putAt_Vec3_LocalPlayer_Vec3(LocalPlayer var0, Vec3 var1) {
-      if (System.nanoTime() >= putAt_J) {
+   static Vec3 applyPitchFloor(LocalPlayer var0, Vec3 var1) {
+      if (System.nanoTime() >= pitchFloorUntilNanos) {
          return var1;
       }
 
       Vec3 var2 = var0.getEyePosition();
       Vec3 var3 = var1.subtract(var2);
       double var4 = var3.length();
-      return !(var4 < 0.001) && !(AiDigLine.load(var3) >= putAt_F) ? var2.add(Vec3.directionFromRotation(putAt_F, AiDigLine.init(var3)).scale(var4)) : var1;
+      return !(var4 < 0.001) && !(AiDigLine.load(var3) >= pitchFloorDegrees) ? var2.add(Vec3.directionFromRotation(pitchFloorDegrees, AiDigLine.init(var3)).scale(var4)) : var1;
    }
 
-   static float putAt_F() {
-      return System.nanoTime() < putAt_J ? putAt_F : 0.0F / 0.0F;
+   static float activePitchFloor() {
+      return System.nanoTime() < pitchFloorUntilNanos ? pitchFloorDegrees : 0.0F / 0.0F;
    }
 
-   static float putAt_F_Vec3(Vec3 var0, float var1, float var2, Vec3 var3) {
+   static float requiredPitchForTarget(Vec3 var0, float var1, float var2, Vec3 var3) {
       boolean var4 = var3.y < var0.y;
       int var5 = Mth.floor(var3.y);
-      return putAt_F_Vec3(var0, var1, var2, var4, var4 ? var5 + 1 : var5);
+      return requiredPitchForPlane(var0, var1, var2, var4, var4 ? var5 + 1 : var5);
    }
 
-   static float putAt_F_Vec3(Vec3 var0, float var1, float var2, boolean var3, double var4) {
+   static float requiredPitchForPlane(Vec3 var0, float var1, float var2, boolean var3, double var4) {
       double var6 = var3 ? var0.y - var4 : var4 - var0.y;
       if (var6 <= 0.0) {
          return var3 ? 90.0F : -90.0F;

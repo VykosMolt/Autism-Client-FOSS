@@ -238,7 +238,7 @@ public final class BacktrackModule extends Module {
          && init_Minecraft.gui.overlay() == null
          && !init_Minecraft.player.isUsingItem()
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && BlinkPacketManager.init_I() == 0;
    }

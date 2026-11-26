@@ -39,7 +39,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
          BlockHitResult hit = init(mc, this.blockPos, this.manualDirection, this.direction);
          if (hit != null) {
             int originalSlot = mc.player.getInventory().getSelectedSlot();
-            MacroItemTarget target = this.init_ArrayUtil().init_ArrayUtil_Minecraft(mc);
+            MacroItemTarget target = this.init_ArrayUtil().resolveTemplates(mc);
             if (target != null) {
                init(mc, target);
                boolean sneaking = this.sneak;
@@ -99,11 +99,11 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    private static void init(Minecraft mc, MacroItemTarget target) {
-      if (target != null && (target.init_Z() || target.update())) {
-         if (target.update()) {
+      if (target != null && (target.hasSlot() || target.hasItemFilter())) {
+         if (target.hasItemFilter()) {
             autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, target, mc.player.getInventory().getSelectedSlot());
          } else {
-            int visibleSlot = target.init_I;
+            int visibleSlot = target.slot;
             if (visibleSlot >= 0 && visibleSlot <= 8) {
                autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, visibleSlot);
             } else {
@@ -184,7 +184,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    @Override
    public String getDisplayName() {
       MacroItemTarget target = this.init_ArrayUtil();
-      String item = !target.init_Z() && !target.update() ? "current" : target.load_Str();
+      String item = !target.hasSlot() && !target.hasItemFilter() ? "current" : target.formatSummary();
       String pos = this.blockPos.getX() + "," + this.blockPos.getY() + "," + this.blockPos.getZ();
       String face = this.manualDirection ? this.direction.name().toLowerCase() : "auto";
       return "Place " + item + " at " + pos + " " + face + GuiWaitAware.init_Str_aP(this);
@@ -210,8 +210,8 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "PLACE");
       MacroItemTarget target = this.init_ArrayUtil();
-      if (target.init_Z() || target.update()) {
-         tag.put("itemName", target.init_CompoundTag());
+      if (target.hasSlot() || target.hasItemFilter()) {
+         tag.put("itemName", target.toTag());
       }
 
       tag.putInt("blockX", this.blockPos.getX());
@@ -240,16 +240,16 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.itemTarget = tag.getCompound("itemName").map(MacroItemTarget::init_ArrayUtil_CompoundTag).orElseGet(() -> {
+      this.itemTarget = tag.getCompound("itemName").map(MacroItemTarget::fromTag).orElseGet(() -> {
          String legacyName = tag.getStringOr("itemName", "");
          if (!legacyName.isBlank()) {
-            return MacroItemTarget.update(legacyName);
+            return MacroItemTarget.parse(legacyName);
          }
 
          int legacySlot = tag.getIntOr("slot", -1);
-         return legacySlot >= 0 ? MacroItemTarget.init_ArrayUtil_I(legacySlot) : new MacroItemTarget();
+         return legacySlot >= 0 ? MacroItemTarget.ofSlot(legacySlot) : new MacroItemTarget();
       });
-      this.itemName = this.itemTarget.write_Str();
+      this.itemName = this.itemTarget.toSpecString();
       int x = tag.getIntOr("blockX", 0);
       int y = tag.getIntOr("blockY", 0);
       int z = tag.getIntOr("blockZ", 0);
@@ -290,11 +290,11 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    public MacroItemTarget init_ArrayUtil() {
-      if (this.itemTarget != null && (this.itemTarget.init_Z() || this.itemTarget.update())) {
+      if (this.itemTarget != null && (this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter())) {
          return this.itemTarget;
       }
 
-      this.itemTarget = MacroItemTarget.update(this.itemName);
+      this.itemTarget = MacroItemTarget.parse(this.itemName);
       return this.itemTarget;
    }
 }

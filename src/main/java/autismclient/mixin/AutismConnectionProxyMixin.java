@@ -32,10 +32,10 @@ public abstract class AutismConnectionProxyMixin {
             route = main == null ? null : new ConnectionPrivacyRegistry.ProxyEndpoint(main.init_bZ, main.read, main.init_I, main.write, main.update);
          }
 
-         ConnectionPrivacyRegistry.init(connection, route);
+         ConnectionPrivacyRegistry.bindProxy(connection, route);
          if (route != null) {
             autism$removeAllProxyHandlers(pipeline);
-            autism$installProxy(pipeline, route.init_bZ(), route.init_Str(), route.init_I(), route.load(), route.read());
+            autism$installProxy(pipeline, route.type(), route.host(), route.port(), route.username(), route.password());
          }
       }
    }

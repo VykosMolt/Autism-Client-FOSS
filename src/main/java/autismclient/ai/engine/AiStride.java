@@ -30,8 +30,8 @@ final class AiStride {
       AiPhysics.MoveInput var6 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, 0.0F);
 
       for (int var7 = 0; var7 < 8; var7++) {
-         AiPhysics.MotionState var8 = AiPhysics.putAt(var3, var6, var2);
-         if (AiPhysics.putAt_Z(var2, var3, var8)) {
+         AiPhysics.MotionState var8 = AiPhysics.step(var3, var6, var2);
+         if (AiPhysics.hitsHazard(var2, var3, var8)) {
             return false;
          }
 
@@ -55,8 +55,8 @@ final class AiStride {
       AiPhysics.MoveInput var7 = var1.withJump(false);
 
       for (int var8 = 0; var8 < 8; var8++) {
-         AiPhysics.MotionState var9 = AiPhysics.putAt(var6, var7, var5);
-         if (AiPhysics.putAt_Z(var5, var6, var9)) {
+         AiPhysics.MotionState var9 = AiPhysics.step(var6, var7, var5);
+         if (AiPhysics.hitsHazard(var5, var6, var9)) {
             return false;
          }
 
@@ -88,8 +88,8 @@ final class AiStride {
       int var8 = 0;
 
       while (var8 < 8) {
-         AiPhysics.MotionState var9 = AiPhysics.putAt(var0, AiPhysics.MoveInput.NONE, var4);
-         if (AiGroundContinuity.putAt(var4, var0, var9, var6) && !AiPhysics.putAt_Z(var4, var0, var9)) {
+         AiPhysics.MotionState var9 = AiPhysics.step(var0, AiPhysics.MoveInput.NONE, var4);
+         if (AiGroundContinuity.putAt(var4, var0, var9, var6) && !AiPhysics.hitsHazard(var4, var0, var9)) {
             if (var9.onGround()) {
                var6 = var9.y();
             }
@@ -117,8 +117,8 @@ final class AiStride {
       boolean var7 = !var0.onGround();
 
       for (int var8 = 1; var8 <= 30; var8++) {
-         AiPhysics.MotionState var9 = AiPhysics.putAt(var4, var1.withJump(var2 && var8 == 1), var3);
-         if (AiPhysics.putAt_Z(var3, var4, var9)) {
+         AiPhysics.MotionState var9 = AiPhysics.step(var4, var1.withJump(var2 && var8 == 1), var3);
+         if (AiPhysics.hitsHazard(var3, var4, var9)) {
             return new AiStride.Inner_TableCache(null, var8, var5, var6);
          }
 
@@ -137,15 +137,15 @@ final class AiStride {
 
    static AiStride.Inner_TableCache putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2) {
       if (var1.jumpDelay() <= 1 && var1.onGround()) {
-         AiPhysics.MotionState var3 = AiPhysics.putAt(var1, var2.withJump(true), var0);
-         if (var3.verticalCollision() && !var3.onGround() && !var3.horizontalCollision() && !AiPhysics.fill(var0, var1, var3)) {
+         AiPhysics.MotionState var3 = AiPhysics.step(var1, var2.withJump(true), var0);
+         if (var3.verticalCollision() && !var3.onGround() && !var3.horizontalCollision() && !AiPhysics.hitsStrictHazard(var0, var1, var3)) {
             AiStride.Inner_TableCache var4 = putAt(var1, var2, true, var0);
             return var4.down()
                   && var4.ceiling()
                   && !var4.wall()
                   && var4.ticks() <= 4
                   && Math.abs(var4.at().y() - var1.y()) <= 0.02
-                  && !AiPhysics.fill(var0, var3, var4.at())
+                  && !AiPhysics.hitsStrictHazard(var0, var3, var4.at())
                   && putAt_Z_TokenCore_TableCac_3(var1, var2, var2.yaw(), var4, var0)
                ? var4
                : null;
@@ -167,7 +167,7 @@ final class AiStride {
       AiPhysics.MotionState var5 = var0;
 
       for (int var6 = 0; var6 < var3.ticks(); var6++) {
-         var5 = AiPhysics.putAt(var5, var1.withJump(false), var4);
+         var5 = AiPhysics.step(var5, var1.withJump(false), var4);
       }
 
       double var16 = Math.toRadians(var2);
@@ -193,8 +193,8 @@ final class AiStride {
 
       for (int var10 = 1; var10 <= 30; var10++) {
          boolean var11 = !var8 && var10 > var2 && var7.onGround();
-         AiPhysics.MotionState var12 = AiPhysics.putAt(var7, var1.withJump(var11), var6);
-         if (AiPhysics.putAt_Z(var6, var7, var12)) {
+         AiPhysics.MotionState var12 = AiPhysics.step(var7, var1.withJump(var11), var6);
+         if (AiPhysics.hitsHazard(var6, var7, var12)) {
             return new AiStride.Inner_StreamUtil(-2, var9);
          }
 
@@ -224,7 +224,7 @@ final class AiStride {
    ) {
       double var7 = Math.hypot(var2.getX() + 0.5 - var1.x(), var2.getZ() + 0.5 - var1.z());
       if (AiJumpSolver.putAt(var1) && var1.pose() == 0 && !(var7 > 2.75) && !(var3 - var1.y() > 1.125) && !(var1.y() > var3 + 0.02)) {
-         float var9 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
+         float var9 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
          AiPhysics.MoveInput var10 = null;
          int var11 = 10;
 
@@ -235,11 +235,11 @@ final class AiStride {
                   AiPhysics.MotionState var21 = var1;
 
                   for (int var22 = 1; var22 < var11; var22++) {
-                     AiPhysics.MotionState var23 = AiPhysics.putAt(var21, var20, var0);
+                     AiPhysics.MotionState var23 = AiPhysics.step(var21, var20, var0);
                      if (!var23.onGround()
                         || var23.y() < var21.y() - 0.02
                         || var23.y() > var3 + 0.02
-                        || AiPhysics.fill(var0, var21, var23)
+                        || AiPhysics.hitsStrictHazard(var0, var21, var23)
                         || AiJumpSolver.putAt(var0, var23)) {
                         break;
                      }
@@ -282,7 +282,7 @@ final class AiStride {
          double var11 = var7 * var7 + var9 * var9;
          if (!(var11 < 1.0E-6) && !(var11 > 6.002500000000001)) {
             double var13 = Math.sqrt(var11);
-            float var15 = AiPhysics.putAt_F_D(0.0, 0.0, var7, var9);
+            float var15 = AiPhysics.yawBetween(0.0, 0.0, var7, var9);
             AiStride.Inner_JsonCache var16 = null;
 
             for (int var20 : putAt_IArr) {
@@ -316,16 +316,16 @@ final class AiStride {
 
    static AiStride.Inner_JsonCache fill(AiPhysics.MotionState var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5) {
       if (!(var0.speed() < 0.06) && var0.onGround() && var0.pose() == 0) {
-         float var6 = AiPhysics.putAt_F_D(0.0, 0.0, var0.vx(), var0.vz());
+         float var6 = AiPhysics.yawBetween(0.0, 0.0, var0.vx(), var0.vz());
 
          for (float var10 : new float[]{var6, var6 - 25.0F, var6 + 25.0F}) {
             AiPhysics.MoveInput var11 = new AiPhysics.MoveInput(-1.0, 0.0, false, false, false, var10);
-            AiPhysics.MotionState var12 = AiPhysics.putAt(var0, var11, var5);
+            AiPhysics.MotionState var12 = AiPhysics.step(var0, var11, var5);
             if (var12.onGround()
                && !(Math.abs(var12.y() - var0.y()) > 0.02)
                && !var12.horizontalCollision()
                && !(var12.speed() >= var0.speed())
-               && !AiPhysics.fill(var5, var0, var12)
+               && !AiPhysics.hitsStrictHazard(var5, var0, var12)
                && AiJumpSolver.putAt_Z_TokenCore_TaskStat(var5, var12.x(), var12.y(), var12.z())) {
                AiStride.Inner_JsonCache var13 = putAt_UiCore_JsonCache_TokenCore_TableCac(var12, var1, var2, var4, var5);
                if (var13 != null) {
@@ -350,8 +350,8 @@ final class AiStride {
       AiPhysics.MotionState var0, AiStride.Inner_JsonCache var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6, boolean var7
    ) {
       for (int var8 = var2; var8 < 14; var8++) {
-         AiPhysics.MotionState var9 = AiPhysics.putAt(var0, var1.input(var8), var6);
-         if (var9.horizontalCollision() && !var7 || AiPhysics.fill(var6, var0, var9) || AiJumpSolver.putAt(var6, var9)) {
+         AiPhysics.MotionState var9 = AiPhysics.step(var0, var1.input(var8), var6);
+         if (var9.horizontalCollision() && !var7 || AiPhysics.hitsStrictHazard(var6, var0, var9) || AiJumpSolver.putAt(var6, var9)) {
             return null;
          }
 

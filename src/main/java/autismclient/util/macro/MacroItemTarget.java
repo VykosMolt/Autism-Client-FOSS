@@ -20,220 +20,220 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 public final class MacroItemTarget {
-   public static final String init_Str = "slot";
-   public static final String load = "registryId";
-   public static final String read = "display";
-   public static final String write = "textJson";
-   public static final String update = "manual";
-   public static final String sync = "template";
-   public int init_I = -1;
-   public String flush = "";
-   public String close = "";
-   public String open = "";
-   public boolean init_Z = false;
-   public String poll = "";
+   public static final String TAG_SLOT = "slot";
+   public static final String TAG_REGISTRY_ID = "registryId";
+   public static final String TAG_DISPLAY = "display";
+   public static final String TAG_TEXT_JSON = "textJson";
+   public static final String TAG_MANUAL = "manual";
+   public static final String TAG_TEMPLATE = "template";
+   public int slot = -1;
+   public String registryId = "";
+   public String displayName = "";
+   public String textJson = "";
+   public boolean manual = false;
+   public String template = "";
 
-   public MacroItemTarget init_ArrayUtil() {
+   public MacroItemTarget copy() {
       MacroItemTarget copy = new MacroItemTarget();
-      copy.init_I = this.init_I;
-      copy.flush = this.flush;
-      copy.close = this.close;
-      copy.open = this.open;
-      copy.init_Z = this.init_Z;
-      copy.poll = this.poll;
+      copy.slot = this.slot;
+      copy.registryId = this.registryId;
+      copy.displayName = this.displayName;
+      copy.textJson = this.textJson;
+      copy.manual = this.manual;
+      copy.template = this.template;
       return copy;
    }
 
-   public boolean init_Z() {
-      return this.init_I >= 0;
+   public boolean hasSlot() {
+      return this.slot >= 0;
    }
 
-   public boolean load_Z() {
-      return this.flush != null && !this.flush.isBlank();
+   public boolean hasRegistryId() {
+      return this.registryId != null && !this.registryId.isBlank();
    }
 
-   public boolean read_Z() {
-      return this.close != null && !this.close.isBlank();
+   public boolean hasDisplayName() {
+      return this.displayName != null && !this.displayName.isBlank();
    }
 
-   public boolean write_Z() {
-      return this.open != null && !this.open.isBlank();
+   public boolean hasTextJson() {
+      return this.textJson != null && !this.textJson.isBlank();
    }
 
-   public boolean update() {
-      return this.load_Z() || this.read_Z() || this.write_Z();
+   public boolean hasItemFilter() {
+      return this.hasRegistryId() || this.hasDisplayName() || this.hasTextJson();
    }
 
-   public Component init_Component() {
-      Component rich = MacroExecutor.init_Component_Str(this.open);
-      return rich != null ? rich.copy() : Component.literal(this.init_Str());
+   public Component toStyledComponent() {
+      Component rich = MacroExecutor.init_Component_Str(this.textJson);
+      return rich != null ? rich.copy() : Component.literal(this.rawLabel());
    }
 
-   public Component init_Component_Str(String editedValue) {
+   public Component restyleText(String editedValue) {
       String safeValue = editedValue == null ? "" : editedValue;
-      Component rich = MacroExecutor.init_Component_Str(this.open);
-      return rich == null ? Component.literal(safeValue) : init_Component_Component_Str(rich, safeValue);
+      Component rich = MacroExecutor.init_Component_Str(this.textJson);
+      return rich == null ? Component.literal(safeValue) : preserveComponentStyles(rich, safeValue);
    }
 
-   public MacroItemTarget init_ArrayUtil_Str(String editedValue) {
-      MacroItemTarget target = this.init_ArrayUtil();
-      String safeValue = load_Str_Str(editedValue);
-      target.close = safeValue;
-      target.init_Z = true;
-      target.open = "";
-      target.poll = safeValue.contains("{") ? safeValue : "";
+   public MacroItemTarget withManualDisplay(String editedValue) {
+      MacroItemTarget target = this.copy();
+      String safeValue = stripFormatting(editedValue);
+      target.displayName = safeValue;
+      target.manual = true;
+      target.textJson = "";
+      target.template = safeValue.contains("{") ? safeValue : "";
       if (safeValue.isEmpty()) {
-         target.flush = "";
+         target.registryId = "";
          return target;
       } else {
          return target;
       }
    }
 
-   public MacroItemTarget load_ArrayUtil_Str(String editedValue) {
+   public MacroItemTarget withStyledDisplay(String editedValue) {
       String safeValue = editedValue == null ? "" : editedValue;
-      MacroItemTarget target = this.init_ArrayUtil();
+      MacroItemTarget target = this.copy();
       if (safeValue.isEmpty()) {
-         target.close = "";
-         target.open = "";
-         target.flush = "";
-         target.init_Z = true;
-         target.poll = "";
+         target.displayName = "";
+         target.textJson = "";
+         target.registryId = "";
+         target.manual = true;
+         target.template = "";
          return target;
       } else {
-         Component styled = this.init_Component_Str(safeValue);
-         target.close = safeValue;
-         target.open = styled == null ? "" : MacroExecutor.init_Str_Component(styled);
-         target.init_Z = false;
-         target.poll = safeValue.contains("{") ? safeValue : "";
+         Component styled = this.restyleText(safeValue);
+         target.displayName = safeValue;
+         target.textJson = styled == null ? "" : MacroExecutor.init_Str_Component(styled);
+         target.manual = false;
+         target.template = safeValue.contains("{") ? safeValue : "";
          return target;
       }
    }
 
-   public String init_Str() {
-      if (this.read_Z()) {
-         return this.close;
+   public String rawLabel() {
+      if (this.hasDisplayName()) {
+         return this.displayName;
       } else {
-         return this.load_Z() ? this.flush : "";
+         return this.hasRegistryId() ? this.registryId : "";
       }
    }
 
-   public String load_Str() {
-      String name = this.read_Str();
-      if (this.init_Z() && !name.isBlank()) {
-         return "Slot " + this.init_I + ": " + name;
+   public String formatSummary() {
+      String name = this.resolvedDisplayName();
+      if (this.hasSlot() && !name.isBlank()) {
+         return "Slot " + this.slot + ": " + name;
       } else {
-         return this.init_Z() ? "Slot " + this.init_I : name;
+         return this.hasSlot() ? "Slot " + this.slot : name;
       }
    }
 
-   public String read_Str() {
-      if (this.write_Z()) {
-         Component rich = MacroExecutor.init_Component_Str(this.open);
+   public String resolvedDisplayName() {
+      if (this.hasTextJson()) {
+         Component rich = MacroExecutor.init_Component_Str(this.textJson);
          if (rich != null && !rich.getString().isBlank()) {
             return rich.getString();
          }
       }
 
-      if (this.read_Z()) {
-         if (!this.load_Z()) {
-            return this.close;
+      if (this.hasDisplayName()) {
+         if (!this.hasRegistryId()) {
+            return this.displayName;
          }
 
-         String registryLabel = RegistryDisplayNameCache.init(this.flush);
-         return !RegistryDisplayNameCache.init(this.close, this.flush) && !this.close.equalsIgnoreCase(registryLabel) ? this.close : registryLabel;
+         String registryLabel = RegistryDisplayNameCache.init(this.registryId);
+         return !RegistryDisplayNameCache.init(this.displayName, this.registryId) && !this.displayName.equalsIgnoreCase(registryLabel) ? this.displayName : registryLabel;
       } else {
-         return this.load_Z() ? RegistryDisplayNameCache.init(this.flush) : "";
+         return this.hasRegistryId() ? RegistryDisplayNameCache.init(this.registryId) : "";
       }
    }
 
-   public Component load_Component() {
-      if (this.write_Z()) {
-         Component rich = MacroExecutor.init_Component_Str(this.open);
+   public Component toDisplayComponent() {
+      if (this.hasTextJson()) {
+         Component rich = MacroExecutor.init_Component_Str(this.textJson);
          if (rich != null) {
             return rich.copy();
          }
       }
 
-      return Component.literal(this.read_Str());
+      return Component.literal(this.resolvedDisplayName());
    }
 
-   public CompoundTag init_CompoundTag() {
+   public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
-      if (this.init_Z()) {
-         tag.putInt("slot", this.init_I);
+      if (this.hasSlot()) {
+         tag.putInt("slot", this.slot);
       }
 
-      if (this.load_Z()) {
-         tag.putString("registryId", this.flush);
+      if (this.hasRegistryId()) {
+         tag.putString("registryId", this.registryId);
       }
 
-      if (this.read_Z()) {
-         tag.putString("display", this.close);
+      if (this.hasDisplayName()) {
+         tag.putString("display", this.displayName);
       }
 
-      if (this.write_Z()) {
-         tag.putString("textJson", this.open);
+      if (this.hasTextJson()) {
+         tag.putString("textJson", this.textJson);
       }
 
-      if (this.poll != null && !this.poll.isBlank()) {
-         tag.putString("template", this.poll);
+      if (this.template != null && !this.template.isBlank()) {
+         tag.putString("template", this.template);
       }
 
-      tag.putBoolean("manual", this.init_Z);
+      tag.putBoolean("manual", this.manual);
       return tag;
    }
 
-   public static MacroItemTarget init_ArrayUtil_CompoundTag(CompoundTag tag) {
+   public static MacroItemTarget fromTag(CompoundTag tag) {
       MacroItemTarget target = new MacroItemTarget();
       if (tag == null) {
          return target;
       }
 
       if (tag.contains("slot")) {
-         target.init_I = tag.getIntOr("slot", -1);
+         target.slot = tag.getIntOr("slot", -1);
       }
 
       if (tag.contains("registryId")) {
-         target.flush = tag.getStringOr("registryId", "");
+         target.registryId = tag.getStringOr("registryId", "");
       }
 
       if (tag.contains("display")) {
-         target.close = tag.getStringOr("display", "");
+         target.displayName = tag.getStringOr("display", "");
       }
 
       if (tag.contains("textJson")) {
-         target.open = tag.getStringOr("textJson", "");
+         target.textJson = tag.getStringOr("textJson", "");
       }
 
       if (tag.contains("manual")) {
-         target.init_Z = tag.getBooleanOr("manual", false);
+         target.manual = tag.getBooleanOr("manual", false);
       }
 
-      target.poll = tag.getStringOr("template", "");
-      if (target.init_Z) {
-         target.close = load_Str_Str(target.close);
-         target.open = "";
-      } else if (!target.write_Z() && target.read_Z()) {
-         target.close = load_Str_Str(target.close);
+      target.template = tag.getStringOr("template", "");
+      if (target.manual) {
+         target.displayName = stripFormatting(target.displayName);
+         target.textJson = "";
+      } else if (!target.hasTextJson() && target.hasDisplayName()) {
+         target.displayName = stripFormatting(target.displayName);
       }
 
       return target;
    }
 
-   public static MacroItemTarget init_ArrayUtil_Tag(Tag element) {
-      return element instanceof CompoundTag compound ? init_ArrayUtil_CompoundTag(compound) : update(element == null ? "" : element.asString().orElse(""));
+   public static MacroItemTarget fromNbtElement(Tag element) {
+      return element instanceof CompoundTag compound ? fromTag(compound) : parse(element == null ? "" : element.asString().orElse(""));
    }
 
-   public static List<MacroItemTarget> init_List_ListTag(ListTag list) {
+   public static List<MacroItemTarget> fromListTag(ListTag list) {
       List<MacroItemTarget> targets = new ArrayList<>();
       if (list == null) {
          return targets;
       }
 
       for (Tag element : list) {
-         MacroItemTarget target = init_ArrayUtil_Tag(element);
-         if (target.init_Z() || target.update()) {
+         MacroItemTarget target = fromNbtElement(element);
+         if (target.hasSlot() || target.hasItemFilter()) {
             targets.add(target);
          }
       }
@@ -241,22 +241,22 @@ public final class MacroItemTarget {
       return targets;
    }
 
-   public static ListTag init_ListTag_List(List<MacroItemTarget> targets) {
+   public static ListTag toListTag(List<MacroItemTarget> targets) {
       ListTag list = new ListTag();
       if (targets == null) {
          return list;
       }
 
       for (MacroItemTarget target : targets) {
-         if (target != null && (target.init_Z() || target.update())) {
-            list.add(target.init_CompoundTag());
+         if (target != null && (target.hasSlot() || target.hasItemFilter())) {
+            list.add(target.toTag());
          }
       }
 
       return list;
    }
 
-   public static List<MacroItemTarget> init_List_List(List<MacroItemTarget> targets) {
+   public static List<MacroItemTarget> copyList(List<MacroItemTarget> targets) {
       List<MacroItemTarget> copies = new ArrayList<>();
       if (targets == null) {
          return copies;
@@ -264,48 +264,48 @@ public final class MacroItemTarget {
 
       for (MacroItemTarget target : targets) {
          if (target != null) {
-            copies.add(target.init_ArrayUtil());
+            copies.add(target.copy());
          }
       }
 
       return copies;
    }
 
-   public static MacroItemTarget read(String text) {
+   public static MacroItemTarget ofManualText(String text) {
       MacroItemTarget target = new MacroItemTarget();
-      target.close = load_Str_Str(text);
-      target.init_Z = true;
+      target.displayName = stripFormatting(text);
+      target.manual = true;
       if (text != null && text.contains("{")) {
-         target.poll = text;
+         target.template = text;
       }
 
       return target;
    }
 
-   public static MacroItemTarget write(String registryId) {
+   public static MacroItemTarget ofRegistryId(String registryId) {
       MacroItemTarget target = new MacroItemTarget();
-      target.flush = registryId == null ? "" : registryId.trim();
-      target.close = target.flush;
-      target.init_Z = false;
+      target.registryId = registryId == null ? "" : registryId.trim();
+      target.displayName = target.registryId;
+      target.manual = false;
       return target;
    }
 
-   public static MacroItemTarget init_ArrayUtil_I(int slot) {
+   public static MacroItemTarget ofSlot(int slot) {
       MacroItemTarget target = new MacroItemTarget();
-      target.init_I = slot;
+      target.slot = slot;
       return target;
    }
 
-   public static MacroItemTarget init_ArrayUtil_ItemStack_I(ItemStack stack, int visibleSlot) {
+   public static MacroItemTarget fromItemStack(ItemStack stack, int visibleSlot) {
       MacroItemTarget target = new MacroItemTarget();
-      target.init_I = visibleSlot;
+      target.slot = visibleSlot;
       if (stack != null && !stack.isEmpty()) {
          Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-         target.flush = id == null ? "" : id.toString();
-         target.close = stack.getHoverName().getString();
-         target.init_Z = false;
-         if (init_Z_ItemStack(stack)) {
-            target.open = MacroExecutor.init_Str_Component(stack.getHoverName());
+         target.registryId = id == null ? "" : id.toString();
+         target.displayName = stack.getHoverName().getString();
+         target.manual = false;
+         if (hasCustomOrStyledName(stack)) {
+            target.textJson = MacroExecutor.init_Str_Component(stack.getHoverName());
          }
 
          return target;
@@ -314,7 +314,7 @@ public final class MacroItemTarget {
       }
    }
 
-   public static MacroItemTarget update(String raw) {
+   public static MacroItemTarget parse(String raw) {
       if (raw == null) {
          return new MacroItemTarget();
       }
@@ -333,52 +333,52 @@ public final class MacroItemTarget {
          try {
             int parsedSlot = Integer.parseInt(slotPart);
             if (parsedSlot >= 0) {
-               target.init_I = parsedSlot;
+               target.slot = parsedSlot;
             }
          } catch (NumberFormatException ignored) {
-            return sync(trimmed);
+            return parseBody(trimmed);
          }
 
          body = separator >= 0 && separator + 1 < trimmed.length() ? trimmed.substring(separator + 1).trim() : "";
       }
 
       if (!body.isBlank()) {
-         MacroItemTarget bodyTarget = sync(body);
-         target.flush = bodyTarget.flush;
-         target.close = bodyTarget.close;
-         target.open = bodyTarget.open;
-         target.init_Z = bodyTarget.init_Z;
+         MacroItemTarget bodyTarget = parseBody(body);
+         target.registryId = bodyTarget.registryId;
+         target.displayName = bodyTarget.displayName;
+         target.textJson = bodyTarget.textJson;
+         target.manual = bodyTarget.manual;
       }
 
       return target;
    }
 
-   public String write_Str() {
-      String body = this.init_Str();
-      if (this.init_Z() && body.isBlank()) {
-         return "#" + this.init_I;
+   public String toSpecString() {
+      String body = this.rawLabel();
+      if (this.hasSlot() && body.isBlank()) {
+         return "#" + this.slot;
       } else {
-         return this.init_Z() ? "#" + this.init_I + "|" + body : body;
+         return this.hasSlot() ? "#" + this.slot + "|" + body : body;
       }
    }
 
-   public int init_I_ItemStack_I(ItemStack stack, int visibleSlot) {
+   public int matchScore(ItemStack stack, int visibleSlot) {
       if (stack == null || stack.isEmpty()) {
          return -1;
       }
 
-      if (this.init_Z() && this.init_I != visibleSlot) {
+      if (this.hasSlot() && this.slot != visibleSlot) {
          return -1;
       }
 
-      if (this.write_Z()) {
+      if (this.hasTextJson()) {
          String stackJson = MacroExecutor.init_Str_Component(stack.getHoverName());
-         if (this.open.equals(stackJson)) {
+         if (this.textJson.equals(stackJson)) {
             return 400;
          } else {
-            return this.read_Z() && this.close.equals(stack.getHoverName().getString()) ? 350 : -1;
+            return this.hasDisplayName() && this.displayName.equals(stack.getHoverName().getString()) ? 350 : -1;
          }
-      } else if (this.load_Z()) {
+      } else if (this.hasRegistryId()) {
          Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
          if (id == null) {
             return -1;
@@ -387,74 +387,74 @@ public final class MacroItemTarget {
          String fullId = id.toString();
          String rawPath = id.getPath();
          String spacedPath = rawPath.replace('_', ' ');
-         if (this.flush.equalsIgnoreCase(fullId)) {
+         if (this.registryId.equalsIgnoreCase(fullId)) {
             return 320;
          }
 
-         if (this.flush.equalsIgnoreCase(rawPath)) {
+         if (this.registryId.equalsIgnoreCase(rawPath)) {
             return 315;
          }
 
-         if (this.flush.equalsIgnoreCase(spacedPath)) {
+         if (this.registryId.equalsIgnoreCase(spacedPath)) {
             return 310;
          }
 
-         if (this.read_Z()) {
-            String normalizedDisplay = init_Str_Str(this.close);
-            if (normalizedDisplay.equals(init_Str_Str(fullId))) {
+         if (this.hasDisplayName()) {
+            String normalizedDisplay = normalizeForMatch(this.displayName);
+            if (normalizedDisplay.equals(normalizeForMatch(fullId))) {
                return 305;
             }
 
-            if (normalizedDisplay.equals(init_Str_Str(rawPath))) {
+            if (normalizedDisplay.equals(normalizeForMatch(rawPath))) {
                return 304;
             }
 
-            if (normalizedDisplay.equals(init_Str_Str(spacedPath))) {
+            if (normalizedDisplay.equals(normalizeForMatch(spacedPath))) {
                return 303;
             }
          }
 
          return -1;
-      } else if (this.read_Z()) {
-         String normalizedTarget = init_Str_Str(this.close);
+      } else if (this.hasDisplayName()) {
+         String normalizedTarget = normalizeForMatch(this.displayName);
          if (normalizedTarget.isBlank()) {
-            return this.init_Z() ? 100 : -1;
+            return this.hasSlot() ? 100 : -1;
          }
 
-         String normalizedDisplay = init_Str_Str(stack.getHoverName().getString());
+         String normalizedDisplay = normalizeForMatch(stack.getHoverName().getString());
          if (normalizedTarget.equals(normalizedDisplay)) {
-            return this.init_Z ? 220 : 240;
+            return this.manual ? 220 : 240;
          }
 
          Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
          if (id != null) {
-            String fullId = init_Str_Str(id.toString());
-            String rawPath = init_Str_Str(id.getPath());
-            String spacedPath = init_Str_Str(id.getPath().replace('_', ' '));
+            String fullId = normalizeForMatch(id.toString());
+            String rawPath = normalizeForMatch(id.getPath());
+            String spacedPath = normalizeForMatch(id.getPath().replace('_', ' '));
             if (normalizedTarget.equals(fullId)) {
-               return this.init_Z ? 210 : 230;
+               return this.manual ? 210 : 230;
             }
 
             if (normalizedTarget.equals(rawPath)) {
-               return this.init_Z ? 205 : 225;
+               return this.manual ? 205 : 225;
             }
 
             if (normalizedTarget.equals(spacedPath)) {
-               return this.init_Z ? 200 : 220;
+               return this.manual ? 200 : 220;
             }
          }
 
          return -1;
       } else {
-         return this.init_Z() ? 100 : -1;
+         return this.hasSlot() ? 100 : -1;
       }
    }
 
-   public boolean init_Z_ItemStack_I(ItemStack stack, int visibleSlot) {
-      return this.init_I_ItemStack_I(stack, visibleSlot) >= 0;
+   public boolean matches(ItemStack stack, int visibleSlot) {
+      return this.matchScore(stack, visibleSlot) >= 0;
    }
 
-   public static String init_Str_Str(String text) {
+   public static String normalizeForMatch(String text) {
       if (text != null && !text.isBlank()) {
          String normalized = Normalizer.normalize(text, Form.NFKC).toLowerCase(Locale.ROOT);
          StringBuilder out = new StringBuilder(normalized.length());
@@ -476,31 +476,31 @@ public final class MacroItemTarget {
       }
    }
 
-   private static MacroItemTarget sync(String raw) {
+   private static MacroItemTarget parseBody(String raw) {
       String trimmed = raw == null ? "" : raw.trim();
       if (trimmed.isEmpty()) {
          return new MacroItemTarget();
       }
 
       MacroItemTarget target = new MacroItemTarget();
-      if (init_Z_Str(trimmed)) {
-         target.flush = trimmed;
-         target.close = trimmed;
-         target.init_Z = false;
+      if (looksLikeRegistryId(trimmed)) {
+         target.registryId = trimmed;
+         target.displayName = trimmed;
+         target.manual = false;
          return target;
       }
 
-      target.close = load_Str_Str(trimmed);
-      target.init_Z = true;
+      target.displayName = stripFormatting(trimmed);
+      target.manual = true;
       if (trimmed.contains("{")) {
-         target.poll = trimmed;
+         target.template = trimmed;
       }
 
       return target;
    }
 
-   public MacroItemTarget init_ArrayUtil_Minecraft(Minecraft mc) {
-      String source = this.poll != null && !this.poll.isBlank() ? this.poll : this.init_Str();
+   public MacroItemTarget resolveTemplates(Minecraft mc) {
+      String source = this.template != null && !this.template.isBlank() ? this.template : this.rawLabel();
       if (source != null && source.indexOf(123) >= 0) {
          String trimmed = source.trim();
          if (trimmed.matches("\\{[A-Za-z_][A-Za-z0-9_.-]{0,63}}")) {
@@ -509,19 +509,19 @@ public final class MacroItemTarget {
             if (value.isPresent() && value.get().init_l_DataUtil() == MacroVarValue.ValueType.ITEM) {
                MacroVarValue item = value.get();
                MacroItemTarget resolved = new MacroItemTarget();
-               resolved.init_I = item.init_Optional_Str("slot").map(v -> init_I_Str_I(v.init_Str(), this.init_I)).orElse(this.init_I);
-               resolved.flush = item.init_Optional_Str("id").map(MacroVarValue::init_Str).orElse("");
-               resolved.close = item.init_Optional_Str("name").map(MacroVarValue::init_Str).orElse(item.init_Str());
-               resolved.init_Z = false;
+               resolved.slot = item.init_Optional_Str("slot").map(v -> parseIntOrDefault(v.init_Str(), this.slot)).orElse(this.slot);
+               resolved.registryId = item.init_Optional_Str("id").map(MacroVarValue::init_Str).orElse("");
+               resolved.displayName = item.init_Optional_Str("name").map(MacroVarValue::init_Str).orElse(item.init_Str());
+               resolved.manual = false;
                return resolved;
             }
          }
 
          MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.init_j_CachePool_Str_Minecraft(source, mc);
          if (resolution.init_Z() && !resolution.init_Str().isBlank()) {
-            MacroItemTarget resolved = update(resolution.init_Str());
-            if (this.init_Z()) {
-               resolved.init_I = this.init_I;
+            MacroItemTarget resolved = parse(resolution.init_Str());
+            if (this.hasSlot()) {
+               resolved.slot = this.slot;
             }
 
             return resolved;
@@ -529,11 +529,11 @@ public final class MacroItemTarget {
             return null;
          }
       } else {
-         return this.init_ArrayUtil();
+         return this.copy();
       }
    }
 
-   private static int init_I_Str_I(String raw, int fallback) {
+   private static int parseIntOrDefault(String raw, int fallback) {
       try {
          return Integer.parseInt(raw);
       } catch (NumberFormatException ignored) {
@@ -541,11 +541,11 @@ public final class MacroItemTarget {
       }
    }
 
-   private static String load_Str_Str(String text) {
+   private static String stripFormatting(String text) {
       return MacroExecutor.init_Str_Str(text);
    }
 
-   private static boolean init_Z_Str(String text) {
+   private static boolean looksLikeRegistryId(String text) {
       if (text != null && !text.isBlank()) {
          return text.contains(" ") ? false : text.matches("[a-z0-9_.-]+(:[a-z0-9_./-]+)?");
       } else {
@@ -553,7 +553,7 @@ public final class MacroItemTarget {
       }
    }
 
-   private static int init(String normalizedTarget, String normalizedCandidate, int baseScore) {
+   private static int scoreWordMatch(String normalizedTarget, String normalizedCandidate, int baseScore) {
       if (!normalizedTarget.isBlank() && !normalizedCandidate.isBlank()) {
          String[] queryWords = normalizedTarget.split(" ");
          String[] candidateWords = normalizedCandidate.split(" ");
@@ -581,7 +581,7 @@ public final class MacroItemTarget {
       }
    }
 
-   private static boolean init_Z_ItemStack(ItemStack stack) {
+   private static boolean hasCustomOrStyledName(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          Component stackName = stack.getHoverName();
          Component defaultName = stack.getItem().getName(stack);
@@ -601,7 +601,7 @@ public final class MacroItemTarget {
       }
    }
 
-   private static Component init_Component_Component_Str(Component previousComponent, String editedValue) {
+   private static Component preserveComponentStyles(Component previousComponent, String editedValue) {
       String safeValue = editedValue == null ? "" : editedValue;
       if (previousComponent == null) {
          return Component.literal(safeValue);
@@ -620,13 +620,13 @@ public final class MacroItemTarget {
          return Component.literal(safeValue);
       }
 
-      List<Style> previousStyles = init_List_Component_I(previousComponent, previousValue.length());
+      List<Style> previousStyles = extractCharStyles(previousComponent, previousValue.length());
       if (previousStyles.isEmpty()) {
          return Component.literal(safeValue);
       }
 
-      int prefix = init_I_Str_Str(previousValue, safeValue);
-      int suffix = load(previousValue, safeValue, prefix);
+      int prefix = commonPrefixLength(previousValue, safeValue);
+      int suffix = commonSuffixLength(previousValue, safeValue, prefix);
       int previousLength = previousValue.length();
       int nextLength = safeValue.length();
       MutableComponent rebuilt = Component.empty();
@@ -634,7 +634,7 @@ public final class MacroItemTarget {
       Style segmentStyle = null;
 
       for (int i = 0; i < nextLength; i++) {
-         Style style = init(previousStyles, previousLength, nextLength, prefix, suffix, i);
+         Style style = mappedStyleAt(previousStyles, previousLength, nextLength, prefix, suffix, i);
          if (segmentStyle == null) {
             segmentStyle = style;
          } else if (!segmentStyle.equals(style)) {
@@ -653,7 +653,7 @@ public final class MacroItemTarget {
       return rebuilt;
    }
 
-   private static List<Style> init_List_Component_I(Component text, int expectedLength) {
+   private static List<Style> extractCharStyles(Component text, int expectedLength) {
       if (text != null && expectedLength > 0) {
          List<Style> rawStyles = new ArrayList<>(expectedLength);
          text.visit((style, part) -> {
@@ -688,7 +688,7 @@ public final class MacroItemTarget {
       }
    }
 
-   private static int init_I_Str_Str(String left, String right) {
+   private static int commonPrefixLength(String left, String right) {
       int max = Math.min(left.length(), right.length());
       int index = 0;
 
@@ -699,7 +699,7 @@ public final class MacroItemTarget {
       return index;
    }
 
-   private static int load(String previous, String next, int prefixLength) {
+   private static int commonSuffixLength(String previous, String next, int prefixLength) {
       int previousRemaining = previous.length() - prefixLength;
       int nextRemaining = next.length() - prefixLength;
       int max = Math.min(previousRemaining, nextRemaining);
@@ -712,7 +712,7 @@ public final class MacroItemTarget {
       return suffix;
    }
 
-   private static Style init(List<Style> previousStyles, int previousLength, int nextLength, int prefixLength, int suffixLength, int nextIndex) {
+   private static Style mappedStyleAt(List<Style> previousStyles, int previousLength, int nextLength, int prefixLength, int suffixLength, int nextIndex) {
       if (previousStyles.isEmpty()) {
          return Style.EMPTY;
       }

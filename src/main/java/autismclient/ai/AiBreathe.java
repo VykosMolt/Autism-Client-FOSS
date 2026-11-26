@@ -50,7 +50,7 @@ public final class AiBreathe {
    public static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int seconds = Math.max(5, Math.min(60, AiJson.init_I_JsonObject(args, "timeoutSeconds", 25)));
+         final int seconds = Math.max(5, Math.min(60, AiJson.getInt(args, "timeoutSeconds", 25)));
          if (mc.player.isUnderWater()) {
             autismclient.ai.engine.AiBlockMine.init_V();
          }
@@ -99,11 +99,11 @@ public final class AiBreathe {
                      && roofState.getDestroySpeed(mc.level, roof) <= 3.0F
                      && AiBreathe.init_Z(mc, roof)) {
                      mc.options.keyUp.setDown(false);
-                     this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(roof));
-                     this.init_DataUtil.load_V();
-                     int slot = AiItems.init(roofState, 36);
+                     this.init_DataUtil.aimAt(Vec3.atCenterOf(roof));
+                     this.init_DataUtil.tick();
+                     int slot = AiItems.bestToolFor(roofState, 36);
                      if (slot >= 0 && player.getInventory().getSelectedSlot() != slot) {
-                        AiItems.load(slot);
+                        AiItems.selectOrMoveToHotbar(slot);
                      }
 
                      autismclient.ai.engine.AiBlockDigger.init_Z_Minecraft(mc, roof, Direction.DOWN);
@@ -128,8 +128,8 @@ public final class AiBreathe {
                      }
 
                      Vec3 target = Vec3.atCenterOf(step);
-                     this.init_DataUtil.init_V_Vec3(target);
-                     this.init_DataUtil.load_V();
+                     this.init_DataUtil.aimAt(target);
+                     this.init_DataUtil.tick();
                      double flat = Math.hypot(target.x - player.getX(), target.z - player.getZ());
                      boolean boxBlocked = !mc.level.noCollision(player, player.getBoundingBox().move(0.0, 0.6, 0.0));
                      mc.options.keyUp.setDown(flat > 0.4 || boxBlocked && flat > 0.08);
@@ -141,18 +141,18 @@ public final class AiBreathe {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.init();
-               return AiGameOperations.init_AiOperation_Result(status, message, AiJson.init_JsonObject_ObjArr("air", mc.player == null ? 0 : mc.player.getAirSupply()));
+               return AiGameOperations.result(status, message, AiJson.objectOf("air", mc.player == null ? 0 : mc.player.getAirSupply()));
             }
 
             void init() {
                mc.options.keyJump.setDown(false);
                mc.options.keyUp.setDown(false);
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
             }
 
             @Override

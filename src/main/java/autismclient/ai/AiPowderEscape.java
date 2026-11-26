@@ -80,14 +80,14 @@ final class AiPowderEscape {
             }
 
             if (this.init_BlockPos != null) {
-               this.init_DataUtil.init_V_Vec3(new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 0.5, this.init_BlockPos.getZ() + 0.5));
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.aimAt(new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 0.5, this.init_BlockPos.getZ() + 0.5));
+               this.init_DataUtil.tick();
             }
 
             mc.options.keyUp.setDown(this.init_BlockPos != null);
             mc.options.keyJump.setDown(true);
             mc.options.keyShift.setDown(false);
-            return AiGameOperations.init_AiOperation_Result(
+            return AiGameOperations.result(
                AiOperation.Status.RUNNING,
                "Climbing out of powder snow" + (this.init_BlockPos == null ? "" : " to " + this.init_BlockPos.toShortString()),
                new JsonObject()
@@ -96,13 +96,13 @@ final class AiPowderEscape {
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.init();
-            return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+            return AiGameOperations.result(status, message, new JsonObject());
          }
 
          void init() {
             mc.options.keyUp.setDown(false);
             mc.options.keyJump.setDown(false);
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
          }
 
          @Override

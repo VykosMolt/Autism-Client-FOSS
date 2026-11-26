@@ -680,7 +680,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    }
 
    private static boolean fill(ItemStack var0) {
-      return var0.isDamageableItem() && !AiItems.init(var0, 2);
+      return var0.isDamageableItem() && !AiItems.hasEnoughDurability(var0, 2);
    }
 
    public static void putAt(Minecraft var0, AiChunkMemory var1) {

@@ -32,15 +32,15 @@ public final class AiMacroValidator {
       if (root.has("actions") && root.get("actions").isJsonArray()) {
          JsonArray actions = root.getAsJsonArray("actions");
          if (!actions.isEmpty() && actions.size() <= 512) {
-            String name = AiJson.init_Str_JsonObject(root, "name", "AI Macro").trim();
+            String name = AiJson.getString(root, "name", "AI Macro").trim();
             if (!name.isEmpty() && name.length() <= 128) {
                Set<String> labels = new HashSet<>();
 
                for (JsonElement value : actions) {
                   JsonObject action = value.getAsJsonObject();
                   init(action, catalog, 0);
-                  if (AiJson.init_Str_JsonObject(action, "type", "").equals("LABEL")) {
-                     String label = AiJson.init_Str_JsonObject(action, "name", AiJson.init_Str_JsonObject(action, "label", ""));
+                  if (AiJson.getString(action, "type", "").equals("LABEL")) {
+                     String label = AiJson.getString(action, "name", AiJson.getString(action, "label", ""));
                      if (!label.isEmpty() && !labels.add(label.trim().toLowerCase(Locale.ROOT))) {
                         throw new IllegalArgumentException("Duplicate label " + label);
                      }
@@ -49,39 +49,39 @@ public final class AiMacroValidator {
 
                for (int i = 0; i < actions.size(); i++) {
                   JsonObject a = actions.get(i).getAsJsonObject();
-                  String type = AiJson.init_Str_JsonObject(a, "type", "");
-                  if (type.equals("REPEAT") && AiJson.init_I_JsonObject(a, "stepCount", 1) > actions.size() - i - 1) {
+                  String type = AiJson.getString(a, "type", "");
+                  if (type.equals("REPEAT") && AiJson.getInt(a, "stepCount", 1) > actions.size() - i - 1) {
                      throw new IllegalArgumentException("Repeat extends beyond final step");
                   }
 
-                  if (type.equals("IF") && (long)AiJson.init_I_JsonObject(a, "thenSteps", 1) + AiJson.init_I_JsonObject(a, "elseSteps", 0) > actions.size() - i - 1) {
+                  if (type.equals("IF") && (long)AiJson.getInt(a, "thenSteps", 1) + AiJson.getInt(a, "elseSteps", 0) > actions.size() - i - 1) {
                      throw new IllegalArgumentException("If/else span extends beyond final step");
                   }
 
                   if (type.equals("FLOW")
-                     && AiJson.init_Str_JsonObject(a, "target", "LABEL").equalsIgnoreCase("LABEL")
-                     && !labels.contains(AiJson.init_Str_JsonObject(a, "labelName", "").trim().toLowerCase(Locale.ROOT))) {
+                     && AiJson.getString(a, "target", "LABEL").equalsIgnoreCase("LABEL")
+                     && !labels.contains(AiJson.getString(a, "labelName", "").trim().toLowerCase(Locale.ROOT))) {
                      throw new IllegalArgumentException("Missing flow label");
                   }
                }
 
                CompoundTag tag = (CompoundTag)JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, root);
-               autismclient.util.AutismMacro macro = new autismclient.util.AutismMacro().init_aM_CompoundTag(tag);
-               macro.init_Str = name;
-               if (macro.init_List.size() != actions.size()) {
+               autismclient.util.AutismMacro macro = new autismclient.util.AutismMacro().fromTag(tag);
+               macro.name = name;
+               if (macro.actions.size() != actions.size()) {
                   throw new IllegalArgumentException("Macro contains an unsupported action");
                }
 
                for (int i = 0; i < actions.size(); i++) {
                   JsonObject supplied = actions.get(i).getAsJsonObject();
-                  MacroAction built = macro.init_List.get(i);
-                  String type = AiJson.init_Str_JsonObject(supplied, "type", "");
+                  MacroAction built = macro.actions.get(i);
+                  String type = AiJson.getString(supplied, "type", "");
                   if (built instanceof autismclient.util.macro.MissingAddonAction) {
                      throw new IllegalArgumentException("Action " + type + " could not be deserialized");
                   }
 
                   JsonObject serialized = NbtOps.INSTANCE
-                     .convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.init_CompoundTag_MacroAction(built))
+                     .convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.serializeAction(built))
                      .getAsJsonObject();
                   Set<String> bound = supplied.get("_dynamicBindings") instanceof JsonObject bindings ? bindings.keySet() : Set.of();
                   Set<String> derived = type.equals("RACE") ? Set.of("conditionType", "actionType") : Set.of();
@@ -191,10 +191,10 @@ public final class AiMacroValidator {
          throw new IllegalArgumentException("Macro nesting exceeds 16");
       }
 
-      String id = AiJson.init_Str_JsonObject(input, "type", "");
+      String id = AiJson.getString(input, "type", "");
       AiCatalog.Entry entry = catalog.get("macro:" + id);
       if (entry != null && entry.contract().classification() != AiCapabilityDescriptor.Classification.DISCOVER_ONLY) {
-         JsonObject defaults = AiJson.init_JsonObject_Str(entry.defaultsJson());
+         JsonObject defaults = AiJson.parseObject(entry.defaultsJson());
          Set<String> conditional = id.equals("RACE") ? Set.of("triggerAction", "triggerType") : Set.of();
 
          for (String key : input.keySet()) {
@@ -206,9 +206,9 @@ public final class AiMacroValidator {
          if (id.equals("RACE")) {
             if (input.has("triggerType")) {
                try {
-                  autismclient.util.macro.RaceAction.Inner_DataUtil.valueOf(AiJson.init_Str_JsonObject(input, "triggerType", "").trim().toUpperCase(Locale.ROOT));
+                  autismclient.util.macro.RaceAction.Inner_DataUtil.valueOf(AiJson.getString(input, "triggerType", "").trim().toUpperCase(Locale.ROOT));
                } catch (IllegalArgumentException e) {
-                  throw new IllegalArgumentException("Unknown RACE triggerType " + AiJson.init_Str_JsonObject(input, "triggerType", ""));
+                  throw new IllegalArgumentException("Unknown RACE triggerType " + AiJson.getString(input, "triggerType", ""));
                }
             }
 
@@ -278,7 +278,7 @@ public final class AiMacroValidator {
                         }
                         break;
                      case TOGGLE:
-                        AiJson.init_Z_JsonObject(input, f.key(), false);
+                        AiJson.getBoolean(input, f.key(), false);
                         break;
                      case ENUM:
                         if (!v.isJsonPrimitive()
@@ -288,9 +288,9 @@ public final class AiMacroValidator {
                         }
                   }
 
-                  if (f.type() == autismclient.gui.macro.editor.FieldType.TOGGLE && AiJson.init_Z_JsonObject(input, f.key(), false)) {
+                  if (f.type() == autismclient.gui.macro.editor.FieldType.TOGGLE && AiJson.getBoolean(input, f.key(), false)) {
                      for (String other : f.mutuallyExclusiveWith()) {
-                        if (AiJson.init_Z_JsonObject(input, other, false)) {
+                        if (AiJson.getBoolean(input, other, false)) {
                            throw new IllegalArgumentException("Mutually exclusive fields " + f.key() + " and " + other);
                         }
                      }
@@ -314,10 +314,10 @@ public final class AiMacroValidator {
          throw new IllegalArgumentException("Condition nesting exceeds 16");
       }
 
-      MacroCondition.Inner_BufferHelper type = MacroCondition.Inner_BufferHelper.valueOf(AiJson.init_Str_JsonObject(node, "node", "GROUP"));
-      AiJson.init_Z_JsonObject(node, "negate", false);
+      MacroCondition.Inner_BufferHelper type = MacroCondition.Inner_BufferHelper.valueOf(AiJson.getString(node, "node", "GROUP"));
+      AiJson.getBoolean(node, "negate", false);
       if (type == MacroCondition.Inner_BufferHelper.GROUP) {
-         MacroCondition.Inner_StreamUtil.valueOf(AiJson.init_Str_JsonObject(node, "combine", "ALL"));
+         MacroCondition.Inner_StreamUtil.valueOf(AiJson.getString(node, "combine", "ALL"));
          if (!node.has("children") || !node.get("children").isJsonArray() || node.getAsJsonArray("children").isEmpty()) {
             throw new IllegalArgumentException("Condition group must contain at least one explicit child");
          }
@@ -330,10 +330,10 @@ public final class AiMacroValidator {
             init(child.getAsJsonObject(), depth + 1);
          }
       } else {
-         MacroCondition.Inner_CachePool.valueOf(AiJson.init_Str_JsonObject(node, "kind", "ALWAYS"));
-         MacroCondition.Inner_ConfigStore.valueOf(AiJson.init_Str_JsonObject(node, "op", "EQ"));
-         MacroCondition.Inner_DataUtil.valueOf(AiJson.init_Str_JsonObject(node, "cmp", "AT_LEAST"));
-         if (node.has("range") && AiJson.init_D_JsonObject(node, "range", 0.0) < 0.0) {
+         MacroCondition.Inner_CachePool.valueOf(AiJson.getString(node, "kind", "ALWAYS"));
+         MacroCondition.Inner_ConfigStore.valueOf(AiJson.getString(node, "op", "EQ"));
+         MacroCondition.Inner_DataUtil.valueOf(AiJson.getString(node, "cmp", "AT_LEAST"));
+         if (node.has("range") && AiJson.getDouble(node, "range", 0.0) < 0.0) {
             throw new IllegalArgumentException("Condition range cannot be negative");
          }
       }
@@ -353,7 +353,7 @@ public final class AiMacroValidator {
             JsonElement child = e.getValue();
             if (child.isJsonObject()
                && child.getAsJsonObject().has("type")
-               && catalog.get("macro:" + AiJson.init_Str_JsonObject(child.getAsJsonObject(), "type", "")) != null) {
+               && catalog.get("macro:" + AiJson.getString(child.getAsJsonObject(), "type", "")) != null) {
                init(child.getAsJsonObject(), catalog, depth + 1);
             } else if (child.isJsonArray() || child.isJsonObject()) {
                init(child, catalog, depth + 1);

@@ -99,7 +99,7 @@ public class StoreItemAction implements MacroAction {
    }
 
    private boolean init_Z_ItemStack_2(ItemStack stack, int visibleSlot, MacroItemTarget target) {
-      return target == null || !target.init_Z() && !target.update() ? false : target.init_Z_ItemStack_I(stack, visibleSlot);
+      return target == null || !target.hasSlot() && !target.hasItemFilter() ? false : target.matches(stack, visibleSlot);
    }
 
    @Override
@@ -117,7 +117,7 @@ public class StoreItemAction implements MacroAction {
       tag.putBoolean("allItems", this.allItems);
       tag.putBoolean("closeSendPkt", this.closeSendPkt);
       tag.putInt("delayTicks", this.delayTicks);
-      tag.put("targetItems", MacroItemTarget.init_ListTag_List(this.init_List_11()));
+      tag.put("targetItems", MacroItemTarget.toListTag(this.init_List_11()));
       tag.putBoolean("enabled", this.init);
       return tag;
    }
@@ -156,7 +156,7 @@ public class StoreItemAction implements MacroAction {
       this.targetItems.clear();
       if (tag.contains("targetItems")) {
          ListTag list = tag.getList("targetItems").orElse(new ListTag());
-         this.itemTargets.addAll(MacroItemTarget.init_List_ListTag(list));
+         this.itemTargets.addAll(MacroItemTarget.fromListTag(list));
       }
 
       this.init_V_13();
@@ -177,7 +177,7 @@ public class StoreItemAction implements MacroAction {
          return modeStr + " (nothing)";
       }
 
-      String what = targets.size() == 1 ? load_Str_Str_3(targets.get(0).write_Str()) : targets.size() + " items";
+      String what = targets.size() == 1 ? load_Str_Str_3(targets.get(0).toSpecString()) : targets.size() + " items";
       return modeStr + " " + what + (this.persistent ? " [Inf]" : "");
    }
 
@@ -229,12 +229,12 @@ public class StoreItemAction implements MacroAction {
 
    public static String load_Str_Str_3(String entry) {
       if (entry != null && !entry.isBlank()) {
-         MacroItemTarget target = MacroItemTarget.update(entry);
-         String label = target.read_Str();
-         if (target.init_Z() && label.isBlank()) {
-            return "#" + target.init_I;
+         MacroItemTarget target = MacroItemTarget.parse(entry);
+         String label = target.resolvedDisplayName();
+         if (target.hasSlot() && label.isBlank()) {
+            return "#" + target.slot;
          } else {
-            return target.init_Z() ? target.init_I + ": " + label : label;
+            return target.hasSlot() ? target.slot + ": " + label : label;
          }
       } else {
          return "";
@@ -290,8 +290,8 @@ public class StoreItemAction implements MacroAction {
       }
 
       for (String target : this.targetItems) {
-         MacroItemTarget parsed = MacroItemTarget.update(target);
-         if (parsed.init_Z() || parsed.update()) {
+         MacroItemTarget parsed = MacroItemTarget.parse(target);
+         if (parsed.hasSlot() || parsed.hasItemFilter()) {
             this.itemTargets.add(parsed);
          }
       }
@@ -304,8 +304,8 @@ public class StoreItemAction implements MacroAction {
 
       for (MacroItemTarget target : this.init_List_11()) {
          if (target != null) {
-            MacroItemTarget resolved = target.init_ArrayUtil_Minecraft(mc);
-            if (resolved != null && (resolved.init_Z() || resolved.update())) {
+            MacroItemTarget resolved = target.resolveTemplates(mc);
+            if (resolved != null && (resolved.hasSlot() || resolved.hasItemFilter())) {
                runtime.add(resolved);
             }
          }
@@ -319,7 +319,7 @@ public class StoreItemAction implements MacroAction {
 
       for (MacroItemTarget target : this.itemTargets) {
          if (target != null) {
-            String entry = target.write_Str();
+            String entry = target.toSpecString();
             if (!entry.isBlank()) {
                this.targetItems.add(entry);
             }

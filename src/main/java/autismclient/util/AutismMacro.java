@@ -16,38 +16,38 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 public class AutismMacro {
-   public String init_Str = "New Macro";
-   public String load_Str = "";
-   public String read = "";
-   public boolean init_Z = false;
-   public int init_I = -1;
-   public int load_I = -1;
-   public List<MacroAction> init_List = new ArrayList<>();
-   private static final Set<String> init_Set;
+   public String name = "New Macro";
+   public String description = "";
+   public String folder = "";
+   public boolean loop = false;
+   public int loopCount = -1;
+   public int keyCode = -1;
+   public List<MacroAction> actions = new ArrayList<>();
+   private static final Set<String> BUILT_IN_ACTION_TYPES;
 
    public AutismMacro() {
    }
 
    public AutismMacro(String name) {
-      this.init_Str = name;
+      this.name = name;
    }
 
-   public AutismMacro init_aM() {
-      return new AutismMacro().init_aM_CompoundTag(this.load_CompoundTag());
+   public AutismMacro copy() {
+      return new AutismMacro().fromTag(this.toTag());
    }
 
-   public AutismMacro init_aM_Str(String newName) {
-      AutismMacro copy = this.init_aM();
+   public AutismMacro copyWithName(String newName) {
+      AutismMacro copy = this.copy();
       if (newName != null && !newName.isBlank()) {
-         copy.init_Str = newName;
+         copy.name = newName;
       }
 
       return copy;
    }
 
-   public AutismMacro load_aM() {
-      if (this.init_List != null) {
-         for (MacroAction action : this.init_List) {
+   public AutismMacro sanitizeForSharing() {
+      if (this.actions != null) {
+         for (MacroAction action : this.actions) {
             if (action != null) {
                action.sanitizeForSharing();
             }
@@ -57,26 +57,26 @@ public class AutismMacro {
       return this;
    }
 
-   public CompoundTag init_CompoundTag() {
-      return this.init_aM().load_aM().load_CompoundTag();
+   public CompoundTag toSharedTag() {
+      return this.copy().sanitizeForSharing().toTag();
    }
 
-   public void init_V() {
-      this.init_V_Z(true);
+   public void execute() {
+      this.execute(true);
    }
 
-   public void init_V_Z(boolean regenerate) {
-      this.init_J_Z(regenerate);
+   public void execute(boolean regenerate) {
+      this.executeWithRunId(regenerate);
    }
 
-   public long init_J() {
-      return this.init_J_Z(true);
+   public long executeWithRunId() {
+      return this.executeWithRunId(true);
    }
 
-   public long init_J_Z(boolean regenerate) {
-      if (this.init_List != null && !this.init_List.isEmpty()) {
+   public long executeWithRunId(boolean regenerate) {
+      if (this.actions != null && !this.actions.isEmpty()) {
          if (regenerate) {
-            this.load_V();
+            this.regeneratePackets();
          }
 
          return MacroExecutor.init_J_aM(this);
@@ -86,9 +86,9 @@ public class AutismMacro {
       }
    }
 
-   public void load_V() {
-      if (this.init_List != null) {
-         for (MacroAction action : this.init_List) {
+   public void regeneratePackets() {
+      if (this.actions != null) {
+         for (MacroAction action : this.actions) {
             if (action instanceof autismclient.util.macro.SendPacketAction) {
                ((autismclient.util.macro.SendPacketAction)action).init_V_10();
             }
@@ -96,19 +96,19 @@ public class AutismMacro {
       }
    }
 
-   public CompoundTag load_CompoundTag() {
+   public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
-      tag.putString("name", this.init_Str);
-      tag.putString("description", this.load_Str);
-      tag.putString("folder", MacroFolderLayout.init_Str_Str(this.read));
-      tag.putBoolean("loop", this.init_Z);
-      tag.putInt("loopCount", this.init_I);
-      tag.putInt("keyCode", this.load_I);
+      tag.putString("name", this.name);
+      tag.putString("description", this.description);
+      tag.putString("folder", MacroFolderLayout.init_Str_Str(this.folder));
+      tag.putBoolean("loop", this.loop);
+      tag.putInt("loopCount", this.loopCount);
+      tag.putInt("keyCode", this.keyCode);
       ListTag actionsList = new ListTag();
-      if (this.init_List != null) {
-         for (MacroAction action : this.init_List) {
+      if (this.actions != null) {
+         for (MacroAction action : this.actions) {
             if (action != null) {
-               actionsList.add(init_CompoundTag_MacroAction(action));
+               actionsList.add(serializeAction(action));
             }
          }
       }
@@ -117,26 +117,26 @@ public class AutismMacro {
       return tag;
    }
 
-   public AutismMacro init_aM_CompoundTag(CompoundTag tag) {
-      this.read = MacroFolderLayout.init_Str_Str(tag.getStringOr("folder", ""));
+   public AutismMacro fromTag(CompoundTag tag) {
+      this.folder = MacroFolderLayout.init_Str_Str(tag.getStringOr("folder", ""));
       if (tag.contains("name")) {
-         this.init_Str = tag.getStringOr("name", "");
+         this.name = tag.getStringOr("name", "");
       }
 
       if (tag.contains("description")) {
-         this.load_Str = tag.getStringOr("description", "");
+         this.description = tag.getStringOr("description", "");
       }
 
       if (tag.contains("loop")) {
-         this.init_Z = tag.getBooleanOr("loop", false);
+         this.loop = tag.getBooleanOr("loop", false);
       }
 
       if (tag.contains("loopCount")) {
-         this.init_I = tag.getIntOr("loopCount", -1);
+         this.loopCount = tag.getIntOr("loopCount", -1);
       }
 
       if (tag.contains("keyCode")) {
-         this.load_I = tag.getIntOr("keyCode", -1);
+         this.keyCode = tag.getIntOr("keyCode", -1);
       }
 
       if (tag.get("actions") instanceof ListTag actionsList) {
@@ -144,31 +144,31 @@ public class AutismMacro {
 
          for (Tag element : actionsList) {
             if (element instanceof CompoundTag actionTag) {
-               MacroAction action = init_MacroAction_CompoundTag(actionTag);
+               MacroAction action = deserializeAction(actionTag);
                if (action != null) {
                   loadedActions.add(action);
                }
             }
          }
 
-         this.init_List = loadedActions;
-         this.read();
+         this.actions = loadedActions;
+         this.migrateLegacyRaceActions();
       }
 
       return this;
    }
 
-   public static MacroAction init_MacroAction_CompoundTag(CompoundTag actionTag) {
+   public static MacroAction deserializeAction(CompoundTag actionTag) {
       if (actionTag != null && actionTag.contains("type")) {
          try {
             String typeName = actionTag.getStringOr("type", "");
-            MacroAction migratedLegacy = init(typeName, actionTag);
+            MacroAction migratedLegacy = migrateLegacyAction(typeName, actionTag);
             if (migratedLegacy != null) {
                return migratedLegacy;
             }
 
             autismclient.util.macro.MacroActionType type = autismclient.util.macro.MacroActionType.valueOf(typeName);
-            MacroAction action = init_MacroAction_StreamGate(type);
+            MacroAction action = createBuiltInAction(type);
             if (type == autismclient.util.macro.MacroActionType.WAIT_ITEM) {
                ((autismclient.util.macro.WaitForSlotChangeAction)action).init(actionTag);
             } else {
@@ -178,7 +178,7 @@ public class AutismMacro {
             DynamicBindingManager.init(action, actionTag);
             return action;
          } catch (IllegalArgumentException e) {
-            return load(actionTag);
+            return deserializeAddonAction(actionTag);
          } catch (Throwable t) {
             String typeName = actionTag.getStringOr("type", "");
             AutismClientAddon.LOG.warn("[Macros] Failed to deserialize action '{}'; preserving its data", typeName, t);
@@ -189,17 +189,17 @@ public class AutismMacro {
       }
    }
 
-   public static CompoundTag init_CompoundTag_MacroAction(MacroAction action) {
+   public static CompoundTag serializeAction(MacroAction action) {
       CompoundTag tag = action == null ? new CompoundTag() : action.toTag();
       DynamicBindingManager.load(action, tag);
       return tag;
    }
 
-   public static boolean init_Z_Str(String type) {
-      return type != null && init_Set.contains(type);
+   public static boolean isBuiltInActionType(String type) {
+      return type != null && BUILT_IN_ACTION_TYPES.contains(type);
    }
 
-   public static int init_I_CompoundTag(CompoundTag macroTag) {
+   public static int pruneUnknownActions(CompoundTag macroTag) {
       if (macroTag == null) {
          return 0;
       } else if (!(macroTag.get("actions") instanceof ListTag actionsList)) {
@@ -209,7 +209,7 @@ public class AutismMacro {
          int dropped = 0;
 
          for (Tag element : actionsList) {
-            if (element instanceof CompoundTag actionTag && init_Z_Str(actionTag.getStringOr("type", ""))) {
+            if (element instanceof CompoundTag actionTag && isBuiltInActionType(actionTag.getStringOr("type", ""))) {
                var7.add(actionTag);
             } else {
                dropped++;
@@ -224,7 +224,7 @@ public class AutismMacro {
       }
    }
 
-   private static MacroAction init_MacroAction_StreamGate(autismclient.util.macro.MacroActionType type) {
+   private static MacroAction createBuiltInAction(autismclient.util.macro.MacroActionType type) {
       MacroAction var10000;
       switch (type) {
          case DELAY:
@@ -541,7 +541,7 @@ public class AutismMacro {
       return var10000;
    }
 
-   private static MacroAction load(CompoundTag actionTag) {
+   private static MacroAction deserializeAddonAction(CompoundTag actionTag) {
       if (actionTag == null) {
          return null;
       }
@@ -568,7 +568,7 @@ public class AutismMacro {
       return new autismclient.util.macro.MissingAddonAction(typeName, actionTag.copy());
    }
 
-   private static MacroAction init(String typeName, CompoundTag actionTag) {
+   private static MacroAction migrateLegacyAction(String typeName, CompoundTag actionTag) {
       if ("WAIT_ENTITY_TARGET".equals(typeName)) {
          autismclient.util.macro.WaitForEntityAction migrated = new autismclient.util.macro.WaitForEntityAction();
          migrated.init(actionTag);
@@ -582,20 +582,20 @@ public class AutismMacro {
       }
    }
 
-   private void read() {
-      if (this.init_List != null && !this.init_List.isEmpty()) {
-         for (int i = 0; i < this.init_List.size(); i++) {
-            if (this.init_List.get(i) instanceof autismclient.util.macro.RaceAction race && race.init_Z()) {
+   private void migrateLegacyRaceActions() {
+      if (this.actions != null && !this.actions.isEmpty()) {
+         for (int i = 0; i < this.actions.size(); i++) {
+            if (this.actions.get(i) instanceof autismclient.util.macro.RaceAction race && race.init_Z()) {
                int inserted = 0;
                autismclient.util.macro.PacketClickAction packetClick = race.init_z();
                if (packetClick != null) {
-                  this.init_List.add(i + 1, packetClick);
+                  this.actions.add(i + 1, packetClick);
                   inserted++;
                }
 
                if (race.load_Z()) {
-                  for (int j = i + 1 + inserted; j < this.init_List.size(); j++) {
-                     MacroAction candidate = this.init_List.get(j);
+                  for (int j = i + 1 + inserted; j < this.actions.size(); j++) {
+                     MacroAction candidate = this.actions.get(j);
                      if (!autismclient.util.macro.RaceAction.load(candidate)) {
                         break;
                      }
@@ -618,7 +618,7 @@ public class AutismMacro {
          return true;
       } else if (o != null && this.getClass() == o.getClass()) {
          AutismMacro that = (AutismMacro)o;
-         return MacroNameNormalizer.init(this.init_Str, that.init_Str);
+         return MacroNameNormalizer.init(this.name, that.name);
       } else {
          return false;
       }
@@ -626,7 +626,7 @@ public class AutismMacro {
 
    @Override
    public int hashCode() {
-      return Objects.hash(MacroNameNormalizer.init(this.init_Str));
+      return Objects.hash(MacroNameNormalizer.init(this.name));
    }
 
    static {
@@ -636,6 +636,6 @@ public class AutismMacro {
          s.add(t.name());
       }
 
-      init_Set = Set.copyOf(s);
+      BUILT_IN_ACTION_TYPES = Set.copyOf(s);
    }
 }

@@ -54,7 +54,7 @@ final class AiNavigationSelection extends AiPlacementSession {
    }
 
    JsonObject buildArgs(BlockPos feet) {
-      JsonObject args = AiJson.init_JsonObject_ObjArr("x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "radius", 0.6);
+      JsonObject args = AiJson.objectOf("x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "radius", 0.6);
       if (this.init_Z) {
          args = AiToolCallParser.init_JsonObject_JsonObject_ParkourOptions(args, this.options);
          args.addProperty("allowInventory", false);
@@ -66,7 +66,7 @@ final class AiNavigationSelection extends AiPlacementSession {
 
          for (int i = 0; i < count; i++) {
             BlockPos cp = this.checkpoints.get(i).stance();
-            arr.add(AiJson.init_JsonObject_ObjArr("x", cp.getX(), "y", cp.getY(), "z", cp.getZ()));
+            arr.add(AiJson.objectOf("x", cp.getX(), "y", cp.getY(), "z", cp.getZ()));
          }
 
          if (!arr.isEmpty()) {

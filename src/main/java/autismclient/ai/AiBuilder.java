@@ -262,8 +262,8 @@ final class AiBuilder {
             );
       }
 
-      String world = AiJson.init_Str_Str(AiWorldIdentity.init(mc) + "/" + AiWorldIdentity.load(mc));
-      return mc.gameDirectory.toPath().resolve("config/autism/ai/scaffold-jobs").resolve(world).resolve(AiJson.init_Str_Str(identity.toString()) + ".json");
+      String world = AiJson.sha256Hex(AiWorldIdentity.init(mc) + "/" + AiWorldIdentity.load(mc));
+      return mc.gameDirectory.toPath().resolve("config/autism/ai/scaffold-jobs").resolve(world).resolve(AiJson.sha256Hex(identity.toString()) + ".json");
    }
 
    static int init_I_List(List<BlockPos> cells, Vec3 worker, Predicate<BlockPos> reachable) {
@@ -364,12 +364,12 @@ final class AiBuilder {
    }
 
    static AiBuilder.BuildOptions init_TableIndex_ConfigS(JsonObject args) {
-      int rotation = AiJson.init_I_JsonObject(args, "rotation", 0);
+      int rotation = AiJson.getInt(args, "rotation", 0);
       if (rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270) {
          throw new IllegalArgumentException("rotation must be 0, 90, 180 or 270 (clockwise seen from above), got " + rotation);
       }
 
-      String mirror = AiJson.init_Str_JsonObject(args, "mirror", "none").trim().toLowerCase(Locale.ROOT);
+      String mirror = AiJson.getString(args, "mirror", "none").trim().toLowerCase(Locale.ROOT);
       if (!mirror.equals("none") && !mirror.equals("x") && !mirror.equals("z")) {
          throw new IllegalArgumentException("mirror must be \"none\", \"x\" or \"z\", got \"" + mirror + "\"");
       }
@@ -383,13 +383,13 @@ final class AiBuilder {
          }
 
          JsonObject layers = args.getAsJsonObject("layers");
-         layerStart = AiJson.init_I_JsonObject(layers, "start", 0);
-         layerHeight = AiJson.init_I_JsonObject(layers, "height", 1);
+         layerStart = AiJson.getInt(layers, "start", 0);
+         layerHeight = AiJson.getInt(layers, "height", 1);
          if (layerHeight < 1 || layerHeight > 512) {
             throw new IllegalArgumentException("layers.height must be 1..512");
          }
 
-         skipFailed = AiJson.init_Z_JsonObject(layers, "skipFailed", false);
+         skipFailed = AiJson.getBoolean(layers, "skipFailed", false);
       }
 
       AiBuilder.RepeatSpec repeat = null;
@@ -399,9 +399,9 @@ final class AiBuilder {
          }
 
          JsonObject r = args.getAsJsonObject("repeat");
-         int rdx = AiJson.init_I_JsonObject(r, "dx", 0);
-         int rdy = AiJson.init_I_JsonObject(r, "dy", 0);
-         int rdz = AiJson.init_I_JsonObject(r, "dz", 0);
+         int rdx = AiJson.getInt(r, "dx", 0);
+         int rdy = AiJson.getInt(r, "dy", 0);
+         int rdz = AiJson.getInt(r, "dz", 0);
          if (rdx == 0 && rdy == 0 && rdz == 0) {
             throw new IllegalArgumentException("repeat vector must not be (0,0,0); omit repeat for a single build");
          }
@@ -410,7 +410,7 @@ final class AiBuilder {
             throw new IllegalArgumentException("repeat vector components must be within +/-256");
          }
 
-         int count = AiJson.init_I_JsonObject(r, "count", -2);
+         int count = AiJson.getInt(r, "count", -2);
          if (count == -2) {
             throw new IllegalArgumentException("repeat.count is required: extra copies after the first (-1 = until cancelled or materials out)");
          }
@@ -423,10 +423,10 @@ final class AiBuilder {
       }
 
       Map<String, List<String>> substitutes = init_Map(args);
-      boolean clearTerrain = AiJson.init_Z_JsonObject(args, "clearTerrain", false);
-      boolean shulkerStock = AiJson.init_Z_JsonObject(args, "shulkerStock", true);
+      boolean clearTerrain = AiJson.getBoolean(args, "clearTerrain", false);
+      boolean shulkerStock = AiJson.getBoolean(args, "shulkerStock", true);
       return new AiBuilder.BuildOptions(rotation, mirror, layerStart, layerHeight, skipFailed, substitutes, repeat, clearTerrain, shulkerStock)
-         .withAssumeFly(AiJson.init_Z_JsonObject(args, "assumeFly", false));
+         .withAssumeFly(AiJson.getBoolean(args, "assumeFly", false));
    }
 
    static Map<String, List<String>> init_Map(JsonObject args) {
@@ -722,12 +722,12 @@ final class AiBuilder {
    static AiBuilder.Blueprint init(JsonObject args, BlockPos fallbackOrigin) {
       JsonObject source = args;
       if (args.has("blueprint")) {
-         String raw = AiJson.init_Str_JsonObject(args, "blueprint", "");
+         String raw = AiJson.getString(args, "blueprint", "");
          if (raw.isBlank()) {
             throw new IllegalArgumentException("blueprint must be a JSON object string with origin and blocks");
          }
 
-         source = AiJson.init_JsonObject_Str(raw);
+         source = AiJson.parseObject(raw);
       }
 
       BlockPos origin = auditOrigin(source, fallbackOrigin);
@@ -1737,7 +1737,7 @@ final class AiBuilder {
       );
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.level != null) {
-         ordered = new ArrayList<>(init_List_TableIndex_DataUti(blueprint, ordered, neighbor -> AiTerrain.init(mc.level, neighbor) && init(mc.level, neighbor)));
+         ordered = new ArrayList<>(init_List_TableIndex_DataUti(blueprint, ordered, neighbor -> AiTerrain.isLoaded(mc.level, neighbor) && init(mc.level, neighbor)));
       }
 
       ordered = new ArrayList<>(init_List(ordered));
@@ -2158,7 +2158,7 @@ final class AiBuilder {
          JsonObject properties = new JsonObject();
          cell.properties().forEach(properties::addProperty);
          reported.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "kind",
                issue.kind().name(),
                "block",
@@ -2197,11 +2197,11 @@ final class AiBuilder {
          + ": "
          + first.detail();
       AiFailure code = contextOnly ? AiFailure.PLACEMENT_IMPOSSIBLE : AiFailure.IMPOSSIBLE_STATE;
-      return AiGameOperations.init(
+      return AiGameOperations.immediateFailure(
          AiOperation.Status.FAILED,
          code,
          message,
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "issueCount",
             audit.issueCount(),
             "reportedIssueCount",
@@ -2287,7 +2287,7 @@ final class AiBuilder {
 
    static JsonObject init_JsonObject_Iterable_2(Iterable<AiCellMaterials.Inner_CachePool> plans, Container inventory, boolean carriedStock) {
       Map<Item, Integer> counts = AiCarriedShulker.init_Map_Container_Z(inventory, carriedStock);
-      return init_JsonObject_Iterable(plans, Map.of(), spec -> AiItems.load_af_DataUtil(spec).items().stream().mapToInt(item -> counts.getOrDefault(item, 0)).sum());
+      return init_JsonObject_Iterable(plans, Map.of(), spec -> AiItems.resolveItem(spec).items().stream().mapToInt(item -> counts.getOrDefault(item, 0)).sum());
    }
 
    private static JsonObject init_JsonObject_Iterable(
@@ -2358,7 +2358,7 @@ final class AiBuilder {
       for (Entry<String, Integer> entry : required.entrySet()) {
          int have = entry.getValue() - flow.init_I(0, sourceEdges[requirementIndex++]);
          if (have < entry.getValue()) {
-            missing.add(entry.getKey(), AiJson.init_JsonObject_ObjArr("required", entry.getValue(), "available", have, "missing", entry.getValue() - have));
+            missing.add(entry.getKey(), AiJson.objectOf("required", entry.getValue(), "available", have, "missing", entry.getValue() - have));
          }
       }
 
@@ -2407,7 +2407,7 @@ final class AiBuilder {
    static AiBuilder.Blueprint init_TableIndex_DataUti(AiBuilder.Blueprint blueprint) {
       Minecraft mc = Minecraft.getInstance();
       ClientLevel world = mc == null ? null : mc.level;
-      return init(blueprint, pos -> world != null && AiTerrain.init(world, pos) ? world.getBlockState(pos) : Blocks.AIR.defaultBlockState());
+      return init(blueprint, pos -> world != null && AiTerrain.isLoaded(world, pos) ? world.getBlockState(pos) : Blocks.AIR.defaultBlockState());
    }
 
    static AiBuilder.Blueprint init(AiBuilder.Blueprint blueprint, Map<Long, BlockState> leafSnapshot) {
@@ -2648,11 +2648,11 @@ final class AiBuilder {
 
             BlockPos origin = auditOrigin(args, mc.player.blockPosition());
             AiSchematic.Inner_BufferHelper loaded = AiSchematic.init_bP_BufferHelper(
-               AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.init_Str_JsonObject(args, "schematic", "")),
+               AiSchematic.init_Path_Path_Str(AiSchematic.init(), AiJson.getString(args, "schematic", "")),
                origin,
                power.rotation(),
                power.mirror(),
-               AiJson.init_Z_JsonObject(args, "skipUnknown", false),
+               AiJson.getBoolean(args, "skipUnknown", false),
                2097152
             );
             blueprint = loaded.blueprint();
@@ -2661,7 +2661,7 @@ final class AiBuilder {
             AutismClientAddon.LOG
                .info(
                   "[AI] build: schematic \"{}\" decoded to {} cells at {}",
-                  AiJson.init_Str_JsonObject(args, "schematic", ""),
+                  AiJson.getString(args, "schematic", ""),
                   blueprint.cells().size(),
                   origin.toShortString()
                );
@@ -2709,32 +2709,32 @@ final class AiBuilder {
                   : init_JsonObject_TableIndex_DataUti(stockPlan, mc.player.getInventory(), power.substitutes())
             );
          if (schematic && missing.size() > 0 && (!power.shulkerStock() || !init_Z(blueprint))) {
-            return AiGameOperations.init(
+            return AiGameOperations.immediateFailure(
                AiOperation.Status.FAILED,
                AiFailure.MISSING_MATERIALS,
                "Missing materials for the schematic; "
                   + (power.shulkerStock() ? "no nearby external shulker stock" : "shulker stock is disabled")
                   + ": "
                   + missing,
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray(), "shulkerStock", false, "cells", blueprint.cells().size()
                )
             );
          }
 
          if (!schematic && missing.size() > 0) {
-            return AiJson.init_Z_JsonObject(args, "craftMissing", true)
+            return AiJson.getBoolean(args, "craftMissing", true)
                ? init(args, missing)
-               : AiGameOperations.init(
+               : AiGameOperations.immediateFailure(
                   AiOperation.Status.FAILED,
                   AiFailure.MISSING_MATERIALS,
                   "Missing materials: " + missing,
-                  AiJson.init_JsonObject_ObjArr("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
+                  AiJson.objectOf("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
                );
          }
 
-         boolean verify = AiJson.init_Z_JsonObject(args, "verify", true);
-         int timeoutSeconds = AiJson.init_I_JsonObject(args, "timeoutSeconds", 600);
+         boolean verify = AiJson.getBoolean(args, "verify", true);
+         int timeoutSeconds = AiJson.getInt(args, "timeoutSeconds", 600);
          return power.repeat() != null
             ? new AiBuilder.BuildOp(blueprint, power, verify, timeoutSeconds)
             : init(blueprint, verify, timeoutSeconds, power, schematic);
@@ -2771,7 +2771,7 @@ final class AiBuilder {
 
          for (BlockPos[] box : boxes) {
             for (BlockPos p : BlockPos.betweenClosed(box[0], box[1])) {
-               if (AiTerrain.init(mc.level, p) && !source.contains(p.asLong()) && mc.level.getBlockState(p).getBlock() instanceof ShulkerBoxBlock) {
+               if (AiTerrain.isLoaded(mc.level, p) && !source.contains(p.asLong()) && mc.level.getBlockState(p).getBlock() instanceof ShulkerBoxBlock) {
                   return true;
                }
             }
@@ -2838,7 +2838,7 @@ final class AiBuilder {
                }
 
                if (!r.terminal()) {
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      AiOperation.Status.RUNNING, "Crafting missing " + items.get(this.init_I) + ": " + r.message(), new JsonObject()
                   );
                }
@@ -2857,12 +2857,12 @@ final class AiBuilder {
                int shortBy = missing.getAsJsonObject(item).get("missing").getAsInt();
 
                try {
-                  this.init_AiOperation = AiCraft.init(AiJson.init_JsonObject_ObjArr("item", item, "count", shortBy, "additional", true));
+                  this.init_AiOperation = AiCraft.craft(AiJson.objectOf("item", item, "count", shortBy, "additional", true));
                } catch (IllegalArgumentException e) {
                   return this.init(item, e.getMessage());
                }
 
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Crafting missing " + item, new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "Crafting missing " + item, new JsonObject());
             } else {
                JsonObject again = args.deepCopy();
                again.addProperty("craftMissing", false);
@@ -2874,12 +2874,12 @@ final class AiBuilder {
                }
 
                this.init_Z = true;
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Materials crafted; building", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "Materials crafted; building", new JsonObject());
             }
          }
 
          AiOperation.Result init(String item, String reason) {
-            JsonObject data = AiJson.init_JsonObject_ObjArr(
+            JsonObject data = AiJson.objectOf(
                "missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray(), "crafted", this.init_JsonArray
             );
             return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, "Missing materials: " + missing + " (could not craft " + item + ": " + reason + ")", data.toString());
@@ -3264,7 +3264,7 @@ final class AiBuilder {
                this.close_Z = scaffoldingOwner;
                this.init_Y = this.close_Z ? new AiGuardLayer(new AiGuard.GuardPolicy(true, true, true, 16.0F, 7.0F, 14), "schematic construction") : null;
                if (this.init_Y != null) {
-                  AiGuard.init_V();
+                  AiGuard.suppressBriefly();
                }
 
                this.poll_Set = new HashSet<>();
@@ -3477,9 +3477,9 @@ final class AiBuilder {
                      this.init_a_StreamUtil.init_V();
                   }
 
-                  if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
+                  if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                      return this.init_AiOperation_Result_AiOperation_Status_Str_4(
-                        AiOperation.Status.FAILED, AiGuard.init_Str_Str("building", mc.player.getHealth(), mc.player.getMaxHealth())
+                        AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", mc.player.getHealth(), mc.player.getMaxHealth())
                      );
                   }
 
@@ -3563,7 +3563,7 @@ final class AiBuilder {
                         boolean moved = false;
 
                         try {
-                           JsonObject data = AiJson.init_JsonObject_Str(refill.dataJson());
+                           JsonObject data = AiJson.parseObject(refill.dataJson());
                            moved = data.has("moved") && data.get("moved").isJsonObject() && data.getAsJsonObject("moved").size() > 0;
                         } catch (RuntimeException var23) {
                         }
@@ -3586,7 +3586,7 @@ final class AiBuilder {
                         }
                      } else {
                         JsonObject receipt = this.init_JsonObject_18();
-                        receipt.add("shulkerTransfer", AiJson.init_JsonObject_Str(refill.dataJson()));
+                        receipt.add("shulkerTransfer", AiJson.parseObject(refill.dataJson()));
                         return this.init_AiOperation_Result_AiOperation_Status(
                            refill.status(), "Shulker transfer did not settle; reconcile inventory before resuming: " + refill.message(), receipt
                         );
@@ -3629,8 +3629,8 @@ final class AiBuilder {
                         }
 
                         if (this.load_Vec3 != null) {
-                           this.init_DataUtil.init_V_Vec3(this.load_Vec3);
-                           this.init_DataUtil.load_V();
+                           this.init_DataUtil.aimAt(this.load_Vec3);
+                           this.init_DataUtil.tick();
                         }
 
                         BlockState liveState = mc.level.getBlockState(this.load_BlockPos);
@@ -3648,7 +3648,7 @@ final class AiBuilder {
                            }
                         } else {
                            this.valid = matched ? this.valid + 1 : 0;
-                           boolean answered = AiServerEvidence.init_J_BlockPos(this.load_BlockPos) > this.read_J;
+                           boolean answered = AiServerEvidence.blockRevision(this.load_BlockPos) > this.read_J;
                            if (this.valid >= (schematic ? 1 : 5) && answered) {
                               if (this.init_Z_TableIndex_StreamU_2(this.read_TableIndex_StreamU, this.load_BlockPos, liveState) && this.load_BlockPos != null) {
                                  this.state++;
@@ -3880,7 +3880,7 @@ final class AiBuilder {
                            evaluated++;
                            BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                            BlockState live = mc.level.getBlockState(pos);
-                           if (!AiTerrain.init(mc.level, pos)
+                           if (!AiTerrain.isLoaded(mc.level, pos)
                               || !AiBuilder.init(cell, live, power.substitutes(), schematic)
                                  && (
                                     !schematic
@@ -3974,7 +3974,7 @@ final class AiBuilder {
                                     }
 
                                     BlockPos dependency = AiSchematicActions.init_BlockPos_TableIndex_StreamU(cell, pos, mc.level, this.load_Map);
-                                    if (AiTerrain.init(mc.level, pos) && (dependency != null || !AiBuilder.init_BlockState(cell).canSurvive(mc.level, pos))) {
+                                    if (AiTerrain.isLoaded(mc.level, pos) && (dependency != null || !AiBuilder.init_BlockState(cell).canSurvive(mc.level, pos))) {
                                        if (dependency != null && this.poll_Map.getOrDefault(cell, 0) < 4) {
                                           boolean later = false;
 
@@ -4021,7 +4021,7 @@ final class AiBuilder {
                                        }
 
                                        if (mc.player.tickCount - this.load_J < 100L) {
-                                          autismclient.ai.engine.AiMotionSafety.putAt_V();
+                                          autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                                           return this.init_AiOperation_Result_5("Waiting for water to propagate from the verified source cells");
                                        }
 
@@ -4062,12 +4062,12 @@ final class AiBuilder {
                                     && !mc.level.getBlockState(pos.below()).getCollisionShape(mc.level, pos.below()).isEmpty()
                                     && mc.level.getBlockState(pos.below()).getCollisionShape(mc.level, pos.below()).max(Axis.Y) >= 1.0
                                     && mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(0.0, 1.42, 0.0))) {
-                                    int itemSlot = AiItems.read(AiItems.load_af_DataUtil(cell.block()));
+                                    int itemSlot = AiItems.equipHotbar(AiItems.resolveItem(cell.block()));
                                     if (itemSlot >= 0) {
                                        this.task++;
-                                       autismclient.ai.engine.AiMotionSafety.putAt_V();
-                                       this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(pos.below()));
-                                       this.init_DataUtil.load_V();
+                                       autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+                                       this.init_DataUtil.aimAt(Vec3.atCenterOf(pos.below()));
+                                       this.init_DataUtil.tick();
                                        mc.options.keyJump.setDown(mc.player.onGround() || mc.player.isInWater());
                                        return this.init_AiOperation_Result_5("Jumping to backfill the access shaft with " + cell.block());
                                     }
@@ -4232,7 +4232,7 @@ final class AiBuilder {
 
                                              if (!sourced) {
                                                 if (schematic && ++this.entry <= 20) {
-                                                   autismclient.ai.engine.AiMotionSafety.putAt_V();
+                                                   autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                                                    return this.init_AiOperation_Result_5("Awaiting material: " + BuiltInRegistries.ITEM.getKey(item));
                                                 }
 
@@ -4253,7 +4253,7 @@ final class AiBuilder {
                                              }
 
                                              this.entry = 0;
-                                             if (AiTerrain.init(mc.level, pos)
+                                             if (AiTerrain.isLoaded(mc.level, pos)
                                                 && (
                                                    schematic
                                                       ? !AiBuilder.init(cell, pos, mc.player.getBoundingBox(), mc.level)
@@ -4279,9 +4279,9 @@ final class AiBuilder {
                                                 }
 
                                                 String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
-                                                if (autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, MacroItemTarget.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
+                                                if (autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, MacroItemTarget.ofRegistryId(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
                                                    if (schematic && ++this.node <= 20) {
-                                                      autismclient.ai.engine.AiMotionSafety.putAt_V();
+                                                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                                                       return this.init_AiOperation_Result_5("Awaiting material: selecting " + itemId);
                                                    }
 
@@ -4413,14 +4413,14 @@ final class AiBuilder {
                                                          <= this.read_D
                                                       ? hitRotation.yaw()
                                                       : this.init_F;
-                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(goalYaw, hitRotation.pitch()));
-                                                   this.init_DataUtil.load_V();
+                                                   this.init_DataUtil.setTargetRotation(new autismclient.util.RotationMath.Rotation(goalYaw, hitRotation.pitch()));
+                                                   this.init_DataUtil.tick();
                                                 } else {
-                                                   AiGameOperations.init(this.init_DataUtil, hit.getLocation());
+                                                   AiGameOperations.aimAndStep(this.init_DataUtil, hit.getLocation());
                                                 }
 
-                                                if (!this.init_DataUtil.load_Z()
-                                                   || autismclient.ai.engine.AiAim.init_Direction_BlockPos(hit.getBlockPos()) != hitFace
+                                                if (!this.init_DataUtil.isSettled()
+                                                   || autismclient.ai.engine.AiAim.lookedBlockFace(hit.getBlockPos()) != hitFace
                                                    || !Float.isNaN(this.init_F)
                                                       && Math.abs(
                                                             autismclient.util.RotationMath.angularDistance(
@@ -4476,7 +4476,7 @@ final class AiBuilder {
                                                       return this.init_AiOperation_Result_5("Waiting for the selected construction item to reach the server");
                                                    }
 
-                                                   this.read_J = AiServerEvidence.init_J_BlockPos(pos);
+                                                   this.read_J = AiServerEvidence.blockRevision(pos);
                                                    this.load_BlockPos = pos;
                                                    this.init_Block = target;
                                                    this.read_TableIndex_StreamU = cell;
@@ -4959,8 +4959,8 @@ final class AiBuilder {
                   && this.push_AiOperation == null
                   && this.close_AiOperation == null
                   && this.poll_AiOperation == null
-                  && !autismclient.ai.engine.AiMotionSafety.fill_Z()) {
-                  autismclient.ai.engine.AiMotionSafety.putAt_V();
+                  && !autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
+                  autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                   if (mc.player.tickCount % 100 == 0) {
                      AutismClientAddon.LOG
                         .info(
@@ -5089,7 +5089,7 @@ final class AiBuilder {
                      if (this.close_List.isEmpty() || drainNow - this.write_J <= 5000L && drainNow - this.update_J <= 60000L) {
                         if (!this.close_List.isEmpty() && this.store < (schematic ? 2097152 : 30)) {
                            BlockPos candidate = this.close_List
-                              .remove(AiBuilder.init_I_List(this.close_List, mc.player.position(), cell -> autismclient.ai.engine.AiBlockInteraction.init(mc, cell) != null));
+                              .remove(AiBuilder.init_I_List(this.close_List, mc.player.position(), cell -> autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, cell) != null));
                            long candidateNow = System.currentTimeMillis();
                            int drainAttempts = this.write_Map.getOrDefault(candidate.asLong(), 0);
                            if (candidateNow < this.update_Map.getOrDefault(candidate.asLong(), 0L)) {
@@ -5097,7 +5097,7 @@ final class AiBuilder {
                               continue;
                            }
 
-                           if (drainAttempts < 3 && autismclient.ai.engine.AiBlockInteraction.init(mc, candidate) == null) {
+                           if (drainAttempts < 3 && autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, candidate) == null) {
                               BlockPos beside = this.init_BlockPos_3(candidate);
                               if (beside != null) {
                                  this.write_Map.put(candidate.asLong(), drainAttempts + 1);
@@ -5283,7 +5283,7 @@ final class AiBuilder {
                                     && box.minX < body.maxX
                                     && box.maxZ > body.minZ
                                     && box.minZ < body.maxZ
-                                    && autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), new Vec3(mc.player.getX(), box.maxY, mc.player.getZ()))
+                                    && autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), new Vec3(mc.player.getX(), box.maxY, mc.player.getZ()))
                                     )
                                   {
                                     return true;
@@ -5325,7 +5325,7 @@ final class AiBuilder {
                         && floor.getFluidState().isEmpty()
                         && Block.isShapeFullBlock(floor.getCollisionShape(mc.level, candidate.below()))
                         && mc.level.noCollision(mc.player, body)
-                        && autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), Vec3.atBottomCenterOf(candidate))) {
+                        && autismclient.ai.engine.AiMotionSafety.isSegmentHazardFree(mc.player.position(), Vec3.atBottomCenterOf(candidate))) {
                         doorExit = candidate;
                         distance = d;
                      }
@@ -5531,7 +5531,7 @@ final class AiBuilder {
 
                   AiOperation.Result init(AiOperation.Status status, String message) {
                      this.cancel();
-                     return AiGameOperations.init_AiOperation_Result(status, message, new JsonObject());
+                     return AiGameOperations.result(status, message, new JsonObject());
                   }
                };
             }
@@ -5664,7 +5664,7 @@ final class AiBuilder {
             void init_V_TableIndex_StreamU_Str(AiBuilder.CellSpec cell, String reason) {
                if (this.start_Set.add(cell)) {
                   if (this.load_List.size() < 32) {
-                     this.load_List.add(AiJson.init_JsonObject_ObjArr("dx", cell.dx(), "dy", cell.dy(), "dz", cell.dz(), "block", cell.block(), "reason", reason));
+                     this.load_List.add(AiJson.objectOf("dx", cell.dx(), "dy", cell.dy(), "dz", cell.dz(), "block", cell.block(), "reason", reason));
                   }
 
                   this.buffer++;
@@ -6267,7 +6267,7 @@ final class AiBuilder {
                         live.hasBlockEntity()
                            || !live.getFluidState().isEmpty()
                            || this.open_Set.contains(key)
-                           || AiItems.init_Z(BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())
+                           || AiItems.requiresSilkTouchOrUnobtainable(BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())
                            || this.mark > 2 && live.isSignalSource()
                      )) {
                      keep.add(key);
@@ -6901,7 +6901,7 @@ final class AiBuilder {
                            Item needed = AiBuilder.init_Item(live.getBlock(), entry.getKey());
                            if (needed != null
                               && !mc.player.getMainHandItem().is(needed)
-                              && AiItems.read(AiItems.load_af_DataUtil(BuiltInRegistries.ITEM.getKey(needed).toString())) < 0) {
+                              && AiItems.equipHotbar(AiItems.resolveItem(BuiltInRegistries.ITEM.getKey(needed).toString())) < 0) {
                               this.init(cell, pos, entry, "no " + BuiltInRegistries.ITEM.getKey(needed).getPath() + " to set it with");
                            } else if (cycling) {
                               if (++this.next_I <= (entry.getKey().equals("note") ? 900 : 160)) {
@@ -6936,16 +6936,16 @@ final class AiBuilder {
                }
 
                BlockHitResult visible = live.getBlock() instanceof SnowLayerBlock
-                  ? autismclient.ai.engine.AiBlockInteraction.init(mc, pos, Direction.UP)
-                  : autismclient.ai.engine.AiBlockInteraction.init(mc, pos);
+                  ? autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, pos, Direction.UP)
+                  : autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, pos);
                if (visible == null) {
                   return false;
                }
 
                this.load_Vec3 = visible.getLocation();
-               AiGameOperations.init(this.init_DataUtil, visible.getLocation());
-               if (autismclient.ai.engine.AiAim.init_Z_BlockPos(pos)) {
-                  BlockHitResult hitResult = autismclient.ai.engine.AiAim.init_BlockHitResult();
+               AiGameOperations.aimAndStep(this.init_DataUtil, visible.getLocation());
+               if (autismclient.ai.engine.AiAim.isLookingAtBlock(pos)) {
+                  BlockHitResult hitResult = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (hitResult != null) {
                      mc.options.keyShift.setDown(false);
                      if (mc.player.isShiftKeyDown()) {
@@ -6997,7 +6997,7 @@ final class AiBuilder {
                if (!AiBuilder.read(AiBuilder.init_Block(cell), property.getKey()) && this.sync_Set.add(property.getKey()) && this.init_JsonArray.size() < 32) {
                   this.init_JsonArray
                      .add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "x", pos.getX(), "y", pos.getY(), "z", pos.getZ(), "property", property.getKey(), "value", property.getValue(), "reason", reason
                         )
                      );
@@ -7083,7 +7083,7 @@ final class AiBuilder {
             boolean init(AiBuilder.CellSpec cell, BlockPos pos, AiSchematicApproach.Inner_DataUtil job, Predicate<AABB> clear) {
                if (job.read(pos)
                   && this.flush(cell, pos)
-                  && AiTerrain.init(mc.level, pos)
+                  && AiTerrain.isLoaded(mc.level, pos)
                   && !(mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > Math.pow(mc.player.blockInteractionRange() - 0.4, 2.0))
                   && clear.test(new AABB(pos))
                   && mc.level.getBlockState(pos).canBeReplaced()
@@ -7101,7 +7101,7 @@ final class AiBuilder {
                      }
 
                      if (autismclient.util.InventorySlotHelper.ensureItemInHotbar(
-                           mc, MacroItemTarget.write(BuiltInRegistries.ITEM.getKey(item).toString()), mc.player.getInventory().getSelectedSlot()
+                           mc, MacroItemTarget.ofRegistryId(BuiltInRegistries.ITEM.getKey(item).toString()), mc.player.getInventory().getSelectedSlot()
                         )
                         < 0) {
                         return false;
@@ -7129,7 +7129,7 @@ final class AiBuilder {
                   AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
                   AiSchematicApproach.Inner_DataUtil job = this.load_b_DataUtil != null ? this.load_b_DataUtil : this.read_b_DataUtil;
                   if (cell != null && job != null && pos.equals(this.init_TableIndex_SyncMan.load()) && this.init(cell, pos, job, this.init_Predicate)) {
-                     BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                     BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                      if (hit != null
                         && AiBuilder.init(
                            this.init_U_CachePool.init_BlockHitResult().getBlockPos(),
@@ -7142,7 +7142,7 @@ final class AiBuilder {
                            && BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
                            BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)mc.level).autism$getBlockPredictionHandler();
                            int beforeSequence = prediction.currentSequence();
-                           long revision = AiServerEvidence.init_J_BlockPos(pos);
+                           long revision = AiServerEvidence.blockRevision(pos);
                            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                            this.open_I++;
                            int sentSequence = prediction.currentSequence();
@@ -7171,7 +7171,7 @@ final class AiBuilder {
                   AiBuilder.CellSpec cell = this.load_TableIndex_StreamU;
                   AiBuilder.PlaceAckTracker.AckState outcome = this.init_TableIndex_StateCa
                      .init(
-                        AiServerEvidence.init_J_BlockPos(pos),
+                        AiServerEvidence.blockRevision(pos),
                         AiBuilder.init(cell, mc.level.getBlockState(pos), power.substitutes(), true),
                         autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.init_I()),
                         mc.player.tickCount
@@ -7389,7 +7389,7 @@ final class AiBuilder {
                         if (live.canBeReplaced()
                            && live.getFluidState().isEmpty()
                            && !AiBuilder.init(next, live, power.substitutes(), schematic)
-                           && AiTerrain.init(mc.level, at)
+                           && AiTerrain.isLoaded(mc.level, at)
                            && AiBuilder.init_BlockState(next).canSurvive(mc.level, at)
                            && AiSchematicActions.init_BlockPos_TableIndex_StreamU(next, at, mc.level, this.load_Map) == null
                            && !this.load_Z(next, at)) {
@@ -7529,7 +7529,7 @@ final class AiBuilder {
 
             autismclient.ai.engine.PlacementGoal.PlacementRequest init_u_CachePool_TableIndex_StreamU_Set(AiBuilder.CellSpec cell, Set<BlockPos> omit) {
                BlockPos at = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
-               if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.init_Z(cell) && !AiBuilder.init_Z(cell) && AiTerrain.init(mc.level, at)) {
+               if (!omit.contains(at) && !at.equals(this.load_BlockPos) && !AiSchematicActions.init_Z(cell) && !AiBuilder.init_Z(cell) && AiTerrain.isLoaded(mc.level, at)) {
                   BlockState live = mc.level.getBlockState(at);
                   Block target = AiBuilder.init_Block(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : target.asItem();
@@ -7718,7 +7718,7 @@ final class AiBuilder {
                      long key = cursorPos.asLong();
                      if (!this.update_Set.contains(key) && !this.close_Set.contains(key)) {
                         BlockPos p = cursorPos.immutable();
-                        if (AiTerrain.init(mc.level, p) && mc.level.getBlockState(p).getBlock() instanceof ShulkerBoxBlock) {
+                        if (AiTerrain.isLoaded(mc.level, p) && mc.level.getBlockState(p).getBlock() instanceof ShulkerBoxBlock) {
                            sources.add(new Inner_DataUtil(p, mc.player.position().distanceToSqr(Vec3.atCenterOf(p))));
                         }
                      }
@@ -7737,8 +7737,8 @@ final class AiBuilder {
                   }
 
                   JsonArray items = new JsonArray();
-                  items.add(AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(want).toString(), "count", need));
-                  JsonObject args = AiJson.init_JsonObject_ObjArr(
+                  items.add(AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(want).toString(), "count", need));
+                  JsonObject args = AiJson.objectOf(
                      "action",
                      "withdraw",
                      "x",
@@ -7833,7 +7833,7 @@ final class AiBuilder {
                   }
                }
 
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "placed",
                   this.state,
                   "skipped",
@@ -7859,7 +7859,7 @@ final class AiBuilder {
                   "sourceFloorWalkingTicks",
                   this.pop_I,
                   "batchPlanning",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "planned",
                      this.tick_I,
                      "prefetched",
@@ -7895,7 +7895,7 @@ final class AiBuilder {
                   this.init_JsonArray,
                   "stance",
                   Boolean.getBoolean("autism.navigation.debug")
-                     ? AiJson.init_JsonObject_ObjArr(
+                     ? AiJson.objectOf(
                         "feet",
                         autismclient.ai.engine.AiStance.init(mc).toShortString(),
                         "onGround",
@@ -7942,7 +7942,7 @@ final class AiBuilder {
                      ItemStack stack = mc.player.getInventory().getItem(i);
                      if (!stack.isEmpty()) {
                         inventory.add(
-                           AiJson.init_JsonObject_ObjArr("slot", i, "item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), "count", stack.getCount())
+                           AiJson.objectOf("slot", i, "item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), "count", stack.getCount())
                         );
                      }
                   }
@@ -7954,7 +7954,7 @@ final class AiBuilder {
             }
 
             AiOperation.Result init_AiOperation_Result_5(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_18());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_18());
             }
 
             AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_4(AiOperation.Status status, String message) {
@@ -7964,7 +7964,7 @@ final class AiBuilder {
             AiOperation.Result init_AiOperation_Result_AiOperation_Status(AiOperation.Status status, String message, JsonObject data) {
                boolean pendingEffects = this.requiresReconciliationAfterEmergency();
                this.cancel();
-               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pendingEffects, AiGameOperations.init_AiOperation_Result(status, message, data));
+               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pendingEffects, AiGameOperations.result(status, message, data));
             }
 
             @Override
@@ -8046,7 +8046,7 @@ final class AiBuilder {
                this.put_Set.clear();
                this.flush_Set.clear();
                this.stop_Set = null;
-               autismclient.ai.engine.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
             }
 
             void push() {
@@ -8170,7 +8170,7 @@ final class AiBuilder {
                   }
 
                   this.clear_Z = true;
-                  autismclient.ai.engine.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.load_I) {
                      autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.load_I);
                   }
@@ -8459,9 +8459,9 @@ final class AiBuilder {
       @Override
       public AiOperation.Result tick() {
          if (!this.load_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
+            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                return this.init(
-                  AiOperation.Status.FAILED, AiGuard.init_Str_Str("building", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                  AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                );
             }
 
@@ -8477,10 +8477,10 @@ final class AiBuilder {
 
                this.init_AiOperation.cancel();
                this.init_AiOperation = null;
-               JsonObject legData = r.dataJson().isBlank() ? new JsonObject() : AiJson.init_JsonObject_Str(r.dataJson());
-               this.load_I = this.load_I + AiJson.init_I_JsonObject(legData, "placed", 0);
-               this.read = this.read + AiJson.init_I_JsonObject(legData, "skipped", 0);
-               this.write = this.write + AiJson.init_I_JsonObject(legData, "failedTotal", 0);
+               JsonObject legData = r.dataJson().isBlank() ? new JsonObject() : AiJson.parseObject(r.dataJson());
+               this.load_I = this.load_I + AiJson.getInt(legData, "placed", 0);
+               this.read = this.read + AiJson.getInt(legData, "skipped", 0);
+               this.write = this.write + AiJson.getInt(legData, "failedTotal", 0);
                if (legData.has("failed") && this.init_JsonArray.size() < 32) {
                   for (JsonElement failure : legData.getAsJsonArray("failed")) {
                      if (this.init_JsonArray.size() >= 32) {
@@ -8539,7 +8539,7 @@ final class AiBuilder {
 
       JsonObject init_JsonObject_19() {
          AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
-         return AiJson.init_JsonObject_ObjArr(
+         return AiJson.objectOf(
             "copies",
             this.init_I,
             "placed",
@@ -8553,12 +8553,12 @@ final class AiBuilder {
             "cells",
             this.init_TableIndex_DataUti.cells().size(),
             "repeat",
-            AiJson.init_JsonObject_ObjArr("dx", repeat.dx(), "dy", repeat.dy(), "dz", repeat.dz(), "count", repeat.count())
+            AiJson.objectOf("dx", repeat.dx(), "dy", repeat.dy(), "dz", repeat.dz(), "count", repeat.count())
          );
       }
 
       AiOperation.Result init(String message) {
-         return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_19());
+         return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_19());
       }
 
       AiOperation.Result init(AiOperation.Status status, String message) {
@@ -8567,7 +8567,7 @@ final class AiBuilder {
 
       AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
          this.cancel();
-         return AiGameOperations.init_AiOperation_Result(status, message, data);
+         return AiGameOperations.result(status, message, data);
       }
 
       @Override

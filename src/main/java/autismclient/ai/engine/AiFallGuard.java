@@ -193,8 +193,8 @@ public final class AiFallGuard {
       AiPhysics.MotionState s = state;
 
       for (int tick = 0; tick < 3; tick++) {
-         AiPhysics.MotionState next = AiPhysics.init(s, input, world);
-         if (AiPhysics.init_Z(world, s, next)) {
+         AiPhysics.MotionState next = AiPhysics.stepCompat(s, input, world);
+         if (AiPhysics.hitsHazardCompat(world, s, next)) {
             return true;
          }
 
@@ -213,7 +213,7 @@ public final class AiFallGuard {
       AiPhysics.MoveInput held = new AiPhysics.MoveInput(input.forward(), input.strafe(), false, input.sprint(), false, input.yaw());
 
       for (int tick = 0; tick < 90; tick++) {
-         s = AiPhysics.init(s, tick == 0 ? input : (tick < 3 ? held : AiPhysics.MoveInput.NONE), world);
+         s = AiPhysics.stepCompat(s, tick == 0 ? input : (tick < 3 ? held : AiPhysics.MoveInput.NONE), world);
          if (load(world, s) || init(world, s)) {
             return false;
          }
@@ -232,8 +232,8 @@ public final class AiFallGuard {
 
    private static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState s, double top) {
       for (int tick = 0; tick < 80; tick++) {
-         AiPhysics.MotionState next = AiPhysics.init(s, AiPhysics.MoveInput.NONE, world);
-         if (AiPhysics.init_Z(world, s, next)) {
+         AiPhysics.MotionState next = AiPhysics.stepCompat(s, AiPhysics.MoveInput.NONE, world);
+         if (AiPhysics.hitsHazardCompat(world, s, next)) {
             return true;
          }
 

@@ -34,7 +34,7 @@ final class AiSourceKnowledge {
 
          init_Map = Map.copyOf(compiled);
          load = Map.copyOf(hashes);
-         init_Str = AiJson.init_Str_Str(json);
+         init_Str = AiJson.sha256Hex(json);
       }
    }
 

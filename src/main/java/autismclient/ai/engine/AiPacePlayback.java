@@ -150,11 +150,11 @@ public final class AiPacePlayback {
       if (var2 != null && var1.onGround() && !var11.jump() && !var11.sneak()) {
          RotationMath.Rotation var12 = RotationMath.lookAt(var2, var1.getEyePosition());
          AiPhysics.MoveInput var13 = putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(var11, var12.yaw());
-         AiPhysics.MotionState var14 = var7 != null ? AiPhysics.fill(var9, var13, var7) : null;
+         AiPhysics.MotionState var14 = var7 != null ? AiPhysics.stepWithClimbable(var9, var13, var7) : null;
          boolean var15 = var14 == null
             || var14.onGround()
                && var14.vy() <= 0.1
-               && !AiPhysics.putAt_Z(var7, var9, var14)
+               && !AiPhysics.hitsHazard(var7, var9, var14)
                && AiPaceScript.putAt_Z_TokenCore_TaskStat(var7, var14, 0.002)
                && (var5 == null || var5.test(BlockPos.containing(var14.x(), var14.y() + 1.0E-4, var14.z())))
                && this.putAt_Z_TokenCore_TaskStat(var7, var14, this.store - 1, var5);
@@ -186,8 +186,8 @@ public final class AiPacePlayback {
          AiPhysics.MoveInput var10 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var9);
          boolean var11 = var10.sprint() && var10.forward() > 0.8 && !var10.sneak() && var8.pose() == 0 && !var8.sprintCut();
          AiPhysics.MoveInput var12 = new AiPhysics.MoveInput(var10.forward(), var10.strafe(), var10.jump(), var11, var10.sneak(), var10.yaw());
-         AiPhysics.MotionState var13 = AiPhysics.fill(var8, var12, var1);
-         if (AiPhysics.putAt_Z(var1, var8, var13)) {
+         AiPhysics.MotionState var13 = AiPhysics.stepWithClimbable(var8, var12, var1);
+         if (AiPhysics.hitsHazard(var1, var8, var13)) {
             return false;
          }
 
@@ -229,8 +229,8 @@ public final class AiPacePlayback {
       double var2 = Math.toRadians(var0.yaw());
       double var4 = -Math.sin(var2) * var0.forward() + Math.cos(var2) * var0.strafe();
       double var6 = Math.cos(var2) * var0.forward() + Math.sin(var2) * var0.strafe();
-      float var8 = AiPhysics.putAt_F_D(0.0, 0.0, var4, var6);
-      int[] var9 = AiMotionSafety.putAt_IArr_F_F(var1, var8);
+      float var8 = AiPhysics.yawBetween(0.0, 0.0, var4, var6);
+      int[] var9 = AiMotionSafety.relativeMoveAxes(var1, var8);
       return new AiPhysics.MoveInput(var9[0], -var9[1], var0.jump(), var0.sprint() && var9[0] > 0, var0.sneak(), var1);
    }
 
@@ -1173,7 +1173,7 @@ public final class AiPacePlayback {
          double var25 = var21 && var19.forward() <= 0.0 && var19.strafe() == 0.0 ? 0.0 : var19.strafe();
          float var27 = var19.yaw();
          if (var21 && var20 != null && Math.hypot(var20.x() - var2.x(), var20.z() - var2.z()) > 0.08) {
-            float var28 = AiPhysics.putAt_F_D(var2.x(), var2.z(), var20.x(), var20.z());
+            float var28 = AiPhysics.yawBetween(var2.x(), var2.z(), var20.x(), var20.z());
             if (Math.abs(Mth.wrapDegrees(var28 - var19.yaw())) <= 45.0F) {
                var27 = this.putAt_F_F(var19.yaw(), var28, 20.0F);
             }
@@ -1185,7 +1185,7 @@ public final class AiPacePlayback {
          AiPhysics.MotionState var31 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(Math.min(var17 + 3, var30));
          float var32 = var29.yaw();
          if (!var29.sneak() && var29.forward() > 0.0 && var31 != null && Math.hypot(var31.x() - var2.x(), var31.z() - var2.z()) > 0.2) {
-            float var33 = AiPhysics.putAt_F_D(var2.x(), var2.z(), var31.x(), var31.z());
+            float var33 = AiPhysics.yawBetween(var2.x(), var2.z(), var31.x(), var31.z());
             var32 = this.putAt_F_F(var29.yaw(), var33, var2.onGround() ? 18.0F : 14.0F);
          }
 
@@ -1287,7 +1287,7 @@ public final class AiPacePlayback {
 
          for (int var47 = 0; var47 < var36.size(); var47++) {
             AiPhysics.MoveInput var48 = (AiPhysics.MoveInput)var36.get(var47);
-            AiPhysics.MotionState var49 = AiPhysics.fill(var2, var48, var79);
+            AiPhysics.MotionState var49 = AiPhysics.stepWithClimbable(var2, var48, var79);
             if (this.putAt_Z_TokenCore_TaskStat(var1, var2, var49, var20, var17, var16, var9, var10, var14)) {
                int var50 = putAt_I_BlockPosArr(var81, var40, var49);
                AiPhysics.MotionState[] var51 = null;
@@ -1398,7 +1398,7 @@ public final class AiPacePlayback {
                               }
 
                               AiPhysics.MoveInput var70 = var10000;
-                              AiPhysics.MotionState var71 = AiPhysics.fill(var62, var70, var93);
+                              AiPhysics.MotionState var71 = AiPhysics.stepWithClimbable(var62, var70, var93);
                               if (!this.putAt_Z_TokenCore_TaskStat(
                                  var1, var62, var71, this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var68), var68, var16, var9, var10, var14
                               )) {
@@ -1472,7 +1472,7 @@ public final class AiPacePlayback {
 
             for (int var86 = 0; var86 < var36.size(); var86++) {
                AiPhysics.MoveInput var87 = (AiPhysics.MoveInput)var36.get(var86);
-               AiPhysics.MotionState var88 = AiPhysics.fill(var2, var87, var79);
+               AiPhysics.MotionState var88 = AiPhysics.stepWithClimbable(var2, var87, var79);
                if (var88.onGround() && this.putAt_Z_TokenCore_TaskStat(var1, var2, var88, var20, var17, var16, var9, var10, var14)) {
                   boolean var54 = var83.forward() > 0.8 && !var83.sneak() && var88.pose() == 0 && !var88.sprintCut();
                   AiPhysics.MoveInput var89 = new AiPhysics.MoveInput(
@@ -1489,7 +1489,7 @@ public final class AiPacePlayback {
 
                   if (!var89.sneak() && var89.forward() > 0.0 && var85 != null && Math.hypot(var85.x() - var88.x(), var85.z() - var88.z()) > 0.2) {
                      float var94 = var89.yaw()
-                        + Math.clamp(Mth.wrapDegrees(AiPhysics.putAt_F_D(var88.x(), var88.z(), var85.x(), var85.z()) - var89.yaw()), -18.0F, 18.0F);
+                        + Math.clamp(Mth.wrapDegrees(AiPhysics.yawBetween(var88.x(), var88.z(), var85.x(), var85.z()) - var89.yaw()), -18.0F, 18.0F);
                      var92.add(new AiPhysics.MoveInput(var89.forward(), var89.strafe(), var89.jump(), var89.sprint(), false, var94));
                      if (var89.sprint()) {
                         var92.add(new AiPhysics.MoveInput(var89.forward(), var89.strafe(), var89.jump(), false, false, var94));
@@ -1502,7 +1502,7 @@ public final class AiPacePlayback {
                   }
 
                   for (AiPhysics.MoveInput var98 : var92) {
-                     AiPhysics.MotionState var99 = AiPhysics.fill(var88, var98, var82);
+                     AiPhysics.MotionState var99 = AiPhysics.stepWithClimbable(var88, var98, var82);
                      if (this.putAt_Z_TokenCore_TaskStat(var1, var88, var99, var84, var18, var16, var9, var10, var14)) {
                         int var101 = putAt_I_BlockPosArr(var81, putAt_I_BlockPosArr(var81, var40, var88), var99);
                         AiPacePlayback.Inner_TaskState var102 = putAt(
@@ -1583,7 +1583,7 @@ public final class AiPacePlayback {
          }
       }
 
-      if (AiPhysics.putAt_Z(var1, var2, var3)) {
+      if (AiPhysics.hitsHazard(var1, var2, var3)) {
          return false;
       }
 
@@ -1777,7 +1777,7 @@ public final class AiPacePlayback {
                var41 = var29;
             }
 
-            AiPhysics.MotionState var68 = AiPhysics.fill(var25, var40, var41);
+            AiPhysics.MotionState var68 = AiPhysics.stepWithClimbable(var25, var40, var41);
             if (var7 != null || var8 != null) {
                BlockPos var43 = BlockPos.containing(var68.x(), var68.y() + 1.0E-4, var68.z());
                if (var7 != null && (!var7.test(var43) || !var7.test(var43.below()))) {
@@ -1793,7 +1793,7 @@ public final class AiPacePlayback {
                }
             }
 
-            if (AiPhysics.putAt_Z(var0, var25, var68)) {
+            if (AiPhysics.hitsHazard(var0, var25, var68)) {
                return new AiPacePlayback.Inner_TaskState(
                   false, var21, var26, ((java.util.Collection<AiPhysics.MotionState>)(java.util.Collection<?>)var24).toArray(AiPhysics.MotionState[]::new), var27, "hazard appeared ahead at tick " + (var65 + 1)
                );
@@ -1988,7 +1988,7 @@ public final class AiPacePlayback {
       int var2 = this.putAt_TextPool_IoHelper.flowTemp();
       int var3 = Math.min(this.store + 10, var2 - 1);
       AiPhysics.MotionState var4 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
-      float var5 = AiMotionSafety.putAt_F();
+      float var5 = AiMotionSafety.activePitchFloor();
       if (var4 == null) {
          return Float.isNaN(var5) ? var1.getXRot() : Math.max(var1.getXRot(), var5);
       }
@@ -2041,7 +2041,7 @@ public final class AiPacePlayback {
       var3.options.keyJump.setDown(var1.jump());
       var3.options.keyShift.setDown(var1.sneak());
       boolean var6 = var1.sprint() && var1.forward() > 0.0;
-      AiMotionSafety.putAt_V_LocalPlayer_Z(var0, var6);
+      AiMotionSafety.markNavigationControl(var0, var6);
       var0.setSprinting(var6);
       if (!var3.options.toggleSprint().get()) {
          var3.options.keySprint.setDown(var6);
@@ -2082,7 +2082,7 @@ public final class AiPacePlayback {
    }
 
    public static void fill_V_LocalPlayer(LocalPlayer var0) {
-      AiMotionSafety.putAt_V_LocalPlayer_Z(null, true);
+      AiMotionSafety.markNavigationControl(null, true);
       Minecraft var1 = Minecraft.getInstance();
       var1.options.keyUp.setDown(false);
       var1.options.keyDown.setDown(false);

@@ -86,7 +86,7 @@ final class AiCollect {
       }
 
       skipped.add(
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "kind", target.drop() ? "drop" : "block", "target", target.drop() ? "entity#" + target.entityId() : target.pos().toShortString(), "reason", reason
          )
       );
@@ -98,7 +98,7 @@ final class AiCollect {
    }
 
    static String init(BlockState state) {
-      Item needed = AiItems.init_Item(state);
+      Item needed = AiItems.cheapestRequiredTool(state);
       return needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString();
    }
 
@@ -115,15 +115,15 @@ final class AiCollect {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final String item = AiJson.init_Str_JsonObject(args, "item", "");
-         int amount = AiJson.init_I_JsonObject(args, "count", 0);
+         final String item = AiJson.getString(args, "item", "");
+         int amount = AiJson.getInt(args, "count", 0);
          Identifier itemId = Identifier.tryParse(item);
          if (!item.isBlank() && itemId != null && !BuiltInRegistries.ITEM.getOptional(itemId).isEmpty()) {
             if (amount >= 1 && amount <= 2304) {
-               int radius = Math.max(16, Math.min(64, AiJson.init_I_JsonObject(args, "radius", 32)));
-               final int baseline = AiGameState.init_I_Str(item);
-               final int target = init_I(amount, baseline, AiJson.init_Z_JsonObject(args, "additional", false));
-               final boolean exact = AiJson.init_Z_JsonObject(args, "exact", false);
+               int radius = Math.max(16, Math.min(64, AiJson.getInt(args, "radius", 32)));
+               final int baseline = AiGameState.countInventoryItem(item);
+               final int target = init_I(amount, baseline, AiJson.getBoolean(args, "additional", false));
+               final boolean exact = AiJson.getBoolean(args, "exact", false);
                List<String> sources = new ArrayList<>();
                String tierGated = null;
 
@@ -141,7 +141,7 @@ final class AiCollect {
 
                final String missingTool = sources.isEmpty() ? tierGated : null;
                final AiOperation gather = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "blocks",
                      autismclient.ai.engine.AiBlockMine.init(sources.isEmpty() ? List.of(item) : sources),
                      "drops",
@@ -155,7 +155,7 @@ final class AiCollect {
                      "dropsOnly",
                      sources.isEmpty(),
                      "timeoutSeconds",
-                     Math.max(20, Math.min(600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)))
+                     Math.max(20, Math.min(600, AiJson.getInt(args, "timeoutSeconds", 180)))
                   )
                );
                return new AiOperation() {
@@ -168,7 +168,7 @@ final class AiCollect {
                      }
 
                      AiOperation.Result r = gather.tick();
-                     int count = AiGameState.init_I_Str(item);
+                     int count = AiGameState.countInventoryItem(item);
                      if (count < target) {
                         if (!r.terminal()) {
                            return this.init(r.message());
@@ -199,14 +199,14 @@ final class AiCollect {
                   }
 
                   AiOperation.Result init(String message) {
-                     return AiGameOperations.init_AiOperation_Result(
-                        AiOperation.Status.RUNNING, message, AiJson.init_JsonObject_ObjArr("item", item, "count", AiGameState.init_I_Str(item), "target", target)
+                     return AiGameOperations.result(
+                        AiOperation.Status.RUNNING, message, AiJson.objectOf("item", item, "count", AiGameState.countInventoryItem(item), "target", target)
                      );
                   }
 
                   AiOperation.Result init(AiOperation.Status status, String message) {
-                     int count = AiGameState.init_I_Str(item);
-                     JsonObject data = AiJson.init_JsonObject_ObjArr(
+                     int count = AiGameState.countInventoryItem(item);
+                     JsonObject data = AiJson.objectOf(
                         "item",
                         item,
                         "collected",
@@ -226,7 +226,7 @@ final class AiCollect {
                         data.add("missing", AiCollect.init(missingTool));
                      }
 
-                     return AiGameOperations.init_AiOperation_Result(status, message, data);
+                     return AiGameOperations.result(status, message, data);
                   }
 
                   @Override

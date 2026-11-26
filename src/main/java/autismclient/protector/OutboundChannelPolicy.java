@@ -31,10 +31,10 @@ public final class OutboundChannelPolicy {
       if (!(packet instanceof ServerboundCustomPayloadPacket) && !(packet instanceof ServerboundCustomQueryAnswerPacket)) {
          return init_ConfigStore_DataUt;
       } else {
-         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
          if (context == null) {
             return load_ConfigStore_DataUt;
-         } else if (context.read()) {
+         } else if (context.isLocalOrMemory()) {
             return init_ConfigStore_DataUt;
          } else {
             return packet instanceof ServerboundCustomQueryAnswerPacket answer
@@ -47,21 +47,21 @@ public final class OutboundChannelPolicy {
    public static boolean init_Z(Connection connection) {
       return connection != null && (connection.getReceiving() == PacketFlow.SERVERBOUND || connection.isMemoryConnection())
          ? true
-         : init_Z(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
+         : init_Z(ConnectionPrivacyRegistry.getActive(connection));
    }
 
    public static boolean init(PacketListener listener) {
-      return init_Z(ConnectionPrivacyRegistry.init(listener));
+      return init_Z(ConnectionPrivacyRegistry.getByListener(listener));
    }
 
    private static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
-      return context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
+      return context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
    }
 
    public static void init(Connection connection, ServerboundCustomQueryAnswerPacket answer) {
       if (connection != null && answer != null) {
-         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
-         if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA) {
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
+         if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA) {
             try {
                if (answer.payload() != null) {
                   return;
@@ -91,7 +91,7 @@ public final class OutboundChannelPolicy {
 
    public static void init_V(Connection connection) {
       if (connection != null) {
-         init_V(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
+         init_V(ConnectionPrivacyRegistry.getActive(connection));
       }
    }
 
@@ -101,17 +101,17 @@ public final class OutboundChannelPolicy {
             init_Map.remove(context);
          }
 
-         boolean current = ConnectionPrivacyRegistry.init_Z(context);
+         boolean current = ConnectionPrivacyRegistry.isActive(context);
          if (current) {
-            OutboundPacketFilterHandler.init(context.init_Connection());
+            OutboundPacketFilterHandler.init(context.connection());
          }
 
          ResourcePackSessionTracker.init_V(context);
          if (current) {
-            LateRegisterSynthesizer.load(context.init_Connection());
+            LateRegisterSynthesizer.load(context.connection());
          }
 
-         ConnectionPrivacyRegistry.read_Z(context);
+         ConnectionPrivacyRegistry.unregisterSession(context);
       }
    }
 
@@ -123,7 +123,7 @@ public final class OutboundChannelPolicy {
          return load_ConfigStore_DataUt;
       }
 
-      if (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA) {
+      if (context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA) {
          return payload instanceof BrandPayload ? init(new ServerboundCustomPayloadPacket(new BrandPayload("vanilla"))) : load_ConfigStore_DataUt;
       }
 
@@ -147,7 +147,7 @@ public final class OutboundChannelPolicy {
    }
 
    private static OutboundChannelPolicy.Inner_DataUtil init(ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomQueryAnswerPacket answer) {
-      if (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
+      if (context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
          return init_ConfigStore_DataUt;
       }
 

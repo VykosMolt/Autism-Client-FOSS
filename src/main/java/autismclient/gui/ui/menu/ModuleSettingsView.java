@@ -755,7 +755,7 @@ final class ModuleSettingsView {
             if (macroName.isBlank()) {
                return "No macro";
             } else {
-               return MacroLibraryManager.init_aN().init_aM_Str(macroName) == null ? "Missing: " + macroName : macroName;
+               return MacroLibraryManager.getInstance().findByName(macroName) == null ? "Missing: " + macroName : macroName;
             }
          }
       } else {

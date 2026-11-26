@@ -95,7 +95,7 @@ public final class AiLanSync {
    }
 
    private static String init(JsonObject args, String key) {
-      String value = AiJson.init_Str_JsonObject(args, key, "");
+      String value = AiJson.getString(args, key, "");
       if (value.isBlank()) {
          throw new IllegalArgumentException(key + " is required for this LAN action");
       } else {
@@ -125,7 +125,7 @@ public final class AiLanSync {
       for (Entry<String, autismclient.util.LanSyncManager.Inner_DataUtil> entry : lan.init_Map().entrySet()) {
          autismclient.util.LanSyncManager.Inner_DataUtil info = entry.getValue();
          clients.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "name",
                info.init_Str,
                "host",
@@ -144,14 +144,14 @@ public final class AiLanSync {
       out.addProperty("connectedCount", lan.load_I());
       Map<String, String> assignments = lan.update_Map();
       if (!assignments.isEmpty()) {
-         out.add("assignments", AiJson.init.toJsonTree(assignments));
+         out.add("assignments", AiJson.GSON.toJsonTree(assignments));
          if (!lan.read_Str().isBlank()) {
             out.addProperty("assignmentSetBy", lan.read_Str());
          }
       }
 
       List<String> remoteMacros = lan.load_List();
-      out.add("remoteMacros", AiJson.init.toJsonTree(remoteMacros.size() > 100 ? remoteMacros.subList(0, 100) : remoteMacros));
+      out.add("remoteMacros", AiJson.GSON.toJsonTree(remoteMacros.size() > 100 ? remoteMacros.subList(0, 100) : remoteMacros));
       if (remoteMacros.size() > 100) {
          out.addProperty("remoteMacrosTruncated", remoteMacros.size() - 100);
       }
@@ -162,7 +162,7 @@ public final class AiLanSync {
    }
 
    public static JsonObject load(JsonObject args) {
-      String action = AiJson.init_Str_JsonObject(args, "action", "");
+      String action = AiJson.getString(args, "action", "");
       init(action, args);
       autismclient.util.LanSyncManager lan = autismclient.util.LanSyncManager.init_aE();
       switch (action) {
@@ -197,7 +197,7 @@ public final class AiLanSync {
                throw new IllegalArgumentException("Already in session " + sessionId);
             }
 
-            String hostIp = AiJson.init_Str_JsonObject(args, "hostIp", "");
+            String hostIp = AiJson.getString(args, "hostIp", "");
             if (hostIp.isBlank()) {
                lan.init_V_Str(sessionId);
             } else {
@@ -229,7 +229,7 @@ public final class AiLanSync {
          case "executeMacroSynchronized":
             load(lan);
             String macro = init(args, "macro");
-            if (autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macro) == null) {
+            if (autismclient.util.MacroLibraryManager.getInstance().findByName(macro) == null) {
                throw new IllegalArgumentException("Unknown macro '" + macro + "'; inspect client:macros for saved names");
             }
 
@@ -259,7 +259,7 @@ public final class AiLanSync {
             }
 
             String name = init(args, "name");
-            if (autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(name) == null) {
+            if (autismclient.util.MacroLibraryManager.getInstance().findByName(name) == null) {
                throw new IllegalArgumentException("Unknown macro '" + name + "'; inspect client:macros for saved names");
             }
 
@@ -296,7 +296,7 @@ public final class AiLanSync {
             break;
          case "setDelayOffset":
             init(lan);
-            lan.init_V_Str_I(init(args, "peer"), Math.max(0, AiJson.init_I_JsonObject(args, "offsetMs", 0)));
+            lan.init_V_Str_I(init(args, "peer"), Math.max(0, AiJson.getInt(args, "offsetMs", 0)));
             break;
          case "setExecutionMethod":
             lan.init_V_aE_StreamUtil(autismclient.util.LanSyncManager.Inner_StreamUtil.valueOf(init(args, "method").toUpperCase(Locale.ROOT)));
@@ -348,7 +348,7 @@ public final class AiLanSync {
          String macro = entry.getValue();
          if (!clients.containsKey(peer)) {
             problems.append(problems.length() == 0 ? "" : "; ").append("unknown peer '").append(peer).append("'");
-         } else if (autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macro) == null && !init(lan, peer, macro)) {
+         } else if (autismclient.util.MacroLibraryManager.getInstance().findByName(macro) == null && !init(lan, peer, macro)) {
             problems.append(problems.length() == 0 ? "" : "; ")
                .append("macro '")
                .append(macro)

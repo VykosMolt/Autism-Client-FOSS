@@ -137,7 +137,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public long putAt(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
-      return AiPhysics.putAt(var1, var3, var5, var7, var9, var11, var13, var15, var17, null, this.putAt_AABBArr_D(var1, var3, var5, var7, var9, var11));
+      return AiPhysics.findSupportInBoxesRaw(var1, var3, var5, var7, var9, var11, var13, var15, var17, null, this.putAt_AABBArr_D(var1, var3, var5, var7, var9, var11));
    }
 
    @Override
@@ -254,7 +254,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          var1[1] = var4;
          var1[2] = var6;
       } else {
-         AiPhysics.putAt(var1, var2, var4, var6, var8, var10, var12, var14, var16, var18, var40, var41);
+         AiPhysics.resolveCollisionsBitmask(var1, var2, var4, var6, var8, var10, var12, var14, var16, var18, var40, var41);
       }
 
       return var41;

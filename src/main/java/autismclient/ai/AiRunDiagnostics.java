@@ -73,7 +73,7 @@ final class AiRunDiagnostics {
             if (this.init_J == 0L && !AiRunDiagnostics.this.init_Z) {
                this.init_J = ++AiRunDiagnostics.this.init_J;
                this.load_J = AiRunDiagnostics.this.init_LongSupplier.getAsLong();
-               JsonObject entry = AiJson.init_JsonObject_ObjArr(
+               JsonObject entry = AiJson.objectOf(
                   "operationId",
                   this.init_J,
                   "parentOperationId",
@@ -95,7 +95,7 @@ final class AiRunDiagnostics {
             try {
                this.init();
             } catch (RuntimeException failure) {
-               AiRunDiagnostics.this.init("speedrun_diagnostic_error", AiJson.init_JsonObject_ObjArr("message", AiRunDiagnostics.init(failure.toString())));
+               AiRunDiagnostics.this.init("speedrun_diagnostic_error", AiJson.objectOf("message", AiRunDiagnostics.init(failure.toString())));
             }
 
             long previous = AiRunDiagnostics.this.load;
@@ -113,7 +113,7 @@ final class AiRunDiagnostics {
 
                      long now = AiRunDiagnostics.this.init_LongSupplier.getAsLong();
                      if (result.terminal() || now >= this.read) {
-                        JsonObject event = AiJson.init_JsonObject_ObjArr(
+                        JsonObject event = AiJson.objectOf(
                            "operationId",
                            this.init_J,
                            "controller",
@@ -129,7 +129,7 @@ final class AiRunDiagnostics {
                            "failureCode",
                            result.failure().name(),
                            "result",
-                           AiRunResources.load_JsonObject(result.dataJson())
+                           AiRunResources.compactEvidenceJson(result.dataJson())
                         );
                         if (result.terminal() && result.status() != AiOperation.Status.SUCCEEDED) {
                            Minecraft client = Minecraft.getInstance();
@@ -158,12 +158,12 @@ final class AiRunDiagnostics {
                      AiRunDiagnostics.this.init_Map.remove(this.init_J);
                   }
 
-                  AiRunDiagnostics.this.init("speedrun_diagnostic_error", AiJson.init_JsonObject_ObjArr("operationId", this.init_J, "message", AiRunDiagnostics.init(failure.toString())));
+                  AiRunDiagnostics.this.init("speedrun_diagnostic_error", AiJson.objectOf("operationId", this.init_J, "message", AiRunDiagnostics.init(failure.toString())));
                }
 
                return result;
             } catch (RuntimeException | Error failure) {
-               JsonObject event = AiJson.init_JsonObject_ObjArr(
+               JsonObject event = AiJson.objectOf(
                   "operationId",
                   this.init_J,
                   "controller",
@@ -207,7 +207,7 @@ final class AiRunDiagnostics {
                         if (this.init_J != 0L && !this.init_Z) {
                            AiRunDiagnostics.this.init(
                               "speedrun_operation_cancel",
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "operationId",
                                  this.init_J,
                                  "controller",
@@ -277,7 +277,7 @@ final class AiRunDiagnostics {
                service.read_V_JsonObject(snapshot);
             }
          } catch (RuntimeException failure) {
-            this.init("speedrun_diagnostic_error", AiJson.init_JsonObject_ObjArr("message", init(failure.toString())));
+            this.init("speedrun_diagnostic_error", AiJson.objectOf("message", init(failure.toString())));
          }
       }
    }
@@ -287,7 +287,7 @@ final class AiRunDiagnostics {
       try {
          snapshot = this.init_JsonObject_Str_2(phase, message, true);
       } catch (RuntimeException failure) {
-         snapshot = AiJson.init_JsonObject_ObjArr("diagnosticError", init(failure.toString()));
+         snapshot = AiJson.objectOf("diagnosticError", init(failure.toString()));
       }
 
       snapshot.addProperty("status", status);
@@ -314,7 +314,7 @@ final class AiRunDiagnostics {
       this.init_Map.values().forEach(entry -> operations.add(entry.deepCopy()));
       List<String> nav = autismclient.ai.engine.AiNavDebug.init(Math.max(0L, autismclient.ai.engine.AiNavDebug.init_J() - 24L));
       nav.forEach(navigation::add);
-      JsonObject out = AiJson.init_JsonObject_ObjArr(
+      JsonObject out = AiJson.objectOf(
          "observedAtMs",
          this.init_LongSupplier.getAsLong(),
          "phase",
@@ -326,14 +326,14 @@ final class AiRunDiagnostics {
          "navigation",
          navigation,
          "resources",
-         AiRunResources.init_JsonObject()
+         AiRunResources.inventorySnapshotJson()
       );
       if (mc.player != null && mc.level != null) {
          out.add("body", this.load(mc));
          BlockPos feet = mc.player.blockPosition();
          out.add(
             "terrain",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "feet",
                mc.level.getBlockState(feet).toString(),
                "head",
@@ -343,9 +343,9 @@ final class AiRunDiagnostics {
                "loaded",
                mc.level.hasChunkAt(feet),
                "feetRevision",
-               AiServerEvidence.init_J_BlockPos(feet),
+               AiServerEvidence.blockRevision(feet),
                "floorRevision",
-               AiServerEvidence.init_J_BlockPos(feet.below())
+               AiServerEvidence.blockRevision(feet.below())
             )
          );
          out.add("localTerrain", init(mc));
@@ -354,7 +354,7 @@ final class AiRunDiagnostics {
             ItemStack stack = mc.player.getInventory().getItem(slot);
             if (!stack.isEmpty()) {
                slots.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "slot",
                      slot,
                      "item",
@@ -371,7 +371,7 @@ final class AiRunDiagnostics {
          }
 
          out.add("slots", slots);
-         out.addProperty("containerRevision", AiServerEvidence.init_J_I(mc.player.containerMenu.containerId));
+         out.addProperty("containerRevision", AiServerEvidence.containerRevision(mc.player.containerMenu.containerId));
          ArrayList<Entity> candidates = new ArrayList<>();
 
          for (Entity entity : mc.level.entitiesForRendering()) {
@@ -383,7 +383,7 @@ final class AiRunDiagnostics {
          candidates.sort(Comparator.comparingDouble(entityx -> entityx.distanceToSqr(mc.player)));
 
          for (Entity entity : candidates.subList(0, Math.min(16, candidates.size()))) {
-            JsonObject info = AiJson.init_JsonObject_ObjArr(
+            JsonObject info = AiJson.objectOf(
                "id",
                entity.getId(),
                "type",
@@ -425,14 +425,14 @@ final class AiRunDiagnostics {
          String state = mc.level.hasChunkAt(cell) ? mc.level.getBlockState(cell).toString() : "unloaded";
          if (!mc.level.hasChunkAt(cell) || !mc.level.getBlockState(cell).isAir()) {
             cells.add(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "dx", cell.getX() - origin.getX(), "dy", cell.getY() - origin.getY(), "dz", cell.getZ() - origin.getZ(), "state", state
                )
             );
          }
       }
 
-      return AiJson.init_JsonObject_ObjArr("origin", origin.toShortString(), "horizontalRadius", 2, "minDy", -1, "maxDy", 3, "omittedCells", "air", "cells", cells);
+      return AiJson.objectOf("origin", origin.toShortString(), "horizontalRadius", 2, "minDy", -1, "maxDy", 3, "omittedCells", "air", "cells", cells);
    }
 
    private JsonArray init_JsonArray() {
@@ -445,7 +445,7 @@ final class AiRunDiagnostics {
       LocalPlayer p = mc.player;
       Options keys = mc.options;
       Vec3 velocity = p.getDeltaMovement();
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "atMs",
          this.init_LongSupplier.getAsLong(),
          "tick",
@@ -489,7 +489,7 @@ final class AiRunDiagnostics {
          "mainHand",
          BuiltInRegistries.ITEM.getKey(p.getMainHandItem().getItem()).toString(),
          "keys",
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "forward",
             keys.keyUp.isDown(),
             "back",

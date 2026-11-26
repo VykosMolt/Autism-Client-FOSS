@@ -29,7 +29,7 @@ public final class VanillaKnownPacksManager extends KnownPacksManager {
    }
 
    public static boolean init(ConnectionPrivacyRegistry.ConnectionSession context) {
-      return context == null || context.init_BufferHelper_Cache() != ConnectionPrivacyRegistry.PrivacyMode.MODDED || !ConnectionPrivacyRegistry.init_Z(context);
+      return context == null || context.privacyMode() != ConnectionPrivacyRegistry.PrivacyMode.MODDED || !ConnectionPrivacyRegistry.isActive(context);
    }
 
    @Override

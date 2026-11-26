@@ -132,26 +132,26 @@ final class AiChop {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         String blockArg = AiJson.init_Str_JsonObject(args, "block", "log").trim();
+         String blockArg = AiJson.getString(args, "block", "log").trim();
          if (blockArg.isEmpty()) {
             throw new IllegalArgumentException("block must be a registry id or a suffix family like \"log\"");
          }
 
          boolean counted = args.has("count");
-         JsonObject gather = AiJson.init_JsonObject_ObjArr(
+         JsonObject gather = AiJson.objectOf(
             "block",
             blockArg,
             "trees",
             true,
             "radius",
-            Math.max(16, Math.min(64, AiJson.init_I_JsonObject(args, "radius", 48))),
+            Math.max(16, Math.min(64, AiJson.getInt(args, "radius", 48))),
             "timeoutSeconds",
-            Math.max(20, Math.min(600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)))
+            Math.max(20, Math.min(600, AiJson.getInt(args, "timeoutSeconds", 180)))
          );
          if (args.has("held")) {
-            gather.addProperty("held", Math.max(1, AiJson.init_I_JsonObject(args, "held", 1)));
+            gather.addProperty("held", Math.max(1, AiJson.getInt(args, "held", 1)));
          } else if (counted) {
-            gather.addProperty("count", Math.max(1, Math.min(64, AiJson.init_I_JsonObject(args, "count", 64))));
+            gather.addProperty("count", Math.max(1, Math.min(64, AiJson.getInt(args, "count", 64))));
          } else {
             gather.addProperty("treeLimit", 1);
          }

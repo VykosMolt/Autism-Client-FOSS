@@ -748,7 +748,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
@@ -1547,7 +1547,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       Vec3 eye = player.getEyePosition();
       BlockPos origin = player.blockPosition();
       int tick = AutismSessionState.init_ck().state_I();
-      long worldKey = AiServerEvidence.init_J_BlockPos(origin) ^ AiServerEvidence.init_J_BlockPos(enemy.blockPosition());
+      long worldKey = AiServerEvidence.blockRevision(origin) ^ AiServerEvidence.blockRevision(enemy.blockPosition());
       long optionsKey = Objects.hash(
          this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"), this.bool("only-above"), this.bool("terrain")
       );

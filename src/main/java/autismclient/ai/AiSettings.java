@@ -434,11 +434,11 @@ public final class AiSettings {
    synchronized String keyMarker(String id) {
       String stored = this.sealedKeys.get(id);
       if (stored != null) {
-         return AiJson.init_Str_Str(stored);
+         return AiJson.sha256Hex(stored);
       }
 
       String external = externalKey(id);
-      return external.isEmpty() ? "none" : AiJson.init_Str_Str(external);
+      return external.isEmpty() ? "none" : AiJson.sha256Hex(external);
    }
 
    private static String externalKey(String id) {
@@ -515,7 +515,7 @@ public final class AiSettings {
    }
 
    public synchronized void save(Path directory) throws IOException {
-      AiJson.init_V_Path_Obj(directory.resolve("settings.json"), this);
+      AiJson.writeAtomicJson(directory.resolve("settings.json"), this);
    }
 
    public static AiSettings load(Path directory) throws IOException {
@@ -526,7 +526,7 @@ public final class AiSettings {
          s.builtIn = true;
       } else {
          String text = Files.readString(path);
-         s = AiJson.init.fromJson(text, AiSettings.class);
+         s = AiJson.GSON.fromJson(text, AiSettings.class);
          if (s == null || s.version != 1 || s.provider == null || s.sealedKeys == null) {
             throw new IllegalArgumentException("Invalid AI settings file");
          }
@@ -572,7 +572,7 @@ public final class AiSettings {
    }
 
    public synchronized AiSettings copy() {
-      return AiJson.init.fromJson(AiJson.init.toJson(this), AiSettings.class);
+      return AiJson.GSON.fromJson(AiJson.GSON.toJson(this), AiSettings.class);
    }
 
    public enum Provider {

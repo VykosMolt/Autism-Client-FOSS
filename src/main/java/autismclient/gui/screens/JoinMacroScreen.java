@@ -439,7 +439,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          if (rowIndex >= 0) {
             JoinMacroScreen.Inner_StreamUtil row = this.init_List.get(rowIndex);
             if (row.init_cY_DataUtil.init_Z()) {
-               MacroLibraryManager.init_aN().init_V_Str(row.init_cY_DataUtil.load_Str());
+               MacroLibraryManager.getInstance().toggleFolderCollapsed(row.init_cY_DataUtil.load_Str());
                this.write_V_2();
                return true;
             }
@@ -543,7 +543,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private void read_V_2() {
       String query = this.init_Str();
-      long revision = MacroLibraryManager.init_aN().init_J();
+      long revision = MacroLibraryManager.getInstance().getRevision();
       if (this.init_Z || !query.equals(this.init_Str) || revision != this.init_J) {
          this.write_V_2();
       }
@@ -552,14 +552,14 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    private void write_V_2() {
       String query = this.init_Str();
       this.init_Str = query;
-      this.init_J = MacroLibraryManager.init_aN().init_J();
+      this.init_J = MacroLibraryManager.getInstance().getRevision();
       this.init_Z = false;
       this.init_List.clear();
 
-      for (MacroFolderLayout.Inner_DataUtil item : MacroLibraryManager.init_aN().init_List_Str(query)) {
+      for (MacroFolderLayout.Inner_DataUtil item : MacroLibraryManager.getInstance().getFolderEntries(query)) {
          this.init_List
             .add(
-               new JoinMacroScreen.Inner_StreamUtil(item.init_Str(), !item.init_Z() && item.init_aM().init_List != null ? item.init_aM().init_List.size() : 0, item)
+               new JoinMacroScreen.Inner_StreamUtil(item.init_Str(), !item.init_Z() && item.init_aM().actions != null ? item.init_aM().actions.size() : 0, item)
             );
       }
 
@@ -572,16 +572,16 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private AutismMacro init_aM() {
       String selected = JoinMacroController.init_Str();
-      return selected.isBlank() ? null : MacroLibraryManager.init_aN().init_aM_Str(selected);
+      return selected.isBlank() ? null : MacroLibraryManager.getInstance().findByName(selected);
    }
 
    private void init_V_aM_2(AutismMacro macro) {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
       OverlayManager.getInstance().register(editor, AutismOverlay.RenderLayer.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {
-         if (saved != null && saved.init_Str != null && !saved.init_Str.isBlank()) {
-            JoinMacroController.init_V(saved.init_Str);
-            bi.init("Join macro selected: " + saved.init_Str, -10035062);
+         if (saved != null && saved.name != null && !saved.name.isBlank()) {
+            JoinMacroController.init_V(saved.name);
+            bi.init("Join macro selected: " + saved.name, -10035062);
          }
       });
       if (this.minecraft != null) {

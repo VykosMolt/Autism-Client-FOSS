@@ -117,7 +117,7 @@ public final class MacroFolderLayout {
                boolean passed = false;
 
                for (AutismMacro macro : looseInOrder) {
-                  String key = MacroNameNormalizer.init(macro.init_Str);
+                  String key = MacroNameNormalizer.init(macro.name);
                   if (!passed) {
                      passed = key.equals(anchor);
                   } else if (!leavingKeys.contains(key)) {
@@ -142,7 +142,7 @@ public final class MacroFolderLayout {
          List<String> keys = new ArrayList<>(looseInOrder.size());
 
          for (AutismMacro macro : looseInOrder) {
-            keys.add(MacroNameNormalizer.init(macro.init_Str));
+            keys.add(MacroNameNormalizer.init(macro.name));
          }
 
          for (String folder : new ArrayList<>(this.load.keySet())) {
@@ -180,7 +180,7 @@ public final class MacroFolderLayout {
 
       for (AutismMacro macro : macros) {
          if (macro != null) {
-            String clean = init_Str_Str(macro.read);
+            String clean = init_Str_Str(macro.folder);
             if (!clean.isEmpty() && !this.init_Map.containsKey(load_Str_Str(clean))) {
                discovered.add(clean);
             }
@@ -193,7 +193,7 @@ public final class MacroFolderLayout {
 
       for (AutismMacro macro : macros) {
          if (macro != null) {
-            macro.read = this.read(macro.read);
+            macro.folder = this.read(macro.folder);
          }
       }
    }
@@ -229,8 +229,8 @@ public final class MacroFolderLayout {
          }
 
          for (AutismMacro macro : macros) {
-            if (macro != null && load_Str_Str(macro.read).equals(oldKey)) {
-               macro.read = next;
+            if (macro != null && load_Str_Str(macro.folder).equals(oldKey)) {
+               macro.folder = next;
             }
          }
 
@@ -251,8 +251,8 @@ public final class MacroFolderLayout {
       this.read.remove(key);
 
       for (AutismMacro macro : macros) {
-         if (macro != null && load_Str_Str(macro.read).equals(key)) {
-            macro.read = "";
+         if (macro != null && load_Str_Str(macro.folder).equals(key)) {
+            macro.folder = "";
          }
       }
 
@@ -348,8 +348,8 @@ public final class MacroFolderLayout {
       TreeMap<String, String> extra = new TreeMap<>();
 
       for (AutismMacro macro : macros) {
-         if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
-            String folder = init_Str_Str(macro.read);
+         if (macro != null && macro.name != null && !macro.name.isBlank()) {
+            String folder = init_Str_Str(macro.folder);
             String key = load_Str_Str(folder);
             if (!labels.containsKey(key)) {
                labels.put(key, folder);
@@ -379,7 +379,7 @@ public final class MacroFolderLayout {
          Map<String, Integer> slots = new HashMap<>();
 
          for (int i = 0; i < loose.size(); i++) {
-            slots.putIfAbsent(MacroNameNormalizer.init(loose.get(i).init_Str), i);
+            slots.putIfAbsent(MacroNameNormalizer.init(loose.get(i).name), i);
          }
 
          boolean[] emitted = new boolean[folderKeys.size()];
@@ -396,7 +396,7 @@ public final class MacroFolderLayout {
                }
             }
 
-            if (i < loose.size() && (needle.isEmpty() || loose.get(i).init_Str.toLowerCase(Locale.ROOT).contains(needle))) {
+            if (i < loose.size() && (needle.isEmpty() || loose.get(i).name.toLowerCase(Locale.ROOT).contains(needle))) {
                rows.add(new MacroFolderLayout.Inner_DataUtil("", loose.get(i), 0, false));
             }
          }
@@ -409,8 +409,8 @@ public final class MacroFolderLayout {
       List<MacroFolderLayout.Inner_DataUtil> rows, String folder, List<AutismMacro> all, String needle, Predicate<String> collapsed, boolean includeEmpty, boolean preserveOrder
    ) {
       boolean folderMatch = folder.toLowerCase(Locale.ROOT).contains(needle);
-      Stream<AutismMacro> matching = all.stream().filter(m -> folderMatch || m.init_Str.toLowerCase(Locale.ROOT).contains(needle));
-      List<AutismMacro> matches = preserveOrder ? matching.toList() : matching.sorted(Comparator.comparing(m -> m.init_Str, String.CASE_INSENSITIVE_ORDER)).toList();
+      Stream<AutismMacro> matching = all.stream().filter(m -> folderMatch || m.name.toLowerCase(Locale.ROOT).contains(needle));
+      List<AutismMacro> matches = preserveOrder ? matching.toList() : matching.sorted(Comparator.comparing(m -> m.name, String.CASE_INSENSITIVE_ORDER)).toList();
       if (!matches.isEmpty() || includeEmpty && all.isEmpty() && folderMatch) {
          boolean shut = needle.isEmpty() && collapsed.test(folder);
          if (!folder.isEmpty()) {
@@ -431,7 +431,7 @@ public final class MacroFolderLayout {
       }
 
       public String init_Str() {
-         return this.init_Z() ? this.init_Str + " (" + this.init_I + ")" : this.init_aM.init_Str;
+         return this.init_Z() ? this.init_Str + " (" + this.init_I + ")" : this.init_aM.name;
       }
 
       public String load_Str() {

@@ -18,7 +18,7 @@ final class BedTargetAimSolver {
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double eyeHeight
    ) {
-      return autismclient.ai.engine.AiPhysics.init(state, input, world).position().add(0.0, eyeHeight, 0.0);
+      return autismclient.ai.engine.AiPhysics.stepCompat(state, input, world).position().add(0.0, eyeHeight, 0.0);
    }
 
    static boolean init(List<AABB> boxes, Vec3 eye, double reach) {

@@ -82,9 +82,9 @@ final class AiPrintRepeat implements AiOperation {
          && this.init_Minecraft.level != null
          && this.init_Minecraft.level == this.init_Obj
          && this.init_Minecraft.player == this.load_Obj) {
-         if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
+         if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
             return this.init_AiOperation_Result_AiOperation_Status_Str_9(
-               AiOperation.Status.FAILED, AiGuard.init_Str_Str("building", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+               AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("building", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
             );
          }
 
@@ -205,7 +205,7 @@ final class AiPrintRepeat implements AiOperation {
                   }
 
                   this.init_bg_NetHelper
-                     .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.init(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
+                     .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
                   if (!this.init_bg_NetHelper.init_Z && !this.init_bg_NetHelper.init_Z()) {
                      return this.init("Checking stock for copy " + (this.init_I + 1));
                   }
@@ -251,7 +251,7 @@ final class AiPrintRepeat implements AiOperation {
 
    JsonObject init_JsonObject_44() {
       AiBuilder.RepeatSpec repeat = this.init_TableIndex_ConfigS.repeat();
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "copies",
          this.init_I,
          "placed",
@@ -277,12 +277,12 @@ final class AiPrintRepeat implements AiOperation {
          "skippedContents",
          this.load_JsonArray,
          "repeat",
-         AiJson.init_JsonObject_ObjArr("dx", repeat.dx(), "dy", repeat.dy(), "dz", repeat.dz(), "count", repeat.count())
+         AiJson.objectOf("dx", repeat.dx(), "dy", repeat.dy(), "dz", repeat.dz(), "count", repeat.count())
       );
    }
 
    AiOperation.Result init(String message) {
-      return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_44());
+      return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_44());
    }
 
    AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_9(AiOperation.Status status, String message) {
@@ -304,15 +304,15 @@ final class AiPrintRepeat implements AiOperation {
       data.addProperty("clocksVerified", this.open);
       data.addProperty("clockItemsVerified", this.poll);
       data.addProperty("machineComplete", status == AiOperation.Status.SUCCEEDED && this.sync == 0 && !pending);
-      this.init_AiOperation_Result = init_AiOperation_Result_AiOperation_Result_bb(AiGameOperations.init_AiOperation_Result(status, message, data), this.init_bb);
+      this.init_AiOperation_Result = init_AiOperation_Result_AiOperation_Result_bb(AiGameOperations.result(status, message, data), this.init_bb);
       return this.init_AiOperation_Result;
    }
 
    static AiOperation.Result init_AiOperation_Result_AiOperation_Result_bb(AiOperation.Result result, AiPreparationReceipt receipt) {
       boolean pending = receipt.init_Z(null);
-      JsonObject data = AiRunResources.init_JsonObject(result.dataJson());
+      JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
       if (receipt.init() != null) {
-         JsonObject childData = AiRunResources.init_JsonObject(receipt.init().dataJson());
+         JsonObject childData = AiRunResources.parseEvidenceJson(receipt.init().dataJson());
          if (childData.has("machineRecovery")) {
             data.add("machineRecovery", childData.get("machineRecovery").deepCopy());
          }
@@ -340,16 +340,16 @@ final class AiPrintRepeat implements AiOperation {
    private void init_V_24() {
       if (this.init_AiOperation != null) {
          if (this.load_Z && this.init_bb.init() != null) {
-            JsonObject legData = AiRunResources.init_JsonObject(this.init_bb.init().dataJson());
-            this.load_I = this.load_I + AiJson.init_I_JsonObject(legData, "placed", 0);
-            this.read_I = this.read_I + AiJson.init_I_JsonObject(legData, "skipped", 0);
-            this.write = this.write + AiJson.init_I_JsonObject(legData, "failedTotal", 0);
-            this.update = this.update + AiJson.init_I_JsonObject(legData, "containersFilled", 0);
-            this.sync = this.sync + AiJson.init_I_JsonObject(legData, "containersSkipped", 0);
-            this.flush = this.flush + AiJson.init_I_JsonObject(legData, "savedSlotsVerified", 0);
-            this.close = this.close + AiJson.init_I_JsonObject(legData, "savedSlotsSkipped", 0);
-            this.open = this.open + AiJson.init_I_JsonObject(legData, "clocksVerified", 0);
-            this.poll = this.poll + AiJson.init_I_JsonObject(legData, "clockItemsVerified", 0);
+            JsonObject legData = AiRunResources.parseEvidenceJson(this.init_bb.init().dataJson());
+            this.load_I = this.load_I + AiJson.getInt(legData, "placed", 0);
+            this.read_I = this.read_I + AiJson.getInt(legData, "skipped", 0);
+            this.write = this.write + AiJson.getInt(legData, "failedTotal", 0);
+            this.update = this.update + AiJson.getInt(legData, "containersFilled", 0);
+            this.sync = this.sync + AiJson.getInt(legData, "containersSkipped", 0);
+            this.flush = this.flush + AiJson.getInt(legData, "savedSlotsVerified", 0);
+            this.close = this.close + AiJson.getInt(legData, "savedSlotsSkipped", 0);
+            this.open = this.open + AiJson.getInt(legData, "clocksVerified", 0);
+            this.poll = this.poll + AiJson.getInt(legData, "clockItemsVerified", 0);
             if (legData.has("skippedContents")) {
                for (JsonElement omission : legData.getAsJsonArray("skippedContents")) {
                   if (this.load_JsonArray.size() >= 32) {

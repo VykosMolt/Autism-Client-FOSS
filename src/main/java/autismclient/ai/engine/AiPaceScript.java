@@ -157,13 +157,13 @@ public final class AiPaceScript {
                AiPhysics.MotionState var7 = var6;
 
                for (int var8 = 0; var8 < 80; var8++) {
-                  var7 = AiPhysics.putAt(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
+                  var7 = AiPhysics.step(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
                }
 
                double var17 = var7.z();
 
                for (int var10 = 0; var10 < 80; var10++) {
-                  var7 = AiPhysics.putAt(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
+                  var7 = AiPhysics.step(var7, AiPhysics.MoveInput.run(0.0F, var3), var5);
                }
 
                double var18 = (var7.z() - var17) / 80.0;
@@ -174,7 +174,7 @@ public final class AiPaceScript {
                AiPhysics.MotionState var12 = var6;
 
                for (int var13 = 0; var13 < 120; var13++) {
-                  var12 = AiPhysics.putAt(
+                  var12 = AiPhysics.step(
                      var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.run(0.0F, var3), var5
                   );
                }
@@ -182,7 +182,7 @@ public final class AiPaceScript {
                double var19 = var12.z();
 
                for (int var15 = 0; var15 < 120; var15++) {
-                  var12 = AiPhysics.putAt(
+                  var12 = AiPhysics.step(
                      var12, var12.onGround() ? AiPhysics.MoveInput.jump(0.0F, var3) : AiPhysics.MoveInput.run(0.0F, var3), var5
                   );
                }
@@ -1551,19 +1551,19 @@ public final class AiPaceScript {
          float var34 = var0.putAt_F;
          AiPhysics.MotionState var35 = var9;
          ArrayList<AiPhysics.MoveInput> var21 = new ArrayList<>(24);
-         float var36 = AiPhysics.putAt_F_D(var35.x(), var35.z(), var12, var14);
+         float var36 = AiPhysics.yawBetween(var35.x(), var35.z(), var12, var14);
 
          for (int var23 = 0; var23 < 12 && Math.abs(Mth.wrapDegrees(var36 - var34)) > var33 + 0.001F; var23++) {
             var34 = putAt_F_F(var34, var36, var33);
             AiPhysics.MoveInput var40 = var35.speed() > 0.01 ? putAt(var34, var35) : AiPhysics.MoveInput.NONE.withYaw(var34);
-            AiPhysics.MotionState var41 = AiPhysics.fill(var35, var40, var4);
+            AiPhysics.MotionState var41 = AiPhysics.stepWithClimbable(var35, var40, var4);
             if (!var41.onGround() || Math.abs(var41.y() - var9.y()) > 1.0E-4) {
                return;
             }
 
             var21.add(var40);
             var35 = var41;
-            var36 = AiPhysics.putAt_F_D(var35.x(), var35.z(), var12, var14);
+            var36 = AiPhysics.yawBetween(var35.x(), var35.z(), var12, var14);
          }
 
          boolean var38 = false;
@@ -1571,13 +1571,13 @@ public final class AiPaceScript {
          double var25 = Math.hypot(var35.x() - var12, var35.z() - var14);
 
          for (int var27 = 0; var27 < 16 && var25 > 0.2; var27++) {
-            var36 = AiPhysics.putAt_F_D(var35.x(), var35.z(), var12, var14);
+            var36 = AiPhysics.yawBetween(var35.x(), var35.z(), var12, var14);
             var34 = putAt_F_F(var34, var36, var33);
             AiPhysics.MoveInput var28 = new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var34);
-            AiPhysics.MotionState var29 = AiPhysics.fill(var35, var28, var4);
+            AiPhysics.MotionState var29 = AiPhysics.stepWithClimbable(var35, var28, var4);
             if (!var29.onGround() || Math.abs(var29.y() - var9.y()) > 1.0E-4) {
                var28 = new AiPhysics.MoveInput(1.0, 0.0, false, false, true, var34);
-               var29 = AiPhysics.fill(var35, var28, var4);
+               var29 = AiPhysics.stepWithClimbable(var35, var28, var4);
                if (!var29.onGround() || Math.abs(var29.y() - var9.y()) > 1.0E-4) {
                   break;
                }
@@ -1616,7 +1616,7 @@ public final class AiPaceScript {
          if (!var21.isEmpty()) {
             for (int var42 = 0; var42 < 8 && var35.speed() >= 0.015; var42++) {
                AiPhysics.MoveInput var44 = var35.speed() > 0.03 ? putAt(var34, var35) : AiPhysics.MoveInput.NONE.withYaw(var34);
-               AiPhysics.MotionState var45 = AiPhysics.fill(var35, var44, var4);
+               AiPhysics.MotionState var45 = AiPhysics.stepWithClimbable(var35, var44, var4);
                if (!var45.onGround() || Math.abs(var45.y() - var9.y()) > 1.0E-4) {
                   break;
                }
@@ -2415,7 +2415,7 @@ public final class AiPaceScript {
             var25 += Math.abs(Mth.wrapDegrees(var16 - var17));
             var17 = var16;
             AiPhysics.PhysicsWorld var60 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var8, var19, var13.speedProfile());
-            AiPhysics.MotionState var47 = AiPhysics.fill(var15, var58, var60);
+            AiPhysics.MotionState var47 = AiPhysics.stepWithClimbable(var15, var58, var60);
             var9.increment();
             var40 = var58.sneak() ? var40 + 1 : 0;
             if (var40 < 3 && var47.pose() != 0 && putAt_Z_TokenCore_TaskStat_2(var8, var15, var47)) {
@@ -2440,7 +2440,7 @@ public final class AiPaceScript {
                return;
             }
 
-            if (AiPhysics.putAt_Z(var8, var15, var47)
+            if (AiPhysics.hitsHazard(var8, var15, var47)
                || putAt_Z_TokenCore_TaskStat_3(var8, var15, var47, var36, var50) && !putAt(var8, var37, var15, var47, var36, var50)
                || putAt(var8, var15, var47, var36, var50, var10)
                || !var36 && fill(var60, var15, var58, var47)) {
@@ -2777,7 +2777,7 @@ public final class AiPaceScript {
             var26 = var25;
             AiPhysics.PhysicsWorld var65 = putAt_TokenCore_TaskStat_TokenCore_TaskStat(var8, var28, var11.speedProfile());
             double var66 = var65.movementSpeed();
-            AiPhysics.MotionState var54 = AiPhysics.fill(var23, var49, var65);
+            AiPhysics.MotionState var54 = AiPhysics.stepWithClimbable(var23, var49, var65);
             var9.increment();
             var31 = var49.sneak() ? var31 + 1 : 0;
             if (var31 < 3 && var54.pose() != 0 && putAt_Z_TokenCore_TaskStat_2(var8, var23, var54)) {
@@ -2802,7 +2802,7 @@ public final class AiPaceScript {
                return null;
             }
 
-            if (AiPhysics.putAt_Z(var8, var23, var54)
+            if (AiPhysics.hitsHazard(var8, var23, var54)
                || putAt_Z_TokenCore_TaskStat_3(var8, var23, var54, var43, var57) && !putAt(var8, var44, var23, var54, var43, var57)
                || putAt(var8, var23, var54, var43, var57, var10)
                || !var43 && fill(var65, var23, var49, var54)) {
@@ -3452,12 +3452,12 @@ public final class AiPaceScript {
          boolean var18 = var3.vx() == 0.0 && Math.abs(var14) > 1.0E-6;
          boolean var19 = var3.vz() == 0.0 && Math.abs(var16) > 1.0E-6;
          if (var19 && !var18) {
-            AiPhysics.MotionState var21 = AiPhysics.fill(
+            AiPhysics.MotionState var21 = AiPhysics.stepWithClimbable(
                putAt_TokenCore_TableCac_TokenCore_TableCac(var1, var1.x(), var1.z() + Math.copySign(0.002, var16)), var2, var0
             );
             return Math.abs(var21.x() - var1.x() - var4) > 0.01;
          } else if (var18 && !var19) {
-            AiPhysics.MotionState var20 = AiPhysics.fill(
+            AiPhysics.MotionState var20 = AiPhysics.stepWithClimbable(
                putAt_TokenCore_TableCac_TokenCore_TableCac(var1, var1.x() + Math.copySign(0.002, var14), var1.z()), var2, var0
             );
             return Math.abs(var20.z() - var1.z() - var6) > 0.01;
@@ -3934,7 +3934,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_TableCache var12,
       LongAdder var13
    ) {
-      AiPhysics.MotionState var14 = AiPhysics.fill(var1, var2, var0);
+      AiPhysics.MotionState var14 = AiPhysics.stepWithClimbable(var1, var2, var0);
       if (var13 != null) {
          var13.increment();
       }
@@ -3960,7 +3960,7 @@ public final class AiPaceScript {
                if (var22 != null && (var14.onGround() || var18) && !var22.test(BlockPos.containing(var14.x(), var14.y() + 1.0E-4, var14.z()))) {
                   return null;
                } else {
-                  return !AiPhysics.putAt_Z(var0, var1, var14)
+                  return !AiPhysics.hitsHazard(var0, var1, var14)
                         && !putAt_Z_TokenCore_TaskStat_3(var0, var1, var14, var3, var18)
                         && !putAt(var0, var1, var14, var3, var18, var12)
                         && (var3 || !fill(var0, var1, var2, var14))
@@ -3980,7 +3980,7 @@ public final class AiPaceScript {
       if (!var5 && var3 <= 2.2) {
          double var16 = var6 - var0.x();
          double var14 = var8 - var0.z();
-         return var16 * var16 + var14 * var14 >= 0.0064 ? AiPhysics.putAt_F_D(var0.x(), var0.z(), var6, var8) : var11;
+         return var16 * var16 + var14 * var14 >= 0.0064 ? AiPhysics.yawBetween(var0.x(), var0.z(), var6, var8) : var11;
       } else {
          float var12 = var10.yawAt(var0.x(), var0.z(), var1 + 1.2);
          float var13 = var10.yawAt(var0.x(), var0.z(), var1 + 2.5);
@@ -4780,7 +4780,7 @@ public final class AiPaceScript {
 
          double var18 = var7 - var1;
          double var20 = var9 - var3;
-         return var18 * var18 + var20 * var20 >= 0.09 ? AiPhysics.putAt_F_D(var1, var3, var7, var9) : 0.0F / 0.0F;
+         return var18 * var18 + var20 * var20 >= 0.09 ? AiPhysics.yawBetween(var1, var3, var7, var9) : 0.0F / 0.0F;
       }
 
       double alongSpeed(double var1, double var3, double var5, double var7, double var9) {

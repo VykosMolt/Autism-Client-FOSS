@@ -34,7 +34,7 @@ public class MacroCommand extends Command {
                .executes(
                   ctx -> {
                      init();
-                     MacroLibraryManager.init_aN().init_V();
+                     MacroLibraryManager.getInstance().stopRunningMacro();
                      AutismClientMessaging.sendPrefixed("§eStopped all macros.");
                      return 1;
                   }
@@ -84,12 +84,12 @@ public class MacroCommand extends Command {
    }
 
    private static int init(String name, int times, int delayTicks) {
-      AutismMacro macro = MacroLibraryManager.init_aN().init_aM_Str(name);
+      AutismMacro macro = MacroLibraryManager.getInstance().findByName(name);
       if (macro == null) {
          AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
          return 1;
       } else if (times <= 1 && delayTicks <= 0) {
-         MacroLibraryManager.init_aN().load_V(name);
+         MacroLibraryManager.getInstance().executeMacroByName(name);
          return 1;
       } else {
             ClientPacketListener connection = Minecraft.getInstance().getConnection();
@@ -109,7 +109,7 @@ public class MacroCommand extends Command {
             Thread t = new Thread(() -> {
                try {
                   for (int i = 0; i < totalTimes && flag.get() && Minecraft.getInstance().getConnection() == connection; i++) {
-                     MacroLibraryManager.init_aN().load_V(name);
+                     MacroLibraryManager.getInstance().executeMacroByName(name);
                      long start = System.nanoTime();
                      long waitTimeoutNanos = 86400000000000L;
 

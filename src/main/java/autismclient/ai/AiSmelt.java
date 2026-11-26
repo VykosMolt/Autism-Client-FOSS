@@ -95,12 +95,12 @@ final class AiSmelt {
             && init_Obj == mc.level
             && load_Obj == mc.getConnection()
             && System.nanoTime() - init_J < 300000000000L
-            && mc.level.getBlockState(init_BlockPos).getBlock() == AiCraft.init_Block(station)
+            && mc.level.getBlockState(init_BlockPos).getBlock() == AiCraft.requireBlock(station)
             && mc.player.getEyePosition().distanceTo(Vec3.atCenterOf(init_BlockPos)) < mc.player.blockInteractionRange()) {
             copy.addProperty("x", init_BlockPos.getX());
             copy.addProperty("y", init_BlockPos.getY());
             copy.addProperty("z", init_BlockPos.getZ());
-         } else if (mc.hitResult instanceof BlockHitResult hit && mc.level.getBlockState(hit.getBlockPos()).getBlock() == AiCraft.init_Block(station)) {
+         } else if (mc.hitResult instanceof BlockHitResult hit && mc.level.getBlockState(hit.getBlockPos()).getBlock() == AiCraft.requireBlock(station)) {
             copy.addProperty("x", hit.getBlockPos().getX());
             copy.addProperty("y", hit.getBlockPos().getY());
             copy.addProperty("z", hit.getBlockPos().getZ());
@@ -119,48 +119,48 @@ final class AiSmelt {
    static AiOperation init(final JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         String outputSpec = AiJson.init_Str_JsonObject(args, "item", "");
-         int requested = AiJson.init_I_JsonObject(args, "count", 1);
+         String outputSpec = AiJson.getString(args, "item", "");
+         int requested = AiJson.getInt(args, "count", 1);
          if (requested >= 1 && requested <= 2304) {
-            AiItems.ItemSpec outputTarget = AiItems.load_af_DataUtil(outputSpec);
-            if (!AiJson.init_Z_JsonObject(args, "additional", false) && AiItems.init_I(outputTarget) >= requested) {
-               return AiGameOperations.init_AiOperation(
+            AiItems.ItemSpec outputTarget = AiItems.resolveItem(outputSpec);
+            if (!AiJson.getBoolean(args, "additional", false) && AiItems.countInInventory(outputTarget) >= requested) {
+               return AiGameOperations.immediate(
                   AiOperation.Status.SUCCEEDED,
                   "Inventory already holds the requested " + outputSpec,
-                  AiJson.init_JsonObject_ObjArr("item", outputSpec, "target", requested, "held", AiItems.init_I(outputTarget))
+                  AiJson.objectOf("item", outputSpec, "target", requested, "held", AiItems.countInInventory(outputTarget))
                );
             }
 
-            final boolean collect = AiJson.init_Z_JsonObject(args, "collect", false);
-            final boolean loadOnly = AiJson.init_Z_JsonObject(args, "loadOnly", false);
+            final boolean collect = AiJson.getBoolean(args, "collect", false);
+            final boolean loadOnly = AiJson.getBoolean(args, "loadOnly", false);
 
             final AiSmelt.Inner_CachePool resolved;
             try {
                resolved = collect
                   ? new AiSmelt.Inner_CachePool(
-                     load(AiJson.init_Str_JsonObject(args, "item", "")),
-                     load(AiJson.init_Str_JsonObject(args, "input", "")),
-                     init_Item(AiJson.init_Str_JsonObject(args, "fuel", "")),
-                     AiJson.init_Str_JsonObject(args, "station", "minecraft:furnace")
+                     load(AiJson.getString(args, "item", "")),
+                     load(AiJson.getString(args, "input", "")),
+                     init_Item(AiJson.getString(args, "fuel", "")),
+                     AiJson.getString(args, "station", "minecraft:furnace")
                   )
-                  : init(mc, outputTarget, AiJson.init_Str_JsonObject(args, "input", ""), AiJson.init_Str_JsonObject(args, "fuel", ""), requested);
+                  : init(mc, outputTarget, AiJson.getString(args, "input", ""), AiJson.getString(args, "fuel", ""), requested);
             } catch (IllegalArgumentException noFuel) {
                if (!collect
-                  && AiJson.init_Str_JsonObject(args, "fuel", "").isBlank()
-                  && !AiJson.init_Z_JsonObject(args, "fuelFetched", false)
+                  && AiJson.getString(args, "fuel", "").isBlank()
+                  && !AiJson.getBoolean(args, "fuelFetched", false)
                   && noFuel.getMessage() != null
                   && noFuel.getMessage().startsWith("No usable fuel")) {
-                  return init(args, workPlan, Math.max(1, requested - (AiJson.init_Z_JsonObject(args, "additional", false) ? 0 : AiItems.init_I(outputTarget))));
+                  return init(args, workPlan, Math.max(1, requested - (AiJson.getBoolean(args, "additional", false) ? 0 : AiItems.countInInventory(outputTarget))));
                }
 
                throw noFuel;
             }
 
             final BlockPos knownStation = args.has("x")
-               ? new BlockPos(AiJson.init_I_JsonObject(args, "x", 0), AiJson.init_I_JsonObject(args, "y", 0), AiJson.init_I_JsonObject(args, "z", 0))
+               ? new BlockPos(AiJson.getInt(args, "x", 0), AiJson.getInt(args, "y", 0), AiJson.getInt(args, "z", 0))
                : null;
-            boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
-            final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
+            boolean additional = AiJson.getBoolean(args, "additional", false);
+            final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
             final String outputId = BuiltInRegistries.ITEM.getKey(resolved.output()).toString();
             final String statusTitle = "Smelting " + resolved.output().getDefaultInstance().getHoverName().getString();
             final int cookTicksPerItem = autismclient.util.AutoCraftingEngine.load(mc, resolved.output())
@@ -169,9 +169,9 @@ final class AiSmelt {
                .mapToInt(p -> Math.max(1, p.load_I()))
                .min()
                .orElse(200);
-            int held = AiGameState.init_I_Str(outputId);
+            int held = AiGameState.countInventoryItem(outputId);
             final int target = additional ? held + requested : requested;
-            if (!collect && !loadOnly && !args.has("x") && !AiJson.init_Z_JsonObject(args, "singleFurnace", false) && AiParallelSmelt.init_I_I_3(target - held) > 1) {
+            if (!collect && !loadOnly && !args.has("x") && !AiJson.getBoolean(args, "singleFurnace", false) && AiParallelSmelt.init_I_I_3(target - held) > 1) {
                return new AiParallelSmelt(resolved, target, cookTicksPerItem, timeoutSeconds);
             }
 
@@ -208,7 +208,7 @@ final class AiSmelt {
                boolean sync_Z;
                boolean flush;
                AiOperation read_AiOperation;
-               final boolean close = AiJson.init_Str_JsonObject(args, "fuel", "").isBlank();
+               final boolean close = AiJson.getString(args, "fuel", "").isBlank();
                AiOperation write_AiOperation;
                int sync_I;
 
@@ -216,16 +216,16 @@ final class AiSmelt {
                   int divisor = AiSmelt.init_I(resolved.stationId());
                   long heat = (long)itemsLeft * cookTicksPerItem;
                   int seconds = Math.max(30, Math.min(300, this.init_I_33() - 20));
-                  if (AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308 && AiItems.init_Z(Blocks.COAL_ORE.defaultBlockState())) {
+                  if (AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())) {
                      return AiObtain.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "item", "minecraft:coal", "count", (int)Math.ceil(heat / (1600.0 / divisor)), "additional", true, "timeoutSeconds", seconds
                         )
                      );
                   }
 
                   int planks = (int)Math.ceil(heat / (300.0 / divisor)) + autismclient.ai.engine.AiRestock.init_I();
-                  return AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "planks", "count", planks, "timeoutSeconds", seconds));
+                  return AiObtain.init(AiJson.objectOf("item", "planks", "count", planks, "timeoutSeconds", seconds));
                }
 
                @Override
@@ -256,20 +256,20 @@ final class AiSmelt {
                      }
 
                      JsonObject receipt = this.init_JsonObject_49();
-                     receipt.add("survival", AiRunResources.init_JsonObject(guarded.dataJson()));
+                     receipt.add("survival", AiRunResources.parseEvidenceJson(guarded.dataJson()));
                      this.cancel();
                      return new AiOperation.Result(guarded.status(), guarded.message(), receipt.toString(), guarded.evidence(), guarded.failure());
                   } else {
-                     if (AiGameState.init_I_Str(outputId) >= target && this.load_AiOperation == null) {
+                     if (AiGameState.countInventoryItem(outputId) >= target && this.load_AiOperation == null) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Inventory already holds the requested " + outputId);
                      }
 
-                     if (this.sync_Z && AiGameState.init_I_Str(resolved.stationId()) <= 0) {
+                     if (this.sync_Z && AiGameState.countInventoryItem(resolved.stationId()) <= 0) {
                         this.sync_Z = false;
                         this.load_BlockPos = null;
                         this.load_I = 0;
-                        this.read_AiOperation = AiCraft.init(
-                           AiJson.init_JsonObject_ObjArr("item", resolved.stationId(), "count", 1, "timeoutSeconds", Math.max(20, Math.min(90, this.init_I_33())))
+                        this.read_AiOperation = AiCraft.craft(
+                           AiJson.objectOf("item", resolved.stationId(), "count", 1, "timeoutSeconds", Math.max(20, Math.min(90, this.init_I_33())))
                         );
                         if (this.read_AiOperation != null) {
                            return this.init("Making a " + resolved.stationId() + " of our own");
@@ -300,7 +300,7 @@ final class AiSmelt {
                            : this.init("Our own " + resolved.stationId() + " is ready to place");
                      } else if (this.init_Q != null) {
                         AiOperation.Result r = this.init_Q.tick();
-                        this.init_JsonObject = AiRunResources.init_JsonObject(r.dataJson());
+                        this.init_JsonObject = AiRunResources.parseEvidenceJson(r.dataJson());
                         if (!r.terminal()) {
                            return this.init(r.message());
                         }
@@ -328,7 +328,7 @@ final class AiSmelt {
 
                         if (this.load_AiOperation != null) {
                            AiOperation.Result result = this.load_AiOperation.tick();
-                           this.load_JsonObject = AiRunResources.init_JsonObject(result.dataJson());
+                           this.load_JsonObject = AiRunResources.parseEvidenceJson(result.dataJson());
                            if (!result.terminal()) {
                               if (!loadOnly
                                  && workPlan != null
@@ -373,7 +373,7 @@ final class AiSmelt {
                                  }
 
                                  this.load_I = 0;
-                                 this.write_AiOperation = this.init(Math.max(1, target - AiGameState.init_I_Str(outputId)));
+                                 this.write_AiOperation = this.init(Math.max(1, target - AiGameState.countInventoryItem(outputId)));
                                  if (this.write_AiOperation != null) {
                                     return this.init("Out of spare fuel; fetching more");
                                  }
@@ -390,19 +390,19 @@ final class AiSmelt {
                            }
 
                            this.load_AiOperation = AiGameplay.update(
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "input",
                                  BuiltInRegistries.ITEM.getKey(resolved.input()).toString(),
                                  "fuel",
                                  BuiltInRegistries.ITEM.getKey(resolved.fuel()).toString(),
                                  "fuelFlexible",
-                                 AiJson.init_Str_JsonObject(args, "fuel", "").isBlank(),
+                                 AiJson.getString(args, "fuel", "").isBlank(),
                                  "item",
                                  outputId,
                                  "count",
                                  target,
                                  "batchSize",
-                                 AiJson.init_I_JsonObject(args, "batchSize", 64),
+                                 AiJson.getInt(args, "batchSize", 64),
                                  "cookTicksPerItem",
                                  cookTicksPerItem,
                                  "fuelBurnDivisor",
@@ -433,23 +433,23 @@ final class AiSmelt {
 
                   if (this.load_BlockPos == null) {
                      if (!this.read_Z) {
-                        if (AiGameState.init_I_Str(resolved.stationId()) <= 0 && !this.flush) {
+                        if (AiGameState.countInventoryItem(resolved.stationId()) <= 0 && !this.flush) {
                            this.flush = true;
                            this.read_AiOperation = AiObtain.init(
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "item", resolved.stationId(), "count", 1, "timeoutSeconds", Math.max(30, Math.min(300, this.init_I_33()))
                               )
                            );
                            return this.init("No " + resolved.stationId() + " near; making one");
                         }
 
-                        if (AiGameState.init_I_Str(resolved.stationId()) <= 0) {
+                        if (AiGameState.countInventoryItem(resolved.stationId()) <= 0) {
                            JsonObject missing = new JsonObject();
                            missing.addProperty(resolved.stationId(), 1);
                            return this.init(
                               AiOperation.Status.FAILED,
                               "No " + resolved.stationId() + " in reach or in the bag",
-                              AiJson.init_JsonObject_ObjArr("missing", missing)
+                              AiJson.objectOf("missing", missing)
                            );
                         }
 
@@ -471,7 +471,7 @@ final class AiSmelt {
                         return this.init(this.init_cn.init_Str());
                      }
                   } else {
-                     BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, this.load_BlockPos);
+                     BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.load_BlockPos);
                      if (interactionHit == null) {
                         if (this.init_AiOperation == null) {
                            this.init_AiOperation = AiGoto.init_AiOperation(this.load_BlockPos, Math.min(120, this.init_I_33()));
@@ -493,7 +493,7 @@ final class AiSmelt {
 
                            if (knownStation != null
                               && this.load_BlockPos.equals(knownStation)
-                              && mc.level.getBlockState(knownStation).getBlock() == AiCraft.init_Block(resolved.stationId())) {
+                              && mc.level.getBlockState(knownStation).getBlock() == AiCraft.requireBlock(resolved.stationId())) {
                               return this.init("No route to the furnace yet; trying again");
                            }
 
@@ -508,8 +508,8 @@ final class AiSmelt {
                            this.init_AiOperation = null;
                         }
 
-                        this.init_DataUtil.init_V_Vec3(interactionHit.getLocation());
-                        this.init_DataUtil.load_V();
+                        this.init_DataUtil.aimAt(interactionHit.getLocation());
+                        this.init_DataUtil.tick();
                         if (++this.load_I > 80) {
                            if (!this.update_Z) {
                               this.update_Z = true;
@@ -528,11 +528,11 @@ final class AiSmelt {
                               );
                            }
                         } else {
-                           if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.load_BlockPos)) {
+                           if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.load_BlockPos)) {
                               return this.init("Turning toward the " + resolved.stationId());
                            }
 
-                           BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                           BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                            if (hit == null) {
                               return this.init("Turning toward the " + resolved.stationId());
                            }
@@ -546,14 +546,14 @@ final class AiSmelt {
                }
 
                BlockPos init_BlockPos_13() {
-                  Block wanted = AiCraft.init_Block(resolved.stationId());
+                  Block wanted = AiCraft.requireBlock(resolved.stationId());
                   BlockPos origin = mc.player.blockPosition();
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
                   int radius = 16;
 
                   for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
-                     if (AiTerrain.init(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wanted) {
+                     if (AiTerrain.isLoaded(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wanted) {
                         double distance = mc.player.distanceToSqr(Vec3.atCenterOf(pos));
                         if (distance < bestDistance) {
                            bestDistance = distance;
@@ -570,13 +570,13 @@ final class AiSmelt {
                }
 
                JsonObject init_JsonObject_49() {
-                  return AiJson.init_JsonObject_ObjArr(
+                  return AiJson.objectOf(
                      "item",
                      outputId,
                      "target",
                      target,
                      "held",
-                     AiGameState.init_I_Str(outputId),
+                     AiGameState.countInventoryItem(outputId),
                      "furnace",
                      this.load_JsonObject,
                      "productiveWork",
@@ -594,12 +594,12 @@ final class AiSmelt {
                      "stationAt",
                      this.load_BlockPos == null ? null : this.load_BlockPos.toShortString(),
                      "inputHeld",
-                     AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(resolved.input()).toString())
+                     AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(resolved.input()).toString())
                   );
                }
 
                AiOperation.Result init(String message) {
-                  AiVisualization.init(this, statusTitle, AiTaskStatus.init(message, "Preparing the furnace"), AiGameState.init_I_Str(outputId), target);
+                  AiVisualization.init(this, statusTitle, AiTaskStatus.init(message, "Preparing the furnace"), AiGameState.countInventoryItem(outputId), target);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_49().toString(), List.of());
                }
 
@@ -642,7 +642,7 @@ final class AiSmelt {
                   }
 
                   this.read_Z = false;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   this.init_DataPipe.init_V();
                   this.load_I = 0;
                   if (mc.player == this.init_LocalPlayer && mc.player.containerMenu instanceof AbstractFurnaceMenu) {
@@ -671,7 +671,7 @@ final class AiSmelt {
                         this.write_AiOperation = null;
                      }
 
-                     this.init_DataUtil.init_V();
+                     this.init_DataUtil.clear();
                      this.init_DataPipe.init_V();
                      if (mc.player == this.init_LocalPlayer && mc.player.containerMenu instanceof AbstractFurnaceMenu) {
                         mc.player.closeContainer();
@@ -720,11 +720,11 @@ final class AiSmelt {
    }
 
    static AiOperation init(JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan, int items) {
-      int seconds = Math.max(30, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600) / 2));
-      final AiOperation fuel = AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308 && AiItems.init_Z(Blocks.COAL_ORE.defaultBlockState())
-         ? AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
+      int seconds = Math.max(30, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 600) / 2));
+      final AiOperation fuel = AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())
+         ? AiObtain.init(AiJson.objectOf("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
          : AiObtain.init(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "item", "planks", "count", (int)Math.ceil(items * 200 / 300.0) + autismclient.ai.engine.AiRestock.init_I(), "timeoutSeconds", seconds
             )
          );
@@ -738,7 +738,7 @@ final class AiSmelt {
          @Override
          public AiOperation.Result tick() {
             if (this.init_Z) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Smelting cancelled", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.CANCELLED, "Smelting cancelled", new JsonObject());
             }
 
             if (this.load != null) {
@@ -837,18 +837,18 @@ final class AiSmelt {
       if (init_Z(mc, stationId)) {
          return 0;
       } else {
-         return AiGameState.init_I_Str(stationId) > 0 ? 1 : 2;
+         return AiGameState.countInventoryItem(stationId) > 0 ? 1 : 2;
       }
    }
 
    static boolean init_Z(Minecraft mc, String stationId) {
       if (mc.player != null && mc.level != null) {
-         Block wanted = AiCraft.init_Block(stationId);
+         Block wanted = AiCraft.requireBlock(stationId);
          BlockPos origin = mc.player.blockPosition();
          int radius = 16;
 
          for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
-            if (AiTerrain.init(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wanted) {
+            if (AiTerrain.isLoaded(mc.level, pos) && mc.level.getBlockState(pos).getBlock() == wanted) {
                return true;
             }
          }
@@ -865,12 +865,12 @@ final class AiSmelt {
       return autismclient.util.AutoCraftingEngine.load(mc, wanted)
          .stream()
          .filter(p -> p.init_List().contains(source))
-         .anyMatch(p -> AiGameState.init_I_Str(p.load_Str()) > 0 || init_Z(mc, p.load_Str()));
+         .anyMatch(p -> AiGameState.countInventoryItem(p.load_Str()) > 0 || init_Z(mc, p.load_Str()));
    }
 
    private static Item init(autismclient.util.AutoCraftingEngine.SmeltRecipe plan, String inputSpec) {
       if (!inputSpec.isBlank()) {
-         AiItems.ItemSpec requested = AiItems.load_af_DataUtil(inputSpec);
+         AiItems.ItemSpec requested = AiItems.resolveItem(inputSpec);
 
          for (Item candidate : plan.init_List()) {
             if (requested.items().contains(candidate)) {
@@ -884,7 +884,7 @@ final class AiSmelt {
          int bestCount = 0;
 
          for (Item candidate : plan.init_List()) {
-            int count = AiGameState.load(BuiltInRegistries.ITEM.getKey(candidate).toString());
+            int count = AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(candidate).toString());
             if (count > bestCount) {
                bestCount = count;
                best = candidate;
@@ -905,11 +905,11 @@ final class AiSmelt {
       }
 
       if (!fuelSpec.isBlank()) {
-         AiItems.ItemSpec requested = AiItems.load_af_DataUtil(fuelSpec);
+         AiItems.ItemSpec requested = AiItems.resolveItem(fuelSpec);
          return init(
             requested.items(),
-            candidate -> Math.max(0, AiGameState.load(BuiltInRegistries.ITEM.getKey(candidate).toString()) - AiRunResources.load(candidate)),
-            candidate -> AiItems.init_I(new ItemStack(candidate)),
+            candidate -> Math.max(0, AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(candidate).toString()) - AiRunResources.mandatoryReservedCount(candidate)),
+            candidate -> AiItems.fuelBurnTime(new ItemStack(candidate)),
             items
          );
       }
@@ -924,10 +924,10 @@ final class AiSmelt {
             && stack.getItem() != input
             && !stack.isDamageableItem()
             && !init_Set.contains(stack.getItem())
-            && AiGameState.load(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) > AiRunResources.load(stack.getItem())) {
-            int burn = AiItems.init_I(stack);
+            && AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) > AiRunResources.mandatoryReservedCount(stack.getItem())) {
+            int burn = AiItems.fuelBurnTime(stack);
             if (burn > 0) {
-               int count = Math.max(0, AiGameState.load(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) - AiRunResources.load(stack.getItem()));
+               int count = Math.max(0, AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) - AiRunResources.mandatoryReservedCount(stack.getItem()));
                if (stack.is(ItemTags.PLANKS)) {
                   count = Math.min(count, spareWood);
                } else if (stack.is(ItemTags.LOGS)) {
@@ -977,7 +977,7 @@ final class AiSmelt {
    static int init(Item fuel) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && fuel != null) {
-         int count = Math.max(0, AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(fuel).toString()) - AiRunResources.load(fuel));
+         int count = Math.max(0, AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(fuel).toString()) - AiRunResources.mandatoryReservedCount(fuel));
          ItemStack stack = new ItemStack(fuel);
          int spareWood = autismclient.ai.engine.AiRestock.init(mc.player.getInventory());
          if (stack.is(ItemTags.PLANKS)) {
@@ -1036,7 +1036,7 @@ final class AiSmelt {
             inputs.add(BuiltInRegistries.ITEM.getKey(input).toString());
          }
 
-         out.add(AiJson.init_JsonObject_ObjArr("recipe", plan.init_Str(), "station", plan.load_Str(), "outputCount", plan.init_I(), "inputs", inputs));
+         out.add(AiJson.objectOf("recipe", plan.init_Str(), "station", plan.load_Str(), "outputCount", plan.init_I(), "inputs", inputs));
       }
 
       return out;

@@ -31,7 +31,7 @@ public final class PackTranslationPolicyResolver {
 
          for (int attempt = 0; attempt < 4; attempt++) {
             policyIdentity = ProtectorFeatureFlags.init_Obj();
-            mode = init(ConnectionPrivacyRegistry.init(init_PacketListener()));
+            mode = init(ConnectionPrivacyRegistry.getByListener(init_PacketListener()));
             if (policyIdentity == ProtectorFeatureFlags.init_Obj()) {
                stable = true;
                break;
@@ -82,8 +82,8 @@ public final class PackTranslationPolicyResolver {
          }
 
          PacketListener listener = currentListener.get();
-         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
-         ConnectionPrivacyRegistry.PrivacyMode effectiveMode = context == null ? mode : context.init_BufferHelper_Cache();
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
+         ConnectionPrivacyRegistry.PrivacyMode effectiveMode = context == null ? mode : context.privacyMode();
          ResourcePackSessionTracker.PackSession session = ResourcePackSessionTracker.init_FileCache_BufferHe(context);
          IdentityHashMap<PackResources, PackTranslationPolicyResolver.Inner_BufferHelper> serverBindings = new IdentityHashMap<>();
 
@@ -91,7 +91,7 @@ public final class PackTranslationPolicyResolver {
             ServerPackSelectionRegistry.Inner_StreamUtil provenance = ServerPackSelectionRegistry.init_CharEncoder_Stream(session, pack);
             if (provenance != null) {
                serverBindings.put(
-                  pack, new PackTranslationPolicyResolver.Inner_BufferHelper(context, context.init_J(), listener, context.init_BufferHelper_Buffe(), session, provenance)
+                  pack, new PackTranslationPolicyResolver.Inner_BufferHelper(context, context.lifecycleId(), listener, context.serverEndpoint(), session, provenance)
                );
             }
          }
@@ -163,7 +163,7 @@ public final class PackTranslationPolicyResolver {
 
    private static ConnectionPrivacyRegistry.PrivacyMode init(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context != null) {
-         return context.init_BufferHelper_Cache();
+         return context.privacyMode();
       } else {
          return ProtectorFeatureFlags.sync() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       }
@@ -244,7 +244,7 @@ public final class PackTranslationPolicyResolver {
                   return this.load();
                }
 
-               ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
+               ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
                if (context != this.init_BufferHelper_Strea) {
                   return this.load();
                }
@@ -297,10 +297,10 @@ public final class PackTranslationPolicyResolver {
 
       private boolean init(PackTranslationPolicyResolver.Inner_BufferHelper server, PackResources pack) {
          ConnectionPrivacyRegistry.ConnectionSession context = server.init_BufferHelper_Strea();
-         if (ConnectionPrivacyRegistry.init_Z(context)
-            && context.init_J() == server.init_J()
-            && context.init_PacketListener() == server.init_PacketListener()
-            && Objects.equals(context.init_BufferHelper_Buffe(), server.init_BufferHelper_Buffe())) {
+         if (ConnectionPrivacyRegistry.isActive(context)
+            && context.lifecycleId() == server.init_J()
+            && context.packetListener() == server.init_PacketListener()
+            && Objects.equals(context.serverEndpoint(), server.init_BufferHelper_Buffe())) {
             ResourcePackSessionTracker.PackSession session = server.init_FileCache_BufferHe();
             if (ResourcePackSessionTracker.init_FileCache_BufferHe(context) == session && ResourcePackSessionTracker.init_Z(session)) {
                ServerPackSelectionRegistry.Inner_StreamUtil captured = server.init_CharEncoder_Stream();

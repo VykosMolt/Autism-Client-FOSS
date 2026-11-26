@@ -41,7 +41,7 @@ final class AiFarmPlacement extends AiPlacementSession {
       if (mc.player != null && mc.level != null) {
          this.init_ClientLevel = mc.level;
          this.init_Str = cropBlock;
-         this.load_Str = AiFarmArea.init_Str(AiJson.init_JsonObject_ObjArr("substrate", substrate), cropBlock);
+         this.load_Str = AiFarmArea.init_Str(AiJson.objectOf("substrate", substrate), cropBlock);
          this.read_BlockPos = previous == null ? null : previous.from();
          this.write = previous == null ? mc.player.blockPosition().below() : previous.to();
          this.load_Z = previous != null;
@@ -155,7 +155,7 @@ final class AiFarmPlacement extends AiPlacementSession {
 
    JsonObject load_JsonObject() {
       AiFarmArea.Inner_DataUtil area = this.init_C_DataUtil();
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "crop",
          this.init_Str,
          "substrate",
@@ -188,7 +188,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          if (surface) {
             double reach = (mc.options.getEffectiveRenderDistance() + 2) * 16.0;
             BlockHitResult hit = this.init_ClientLevel.clip(new ClipContext(eye, eye.add(direction.scale(reach)), Block.OUTLINE, Fluid.NONE, mc.player));
-            if (hit.getType() == Type.BLOCK && AiTerrain.init(this.init_ClientLevel, hit.getBlockPos())) {
+            if (hit.getType() == Type.BLOCK && AiTerrain.isLoaded(this.init_ClientLevel, hit.getBlockPos())) {
                this.write = this.init_BlockPos_BlockPos(hit.getBlockPos());
                this.init_D = Vec3.atCenterOf(this.write).distanceTo(eye);
             } else {
@@ -304,6 +304,6 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    private static JsonObject init_JsonObject_BlockPos(BlockPos p) {
-      return AiJson.init_JsonObject_ObjArr("x", p.getX(), "y", p.getY(), "z", p.getZ());
+      return AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ());
    }
 }

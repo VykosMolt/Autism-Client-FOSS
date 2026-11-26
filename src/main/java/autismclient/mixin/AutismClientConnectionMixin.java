@@ -133,7 +133,7 @@ public abstract class AutismClientConnectionMixin {
    @Unique
    private static void autism$snapshotPrivacyMode(Connection connection, SocketAddress peerAddress) {
       ConnectionPrivacyRegistry.PrivacyMode mode = AutismConfig.getGlobal().spoofClientVanilla ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
-      ConnectionPrivacyRegistry.init(connection, mode, false, peerAddress);
+      ConnectionPrivacyRegistry.register(connection, mode, false, peerAddress);
    }
 
    @Inject(

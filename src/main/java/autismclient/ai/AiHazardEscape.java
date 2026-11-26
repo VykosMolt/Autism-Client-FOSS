@@ -26,7 +26,7 @@ final class AiHazardEscape {
          return mc.player.isOnFire()
                && !mc.player.hasEffect(MobEffects.FIRE_RESISTANCE)
                && !mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)
-               && AiGameState.init_I_Str("minecraft:water_bucket") > 0
+               && AiGameState.countInventoryItem("minecraft:water_bucket") > 0
             ? "on fire"
             : null;
       }
@@ -34,7 +34,7 @@ final class AiHazardEscape {
 
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
-      final int seconds = Math.max(1, Math.min(30, AiJson.init_I_JsonObject(args, "timeoutSeconds", 25)));
+      final int seconds = Math.max(1, Math.min(30, AiJson.getInt(args, "timeoutSeconds", 25)));
       final Object level = mc.level;
       final Object player = mc.player;
       final Object connection = mc.getConnection();
@@ -80,7 +80,7 @@ final class AiHazardEscape {
             boolean pending = this.init_Y.read();
             this.init_Y.init_V();
             return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
-               pending, AiGameOperations.init_AiOperation_Result(status, message, AiJson.init_JsonObject_ObjArr("hazard", this.init_Str, "reobserveBeforeResuming", true))
+               pending, AiGameOperations.result(status, message, AiJson.objectOf("hazard", this.init_Str, "reobserveBeforeResuming", true))
             );
          }
 

@@ -62,8 +62,8 @@ public final class AntiKnockbackModule extends Module {
          && MC.player.isAlive()
          && !MC.player.isSpectator()
          && !aD.init_Z()
-         && !FreecamController.init_Z()
-         && !FreecamController.write()
+         && !FreecamController.isActive()
+         && !FreecamController.isAiControllingBody()
          && MC.gui.screen() == null
          && !MC.player.isPassenger()
          && !MC.player.isInWater()

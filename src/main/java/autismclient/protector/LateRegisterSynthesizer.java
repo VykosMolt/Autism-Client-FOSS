@@ -41,7 +41,7 @@ public final class LateRegisterSynthesizer {
       LateRegisterSynthesizer.Inner_DataUtil session = init_TaskQueue_DataUtil(connection, true);
       if (session != null) {
          synchronized (init_Map) {
-            if (ConnectionPrivacyRegistry.init_Z(session.init_BufferHelper_Strea)) {
+            if (ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea)) {
                session.init_Z = true;
             }
          }
@@ -55,7 +55,7 @@ public final class LateRegisterSynthesizer {
       }
 
       synchronized (init_Map) {
-         if (ConnectionPrivacyRegistry.init_Z(session.init_BufferHelper_Strea) && !session.write) {
+         if (ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea) && !session.write) {
             session.write = true;
             return true;
          } else {
@@ -68,9 +68,9 @@ public final class LateRegisterSynthesizer {
       load_J++;
       ClientPacketListener listener = client == null ? null : client.getConnection();
       if (client != null && client.player != null && listener != null) {
-         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init(listener);
-         if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && ProtectorFeatureFlags.update()) {
-            List<Identifier> channels = init(context.init_Connection(), load_J);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
+         if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && ProtectorFeatureFlags.update()) {
+            List<Identifier> channels = init(context.connection(), load_J);
             if (channels != null) {
                init(context, channels, listener, listener::send);
             }
@@ -86,7 +86,7 @@ public final class LateRegisterSynthesizer {
       boolean completed = false;
 
       try {
-         if (context.init_PacketListener() != listener) {
+         if (context.packetListener() != listener) {
             return;
          }
 
@@ -104,7 +104,7 @@ public final class LateRegisterSynthesizer {
          init_Logger.warn("[AutismProtector] Late register send failed: {}", t.getMessage());
          return;
       } finally {
-         init_V(context.init_Connection(), completed);
+         init_V(context.connection(), completed);
       }
    }
 
@@ -115,7 +115,7 @@ public final class LateRegisterSynthesizer {
       }
 
       synchronized (init_Map) {
-         if (!ConnectionPrivacyRegistry.init_Z(session.init_BufferHelper_Strea)) {
+         if (!ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea)) {
             return null;
          }
 
@@ -146,7 +146,7 @@ public final class LateRegisterSynthesizer {
       LateRegisterSynthesizer.Inner_DataUtil session = init_TaskQueue_DataUtil(connection, false);
       if (session != null) {
          synchronized (init_Map) {
-            if (ConnectionPrivacyRegistry.init_Z(session.init_BufferHelper_Strea) && session.load) {
+            if (ConnectionPrivacyRegistry.isActive(session.init_BufferHelper_Strea) && session.load) {
                session.load = false;
                session.read |= success;
             }
@@ -159,12 +159,12 @@ public final class LateRegisterSynthesizer {
          return null;
       }
 
-      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection);
-      if (context != null && context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
+      ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
+      if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
          synchronized (init_Map) {
             LateRegisterSynthesizer.Inner_DataUtil existing = init_Map.get(connection);
             if (existing != null) {
-               if (existing.init_BufferHelper_Strea == context && existing.init_PacketListener == context.init_PacketListener() && ConnectionPrivacyRegistry.init_Z(context)
+               if (existing.init_BufferHelper_Strea == context && existing.init_PacketListener == context.packetListener() && ConnectionPrivacyRegistry.isActive(context)
                   )
                 {
                   return existing;
@@ -173,7 +173,7 @@ public final class LateRegisterSynthesizer {
                init_Map.remove(connection);
             }
 
-            if (create && init_Map.size() < 1024 && ConnectionPrivacyRegistry.init_Z(context)) {
+            if (create && init_Map.size() < 1024 && ConnectionPrivacyRegistry.isActive(context)) {
                LateRegisterSynthesizer.Inner_DataUtil created = new LateRegisterSynthesizer.Inner_DataUtil(context);
                init_Map.put(connection, created);
                return created;
@@ -196,7 +196,7 @@ public final class LateRegisterSynthesizer {
 
    private static void load() {
       synchronized (init_Map) {
-         init_Map.entrySet().removeIf(entry -> !ConnectionPrivacyRegistry.init_Z(entry.getValue().init_BufferHelper_Strea));
+         init_Map.entrySet().removeIf(entry -> !ConnectionPrivacyRegistry.isActive(entry.getValue().init_BufferHelper_Strea));
       }
    }
 
@@ -265,7 +265,7 @@ public final class LateRegisterSynthesizer {
 
       private Inner_DataUtil(ConnectionPrivacyRegistry.ConnectionSession context) {
          this.init_BufferHelper_Strea = context;
-         this.init_PacketListener = context.init_PacketListener();
+         this.init_PacketListener = context.packetListener();
       }
    }
 }

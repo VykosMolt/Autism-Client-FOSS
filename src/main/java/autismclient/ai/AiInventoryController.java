@@ -59,7 +59,7 @@ public final class AiInventoryController implements AiOperation {
 
    AiInventoryController(int containerId, int destination, ItemStack wanted) {
       this(
-         AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(wanted.getItem()).toString(), "count", 0, "containerId", containerId),
+         AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(wanted.getItem()).toString(), "count", 0, "containerId", containerId),
          null,
          Set.of(destination),
          destination,
@@ -69,7 +69,7 @@ public final class AiInventoryController implements AiOperation {
 
    AiInventoryController(int containerId, ItemStack exact, int count, Set<Integer> allowedSources, Set<Integer> allowedDestinations) {
       this(
-         AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(exact.getItem()).toString(), "count", count, "containerId", containerId),
+         AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(exact.getItem()).toString(), "count", count, "containerId", containerId),
          allowedSources,
          allowedDestinations,
          -1,
@@ -97,14 +97,14 @@ public final class AiInventoryController implements AiOperation {
          throw new IllegalArgumentException("A saved storage slot requires a nonempty stack");
       }
 
-      this.init_Str = AiJson.init_Str_JsonObject(args, "item", "");
-      this.init_I = AiJson.init_I_JsonObject(args, "count", -1);
-      this.load_I = AiJson.init_I_JsonObject(args, "containerId", -1);
+      this.init_Str = AiJson.getString(args, "item", "");
+      this.init_I = AiJson.getInt(args, "count", -1);
+      this.load_I = AiJson.getInt(args, "containerId", -1);
       if (this.init_Str.isBlank() || this.init_I < 0 || this.init_I > 2304 && allowedSources == null) {
          throw new IllegalArgumentException("Expected item registry id and inventory count 0..2304");
       }
 
-      this.init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180))) * 1000000000L;
+      this.init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 180))) * 1000000000L;
    }
 
    @Override
@@ -198,7 +198,7 @@ public final class AiInventoryController implements AiOperation {
                         && slot.container == this.init_Minecraft.player.getInventory() == deposit
                         && this.init(slot.getItem())
                         && slot.mayPickup(this.init_Minecraft.player)
-                        && (pass != 0 || AiItems.init_Z(slot.getItem()))) {
+                        && (pass != 0 || AiItems.isPlainItem(slot.getItem()))) {
                         this.read_I = slot.index;
                         break;
                      }
@@ -365,7 +365,7 @@ public final class AiInventoryController implements AiOperation {
    }
 
    private boolean init_Z_I(int slot, int button, ItemStack from, ItemStack to, ItemStack cursor) {
-      this.load_J = AiServerEvidence.init_J();
+      this.load_J = AiServerEvidence.inventoryRevision();
       AbstractContainerMenu menu = this.init_Minecraft.player.containerMenu;
       this.init_b_DataUtil = AiContainerTransactions.init(menu, slot, button, Map.of(this.read_I, from, this.write_I, to), cursor);
       if (this.init_b_DataUtil == null) {
@@ -394,7 +394,7 @@ public final class AiInventoryController implements AiOperation {
 
    private int init_I_23() {
       return this.update_ItemStack.isEmpty()
-         ? AiGameState.init_I_Str(this.init_Str)
+         ? AiGameState.countInventoryItem(this.init_Str)
          : init_I_Container_ItemStack_2(this.init_Minecraft.player.getInventory(), this.update_ItemStack);
    }
 
@@ -412,7 +412,7 @@ public final class AiInventoryController implements AiOperation {
    }
 
    String init_Str_13() {
-      JsonObject data = AiJson.init_JsonObject_ObjArr(
+      JsonObject data = AiJson.objectOf(
          "containerId",
          this.load_I,
          "phase",
@@ -444,7 +444,7 @@ public final class AiInventoryController implements AiOperation {
       data.addProperty("observedMenuIdentityMatches", current);
       if (current) {
          AbstractContainerMenu menu = this.init_Minecraft.player.containerMenu;
-         data.addProperty("observedNativeRevision", AiServerEvidence.init_J());
+         data.addProperty("observedNativeRevision", AiServerEvidence.inventoryRevision());
          data.add("observedCursor", init_JsonObject_ItemStack_HolderLookup_Provi(menu.getCarried(), registries));
          if (this.read_I >= 0 && this.read_I < menu.slots.size()) {
             data.add("observedSource", init_JsonObject_ItemStack_HolderLookup_Provi(menu.getSlot(this.read_I).getItem(), registries));
@@ -459,7 +459,7 @@ public final class AiInventoryController implements AiOperation {
    }
 
    static JsonObject init_JsonObject_ItemStack_HolderLookup_Provi(ItemStack stack, Provider registries) {
-      JsonObject data = AiJson.init_JsonObject_ObjArr("empty", stack.isEmpty(), "count", stack.getCount());
+      JsonObject data = AiJson.objectOf("empty", stack.isEmpty(), "count", stack.getCount());
       if (stack.isEmpty()) {
          return data;
       }
@@ -480,10 +480,10 @@ public final class AiInventoryController implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_7(AiOperation.Status status, String text) {
-      return AiGameOperations.init_AiOperation_Result(
+      return AiGameOperations.result(
          status,
          text,
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "item",
             this.init_Str,
             "count",

@@ -33,10 +33,10 @@ final class AiAnvil {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final AiAnvil.Inner_DataUtil mode = init(AiJson.init_Str_JsonObject(args, "mode", "repair"));
-         final String leftId = init(AiJson.init_Str_JsonObject(args, "left", ""), "left");
-         final String rightId = init(AiJson.init_Str_JsonObject(args, "right", ""), "right");
-         final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)));
+         final AiAnvil.Inner_DataUtil mode = init(AiJson.getString(args, "mode", "repair"));
+         final String leftId = init(AiJson.getString(args, "left", ""), "left");
+         final String rightId = init(AiJson.getString(args, "right", ""), "right");
+         final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300)));
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -66,8 +66,8 @@ final class AiAnvil {
                if (!this.load_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Anvil deadline reached");
-                  } else if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("anvil work", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
+                  } else if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+                     return this.init(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("anvil work", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
                   } else if (!(this.init_Minecraft.player.containerMenu instanceof AnvilMenu menu)) {
                      AiOperation.Result open = this.init_AiOperation_Result_3();
                      return open != null ? open : this.init("Opening the anvil");
@@ -95,9 +95,9 @@ final class AiAnvil {
                      }
 
                      if (this.load_J >= 0L) {
-                        if (AiServerEvidence.init_J_I(menu.containerId) > this.load_J) {
+                        if (AiServerEvidence.containerRevision(menu.containerId) > this.load_J) {
                            if (menu.getSlot(2).getItem().isEmpty()
-                              && AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString()) > this.poll) {
+                              && AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString()) > this.poll) {
                               return this.init(AiOperation.Status.SUCCEEDED, "Anvil produced " + BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()));
                            } else {
                               return ++this.flush > 40
@@ -157,8 +157,8 @@ final class AiAnvil {
                         } else {
                            this.close = cost;
                            this.init_ItemStack = out.copy();
-                           this.poll = AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString());
-                           this.load_J = AiServerEvidence.init_J_I(menu.containerId);
+                           this.poll = AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem()).toString());
+                           this.load_J = AiServerEvidence.containerRevision(menu.containerId);
                            AiContainerTransactions.init(menu.containerId, 2, 0, ContainerInput.QUICK_MOVE);
                            return this.init("Taking the result");
                         }
@@ -172,15 +172,15 @@ final class AiAnvil {
             AiOperation.Result init(AnvilMenu menu) {
                if (this.update <= 0 && menu.getSlot(2).getItem().isEmpty()) {
                   JsonObject missing = new JsonObject();
-                  if (menu.getSlot(0).getItem().isEmpty() && AiGameState.load(leftId) < 1) {
+                  if (menu.getSlot(0).getItem().isEmpty() && AiGameState.countMainInventoryItem(leftId) < 1) {
                      missing.addProperty(leftId, 1);
                   }
 
-                  if (menu.getSlot(1).getItem().isEmpty() && AiGameState.load(rightId) < 1) {
+                  if (menu.getSlot(1).getItem().isEmpty() && AiGameState.countMainInventoryItem(rightId) < 1) {
                      missing.addProperty(rightId, 1);
                   }
 
-                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing anvil materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
+                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing anvil materials", AiJson.objectOf("missing", missing)) : null;
                } else {
                   return null;
                }
@@ -204,7 +204,7 @@ final class AiAnvil {
             int init(String itemId, boolean plainOnly) {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.init_Minecraft.player.getInventory().getItem(slot);
-                  if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId) && (!plainOnly || AiItems.init_Z(stack))) {
+                  if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId) && (!plainOnly || AiItems.isPlainItem(stack))) {
                      return slot;
                   }
                }
@@ -245,13 +245,13 @@ final class AiAnvil {
 
                if (this.init_BlockPos == null) {
                   if (!this.init_Z) {
-                     if (AiGameState.init_I_Str("minecraft:anvil") <= 0) {
+                     if (AiGameState.countInventoryItem("minecraft:anvil") <= 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:anvil", 1);
-                        return this.init(AiFailure.MISSING_STATION, "No anvil in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
+                        return this.init(AiFailure.MISSING_STATION, "No anvil in reach or in the bag", AiJson.objectOf("missing", missing));
                      }
 
-                     BlockPos spot = AiCraft.init_BlockPos();
+                     BlockPos spot = AiCraft.findPlacementSpot();
                      if (spot == null) {
                         return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for an anvil");
                      }
@@ -280,17 +280,17 @@ final class AiAnvil {
                      return this.init(AiOperation.Status.FAILED, "The anvil fell out of reach");
                   }
 
-                  this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(this.init_BlockPos));
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.aimAt(Vec3.atCenterOf(this.init_BlockPos));
+                  this.init_DataUtil.tick();
                   if (++this.load_I > 80) {
                      return this.init(AiOperation.Status.FAILED, "Could not open the anvil");
                   }
 
-                  if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+                  if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.init_BlockPos)) {
                      return this.init("Turning toward the anvil");
                   }
 
-                  BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                  BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (hit == null) {
                      return this.init("Turning toward the anvil");
                   }
@@ -302,14 +302,14 @@ final class AiAnvil {
             }
 
             BlockPos init_BlockPos() {
-               Block wanted = AiCraft.init_Block("minecraft:anvil");
+               Block wanted = AiCraft.requireBlock("minecraft:anvil");
                BlockPos origin = this.init_Minecraft.player.blockPosition();
                BlockPos best = null;
                double bestDistance = 1.7976931348623157E308;
                int radius = 16;
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-radius, -8, -radius), origin.offset(radius, 8, radius))) {
-                  if (AiTerrain.init(this.init_Minecraft.level, pos) && this.init_Minecraft.level.getBlockState(pos).getBlock() == wanted) {
+                  if (AiTerrain.isLoaded(this.init_Minecraft.level, pos) && this.init_Minecraft.level.getBlockState(pos).getBlock() == wanted) {
                      double distance = this.init_Minecraft.player.distanceToSqr(Vec3.atCenterOf(pos));
                      if (distance < bestDistance) {
                         bestDistance = distance;
@@ -322,7 +322,7 @@ final class AiAnvil {
             }
 
             JsonObject init_JsonObject_4() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "mode",
                   mode.name().toLowerCase(Locale.ROOT),
                   "left",
@@ -339,7 +339,7 @@ final class AiAnvil {
                }
 
                if (this.read_Z) {
-                  out.add("picked", AiJson.init_JsonObject_ObjArr("item", this.init_Str, "slot", this.push));
+                  out.add("picked", AiJson.objectOf("item", this.init_Str, "slot", this.push));
                }
 
                if (!this.init_ItemStack.isEmpty()) {
@@ -392,7 +392,7 @@ final class AiAnvil {
             public void cancel() {
                if (!this.load_Z) {
                   this.load_Z = true;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   this.init_DataPipe.init_V();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu instanceof AnvilMenu) {
                      this.init_Minecraft.player.closeContainer();
@@ -409,7 +409,7 @@ final class AiAnvil {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
-         AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
+         AiItems.ItemSpec target = AiItems.resolveItem(spec);
          if (target.items().size() != 1) {
             throw new IllegalArgumentException(arg + " must resolve to a single item id, got " + target.items().size() + " from \"" + spec + "\"");
          } else {

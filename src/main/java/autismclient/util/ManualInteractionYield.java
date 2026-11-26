@@ -112,7 +112,7 @@ public final class ManualInteractionYield {
          int tick = AutismSessionState.init_ck().state_I();
          if (tick != update) {
             update = tick;
-            if (mc.player != null && mc.level != null && mc.options != null && !autismclient.modules.FreecamController.init_Z()) {
+            if (mc.player != null && mc.level != null && mc.options != null && !autismclient.modules.FreecamController.isActive()) {
                boolean destroying = mc.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor && accessor.autism$isDestroying();
                if (!AutismLiteVariant.enabled() && autismclient.modules.BedNukerModule.read_Z_10()) {
                   destroying = false;

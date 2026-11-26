@@ -36,7 +36,7 @@ final class AiFireControl {
 
    AiFireControl(boolean bodyOnly) {
       this.init_Z = bodyOnly;
-      this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
+      this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
    }
 
    int init_I() {
@@ -63,10 +63,10 @@ final class AiFireControl {
       if (this.init_Minecraft.player != null && this.init_Minecraft.level != null && this.init_Minecraft.gameMode != null) {
          if (this.init_BlockPos != null) {
             if (!(this.init_Minecraft.level.getBlockState(this.init_BlockPos).getBlock() instanceof BaseFireBlock)
-               && AiServerEvidence.init_J_BlockPos(this.init_BlockPos) > this.init_J) {
+               && AiServerEvidence.blockRevision(this.init_BlockPos) > this.init_J) {
                this.load++;
                this.init_BlockPos = null;
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
             } else {
                if (++this.init_I < 20) {
                   this.load_V();
@@ -75,7 +75,7 @@ final class AiFireControl {
                }
 
                this.init_BlockPos = null;
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
             }
          }
 
@@ -94,7 +94,7 @@ final class AiFireControl {
             double score = 1.7976931348623157E308;
 
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-6, -1, -6), feet.offset(6, 2, 6))) {
-               if (AiTerrain.init(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() instanceof BaseFireBlock) {
+               if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && this.init_Minecraft.level.getBlockState(p).getBlock() instanceof BaseFireBlock) {
                   boolean body = new AABB(p).inflate(0.2).intersects(this.init_Minecraft.player.getBoundingBox());
                   if (!this.init_Z || body) {
                      boolean loot = protectDrops
@@ -174,8 +174,8 @@ final class AiFireControl {
                   }
 
                   this.init_Minecraft.options.keyUse.setDown(false);
-                  this.init_DataUtil.init_V_Vec3(point);
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.aimAt(point);
+                  this.init_DataUtil.tick();
                   this.init_Str = "Extinguish fire before combat and rod collection";
                   Vec3 look = eye.add(
                      Vec3.directionFromRotation(this.init_Minecraft.player.getXRot(), this.init_Minecraft.player.getYRot())
@@ -185,13 +185,13 @@ final class AiFireControl {
                      return true;
                   }
 
-                  this.init_J = AiServerEvidence.init_J_BlockPos(best);
+                  this.init_J = AiServerEvidence.blockRevision(best);
                   this.init_BlockPos = best;
                   this.init_I = 0;
                   this.init_Minecraft.gameMode.startDestroyBlock(best, Direction.UP);
                   Compat263.swing(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
                   this.init_Minecraft.player.resetAttackStrengthTicker();
-                  AiRunTrace.init_V_Str_JsonObject("blaze_fire_extinguish", AiJson.init_JsonObject_ObjArr("at", best.toShortString(), "priority", "before-combat-and-loot"));
+                  AiRunTrace.init_V_Str_JsonObject("blaze_fire_extinguish", AiJson.objectOf("at", best.toShortString(), "priority", "before-combat-and-loot"));
                   return true;
                }
             }
@@ -215,7 +215,7 @@ final class AiFireControl {
    }
 
    void init_V() {
-      this.init_DataUtil.init_V();
+      this.init_DataUtil.clear();
       if (this.init_AiOperation != null) {
          this.init_AiOperation.cancel();
       }

@@ -53,7 +53,7 @@ final class AiFastPath {
             int x = init(m.group(2));
             int y = init(m.group(3));
             int z = init(m.group(4));
-            JsonObject args = AiJson.init_JsonObject_ObjArr("x", x, "y", y, "z", z);
+            JsonObject args = AiJson.objectOf("x", x, "y", y, "z", z);
             if (parkour) {
                init(args, true);
             }
@@ -65,7 +65,7 @@ final class AiFastPath {
                boolean parkour = "parkour".equalsIgnoreCase(m.group(1));
                int x = init(m.group(2));
                int z = init(m.group(3));
-               JsonObject args = AiJson.init_JsonObject_ObjArr("x", x, "z", z);
+               JsonObject args = AiJson.objectOf("x", x, "z", z);
                if (parkour) {
                   init(args, true);
                }
@@ -95,7 +95,7 @@ final class AiFastPath {
                      return null;
                   }
 
-                  JsonObject args = AiJson.init_JsonObject_ObjArr("x", at[0], "y", at[1], "z", at[2]);
+                  JsonObject args = AiJson.objectOf("x", at[0], "y", at[1], "z", at[2]);
                   if (parkour) {
                      init(args, true);
                   }
@@ -131,7 +131,7 @@ final class AiFastPath {
          }
 
          String canonical = var10000;
-         JsonObject args = AiJson.init_JsonObject_ObjArr("direction", canonical, "distance", distance);
+         JsonObject args = AiJson.objectOf("direction", canonical, "distance", distance);
          if (parkour) {
             init(args, false);
          }

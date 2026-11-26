@@ -18,37 +18,37 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 
 public final class FreecamController {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft MC = Minecraft.getInstance();
    private static final double init_D = 0.5;
    private static final double load_D = 0.05;
    private static final double read_D = 30.0;
-   private static boolean init_Z;
-   private static Vec3 init_Vec3 = Vec3.ZERO;
-   private static Vec3 load_Vec3 = Vec3.ZERO;
-   private static float init_F;
-   private static float load_F;
-   private static float read_F;
-   private static float write;
-   private static CameraType init_CameraType = CameraType.FIRST_PERSON;
-   private static boolean load_Z;
-   private static boolean read_Z = true;
+   private static boolean active;
+   private static Vec3 position = Vec3.ZERO;
+   private static Vec3 prevPosition = Vec3.ZERO;
+   private static float yaw;
+   private static float pitch;
+   private static float prevYaw;
+   private static float prevPitch;
+   private static CameraType savedCameraType = CameraType.FIRST_PERSON;
+   private static boolean reloadChunksOnExit;
+   private static boolean allowPlayerInteraction = true;
 
    private FreecamController() {
    }
 
-   public static boolean init_Z() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.TextFormat.init() ? false : init_Z;
+   public static boolean isActive() {
+      return !AutismLiteVariant.enabled() && !autismclient.e.TextFormat.init() ? false : active;
    }
 
-   public static boolean load_Z() {
-      return read_Z;
+   public static boolean isInteractionAllowed() {
+      return allowPlayerInteraction;
    }
 
-   public static boolean read() {
-      return init_Z() && read_Z && !write();
+   public static boolean canInteractAsPlayer() {
+      return isActive() && allowPlayerInteraction && !isAiControllingBody();
    }
 
-   public static boolean write() {
+   public static boolean isAiControllingBody() {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
@@ -57,9 +57,9 @@ public final class FreecamController {
       return ai != null && ai.open_Z() || autismclient.ai.AiDirectOps.load_Z();
    }
 
-   public static boolean init_Z_KeyMapping(KeyMapping mapping) {
-      if (mapping != null && init_Minecraft != null && init_Minecraft.options != null && init_Z()) {
-         Options o = init_Minecraft.options;
+   public static boolean shouldSuppressKey(KeyMapping mapping) {
+      if (mapping != null && MC != null && MC.options != null && isActive()) {
+         Options o = MC.options;
          if (mapping != o.keyUp
             && mapping != o.keyDown
             && mapping != o.keyLeft
@@ -72,9 +72,9 @@ public final class FreecamController {
                   && mapping != o.keyPickItem
                   && mapping != o.keyDrop
                   && mapping != o.keySwapOffhand
-                  && !load_Z_KeyMapping(mapping)
+                  && !isHotbarKey(mapping)
                ? false
-               : write();
+               : isAiControllingBody();
          } else {
             return true;
          }
@@ -83,8 +83,8 @@ public final class FreecamController {
       }
    }
 
-   private static boolean load_Z_KeyMapping(KeyMapping mapping) {
-      for (KeyMapping hotbar : init_Minecraft.options.keyHotbarSlots) {
+   private static boolean isHotbarKey(KeyMapping mapping) {
+      for (KeyMapping hotbar : MC.options.keyHotbarSlots) {
          if (mapping == hotbar) {
             return true;
          }
@@ -93,72 +93,72 @@ public final class FreecamController {
       return false;
    }
 
-   public static void init_V_Z(boolean enabled) {
-      read_Z = enabled;
+   public static void setInteractionAllowed(boolean enabled) {
+      allowPlayerInteraction = enabled;
    }
 
-   public static void load_V_Z(boolean shouldReloadChunks) {
-      if (init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.level != null) {
-         Vec3 startingPos = init_Minecraft.gameRenderer.mainCamera().position();
-         Entity startingView = init_Minecraft.getCameraEntity() == null ? init_Minecraft.player : init_Minecraft.getCameraEntity();
+   public static void enable(boolean shouldReloadChunks) {
+      if (MC != null && MC.player != null && MC.level != null) {
+         Vec3 startingPos = MC.gameRenderer.mainCamera().position();
+         Entity startingView = MC.getCameraEntity() == null ? MC.player : MC.getCameraEntity();
          float startingYaw = startingView.getYRot();
          float startingPitch = startingView.getXRot();
          if (RemoteViewController.init_Z()) {
             RemoteViewController.init(false);
          }
 
-         load_Z = shouldReloadChunks;
-         init_CameraType = init_Minecraft.options.getCameraType();
-         init_Vec3 = startingPos;
-         load_Vec3 = init_Vec3;
-         init_F = startingYaw;
-         load_F = startingPitch;
-         read_F = init_F;
-         write = load_F;
-         init_Z = true;
-         if (!write()) {
-            load_V();
+         reloadChunksOnExit = shouldReloadChunks;
+         savedCameraType = MC.options.getCameraType();
+         position = startingPos;
+         prevPosition = position;
+         yaw = startingYaw;
+         pitch = startingPitch;
+         prevYaw = yaw;
+         prevPitch = pitch;
+         active = true;
+         if (!isAiControllingBody()) {
+            releaseMovementKeys();
          }
 
-         init_Minecraft.options.setCameraType(CameraType.FIRST_PERSON);
-         if (load_Z) {
+         MC.options.setCameraType(CameraType.FIRST_PERSON);
+         if (reloadChunksOnExit) {
             am.init_V();
          }
       }
    }
 
-   public static void init_V() {
-      if (init_Z) {
-         init_Z = false;
-         if (init_Minecraft != null) {
-            init_Minecraft.options.setCameraType(init_CameraType);
-            if (load_Z) {
+   public static void disable() {
+      if (active) {
+         active = false;
+         if (MC != null) {
+            MC.options.setCameraType(savedCameraType);
+            if (reloadChunksOnExit) {
                am.init_V();
             }
          }
 
-         load_Z = false;
+         reloadChunksOnExit = false;
       }
    }
 
-   public static void init(double speed, double verticalSpeed) {
-      if (init_Z) {
-         if (init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.level != null) {
-            read_F = init_F;
-            write = load_F;
-            load_Vec3 = init_Vec3;
-            boolean forward = read(init_Minecraft.options.keyUp);
-            boolean backward = read(init_Minecraft.options.keyDown);
-            boolean right = read(init_Minecraft.options.keyRight);
-            boolean left = read(init_Minecraft.options.keyLeft);
-            boolean up = read(init_Minecraft.options.keyJump);
-            boolean down = read(init_Minecraft.options.keyShift);
-            boolean sprint = read(init_Minecraft.options.keySprint);
-            if (init_Minecraft.gui.screen() == null) {
+   public static void tick(double speed, double verticalSpeed) {
+      if (active) {
+         if (MC != null && MC.player != null && MC.level != null) {
+            prevYaw = yaw;
+            prevPitch = pitch;
+            prevPosition = position;
+            boolean forward = isPhysicallyDown(MC.options.keyUp);
+            boolean backward = isPhysicallyDown(MC.options.keyDown);
+            boolean right = isPhysicallyDown(MC.options.keyRight);
+            boolean left = isPhysicallyDown(MC.options.keyLeft);
+            boolean up = isPhysicallyDown(MC.options.keyJump);
+            boolean down = isPhysicallyDown(MC.options.keyShift);
+            boolean sprint = isPhysicallyDown(MC.options.keySprint);
+            if (MC.gui.screen() == null) {
                double horizontal = Math.max(0.0, speed) * (sprint ? 1.0 : 0.5);
                double vertical = Math.max(0.0, verticalSpeed) * (sprint ? 1.0 : 0.5);
-               Vec3 forwardVec = Vec3.directionFromRotation(0.0F, init_F);
-               Vec3 rightVec = Vec3.directionFromRotation(0.0F, init_F + 90.0F);
+               Vec3 forwardVec = Vec3.directionFromRotation(0.0F, yaw);
+               Vec3 rightVec = Vec3.directionFromRotation(0.0F, yaw + 90.0F);
                double dx = 0.0;
                double dy = 0.0;
                double dz = 0.0;
@@ -202,56 +202,56 @@ public final class FreecamController {
                   dy -= vertical;
                }
 
-               init_Vec3 = init_Vec3.add(dx, dy, dz);
+               position = position.add(dx, dy, dz);
             }
          } else {
-            init_Z = false;
+            active = false;
          }
       }
    }
 
-   public static Vec3 init(MoverType type, Vec3 movement) {
+   public static Vec3 filterMovement(MoverType type, Vec3 movement) {
       return movement;
    }
 
-   public static boolean init_Z_D(double scrollY) {
-      if (!init_Z || scrollY == 0.0) {
+   public static boolean handleMouseScroll(double scrollY) {
+      if (!active || scrollY == 0.0) {
          return false;
       }
 
-      if (init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.gui.screen() == null && init_Minecraft.gui.overlay() == null) {
+      if (MC != null && MC.player != null && MC.gui.screen() == null && MC.gui.overlay() == null) {
          Module freecam = al.init_Module_Str("freecam");
          if (freecam == null) {
             return false;
          }
 
          double step = scrollY > 0.0 ? 0.5 : -0.5;
-         double speed = init_D_D(init_D_Str(freecam.value("speed")) + step);
-         double vertical = init_D_D(init_D_Str(freecam.value("vertical-speed")) + step);
-         freecam.setValueTransient("speed", init_Str_D(speed));
-         freecam.setValueTransient("vertical-speed", init_Str_D(vertical));
-         init_Minecraft.gui.hud.setOverlayMessage(init_Component_D(speed), false);
+         double speed = snapSpeed(parseDoubleOrOne(freecam.value("speed")) + step);
+         double vertical = snapSpeed(parseDoubleOrOne(freecam.value("vertical-speed")) + step);
+         freecam.setValueTransient("speed", formatSpeed(speed));
+         freecam.setValueTransient("vertical-speed", formatSpeed(vertical));
+         MC.gui.hud.setOverlayMessage(formatSpeedMessage(speed), false);
          return true;
       } else {
          return false;
       }
    }
 
-   private static double init_D_D(double value) {
-      return load_D_D(Math.ceil(value * 2.0) / 2.0);
+   private static double snapSpeed(double value) {
+      return clampSpeed(Math.ceil(value * 2.0) / 2.0);
    }
 
-   private static Component init_Component_D(double speed) {
+   private static Component formatSpeedMessage(double speed) {
       return Component.empty()
-         .append(init("[", autismclient.util.UiColorPalette.a(), false))
-         .append(init("AUTISM", autismclient.util.UiColorPalette.init(), true))
-         .append(init("] ", autismclient.util.UiColorPalette.a(), false))
-         .append(init("Freecam Speed", autismclient.util.UiColorPalette.pool(), true))
-         .append(init(": ", autismclient.util.UiColorPalette.a(), false))
-         .append(init(init_Str_D(speed), autismclient.util.UiColorPalette.index(), true));
+         .append(styledText("[", autismclient.util.UiColorPalette.a(), false))
+         .append(styledText("AUTISM", autismclient.util.UiColorPalette.init(), true))
+         .append(styledText("] ", autismclient.util.UiColorPalette.a(), false))
+         .append(styledText("Freecam Speed", autismclient.util.UiColorPalette.pool(), true))
+         .append(styledText(": ", autismclient.util.UiColorPalette.a(), false))
+         .append(styledText(formatSpeed(speed), autismclient.util.UiColorPalette.index(), true));
    }
 
-   private static MutableComponent init(String value, int color, boolean bold) {
+   private static MutableComponent styledText(String value, int color, boolean bold) {
       Style style = Style.EMPTY.withColor(color);
       if (bold) {
          style = style.withBold(true);
@@ -260,7 +260,7 @@ public final class FreecamController {
       return Component.literal(value).setStyle(style);
    }
 
-   private static double init_D_Str(String value) {
+   private static double parseDoubleOrOne(String value) {
       try {
          return Double.parseDouble(value);
       } catch (NumberFormatException | NullPointerException ignored) {
@@ -268,73 +268,73 @@ public final class FreecamController {
       }
    }
 
-   private static double load_D_D(double value) {
+   private static double clampSpeed(double value) {
       return Math.max(0.05, Math.min(30.0, value));
    }
 
-   private static String init_Str_D(double value) {
+   private static String formatSpeed(double value) {
       return String.format(Locale.ROOT, "%.2f", value);
    }
 
-   public static void load(double deltaYaw, double deltaPitch) {
-      if (init_Z) {
-         init_F += (float)(deltaYaw * 0.15);
-         load_F += (float)(deltaPitch * 0.15);
-         load_F = Mth.clamp(load_F, -90.0F, 90.0F);
+   public static void applyMouseTurn(double deltaYaw, double deltaPitch) {
+      if (active) {
+         yaw += (float)(deltaYaw * 0.15);
+         pitch += (float)(deltaPitch * 0.15);
+         pitch = Mth.clamp(pitch, -90.0F, 90.0F);
       }
    }
 
-   public static double init_D_F(float tickDelta) {
-      return Mth.lerp(tickDelta, load_Vec3.x, init_Vec3.x);
+   public static double getInterpolatedX(float tickDelta) {
+      return Mth.lerp(tickDelta, prevPosition.x, position.x);
    }
 
-   public static double load_D_F(float tickDelta) {
-      return Mth.lerp(tickDelta, load_Vec3.y, init_Vec3.y);
+   public static double getInterpolatedY(float tickDelta) {
+      return Mth.lerp(tickDelta, prevPosition.y, position.y);
    }
 
-   public static double read(float tickDelta) {
-      return Mth.lerp(tickDelta, load_Vec3.z, init_Vec3.z);
+   public static double getInterpolatedZ(float tickDelta) {
+      return Mth.lerp(tickDelta, prevPosition.z, position.z);
    }
 
-   public static float init_F_F(float tickDelta) {
-      return Mth.lerp(tickDelta, read_F, init_F);
+   public static float getInterpolatedYaw(float tickDelta) {
+      return Mth.lerp(tickDelta, prevYaw, yaw);
    }
 
-   public static float load_F_F(float tickDelta) {
-      return Mth.lerp(tickDelta, write, load_F);
+   public static float getInterpolatedPitch(float tickDelta) {
+      return Mth.lerp(tickDelta, prevPitch, pitch);
    }
 
-   public static Vec3 init_Vec3_F(float tickDelta) {
-      return new Vec3(init_D_F(tickDelta), load_D_F(tickDelta), read(tickDelta));
+   public static Vec3 getInterpolatedEyePos(float tickDelta) {
+      return new Vec3(getInterpolatedX(tickDelta), getInterpolatedY(tickDelta), getInterpolatedZ(tickDelta));
    }
 
-   public static Vec3 load_Vec3_F(float tickDelta) {
-      return init_Vec3_F(tickDelta).subtract(0.0, init_D(), 0.0);
+   public static Vec3 getInterpolatedFeetPos(float tickDelta) {
+      return getInterpolatedEyePos(tickDelta).subtract(0.0, cameraEyeHeight(), 0.0);
    }
 
-   private static double init_D() {
-      Entity view = init_Minecraft == null ? null : init_Minecraft.getCameraEntity();
+   private static double cameraEyeHeight() {
+      Entity view = MC == null ? null : MC.getCameraEntity();
       return view == null ? 0.0 : view.getEyeY() - view.getY();
    }
 
-   private static boolean read(KeyMapping mapping) {
+   private static boolean isPhysicallyDown(KeyMapping mapping) {
       return mapping != null && autismclient.util.KeyMappingControl.of(mapping).autism$isActuallyDown();
    }
 
-   private static void load_V() {
-      if (init_Minecraft != null && init_Minecraft.options != null) {
+   private static void releaseMovementKeys() {
+      if (MC != null && MC.options != null) {
          boolean released = false;
 
          for (KeyMapping key : new KeyMapping[]{
-            init_Minecraft.options.keyUp,
-            init_Minecraft.options.keyDown,
-            init_Minecraft.options.keyRight,
-            init_Minecraft.options.keyLeft,
-            init_Minecraft.options.keyJump,
-            init_Minecraft.options.keyShift,
-            init_Minecraft.options.keySprint
+            MC.options.keyUp,
+            MC.options.keyDown,
+            MC.options.keyRight,
+            MC.options.keyLeft,
+            MC.options.keyJump,
+            MC.options.keyShift,
+            MC.options.keySprint
          }) {
-            if ((key != init_Minecraft.options.keyShift || !al.tick_Z()) && read(key) && key.isDown()) {
+            if ((key != MC.options.keyShift || !al.tick_Z()) && isPhysicallyDown(key) && key.isDown()) {
                key.setDown(false);
                released = true;
             }

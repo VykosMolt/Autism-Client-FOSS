@@ -36,56 +36,56 @@ public final class AiAim {
    private static final double load_D = 1.0;
    private static final double read_D = 64.0;
    static final float init_F = 7.0F;
-   private RotationMath.Rotation init_ce_DataUtil;
-   private static volatile String init_Str = "";
-   private Vec3 init_Vec3;
-   private int init_I = -1;
-   private AiAim.AimProfile init_DataUtil_DataUtil = AiAim.AimProfile.NORMAL;
-   private int load_I;
-   private boolean init_Z;
+   private RotationMath.Rotation targetRotation;
+   private static volatile String lastDebugState = "";
+   private Vec3 targetPoint;
+   private int allowedEndermanEntityId = -1;
+   private AiAim.AimProfile aimProfile = AiAim.AimProfile.NORMAL;
+   private int settledTicks;
+   private boolean silent;
    static final double init_D = 0.4;
    static final float load_F = 3.0F;
    static final float read_F = 0.5F;
-   private int read_I = -2147483648;
-   private static int write = -2147483648;
+   private int lastInstanceStepTick = -2147483648;
+   private static int lastGlobalStepTick = -2147483648;
 
-   public static String init_Str() {
-      return init_Str;
+   public static String lastDebugState() {
+      return lastDebugState;
    }
 
-   public AiAim init_DataUtil_I(int entityId) {
-      this.init_I = entityId;
+   public AiAim allowEnderman(int entityId) {
+      this.allowedEndermanEntityId = entityId;
       return this;
    }
 
-   public void init_V_DataUtil_DataUtil(AiAim.AimProfile value) {
+   public void setProfile(AiAim.AimProfile value) {
       if (value != null) {
-         this.init_DataUtil_DataUtil = value;
+         this.aimProfile = value;
       }
    }
 
-   public AiAim.AimProfile init_DataUtil_DataUtil() {
-      return this.init_DataUtil_DataUtil;
+   public AiAim.AimProfile profile() {
+      return this.aimProfile;
    }
 
-   public void init_V_Vec3(Vec3 point) {
+   public void aimAt(Vec3 point) {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player != null && point != null) {
          Vec3 eye = player.getEyePosition();
          RotationMath.Rotation rotation = RotationMath.lookAt(point, eye);
-         if (init_Z_Vec3(point.subtract(eye))) {
-            RotationMath.Rotation kept = new RotationMath.Rotation(this.init_ce_DataUtil != null ? this.init_ce_DataUtil.yaw() : player.getYRot(), rotation.pitch());
-            if (init(player, eye, kept, point)) {
+         if (isSteepVerticalDelta(point.subtract(eye))) {
+            RotationMath.Rotation kept = new RotationMath.Rotation(this.targetRotation != null ? this.targetRotation.yaw() : player.getYRot(), rotation.pitch());
+            if (keptYawHitsSameFace(player, eye, kept, point)) {
                rotation = kept;
             }
          }
 
-         this.init_V_ce_DataUtil(rotation);
-         this.init_Vec3 = point;
+         this.setTargetRotation(rotation);
+         this.targetPoint = point;
       }
    }
 
-   private static boolean init(LocalPlayer player, Vec3 eye, RotationMath.Rotation kept, Vec3 point) {
+   private static boolean keptYawHitsSameFace(LocalPlayer player, Vec3 eye, RotationMath.Rotation kept, Vec3 point) {
       ClientLevel level = Minecraft.getInstance().level;
       if (level == null) {
          return true;
@@ -103,136 +103,136 @@ public final class AiAim {
 
       Vec3 end = eye.add(Vec3.directionFromRotation(kept.pitch(), kept.yaw()).scale(point.distanceTo(eye) + 0.02));
       BlockHitResult hit = level.clip(new ClipContext(eye, end, Block.OUTLINE, Fluid.NONE, player));
-      return AiBlockInteraction.init(eye, intended.getBlockPos(), hit, player.blockInteractionRange()) && hit.getDirection() == intended.getDirection();
+      return AiBlockInteraction.isValidTargetHit(eye, intended.getBlockPos(), hit, player.blockInteractionRange()) && hit.getDirection() == intended.getDirection();
    }
 
-   static boolean init_Z_Vec3(Vec3 delta) {
+   static boolean isSteepVerticalDelta(Vec3 delta) {
       double horizontal = Math.hypot(delta.x, delta.z);
       double vertical = Math.abs(delta.y);
       return vertical > 0.4 && (horizontal < 0.4 || horizontal < vertical / 2.75);
    }
 
-   public void init_V_ce_DataUtil(RotationMath.Rotation rotation) {
+   public void setTargetRotation(RotationMath.Rotation rotation) {
       if (rotation != null) {
-         this.init_Vec3 = null;
-         if (this.init_ce_DataUtil == null || RotationMath.angularDistance(this.init_ce_DataUtil, rotation) > 1.0E-4) {
-            this.load_I = 0;
+         this.targetPoint = null;
+         if (this.targetRotation == null || RotationMath.angularDistance(this.targetRotation, rotation) > 1.0E-4) {
+            this.settledTicks = 0;
          }
 
-         this.init_ce_DataUtil = rotation;
+         this.targetRotation = rotation;
       }
    }
 
-   public RotationMath.Rotation init_ce_DataUtil() {
-      return this.init_ce_DataUtil;
+   public RotationMath.Rotation targetRotation() {
+      return this.targetRotation;
    }
 
-   public void init_V_Z(boolean value) {
-      this.init_Z = value;
+   public void setSilent(boolean value) {
+      this.silent = value;
    }
 
-   public boolean init_Z() {
-      return this.init_Z;
+   public boolean isSilent() {
+      return this.silent;
    }
 
-   public void init_V() {
-      this.init_ce_DataUtil = null;
-      this.load_I = 0;
-      if (this.init_Z) {
+   public void clear() {
+      this.targetRotation = null;
+      this.settledTicks = 0;
+      if (this.silent) {
          AiSilentAim.init_V();
       }
    }
 
-   static float init_F_F_F(float remaining, float cap) {
+   static float stepAngle(float remaining, float cap) {
       float abs = Math.abs(remaining);
       return !(abs <= 3.0F) && !(cap >= 180.0F) ? Math.copySign(Math.min(cap, Math.max(3.0F, abs * 0.5F)), remaining) : remaining;
    }
 
-   static float init_F_F_DataUtil_DataUtil(float remaining, AiAim.AimProfile speed) {
-      if (speed.init_Z) {
-         return Math.max(-speed.read_F, Math.min(speed.read_F, remaining));
+   static float stepAngleForProfile(float remaining, AiAim.AimProfile speed) {
+      if (speed.linear) {
+         return Math.max(-speed.cameraCap, Math.min(speed.cameraCap, remaining));
       } else if (speed == AiAim.AimProfile.FLOW) {
          float abs = Math.abs(remaining);
-         return abs <= 12.0F ? remaining : Math.copySign(Math.min(speed.read_F, Math.max(12.0F, abs * 0.65F)), remaining);
+         return abs <= 12.0F ? remaining : Math.copySign(Math.min(speed.cameraCap, Math.max(12.0F, abs * 0.65F)), remaining);
       } else {
-         return init_F_F_F(remaining, speed.read_F);
+         return stepAngle(remaining, speed.cameraCap);
       }
    }
 
-   public float init_F() {
+   public float predictedNextYaw() {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player == null) {
          return 0.0F;
-      } else if (this.init_ce_DataUtil != null && !this.init_Z) {
-         return this.read_I != player.tickCount && write != player.tickCount
-            ? player.getYRot() + init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(this.init_ce_DataUtil.yaw() - player.getYRot()), this.init_DataUtil_DataUtil)
+      } else if (this.targetRotation != null && !this.silent) {
+         return this.lastInstanceStepTick != player.tickCount && lastGlobalStepTick != player.tickCount
+            ? player.getYRot() + stepAngleForProfile(Mth.wrapDegrees(this.targetRotation.yaw() - player.getYRot()), this.aimProfile)
             : player.getYRot();
       } else {
          return player.getYRot();
       }
    }
 
-   public void load_V() {
+   public void tick() {
       LocalPlayer player = Minecraft.getInstance().player;
-      if (player != null && this.init_ce_DataUtil != null && (this.init_Z || this.read_I != player.tickCount && write != player.tickCount)) {
-         if (!this.init_Z) {
-            RotationMath.Rotation target = this.init_ce_DataUtil_LocalPlayer_ce_DataUtil(player, this.init_ce_DataUtil);
-            init_Str = String.format(
+      if (player != null && this.targetRotation != null && (this.silent || this.lastInstanceStepTick != player.tickCount && lastGlobalStepTick != player.tickCount)) {
+         if (!this.silent) {
+            RotationMath.Rotation target = this.avoidEndermanEye(player, this.targetRotation);
+            lastDebugState = String.format(
                Locale.ROOT,
                "aim@%x speed %s goal %.0f/%.0f%s%s",
                System.identityHashCode(this),
-               this.init_DataUtil_DataUtil,
-               this.init_ce_DataUtil.yaw(),
-               this.init_ce_DataUtil.pitch(),
-               this.init_Vec3 == null ? " (rotation)" : " (point)",
-               target == this.init_ce_DataUtil ? "" : String.format(Locale.ROOT, " offset to %.0f/%.0f", target.yaw(), target.pitch())
+               this.aimProfile,
+               this.targetRotation.yaw(),
+               this.targetRotation.pitch(),
+               this.targetPoint == null ? " (rotation)" : " (point)",
+               target == this.targetRotation ? "" : String.format(Locale.ROOT, " offset to %.0f/%.0f", target.yaw(), target.pitch())
             );
             float prevYaw = player.getYRot();
             float prevPitch = player.getXRot();
-            float yaw = prevYaw + init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(target.yaw() - prevYaw), this.init_DataUtil_DataUtil);
-            float pitch = prevPitch + init_F_F_DataUtil_DataUtil(target.pitch() - prevPitch, this.init_DataUtil_DataUtil);
+            float yaw = prevYaw + stepAngleForProfile(Mth.wrapDegrees(target.yaw() - prevYaw), this.aimProfile);
+            float pitch = prevPitch + stepAngleForProfile(target.pitch() - prevPitch, this.aimProfile);
             RotationMath.Rotation stepped = new RotationMath.Rotation(yaw, pitch);
             if (Minecraft.getInstance().level != null) {
-               stepped = this.init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft.getInstance(), stepped);
+               stepped = this.nudgeAwayFromEndermen(Minecraft.getInstance(), stepped);
             }
 
             RotationMath.applyToPlayer(player, stepped, false);
             AiCameraTurn.putAt(player, prevYaw, prevPitch);
-            this.read_I = player.tickCount;
-            write = player.tickCount;
-            this.load_I = this.init_D() <= 1.0 ? this.load_I + 1 : 0;
+            this.lastInstanceStepTick = player.tickCount;
+            lastGlobalStepTick = player.tickCount;
+            this.settledTicks = this.angularError() <= 1.0 ? this.settledTicks + 1 : 0;
          } else {
             AiSilentAim.init(true);
-            SilentRotationManager.init_V_Str("ai-assistant", 1, this.init_ce_DataUtil);
+            SilentRotationManager.init_V_Str("ai-assistant", 1, this.targetRotation);
             SilentRotationManager.init(
-               "ai-assistant", player, this.init_DataUtil_DataUtil.init_F, this.init_DataUtil_DataUtil.load_F, this.init_DataUtil_DataUtil.init_ap_StreamUtil
+               "ai-assistant", player, this.aimProfile.yawCap, this.aimProfile.pitchCap, this.aimProfile.streamProfile
             );
             RotationMath.Rotation packetRotation = SilentMovementCoordinator.activeRotation();
-            this.load_I = packetRotation != null && RotationMath.angularDistance(packetRotation, this.init_ce_DataUtil) <= 1.0 ? this.load_I + 1 : 0;
+            this.settledTicks = packetRotation != null && RotationMath.angularDistance(packetRotation, this.targetRotation) <= 1.0 ? this.settledTicks + 1 : 0;
          }
       }
    }
 
-   private RotationMath.Rotation init_ce_DataUtil_LocalPlayer_ce_DataUtil(LocalPlayer player, RotationMath.Rotation rotation) {
+   private RotationMath.Rotation avoidEndermanEye(LocalPlayer player, RotationMath.Rotation rotation) {
       Minecraft mc = Minecraft.getInstance();
-      return mc.level != null && this.init_ce_DataUtil != null ? this.init_ce_DataUtil_Minecraft_ce_DataUtil(mc, rotation) : rotation;
+      return mc.level != null && this.targetRotation != null ? this.nudgeAwayFromEndermen(mc, rotation) : rotation;
    }
 
-   private RotationMath.Rotation init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Rotation rotation) {
-      if (!this.init_Z_Minecraft_ce_DataUtil(mc, rotation)) {
+   private RotationMath.Rotation nudgeAwayFromEndermen(Minecraft mc, RotationMath.Rotation rotation) {
+      if (!this.wouldStareAtEnderman(mc, rotation)) {
          return rotation;
       }
 
       for (float dip : new float[]{8.0F, 14.0F, 20.0F}) {
          RotationMath.Rotation candidate = new RotationMath.Rotation(rotation.yaw(), Math.min(90.0F, rotation.pitch() + dip));
-         if (!this.init_Z_Minecraft_ce_DataUtil(mc, candidate)) {
+         if (!this.wouldStareAtEnderman(mc, candidate)) {
             return candidate;
          }
       }
 
       for (float side : new float[]{7.0F, -7.0F, 14.0F, -14.0F}) {
          RotationMath.Rotation candidate = new RotationMath.Rotation(rotation.yaw() + side, rotation.pitch());
-         if (!this.init_Z_Minecraft_ce_DataUtil(mc, candidate)) {
+         if (!this.wouldStareAtEnderman(mc, candidate)) {
             return candidate;
          }
       }
@@ -240,16 +240,16 @@ public final class AiAim {
       return new RotationMath.Rotation(rotation.yaw() + 7.0F, rotation.pitch());
    }
 
-   private boolean init_Z_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Rotation rotation) {
+   private boolean wouldStareAtEnderman(Minecraft mc, RotationMath.Rotation rotation) {
       Vec3 view = Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).normalize();
       Vec3 eye = mc.player.getEyePosition();
 
       for (Entity entity : mc.level.entitiesForRendering()) {
          if (entity instanceof Enderman enderman
             && enderman.isAlive()
-            && (this.init_Vec3 == null || !enderman.isCreepy() || !enderman.getBoundingBox().inflate(0.6).contains(this.init_Vec3))
-            && enderman.getId() != this.init_I
-            && init(view, enderman.getX() - mc.player.getX(), enderman.getEyeY() - eye.y, enderman.getZ() - mc.player.getZ())
+            && (this.targetPoint == null || !enderman.isCreepy() || !enderman.getBoundingBox().inflate(0.6).contains(this.targetPoint))
+            && enderman.getId() != this.allowedEndermanEntityId
+            && isWithinEndermanStareCone(view, enderman.getX() - mc.player.getX(), enderman.getEyeY() - eye.y, enderman.getZ() - mc.player.getZ())
             && mc.player.hasLineOfSight(enderman, Block.VISUAL, Fluid.NONE, enderman.getEyeY())) {
             return true;
          }
@@ -258,14 +258,14 @@ public final class AiAim {
       return false;
    }
 
-   private static Entity init_Entity_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Rotation rotation) {
+   private static Entity findStaredEnderman(Minecraft mc, RotationMath.Rotation rotation) {
       Vec3 view = Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).normalize();
       Vec3 eye = mc.player.getEyePosition();
 
       for (Entity entity : mc.level.entitiesForRendering()) {
          if (entity instanceof Enderman enderman
             && enderman.isAlive()
-            && init(view, enderman.getX() - mc.player.getX(), enderman.getEyeY() - eye.y, enderman.getZ() - mc.player.getZ())
+            && isWithinEndermanStareCone(view, enderman.getX() - mc.player.getX(), enderman.getEyeY() - eye.y, enderman.getZ() - mc.player.getZ())
             && mc.player.hasLineOfSight(enderman, Block.VISUAL, Fluid.NONE, enderman.getEyeY())) {
             return enderman;
          }
@@ -274,28 +274,28 @@ public final class AiAim {
       return null;
    }
 
-   static boolean init(Vec3 view, double dx, double dy, double dz) {
+   static boolean isWithinEndermanStareCone(Vec3 view, double dx, double dy, double dz) {
       double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
       return !(distance < 1.0E-6) && !(distance > 64.0)
          ? view.normalize().dot(new Vec3(dx / distance, dy / distance, dz / distance)) > 1.0 - 0.025 / distance
          : false;
    }
 
-   public boolean load_Z() {
-      return this.init_ce_DataUtil != null && this.load_I > 0;
+   public boolean isSettled() {
+      return this.targetRotation != null && this.settledTicks > 0;
    }
 
-   public double init_D() {
+   public double angularError() {
       LocalPlayer player = Minecraft.getInstance().player;
-      return player != null && this.init_ce_DataUtil != null ? RotationMath.angularDistance(RotationMath.ofPlayer(player), this.init_ce_DataUtil) : 0.0;
+      return player != null && this.targetRotation != null ? RotationMath.angularDistance(RotationMath.ofPlayer(player), this.targetRotation) : 0.0;
    }
 
-   public static BlockHitResult init_BlockHitResult() {
+   public static BlockHitResult raycastLookBlock() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          double reach = mc.player.blockInteractionRange();
          Vec3 eye = mc.player.getEyePosition();
-         Vec3 end = eye.add(init_Vec3().scale(reach));
+         Vec3 end = eye.add(effectiveLookVector().scale(reach));
          BlockHitResult hit = mc.level.clip(new ClipContext(eye, end, Block.OUTLINE, Fluid.NONE, mc.player));
          return hit != null && hit.getType() == Type.BLOCK ? hit : null;
       } else {
@@ -303,35 +303,35 @@ public final class AiAim {
       }
    }
 
-   public static boolean init_Z_BlockPos(BlockPos cell) {
-      BlockHitResult hit = init_BlockHitResult();
+   public static boolean isLookingAtBlock(BlockPos cell) {
+      BlockHitResult hit = raycastLookBlock();
       return hit != null && hit.getBlockPos().equals(cell);
    }
 
-   public static Direction init_Direction_BlockPos(BlockPos cell) {
-      BlockHitResult hit = init_BlockHitResult();
+   public static Direction lookedBlockFace(BlockPos cell) {
+      BlockHitResult hit = raycastLookBlock();
       return hit != null && hit.getBlockPos().equals(cell) ? hit.getDirection() : null;
    }
 
-   public static boolean init_Z_Entity(Entity target) {
+   public static boolean isLookingAtEntity(Entity target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && target != null) {
          double reach = mc.player.getAttackRangeWith(mc.player.getMainHandItem()).effectiveMaxRange(mc.player);
          Vec3 eye = mc.player.getEyePosition();
-         Vec3 end = eye.add(init_Vec3().scale(reach));
+         Vec3 end = eye.add(effectiveLookVector().scale(reach));
          AABB box = target.getBoundingBox().inflate(target.getPickRadius());
          Optional<Vec3> contact = box.clip(eye, end);
-         return contact.isPresent() && init(mc, target, eye, contact.get());
+         return contact.isPresent() && isUnobstructedHit(mc, target, eye, contact.get());
       } else {
          return false;
       }
    }
 
-   public boolean load_Z_Entity(Entity target) {
+   public boolean isAimedAtEntity(Entity target) {
       if (!AutismLiteVariant.enabled() && autismclient.ai.AiClientTick.init()) {
-         return init_Z_Entity(target);
-      } else if (!this.init_Z) {
-         return init_Z_Entity(target);
+         return isLookingAtEntity(target);
+      } else if (!this.silent) {
+         return isLookingAtEntity(target);
       } else {
          RotationMath.Rotation rotation = SilentMovementCoordinator.activeRotation();
          if (rotation == null) {
@@ -344,7 +344,7 @@ public final class AiAim {
                Vec3 end = eye.add(Vec3.directionFromRotation(rotation.pitch(), rotation.yaw()).scale(reach));
                AABB box = target.getBoundingBox().inflate(target.getPickRadius());
                Optional<Vec3> contact = box.clip(eye, end);
-               return contact.isPresent() && init(mc, target, eye, contact.get());
+               return contact.isPresent() && isUnobstructedHit(mc, target, eye, contact.get());
             } else {
                return false;
             }
@@ -352,7 +352,7 @@ public final class AiAim {
       }
    }
 
-   public static Vec3 init_Vec3() {
+   public static Vec3 effectiveLookVector() {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player == null) {
          return Vec3.ZERO;
@@ -364,7 +364,7 @@ public final class AiAim {
       }
    }
 
-   private static boolean init(Minecraft mc, Entity target, Vec3 eye, Vec3 contact) {
+   private static boolean isUnobstructedHit(Minecraft mc, Entity target, Vec3 eye, Vec3 contact) {
       BlockHitResult block = mc.level.clip(new ClipContext(eye, contact, Block.COLLIDER, Fluid.NONE, mc.player));
       if (block != null && block.getType() == Type.BLOCK) {
          return false;
@@ -381,7 +381,7 @@ public final class AiAim {
       return interceptor == null;
    }
 
-   public static Vec3 init_Vec3_BlockPos_Direction(BlockPos cell, Direction face) {
+   public static Vec3 aimPointForBlockFace(BlockPos cell, Direction face) {
       Minecraft mc = Minecraft.getInstance();
       Vec3 centre = Vec3.atCenterOf(cell);
       if (mc.player != null && mc.level != null && face != null) {
@@ -394,7 +394,7 @@ public final class AiAim {
       }
    }
 
-   public static Vec3 init_Vec3_Entity(Entity target) {
+   public static Vec3 defaultEntityAimPoint(Entity target) {
       if (target == null) {
          return Vec3.ZERO;
       }
@@ -404,19 +404,19 @@ public final class AiAim {
       return new Vec3(box.getCenter().x, Mth.clamp(eyeY, box.minY + 0.1, box.maxY - 0.1), box.getCenter().z);
    }
 
-   public static Vec3 load_Vec3_Entity(Entity target) {
+   public static Vec3 bestEntityAimPoint(Entity target) {
       Minecraft mc = Minecraft.getInstance();
-      return target != null && mc.player != null && mc.level != null ? init_Vec3_Entity_Vec3(target, mc.player.getEyePosition()) : init_Vec3_Entity(target);
+      return target != null && mc.player != null && mc.level != null ? bestEntityAimPointFrom(target, mc.player.getEyePosition()) : defaultEntityAimPoint(target);
    }
 
-   public static Vec3 init_Vec3_Entity_Vec3(Entity target, Vec3 eye) {
+   public static Vec3 bestEntityAimPointFrom(Entity target, Vec3 eye) {
       Minecraft mc = Minecraft.getInstance();
       if (target != null && mc.player != null && mc.level != null) {
          BiPredicate<Vec3, Vec3> clear = (from, to) -> {
             BlockHitResult hit = mc.level.clip(new ClipContext(from, to, Block.COLLIDER, Fluid.NONE, mc.player));
             return hit == null || hit.getType() != Type.BLOCK;
          };
-         return init(
+         return pickVisibleHitboxPoint(
             target.getBoundingBox(),
             eye,
             mc.player.getYRot(),
@@ -425,31 +425,31 @@ public final class AiAim {
             clear
          );
       } else {
-         return init_Vec3_Entity(target);
+         return defaultEntityAimPoint(target);
       }
    }
 
-   public static boolean init_Z_Entity_Vec3(Entity target, Vec3 point) {
+   public static boolean canHitEntityAt(Entity target, Vec3 point) {
       Minecraft mc = Minecraft.getInstance();
-      return mc.player != null && mc.level != null && target != null && point != null ? init(target, mc.player.getEyePosition(), point) : false;
+      return mc.player != null && mc.level != null && target != null && point != null ? canHitEntityFrom(target, mc.player.getEyePosition(), point) : false;
    }
 
-   public static boolean init(Entity target, Vec3 eye, Vec3 point) {
+   public static boolean canHitEntityFrom(Entity target, Vec3 eye, Vec3 point) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && target != null && point != null) {
          double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
          Optional<Vec3> contact = target.getBoundingBox().clip(eye, eye.add(point.subtract(eye).normalize().scale(reach)));
-         return contact.isEmpty() ? false : init(mc, target, eye, contact.get());
+         return contact.isEmpty() ? false : isUnobstructedHit(mc, target, eye, contact.get());
       } else {
          return false;
       }
    }
 
-   public static Vec3 init(AABB hitbox, Vec3 eye, float yaw, float pitch, double reach) {
-      return init(hitbox, eye, yaw, pitch, reach, (from, to) -> true);
+   public static Vec3 pickVisibleHitboxPoint(AABB hitbox, Vec3 eye, float yaw, float pitch, double reach) {
+      return pickVisibleHitboxPoint(hitbox, eye, yaw, pitch, reach, (from, to) -> true);
    }
 
-   public static Vec3 init(AABB hitbox, Vec3 eye, float yaw, float pitch, double reach, BiPredicate<Vec3, Vec3> clear) {
+   public static Vec3 pickVisibleHitboxPoint(AABB hitbox, Vec3 eye, float yaw, float pitch, double reach, BiPredicate<Vec3, Vec3> clear) {
       double inset = Math.min(0.1, Math.min(hitbox.getXsize(), hitbox.getYsize()) * 0.25);
       AABB box = hitbox.deflate(inset);
       Vec3 dir = Vec3.directionFromRotation(pitch, yaw);
@@ -521,8 +521,8 @@ public final class AiAim {
       return points.get(order[0]);
    }
 
-   public static float init_F_DataUtil_DataUtil(AiAim.AimProfile speed) {
-      return speed.init_F;
+   public static float yawCapOf(AiAim.AimProfile speed) {
+      return speed.yawCap;
    }
 
    public enum AimProfile {
@@ -534,22 +534,22 @@ public final class AiAim {
       EXACT(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD, true),
       TELLY(72.0F, 72.0F, 100.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK, true);
 
-      final float init_F;
-      final float load_F;
-      final float read_F;
-      final RotationStreamPlanner.Inner_StreamUtil init_ap_StreamUtil;
-      final boolean init_Z;
+      final float yawCap;
+      final float pitchCap;
+      final float cameraCap;
+      final RotationStreamPlanner.Inner_StreamUtil streamProfile;
+      final boolean linear;
 
       AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile) {
          this(yawCap, pitchCap, cameraCap, profile, false);
       }
 
       AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile, boolean linear) {
-         this.init_F = yawCap;
-         this.load_F = pitchCap;
-         this.read_F = cameraCap;
-         this.init_ap_StreamUtil = profile;
-         this.init_Z = linear;
+         this.yawCap = yawCap;
+         this.pitchCap = pitchCap;
+         this.cameraCap = cameraCap;
+         this.streamProfile = profile;
+         this.linear = linear;
       }
    }
 }

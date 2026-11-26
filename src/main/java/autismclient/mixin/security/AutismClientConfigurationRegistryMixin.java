@@ -30,7 +30,7 @@ public abstract class AutismClientConfigurationRegistryMixin {
       Operation<Frozen> original
    ) {
       Connection connection = ((ClientCommonNetworkHandlerAccessor)(Object)this).getConnection();
-      RegistryCompatGuard.init_V(ConnectionPrivacyRegistry.init_BufferHelper_Strea(connection));
+      RegistryCompatGuard.init_V(ConnectionPrivacyRegistry.getActive(connection));
 
       try {
          return original.call(collector, knownDataSource, originalRegistries, synchronizedRegistriesOnly);

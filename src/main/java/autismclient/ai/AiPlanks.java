@@ -99,7 +99,7 @@ public final class AiPlanks {
       int logs = Math.min(byPlanks.get(best), Math.max(1, (wanted + each - 1) / each));
 
       try {
-         return AiCraft.init(AiJson.init_JsonObject_ObjArr("item", best, "count", logs * each, "additional", true, "timeoutSeconds", 20));
+         return AiCraft.craft(AiJson.objectOf("item", best, "count", logs * each, "additional", true, "timeoutSeconds", 20));
       } catch (IllegalArgumentException e) {
          return null;
       }

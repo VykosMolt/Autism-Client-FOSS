@@ -54,7 +54,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
    @Inject(method = "handleResourcePackPush", at = @At("HEAD"), cancellable = true)
    private void yang$onResourcePackSend(ClientboundResourcePackPushPacket packet, CallbackInfo ci) {
       if (!aD.read_Z() && this.minecraft.isSameThread()) {
-         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(this.connection);
+         ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(this.connection);
          if (context != null) {
             AutismSessionState shared = AutismSessionState.init_ck();
             ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
@@ -67,7 +67,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
                serializedBypass = false;
             }
 
-            autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
+            autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.init(context.privacyMode(), sharedBypass, serializedBypass);
             ResourcePackPushValidator.Inner_StreamUtil verdict = ResourcePackPushValidator.init(packet, forceDeny, selectedPolicy != null);
             if (verdict.init_RefQueue_DataUtil() != ResourcePackPushValidator.Inner_DataUtil.PASS) {
                if (verdict.init_RefQueue_DataUtil() == ResourcePackPushValidator.Inner_DataUtil.INVALID_URL) {

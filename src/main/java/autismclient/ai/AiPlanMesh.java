@@ -235,7 +235,7 @@ final class AiPlanMesh implements AutoCloseable {
                this.push = (this.push + 1) % n;
                AiBuilder.CellSpec cell = this.init_List.get(i);
                BlockPos at = this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz());
-               boolean loaded = AiTerrain.init(world, at);
+               boolean loaded = AiTerrain.isLoaded(world, at);
                BlockState live = loaded ? world.getBlockState(at) : Blocks.AIR.defaultBlockState();
                boolean satisfied = loaded && AiBuilder.update(cell, live);
                int color = AiVisualization.init(satisfied, live.canBeReplaced(), loaded);

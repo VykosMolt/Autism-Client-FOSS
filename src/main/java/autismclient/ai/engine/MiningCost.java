@@ -109,7 +109,7 @@ public final class MiningCost {
 
       for (int slot = 0; slot < slots; slot++) {
          ItemStack stack = inventory.getItem(slot);
-         if (AiItems.init(stack, 2) && (!needsTool || stack.isCorrectToolForDrops(state)) && accepted.test(state, stack)) {
+         if (AiItems.hasEnoughDurability(stack, 2) && (!needsTool || stack.isCorrectToolForDrops(state)) && accepted.test(state, stack)) {
             double speed = autismclient.util.BlockBreakSpeedHelper.init(mc, stack, state);
             if (speed > bestSpeed || speed == bestSpeed && slot == inventory.getSelectedSlot()) {
                bestSpeed = speed;
@@ -121,7 +121,7 @@ public final class MiningCost {
       if (tool >= 0 && inventory.getItem(tool).is(Items.IRON_PICKAXE) && init_Z_I(init(inventory.getItem(tool)), AiRestock.update(), true, init(state))) {
          for (int slot = 0; slot < slots; slot++) {
             ItemStack stack = inventory.getItem(slot);
-            if (stack.is(Items.STONE_PICKAXE) && AiItems.init(stack, 2) && accepted.test(state, stack)) {
+            if (stack.is(Items.STONE_PICKAXE) && AiItems.hasEnoughDurability(stack, 2) && accepted.test(state, stack)) {
                return slot;
             }
          }
@@ -134,7 +134,7 @@ public final class MiningCost {
       if (needsTool) {
          for (int slot = 0; slot < slots; slot++) {
             ItemStack stack = inventory.getItem(slot);
-            if (stack.isCorrectToolForDrops(state) && AiItems.init(stack, 2) && accepted.test(state, stack)) {
+            if (stack.isCorrectToolForDrops(state) && AiItems.hasEnoughDurability(stack, 2) && accepted.test(state, stack)) {
                return slot;
             }
          }

@@ -27,8 +27,8 @@ public class AutismFabricPayloadCodecMixin {
    private void autism$gatePayloadCodec(Identifier id, CallbackInfoReturnable<TypeAndCodec<?, ?>> cir) {
       if (this.flow == PacketFlow.CLIENTBOUND && PacketDecodeOriginStack.init_Z()) {
          ConnectionPrivacyRegistry.ConnectionSession context = PacketDecodeOriginStack.init_BufferHelper_Strea();
-         if ((context == null || context.init_Connection().getReceiving() == PacketFlow.CLIENTBOUND)
-            && (context == null || context.init_BufferHelper_Cache() != ConnectionPrivacyRegistry.PrivacyMode.MODDED || !ConnectionPrivacyRegistry.init_Z(context))) {
+         if ((context == null || context.connection().getReceiving() == PacketFlow.CLIENTBOUND)
+            && (context == null || context.privacyMode() != ConnectionPrivacyRegistry.PrivacyMode.MODDED || !ConnectionPrivacyRegistry.isActive(context))) {
             cir.setReturnValue(null);
          }
       }

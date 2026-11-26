@@ -9,8 +9,8 @@ public final class RaceEligibilityChecker {
    }
 
    public static boolean init(autismclient.util.AutismMacro macro) {
-      if (macro != null && macro.init_List != null) {
-         for (MacroAction action : macro.init_List) {
+      if (macro != null && macro.actions != null) {
+         for (MacroAction action : macro.actions) {
             if (action != null && action.isEnabled()) {
                return init(action);
             }

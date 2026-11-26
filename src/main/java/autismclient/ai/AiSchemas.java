@@ -22,7 +22,7 @@ final class AiSchemas {
    }
 
    private static boolean auditMatchesKind(JsonObject schema, JsonElement value) {
-      String type = AiJson.init_Str_JsonObject(schema, "type", "");
+      String type = AiJson.getString(schema, "type", "");
       switch (type) {
          case "object":
             return value.isJsonObject();
@@ -46,7 +46,7 @@ final class AiSchemas {
       if (property == null) {
          return false;
       }
-      if ("null".equals(AiJson.init_Str_JsonObject(property, "type", ""))) {
+      if ("null".equals(AiJson.getString(property, "type", ""))) {
          return true;
       }
       if (property.has("anyOf") && property.get("anyOf").isJsonArray()) {
@@ -88,7 +88,7 @@ final class AiSchemas {
             return value;
          }
 
-         String type = AiJson.init_Str_JsonObject(schema, "type", "");
+         String type = AiJson.getString(schema, "type", "");
          switch (type) {
             case "integer":
             case "number":
@@ -216,7 +216,7 @@ final class AiSchemas {
 
          throw new IllegalArgumentException(path + ": value does not match any supported shape: " + init(value));
       } else {
-         String type = AiJson.init_Str_JsonObject(schema, "type", "");
+         String type = AiJson.getString(schema, "type", "");
          boolean var10000;
          switch (type) {
             case "object":

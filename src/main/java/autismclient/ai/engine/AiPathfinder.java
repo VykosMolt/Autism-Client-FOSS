@@ -2731,7 +2731,7 @@ public final class AiPathfinder {
             for (int var10 = 1; var10 <= 2; var10++) {
                int var11 = var9[0] * var10;
                int var12 = var9[1] * var10;
-               float var13 = AiPhysics.putAt_F_D(0.0, 0.0, var11, var12);
+               float var13 = AiPhysics.yawBetween(0.0, 0.0, var11, var12);
 
                for (int var14 = var5 ? 0 : 2; var14 >= -2; var14--) {
                   BlockPos var15 = var2.offset(var11, var14, var12);
@@ -2905,7 +2905,7 @@ public final class AiPathfinder {
                && var0.putAt_FileStore_BitCache_BlockPos(var2.offset(var11, 0, var12)).passable()
                && putAt_Z_FileStore_IoHelper(var0, var2, var11, var12)) {
                AiPlannerWorld var13 = var0.putAt_RefQueue();
-               float var14 = AiPhysics.putAt_F_D(0.0, 0.0, var11, var12);
+               float var14 = AiPhysics.yawBetween(0.0, 0.0, var11, var12);
                double[][] var15 = new double[][]{{0.0, 0.0}, {0.0, var12 * 0.35}, {var11 * 0.35, 0.0}, {var11 * 0.35, var12 * 0.35}};
 
                for (int var16 = 0; var16 < var15.length; var16++) {
@@ -4582,8 +4582,8 @@ public final class AiPathfinder {
             ArrayList<AiPhysics.MotionState> var9 = new ArrayList<>();
 
             for (int var10 = 0; var10 < 120; var10++) {
-               float var11 = var6 == null ? var5 : AiPhysics.putAt_F_D(var7.x(), var7.z(), var6.getX() + 0.5, var6.getZ() + 0.5);
-               var7 = AiPhysics.putAt(var7, new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var11), var1);
+               float var11 = var6 == null ? var5 : AiPhysics.yawBetween(var7.x(), var7.z(), var6.getX() + 0.5, var6.getZ() + 0.5);
+               var7 = AiPhysics.step(var7, new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var11), var1);
                if (!var7.onGround()) {
                   var8 = true;
                } else if (var8) {
@@ -6065,7 +6065,7 @@ public final class AiPathfinder {
                var4 = var3.z();
             }
 
-            var3 = AiPhysics.putAt(var3, var3.onGround() ? AiPhysics.MoveInput.jump(0.0F, true) : AiPhysics.MoveInput.run(0.0F, true), var2);
+            var3 = AiPhysics.step(var3, var3.onGround() ? AiPhysics.MoveInput.jump(0.0F, true) : AiPhysics.MoveInput.run(0.0F, true), var2);
          }
 
          return 200.0 / Math.max(1.0E-6, var3.z() - var4);
@@ -6654,7 +6654,7 @@ public final class AiPathfinder {
                         return false;
                      }
 
-                     if (AiItems.init(var3, 2) != AiItems.init(var4, 2)) {
+                     if (AiItems.hasEnoughDurability(var3, 2) != AiItems.hasEnoughDurability(var4, 2)) {
                         return false;
                      }
                   } else if (var5 != var6) {
@@ -6679,7 +6679,7 @@ public final class AiPathfinder {
                ? var0.getItem() == var1.getItem()
                   && var0.getCount() == var1.getCount()
                   && Objects.equals(var0.getEnchantments(), var1.getEnchantments())
-                  && AiItems.init(var0, 2) == AiItems.init(var1, 2)
+                  && AiItems.hasEnoughDurability(var0, 2) == AiItems.hasEnoughDurability(var1, 2)
                : var2 == var3;
          } else {
             return false;
@@ -7498,7 +7498,7 @@ public final class AiPathfinder {
       }
 
       private static boolean putAt_Z_ItemStack_BlockState(ItemStack var0, BlockState var1) {
-         return var0 != null && !var0.isEmpty() && var0.isCorrectToolForDrops(var1) && AiItems.init(var0, 2);
+         return var0 != null && !var0.isEmpty() && var0.isCorrectToolForDrops(var1) && AiItems.hasEnoughDurability(var0, 2);
       }
 
       static boolean putAt_Z_BlockState_ItemStackArr(BlockState var0, ItemStack[] var1) {
@@ -7554,7 +7554,7 @@ public final class AiPathfinder {
          double var5 = MiningCost.init_D_Minecraft(var0, ItemStack.EMPTY, var1, var2, var4);
 
          for (ItemStack var10 : var3) {
-            if (var10 != null && !var10.isEmpty() && AiItems.init(var10, 2)) {
+            if (var10 != null && !var10.isEmpty() && AiItems.hasEnoughDurability(var10, 2)) {
                var5 = Math.min(var5, MiningCost.init_D_Minecraft(var0, var10, var1, var2, var4));
             }
          }
@@ -7570,7 +7570,7 @@ public final class AiPathfinder {
          double var7 = !var6 && var5.test(var1, ItemStack.EMPTY) ? MiningCost.init_D_Minecraft(var0, ItemStack.EMPTY, var1, var2, var4) : 1.0 / 0.0;
 
          for (ItemStack var12 : var3) {
-            if (var12 != null && !var12.isEmpty() && AiItems.init(var12, 2) && (!var6 || var12.isCorrectToolForDrops(var1)) && var5.test(var1, var12)) {
+            if (var12 != null && !var12.isEmpty() && AiItems.hasEnoughDurability(var12, 2) && (!var6 || var12.isCorrectToolForDrops(var1)) && var5.test(var1, var12)) {
                var7 = Math.min(var7, MiningCost.init_D_Minecraft(var0, var12, var1, var2, var4));
             }
          }
@@ -7586,7 +7586,7 @@ public final class AiPathfinder {
          }
 
          for (ItemStack var7 : var1) {
-            if (var7 != null && var7.is(Items.STONE_PICKAXE) && AiItems.init(var7, 2) && var3.test(var2, var7)) {
+            if (var7 != null && var7.is(Items.STONE_PICKAXE) && AiItems.hasEnoughDurability(var7, 2) && var3.test(var2, var7)) {
                return var0;
             }
          }

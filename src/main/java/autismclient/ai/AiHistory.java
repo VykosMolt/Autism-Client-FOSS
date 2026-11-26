@@ -24,7 +24,7 @@ final class AiHistory {
    }
 
    static String init_Str(JsonObject m) {
-      return AiJson.init_Str_JsonObject(m, "role", "");
+      return AiJson.getString(m, "role", "");
    }
 
    static boolean init_Z(JsonObject m) {
@@ -41,7 +41,7 @@ final class AiHistory {
    }
 
    private static String init(JsonElement block) {
-      return block.isJsonObject() ? AiJson.init_Str_JsonObject(block.getAsJsonObject(), "type", "") : "";
+      return block.isJsonObject() ? AiJson.getString(block.getAsJsonObject(), "type", "") : "";
    }
 
    static JsonObject init_JsonObject(JsonObject message) {
@@ -64,7 +64,7 @@ final class AiHistory {
          }
 
          if (kept.isEmpty()) {
-            kept.add(AiJson.init_JsonObject_ObjArr("type", "text", "text", "(reasoning omitted)"));
+            kept.add(AiJson.objectOf("type", "text", "text", "(reasoning omitted)"));
          }
 
          JsonObject copy = message.deepCopy();
@@ -115,10 +115,10 @@ final class AiHistory {
             for (JsonElement block : content) {
                if (init(block).equals("tool_use")) {
                   JsonObject b = block.getAsJsonObject();
-                  String name = AiJson.init_Str_JsonObject(b, "name", "");
+                  String name = AiJson.getString(b, "name", "");
                   out.add(
                      new AiHistory.Inner_DataUtil(
-                        AiJson.init_Str_JsonObject(b, "id", ""),
+                        AiJson.getString(b, "id", ""),
                         name,
                         init(name, b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : null)
                      )
@@ -132,10 +132,10 @@ final class AiHistory {
             for (JsonElement part : parts) {
                if (part.isJsonObject() && part.getAsJsonObject().has("functionCall")) {
                   JsonObject f = part.getAsJsonObject().getAsJsonObject("functionCall");
-                  String name = AiJson.init_Str_JsonObject(f, "name", "");
+                  String name = AiJson.getString(f, "name", "");
                   out.add(
                      new AiHistory.Inner_DataUtil(
-                        AiJson.init_Str_JsonObject(f, "id", ""), name, init(name, f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : null)
+                        AiJson.getString(f, "id", ""), name, init(name, f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : null)
                      )
                   );
                }
@@ -148,15 +148,15 @@ final class AiHistory {
                if (item.isJsonObject()) {
                   JsonObject c = item.getAsJsonObject();
                   JsonObject f = c.has("function") && c.get("function").isJsonObject() ? c.getAsJsonObject("function") : new JsonObject();
-                  String name = AiJson.init_Str_JsonObject(f, "name", "");
+                  String name = AiJson.getString(f, "name", "");
                   JsonObject args = null;
 
                   try {
-                     args = AiJson.init_JsonObject_Str(AiJson.init_Str_JsonObject(f, "arguments", "{}"));
+                     args = AiJson.parseObject(AiJson.getString(f, "arguments", "{}"));
                   } catch (RuntimeException var11) {
                   }
 
-                  out.add(new AiHistory.Inner_DataUtil(AiJson.init_Str_JsonObject(c, "id", ""), name, init(name, args)));
+                  out.add(new AiHistory.Inner_DataUtil(AiJson.getString(c, "id", ""), name, init(name, args)));
                }
             }
          }
@@ -220,7 +220,7 @@ final class AiHistory {
 
                for (JsonElement block : content) {
                   if (init(block).equals("tool_result")) {
-                     String id = AiJson.init_Str_JsonObject(block.getAsJsonObject(), "tool_use_id", "");
+                     String id = AiJson.getString(block.getAsJsonObject(), "tool_use_id", "");
                      if (expected.contains(id) && answered.add(id)) {
                         results.add(block);
                      }
@@ -232,7 +232,7 @@ final class AiHistory {
                for (String id : expected) {
                   if (!answered.contains(id)) {
                      results.add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "type",
                            "tool_result",
                            "tool_use_id",
@@ -248,7 +248,7 @@ final class AiHistory {
                merged.addAll(results);
                merged.addAll(rest);
                if (merged.isEmpty()) {
-                  merged.add(AiJson.init_JsonObject_ObjArr("type", "text", "text", "(earlier tool results omitted)"));
+                  merged.add(AiJson.objectOf("type", "text", "text", "(earlier tool results omitted)"));
                }
 
                m.add("content", merged);
@@ -257,7 +257,7 @@ final class AiHistory {
 
                for (String id : expected) {
                   merged.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "type",
                         "tool_result",
                         "tool_use_id",
@@ -268,9 +268,9 @@ final class AiHistory {
                   );
                }
 
-               String text = AiJson.init_Str_JsonObject(m, "content", "");
+               String text = AiJson.getString(m, "content", "");
                if (!text.isEmpty()) {
-                  merged.add(AiJson.init_JsonObject_ObjArr("type", "text", "text", text));
+                  merged.add(AiJson.objectOf("type", "text", "text", text));
                }
 
                m.add("content", merged);
@@ -300,7 +300,7 @@ final class AiHistory {
 
       for (String id : ids) {
          content.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "type",
                "tool_result",
                "tool_use_id",
@@ -311,7 +311,7 @@ final class AiHistory {
          );
       }
 
-      return AiJson.init_JsonObject_ObjArr("role", "user", "content", content);
+      return AiJson.objectOf("role", "user", "content", content);
    }
 
    private static void init_V(JsonObject assistant) {
@@ -320,7 +320,7 @@ final class AiHistory {
          JsonArray kept = new JsonArray();
 
          for (JsonElement block : content) {
-            if (!init(block).equals("text") || !AiJson.init_Str_JsonObject(block.getAsJsonObject(), "text", "").isEmpty()) {
+            if (!init(block).equals("text") || !AiJson.getString(block.getAsJsonObject(), "text", "").isEmpty()) {
                kept.add(block);
             }
          }
@@ -338,14 +338,14 @@ final class AiHistory {
       for (JsonObject m : history) {
          boolean tool = init_Str(m).equals("tool");
          if (tool) {
-            String id = AiJson.init_Str_JsonObject(m, "tool_call_id", "");
+            String id = AiJson.getString(m, "tool_call_id", "");
             if (open.remove(id)) {
                out.add(m);
             }
          } else {
             for (String id : open) {
                out.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "role",
                      "tool",
                      "tool_call_id",
@@ -368,7 +368,7 @@ final class AiHistory {
 
       for (String id : open) {
          out.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "role",
                "tool",
                "tool_call_id",
@@ -423,7 +423,7 @@ final class AiHistory {
             merged.addAll(responses);
             merged.addAll(rest);
             if (merged.isEmpty()) {
-               merged.add(AiJson.init_JsonObject_ObjArr("text", "(earlier tool results omitted)"));
+               merged.add(AiJson.objectOf("text", "(earlier tool results omitted)"));
             }
 
             m.add("parts", merged);
@@ -442,11 +442,11 @@ final class AiHistory {
    }
 
    private static JsonObject init(AiHistory.Inner_DataUtil call) {
-      JsonObject response = AiJson.init_JsonObject_ObjArr(
+      JsonObject response = AiJson.objectOf(
          "name",
          call.name(),
          "response",
-         AiJson.init_JsonObject_Str(
+         AiJson.parseObject(
             "{\"status\":\"INTERRUPTED\",\"message\":\"The run stopped before this call's result was recorded; re-observe before assuming its effect\"}"
          )
       );
@@ -454,7 +454,7 @@ final class AiHistory {
          response.addProperty("id", call.id());
       }
 
-      return AiJson.init_JsonObject_ObjArr("functionResponse", response);
+      return AiJson.objectOf("functionResponse", response);
    }
 
    private static JsonObject init_JsonObject(List<AiHistory.Inner_DataUtil> calls) {
@@ -464,7 +464,7 @@ final class AiHistory {
          parts.add(init(c));
       }
 
-      return AiJson.init_JsonObject_ObjArr("role", "user", "parts", parts);
+      return AiJson.objectOf("role", "user", "parts", parts);
    }
 
    static AiHistory.Inner_StreamUtil init(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars) {
@@ -564,7 +564,7 @@ final class AiHistory {
       if (blocks != null) {
          for (JsonElement b : blocks) {
             if (init(b).equals("text")) {
-               return AiJson.init_Str_JsonObject(b.getAsJsonObject(), "text", "");
+               return AiJson.getString(b.getAsJsonObject(), "text", "");
             }
          }
       }
@@ -573,7 +573,7 @@ final class AiHistory {
       if (parts != null) {
          for (JsonElement p : parts) {
             if (p.isJsonObject() && p.getAsJsonObject().has("text")) {
-               return AiJson.init_Str_JsonObject(p.getAsJsonObject(), "text", "");
+               return AiJson.getString(p.getAsJsonObject(), "text", "");
             }
          }
       }
@@ -614,7 +614,7 @@ final class AiHistory {
                for (JsonElement block : content) {
                   if (init(block).equals("tool_result")) {
                      JsonObject b = block.getAsJsonObject();
-                     init(byTool, labels.get(AiJson.init_Str_JsonObject(b, "tool_use_id", "")), load(b.get("content")));
+                     init(byTool, labels.get(AiJson.getString(b, "tool_use_id", "")), load(b.get("content")));
                   }
                }
             }
@@ -625,14 +625,14 @@ final class AiHistory {
                for (JsonElement part : parts) {
                   if (part.isJsonObject() && part.getAsJsonObject().has("functionResponse")) {
                      JsonObject r = part.getAsJsonObject().getAsJsonObject("functionResponse");
-                     String label = k < geminiPending.size() ? geminiPending.get(k).label() : AiJson.init_Str_JsonObject(r, "name", "");
+                     String label = k < geminiPending.size() ? geminiPending.get(k).label() : AiJson.getString(r, "name", "");
                      init(byTool, label, load(r.get("response")));
                      k++;
                   }
                }
             }
          } else if (init_Str(m).equals("tool")) {
-            init(byTool, labels.get(AiJson.init_Str_JsonObject(m, "tool_call_id", "")), load(m.get("content")));
+            init(byTool, labels.get(AiJson.getString(m, "tool_call_id", "")), load(m.get("content")));
          }
       }
 
@@ -674,9 +674,9 @@ final class AiHistory {
       try {
          JsonObject o = result == null
             ? null
-            : (result.isJsonObject() ? result.getAsJsonObject() : (result.isJsonPrimitive() ? AiJson.init_JsonObject_Str(result.getAsString()) : null));
+            : (result.isJsonObject() ? result.getAsJsonObject() : (result.isJsonPrimitive() ? AiJson.parseObject(result.getAsString()) : null));
          if (o != null) {
-            return AiJson.init_Str_JsonObject(o, "status", AiJson.init_Str_JsonObject(o, "outcome", "returned"));
+            return AiJson.getString(o, "status", AiJson.getString(o, "outcome", "returned"));
          }
       } catch (RuntimeException var2) {
       }
@@ -694,7 +694,7 @@ final class AiHistory {
       if (blocks != null) {
          for (JsonElement b : blocks) {
             if (init(b).equals("text")) {
-               text.append(AiJson.init_Str_JsonObject(b.getAsJsonObject(), "text", ""));
+               text.append(AiJson.getString(b.getAsJsonObject(), "text", ""));
             }
          }
       }
@@ -702,8 +702,8 @@ final class AiHistory {
       JsonArray parts = init(m, "parts");
       if (parts != null) {
          for (JsonElement p : parts) {
-            if (p.isJsonObject() && p.getAsJsonObject().has("text") && !AiJson.init_Z_JsonObject(p.getAsJsonObject(), "thought", false)) {
-               text.append(AiJson.init_Str_JsonObject(p.getAsJsonObject(), "text", ""));
+            if (p.isJsonObject() && p.getAsJsonObject().has("text") && !AiJson.getBoolean(p.getAsJsonObject(), "thought", false)) {
+               text.append(AiJson.getString(p.getAsJsonObject(), "text", ""));
             }
          }
       }

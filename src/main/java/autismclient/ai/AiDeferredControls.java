@@ -51,7 +51,7 @@ final class AiDeferredControls implements AiOperation {
          }
 
          if (result.status() != AiOperation.Status.SUCCEEDED) {
-            return this.init(result, result.message(), AiJson.init_JsonObject_Str(result.dataJson()));
+            return this.init(result, result.message(), AiJson.parseObject(result.dataJson()));
          }
 
          this.init_AiOperation_Result = result;
@@ -73,7 +73,7 @@ final class AiDeferredControls implements AiOperation {
 
       AiOperation.Result result = this.load_AiOperation.tick();
       if (!result.terminal()) {
-         return AiGameOperations.init_AiOperation_Result(
+         return AiGameOperations.result(
             AiOperation.Status.RUNNING, "Restoring switch " + (this.init_I + 1) + "/" + this.init_List.size() + ": " + result.message(), this.init()
          );
       } else {
@@ -81,17 +81,17 @@ final class AiDeferredControls implements AiOperation {
          this.load_AiOperation = null;
          if (result.status() != AiOperation.Status.SUCCEEDED) {
             JsonObject data = this.init();
-            data.add("controlResult", AiJson.init_JsonObject_Str(result.dataJson()));
+            data.add("controlResult", AiJson.parseObject(result.dataJson()));
             return this.init(result, "Structure verified; switch activation stopped: " + result.message(), data);
          } else {
             this.init_I++;
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Switch position verified", this.init());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, "Switch position verified", this.init());
          }
       }
    }
 
    private JsonObject init() {
-      JsonObject data = this.init_AiOperation_Result == null ? new JsonObject() : AiJson.init_JsonObject_Str(this.init_AiOperation_Result.dataJson());
+      JsonObject data = this.init_AiOperation_Result == null ? new JsonObject() : AiJson.parseObject(this.init_AiOperation_Result.dataJson());
       data.addProperty("constructionVerifiedBeforeActivation", this.init_AiOperation_Result != null);
       data.addProperty("activatedControls", this.init_I);
       data.addProperty("controls", this.init_List.size());
@@ -99,11 +99,11 @@ final class AiDeferredControls implements AiOperation {
    }
 
    private AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
-      return this.init(AiGameOperations.init_AiOperation_Result(status, message, data), message, data);
+      return this.init(AiGameOperations.result(status, message, data), message, data);
    }
 
    private AiOperation.Result init(AiOperation.Result result, String message, JsonObject data) {
-      this.load_AiOperation_Result = new AiOperation.Result(result.status(), message, AiJson.init.toJson(data), result.evidence(), result.failure());
+      this.load_AiOperation_Result = new AiOperation.Result(result.status(), message, AiJson.GSON.toJson(data), result.evidence(), result.failure());
       this.init_AiOperation.cancel();
       if (this.load_AiOperation != null) {
          this.load_AiOperation.cancel();

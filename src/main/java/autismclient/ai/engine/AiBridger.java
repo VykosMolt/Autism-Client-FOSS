@@ -131,7 +131,7 @@ public final class AiBridger {
                }
 
                AiBridger.Inner_StreamUtil var11 = this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var10, false);
-               AiPhysics.MotionState var12 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var11, var10), var5);
+               AiPhysics.MotionState var12 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var11, var10), var5);
                if (putAt_Z_TokenCore_TableCac_2(var12, var5, this.putAt_TextStore_JsonCach.floorY())
                   && (this.putAt_Z_TokenCore_TableCac(var12, var10, var5) || this.value(var12, var10, var5))) {
                   return var11;
@@ -141,7 +141,7 @@ public final class AiBridger {
                AiBridger.Inner_StreamUtil var14 = new AiBridger.Inner_StreamUtil(var9, 25.0F, var13[0], var13[1], false, var13[0] > 0, false, -1, false);
                if (putAt_Z_F_F(var10.yaw(), var9)
                   && !putAt_Z_TokenCore_TableCac_2(
-                     AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var14, var10), var5),
+                     AiPhysics.step(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var14, var10), var5),
                      var5,
                      this.putAt_TextStore_JsonCach.floorY()
                   )) {
@@ -186,7 +186,7 @@ public final class AiBridger {
 
             for (int var15 = -1; var15 <= 1; var15++) {
                for (int var16 = -1; var16 <= 1; var16++) {
-                  AiPhysics.MotionState var17 = AiPhysics.putAt(var1, new AiPhysics.MoveInput(var15, var16, false, false, true, var2.yaw()), var3);
+                  AiPhysics.MotionState var17 = AiPhysics.step(var1, new AiPhysics.MoveInput(var15, var16, false, false, true, var2.yaw()), var3);
                   double var18 = var17.vx() * var17.vx() + var17.vz() * var17.vz();
                   if (var18 < var13
                      && this.putAt_TextStore_JsonCach.along(var17.x(), var17.z()) >= var6
@@ -208,7 +208,7 @@ public final class AiBridger {
 
    private boolean prevEx(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       for (int var4 = 0; var4 < 30; var4++) {
-         var1 = AiPhysics.putAt(var1, AiPhysics.MoveInput.NONE, var3);
+         var1 = AiPhysics.step(var1, AiPhysics.MoveInput.NONE, var3);
          if (var1.y() < this.putAt_TextStore_JsonCach.floorY() + 1 - 0.01) {
             return false;
          }
@@ -271,7 +271,7 @@ public final class AiBridger {
       if (!Double.isNaN(var7)
          && var9 < 0
          && !putAt_Z_TokenCore_TableCac_2(
-            AiPhysics.putAt(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, true, var12.yaw()), var5),
+            AiPhysics.step(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, true, var12.yaw()), var5),
             var5,
             this.putAt_TextStore_JsonCach.floorY()
          )) {
@@ -280,7 +280,7 @@ public final class AiBridger {
 
       boolean var14 = false;
       if (var9 < 0 || AiPathfinder.MoveCosts.putAt()) {
-         AiPhysics.MotionState var15 = AiPhysics.putAt(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, false, var12.yaw()), var5);
+         AiPhysics.MotionState var15 = AiPhysics.step(var1, new AiPhysics.MoveInput(var13[0], var13[1], false, false, false, var12.yaw()), var5);
          var14 = !putAt_Z_TokenCore_TableCac_2(var15, var5, this.putAt_TextStore_JsonCach.floorY());
       }
 
@@ -293,7 +293,7 @@ public final class AiBridger {
       float[] var9 = Double.isNaN(var6) ? this.putAt_FArr_TokenCore_TableCac(var1, var3, var5) : this.putAt_FArr_TokenCore_TableCac(var1, var3, var5, var6);
       AiBridger.Inner_DataUtil var10 = var2.stepToward(var9[0], var9[1]);
       int[] var11 = this.putAt_IArr_F(var10.yaw(), var1, this.putAt_TextStore_JsonCach.yaw());
-      AiPhysics.MotionState var12 = AiPhysics.putAt(
+      AiPhysics.MotionState var12 = AiPhysics.step(
          var1, new AiPhysics.MoveInput(var11[0], var11[1], false, var8 && var11[0] > 0, false, var10.yaw()), var4
       );
       return Double.isNaN(var6) ? this.putAt_FArr_TokenCore_TableCac(var12, var3, var5) : this.putAt_FArr_TokenCore_TableCac(var12, var3, var5, var6);
@@ -309,7 +309,7 @@ public final class AiBridger {
          : new double[]{var1.x(), var1.z()};
       double var12 = Math.hypot(var10[0] - var11[0], var10[1] - var11[1]);
       float var14 = !(Math.abs(var6 - var8) < 1.0E-6) && !(var12 < 1.0E-6)
-         ? AiPhysics.putAt_F_D(var11[0], var11[1], var10[0], var10[1])
+         ? AiPhysics.yawBetween(var11[0], var11[1], var10[0], var10[1])
          : putAt_F_F(this.putAt_TextStore_JsonCach.yaw() + 179.5F);
       float var15 = (float)Math.toDegrees(Math.atan2(var4 - (this.putAt_TextStore_JsonCach.floorY() + 0.5), Math.max(0.12, var12)));
       return new float[]{var14, Math.min(89.5F, var15)};
@@ -319,7 +319,7 @@ public final class AiBridger {
       double var6 = var1.y() + (var2 ? 1.27 : 1.62);
       double var8 = this.putAt_TextStore_JsonCach.cellX(var3) + 0.5;
       double var10 = this.putAt_TextStore_JsonCach.cellZ(var3) + 0.5;
-      float var12 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var8, var10);
+      float var12 = AiPhysics.yawBetween(var1.x(), var1.z(), var8, var10);
       float var13 = (float)Math.toDegrees(Math.atan2(var6 - var4, Math.max(0.12, Math.hypot(var8 - var1.x(), var10 - var1.z()))));
       return new float[]{var12, Math.min(89.5F, var13)};
    }
@@ -350,7 +350,7 @@ public final class AiBridger {
 
    boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       AiBridger.Inner_StreamUtil var4 = this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var2, true);
-      AiPhysics.MotionState var5 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var4, var2), var3);
+      AiPhysics.MotionState var5 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var4, var2), var3);
       return this.putAt_Z_TokenCore_TableCac(var5, var2, false, var3);
    }
 
@@ -362,7 +362,7 @@ public final class AiBridger {
       for (int var7 = 0; var7 < 30; var7++) {
          var5 = var5.stepToward(var4, 25.0F);
          int[] var8 = this.putAt_IArr_F(var5.yaw(), var6, var4);
-         var6 = AiPhysics.putAt(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
+         var6 = AiPhysics.step(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
          if (var6.onGround()) {
             return this.putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(var6, var3) && this.value(var6, var5, var3);
          }
@@ -387,7 +387,7 @@ public final class AiBridger {
          }
 
          int[] var8 = this.putAt_IArr_F(var5.yaw(), var6, var4);
-         var6 = AiPhysics.putAt(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
+         var6 = AiPhysics.step(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
          if (!putAt_Z_TokenCore_TableCac_2(var6, var3, this.putAt_TextStore_JsonCach.floorY())) {
             return false;
          }
@@ -400,7 +400,7 @@ public final class AiBridger {
       AiPhysics.MotionState var4 = var1;
 
       for (int var5 = 0; var5 < 8; var5++) {
-         var4 = AiPhysics.putAt(var4, new AiPhysics.MoveInput(0.0, 0.0, false, false, true, var2.yaw()), var3);
+         var4 = AiPhysics.step(var4, new AiPhysics.MoveInput(0.0, 0.0, false, false, true, var2.yaw()), var3);
          if (!putAt_Z_TokenCore_TableCac_2(var4, var3, this.putAt_TextStore_JsonCach.floorY())) {
             return false;
          }
@@ -435,7 +435,7 @@ public final class AiBridger {
             );
          }
 
-         var1 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var10, var7), var5);
+         var1 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var10, var7), var5);
       }
 
       return false;
@@ -667,7 +667,7 @@ public final class AiBridger {
       }
 
       public float yaw() {
-         return AiPhysics.putAt_F_D(0.0, 0.0, this.dx, this.dz);
+         return AiPhysics.yawBetween(0.0, 0.0, this.dx, this.dz);
       }
 
       public double along(double var1, double var3) {

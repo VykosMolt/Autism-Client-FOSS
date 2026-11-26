@@ -57,16 +57,16 @@ public final class AiMine {
    public static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final String blockArg = AiMiningTargets.parse(AiJson.init_Str_JsonObject(args, "block", "")).spec();
+         final String blockArg = AiMiningTargets.parse(AiJson.getString(args, "block", "")).spec();
          if (blockArg.isEmpty()) {
             throw new IllegalArgumentException("block must be a registry id or a suffix family like \"log\"");
          }
 
          final AiMiningQuota quota = AiMiningQuota.init_as_JsonObject(args);
-         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.init_I_JsonObject(args, "count", 1))) : quota.init_I();
-         final int radius = Math.max(8, Math.min(96, AiJson.init_I_JsonObject(args, "radius", 48)));
-         final boolean backfill = AiJson.init_Z_JsonObject(args, "backfill", false);
-         final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300))) * 1000000000L;
+         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.getInt(args, "count", 1))) : quota.init_I();
+         final int radius = Math.max(8, Math.min(96, AiJson.getInt(args, "radius", 48)));
+         final boolean backfill = AiJson.getBoolean(args, "backfill", false);
+         final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300))) * 1000000000L;
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final int init_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
@@ -81,7 +81,7 @@ public final class AiMine {
             final JsonArray init_JsonArray = new JsonArray();
             final AiAim init_DataUtil = new AiAim();
             final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
-               this.init_Minecraft, this::init_V, this.init_DataUtil::init_V_Vec3, true, true, this.init_DataUtil::load_V
+               this.init_Minecraft, this::init_V, this.init_DataUtil::aimAt, true, true, this.init_DataUtil::tick
             );
             final AiBackfill init_StreamUtil = backfill ? new AiBackfill(this.init_Minecraft) : null;
             final int load_I = this.load_I_9();
@@ -218,12 +218,12 @@ public final class AiMine {
                         }
                      }
 
-                     BlockHitResult interactionHit = AiBlockInteraction.init(this.init_Minecraft, this.load_BlockPos);
+                     BlockHitResult interactionHit = AiBlockInteraction.findReachableHit(this.init_Minecraft, this.load_BlockPos);
                      if (interactionHit != null) {
                         this.init(interactionHit.getLocation());
                      }
 
-                     this.init_DataUtil.load_V();
+                     this.init_DataUtil.tick();
                      switch (this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.load_BlockPos)) {
                         case init:
                            if (this.init_RefQueue_DataUtil.init_Z_BlockPos(this.load_BlockPos)
@@ -284,7 +284,7 @@ public final class AiMine {
                            && this.write(BlockPos.containing(drop.position()))
                            && this.update(drop.blockPosition())) {
                            this.init(Vec3.atCenterOf(drop.blockPosition()));
-                           this.init_DataUtil.load_V();
+                           this.init_DataUtil.tick();
                            this.init_Minecraft.options.keyUp.setDown(true);
                            return this.init_AiOperation_Result_7("Collecting drops");
                         }
@@ -547,7 +547,7 @@ public final class AiMine {
                      ArrayList<MiningTargetSearch.Inner_DataUtil> choices = new ArrayList<>();
                      ItemStack[] tools = this.init_ItemStackArr_2();
                      this.init_ClassCache_StreamU.init_V_ItemStackArr(tools);
-                     long inventoryRevision = AiServerEvidence.init_J();
+                     long inventoryRevision = AiServerEvidence.inventoryRevision();
                      if (this.init_J != inventoryRevision) {
                         this.write_Map.clear();
                         this.init_J = inventoryRevision;
@@ -613,7 +613,7 @@ public final class AiMine {
                      if (this.init_JsonArray.size() < 16) {
                         this.init_JsonArray
                            .add(
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "x", this.load_BlockPos.getX(), "y", this.load_BlockPos.getY(), "z", this.load_BlockPos.getZ(), "reason", reason
                               )
                            );
@@ -681,11 +681,11 @@ public final class AiMine {
             }
 
             boolean read(BlockPos pos) {
-               return AiBlockInteraction.init(this.init_Minecraft, pos) != null;
+               return AiBlockInteraction.findReachableHit(this.init_Minecraft, pos) != null;
             }
 
             boolean write(BlockPos pos) {
-               return AiBlockInteraction.init(this.init_Minecraft, pos) != null;
+               return AiBlockInteraction.findReachableHit(this.init_Minecraft, pos) != null;
             }
 
             boolean update(BlockPos to) {
@@ -699,7 +699,7 @@ public final class AiMine {
                int ax = Math.abs(dx);
                int az = Math.abs(dz);
                if (Math.max(ax, az) <= 3 && (ax == 0 || az == 0 || ax == az)) {
-                  if (!AiMotionSafety.putAt_Z_Vec3_Vec3(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(to))) {
+                  if (!AiMotionSafety.isSegmentHazardFree(this.init_Minecraft.player.position(), Vec3.atBottomCenterOf(to))) {
                      return false;
                   }
 
@@ -722,7 +722,7 @@ public final class AiMine {
             }
 
             void init(Vec3 point) {
-               this.init_DataUtil.init_V_Vec3(point);
+               this.init_DataUtil.aimAt(point);
             }
 
             AiOperation.Result init_AiOperation_Result_14() {
@@ -737,7 +737,7 @@ public final class AiMine {
                      byte var11 = -1;
                   }
 
-                  if (suitable && AiItems.init(stack, 2)) {
+                  if (suitable && AiItems.hasEnoughDurability(stack, 2)) {
                      return null;
                   }
                }
@@ -755,7 +755,7 @@ public final class AiMine {
                      }
                   }
 
-                  Item needed = AiItems.init_Item(state);
+                  Item needed = AiItems.cheapestRequiredTool(state);
                   JsonObject missing = new JsonObject();
                   missing.addProperty(needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString(), 1);
                   JsonObject data = this.init_JsonObject_28();
@@ -779,7 +779,7 @@ public final class AiMine {
                         slot,
                         stack.isDamageableItem() ? stack.getMaxDamage() - stack.getDamageValue() : -1,
                         handsOk || stack.isCorrectToolForDrops(state),
-                        AiItems.load_Z(stack)
+                        AiItems.isDisposableTierTool(stack)
                      )
                   );
                }
@@ -818,7 +818,7 @@ public final class AiMine {
             }
 
             JsonObject init_JsonObject_28() {
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "brokenByBlock",
                   quota == null ? null : quota.init_JsonObject(),
                   "remainingByBlock",

@@ -51,11 +51,11 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
 
    @Inject(method = "set", at = @At("HEAD"), cancellable = true)
    private static void autism$freecamOwnsPhysicalSet(Key key, boolean state, CallbackInfo ci) {
-      if (!autism$simulating && FreecamController.init_Z()) {
+      if (!autism$simulating && FreecamController.isActive()) {
          List<KeyMapping> mappings = MAP.get(key);
          if (mappings != null) {
             for (KeyMapping mapping : mappings) {
-               if (!FreecamController.init_Z_KeyMapping(mapping)) {
+               if (!FreecamController.shouldSuppressKey(mapping)) {
                   mapping.setDown(state);
                }
             }
@@ -67,11 +67,11 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
 
    @Inject(method = "click", at = @At("HEAD"), cancellable = true)
    private static void autism$freecamOwnsPhysicalClick(Key key, CallbackInfo ci) {
-      if (!autism$simulating && FreecamController.init_Z()) {
+      if (!autism$simulating && FreecamController.isActive()) {
          List<KeyMapping> mappings = MAP.get(key);
          if (mappings != null) {
             for (KeyMapping mapping : mappings) {
-               if (!FreecamController.init_Z_KeyMapping(mapping)) {
+               if (!FreecamController.shouldSuppressKey(mapping)) {
                   KeyMappingControl.of(mapping).autism$countClick();
                }
             }
@@ -83,7 +83,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
 
    @Inject(method = "setAll", at = @At("HEAD"), cancellable = true)
    private static void autism$freecamOwnsPhysicalSetAll(CallbackInfo ci) {
-      if (FreecamController.init_Z()) {
+      if (FreecamController.isActive()) {
          Window window = Minecraft.getInstance().getWindow();
 
          for (KeyMapping mapping : ALL.values()) {
@@ -103,7 +103,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
    @Unique
    @Override
    public void autism$refocus(Window window) {
-      if (this.shouldSetOnIngameFocus() && !FreecamController.init_Z_KeyMapping((KeyMapping)(Object)this)) {
+      if (this.shouldSetOnIngameFocus() && !FreecamController.shouldSuppressKey((KeyMapping)(Object)this)) {
          int code = this.key.getValue();
          boolean down = false;
          if (code >= 0) {
@@ -122,7 +122,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
    @Unique
    @Override
    public boolean autism$physicalForBody() {
-      return !FreecamController.init_Z_KeyMapping((KeyMapping)(Object)this) && this.autism$isActuallyDown();
+      return !FreecamController.shouldSuppressKey((KeyMapping)(Object)this) && this.autism$isActuallyDown();
    }
 
    @Inject(method = "releaseAll", at = @At("TAIL"))

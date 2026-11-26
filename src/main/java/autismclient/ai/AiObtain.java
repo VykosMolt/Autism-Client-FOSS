@@ -74,35 +74,35 @@ final class AiObtain {
    static AiOperation init(JsonObject args, final int depth, final Set<String> visiting) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final String spec = AiJson.init_Str_JsonObject(args, "item", "");
-         final AiItems.ItemSpec target = AiItems.load_af_DataUtil(spec);
-         if (depth == 0 && !AiJson.init_Z_JsonObject(args, "staged", false) && target.items().size() == 1) {
+         final String spec = AiJson.getString(args, "item", "");
+         final AiItems.ItemSpec target = AiItems.resolveItem(spec);
+         if (depth == 0 && !AiJson.getBoolean(args, "staged", false) && target.items().size() == 1) {
             String only = BuiltInRegistries.ITEM.getKey(target.items().iterator().next()).toString();
-            int want = AiJson.init_Z_JsonObject(args, "additional", false)
-               ? AiItems.init_I(target) + AiJson.init_I_JsonObject(args, "count", 1)
-               : AiJson.init_I_JsonObject(args, "count", 1);
+            int want = AiJson.getBoolean(args, "additional", false)
+               ? AiItems.countInInventory(target) + AiJson.getInt(args, "count", 1)
+               : AiJson.getInt(args, "count", 1);
             boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal();
-            if (equippedObsidian && want >= 1 && want <= 2304 && AiItems.init_I(target) < want) {
-               return AiObsidian.load(want, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600));
+            if (equippedObsidian && want >= 1 && want <= 2304 && AiItems.countInInventory(target) < want) {
+               return AiObsidian.load(want, AiJson.getInt(args, "timeoutSeconds", 600));
             }
 
             if (!equippedObsidian && AiProgression.init_Z(only, want)) {
                return AiProgression.init_AiOperation_JsonObject(args, only, want);
             }
 
-            if (only.equals("minecraft:water_bucket") && want >= 1 && want <= 16 && AiItems.init_I(target) < want) {
-               return AiObsidian.init(want, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300));
+            if (only.equals("minecraft:water_bucket") && want >= 1 && want <= 16 && AiItems.countInInventory(target) < want) {
+               return AiObsidian.init(want, AiJson.getInt(args, "timeoutSeconds", 300));
             }
          }
 
-         int requested = AiJson.init_I_JsonObject(args, "count", 1);
+         int requested = AiJson.getInt(args, "count", 1);
          if (requested >= 1 && requested <= 2304) {
-            boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
-            final boolean allowCombat = AiJson.init_Z_JsonObject(args, "allowCombat", true);
-            final boolean allowMining = AiJson.init_Z_JsonObject(args, "allowMining", true);
-            final int radius = Math.max(8, Math.min(128, AiJson.init_I_JsonObject(args, "radius", 64)));
-            final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
-            final int held = AiItems.init_I(target);
+            boolean additional = AiJson.getBoolean(args, "additional", false);
+            final boolean allowCombat = AiJson.getBoolean(args, "allowCombat", true);
+            final boolean allowMining = AiJson.getBoolean(args, "allowMining", true);
+            final int radius = Math.max(8, Math.min(128, AiJson.getInt(args, "radius", 64)));
+            final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
+            final int held = AiItems.countInInventory(target);
             final int goal = additional ? held + requested : requested;
             return new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -151,11 +151,11 @@ final class AiObtain {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
-                        "Obtain deadline reached with " + AiItems.init_I(this.init_af_DataUtil) + "/" + goal
+                        "Obtain deadline reached with " + AiItems.countInInventory(this.init_af_DataUtil) + "/" + goal
                      );
                   }
 
-                  if (AiItems.init_I(this.init_af_DataUtil) >= goal && this.init_AiOperation == null) {
+                  if (AiItems.countInInventory(this.init_af_DataUtil) >= goal && this.init_AiOperation == null) {
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;
@@ -182,18 +182,18 @@ final class AiObtain {
                               )
                               : "every strategy was tried";
                            return this.init(
-                              AiOperation.Status.FAILED, "No remaining route to " + spec + " (" + AiItems.init_I(this.init_af_DataUtil) + "/" + goal + "); " + why
+                              AiOperation.Status.FAILED, "No remaining route to " + spec + " (" + AiItems.countInInventory(this.init_af_DataUtil) + "/" + goal + "); " + why
                            );
                         } else {
                            this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str(
-                              "obtain", next.name() + " " + spec + " " + AiItems.init_I(this.init_af_DataUtil) + "/" + goal, this.init_AiOperation(next)
+                              "obtain", next.name() + " " + spec + " " + AiItems.countInInventory(this.init_af_DataUtil) + "/" + goal, this.init_AiOperation(next)
                            );
                            if (this.init_AiOperation == null) {
                               this.init_List.add(next);
                               return this.init_AiOperation_Result_9("Strategy " + next + " unavailable; trying the next");
                            } else {
                               this.init_aE_DataUtil = next;
-                              this.read_I = AiItems.init_I(this.init_af_DataUtil);
+                              this.read_I = AiItems.countInInventory(this.init_af_DataUtil);
                               return this.init_AiOperation_Result_9("Starting " + next.name().toLowerCase(Locale.ROOT) + " for " + spec);
                            }
                         }
@@ -214,7 +214,7 @@ final class AiObtain {
                            return this.init(AiOperation.Status.UNCERTAIN, result.message());
                         }
 
-                        if (AiItems.init_I(this.init_af_DataUtil) >= goal) {
+                        if (AiItems.countInInventory(this.init_af_DataUtil) >= goal) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + goal + " " + this.write_Str_2());
                         }
 
@@ -242,7 +242,7 @@ final class AiObtain {
                               if (family != null && !this.write_Z_6()) {
                                  this.update = true;
                                  this.write_Str = family;
-                                 this.init_af_DataUtil = AiItems.load_af_DataUtil(family);
+                                 this.init_af_DataUtil = AiItems.resolveItem(family);
                                  this.load_Set = null;
                                  this.read_Set = null;
                                  this.load_List = null;
@@ -265,7 +265,7 @@ final class AiObtain {
                               return this.init_AiOperation_Result_9("Craft still short on materials; fetching the rest");
                            }
 
-                           if (AiItems.init_I(this.init_af_DataUtil) > this.read_I && this.init_EnumMap.merge(this.init_aE_DataUtil, 1, Integer::sum) <= 8) {
+                           if (AiItems.countInInventory(this.init_af_DataUtil) > this.read_I && this.init_EnumMap.merge(this.init_aE_DataUtil, 1, Integer::sum) <= 8) {
                               this.init_aE_DataUtil = null;
                               return this.init_AiOperation_Result_9("Strategy " + result.status() + " after progress; another pass");
                            }
@@ -293,14 +293,14 @@ final class AiObtain {
                      this.load_AiOperation.cancel();
                      this.load_AiOperation = null;
                      return this.init_AiOperation_Result_9("Resuming after " + this.init_Str);
-                  } else if (autismclient.ai.engine.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
-                     AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
-                     AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_19());
+                  } else if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
+                     AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
+                     AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.init_I_19());
                      if (action == null) {
                         return null;
                      }
 
-                     this.init_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                     this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                      this.init_I++;
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
@@ -317,7 +317,7 @@ final class AiObtain {
 
                AiObtain.Inner_DataUtil init_aE_DataUtil() {
                   if (!this.init_List.contains(AiObtain.Inner_DataUtil.CRAFT) && !this.init_Set_6().isEmpty()) {
-                     AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
+                     AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
                      if (this.init_Set_6().stream().anyMatch(item -> {
                         AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
                         return plan.complete() && !plan.steps().isEmpty();
@@ -333,8 +333,8 @@ final class AiObtain {
                            output -> autismclient.util.AutoCraftingEngine.load(mc, output)
                               .stream()
                               .anyMatch(
-                                 p -> p.init_List().stream().mapToInt(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
-                                    >= goal - AiItems.init_I(this.init_af_DataUtil)
+                                 p -> p.init_List().stream().mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
+                                    >= goal - AiItems.countInInventory(this.init_af_DataUtil)
                               )
                         )) {
                      return AiObtain.Inner_DataUtil.SMELT;
@@ -350,7 +350,7 @@ final class AiObtain {
                               && !AiObtain.init().contains(BuiltInRegistries.ITEM.getKey(item).toString())
                               && AiObtain.init_Z_Item_Block(item, form.getBlock())
                               && this.init(form.getBlock().defaultBlockState())
-                              && AiTerrain.init(mc, List.of(form.getBlock()), 8) <= 64.0
+                              && AiTerrain.nearestBlockDistSqr(mc, List.of(form.getBlock()), 8) <= 64.0
                         )) {
                      return AiObtain.Inner_DataUtil.GATHER;
                   }
@@ -413,7 +413,7 @@ final class AiObtain {
                   for (Block block : this.init_List_6()) {
                      BlockState state = block.defaultBlockState();
                      if (!this.init(state)) {
-                        Item tool = AiItems.init_Item(state);
+                        Item tool = AiItems.cheapestRequiredTool(state);
                         if (tool != null) {
                            String toolId = BuiltInRegistries.ITEM.getKey(tool).toString();
                            if (!visiting.contains(toolId) && !this.init_af_DataUtil.items().contains(tool)) {
@@ -427,11 +427,11 @@ final class AiObtain {
                }
 
                boolean init(BlockState state) {
-                  return autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.init(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
+                  return autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
                }
 
                AiOperation init_AiOperation(AiObtain.Inner_DataUtil strategy) {
-                  int missing = goal - AiItems.init_I(this.init_af_DataUtil);
+                  int missing = goal - AiItems.countInInventory(this.init_af_DataUtil);
                   int legSeconds = Math.max(15, this.init_I_19());
                   switch (strategy) {
                      case TOOL:
@@ -448,11 +448,11 @@ final class AiObtain {
                         }
 
                         return AiObtain.init(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "item",
                               toolId,
                               "count",
-                              AiCraft.init_I(toolId) + 1,
+                              AiCraft.countItem(toolId) + 1,
                               "radius",
                               radius,
                               "allowCombat",
@@ -466,7 +466,7 @@ final class AiObtain {
                            nested
                         );
                      case CRAFT:
-                        AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
+                        AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
                         Item output = AiObtain.init(this.init_Set_6(), goal, graph, AiObtain::init_D);
                         if (output == null) {
                            return null;
@@ -486,7 +486,7 @@ final class AiObtain {
                                  nestedCraft.add(outputId);
                                  int count = shortfall.getValue() + AiObtain.init_I_Z_Str(AiObtain.init(graph, outputId, plan), shortfall.getKey());
                                  return AiObtain.init(
-                                    AiJson.init_JsonObject_ObjArr(
+                                    AiJson.objectOf(
                                        "item",
                                        want,
                                        "count",
@@ -513,7 +513,7 @@ final class AiObtain {
                            }
 
                            this.load_Str = "craft " + outputId;
-                           return AiCraft.init(AiJson.init_JsonObject_ObjArr("item", outputId, "count", goal, "timeoutSeconds", legSeconds));
+                           return AiCraft.craft(AiJson.objectOf("item", outputId, "count", goal, "timeoutSeconds", legSeconds));
                         }
                      case SMELT:
                         Item outputx = this.load_Set_4()
@@ -524,7 +524,7 @@ final class AiObtain {
                                  item -> autismclient.util.AutoCraftingEngine.load(mc, item)
                                     .stream()
                                     .flatMap(p -> p.init_List().stream())
-                                    .mapToInt(i -> AiGameState.load(BuiltInRegistries.ITEM.getKey(i).toString()))
+                                    .mapToInt(i -> AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()))
                                     .max()
                                     .orElse(0)
                               )
@@ -541,7 +541,7 @@ final class AiObtain {
                               String inputId = inputNeed.getKey();
                               this.load_Str = "obtain " + inputId + " to smelt into " + outputId;
                               return AiObtain.init(
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                     "item",
                                     inputId,
                                     "count",
@@ -563,14 +563,14 @@ final class AiObtain {
                            } else {
                               autismclient.util.AutoCraftingEngine.SmeltRecipe cooking = autismclient.util.AutoCraftingEngine.load(mc, outputx)
                                  .stream()
-                                 .filter(p -> p.init_List().stream().anyMatch(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
-                                 .min(Comparator.comparingInt(p -> AiSmelt.init_Z(mc, p.load_Str()) ? 0 : (AiGameState.init_I_Str(p.load_Str()) > 0 ? 1 : 2)))
+                                 .filter(p -> p.init_List().stream().anyMatch(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
+                                 .min(Comparator.comparingInt(p -> AiSmelt.init_Z(mc, p.load_Str()) ? 0 : (AiGameState.countInventoryItem(p.load_Str()) > 0 ? 1 : 2)))
                                  .orElse(null);
                               if (cooking != null && depth < 5) {
-                                 if (!AiSmelt.init_Z(mc, cooking.load_Str()) && AiGameState.init_I_Str(cooking.load_Str()) == 0 && !visiting.contains(cooking.load_Str())) {
+                                 if (!AiSmelt.init_Z(mc, cooking.load_Str()) && AiGameState.countInventoryItem(cooking.load_Str()) == 0 && !visiting.contains(cooking.load_Str())) {
                                     this.load_Str = "obtain " + cooking.load_Str() + " for " + outputId;
                                     return AiObtain.init(
-                                       AiJson.init_JsonObject_ObjArr(
+                                       AiJson.objectOf(
                                           "item",
                                           cooking.load_Str(),
                                           "count",
@@ -593,26 +593,26 @@ final class AiObtain {
 
                                  Item source = cooking.init_List()
                                     .stream()
-                                    .filter(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString()) > 0)
+                                    .filter(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()) > 0)
                                     .findFirst()
                                     .orElseThrow();
                                  Item fuel = AiSmelt.init("", source, missing);
                                  int burnDivisor = AiSmelt.init_I(cooking.load_Str());
-                                 int burn = fuel == null ? 0 : AiItems.init_I(new ItemStack(fuel)) / burnDivisor;
+                                 int burn = fuel == null ? 0 : AiItems.fuelBurnTime(new ItemStack(fuel)) / burnDivisor;
                                  int fuelCount = fuel == null ? 0 : AiSmelt.init(fuel);
                                  int furnaceCount = AiParallelSmelt.init_I_I_3(missing);
                                  if (fuelCount < AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), burn)) {
                                     ItemStack fuelStack = fuel == null ? ItemStack.EMPTY : new ItemStack(fuel);
                                     boolean coalNearby = AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308
-                                       && AiItems.init_Z(Blocks.COAL_ORE.defaultBlockState());
+                                       && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState());
                                     String fuelId;
                                     int needed;
                                     if (fuel == null || AiSmelt.init_I(fuelStack) != 1 || fuel != Items.COAL && fuel != Items.CHARCOAL) {
                                        if (coalNearby && allowMining && !visiting.contains("minecraft:coal")) {
                                           fuelId = "minecraft:coal";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor) + AiRunResources.load(Items.COAL);
-                                       } else if (AiItems.init_I(AiItems.load_af_DataUtil("log")) <= 0
-                                          && AiItems.init_I(AiItems.load_af_DataUtil("planks")) <= 0
+                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor) + AiRunResources.mandatoryReservedCount(Items.COAL);
+                                       } else if (AiItems.countInInventory(AiItems.resolveItem("log")) <= 0
+                                          && AiItems.countInInventory(AiItems.resolveItem("planks")) <= 0
                                           && AiObtain.init_D("minecraft:coal") != 1.7976931348623157E308) {
                                           fuelId = "minecraft:coal";
                                           needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor);
@@ -622,13 +622,13 @@ final class AiObtain {
                                        }
                                     } else {
                                        fuelId = BuiltInRegistries.ITEM.getKey(fuel).toString();
-                                       needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), burn) + AiRunResources.load(fuel);
+                                       needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), burn) + AiRunResources.mandatoryReservedCount(fuel);
                                     }
 
                                     if (!visiting.contains(fuelId)) {
                                        this.load_Str = "obtain fuel " + fuelId + " for " + outputId;
                                        return AiObtain.init(
-                                          AiJson.init_JsonObject_ObjArr(
+                                          AiJson.objectOf(
                                              "item",
                                              fuelId,
                                              "count",
@@ -655,11 +655,11 @@ final class AiObtain {
                                  int largestInput = autismclient.util.AutoCraftingEngine.load(mc, outputx)
                                     .stream()
                                     .flatMap(p -> p.init_List().stream())
-                                    .mapToInt(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString()))
+                                    .mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString()))
                                     .max()
                                     .orElse(0);
-                                 int batchGoal = Math.min(goal, AiItems.init_I(this.init_af_DataUtil) + largestInput);
-                                 return AiSmelt.load(AiJson.init_JsonObject_ObjArr("item", outputId, "count", batchGoal, "timeoutSeconds", legSeconds));
+                                 int batchGoal = Math.min(goal, AiItems.countInInventory(this.init_af_DataUtil) + largestInput);
+                                 return AiSmelt.load(AiJson.objectOf("item", outputId, "count", batchGoal, "timeoutSeconds", legSeconds));
                               } catch (IllegalArgumentException e) {
                                  this.load_Str = "smelt " + outputId + " (" + e.getMessage() + ")";
                                  return null;
@@ -679,7 +679,7 @@ final class AiObtain {
                         return this.init(mineId, missing, legSeconds);
                      case PROSPECT:
                         this.load_Str = "prospect " + spec;
-                        return AiProspect.init(AiJson.init_JsonObject_ObjArr("item", spec, "count", goal, "timeoutSeconds", legSeconds));
+                        return AiProspect.init(AiJson.objectOf("item", spec, "count", goal, "timeoutSeconds", legSeconds));
                      case HUNT:
                         List<EntityType<?>> mobs = this.load_List_3();
                         if (mobs.isEmpty()) {
@@ -693,7 +693,7 @@ final class AiObtain {
                         }
 
                         this.load_Str = "hunt " + String.join(",", names);
-                        JsonObject fightArgs = AiJson.init_JsonObject_ObjArr(
+                        JsonObject fightArgs = AiJson.objectOf(
                            "target", String.join(",", names), "count", Math.max(1, Math.min(32, missing)), "radius", radius, "timeoutSeconds", legSeconds
                         );
                         String colors = AiObtain.init(this.init_af_DataUtil.items());
@@ -729,7 +729,7 @@ final class AiObtain {
                }
 
                boolean init_Z_18() {
-                  return AiItems.init_I(AiItems.load_af_DataUtil("log")) > 0 || AiItems.init_I(AiItems.load_af_DataUtil("planks")) >= 2 || AiObtain.init_D("log") <= 1024.0;
+                  return AiItems.countInInventory(AiItems.resolveItem("log")) > 0 || AiItems.countInInventory(AiItems.resolveItem("planks")) >= 2 || AiObtain.init_D("log") <= 1024.0;
                }
 
                AiOperation init(List<EntityType<?>> mobs, JsonObject fightArgs, int legSeconds) {
@@ -744,12 +744,12 @@ final class AiObtain {
                }
 
                AiOperation init(List<EntityType<?>> mobs, JsonObject fightArgs) {
-                  if (AiObtain.init_Z(mobs) && AiItems.init(36) < 0 && depth < 5 && !visiting.contains("minecraft:wooden_sword") && this.init_Z_18()) {
+                  if (AiObtain.init_Z(mobs) && AiItems.bestWeaponSlot(36) < 0 && depth < 5 && !visiting.contains("minecraft:wooden_sword") && this.init_Z_18()) {
                      this.load_Str = "a wooden sword before the hunt";
                      Set<String> nested = new LinkedHashSet<>(visiting);
                      nested.add("minecraft:wooden_sword");
                      AiOperation sword = AiObtain.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "item",
                            "minecraft:wooden_sword",
                            "count",
@@ -827,13 +827,13 @@ final class AiObtain {
                               }
                            }
 
-                           if (AiItems.init_I(init_af_DataUtil) >= goal) {
-                              return AiGameOperations.init_AiOperation_Result(
+                           if (AiItems.countInInventory(init_af_DataUtil) >= goal) {
+                              return AiGameOperations.result(
                                  AiOperation.Status.SUCCEEDED, "Hunt and collect brought " + spec + " to target", new JsonObject()
                               );
                            }
 
-                           int missing = goal - AiItems.init_I(init_af_DataUtil);
+                           int missing = goal - AiItems.countInInventory(init_af_DataUtil);
                            if (this.init_I == 0 && !this.init_List.isEmpty()) {
                               this.init_I++;
                               List<String> ids = new ArrayList<>();
@@ -844,16 +844,16 @@ final class AiObtain {
 
                               String dropIds = String.join(",", ids);
                               this.init_AiOperation = AiGameplay.write(
-                                 AiJson.init_JsonObject_ObjArr(
+                                 AiJson.objectOf(
                                     "item", dropIds, "count", missing, "additional", true, "timeoutSeconds", Math.max(1, Math.min(60, init_I_19()))
                                  )
                               );
-                              return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Collecting the dropped " + spec, new JsonObject());
+                              return AiGameOperations.result(AiOperation.Status.RUNNING, "Collecting the dropped " + spec, new JsonObject());
                            } else {
-                              return AiGameOperations.init_AiOperation_Result(this.init_AiOperation_Result.status(), this.init_AiOperation_Result.message(), new JsonObject());
+                              return AiGameOperations.result(this.init_AiOperation_Result.status(), this.init_AiOperation_Result.message(), new JsonObject());
                            }
                         } else {
-                           return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Hunt cancelled", new JsonObject());
+                           return AiGameOperations.result(AiOperation.Status.CANCELLED, "Hunt cancelled", new JsonObject());
                         }
                      }
 
@@ -890,7 +890,7 @@ final class AiObtain {
                      Set<String> nested = new LinkedHashSet<>(visiting);
                      nested.addAll(this.init_Set);
                      return AiObtain.init(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "item",
                            "minecraft:furnace",
                            "count",
@@ -921,12 +921,12 @@ final class AiObtain {
 
                   if (!visiting.contains("minecraft:crafting_table") && !this.init_Set.contains("minecraft:crafting_table")) {
                      this.init_Z = true;
-                     if (AiItems.init_I(AiItems.load_af_DataUtil("planks")) < 4 && AiItems.init_I(AiItems.load_af_DataUtil("log")) <= 0) {
+                     if (AiItems.countInInventory(AiItems.resolveItem("planks")) < 4 && AiItems.countInInventory(AiItems.resolveItem("log")) <= 0) {
                         this.load_Str = "obtain minecraft:crafting_table for the 3x3 grid";
                         Set<String> nested = new LinkedHashSet<>(visiting);
                         nested.addAll(this.init_Set);
                         return AiObtain.init(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "item",
                               "minecraft:crafting_table",
                               "count",
@@ -945,12 +945,12 @@ final class AiObtain {
                         );
                      } else {
                         this.load_Str = "craft a crafting table for the 3x3 grid";
-                        return AiCraft.init(
-                           AiJson.init_JsonObject_ObjArr(
+                        return AiCraft.craft(
+                           AiJson.objectOf(
                               "item",
                               "minecraft:crafting_table",
                               "count",
-                              AiCraft.init_I("minecraft:crafting_table") + 1,
+                              AiCraft.countItem("minecraft:crafting_table") + 1,
                               "timeoutSeconds",
                               Math.max(15, Math.min(30, this.init_I_19()))
                            )
@@ -986,7 +986,7 @@ final class AiObtain {
 
                   boolean trees = blocks.stream().anyMatch(id -> id.endsWith("_log"));
                   return autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "blocks",
                         autismclient.ai.engine.AiBlockMine.init(blocks),
                         "drops",
@@ -1010,7 +1010,7 @@ final class AiObtain {
                         final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
                         final BlockPos init_BlockPos = mc.player.blockPosition();
                         final int init_I = this.init_BlockPos.getY();
-                        final Block init_Block = AiCraft.init_Block(blockId);
+                        final Block init_Block = AiCraft.requireBlock(blockId);
                         AiOperation init_AiOperation;
                         boolean init_Z;
                         int load_I;
@@ -1020,11 +1020,11 @@ final class AiObtain {
                         public AiOperation.Result tick() {
                            if (!this.load_Z && mc.player != null && mc.level != null) {
                               if (System.nanoTime() > this.init_J) {
-                                 return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "Mine deadline reached", new JsonObject());
+                                 return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Mine deadline reached", new JsonObject());
                               }
 
-                              if (AiItems.init_I(init_af_DataUtil) >= goal) {
-                                 return AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Mined " + blockId + " to target", new JsonObject());
+                              if (AiItems.countInInventory(init_af_DataUtil) >= goal) {
+                                 return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Mined " + blockId + " to target", new JsonObject());
                               }
 
                               if (this.init_AiOperation != null) {
@@ -1054,13 +1054,13 @@ final class AiObtain {
                               if (found) {
                                  this.init_Z = true;
                                  this.init_AiOperation = autismclient.ai.engine.AiMine.init(
-                                    AiJson.init_JsonObject_ObjArr("block", blockId, "count", count, "radius", radius, "timeoutSeconds", init_I_19())
+                                    AiJson.objectOf("block", blockId, "count", count, "radius", radius, "timeoutSeconds", init_I_19())
                                  );
-                                 return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Mining " + blockId, new JsonObject());
+                                 return AiGameOperations.result(AiOperation.Status.RUNNING, "Mining " + blockId, new JsonObject());
                               }
 
                               if (nextY == null) {
-                                 return AiGameOperations.init_AiOperation_Result(
+                                 return AiGameOperations.result(
                                     AiOperation.Status.FAILED,
                                     "No " + blockId + " in the scan band after descending " + (this.init_I - currentY) + " to Y=" + currentY,
                                     new JsonObject()
@@ -1070,14 +1070,14 @@ final class AiObtain {
                               this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(
                                  new BlockPos(this.init_BlockPos.getX(), nextY, this.init_BlockPos.getZ()), 2.5, true, true, true, AiObtain.init(init_I_19())
                               );
-                              return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Descending to Y=" + nextY + " toward " + blockId, new JsonObject());
+                              return AiGameOperations.result(AiOperation.Status.RUNNING, "Descending to Y=" + nextY + " toward " + blockId, new JsonObject());
                            } else {
-                              return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Mine cancelled", new JsonObject());
+                              return AiGameOperations.result(AiOperation.Status.CANCELLED, "Mine cancelled", new JsonObject());
                            }
                         }
 
                         boolean init() {
-                           return AiTerrain.init(mc, List.of(this.init_Block), Math.min(radius, 96)) != 1.7976931348623157E308;
+                           return AiTerrain.nearestBlockDistSqr(mc, List.of(this.init_Block), Math.min(radius, 96)) != 1.7976931348623157E308;
                         }
 
                         @Override
@@ -1150,15 +1150,15 @@ final class AiObtain {
                   int bestCount = -1;
 
                   for (autismclient.util.AutoCraftingEngine.SmeltRecipe plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
-                     if (plan.init_List().stream().mapToInt(i -> AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
-                        >= goal - AiItems.init_I(this.init_af_DataUtil)) {
+                     if (plan.init_List().stream().mapToInt(i -> AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
+                        >= goal - AiItems.countInInventory(this.init_af_DataUtil)) {
                         return null;
                      }
 
                      for (Item input : plan.init_List()) {
                         String inputId = BuiltInRegistries.ITEM.getKey(input).toString();
-                        int count = AiGameState.init_I_Str(inputId);
-                        if (count >= goal - AiItems.init_I(this.init_af_DataUtil)) {
+                        int count = AiGameState.countInventoryItem(inputId);
+                        if (count >= goal - AiItems.countInInventory(this.init_af_DataUtil)) {
                            return null;
                         }
 
@@ -1170,7 +1170,7 @@ final class AiObtain {
                      }
                   }
 
-                  return best == null ? null : Map.entry(best, goal - AiItems.init_I(this.init_af_DataUtil));
+                  return best == null ? null : Map.entry(best, goal - AiItems.countInInventory(this.init_af_DataUtil));
                }
 
                boolean read_Z_8() {
@@ -1189,7 +1189,7 @@ final class AiObtain {
                   this.write_Z = true;
                   this.init_JsonArray
                      .add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "strategy",
                            "gather",
                            "status",
@@ -1205,7 +1205,7 @@ final class AiObtain {
 
                boolean write_Z_6() {
                   if (this.init_Boolean == null) {
-                     this.init_Boolean = AiTerrain.init(mc, this.init_List_6(), 32) != 1.7976931348623157E308;
+                     this.init_Boolean = AiTerrain.nearestBlockDistSqr(mc, this.init_List_6(), 32) != 1.7976931348623157E308;
                   }
 
                   return this.init_Boolean;
@@ -1227,7 +1227,7 @@ final class AiObtain {
 
                   for (Item item : this.init_af_DataUtil.items()) {
                      String id = BuiltInRegistries.ITEM.getKey(item).toString();
-                     int count = AiGameState.init_I_Str(id);
+                     int count = AiGameState.countInventoryItem(id);
                      if (count > bestCount) {
                         bestCount = count;
                         bestId = id;
@@ -1245,7 +1245,7 @@ final class AiObtain {
                   List<Block> blocks = new ArrayList<>(this.init_af_DataUtil.blocks());
 
                   for (Item item : this.init_af_DataUtil.items()) {
-                     for (Block block : AiItems.init(item)) {
+                     for (Block block : AiItems.sourceBlocksFor(item)) {
                         if (!blocks.contains(block)) {
                            blocks.add(block);
                         }
@@ -1256,7 +1256,7 @@ final class AiObtain {
                      blockx -> this.init_af_DataUtil
                         .items()
                         .stream()
-                        .noneMatch(itemx -> AiItems.init(itemx).contains(blockx) && AiObtain.init_Z_Item_Block(itemx, blockx))
+                        .noneMatch(itemx -> AiItems.sourceBlocksFor(itemx).contains(blockx) && AiObtain.init_Z_Item_Block(itemx, blockx))
                   );
                   blocks.removeIf(AiObtain::init);
                   this.load_List = List.copyOf(blocks);
@@ -1271,7 +1271,7 @@ final class AiObtain {
                   List<EntityType<?>> mobs = new ArrayList<>();
 
                   for (Item item : this.init_af_DataUtil.items()) {
-                     for (EntityType<?> type : AiItems.load(item)) {
+                     for (EntityType<?> type : AiItems.sourceEntitiesFor(item)) {
                         if (!mobs.contains(type)) {
                            mobs.add(type);
                         }
@@ -1287,10 +1287,10 @@ final class AiObtain {
                }
 
                JsonObject init_JsonObject_32() {
-                  JsonObject out = AiJson.init_JsonObject_ObjArr(
-                     "item", spec, "goal", goal, "held", AiItems.init_I(this.init_af_DataUtil), "startedWith", held, "depth", depth
+                  JsonObject out = AiJson.objectOf(
+                     "item", spec, "goal", goal, "held", AiItems.countInInventory(this.init_af_DataUtil), "startedWith", held, "depth", depth
                   );
-                  out.add("matches", AiJson.init.toJsonTree(this.init_af_DataUtil.itemIds()));
+                  out.add("matches", AiJson.GSON.toJsonTree(this.init_af_DataUtil.itemIds()));
                   if (this.write_Str != null) {
                      out.addProperty("familyFallbackFrom", spec);
                   }
@@ -1308,7 +1308,7 @@ final class AiObtain {
                   }
 
                   out.add("exhausted", spent);
-                  out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.init_I, this.init_Str));
+                  out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));
                   return out;
                }
 
@@ -1321,7 +1321,7 @@ final class AiObtain {
                      this.read_Str = "Getting " + label;
                   }
 
-                  AiVisualization.init(this, this.read_Str, AiTaskStatus.init(message, "Preparing materials"), AiItems.init_I(this.init_af_DataUtil), goal);
+                  AiVisualization.init(this, this.read_Str, AiTaskStatus.init(message, "Preparing materials"), AiItems.countInInventory(this.init_af_DataUtil), goal);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_32().toString(), List.of());
                }
 
@@ -1387,7 +1387,7 @@ final class AiObtain {
          if (mc != null && mc.player != null) {
             for (int slot = 0; slot < 36; slot++) {
                ItemStack stack = mc.player.getInventory().getItem(slot);
-               if (stack.isCorrectToolForDrops(block.defaultBlockState()) && AiItems.init(stack, 2) && BlockBreakSpeedHelper.init_Z(mc, stack)) {
+               if (stack.isCorrectToolForDrops(block.defaultBlockState()) && AiItems.hasEnoughDurability(stack, 2) && BlockBreakSpeedHelper.init_Z(mc, stack)) {
                   return true;
                }
             }
@@ -1514,7 +1514,7 @@ final class AiObtain {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            return AiGameOperations.init_AiOperation_Result(status, message, AiJson.init_JsonObject_ObjArr("looking", what, "legs", this.init_I));
+            return AiGameOperations.result(status, message, AiJson.objectOf("looking", what, "legs", this.init_I));
          }
 
          @Override
@@ -1554,7 +1554,7 @@ final class AiObtain {
 
             if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.load < 2) {
                this.load++;
-               this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", (int)Math.min(120L, left)));
+               this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.objectOf("timeoutSeconds", (int)Math.min(120L, left)));
                return this.init(AiOperation.Status.RUNNING, "Up to open sky to look for " + what);
             }
 
@@ -1614,11 +1614,11 @@ final class AiObtain {
 
    static double init_D(String itemId) {
       Minecraft mc = Minecraft.getInstance();
-      AiItems.ItemSpec target = AiItems.load_af_DataUtil(itemId);
+      AiItems.ItemSpec target = AiItems.resolveItem(itemId);
       List<Block> sources = new ArrayList<>(target.blocks());
 
       for (Item item : target.items()) {
-         for (Block block : AiItems.init(item)) {
+         for (Block block : AiItems.sourceBlocksFor(item)) {
             if (!sources.contains(block)) {
                sources.add(block);
             }
@@ -1626,11 +1626,11 @@ final class AiObtain {
       }
 
       sources.removeIf(AiObtain::init);
-      double best = sources.isEmpty() ? 1.7976931348623157E308 : AiTerrain.init(mc, sources, 32);
+      double best = sources.isEmpty() ? 1.7976931348623157E308 : AiTerrain.nearestBlockDistSqr(mc, sources, 32);
       List<EntityType<?>> mobs = new ArrayList<>();
 
       for (Item item : target.items()) {
-         for (EntityType<?> type : AiItems.load(item)) {
+         for (EntityType<?> type : AiItems.sourceEntitiesFor(item)) {
             if (!mobs.contains(type)) {
                mobs.add(type);
             }
@@ -1736,7 +1736,7 @@ final class AiObtain {
    static String init_Str(String dataJson) {
       if (dataJson != null && !dataJson.isBlank()) {
          try {
-            JsonObject data = AiJson.init_JsonObject_Str(dataJson);
+            JsonObject data = AiJson.parseObject(dataJson);
             if (data.has("missing") && data.get("missing").isJsonObject()) {
                for (Entry<String, JsonElement> entry : data.getAsJsonObject("missing").entrySet()) {
                   if (read(entry.getKey())) {
@@ -1761,7 +1761,7 @@ final class AiObtain {
    }
 
    static int init_I_Z_Str(boolean needsTable, String item) {
-      if (needsTable && !AiCraft.load() && AiCraft.init_I("minecraft:crafting_table") <= 0) {
+      if (needsTable && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") <= 0) {
          String path = item.substring(item.indexOf(58) + 1);
          if (!path.endsWith("_planks") && !path.equals("planks")) {
             return !path.endsWith("_log") && !path.endsWith("_wood") && !path.endsWith("_stem") && !path.endsWith("_hyphae") && !path.equals("log") ? 0 : 1;
@@ -1785,7 +1785,7 @@ final class AiObtain {
    static boolean load(String dataJson) {
       if (dataJson != null && !dataJson.isBlank()) {
          try {
-            JsonObject data = AiJson.init_JsonObject_Str(dataJson);
+            JsonObject data = AiJson.parseObject(dataJson);
             return data.has("missing") && data.get("missing").isJsonObject() && data.getAsJsonObject("missing").has("minecraft:crafting_table");
          } catch (RuntimeException e) {
             return false;
@@ -1808,7 +1808,7 @@ final class AiObtain {
    }
 
    static Set<String> init() {
-      return AiItems.init_Set();
+      return AiItems.directMineableItems();
    }
 
    static AiCraftPlanner.RecipeGraph init(final AiCraftPlanner.RecipeGraph inner) {
@@ -1843,7 +1843,7 @@ final class AiObtain {
 
          @Override
          public boolean init_Z(String itemId) {
-            return BuiltInRegistries.ITEM.getOptional(Identifier.parse(itemId)).map(item -> AiObtain.init_Z(AiItems.load(item))).orElse(false);
+            return BuiltInRegistries.ITEM.getOptional(Identifier.parse(itemId)).map(item -> AiObtain.init_Z(AiItems.sourceEntitiesFor(item))).orElse(false);
          }
 
          @Override
@@ -1890,7 +1890,7 @@ final class AiObtain {
       try {
          Set<String> ids = new HashSet<>();
 
-         for (Item item : AiItems.init_af_DataUtil(spec).items()) {
+         for (Item item : AiItems.resolve(spec).items()) {
             ids.add(BuiltInRegistries.ITEM.getKey(item).toString());
          }
 
@@ -1948,7 +1948,7 @@ final class AiObtain {
    }
 
    static JsonObject init(String strategy, String detail, AiOperation.Result result) {
-      JsonObject entry = AiJson.init_JsonObject_ObjArr(
+      JsonObject entry = AiJson.objectOf(
          "strategy", strategy.toLowerCase(Locale.ROOT), "detail", detail, "status", result.status().name(), "message", result.message()
       );
 

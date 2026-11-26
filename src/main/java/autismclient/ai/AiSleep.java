@@ -33,9 +33,9 @@ final class AiSleep {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int timeoutSeconds = Math.max(15, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
-         final boolean place = AiJson.init_Z_JsonObject(args, "place", true);
-         final boolean requireNight = AiJson.init_Z_JsonObject(args, "requireNight", true);
+         final int timeoutSeconds = Math.max(15, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
+         final boolean place = AiJson.getBoolean(args, "place", true);
+         final boolean requireNight = AiJson.getBoolean(args, "requireNight", true);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final long load_J = AiSleep.init_J();
@@ -114,7 +114,7 @@ final class AiSleep {
                      }
 
                      if (this.init_BlockPos != null) {
-                        BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, this.init_BlockPos);
+                        BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.init_BlockPos);
                         if (interactionHit == null) {
                            if (this.init_AiOperation == null) {
                               this.init_AiOperation = AiGoto.init_AiOperation(this.init_BlockPos, Math.min(120, this.init_I_32()));
@@ -139,8 +139,8 @@ final class AiSleep {
                               this.init_AiOperation = null;
                            }
 
-                           this.init_DataUtil.init_V_Vec3(interactionHit.getLocation());
-                           this.init_DataUtil.load_V();
+                           this.init_DataUtil.aimAt(interactionHit.getLocation());
+                           this.init_DataUtil.tick();
                            if (++this.init_I > 80) {
                               String refusal = AiSleep.init(AiChatLedger.init_List(16), this.read_J);
                               return this.init(
@@ -151,11 +151,11 @@ final class AiSleep {
                               );
                            }
 
-                           if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+                           if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.init_BlockPos)) {
                               return this.init("Turning toward the bed");
                            }
 
-                           BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                           BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                            if (hit == null) {
                               return this.init("Turning toward the bed");
                            }
@@ -177,10 +177,10 @@ final class AiSleep {
                         if (carried == null) {
                            JsonObject missing = new JsonObject();
                            missing.addProperty("minecraft:red_bed", 1);
-                           return this.init(AiOperation.Status.FAILED, "No bed nearby and none in the inventory", AiJson.init_JsonObject_ObjArr("missing", missing));
+                           return this.init(AiOperation.Status.FAILED, "No bed nearby and none in the inventory", AiJson.objectOf("missing", missing));
                         }
 
-                        BlockPos spot = AiCraft.init_BlockPos();
+                        BlockPos spot = AiCraft.findPlacementSpot();
                         if (spot == null) {
                            return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for a bed");
                         }
@@ -218,7 +218,7 @@ final class AiSleep {
                double bestDistance = 1.7976931348623157E308;
 
                for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-24, -8, -24), origin.offset(24, 8, 24))) {
-                  if (AiTerrain.init(mc.level, pos) && mc.level.getBlockState(pos).getBlock() instanceof BedBlock) {
+                  if (AiTerrain.isLoaded(mc.level, pos) && mc.level.getBlockState(pos).getBlock() instanceof BedBlock) {
                      double distance = mc.player.distanceToSqr(Vec3.atCenterOf(pos));
                      if (distance < bestDistance) {
                         bestDistance = distance;
@@ -231,10 +231,10 @@ final class AiSleep {
             }
 
             Item init_Item_4() {
-               AiItems.ItemSpec beds = AiItems.init_af_DataUtil("bed");
+               AiItems.ItemSpec beds = AiItems.resolve("bed");
 
                for (Item item : beds.items()) {
-                  if (AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
+                  if (AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(item).toString()) > 0) {
                      return item;
                   }
                }
@@ -247,7 +247,7 @@ final class AiSleep {
             }
 
             JsonObject init_JsonObject_48() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "dayTime",
                   AiSleep.init_J(),
                   "night",
@@ -292,7 +292,7 @@ final class AiSleep {
             public void cancel() {
                if (!this.read_Z) {
                   this.read_Z = true;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   this.init_DataPipe.init_V();
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();

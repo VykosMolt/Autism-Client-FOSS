@@ -128,7 +128,7 @@ public final class AiParkourFallWarning {
                         boolean var24 = false;
 
                         for (int var25 = 0; var25 < var22.size(); var25++) {
-                           var23 = AiPhysics.fill(var23, (AiPhysics.MoveInput)var22.get(var25), var7);
+                           var23 = AiPhysics.stepWithClimbable(var23, (AiPhysics.MoveInput)var22.get(var25), var7);
                            int var26 = (int)Math.floor(var23.x());
                            int var27 = (int)Math.floor(var23.y());
                            int var28 = (int)Math.floor(var23.z());

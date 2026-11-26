@@ -20,7 +20,7 @@ public final class AiCombatMotion {
          double floorY = state.y();
 
          for (int tick = 0; tick < 24; tick++) {
-            state = AiPhysics.init(state, new AiPhysics.MoveInput(0.0, 0.0, tick == 0, false, false, mc.player.getYRot()), world);
+            state = AiPhysics.stepCompat(state, new AiPhysics.MoveInput(0.0, 0.0, tick == 0, false, false, mc.player.getYRot()), world);
             BlockPos feet = BlockPos.containing(state.x(), state.y(), state.z());
             if (!mc.level.isInsideBuildHeight(feet)
                || mc.level.getChunkSource().getChunk(feet.getX() >> 4, feet.getZ() >> 4, ChunkStatus.FULL, false) == null
@@ -69,7 +69,7 @@ public final class AiCombatMotion {
             AiPhysics.MoveInput active = tick < movingTicks
                ? input
                : new AiPhysics.MoveInput(0.0, 0.0, false, false, mc.player.isShiftKeyDown(), yaw);
-            AiPhysics.MotionState next = AiPhysics.init(state, active, world);
+            AiPhysics.MotionState next = AiPhysics.stepCompat(state, active, world);
             BlockPos feet = BlockPos.containing(next.x(), next.y(), next.z());
             if (!mc.level.isInsideBuildHeight(feet)
                || mc.level.getChunkSource().getChunk(feet.getX() >> 4, feet.getZ() >> 4, ChunkStatus.FULL, false) == null

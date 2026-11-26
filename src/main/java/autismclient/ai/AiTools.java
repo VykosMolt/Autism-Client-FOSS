@@ -119,17 +119,17 @@ final class AiTools {
       JsonObject properties = new JsonObject();
 
       for (int i = 0; i < fields.length; i += 2) {
-         JsonObject field = AiJson.init_JsonObject_ObjArr("type", fields[i + 1]);
+         JsonObject field = AiJson.objectOf("type", fields[i + 1]);
          if (fields[i + 1].equals("array")) {
-            JsonObject item = AiJson.init_JsonObject_ObjArr("type", Set.of("subgoals", "fixtures", "legs").contains(fields[i]) ? "object" : "string");
+            JsonObject item = AiJson.objectOf("type", Set.of("subgoals", "fixtures", "legs").contains(fields[i]) ? "object" : "string");
             // plan steps are {id, capability, arguments, needs} objects or command strings
-            field.add("items", fields[i].equals("steps") ? AiJson.init_JsonObject_ObjArr("anyOf", List.of(item, AiJson.init_JsonObject_ObjArr("type", "object"))) : item);
+            field.add("items", fields[i].equals("steps") ? AiJson.objectOf("anyOf", List.of(item, AiJson.objectOf("type", "object"))) : item);
          }
 
          properties.add(fields[i].toString(), field);
       }
 
-      return AiJson.init_JsonObject_ObjArr("type", "object", "properties", properties, "additionalProperties", false);
+      return AiJson.objectOf("type", "object", "properties", properties, "additionalProperties", false);
    }
 
    static JsonObject init_JsonObject() {
@@ -345,7 +345,7 @@ final class AiTools {
    }
 
    private static void init_V_JsonArray(JsonArray tools, String name, String description, JsonObject parameters) {
-      tools.add(AiJson.init_JsonObject_ObjArr("name", name, "description", description, "parameters", parameters));
+      tools.add(AiJson.objectOf("name", name, "description", description, "parameters", parameters));
    }
 
    static List<AiCapabilityDescriptor> init_List() {
@@ -980,10 +980,10 @@ final class AiTools {
          .getAsJsonObject("items")
          .add(
             "items",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "anyOf",
                List.of(
-                  AiJson.init_JsonObject_ObjArr("type", "string"),
+                  AiJson.objectOf("type", "string"),
                   init_JsonObject_JsonObject_StrArr(init_JsonObject_ObjArr("item", "string", "count", "integer"), "item")
                )
             )
@@ -1485,7 +1485,7 @@ final class AiTools {
             List.of("GUI"),
             "captureState reflects the requested capture/filter state; read returns bounded entries from the local buffer.",
             "If entries are empty, start capture and reproduce the traffic; blocked packet names never enter the buffer.",
-            AiJson.init_JsonObject_ObjArr("id", "client:packet_log", "arguments", AiJson.init_JsonObject_ObjArr("action", "read", "category", "ALL", "limit", 10))
+            AiJson.objectOf("id", "client:packet_log", "arguments", AiJson.objectOf("action", "read", "category", "ALL", "limit", 10))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -1509,7 +1509,7 @@ final class AiTools {
             List.of("NETWORK"),
             "send reports dispatch (UNCERTAIN for the server outcome - reobserve); queue/delay report verified queue state.",
             "On refusal, read the surfaced builder help and fix args; do not retry an uncertain send without reobserving.",
-            AiJson.init_JsonObject_ObjArr("id", "client:packet_send", "arguments", AiJson.init_JsonObject_ObjArr("name", "ServerboundPunchPacket", "mode", "send"))
+            AiJson.objectOf("id", "client:packet_send", "arguments", AiJson.objectOf("name", "ServerboundPunchPacket", "mode", "send"))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -1527,7 +1527,7 @@ final class AiTools {
             List.of("NETWORK", "PACKET_DELAY"),
             "list/clear/restore report verified queue state; flush reports SUCCEEDED only after the queue drained.",
             "If flush times out or another drain is active, list the queue before deciding to clear or wait.",
-            AiJson.init_JsonObject_ObjArr("id", "client:packet_queue", "arguments", AiJson.init_JsonObject_ObjArr("action", "list", "limit", 50)).toString(),
+            AiJson.objectOf("id", "client:packet_queue", "arguments", AiJson.objectOf("action", "list", "limit", 50)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1544,7 +1544,7 @@ final class AiTools {
             List.of("NETWORK"),
             "Scan cache entry for the current server present and stable; partial results on timeout.",
             "If nothing is detected the server may hide its command tree; payload fingerprints can still identify plugins.",
-            AiJson.init_JsonObject_ObjArr("id", "client:plugin_scan", "arguments", AiJson.init_JsonObject_ObjArr("force", false)).toString(),
+            AiJson.objectOf("id", "client:plugin_scan", "arguments", AiJson.objectOf("force", false)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1561,7 +1561,7 @@ final class AiTools {
             List.of(),
             "Cached scan contents read; freshness is reported.",
             "If absent, connect and run client:plugin_scan.",
-            AiJson.init_JsonObject_ObjArr("id", "client:plugin_scan_cached", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "client:plugin_scan_cached", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -1578,7 +1578,7 @@ final class AiTools {
             List.of(),
             "Current LAN Sync status read.",
             "If not running, start it via client:lan_control.",
-            AiJson.init_JsonObject_ObjArr("id", "client:lan", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "client:lan", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -1620,7 +1620,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "GUI", "WORLD_ACTION"),
             "Post-action status reflects the requested transition; synchronized execution outcomes are observed via client:lan.",
             "On invalid-state errors, read client:lan status and choose a valid action.",
-            AiJson.init_JsonObject_ObjArr("id", "client:lan_control", "arguments", AiJson.init_JsonObject_ObjArr("action", "createSession")).toString(),
+            AiJson.objectOf("id", "client:lan_control", "arguments", AiJson.objectOf("action", "createSession")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1637,7 +1637,7 @@ final class AiTools {
             List.of(),
             "Current screen contents read.",
             "If a widget is missing, reread the screen; menus rebuild constantly.",
-            AiJson.init_JsonObject_ObjArr("id", "client:screen", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "client:screen", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -1654,7 +1654,7 @@ final class AiTools {
             List.of("GUI", "INPUT"),
             "The post-click screen is returned; server-visible effects require separate observation.",
             "On no-match errors, read client:screen for the available labels.",
-            AiJson.init_JsonObject_ObjArr("id", "client:screen_click", "arguments", AiJson.init_JsonObject_ObjArr("label", "Play")).toString(),
+            AiJson.objectOf("id", "client:screen_click", "arguments", AiJson.objectOf("label", "Play")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1671,7 +1671,7 @@ final class AiTools {
             List.of("GUI"),
             "The returned screen is what remains open.",
             "If no screen is open there is nothing to close.",
-            AiJson.init_JsonObject_ObjArr("id", "client:screen_close", "arguments", AiJson.init_JsonObject_ObjArr("sendPacket", true)).toString(),
+            AiJson.objectOf("id", "client:screen_close", "arguments", AiJson.objectOf("sendPacket", true)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1688,7 +1688,7 @@ final class AiTools {
             List.of("GUI"),
             "The returned screen is what is open.",
             "Nothing stored: save one first.",
-            AiJson.init_JsonObject_ObjArr("id", "client:screen_store", "arguments", AiJson.init_JsonObject_ObjArr("action", "save")).toString(),
+            AiJson.objectOf("id", "client:screen_store", "arguments", AiJson.objectOf("action", "save")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1705,7 +1705,7 @@ final class AiTools {
             List.of(),
             "The result names the macro affected.",
             "Unknown names: read client:macros first.",
-            AiJson.init_JsonObject_ObjArr("id", "client:macro_manage", "arguments", AiJson.init_JsonObject_ObjArr("action", "rename", "name", "old", "newName", "new"))
+            AiJson.objectOf("id", "client:macro_manage", "arguments", AiJson.objectOf("action", "rename", "name", "old", "newName", "new"))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -1723,7 +1723,7 @@ final class AiTools {
             List.of(),
             "The folder list after the change.",
             "Unknown folder or macro names: list first (client:macros lists macros with their folder).",
-            AiJson.init_JsonObject_ObjArr("id", "client:macro_folders", "arguments", AiJson.init_JsonObject_ObjArr("action", "create", "name", "AI")).toString(),
+            AiJson.objectOf("id", "client:macro_folders", "arguments", AiJson.objectOf("action", "create", "name", "AI")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1756,7 +1756,7 @@ final class AiTools {
             List.of("GUI"),
             "The profile list with the active id after the change.",
             "Name collisions: choose another name; the default profile cannot be deleted.",
-            AiJson.init_JsonObject_ObjArr("id", "client:profiles", "arguments", AiJson.init_JsonObject_ObjArr("action", "create", "name", "PvP blue")).toString(),
+            AiJson.objectOf("id", "client:profiles", "arguments", AiJson.objectOf("action", "create", "name", "PvP blue")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1773,8 +1773,8 @@ final class AiTools {
             List.of("GUI"),
             "The colour state after the change.",
             "Invalid colour strings are rejected: use 6 or 8 hex digits.",
-            AiJson.init_JsonObject_ObjArr(
-                  "id", "client:theme", "arguments", AiJson.init_JsonObject_ObjArr("action", "set", "colors", AiJson.init_JsonObject_ObjArr("master", "#3B82F6"))
+            AiJson.objectOf(
+                  "id", "client:theme", "arguments", AiJson.objectOf("action", "set", "colors", AiJson.objectOf("master", "#3B82F6"))
                )
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
@@ -1793,7 +1793,7 @@ final class AiTools {
             List.of(),
             "The send/delay/queue state after the change.",
             "Nothing queued: there is nothing to flush or clear.",
-            AiJson.init_JsonObject_ObjArr("id", "client:packet_gui", "arguments", AiJson.init_JsonObject_ObjArr("action", "delay", "value", true)).toString(),
+            AiJson.objectOf("id", "client:packet_gui", "arguments", AiJson.objectOf("action", "delay", "value", true)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1810,7 +1810,7 @@ final class AiTools {
             List.of(),
             "The blocked lists after the change.",
             "Unknown packet name: action list shows the current names.",
-            AiJson.init_JsonObject_ObjArr("id", "client:packet_filter", "arguments", AiJson.init_JsonObject_ObjArr("action", "list")).toString(),
+            AiJson.objectOf("id", "client:packet_filter", "arguments", AiJson.objectOf("action", "list")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1845,7 +1845,7 @@ final class AiTools {
             List.of(),
             "The waypoint list after the change.",
             "Unknown names: action list shows them.",
-            AiJson.init_JsonObject_ObjArr("id", "client:waypoint_manage", "arguments", AiJson.init_JsonObject_ObjArr("action", "add", "name", "base")).toString(),
+            AiJson.objectOf("id", "client:waypoint_manage", "arguments", AiJson.objectOf("action", "add", "name", "base")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1880,7 +1880,7 @@ final class AiTools {
             List.of(),
             "The proxy list with the active one.",
             "Unknown proxy: action list shows them.",
-            AiJson.init_JsonObject_ObjArr("id", "client:proxies", "arguments", AiJson.init_JsonObject_ObjArr("action", "list")).toString(),
+            AiJson.objectOf("id", "client:proxies", "arguments", AiJson.objectOf("action", "list")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1897,8 +1897,8 @@ final class AiTools {
             List.of(),
             "The join-macro settings after the change.",
             "Unknown macro name: it must be a saved macro.",
-            AiJson.init_JsonObject_ObjArr(
-                  "id", "client:join_macro", "arguments", AiJson.init_JsonObject_ObjArr("action", "set", "enabled", true, "macro", "greet", "timing", "PLAYABLE")
+            AiJson.objectOf(
+                  "id", "client:join_macro", "arguments", AiJson.objectOf("action", "set", "enabled", true, "macro", "greet", "timing", "PLAYABLE")
                )
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
@@ -1917,7 +1917,7 @@ final class AiTools {
             List.of(),
             "The server info fields; realVersion/estimatedTps appear once the client has probed them.",
             "When not connected it returns connected=false.",
-            AiJson.init_JsonObject_ObjArr("id", "client:server_info", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "client:server_info", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -1952,7 +1952,7 @@ final class AiTools {
             List.of("GUI"),
             "The element state after the change.",
             "Unknown ids: list first; settings keys come from get.",
-            AiJson.init_JsonObject_ObjArr("id", "client:hud", "arguments", AiJson.init_JsonObject_ObjArr("action", "list")).toString(),
+            AiJson.objectOf("id", "client:hud", "arguments", AiJson.objectOf("action", "list")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -1970,7 +1970,7 @@ final class AiTools {
             List.of("GUI", "INPUT"),
             "The resulting field value is reported.",
             "If truncated, shorten the text; the field's own limit applies.",
-            AiJson.init_JsonObject_ObjArr("id", "client:screen_type", "arguments", AiJson.init_JsonObject_ObjArr("label", "Server Address", "text", "play.example.com"))
+            AiJson.objectOf("id", "client:screen_type", "arguments", AiJson.objectOf("label", "Server Address", "text", "play.example.com"))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -1988,7 +1988,7 @@ final class AiTools {
             List.of("NETWORK", "GUI"),
             "World join observed, or the server's disconnect reason reported.",
             "On refusal/kick, read the reason; auth servers may need login flows after join.",
-            AiJson.init_JsonObject_ObjArr("id", "client:connect", "arguments", AiJson.init_JsonObject_ObjArr("address", "play.example.com")).toString(),
+            AiJson.objectOf("id", "client:connect", "arguments", AiJson.objectOf("address", "play.example.com")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2005,7 +2005,7 @@ final class AiTools {
             List.of("NETWORK", "GUI"),
             "The landing screen is returned.",
             "None.",
-            AiJson.init_JsonObject_ObjArr("id", "client:disconnect", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "client:disconnect", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2022,7 +2022,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "INVENTORY"),
             "Food level at or above target; data reports foodBefore/food/target.",
             "On 'No food in inventory', obtain food first; on UNCERTAIN swap, reobserve inventory before retrying.",
-            AiJson.init_JsonObject_ObjArr("id", "game:eat", "arguments", AiJson.init_JsonObject_ObjArr("food", 18, "timeoutSeconds", 30)).toString(),
+            AiJson.objectOf("id", "game:eat", "arguments", AiJson.objectOf("food", 18, "timeoutSeconds", 30)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2039,82 +2039,82 @@ final class AiTools {
             List.of("INPUT", "ROTATION"),
             "No observed threats within radius*1.5, or arrival at the escape target (message distinguishes).",
             "On navigator failure, retry with a different direction or larger distance; on low-health abort, recover before re-engaging.",
-            AiJson.init_JsonObject_ObjArr("id", "game:flee", "arguments", AiJson.init_JsonObject_ObjArr("radius", 12, "distance", 24, "timeoutSeconds", 60)).toString(),
+            AiJson.objectOf("id", "game:flee", "arguments", AiJson.objectOf("radius", 12, "distance", 24, "timeoutSeconds", 60)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
-      JsonObject cellSchema = AiJson.init_JsonObject_ObjArr(
+      JsonObject cellSchema = AiJson.objectOf(
          "type",
          "object",
          "additionalProperties",
          false,
          "properties",
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "dx",
-            AiJson.init_JsonObject_ObjArr("type", "integer", "minimum", -256, "maximum", 256),
+            AiJson.objectOf("type", "integer", "minimum", -256, "maximum", 256),
             "dy",
-            AiJson.init_JsonObject_ObjArr("type", "integer", "minimum", -256, "maximum", 256),
+            AiJson.objectOf("type", "integer", "minimum", -256, "maximum", 256),
             "dz",
-            AiJson.init_JsonObject_ObjArr("type", "integer", "minimum", -256, "maximum", 256),
+            AiJson.objectOf("type", "integer", "minimum", -256, "maximum", 256),
             "block",
-            AiJson.init_JsonObject_ObjArr("type", "string")
+            AiJson.objectOf("type", "string")
          ),
          "required",
          List.of("dx", "dy", "dz", "block")
       );
-      JsonObject buildSchema = AiJson.init_JsonObject_ObjArr(
+      JsonObject buildSchema = AiJson.objectOf(
          "type",
          "object",
          "additionalProperties",
          false,
          "properties",
-         AiJson.init_JsonObject_ObjArr(
+         AiJson.objectOf(
             "origin",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "type",
                "object",
                "additionalProperties",
                false,
                "properties",
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "x",
-                  AiJson.init_JsonObject_ObjArr("type", "integer"),
+                  AiJson.objectOf("type", "integer"),
                   "y",
-                  AiJson.init_JsonObject_ObjArr("type", "integer"),
+                  AiJson.objectOf("type", "integer"),
                   "z",
-                  AiJson.init_JsonObject_ObjArr("type", "integer")
+                  AiJson.objectOf("type", "integer")
                ),
                "required",
                List.of("x", "y", "z")
             ),
             "blocks",
-            AiJson.init_JsonObject_ObjArr("type", "array", "maxItems", 2048, "items", cellSchema),
+            AiJson.objectOf("type", "array", "maxItems", 2048, "items", cellSchema),
             "blueprint",
-            AiJson.init_JsonObject_ObjArr("type", "string", "maxLength", 2000000),
+            AiJson.objectOf("type", "string", "maxLength", 2000000),
             "schematic",
-            AiJson.init_JsonObject_ObjArr("type", "string", "maxLength", 128),
+            AiJson.objectOf("type", "string", "maxLength", 128),
             "skipUnknown",
-            AiJson.init_JsonObject_ObjArr("type", "boolean"),
+            AiJson.objectOf("type", "boolean"),
             "rotation",
-            AiJson.init_JsonObject_ObjArr("type", "integer"),
+            AiJson.objectOf("type", "integer"),
             "mirror",
-            AiJson.init_JsonObject_ObjArr("type", "string"),
+            AiJson.objectOf("type", "string"),
             "layers",
-            AiJson.init_JsonObject_ObjArr("type", "object"),
+            AiJson.objectOf("type", "object"),
             "repeat",
-            AiJson.init_JsonObject_ObjArr("type", "object"),
+            AiJson.objectOf("type", "object"),
             "substitutes",
-            AiJson.init_JsonObject_ObjArr("type", "object"),
+            AiJson.objectOf("type", "object"),
             "timeoutSeconds",
-            AiJson.init_JsonObject_ObjArr("type", "integer"),
+            AiJson.objectOf("type", "integer"),
             "verify",
-            AiJson.init_JsonObject_ObjArr("type", "boolean"),
+            AiJson.objectOf("type", "boolean"),
             "craftMissing",
-            AiJson.init_JsonObject_ObjArr("type", "boolean"),
+            AiJson.objectOf("type", "boolean"),
             "shulkerStock",
-            AiJson.init_JsonObject_ObjArr("type", "boolean"),
+            AiJson.objectOf("type", "boolean"),
             "assumeFly",
-            AiJson.init_JsonObject_ObjArr("type", "boolean")
+            AiJson.objectOf("type", "boolean")
          )
       );
       buildSchema.getAsJsonObject("properties").add("clearTerrain", JsonParser.parseString("{\"type\":\"boolean\"}"));
@@ -2131,15 +2131,15 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "GUI", "WORLD_ACTION"),
             "Terminal report {placed, skipped(already-correct), failed[], failedTotal, copies on repeat builds}; SUCCEEDED means the blueprint cursor completed - check failed[] for cells needing rework.",
             "On Missing materials, gather the delta and re-issue the identical blueprint (resume is automatic); on unreachable-approach FAILED, add scaffolding layers to the blueprint; never repeat a cell manually against its reported reason without changing conditions.",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                   "id",
                   "game:build",
                   "arguments",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "origin",
-                     AiJson.init_JsonObject_ObjArr("x", 100, "y", 64, "z", -200),
+                     AiJson.objectOf("x", 100, "y", 64, "z", -200),
                      "blocks",
-                     List.of(AiJson.init_JsonObject_ObjArr("dx", 0, "dy", 0, "dz", 0, "block", "minecraft:oak_planks"))
+                     List.of(AiJson.objectOf("dx", 0, "dy", 0, "dz", 0, "block", "minecraft:oak_planks"))
                   )
                )
                .toString(),
@@ -2175,7 +2175,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "SUCCEEDED with {placed, from, to} when the target column is reached (or the direction lane is laid); every counted block was observed standing client-side, and still standing a second later when verify:true.",
             "On Out of blocks, restock the hotbar and re-issue; on Fell off the bridge, recover and restart from the last solid block; stop releases movement/sneak/sprint/jump keys and restores the hotbar slot.",
-            AiJson.init_JsonObject_ObjArr("id", "game:telly", "arguments", AiJson.init_JsonObject_ObjArr("x", 120, "z", -40, "mode", "telly", "blocks", 64)).toString(),
+            AiJson.objectOf("id", "game:telly", "arguments", AiJson.objectOf("x", 120, "z", -40, "mode", "telly", "blocks", 64)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2210,12 +2210,12 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "SUCCEEDED with {placed, from, to} when the blocks budget is spent, the leg list completes, or a tower meets a ceiling; every counted block was observed applied client-side, server-revision verified when verify:true.",
             "On Out of blocks, restock the hotbar and re-issue; on Fell off the scaffold, recover and restart from the last solid block; stop releases movement/sneak/sprint/jump keys and restores the hotbar slot.",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                   "id",
                   "game:scaffold",
                   "arguments",
-                  AiJson.init_JsonObject_ObjArr(
-                     "legs", List.of(AiJson.init_JsonObject_ObjArr("tower", true, "blocks", 3), AiJson.init_JsonObject_ObjArr("direction", -90, "blocks", 8))
+                  AiJson.objectOf(
+                     "legs", List.of(AiJson.objectOf("tower", true, "blocks", 3), AiJson.objectOf("direction", -90, "blocks", 8))
                   )
                )
                .toString(),
@@ -2235,7 +2235,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION"),
             "Incoming threats resolved; applied server motion confirms a ghast redirection. Target death may remain under background observation while the objective resumes.",
             "Read ghastReflection.reason and outcomes. Resume the original objective after a confirmed bat/return. TIMED_OUT or an unconfirmed hit requires another live incoming-danger assessment; do not wait for a new ghast shot.",
-            AiJson.init_JsonObject_ObjArr("id", "game:dodge", "arguments", AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4))
+            AiJson.objectOf("id", "game:dodge", "arguments", AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -2253,7 +2253,7 @@ final class AiTools {
             List.of(),
             "Danger report read.",
             "Empty sources mean no priced danger nearby; check game:oracle threats for hostiles without a blast clock.",
-            AiJson.init_JsonObject_ObjArr("id", "game:danger", "arguments", AiJson.init_JsonObject_ObjArr("cap", 12)).toString(),
+            AiJson.objectOf("id", "game:danger", "arguments", AiJson.objectOf("cap", 12)).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -2270,7 +2270,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "Landing occurred with at most 0.5 applied damage; report includes predicted vs actual damage and collection state.",
             "On 'No clutch item in hotbar', stock one and retry; on 'Clutch missed' or late placement, take the damage, recover, and call earlier next time; on timeout with no fall, re-call when the drop actually starts.",
-            AiJson.init_JsonObject_ObjArr("id", "game:mlg", "arguments", AiJson.init_JsonObject_ObjArr("method", "auto", "collect", true, "timeoutSeconds", 10))
+            AiJson.objectOf("id", "game:mlg", "arguments", AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 10))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -2288,7 +2288,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "SUCCEEDED {chopped, collected, skipped[], remaining, active} - whole vein down or count reached; every counted block verified broken.",
             "On 'No matching block within radius', move closer or retry with a namespaced id; on skipped[] entries, reposition or change conditions before re-issuing; never re-issue unchanged against the same skipped list.",
-            AiJson.init_JsonObject_ObjArr("id", "game:chop", "arguments", AiJson.init_JsonObject_ObjArr("block", "log", "count", 16)).toString(),
+            AiJson.objectOf("id", "game:chop", "arguments", AiJson.objectOf("block", "log", "count", 16)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2311,7 +2311,7 @@ final class AiTools {
             List.of("NETWORK"),
             "Matching chat line observed (or dispatch plus immediate echoes when no matcher); partial lines and silence are reported, never assumed.",
             "On timeout, reobserve recentChat before repeating; never spam an unanswered command.",
-            AiJson.init_JsonObject_ObjArr("id", "game:command", "arguments", AiJson.init_JsonObject_ObjArr("send", "bal", "match", "Balance")).toString(),
+            AiJson.objectOf("id", "game:command", "arguments", AiJson.objectOf("send", "bal", "match", "Balance")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2328,7 +2328,7 @@ final class AiTools {
             List.of(),
             "Options, costs, affordability, input/lapis/XP state of the open table read.",
             "Open the table first (game:interact on the table block).",
-            AiJson.init_JsonObject_ObjArr("id", "game:enchant_table", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "game:enchant_table", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -2345,7 +2345,7 @@ final class AiTools {
             List.of("INVENTORY", "GUI", "NETWORK"),
             "Server-applied slot change observed (container revision + stability window); result reports applied enchants and spent lapis/levels.",
             "On UNCERTAIN, read game:enchant_table before deciding; on deficit errors, supply the named resource.",
-            AiJson.init_JsonObject_ObjArr("id", "game:enchant", "arguments", AiJson.init_JsonObject_ObjArr("button", 2)).toString(),
+            AiJson.objectOf("id", "game:enchant", "arguments", AiJson.objectOf("button", 2)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2363,7 +2363,7 @@ final class AiTools {
             List.of(),
             "Nearest matches with positions, distances and predicted/observed provenance.",
             "On seed errors, provide the seed argument or set the xray oresim-seed; on empty results, widen radiusChunks or move to load more terrain.",
-            AiJson.init_JsonObject_ObjArr("id", "game:oracle", "arguments", AiJson.init_JsonObject_ObjArr("query", "stronghold")).toString(),
+            AiJson.objectOf("id", "game:oracle", "arguments", AiJson.objectOf("query", "stronghold")).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -2380,11 +2380,11 @@ final class AiTools {
             List.of(),
             "scaffold/build/install report the new on-disk state; load/verify report the AddonManager status LOADED with registered ids.",
             "On compile errors, rewrite the named file with action=write and rebuild; on FAILED/NEEDS_NEWER_API loads, fix the named cause and reload.",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                   "id",
                   "client:addon",
                   "arguments",
-                  AiJson.init_JsonObject_ObjArr("action", "scaffold", "id", "my-addon", "name", "My Addon", "features", List.of("module"))
+                  AiJson.objectOf("action", "scaffold", "id", "my-addon", "name", "My Addon", "features", List.of("module"))
                )
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
@@ -2426,7 +2426,7 @@ final class AiTools {
             List.of("NETWORK", "GUI"),
             "World created and joined; the reported seed matches the request when given.",
             "On name-refusal, delete the existing world (Select World screen) or pick another name; on load timeout, read client:screen for the current state.",
-            AiJson.init_JsonObject_ObjArr("id", "client:world_create", "arguments", AiJson.init_JsonObject_ObjArr("name", "AI Speedrun", "seed", -1950884254474434485L))
+            AiJson.objectOf("id", "client:world_create", "arguments", AiJson.objectOf("name", "AI Speedrun", "seed", -1950884254474434485L))
                .toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
@@ -2444,7 +2444,7 @@ final class AiTools {
             List.of(),
             "World list read.",
             "Empty list means no worlds exist yet.",
-            AiJson.init_JsonObject_ObjArr("id", "client:world_list", "arguments", new JsonObject()).toString(),
+            AiJson.objectOf("id", "client:world_list", "arguments", new JsonObject()).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -2461,7 +2461,7 @@ final class AiTools {
             List.of("NETWORK", "GUI"),
             "The named world no longer exists (client:world_list confirms).",
             "On 'Leave the current world first', disconnect and retry; on unknown world, check the name with client:world_list.",
-            AiJson.init_JsonObject_ObjArr("id", "client:world_delete", "arguments", AiJson.init_JsonObject_ObjArr("name", "Old Run")).toString(),
+            AiJson.objectOf("id", "client:world_delete", "arguments", AiJson.objectOf("name", "Old Run")).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2485,7 +2485,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "SUCCEEDED {collected, baseline, count, skipped[]} - requested count observed in inventory; exact surplus reported without disposal. FAILED 'No more reachable sources' reports progress (collected X of Y) and skipped[], plus missing{tool:1} when tier-gated sources remain.",
             "On 'No more reachable sources', explore for more sources or lower count; on a missing{tool} report, craft the named pickaxe first (game:craft); on skipped[] entries, reposition or change conditions before re-issuing; never re-issue unchanged against the same skipped list.",
-            AiJson.init_JsonObject_ObjArr("id", "game:collect", "arguments", AiJson.init_JsonObject_ObjArr("item", "minecraft:oak_log", "count", 16)).toString(),
+            AiJson.objectOf("id", "game:collect", "arguments", AiJson.objectOf("item", "minecraft:oak_log", "count", 16)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2555,11 +2555,11 @@ final class AiTools {
          init_JsonObject_ObjArr("x", "integer", "y", "integer", "z", "integer"), "x", "y", "z"
       );
       gotoSchema.getAsJsonObject("properties")
-         .add("checkpoints", AiJson.init_JsonObject_ObjArr("type", "array", "items", gotoCheckpointItem, "minItems", 1, "maxItems", 31));
+         .add("checkpoints", AiJson.objectOf("type", "array", "items", gotoCheckpointItem, "minItems", 1, "maxItems", 31));
       gotoSchema.getAsJsonObject("properties")
          .add(
             "parkourSpeed",
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "type",
                "integer",
                "minimum",
@@ -2583,7 +2583,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "Observed player position within the arrival radius.",
             "On unreachable-target failures, enable allowDig or move closer to loaded terrain; on stall replans, wait - the engine escalates and reports honestly.",
-            AiJson.init_JsonObject_ObjArr("id", "game:goto", "arguments", AiJson.init_JsonObject_ObjArr("x", 100, "y", 64, "z", -200)).toString(),
+            AiJson.objectOf("id", "game:goto", "arguments", AiJson.objectOf("x", 100, "y", 64, "z", -200)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2604,7 +2604,7 @@ final class AiTools {
             List.of(),
             "Nearest matching biome cell with position, distance and predicted provenance.",
             "On seed errors, provide the seed argument or set the xray oresim-seed; on no hit within radius, widen radiusBlocks; on ambiguous biome, pass a full registry id.",
-            AiJson.init_JsonObject_ObjArr("id", "game:find_biome", "arguments", AiJson.init_JsonObject_ObjArr("biome", "minecraft:plains")).toString(),
+            AiJson.objectOf("id", "game:find_biome", "arguments", AiJson.objectOf("biome", "minecraft:plains")).toString(),
             AiCapabilityDescriptor.Classification.OBSERVE
          )
       );
@@ -2627,7 +2627,7 @@ final class AiTools {
             List.of("INPUT", "ROTATION", "WORLD_ACTION"),
             "Each selected type quota observed broken with drops swept; brokenByBlock and remainingByBlock report per-type progress; collected reported from inventory deltas.",
             "On exhausted sources, widen the search area or move to load more terrain; on blacklisted sources, reposition before re-issuing.",
-            AiJson.init_JsonObject_ObjArr("id", "game:mine", "arguments", AiJson.init_JsonObject_ObjArr("block", "minecraft:coal_ore", "count", 8)).toString(),
+            AiJson.objectOf("id", "game:mine", "arguments", AiJson.objectOf("block", "minecraft:coal_ore", "count", 8)).toString(),
             AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2659,7 +2659,7 @@ final class AiTools {
 
       for (Entry<String, JsonElement> entry : schema.getAsJsonObject("properties").entrySet()) {
          String key = entry.getKey();
-         String type = AiJson.init_Str_JsonObject(entry.getValue().getAsJsonObject(), "type", "");
+         String type = AiJson.getString(entry.getValue().getAsJsonObject(), "type", "");
          switch (type) {
             case "integer":
                example.addProperty(
@@ -2676,7 +2676,7 @@ final class AiTools {
                example.add(key, new JsonObject());
                break;
             case "array":
-               example.add(key, AiJson.init.toJsonTree(List.of("minecraft:wheat")));
+               example.add(key, AiJson.GSON.toJsonTree(List.of("minecraft:wheat")));
                break;
             default:
                example.addProperty(key, init_Str_Str_Str(id, key));
@@ -2696,7 +2696,7 @@ final class AiTools {
             readOnly ? List.of() : List.of("INPUT", "ROTATION", "GUI", "WORLD_ACTION"),
             success,
             "Reobserve and change strategy after failure; stop releases owned controls.",
-            AiJson.init_JsonObject_ObjArr("id", id, "arguments", example).toString(),
+            AiJson.objectOf("id", id, "arguments", example).toString(),
             readOnly ? AiCapabilityDescriptor.Classification.OBSERVE : AiCapabilityDescriptor.Classification.ACTION
          )
       );
@@ -2769,17 +2769,17 @@ final class AiTools {
       }
 
       if (this.init_cc.update_Z() && !AiService.init_Set.contains(tool) && !"perform".equals(tool)) {
-         return AiJson.init_JsonObject_ObjArr("status", "FAILED", "error", "Plan mode: research and plan first; the user approves before any action");
+         return AiJson.objectOf("status", "FAILED", "error", "Plan mode: research and plan first; the user approves before any action");
       }
 
       if (this.init_cc.update_Z() && "perform".equals(tool)) {
-         return AiJson.init_JsonObject_ObjArr("status", "FAILED", "error", "Plan mode: no capabilities may be performed until the user approves the plan");
+         return AiJson.objectOf("status", "FAILED", "error", "Plan mode: no capabilities may be performed until the user approves the plan");
       }
 
       if (!fromScript && Set.of("catalog_inspect", "catalog_search").contains(tool)) {
          int seen = this.init_Map.merge(key, 1, Integer::sum);
          if (seen >= 4) {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "status",
                "FAILED",
                "error",
@@ -2796,7 +2796,7 @@ final class AiTools {
 
       try {
          JsonObject result = this.load(tool, args, generation);
-         this.init_bH.init_V_Str_Str(key, AiRetryGuard.init_Z_JsonObject(result) ? "INTERRUPTED" : AiJson.init_Str_JsonObject(result, "status", ""));
+         this.init_bH.init_V_Str_Str(key, AiRetryGuard.init_Z_JsonObject(result) ? "INTERRUPTED" : AiJson.getString(result, "status", ""));
          return result;
       } catch (CancellationException e) {
          throw e;
@@ -2815,38 +2815,38 @@ final class AiTools {
       JsonObject var10000;
       switch (tool) {
          case "catalog_search": {
-            JsonObject var44 = AiJson.init_JsonObject_ObjArr(
+            JsonObject var44 = AiJson.objectOf(
                "revision",
                this.init_cc.init_AiCatalog_Snapshot().revision(),
                "entries",
                this.init_cc
                   .init_AiCatalog_Snapshot()
-                  .search(AiJson.init_Str_JsonObject(args, "query", ""), AiJson.init_I_JsonObject(args, "offset", 0), AiJson.init_I_JsonObject(args, "limit", 12))
+                  .search(AiJson.getString(args, "query", ""), AiJson.getInt(args, "offset", 0), AiJson.getInt(args, "limit", 12))
             );
             JsonObject var45 = var44;
             var10000 = var45;
             break;
          }
          case "catalog_inspect": {
-            JsonObject var43 = this.init_JsonObject_Str_J(AiJson.init_Str_JsonObject(args, "id", ""), generation);
+            JsonObject var43 = this.init_JsonObject_Str_J(AiJson.getString(args, "id", ""), generation);
             JsonObject var44 = var43;
             var10000 = var44;
             break;
          }
          case "get_tool_schema": {
-            JsonObject var42 = this.init_JsonObject_Str_J(AiJson.init_Str_JsonObject(args, "id", ""), generation);
+            JsonObject var42 = this.init_JsonObject_Str_J(AiJson.getString(args, "id", ""), generation);
             JsonObject var43 = var42;
             var10000 = var43;
             break;
          }
          case "list_tools": {
-            JsonObject var41 = this.init_JsonObject_Str(AiJson.init_Str_JsonObject(args, "category", ""));
+            JsonObject var41 = this.init_JsonObject_Str(AiJson.getString(args, "category", ""));
             JsonObject var42 = var41;
             var10000 = var42;
             break;
          }
          case "observe": {
-            JsonObject var40 = AiJson.init.toJsonTree(this.init_cc.init_AiObservation_J_Str(generation, "game")).getAsJsonObject();
+            JsonObject var40 = AiJson.GSON.toJsonTree(this.init_cc.init_AiObservation_J_Str(generation, "game")).getAsJsonObject();
             JsonObject var41 = var40;
             var10000 = var41;
             break;
@@ -2876,13 +2876,13 @@ final class AiTools {
             break;
          }
          case "perform":
-            String id = AiJson.init_Str_JsonObject(args, "id", "");
+            String id = AiJson.getString(args, "id", "");
             AiCatalog.Entry entry = this.init_cc.init_AiCatalog_Snapshot().get(id);
             if (entry == null) {
                throw new IllegalArgumentException("Unknown capability " + id + this.load(id));
             }
 
-            String given = AiJson.init_Str_JsonObject(args, "fingerprint", "");
+            String given = AiJson.getString(args, "fingerprint", "");
             if (this.init_cc.init_Z() && !given.isBlank() && !entry.fingerprint().equals(given)) {
                throw new IllegalArgumentException("Stale fingerprint for " + id + "; perform again with fingerprint " + entry.fingerprint());
             }
@@ -2912,7 +2912,7 @@ final class AiTools {
 
             if (supplied != null && supplied.isJsonPrimitive() && supplied.getAsJsonPrimitive().isString()) {
                try {
-                  supplied = AiJson.init_JsonObject_Str(supplied.getAsString());
+                  supplied = AiJson.parseObject(supplied.getAsString());
                } catch (RuntimeException var22) {
                }
             }
@@ -2922,7 +2922,7 @@ final class AiTools {
             }
 
             JsonObject raw = supplied != null && supplied.isJsonObject() ? supplied.getAsJsonObject() : new JsonObject();
-            JsonObject schema = AiJson.init_JsonObject_Str(entry.contract().inputSchema());
+            JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
             List<String> ignored = new ArrayList<>();
             JsonObject arguments = !schema.has("type") && !schema.has("properties") ? raw : AiSchemas.init(schema, raw, !this.init_cc.init_Z(), ignored);
             if (schema.has("type") || schema.has("properties")) {
@@ -2933,15 +2933,15 @@ final class AiTools {
                autismclient.util.AutoCraftingEngine.CraftContext snapshot = this.init_cc
                   .init_Obj_J_Supplier(generation, () -> autismclient.util.AutoCraftingEngine.init_J_BufferHelper(Minecraft.getInstance()));
                List<autismclient.util.AutoCraftingEngine.CraftOption> options = autismclient.util.AutoCraftingEngine.init(snapshot);
-               String query = AiJson.init_Str_JsonObject(arguments, "query", "").toLowerCase(Locale.ROOT);
+               String query = AiJson.getString(arguments, "query", "").toLowerCase(Locale.ROOT);
                JsonArray recipes = new JsonArray();
                options.stream()
                   .filter(o -> o.write_Str.contains(query))
-                  .skip(Math.max(0, AiJson.init_I_JsonObject(arguments, "offset", 0)))
-                  .limit(Math.max(1, Math.min(50, AiJson.init_I_JsonObject(arguments, "limit", 20))))
+                  .skip(Math.max(0, AiJson.getInt(arguments, "offset", 0)))
+                  .limit(Math.max(1, Math.min(50, AiJson.getInt(arguments, "limit", 20))))
                   .forEach(
                      o -> recipes.add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "key",
                            o.init_Str,
                            "item",
@@ -2961,7 +2961,7 @@ final class AiTools {
                         )
                      )
                   );
-               JsonObject var34x = AiJson.init_JsonObject_ObjArr(
+               JsonObject var34x = AiJson.objectOf(
                   "status",
                   "SUCCEEDED",
                   "recipes",
@@ -2977,7 +2977,7 @@ final class AiTools {
                JsonObject result = this.init_cc.init_JsonObject_J_2(generation, id, entry.fingerprint(), () -> this.read(id, arguments));
                this.init_bw.init(id, entry.fingerprint(), arguments, result);
                if (!ignored.isEmpty()) {
-                  result.add("ignoredArguments", AiJson.init.toJsonTree(ignored));
+                  result.add("ignoredArguments", AiJson.GSON.toJsonTree(ignored));
                }
 
                if (entry.contract().classification() == AiCapabilityDescriptor.Classification.OBSERVE) {
@@ -2997,7 +2997,7 @@ final class AiTools {
          }
          case "task_update": {
             this.init_cc.init_V_JsonObject(args);
-            JsonObject var32 = AiJson.init_JsonObject_ObjArr("recorded", true);
+            JsonObject var32 = AiJson.objectOf("recorded", true);
             JsonObject var33 = var32;
             var10000 = var33;
             break;
@@ -3009,27 +3009,27 @@ final class AiTools {
             break;
          }
          case "procedure_inspect": {
-            JsonObject var30 = this.init_bw.init_JsonObject_Str(AiJson.init_Str_JsonObject(args, "id", ""));
+            JsonObject var30 = this.init_bw.init_JsonObject_Str(AiJson.getString(args, "id", ""));
             JsonObject var31 = var30;
             var10000 = var31;
             break;
          }
          case "procedure_run": {
-            JsonObject var29 = this.init_bw.init_JsonObject_Str_2(AiJson.init_Str_JsonObject(args, "id", ""), generation, this);
+            JsonObject var29 = this.init_bw.init_JsonObject_Str_2(AiJson.getString(args, "id", ""), generation, this);
             JsonObject var30 = var29;
             var10000 = var30;
             break;
          }
          case "memory_search": {
-            JsonObject var28 = AiJson.init_JsonObject_ObjArr(
-               "memories", this.init_cc.init_AiMemoryStore().init(this.init_cc.poll_Str(), AiJson.init_Str_JsonObject(args, "query", ""), 20)
+            JsonObject var28 = AiJson.objectOf(
+               "memories", this.init_cc.init_AiMemoryStore().init(this.init_cc.poll_Str(), AiJson.getString(args, "query", ""), 20)
             );
             JsonObject var29 = var28;
             var10000 = var29;
             break;
          }
          case "memory_remember": {
-            String kindText = AiJson.init_Str_JsonObject(args, "kind", "HYPOTHESIS").trim();
+            String kindText = AiJson.getString(args, "kind", "HYPOTHESIS").trim();
 
             AiMemoryStore.Inner_DataUtil kind;
             try {
@@ -3043,9 +3043,9 @@ final class AiTools {
             }
 
             String memoryScope = kind == AiMemoryStore.Inner_DataUtil.USER ? "user" : this.init_cc.poll_Str();
-            String text = AiJson.init_Str_JsonObject(args, "text", "");
-            String payload = AiJson.init_Str_JsonObject(args, "payload", "");
-            String evidence = AiJson.init_Str_JsonObject(args, "evidenceId", "");
+            String text = AiJson.getString(args, "text", "");
+            String payload = AiJson.getString(args, "payload", "");
+            String evidence = AiJson.getString(args, "evidenceId", "");
 
             AiMemoryStore.Memory memory;
             try {
@@ -3065,19 +3065,19 @@ final class AiTools {
                memory = this.init_cc.init_AiMemoryStore().init(kind, memoryScope, text, fallback, this.init_cc.init_AiCatalog_Snapshot().revision(), payload);
             }
 
-            JsonObject var27 = AiJson.init_JsonObject_ObjArr("memory", memory);
+            JsonObject var27 = AiJson.objectOf("memory", memory);
             JsonObject var28 = var27;
             var10000 = var28;
             break;
          }
          case "web_search": {
-            JsonObject var26 = this.init_cc.init_JsonObject_Str_J(AiJson.init_Str_JsonObject(args, "query", ""), generation);
+            JsonObject var26 = this.init_cc.init_JsonObject_Str_J(AiJson.getString(args, "query", ""), generation);
             JsonObject var271 = var26;
             var10000 = var271;
             break;
          }
          case "web_fetch": {
-            JsonObject var25 = AiWeb.init_JsonObject(AiJson.init_Str_JsonObject(args, "url", ""), () -> this.init_cc.init_V_J(generation));
+            JsonObject var25 = AiWeb.init_JsonObject(AiJson.getString(args, "url", ""), () -> this.init_cc.init_V_J(generation));
             JsonObject var26 = var25;
             var10000 = var26;
             break;
@@ -3148,11 +3148,11 @@ final class AiTools {
                   Command command = autismclient.commands.CommandManager.getCommand(id.substring(8));
                   if (command != null) {
                      current.addProperty("prefix", autismclient.commands.CommandManager.getPrefix());
-                     current.add("forms", AiJson.init.toJsonTree(autismclient.commands.CommandManager.getUsageForms(command)));
+                     current.add("forms", AiJson.GSON.toJsonTree(autismclient.commands.CommandManager.getUsageForms(command)));
                   }
                }
 
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "entry",
                   e,
                   "known",
@@ -3190,13 +3190,13 @@ final class AiTools {
          AiCapabilityDescriptor contract = entry.contract();
          if (filter.isEmpty() || contract.family().equals(filter)) {
             grouped.computeIfAbsent(contract.family(), f -> new JsonArray())
-               .add(AiJson.init_JsonObject_ObjArr("id", contract.id(), "summary", init_Str_Str(contract.purpose())));
+               .add(AiJson.objectOf("id", contract.id(), "summary", init_Str_Str(contract.purpose())));
          }
       }
 
       JsonObject categories = new JsonObject();
       grouped.forEach(categories::add);
-      return AiJson.init_JsonObject_ObjArr("revision", this.init_cc.init_AiCatalog_Snapshot().revision(), "categories", categories);
+      return AiJson.objectOf("revision", this.init_cc.init_AiCatalog_Snapshot().revision(), "categories", categories);
    }
 
    public static String init_Str_Str(String purpose) {
@@ -3214,15 +3214,15 @@ final class AiTools {
          JsonObject data = args.getAsJsonObject("macro");
          String existing = this.init_cc.init_Obj_J_Supplier(generation, () -> {
             autismclient.util.AutismMacro validated = AiMacroValidator.init(data, this.init_cc.init_AiCatalog_Snapshot());
-            autismclient.util.AutismMacro old = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(validated.init_Str);
+            autismclient.util.AutismMacro old = autismclient.util.MacroLibraryManager.getInstance().findByName(validated.name);
             return old == null ? "" : init_JsonObject_aM(old).toString();
          });
          if (!existing.isEmpty()) {
-            if (this.init_cc.init_Z() && !AiJson.init_Str_Str(existing).equals(AiJson.init_Str_JsonObject(args, "expectedFingerprint", ""))) {
+            if (this.init_cc.init_Z() && !AiJson.sha256Hex(existing).equals(AiJson.getString(args, "expectedFingerprint", ""))) {
                throw new IllegalArgumentException("Macro already exists or changed; inspect client:macros before editing");
             }
 
-            this.init_cc.read_V_Str_Str(AiJson.init_Str_JsonObject(data, "name", "AI Macro").trim(), existing);
+            this.init_cc.read_V_Str_Str(AiJson.getString(data, "name", "AI Macro").trim(), existing);
          }
 
          return this.init_cc
@@ -3230,22 +3230,22 @@ final class AiTools {
                generation,
                () -> {
                   autismclient.util.AutismMacro macro = AiMacroValidator.init(data, this.init_cc.init_AiCatalog_Snapshot());
-                  autismclient.util.MacroLibraryManager manager = autismclient.util.MacroLibraryManager.init_aN();
-                  autismclient.util.AutismMacro old = manager.init_aM_Str(macro.init_Str);
+                  autismclient.util.MacroLibraryManager manager = autismclient.util.MacroLibraryManager.getInstance();
+                  autismclient.util.AutismMacro old = manager.findByName(macro.name);
                   if (!existing.equals(old == null ? "" : init_JsonObject_aM(old).toString())) {
                      throw new IllegalArgumentException("Macro changed while preserving its revision; inspect again");
                   }
 
-                  manager.init_V_aM(macro);
-                  return AiJson.init_JsonObject_ObjArr(
+                  manager.saveMacro(macro);
+                  return AiJson.objectOf(
                      "saved",
                      true,
                      "name",
-                     macro.init_Str,
+                     macro.name,
                      "fingerprint",
-                     AiJson.init_Str_Str(init_JsonObject_aM(macro).toString()),
+                     AiJson.sha256Hex(init_JsonObject_aM(macro).toString()),
                      "steps",
-                     macro.init_List.size()
+                     macro.actions.size()
                   );
                }
             );
@@ -3255,13 +3255,13 @@ final class AiTools {
    }
 
    static JsonObject init_JsonObject_aM(autismclient.util.AutismMacro macro) {
-      return NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, macro.load_CompoundTag()).getAsJsonObject();
+      return NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, macro.toTag()).getAsJsonObject();
    }
 
    static JsonObject init_JsonObject_Str_JsonObject(String id, JsonObject args) {
       Integer fallback = load.get(id);
       if (fallback != null && !args.has("timeoutSeconds")) {
-         if ((id.equals("game:goto") || id.equals("game:navigate")) && AiJson.init_Z_JsonObject(args, "parkour", false)) {
+         if ((id.equals("game:goto") || id.equals("game:navigate")) && AiJson.getBoolean(args, "parkour", false)) {
             return args;
          }
 
@@ -3284,11 +3284,11 @@ final class AiTools {
             BlockState state = block.defaultBlockState();
             if (state.requiresCorrectToolForDrops() && autismclient.ai.engine.MiningCost.load(mc, state, true) < 0) {
                String tool = AiCollect.init(state);
-               return AiGameOperations.init(
+               return AiGameOperations.immediateFailure(
                   AiOperation.Status.FAILED,
                   AiFailure.MISSING_TOOL,
                   id + " drops nothing without " + tool + " or better; get one first (game:obtain " + tool + ")",
-                  AiJson.init_JsonObject_ObjArr("missing", AiCollect.init(tool))
+                  AiJson.objectOf("missing", AiCollect.init(tool))
                );
             } else {
                return null;
@@ -3303,9 +3303,9 @@ final class AiTools {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          return new BlockPos(
-            AiJson.init_I_JsonObject(args, "x", mc.player.getBlockX()),
-            AiJson.init_I_JsonObject(args, "y", mc.player.getBlockY()),
-            AiJson.init_I_JsonObject(args, "z", mc.player.getBlockZ())
+            AiJson.getInt(args, "x", mc.player.getBlockX()),
+            AiJson.getInt(args, "y", mc.player.getBlockY()),
+            AiJson.getInt(args, "z", mc.player.getBlockZ())
          );
       } else {
          throw new IllegalArgumentException("Structure observation needs a connected player");
@@ -3317,7 +3317,7 @@ final class AiTools {
    }
 
    private static AiOperation init_AiOperation_Str(String id, JsonObject args, AiOperation op) {
-      return op != null && (AiGuard.init(id, args) || AiGuard.init(id)) ? AiGuard.init(op) : op;
+      return op != null && (AiGuard.isLowHealthRecoveryOp(id, args) || AiGuard.isSafeLowHealthNavigationOp(id)) ? AiGuard.allowDuringLowHealth(op) : op;
    }
 
    private static AiOperation load(String id, JsonObject args) {
@@ -3340,36 +3340,36 @@ final class AiTools {
             var10000 = autismclient.ai.engine.AiSeek.load(args);
             break;
          case "game:entities":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Entities queried", AiEntityQuery.init(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Entities queried", AiEntityQuery.init(args));
             break;
          case "game:events":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Events read", AiEventLog.init_JsonObject_JsonObject(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Events read", AiEventLog.init_JsonObject_JsonObject(args));
             break;
          case "game:raycast":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Raycast resolved", AiRaycast.init(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Raycast resolved", AiRaycast.init(args));
             break;
          case "game:mine":
             JsonObject mineArgs = AiMiningQuota.init_JsonObject_JsonObject(args);
-            AiMiningTargets targets = AiMiningTargets.parse(AiJson.init_Str_JsonObject(mineArgs, "block", ""));
+            AiMiningTargets targets = AiMiningTargets.parse(AiJson.getString(mineArgs, "block", ""));
             AiOperation gated = targets.types().size() == 1 ? init_AiOperation_Str(targets.spec()) : null;
             var10000 = gated != null
                ? gated
                : (
-                  !AiJson.init_Z_JsonObject(args, "backfill", false) && !AiOreRoute.init_Z
+                  !AiJson.getBoolean(args, "backfill", false) && !AiOreRoute.init_Z
                      ? autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "block",
                            targets.spec(),
                            "counts",
                            mineArgs.get("counts"),
                            "count",
-                           AiJson.init_I_JsonObject(args, "count", 1),
+                           AiJson.getInt(args, "count", 1),
                            "trees",
                            targets.types().size() == 1 && (targets.spec().equals("log") || targets.spec().endsWith("_log")),
                            "radius",
-                           AiJson.init_I_JsonObject(args, "radius", 64),
+                           AiJson.getInt(args, "radius", 64),
                            "timeoutSeconds",
-                           AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)
+                           AiJson.getInt(args, "timeoutSeconds", 300)
                         )
                      )
                      : autismclient.ai.engine.AiMine.init(mineArgs)
@@ -3382,13 +3382,13 @@ final class AiTools {
             var10000 = autismclient.ai.engine.AiExcavate.load(args);
             break;
          case "game:harvest_wheat":
-            var10000 = AiGameOperations.read(args);
+            var10000 = AiGameOperations.farmWheat(args);
             break;
          case "game:find_village":
-            var10000 = AiGameOperations.init(args, true);
+            var10000 = AiGameOperations.explore(args, true);
             break;
          case "game:explore":
-            var10000 = AiGameOperations.init(args, false);
+            var10000 = AiGameOperations.explore(args, false);
             break;
          case "game:oracle":
             var10000 = AiOracle.init_AiOperation_JsonObject(args);
@@ -3441,22 +3441,22 @@ final class AiTools {
          case "game:break":
          case "game:interact":
          case "game:place":
-            var10000 = AiGameOperations.init(id.substring(5), args);
+            var10000 = AiGameOperations.blockAction(id.substring(5), args);
             break;
          case "game:place_near":
-            var10000 = AiGameOperations.init_AiOperation(args);
+            var10000 = AiGameOperations.placeItem(args);
             break;
          case "game:inventory_click":
-            var10000 = AiGameOperations.load(args);
+            var10000 = AiGameOperations.clickContainerSlot(args);
             break;
          case "game:reconcile_inventory":
             var10000 = new AiInventoryController(args);
             break;
          case "game:inspect_item":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read observed item text", AiGameplay.init_JsonObject(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read observed item text", AiGameplay.init_JsonObject(args));
             break;
          case "game:read_sign":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read observed sign text", AiGameplay.load_JsonObject(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read observed sign text", AiGameplay.load_JsonObject(args));
             break;
          case "game:interact_entity":
             var10000 = AiGameplay.load_AiOperation(args);
@@ -3471,7 +3471,7 @@ final class AiTools {
             var10000 = AiEnchant.init_AiOperation(args);
             break;
          case "game:enchant_table":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read open enchanting table", AiEnchant.init_JsonObject(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read open enchanting table", AiEnchant.init_JsonObject(args));
             break;
          case "game:craft":
             JsonObject crafted = args.deepCopy();
@@ -3479,7 +3479,7 @@ final class AiTools {
                crafted.addProperty("reclaimTable", true);
             }
 
-            var10000 = AiCraft.init(crafted);
+            var10000 = AiCraft.craft(crafted);
             break;
          case "game:obtain":
             var10000 = AiObtain.init(args);
@@ -3557,17 +3557,17 @@ final class AiTools {
             var10000 = AiEndRun.init(args);
             break;
          case "game:world_memory":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Observed world memory and partial discovery coverage", AiWorldMemory.init(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Observed world memory and partial discovery coverage", AiWorldMemory.init(args));
             break;
          case "game:run_resources":
-            var10000 = AiGameOperations.init_AiOperation(
+            var10000 = AiGameOperations.immediate(
                AiOperation.Status.SUCCEEDED,
                "Observed run resources and directed portal links",
-               AiJson.init_JsonObject_ObjArr("resources", AiRunResources.init_JsonObject(), "portalLinks", AiPortalLinks.init_JsonArray())
+               AiJson.objectOf("resources", AiRunResources.inventorySnapshotJson(), "portalLinks", AiPortalLinks.init_JsonArray())
             );
             break;
          case "game:nether_structures":
-            var10000 = AiGameOperations.init_AiOperation(
+            var10000 = AiGameOperations.immediate(
                AiOperation.Status.SUCCEEDED,
                "Observed structural evidence; variants are hypotheses",
                AiNetherStructures.init_aC_DataUtil(init_BlockPos_JsonObject(args)).data()
@@ -3616,7 +3616,7 @@ final class AiTools {
             var10000 = AiGameplay.sync(args);
             break;
          case "game:menu":
-            var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read current custom menu", AiGameplay.init());
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read current custom menu", AiGameplay.init());
             break;
          case "game:submit_menu":
             var10000 = AiGameplay.init_AiOperation(args);
@@ -3644,7 +3644,7 @@ final class AiTools {
             action.addProperty("type", id.substring(6));
             action.remove("timeoutSeconds");
             autismclient.util.AutismMacro m = AiMacroValidator.init(
-               AiJson.init_JsonObject_ObjArr("name", "AI operation " + UUID.randomUUID(), "actions", List.of(action)), this.init_cc.init_AiCatalog_Snapshot()
+               AiJson.objectOf("name", "AI operation " + UUID.randomUUID(), "actions", List.of(action)), this.init_cc.init_AiCatalog_Snapshot()
             );
             return this.init_AiOperation_aM_JsonObject(m, args);
          }
@@ -3658,17 +3658,17 @@ final class AiTools {
       if (id.equals("client:macros")) {
          JsonArray macros = new JsonArray();
 
-         for (autismclient.util.AutismMacro m : autismclient.util.MacroLibraryManager.init_aN().init_List()) {
-            macros.add(AiJson.init_JsonObject_ObjArr("macro", init_JsonObject_aM(m), "fingerprint", AiJson.init_Str_Str(init_JsonObject_aM(m).toString())));
+         for (autismclient.util.AutismMacro m : autismclient.util.MacroLibraryManager.getInstance().getMacros()) {
+            macros.add(AiJson.objectOf("macro", init_JsonObject_aM(m), "fingerprint", AiJson.sha256Hex(init_JsonObject_aM(m).toString())));
          }
 
-         return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read macro library", AiJson.init_JsonObject_ObjArr("macros", macros));
+         return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read macro library", AiJson.objectOf("macros", macros));
       } else {
          if (id.equals("client:packet_log")) {
-            String action = AiJson.init_Str_JsonObject(args, "action", "state");
+            String action = AiJson.getString(args, "action", "state");
             return action.equalsIgnoreCase("read")
-               ? AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read captured packet log", AiPacketLog.load(args))
-               : AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Packet capture control applied", AiPacketLog.init(args));
+               ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read captured packet log", AiPacketLog.load(args))
+               : AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Packet capture control applied", AiPacketLog.init(args));
          }
 
          if (id.equals("client:packet_send")) {
@@ -3680,77 +3680,77 @@ final class AiTools {
          }
 
          if (id.equals("client:plugin_scan_cached")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read cached plugin scan", AiServerIntel.init_JsonObject(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read cached plugin scan", AiServerIntel.init_JsonObject(args));
          }
 
          if (id.equals("client:lan")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read LAN Sync status", AiLanSync.init(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read LAN Sync status", AiLanSync.init(args));
          }
 
          if (id.equals("client:screen")) {
-            return AiGameOperations.init_AiOperation(
+            return AiGameOperations.immediate(
                AiOperation.Status.SUCCEEDED, "Read current screen", !args.has("index") && !args.has("ip") ? AiScreens.init_JsonObject(mc) : AiScreens.update(args)
             );
          }
 
          if (id.equals("client:screen_click")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Clicked screen widget", AiScreens.init_JsonObject(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Clicked screen widget", AiScreens.init_JsonObject(args));
          }
 
          if (id.equals("client:screen_type")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Typed into screen text field", AiScreens.write(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Typed into screen text field", AiScreens.write(args));
          }
 
          if (id.equals("client:screen_close")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Closed screen", AiScreens.load_JsonObject(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Closed screen", AiScreens.load_JsonObject(args));
          }
 
          if (id.equals("client:macro_folders")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Macro folders", AiClientConfig.pop(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Macro folders", AiClientConfig.pop(args));
          }
 
          if (id.equals("client:macro_manage")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Macro library", AiClientConfig.tick(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Macro library", AiClientConfig.tick(args));
          }
 
          if (id.equals("client:screen_store")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Stored GUI", AiScreens.read(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Stored GUI", AiScreens.read(args));
          }
 
          if (id.equals("client:packet_gui")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "GUI packet controls", AiClientConfig.write(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "GUI packet controls", AiClientConfig.write(args));
          }
 
          if (id.equals("client:packet_filter")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Packet filter", AiClientConfig.update(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Packet filter", AiClientConfig.update(args));
          }
 
          if (id.equals("client:waypoint_manage")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Waypoints", AiClientConfig.sync(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Waypoints", AiClientConfig.sync(args));
          }
 
          if (id.equals("client:proxies")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Proxies", AiClientConfig.close(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Proxies", AiClientConfig.close(args));
          }
 
          if (id.equals("client:join_macro")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Join macro", AiClientConfig.open(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Join macro", AiClientConfig.open(args));
          }
 
          if (id.equals("client:server_info")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Server info", AiClientConfig.poll(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Server info", AiClientConfig.poll(args));
          }
 
          if (id.equals("client:profiles")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Profiles", AiClientConfig.init_JsonObject(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Profiles", AiClientConfig.init_JsonObject(args));
          }
 
          if (id.equals("client:theme")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Theme colours", AiClientConfig.load(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Theme colours", AiClientConfig.load(args));
          }
 
          if (id.equals("client:hud")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "HUD elements", AiClientConfig.read(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "HUD elements", AiClientConfig.read(args));
          }
 
          if (id.equals("client:connect")) {
@@ -3758,7 +3758,7 @@ final class AiTools {
          }
 
          if (id.equals("client:disconnect")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Disconnected", AiScreens.sync(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Disconnected", AiScreens.sync(args));
          }
 
          if (id.equals("client:addon")) {
@@ -3770,11 +3770,11 @@ final class AiTools {
          }
 
          if (id.equals("client:world_list")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read world list", AiWorldCreate.init_JsonObject(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read world list", AiWorldCreate.init_JsonObject(args));
          }
 
          if (id.equals("client:world_delete")) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "World deleted", AiWorldCreate.load(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "World deleted", AiWorldCreate.load(args));
          }
 
          if (mc.player != null && mc.level != null && mc.player.isAlive()) {
@@ -3788,48 +3788,48 @@ final class AiTools {
             AiOperation var10000;
             switch (id) {
                case "client:packets":
-                  var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Read runtime protocol schemas", AiPacketLog.read(args));
+                  var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read runtime protocol schemas", AiPacketLog.read(args));
                   break;
                case "client:plugin_scan":
                   var10000 = AiServerIntel.init_AiOperation(args);
                   break;
                case "client:lan_control":
-                  var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", AiLanSync.load(args));
+                  var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", AiLanSync.load(args));
                   break;
                case "client:run_macro":
-                  autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(AiJson.init_Str_JsonObject(args, "name", ""));
+                  autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(AiJson.getString(args, "name", ""));
                   if (macro == null) {
                      throw new IllegalArgumentException("Unknown macro");
                   }
 
                   if (args.has("expectedMacroFingerprint")
-                     && !AiJson.init_Str_JsonObject(args, "expectedMacroFingerprint", "").equals(AiJson.init_Str_Str(init_JsonObject_aM(macro).toString()))) {
+                     && !AiJson.getString(args, "expectedMacroFingerprint", "").equals(AiJson.sha256Hex(init_JsonObject_aM(macro).toString()))) {
                      throw new IllegalArgumentException("Saved procedure macro revision changed; inspect and record it again");
                   }
 
                   var10000 = init_AiOperation_aM(macro, args, settings);
                   break;
                case "client:waypoints":
-                  var10000 = AiGameOperations.init_AiOperation(
+                  var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Read scoped waypoints",
-                     AiJson.init_JsonObject_ObjArr("waypoints", AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc)))
+                     AiJson.objectOf("waypoints", AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc)))
                   );
                   break;
                case "client:waypoints_add":
                   String scope = AuditWaypointScope.current(mc);
-                  String name = AiJson.init_Str_JsonObject(args, "name", "");
+                  String name = AiJson.getString(args, "name", "");
                   if (name.isBlank()) {
                      throw new IllegalArgumentException("Waypoint name required");
                   }
 
-                  BlockPos p = AiGameOperations.init_BlockPos(args);
+                  BlockPos p = AiGameOperations.requireBlockPos(args);
                   AutismWaypoints.init_AutismWaypoints()
                      .init(scope, new AutismWaypoints.Waypoint(name, p.getX(), p.getY(), p.getZ(), -8337153, System.currentTimeMillis()));
-                  var10000 = AiGameOperations.init_AiOperation(
+                  var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Added scoped waypoint",
-                     AiJson.init_JsonObject_ObjArr("waypoints", AutismWaypoints.init_AutismWaypoints().init_List_Str(scope))
+                     AiJson.objectOf("waypoints", AutismWaypoints.init_AutismWaypoints().init_List_Str(scope))
                   );
                   break;
                default:
@@ -3861,7 +3861,7 @@ final class AiTools {
       if (node.isJsonObject()) {
          JsonObject object = node.getAsJsonObject();
          if (object.has("type")) {
-            String type = AiJson.init_Str_JsonObject(object, "type", "");
+            String type = AiJson.getString(object, "type", "");
             if (Set.of("VCLIP", "HCLIP").contains(type) && !s.allowClips) {
                return "Macro action " + type + " is a detectable clip feature and is disabled; enable 'Detectable: clips' in AI Advanced settings to allow it";
             }
@@ -3910,34 +3910,34 @@ final class AiTools {
          throw new IllegalArgumentException(restricted);
       }
 
-      final String macroFingerprint = AiJson.init_Str_Str(init_JsonObject_aM(macro).toString());
+      final String macroFingerprint = AiJson.sha256Hex(init_JsonObject_aM(macro).toString());
       final long run = MacroExecutor.init_J_aM_MacroExecutor_Pool(macro, MacroExecutor.ExecutionFlags.init_MacroExecutor_Pool);
       if (run < 0L) {
-         return AiGameOperations.init_AiOperation(
+         return AiGameOperations.immediate(
             AiOperation.Status.FAILED,
             "Macro launch rejected (panic lock, same-name run, capacity, or unreadable macro)",
-            AiJson.init_JsonObject_ObjArr("launched", false, "macroFingerprint", macroFingerprint)
+            AiJson.objectOf("launched", false, "macroFingerprint", macroFingerprint)
          );
       }
 
-      final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600))) * 1000000000L;
+      final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
             MacroExecutor.MacroRunOutcome outcome = MacroExecutor.init_MacroExecutor_Macr_J(run);
             if (outcome != null) {
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   outcome.outcome().equals("COMPLETED") ? AiOperation.Status.SUCCEEDED : AiOperation.Status.UNCERTAIN,
                   "Macro execution " + outcome.outcome() + "; verify gameplay postcondition",
-                  AiJson.init_JsonObject_ObjArr("outcome", outcome, "macroFingerprint", macroFingerprint)
+                  AiJson.objectOf("outcome", outcome, "macroFingerprint", macroFingerprint)
                );
             } else if (System.nanoTime() > deadline) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "Macro deadline reached", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Macro deadline reached", new JsonObject());
             } else {
                return !MacroExecutor.init_Z_J(run)
-                  ? AiGameOperations.init_AiOperation_Result(AiOperation.Status.UNCERTAIN, "Macro ended without retained outcome", new JsonObject())
-                  : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Macro running", AiJson.init_JsonObject_ObjArr("runId", run));
+                  ? AiGameOperations.result(AiOperation.Status.UNCERTAIN, "Macro ended without retained outcome", new JsonObject())
+                  : AiGameOperations.result(AiOperation.Status.RUNNING, "Macro running", AiJson.objectOf("runId", run));
             }
          }
 

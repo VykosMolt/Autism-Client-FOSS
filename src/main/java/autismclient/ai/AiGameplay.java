@@ -58,14 +58,14 @@ final class AiGameplay {
    static JsonObject init() {
       CustomMenuSnapshot current = autismclient.util.custommenu.CustomMenuTracker.init_CustomMenuSnapshot();
       if (current == null) {
-         return AiJson.init_JsonObject_ObjArr("available", false);
+         return AiJson.objectOf("available", false);
       }
 
       JsonArray inputs = new JsonArray();
 
       for (CustomMenuInput input : current.inputs()) {
          inputs.add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "key",
                input.key(),
                "label",
@@ -84,7 +84,7 @@ final class AiGameplay {
          );
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "available",
          true,
          "adapter",
@@ -110,10 +110,10 @@ final class AiGameplay {
          throw new IllegalArgumentException("generation required; inspect game:menu again");
       }
 
-      if (current != null && current.generation() == generation && current.adapterId().equals(AiJson.init_Str_JsonObject(args, "adapter", ""))) {
+      if (current != null && current.generation() == generation && current.adapterId().equals(AiJson.getString(args, "adapter", ""))) {
          CustomMenuButton button = current.buttons()
             .stream()
-            .filter(b -> b.index() == AiJson.init_I_JsonObject(args, "button", -1))
+            .filter(b -> b.index() == AiJson.getInt(args, "button", -1))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Unknown form button"));
          if (!button.serverRelevant()) {
@@ -181,7 +181,7 @@ final class AiGameplay {
 
          return expected != null
             ? expected
-            : AiGameOperations.init_AiOperation(AiOperation.Status.UNCERTAIN, "Form submitted once; verify the server response before another submission", init());
+            : AiGameOperations.immediate(AiOperation.Status.UNCERTAIN, "Form submitted once; verify the server response before another submission", init());
       } else {
          throw new IllegalArgumentException("Stale custom menu; inspect game:menu again");
       }
@@ -191,11 +191,11 @@ final class AiGameplay {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          AbstractContainerMenu menu = mc.player.containerMenu;
-         if (menu.containerId != AiJson.init_I_JsonObject(args, "containerId", -1)) {
+         if (menu.containerId != AiJson.getInt(args, "containerId", -1)) {
             throw new IllegalArgumentException("Stale container; observe again");
          }
 
-         int slot = AiJson.init_I_JsonObject(args, "slot", -1);
+         int slot = AiJson.getInt(args, "slot", -1);
          if (slot >= 0 && slot < menu.slots.size()) {
             ItemStack item = menu.getSlot(slot).getItem();
             ItemLore lore = item.get(DataComponents.LORE);
@@ -205,7 +205,7 @@ final class AiGameplay {
                lore.lines().stream().limit(32L).forEach(line -> lines.add(init_Str(line.getString())));
             }
 
-            int offset = Math.max(0, AiJson.init_I_JsonObject(args, "pageOffset", 0));
+            int offset = Math.max(0, AiJson.getInt(args, "pageOffset", 0));
             int total = 0;
             WrittenBookContent written = item.get(DataComponents.WRITTEN_BOOK_CONTENT);
             WritableBookContent editable = item.get(DataComponents.WRITABLE_BOOK_CONTENT);
@@ -247,10 +247,10 @@ final class AiGameplay {
 
    static JsonObject load_JsonObject(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
-      BlockPos pos = AiGameOperations.init_BlockPos(args);
-      if (AiTerrain.init(mc.level, pos) && !(pos.distSqr(mc.player.blockPosition()) > 1024.0)) {
+      BlockPos pos = AiGameOperations.requireBlockPos(args);
+      if (AiTerrain.isLoaded(mc.level, pos) && !(pos.distSqr(mc.player.blockPosition()) > 1024.0)) {
          if (mc.level.getBlockEntity(pos) instanceof SignBlockEntity sign) {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "front",
                Arrays.stream(Compat263.getMessages(Compat263.getFrontText(sign), false)).map(c -> init_Str(c.getString())).toList(),
                "back",
@@ -269,7 +269,7 @@ final class AiGameplay {
    static AiOperation load_AiOperation(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final Entity entity = mc.level.getEntity(AiJson.init_I_JsonObject(args, "entityId", -1));
+         final Entity entity = mc.level.getEntity(AiJson.getInt(args, "entityId", -1));
          if (entity != null && !(entity.distanceToSqr(mc.player) > 16.0)) {
             final int container = mc.player.containerMenu.containerId;
             return new AiOperation() {
@@ -282,53 +282,53 @@ final class AiGameplay {
                @Override
                public AiOperation.Result tick() {
                   if (this.init_Z || mc.player == null) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Entity interaction cancelled", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.CANCELLED, "Entity interaction cancelled", new JsonObject());
                   }
 
                   if (!entity.isAlive()) {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Target entity is gone", AiJson.init_JsonObject_ObjArr("entityId", entity.getId()));
+                     return AiGameOperations.result(AiOperation.Status.FAILED, "Target entity is gone", AiJson.objectOf("entityId", entity.getId()));
                   }
 
                   if (mc.player.containerMenu.containerId != container) {
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.SUCCEEDED,
                         "Observed entity interaction opened a server container",
-                        AiJson.init_JsonObject_ObjArr("entityId", entity.getId(), "containerId", mc.player.containerMenu.containerId)
+                        AiJson.objectOf("entityId", entity.getId(), "containerId", mc.player.containerMenu.containerId)
                      );
                   }
 
                   if (!this.load_Z) {
-                     AiGameOperations.init(this.init_DataUtil, autismclient.ai.engine.AiAim.init_Vec3_Entity(entity));
-                     if (!autismclient.ai.engine.AiAim.init_Z_Entity(entity)) {
+                     AiGameOperations.aimAndStep(this.init_DataUtil, autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity));
+                     if (!autismclient.ai.engine.AiAim.isLookingAtEntity(entity)) {
                         if (++this.load_I > 40) {
-                           return AiGameOperations.init_AiOperation_Result(
-                              AiOperation.Status.FAILED, "Could not bring the crosshair onto the entity", AiJson.init_JsonObject_ObjArr("entityId", entity.getId())
+                           return AiGameOperations.result(
+                              AiOperation.Status.FAILED, "Could not bring the crosshair onto the entity", AiJson.objectOf("entityId", entity.getId())
                            );
                         }
 
-                        return AiGameOperations.init_AiOperation_Result(
-                           AiOperation.Status.RUNNING, "Turning toward the entity", AiJson.init_JsonObject_ObjArr("entityId", entity.getId())
+                        return AiGameOperations.result(
+                           AiOperation.Status.RUNNING, "Turning toward the entity", AiJson.objectOf("entityId", entity.getId())
                         );
                      }
 
                      mc.gameMode
                         .interact(
-                           mc.player, entity, new EntityHitResult(entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(entity)), InteractionHand.MAIN_HAND
+                           mc.player, entity, new EntityHitResult(entity, autismclient.ai.engine.AiAim.defaultEntityAimPoint(entity)), InteractionHand.MAIN_HAND
                         );
                      this.load_Z = true;
                   }
 
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      ++this.init_I > 60 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.RUNNING,
                      "Interaction sent once; inspect entity/server state for its intended effect",
-                     AiJson.init_JsonObject_ObjArr("entityId", entity.getId())
+                     AiJson.objectOf("entityId", entity.getId())
                   );
                }
 
                @Override
                public void cancel() {
                   this.init_Z = true;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                }
             };
          } else {
@@ -340,14 +340,14 @@ final class AiGameplay {
    }
 
    static AiOperation read(final JsonObject args) {
-      final String item = AiJson.init_Str_JsonObject(args, "item", "");
-      final int recipe = AiJson.init_I_JsonObject(args, "recipeDisplayId", -1);
-      final int amount = AiJson.init_I_JsonObject(args, "count", 1);
+      final String item = AiJson.getString(args, "item", "");
+      final int recipe = AiJson.getInt(args, "recipeDisplayId", -1);
+      final int amount = AiJson.getInt(args, "count", 1);
       if (recipe >= 0 && !item.isBlank() && amount >= 1 && amount <= 2304) {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
-            final int init_I = AiGameState.init_I_Str(item);
-            final int load_I = amount + (AiJson.init_Z_JsonObject(args, "additional", false) ? this.init_I : 0);
+            final int init_I = AiGameState.countInventoryItem(item);
+            final int load_I = amount + (AiJson.getBoolean(args, "additional", false) ? this.init_I : 0);
             final long init_J = System.nanoTime() + 120000000000L;
             int read = -1;
             int write;
@@ -365,9 +365,9 @@ final class AiGameplay {
                      return this.init(AiOperation.Status.TIMED_OUT, "Craft target not observed before timeout; do not repeat uncertain clicks");
                   }
 
-                  int count = AiGameState.init_I_Str(item);
+                  int count = AiGameState.countInventoryItem(item);
                   if (count >= this.load_I) {
-                     boolean confirmed = AiServerEvidence.init_J_I(this.read) > this.load_J;
+                     boolean confirmed = AiServerEvidence.containerRevision(this.read) > this.load_J;
                      return ++this.sync >= (confirmed ? 10 : 20)
                         ? this.init(AiOperation.Status.SUCCEEDED, "Crafted output inventory target observed")
                         : this.init("Verifying crafted inventory");
@@ -398,7 +398,7 @@ final class AiGameplay {
                      if (this.write == 1) {
                         ItemStack output = menu.getResultSlot().getItem();
                         if (!output.isEmpty() && BuiltInRegistries.ITEM.getKey(output.getItem()).toString().equals(item)) {
-                           this.load_J = AiServerEvidence.init_J_I(this.read);
+                           this.load_J = AiServerEvidence.containerRevision(this.read);
                            AiContainerTransactions.init(this.read, menu.getResultSlot().index, 0, ContainerInput.QUICK_MOVE);
                            this.write = 2;
                            this.update = 0;
@@ -432,13 +432,13 @@ final class AiGameplay {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(
-                  AiOperation.Status.RUNNING, message, AiJson.init_JsonObject_ObjArr("count", AiGameState.init_I_Str(item), "target", this.load_I)
+               return AiGameOperations.result(
+                  AiOperation.Status.RUNNING, message, AiJson.objectOf("count", AiGameState.countInventoryItem(item), "target", this.load_I)
                );
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
-               return AiGameOperations.init_AiOperation_Result(status, message, AiJson.init_JsonObject_ObjArr("item", item, "count", AiGameState.init_I_Str(item), "target", this.load_I));
+               return AiGameOperations.result(status, message, AiJson.objectOf("item", item, "count", AiGameState.countInventoryItem(item), "target", this.load_I));
             }
 
             @Override
@@ -452,16 +452,16 @@ final class AiGameplay {
    }
 
    static AiOperation write(JsonObject args) {
-      final String item = AiJson.init_Str_JsonObject(args, "item", "");
-      int amount = AiJson.init_I_JsonObject(args, "count", 1);
+      final String item = AiJson.getString(args, "item", "");
+      int amount = AiJson.getInt(args, "count", 1);
       if (!item.isBlank() && amount >= 1 && amount <= 2304) {
          final List<String> ids = init_List(item);
          int baseline = init_I(ids);
-         final int target = amount + (AiJson.init_Z_JsonObject(args, "additional", false) ? baseline : 0);
+         final int target = amount + (AiJson.getBoolean(args, "additional", false) ? baseline : 0);
          final Minecraft mc = Minecraft.getInstance();
          final Object world = mc.level;
          final Object player = mc.player;
-         final int seconds = Math.max(20, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 120)));
+         final int seconds = Math.max(20, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 120)));
          final long deadline = System.nanoTime() + seconds * 1000000000L;
          AiOperation collection = new AiOperation() {
             boolean init_Z;
@@ -480,15 +480,15 @@ final class AiGameplay {
             @Override
             public AiOperation.Result tick() {
                if (this.init_Z) {
-                  return this.init(AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Drop collection cancelled", new JsonObject()));
+                  return this.init(AiGameOperations.result(AiOperation.Status.CANCELLED, "Drop collection cancelled", new JsonObject()));
                }
 
                if (mc.player != player || mc.level != world || System.nanoTime() > deadline) {
-                  return this.init(AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "Drop collection stopped before verified pickup", new JsonObject()));
+                  return this.init(AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Drop collection stopped before verified pickup", new JsonObject()));
                }
 
                if (AiGameplay.init_I(ids) >= target && !this.init_bb.init_Z(this.init()) && !this.init_K.read()) {
-                  return this.init(AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
+                  return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
                }
 
                if (!this.load) {
@@ -508,7 +508,7 @@ final class AiGameplay {
 
                if (this.init_AiOperation == null) {
                   this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "blocks",
                         autismclient.ai.engine.AiBlockMine.init(ids),
                         "drops",
@@ -528,8 +528,8 @@ final class AiGameplay {
                }
 
                if (ids.contains("minecraft:blaze_rod") && (this.init_K.init_Z() || this.init_AiOperation.canInterruptNow()) && this.init_K.init(true, null)) {
-                  return AiGameOperations.init_AiOperation_Result(
-                     AiOperation.Status.RUNNING, this.init_K.init_Str(), AiJson.init_JsonObject_ObjArr("firesExtinguished", this.init_K.init_I())
+                  return AiGameOperations.result(
+                     AiOperation.Status.RUNNING, this.init_K.init_Str(), AiJson.objectOf("firesExtinguished", this.init_K.init_I())
                   );
                } else {
                   AiOperation.Result r = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
@@ -538,13 +538,13 @@ final class AiGameplay {
                   } else {
                      this.init_bb.init_V(this.init_AiOperation);
                      if (AiGameplay.init_I(ids) >= target && !this.init_bb.init_Z(this.init_AiOperation)) {
-                        return this.init(AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
+                        return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
                      } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.init_bb.init_Z(this.init_AiOperation) && !this.read && !this.write) {
                         this.write = true;
                         this.init_AiOperation = null;
                         this.load = false;
                         this.init_T_DataUtil = AiGameplay.init(ids, (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L), false);
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Making room for the observed drops", AiRunResources.init_JsonObject(r.dataJson()));
+                        return AiGameOperations.result(AiOperation.Status.RUNNING, "Making room for the observed drops", AiRunResources.parseEvidenceJson(r.dataJson()));
                      } else {
                         return this.init(r);
                      }
@@ -554,7 +554,7 @@ final class AiGameplay {
 
             AiOperation.Result init(AiOperation.Result result) {
                result = this.init_bb.init(result, this.requiresReconciliationAfterEmergency());
-               JsonObject data = AiRunResources.init_JsonObject(result.dataJson());
+               JsonObject data = AiRunResources.parseEvidenceJson(result.dataJson());
                data.addProperty("item", item);
                data.addProperty("count", AiGameplay.init_I(ids));
                data.addProperty("target", target);
@@ -584,7 +584,7 @@ final class AiGameplay {
                }
             }
          };
-         return AiPreparationReceipt.init(collection, autismclient.ai.engine.AiMotionSafety::fill_Z, () -> mc.player == player && mc.level == world, deadline);
+         return AiPreparationReceipt.init(collection, autismclient.ai.engine.AiMotionSafety::isPlayerSupported, () -> mc.player == player && mc.level == world, deadline);
       } else {
          throw new IllegalArgumentException("Expected item registry id and count 1..2304");
       }
@@ -600,9 +600,9 @@ final class AiGameplay {
       Object player = mc.player;
       return new AiGameplay.Inner_DataUtil(
          () -> !beforeBreak && !init_Z(ids) || load(ids),
-         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.fill_Z() && init_Z(mc),
+         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && init_Z(mc),
          () -> AiTidy.init(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "action",
                "drop",
                "freeSlots",
@@ -671,7 +671,7 @@ final class AiGameplay {
          }
 
          for (String id : ids) {
-            for (Item item : AiItems.load_af_DataUtil(id).items()) {
+            for (Item item : AiItems.resolveItem(id).items()) {
                if (autismclient.ai.engine.AiBlockMine.init(mc.player.getInventory(), item.getDefaultInstance())) {
                   return true;
                }
@@ -694,7 +694,7 @@ final class AiGameplay {
       try {
          List<String> out = new ArrayList<>();
 
-         for (Item it : AiItems.load_af_DataUtil(spec).items()) {
+         for (Item it : AiItems.resolveItem(spec).items()) {
             out.add(BuiltInRegistries.ITEM.getKey(it).toString());
          }
 
@@ -711,7 +711,7 @@ final class AiGameplay {
       int total = 0;
 
       for (String id : ids) {
-         total += AiGameState.init_I_Str(id);
+         total += AiGameState.countInventoryItem(id);
       }
 
       return total;
@@ -731,18 +731,18 @@ final class AiGameplay {
    }
 
    static AiOperation update(final JsonObject args) {
-      final String input = AiJson.init_Str_JsonObject(args, "input", "");
-      final String output = AiJson.init_Str_JsonObject(args, "item", "");
-      final String fuel = AiJson.init_Str_JsonObject(args, "fuel", "minecraft:coal");
-      final int count = AiJson.init_I_JsonObject(args, "count", 1);
+      final String input = AiJson.getString(args, "input", "");
+      final String output = AiJson.getString(args, "item", "");
+      final String fuel = AiJson.getString(args, "fuel", "minecraft:coal");
+      final int count = AiJson.getInt(args, "count", 1);
       if (!input.isBlank() && !output.isBlank() && count >= 1 && count <= 2304) {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
-            final int init_I = count + (AiJson.init_Z_JsonObject(args, "additional", false) ? AiGameState.init_I_Str(output) : 0);
+            final int init_I = count + (AiJson.getBoolean(args, "additional", false) ? AiGameState.countInventoryItem(output) : 0);
             final Object init_Obj = this.init_Minecraft.level;
             final Object load_Obj = this.init_Minecraft.getConnection();
             final LocalPlayer init_LocalPlayer = this.init_Minecraft.player;
-            final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600))) * 1000000000L;
+            final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
             int load_I = -1;
             int read_I;
             int write_I = -1;
@@ -750,16 +750,16 @@ final class AiGameplay {
             int sync;
             int flush;
             long load_J;
-            final int close = AiGameState.init_I_Str(output);
+            final int close = AiGameState.countInventoryItem(output);
             boolean init_Z;
             boolean load_Z;
             long read_J;
             int open;
-            final boolean read_Z = AiJson.init_Z_JsonObject(args, "loadOnly", false);
-            final int poll = Math.max(1, AiJson.init_I_JsonObject(args, "batchSize", 64));
-            final int push = Math.max(1, AiJson.init_I_JsonObject(args, "cookTicksPerItem", 200));
-            final AiGameplay.Inner_StreamUtil init_T_StreamUtil = new AiGameplay.Inner_StreamUtil(fuel, AiJson.init_Z_JsonObject(args, "collect", false));
-            final boolean write_Z = AiJson.init_Z_JsonObject(args, "fuelFlexible", false);
+            final boolean read_Z = AiJson.getBoolean(args, "loadOnly", false);
+            final int poll = Math.max(1, AiJson.getInt(args, "batchSize", 64));
+            final int push = Math.max(1, AiJson.getInt(args, "cookTicksPerItem", 200));
+            final AiGameplay.Inner_StreamUtil init_T_StreamUtil = new AiGameplay.Inner_StreamUtil(fuel, AiJson.getBoolean(args, "collect", false));
+            final boolean write_Z = AiJson.getBoolean(args, "fuelFlexible", false);
 
             @Override
             public AiOperation.Result tick() {
@@ -776,7 +776,7 @@ final class AiGameplay {
                      this.write_I >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                      "Smelting target not reached; reobserve any pending transfer"
                   );
-               } else if (AiGameState.init_I_Str(output) >= this.init_I && this.write_I < 0) {
+               } else if (AiGameState.countInventoryItem(output) >= this.init_I && this.write_I < 0) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Smelted output inventory target observed after transfer reconciliation");
                } else {
                   this.flush = 0;
@@ -794,7 +794,7 @@ final class AiGameplay {
 
                      if (this.write_I >= 0) {
                         this.read_I++;
-                        boolean acknowledged = AiServerEvidence.load_J_I(this.load_I) - this.read_J >= this.open;
+                        boolean acknowledged = AiServerEvidence.containerReplyCount(this.load_I) - this.read_J >= this.open;
                         if (!acknowledged || !this.init(menu) || !menu.getCarried().isEmpty()) {
                            return this.read_I > 100
                               ? this.init(AiOperation.Status.UNCERTAIN, "Furnace transfer dispatched without observed slot change; inspect before repeating")
@@ -806,7 +806,7 @@ final class AiGameplay {
                         this.load_Z = false;
                      }
 
-                     if (AiGameState.init_I_Str(output) >= this.init_I) {
+                     if (AiGameState.countInventoryItem(output) >= this.init_I) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Smelted output inventory target confirmed by server snapshots");
                      }
 
@@ -827,7 +827,7 @@ final class AiGameplay {
                         }
 
                         ItemStack fuelStack = menu.getSlot(1).getItem();
-                        this.init_T_StreamUtil.init(fuelStack, menu.isLit(), AiItems.init_I(fuelStack), this::init_Str_6);
+                        this.init_T_StreamUtil.init(fuelStack, menu.isLit(), AiItems.fuelBurnTime(fuelStack), this::init_Str_6);
                         if (this.init_T_StreamUtil.init(fuelStack)) {
                            this.init_V_9();
                            this.init(1, 0, ContainerInput.QUICK_MOVE);
@@ -865,10 +865,10 @@ final class AiGameplay {
                               this.init_V_9();
                               if (destination == 1) {
                                  ItemStack stack = menu.getSlot(source).getItem();
-                                 int burn = Math.max(1, AiItems.init_I(stack) / Math.max(1, AiJson.init_I_JsonObject(args, "fuelBurnDivisor", 1)));
-                                 int left = Math.max(1, this.init_I - AiGameState.init_I_Str(output));
+                                 int burn = Math.max(1, AiItems.fuelBurnTime(stack) / Math.max(1, AiJson.getInt(args, "fuelBurnDivisor", 1)));
+                                 int left = Math.max(1, this.init_I - AiGameState.countInventoryItem(output));
                                  int items = Math.max(1, Math.min(stack.getCount(), (left * this.push + burn - 1) / burn));
-                                 int spare = this.write_Z ? AiSmelt.init(stack.getItem()) : Math.max(0, AiGameState.load(wanted) - AiRunResources.load(stack.getItem()));
+                                 int spare = this.write_Z ? AiSmelt.init(stack.getItem()) : Math.max(0, AiGameState.countMainInventoryItem(wanted) - AiRunResources.mandatoryReservedCount(stack.getItem()));
                                  if (spare <= 0) {
                                     return this.init(AiOperation.Status.FAILED, "Fuel is reserved for the active survival run: " + wanted);
                                  }
@@ -885,7 +885,7 @@ final class AiGameplay {
                                  }
                               } else {
                                  int items = Math.min(
-                                    menu.getSlot(source).getItem().getCount(), Math.min(this.poll, Math.max(1, this.init_I - AiGameState.init_I_Str(output)))
+                                    menu.getSlot(source).getItem().getCount(), Math.min(this.poll, Math.max(1, this.init_I - AiGameState.countInventoryItem(output)))
                                  );
                                  this.init(source, 0, ContainerInput.PICKUP);
 
@@ -906,7 +906,7 @@ final class AiGameplay {
 
                         return this.read_Z && !menu.getSlot(0).getItem().isEmpty() && (menu.isLit() || !menu.getSlot(1).getItem().isEmpty())
                            ? this.init(AiOperation.Status.SUCCEEDED, "Loaded and burning; the output is collected later")
-                           : this.init("Waiting for furnace output (" + AiGameState.init_I_Str(output) + "/" + this.init_I + ")");
+                           : this.init("Waiting for furnace output (" + AiGameState.countInventoryItem(output) + "/" + this.init_I + ")");
                      } else if (!BuiltInRegistries.ITEM.getKey(result.getItem()).toString().equals(output)) {
                         String existing = BuiltInRegistries.ITEM.getKey(result.getItem()).toString();
                         this.init_V_9();
@@ -916,7 +916,7 @@ final class AiGameplay {
                         this.load_Z = true;
                         return this.init("Collecting existing furnace output " + existing + " before the requested recipe");
                      } else {
-                        this.sync = AiGameState.init_I_Str(output);
+                        this.sync = AiGameState.countInventoryItem(output);
                         this.init_V_9();
                         this.init(2, 0, ContainerInput.QUICK_MOVE);
                         this.write_I = 2;
@@ -928,8 +928,8 @@ final class AiGameplay {
             }
 
             String init_Str_6() {
-               Item inputItem = AiItems.load_af_DataUtil(input).items().iterator().next();
-               int left = Math.max(1, this.init_I - AiGameState.init_I_Str(output));
+               Item inputItem = AiItems.resolveItem(input).items().iterator().next();
+               int left = Math.max(1, this.init_I - AiGameState.countInventoryItem(output));
                Item available = AiSmelt.init(this.init_T_StreamUtil.init(), inputItem, left);
                if (available == null) {
                   available = AiSmelt.init("", inputItem, left);
@@ -939,8 +939,8 @@ final class AiGameplay {
             }
 
             void init_V_9() {
-               this.load_J = AiServerEvidence.init_J_I(this.load_I);
-               this.read_J = AiServerEvidence.load_J_I(this.load_I);
+               this.load_J = AiServerEvidence.containerRevision(this.load_I);
+               this.read_J = AiServerEvidence.containerReplyCount(this.load_I);
                this.open = 0;
             }
 
@@ -954,15 +954,15 @@ final class AiGameplay {
                   return menu.getSlot(this.write_I).getItem().isEmpty();
                } else {
                   return this.write_I == 2
-                     ? AiGameState.init_I_Str(output) > this.sync
+                     ? AiGameState.countInventoryItem(output) > this.sync
                      : !menu.getSlot(this.write_I).getItem().isEmpty() || this.write_I == 1 && menu.isLit();
                }
             }
 
             JsonObject init_JsonObject_17() {
-               JsonObject data = AiJson.init_JsonObject_ObjArr(
+               JsonObject data = AiJson.objectOf(
                   "count",
-                  AiGameState.init_I_Str(output),
+                  AiGameState.countInventoryItem(output),
                   "target",
                   this.init_I,
                   "containerId",
@@ -978,7 +978,7 @@ final class AiGameplay {
                   "repliesBefore",
                   this.read_J,
                   "repliesNow",
-                  this.load_I < 0 ? 0L : AiServerEvidence.load_J_I(this.load_I)
+                  this.load_I < 0 ? 0L : AiServerEvidence.containerReplyCount(this.load_I)
                );
                if (this.init_Minecraft.player != null
                   && this.init_Minecraft.player.containerMenu instanceof AbstractFurnaceMenu menu
@@ -990,23 +990,23 @@ final class AiGameplay {
                   for (int slot = 0; slot < 3; slot++) {
                      ItemStack stack = menu.getSlot(slot).getItem();
                      data.add(
-                        "slot" + slot, AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), "count", stack.getCount())
+                        "slot" + slot, AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), "count", stack.getCount())
                      );
                   }
 
                   ItemStack cursor = menu.getCarried();
-                  data.add("cursor", AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(cursor.getItem()).toString(), "count", cursor.getCount()));
+                  data.add("cursor", AiJson.objectOf("item", BuiltInRegistries.ITEM.getKey(cursor.getItem()).toString(), "count", cursor.getCount()));
                }
 
                return data;
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_17());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_17());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_17());
+               return AiGameOperations.result(status, message, this.init_JsonObject_17());
             }
 
             @Override
@@ -1027,15 +1027,15 @@ final class AiGameplay {
    static AiOperation sync(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final String blockArg = AiJson.init_Str_JsonObject(args, "block", "").trim();
+         final String blockArg = AiJson.getString(args, "block", "").trim();
          if (blockArg.isEmpty()) {
             throw new IllegalArgumentException("block is required: a registry id or a family like \"ore\"");
          }
 
-         final AiItems.ItemSpec target = AiItems.read_af_DataUtil(blockArg);
+         final AiItems.ItemSpec target = AiItems.resolveBlock(blockArg);
          final Set<String> wanted = new HashSet<>(target.blockIds());
-         final int radius = Math.max(8, Math.min(96, AiJson.init_I_JsonObject(args, "radius", 64)));
-         final int limit = Math.max(1, Math.min(64, AiJson.init_I_JsonObject(args, "limit", 16)));
+         final int radius = Math.max(8, Math.min(96, AiJson.getInt(args, "radius", 64)));
+         final int limit = Math.max(1, Math.min(64, AiJson.getInt(args, "limit", 16)));
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition();
@@ -1066,7 +1066,7 @@ final class AiGameplay {
                         .offset(
                            this.write % this.init_I - radius, this.write / (this.init_I * this.init_I) - 24, this.write / this.init_I % this.init_I - radius
                         );
-                     if (AiTerrain.init(this.init_Minecraft.level, p)) {
+                     if (AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
                         BlockState state = this.init_Minecraft.level.getBlockState(p);
                         double distanceSqr = p.distSqr(this.init_BlockPos);
                         if (target.matches(state) && distanceSqr <= (double)radius * radius && this.init_List.size() < 256) {
@@ -1078,21 +1078,21 @@ final class AiGameplay {
                   }
 
                   if (this.write < this.read) {
-                     return AiGameOperations.init_AiOperation_Result(
-                        AiOperation.Status.RUNNING, "Scanning loaded terrain", AiJson.init_JsonObject_ObjArr("scanned", this.write, "total", this.read)
+                     return AiGameOperations.result(
+                        AiOperation.Status.RUNNING, "Scanning loaded terrain", AiJson.objectOf("scanned", this.write, "total", this.read)
                      );
                   }
 
                   this.init_List
-                     .removeIf(hitx -> !AiTerrain.init(this.init_Minecraft.level, hitx.pos()) || !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
+                     .removeIf(hitx -> !AiTerrain.isLoaded(this.init_Minecraft.level, hitx.pos()) || !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
                   this.load_List
-                     .removeIf(hitx -> AiTerrain.init(this.init_Minecraft.level, hitx.pos()) && !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
+                     .removeIf(hitx -> AiTerrain.isLoaded(this.init_Minecraft.level, hitx.pos()) && !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
                   List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.init_List_List(this.init_List, this.load_List, limit);
                   JsonArray results = new JsonArray();
 
                   for (autismclient.ai.engine.AiChunkMemory.Inner_CachePool hit : merged) {
                      results.add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "x",
                            hit.pos().getX(),
                            "y",
@@ -1119,12 +1119,12 @@ final class AiGameplay {
                      );
                   }
 
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      AiOperation.Status.SUCCEEDED,
                      merged.isEmpty()
                         ? "No matching evidence in the scanned or remembered volume; unexplored terrain remains unknown"
                         : "Found " + merged.size() + " " + blockArg + " match(es)",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "block",
                         blockArg,
                         "radius",
@@ -1144,7 +1144,7 @@ final class AiGameplay {
                      )
                   );
                } else {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Find world or connection changed", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.CANCELLED, "Find world or connection changed", new JsonObject());
                }
             }
 
@@ -1185,7 +1185,7 @@ final class AiGameplay {
          }
 
          if (!wanted.isEmpty() && wanted.size() <= 32) {
-            final int radius = Math.max(1, Math.min(32, AiJson.init_I_JsonObject(args, "radius", 16)));
+            final int radius = Math.max(1, Math.min(32, AiJson.getInt(args, "radius", 16)));
             return new AiOperation() {
                final Minecraft init_Minecraft = Minecraft.getInstance();
                final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition();
@@ -1208,12 +1208,12 @@ final class AiGameplay {
                            this.init_BlockPos.getY() + this.read / (this.init_I * this.init_I) - 8,
                            this.init_BlockPos.getZ() + this.read / this.init_I % this.init_I - radius
                         );
-                        if (AiTerrain.init(this.init_Minecraft.level, p)) {
+                        if (AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
                            BlockState state = this.init_Minecraft.level.getBlockState(p);
                            if (this.init_Set.contains(state.getBlock()) && this.init_JsonArray.size() < 256) {
                               this.init_JsonArray
                                  .add(
-                                    AiJson.init_JsonObject_ObjArr(
+                                    AiJson.objectOf(
                                        "x",
                                        p.getX(),
                                        "y",
@@ -1232,10 +1232,10 @@ final class AiGameplay {
                         this.read++;
                      }
 
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         this.read >= this.load ? AiOperation.Status.SUCCEEDED : AiOperation.Status.RUNNING,
                         this.read >= this.load ? "Loaded terrain surveyed" : "Surveying loaded terrain",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "matches",
                            this.init_JsonArray,
                            "truncated",
@@ -1249,7 +1249,7 @@ final class AiGameplay {
                         )
                      );
                   } else {
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Survey cancelled", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.CANCELLED, "Survey cancelled", new JsonObject());
                   }
                }
 
@@ -1294,19 +1294,19 @@ final class AiGameplay {
 
          if (this.load_Z || this.init_LongSupplier.getAsLong() > this.init_J) {
             return this.init(
-               AiGameOperations.init_AiOperation_Result(
+               AiGameOperations.result(
                   this.load_Z ? AiOperation.Status.CANCELLED : AiOperation.Status.TIMED_OUT, "Pickup capacity preparation stopped", new JsonObject()
                )
             );
          }
 
          if (this.init_AiOperation == null && this.init_BooleanSupplier.getAsBoolean()) {
-            return this.init(AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", new JsonObject()));
+            return this.init(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", new JsonObject()));
          }
 
          if ((this.init_AiOperation == null || this.init_AiOperation.canInterruptNow() && !this.init_bb.init_Z(this.init_AiOperation))
             && !this.load_BooleanSupplier.getAsBoolean()) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Settling before making pickup room", new JsonObject());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, "Settling before making pickup room", new JsonObject());
          }
 
          if (this.init_AiOperation == null) {

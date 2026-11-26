@@ -32,21 +32,21 @@ final class AiBarterBatch {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int target = Math.max(0, Math.min(64, AiJson.init_I_JsonObject(args, "pearls", 0)));
-         boolean additional = AiJson.init_Z_JsonObject(args, "additional", false);
-         final int baseline = AiCraft.init_I("minecraft:ender_pearl");
+         final int target = Math.max(0, Math.min(64, AiJson.getInt(args, "pearls", 0)));
+         boolean additional = AiJson.getBoolean(args, "additional", false);
+         final int baseline = AiCraft.countItem("minecraft:ender_pearl");
          final int pearlGoal = target + (additional ? baseline : 0);
-         final int partners = Math.max(1, Math.min(4, AiJson.init_I_JsonObject(args, "partners", 3)));
-         final int budget = AiBarter.init(Math.max(0, AiJson.init_I_JsonObject(args, "gold", 0)), AiCraft.init_I("minecraft:gold_ingot"));
+         final int partners = Math.max(1, Math.min(4, AiJson.getInt(args, "partners", 3)));
+         final int budget = AiBarter.init(Math.max(0, AiJson.getInt(args, "gold", 0)), AiCraft.countItem("minecraft:gold_ingot"));
          if (budget == 0 && (target == 0 || baseline < pearlGoal)) {
-            return AiGameOperations.init_AiOperation(
+            return AiGameOperations.immediate(
                AiOperation.Status.FAILED,
                "No gold ingots available for adult bartering",
-               AiJson.init_JsonObject_ObjArr("missing", AiJson.init_JsonObject_ObjArr("minecraft:gold_ingot", 1), "goldSpent", 0, "bartered", 0)
+               AiJson.objectOf("missing", AiJson.objectOf("minecraft:gold_ingot", 1), "goldSpent", 0, "bartered", 0)
             );
          }
 
-         final int seconds = Math.max(10, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)));
+         final int seconds = Math.max(10, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 300)));
          return new AiOperation() {
             final Object init_Obj = mc.level;
             final int init_I = mc.player.getInventory().getSelectedSlot();
@@ -108,11 +108,11 @@ final class AiBarterBatch {
                this.load_I++;
                if (System.nanoTime() > this.init_J) {
                   return this.init(
-                     AiOperation.Status.TIMED_OUT, "Barter budget expired; observed pearls " + AiCraft.init_I("minecraft:ender_pearl") + "/" + pearlGoal
+                     AiOperation.Status.TIMED_OUT, "Barter budget expired; observed pearls " + AiCraft.countItem("minecraft:ender_pearl") + "/" + pearlGoal
                   );
                }
 
-               if (target > 0 && AiCraft.init_I("minecraft:ender_pearl") >= pearlGoal && this.init_Piglin == null && this.init_Map.isEmpty()) {
+               if (target > 0 && AiCraft.countItem("minecraft:ender_pearl") >= pearlGoal && this.init_Piglin == null && this.init_Map.isEmpty()) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Pearl inventory target met after " + this.write_I + " confirmed barters");
                }
 
@@ -127,7 +127,7 @@ final class AiBarterBatch {
                            }
                         }, () -> Math.max(1, (int)((this.init_J - System.nanoTime()) / 1000000000L)));
                      if (survival != null) {
-                        this.init_DataUtil.init_V();
+                        this.init_DataUtil.clear();
                         return survival.terminal() ? this.init(survival.status(), survival.message()) : survival;
                      }
                   }
@@ -166,13 +166,13 @@ final class AiBarterBatch {
                      }
 
                      this.load_Z = true;
-                     this.init_AiOperation = AiEquip.init(AiJson.init_JsonObject_ObjArr("what", "armor", "prefer", "golden_boots"));
+                     this.init_AiOperation = AiEquip.init(AiJson.objectOf("what", "armor", "prefer", "golden_boots"));
                      return this.init("Equipping gold armor for piglin neutrality");
                   } else {
                      if (this.init_Piglin != null) {
                         boolean admired = this.init_Piglin.isAlive() && this.init_Piglin.getOffhandItem().is(Items.GOLD_INGOT);
                         AiBarterBatch.Inner_StreamUtil outcome = this.init_JsonUtil_DataUtil
-                           .init(AiCraft.init_I("minecraft:gold_ingot"), admired, AiServerEvidence.init_J(), this.load_I);
+                           .init(AiCraft.countItem("minecraft:gold_ingot"), admired, AiServerEvidence.inventoryRevision(), this.load_I);
                         if (outcome != AiBarterBatch.Inner_StreamUtil.ACCEPTED) {
                            if (outcome == AiBarterBatch.Inner_StreamUtil.AMBIGUOUS) {
                               this.read_I = this.read_I + this.init_JsonUtil_DataUtil.init_I();
@@ -247,23 +247,23 @@ final class AiBarterBatch {
                         }
                      }
 
-                     if (this.init_Piglin != null || AiItems.init_I() >= 2 || this.read_I >= budget && this.read_Map.isEmpty()) {
+                     if (this.init_Piglin != null || AiItems.countFreeSlots() >= 2 || this.read_I >= budget && this.read_Map.isEmpty()) {
                         if (this.init_Map.size() < partners
                            && this.read_I < budget
-                           && AiCraft.init_I("minecraft:gold_ingot") > 0
-                           && (target == 0 || AiCraft.init_I("minecraft:ender_pearl") < pearlGoal)) {
+                           && AiCraft.countItem("minecraft:gold_ingot") > 0
+                           && (target == 0 || AiCraft.countItem("minecraft:ender_pearl") < pearlGoal)) {
                            Piglin partner = AiBarterBatch.init(mc, this.init_Map.keySet(), this.init_Set);
                            if (partner != null) {
                               if (!(partner.distanceToSqr(mc.player) > 9.0) && mc.player.hasLineOfSight(partner)) {
                                  if (mc.player.getMainHandItem().is(Items.GOLD_INGOT)) {
-                                    this.init_DataUtil.init_V_Vec3(partner.getBoundingBox().getCenter());
-                                    this.init_DataUtil.load_V();
-                                    if (this.init_DataUtil.load_Z() && this.init_DataUtil.load_Z_Entity(partner)) {
+                                    this.init_DataUtil.aimAt(partner.getBoundingBox().getCenter());
+                                    this.init_DataUtil.tick();
+                                    if (this.init_DataUtil.isSettled() && this.init_DataUtil.isAimedAtEntity(partner)) {
                                        this.flush_Map = AiBarterBatch.init_Map(mc);
                                        this.close = AiBarterBatch.init();
                                        this.init_Piglin = partner;
                                        this.sync_I = this.load_I;
-                                       this.init_JsonUtil_DataUtil.init(AiCraft.init_I("minecraft:gold_ingot"), AiServerEvidence.init_J(), this.load_I);
+                                       this.init_JsonUtil_DataUtil.init(AiCraft.countItem("minecraft:gold_ingot"), AiServerEvidence.inventoryRevision(), this.load_I);
                                        mc.gameMode
                                           .interact(
                                              mc.player, partner, new EntityHitResult(partner, partner.getBoundingBox().getCenter()), InteractionHand.MAIN_HAND
@@ -274,7 +274,7 @@ final class AiBarterBatch {
                                     return this.init("Aiming at an adult barter partner");
                                  }
 
-                                 this.init_AiOperation = AiEquip.init(AiJson.init_JsonObject_ObjArr("what", "minecraft:gold_ingot"));
+                                 this.init_AiOperation = AiEquip.init(AiJson.objectOf("what", "minecraft:gold_ingot"));
                               } else if (this.init_Map.isEmpty()) {
                                  this.load_Piglin = partner;
                                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(partner.blockPosition(), 2.5, true, false, false, 40);
@@ -297,10 +297,10 @@ final class AiBarterBatch {
 
                         if (collect == null || this.init_Map.size() < partners && this.read_I < budget && this.load_I % 40 != 0) {
                            if (this.init_Map.isEmpty() && this.init_Piglin == null && this.init_AiOperation == null) {
-                              if (this.read_I >= budget || AiCraft.init_I("minecraft:gold_ingot") <= 0) {
+                              if (this.read_I >= budget || AiCraft.countItem("minecraft:gold_ingot") <= 0) {
                                  return this.init(
                                     target == 0 && this.write_I > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                                    "Gold batch exhausted; pearls " + AiCraft.init_I("minecraft:ender_pearl") + "/" + pearlGoal + "; loot is random"
+                                    "Gold batch exhausted; pearls " + AiCraft.countItem("minecraft:ender_pearl") + "/" + pearlGoal + "; loot is random"
                                  );
                               }
 
@@ -312,13 +312,13 @@ final class AiBarterBatch {
                            return this.init("Waiting on " + this.init_Map.size() + " genuine barters");
                         } else {
                            this.init_AiOperation = AiGameplay.write(
-                              AiJson.init_JsonObject_ObjArr("item", collect, "count", 1, "additional", true, "radius", 12, "timeoutSeconds", 12)
+                              AiJson.objectOf("item", collect, "count", 1, "additional", true, "radius", 12, "timeoutSeconds", 12)
                            );
                            return this.init("Collecting observed barter output " + collect);
                         }
                      } else {
                         this.init_AiOperation = AiTidy.init(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "action",
                               "drop",
                               "freeSlots",
@@ -343,7 +343,7 @@ final class AiBarterBatch {
                      gains.addProperty(id, gained);
                   }
                });
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "bartered",
                   this.write_I,
                   "goldSpent",
@@ -351,7 +351,7 @@ final class AiBarterBatch {
                   "goldBudget",
                   budget,
                   "goldLeft",
-                  AiCraft.init_I("minecraft:gold_ingot"),
+                  AiCraft.countItem("minecraft:gold_ingot"),
                   "partners",
                   partners,
                   "pendingBarters",
@@ -361,15 +361,15 @@ final class AiBarterBatch {
                   "pearlsTarget",
                   pearlGoal,
                   "pearlsGained",
-                  AiCraft.init_I("minecraft:ender_pearl") - baseline,
+                  AiCraft.countItem("minecraft:ender_pearl") - baseline,
                   "pearlsMet",
-                  AiCraft.init_I("minecraft:ender_pearl") >= pearlGoal,
+                  AiCraft.countItem("minecraft:ender_pearl") >= pearlGoal,
                   "observedOutputs",
-                  AiJson.init.toJsonTree(this.read_Map),
+                  AiJson.GSON.toJsonTree(this.read_Map),
                   "outputAttribution",
                   "aggregate nearby drop and inventory evidence; individual output attribution may be ambiguous",
                   "inventoryConfirmedOutputs",
-                  AiJson.init.toJsonTree(this.write_Map),
+                  AiJson.GSON.toJsonTree(this.write_Map),
                   "collectedOutputs",
                   gains,
                   "lootWeightTotal",
@@ -386,7 +386,7 @@ final class AiBarterBatch {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_11());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_11());
             }
 
             boolean init_Z_4() {
@@ -395,7 +395,7 @@ final class AiBarterBatch {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                AiOperation.Result result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
-                  this.requiresReconciliationAfterEmergency(), AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_11())
+                  this.requiresReconciliationAfterEmergency(), AiGameOperations.result(status, message, this.init_JsonObject_11())
                );
                this.cancel();
                return result;
@@ -421,9 +421,9 @@ final class AiBarterBatch {
                   }
 
                   this.init_Y.init_V();
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   if (mc.player != null && mc.level == this.init_Obj) {
-                     AiItems.load(this.init_I);
+                     AiItems.selectOrMoveToHotbar(this.init_I);
                   }
                }
             }
@@ -486,7 +486,7 @@ final class AiBarterBatch {
    private static boolean init_Z(Minecraft mc) {
       for (EquipmentSlot slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET)) {
          ItemStack stack = mc.player.getItemBySlot(slot);
-         if (AiRunResources.init(stack, 8) && AiDimension.load_Set.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+         if (AiRunResources.hasMinDurability(stack, 8) && AiDimension.load_Set.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
             return true;
          }
       }

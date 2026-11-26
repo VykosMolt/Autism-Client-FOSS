@@ -24,8 +24,8 @@ public final class CopyPosCommand extends Command {
       root.executes(
          ctx -> {
             Minecraft mc = Minecraft.getInstance();
-            if (FreecamController.init_Z()) {
-               String coordinates = init(FreecamController.load_Vec3_F(1.0F));
+            if (FreecamController.isActive()) {
+               String coordinates = init(FreecamController.getInterpolatedFeetPos(1.0F));
                if (mc != null && mc.keyboardHandler != null) {
                   mc.keyboardHandler.setClipboard(coordinates);
                }

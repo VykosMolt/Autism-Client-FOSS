@@ -29,11 +29,11 @@ final class AiRecover {
       if (mc.player != null && mc.level != null) {
          final AiDeathLog.Inner_DataUtil death = AiDeathLog.init_j_DataUtil();
          if (death == null) {
-            return AiGameOperations.init_AiOperation(AiOperation.Status.FAILED, "No death has been recorded this session; there is nothing to recover", AiDeathLog.init_JsonObject());
+            return AiGameOperations.immediate(AiOperation.Status.FAILED, "No death has been recorded this session; there is nothing to recover", AiDeathLog.init_JsonObject());
          }
 
-         final int timeoutSeconds = Math.max(15, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)));
-         final boolean allowDig = AiJson.init_Z_JsonObject(args, "allowDig", true);
+         final int timeoutSeconds = Math.max(15, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 300)));
+         final boolean allowDig = AiJson.getBoolean(args, "allowDig", true);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final Map<String, Integer> init_Map = this.init_Map_3();
@@ -59,12 +59,12 @@ final class AiRecover {
                      return this.init(
                         AiOperation.Status.FAILED,
                         "The grave is in " + death.dimension() + " and the player is in " + dimension + "; travel there first with game:dimension",
-                        AiJson.init_JsonObject_ObjArr("needsDimension", death.dimension())
+                        AiJson.objectOf("needsDimension", death.dimension())
                      );
                   }
 
                   if (death.expired() && !this.init_Z) {
-                     if (AiTerrain.init(mc.level, death.position())) {
+                     if (AiTerrain.isLoaded(mc.level, death.position())) {
                         return this.init(
                            AiOperation.Status.FAILED,
                            "The five-minute despawn window closed "
@@ -158,13 +158,13 @@ final class AiRecover {
                   this.load_AiOperation = null;
                   return this.init("Resuming recovery after " + this.init_Str);
                } else {
-                  AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
-                  AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_24());
+                  AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
+                  AiOperation action = AiGuard.createResponseOperation(this.init_X_CachePool, vitals, this.init_I_24());
                   if (action == null) {
                      return null;
                   }
 
-                  this.init_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
+                  this.init_Str = AiGuard.decisionReason(this.init_X_CachePool, vitals);
                   this.init_I++;
                   if (this.init_AiOperation != null) {
                      this.init_AiOperation.cancel();
@@ -237,7 +237,7 @@ final class AiRecover {
             }
 
             JsonObject init_JsonObject_39() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr("grave", AiDeathLog.init_JsonObject(), "arrived", this.init_Z);
+               JsonObject out = AiJson.objectOf("grave", AiDeathLog.init_JsonObject(), "arrived", this.init_Z);
                if (this.read) {
                   out.addProperty(
                      "warning",
@@ -246,18 +246,18 @@ final class AiRecover {
                }
 
                JsonArray gained = new JsonArray();
-               this.load().forEach((item, count) -> gained.add(AiJson.init_JsonObject_ObjArr("item", item, "count", count)));
+               this.load().forEach((item, count) -> gained.add(AiJson.objectOf("item", item, "count", count)));
                out.add("recovered", gained);
                JsonArray stillMissing = new JsonArray();
                Map<String, Integer> have = this.load();
                death.inventory().forEach((item, count) -> {
                   int shortfall = count - have.getOrDefault(item, 0);
                   if (shortfall > 0) {
-                     stillMissing.add(AiJson.init_JsonObject_ObjArr("item", item, "count", shortfall));
+                     stillMissing.add(AiJson.objectOf("item", item, "count", shortfall));
                   }
                });
                out.add("stillMissing", stillMissing);
-               out.add("survival", AiGuard.init_JsonObject_X_BufferHelper(AiGuard.init_X_BufferHelper(), this.init_I, this.init_Str));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));
                return out;
             }
 
@@ -304,7 +304,7 @@ final class AiRecover {
 
    static AiOperation init_AiOperation() {
       AiDeathLog.Inner_DataUtil death = AiDeathLog.init_j_DataUtil();
-      return AiGameOperations.init_AiOperation(
+      return AiGameOperations.immediate(
          AiOperation.Status.SUCCEEDED,
          death == null
             ? "No death recorded this session"

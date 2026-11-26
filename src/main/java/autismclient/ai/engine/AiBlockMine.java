@@ -165,7 +165,7 @@ public final class AiBlockMine {
       Set<Block> sources = new HashSet<>();
 
       for (Item item : wanted) {
-         for (Block block : AiItems.init(item)) {
+         for (Block block : AiItems.sourceBlocksFor(item)) {
             if (matches.test(block)) {
                sources.add(block);
             }
@@ -424,12 +424,12 @@ public final class AiBlockMine {
    static Set<Long> init_Set(JsonObject args) {
       if (args.has("avoid") && args.get("avoid").isJsonObject()) {
          JsonObject box = args.getAsJsonObject("avoid");
-         int minX = AiJson.init_I_JsonObject(box, "minX", 0);
-         int minY = AiJson.init_I_JsonObject(box, "minY", 0);
-         int minZ = AiJson.init_I_JsonObject(box, "minZ", 0);
-         int maxX = AiJson.init_I_JsonObject(box, "maxX", minX);
-         int maxY = AiJson.init_I_JsonObject(box, "maxY", minY);
-         int maxZ = AiJson.init_I_JsonObject(box, "maxZ", minZ);
+         int minX = AiJson.getInt(box, "minX", 0);
+         int minY = AiJson.getInt(box, "minY", 0);
+         int minZ = AiJson.getInt(box, "minZ", 0);
+         int maxX = AiJson.getInt(box, "maxX", minX);
+         int maxY = AiJson.getInt(box, "maxY", minY);
+         int maxZ = AiJson.getInt(box, "maxZ", minZ);
          if (maxX >= minX && maxY >= minY && maxZ >= minZ && (long)(maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1) <= 65536L) {
             Set<Long> cells = new HashSet<>();
 
@@ -467,7 +467,7 @@ public final class AiBlockMine {
          }
 
          final Set<Long> protectedCells = keep;
-         final String blockArg = AiJson.init_Str_JsonObject(args, "block", "").trim();
+         final String blockArg = AiJson.getString(args, "block", "").trim();
          final Set<String> blockIds = new HashSet<>();
          if (args.has("blocks") && args.get("blocks").isJsonArray()) {
             for (JsonElement e : args.getAsJsonArray("blocks")) {
@@ -485,7 +485,7 @@ public final class AiBlockMine {
             ? blockArg
             : blockIds.stream().sorted().limit(2L).map(id -> id.substring(id.indexOf(58) + 1)).reduce((a, b) -> a + "/" + b).orElse("blocks")
                + (blockIds.size() > 2 ? "/..." : "");
-         final String dropArg = AiJson.init_Str_JsonObject(args, "drop", "").trim();
+         final String dropArg = AiJson.getString(args, "drop", "").trim();
          final Set<String> dropIds = new HashSet<>();
          if (args.has("drops") && args.get("drops").isJsonArray()) {
             for (JsonElement e : args.getAsJsonArray("drops")) {
@@ -497,35 +497,35 @@ public final class AiBlockMine {
 
          final Set<Item> wantedDrops = new HashSet<>();
          if (!dropArg.isEmpty()) {
-            wantedDrops.addAll(AiItems.load_af_DataUtil(dropArg).items());
+            wantedDrops.addAll(AiItems.resolveItem(dropArg).items());
          }
 
          for (String drop : dropIds) {
-            wantedDrops.addAll(AiItems.load_af_DataUtil(drop).items());
+            wantedDrops.addAll(AiItems.resolveItem(drop).items());
          }
 
-         final int held = AiJson.init_I_JsonObject(args, "held", 0);
-         final int heldMin = Math.max(0, AiJson.init_I_JsonObject(args, "heldMin", 0));
-         final int nearRadius = Math.max(0, AiJson.init_I_JsonObject(args, "nearRadius", 0));
+         final int held = AiJson.getInt(args, "held", 0);
+         final int heldMin = Math.max(0, AiJson.getInt(args, "heldMin", 0));
+         final int nearRadius = Math.max(0, AiJson.getInt(args, "nearRadius", 0));
          final AiMiningQuota quota = AiMiningQuota.init_as_JsonObject(args);
-         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.init_I_JsonObject(args, "count", 1))) : quota.init_I();
-         final int radius = Math.max(16, Math.min(128, AiJson.init_I_JsonObject(args, "radius", 64)));
-         final boolean explore = AiJson.init_Z_JsonObject(args, "explore", !AiJson.init_Z_JsonObject(args, "dropsOnly", false));
-         final boolean dropsOnly = AiJson.init_Z_JsonObject(args, "dropsOnly", false);
+         final int count = quota == null ? Math.max(1, Math.min(640, AiJson.getInt(args, "count", 1))) : quota.init_I();
+         final int radius = Math.max(16, Math.min(128, AiJson.getInt(args, "radius", 64)));
+         final boolean explore = AiJson.getBoolean(args, "explore", !AiJson.getBoolean(args, "dropsOnly", false));
+         final boolean dropsOnly = AiJson.getBoolean(args, "dropsOnly", false);
          final boolean obsidianJob = blockArg.equals("obsidian")
             || blockArg.equals("minecraft:obsidian")
             || !blockIds.isEmpty() && blockIds.stream().allMatch(id -> id.equals("obsidian") || id.equals("minecraft:obsidian"));
-         final boolean approach = AiJson.init_Z_JsonObject(args, "approach", false);
-         final boolean descendOnly = AiJson.init_Z_JsonObject(args, "descendOnly", false);
-         final int exploreY = args.has("exploreY") ? AiJson.init_I_JsonObject(args, "exploreY", 0) : -2147483648;
-         final int treeLimit = Math.max(0, AiJson.init_I_JsonObject(args, "treeLimit", 0));
+         final boolean approach = AiJson.getBoolean(args, "approach", false);
+         final boolean descendOnly = AiJson.getBoolean(args, "descendOnly", false);
+         final int exploreY = args.has("exploreY") ? AiJson.getInt(args, "exploreY", 0) : -2147483648;
+         final int treeLimit = Math.max(0, AiJson.getInt(args, "treeLimit", 0));
          final boolean oreJob = blockArg.contains("ore") || blockIds.stream().anyMatch(id -> id.endsWith("_ore"));
-         final boolean treeMode = AiJson.init_Z_JsonObject(
+         final boolean treeMode = AiJson.getBoolean(
             args,
             "trees",
             !blockArg.isEmpty() && (blockArg.equals("log") || blockArg.endsWith("_log")) || blockIds.stream().anyMatch(id -> id.endsWith("_log"))
          );
-         final long deadline = System.nanoTime() + Math.max(20, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600))) * 1000000000L;
+         final long deadline = System.nanoTime() + Math.max(20, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
          return new AiOperation() {
             final Object init_Obj = mc.level;
             final Set<Long> init_Set = new HashSet<>(avoid);
@@ -549,24 +549,24 @@ public final class AiBlockMine {
             final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
-                  this.init_DataUtil::init_V_Vec3,
+                  this.init_DataUtil::aimAt,
                   true,
                   true,
-                  this.init_DataUtil::load_V,
-                  () -> !this.init_DataUtil.init_Z()
+                  this.init_DataUtil::tick,
+                  () -> !this.init_DataUtil.isSilent()
                )
-               .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.init_V_ce_DataUtil(rotation))
-               .init_RefQueue_DataUtil_BiPredicate((state, tool) -> AiItems.init(mc, state, tool, wantedDrops));
+               .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.setTargetRotation(rotation))
+               .init_RefQueue_DataUtil_BiPredicate((state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops));
             final AiBlockDigger load_RefQueue_DataUtil = new AiBlockDigger(
                   mc,
                   s -> mc.player.getInventory().setSelectedSlot(s),
-                  this.init_DataUtil::init_V_Vec3,
+                  this.init_DataUtil::aimAt,
                   true,
                   false,
-                  this.init_DataUtil::load_V,
-                  () -> !this.init_DataUtil.init_Z()
+                  this.init_DataUtil::tick,
+                  () -> !this.init_DataUtil.isSilent()
                )
-               .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.init_V_ce_DataUtil(rotation));
+               .init_RefQueue_DataUtil_Consumer(rotation -> this.init_DataUtil.setTargetRotation(rotation));
             AiBlockDigger read_RefQueue_DataUtil = this.init_RefQueue_DataUtil;
             List<BlockPos> init_List = new ArrayList<>();
             final Set<Long> write_Set = new HashSet<>();
@@ -574,7 +574,7 @@ public final class AiBlockMine {
             final Set<Long> update_Set = new HashSet<>();
             final Set<Long> sync_Set = new HashSet<>();
             BlockPos load_BlockPos = args.has("focusX")
-               ? new BlockPos(AiJson.init_I_JsonObject(args, "focusX", 0), AiJson.init_I_JsonObject(args, "focusY", 0), AiJson.init_I_JsonObject(args, "focusZ", 0))
+               ? new BlockPos(AiJson.getInt(args, "focusX", 0), AiJson.getInt(args, "focusY", 0), AiJson.getInt(args, "focusZ", 0))
                : null;
             final Set<Long> flush_Set = new HashSet<>();
             final Set<Long> close_Set = new LinkedHashSet<>();
@@ -592,7 +592,7 @@ public final class AiBlockMine {
             AiOperation.Result init_AiOperation_Result;
             AiOperation load_AiOperation;
             boolean write_Z;
-            boolean update_Z = AiJson.init_Z_JsonObject(args, "toolPrepared", false);
+            boolean update_Z = AiJson.getBoolean(args, "toolPrepared", false);
             boolean sync_Z;
             final AiPlacer init_DataPipe = new AiPlacer();
             BlockPos update_BlockPos;
@@ -716,7 +716,7 @@ public final class AiBlockMine {
                }
 
                if (!AutismLiteVariant.enabled()) {
-                  this.load_AiOperation = autismclient.ai.AiBreathe.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25));
+                  this.load_AiOperation = autismclient.ai.AiBreathe.init(AiJson.objectOf("timeoutSeconds", 25));
                }
 
                return this.init_AiOperation_Result_6("Too little air for " + cell.toShortString() + " under water; surfacing first");
@@ -941,7 +941,7 @@ public final class AiBlockMine {
 
                         this.load_AiOperation.cancel();
                         this.load_AiOperation = null;
-                        AiMotionSafety.putAt_V();
+                        AiMotionSafety.releaseMovementKeys();
                         return this.init_AiOperation_Result_6("Breathing again; back to " + label);
                      } else {
                         this.init_V_14();
@@ -1096,7 +1096,7 @@ public final class AiBlockMine {
                                     held,
                                     held - this.load_I_6() - this.pop_I - this.write_Map.size(),
                                     mc.level.getBlockState(inReach).is(BlockTags.LOGS),
-                                    AiMotionSafety.fill_Z(),
+                                    AiMotionSafety.isPlayerSupported(),
                                     this.canInterruptNow(),
                                     this.requiresReconciliationAfterEmergency() || !this.write_Map.isEmpty()
                                  )) {
@@ -1498,7 +1498,7 @@ public final class AiBlockMine {
 
                                  for (BlockPos block : goalCells) {
                                     if (AiBlockMine.init(mc.player.blockPosition(), block, treeMode && this.write_Set.contains(block.asLong()))
-                                       && (AiBlockInteraction.init(mc, block) != null || this.init_BlockPos_Vec3(eye, block, mc.player.blockInteractionRange()) != null)
+                                       && (AiBlockInteraction.findReachableHit(mc, block) != null || this.init_BlockPos_Vec3(eye, block, mc.player.blockInteractionRange()) != null)
                                        )
                                      {
                                        visible = true;
@@ -1546,7 +1546,7 @@ public final class AiBlockMine {
                                        JsonArray dropGoals = new JsonArray();
 
                                        for (Vec3 item : drops) {
-                                          dropGoals.add(AiJson.init_JsonObject_ObjArr("x", item.x, "y", item.y, "z", item.z));
+                                          dropGoals.add(AiJson.objectOf("x", item.x, "y", item.y, "z", item.z));
                                        }
 
                                        out.add("dropGoals", dropGoals);
@@ -1629,9 +1629,9 @@ public final class AiBlockMine {
                                     }
 
                                     this.load_V_7();
-                                    AiMotionSafety.putAt_V();
-                                    if (!AiMotionSafety.putAt_Z_D_D(0.0, 0.0)) {
-                                       AiMotionSafety.fill_V();
+                                    AiMotionSafety.releaseMovementKeys();
+                                    if (!AiMotionSafety.isHorizontalMoveSafe(0.0, 0.0)) {
+                                       AiMotionSafety.applyEmergencyBrake();
                                     }
 
                                     this.init_BlockPos(List.of(near));
@@ -1853,8 +1853,8 @@ public final class AiBlockMine {
                double yaw = Math.toRadians(mc.player.getYRot());
                double forward = dx * -Math.sin(yaw) + dz * Math.cos(yaw);
                double right = dx * -Math.cos(yaw) + dz * -Math.sin(yaw);
-               if (!AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), new Vec3(point.x, mc.player.getY(), point.z))
-                  || !AiMotionSafety.putAt_Z_D_D(forward > 0.2 ? 1.0 : (forward < -0.2 ? -1.0 : 0.0), right > 0.2 ? -1.0 : (right < -0.2 ? 1.0 : 0.0))) {
+               if (!AiMotionSafety.isSegmentHazardFree(mc.player.position(), new Vec3(point.x, mc.player.getY(), point.z))
+                  || !AiMotionSafety.isHorizontalMoveSafe(forward > 0.2 ? 1.0 : (forward < -0.2 ? -1.0 : 0.0), right > 0.2 ? -1.0 : (right < -0.2 ? 1.0 : 0.0))) {
                   return false;
                } else if (this.init(point.x, point.z) && this.init((point.x + mc.player.getX()) / 2.0, (point.z + mc.player.getZ()) / 2.0)) {
                   mc.options.keyUp.setDown(forward > 0.2);
@@ -2195,7 +2195,7 @@ public final class AiBlockMine {
                BlockPos feet = mc.player.blockPosition();
 
                for (BlockPos t : this.init_List) {
-                  if (!this.init_Set.contains(t.asLong()) && this.write_Z_2(t) && AiBlockMine.init(feet, t, true) && AiBlockInteraction.init(mc, t) != null) {
+                  if (!this.init_Set.contains(t.asLong()) && this.write_Z_2(t) && AiBlockMine.init(feet, t, true) && AiBlockInteraction.findReachableHit(mc, t) != null) {
                      return true;
                   }
                }
@@ -2262,7 +2262,7 @@ public final class AiBlockMine {
             ToDoubleFunction<BlockPos> init_ToDoubleFunction() {
                Map<BlockState, Double> costs = new IdentityHashMap<>();
                return cell -> costs.computeIfAbsent(mc.level.getBlockState(cell), state -> {
-                  int slot = MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.init(mc, block, tool, wantedDrops));
+                  int slot = MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, wantedDrops));
                   return slot < 0 ? 1.0 / 0.0 : MiningCost.init_D_Minecraft(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, cell));
                });
             }
@@ -2279,7 +2279,7 @@ public final class AiBlockMine {
                         return true;
                      }
 
-                     for (Block source : AiItems.init(it)) {
+                     for (Block source : AiItems.sourceBlocksFor(it)) {
                         if (this.init_Z_3(BuiltInRegistries.BLOCK.getKey(source).toString())) {
                            return true;
                         }
@@ -2371,7 +2371,7 @@ public final class AiBlockMine {
                   BlockPos feet = mc.player.blockPosition();
 
                   for (BlockPos block : this.init_List_5()) {
-                     if (AiBlockMine.init(feet, block, treeMode && this.write_Set.contains(block.asLong())) && AiBlockInteraction.init(mc, block) != null) {
+                     if (AiBlockMine.init(feet, block, treeMode && this.write_Set.contains(block.asLong())) && AiBlockInteraction.findReachableHit(mc, block) != null) {
                         return true;
                      }
                   }
@@ -2518,7 +2518,7 @@ public final class AiBlockMine {
                      && this.write_Z_2(led)
                      && this.sync(led)
                      && AiBlockMine.init(mc.player.blockPosition(), led, treeMode && this.write_Set.contains(led.asLong()))) {
-                     return MiningCost.init_I_Minecraft_2(mc, mc.level.getBlockState(led), true, (state, tool) -> AiItems.init(mc, state, tool, wantedDrops)) < 0
+                     return MiningCost.init_I_Minecraft_2(mc, mc.level.getBlockState(led), true, (state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops)) < 0
                         ? null
                         : next.direction();
                   } else {
@@ -2705,7 +2705,7 @@ public final class AiBlockMine {
                      }
 
                      if (!t.equals(over) || !this.update(t)) {
-                        BlockPos in = AiBlockInteraction.init(mc, t) != null && (rest == null || AiBlockInteraction.init(mc, t, rest) != null)
+                        BlockPos in = AiBlockInteraction.findReachableHit(mc, t) != null && (rest == null || AiBlockInteraction.findReachableHitFrom(mc, t, rest) != null)
                            ? t
                            : this.init_BlockPos_Vec3(eye, t, reach);
                         if (in == null && !this.init_Set.contains(t.asLong())) {
@@ -2811,7 +2811,7 @@ public final class AiBlockMine {
                      }
 
                      out.append(" | ").append(t.toShortString()).append(' ').append(mc.level.getBlockState(t).getBlock().getName().getString());
-                     if (AiBlockInteraction.init(mc, t) == null) {
+                     if (AiBlockInteraction.findReachableHit(mc, t) == null) {
                         out.append(" unseen");
                      }
 
@@ -2852,7 +2852,7 @@ public final class AiBlockMine {
                   if (!in.equals(target) && !(eye.distanceToSqr(hit.getLocation()) > reach * reach)) {
                      BlockState state = mc.level.getBlockState(in);
                      boolean soft = state.is(BlockTags.LEAVES) || state.getDestroySpeed(mc.level, in) == 0.0F && !state.hasBlockEntity();
-                     return soft && state.getFluidState().isEmpty() && AiBlockInteraction.init(mc, in) != null ? in : null;
+                     return soft && state.getFluidState().isEmpty() && AiBlockInteraction.findReachableHit(mc, in) != null ? in : null;
                   } else {
                      return null;
                   }
@@ -3024,7 +3024,7 @@ public final class AiBlockMine {
 
             BiPredicate<BlockState, ItemStack> init_BiPredicate() {
                Set<Block> sources = AiBlockMine.init_Set(wantedDrops, block -> this.init_Z_3(BuiltInRegistries.BLOCK.getKey(block).toString()));
-               BiPredicate<BlockState, ItemStack> wanted = AiItems.init(mc, wantedDrops);
+               BiPredicate<BlockState, ItemStack> wanted = AiItems.dropFilterFor(mc, wantedDrops);
                return (state, tool) -> !sources.contains(state.getBlock()) || wanted.test(state, tool);
             }
 
@@ -3315,7 +3315,7 @@ public final class AiBlockMine {
                               if (!over.is(BlockTags.LOGS)
                                  && over.getCollisionShape(mc.level, p.above()).isEmpty()
                                  && !AiEditLedger.init_Z(p)
-                                 && AiBlockInteraction.init(mc, p) != null
+                                 && AiBlockInteraction.findReachableHit(mc, p) != null
                                  && !this.init_Set.contains(p.asLong())
                                  && AiPathfinder.LiveGridView.init_Z_ClientLevel_BlockPos(mc.level, p)
                                  && (best == null || dx * dz == 0)) {
@@ -3406,7 +3406,7 @@ public final class AiBlockMine {
             }
 
             JsonObject init_JsonObject_25() {
-               JsonObject out = AiJson.init_JsonObject_ObjArr(
+               JsonObject out = AiJson.objectOf(
                   "block",
                   label,
                   "broken",
@@ -3437,7 +3437,7 @@ public final class AiBlockMine {
             }
 
             AiOperation.Result load_AiOperation_Result_2(BlockPos target) {
-               Item needed = AiItems.init_Item(mc.level.getBlockState(target));
+               Item needed = AiItems.cheapestRequiredTool(mc.level.getBlockState(target));
                JsonObject out = this.init_JsonObject_25();
                out.addProperty("targetX", target.getX());
                out.addProperty("targetY", target.getY());
@@ -3494,8 +3494,8 @@ public final class AiBlockMine {
                this.load_RefQueue_DataUtil.init_V();
                this.init_DataPipe.init_V();
                this.update_BlockPos = null;
-               this.init_DataUtil.init_V();
-               AiMotionSafety.putAt_V();
+               this.init_DataUtil.clear();
+               AiMotionSafety.releaseMovementKeys();
             }
 
             @Override

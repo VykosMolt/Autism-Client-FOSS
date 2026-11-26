@@ -28,7 +28,7 @@ final class AiEnchant {
       int levelNeeded = Math.max(button + 1, requiredLevel);
       boolean enoughLapis = lapisAvailable >= lapisCost;
       boolean enoughLevels = xpLevel >= levelNeeded;
-      JsonObject option = AiJson.init_JsonObject_ObjArr(
+      JsonObject option = AiJson.objectOf(
          "button",
          button,
          "requiredLevel",
@@ -108,7 +108,7 @@ final class AiEnchant {
          );
       }
 
-      JsonObject inputJson = AiJson.init_JsonObject_ObjArr(
+      JsonObject inputJson = AiJson.objectOf(
          "slot",
          0,
          "item",
@@ -122,7 +122,7 @@ final class AiEnchant {
          inputJson.add("components", AiWorldReaders.init(input));
       }
 
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "containerId",
          menu.containerId,
          "inputSlot",
@@ -148,9 +148,9 @@ final class AiEnchant {
 
    static AiOperation init_AiOperation(JsonObject args) {
       if (args.has("button") && !args.get("button").isJsonNull()) {
-         final int button = AiJson.init_I_JsonObject(args, "button", -1);
+         final int button = AiJson.getInt(args, "button", -1);
          if (button >= 0 && button < 3) {
-            int timeout = Math.max(1, Math.min(120, AiJson.init_I_JsonObject(args, "timeoutSeconds", 30)));
+            int timeout = Math.max(1, Math.min(120, AiJson.getInt(args, "timeoutSeconds", 30)));
             final Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.player != null && mc.level != null && mc.gameMode != null) {
                if (mc.player.containerMenu instanceof EnchantmentMenu menu) {
@@ -158,10 +158,10 @@ final class AiEnchant {
                      button, menu.costs[button], init(menu.getSlot(1).getItem()), mc.player.experienceLevel, !menu.getSlot(0).getItem().isEmpty()
                   );
                   if (deficit != null) {
-                     return AiGameOperations.init_AiOperation(
+                     return AiGameOperations.immediate(
                         AiOperation.Status.FAILED,
                         deficit,
-                        AiJson.init_JsonObject_ObjArr("button", button, "option", init(mc, menu).getAsJsonArray("options").get(button))
+                        AiJson.objectOf("button", button, "option", init(mc, menu).getAsJsonArray("options").get(button))
                      );
                   }
 
@@ -193,23 +193,23 @@ final class AiEnchant {
                               !current.getSlot(0).getItem().isEmpty()
                            );
                            if (again != null) {
-                              return this.init(AiOperation.Status.FAILED, again, AiJson.init_JsonObject_ObjArr("button", button));
+                              return this.init(AiOperation.Status.FAILED, again, AiJson.objectOf("button", button));
                            }
 
-                           this.init_J = AiServerEvidence.init_J_I(containerId);
+                           this.init_J = AiServerEvidence.containerRevision(containerId);
                            mc.gameMode.handleInventoryButtonClick(containerId, button);
                            this.init_Z = true;
                            return this.init("Enchant option clicked once; waiting for the server-applied result");
                         } else {
                            ItemStack now = current.getSlot(0).getItem();
                            boolean changed = !ItemStack.matches(before, now);
-                           boolean confirmed = AiServerEvidence.init_J_I(containerId) > this.init_J;
+                           boolean confirmed = AiServerEvidence.containerRevision(containerId) > this.init_J;
                            if (!changed || !confirmed) {
                               return System.nanoTime() > deadline
                                  ? this.init(
                                     AiOperation.Status.UNCERTAIN,
                                     "Enchant click not confirmed; inspect the table before retrying",
-                                    AiJson.init_JsonObject_ObjArr("button", button, "containerId", containerId, "changed", changed)
+                                    AiJson.objectOf("button", button, "containerId", containerId, "changed", changed)
                                  )
                                  : this.init(
                                     changed
@@ -222,7 +222,7 @@ final class AiEnchant {
                               return this.init("Enchant result applied; verifying it is stable");
                            }
 
-                           JsonObject data = AiJson.init_JsonObject_ObjArr(
+                           JsonObject data = AiJson.objectOf(
                               "button",
                               button,
                               "containerId",
@@ -245,12 +245,12 @@ final class AiEnchant {
                      }
 
                      AiOperation.Result init(String message) {
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, AiJson.init_JsonObject_ObjArr("button", button));
+                        return AiGameOperations.result(AiOperation.Status.RUNNING, message, AiJson.objectOf("button", button));
                      }
 
                      AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
                         this.load = true;
-                        return AiGameOperations.init_AiOperation_Result(status, message, data);
+                        return AiGameOperations.result(status, message, data);
                      }
 
                      @Override
@@ -273,7 +273,7 @@ final class AiEnchant {
    }
 
    private static AiOperation init(String message) {
-      return AiGameOperations.init_AiOperation(AiOperation.Status.FAILED, message, new JsonObject());
+      return AiGameOperations.immediate(AiOperation.Status.FAILED, message, new JsonObject());
    }
 
    private static IntFunction<String> init_IntFunction(Minecraft mc) {

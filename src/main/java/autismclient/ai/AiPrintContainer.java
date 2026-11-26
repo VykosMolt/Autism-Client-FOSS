@@ -332,7 +332,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
             }
          }
 
-         long revision = AiServerEvidence.init_J_I(this.init_AbstractContainerM.containerId);
+         long revision = AiServerEvidence.containerRevision(this.init_AbstractContainerM.containerId);
          if (!this.init_ArrayDeque.isEmpty() || revision != this.write_J) {
             this.write_J = revision;
             this.update_J = tick;
@@ -549,7 +549,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    public boolean beginDispatch() {
       if (this.prepare() == autismclient.ai.print.PrintMachineJob.JobStatus.READY && !this.init_DataUtil.load_Z()) {
          this.init_J = System.nanoTime();
-         this.load_J = AiServerEvidence.init_J();
+         this.load_J = AiServerEvidence.inventoryRevision();
          this.sync_Z = this.init_DataUtil.update_Z();
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
             autismclient.ai.print.PrintMachineJob.JobStatus.SENT, "Waiting for the container menu and its server contents"
@@ -641,7 +641,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
             }
 
             if (this.load_List == null) {
-               if (AiServerEvidence.init_J_I(this.init_AbstractContainerM.containerId) <= this.load_J
+               if (AiServerEvidence.containerRevision(this.init_AbstractContainerM.containerId) <= this.load_J
                   || this.init_CompletableFuture != null && !this.init_CompletableFuture.isDone()) {
                   if (System.nanoTime() - this.init_J < 5000000000L) {
                      return this.init_BitSetUtil_DataUti;
@@ -946,7 +946,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public String init_Str() {
-      JsonObject receipt = AiJson.init_JsonObject_ObjArr(
+      JsonObject receipt = AiJson.objectOf(
          "position",
          this.init_BlockPos.toShortString(),
          "state",

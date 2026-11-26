@@ -24,7 +24,7 @@ final class AiWorldCreate {
    }
 
    static AiOperation init_AiOperation(final JsonObject args) {
-      final String name = AiJson.init_Str_JsonObject(args, "name", "").trim();
+      final String name = AiJson.getString(args, "name", "").trim();
       if (name.isBlank() || name.length() > 64) {
          throw new IllegalArgumentException("name required (1..64 characters)");
       }
@@ -34,7 +34,7 @@ final class AiWorldCreate {
       }
 
       GameType var10000;
-      switch (AiJson.init_Str_JsonObject(args, "gamemode", "survival").toLowerCase(Locale.ROOT)) {
+      switch (AiJson.getString(args, "gamemode", "survival").toLowerCase(Locale.ROOT)) {
          case "survival":
             var10000 = GameType.SURVIVAL;
             break;
@@ -53,7 +53,7 @@ final class AiWorldCreate {
 
       final GameType gameType = var10000;
       Difficulty var14;
-      switch (AiJson.init_Str_JsonObject(args, "difficulty", "normal").toLowerCase(Locale.ROOT)) {
+      switch (AiJson.getString(args, "difficulty", "normal").toLowerCase(Locale.ROOT)) {
          case "peaceful":
             var14 = Difficulty.PEACEFUL;
             break;
@@ -71,15 +71,15 @@ final class AiWorldCreate {
       }
 
       final Difficulty difficulty = var14;
-      final boolean cheats = AiJson.init_Z_JsonObject(args, "cheats", false);
-      final boolean hardcore = AiJson.init_Z_JsonObject(args, "hardcore", false);
-      final boolean bonusChest = AiJson.init_Z_JsonObject(args, "bonusChest", false);
-      final boolean structures = AiJson.init_Z_JsonObject(args, "structures", true);
+      final boolean cheats = AiJson.getBoolean(args, "cheats", false);
+      final boolean hardcore = AiJson.getBoolean(args, "hardcore", false);
+      final boolean bonusChest = AiJson.getBoolean(args, "bonusChest", false);
+      final boolean structures = AiJson.getBoolean(args, "structures", true);
       final Long seed = args.has("seed") && args.get("seed").isJsonPrimitive() ? args.get("seed").getAsLong() : null;
       final Minecraft mc = Minecraft.getInstance();
       final Object initialLevel = mc.level;
       return new AiOperation() {
-         final long init_J = System.nanoTime() + Math.max(10, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 120))) * 1000000000L;
+         final long init_J = System.nanoTime() + Math.max(10, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 120))) * 1000000000L;
          boolean init_Z;
          boolean load;
          String init_Str = "";
@@ -114,26 +114,26 @@ final class AiWorldCreate {
          @Override
          public AiOperation.Result tick() {
             if (this.load) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, this.init_Str, AiJson.init_JsonObject_ObjArr("name", name));
+               return AiGameOperations.result(AiOperation.Status.FAILED, this.init_Str, AiJson.objectOf("name", name));
             } else if (!this.init_Z) {
                this.init();
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Creating world " + name, new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "Creating world " + name, new JsonObject());
             } else if (mc.player != null && mc.level != null && mc.level != initialLevel) {
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   AiOperation.Status.SUCCEEDED,
                   "World " + name + " created and joined" + (seed == null ? " (random seed)" : " with seed " + seed),
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "name", name, "seed", seed == null ? "random" : String.valueOf(seed), "gamemode", gameType.name(), "difficulty", difficulty.name()
                   )
                );
             } else {
                return System.nanoTime() - this.init_J >= 0L
-                  ? AiGameOperations.init_AiOperation_Result(
+                  ? AiGameOperations.result(
                      AiOperation.Status.TIMED_OUT,
                      "World did not load within the deadline; inspect the current screen",
-                     AiJson.init_JsonObject_ObjArr("name", name)
+                     AiJson.objectOf("name", name)
                   )
-                  : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Loading world " + name, new JsonObject());
+                  : AiGameOperations.result(AiOperation.Status.RUNNING, "Loading world " + name, new JsonObject());
             }
          }
 
@@ -154,11 +154,11 @@ final class AiWorldCreate {
          throw new IllegalStateException("Could not list worlds: " + e.getMessage());
       }
 
-      return AiJson.init_JsonObject_ObjArr("worlds", worlds);
+      return AiJson.objectOf("worlds", worlds);
    }
 
    static JsonObject load(JsonObject args) {
-      String name = AiJson.init_Str_JsonObject(args, "name", "").trim();
+      String name = AiJson.getString(args, "name", "").trim();
       if (name.isBlank()) {
          throw new IllegalArgumentException("name required");
       }
@@ -182,7 +182,7 @@ final class AiWorldCreate {
          throw new IllegalArgumentException("Unknown world '" + name + "'");
       }
 
-      return AiJson.init_JsonObject_ObjArr("deleted", name);
+      return AiJson.objectOf("deleted", name);
    }
 
    // Only a world the save list shows, so a path can't reach outside the saves folder.

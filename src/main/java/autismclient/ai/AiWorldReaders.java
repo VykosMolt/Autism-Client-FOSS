@@ -63,7 +63,7 @@ final class AiWorldReaders {
 
             if (line != null) {
                rows.add(
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "row",
                      line.init_I(),
                      "objective",
@@ -96,7 +96,7 @@ final class AiWorldReaders {
             }
 
             if (player != null && player.init_Str() != null) {
-               players.add(AiJson.init_JsonObject_ObjArr("name", init(player.init_Str(), 64), "prefix", init(player.load(), 128)));
+               players.add(AiJson.objectOf("name", init(player.init_Str(), 64), "prefix", init(player.load(), 128)));
             }
          }
       } catch (Throwable var4) {
@@ -137,7 +137,7 @@ final class AiWorldReaders {
                }
 
                if (value instanceof BossEvent event) {
-                  bars.add(AiJson.init_JsonObject_ObjArr("title", init(init(event.getName()), 256), "progress", event.getProgress()));
+                  bars.add(AiJson.objectOf("title", init(init(event.getName()), 256), "progress", event.getProgress()));
                }
             }
          }
@@ -233,7 +233,7 @@ final class AiWorldReaders {
          if (written != null) {
             summary.add(
                "writtenBook",
-               AiJson.init_JsonObject_ObjArr("title", init(written.title() == null ? "" : written.title().raw(), 48), "author", init(written.author(), 48))
+               AiJson.objectOf("title", init(written.title() == null ? "" : written.title().raw(), 48), "author", init(written.author(), 48))
             );
          }
 
@@ -319,7 +319,7 @@ final class AiWorldReaders {
       try {
          Component customName = stack.get(DataComponents.CUSTOM_NAME);
          if (customName != null) {
-            sections.add(Map.entry("customName", AiJson.init.toJsonTree(init(customName.getString(), 512))));
+            sections.add(Map.entry("customName", AiJson.GSON.toJsonTree(init(customName.getString(), 512))));
          }
       } catch (Throwable var19) {
       }
@@ -350,13 +350,13 @@ final class AiWorldReaders {
             && (!modelData.floats().isEmpty() || !modelData.flags().isEmpty() || !modelData.strings().isEmpty() || !modelData.colors().isEmpty())) {
             JsonObject object = new JsonObject();
             JsonArray floats = new JsonArray();
-            modelData.floats().stream().limit(16L).forEach(value -> floats.add(value == null ? JsonNull.INSTANCE : AiJson.init.toJsonTree(value)));
+            modelData.floats().stream().limit(16L).forEach(value -> floats.add(value == null ? JsonNull.INSTANCE : AiJson.GSON.toJsonTree(value)));
             if (floats.size() > 0) {
                object.add("floats", floats);
             }
 
             JsonArray flags = new JsonArray();
-            modelData.flags().stream().limit(16L).forEach(value -> flags.add(value == null ? JsonNull.INSTANCE : AiJson.init.toJsonTree(value)));
+            modelData.flags().stream().limit(16L).forEach(value -> flags.add(value == null ? JsonNull.INSTANCE : AiJson.GSON.toJsonTree(value)));
             if (flags.size() > 0) {
                object.add("flags", flags);
             }
@@ -368,7 +368,7 @@ final class AiWorldReaders {
             }
 
             JsonArray colors = new JsonArray();
-            modelData.colors().stream().limit(16L).forEach(value -> colors.add(value == null ? JsonNull.INSTANCE : AiJson.init.toJsonTree(value)));
+            modelData.colors().stream().limit(16L).forEach(value -> colors.add(value == null ? JsonNull.INSTANCE : AiJson.GSON.toJsonTree(value)));
             if (colors.size() > 0) {
                object.add("colors", colors);
             }
@@ -394,7 +394,7 @@ final class AiWorldReaders {
                }
 
                if (effect != null) {
-                  effects.add(AiJson.init_JsonObject_ObjArr("id", init(effect.getEffect()), "amplifier", effect.getAmplifier(), "duration", effect.getDuration()));
+                  effects.add(AiJson.objectOf("id", init(effect.getEffect()), "amplifier", effect.getAmplifier(), "duration", effect.getDuration()));
                }
             }
 
@@ -419,7 +419,7 @@ final class AiWorldReaders {
 
                if (entry != null && entry.modifier() != null) {
                   entries.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "attribute",
                         init(entry.attribute()),
                         "amount",
@@ -451,7 +451,7 @@ final class AiWorldReaders {
             }
 
             if (name != null && !name.isBlank()) {
-               sections.add(Map.entry("profile", AiJson.init_JsonObject_ObjArr("name", init(name, 64))));
+               sections.add(Map.entry("profile", AiJson.objectOf("name", init(name, 64))));
             }
          }
       } catch (Throwable var16) {
@@ -459,7 +459,7 @@ final class AiWorldReaders {
 
       try {
          if (stack.get(DataComponents.TRIM) instanceof ArmorTrim armorTrim) {
-            sections.add(Map.entry("trim", AiJson.init_JsonObject_ObjArr("material", init(armorTrim.material()), "pattern", init(armorTrim.pattern()))));
+            sections.add(Map.entry("trim", AiJson.objectOf("material", init(armorTrim.material()), "pattern", init(armorTrim.pattern()))));
          }
       } catch (Throwable var14) {
       }
@@ -467,14 +467,14 @@ final class AiWorldReaders {
       try {
          DyedItemColor dyed = stack.get(DataComponents.DYED_COLOR);
          if (dyed != null) {
-            sections.add(Map.entry("dyedColor", AiJson.init.toJsonTree(dyed.rgb())));
+            sections.add(Map.entry("dyedColor", AiJson.GSON.toJsonTree(dyed.rgb())));
          }
       } catch (Throwable var13) {
       }
 
       try {
          if (stack.getMaxDamage() > 0) {
-            sections.add(Map.entry("damage", AiJson.init_JsonObject_ObjArr("current", stack.getDamageValue(), "max", stack.getMaxDamage())));
+            sections.add(Map.entry("damage", AiJson.objectOf("current", stack.getDamageValue(), "max", stack.getMaxDamage())));
          }
       } catch (Throwable var12) {
       }
@@ -483,7 +483,7 @@ final class AiWorldReaders {
          FoodProperties food = stack.get(DataComponents.FOOD);
          if (food != null) {
             sections.add(
-               Map.entry("food", AiJson.init_JsonObject_ObjArr("nutrition", food.nutrition(), "saturation", food.saturation(), "canAlwaysEat", food.canAlwaysEat()))
+               Map.entry("food", AiJson.objectOf("nutrition", food.nutrition(), "saturation", food.saturation(), "canAlwaysEat", food.canAlwaysEat()))
             );
          }
       } catch (Throwable var11) {
@@ -491,7 +491,7 @@ final class AiWorldReaders {
 
       try {
          if (stack.get(DataComponents.CONSUMABLE) != null) {
-            sections.add(Map.entry("consumable", AiJson.init.toJsonTree(true)));
+            sections.add(Map.entry("consumable", AiJson.GSON.toJsonTree(true)));
          }
       } catch (Throwable var10) {
       }
@@ -499,7 +499,7 @@ final class AiWorldReaders {
       try {
          ItemContainerContents container = stack.get(DataComponents.CONTAINER);
          if (container != null) {
-            sections.add(Map.entry("container", AiJson.init_JsonObject_ObjArr("count", init(container))));
+            sections.add(Map.entry("container", AiJson.objectOf("count", init(container))));
             JsonArray items = new JsonArray();
             int[] index = new int[]{0};
             container.nonEmptyItemCopyStream().limit(27L).forEach(inner -> {
@@ -570,7 +570,7 @@ final class AiWorldReaders {
                break;
             }
 
-            out.add(AiJson.init_JsonObject_ObjArr("id", init(entry.getKey()), "level", entry.getIntValue(), "stored", stored));
+            out.add(AiJson.objectOf("id", init(entry.getKey()), "level", entry.getIntValue(), "stored", stored));
          }
       }
    }
@@ -688,7 +688,7 @@ final class AiWorldReaders {
    }
 
    private static int init(JsonElement element) {
-      return AiJson.init.toJson(element).length();
+      return AiJson.GSON.toJson(element).length();
    }
 
    private static String init(Holder<?> holder) {

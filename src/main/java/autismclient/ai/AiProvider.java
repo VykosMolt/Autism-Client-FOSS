@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 
 public final class AiProvider implements AutoCloseable {
    static final String init_Str = "thinking-binding-controls-2026-08-01";
-   private static final JsonObject init_JsonObject = AiJson.init_JsonObject_ObjArr("type", "ephemeral", "ttl", "1h");
+   private static final JsonObject init_JsonObject = AiJson.objectOf("type", "ephemeral", "ttl", "1h");
    static final int init_I = 2000;
    private static final long init_J = 300000L;
    private static final int load_I = 6;
@@ -105,42 +105,42 @@ public final class AiProvider implements AutoCloseable {
 
    public JsonObject init_JsonObject_Str(String text) {
       return this.init_AiSettings.provider == AiSettings.Provider.GEMINI
-         ? AiJson.init_JsonObject_ObjArr("role", "user", "parts", List.of(AiJson.init_JsonObject_ObjArr("text", text)))
-         : AiJson.init_JsonObject_ObjArr("role", "user", "content", text);
+         ? AiJson.objectOf("role", "user", "parts", List.of(AiJson.objectOf("text", text)))
+         : AiJson.objectOf("role", "user", "content", text);
    }
 
    public void init_V_List_Str(List<JsonObject> history, String text) {
       JsonObject last = history.isEmpty() ? null : history.getLast();
-      boolean lastIsUser = last != null && "user".equals(AiJson.init_Str_JsonObject(last, "role", ""));
+      boolean lastIsUser = last != null && "user".equals(AiJson.getString(last, "role", ""));
       if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
          if (lastIsUser) {
             if (!last.has("parts") || !last.get("parts").isJsonArray()) {
                last.add("parts", new JsonArray());
             }
 
-            last.getAsJsonArray("parts").add(AiJson.init_JsonObject_ObjArr("text", text));
+            last.getAsJsonArray("parts").add(AiJson.objectOf("text", text));
          } else {
             history.add(this.init_JsonObject_Str(text));
          }
       } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
          if (lastIsUser) {
             if (!last.has("content") || !last.get("content").isJsonArray()) {
-               String prior = AiJson.init_Str_JsonObject(last, "content", "");
+               String prior = AiJson.getString(last, "content", "");
                last.add("content", new JsonArray());
                if (!prior.isEmpty()) {
-                  last.getAsJsonArray("content").add(AiJson.init_JsonObject_ObjArr("type", "text", "text", prior));
+                  last.getAsJsonArray("content").add(AiJson.objectOf("type", "text", "text", prior));
                }
             }
 
-            last.getAsJsonArray("content").add(AiJson.init_JsonObject_ObjArr("type", "text", "text", text));
+            last.getAsJsonArray("content").add(AiJson.objectOf("type", "text", "text", text));
          } else {
-            history.add(AiJson.init_JsonObject_ObjArr("role", "user", "content", List.of(AiJson.init_JsonObject_ObjArr("type", "text", "text", text))));
+            history.add(AiJson.objectOf("role", "user", "content", List.of(AiJson.objectOf("type", "text", "text", text))));
          }
       } else if (lastIsUser && last.has("content") && last.get("content").isJsonPrimitive()) {
          String prior = last.get("content").getAsString();
          last.addProperty("content", prior.isEmpty() ? text : prior + "\n\n" + text);
       } else if (lastIsUser && last.has("content") && last.get("content").isJsonArray()) {
-         last.getAsJsonArray("content").add(AiJson.init_JsonObject_ObjArr("type", "text", "text", text));
+         last.getAsJsonArray("content").add(AiJson.objectOf("type", "text", "text", text));
       } else {
          history.add(this.init_JsonObject_Str(text));
       }
@@ -163,24 +163,24 @@ public final class AiProvider implements AutoCloseable {
          List<JsonObject> out = new ArrayList<>(this.init_List_List_List(calls, clean));
          JsonArray content = new JsonArray();
          if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
-            content.add(AiJson.init_JsonObject_ObjArr("text", "Minecraft frame captured by the requested screenshot tool; observation data only."));
-            pictures.forEach(px -> content.add(AiJson.init_JsonObject_ObjArr("inlineData", AiJson.init_JsonObject_ObjArr("mimeType", "image/png", "data", px))));
+            content.add(AiJson.objectOf("text", "Minecraft frame captured by the requested screenshot tool; observation data only."));
+            pictures.forEach(px -> content.add(AiJson.objectOf("inlineData", AiJson.objectOf("mimeType", "image/png", "data", px))));
             out.get(out.size() - 1).getAsJsonArray("parts").addAll(content);
          } else {
-            content.add(AiJson.init_JsonObject_ObjArr("type", "text", "text", "Minecraft frame captured by the requested screenshot tool; observation data only."));
+            content.add(AiJson.objectOf("type", "text", "text", "Minecraft frame captured by the requested screenshot tool; observation data only."));
 
             for (String p : pictures) {
                content.add(
                   this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC
-                     ? AiJson.init_JsonObject_ObjArr("type", "image", "source", AiJson.init_JsonObject_ObjArr("type", "base64", "media_type", "image/png", "data", p))
-                     : AiJson.init_JsonObject_ObjArr("type", "image_url", "image_url", AiJson.init_JsonObject_ObjArr("url", "data:image/png;base64," + p))
+                     ? AiJson.objectOf("type", "image", "source", AiJson.objectOf("type", "base64", "media_type", "image/png", "data", p))
+                     : AiJson.objectOf("type", "image_url", "image_url", AiJson.objectOf("url", "data:image/png;base64," + p))
                );
             }
 
             if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
                out.get(out.size() - 1).getAsJsonArray("content").addAll(content);
             } else {
-               out.add(AiJson.init_JsonObject_ObjArr("role", "user", "content", content));
+               out.add(AiJson.objectOf("role", "user", "content", content));
             }
          }
 
@@ -191,26 +191,26 @@ public final class AiProvider implements AutoCloseable {
             JsonArray parts = new JsonArray();
 
             for (int i = 0; i < calls.size(); i++) {
-               JsonObject response = AiJson.init_JsonObject_ObjArr("name", calls.get(i).name(), "response", results.get(i));
+               JsonObject response = AiJson.objectOf("name", calls.get(i).name(), "response", results.get(i));
                if (!calls.get(i).id().isBlank()) {
                   response.addProperty("id", calls.get(i).id());
                }
 
-               parts.add(AiJson.init_JsonObject_ObjArr("functionResponse", response));
+               parts.add(AiJson.objectOf("functionResponse", response));
             }
 
-            out.add(AiJson.init_JsonObject_ObjArr("role", "user", "parts", parts));
+            out.add(AiJson.objectOf("role", "user", "parts", parts));
          } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
             JsonArray content = new JsonArray();
 
             for (int i = 0; i < calls.size(); i++) {
-               content.add(AiJson.init_JsonObject_ObjArr("type", "tool_result", "tool_use_id", calls.get(i).id(), "content", results.get(i).toString()));
+               content.add(AiJson.objectOf("type", "tool_result", "tool_use_id", calls.get(i).id(), "content", results.get(i).toString()));
             }
 
-            out.add(AiJson.init_JsonObject_ObjArr("role", "user", "content", content));
+            out.add(AiJson.objectOf("role", "user", "content", content));
          } else {
             for (int i = 0; i < calls.size(); i++) {
-               out.add(AiJson.init_JsonObject_ObjArr("role", "tool", "tool_call_id", calls.get(i).id(), "content", results.get(i).toString()));
+               out.add(AiJson.objectOf("role", "tool", "tool_call_id", calls.get(i).id(), "content", results.get(i).toString()));
             }
          }
 
@@ -232,51 +232,51 @@ public final class AiProvider implements AutoCloseable {
 
    public synchronized JsonObject init_JsonObject_c_StreamUtil(AiContext.Inner_StreamUtil prompt, List<JsonObject> history, JsonArray functions, String toolChoice) {
       String effort = this.load();
-      JsonObject body = AiJson.init_JsonObject_ObjArr("model", this.init_AiSettings.model, "stream", true);
+      JsonObject body = AiJson.objectOf("model", this.init_AiSettings.model, "stream", true);
       JsonArray wireTools = new JsonArray();
       if (this.init_AiSettings.provider == AiSettings.Provider.GEMINI) {
          JsonArray declarations = new JsonArray();
 
          for (JsonElement function : functions) {
             JsonObject f = function.getAsJsonObject();
-            declarations.add(AiJson.init_JsonObject_ObjArr("name", f.get("name"), "description", f.get("description"), "parametersJsonSchema", f.get("parameters")));
+            declarations.add(AiJson.objectOf("name", f.get("name"), "description", f.get("description"), "parametersJsonSchema", f.get("parameters")));
          }
 
-         JsonObject generation = AiJson.init_JsonObject_ObjArr("maxOutputTokens", this.init_AiSettings.outputTokens);
+         JsonObject generation = AiJson.objectOf("maxOutputTokens", this.init_AiSettings.outputTokens);
          if (AiSettings.geminiThinkingLevels(this.init_AiSettings.model)) {
-            generation.add("thinkingConfig", AiJson.init_JsonObject_ObjArr("thinkingLevel", effort.toUpperCase(Locale.ROOT)));
+            generation.add("thinkingConfig", AiJson.objectOf("thinkingLevel", effort.toUpperCase(Locale.ROOT)));
          } else if (AiSettings.geminiThinkingBudget(this.init_AiSettings.model)) {
             int budget = AiSettings.thinkingBudget(this.init_AiSettings.provider, effort, this.init_AiSettings.outputTokens);
             if (budget > 0) {
-               generation.add("thinkingConfig", AiJson.init_JsonObject_ObjArr("thinkingBudget", budget));
+               generation.add("thinkingConfig", AiJson.objectOf("thinkingBudget", budget));
             }
          }
 
-         body = AiJson.init_JsonObject_ObjArr(
+         body = AiJson.objectOf(
             "systemInstruction",
-            AiJson.init_JsonObject_ObjArr("parts", List.of(AiJson.init_JsonObject_ObjArr("text", prompt.text()))),
+            AiJson.objectOf("parts", List.of(AiJson.objectOf("text", prompt.text()))),
             "contents",
             history,
             "generationConfig",
             generation
          );
          if (!declarations.isEmpty()) {
-            body.add("tools", AiJson.init.toJsonTree(List.of(AiJson.init_JsonObject_ObjArr("functionDeclarations", declarations))));
+            body.add("tools", AiJson.GSON.toJsonTree(List.of(AiJson.objectOf("functionDeclarations", declarations))));
             if (toolChoice != null) {
                body.add(
                   "toolConfig",
-                  AiJson.init_JsonObject_ObjArr("functionCallingConfig", AiJson.init_JsonObject_ObjArr("mode", toolChoice.equals("none") ? "NONE" : "ANY"))
+                  AiJson.objectOf("functionCallingConfig", AiJson.objectOf("mode", toolChoice.equals("none") ? "NONE" : "ANY"))
                );
             }
          }
       } else if (this.init_AiSettings.provider == AiSettings.Provider.ANTHROPIC) {
          for (JsonElement item : functions) {
             JsonObject f = item.getAsJsonObject();
-            wireTools.add(AiJson.init_JsonObject_ObjArr("name", f.get("name"), "description", f.get("description"), "input_schema", f.get("parameters")));
+            wireTools.add(AiJson.objectOf("name", f.get("name"), "description", f.get("description"), "input_schema", f.get("parameters")));
          }
 
          body.add("system", init_JsonArray_c_StreamUtil(prompt));
-         body.add("messages", AiJson.init.toJsonTree(history));
+         body.add("messages", AiJson.GSON.toJsonTree(history));
          body.addProperty("max_tokens", this.init_AiSettings.outputTokens);
          if (!wireTools.isEmpty()) {
             body.add("tools", wireTools);
@@ -286,20 +286,20 @@ public final class AiProvider implements AutoCloseable {
          JsonObject thinking = null;
          switch (AiSettings.anthropicThinking(this.init_AiSettings.model)) {
             case ADAPTIVE:
-               thinking = AiJson.init_JsonObject_ObjArr("type", "adaptive");
-               body.add("output_config", AiJson.init_JsonObject_ObjArr("effort", effort));
+               thinking = AiJson.objectOf("type", "adaptive");
+               body.add("output_config", AiJson.objectOf("effort", effort));
                break;
             case BUDGET:
                int budget = AiSettings.thinkingBudget(this.init_AiSettings.provider, effort, this.init_AiSettings.outputTokens);
                if (budget > 0) {
-                  thinking = AiJson.init_JsonObject_ObjArr("type", "enabled", "budget_tokens", budget);
+                  thinking = AiJson.objectOf("type", "enabled", "budget_tokens", budget);
                }
             case NONE:
          }
 
          if (thinking != null) {
             if (load(this.init_AiSettings)) {
-               thinking.add("block_binding", AiJson.init_JsonObject_ObjArr("prefix_mismatch_behavior", "drop_block"));
+               thinking.add("block_binding", AiJson.objectOf("prefix_mismatch_behavior", "drop_block"));
             }
 
             body.add("thinking", thinking);
@@ -307,20 +307,20 @@ public final class AiProvider implements AutoCloseable {
 
          if (!wireTools.isEmpty()) {
             if ("none".equals(toolChoice)) {
-               body.add("tool_choice", AiJson.init_JsonObject_ObjArr("type", "none"));
+               body.add("tool_choice", AiJson.objectOf("type", "none"));
             } else if (toolChoice != null && thinking == null) {
-               body.add("tool_choice", AiJson.init_JsonObject_ObjArr("type", "any"));
+               body.add("tool_choice", AiJson.objectOf("type", "any"));
             }
          }
       } else if (this.load_Z) {
-         body = AiJson.init_JsonObject_ObjArr(
+         body = AiJson.objectOf(
             "model", this.init_AiSettings.model, "stream", true, "store", false, "instructions", prompt.text(), "input", init_JsonArray_List(history)
          );
 
          for (JsonElement item : functions) {
             JsonObject f = item.getAsJsonObject();
             wireTools.add(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "type", "function", "name", f.get("name"), "description", f.get("description"), "parameters", f.get("parameters"), "strict", false
                )
             );
@@ -335,18 +335,18 @@ public final class AiProvider implements AutoCloseable {
 
          body.addProperty("max_output_tokens", this.init_AiSettings.outputTokens);
          if (AiSettings.effortField(this.init_AiSettings.provider, this.init_AiSettings.model) != null) {
-            body.add("reasoning", AiJson.init_JsonObject_ObjArr("effort", effort));
+            body.add("reasoning", AiJson.objectOf("effort", effort));
          }
       } else {
          List<JsonObject> messages = new ArrayList<>();
-         messages.add(AiJson.init_JsonObject_ObjArr("role", "system", "content", prompt.text()));
+         messages.add(AiJson.objectOf("role", "system", "content", prompt.text()));
          messages.addAll(history);
 
          for (JsonElement f : functions) {
-            wireTools.add(AiJson.init_JsonObject_ObjArr("type", "function", "function", f));
+            wireTools.add(AiJson.objectOf("type", "function", "function", f));
          }
 
-         body.add("messages", AiJson.init.toJsonTree(messages));
+         body.add("messages", AiJson.GSON.toJsonTree(messages));
          if (!wireTools.isEmpty()) {
             body.add("tools", wireTools);
          }
@@ -355,7 +355,7 @@ public final class AiProvider implements AutoCloseable {
             || this.init_AiSettings.provider == AiSettings.Provider.MOONSHOT
                && "reasoning_effort".equals(AiSettings.effortField(this.init_AiSettings.provider, this.init_AiSettings.model));
          body.addProperty(completionTokens ? "max_completion_tokens" : "max_tokens", this.init_AiSettings.outputTokens);
-         body.add("stream_options", AiJson.init_JsonObject_ObjArr("include_usage", true));
+         body.add("stream_options", AiJson.objectOf("include_usage", true));
          String effortField = AiSettings.effortField(this.init_AiSettings.provider, this.init_AiSettings.model);
          String modelId = this.init_AiSettings.model.toLowerCase(Locale.ROOT);
          boolean thinkingRejectsForced = this.init_AiSettings.provider == AiSettings.Provider.DASHSCOPE
@@ -387,11 +387,11 @@ public final class AiProvider implements AutoCloseable {
 
    static JsonArray init_JsonArray_c_StreamUtil(AiContext.Inner_StreamUtil prompt) {
       JsonArray system = new JsonArray();
-      JsonObject stable = AiJson.init_JsonObject_ObjArr("type", "text", "text", prompt.stable().isEmpty() ? "." : prompt.stable());
+      JsonObject stable = AiJson.objectOf("type", "text", "text", prompt.stable().isEmpty() ? "." : prompt.stable());
       stable.add("cache_control", init_JsonObject.deepCopy());
       system.add(stable);
       if (!prompt.objective().isEmpty()) {
-         JsonObject objective = AiJson.init_JsonObject_ObjArr("type", "text", "text", prompt.objective());
+         JsonObject objective = AiJson.objectOf("type", "text", "text", prompt.objective());
          if (prompt.objective().length() >= 2000) {
             objective.add("cache_control", init_JsonObject.deepCopy());
          }
@@ -406,21 +406,21 @@ public final class AiProvider implements AutoCloseable {
       JsonArray input = new JsonArray();
 
       for (JsonObject m : history) {
-         String role = AiJson.init_Str_JsonObject(m, "role", "");
+         String role = AiJson.getString(m, "role", "");
          if (role.equals("tool")) {
             input.add(
-               AiJson.init_JsonObject_ObjArr(
-                  "type", "function_call_output", "call_id", AiJson.init_Str_JsonObject(m, "tool_call_id", ""), "output", AiJson.init_Str_JsonObject(m, "content", "")
+               AiJson.objectOf(
+                  "type", "function_call_output", "call_id", AiJson.getString(m, "tool_call_id", ""), "output", AiJson.getString(m, "content", "")
                )
             );
          } else if (!role.equals("assistant")) {
             input.add(
-               AiJson.init_JsonObject_ObjArr("role", role.equals("system") ? "developer" : "user", "content", init_JsonElement_JsonElement(m.get("content")))
+               AiJson.objectOf("role", role.equals("system") ? "developer" : "user", "content", init_JsonElement_JsonElement(m.get("content")))
             );
          } else {
             String text = m.has("content") && m.get("content").isJsonPrimitive() ? m.get("content").getAsString() : "";
             if (!text.isBlank()) {
-               input.add(AiJson.init_JsonObject_ObjArr("role", "assistant", "content", text));
+               input.add(AiJson.objectOf("role", "assistant", "content", text));
             }
 
             if (m.has("tool_calls") && m.get("tool_calls").isJsonArray()) {
@@ -428,15 +428,15 @@ public final class AiProvider implements AutoCloseable {
                   if (item.isJsonObject()) {
                      JsonObject c = item.getAsJsonObject();
                      JsonObject f = c.has("function") && c.get("function").isJsonObject() ? c.getAsJsonObject("function") : new JsonObject();
-                     String arguments = AiJson.init_Str_JsonObject(f, "arguments", "");
+                     String arguments = AiJson.getString(f, "arguments", "");
                      input.add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "type",
                            "function_call",
                            "call_id",
-                           AiJson.init_Str_JsonObject(c, "id", ""),
+                           AiJson.getString(c, "id", ""),
                            "name",
-                           AiJson.init_Str_JsonObject(f, "name", ""),
+                           AiJson.getString(f, "name", ""),
                            "arguments",
                            arguments.isBlank() ? "{}" : arguments
                         )
@@ -461,14 +461,14 @@ public final class AiProvider implements AutoCloseable {
          for (JsonElement item : content.getAsJsonArray()) {
             if (item.isJsonObject()) {
                JsonObject p = item.getAsJsonObject();
-               if ("image_url".equals(AiJson.init_Str_JsonObject(p, "type", ""))) {
+               if ("image_url".equals(AiJson.getString(p, "type", ""))) {
                   JsonElement image = p.get("image_url");
                   String url = image != null && image.isJsonObject()
-                     ? AiJson.init_Str_JsonObject(image.getAsJsonObject(), "url", "")
+                     ? AiJson.getString(image.getAsJsonObject(), "url", "")
                      : (image != null && image.isJsonPrimitive() ? image.getAsString() : "");
-                  parts.add(AiJson.init_JsonObject_ObjArr("type", "input_image", "image_url", url));
+                  parts.add(AiJson.objectOf("type", "input_image", "image_url", url));
                } else {
-                  parts.add(AiJson.init_JsonObject_ObjArr("type", "input_text", "text", AiJson.init_Str_JsonObject(p, "text", "")));
+                  parts.add(AiJson.objectOf("type", "input_text", "text", AiJson.getString(p, "text", "")));
                }
             }
          }
@@ -847,12 +847,12 @@ public final class AiProvider implements AutoCloseable {
 
                JsonObject event;
                try {
-                  event = AiJson.init_JsonObject_Str(data);
+                  event = AiJson.parseObject(data);
                } catch (RuntimeException e) {
                   throw new IOException("Provider sent a malformed streaming event: " + init_Str_Str_I(data, 500), e);
                }
 
-               if (!event.has("error") && !"error".equals(AiJson.init_Str_JsonObject(event, "type", ""))) {
+               if (!event.has("error") && !"error".equals(AiJson.getString(event, "type", ""))) {
                   if (provider == AiSettings.Provider.GEMINI) {
                      if (event.has("usageMetadata") && event.get("usageMetadata").isJsonObject()) {
                         content.set(true);
@@ -882,7 +882,7 @@ public final class AiProvider implements AutoCloseable {
                            JsonElement copy = part.deepCopy();
                            geminiParts.add(copy);
                            JsonObject p = part.getAsJsonObject();
-                           if (p.has("text") && p.get("text").isJsonPrimitive() && !AiJson.init_Z_JsonObject(p, "thought", false)) {
+                           if (p.has("text") && p.get("text").isJsonPrimitive() && !AiJson.getBoolean(p, "thought", false)) {
                               String delta = p.get("text").getAsString();
                               text.append(delta);
                               onText.accept(delta);
@@ -891,9 +891,9 @@ public final class AiProvider implements AutoCloseable {
                            if (p.has("functionCall") && p.get("functionCall").isJsonObject()) {
                               toolDeltas.set(true);
                               JsonObject f = copy.getAsJsonObject().getAsJsonObject("functionCall");
-                              String callName = AiJson.init_Str_JsonObject(f, "name", "");
+                              String callName = AiJson.getString(f, "name", "");
                               JsonObject callArgs = f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : new JsonObject();
-                              AiProvider.Inner_DataUtil call = new AiProvider.Inner_DataUtil(AiJson.init_Str_JsonObject(f, "id", ""), callName, callArgs);
+                              AiProvider.Inner_DataUtil call = new AiProvider.Inner_DataUtil(AiJson.getString(f, "id", ""), callName, callArgs);
                               geminiCalls.add(call);
                               if (geminiCalls.size() > 32) {
                                  throw new IOException("Too many tool calls");
@@ -907,12 +907,12 @@ public final class AiProvider implements AutoCloseable {
                   }
 
                   if (provider == AiSettings.Provider.ANTHROPIC) {
-                     String type = AiJson.init_Str_JsonObject(event, "type", "");
-                     int index = AiJson.init_I_JsonObject(event, "index", 0);
+                     String type = AiJson.getString(event, "type", "");
+                     int index = AiJson.getInt(event, "index", 0);
                      if (!type.equals("message_start")) {
                         if (type.equals("content_block_start")) {
                            blocks.put(index, event.getAsJsonObject("content_block").deepCopy());
-                           if ("tool_use".equals(AiJson.init_Str_JsonObject(blocks.get(index), "type", ""))) {
+                           if ("tool_use".equals(AiJson.getString(blocks.get(index), "type", ""))) {
                               content.set(true);
                               toolDeltas.set(true);
                            }
@@ -944,7 +944,7 @@ public final class AiProvider implements AutoCloseable {
                            }
                         } else if (type.equals("content_block_stop")) {
                            JsonObject b = blocks.get(index);
-                           if (b != null && "tool_use".equals(AiJson.init_Str_JsonObject(b, "type", ""))) {
+                           if (b != null && "tool_use".equals(AiJson.getString(b, "type", ""))) {
                               init_V_TreeMap(
                                  ready,
                                  index,
@@ -953,7 +953,7 @@ public final class AiProvider implements AutoCloseable {
                               );
                            }
                         } else if (type.equals("message_delta")) {
-                           finish = AiJson.init_Str_JsonObject(event.getAsJsonObject("delta"), "stop_reason", "");
+                           finish = AiJson.getString(event.getAsJsonObject("delta"), "stop_reason", "");
                            if (event.has("usage") && event.get("usage").isJsonObject()) {
                               load(event.getAsJsonObject("usage"), meter);
                            }
@@ -1001,7 +1001,7 @@ public final class AiProvider implements AutoCloseable {
                      continue;
                   }
 
-                  String deltaContent = AiJson.init_Str_JsonObject(delta, "content", "");
+                  String deltaContent = AiJson.getString(delta, "content", "");
                   text.append(deltaContent);
                   if (!deltaContent.isEmpty()) {
                      content.set(true);
@@ -1009,7 +1009,7 @@ public final class AiProvider implements AutoCloseable {
                      onText.accept(deltaContent);
                   }
 
-                  reasoning.append(AiJson.init_Str_JsonObject(delta, "reasoning_content", ""));
+                  reasoning.append(AiJson.getString(delta, "reasoning_content", ""));
                   if (delta.has("tool_calls") && delta.get("tool_calls").isJsonArray()) {
                      toolDeltas.set(true);
                      Set<Integer> touched = new HashSet<>();
@@ -1020,25 +1020,25 @@ public final class AiProvider implements AutoCloseable {
                         }
                         content.set(true);
                         JsonObject call = item.getAsJsonObject();
-                        int index = AiJson.init_I_JsonObject(call, "index", 0);
+                        int index = AiJson.getInt(call, "index", 0);
                         touched.add(index);
                         JsonObject b = blocks.computeIfAbsent(
-                           index, k -> AiJson.init_JsonObject_ObjArr("type", "function", "function", AiJson.init_JsonObject_ObjArr("name", "", "arguments", ""))
+                           index, k -> AiJson.objectOf("type", "function", "function", AiJson.objectOf("name", "", "arguments", ""))
                         );
-                        String id = AiJson.init_Str_JsonObject(call, "id", "");
-                        if (!id.isEmpty() && AiJson.init_Str_JsonObject(b, "id", "").isEmpty()) {
+                        String id = AiJson.getString(call, "id", "");
+                        if (!id.isEmpty() && AiJson.getString(b, "id", "").isEmpty()) {
                            b.addProperty("id", id);
                         }
 
                         if (call.has("function") && call.get("function").isJsonObject()) {
                            JsonObject f = call.getAsJsonObject("function");
                            JsonObject bf = b.getAsJsonObject("function");
-                           String name = AiJson.init_Str_JsonObject(f, "name", "");
-                           if (!name.isEmpty() && AiJson.init_Str_JsonObject(bf, "name", "").isEmpty()) {
+                           String name = AiJson.getString(f, "name", "");
+                           if (!name.isEmpty() && AiJson.getString(bf, "name", "").isEmpty()) {
                               bf.addProperty("name", name);
                            }
 
-                           init_V_JsonObject(bf, "arguments", AiJson.init_Str_JsonObject(f, "arguments", ""));
+                           init_V_JsonObject(bf, "arguments", AiJson.getString(f, "arguments", ""));
                         }
                      }
 
@@ -1079,7 +1079,7 @@ public final class AiProvider implements AutoCloseable {
       List<AiProvider.Inner_DataUtil> calls = new ArrayList<>();
       JsonObject wire;
       if (provider == AiSettings.Provider.GEMINI) {
-         wire = AiJson.init_JsonObject_ObjArr("role", "model", "parts", geminiParts);
+         wire = AiJson.objectOf("role", "model", "parts", geminiParts);
          calls.addAll(geminiCalls);
       } else if (provider == AiSettings.Provider.ANTHROPIC) {
          Map<Integer, String> argumentErrors = new HashMap<>();
@@ -1091,7 +1091,7 @@ public final class AiProvider implements AutoCloseable {
                   String raw = entry.getValue().toString();
 
                   try {
-                     block.add("input", raw.isBlank() ? new JsonObject() : AiJson.init_JsonObject_Str(raw));
+                     block.add("input", raw.isBlank() ? new JsonObject() : AiJson.parseObject(raw));
                   } catch (RuntimeException e) {
                      block.add("input", new JsonObject());
                      argumentErrors.put(entry.getKey(), init_Str_Str_I(raw, 1000));
@@ -1100,16 +1100,16 @@ public final class AiProvider implements AutoCloseable {
             }
          }
 
-         wire = AiJson.init_JsonObject_ObjArr("role", "assistant", "content", blocks.values());
+         wire = AiJson.objectOf("role", "assistant", "content", blocks.values());
 
          for (Entry<Integer, JsonObject> entry : blocks.entrySet()) {
             JsonObject b = entry.getValue();
-            if ("tool_use".equals(AiJson.init_Str_JsonObject(b, "type", ""))) {
+            if ("tool_use".equals(AiJson.getString(b, "type", ""))) {
                AiProvider.Inner_DataUtil call = ready.get(entry.getKey());
                if (call == null) {
                   call = new AiProvider.Inner_DataUtil(
-                     AiJson.init_Str_JsonObject(b, "id", ""),
-                     AiJson.init_Str_JsonObject(b, "name", ""),
+                     AiJson.getString(b, "id", ""),
+                     AiJson.getString(b, "name", ""),
                      b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : new JsonObject(),
                      argumentErrors.get(entry.getKey())
                   );
@@ -1121,13 +1121,13 @@ public final class AiProvider implements AutoCloseable {
          }
       } else {
          init_V_TreeMap(blocks, ready, onCallReady);
-         wire = AiJson.init_JsonObject_ObjArr("role", "assistant", "content", text.toString());
+         wire = AiJson.objectOf("role", "assistant", "content", text.toString());
          if (!reasoning.isEmpty()) {
             wire.addProperty("reasoning_content", reasoning.toString());
          }
 
          if (!blocks.isEmpty()) {
-            wire.add("tool_calls", AiJson.init.toJsonTree(blocks.values()));
+            wire.add("tool_calls", AiJson.GSON.toJsonTree(blocks.values()));
          }
 
          for (int index : blocks.keySet()) {
@@ -1175,13 +1175,13 @@ public final class AiProvider implements AutoCloseable {
             if (!data.isBlank() && !data.equals("[DONE]")) {
                JsonObject event;
                try {
-                  event = AiJson.init_JsonObject_Str(data);
+                  event = AiJson.parseObject(data);
                } catch (RuntimeException e) {
                   throw new IOException("Provider sent a malformed streaming event: " + init_Str_Str_I(data, 500), e);
                }
 
-               String type = AiJson.init_Str_JsonObject(event, "type", "");
-               int index = event.has("output_index") ? AiJson.init_I_JsonObject(event, "output_index", 0) : 0;
+               String type = AiJson.getString(event, "type", "");
+               int index = event.has("output_index") ? AiJson.getInt(event, "output_index", 0) : 0;
                JsonObject item = event.has("item") && event.get("item").isJsonObject() ? event.getAsJsonObject("item") : null;
                JsonObject response = event.has("response") && event.get("response").isJsonObject() ? event.getAsJsonObject("response") : null;
                switch (type) {
@@ -1198,7 +1198,7 @@ public final class AiProvider implements AutoCloseable {
                   case "response.refusal.delta":
                      content.set(true);
                      streamedText.add(index);
-                     String delta = AiJson.init_Str_JsonObject(event, "delta", "");
+                     String delta = AiJson.getString(event, "delta", "");
                      if (!delta.isEmpty()) {
                         text.append(delta);
                         onText.accept(delta);
@@ -1206,7 +1206,7 @@ public final class AiProvider implements AutoCloseable {
                      break;
                   case "response.output_item.added":
                      content.set(true);
-                     if (item != null && "function_call".equals(AiJson.init_Str_JsonObject(item, "type", ""))) {
+                     if (item != null && "function_call".equals(AiJson.getString(item, "type", ""))) {
                         toolDeltas.set(true);
                         blocks.put(index, init_JsonObject_JsonObject(item));
                      }
@@ -1216,7 +1216,7 @@ public final class AiProvider implements AutoCloseable {
                      toolDeltas.set(true);
                      JsonObject b = blocks.get(index);
                      if (b != null) {
-                        init_V_JsonObject(b.getAsJsonObject("function"), "arguments", AiJson.init_Str_JsonObject(event, "delta", ""));
+                        init_V_JsonObject(b.getAsJsonObject("function"), "arguments", AiJson.getString(event, "delta", ""));
                      }
                      break;
                   case "response.output_item.done":
@@ -1224,7 +1224,7 @@ public final class AiProvider implements AutoCloseable {
                         break;
                      }
 
-                     String itemType = AiJson.init_Str_JsonObject(item, "type", "");
+                     String itemType = AiJson.getString(item, "type", "");
                      if (itemType.equals("function_call")) {
                         content.set(true);
                         toolDeltas.set(true);
@@ -1234,7 +1234,7 @@ public final class AiProvider implements AutoCloseable {
                         for (JsonElement part : item.getAsJsonArray("content")) {
                            if (part.isJsonObject()) {
                               JsonObject p = part.getAsJsonObject();
-                              String piece = AiJson.init_Str_JsonObject(p, "text", AiJson.init_Str_JsonObject(p, "refusal", ""));
+                              String piece = AiJson.getString(p, "text", AiJson.getString(p, "refusal", ""));
                               if (!piece.isEmpty()) {
                                  content.set(true);
                                  text.append(piece);
@@ -1257,7 +1257,7 @@ public final class AiProvider implements AutoCloseable {
                         JsonObject details = response != null && response.has("incomplete_details") && response.get("incomplete_details").isJsonObject()
                            ? response.getAsJsonObject("incomplete_details")
                            : null;
-                        String reason = details == null ? "" : AiJson.init_Str_JsonObject(details, "reason", "");
+                        String reason = details == null ? "" : AiJson.getString(details, "reason", "");
                         if (!reason.equals("max_output_tokens")) {
                            throw new IOException("Provider stopped the response early" + (reason.isEmpty() ? "" : ": " + reason));
                         }
@@ -1278,9 +1278,9 @@ public final class AiProvider implements AutoCloseable {
       }
 
       init_V_TreeMap(blocks, ready, onCallReady);
-      JsonObject wire = AiJson.init_JsonObject_ObjArr("role", "assistant", "content", text.toString());
+      JsonObject wire = AiJson.objectOf("role", "assistant", "content", text.toString());
       if (!blocks.isEmpty()) {
-         wire.add("tool_calls", AiJson.init.toJsonTree(blocks.values()));
+         wire.add("tool_calls", AiJson.GSON.toJsonTree(blocks.values()));
       }
 
       List<AiProvider.Inner_DataUtil> calls = new ArrayList<>();
@@ -1298,13 +1298,13 @@ public final class AiProvider implements AutoCloseable {
    }
 
    private static JsonObject init_JsonObject_JsonObject(JsonObject item) {
-      return AiJson.init_JsonObject_ObjArr(
+      return AiJson.objectOf(
          "id",
-         AiJson.init_Str_JsonObject(item, "call_id", ""),
+         AiJson.getString(item, "call_id", ""),
          "type",
          "function",
          "function",
-         AiJson.init_JsonObject_ObjArr("name", AiJson.init_Str_JsonObject(item, "name", ""), "arguments", AiJson.init_Str_JsonObject(item, "arguments", ""))
+         AiJson.objectOf("name", AiJson.getString(item, "name", ""), "arguments", AiJson.getString(item, "arguments", ""))
       );
    }
 
@@ -1384,7 +1384,7 @@ public final class AiProvider implements AutoCloseable {
       }
 
       try {
-         return new AiProvider.Inner_DataUtil(id, name, AiJson.init_JsonObject_Str(rawArguments));
+         return new AiProvider.Inner_DataUtil(id, name, AiJson.parseObject(rawArguments));
       } catch (RuntimeException e) {
          return new AiProvider.Inner_DataUtil(id, name, new JsonObject(), init_Str_Str_I(rawArguments, 1000));
       }
@@ -1410,7 +1410,7 @@ public final class AiProvider implements AutoCloseable {
             init_V_TreeMap(
                ready,
                index,
-               init_bA_DataUtil_Str(AiJson.init_Str_JsonObject(b, "id", ""), f.get("name").getAsString(), f.get("arguments").getAsString()),
+               init_bA_DataUtil_Str(AiJson.getString(b, "id", ""), f.get("name").getAsString(), f.get("arguments").getAsString()),
                onCallReady
             );
          }
@@ -1426,12 +1426,12 @@ public final class AiProvider implements AutoCloseable {
             String raw = f.get("arguments").getAsString();
             if (!name.isEmpty() && !raw.isBlank()) {
                try {
-                  AiJson.init_JsonObject_Str(raw);
+                  AiJson.parseObject(raw);
                } catch (RuntimeException e) {
                   return;
                }
 
-               init_V_TreeMap(ready, index, init_bA_DataUtil_Str(AiJson.init_Str_JsonObject(b, "id", ""), name, raw), onCallReady);
+               init_V_TreeMap(ready, index, init_bA_DataUtil_Str(AiJson.getString(b, "id", ""), name, raw), onCallReady);
             }
          }
       }
@@ -1447,7 +1447,7 @@ public final class AiProvider implements AutoCloseable {
       String error = null;
       if (raw != null) {
          try {
-            block.add("input", raw.isBlank() ? new JsonObject() : AiJson.init_JsonObject_Str(raw));
+            block.add("input", raw.isBlank() ? new JsonObject() : AiJson.parseObject(raw));
          } catch (RuntimeException e) {
             block.add("input", new JsonObject());
             error = init_Str_Str_I(raw, 1000);
@@ -1455,15 +1455,15 @@ public final class AiProvider implements AutoCloseable {
       }
 
       return new AiProvider.Inner_DataUtil(
-         AiJson.init_Str_JsonObject(block, "id", ""),
-         AiJson.init_Str_JsonObject(block, "name", ""),
+         AiJson.getString(block, "id", ""),
+         AiJson.getString(block, "name", ""),
          block.has("input") && block.get("input").isJsonObject() ? block.getAsJsonObject("input") : new JsonObject(),
          error
       );
    }
 
    private static void init_V_JsonObject(JsonObject o, String key, String value) {
-      o.addProperty(key, AiJson.init_Str_JsonObject(o, key, "") + value);
+      o.addProperty(key, AiJson.getString(o, key, "") + value);
    }
 
    @Override

@@ -19,7 +19,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
    public WaitForSlotChangeAction(int slotNumber) {
       WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil();
       entry.init_Str = slotNumber >= 0 ? "#" + slotNumber : "";
-      entry.init_ArrayUtil = MacroItemTarget.update(entry.init_Str);
+      entry.init_ArrayUtil = MacroItemTarget.parse(entry.init_Str);
       this.entries.add(entry);
    }
 
@@ -32,8 +32,8 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       for (WaitForSlotChangeAction.Inner_DataUtil entry : this.entries) {
          CompoundTag entryTag = new CompoundTag();
          MacroItemTarget target = entry.init_ArrayUtil();
-         if (target.init_Z() || target.update()) {
-            entryTag.put("target", target.init_CompoundTag());
+         if (target.hasSlot() || target.hasItemFilter()) {
+            entryTag.put("target", target.toTag());
          }
 
          entryTag.putString("mode", entry.init_aD_StreamUtil.name());
@@ -56,9 +56,9 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
             if (element instanceof CompoundTag entryTag) {
                WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil();
                entry.init_ArrayUtil = entryTag.getCompound("target")
-                  .map(MacroItemTarget::init_ArrayUtil_CompoundTag)
-                  .orElseGet(() -> MacroItemTarget.update(entryTag.getStringOr("target", "")));
-               entry.init_Str = entry.init_ArrayUtil.write_Str();
+                  .map(MacroItemTarget::fromTag)
+                  .orElseGet(() -> MacroItemTarget.parse(entryTag.getStringOr("target", "")));
+               entry.init_Str = entry.init_ArrayUtil.toSpecString();
                entry.init_I = entryTag.getIntOr("count", 1);
 
                try {
@@ -209,14 +209,14 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
 
       public Inner_DataUtil(String target, WaitForSlotChangeAction.Inner_StreamUtil waitMode, int targetCount) {
          this.init_Str = target;
-         this.init_ArrayUtil = MacroItemTarget.update(target);
+         this.init_ArrayUtil = MacroItemTarget.parse(target);
          this.init_aD_StreamUtil = waitMode;
          this.init_I = targetCount;
       }
 
       public WaitForSlotChangeAction.Inner_DataUtil init_aD_DataUtil() {
          WaitForSlotChangeAction.Inner_DataUtil copy = new WaitForSlotChangeAction.Inner_DataUtil(this.init_Str, this.init_aD_StreamUtil, this.init_I);
-         copy.init_ArrayUtil = this.init_ArrayUtil == null ? new MacroItemTarget() : this.init_ArrayUtil.init_ArrayUtil();
+         copy.init_ArrayUtil = this.init_ArrayUtil == null ? new MacroItemTarget() : this.init_ArrayUtil.copy();
          return copy;
       }
 
@@ -256,11 +256,11 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
 
       public MacroItemTarget init_ArrayUtil() {
-         if (this.init_ArrayUtil != null && (this.init_ArrayUtil.init_Z() || this.init_ArrayUtil.update())) {
+         if (this.init_ArrayUtil != null && (this.init_ArrayUtil.hasSlot() || this.init_ArrayUtil.hasItemFilter())) {
             return this.init_ArrayUtil;
          }
 
-         this.init_ArrayUtil = MacroItemTarget.update(this.init_Str);
+         this.init_ArrayUtil = MacroItemTarget.parse(this.init_Str);
          return this.init_ArrayUtil;
       }
    }

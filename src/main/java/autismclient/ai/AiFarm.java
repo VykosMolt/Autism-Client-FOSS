@@ -113,16 +113,16 @@ final class AiFarm {
    static AiOperation init(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiFarm.Inner_DataUtil action = init_B_DataUtil(AiJson.init_Str_JsonObject(args, "action", "harvest"));
+         AiFarm.Inner_DataUtil action = init_B_DataUtil(AiJson.getString(args, "action", "harvest"));
          if (action == AiFarm.Inner_DataUtil.HARVEST) {
-            String spec = AiJson.init_Str_JsonObject(args, "crop", AiJson.init_Str_JsonObject(args, "item", "minecraft:wheat"));
+            String spec = AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat"));
             String crop = init_Str(spec);
             return init_Set.contains(crop) ? load(args, crop, init_Map.get(crop)) : init(args, crop, init_Map.get(crop));
          } else if (action == AiFarm.Inner_DataUtil.PLANT) {
-            String crop = init_Str(AiJson.init_Str_JsonObject(args, "crop", AiJson.init_Str_JsonObject(args, "item", "minecraft:wheat")));
+            String crop = init_Str(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
             return AiFarmPlant.init(args, crop, load(crop));
          } else if (action == AiFarm.Inner_DataUtil.BUILD) {
-            String crop = init_Str(AiJson.init_Str_JsonObject(args, "crop", AiJson.init_Str_JsonObject(args, "item", "minecraft:wheat")));
+            String crop = init_Str(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
             return AiFarmBuild.init(args, crop, load(crop));
          } else {
             return load(args);
@@ -220,12 +220,12 @@ final class AiFarm {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final BlockPos init_BlockPos = this.init_Minecraft.player.blockPosition();
             final int init_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
-            final int load_I = AiGameState.init_I_Str(cropItem);
-            final int read_I = AiJson.init_I_JsonObject(args, "count", 53) + (AiJson.init_Z_JsonObject(args, "additional", false) ? this.load_I : 0);
-            final boolean init_Z = AiJson.init_Z_JsonObject(args, "exact", false);
-            final boolean load_Z = AiJson.init_Z_JsonObject(args, "bonemeal", false);
-            final boolean read_Z = AiJson.init_Z_JsonObject(args, "replant", true);
-            final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600))) * 1000000000L;
+            final int load_I = AiGameState.countInventoryItem(cropItem);
+            final int read_I = AiJson.getInt(args, "count", 53) + (AiJson.getBoolean(args, "additional", false) ? this.load_I : 0);
+            final boolean init_Z = AiJson.getBoolean(args, "exact", false);
+            final boolean load_Z = AiJson.getBoolean(args, "bonemeal", false);
+            final boolean read_Z = AiJson.getBoolean(args, "replant", true);
+            final long init_J = System.nanoTime() + Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
             final int write_I = 2;
             final int update_I = 5;
             final int sync = 25;
@@ -239,7 +239,7 @@ final class AiFarm {
             final Map<String, Integer> init_Map = new HashMap<>();
             final Map<Long, Integer> load_Map = new HashMap<>();
             final Map<Long, Long> read_Map = new HashMap<>();
-            long load_J = AiServerEvidence.init_J();
+            long load_J = AiServerEvidence.inventoryRevision();
             BlockPos load_BlockPos = this.init_BlockPos;
             AiFarm.Inner_CachePool init_B_CachePool;
             AiOperation init_AiOperation;
@@ -292,19 +292,19 @@ final class AiFarm {
 
                   if (this.init_Minecraft.gui.screen() != null) {
                      autismclient.util.BlockAttackGraceWindow.init();
-                     autismclient.ai.engine.AiMotionSafety.putAt_V();
-                     this.init_DataUtil.init_V();
+                     autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
+                     this.init_DataUtil.clear();
                      return this.read("Harvest paused while a screen is open");
                   }
 
-                  if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
+                  if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
                      return this.init(
                         AiOperation.Status.FAILED,
-                        AiGuard.init_Str_Str("harvesting", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                        AiGuard.formatLowHealthAbort("harvesting", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                      );
                   }
 
-                  int count = AiGameState.init_I_Str(cropItem);
+                  int count = AiGameState.countInventoryItem(cropItem);
 
                   for (int i = this.write_List.size() - 1; i >= 0; i--) {
                      AiOperation.Result v = this.write_List.get(i).tick();
@@ -430,7 +430,7 @@ final class AiFarm {
                      return ++this.set > 200
                         ? this.init(AiOperation.Status.UNCERTAIN, "The last replant is still unconfirmed; inspect the field before repeating")
                         : this.read("Confirming the last replants");
-                  } else if (count > this.load_I && AiServerEvidence.init_J() <= this.load_J) {
+                  } else if (count > this.load_I && AiServerEvidence.inventoryRevision() <= this.load_J) {
                      return ++this.start > 200
                         ? this.init(
                            AiOperation.Status.UNCERTAIN, "Harvest target observed locally, but server confirmation not received; inspect before repeating"
@@ -456,7 +456,7 @@ final class AiFarm {
             }
 
             boolean init_Z(String itemId) {
-               AiItems.ItemSpec wanted = AiItems.load_af_DataUtil(itemId);
+               AiItems.ItemSpec wanted = AiItems.resolveItem(itemId);
                Inventory inventory = this.init_Minecraft.player.getInventory();
 
                for (int slot = 0; slot < 36; slot++) {
@@ -569,7 +569,7 @@ final class AiFarm {
             boolean init_Z(AiFarm.Inner_CachePool w) {
                switch (w.kind()) {
                   case HARVEST:
-                     if (!AiTerrain.init(this.init_Minecraft.level, w.cell())) {
+                     if (!AiTerrain.isLoaded(this.init_Minecraft.level, w.cell())) {
                         return false;
                      }
 
@@ -578,9 +578,9 @@ final class AiFarm {
                   case REPLANT:
                      return seed != null && this.init_Minecraft.level.getBlockState(w.cell()).isAir();
                   case BONEMEAL:
-                     return AiTerrain.init(this.init_Minecraft.level, w.cell())
+                     return AiTerrain.isLoaded(this.init_Minecraft.level, w.cell())
                         && AiFarm.load_Z(this.init_Minecraft.level.getBlockState(w.cell()))
-                        && AiGameState.init_I_Str("minecraft:bone_meal") > 0;
+                        && AiGameState.countInventoryItem("minecraft:bone_meal") > 0;
                   case DROP:
                      return this.init_Minecraft.level.getEntity(w.entityId()) instanceof ItemEntity drop && drop.isAlive();
                   default:
@@ -590,22 +590,22 @@ final class AiFarm {
 
             AiFarm.Inner_CachePool init_B_CachePool() {
                int queued = this.init_ArrayDeque.size();
-               boolean enough = AiGameState.init_I_Str(cropItem) >= this.read_I;
+               boolean enough = AiGameState.countInventoryItem(cropItem) >= this.read_I;
                boolean needsSeed = seed != null
-                  && AiGameState.init_I_Str(seed) == 0
+                  && AiGameState.countInventoryItem(seed) == 0
                   && this.init_ArrayDeque.stream().anyMatch(wx -> wx.kind() == AiFarm.Inner_BufferHelper.REPLANT);
 
                while (queued-- > 0) {
                   AiFarm.Inner_CachePool w = this.init_ArrayDeque.poll();
                   if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                     AiServerEvidence.Inner_DataUtil update = AiServerEvidence.init_ca_DataUtil_BlockPos(w.cell());
+                     AiServerEvidence.Inner_DataUtil update = AiServerEvidence.lastBlockUpdate(w.cell());
                      if (AiReplantEvidence.init(
                            this.init_Minecraft.level.getBlockState(w.cell()),
                            update,
                            this.read_Map.getOrDefault(w.cell().asLong(), 0L),
                            crop,
                            false,
-                           AiGameState.init_I_Str(seed)
+                           AiGameState.countInventoryItem(seed)
                         )
                         == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
                         this.prev++;
@@ -614,7 +614,7 @@ final class AiFarm {
                         continue;
                      }
 
-                     if (AiGameState.init_I_Str(seed) <= 0) {
+                     if (AiGameState.countInventoryItem(seed) <= 0) {
                         if (this.init_Minecraft.player.tickCount - this.load_Map.getOrDefault(w.cell().asLong(), this.init_Minecraft.player.tickCount) > 120) {
                            this.init_Str = "No " + seed + " to finish the replant at " + w.cell().toShortString();
                            return null;
@@ -716,7 +716,7 @@ final class AiFarm {
                } else if (this.load(cell) && this.load(w)) {
                   switch (w.kind()) {
                      case HARVEST:
-                        this.read_Map.put(w.cell().asLong(), AiServerEvidence.init_J_BlockPos(w.cell()));
+                        this.read_Map.put(w.cell().asLong(), AiServerEvidence.blockRevision(w.cell()));
                         if (this.read_Z && kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null) {
                            BlockState before = this.init_Minecraft.level.getBlockState(w.cell());
                            if (crop == Blocks.COCOA) {
@@ -730,10 +730,10 @@ final class AiFarm {
                         }
 
                         if (kind == AiFarm.Inner_StreamUtil.INTERACT) {
-                           this.load_AiOperation = AiGameOperations.init("use", this.init_JsonObject(w.cell()));
+                           this.load_AiOperation = AiGameOperations.blockAction("use", this.init_JsonObject(w.cell()));
                            return this.read("Picking " + w.cell().toShortString());
                         } else {
-                           this.load_AiOperation = AiGameOperations.init("break", this.init_JsonObject(w.cell()));
+                           this.load_AiOperation = AiGameOperations.blockAction("break", this.init_JsonObject(w.cell()));
                            AiOperation.Result first = this.load_AiOperation.tick();
                            if (!first.terminal()) {
                               return this.read("Breaking " + w.cell().toShortString());
@@ -744,9 +744,9 @@ final class AiFarm {
                            return this.init(this.init_B_CachePool, first);
                         }
                      case REPLANT:
-                        int slot = AiItems.read(AiItems.load_af_DataUtil(seed));
+                        int slot = AiItems.equipHotbar(AiItems.resolveItem(seed));
                         if (slot < 0) {
-                           if (AiGameState.init_I_Str(seed) <= 0) {
+                           if (AiGameState.countInventoryItem(seed) <= 0) {
                               this.init_ArrayDeque.addLast(w);
                               this.init_B_CachePool = null;
                               this.put = 0;
@@ -765,7 +765,7 @@ final class AiFarm {
                            JsonObject placeArgs = this.init_JsonObject(w.base());
                            placeArgs.addProperty("face", w.face().name());
                            placeArgs.addProperty("slot", slot);
-                           this.load_AiOperation = AiGameOperations.init("place", placeArgs);
+                           this.load_AiOperation = AiGameOperations.blockAction("place", placeArgs);
                            AiOperation.Result opened = this.load_AiOperation.tick();
                            if (!opened.terminal()) {
                               return this.read("Replanting " + w.cell().toShortString());
@@ -776,7 +776,7 @@ final class AiFarm {
                            return this.init(this.init_B_CachePool, opened);
                         }
                      case BONEMEAL:
-                        int mealSlot = AiItems.read(AiItems.load_af_DataUtil("minecraft:bone_meal"));
+                        int mealSlot = AiItems.equipHotbar(AiItems.resolveItem("minecraft:bone_meal"));
                         if (mealSlot < 0) {
                            return this.read();
                         }
@@ -784,7 +784,7 @@ final class AiFarm {
                         JsonObject useArgs = this.init_JsonObject(w.cell());
                         useArgs.addProperty("slot", mealSlot);
                         useArgs.addProperty("aimY", this.init_D(w.cell()));
-                        this.load_AiOperation = AiGameOperations.init("use", useArgs);
+                        this.load_AiOperation = AiGameOperations.blockAction("use", useArgs);
                         return this.read("Feeding " + w.cell().toShortString());
                      default:
                         return this.read();
@@ -838,8 +838,8 @@ final class AiFarm {
                   return this.read("Direct walk blocked; pathing around");
                } else {
                   this.load_D = distSqr;
-                  this.init_DataUtil.init_V_Vec3(center);
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.aimAt(center);
+                  this.init_DataUtil.tick();
                   this.init_Minecraft.options.keyUp.setDown(true);
                   this.init_Minecraft.player.setSprinting(distSqr > 9.0);
                   return this.read("Walking straight to the next plant");
@@ -966,7 +966,7 @@ final class AiFarm {
 
             void init(BlockPos cell, String reason) {
                if (this.read_List.size() < 32) {
-                  this.read_List.add(AiJson.init_JsonObject_ObjArr("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
+                  this.read_List.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
                }
 
                this.value++;
@@ -984,7 +984,7 @@ final class AiFarm {
 
                      String id = BuiltInRegistries.ITEM.getKey(item.getItem().getItem()).toString();
                      if (id.equals(cropItem) || seed != null && id.equals(seed)) {
-                        this.init_Map.putIfAbsent(id, AiGameState.init_I_Str(id));
+                        this.init_Map.putIfAbsent(id, AiGameState.countInventoryItem(id));
                         found.add(AiFarm.Inner_CachePool.drop(item.getId(), id, item.blockPosition(), this.init_Minecraft.player.distanceToSqr(item)));
                      }
                   }
@@ -998,7 +998,7 @@ final class AiFarm {
             }
 
             void init_V(AiFarm.Inner_CachePool w) {
-               int now = AiGameState.init_I_Str(w.item());
+               int now = AiGameState.countInventoryItem(w.item());
                int base = this.init_Map.getOrDefault(w.item(), now);
                if (now > base) {
                   this.size += now - base;
@@ -1008,7 +1008,7 @@ final class AiFarm {
             }
 
             JsonObject init_JsonObject(BlockPos p) {
-               return AiJson.init_JsonObject_ObjArr("x", p.getX(), "y", p.getY(), "z", p.getZ());
+               return AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ());
             }
 
             boolean load(BlockPos pos) {
@@ -1023,7 +1023,7 @@ final class AiFarm {
             boolean load(AiFarm.Inner_CachePool w) {
                BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.REPLANT ? w.base() : w.cell();
                if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                  return autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, w.base(), w.face()) != null;
+                  return autismclient.ai.engine.AiBlockInteraction.findFaceHit(this.init_Minecraft, w.base(), w.face()) != null;
                } else {
                   return w.kind() == AiFarm.Inner_BufferHelper.BONEMEAL ? this.init(cell, this.init_D(cell)) : this.read(cell);
                }
@@ -1083,11 +1083,11 @@ final class AiFarm {
                   skipList.add(entry);
                }
 
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "crop",
                   cropBlock,
                   "count",
-                  AiGameState.init_I_Str(cropItem),
+                  AiGameState.countInventoryItem(cropItem),
                   "target",
                   this.read_I,
                   "harvested",
@@ -1116,12 +1116,12 @@ final class AiFarm {
             }
 
             AiOperation.Result read(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject());
+               return AiGameOperations.result(status, message, this.init_JsonObject());
             }
 
             @Override
@@ -1145,7 +1145,7 @@ final class AiFarm {
                   this.write_List.clear();
                   this.update_List.clear();
                   this.write_BlockPos = null;
-                  autismclient.ai.engine.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.getInventory().getSelectedSlot() != this.init_I) {
                      autismclient.util.InventorySlotHelper.selectHotbarSlot(this.init_Minecraft, this.init_I);
                   }
@@ -1163,7 +1163,7 @@ final class AiFarm {
 
    private static AiOperation load(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
-      final String species = AiJson.init_Str_JsonObject(args, "animal", "").trim().toLowerCase(Locale.ROOT);
+      final String species = AiJson.getString(args, "animal", "").trim().toLowerCase(Locale.ROOT);
       if (species.isEmpty()) {
          throw new IllegalArgumentException("breed needs animal, the species to feed");
       }
@@ -1174,8 +1174,8 @@ final class AiFarm {
          throw new IllegalArgumentException("No known breeding food for '" + species + "'; breedable species: " + String.join(", ", write_Map.keySet()));
       }
 
-      final int feeds = Math.max(2, Math.min(64, AiJson.init_I_JsonObject(args, "count", 2)));
-      final int timeoutSeconds = Math.max(10, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
+      final int feeds = Math.max(2, Math.min(64, AiJson.getInt(args, "count", 2)));
+      final int timeoutSeconds = Math.max(10, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
       return new AiOperation() {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
@@ -1278,9 +1278,9 @@ final class AiFarm {
                         this.init_AiOperation = null;
                      }
 
-                     this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
-                     this.init_DataUtil.load_V();
-                     if (!autismclient.ai.engine.AiAim.init_Z_Entity(this.init_Entity)) {
+                     this.init_DataUtil.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity));
+                     this.init_DataUtil.tick();
+                     if (!autismclient.ai.engine.AiAim.isLookingAtEntity(this.init_Entity)) {
                         if (++this.load_I > 40) {
                            this.load_Set.add(this.init_Entity.getId());
                            this.init_Entity = null;
@@ -1288,7 +1288,7 @@ final class AiFarm {
 
                         return this.init_AiOperation_Result_2("Turning toward a " + species);
                      } else {
-                        if (AiItems.read(AiItems.load_af_DataUtil(food)) < 0) {
+                        if (AiItems.equipHotbar(AiItems.resolveItem(food)) < 0) {
                            return this.init(AiOperation.Status.FAILED, "Could not hold " + food);
                         }
 
@@ -1296,7 +1296,7 @@ final class AiFarm {
                            .interact(
                               mc.player,
                               this.init_Entity,
-                              new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_Entity)),
+                              new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.defaultEntityAimPoint(this.init_Entity)),
                               InteractionHand.MAIN_HAND
                            );
                         Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
@@ -1335,7 +1335,7 @@ final class AiFarm {
 
          String init_Str_2() {
             for (String food : foods) {
-               if (AiGameState.init_I_Str(food) > 0) {
+               if (AiGameState.countInventoryItem(food) > 0) {
                   return food;
                }
             }
@@ -1366,7 +1366,7 @@ final class AiFarm {
          }
 
          JsonObject init_JsonObject_2() {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "action",
                "breed",
                "animal",
@@ -1378,7 +1378,7 @@ final class AiFarm {
                "skipped",
                this.load_Set.size(),
                "food",
-               AiJson.init.toJsonTree(foods)
+               AiJson.GSON.toJsonTree(foods)
             );
          }
 
@@ -1396,7 +1396,7 @@ final class AiFarm {
          public void cancel() {
             if (!this.init_Z) {
                this.init_Z = true;
-               this.init_DataUtil.init_V();
+               this.init_DataUtil.clear();
                if (this.init_AiOperation != null) {
                   this.init_AiOperation.cancel();
                   this.init_AiOperation = null;
@@ -1416,7 +1416,7 @@ final class AiFarm {
          for (int dz = -32; dz <= 32; dz++) {
             for (int dy = -8; dy <= 8; dy++) {
                p.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
-               if (AiTerrain.init(mc.level, p)) {
+               if (AiTerrain.isLoaded(mc.level, p)) {
                   BlockState state = mc.level.getBlockState(p);
                   if (state.is(crop) && init_Z(state)) {
                      double sq = p.distSqr(origin);
@@ -1447,7 +1447,7 @@ final class AiFarm {
             for (int dz = -1; dz <= 1; dz++) {
                BlockPos next = ground.offset(dx, 0, dz);
                if (seen.add(next.asLong())
-                  && AiTerrain.init(mc.level, next)
+                  && AiTerrain.isLoaded(mc.level, next)
                   && autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(next))
                   && (mc.level.getBlockState(next.above()).isAir() || mc.level.getBlockState(next.above()).is(crop))) {
                   queue.add(next);
@@ -1462,15 +1462,15 @@ final class AiFarm {
    private static AiOperation load(final JsonObject args, final String cropBlock, final String cropItem) {
       final Minecraft mc = Minecraft.getInstance();
       Block crop = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cropBlock));
-      int baseline = AiGameState.init_I_Str(cropItem);
-      final int target = AiJson.init_I_JsonObject(args, "count", 53) + (AiJson.init_Z_JsonObject(args, "additional", false) ? baseline : 0);
+      int baseline = AiGameState.countInventoryItem(cropItem);
+      final int target = AiJson.getInt(args, "count", 53) + (AiJson.getBoolean(args, "additional", false) ? baseline : 0);
       final List<BlockPos> field = init(mc, crop);
-      if (!field.isEmpty() && !AiJson.init_Z_JsonObject(args, "bonemeal", false)) {
+      if (!field.isEmpty() && !AiJson.getBoolean(args, "bonemeal", false)) {
          final JsonObject rest = args.deepCopy();
          rest.addProperty("count", target);
          rest.addProperty("additional", false);
          return new AiOperation() {
-            AiOperation init_AiOperation = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, target, AiJson.init_Z_JsonObject(args, "replant", true));
+            AiOperation init_AiOperation = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, target, AiJson.getBoolean(args, "replant", true));
             boolean init_Z;
             boolean load;
 
@@ -1481,17 +1481,17 @@ final class AiFarm {
                   return r;
                }
 
-               if (!this.load && r.status() == AiOperation.Status.SUCCEEDED && AiGameState.init_I_Str(cropItem) >= target && this.init()) {
+               if (!this.load && r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem(cropItem) >= target && this.init()) {
                   this.init_AiOperation.cancel();
                   this.load = true;
-                  this.init_AiOperation = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, AiGameState.init_I_Str(cropItem));
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Collecting the field's remaining drops", new JsonObject());
+                  this.init_AiOperation = AiFieldWork.init(field, cropBlock, AiFarm.load(cropBlock), cropItem, AiGameState.countInventoryItem(cropItem));
+                  return AiGameOperations.result(AiOperation.Status.RUNNING, "Collecting the field's remaining drops", new JsonObject());
                }
 
                if (this.load
                   || this.init_Z
                   || r.status() == AiOperation.Status.CANCELLED
-                  || AiGameState.init_I_Str(cropItem) >= target
+                  || AiGameState.countInventoryItem(cropItem) >= target
                   || r.status() == AiOperation.Status.FAILED && r.message().contains("Inventory full")) {
                   return r;
                }
@@ -1499,7 +1499,7 @@ final class AiFarm {
                this.init_AiOperation.cancel();
                this.init_Z = true;
                this.init_AiOperation = AiFarm.init(rest, cropBlock, cropItem);
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Field done; looking for more " + cropItem, new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, "Field done; looking for more " + cropItem, new JsonObject());
             }
 
             boolean init() {

@@ -56,11 +56,11 @@ public class AssertAction implements MacroAction {
          switch (this.check) {
             case HELD_ITEM:
                var10000 = mc.player != null
-                  && MacroItemTarget.update(itemResolution.init_Str()).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
+                  && MacroItemTarget.parse(itemResolution.init_Str()).matchScore(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
                      >= 0;
                break;
             case INVENTORY_ITEM:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update(itemResolution.init_Str()));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse(itemResolution.init_Str()));
                break;
             case GUI_TYPE:
                var10000 = GuiScreenMatcher.init(mc.gui.screen(), guiResolution.init_Str(), "");
@@ -75,13 +75,13 @@ public class AssertAction implements MacroAction {
                var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.init_Str());
                break;
             case HAS_BUNDLE:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update("minecraft:bundle"));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse("minecraft:bundle"));
                break;
             case BUNDLE_V2_READY:
                var10000 = this.load(mc);
                break;
             case HAS_WRITABLE_BOOK:
-               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.update("minecraft:writable_book"));
+               var10000 = WaitInventoryPredicateAction.init_Z_Minecraft_ArrayUtil(mc, MacroItemTarget.parse("minecraft:writable_book"));
                break;
             case CONNECTION:
                var10000 = mc.getConnection() != null;
@@ -159,8 +159,8 @@ public class AssertAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.check = MacroNbtCodecHelper.init(AssertAction.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), AssertAction.Inner_DataUtil.CONNECTION);
-      this.failureBehavior = MacroNbtCodecHelper.init(AssertAction.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), AssertAction.Inner_StreamUtil.STOP_MACRO);
+      this.check = MacroNbtCodecHelper.parseEnum(AssertAction.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), AssertAction.Inner_DataUtil.CONNECTION);
+      this.failureBehavior = MacroNbtCodecHelper.parseEnum(AssertAction.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), AssertAction.Inner_StreamUtil.STOP_MACRO);
       this.itemName = tag.getStringOr("itemName", "");
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.entityId = tag.getStringOr("entityId", "");

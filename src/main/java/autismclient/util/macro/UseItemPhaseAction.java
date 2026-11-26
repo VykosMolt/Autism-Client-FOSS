@@ -83,8 +83,8 @@ public class UseItemPhaseAction implements MacroAction {
 
    public void init_V_2(Minecraft mc) {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
-         MacroItemTarget target = MacroItemTarget.update(this.itemName);
-         if (target.update()) {
+         MacroItemTarget target = MacroItemTarget.parse(this.itemName);
+         if (target.hasItemFilter()) {
             autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, target, mc.player.getInventory().getSelectedSlot());
          }
 
@@ -200,7 +200,7 @@ public class UseItemPhaseAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.phase = MacroNbtCodecHelper.init(UseItemPhaseAction.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), UseItemPhaseAction.Inner_DataUtil.USE_ONCE);
+      this.phase = MacroNbtCodecHelper.parseEnum(UseItemPhaseAction.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), UseItemPhaseAction.Inner_DataUtil.USE_ONCE);
       this.itemName = tag.getStringOr("itemName", "");
       this.hand = tag.getStringOr("hand", "MAIN_HAND");
       this.holdTicks = tag.getIntOr("holdTicks", 0);

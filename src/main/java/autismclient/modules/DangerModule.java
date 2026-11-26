@@ -271,19 +271,19 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return danger != null
          && danger.init_Z
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && "danger".equals(autismclient.util.SilentRotationManager.init_Str())
          && autismclient.util.SilentRotationManager.read_Z();
    }
 
    public static boolean sync_Z_12() {
       DangerModule danger = init_z();
-      return danger != null && danger.init_Z && !danger.load_Z && !aD.init_Z() && !FreecamController.init_Z();
+      return danger != null && danger.init_Z && !danger.load_Z && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public static boolean flush_Z_10() {
       DangerModule danger = init_z();
-      return danger != null && danger.init_Z && !aD.init_Z() && !FreecamController.init_Z();
+      return danger != null && danger.init_Z && !aD.init_Z() && !FreecamController.isActive();
    }
 
    public List<DangerModule.Inner_CachePool> load_List_4() {
@@ -347,7 +347,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    @Override
    public boolean load_Z_23() {
-      return (this.init_Z || autismclient.util.SilentRotationManager.init_Z()) && !aD.init_Z() && !FreecamController.init_Z();
+      return (this.init_Z || autismclient.util.SilentRotationManager.init_Z()) && !aD.init_Z() && !FreecamController.isActive();
    }
 
    @Override
@@ -625,7 +625,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          && !MC.player.isSpectator()
          && MC.gui.screen() == null
          && !aD.init_Z()
-         && !FreecamController.init_Z()
+         && !FreecamController.isActive()
          && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && !BlinkPacketManager.init_Z()
@@ -1046,7 +1046,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          || MC.player == null
          || !MC.player.isAlive()
          || aD.init_Z()
-         || FreecamController.init_Z()) {
+         || FreecamController.isActive()) {
          return null;
       }
 

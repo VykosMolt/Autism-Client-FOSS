@@ -113,7 +113,7 @@ public abstract class AutismChatSuggestMixin {
          int cursor = Math.max(prefixLen, Math.min(this.input.getCursorPosition(), value.length()));
          int commandRevision = CommandManager.getRegistryVersion();
          int moduleRevision = al.init_I();
-         long macroRevision = MacroLibraryManager.init_aN().init_J();
+         long macroRevision = MacroLibraryManager.getInstance().getRevision();
          Minecraft minecraft = Minecraft.getInstance();
          AbstractContainerMenu menu = minecraft.player == null ? null : minecraft.player.containerMenu;
          int menuRevision = menu == null ? -1 : menu.getStateId();

@@ -52,23 +52,23 @@ final class AiFarmPlant {
 
       String substrate = AiFarmArea.init_Str(args, cropBlock);
       final boolean soulSand = AiFarmArea.init_Z(substrate);
-      final int width = Math.max(0, Math.min(15, AiJson.init_I_JsonObject(args, "width", 0)));
-      final int length = Math.max(0, Math.min(15, AiJson.init_I_JsonObject(args, "length", 0)));
-      final int requested = Math.max(1, Math.min(128, AiJson.init_I_JsonObject(args, "count", width > 0 && length > 0 ? width * length : 9)));
-      final int radius = Math.max(4, Math.min(32, AiJson.init_I_JsonObject(args, "radius", 16)));
-      final int seeds = AiGameState.init_I_Str(seedItem);
+      final int width = Math.max(0, Math.min(15, AiJson.getInt(args, "width", 0)));
+      final int length = Math.max(0, Math.min(15, AiJson.getInt(args, "length", 0)));
+      final int requested = Math.max(1, Math.min(128, AiJson.getInt(args, "count", width > 0 && length > 0 ? width * length : 9)));
+      final int radius = Math.max(4, Math.min(32, AiJson.getInt(args, "radius", 16)));
+      final int seeds = AiGameState.countInventoryItem(seedItem);
       if (seeds <= 0) {
          throw new IllegalArgumentException("No " + seedItem + " to plant; obtain some first (missing " + seedItem + ": " + requested + ")");
       }
 
-      if (!soulSand && AiGameState.init_I_Str("#minecraft:hoes") <= 0 && !init(client)) {
+      if (!soulSand && AiGameState.countInventoryItem("#minecraft:hoes") <= 0 && !init(client)) {
          throw new IllegalArgumentException("A hoe is needed to till; craft one first (missing minecraft:wooden_hoe: 1)");
       }
 
       final int plots = Math.min(requested, seeds);
       return new AiOperation() {
          final Minecraft init_Minecraft = Minecraft.getInstance();
-         final long init_J = System.nanoTime() + Math.max(10, Math.min(1800, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600))) * 1000000000L;
+         final long init_J = System.nanoTime() + Math.max(10, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 600))) * 1000000000L;
          final List<JsonObject> init_List = new ArrayList<>();
          List<BlockPos> load_List;
          BlockPos init_BlockPos;
@@ -103,7 +103,7 @@ final class AiFarmPlant {
                   return this.read_List != null ? this.init(this.read()) : this.init(r);
                } else {
                   if (this.load_BlockPos != null) {
-                     this.init_AiOperation = AiGameOperations.init("break", AiFarmPlant.load(this.load_BlockPos));
+                     this.init_AiOperation = AiGameOperations.blockAction("break", AiFarmPlant.load(this.load_BlockPos));
                      return this.init("Breaking ice at " + this.load_BlockPos.toShortString() + " to open water");
                   }
 
@@ -124,7 +124,7 @@ final class AiFarmPlant {
                   while (this.write < this.read_List.size()) {
                      BlockPos c = this.read_List.get(this.write);
                      if (AiFarmPlant.init(this.init_Minecraft.level.getBlockState(c.above()))) {
-                        this.init_AiOperation = AiGameOperations.init("break", AiFarmPlant.load(c.above()));
+                        this.init_AiOperation = AiGameOperations.blockAction("break", AiFarmPlant.load(c.above()));
                         this.write++;
                         this.read_I++;
                         return this.init("Clearing " + c.above().toShortString());
@@ -158,7 +158,7 @@ final class AiFarmPlant {
                   }
 
                   AiOperation.Result w = this.load_AiOperation.tick();
-                  JsonObject data = AiJson.init_JsonObject_Str(w.dataJson());
+                  JsonObject data = AiJson.parseObject(w.dataJson());
                   if (data.has("sown")) {
                      this.init_I = data.get("sown").getAsInt();
                   }
@@ -237,7 +237,7 @@ final class AiFarmPlant {
                for (int dz = fromZ; dz <= toZ; dz++) {
                   for (int dy = -2; dy <= 1; dy++) {
                      BlockPos p = anchor.offset(dx, dy, dz);
-                     if (AiTerrain.init(this.init_Minecraft.level, p)) {
+                     if (AiTerrain.isLoaded(this.init_Minecraft.level, p)) {
                         BlockState ground = this.init_Minecraft.level.getBlockState(p);
                         BlockState above = this.init_Minecraft.level.getBlockState(p.above());
                         boolean farmland = soulSand ? ground.is(Blocks.SOUL_SAND) : ground.is(Blocks.FARMLAND);
@@ -269,7 +269,7 @@ final class AiFarmPlant {
                for (int dz = -radius; dz <= radius; dz++) {
                   for (int dy = -4; dy <= 3; dy++) {
                      p.set(from.getX() + dx, from.getY() + dy, from.getZ() + dz);
-                     if (AiTerrain.init(this.init_Minecraft.level, p) && match.test(this.init_Minecraft.level.getBlockState(p))) {
+                     if (AiTerrain.isLoaded(this.init_Minecraft.level, p) && match.test(this.init_Minecraft.level.getBlockState(p))) {
                         double sq = p.distSqr(from);
                         if (sq < bestSq) {
                            bestSq = sq;
@@ -300,7 +300,7 @@ final class AiFarmPlant {
          JsonObject init_JsonObject_6() {
             JsonArray skips = new JsonArray();
             this.init_List.forEach(skips::add);
-            JsonObject out = AiJson.init_JsonObject_ObjArr(
+            JsonObject out = AiJson.objectOf(
                "planted",
                this.init_I,
                "tilled",
@@ -310,25 +310,25 @@ final class AiFarmPlant {
                "requested",
                requested,
                "seedsLeft",
-               AiGameState.init_I_Str(seedItem),
+               AiGameState.countInventoryItem(seedItem),
                "hydrated",
                this.init_BlockPos != null,
                "skipped",
                skips
             );
             if (this.init_BlockPos != null) {
-               out.add("water", AiJson.init_JsonObject_ObjArr("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
+               out.add("water", AiJson.objectOf("x", this.init_BlockPos.getX(), "y", this.init_BlockPos.getY(), "z", this.init_BlockPos.getZ()));
             }
 
             return out;
          }
 
          AiOperation.Result init(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_6());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_6());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_6());
+            return AiGameOperations.result(status, message, this.init_JsonObject_6());
          }
 
          @Override
@@ -358,7 +358,7 @@ final class AiFarmPlant {
    }
 
    private static JsonObject init(BlockPos p) {
-      return AiJson.init_JsonObject_ObjArr("x", p.getX(), "y", p.getY(), "z", p.getZ());
+      return AiJson.objectOf("x", p.getX(), "y", p.getY(), "z", p.getZ());
    }
 
    private static JsonObject load(BlockPos p) {

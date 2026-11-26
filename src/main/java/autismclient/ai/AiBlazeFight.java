@@ -254,15 +254,15 @@ final class AiBlazeFight {
 
    static AiOperation init(final JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
-      final int count = Math.max(1, AiJson.init_I_JsonObject(args, "count", 1));
-      final double radius = Math.max(6.0, Math.min(32.0, AiJson.init_D_JsonObject(args, "radius", 24.0)));
-      final float retreat = (float)AiJson.init_D_JsonObject(args, "retreatHealth", 8.0);
-      final int seconds = Math.max(10, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 90)));
+      final int count = Math.max(1, AiJson.getInt(args, "count", 1));
+      final double radius = Math.max(6.0, Math.min(32.0, AiJson.getDouble(args, "radius", 24.0)));
+      final float retreat = (float)AiJson.getDouble(args, "retreatHealth", 8.0);
+      final int seconds = Math.max(10, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 90)));
       return new AiOperation() {
          final Object init_Obj = mc.level;
          final Object load_Obj = mc.getConnection();
          final Object read_Obj = mc.player;
-         final long init_J = AiServerEvidence.load_J();
+         final long init_J = AiServerEvidence.deathRevision();
          final long load_J = System.nanoTime() + seconds * 1000000000L;
          final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final AiFireControl init_K = new AiFireControl();
@@ -324,9 +324,9 @@ final class AiBlazeFight {
          long read_J;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
-            if (AiJson.init_Z_JsonObject(args, "useShield", false) && !AiDefense.init_Z(mc)) {
-               AiItems.init_Z(AiItems.load_af_DataUtil("minecraft:shield"));
+            this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
+            if (AiJson.getBoolean(args, "useShield", false) && !AiDefense.init_Z(mc)) {
+               AiItems.equipOffhand(AiItems.resolveItem("minecraft:shield"));
             }
 
             this.init_DataPipe = new AiCombatDeaths();
@@ -356,7 +356,7 @@ final class AiBlazeFight {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_5(AiOperation.Status.UNCERTAIN, "Blaze fight world, connection or player changed");
                }
 
-               if (!mc.player.isAlive() || this.init_J != AiServerEvidence.load_J()) {
+               if (!mc.player.isAlive() || this.init_J != AiServerEvidence.deathRevision()) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_5(AiOperation.Status.FAILED, "Death ended this blaze fight");
                }
 
@@ -486,7 +486,7 @@ final class AiBlazeFight {
                      && this.init_K.load_Z()
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_SyncManager == null || this.init_SyncManager.canInterruptNow())
-                     && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
+                     && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      if (this.init_AiOperation == null) {
                         this.update_V();
                         this.write_V_2();
@@ -496,9 +496,9 @@ final class AiBlazeFight {
                            this.init_SyncManager = null;
                         }
 
-                        this.init_AiOperation = AiSurvival.load(AiJson.init_JsonObject_ObjArr("radius", 10, "distance", 10, "timeoutSeconds", 6));
+                        this.init_AiOperation = AiSurvival.load(AiJson.objectOf("radius", 10, "distance", 10, "timeoutSeconds", 6));
                         AiRunTrace.init_V_Str_JsonObject(
-                           "blaze_combat_priority", AiJson.init_JsonObject_ObjArr("reason", "nearby creeper fuse", "entityId", creeper.getId())
+                           "blaze_combat_priority", AiJson.objectOf("reason", "nearby creeper fuse", "entityId", creeper.getId())
                         );
                      }
 
@@ -518,7 +518,7 @@ final class AiBlazeFight {
                   } else {
                      if (this.init_SyncManager != null) {
                         AiOperation.Result r = this.init_SyncManager.tick();
-                        this.init_JsonObject = AiRunResources.init_JsonObject(r.dataJson());
+                        this.init_JsonObject = AiRunResources.parseEvidenceJson(r.dataJson());
                         if (!r.terminal()) {
                            return this.init(r.message());
                         }
@@ -561,7 +561,7 @@ final class AiBlazeFight {
                         if (this.size > 0 && --this.size == 0 && this.init_F >= 0.0F && this.init_Blaze != null) {
                            float after = this.init_Blaze.getHealth();
                            boolean confirmed = !this.init_Blaze.isRemoved() || after <= 0.0F;
-                           JsonObject observation = AiJson.init_JsonObject_ObjArr(
+                           JsonObject observation = AiJson.objectOf(
                               "targetId",
                               this.init_Blaze.getId(),
                               "targetUuid",
@@ -605,7 +605,7 @@ final class AiBlazeFight {
                         }
 
                         if (this.push % 4 == 0) {
-                           this.close_Z = AiBlazeFight.init(mc.level, box, reach + 0.3, p -> AiTerrain.init(mc.level, p));
+                           this.close_Z = AiBlazeFight.init(mc.level, box, reach + 0.3, p -> AiTerrain.isLoaded(mc.level, p));
                         }
 
                         this.next = !this.close_Z && this.add <= 0 ? this.next + 1 : 0;
@@ -708,14 +708,14 @@ final class AiBlazeFight {
                                  && AiCombat.init(coming) <= 10;
                               boolean swingFirst = AiBlazeFight.init(blockNow, coming == null ? 2147483647 : AiCombat.init(coming), AiDefense.load(mc));
                               boolean swingSoon = inReach && charge >= 0.85F && swingFirst;
-                              Vec3 look = autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity);
+                              Vec3 look = autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity);
                               if (blockNow && !swingSoon) {
                                  look = AiCombat.init_Vec3_Minecraft_Vec3(mc, look);
                               }
 
-                              this.init_DataUtil.init_V_Vec3(look);
-                              this.init_DataUtil.load_V();
-                              boolean onTarget = this.init_DataUtil.load_Z_Entity(this.init_Entity);
+                              this.init_DataUtil.aimAt(look);
+                              this.init_DataUtil.tick();
+                              boolean onTarget = this.init_DataUtil.isAimedAtEntity(this.init_Entity);
                               boolean killsNow = this.init_Entity instanceof LivingEntity dying
                                  && dying.getHealth() <= this.init(charge) * 0.95
                                  && charge >= 0.5F;
@@ -992,7 +992,7 @@ final class AiBlazeFight {
                                        mc.player.blockPosition(),
                                        this.update_Z(),
                                        this.open_I < 4,
-                                       p -> AiTerrain.init(mc.level, p),
+                                       p -> AiTerrain.isLoaded(mc.level, p),
                                        AiGoto::init_Z
                                     );
                                     if (goal.init_List().isEmpty()) {
@@ -1054,7 +1054,7 @@ final class AiBlazeFight {
                                     );
                                     AiRunTrace.init_V_Str_JsonObject(
                                        "blaze_approach_result",
-                                       AiJson.init_JsonObject_ObjArr(
+                                       AiJson.objectOf(
                                           "target",
                                           this.init_Entity.getId(),
                                           "status",
@@ -1105,8 +1105,8 @@ final class AiBlazeFight {
                                  this.update_V();
                                  this.write_V_2();
                                  this.init_DataUtil
-                                    .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity)));
-                                 this.init_DataUtil.load_V();
+                                    .aimAt(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.engine.AiAim.bestEntityAimPoint(this.init_Entity)));
+                                 this.init_DataUtil.tick();
                                  if (!this.init_Z) {
                                     this.update_I++;
                                  }
@@ -1146,7 +1146,7 @@ final class AiBlazeFight {
             this.init_I++;
             this.init_Str = reason;
             AiRunTrace.init_V_Str_JsonObject(
-               "blaze_target_switch", AiJson.init_JsonObject_ObjArr("to", next == null ? -1 : next.getId(), "reason", reason, "defensiveDetour", defensive)
+               "blaze_target_switch", AiJson.objectOf("to", next == null ? -1 : next.getId(), "reason", reason, "defensiveDetour", defensive)
             );
          }
 
@@ -1163,9 +1163,9 @@ final class AiBlazeFight {
                   }
                }
 
-               return AiJson.init_JsonObject_ObjArr("loadedBlazes", loaded, "deferredBlazes", deferred, "lastUnreachableReason", this.load_Str);
+               return AiJson.objectOf("loadedBlazes", loaded, "deferredBlazes", deferred, "lastUnreachableReason", this.load_Str);
             } else {
-               return AiJson.init_JsonObject_ObjArr("contextAvailable", false);
+               return AiJson.objectOf("contextAvailable", false);
             }
          }
 
@@ -1191,7 +1191,7 @@ final class AiBlazeFight {
                         && e.distanceToSqr(mc.player) < 6.25
                         && e.getBoundingBox().distanceToSqr(eye) <= reachSq
                         && mc.player.hasLineOfSight(e)
-                        && (!args.has("entityId") || e.getId() == AiJson.init_I_JsonObject(args, "entityId", -1))) {
+                        && (!args.has("entityId") || e.getId() == AiJson.getInt(args, "entityId", -1))) {
                         close = e;
                         break;
                      }
@@ -1211,14 +1211,14 @@ final class AiBlazeFight {
             double reachNow = AiDefense.init_D(mc) + 0.25;
 
             for (Entity e : mc.level.entitiesForRendering()) {
-               if (e instanceof Blaze blaze && e.isAlive() && (!args.has("entityId") || e.getId() == AiJson.init_I_JsonObject(args, "entityId", -1))) {
+               if (e instanceof Blaze blaze && e.isAlive() && (!args.has("entityId") || e.getId() == AiJson.getInt(args, "entityId", -1))) {
                   Long until = AiBlazeFight.init_Map.get(e.getUUID());
                   if (until == null || until <= System.nanoTime()) {
                      double d = e.distanceTo(mc.player);
                      if (!(d > radius)) {
                         boolean ground = e == this.init_Entity
                            ? this.close_Z
-                           : AiBlazeFight.init(mc.level, e.getBoundingBox(), reachNow, p -> AiTerrain.init(mc.level, p));
+                           : AiBlazeFight.init(mc.level, e.getBoundingBox(), reachNow, p -> AiTerrain.isLoaded(mc.level, p));
                         double score = AiBlazeFight.init_D_D(
                            d, mc.player.hasLineOfSight(e), e == this.init_Entity, blaze.getHealth() < blaze.getMaxHealth() - 0.5, ground
                         );
@@ -1241,7 +1241,7 @@ final class AiBlazeFight {
 
          Vec3 init_Vec3_Entity_D(Entity blaze, double reach) {
             AABB box = blaze.getBoundingBox();
-            Predicate<BlockPos> loaded = p -> AiTerrain.init(mc.level, p);
+            Predicate<BlockPos> loaded = p -> AiTerrain.isLoaded(mc.level, p);
             Predicate<AABB> free = b -> mc.level.noCollision(b);
             Vec3 here = mc.player.position();
             if (AiBlazeFight.init(mc.level, box, here, reach, loaded, free)) {
@@ -1289,7 +1289,7 @@ final class AiBlazeFight {
 
                for (int down = 1; down <= 2 && !floor; down++) {
                   BlockPos cell = feet.below(down);
-                  if (!AiTerrain.init(mc.level, cell) || mc.level.getFluidState(cell).is(FluidTags.LAVA)) {
+                  if (!AiTerrain.isLoaded(mc.level, cell) || mc.level.getFluidState(cell).is(FluidTags.LAVA)) {
                      break;
                   }
 
@@ -1321,7 +1321,7 @@ final class AiBlazeFight {
 
                   for (int down = 1; down <= 2 && !floor; down++) {
                      BlockPos cell = feet.below(down);
-                     if (!AiTerrain.init(mc.level, cell) || mc.level.getFluidState(cell).is(FluidTags.LAVA)) {
+                     if (!AiTerrain.isLoaded(mc.level, cell) || mc.level.getFluidState(cell).is(FluidTags.LAVA)) {
                         break;
                      }
 
@@ -1377,7 +1377,7 @@ final class AiBlazeFight {
          }
 
          boolean init(BlockPos feet) {
-            if (AiTerrain.init(mc.level, feet.below()) && AiTerrain.init(mc.level, feet.above())) {
+            if (AiTerrain.isLoaded(mc.level, feet.below()) && AiTerrain.isLoaded(mc.level, feet.above())) {
                for (int dy = -1; dy <= 1; dy++) {
                   if (mc.level.getFluidState(feet.above(dy)).is(FluidTags.LAVA)) {
                      return false;
@@ -1412,7 +1412,7 @@ final class AiBlazeFight {
             int hold = wounded ? Math.min(seconds, 6) : seconds;
             AiRunTrace.init_V_Str_JsonObject(
                "blaze_unreachable",
-               AiJson.init_JsonObject_ObjArr("target", this.init_Entity.getId(), "reason", reason, "gap", gap, "wounded", wounded, "seconds", hold)
+               AiJson.objectOf("target", this.init_Entity.getId(), "reason", reason, "gap", gap, "wounded", wounded, "seconds", hold)
             );
             AutismClientAddon.LOG
                .info(
@@ -1432,7 +1432,7 @@ final class AiBlazeFight {
          }
 
          double init(float charge) {
-            return Math.max(mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE), 1.0 + AiItems.init_D(mc.player.getMainHandItem()))
+            return Math.max(mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE), 1.0 + AiItems.attackDamageBonus(mc.player.getMainHandItem()))
                * (0.2 + 0.8 * charge * charge);
          }
 
@@ -1571,7 +1571,7 @@ final class AiBlazeFight {
                AABB core = end.deflate(0.2, 0.0, 0.2);
                return !mc.level.noCollision(new AABB(core.minX, core.minY - 0.55, core.minZ, core.maxX, core.minY - 0.01, core.maxZ));
             } else {
-               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
+               if (!autismclient.ai.engine.AiMotionSafety.isPlayerMoveSafe(forward, strafe, false, false)) {
                   return false;
                }
 
@@ -1583,7 +1583,7 @@ final class AiBlazeFight {
                   return false;
                }
 
-               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
+               if (!autismclient.ai.engine.AiMotionSafety.isPlayerMoveSafe(forward, strafe, false, false)) {
                   return false;
                }
 
@@ -1616,7 +1616,7 @@ final class AiBlazeFight {
          }
 
          boolean write_Z() {
-            return AiBlazeFight.init(mc.level, mc.player.blockPosition(), p -> AiTerrain.init(mc.level, p));
+            return AiBlazeFight.init(mc.level, mc.player.blockPosition(), p -> AiTerrain.isLoaded(mc.level, p));
          }
 
          boolean update_Z() {
@@ -1634,9 +1634,9 @@ final class AiBlazeFight {
 
          void init_V_11() {
             if (this.push % 10 == 1) {
-               int slot = AiItems.init(36);
+               int slot = AiItems.bestWeaponSlot(36);
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
-                  AiItems.load(slot);
+                  AiItems.selectOrMoveToHotbar(slot);
                }
             }
          }
@@ -1678,7 +1678,7 @@ final class AiBlazeFight {
          }
 
          AiOperation.Result init(String message) {
-            JsonObject data = AiJson.init_JsonObject_ObjArr(
+            JsonObject data = AiJson.objectOf(
                "kills",
                this.load_I,
                "requestedKills",
@@ -1722,7 +1722,7 @@ final class AiBlazeFight {
             if (this.init_Entity != null) {
                data.add(
                   "target",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "id",
                      this.init_Entity.getId(),
                      "uuid",
@@ -1741,7 +1741,7 @@ final class AiBlazeFight {
                );
             }
 
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, data);
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, data);
          }
 
          AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_5(AiOperation.Status status, String message) {
@@ -1761,14 +1761,14 @@ final class AiBlazeFight {
                this.init_SyncManager = null;
             }
 
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
             AiBlazeFight.init_J = 0L;
             return this.init_bb
                .init(
-                  AiGameOperations.init_AiOperation_Result(
+                  AiGameOperations.result(
                      status,
                      message + " (" + this.read_I + " swings, " + this.write_I + " crits, " + this.update_I + " shield raises)",
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "kills",
                         this.load_I,
                         "targetSwitches",

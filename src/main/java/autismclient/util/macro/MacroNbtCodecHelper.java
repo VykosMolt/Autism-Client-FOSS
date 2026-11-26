@@ -10,7 +10,7 @@ final class MacroNbtCodecHelper {
    private MacroNbtCodecHelper() {
    }
 
-   static ListTag init(List<String> values) {
+   static ListTag toStringListTag(List<String> values) {
       ListTag list = new ListTag();
       if (values == null) {
          return list;
@@ -25,7 +25,7 @@ final class MacroNbtCodecHelper {
       return list;
    }
 
-   static ArrayList<String> init(ListTag list) {
+   static ArrayList<String> fromStringListTag(ListTag list) {
       ArrayList<String> values = new ArrayList<>();
       if (list == null) {
          return values;
@@ -41,7 +41,7 @@ final class MacroNbtCodecHelper {
       return values;
    }
 
-   static <E extends Enum<E>> E init(Class<E> type, String raw, E fallback) {
+   static <E extends Enum<E>> E parseEnum(Class<E> type, String raw, E fallback) {
       if (raw != null && !raw.isBlank()) {
          try {
             return Enum.valueOf(type, raw.trim().toUpperCase(Locale.ROOT));

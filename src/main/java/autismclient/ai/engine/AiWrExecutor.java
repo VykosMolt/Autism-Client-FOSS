@@ -78,7 +78,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private final Minecraft putAt_Minecraft = Minecraft.getInstance();
    private final AiAim putAt_CacheHelper = new AiAim();
    private final AiBlockDigger putAt_JsonCache = new AiBlockDigger(
-      this.putAt_Minecraft, this::fill, this::putAt_V_Vec3, false, false, this.putAt_CacheHelper::load_V, () -> !this.putAt_CacheHelper.init_Z()
+      this.putAt_Minecraft, this::fill, this::putAt_V_Vec3, false, false, this.putAt_CacheHelper::tick, () -> !this.putAt_CacheHelper.isSilent()
    );
    private List<AiPathfinder.UiHelper> putAt_List = List.of();
    private int pollAt_I;
@@ -188,15 +188,15 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    public static boolean fill_Z() {
-      return AiMotionSafety.fill_Z();
+      return AiMotionSafety.isPlayerSupported();
    }
 
    public static void putAt_V() {
-      AiMotionSafety.putAt_V();
+      AiMotionSafety.releaseMovementKeys();
    }
 
    public static void fill_V() {
-      AiMotionSafety.fill_V();
+      AiMotionSafety.applyEmergencyBrake();
    }
 
    public static int putAt_I_List(List<AiPathfinder.UiHelper> var0) {
@@ -516,13 +516,13 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       if (this.putAt_Minecraft.player != null && this.putAt_Minecraft.level != null) {
          LocalPlayer var1 = this.putAt_Minecraft.player;
          if (!var1.isInWater() && (!var1.onGround() || !(var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4))) {
-            if (AiMotionSafety.putAt_Z_TokenCore_TaskStat_2(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), AiPhysics.MoveInput.NONE, 64)
+            if (AiMotionSafety.isMoveSafe(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), AiPhysics.MoveInput.NONE, 64)
                )
              {
                return true;
             }
 
-            AiMotionSafety.fill_V();
+            AiMotionSafety.applyEmergencyBrake();
             return false;
          } else {
             return true;
@@ -670,7 +670,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
 
       this.state(false);
-      this.putAt_CacheHelper.init_V();
+      this.putAt_CacheHelper.clear();
       this.putAt_List = List.of();
       this.pollAt_I = 0;
       this.putAt_FileStore_PacketHe = null;
@@ -749,7 +749,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          this.pollAt_V();
          this.pollOf_V();
          if (this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill && this.putAt_RingCache_TaskStat == null && this.putAt_TokenCodec == null) {
-            this.putAt_CacheHelper.load_V();
+            this.putAt_CacheHelper.tick();
          }
 
          return this.putAt_RingCache_TableCac;
@@ -890,7 +890,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                      }
 
                      if (this.frameOf_Z && var1.onGround() && !this.value(this.putAt_FileStore_PacketHe)) {
-                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.AimProfile.FAST);
+                        this.putAt_CacheHelper.setProfile(AiAim.AimProfile.FAST);
                         if (!this.putAt_FileStore_PacketHe.cellsToBreak().isEmpty() && this.putAt_Z_LocalPlayer(var1, this.putAt_FileStore_PacketHe, false)) {
                            return;
                         }
@@ -1420,7 +1420,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private void putAt_V_BlockPos(BlockPos var1) {
       LocalPlayer var2 = this.putAt_Minecraft.player;
       if (var2 != null && this.putAt_Z_BlockPos(var1) && var2.tickCount - this.syncAt_I >= 3) {
-         BlockHitResult var3 = AiAim.init_BlockHitResult();
+         BlockHitResult var3 = AiAim.raycastLookBlock();
          if (var3 != null && (var3.getBlockPos().equals(var1) || var3.getBlockPos().equals(var1.above()))) {
             this.putAt_Minecraft.gameMode.useItemOn(var2, InteractionHand.MAIN_HAND, var3);
             Compat263.swing(var2, InteractionHand.MAIN_HAND);
@@ -1449,7 +1449,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          this.state_Z = false;
       }
 
-      this.putAt_CacheHelper.init_V_DataUtil_DataUtil(
+      this.putAt_CacheHelper.setProfile(
             var1.type() != AiPathfinder.MoveType.PILLAR && var1.type() != AiPathfinder.MoveType.BRIDGE_CELL
                ? AiAim.AimProfile.FAST
                : AiAim.AimProfile.EXACT
@@ -1768,7 +1768,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       } else {
          BlockPos var21 = null;
          Vec3 var22 = null;
-         if (!this.putAt_CacheHelper.init_Z()) {
+         if (!this.putAt_CacheHelper.isSilent()) {
             Vec3 var8 = var1.getEyePosition();
             double var9 = var1.blockInteractionRange();
             AiDigLine.Inner_CachePool var11 = this.putAt_EventBus_JsonCache();
@@ -1789,8 +1789,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          if (this.putAt_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var24 && var24.autism$getDestroyProgress() > 0.0F) {
             BlockPos var26 = var24.autism$getDestroyBlockPos();
             if (var26 != null && !var26.equals(var21) && var5.contains(var26)) {
-               BlockHitResult var28 = AiAim.init_BlockHitResult();
-               BlockHitResult var29 = var28 != null && var28.getBlockPos().equals(var26) ? var28 : AiBlockInteraction.init(this.putAt_Minecraft, var26);
+               BlockHitResult var28 = AiAim.raycastLookBlock();
+               BlockHitResult var29 = var28 != null && var28.getBlockPos().equals(var26) ? var28 : AiBlockInteraction.findReachableHit(this.putAt_Minecraft, var26);
                if (var29 != null) {
                   var21 = var26.immutable();
                   var22 = var29.getLocation();
@@ -1830,7 +1830,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                && var27 * var27 + var30 * var30 > 0.6889
                && (var2.to().getY() >= var2.from().getY() || !putAt_Z_FileStore_BitCache(this.putAt_FileStore_BitCache_BlockPos(var2.to().above())));
             if (var14) {
-               this.putAt_Z_F(AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5));
+               this.putAt_Z_F(AiPhysics.yawBetween(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5));
             } else {
                this.putAt_Minecraft.options.keyUp.setDown(false);
                this.putAt_Minecraft.options.keyDown.setDown(false);
@@ -1873,7 +1873,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private BlockPos putAt_BlockPos_LocalPlayer_BlockPos(LocalPlayer var1, BlockPos var2) {
-      if (AiBlockInteraction.init(this.putAt_Minecraft, var2) != null) {
+      if (AiBlockInteraction.findReachableHit(this.putAt_Minecraft, var2) != null) {
          return null;
       }
 
@@ -1935,7 +1935,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       BlockPos var2 = this.putAt_List.get(Math.min(this.putAt_List.size() - 1, this.pollAt_I + 3)).to();
       return Math.hypot(var2.getX() - var1.getX(), var2.getZ() - var1.getZ()) < 1.5
          ? 0.0F / 0.0F
-         : AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var2.getX(), var2.getZ());
+         : AiPhysics.yawBetween(var1.getX(), var1.getZ(), var2.getX(), var2.getZ());
    }
 
    private List<BlockPos> putAt_List_List(List<BlockPos> var1) {
@@ -1982,7 +1982,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private Vec3 putAt_Vec3_LocalPlayer(LocalPlayer var1) {
-      if (!this.putAt_CacheHelper.init_Z() && this.pollAt_I + 1 < this.putAt_List.size()) {
+      if (!this.putAt_CacheHelper.isSilent() && this.pollAt_I + 1 < this.putAt_List.size()) {
          AiPathfinder.UiHelper var2 = this.putAt_List.get(this.pollAt_I + 1);
          if (var2.cellsToBreak().isEmpty()) {
             return null;
@@ -2069,7 +2069,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             }
 
             if (var4 * var4 + var6 * var6 > 0.04) {
-               this.putAt_CacheHelper.init_V_ce_DataUtil(putAt_TaskUtil_CacheHelp_LocalPlayer(var1));
+               this.putAt_CacheHelper.setTargetRotation(putAt_TaskUtil_CacheHelp_LocalPlayer(var1));
                this.putAt_V_LocalPlayer(var1, var3.getX() + 0.5, var3.getZ() + 0.5, 0.08);
                return;
             }
@@ -2089,16 +2089,16 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                return;
             }
 
-            this.putAt_CacheHelper.init_V_ce_DataUtil(putAt_TaskUtil_CacheHelp_LocalPlayer(var1));
-            this.putAt_CacheHelper.load_V();
-            if (this.putAt_CacheHelper.init_D() > 6.0) {
+            this.putAt_CacheHelper.setTargetRotation(putAt_TaskUtil_CacheHelp_LocalPlayer(var1));
+            this.putAt_CacheHelper.tick();
+            if (this.putAt_CacheHelper.angularError() > 6.0) {
                return;
             }
 
             this.prev_Z = true;
          }
 
-         this.putAt_CacheHelper.init_V_ce_DataUtil(putAt_TaskUtil_CacheHelp_LocalPlayer(var1));
+         this.putAt_CacheHelper.setTargetRotation(putAt_TaskUtil_CacheHelp_LocalPlayer(var1));
          this.putAt_Minecraft.options.keyJump.setDown(true);
          this.putAt_Minecraft.options.keyUp.setDown(false);
          this.putAt_V_LocalPlayer_Z(var1, false);
@@ -2159,7 +2159,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          return this.fill_RingCache_CacheHel(var1);
       }
 
-      if (this.putAt_CacheHelper.init_D() > 1.0) {
+      if (this.putAt_CacheHelper.angularError() > 1.0) {
          return AiWrExecutor.Inner_CacheHelper.fill;
       }
 
@@ -2177,7 +2177,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          this.fill(var2);
          ItemStack var5 = this.putAt_Minecraft.player.getInventory().getItem(var2);
          this.putAt_Str = BuiltInRegistries.ITEM.getKey(var5.getItem()).toString();
-         this.readEx_J = AiServerEvidence.init_J_BlockPos(var1);
+         this.readEx_J = AiServerEvidence.blockRevision(var1);
          this.putAt_Block = ((BlockItem)var5.getItem()).getBlock();
          InteractionResult var6 = this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var4);
          if (var6.consumesAction() && !this.putAt_Minecraft.level.getBlockState(var1).isAir()) {
@@ -2191,7 +2191,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private boolean pollOf_Z() {
-      if (!this.putAt_CacheHelper.init_Z() && this.putAt_FileStore_PacketHe != null) {
+      if (!this.putAt_CacheHelper.isSilent() && this.putAt_FileStore_PacketHe != null) {
          int var1 = this.putAt_FileStore_PacketHe.to().getX() - this.putAt_FileStore_PacketHe.from().getX();
          int var2 = this.putAt_FileStore_PacketHe.to().getZ() - this.putAt_FileStore_PacketHe.from().getZ();
          return this.putAt_FileStore_PacketHe.to().getY() == this.putAt_FileStore_PacketHe.from().getY()
@@ -2470,7 +2470,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          this.putAt_V_Vec3(var7);
       }
 
-      float var8 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var7.x, var7.z);
+      float var8 = AiPhysics.yawBetween(var1.getX(), var1.getZ(), var7.x, var7.z);
       boolean var9 = this.putAt_Z_F(var8);
       this.putAt_V_LocalPlayer_Z(var1, this.stateOf_Z && var9 && this.prev(var1));
       this.putAt_Minecraft.options.keyJump.setDown(false);
@@ -2488,8 +2488,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private void fill_V(BlockPos var1) {
       LocalPlayer var2 = this.putAt_Minecraft.player;
       if (var2 != null && this.putAt_Z_BlockPos(var1) && var2.tickCount - this.syncAt_I >= 3) {
-         this.putAt_CacheHelper.load_V();
-         BlockHitResult var3 = AiAim.init_BlockHitResult();
+         this.putAt_CacheHelper.tick();
+         BlockHitResult var3 = AiAim.raycastLookBlock();
          if (var3 != null && (var3.getBlockPos().equals(var1) || var3.getBlockPos().equals(var1.above()))) {
             this.putAt_Minecraft.gameMode.useItemOn(var2, InteractionHand.MAIN_HAND, var3);
             Compat263.swing(var2, InteractionHand.MAIN_HAND);
@@ -2539,9 +2539,9 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                         this.putAt_Minecraft.player.getEyePosition()
                      )
                   );
-                  this.putAt_CacheHelper.load_V();
-                  if (AiAim.init_Z_BlockPos(var1)) {
-                     BlockHitResult var3 = AiAim.init_BlockHitResult();
+                  this.putAt_CacheHelper.tick();
+                  if (AiAim.isLookingAtBlock(var1)) {
+                     BlockHitResult var3 = AiAim.raycastLookBlock();
                      if (var3 != null) {
                         this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var3);
                         Compat263.swing(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND);
@@ -2601,10 +2601,10 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.putAt_V_Vec3(var3);
       double var4 = var2.to().getX() + 0.5;
       double var6 = var2.to().getZ() + 0.5;
-      float var8 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var4, var6);
+      float var8 = AiPhysics.yawBetween(var1.getX(), var1.getZ(), var4, var6);
       AiPhysics.MotionState var9 = putAt_TokenCore_TableCac_LocalPlayer(var1);
       AiLiveWorld var10 = this.putAt_NetEntry();
-      float var11 = this.putAt_CacheHelper.init_F();
+      float var11 = this.putAt_CacheHelper.predictedNextYaw();
       AiPhysics.MoveInput[] var12 = new AiPhysics.MoveInput[]{
          putAt_TokenCore_CacheHel_F_F(var11, var8),
          new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var11),
@@ -2662,7 +2662,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          ArrayList<AiPhysics.MotionState> var14 = new ArrayList<>();
 
          for (int var15 = 0; var15 < 60 && !var11; var15++) {
-            float var16 = AiPhysics.putAt_F_D(var9.x(), var9.z(), var4, var6);
+            float var16 = AiPhysics.yawBetween(var9.x(), var9.z(), var4, var6);
             AiPhysics.MoveInput var17 = var10 && var8 != 0
                ? (
                   var8 == 1
@@ -2670,8 +2670,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                      : new AiPhysics.MoveInput(-1.0, 0.0, false, false, false, var16)
                )
                : new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var16);
-            AiPhysics.MotionState var18 = AiPhysics.putAt(var9, var17, var3);
-            if (AiPhysics.putAt_Z(var3, var9, var18)) {
+            AiPhysics.MotionState var18 = AiPhysics.step(var9, var17, var3);
+            if (AiPhysics.hitsHazard(var3, var9, var18)) {
                break;
             }
 
@@ -2729,7 +2729,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private void tick(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       boolean var3 = var2.to().getY() > var2.from().getY();
       if (var1.isInWater()) {
-         this.putAt_CacheHelper.init_V();
+         this.putAt_CacheHelper.clear();
          this.putAt_V_LocalPlayer(var1, var2.to().getX() + 0.5, var2.to().getZ() + 0.5, 0.15);
          this.putAt_V_LocalPlayer_Z(var1, false);
          this.putAt_Minecraft.options.keyJump.setDown(var3);
@@ -2742,7 +2742,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private void putAt_V_LocalPlayer_2(LocalPlayer var1, AiPathfinder.UiHelper var2, boolean var3, boolean var4, Vec3 var5) {
       Vec3 var6 = var5 != null ? var5 : AiRoutePolicy.putAt_Vec3_FileStore_PacketHe_D(var2, var1.getEyePosition().y);
       this.putAt_V_Vec3(var6);
-      float var7 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5);
+      float var7 = AiPhysics.yawBetween(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5);
       boolean var8 = this.putAt_Z_F(var7);
       this.putAt_V_LocalPlayer_Z(var1, var8 && var3 && !var1.isInWater());
       double var9 = var2.to().getY();
@@ -2832,7 +2832,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return this.putAt_FileStore_BitCache_BlockPos(var1).passable()
          ? false
          : this.putAt_BlockPos == null
-            || this.putAt_Minecraft.level.getBlockState(var1).getBlock() == this.putAt_Block && AiServerEvidence.init_J_BlockPos(var1) > this.readEx_J;
+            || this.putAt_Minecraft.level.getBlockState(var1).getBlock() == this.putAt_Block && AiServerEvidence.blockRevision(var1) > this.readEx_J;
    }
 
    private AiWrExecutor.Inner_CacheHelper fill_RingCache_CacheHel(BlockPos var1) {
@@ -2861,25 +2861,25 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             return AiWrExecutor.Inner_CacheHelper.readEx;
          }
 
-         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.AimProfile.FAST);
+         this.putAt_CacheHelper.setProfile(AiAim.AimProfile.FAST);
          RotationMath.Rotation var7 = var6.init_U_DataUtil().init_ce_DataUtil();
          Vec3 var8 = this.putAt_Minecraft.player.getEyePosition();
          Vec3 var9 = var6.init_U_DataUtil().init_Vec3();
          boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.MoveType.PILLAR;
          if (var10 && var7 != null && var9 != null && Math.hypot(var9.x - var8.x, var9.z - var8.z) < 0.4) {
-            this.putAt_CacheHelper.init_V_Vec3(var9);
+            this.putAt_CacheHelper.aimAt(var9);
          } else if (var7 != null) {
-            this.putAt_CacheHelper.init_V_ce_DataUtil(var7);
+            this.putAt_CacheHelper.setTargetRotation(var7);
          } else {
-            this.putAt_CacheHelper.init_V_Vec3(var9);
+            this.putAt_CacheHelper.aimAt(var9);
          }
 
-         this.putAt_CacheHelper.load_V();
-         if (!AiAim.init_Z_BlockPos(var6.init_BlockHitResult().getBlockPos())) {
+         this.putAt_CacheHelper.tick();
+         if (!AiAim.isLookingAtBlock(var6.init_BlockHitResult().getBlockPos())) {
             return AiWrExecutor.Inner_CacheHelper.fill;
          }
 
-         this.readEx_J = AiServerEvidence.init_J_BlockPos(var1);
+         this.readEx_J = AiServerEvidence.blockRevision(var1);
          this.putAt_Block = ((BlockItem)var3.getItem()).getBlock();
          InteractionResult var11 = this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var6.init_BlockHitResult());
          if (var11.consumesAction() && !this.putAt_Minecraft.level.getBlockState(var1).isAir()) {
@@ -3111,7 +3111,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                var4,
                var5.isDamageableItem() ? var5.getMaxDamage() - var5.getDamageValue() : -1,
                var2 || var5.isCorrectToolForDrops(var1),
-               AiItems.load_Z(var5)
+               AiItems.isDisposableTierTool(var5)
             )
          );
       }
@@ -3177,7 +3177,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private static AiPhysics.MotionState putAt_TokenCore_TableCac_LocalPlayer(LocalPlayer var0) {
-      return AiMotionSafety.putAt_TokenCore_TableCac(var0);
+      return AiMotionSafety.snapshotPlayer(var0);
    }
 
    private AiPathfinder.CellInfo putAt_FileStore_BitCache_BlockPos(BlockPos var1) {
@@ -3243,8 +3243,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             double var7 = var13 != null && !var13.isEmpty()
                ? var12.getY() + (var14 ? var13.max(Axis.Y) : var13.min(Axis.Y))
                : var12.getY() + (var14 ? 1.0 : 0.0);
-            this.putAt_CacheHelper.init_V_ce_DataUtil(
-                  new RotationMath.Rotation(var2.getYRot(), AiMotionSafety.putAt_F_Vec3(var3, var2.getYRot(), var2.getXRot(), var14, var7))
+            this.putAt_CacheHelper.setTargetRotation(
+                  new RotationMath.Rotation(var2.getYRot(), AiMotionSafety.requiredPitchForPlane(var3, var2.getYRot(), var2.getXRot(), var14, var7))
                );
             return;
          }
@@ -3264,9 +3264,9 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                if (var6 < 0.3) {
                   double var8 = Math.hypot(var1.x - var3.x, var1.z - var3.z);
                   float var10 = (float)Math.toDegrees(Math.atan2(var3.y - var1.y, Math.max(0.3, var8)));
-                  float var11 = AiPhysics.putAt_F_D(0.0, 0.0, var4, var5);
+                  float var11 = AiPhysics.yawBetween(0.0, 0.0, var4, var5);
                   if (this.putAt_Z_Vec3(var3, var11, var10, BlockPos.containing(var1))) {
-                     this.putAt_CacheHelper.init_V_ce_DataUtil(new RotationMath.Rotation(var11, var10));
+                     this.putAt_CacheHelper.setTargetRotation(new RotationMath.Rotation(var11, var10));
                      return;
                   }
                }
@@ -3274,7 +3274,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          }
       }
 
-      this.putAt_CacheHelper.init_V_Vec3(var1);
+      this.putAt_CacheHelper.aimAt(var1);
    }
 
    private boolean putAt_Z_Vec3(Vec3 var1, float var2, float var3, BlockPos var4) {
@@ -3298,7 +3298,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private boolean putAt_Z_F(float var1) {
-      int[] var2 = AiMotionSafety.putAt_IArr_F_F(this.putAt_CacheHelper.init_F(), var1);
+      int[] var2 = AiMotionSafety.relativeMoveAxes(this.putAt_CacheHelper.predictedNextYaw(), var1);
       this.putAt_Minecraft.options.keyUp.setDown(var2[0] > 0);
       this.putAt_Minecraft.options.keyDown.setDown(var2[0] < 0);
       this.putAt_Minecraft.options.keyRight.setDown(var2[1] > 0);
@@ -3307,7 +3307,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private static AiPhysics.MoveInput putAt_TokenCore_CacheHel_F_F(float var0, float var1) {
-      int[] var2 = AiMotionSafety.putAt_IArr_F_F(var0, var1);
+      int[] var2 = AiMotionSafety.relativeMoveAxes(var0, var1);
       return new AiPhysics.MoveInput(var2[0], -var2[1], false, false, false, var0);
    }
 
@@ -3320,7 +3320,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private void putAt_V_LocalPlayer_Z(LocalPlayer var1, boolean var2) {
-      AiMotionSafety.putAt_V_LocalPlayer_Z(var1, var2);
+      AiMotionSafety.markNavigationControl(var1, var2);
       var1.setSprinting(var2);
       if (!this.putAt_Minecraft.options.toggleSprint().get()) {
          this.putAt_Minecraft.options.keySprint.setDown(var2);
@@ -3383,7 +3383,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.putAt_TokenCodec = null;
       this.putAt_Set.clear();
       this.putAt_JsonCache.putAt_V();
-      AiMotionSafety.putAt_V();
+      AiMotionSafety.releaseMovementKeys();
       this.fill_BlockPos = null;
       if (this.putAt_SyncCore != null) {
          this.putAt_SyncCore.init_V();

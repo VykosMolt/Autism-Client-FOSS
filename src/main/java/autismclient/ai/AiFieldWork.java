@@ -165,7 +165,7 @@ final class AiFieldWork {
          final Set<Long> load_Set;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.CALM);
+            this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
             this.init_Map = new HashMap<>();
             this.load_Map = new HashMap<>();
             this.load_I = mc.player.getInventory().getSelectedSlot();
@@ -184,7 +184,7 @@ final class AiFieldWork {
                if (mc.gui.screen() != null) {
                   autismclient.util.BlockAttackGraceWindow.init();
                   this.load_V_2();
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   this.load_Z = false;
                   this.init_H_StreamUtil = null;
                   return this.init_AiOperation_Result_4("Harvest paused while a screen is open");
@@ -200,7 +200,7 @@ final class AiFieldWork {
                }
 
                for (long key : this.load_Set) {
-                  AiServerEvidence.Inner_DataUtil update = AiServerEvidence.init_ca_DataUtil_BlockPos(BlockPos.of(key).above());
+                  AiServerEvidence.Inner_DataUtil update = AiServerEvidence.lastBlockUpdate(BlockPos.of(key).above());
                   boolean breakConfirmed = update != null && update.revision() > this.read_Map.get(key) && update.state().isAir();
                   int since = this.load_Map.getOrDefault(key, this.init_Map.getOrDefault(key, this.update_I));
                   if ((!breakConfirmed || this.load_Map.containsKey(key)) && this.update_I - since > 120) {
@@ -217,7 +217,7 @@ final class AiFieldWork {
                   }
                }
 
-               int held = AiGameState.init_I_Str(cropItem);
+               int held = AiGameState.countInventoryItem(cropItem);
                boolean enough = held + onGround >= target;
                if (!enough && !this.init_Z_2(cropItem)) {
                   return this.init(AiOperation.Status.FAILED, "Inventory full: make room for " + cropItem + " before harvesting");
@@ -268,8 +268,8 @@ final class AiFieldWork {
                   }
                }
 
-               AiItems.ItemSpec seed = seedItem == null ? null : AiItems.load_af_DataUtil(seedItem);
-               boolean seedAvailable = seed != null && AiGameState.init_I_Str(seedItem) > 0;
+               AiItems.ItemSpec seed = seedItem == null ? null : AiItems.resolveItem(seedItem);
+               boolean seedAvailable = seed != null && AiGameState.countInventoryItem(seedItem) > 0;
                Vec3 eye = mc.player.getEyePosition();
                double reach = mc.player.blockInteractionRange() - 0.15;
                Vec3 heading = this.init_Vec3();
@@ -282,11 +282,11 @@ final class AiFieldWork {
                boolean fixedRow = this.init_Z && this.read_I % 2 == 1;
                if (fixedRow && !this.load_Z) {
                   float yaw = Math.abs(heading.x) > Math.abs(heading.z) ? 0.0F : 90.0F;
-                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(yaw, 80.0F));
+                  this.init_DataUtil.setTargetRotation(new autismclient.util.RotationMath.Rotation(yaw, 80.0F));
                   this.load_Z = true;
                }
 
-               BlockHitResult currentRay = autismclient.ai.engine.AiAim.init_BlockHitResult();
+               BlockHitResult currentRay = autismclient.ai.engine.AiAim.raycastLookBlock();
 
                for (BlockPos ground : field) {
                   BlockPos at = ground.above();
@@ -317,7 +317,7 @@ final class AiFieldWork {
                         if (AiFieldPlan.init(this.init_Z, this.read_I, onRay)) {
                            BlockHitResult hit = onRay
                               ? currentRay
-                              : (ripeHere ? autismclient.ai.engine.AiBlockInteraction.init(mc, at) : autismclient.ai.engine.AiBlockInteraction.init(mc, ground, Direction.UP));
+                              : (ripeHere ? autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, at) : autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, ground, Direction.UP));
                            if (hit != null && !(eye.distanceTo(hit.getLocation()) > reach)) {
                               double score = onRay ? -1.0E9 : along * 4.0 + eye.distanceToSqr(hit.getLocation()) * 0.1;
                               if (score < bestKey) {
@@ -335,8 +335,8 @@ final class AiFieldWork {
                boolean acted = false;
                if (best != null) {
                   AiFieldPlan.Inner_StreamUtil nextGoal = AiFieldPlan.Inner_StreamUtil.of(best, bestBreak ? bestHit.getDirection() : Direction.UP);
-                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.init_BlockHitResult())) {
-                     this.init_DataUtil.init_V_Vec3(bestHit.getLocation());
+                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
+                     this.init_DataUtil.aimAt(bestHit.getLocation());
                      this.open++;
                      this.load_Z = false;
                   }
@@ -344,9 +344,9 @@ final class AiFieldWork {
                   this.init_H_StreamUtil = nextGoal;
                }
 
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.tick();
                if (best != null) {
-                  BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                  BlockHitResult ray = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (ray != null && ray.getBlockPos().equals(best)) {
                      if (bestBreak) {
                         if (this.read_Z && mc.player.getInventory().getItem(this.load_I).is(this.init_Item)) {
@@ -354,7 +354,7 @@ final class AiFieldWork {
                         }
 
                         long ground = best.below().asLong();
-                        long revision = AiServerEvidence.init_J_BlockPos(best);
+                        long revision = AiServerEvidence.blockRevision(best);
                         BlockState before = mc.level.getBlockState(best);
                         if (autismclient.ai.engine.AiBlockDigger.init_Z_Minecraft(mc, best, ray.getDirection())
                            && AiReplantEvidence.init(before, mc.level.getBlockState(best), crop)) {
@@ -418,7 +418,7 @@ final class AiFieldWork {
                            boolean waiting = this.load_Set
                               .stream()
                               .anyMatch(key -> autismclient.util.BlockBreakGraceCalc.init(this.update_I, this.init_Map.get(key), this.init_I_4()));
-                           if (lying.isEmpty() && bare > 0 && AiGameState.init_I_Str(seedItem) <= 0 && !waiting) {
+                           if (lying.isEmpty() && bare > 0 && AiGameState.countInventoryItem(seedItem) <= 0 && !waiting) {
                               return this.init(AiOperation.Status.FAILED, "Harvest needs " + seedItem + " to replant " + bare + " plots");
                            }
 
@@ -497,11 +497,11 @@ final class AiFieldWork {
                boolean ownClick = this.init_Set.contains(key);
                AiReplantEvidence.Inner_DataUtil state = AiReplantEvidence.init(
                   mc.level.getBlockState(above),
-                  AiServerEvidence.init_ca_DataUtil_BlockPos(above),
+                  AiServerEvidence.lastBlockUpdate(above),
                   this.read_Map.getOrDefault(key, 0L),
                   crop,
                   ownClick,
-                  AiGameState.init_I_Str(seedItem)
+                  AiGameState.countInventoryItem(seedItem)
                );
                if (state == AiReplantEvidence.Inner_DataUtil.LOCAL || state == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
                   iterator.remove();
@@ -534,7 +534,7 @@ final class AiFieldWork {
                   return !autismclient.util.InventorySlotHelper.swapToOffhand(mc, mc.player.getInventory().getSelectedSlot()) ? false : seed.matches(mc.player.getMainHandItem());
                }
             } else {
-               return AiItems.read(seed) >= 0 && seed.matches(mc.player.getMainHandItem());
+               return AiItems.equipHotbar(seed) >= 0 && seed.matches(mc.player.getMainHandItem());
             }
          }
 
@@ -553,7 +553,7 @@ final class AiFieldWork {
                   ? true
                   : AiReplantEvidence.init(
                      mc.level.getBlockState(ground.above()),
-                     AiServerEvidence.init_ca_DataUtil_BlockPos(ground.above()),
+                     AiServerEvidence.lastBlockUpdate(ground.above()),
                      this.read_Map.get(key),
                      this.update_I,
                      this.init_Map.get(key),
@@ -564,7 +564,7 @@ final class AiFieldWork {
          }
 
          boolean init_Z_2(String itemId) {
-            AiItems.ItemSpec wanted = AiItems.load_af_DataUtil(itemId);
+            AiItems.ItemSpec wanted = AiItems.resolveItem(itemId);
             Inventory inventory = mc.player.getInventory();
 
             for (int slot = 0; slot < 36; slot++) {
@@ -599,7 +599,7 @@ final class AiFieldWork {
          }
 
          JsonObject init_JsonObject_8() {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "broken",
                this.sync,
                "sown",
@@ -624,12 +624,12 @@ final class AiFieldWork {
          }
 
          AiOperation.Result init_AiOperation_Result_4(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_8());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_8());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_8());
+            return AiGameOperations.result(status, message, this.init_JsonObject_8());
          }
 
          @Override
@@ -644,7 +644,7 @@ final class AiFieldWork {
                this.load_V_2();
             }
 
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
          }
       };
    }
@@ -752,7 +752,7 @@ final class AiFieldWork {
                this.init_Set.add(p.asLong());
             }
 
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.AimProfile.FAST);
+            this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
             this.init_I = 1;
             this.open = -1;
             this.load_Set = new HashSet<>();
@@ -768,7 +768,7 @@ final class AiFieldWork {
                if (mc.gui.screen() != null) {
                   autismclient.util.BlockAttackGraceWindow.init();
                   this.load();
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   return this.init("Field work paused while a screen is open");
                }
 
@@ -809,7 +809,7 @@ final class AiFieldWork {
                this.init_V_5();
                Vec3 eye = mc.player.getEyePosition();
                double reach = mc.player.blockInteractionRange() - 0.15;
-               boolean seeds = AiGameState.init_I_Str(seedItem) > 0;
+               boolean seeds = AiGameState.countInventoryItem(seedItem) > 0;
                Vec3 heading = this.init_Vec3_2();
                BlockPos best = null;
                BlockHitResult bestHit = null;
@@ -828,7 +828,7 @@ final class AiFieldWork {
 
                      Vec3 top = Vec3.atCenterOf(p).add(0.0, 0.5, 0.0);
                      if (!(eye.distanceToSqr(top) > (reach + 1.0) * (reach + 1.0))) {
-                        BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(mc, p, Direction.UP);
+                        BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, p, Direction.UP);
                         if (hit != null && !(eye.distanceTo(hit.getLocation()) > reach)) {
                            double key = along * 4.0 + eye.distanceToSqr(hit.getLocation()) * 0.1;
                            if (key < bestKey) {
@@ -848,17 +848,17 @@ final class AiFieldWork {
                boolean clicked = false;
                if (best != null) {
                   AiFieldPlan.Inner_StreamUtil nextGoal = AiFieldPlan.Inner_StreamUtil.of(best, Direction.UP);
-                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.init_BlockHitResult())) {
-                     this.init_DataUtil.init_V_Vec3(bestHit.getLocation());
+                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
+                     this.init_DataUtil.aimAt(bestHit.getLocation());
                      this.poll++;
                   }
 
                   this.init_H_StreamUtil = nextGoal;
                }
 
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.tick();
                if (best != null) {
-                  BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                  BlockHitResult ray = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (ray != null && ray.getBlockPos().equals(best) && ray.getDirection() == Direction.UP) {
                      clicked = this.init(best, ray);
                   }
@@ -891,7 +891,7 @@ final class AiFieldWork {
                                  .append(need)
                                  .append(" (")
                                  .append(mc.level.getBlockState(p).getBlock().getName().getString())
-                                 .append(autismclient.ai.engine.AiBlockInteraction.init(mc, p, Direction.UP) == null ? ", top unseen" : "")
+                                 .append(autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, p, Direction.UP) == null ? ", top unseen" : "")
                                  .append(')');
                            }
                         }
@@ -942,7 +942,7 @@ final class AiFieldWork {
          }
 
          void init_V_5() {
-            int seedsNow = AiGameState.init_I_Str(seedItem);
+            int seedsNow = AiGameState.countInventoryItem(seedItem);
             boolean debug = Boolean.getBoolean("autism.navigation.debug");
             if (debug && this.open >= 0 && seedsNow > this.open) {
                AutismClientAddon.LOG
@@ -1060,26 +1060,26 @@ final class AiFieldWork {
          }
 
          boolean init_Z_3() {
-            AiItems.ItemSpec seed = AiItems.load_af_DataUtil(seedItem);
+            AiItems.ItemSpec seed = AiItems.resolveItem(seedItem);
             if (crop == Blocks.NETHER_WART) {
                if (seed.matches(mc.player.getMainHandItem()) || seed.matches(mc.player.getOffhandItem())) {
                   return true;
                }
 
-               if (AiGameState.init_I_Str(seedItem) <= 0) {
+               if (AiGameState.countInventoryItem(seedItem) <= 0) {
                   return true;
                }
 
-               if (AiItems.read(seed) >= 0) {
+               if (AiItems.equipHotbar(seed) >= 0) {
                   return true;
                }
 
-               AiItems.init_Z(seed);
+               AiItems.equipOffhand(seed);
                return false;
-            } else if (!mc.player.getMainHandItem().is(ItemTags.HOES) && AiItems.read(AiItems.load_af_DataUtil("hoe")) < 0) {
+            } else if (!mc.player.getMainHandItem().is(ItemTags.HOES) && AiItems.equipHotbar(AiItems.resolveItem("hoe")) < 0) {
                return false;
-            } else if (!seed.matches(mc.player.getOffhandItem()) && AiGameState.init_I_Str(seedItem) > 0) {
-               AiItems.init_Z(seed);
+            } else if (!seed.matches(mc.player.getOffhandItem()) && AiGameState.countInventoryItem(seedItem) > 0) {
+               AiItems.equipOffhand(seed);
                return false;
             } else {
                return mc.player.getMainHandItem().is(ItemTags.HOES);
@@ -1104,16 +1104,16 @@ final class AiFieldWork {
          }
 
          AiOperation.Result init(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_9());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_9());
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_9());
+            return AiGameOperations.result(status, message, this.init_JsonObject_9());
          }
 
          JsonObject init_JsonObject_9() {
-            return AiJson.init_JsonObject_ObjArr("tilled", this.write_I, "sown", this.update, "lost", this.close, "ticks", this.read_I, "aimRequests", this.poll);
+            return AiJson.objectOf("tilled", this.write_I, "sown", this.update, "lost", this.close, "ticks", this.read_I, "aimRequests", this.poll);
          }
 
          @Override
@@ -1128,7 +1128,7 @@ final class AiFieldWork {
                this.load();
             }
 
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
          }
       };
    }

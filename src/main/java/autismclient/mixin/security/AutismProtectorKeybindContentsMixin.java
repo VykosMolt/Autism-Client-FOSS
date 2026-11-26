@@ -58,7 +58,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
    @WrapOperation(method = "getNestedComponent", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
    private Object autism$tagResolvedKeybind(Supplier<?> supplier, Operation<Object> original) {
       if (this.autism$fromPacket
-         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA)
+         && (this.autism$packetOrigin == null || this.autism$packetOrigin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA)
          && !ModNamespaceCatalog.init_Z(this.name)) {
          Component replacement = Component.translatable(this.name);
          PacketComponentOriginTracker.init(replacement, this.autism$packetOrigin);

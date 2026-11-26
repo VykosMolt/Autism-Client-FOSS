@@ -292,7 +292,7 @@ public final class LivePrintEnv implements PrintEnv {
          if (this.init_Minecraft.level.hasChunkAt(pos)) {
             BlockState now = this.init_Minecraft.level.getBlockState(pos);
             BlockState before = this.init_Long2ObjectLinkedO.putAndMoveToLast(key, now);
-            BlockState prior = AiServerEvidence.init_BlockState_J(key);
+            BlockState prior = AiServerEvidence.consumePreChangeState(key);
             if (before == null && prior != null && prior != now) {
                before = prior;
             }
@@ -319,7 +319,7 @@ public final class LivePrintEnv implements PrintEnv {
 
    @Override
    public AiPhysics.PhysicsWorld init_NodeWalker_CachePo() {
-      return AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(this.init_Minecraft.level, this.init_LocalPlayer());
+      return AiPhysics.createLiveWorld(this.init_Minecraft.level, this.init_LocalPlayer());
    }
 
    @Override

@@ -91,28 +91,28 @@ public final class AiRunTrace {
    }
 
    public synchronized void init_V_Str_I(String objective, int taskMinutes) {
-      this.read("task_start", AiJson.init_JsonObject_ObjArr("objective", objective, "taskMinutes", taskMinutes));
+      this.read("task_start", AiJson.objectOf("objective", objective, "taskMinutes", taskMinutes));
    }
 
    public synchronized void init_V_J_J(long latencyMs, long estTokens) {
-      this.read("provider_request", AiJson.init_JsonObject_ObjArr("latencyMs", latencyMs, "estTokens", estTokens));
+      this.read("provider_request", AiJson.objectOf("latencyMs", latencyMs, "estTokens", estTokens));
    }
 
    public synchronized void init(String name) {
-      this.read("tool_call", AiJson.init_JsonObject_ObjArr("name", name));
+      this.read("tool_call", AiJson.objectOf("name", name));
    }
 
    public synchronized void init_V_Str(String name, String status, String failureCode, long durationMs) {
       this.read(
          "tool_result",
          failureCode != null && !failureCode.isBlank()
-            ? AiJson.init_JsonObject_ObjArr("name", name, "status", status, "failureCode", failureCode, "durationMs", durationMs)
-            : AiJson.init_JsonObject_ObjArr("name", name, "status", status, "durationMs", durationMs)
+            ? AiJson.objectOf("name", name, "status", status, "failureCode", failureCode, "durationMs", durationMs)
+            : AiJson.objectOf("name", name, "status", status, "durationMs", durationMs)
       );
    }
 
    public synchronized void load(String kind) {
-      this.read("op_interrupt", AiJson.init_JsonObject_ObjArr("kind", kind));
+      this.read("op_interrupt", AiJson.objectOf("kind", kind));
    }
 
    public synchronized void read() {
@@ -124,18 +124,18 @@ public final class AiRunTrace {
    }
 
    public synchronized void load(String from, String to) {
-      this.read("dimension_change", AiJson.init_JsonObject_ObjArr("from", from, "to", to));
+      this.read("dimension_change", AiJson.objectOf("from", from, "to", to));
    }
 
    public synchronized void read(String name, String detail) {
       this.init_List.add(new AiRunTrace.Inner_DataUtil(name, Math.max(0L, System.currentTimeMillis() - this.load_J), detail == null ? "" : detail));
       this.read(
-         "split", detail != null && !detail.isBlank() ? AiJson.init_JsonObject_ObjArr("name", name, "detail", detail) : AiJson.init_JsonObject_ObjArr("name", name)
+         "split", detail != null && !detail.isBlank() ? AiJson.objectOf("name", name, "detail", detail) : AiJson.objectOf("name", name)
       );
    }
 
    public synchronized void read(String outcome) {
-      this.read("finish", AiJson.init_JsonObject_ObjArr("outcome", outcome));
+      this.read("finish", AiJson.objectOf("outcome", outcome));
    }
 
    static String init_Str_J(long ts, long startedAt, String kind, JsonObject data) {
@@ -149,7 +149,7 @@ public final class AiRunTrace {
       o.addProperty("ts", ts);
       o.addProperty("elapsedMs", Math.max(0L, ts - startedAt));
       o.addProperty("event", kind);
-      return AiJson.init.toJson(o);
+      return AiJson.GSON.toJson(o);
    }
 
    static boolean init(long written, long incomingBytes, long limit) {

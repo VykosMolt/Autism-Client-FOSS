@@ -26,8 +26,8 @@ public final class AiLadderJump {
 
          for (int var16 = 0; var16 < 27; var16++) {
             AiPhysics.MoveInput var17 = var10.withJump(!var12.onGround() || var12.y() < var4 - 0.02);
-            AiPhysics.MotionState var18 = AiPhysics.fill(var12, var17, var0);
-            if (AiPhysics.fill(var0, var12, var18) || var14 - var18.y() > var0.putAt_D()) {
+            AiPhysics.MotionState var18 = AiPhysics.stepWithClimbable(var12, var17, var0);
+            if (AiPhysics.hitsStrictHazard(var0, var12, var18) || var14 - var18.y() > var0.putAt_D()) {
                break;
             }
 
@@ -83,8 +83,8 @@ public final class AiLadderJump {
 
       for (int var10 = var3; var10 < var2.inputs().size() + 3; var10++) {
          AiPhysics.MoveInput var11 = AiSlimeBounce.putAt_TokenCore_CacheHel_TaskStore_I(var2, var10);
-         AiPhysics.MotionState var12 = AiPhysics.fill(var7, var11, var0);
-         if (AiPhysics.fill(var0, var7, var12) || var8 - var12.y() > var0.putAt_D()) {
+         AiPhysics.MotionState var12 = AiPhysics.stepWithClimbable(var7, var11, var0);
+         if (AiPhysics.hitsStrictHazard(var0, var7, var12) || var8 - var12.y() > var0.putAt_D()) {
             return false;
          }
 
@@ -106,7 +106,7 @@ public final class AiLadderJump {
          return null;
       }
 
-      float var4 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
+      float var4 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
       int var5 = var1.onGround() ? 10 : 0;
 
       for (float var9 : new float[]{0.0F, -6.0F, 6.0F, -12.0F, 12.0F}) {
@@ -126,8 +126,8 @@ public final class AiLadderJump {
 
             for (int var18 = 0; var18 < 24; var18++) {
                AiPhysics.MoveInput var19 = var11.withJump(var18 == 0 || !var17 && var5 == 0);
-               AiPhysics.MotionState var20 = AiPhysics.fill(var15, var19, var0);
-               if (AiPhysics.fill(var0, var15, var20) || var20.y() < var2.getY() - 4) {
+               AiPhysics.MotionState var20 = AiPhysics.stepWithClimbable(var15, var19, var0);
+               if (AiPhysics.hitsStrictHazard(var0, var15, var20) || var20.y() < var2.getY() - 4) {
                   break;
                }
 
@@ -170,8 +170,8 @@ public final class AiLadderJump {
                break;
             }
 
-            AiPhysics.MotionState var23 = AiPhysics.putAt(var12, var11, var0);
-            if (!var23.onGround() || AiPhysics.fill(var0, var12, var23)) {
+            AiPhysics.MotionState var23 = AiPhysics.step(var12, var11, var0);
+            if (!var23.onGround() || AiPhysics.hitsStrictHazard(var0, var12, var23)) {
                break;
             }
 
@@ -235,8 +235,8 @@ public final class AiLadderJump {
             var9 = var9.withStrafe(var3);
          }
 
-         AiPhysics.MotionState var10 = AiPhysics.fill(var6, var9, var0);
-         if (AiPhysics.fill(var0, var6, var10) || var10.y() < var2.getY()) {
+         AiPhysics.MotionState var10 = AiPhysics.stepWithClimbable(var6, var9, var0);
+         if (AiPhysics.hitsStrictHazard(var0, var6, var10) || var10.y() < var2.getY()) {
             return null;
          }
 
@@ -294,8 +294,8 @@ public final class AiLadderJump {
             return putAt_Z_TokenCore_TaskStat(var0, var1, var4, ((AiPhysics.MoveInput)var5.getLast()).yaw());
          }
 
-         AiPhysics.MotionState var7 = AiPhysics.fill(var1, AiSlimeBounce.putAt_TokenCore_CacheHel_TaskStore_I(var2, var6), var0);
-         if (AiPhysics.fill(var0, var1, var7)) {
+         AiPhysics.MotionState var7 = AiPhysics.stepWithClimbable(var1, AiSlimeBounce.putAt_TokenCore_CacheHel_TaskStore_I(var2, var6), var0);
+         if (AiPhysics.hitsStrictHazard(var0, var1, var7)) {
             return false;
          }
 
@@ -313,7 +313,7 @@ public final class AiLadderJump {
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, boolean var3
    ) {
       if (!var1.onGround() && !(var1.y() < var2.getY() - 4) && !(Math.hypot(var1.x() - var2.getX() - 0.5, var1.z() - var2.getZ() - 0.5) > 3.0)) {
-         float var4 = AiPhysics.putAt_F_D(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
+         float var4 = AiPhysics.yawBetween(var1.x(), var1.z(), var2.getX() + 0.5, var2.getZ() + 0.5);
 
          for (int var8 : new int[]{0, -15, 15, -30, 30}) {
             float var9 = var4 + var8;
@@ -323,8 +323,8 @@ public final class AiLadderJump {
                AiPhysics.MotionState var15 = var1;
 
                for (int var16 = 0; var16 < 12; var16++) {
-                  AiPhysics.MotionState var17 = AiPhysics.fill(var15, var14, var0);
-                  if (AiPhysics.fill(var0, var15, var17) || var17.y() < var2.getY() - 4) {
+                  AiPhysics.MotionState var17 = AiPhysics.stepWithClimbable(var15, var14, var0);
+                  if (AiPhysics.hitsStrictHazard(var0, var15, var17) || var17.y() < var2.getY() - 4) {
                      break;
                   }
 
@@ -370,8 +370,8 @@ public final class AiLadderJump {
             int var15 = 0;
 
             while (var15 < 4) {
-               AiPhysics.MotionState var16 = AiPhysics.fill(var14, var13, var0);
-               if (!(var16.y() < var6.y() - 0.02) && !AiPhysics.fill(var0, var14, var16)) {
+               AiPhysics.MotionState var16 = AiPhysics.stepWithClimbable(var14, var13, var0);
+               if (!(var16.y() < var6.y() - 0.02) && !AiPhysics.hitsStrictHazard(var0, var14, var16)) {
                   var14 = var16;
                   if (!AiJumpSolver.putAt(var14)) {
                      var15++;
@@ -396,8 +396,8 @@ public final class AiLadderJump {
       int var5 = 0;
 
       while (var5 < (var4 ? 8 : 4)) {
-         AiPhysics.MotionState var6 = AiPhysics.fill(var1, putAt_TokenCore_CacheHel_TokenCore_TaskStat(var0, var1, var2, var3), var0);
-         if (!AiPhysics.fill(var0, var1, var6) && AiSlimeBounce.putAt(var0, BlockPos.containing(var6.x(), var6.y(), var6.z()), var2)) {
+         AiPhysics.MotionState var6 = AiPhysics.stepWithClimbable(var1, putAt_TokenCore_CacheHel_TokenCore_TaskStat(var0, var1, var2, var3), var0);
+         if (!AiPhysics.hitsStrictHazard(var0, var1, var6) && AiSlimeBounce.putAt(var0, BlockPos.containing(var6.x(), var6.y(), var6.z()), var2)) {
             if (!(var6.vy() > 0.0)
                || !(Math.abs(var6.vx()) < 0.06)
                || !(Math.abs(var6.vz()) < 0.06)

@@ -22,22 +22,22 @@ public final class LegacyMultiCheck {
       legacy.putInt("waitMs", 1200);
 
       AutismMacro saved = new AutismMacro("Legacy Multi fixture");
-      saved.init_List.add(AutismMacro.init_MacroAction_CompoundTag(legacy));
-      saved.init_List.add(new DelayAction(0));
-      saved.init_List.add(new JoinAction());
-      saved.init_List.add(new RaceAction());
-      saved.init_List.add(new DelayAction(0));
-      CompoundTag before = saved.load_CompoundTag();
+      saved.actions.add(AutismMacro.deserializeAction(legacy));
+      saved.actions.add(new DelayAction(0));
+      saved.actions.add(new JoinAction());
+      saved.actions.add(new RaceAction());
+      saved.actions.add(new DelayAction(0));
+      CompoundTag before = saved.toTag();
 
-      AutismMacro running = saved.init_aM();
-      check(running.init_List.get(0) instanceof MultiAction, "normal macro codec reads the legacy header");
-      check(legacy.equals(running.init_List.get(0).toTag()), "legacy account and scope fields round-trip");
-      check(MacroExecutor.suppressLegacyMultiSteps(running.init_List), "run reports a legacy block");
-      check(running.init_List.size() == saved.init_List.size(), "run keeps physical indices");
-      check(!running.init_List.get(1).isEnabled(), "covered action is disabled");
-      check(!running.init_List.get(2).isEnabled() && !JoinAction.init(running.init_List, 0, false), "covered actions cannot affect Join lookahead");
-      check(running.init_List.get(3) instanceof RaceAction && running.init_List.get(4) instanceof DelayAction, "scope stops at the next block and preserves its rows");
-      check(before.equals(saved.load_CompoundTag()), "preparing the run leaves saved macro data intact");
+      AutismMacro running = saved.copy();
+      check(running.actions.get(0) instanceof MultiAction, "normal macro codec reads the legacy header");
+      check(legacy.equals(running.actions.get(0).toTag()), "legacy account and scope fields round-trip");
+      check(MacroExecutor.suppressLegacyMultiSteps(running.actions), "run reports a legacy block");
+      check(running.actions.size() == saved.actions.size(), "run keeps physical indices");
+      check(!running.actions.get(1).isEnabled(), "covered action is disabled");
+      check(!running.actions.get(2).isEnabled() && !JoinAction.init(running.actions, 0, false), "covered actions cannot affect Join lookahead");
+      check(running.actions.get(3) instanceof RaceAction && running.actions.get(4) instanceof DelayAction, "scope stops at the next block and preserves its rows");
+      check(before.equals(saved.toTag()), "preparing the run leaves saved macro data intact");
 
       MultiAction disabled = new MultiAction() {
          @Override

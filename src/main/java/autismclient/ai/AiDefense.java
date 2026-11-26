@@ -21,7 +21,7 @@ final class AiDefense {
       }
 
       ItemStack shield = mc.player.getOffhandItem();
-      return AiRunResources.init(shield, 8) && shield.get(DataComponents.BLOCKS_ATTACKS) != null && !mc.player.getCooldowns().isOnCooldown(shield);
+      return AiRunResources.hasMinDurability(shield, 8) && shield.get(DataComponents.BLOCKS_ATTACKS) != null && !mc.player.getCooldowns().isOnCooldown(shield);
    }
 
    static int init_I(Minecraft mc) {
@@ -108,7 +108,7 @@ final class AiDefense {
          && target.isAlive()
          && !mc.player.cannotAttackWithItem(mc.player.getMainHandItem(), 0)
          && mc.player.isWithinAttackRange(mc.player.getMainHandItem(), target.getBoundingBox(), 0.0)
-         && (aim == null ? autismclient.ai.engine.AiAim.init_Z_Entity(target) : aim.load_Z_Entity(target));
+         && (aim == null ? autismclient.ai.engine.AiAim.isLookingAtEntity(target) : aim.isAimedAtEntity(target));
    }
 
    static double init_D(Minecraft mc) {

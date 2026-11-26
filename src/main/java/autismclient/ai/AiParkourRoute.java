@@ -74,8 +74,8 @@ final class AiParkourRoute implements AiOperation {
    private static final float fill_F = 20.0F;
 
    AiParkourRoute(JsonObject var1) {
-      if (AiJson.init_Z_JsonObject(var1, "parkour", false)
-         && !AiJson.init_Z_JsonObject(var1, "yOnly", false)
+      if (AiJson.getBoolean(var1, "parkour", false)
+         && !AiJson.getBoolean(var1, "yOnly", false)
          && var1.has("x")
          && var1.has("y")
          && var1.has("z")) {
@@ -99,8 +99,8 @@ final class AiParkourRoute implements AiOperation {
    }
 
    static boolean putAt_Z_JsonObject(JsonObject var0) {
-      return AiJson.init_Z_JsonObject(var0, "parkour", false)
-         && !AiJson.init_Z_JsonObject(var0, "yOnly", false)
+      return AiJson.getBoolean(var0, "parkour", false)
+         && !AiJson.getBoolean(var0, "yOnly", false)
          && var0.has("x")
          && var0.has("y")
          && var0.has("z");
@@ -146,16 +146,16 @@ final class AiParkourRoute implements AiOperation {
             return new AiOperation.Result(AiOperation.Status.RUNNING, var4 + " · " + var10.message(), var10.dataJson(), var10.evidence());
          }
 
-         var5 = AiJson.init_JsonObject_Str(var10.dataJson());
-         double var6 = AiJson.init_D_JsonObject(var5, "firstPathReadyMs", -1.0);
+         var5 = AiJson.parseObject(var10.dataJson());
+         double var6 = AiJson.getDouble(var5, "firstPathReadyMs", -1.0);
          if (this.flowState == 0) {
             this.putAt_D = var6;
          }
 
-         this.flowTemp = this.flowTemp + AiJson.init_I_JsonObject(var5, "replans", 0);
+         this.flowTemp = this.flowTemp + AiJson.getInt(var5, "replans", 0);
          this.putAt_JsonArray
             .add(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "target",
                   List.of(var9.getX(), var9.getY(), var9.getZ()),
                   "startedAt",
@@ -169,9 +169,9 @@ final class AiParkourRoute implements AiOperation {
                   "firstPathReadyMs",
                   var6,
                   "searchMs",
-                  AiJson.init_D_JsonObject(var5, "checkpointSearchMs", -1.0),
+                  AiJson.getDouble(var5, "checkpointSearchMs", -1.0),
                   "replans",
-                  AiJson.init_I_JsonObject(var5, "replans", 0)
+                  AiJson.getInt(var5, "replans", 0)
                )
             );
          this.putAt_AiOperation = null;
@@ -202,7 +202,7 @@ final class AiParkourRoute implements AiOperation {
          this.putAt_PoolStore = new autismclient.ai.engine.AiLiveGrid(var2, var3, autismclient.ai.engine.AiChunkMemory.init_StateCache());
          autismclient.ai.engine.AiPhysics.MotionState var4 = autismclient.ai.engine.AiPhysics.MotionState.of(var1);
          float var5 = var1.getYRot();
-         int var6 = AiJson.init_I_JsonObject(this.putAt_JsonObject, "parkourSpeed", -1);
+         int var6 = AiJson.getInt(this.putAt_JsonObject, "parkourSpeed", -1);
          double var7 = autismclient.ai.engine.AiPacePlayback.putAt_D_LocalPlayer(var1);
          double var9 = var6 >= 0 ? 0.1 * (1.0 + 0.2 * var6) : var7;
          boolean var11 = !this.putAt_List.isEmpty() && autismclient.ai.engine.AiPaceScript.putAt(var4, this.putAt_List.get(0));
@@ -211,7 +211,7 @@ final class AiParkourRoute implements AiOperation {
          this.value_D = this.pollAt_Z ? var7 : var9;
          this.readEx_D = var9;
          this.prevEx_D = !this.pollAt_Z && this.pollOf_Z && Math.abs(var7 - var9) > 1.0E-4 ? var7 : 0.0 / 0.0;
-         this.tick_Z = AiJson.init_Z_JsonObject(this.putAt_JsonObject, "assumeNoFallDamage", false);
+         this.tick_Z = AiJson.getBoolean(this.putAt_JsonObject, "assumeNoFallDamage", false);
          autismclient.ai.engine.AiLiveGrid var12 = this.putAt_PoolStore;
          double var13 = this.value_D;
          double var15 = this.readEx_D;
@@ -685,7 +685,7 @@ final class AiParkourRoute implements AiOperation {
       BlockPos var2 = this.putAt_List.get(this.pollAt_I);
       this.putAt_JsonArray
          .add(
-            AiJson.init_JsonObject_ObjArr(
+            AiJson.objectOf(
                "target",
                List.of(var2.getX(), var2.getY(), var2.getZ()),
                "startedAt",
@@ -734,7 +734,7 @@ final class AiParkourRoute implements AiOperation {
       var3.addProperty("paceRestarts", this.prevEx_I);
       var3.addProperty("paceWorstError", this.prev_D);
       var3.addProperty("parkourRecordPace", true);
-      var3.addProperty("parkourSpeed", AiJson.init_I_JsonObject(this.putAt_JsonObject, "parkourSpeed", -1));
+      var3.addProperty("parkourSpeed", AiJson.getInt(this.putAt_JsonObject, "parkourSpeed", -1));
       var3.addProperty("planningMovementSpeed", this.readEx_D);
       this.putAt_HashEntry_TableCac.close();
       return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Reached all " + this.putAt_List.size() + " checkpoints", var3.toString(), List.of());

@@ -20,7 +20,7 @@ public class AiStoreFilesCheck {
    }
 
    static JsonObject user(String text) {
-      return AiJson.init_JsonObject_ObjArr("role", "user", "content", text);
+      return AiJson.objectOf("role", "user", "content", text);
    }
 
    public static void main(String[] args) throws Exception {

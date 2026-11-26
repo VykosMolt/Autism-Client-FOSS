@@ -81,7 +81,7 @@ final class AiModelCatalog {
 
    record Inner_DataUtil(AiSettings.Provider provider, String endpoint, String credentialDigest) {
       static AiModelCatalog.Inner_DataUtil of(AiSettings.Provider provider, String endpoint, String key) {
-         return new AiModelCatalog.Inner_DataUtil(provider, AiModels.init_Str(provider, endpoint), AiJson.init_Str_Str(key == null ? "" : key.trim()));
+         return new AiModelCatalog.Inner_DataUtil(provider, AiModels.init_Str(provider, endpoint), AiJson.sha256Hex(key == null ? "" : key.trim()));
       }
    }
 }

@@ -24,7 +24,7 @@ public final class RegistryCompatGuard {
 
    public static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea() {
       ConnectionPrivacyRegistry.ConnectionSession context = load.get();
-      if (context == null || context.read()) {
+      if (context == null || context.isLocalOrMemory()) {
          return null;
       }
 
@@ -50,9 +50,9 @@ public final class RegistryCompatGuard {
 
    private static boolean init_Z(ConnectionPrivacyRegistry.ConnectionSession context) {
       return context != null
-         && !context.read()
-         && ConnectionPrivacyRegistry.init_Z(context)
-         && (context.init_BufferHelper_Cache() == ConnectionPrivacyRegistry.PrivacyMode.MODDED || autismclient.compat.via.ViaFabricPlusBridge.init_Z(context.init_Connection()));
+         && !context.isLocalOrMemory()
+         && ConnectionPrivacyRegistry.isActive(context)
+         && (context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED || autismclient.compat.via.ViaFabricPlusBridge.init_Z(context.connection()));
    }
 
    public static void load() {

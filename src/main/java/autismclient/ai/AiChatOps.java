@@ -13,8 +13,8 @@ public final class AiChatOps {
    }
 
    public static AiOperation init(JsonObject args) {
-      int index = AiJson.init_I_JsonObject(args, "index", 0);
-      int actionIndex = AiJson.init_I_JsonObject(args, "actionIndex", 0);
+      int index = AiJson.getInt(args, "index", 0);
+      int actionIndex = AiJson.getInt(args, "actionIndex", 0);
       int size = AiChatLedger.init_I();
       if (index >= 0 && index < size) {
          AiChatLedger.ChatEntry entry = AiChatLedger.init_TokenStore_StreamU(index);
@@ -26,17 +26,17 @@ public final class AiChatOps {
                   var10000 = init(action.value());
                   break;
                case "SUGGEST_COMMAND":
-                  var10000 = AiGameOperations.init_AiOperation(
+                  var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Returned the suggested command text WITHOUT sending it: suggest means the server offers it for user editing. Edit it if needed, then send it yourself via game:command/chat.",
-                     AiJson.init_JsonObject_ObjArr("suggested", action.value())
+                     AiJson.objectOf("suggested", action.value())
                   );
                   break;
                case "OPEN_URL":
-                  var10000 = AiGameOperations.init_AiOperation(
+                  var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Returned the URL WITHOUT opening a browser: autonomous link opening is disabled by design. If you trust this untrusted chat content, fetch it with web_fetch instead.",
-                     AiJson.init_JsonObject_ObjArr("url", action.value())
+                     AiJson.objectOf("url", action.value())
                   );
                   break;
                case "COPY_TO_CLIPBOARD":
@@ -84,31 +84,31 @@ public final class AiChatOps {
             @Override
             public AiOperation.Result tick() {
                if (this.load_Z || this.init_Minecraft.getConnection() == null) {
-                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Chat click cancelled", new JsonObject());
+                  return AiGameOperations.result(AiOperation.Status.CANCELLED, "Chat click cancelled", new JsonObject());
                } else if (!this.init_Z) {
                   this.init_Minecraft.getConnection().sendCommand(command);
                   this.init_Z = true;
-                  return AiGameOperations.init_AiOperation_Result(
-                     AiOperation.Status.RUNNING, "Chat button command sent; observing for a response", AiJson.init_JsonObject_ObjArr("command", command)
+                  return AiGameOperations.result(
+                     AiOperation.Status.RUNNING, "Chat button command sent; observing for a response", AiJson.objectOf("command", command)
                   );
                } else {
                   boolean menuChanged = this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu.containerId != this.init_I;
                   boolean screenChanged = this.init_Minecraft.gui.screen() != this.init_Screen;
                   if (AiChatLedger.init_J() <= this.init_J && !menuChanged && !screenChanged) {
                      return System.nanoTime() > this.load_J
-                        ? AiGameOperations.init_AiOperation_Result(
+                        ? AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
                            "Chat button command sent; no response observed",
-                           AiJson.init_JsonObject_ObjArr("command", command, "observation", "no response observed within 5s")
+                           AiJson.objectOf("command", command, "observation", "no response observed within 5s")
                         )
-                        : AiGameOperations.init_AiOperation_Result(
-                           AiOperation.Status.RUNNING, "Waiting for a chat response to the clicked command", AiJson.init_JsonObject_ObjArr("command", command)
+                        : AiGameOperations.result(
+                           AiOperation.Status.RUNNING, "Waiting for a chat response to the clicked command", AiJson.objectOf("command", command)
                         );
                   } else {
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.SUCCEEDED,
                         "Chat button command observed a response",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "command", command, "responses", AiChatOps.init(this.init_J), "menuChanged", menuChanged, "screenChanged", screenChanged
                         )
                      );
@@ -127,11 +127,11 @@ public final class AiChatOps {
    private static AiOperation load(String value) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.keyboardHandler == null) {
-         return AiGameOperations.init_AiOperation(AiOperation.Status.FAILED, "Client clipboard unavailable", new JsonObject());
+         return AiGameOperations.immediate(AiOperation.Status.FAILED, "Client clipboard unavailable", new JsonObject());
       }
 
       mc.keyboardHandler.setClipboard(value);
-      return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Copied chat click text to the client clipboard", AiJson.init_JsonObject_ObjArr("copied", value));
+      return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Copied chat click text to the client clipboard", AiJson.objectOf("copied", value));
    }
 
    private static JsonArray init(long baseline) {
@@ -139,7 +139,7 @@ public final class AiChatOps {
 
       for (AiChatLedger.ChatEntry entry : AiChatLedger.init_List(4)) {
          if (entry.revision() > baseline) {
-            out.add(AiJson.init_JsonObject_ObjArr("source", entry.source(), "sender", entry.sender(), "text", entry.text()));
+            out.add(AiJson.objectOf("source", entry.source(), "sender", entry.sender(), "text", entry.text()));
          }
       }
 

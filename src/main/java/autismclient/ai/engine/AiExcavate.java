@@ -176,18 +176,18 @@ public final class AiExcavate {
       }
 
       if (args.has("x") && args.has("y") && args.has("z")) {
-         int x = AiJson.init_I_JsonObject(args, "x", 0);
-         int y = AiJson.init_I_JsonObject(args, "y", 0);
-         int z = AiJson.init_I_JsonObject(args, "z", 0);
+         int x = AiJson.getInt(args, "x", 0);
+         int y = AiJson.getInt(args, "y", 0);
+         int z = AiJson.getInt(args, "z", 0);
          boolean corner2 = args.has("x2") && args.has("y2") && args.has("z2");
          boolean extents = args.has("dx") && args.has("dy") && args.has("dz");
          if (!corner2 && !extents) {
             throw new IllegalArgumentException("Supply the second corner x2,y2,z2 or extents dx,dy,dz");
          }
 
-         int x2 = corner2 ? AiJson.init_I_JsonObject(args, "x2", 0) : x + Math.max(1, AiJson.init_I_JsonObject(args, "dx", 1)) - 1;
-         int y2 = corner2 ? AiJson.init_I_JsonObject(args, "y2", 0) : y + Math.max(1, AiJson.init_I_JsonObject(args, "dy", 1)) - 1;
-         int z2 = corner2 ? AiJson.init_I_JsonObject(args, "z2", 0) : z + Math.max(1, AiJson.init_I_JsonObject(args, "dz", 1)) - 1;
+         int x2 = corner2 ? AiJson.getInt(args, "x2", 0) : x + Math.max(1, AiJson.getInt(args, "dx", 1)) - 1;
+         int y2 = corner2 ? AiJson.getInt(args, "y2", 0) : y + Math.max(1, AiJson.getInt(args, "dy", 1)) - 1;
+         int z2 = corner2 ? AiJson.getInt(args, "z2", 0) : z + Math.max(1, AiJson.getInt(args, "dz", 1)) - 1;
          int minX = Math.min(x, x2);
          int maxX = Math.max(x, x2);
          int minY = Math.min(y, y2);
@@ -199,10 +199,10 @@ public final class AiExcavate {
             throw new IllegalArgumentException("Box volume " + cells + " exceeds 32768 cells");
          }
 
-         boolean collect = AiJson.init_Z_JsonObject(args, "collect", true);
-         boolean backfill = AiJson.init_Z_JsonObject(args, "backfill", false);
-         int maxBlocks = Math.max(1, Math.min(4096, AiJson.init_I_JsonObject(args, "maxBlocks", 1024)));
-         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
+         boolean collect = AiJson.getBoolean(args, "collect", true);
+         boolean backfill = AiJson.getBoolean(args, "backfill", false);
+         int maxBlocks = Math.max(1, Math.min(4096, AiJson.getInt(args, "maxBlocks", 1024)));
+         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          return new AiExcavate.Inner_CachePool(
             "mine_area", init(minX, minY, minZ, maxX, maxY, maxZ, client.player.blockPosition()), maxY - minY + 1, collect, maxBlocks, timeoutSeconds, backfill
          );
@@ -214,32 +214,32 @@ public final class AiExcavate {
    public static AiOperation load(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         String shape = AiJson.init_Str_JsonObject(args, "shape", "");
-         boolean collect = AiJson.init_Z_JsonObject(args, "collect", true);
-         boolean backfill = AiJson.init_Z_JsonObject(args, "backfill", false);
-         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
+         String shape = AiJson.getString(args, "shape", "");
+         boolean collect = AiJson.getBoolean(args, "collect", true);
+         boolean backfill = AiJson.getBoolean(args, "backfill", false);
+         int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          BlockPos origin = client.player.blockPosition();
          AiExcavate.Inner_CachePool var10000;
          switch (shape) {
             case "tunnel":
                int[] step = args.has("direction")
-                  ? init(AiJson.init_Str_JsonObject(args, "direction", ""))
-                  : init((float)AiJson.init_D_JsonObject(args, "yaw", client.player.getYRot()));
+                  ? init(AiJson.getString(args, "direction", ""))
+                  : init((float)AiJson.getDouble(args, "yaw", client.player.getYRot()));
                if (step == null) {
                   throw new IllegalArgumentException("direction must be north, south, east or west (or pass yaw)");
                }
 
-               int length = Math.max(1, Math.min(128, AiJson.init_I_JsonObject(args, "length", 8)));
-               int width = Math.max(1, Math.min(3, AiJson.init_I_JsonObject(args, "width", 1)));
-               int height = Math.max(1, Math.min(3, AiJson.init_I_JsonObject(args, "height", 2)));
+               int length = Math.max(1, Math.min(128, AiJson.getInt(args, "length", 8)));
+               int width = Math.max(1, Math.min(3, AiJson.getInt(args, "width", 1)));
+               int height = Math.max(1, Math.min(3, AiJson.getInt(args, "height", 2)));
                var10000 = new AiExcavate.Inner_CachePool(
                   "dig:tunnel", init(origin, step[0], step[1], length, width, height), length, collect, length * width * height, timeoutSeconds, backfill
                );
                break;
             case "room":
-               int dx = Math.max(1, Math.min(16, AiJson.init_I_JsonObject(args, "dx", 4)));
-               int dy = Math.max(1, Math.min(16, AiJson.init_I_JsonObject(args, "dy", 4)));
-               int dz = Math.max(1, Math.min(16, AiJson.init_I_JsonObject(args, "dz", 4)));
+               int dx = Math.max(1, Math.min(16, AiJson.getInt(args, "dx", 4)));
+               int dy = Math.max(1, Math.min(16, AiJson.getInt(args, "dy", 4)));
+               int dz = Math.max(1, Math.min(16, AiJson.getInt(args, "dz", 4)));
                int[] box = init(origin.getX(), origin.getY(), origin.getZ(), dx, dy, dz);
                var10000 = new AiExcavate.Inner_CachePool(
                   "dig:room", init(box[0], box[1], box[2], box[3], box[4], box[5], origin), dy, collect, dx * dy * dz, timeoutSeconds, backfill
@@ -250,7 +250,7 @@ public final class AiExcavate {
                   throw new IllegalArgumentException("staircase needs targetY (the Y level to descend to)");
                }
 
-               int targetY = Math.max(client.level.getMinY(), AiJson.init_I_JsonObject(args, "targetY", 0));
+               int targetY = Math.max(client.level.getMinY(), AiJson.getInt(args, "targetY", 0));
                if (targetY >= origin.getY()) {
                   throw new IllegalArgumentException(
                      "targetY must be below the player's feet (y=" + origin.getY() + "); a staircase descends - use tunnel for level digs"
@@ -262,8 +262,8 @@ public final class AiExcavate {
                }
 
                int[] step2 = args.has("direction")
-                  ? init(AiJson.init_Str_JsonObject(args, "direction", ""))
-                  : init((float)AiJson.init_D_JsonObject(args, "yaw", client.player.getYRot()));
+                  ? init(AiJson.getString(args, "direction", ""))
+                  : init((float)AiJson.getDouble(args, "yaw", client.player.getYRot()));
                if (step2 == null) {
                   throw new IllegalArgumentException("direction must be north, south, east or west (or pass yaw)");
                }
@@ -421,7 +421,7 @@ public final class AiExcavate {
                   if (result.failure() == AiFailure.TOOL_WORN) {
                      JsonObject failureData = this.load_JsonObject_2();
                      failureData.addProperty("reason", "TOOL_WORN");
-                     Item needed = AiItems.init_Item(this.init_BlockState(this.load_BlockPos));
+                     Item needed = AiItems.cheapestRequiredTool(this.init_BlockState(this.load_BlockPos));
                      JsonObject missing = new JsonObject();
                      missing.addProperty(needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString(), 1);
                      failureData.add("missing", missing);
@@ -594,8 +594,8 @@ public final class AiExcavate {
                   );
                }
 
-               this.init_DataUtil.init_V_Vec3(this.init_Vec3);
-               this.init_DataUtil.load_V();
+               this.init_DataUtil.aimAt(this.init_Vec3);
+               this.init_DataUtil.tick();
                this.init_StreamUtil.init_V();
                return this.load("Backfilling behind the dig");
             }
@@ -685,7 +685,7 @@ public final class AiExcavate {
 
       void init(BlockPos cell, String reason) {
          if (this.init_JsonArray.size() < 32) {
-            this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
+            this.init_JsonArray.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
          }
 
          this.update_I++;
@@ -755,7 +755,7 @@ public final class AiExcavate {
       }
 
       JsonObject load_JsonObject_2() {
-         JsonObject out = AiJson.init_JsonObject_ObjArr(
+         JsonObject out = AiJson.objectOf(
             "op",
             this.init_Str,
             "dug",

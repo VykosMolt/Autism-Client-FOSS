@@ -111,7 +111,7 @@ public final class AiWallJump {
          AiPhysics.MotionState var2 = var1.maneuver().start();
 
          for (AiPhysics.MoveInput var4 : var1.maneuver().inputs()) {
-            AiPhysics.MotionState var5 = AiPhysics.putAt(var2, var4, var0);
+            AiPhysics.MotionState var5 = AiPhysics.step(var2, var4, var0);
             if (AiPaceScript.value(var0, var5) || AiPaceScript.readEx(var0, var2, var5) || AiPaceScript.value(var0, var2, var5)) {
                return false;
             }
@@ -145,7 +145,7 @@ public final class AiWallJump {
       BlockPos var9 = (BlockPos)var3.getLast();
       double var10 = Integer.signum(var9.getX() - var2.getX());
       double var12 = Integer.signum(var9.getZ() - var2.getZ());
-      float var14 = AiPhysics.putAt_F_D(0.0, 0.0, var10, var12);
+      float var14 = AiPhysics.yawBetween(0.0, 0.0, var10, var12);
       AiJumpSolver.JumpPlan var15 = null;
 
       for (int var19 : new int[]{-1, 1}) {
@@ -538,11 +538,11 @@ public final class AiWallJump {
       AiPhysics.PhysicsWorld var0, double var1, AiWallJump.Inner_TableCache var3, AiPhysics.MoveInput var4, boolean var5
    ) {
       AiPhysics.MotionState var6 = var3.body();
-      AiPhysics.MotionState var7 = AiPhysics.putAt(var6, var4, var0);
+      AiPhysics.MotionState var7 = AiPhysics.step(var6, var4, var0);
       if (!var7.horizontalCollision()
          && !(var7.y() < var1 - 0.02)
          && (var4.sneak() || var7.pose() == 0)
-         && !AiPhysics.fill(var0, var6, var7)
+         && !AiPhysics.hitsStrictHazard(var0, var6, var7)
          && !AiJumpSolver.putAt(var0, var7)) {
          return !var5 || !AiPaceScript.value(var0, var7) && !AiPaceScript.readEx(var0, var6, var7) && !AiPaceScript.value(var0, var6, var7)
             ? new AiWallJump.Inner_TableCache(var7, var4, var3, 0.0)
@@ -601,8 +601,8 @@ public final class AiWallJump {
          double var10 = Integer.signum(var9.getX() - var2.getX());
          double var12 = Integer.signum(var9.getZ() - var2.getZ());
          float var14 = Math.hypot(var1.x() - var5, var1.z() - var7) > 0.012
-            ? AiPhysics.putAt_F_D(var1.x(), var1.z(), var5, var7)
-            : AiPhysics.putAt_F_D(0.0, 0.0, -var12, var10);
+            ? AiPhysics.yawBetween(var1.x(), var1.z(), var5, var7)
+            : AiPhysics.yawBetween(0.0, 0.0, -var12, var10);
          AiPhysics.MoveInput[] var15 = new AiPhysics.MoveInput[]{
             AiPhysics.MoveInput.NONE.withYaw(var14),
             new AiPhysics.MoveInput(1.0, 0.0, false, false, false, var14),
@@ -623,11 +623,11 @@ public final class AiWallJump {
                AiPhysics.MotionState var23 = var22.body();
 
                for (AiPhysics.MoveInput var27 : var15) {
-                  AiPhysics.MotionState var28 = AiPhysics.putAt(var23, var27, var0);
+                  AiPhysics.MotionState var28 = AiPhysics.step(var23, var27, var0);
                   if (var28.onGround()
                      && !(Math.abs(var28.y() - var1.y()) > 0.02)
                      && !var28.horizontalCollision()
-                     && !AiPhysics.fill(var0, var23, var28)
+                     && !AiPhysics.hitsStrictHazard(var0, var23, var28)
                      && !AiJumpSolver.putAt(var0, var28)
                      && (!var4 || !AiPaceScript.value(var0, var28) && !AiPaceScript.readEx(var0, var23, var28) && !AiPaceScript.value(var0, var23, var28))) {
                      double var29 = Math.hypot(var28.x() - var5, var28.z() - var7);
@@ -702,7 +702,7 @@ public final class AiWallJump {
 
                for (int var55 = 0; var55 < 5 && var53.speed() > 1.0E-4; var55++) {
                   AiPhysics.MoveInput var57 = AiPhysics.MoveInput.NONE.withYaw(var14);
-                  AiPhysics.MotionState var30 = AiPhysics.putAt(var53, var57, var0);
+                  AiPhysics.MotionState var30 = AiPhysics.step(var53, var57, var0);
                   if (!var30.onGround() || Math.abs(var30.y() - var1.y()) > 0.02) {
                      var54 = false;
                      break;
@@ -723,7 +723,7 @@ public final class AiWallJump {
                         for (int var32 = 0; var32 < 8 && Math.abs(putAt(var59 - var60)) > 30.0F; var32++) {
                            var60 += Math.clamp(putAt(var59 - var60), -30.0F, 30.0F);
                            AiPhysics.MoveInput var62 = AiPhysics.MoveInput.NONE.withYaw(var60);
-                           AiPhysics.MotionState var34 = AiPhysics.putAt(var53, var62, var0);
+                           AiPhysics.MotionState var34 = AiPhysics.step(var53, var62, var0);
                            if (!var34.onGround() || Math.abs(var34.y() - var1.y()) > 0.02) {
                               var54 = false;
                               break;
@@ -743,11 +743,11 @@ public final class AiWallJump {
 
                            while (var65 < var61.size()) {
                               AiPhysics.MoveInput var67 = (AiPhysics.MoveInput)var61.get(var65);
-                              AiPhysics.MotionState var37 = AiPhysics.putAt(var63, var67, var0);
+                              AiPhysics.MotionState var37 = AiPhysics.step(var63, var67, var0);
                               if (!var37.horizontalCollision()
                                  && !(var37.y() < var1.y() - 0.02)
                                  && (var65 < var64 || var37.pose() == 0)
-                                 && !AiPhysics.fill(var0, var63, var37)
+                                 && !AiPhysics.hitsStrictHazard(var0, var63, var37)
                                  && !AiJumpSolver.putAt(var0, var37)) {
                                  if (!var4 || !AiPaceScript.value(var0, var37) && !AiPaceScript.readEx(var0, var63, var37) && !AiPaceScript.value(var0, var63, var37)) {
                                     var63 = var37;

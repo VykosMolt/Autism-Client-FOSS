@@ -138,7 +138,7 @@ public final class am {
    }
 
    public static boolean update() {
-      return init_am_JsonUtil().load_Z() || FreecamController.init_Z();
+      return init_am_JsonUtil().load_Z() || FreecamController.isActive();
    }
 
    public static boolean sync() {

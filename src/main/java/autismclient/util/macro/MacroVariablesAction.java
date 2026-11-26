@@ -39,15 +39,15 @@ public class MacroVariablesAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "MACRO_VARIABLES");
-      tag.put("names", MacroNbtCodecHelper.init(this.names));
-      tag.put("values", MacroNbtCodecHelper.init(this.values));
+      tag.put("names", MacroNbtCodecHelper.toStringListTag(this.names));
+      tag.put("values", MacroNbtCodecHelper.toStringListTag(this.values));
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.names = MacroNbtCodecHelper.init(tag.getList("names").orElse(new ListTag()));
-      this.values = MacroNbtCodecHelper.init(tag.getList("values").orElse(new ListTag()));
+      this.names = MacroNbtCodecHelper.fromStringListTag(tag.getList("names").orElse(new ListTag()));
+      this.values = MacroNbtCodecHelper.fromStringListTag(tag.getList("values").orElse(new ListTag()));
    }
 
    @Override

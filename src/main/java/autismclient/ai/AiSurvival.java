@@ -85,10 +85,10 @@ final class AiSurvival {
          policy = policy.withoutFlee();
       }
 
-      AiGuard.StatusSnapshot vitals = AiGuard.init_X_BufferHelper();
+      AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
       Entity threat = init_Entity(mc);
       if (threat != null && AiThreats.init_cv_DataUtil(threat) == AiThreats.Inner_DataUtil.AVOID) {
-         return load(AiJson.init_JsonObject_ObjArr("radius", 12, "distance", 12, "timeoutSeconds", 15));
+         return load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
 
       if (threat != null && vitals.hostilesNear() == 0) {
@@ -97,15 +97,15 @@ final class AiSurvival {
          );
       }
 
-      AiOperation defense = AiGuard.init_AiOperation_X_CachePool(policy, vitals, Math.max(1, Math.min(15, seconds)));
-      return defense != null ? defense : load(AiJson.init_JsonObject_ObjArr("radius", 12, "distance", 12, "timeoutSeconds", 15));
+      AiOperation defense = AiGuard.createResponseOperation(policy, vitals, Math.max(1, Math.min(15, seconds)));
+      return defense != null ? defense : load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
    }
 
    static AiOperation init(JsonObject args) {
       final Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final int target = Math.max(1, Math.min(20, AiJson.init_I_JsonObject(args, "food", 18)));
-         final long deadline = System.nanoTime() + Math.min(3600, Math.max(1, AiJson.init_I_JsonObject(args, "timeoutSeconds", 30))) * 1000000000L;
+         final int target = Math.max(1, Math.min(20, AiJson.getInt(args, "food", 18)));
+         final long deadline = System.nanoTime() + Math.min(3600, Math.max(1, AiJson.getInt(args, "timeoutSeconds", 30))) * 1000000000L;
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final Object init_Obj = client.level;
@@ -227,8 +227,8 @@ final class AiSurvival {
                               inventory.setSelectedSlot(slot);
                            }
 
-                           this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Rotation(this.init_Minecraft.player.getYRot(), -89.5F));
-                           this.init_DataUtil.load_V();
+                           this.init_DataUtil.setTargetRotation(new autismclient.util.RotationMath.Rotation(this.init_Minecraft.player.getYRot(), -89.5F));
+                           this.init_DataUtil.tick();
                            this.init_Minecraft.options.keyUse.setDown(true);
                            return ++this.sync > 100
                               ? this.init(AiOperation.Status.FAILED, "Eating did not start; the item use may have been rejected")
@@ -260,11 +260,11 @@ final class AiSurvival {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init());
             }
 
             JsonObject init() {
-               return AiJson.init_JsonObject_ObjArr(
+               return AiJson.objectOf(
                   "foodBefore",
                   this.init_I,
                   "food",
@@ -280,7 +280,7 @@ final class AiSurvival {
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init());
+               return AiGameOperations.result(status, message, this.init());
             }
 
             @Override
@@ -297,7 +297,7 @@ final class AiSurvival {
             public void cancel() {
                if (!this.read_Z) {
                   this.read_Z = true;
-                  this.init_DataUtil.init_V();
+                  this.init_DataUtil.clear();
                   if (this.init_Minecraft.options != null) {
                      this.init_Minecraft.options.keyUse.setDown(autismclient.util.KeyMappingControl.of(this.init_Minecraft.options.keyUse).autism$physicalForBody());
                   }
@@ -322,9 +322,9 @@ final class AiSurvival {
    static AiOperation load(JsonObject args) {
       final Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final double radius = Math.max(1.0, Math.min(64.0, AiJson.init_D_JsonObject(args, "radius", 12.0)));
-         final double distance = Math.max(4.0, Math.min(128.0, AiJson.init_D_JsonObject(args, "distance", 24.0)));
-         final long deadline = System.nanoTime() + Math.min(3600, Math.max(1, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60))) * 1000000000L;
+         final double radius = Math.max(1.0, Math.min(64.0, AiJson.getDouble(args, "radius", 12.0)));
+         final double distance = Math.max(4.0, Math.min(128.0, AiJson.getDouble(args, "distance", 24.0)));
+         final long deadline = System.nanoTime() + Math.min(3600, Math.max(1, AiJson.getInt(args, "timeoutSeconds", 60))) * 1000000000L;
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             AiOperation init_AiOperation;
@@ -374,10 +374,10 @@ final class AiSurvival {
                      this.load_Z = false;
                      AiBlastEscape.init(this.init_Minecraft, retreatYaw);
                      this.read_Z = true;
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
                         "Immediate safe sprint out of the creeper blast before planning cover",
-                        AiJson.init_JsonObject_ObjArr("priority", "creeper-fuse", "escape", "verified-sprint-and-coast", "creeperId", immediateBlast.getId())
+                        AiJson.objectOf("priority", "creeper-fuse", "escape", "verified-sprint-and-coast", "creeperId", immediateBlast.getId())
                      );
                   } else {
                      if (this.read_Z && this.init_Minecraft.player.onGround()) {
@@ -408,7 +408,7 @@ final class AiSurvival {
                               this.load_Z = true;
                               AutismClientAddon.LOG
                                  .info("[AI] flee: shielding an igniting creeper at {} blocks", creeper.distanceTo(this.init_Minecraft.player));
-                              this.init_AiOperation = AiCover.init(AiJson.init_JsonObject_ObjArr("sealOnly", true, "timeoutSeconds", 10));
+                              this.init_AiOperation = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                               AiOperation.Result shield = this.init_AiOperation.tick();
                               return shield.terminal() ? this.init(shield.status(), shield.message()) : shield;
                            }
@@ -508,11 +508,11 @@ final class AiSurvival {
                      }
 
                      boolean shaft = false;
-                     if (target == null && autismclient.ai.engine.AiMotionSafety.fill_Z() && !this.init_Minecraft.player.isInWater()) {
+                     if (target == null && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && !this.init_Minecraft.player.isInWater()) {
                         target = AiSurvival.init_BlockPos_BlockPos(
                            this.init_Minecraft.player.blockPosition(),
                            escapeThreats,
-                           AiGuard.init_I(),
+                           AiGuard.countPerchBlocks(),
                            cell -> this.init_Minecraft.level.getChunkSource().getChunk(cell.getX() >> 4, cell.getZ() >> 4, ChunkStatus.FULL, false) != null
                               && this.init_Minecraft.level.getBlockState(cell).getCollisionShape(this.init_Minecraft.level, cell).isEmpty()
                               && this.init_Minecraft.level.getFluidState(cell).isEmpty()
@@ -530,7 +530,7 @@ final class AiSurvival {
                            .orElse(null);
                         if (creeper != null && AiShield.init(this.init_Minecraft) != null && AiShield.init(this.init_Minecraft, creeper) != null) {
                            this.load_Z = true;
-                           this.init_AiOperation = AiCover.init(AiJson.init_JsonObject_ObjArr("sealOnly", true, "timeoutSeconds", 10));
+                           this.init_AiOperation = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                            AiOperation.Result first = this.init_AiOperation.tick();
                            return first.terminal() ? this.init(first.status(), first.message()) : first;
                         } else {
@@ -558,7 +558,7 @@ final class AiSurvival {
                         }
 
                         this.init_AiOperation_Result = first;
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Re-evaluating escape direction", this.init());
+                        return AiGameOperations.result(AiOperation.Status.RUNNING, "Re-evaluating escape direction", this.init());
                      }
                   }
                } else {
@@ -567,12 +567,12 @@ final class AiSurvival {
             }
 
             JsonObject init() {
-               return AiJson.init_JsonObject_ObjArr("radius", radius, "distance", distance);
+               return AiJson.objectOf("radius", radius, "distance", distance);
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(status, message, this.init());
+               return AiGameOperations.result(status, message, this.init());
             }
 
             @Override

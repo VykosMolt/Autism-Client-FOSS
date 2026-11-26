@@ -37,32 +37,32 @@ public final class AiMiningPreparation {
    }
 
    public static AiOperation init(JsonObject args) {
-      if (!AiJson.init_Z_JsonObject(args, "toolPrepared", false)
-         && !AiJson.init_Z_JsonObject(args, "dropsOnly", false)
-         && !AiJson.init_Z_JsonObject(args, "approach", false)
-         && !AiJson.init_Z_JsonObject(args, "descendOnly", false)) {
+      if (!AiJson.getBoolean(args, "toolPrepared", false)
+         && !AiJson.getBoolean(args, "dropsOnly", false)
+         && !AiJson.getBoolean(args, "approach", false)
+         && !AiJson.getBoolean(args, "descendOnly", false)) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null && !mc.player.hasInfiniteMaterials()) {
             Set<Item> wanted = new HashSet<>();
             if (args.has("drops")) {
                for (JsonElement drop : args.getAsJsonArray("drops")) {
-                  wanted.addAll(AiItems.load_af_DataUtil(drop.getAsString()).items());
+                  wanted.addAll(AiItems.resolveItem(drop.getAsString()).items());
                }
             }
 
             if (args.has("drop")) {
-               wanted.addAll(AiItems.load_af_DataUtil(AiJson.init_Str_JsonObject(args, "drop", "")).items());
+               wanted.addAll(AiItems.resolveItem(AiJson.getString(args, "drop", "")).items());
             }
 
             Set<Block> blocks = new LinkedHashSet<>();
-            String id = AiJson.init_Str_JsonObject(args, "block", "");
+            String id = AiJson.getString(args, "block", "");
             if (!id.isEmpty()) {
-               blocks.addAll(AiItems.read_af_DataUtil(id).blocks());
+               blocks.addAll(AiItems.resolveBlock(id).blocks());
             }
 
             if (args.has("blocks")) {
                for (JsonElement block : args.getAsJsonArray("blocks")) {
-                  blocks.addAll(AiItems.read_af_DataUtil(block.getAsString()).blocks());
+                  blocks.addAll(AiItems.resolveBlock(block.getAsString()).blocks());
                }
             }
 
@@ -81,38 +81,38 @@ public final class AiMiningPreparation {
       }
 
       AiOperation.Result captured = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
-         result.status(), result.message(), AiRunResources.init_JsonObject(result.dataJson()), pending, child
+         result.status(), result.message(), AiRunResources.parseEvidenceJson(result.dataJson()), pending, child
       );
       return new AiOperation.Result(captured.status(), captured.message(), captured.dataJson(), result.evidence(), result.failure());
    }
 
    public static AiOperation load(final JsonObject args) {
-      if (!AiJson.init_Z_JsonObject(args, "toolPrepared", false)
-         && !AiJson.init_Z_JsonObject(args, "dropsOnly", false)
-         && !AiJson.init_Z_JsonObject(args, "approach", false)
-         && !AiJson.init_Z_JsonObject(args, "descendOnly", false)) {
+      if (!AiJson.getBoolean(args, "toolPrepared", false)
+         && !AiJson.getBoolean(args, "dropsOnly", false)
+         && !AiJson.getBoolean(args, "approach", false)
+         && !AiJson.getBoolean(args, "descendOnly", false)) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null && !mc.player.hasInfiniteMaterials()) {
             Set<Item> wanted = new HashSet<>();
             if (args.has("drops")) {
                for (JsonElement drop : args.getAsJsonArray("drops")) {
-                  wanted.addAll(AiItems.load_af_DataUtil(drop.getAsString()).items());
+                  wanted.addAll(AiItems.resolveItem(drop.getAsString()).items());
                }
             }
 
             if (args.has("drop")) {
-               wanted.addAll(AiItems.load_af_DataUtil(AiJson.init_Str_JsonObject(args, "drop", "")).items());
+               wanted.addAll(AiItems.resolveItem(AiJson.getString(args, "drop", "")).items());
             }
 
             Set<Block> blocksToMine = new LinkedHashSet<>();
-            String id = AiJson.init_Str_JsonObject(args, "block", "");
+            String id = AiJson.getString(args, "block", "");
             if (!id.isEmpty()) {
-               blocksToMine.addAll(AiItems.read_af_DataUtil(id).blocks());
+               blocksToMine.addAll(AiItems.resolveBlock(id).blocks());
             }
 
             if (args.has("blocks")) {
                for (JsonElement block : args.getAsJsonArray("blocks")) {
-                  blocksToMine.addAll(AiItems.read_af_DataUtil(block.getAsString()).blocks());
+                  blocksToMine.addAll(AiItems.resolveBlock(block.getAsString()).blocks());
                }
             }
 
@@ -127,7 +127,7 @@ public final class AiMiningPreparation {
 
             for (Block block : blocksToMine) {
                BlockState candidate = block.defaultBlockState();
-               int toolSlot = autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, candidate, true, (s, tool) -> AiItems.init(mc, s, tool, wanted));
+               int toolSlot = autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, candidate, true, (s, tool) -> AiItems.canDropWantedItem(mc, s, tool, wanted));
                if (toolSlot >= 0) {
                   ItemStack tool = mc.player.getInventory().getItem(toolSlot);
                   if (!(tool.getDestroySpeed(candidate) <= 1.0F) && BuiltInRegistries.ITEM.getKey(tool.getItem()).getPath().endsWith("_pickaxe")) {
@@ -147,13 +147,13 @@ public final class AiMiningPreparation {
 
             ItemStack current = mc.player.getInventory().getItem(slot);
             if (!(current.getDestroySpeed(state) <= 1.0F) && BuiltInRegistries.ITEM.getKey(current.getItem()).getPath().endsWith("_pickaxe")) {
-               int blocks = AiJson.init_I_JsonObject(args, "count", 1);
-               int held = AiJson.init_I_JsonObject(args, "held", 0);
+               int blocks = AiJson.getInt(args, "count", 1);
+               int held = AiJson.getInt(args, "held", 0);
                if (held > 0) {
                   int stocked = 0;
 
                   for (Item drop : wanted) {
-                     stocked += AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(drop).toString());
+                     stocked += AiGameState.countInventoryItem(BuiltInRegistries.ITEM.getKey(drop).toString());
                   }
 
                   blocks = Math.max(0, held - stocked);
@@ -165,16 +165,16 @@ public final class AiMiningPreparation {
 
                float hardness = state.getBlock().defaultDestroyTime();
                double before = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, current, state, hardness);
-               AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
+               AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
                Item chosen = null;
                AiCraftPlanner.CraftPlan chosenPlan = null;
                int chosenLogs = 0;
                double bestSaving = 0.0;
-               boolean tableHeld = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0;
+               boolean tableHeld = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0;
                BlockPos nearbyLog = null;
 
                for (BlockPos at : BlockPos.betweenClosed(mc.player.blockPosition().offset(-6, -2, -6), mc.player.blockPosition().offset(6, 3, 6))) {
-                  if (AiTerrain.init(mc.level, at)
+                  if (AiTerrain.isLoaded(mc.level, at)
                      && mc.level.getBlockState(at).is(BlockTags.LOGS)
                      && init(mc, at)
                      && (nearbyLog == null || at.distSqr(mc.player.blockPosition()) < nearbyLog.distSqr(mc.player.blockPosition()))) {
@@ -187,7 +187,7 @@ public final class AiMiningPreparation {
 
                for (Item tool : List.of(Items.STONE_PICKAXE, Items.IRON_PICKAXE, Items.DIAMOND_PICKAXE)) {
                   ItemStack upgraded = new ItemStack(tool);
-                  if (upgraded.isCorrectToolForDrops(state) && AiItems.init(mc, state, upgraded, wanted)) {
+                  if (upgraded.isCorrectToolForDrops(state) && AiItems.canDropWantedItem(mc, state, upgraded, wanted)) {
                      double after = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, upgraded, state, hardness);
                      if (!(after >= before)) {
                         String toolId = BuiltInRegistries.ITEM.getKey(tool).toString();
@@ -208,7 +208,7 @@ public final class AiMiningPreparation {
                         if (plan != null
                            && (plan.complete() || plan.missing().size() == 1 && cobble <= 3 && cobble != 0)
                            && logs <= (wood == null ? 0 : 3)
-                           && (cobble <= 0 || !(AiTerrain.init(mc, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8) > 64.0))) {
+                           && (cobble <= 0 || !(AiTerrain.nearestBlockDistSqr(mc, List.of(Blocks.STONE, Blocks.COBBLESTONE), 8) > 64.0))) {
                            double woodTicks = 0.0;
                            if (logs > 0) {
                               BlockState logState = mc.level.getBlockState(wood);
@@ -247,7 +247,7 @@ public final class AiMiningPreparation {
                final JsonObject resume = args.deepCopy();
                resume.addProperty("toolPrepared", true);
                return new AiOperation() {
-                  final long init_J = System.nanoTime() + Math.max(20, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)) * 1000000000L;
+                  final long init_J = System.nanoTime() + Math.max(20, AiJson.getInt(args, "timeoutSeconds", 600)) * 1000000000L;
                   AiOperation init_AiOperation;
                   int init_I;
                   boolean init_Z;
@@ -255,13 +255,13 @@ public final class AiMiningPreparation {
                   @Override
                   public AiOperation.Result tick() {
                      if (this.init_Z) {
-                        return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Mining cancelled", new JsonObject());
+                        return AiGameOperations.result(AiOperation.Status.CANCELLED, "Mining cancelled", new JsonObject());
                      }
 
                      if (System.nanoTime() >= this.init_J) {
                         boolean uncertain = this.requiresReconciliationAfterEmergency();
                         this.cancel();
-                        return AiGameOperations.init_AiOperation_Result(
+                        return AiGameOperations.result(
                            uncertain ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                            "Mining preparation exceeded the job deadline",
                            new JsonObject()
@@ -293,13 +293,13 @@ public final class AiMiningPreparation {
 
                      if (this.init_I == 0 && logs > 0) {
                         this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "block",
                               logId,
                               "drops",
                               autismclient.ai.engine.AiBlockMine.init(List.of(logId)),
                               "held",
-                              AiCraft.init_I(logId) + logs,
+                              AiCraft.countItem(logId) + logs,
                               "toolPrepared",
                               true,
                               "explore",
@@ -313,13 +313,13 @@ public final class AiMiningPreparation {
                         this.init_I = 1;
                      } else if (this.init_I < 2 && cobble > 0) {
                         this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "blocks",
                               autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
                               "drops",
                               autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:cobblestone")),
                               "held",
-                              AiCraft.init_I("minecraft:cobblestone") + cobble,
+                              AiCraft.countItem("minecraft:cobblestone") + cobble,
                               "toolPrepared",
                               true,
                               "explore",
@@ -332,8 +332,8 @@ public final class AiMiningPreparation {
                         );
                         this.init_I = 2;
                      } else if (this.init_I < 3) {
-                        this.init_AiOperation = AiCraft.init(
-                           AiJson.init_JsonObject_ObjArr("item", tool, "count", AiCraft.init_I(tool) + 1, "timeoutSeconds", Math.min(20, seconds))
+                        this.init_AiOperation = AiCraft.craft(
+                           AiJson.objectOf("item", tool, "count", AiCraft.countItem(tool) + 1, "timeoutSeconds", Math.min(20, seconds))
                         );
                         this.init_I = 3;
                      } else {
@@ -342,7 +342,7 @@ public final class AiMiningPreparation {
                         this.init_I = 4;
                      }
 
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.RUNNING, this.init_I < 4 ? "Prepare a faster mining tool" : "Continue the mining batch", new JsonObject()
                      );
                   }
@@ -442,7 +442,7 @@ public final class AiMiningPreparation {
    }
 
    private static AiOperation init(Minecraft mc, JsonObject args, Set<Item> wanted, Set<Block> blocks) {
-      int held = AiJson.init_I_JsonObject(args, "held", 0);
+      int held = AiJson.getInt(args, "held", 0);
       if (held > 0 && !blocks.isEmpty() && mc.player.onGround() && !mc.player.isInWater() && !mc.player.isInLava()) {
          Set<String> goalLogs = new HashSet<>();
 
@@ -466,9 +466,9 @@ public final class AiMiningPreparation {
                   goalLogs.add(BuiltInRegistries.ITEM.getKey(block.asItem()).toString());
                }
 
-               int slot = autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (s, tool) -> AiItems.init(mc, s, tool, wanted));
+               int slot = autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (s, tool) -> AiItems.canDropWantedItem(mc, s, tool, wanted));
                ItemStack current = slot < 0 ? ItemStack.EMPTY : mc.player.getInventory().getItem(slot);
-               if (!(current.getDestroySpeed(state) > 1.0F) && AiItems.init(mc, state, axe, wanted)) {
+               if (!(current.getDestroySpeed(state) > 1.0F) && AiItems.canDropWantedItem(mc, state, axe, wanted)) {
                   before = Math.min(before, autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, current, state, block.defaultDestroyTime(), factors));
                   after = Math.max(after, autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, axe, state, block.defaultDestroyTime(), factors));
                   continue;
@@ -480,7 +480,7 @@ public final class AiMiningPreparation {
             return null;
          }
 
-         int stocked = goalLogs.stream().mapToInt(AiCraft::init_I).sum();
+         int stocked = goalLogs.stream().mapToInt(AiCraft::countItem).sum();
          int remaining = Math.max(0, held - stocked);
          if (remaining == 0) {
             return null;
@@ -490,11 +490,11 @@ public final class AiMiningPreparation {
          Map<String, List<BlockPos>> local = new LinkedHashMap<>();
 
          for (BlockPos at : BlockPos.betweenClosed(origin.offset(-6, 0, -6), origin.offset(6, 3, 6))) {
-            if (AiTerrain.init(mc.level, at)
+            if (AiTerrain.isLoaded(mc.level, at)
                && mc.level.getBlockState(at).is(BlockTags.LOGS)
                && !(at.distSqr(origin) > 36.0)
                && init(mc, at, origin.getY())
-               && init(origin, at, true, autismclient.ai.engine.AiBlockInteraction.init(mc, at) != null, init(mc, at))) {
+               && init(origin, at, true, autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, at) != null, init(mc, at))) {
                String log = BuiltInRegistries.ITEM.getKey(mc.level.getBlockState(at).getBlock().asItem()).toString();
                if (goalLogs.contains(log)) {
                   local.computeIfAbsent(log, ignored -> new ArrayList<>()).add(at.immutable());
@@ -502,9 +502,9 @@ public final class AiMiningPreparation {
             }
          }
 
-         AiCraftPlanner.RecipeGraph graph = AiCraft.init_g_StreamUtil();
-         boolean tableHeld = AiCraft.load() || AiCraft.init_I("minecraft:crafting_table") > 0;
-         if (!AiCraft.load() && AiCraft.init_BlockPos() == null) {
+         AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
+         boolean tableHeld = AiCraft.isCraftingTableInReach() || AiCraft.countItem("minecraft:crafting_table") > 0;
+         if (!AiCraft.isCraftingTableInReach() && AiCraft.findPlacementSpot() == null) {
             return null;
          }
 
@@ -544,20 +544,20 @@ public final class AiMiningPreparation {
          Object world = mc.level;
          Object player = mc.player;
          Object connection = mc.getConnection();
-         long deadline = System.nanoTime() + Math.max(1, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)) * 1000000000L;
+         long deadline = System.nanoTime() + Math.max(1, AiJson.getInt(args, "timeoutSeconds", 600)) * 1000000000L;
          JsonObject resume = args.deepCopy();
          resume.addProperty("toolPrepared", true);
          IntSupplier seconds = () -> (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L);
          AiOperation gather = extra == 0
             ? null
             : autismclient.ai.engine.AiBlockMine.init_AiOperation(
-               AiJson.init_JsonObject_ObjArr(
+               AiJson.objectOf(
                   "block",
                   log,
                   "drops",
                   autismclient.ai.engine.AiBlockMine.init(List.of(log)),
                   "held",
-                  AiCraft.init_I(log) + extra,
+                  AiCraft.countItem(log) + extra,
                   "toolPrepared",
                   true,
                   "trees",
@@ -572,9 +572,9 @@ public final class AiMiningPreparation {
             );
          return init(
             gather,
-            () -> AiCraft.init(
-               AiJson.init_JsonObject_ObjArr(
-                  "item", "minecraft:wooden_axe", "count", AiCraft.init_I("minecraft:wooden_axe") + 1, "timeoutSeconds", Math.min(20, seconds.getAsInt())
+            () -> AiCraft.craft(
+               AiJson.objectOf(
+                  "item", "minecraft:wooden_axe", "count", AiCraft.countItem("minecraft:wooden_axe") + 1, "timeoutSeconds", Math.min(20, seconds.getAsInt())
                )
             ),
             () -> autismclient.ai.engine.AiBlockMine.init_AiOperation(init(resume, seconds.getAsInt())),
@@ -597,7 +597,7 @@ public final class AiMiningPreparation {
    private static boolean init(Minecraft mc, BlockPos log, int floorY) {
       for (int y = log.getY() - 1; y >= floorY - 1; y--) {
          BlockPos at = new BlockPos(log.getX(), y, log.getZ());
-         if (!AiTerrain.init(mc.level, at) || !mc.level.getFluidState(at).isEmpty()) {
+         if (!AiTerrain.isLoaded(mc.level, at) || !mc.level.getFluidState(at).isEmpty()) {
             return false;
          }
 
@@ -662,7 +662,7 @@ public final class AiMiningPreparation {
             if (this.init_AiOperation == null) {
                this.init_AiOperation = this.init_I == 1 ? craft.get() : resume.get();
                this.init_AiOperation_Result = null;
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   AiOperation.Status.RUNNING, this.init_I == 1 ? "Crafting an axe for the log batch" : "Continuing the log batch", new JsonObject()
                );
             }
@@ -686,7 +686,7 @@ public final class AiMiningPreparation {
 
             this.init_I = result.status() == AiOperation.Status.SUCCEEDED ? this.init_I + 1 : 2;
             this.init_AiOperation_Result = null;
-            return AiGameOperations.init_AiOperation_Result(
+            return AiGameOperations.result(
                AiOperation.Status.RUNNING, this.init_I == 1 ? "Preparing a faster axe" : "Continuing the log batch", new JsonObject()
             );
          }
@@ -696,7 +696,7 @@ public final class AiMiningPreparation {
             this.load_AiOperation_Result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
                status,
                message,
-               AiJson.init_JsonObject_ObjArr("investment", "minecraft:wooden_axe", "stage", this.init_I),
+               AiJson.objectOf("investment", "minecraft:wooden_axe", "stage", this.init_I),
                this.load_Z,
                this.init_AiOperation_Result
             );
@@ -721,11 +721,11 @@ public final class AiMiningPreparation {
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            JsonObject evidence = this.init_AiOperation_Result == null ? new JsonObject() : AiRunResources.init_JsonObject(this.init_AiOperation_Result.dataJson());
+            JsonObject evidence = this.init_AiOperation_Result == null ? new JsonObject() : AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson());
             return this.load_Z
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-               || AiJson.init_Z_JsonObject(evidence, "reobserveBeforeResuming", false)
-               || AiJson.init_Z_JsonObject(evidence, "interruptedActionNeedsReconciliation", false);
+               || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false)
+               || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false);
          }
 
          @Override
@@ -747,7 +747,7 @@ public final class AiMiningPreparation {
 
       for (int y = log.getY() + 1; y < top && y <= log.getY() + 64; y++) {
          BlockPos at = new BlockPos(log.getX(), y, log.getZ());
-         if (!AiTerrain.init(mc.level, at)) {
+         if (!AiTerrain.isLoaded(mc.level, at)) {
             return false;
          }
 

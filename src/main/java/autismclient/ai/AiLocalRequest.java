@@ -33,18 +33,18 @@ final class AiLocalRequest {
          throw new IllegalArgumentException("Choose at least one block to mine");
       }
 
-      String types = targets.stream().map(args -> AiJson.init_Str_JsonObject(args, "block", "")).collect(Collectors.joining(","));
-      int count = amount == null ? (targets.size() == 1 ? AiJson.init_I_JsonObject(targets.getFirst(), "count", 1) : 16) : amount;
+      String types = targets.stream().map(args -> AiJson.getString(args, "block", "")).collect(Collectors.joining(","));
+      int count = amount == null ? (targets.size() == 1 ? AiJson.getInt(targets.getFirst(), "count", 1) : 16) : amount;
       if (count >= 1 && count <= 640) {
          JsonObject overrides = new JsonObject();
 
          for (JsonObject target : targets) {
             if (target.has("mineAmount")) {
-               overrides.add(AiJson.init_Str_JsonObject(target, "block", ""), target.get("mineAmount"));
+               overrides.add(AiJson.getString(target, "block", ""), target.get("mineAmount"));
             }
          }
 
-         return AiMiningQuota.init_JsonObject_JsonObject(AiJson.init_JsonObject_ObjArr("block", types, "count", count, "counts", overrides));
+         return AiMiningQuota.init_JsonObject_JsonObject(AiJson.objectOf("block", types, "count", count, "counts", overrides));
       } else {
          throw new IllegalArgumentException("Choose an amount from 1 to 640");
       }
@@ -52,15 +52,15 @@ final class AiLocalRequest {
 
    static JsonObject init(String label, String capability, JsonObject arguments) {
       if (label != null && !label.isBlank() && label.length() <= 16000 && capability != null && init.contains(capability) && arguments != null) {
-         return AiJson.init_JsonObject_ObjArr("label", label, "capability", capability, "arguments", arguments.deepCopy());
+         return AiJson.objectOf("label", label, "capability", capability, "arguments", arguments.deepCopy());
       } else {
          throw new IllegalArgumentException("Invalid local action");
       }
    }
 
    static AiIntents.Inner_CachePool init(JsonObject stored) {
-      String label = AiJson.init_Str_JsonObject(stored, "label", "");
-      String capability = AiJson.init_Str_JsonObject(stored, "capability", "");
+      String label = AiJson.getString(stored, "label", "");
+      String capability = AiJson.getString(stored, "capability", "");
       if (stored.has("arguments") && stored.get("arguments").isJsonObject()) {
          JsonObject checked = init(label, capability, stored.getAsJsonObject("arguments"));
          return new AiIntents.Inner_CachePool(List.of(new AiIntents.Inner_BufferHelper(label, capability, checked.getAsJsonObject("arguments"), label)), "");
@@ -87,7 +87,7 @@ final class AiLocalRequest {
 
    static JsonObject init(JsonObject arguments, int held, int limit) {
       JsonObject args = arguments.deepCopy();
-      int requested = AiJson.init_I_JsonObject(args, "count", 1);
+      int requested = AiJson.getInt(args, "count", 1);
       long total = (long)held + requested;
       if (held >= 0 && requested >= 1 && total <= limit) {
          args.addProperty("count", total);
@@ -100,11 +100,11 @@ final class AiLocalRequest {
 
    static boolean init(JsonObject stored, String world, String dimension) {
       return !stored.has("placementWorld")
-         || AiJson.init_Str_JsonObject(stored, "placementWorld", "").equals(world) && AiJson.init_Str_JsonObject(stored, "placementDimension", "").equals(dimension);
+         || AiJson.getString(stored, "placementWorld", "").equals(world) && AiJson.getString(stored, "placementDimension", "").equals(dimension);
    }
 
    static void init_V(JsonObject stored, Path file) throws IOException {
-      stored.add("sourceRevision", AiJson.init_JsonObject_ObjArr("size", Files.size(file), "modified", Files.getLastModifiedTime(file).toMillis()));
+      stored.add("sourceRevision", AiJson.objectOf("size", Files.size(file), "modified", Files.getLastModifiedTime(file).toMillis()));
    }
 
    static boolean init_Z(JsonObject stored, Path file) {

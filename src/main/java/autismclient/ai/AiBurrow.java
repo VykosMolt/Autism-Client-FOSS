@@ -231,10 +231,10 @@ final class AiBurrow {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final int timeoutSeconds = Math.max(60, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600)));
-         final float healTo = (float)AiJson.init_D_JsonObject(args, "healTo", 0.0);
-         final boolean stay = AiJson.init_Z_JsonObject(args, "stay", false);
-         final boolean towerOk = AiJson.init_Z_JsonObject(args, "towerOk", true);
+         final int timeoutSeconds = Math.max(60, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 600)));
+         final float healTo = (float)AiJson.getDouble(args, "healTo", 0.0);
+         final boolean stay = AiJson.getBoolean(args, "stay", false);
+         final boolean towerOk = AiJson.getBoolean(args, "towerOk", true);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final Object init_Obj = mc.level;
@@ -294,7 +294,7 @@ final class AiBurrow {
                      && this.init_AiOperation == null
                      && AiBurrow.init(
                         healTo,
-                        autismclient.ai.engine.AiMotionSafety.fill_Z(),
+                        autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                         AiBurrow.init_Z_BlockPos_Predicate(feet, this::init_Z_3) && this.write_Z(feet),
                         this.update_Z(feet),
                         mc.player.isInWater() || mc.player.isInLava() || AiEndRun.init_Z(mc)
@@ -335,8 +335,8 @@ final class AiBurrow {
                            healTo > 0.0F,
                            this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.WAIT,
                            mc.player.isOnFire(),
-                           AiServerEvidence.init_Z_UUID(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
-                           autismclient.ai.engine.AiMotionSafety.fill_Z(),
+                           AiServerEvidence.matchesRecentBurnDamage(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
+                           autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                            this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.WAIT && this.init_Z_6(),
                            this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.WAIT && this.update_Z(this.update_BlockPos),
                            mc.player.isInLava() || AiEndRun.init_Z(mc)
@@ -497,7 +497,7 @@ final class AiBurrow {
                   && this.write_BlockPos.getY() == this.update_BlockPos.getY() + 2
                   && !this.write_BlockPos.equals(AiBurrow.init_BlockPos(this.update_BlockPos))
                   && this.load_Z(this.update_BlockPos);
-               if (!autismclient.ai.engine.AiMotionSafety.fill_Z() && !beamInFlight) {
+               if (!autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && !beamInFlight) {
                   return this.init("Settling before closing the shelter");
                }
 
@@ -543,7 +543,7 @@ final class AiBurrow {
 
                      for (BlockPos cell : this.init_List) {
                         if (!this.init_Z_3(cell)
-                           && (!AiTerrain.init(mc.level, cell) || !mc.level.getBlockState(cell).canBeReplaced() || !mc.level.getFluidState(cell).isEmpty())) {
+                           && (!AiTerrain.isLoaded(mc.level, cell) || !mc.level.getBlockState(cell).canBeReplaced() || !mc.level.getFluidState(cell).isEmpty())) {
                            return this.init(AiOperation.Status.FAILED, "Shelter boundary cannot be safely filled at " + cell.toShortString());
                         }
                      }
@@ -588,7 +588,7 @@ final class AiBurrow {
                      && !this.init_Z_3(this.write_BlockPos)
                      && this.load_Z(this.update_BlockPos)
                      && !this.init_DataPipe.load_Z()
-                     && autismclient.ai.engine.AiMotionSafety.fill_Z()
+                     && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
                      && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(this.write_BlockPos, this.init_Item)) {
                      mc.options.keyJump.setDown(true);
                      this.sync_Z = true;
@@ -623,7 +623,7 @@ final class AiBurrow {
 
                   for (BlockPos cell : boundary) {
                      if (!this.init_Z_3(cell)
-                        && (!AiTerrain.init(mc.level, cell) || !mc.level.getBlockState(cell).canBeReplaced() || !mc.level.getFluidState(cell).isEmpty())) {
+                        && (!AiTerrain.isLoaded(mc.level, cell) || !mc.level.getBlockState(cell).canBeReplaced() || !mc.level.getFluidState(cell).isEmpty())) {
                         return this.init(AiOperation.Status.FAILED, "No observed safe boundary for a closed tower shelter at " + cell.toShortString());
                      }
                   }
@@ -695,12 +695,12 @@ final class AiBurrow {
                         mc.player.getFoodData().getFoodLevel(),
                         AiSurvival.init(mc.player.getInventory()) >= 0,
                         this.init_Z_6(),
-                        autismclient.ai.engine.AiMotionSafety.fill_Z(),
+                        autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                         this.canInterruptNow(),
                         this.requiresReconciliationAfterEmergency()
                      )) {
                      this.update_I++;
-                     this.load_AiOperation = AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 10));
+                     this.load_AiOperation = AiSurvival.init(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
                      return this.init("Eating in the sealed shelter to enable regeneration");
                   }
 
@@ -773,11 +773,11 @@ final class AiBurrow {
                   this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
                   return this.init("Cap open; climbing out");
                } else {
-                  if (AiBurrow.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.engine.AiMotionSafety.fill_Z())) {
+                  if (AiBurrow.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.engine.AiMotionSafety.isPlayerSupported())) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Down from the tower; the night is over");
                   }
 
-                  if (!autismclient.ai.engine.AiMotionSafety.fill_Z()) {
+                  if (!autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      return this.init("Settling onto the ground while descending the shelter");
                   }
 
@@ -846,7 +846,7 @@ final class AiBurrow {
                } else {
                   this.init_AiOperation.cancel();
                   this.init_AiOperation = null;
-                  if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.engine.AiMotionSafety.fill_Z()) {
+                  if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      return this.init("Settling on the surface before handing back control");
                   } else if (r.status() == AiOperation.Status.SUCCEEDED && this.write_Z) {
                      return this.init(
@@ -861,7 +861,7 @@ final class AiBurrow {
             }
 
             boolean init_Z_3(BlockPos pos) {
-               return AiTerrain.init(mc.level, pos) && mc.level.getFluidState(pos).isEmpty() && mc.level.getBlockState(pos).isCollisionShapeFullBlock(mc.level, pos);
+               return AiTerrain.isLoaded(mc.level, pos) && mc.level.getFluidState(pos).isEmpty() && mc.level.getBlockState(pos).isCollisionShapeFullBlock(mc.level, pos);
             }
 
             boolean load_Z(BlockPos feet) {
@@ -888,7 +888,7 @@ final class AiBurrow {
 
             boolean write_Z(BlockPos feet) {
                for (BlockPos inside : List.of(feet, feet.above())) {
-                  if (!AiTerrain.init(mc.level, inside)
+                  if (!AiTerrain.isLoaded(mc.level, inside)
                      || !mc.level.getFluidState(inside).isEmpty()
                      || !mc.level.getBlockState(inside).getCollisionShape(mc.level, inside).isEmpty()) {
                      return false;
@@ -916,7 +916,7 @@ final class AiBurrow {
                   pos -> {
                      if (this.init_Z_3(pos.below()) && !this.init(pos, 3.0)) {
                         for (BlockPos inside : List.of(pos, pos.above())) {
-                           if (!AiTerrain.init(mc.level, inside)
+                           if (!AiTerrain.isLoaded(mc.level, inside)
                               || !mc.level.getFluidState(inside).isEmpty()
                               || !mc.level.getBlockState(inside).getCollisionShape(mc.level, inside).isEmpty()) {
                               return false;
@@ -942,7 +942,7 @@ final class AiBurrow {
             }
 
             AiBurrow.Inner_StreamUtil init_RingBuffer_StreamU(BlockPos pos) {
-               if (!AiTerrain.init(mc.level, pos)) {
+               if (!AiTerrain.isLoaded(mc.level, pos)) {
                   return AiBurrow.Inner_StreamUtil.STOP;
                }
 
@@ -1056,7 +1056,7 @@ final class AiBurrow {
                      return false;
                   }
 
-                  this.init_UtilCore.init_V_I(source, AiItems.load(), BuiltInRegistries.ITEM.getKey(mc.player.getInventory().getItem(source).getItem()).toString());
+                  this.init_UtilCore.init_V_I(source, AiItems.pickHotbarDestination(), BuiltInRegistries.ITEM.getKey(mc.player.getInventory().getItem(source).getItem()).toString());
                   return true;
                } else {
                   return false;
@@ -1066,11 +1066,11 @@ final class AiBurrow {
             JsonObject init(int needed) {
                JsonObject missing = new JsonObject();
                missing.addProperty("minecraft:dirt", Math.max(1, needed - this.load_I_5()));
-               return AiJson.init_JsonObject_ObjArr("missing", missing, "constructionRequired", needed, "constructionAvailable", this.load_I_5());
+               return AiJson.objectOf("missing", missing, "constructionRequired", needed, "constructionAvailable", this.load_I_5());
             }
 
             JsonObject init_JsonObject_15() {
-               JsonObject data = AiJson.init_JsonObject_ObjArr(
+               JsonObject data = AiJson.objectOf(
                   "slept",
                   false,
                   "hidTicks",
@@ -1102,7 +1102,7 @@ final class AiBurrow {
             }
 
             AiOperation.Result init(String message) {
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_15());
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init_JsonObject_15());
             }
 
             AiOperation.Result init(AiOperation.Status status, String message) {
@@ -1118,15 +1118,15 @@ final class AiBurrow {
                }
 
                this.cancel();
-               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiGameOperations.init_AiOperation_Result(status, message, data));
+               return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiGameOperations.result(status, message, data));
             }
 
             AiOperation.Result init(AiOperation.Result result, String action) {
                this.flush_Z = true;
-               this.init_JsonObject = AiJson.init_JsonObject_ObjArr(
+               this.init_JsonObject = AiJson.objectOf(
                   "status", result.status().name(), "message", result.message(), "failureCode", result.failure().name()
                );
-               this.init_JsonObject.add("result", AiRunResources.init_JsonObject(result.dataJson()));
+               this.init_JsonObject.add("result", AiRunResources.parseEvidenceJson(result.dataJson()));
                JsonObject data = this.init_JsonObject_15();
                this.cancel();
                return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
@@ -1143,7 +1143,7 @@ final class AiBurrow {
             @Override
             public boolean canInterruptNow() {
                return !this.flush_Z
-                  && autismclient.ai.engine.AiMotionSafety.fill_Z()
+                  && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
                   && !this.sync_Z
                   && !AiBurrow.init_Z_Z_BooleanSupplier(this.init_Z, this.init_DataPipe::load_Z)
                   && !this.init_UtilCore.load_Z()

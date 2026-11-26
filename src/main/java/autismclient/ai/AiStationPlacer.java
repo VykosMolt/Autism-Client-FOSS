@@ -70,12 +70,12 @@ final class AiStationPlacer {
       }
 
       if (!this.init_Z) {
-         if (this.init_List == null && !this.load_Z && AiCraft.read() && this.read()) {
+         if (this.init_List == null && !this.load_Z && AiCraft.isStandingOnLeaves() && this.read()) {
             return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
          if (this.init_List == null) {
-            this.init_List = new ArrayList<>(AiCraft.init_List());
+            this.init_List = new ArrayList<>(AiCraft.candidatePlacementSpots());
             this.load_I = 0;
             this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(spotx, this.init_Item));
             if (this.init_BlockPos != null && this.init_List.remove(this.init_BlockPos)) {
@@ -166,9 +166,9 @@ final class AiStationPlacer {
       }
 
       this.load_Z = true;
-      BlockPos open = AiCraft.init(6);
+      BlockPos open = AiCraft.findOpenStationSpot(6);
       if (open == null) {
-         open = AiCraft.load(3);
+         open = AiCraft.findFlatStationSpot(3);
       }
 
       if (open == null) {

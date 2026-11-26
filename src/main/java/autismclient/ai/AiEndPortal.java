@@ -29,7 +29,7 @@ final class AiEndPortal {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && portal != null) {
          for (BlockPos p : BlockPos.betweenClosed(portal.offset(-3, 0, -3), portal.offset(3, 0, 3))) {
-            if (AiTerrain.init(mc.level, p) && mc.level.getBlockState(p).is(Blocks.END_PORTAL_FRAME)) {
+            if (AiTerrain.isLoaded(mc.level, p) && mc.level.getBlockState(p).is(Blocks.END_PORTAL_FRAME)) {
                AiEndPortal.Inner_StreamUtil ring = load(p);
                if (ring != null
                   && ring.active
@@ -64,7 +64,7 @@ final class AiEndPortal {
             for (Direction side : Plane.HORIZONTAL) {
                for (int offset = -1; offset <= 1; offset++) {
                   BlockPos cell = center.relative(side, 2).relative(side.getClockWise(), offset);
-                  if (!AiTerrain.init(mc.level, cell)) {
+                  if (!AiTerrain.isLoaded(mc.level, cell)) {
                      valid = false;
                      break;
                   }
@@ -91,7 +91,7 @@ final class AiEndPortal {
 
                for (int x = -1; x <= 1; x++) {
                   for (int z = -1; z <= 1; z++) {
-                     active &= AiTerrain.init(mc.level, center.offset(x, 0, z)) && mc.level.getBlockState(center.offset(x, 0, z)).is(Blocks.END_PORTAL);
+                     active &= AiTerrain.isLoaded(mc.level, center.offset(x, 0, z)) && mc.level.getBlockState(center.offset(x, 0, z)).is(Blocks.END_PORTAL);
                   }
                }
 
@@ -159,7 +159,7 @@ final class AiEndPortal {
                }
 
                if (this.init_t_DataUtil
-                  .init(state.getValue(EndPortalFrameBlock.HAS_EYE), AiCraft.init_I("minecraft:ender_eye"), AiServerEvidence.init_J_BlockPos(frame), AiServerEvidence.init_J())) {
+                  .init(state.getValue(EndPortalFrameBlock.HAS_EYE), AiCraft.countItem("minecraft:ender_eye"), AiServerEvidence.blockRevision(frame), AiServerEvidence.inventoryRevision())) {
                   return this.init(
                      AiOperation.Status.SUCCEEDED, this.init_t_DataUtil.init() ? "Frame eye and one consumed Eye confirmed" : "Frame was already filled"
                   );
@@ -168,7 +168,7 @@ final class AiEndPortal {
                if (state.getValue(EndPortalFrameBlock.HAS_EYE)) {
                   return ++this.init_I > 60
                      ? this.init(AiOperation.Status.UNCERTAIN, "Filled frame observed without the matching one-Eye inventory acknowledgement")
-                     : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Waiting for frame inventory acknowledgement", new JsonObject());
+                     : AiGameOperations.result(AiOperation.Status.RUNNING, "Waiting for frame inventory acknowledgement", new JsonObject());
                }
 
                if (++this.init_I > 60) {
@@ -189,28 +189,28 @@ final class AiEndPortal {
                      return this.init(AiOperation.Status.FAILED, "Frame insertion ray is obstructed");
                   }
 
-                  this.init_DataUtil.init_V_Vec3(this.init_BlockHitResult.getLocation());
-                  this.init_DataUtil.load_V();
+                  this.init_DataUtil.aimAt(this.init_BlockHitResult.getLocation());
+                  this.init_DataUtil.tick();
                }
 
-               if (!this.init_t_DataUtil.init() && this.init_DataUtil.load_Z()) {
+               if (!this.init_t_DataUtil.init() && this.init_DataUtil.isSettled()) {
                   if (!mc.player.getMainHandItem().is(Items.ENDER_EYE)) {
                      return this.init(AiOperation.Status.FAILED, "No Eye held for insertion");
                   }
 
-                  BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
+                  BlockHitResult ray = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (ray == null || !ray.getBlockPos().equals(frame)) {
                      this.init_BlockHitResult = null;
                      return ++this.load >= 4
                         ? this.init(AiOperation.Status.FAILED, "Frame insertion ray is obstructed")
-                        : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Aiming at another face of the frame", new JsonObject());
+                        : AiGameOperations.result(AiOperation.Status.RUNNING, "Aiming at another face of the frame", new JsonObject());
                   }
 
-                  this.init_t_DataUtil.init(AiCraft.init_I("minecraft:ender_eye"), AiServerEvidence.init_J_BlockPos(frame), AiServerEvidence.init_J());
+                  this.init_t_DataUtil.init(AiCraft.countItem("minecraft:ender_eye"), AiServerEvidence.blockRevision(frame), AiServerEvidence.inventoryRevision());
                   mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, ray);
                }
 
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   AiOperation.Status.RUNNING, this.init_t_DataUtil.init() ? "Waiting for frame eye" : "Aiming at frame", new JsonObject()
                );
             } else {
@@ -219,13 +219,13 @@ final class AiEndPortal {
          }
 
          AiOperation.Result init(AiOperation.Status status, String message) {
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
             return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
                this.init_t_DataUtil.load(),
-               AiGameOperations.init_AiOperation_Result(
+               AiGameOperations.result(
                   status,
                   message,
-                  AiJson.init_JsonObject_ObjArr("frame", frame.toShortString(), "sent", this.init_t_DataUtil.init(), "acknowledged", !this.init_t_DataUtil.load())
+                  AiJson.objectOf("frame", frame.toShortString(), "sent", this.init_t_DataUtil.init(), "acknowledged", !this.init_t_DataUtil.load())
                )
             );
          }
@@ -242,7 +242,7 @@ final class AiEndPortal {
 
          @Override
          public void cancel() {
-            this.init_DataUtil.init_V();
+            this.init_DataUtil.clear();
          }
       };
    }

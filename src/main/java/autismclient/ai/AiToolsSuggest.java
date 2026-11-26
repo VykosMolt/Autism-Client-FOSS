@@ -412,7 +412,7 @@ public final class AiToolsSuggest {
 
       JsonObject schema;
       try {
-         schema = AiJson.init_JsonObject_Str(entry.contract().inputSchema());
+         schema = AiJson.parseObject(entry.contract().inputSchema());
       } catch (Exception e) {
          return List.of();
       }
@@ -432,7 +432,7 @@ public final class AiToolsSuggest {
                for (JsonElement value : property.getAsJsonArray("enum")) {
                   out.add(key + "=" + value.getAsString());
                }
-            } else if ("boolean".equals(AiJson.init_Str_JsonObject(property, "type", ""))) {
+            } else if ("boolean".equals(AiJson.getString(property, "type", ""))) {
                out.add(key + "=true");
                out.add(key + "=false");
             }

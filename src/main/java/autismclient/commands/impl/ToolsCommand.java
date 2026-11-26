@@ -245,7 +245,7 @@ public final class ToolsCommand extends Command {
 
       JsonObject schema;
       try {
-         schema = AiJson.init_JsonObject_Str(entry.contract().inputSchema());
+         schema = AiJson.parseObject(entry.contract().inputSchema());
       } catch (Exception e) {
          init_V_Str("§7(no argument schema)");
          return 1;
@@ -260,7 +260,7 @@ public final class ToolsCommand extends Command {
          }
 
          for (Entry<String, JsonElement> property : schema.getAsJsonObject("properties").entrySet()) {
-            String type = AiJson.init_Str_JsonObject(property.getValue().getAsJsonObject(), "type", "any");
+            String type = AiJson.getString(property.getValue().getAsJsonObject(), "type", "any");
             init_V_Str("§8- §f" + property.getKey() + " §7" + type + (required.contains(property.getKey()) ? " §c(required)" : ""));
          }
 
@@ -411,14 +411,14 @@ public final class ToolsCommand extends Command {
             }
 
             try {
-               AiJson.init_JsonObject_Str(content);
+               AiJson.parseObject(content);
             } catch (Exception e) {
                return this.sync("Blueprint is not a JSON object: " + e.getMessage());
             }
 
-            return this.init_I_Str_JsonObject("game:build", AiJson.init_JsonObject_ObjArr("blueprint", content));
+            return this.init_I_Str_JsonObject("game:build", AiJson.objectOf("blueprint", content));
          } else {
-            return this.init_I_Str_JsonObject("game:build", AiJson.init_JsonObject_ObjArr("schematic", name));
+            return this.init_I_Str_JsonObject("game:build", AiJson.objectOf("schematic", name));
          }
       } else {
          String content = name;
@@ -427,12 +427,12 @@ public final class ToolsCommand extends Command {
          }
 
          try {
-            AiJson.init_JsonObject_Str(content);
+            AiJson.parseObject(content);
          } catch (Exception e) {
             return this.sync("Blueprint is not a JSON object: " + e.getMessage());
          }
 
-         return this.init_I_Str_JsonObject("game:build", AiJson.init_JsonObject_ObjArr("blueprint", content));
+         return this.init_I_Str_JsonObject("game:build", AiJson.objectOf("blueprint", content));
       }
    }
 

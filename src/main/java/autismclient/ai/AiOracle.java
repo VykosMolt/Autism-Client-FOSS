@@ -103,8 +103,8 @@ final class AiOracle {
    }
 
    static AiOperation init_AiOperation_JsonObject(JsonObject args) {
-      AiOracle.Inner_ConfigStore q = init_aG_ConfigStore_Str(AiJson.init_Str_JsonObject(args, "query", ""));
-      int cap = init_I_I(AiJson.init_I_JsonObject(args, "cap", 8));
+      AiOracle.Inner_ConfigStore q = init_aG_ConfigStore_Str(AiJson.getString(args, "query", ""));
+      int cap = init_I_I(AiJson.getInt(args, "cap", 8));
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          if (!init_Z() || q.subject() != AiOracle.Inner_SyncManager.ORE && q.subject() != AiOracle.Inner_SyncManager.STRUCTURE) {
@@ -123,13 +123,13 @@ final class AiOracle {
                   var10000 = init_AiOperation_I(cap);
                   break;
                case ORE:
-                  var10000 = init(q.ore(), cap, AiJson.init_Str_JsonObject(args, "seed", ""));
+                  var10000 = init(q.ore(), cap, AiJson.getString(args, "seed", ""));
                   break;
                case BLOCK:
                   var10000 = init(q.blockId(), init_Predicate_Str(q.blockId()), cap, init_I_JsonObject(args));
                   break;
                case STRUCTURE:
-                  var10000 = init(q.structure(), cap, AiJson.init_Str_JsonObject(args, "seed", ""));
+                  var10000 = init(q.structure(), cap, AiJson.getString(args, "seed", ""));
                   break;
                default:
                   throw new MatchException(null, null);
@@ -372,7 +372,7 @@ final class AiOracle {
    }
 
    private static int init_I_JsonObject(JsonObject args) {
-      return load(AiJson.init_I_JsonObject(args, "radiusChunks", autismclient.modules.am.init_I()));
+      return load(AiJson.getInt(args, "radiusChunks", autismclient.modules.am.init_I()));
    }
 
    private static Predicate<BlockState> init_Predicate_Str(String blockId) {
@@ -468,7 +468,7 @@ final class AiOracle {
                for (int i = 0; i < n; i++) {
                   BlockPos p = BlockPos.of(outPos[i]);
                   positions.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "x",
                         p.getX(),
                         "y",
@@ -493,7 +493,7 @@ final class AiOracle {
                      + " position(s), nearest-first; predicted from world seed simulation (seed from "
                      + seed.source()
                      + "); confirm by observation",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "query",
                      kind.init_Str,
                      "predicted",
@@ -518,19 +518,19 @@ final class AiOracle {
          }
 
          AiOperation.Result init(String message) {
-            return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, message, this.init());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init());
          }
 
          JsonObject init() {
             autismclient.util.oresim.OreSimEngine.Inner_ConfigStore p = autismclient.util.oresim.OreSimEngine.init_StreamUtil_ConfigS();
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "engineStatus", autismclient.util.oresim.OreSimEngine.init_StreamUtil_BufferH().name(), "simulatedChunks", p.init_I(), "totalChunks", p.load()
             );
          }
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, data);
+            return AiGameOperations.result(status, message, data);
          }
 
          @Override
@@ -552,10 +552,10 @@ final class AiOracle {
          throw new IllegalArgumentException("Structure locating supports only the Overworld, Nether and End");
       } else {
          return !spec.dimensions().contains(dim)
-            ? AiGameOperations.init_AiOperation(
+            ? AiGameOperations.immediate(
                AiOperation.Status.FAILED,
                spec.label() + " does not generate in the " + dim + " (generates in: " + String.join(", ", spec.dimensions()) + ")",
-               AiJson.init_JsonObject_ObjArr("query", spec.label(), "dimension", dim, "predicted", true, "observed", false)
+               AiJson.objectOf("query", spec.label(), "dimension", dim, "predicted", true, "observed", false)
             )
             : new AiOperation() {
                final long init_J = System.nanoTime() + 60000000000L;
@@ -575,9 +575,9 @@ final class AiOracle {
                      if (!this.init_CompletableFuture.isDone()) {
                         if (System.nanoTime() > this.init_J) {
                            this.cancel();
-                           return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "Structure location did not finish within 60s", this.init());
+                           return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Structure location did not finish within 60s", this.init());
                         } else {
-                           return AiGameOperations.init_AiOperation_Result(
+                           return AiGameOperations.result(
                               AiOperation.Status.RUNNING, "Locating " + spec.label() + " from world seed simulation (off-thread vanilla worldgen)", this.init()
                            );
                         }
@@ -597,7 +597,7 @@ final class AiOracle {
                            return this.init(
                               AiOperation.Status.FAILED,
                               outcome.error(),
-                              AiJson.init_JsonObject_ObjArr("query", spec.label(), "dimension", dim, "predicted", true, "observed", false)
+                              AiJson.objectOf("query", spec.label(), "dimension", dim, "predicted", true, "observed", false)
                            );
                         }
 
@@ -605,7 +605,7 @@ final class AiOracle {
 
                         for (AiOracle.Inner_JsonUtil hit : outcome.hits()) {
                            positions.add(
-                              AiJson.init_JsonObject_ObjArr(
+                              AiJson.objectOf(
                                  "x",
                                  hit.x(),
                                  "y",
@@ -630,7 +630,7 @@ final class AiOracle {
                               + " position(s), nearest-first; predicted from world seed simulation (seed from "
                               + seed.source()
                               + "); confirm by observation",
-                           AiJson.init_JsonObject_ObjArr(
+                           AiJson.objectOf(
                               "query",
                               spec.label(),
                               "dimension",
@@ -650,17 +650,17 @@ final class AiOracle {
                      }
                   } else {
                      this.cancel();
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Oracle query cancelled", new JsonObject());
+                     return AiGameOperations.result(AiOperation.Status.CANCELLED, "Oracle query cancelled", new JsonObject());
                   }
                }
 
                JsonObject init() {
-                  return AiJson.init_JsonObject_ObjArr("query", spec.label(), "dimension", dim, "worker", "ai-oracle-structures");
+                  return AiJson.objectOf("query", spec.label(), "dimension", dim, "worker", "ai-oracle-structures");
                }
 
                AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
                   this.cancel();
-                  return AiGameOperations.init_AiOperation_Result(status, message, data);
+                  return AiGameOperations.result(status, message, data);
                }
 
                @Override
@@ -849,16 +849,16 @@ final class AiOracle {
          throw new IllegalArgumentException("No seed knowledge in a seed-free run: find the biome by exploration");
       }
 
-      final String biomeId = init_Str_Str_Collection(AiJson.init_Str_JsonObject(args, "biome", ""), init_List_Minecraft(mc));
-      final int radiusBlocks = Math.max(64, Math.min(16384, AiJson.init_I_JsonObject(args, "radiusBlocks", 4096)));
-      final AiOracle.Inner_NetHelper seed = init_aG_NetHelper_Str_aG_TaskQueue(AiJson.init_Str_JsonObject(args, "seed", ""), init_aG_TaskQueue_Minecraft(mc));
-      ResourceKey<Level> dimension = args.has("dimension") ? init_ResourceKey_Str(AiJson.init_Str_JsonObject(args, "dimension", "")) : mc.level.dimension();
+      final String biomeId = init_Str_Str_Collection(AiJson.getString(args, "biome", ""), init_List_Minecraft(mc));
+      final int radiusBlocks = Math.max(64, Math.min(16384, AiJson.getInt(args, "radiusBlocks", 4096)));
+      final AiOracle.Inner_NetHelper seed = init_aG_NetHelper_Str_aG_TaskQueue(AiJson.getString(args, "seed", ""), init_aG_TaskQueue_Minecraft(mc));
+      ResourceKey<Level> dimension = args.has("dimension") ? init_ResourceKey_Str(AiJson.getString(args, "dimension", "")) : mc.level.dimension();
       if (dimension == null) {
          throw new IllegalArgumentException("dimension must be overworld, nether or end");
       }
 
       final ResourceKey<Level> targetDimension = dimension;
-      final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)));
+      final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
       return new AiOperation() {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
          final AtomicBoolean init_AtomicBoolean = new AtomicBoolean();
@@ -878,9 +878,9 @@ final class AiOracle {
                if (!this.init_CompletableFuture.isDone()) {
                   if (System.nanoTime() > this.init_J) {
                      this.cancel();
-                     return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "Biome location did not finish within " + timeoutSeconds + "s", this.init());
+                     return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Biome location did not finish within " + timeoutSeconds + "s", this.init());
                   } else {
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.RUNNING,
                         "Sampling vanilla biome generation for " + biomeId + " (off-thread, seed from " + seed.source() + ")",
                         this.init()
@@ -899,7 +899,7 @@ final class AiOracle {
                   } else if (outcome.error() != null) {
                      this.cancel();
                      return AiOperation.Result.failed(
-                        AiFailure.UNREACHABLE, outcome.error(), AiJson.init_JsonObject_ObjArr("biome", biomeId, "predicted", true, "observed", false).toString()
+                        AiFailure.UNREACHABLE, outcome.error(), AiJson.objectOf("biome", biomeId, "predicted", true, "observed", false).toString()
                      );
                   } else {
                      AiOracle.Inner_DataUtil hit = outcome.hit();
@@ -918,7 +918,7 @@ final class AiOracle {
                            + " blocks); predicted from world seed simulation (seed from "
                            + seed.source()
                            + "); confirm by observation",
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "biome",
                            hit.biomeId(),
                            "predicted",
@@ -930,7 +930,7 @@ final class AiOracle {
                            "note",
                            "predicted from world seed simulation; confirm by observation",
                            "position",
-                           AiJson.init_JsonObject_ObjArr("x", hit.x(), "y", hit.y(), "z", hit.z()),
+                           AiJson.objectOf("x", hit.x(), "y", hit.y(), "z", hit.z()),
                            "distance",
                            AiOracle.init_D_D(Math.sqrt(hit.distanceSq()))
                         )
@@ -939,17 +939,17 @@ final class AiOracle {
                }
             } else {
                this.cancel();
-               return AiGameOperations.init_AiOperation_Result(AiOperation.Status.CANCELLED, "Biome location cancelled", new JsonObject());
+               return AiGameOperations.result(AiOperation.Status.CANCELLED, "Biome location cancelled", new JsonObject());
             }
          }
 
          JsonObject init() {
-            return AiJson.init_JsonObject_ObjArr("biome", biomeId, "worker", "ai-oracle-structures");
+            return AiJson.objectOf("biome", biomeId, "worker", "ai-oracle-structures");
          }
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, data);
+            return AiGameOperations.result(status, message, data);
          }
 
          @Override
@@ -1149,7 +1149,7 @@ final class AiOracle {
                }
 
                if (this.init_I < this.load.size() && this.init_List.size() < 4096) {
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      AiOperation.Status.RUNNING, "Scanning loaded chunks for " + label + " (" + this.init_I + "/" + this.load.size() + ")", this.init()
                   );
                }
@@ -1160,7 +1160,7 @@ final class AiOracle {
                for (int i = 0; i < ordered.size() && i < cap; i++) {
                   AiOracle.Inner_CachePool f = ordered.get(i);
                   positions.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "x", f.x(), "y", f.y(), "z", f.z(), "distance", AiOracle.init_D_D(Math.sqrt(f.distanceSq())), "block", label, "observed", true
                      )
                   );
@@ -1169,7 +1169,7 @@ final class AiOracle {
                return this.init(
                   AiOperation.Status.SUCCEEDED,
                   positions.size() + " observed " + label + " position(s) in loaded terrain, nearest-first",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "query",
                      label,
                      "observed",
@@ -1190,14 +1190,14 @@ final class AiOracle {
          }
 
          JsonObject init() {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "query", label, "scannedChunks", this.init_I, "totalChunks", this.load == null ? 0 : this.load.size(), "matches", this.init_List.size()
             );
          }
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, data);
+            return AiGameOperations.result(status, message, data);
          }
 
          @Override
@@ -1274,7 +1274,7 @@ final class AiOracle {
                }
 
                if (this.init_I < this.load.size()) {
-                  return AiGameOperations.init_AiOperation_Result(
+                  return AiGameOperations.result(
                      AiOperation.Status.RUNNING, "Scanning loaded chunks for villages (" + this.init_I + "/" + this.load.size() + ")", this.init()
                   );
                }
@@ -1284,12 +1284,12 @@ final class AiOracle {
 
                for (int i = 0; i < ordered.size() && i < cap; i++) {
                   AiOracle.Inner_CachePool f = ordered.get(i);
-                  centers.add(AiJson.init_JsonObject_ObjArr("x", f.x(), "z", f.z(), "distance", AiOracle.init_D_D(Math.sqrt(f.distanceSq())), "observed", true));
+                  centers.add(AiJson.objectOf("x", f.x(), "z", f.z(), "distance", AiOracle.init_D_D(Math.sqrt(f.distanceSq())), "observed", true));
                }
 
                JsonObject nearest = ordered.isEmpty()
                   ? null
-                  : AiJson.init_JsonObject_ObjArr(
+                  : AiJson.objectOf(
                      "x", ordered.get(0).x(), "z", ordered.get(0).z(), "distance", AiOracle.init_D_D(Math.sqrt(ordered.get(0).distanceSq())), "observed", true
                   );
                return this.init(
@@ -1304,7 +1304,7 @@ final class AiOracle {
                         + " ("
                         + AiOracle.init_D_D(Math.sqrt(ordered.get(0).distanceSq()))
                         + " blocks); game:find_village verifies village evidence clusters",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "query",
                      "village",
                      "observed",
@@ -1329,14 +1329,14 @@ final class AiOracle {
          }
 
          JsonObject init() {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "query", "village", "scannedChunks", this.init_I, "totalChunks", this.load == null ? 0 : this.load.size(), "matches", this.init_List.size()
             );
          }
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, data);
+            return AiGameOperations.result(status, message, data);
          }
 
          @Override
@@ -1379,7 +1379,7 @@ final class AiOracle {
                for (int i = 0; i < close.size() && i < cap; i++) {
                   LivingEntity e = close.get(i);
                   threats.add(
-                     AiJson.init_JsonObject_ObjArr(
+                     AiJson.objectOf(
                         "id",
                         e.getId(),
                         "type",
@@ -1401,7 +1401,7 @@ final class AiOracle {
                return this.init(
                   AiOperation.Status.SUCCEEDED,
                   threats.size() + " observed hostile mob(s) within 24 blocks",
-                  AiJson.init_JsonObject_ObjArr(
+                  AiJson.objectOf(
                      "query", "threats", "observed", true, "predicted", false, "radius", 24.0, "matches", close.size(), "threats", threats
                   )
                );
@@ -1412,7 +1412,7 @@ final class AiOracle {
 
          AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
             this.cancel();
-            return AiGameOperations.init_AiOperation_Result(status, message, data);
+            return AiGameOperations.result(status, message, data);
          }
 
          @Override

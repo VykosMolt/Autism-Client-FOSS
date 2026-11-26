@@ -77,7 +77,7 @@ final class AiStrongholdSearch {
                if (this.init_AiOperation != null) {
                   AiOperation.Result result = this.init_AiOperation.tick();
                   if (!result.terminal()) {
-                     return AiGameOperations.init_AiOperation_Result(
+                     return AiGameOperations.result(
                         AiOperation.Status.RUNNING, "Exploring supported structure terrain: " + result.message(), this.init_JsonObject_54()
                      );
                   }
@@ -87,7 +87,7 @@ final class AiStrongholdSearch {
                   this.init_AiOperation = null;
                   this.init_JsonArray
                      .add(
-                        AiJson.init_JsonObject_ObjArr(
+                        AiJson.objectOf(
                            "from",
                            this.load_BlockPos.toShortString(),
                            "toward",
@@ -97,7 +97,7 @@ final class AiStrongholdSearch {
                            "status",
                            result.status().name(),
                            "evidence",
-                           AiRunResources.load_JsonObject(result.dataJson())
+                           AiRunResources.compactEvidenceJson(result.dataJson())
                         )
                      );
                   if (result.status() == AiOperation.Status.UNCERTAIN || pending) {
@@ -146,7 +146,7 @@ final class AiStrongholdSearch {
                   null,
                   AiGoto.GotoOptions.DEFAULT
                );
-               return AiGameOperations.init_AiOperation_Result(
+               return AiGameOperations.result(
                   AiOperation.Status.RUNNING, "Following observed stronghold frontier " + this.init_BlockPos.toShortString(), this.init_JsonObject_54()
                );
             } else {
@@ -169,7 +169,7 @@ final class AiStrongholdSearch {
 
          boolean init_Z_8(BlockPos feet) {
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-2, -2, -2), feet.offset(2, 1, 2))) {
-               if (AiTerrain.init(mc.level, p) && AiStrongholdSearch.init(mc.level.getBlockState(p))) {
+               if (AiTerrain.isLoaded(mc.level, p) && AiStrongholdSearch.init(mc.level.getBlockState(p))) {
                   return true;
                }
             }
@@ -220,7 +220,7 @@ final class AiStrongholdSearch {
          }
 
          boolean load_Z_6(BlockPos at) {
-            if (AiTerrain.init(mc.level, at) && AiTerrain.init(mc.level, at.above()) && AiTerrain.init(mc.level, at.below())) {
+            if (AiTerrain.isLoaded(mc.level, at) && AiTerrain.isLoaded(mc.level, at.above()) && AiTerrain.isLoaded(mc.level, at.below())) {
                for (BlockPos cell : List.of(at, at.above())) {
                   BlockState state = mc.level.getBlockState(cell);
                   if (!state.getCollisionShape(mc.level, cell).isEmpty() || !state.getFluidState().isEmpty() || state.getBlock() instanceof BaseFireBlock) {
@@ -235,7 +235,7 @@ final class AiStrongholdSearch {
          }
 
          JsonObject init_JsonObject_54() {
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "leadIsEstimate",
                true,
                "leadX",
@@ -261,7 +261,7 @@ final class AiStrongholdSearch {
 
          AiOperation.Result init(AiOperation.Status status, String message) {
             AiOperation.Result result = AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(
-               this.requiresReconciliationAfterEmergency(), AiGameOperations.init_AiOperation_Result(status, message, this.init_JsonObject_54())
+               this.requiresReconciliationAfterEmergency(), AiGameOperations.result(status, message, this.init_JsonObject_54())
             );
             this.cancel();
             return result;

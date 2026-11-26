@@ -53,8 +53,8 @@ final class AiWeb {
          }
 
          byte[] bytes = response.body();
-         JsonObject data = AiJson.init_JsonObject_Str(new String(bytes, StandardCharsets.UTF_8));
-         return AiJson.init_JsonObject_ObjArr(
+         JsonObject data = AiJson.parseObject(new String(bytes, StandardCharsets.UTF_8));
+         return AiJson.objectOf(
             "source",
             "Brave Search",
             "retrievedAt",
@@ -94,7 +94,7 @@ final class AiWeb {
                   .replaceAll("\\s+", " ");
             }
 
-            return AiJson.init_JsonObject_ObjArr(
+            return AiJson.objectOf(
                "url",
                uri.toString(),
                "retrievedAt",
