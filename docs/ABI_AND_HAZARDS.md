@@ -87,9 +87,12 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 - Renaming an enum constant in source is **only** permitted when renaming it to its exact string in `mappings/enum-names.tsv` AND syncing its `F` row in `mappings/disambig.tsv`.
 - `MacroActionType.MULTI` and inert `util/macro/MultiAction.java` remain intact for readable legacy Multi blocks (`tools/checks/LegacyMultiCheck.java`).
 
-## 6. Java `record` Component Names
+## 6. Java `record` Component Names & Member-Rename Hazards
 - `mappings/record-names.tsv` (`1,124` entries) is validated strictly by `ReverseRemapJar.restoreRecordNames` (throws `IllegalStateException` on component count mismatch).
-- Never alter record component order/count during pure deobfuscation; `record-names.tsv` is keyed by `origName`, so in-place record class renames only update `mappings/disambig.tsv` (update `record-names.tsv` only if component names themselves change).
+- Never alter record component order/count during pure deobfuscation; `record-names.tsv` is keyed by `origName` and restores the exact original runtime `ObjectMethods.bootstrap` component-name string on packaging, so source-level record class (`C`/`N`) and record component (`R`) renames only sync `mappings/disambig.tsv` (both backing `F` and accessor `M` rows) while leaving `record-names.tsv` unchanged.
+- **Silent Member-Rename Traps (permanently blocked in `AstBatchRenamer`):**
+  - *Arity-colliding overload merges:* Fernflower often omits widening casts (e.g., `int -> float`) when disambiguated overloads had distinct names. Merging two previously distinct same-arity methods onto one name can silently redirect an `int` wrapper into infinite self-recursion (`StackOverflowError`). `AstBatchRenamer` refuses any arity-colliding merge of distinct original methods.
+  - *Lexical shadowing of unqualified references:* Renaming a field or method to match an in-scope local variable, parameter, or enclosing/inner member silently turns field writes (`PUTSTATIC`/`PUTFIELD`) into no-op local stores (`ISTORE`) or hijacks unqualified calls. `AstBatchRenamer` validates every unqualified identifier edit against `Trees.getScope` and refuses any shadowed target.
 
 ## 7. Internal Reflection Lock (`MacroAction` Public Fields)
 - `autismclient.util.macro.MacroAction` reflects `"listenDuringPreviousAction"`.
