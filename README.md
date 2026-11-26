@@ -17,6 +17,8 @@ The goal, obviously, is to end up with something much shorter, cleaner and actua
 
 Install **Java 25**. The Gradle wrapper downloads the verified Minecraft `26.3` client and build dependencies. GitHub Actions runs compilation and the regression checks on pushes and pull requests targeting `master` or `dev`.
 
+This branch requires Fabric Loader **0.19.5** or later and Fabric API **0.165.0+26.3** or later. Compilation and the Mixin audits use these minimum versions.
+
 ```bash
 # Compile and run the regression checks
 ./gradlew compileJava
