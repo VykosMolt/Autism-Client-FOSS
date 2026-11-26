@@ -11,7 +11,7 @@ AUTISM Client renders its custom menus, editors, and HUD screens through a virtu
 | `autismclient.gui.d` | 13 / 30 | 18,714 | `autismclient.gui.screens` | Full-screen GUI screens (`17` named `*Screen` + base/dynamic helpers) |
 | `autismclient.gui.e` | 10 / 10 | 2,543 | `autismclient.gui.assets` | Custom UI icons & dynamic texture prewarmers |
 | `autismclient.gui.f` (+ `.a/.b/.c/.d`) | 107 / 107 | 17,531 | `autismclient.gui.ui.*` | Widget, theme, typography, scrollbar, dropdown, and layout toolkit |
-| `autismclient.gui.macro.editor` + `.a` | 7 / 11 | 19,672 | `autismclient.gui.macro.editor` | `ActionEditorOverlay`, `ActionFieldSchema`, field registry, live capture |
+| `autismclient.gui.macro.editor` + `.a` | 6 / 11 | 19,672 | `autismclient.gui.macro.editor` | `ActionEditorOverlay`, `ActionFieldRegistry`, `ActionFieldSchema`, `FieldDef`, `RaceStepSelectorOverlay`, live capture |
 
 ## Frozen & ABI-Pinned GUI Symbols (see [ABI_AND_HAZARDS.md](../ABI_AND_HAZARDS.md))
 - **Hard-frozen files:** `gui/a/DataUtil.java`, `gui/d/JsonUtil.java` (never inspected or modified).

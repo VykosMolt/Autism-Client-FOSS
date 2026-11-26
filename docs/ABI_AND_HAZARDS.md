@@ -28,7 +28,7 @@ Every rule below MUST be respected by all deobfuscation tooling and manual refac
   - `autismclient/b/DataUtil` (`AddonManager`; referenced by `modules/al.java`)
   - `autismclient/util/g/PkgCls_a` (`PacedTpController`; referenced by `modules/al.java`)
   - `autismclient/util/mm/IoWorker` (`ServerTimeAnchor`; referenced by `autismclient/a/*`)
-  - `autismclient/util/mm/StateCache` (JWT public-key verifier calling `autismclient/e/DataUtil`)
+  - `autismclient/util/mm/StateCache` (conservatively frozen: JWT public-key verifier tightly coupled to encrypted string helpers in `autismclient/e/DataUtil`)
   - `autismclient/util/mm/a/CachePool` (`LocalIdentityStore`; referenced by `autismclient/a/CachePool` & `guardian/impl/LoginProof`)
   - `autismclient/util/mm/a/DataUtil` (`LocalSecretSealer`; referenced by `autismclient/a/StreamUtil`)
 - **Compile-time frozen enum constants** (directly referenced by untouched `.java` files; verified by `:compileJava`):
@@ -67,12 +67,13 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 
 ## 7. Internal Reflection Lock (`MacroAction` Public Fields)
 - `autismclient.util.macro.MacroAction` reflects `"listenDuringPreviousAction"`.
-- `autismclient.util.macro.d` reflects `action.getClass().getField(binding.getKey())` for dynamic macro variable bindings, matching `ActionFieldSchema` keys in `gui/macro/editor/DataUtil.java`.
+- `autismclient.util.macro.d` reflects `action.getClass().getField(binding.getKey())` for dynamic macro variable bindings, matching `ActionFieldSchema` keys in `gui/macro/editor/ActionFieldRegistry.java`.
 - **Rule:** Never rename public fields on any `MacroAction` subclass (they are already readable schema keys).
 
 ## 8. String-Referenced Metadata & Checks
 Keep these files in lockstep with any class/package rename:
-- `src/main/resources/fabric.mod.json` (`AutismClientMod`, `AutismModMenuIntegration`)
+- `src/main/resources/fabric.mod.json` (`AutismClientMod`, `AutismModMenuIntegration`, `"accessWidener": "autism.accesswidener"`)
+- `src/main/resources/autism.accesswidener` (`accessWidener v2 official` for MC 26.3 runtime)
 - `src/main/resources/autism.mixins.json` (`autismclient.mixin.*`, `AutismMixinPlugin`)
 - `src/main/resources/META-INF/services/autismclient.util.mm.guardian.Guardian` (frozen)
 - `src/main/resources/assets/autismclient/ai/source-contracts.json`

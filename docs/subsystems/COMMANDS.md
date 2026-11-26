@@ -1,33 +1,33 @@
 # Commands Subsystem (`autismclient.commands.*`)
 
-AUTISM Client implements client-side chat commands using Mojang's **Brigadier** command parser. Phase 2 deobfuscation renamed all `40` classes in `autismclient.commands.b` (`39` built-in `*Command` subclasses + `SlotClickCommandHelper`) to match upstream `source-contracts.json` names (`0/40` obfuscated remaining in `commands.b`).
+AUTISM Client implements client-side chat commands using Mojang's **Brigadier** command parser. Phase 2 renamed all `40` classes in `autismclient.commands.b` (`39` built-in `*Command` subclasses + `SlotClickCommandHelper`), and Phase 3A renamed the remaining `3` core classes in `autismclient.commands` and all `8` custom Brigadier argument types in `autismclient.commands.a` (`0/53` obfuscated remaining across the entire commands subsystem).
 
 ## Package Layout
 
 | Current Package | Files | Status | Planned Target | Role |
 |---|---:|---|---|---|
-| `autismclient.commands` | 5 | 3 obf / 5 tot | `autismclient.commands` | Core base (`Command`), source (`AutismCommandSource`), dispatcher/registry (`DataUtil`, `StreamUtil`, `CachePool`) |
-| `autismclient.commands.a` | 8 | 8 obf / 8 tot | `autismclient.commands.arguments` | Custom Brigadier `ArgumentType` implementations |
+| `autismclient.commands` | 5 | **0 obf / 5 tot** | `autismclient.commands` | Core base (`Command`), source (`AutismCommandSource`), dispatcher/registry (`CommandManager`), completion helpers (`CommandSuggestions`, `RegistrySuggestions`) |
+| `autismclient.commands.a` | 8 | **0 obf / 8 tot** | `autismclient.commands.arguments` | All 8 custom Brigadier `*ArgumentType` implementations |
 | `autismclient.commands.b` | 40 | **0 obf / 40 tot** | `autismclient.commands.impl` | All 39 built-in commands + `SlotClickCommandHelper` |
 
 ## Core Classes (`autismclient.commands`)
 - `Command` (`41` LOC) — abstract base class for all client commands (`super(name, description, aliases...)`).
 - `AutismCommandSource` (`32` LOC) — Brigadier command source carrying client context and feedback helpers.
-- `DataUtil` (`470` LOC) — command registry, prefix handling, and Brigadier `CommandDispatcher<AutismCommandSource>` setup.
-- `StreamUtil` (`258` LOC) — command argument suggestion / completion utilities.
-- `CachePool` (`204` LOC) — command keybind store and dispatcher (`bind` / `binds`).
+- `CommandManager` (`470` LOC) — command registry, prefix handling, and Brigadier `CommandDispatcher<AutismCommandSource>` setup.
+- `CommandSuggestions` (`258` LOC) — Brigadier tab-completion providers for toggles, numeric presets, waypoints, prefixes, blocks, entities, and items.
+- `RegistrySuggestions` (`204` LOC) — fuzzy item/block registry ID resolver and player-inventory item completion helper.
 
 ## Custom Argument Types (`autismclient.commands.a`)
 | Class | Type Parameter | Parses |
 |---|---|---|
-| `BufferHelper` | `Integer` | Inventory / container / armor slot indices (`hotbar`, `gui`, `inventory`, `helmet`..`boots`) |
-| `CachePool` | `String` | Command / macro / player names with completions |
-| `ConfigStore` | `String` | Module / HUD identifiers (`all`, `hud`, module IDs) |
-| `DataUtil` | `String` | Registry item or block IDs |
-| `JsonUtil` | `String` | Quoted or greedy text tokens |
-| `StateCache` | `String` | Named targets / identifiers |
-| `StreamUtil` | `Integer` | GLFW key names / codes (`NONE`, `KEY_*`, `GLFW_KEY_*`) |
-| `SyncManager` | `Integer` | XCarry slot names (`craft1`..`craft5`, `result`, armor/offhand/cursor) |
+| `SlotArgumentType` | `Integer` | Inventory / container / armor slot indices (`hotbar`, `gui`, `inventory`, `helmet`..`boots`) |
+| `MacroNameArgumentType` | `String` | Saved macro names with tab-completions |
+| `ModuleArgumentType` | `String` | Module / HUD identifiers (`all`, `hud`, module IDs) |
+| `ItemOrBlockIdArgumentType` | `String` | Registry item or block IDs |
+| `PacketNameArgumentType` | `String` | C2S packet class names (for `send`) |
+| `ContainerItemNameArgumentType` | `String` | Visible item names inside an open container (for `click-item`) |
+| `KeyBindArgumentType` | `Integer` | GLFW key names / codes (`NONE`, `KEY_*`, `GLFW_KEY_*`) |
+| `XCarrySlotArgumentType` | `Integer` | XCarry slot names (`craft1`..`craft5`, `result`, armor/offhand/cursor) |
 
 ## Built-In Commands (`autismclient.commands.b`)
 

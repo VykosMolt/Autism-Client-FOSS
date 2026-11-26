@@ -48,25 +48,25 @@ AUTISM_TOOL_ENV_PREPARED=1 SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh
    - `AutismClientMod` (`ClientModInitializer`): initializes config/stores, AutismProtector (`autismclient.g`), modules, commands, overlays, resource reload prewarmers, and client tick hooks.
    - `AutismClientAddon`: shared `LOG`, data folder (`config/autism`), and mod constants.
 2. **Mixin Layer (`autismclient.mixin.*`, 252 files)**
-   - Configured by `src/main/resources/autism.mixins.json` (`251` client mixins + `AutismMixinPlugin`) and `autism.accesswidener`.
-   - Sub-layers: core MC hooks (`175`), `accessor.*` (`36`), `security.*` (`34` anti-fingerprint mixins), `lithium.*` (`2`), `indigo.*` (`1`), `via.*` (`3`), `guardian.*` (`1`), plus duck interfaces in `autismclient.c`.
+   - Configured by `src/main/resources/autism.mixins.json` (`251` client mixins + `AutismMixinPlugin`) and `src/main/resources/autism.accesswidener` (`accessWidener v2 official`, wired in `fabric.mod.json`).
+   - Sub-layers: `174` core MC hook mixins (+ `AutismMixinPlugin`), `accessor.*` (`36`), `security.*` (`34` anti-fingerprint mixins), `lithium.*` (`2`), `indigo.*` (`1`), `via.*` (`3`), `guardian.*` (`1`), plus duck interfaces in `autismclient.c` (`DisconnectedScreenDuck`, `ExternalButtonScreenDuck`).
 3. **Module System (`autismclient.modules`, `autismclient.aggressivepvp`)**
    - `Module` base class & settings schema (`autismclient.api.module.*`).
    - `62` top-level `*Module` subclasses (`KillAuraModule`, `ClutchModule`, `AnchorAuraModule`, `TriggerBotModule`, etc.) + `Module` + `AiCheckpointHud` + ABI-pinned inner module container `modules/f.java` + ESP/render state snapshots (`modules/am.java`) + `aggressivepvp/*` (`18` files).
 4. **Macro Engine & Editor (`autismclient.util.macro`, `autismclient.gui.macro.editor`)**
    - `MacroExecutor` runs sequences of `MacroAction` / `ContextMacroAction` implementations (`103` `StreamGate` enum constants, `102` concrete `*Action.java` subclasses + `MacroAction.java` + `MacroCondition.java` + ABI-pinned `ak.java` + addon actions via `MacroActionRegistry`).
-   - Serialized as NBT (`util/aM.java`), dynamically bound via reflection on public `MacroAction` fields (`util/macro/d.java`), edited in `AutismMacroEditorOverlay` + `ActionEditorOverlay` (`ActionFieldSchema` in `gui/macro/editor/DataUtil.java`).
+   - Serialized as NBT (`util/AutismMacro.java`), dynamically bound via reflection on public `MacroAction` fields (`util/macro/d.java`), edited in `AutismMacroEditorOverlay` + `ActionEditorOverlay` (`ActionFieldSchema` in `gui/macro/editor/ActionFieldRegistry.java`).
 5. **Commands (`autismclient.commands`, `commands.a`, `commands.b`)**
-   - Brigadier-based client command dispatcher (`commands.DataUtil`), `8` custom `ArgumentType`s (`commands.a`), and `39` built-in `*Command` classes + `SlotClickCommandHelper` (`commands.b`).
+   - Brigadier-based client command dispatcher (`CommandManager`, `CommandSuggestions`, `RegistrySuggestions`), `8` custom `*ArgumentType`s (`commands.a`), and `39` built-in `*Command` classes + `SlotClickCommandHelper` (`commands.b`).
 6. **UI, Overlays & Rendering (`autismclient.gui.*`, `autismclient.render`, `util/Autism*Overlay`)**
-   - Custom virtual-scaled (`cA`) screen framework (`gui.d.KeyHolder`), `17` named `*Screen` GUIs (`LoginPasswordScreen`, `JoinMacroScreen`, `ForceOpPreviewScreen`, etc.) + `13` base/dynamic-title helpers in `gui.d`, reusable widget/theme/typography toolkit (`gui.f.*`, `107` files), dynamic texture/GIF loaders (`gui.e`, `util.c`), and `AutismRenderTypes`.
+   - Custom virtual-scaled (`cA`) screen framework (`gui.d.KeyHolder`), `17` named `*Screen` GUIs (`LoginPasswordScreen`, `JoinMacroScreen`, `ForceOpPreviewScreen`, etc.) + `13` base/dynamic-title helpers in `gui.d`, ModMenu settings screen (`compat.AutismSettingsScreen`), reusable widget/theme/typography toolkit (`gui.f.*`, `107` files), dynamic texture/GIF loaders (`gui.e`, `util.c`), and `AutismRenderTypes`.
 7. **AutismProtector Privacy Layer (`autismclient.g`, `mixin.security`)**
-   - Anti-fingerprint isolation for brand/channels, resource packs, known packs, connections, and proxies.
+   - `33` named classes in `autismclient.g` + `34` `mixin.security.*` hooks providing anti-fingerprint isolation for brand/channels, resource packs, HTTP/proxy scoping, known packs, translations/keybinds, and registry compatibility ([PROTECTOR.md](./subsystems/PROTECTOR.md)).
 8. **Utilities & Feature Engines (`autismclient.util.*`)**
-   - Persistence (`AutismConfig`, `AutismWaypoints`, `ServerPluginScanCache`, `util.mm.*` local sealing/DPAPI).
-   - Specialized engines: OreSim (`util.oresim`, `util.j.a`), clicker (`util.a`), custom menus (`util.b`), LAN/macro sync (`util.d`), AutoLogin (`util.f`), travel (`util.g`), villager trading/duping (`util.h`, `util.i`).
+   - Persistence (`AutismConfig`, `AutismWaypoints`, `ServerPluginScanCache`, `util.mm.LocalPrefsStore`, `util.mm.a.WindowsDpapiBridge`, plus ABI-pinned crypto/sealing classes in `util.mm*`).
+   - Specialized engines (all deobfuscated in Phase 3A): OreSim (`util.oresim`, `util.j.a`), clicker (`util.a`), custom menus (`util.b`), GIF (`util.c`), LAN sync (`util.d`), Leaf Dupe (`util.e`), AutoLogin (`util.f`), villager trading/duping (`util.h`, `util.i`), plus ABI-pinned travel (`util.g.PkgCls_a`) and ViaFabricPlus bridge (`compat.a.ViaFabricPlusBridge`).
 9. **Public Addon API (`autismclient.api.*`, `autismclient.b`)**
-   - `54` stable unobfuscated API classes (`3,531` LOC) covering modules, settings, macros, HUD, events, custom menus, and AI extensions, loaded by `autismclient.b.DataUtil`.
+   - `54` stable unobfuscated API classes (`3,531` LOC) covering modules, settings, macros, HUD, events, custom menus, and AI extensions, loaded by ABI-pinned `autismclient.b.DataUtil`.
 10. **AI Assistant (`autismclient.ai`, `ai.a`, `ai.b`, `autism-ai/worker.jar`)**
     - Self-contained autonomous agent, catalog (`AiCatalog`), memory/regions, engine (`ai.a`), schematic printer (`ai.b`), and Rhino JS worker (`worker.jar`). Currently frozen during non-AI deobfuscation.
 
@@ -79,9 +79,11 @@ All source renames are executed mechanically via JDK 25's compiler AST (`com.sun
 - **Completed Phases:**
   - **Phase 1 (`44b8fe9`):** `1,336` non-AI, non-frozen enum constants restored to exact runtime names from `mappings/enum-names.tsv` (bit-for-bit SHA-256 identical packaged JAR).
   - **Phase 2 (`df79bd7`):** `222` Rosetta Stone non-AI classes renamed in place (`40` in `commands/b`, `62` in `modules`, `103` in `util/macro`, `17` in `gui/d`), 100% aligned with `source-contracts.json` (`4,074/4,074` classes + `94/94` resources semantically bytecode-identical).
+  - **Phase 3A (`24eb317`):** `60` self-contained non-AI subsystem classes renamed in place (`c/`, `commands/`, `commands/a/`, `compat/`, `compat/a/`, `util/oresim/`, `util/j/a/`, `util/a..f/`, `util/h/`, `util/i/`, `util/mm*`, plus `AutismMacro` and `ActionFieldRegistry`), alongside 6 newly confirmed ABI pins in `AstBatchRenamer.FROZEN_SYMBOL_EXACT`.
+  - **Phase 3B (`d81bac9`):** All `33/33` AutismProtector classes in `autismclient/g/` renamed in place (`4,074/4,074` classes + `94/94` resources semantically bytecode-identical vs pre-Phase-3 baseline `c19e1c4`).
 
 ## Related Docs
 - [ABI & Silent-Breakage Hazards](./ABI_AND_HAZARDS.md)
 - [59-Package Directory](./PACKAGES.md)
 - [Deobfuscation Ledger](./DEOBFUSCATION_LEDGER.tsv)
-- Subsystem Guides: [Commands](./subsystems/COMMANDS.md) · [Modules](./subsystems/MODULES.md) · [Macros](./subsystems/MACROS.md) · [GUI & Screens](./subsystems/GUI.md)
+- Subsystem Guides: [Commands](./subsystems/COMMANDS.md) · [Modules](./subsystems/MODULES.md) · [Macros](./subsystems/MACROS.md) · [GUI & Screens](./subsystems/GUI.md) · [AutismProtector](./subsystems/PROTECTOR.md)
