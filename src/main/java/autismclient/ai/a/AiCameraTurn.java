@@ -1,6 +1,6 @@
 package autismclient.ai.a;
 
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import java.lang.ref.WeakReference;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -35,7 +35,7 @@ public final class AiCameraTurn {
       }
    }
 
-   public static ce.Inner_DataUtil putAt(LocalPlayer var0) {
+   public static RotationMath.Inner_DataUtil putAt(LocalPlayer var0) {
       AiCameraTurn.Inner_CacheHelper var1 = putAt_SyncPool_CacheHelp;
       if (var1 == null) {
          return null;
@@ -43,7 +43,7 @@ public final class AiCameraTurn {
 
       if (var0 != null && putAt_WeakReference.get() == var0 && var1.putAt(var0.getYRot(), var0.getXRot())) {
          long var2 = System.nanoTime();
-         ce.Inner_DataUtil var4 = var1.putAt_TaskUtil_CacheHelp_J(var2);
+         RotationMath.Inner_DataUtil var4 = var1.putAt_TaskUtil_CacheHelp_J(var2);
          if (var1.putAt_Z_J(var2)) {
             putAt_SyncPool_CacheHelp = null;
             return null;
@@ -120,9 +120,9 @@ public final class AiCameraTurn {
          this.readEx_J = var3;
       }
 
-      ce.Inner_DataUtil putAt_TaskUtil_CacheHelp_J(long var1) {
+      RotationMath.Inner_DataUtil putAt_TaskUtil_CacheHelp_J(long var1) {
          this.putAt_V_J(var1);
-         return new ce.Inner_DataUtil(Mth.wrapDegrees((float)this.closeOf), Math.clamp((float)this.pollAt, -90.0F, 90.0F));
+         return new RotationMath.Inner_DataUtil(Mth.wrapDegrees((float)this.closeOf), Math.clamp((float)this.pollAt, -90.0F, 90.0F));
       }
 
       double putAt() {

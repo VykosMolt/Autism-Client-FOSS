@@ -1837,8 +1837,8 @@ public final class al {
 
       if (showMouse) {
          int leftW = (rowW - gap) / 2;
-         init(context, font, x, nextRowY, leftW, keyH, Integer.toString(G.init_I()), init_FArr[4], idle, active, text, alpha);
-         init(context, font, x + leftW + gap, nextRowY, rowW - leftW - gap, keyH, Integer.toString(G.load_I()), init_FArr[5], idle, active, text, alpha);
+         init(context, font, x, nextRowY, leftW, keyH, Integer.toString(ClickRateTracker.init_I()), init_FArr[4], idle, active, text, alpha);
+         init(context, font, x + leftW + gap, nextRowY, rowW - leftW - gap, keyH, Integer.toString(ClickRateTracker.load_I()), init_FArr[5], idle, active, text, alpha);
       }
    }
 
@@ -1849,14 +1849,14 @@ public final class al {
          init_Z_KeyMapping(o == null ? null : o.keyLeft),
          init_Z_KeyMapping(o == null ? null : o.keyDown),
          init_Z_KeyMapping(o == null ? null : o.keyRight),
-         init_Z_KeyMapping(o == null ? null : o.keyAttack) || G.init(120L),
-         init_Z_KeyMapping(o == null ? null : o.keyUse) || G.load(120L),
+         init_Z_KeyMapping(o == null ? null : o.keyAttack) || ClickRateTracker.init(120L),
+         init_Z_KeyMapping(o == null ? null : o.keyUse) || ClickRateTracker.load(120L),
          init_Z_KeyMapping(o == null ? null : o.keyJump)
       };
    }
 
    private static boolean init_Z_KeyMapping(KeyMapping mapping) {
-      return mapping != null && aB.init(mapping).autism$isActuallyDown();
+      return mapping != null && KeyMappingControl.init(mapping).autism$isActuallyDown();
    }
 
    private static void init(GuiGraphicsExtractor context, Font font, int x, int y, int w, int h, float fill, int idle, int active, int text, float alpha) {
@@ -2128,8 +2128,8 @@ public final class al {
 
    private static void read(List<al.Inner_NetHelper> lines) {
       boolean showTotal = init_Z_Str_Str("cps", "show-total");
-      int leftCps = G.init_I();
-      int rightCps = G.load_I();
+      int leftCps = ClickRateTracker.init_I();
+      int rightCps = ClickRateTracker.load_I();
       lines.add(init_al_NetHelper_Str("cps", "Left", Integer.toString(leftCps)));
       lines.add(init_al_NetHelper_Str("cps", "Right", Integer.toString(rightCps)));
       if (showTotal) {

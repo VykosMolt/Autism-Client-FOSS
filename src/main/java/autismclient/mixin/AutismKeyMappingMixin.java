@@ -8,7 +8,7 @@ import autismclient.modules.AutoTotemModule;
 import autismclient.modules.AutoArmorModule;
 import autismclient.modules.FreecamController;
 import autismclient.modules.al;
-import autismclient.util.aB;
+import autismclient.util.KeyMappingControl;
 import autismclient.util.bA;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.platform.InputConstants.Key;
@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(KeyMapping.class)
-public abstract class AutismKeyMappingMixin implements aB {
+public abstract class AutismKeyMappingMixin implements KeyMappingControl {
    @Shadow
    protected Key key;
    @Shadow
@@ -72,7 +72,7 @@ public abstract class AutismKeyMappingMixin implements aB {
          if (mappings != null) {
             for (KeyMapping mapping : mappings) {
                if (!FreecamController.init_Z_KeyMapping(mapping)) {
-                  aB.init(mapping).autism$countClick();
+                  KeyMappingControl.init(mapping).autism$countClick();
                }
             }
          }
@@ -87,7 +87,7 @@ public abstract class AutismKeyMappingMixin implements aB {
          Window window = Minecraft.getInstance().getWindow();
 
          for (KeyMapping mapping : ALL.values()) {
-            aB.init(mapping).autism$refocus(window);
+            KeyMappingControl.init(mapping).autism$refocus(window);
          }
 
          ci.cancel();

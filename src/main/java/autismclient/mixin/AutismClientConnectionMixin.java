@@ -22,15 +22,15 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.D;
 import autismclient.util.E;
-import autismclient.util.EventBus;
+import autismclient.util.QueuedCombatAction;
 import autismclient.util.PacketCaptureState;
-import autismclient.util.ce;
-import autismclient.util.ch;
-import autismclient.util.ci;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
+import autismclient.util.SprintStateTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.BedSleepDesyncHelper;
-import autismclient.util.y;
+import autismclient.util.CommandProbeIdAllocator;
 import autismclient.util.b.CustomMenuTracker;
 import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
@@ -157,7 +157,7 @@ public abstract class AutismClientConnectionMixin {
       this.autism$spoofPipelineInstalled = false;
       PacketCaptureState.read();
       if (((Connection)(Object)this).getPacketListener() instanceof ClientGamePacketListener) {
-         ch.init_V();
+         ServerRotationTracker.init_V();
          ScaffoldModule.update_V_10();
          if (!AutismLiteVariant.enabled()) {
             LeafDupeModule.load_V_21();
@@ -185,7 +185,7 @@ public abstract class AutismClientConnectionMixin {
             return;
          }
 
-         ch.init(packet);
+         ServerRotationTracker.init(packet);
          if (!AutismLiteVariant.enabled()) {
             BacktrackModule.init_V_Connection_Packet((Connection)(Object)this, packet);
          }
@@ -277,7 +277,7 @@ public abstract class AutismClientConnectionMixin {
             yaw = f.init(yaw);
             pitch = f.load(pitch);
          } else {
-            ce.Inner_DataUtil rotation = cn.load(Minecraft.getInstance().player);
+            RotationMath.Inner_DataUtil rotation = SilentMovementCoordinator.load(Minecraft.getInstance().player);
             if (rotation != null) {
                yaw = rotation.init();
                pitch = rotation.load();
@@ -328,7 +328,7 @@ public abstract class AutismClientConnectionMixin {
 
                if (!this.autism$isLocalClientPlayConnection() || !PingSpoofScheduler.load_Z(packet) && !BlinkPacketManager.load(packet)) {
                   if (this.autism$isLocalClientPlayConnection() && packet instanceof ServerboundPongPacket pong) {
-                     autismclient.util.ci.load(pong.getId());
+                     autismclient.util.SprintStateTracker.load(pong.getId());
                   }
 
                   boolean payloadLoggedEarly = false;
@@ -493,7 +493,7 @@ public abstract class AutismClientConnectionMixin {
    private void yang$afterSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
       if (!aD.read_Z() && this.isPlayConnectionActive()) {
          if (!AutismLiteVariant.enabled() && Minecraft.getInstance().isSameThread()) {
-            EventBus.init(packet);
+            QueuedCombatAction.init(packet);
          }
 
          if (this.isAutismActive()) {
@@ -578,7 +578,7 @@ public abstract class AutismClientConnectionMixin {
                if (normalLoggerPath) {
                   ServerTickPhaseTracker.init(packet);
                   MacroExecutor.load_V_Packet(packet);
-                  if (packet instanceof ClientboundCommandSuggestionsPacket macroSuggestions && y.init(macroSuggestions.id())) {
+                  if (packet instanceof ClientboundCommandSuggestionsPacket macroSuggestions && CommandProbeIdAllocator.init(macroSuggestions.id())) {
                      ci.cancel();
                   } else {
                      if (packet instanceof ClientboundOpenScreenPacket openScreenPacket) {

@@ -2,7 +2,7 @@ package autismclient.ai.a;
 
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.U;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -598,7 +598,7 @@ public final class u implements ClassCache.Inner_JsonUtil {
          .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(rays));
       if (constraint != null) {
          if (constraint.clickYaw() != null) {
-            request.init_U_StateCache_ce_DataUtil(new ce.Inner_DataUtil(constraint.clickYaw(), mc.player.getXRot()));
+            request.init_U_StateCache_ce_DataUtil(new RotationMath.Inner_DataUtil(constraint.clickYaw(), mc.player.getXRot()));
          }
 
          EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);

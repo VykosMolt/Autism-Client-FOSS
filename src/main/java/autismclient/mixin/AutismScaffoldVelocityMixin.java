@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.ScaffoldModule;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,8 +20,8 @@ public abstract class AutismScaffoldVelocityMixin {
    private float autism$scaffoldSilentMovementYaw(float vanillaYaw) {
       Entity entity = (Entity)(Object)this;
       float scaffold = ScaffoldModule.init_F_Entity_F(entity, vanillaYaw);
-      float yaw = cn.init_F(entity, scaffold);
-      cn.init_V(entity, yaw);
+      float yaw = SilentMovementCoordinator.init_F(entity, scaffold);
+      SilentMovementCoordinator.init_V(entity, yaw);
       return yaw;
    }
 }

@@ -422,7 +422,7 @@ public final class CommandTabNameProber {
 
                   for (int k = start; k < end; k++) {
                      int idx = pending.get(k);
-                     int requestId = y.init();
+                     int requestId = CommandProbeIdAllocator.init();
                      MacroExecutor.Inner_EventBus listener = MacroExecutor.init_MacroExecutor_Even_Predicate(
                         packet -> packet instanceof ClientboundCommandSuggestionsPacket replyx && replyx.id() == requestId
                      );

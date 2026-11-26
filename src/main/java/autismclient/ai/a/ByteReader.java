@@ -4,7 +4,7 @@ import autismclient.ai.A;
 import autismclient.ai.af;
 import autismclient.ai.ag;
 import autismclient.api.ai.AiOperation;
-import autismclient.util.aB;
+import autismclient.util.KeyMappingControl;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -824,7 +824,7 @@ public final class ByteReader {
                   this.init_Minecraft.options.keySprint,
                   this.init_Minecraft.options.keyShift
                )) {
-                  key.setDown(aB.init(key).autism$physicalForBody());
+                  key.setDown(KeyMappingControl.init(key).autism$physicalForBody());
                }
             }
 

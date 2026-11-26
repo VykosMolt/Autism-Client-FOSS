@@ -3975,7 +3975,7 @@ public class AutismServerInfoOverlay extends bj {
       if (packet != null && !autismclient.modules.aD.init_Z() && "ServerboundCommandSuggestionPacket".equals(packet.getClass().getSimpleName())) {
          int id = this.init_I_Obj(packet, -1, "getId", "id");
          String command = this.init_Str_Obj_StrArr(packet, "getCommand", "command");
-         if (id >= 0 && command != null && !command.isBlank() && auditIsObservableCommandCompletion(command) && !y.init(id)) {
+         if (id >= 0 && command != null && !command.isBlank() && auditIsObservableCommandCompletion(command) && !CommandProbeIdAllocator.init(id)) {
             init_Minecraft.execute(() -> {
                try {
                   AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
@@ -4208,7 +4208,7 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    public void init_V_I_ClientboundCommand(int id, ClientboundCommandSuggestionsPacket packet) {
-      if (!y.init(id)) {
+      if (!CommandProbeIdAllocator.init(id)) {
          init_Minecraft.execute(
             () -> {
                AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;

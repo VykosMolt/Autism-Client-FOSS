@@ -1007,11 +1007,11 @@ final class h {
                   return false;
                }
 
-               double damage = autismclient.util.S.init_D(
+               double damage = autismclient.util.ExplosionDamageCalculator.init_D(
                   mc.player,
                   crystal.position(),
                   6.0F,
-                  autismclient.util.S.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, crystal))
+                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, crystal))
                );
                return h.init(damage, mc.player.getHealth() + mc.player.getAbsorptionAmount(), danger.lethal(), danger.voidFall())
                   && danger.worstSource() <= 4.0F;

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.ScaffoldModule;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.macro.MacroAimController;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
@@ -16,13 +16,13 @@ public class AutismKillAuraRotationMixin {
    @ModifyExpressionValue(method = "sendChanges", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getYRot()F"))
    private float autism$killAuraSilentYaw(float original) {
       LocalPlayer self = (LocalPlayer)(Object)this;
-      return MacroAimController.init_Z() ? MacroAimController.init(self, original) : cn.init(self, original);
+      return MacroAimController.init_Z() ? MacroAimController.init(self, original) : SilentMovementCoordinator.init(self, original);
    }
 
    @ModifyExpressionValue(method = "sendChanges", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getXRot()F"))
    private float autism$killAuraSilentPitch(float original) {
       LocalPlayer self = (LocalPlayer)(Object)this;
-      return MacroAimController.init_Z() ? MacroAimController.load(self, original) : cn.load(self, original);
+      return MacroAimController.init_Z() ? MacroAimController.load(self, original) : SilentMovementCoordinator.load(self, original);
    }
 
    @ModifyExpressionValue(
@@ -41,6 +41,6 @@ public class AutismKillAuraRotationMixin {
       }
 
       Vec3 scaffold = ScaffoldModule.init_Vec3_LocalPlayer_Vec3((LocalPlayer)camera, original);
-      return cn.init((LocalPlayer)camera, scaffold);
+      return SilentMovementCoordinator.init((LocalPlayer)camera, scaffold);
    }
 }

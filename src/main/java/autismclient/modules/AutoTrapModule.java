@@ -4,11 +4,11 @@ import autismclient.api.module.BoolSetting;
 import autismclient.api.module.ChoiceSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.api.module.RegistryListSetting;
-import autismclient.util.bM;
-import autismclient.util.ce;
-import autismclient.util.ch;
+import autismclient.util.PerTickPlacementLock;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +55,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
+public final class AutoTrapModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    private static final double init_D = 10.0;
    private static final int init_I = 25;
    private static final int load_I = 10;
@@ -125,18 +125,18 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
    @Override
    public void onDisable() {
       this.init_V_13();
-      autismclient.util.aD.init(this.id());
-      autismclient.util.ah.update_V(this.id());
+      autismclient.util.SilentRotationManager.init(this.id());
+      autismclient.util.InventorySlotArbiter.update_V(this.id());
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_13();
       if (this.read_Z_6()) {
-         autismclient.util.aD.load_V();
+         autismclient.util.SilentRotationManager.load_V();
       }
 
-      autismclient.util.ah.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.update_V(this.id());
    }
 
    private void init_V_13() {
@@ -165,7 +165,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
    @Override
    public void tick() {
       if (!this.isEnabled() && MC != null && MC.player != null && this.read_Z_6()) {
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
    }
 
@@ -176,12 +176,12 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean hasDisabledTickWork() {
-      return autismclient.util.aD.read_Z() && this.read_Z_6();
+      return autismclient.util.SilentRotationManager.read_Z() && this.read_Z_6();
    }
 
    @Override
    public boolean load_Z_23() {
-      return cn.init_Z() ? false : autismclient.util.aD.init_Z() || this.isEnabled() && this.init_Z_14();
+      return SilentMovementCoordinator.init_Z() ? false : autismclient.util.SilentRotationManager.init_Z() || this.isEnabled() && this.init_Z_14();
    }
 
    @Override
@@ -207,7 +207,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
                AutoTrapModule.Inner_BufferHelper plan = this.init_PathHelper_BufferH;
                boolean holdingForAura = plan != null && this.sync();
                if (plan != null && !holdingForAura) {
-                  ce.Inner_DataUtil placed = this.init_ce_DataUtil_PathHelper_BufferH(plan);
+                  RotationMath.Inner_DataUtil placed = this.init_ce_DataUtil_PathHelper_BufferH(plan);
                   if (placed != null) {
                      this.clear = 0;
                      this.get = 0;
@@ -255,7 +255,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return false;
       } else if (!MC.player.isAlive() || MC.player.isSpectator()) {
          return false;
-      } else if (cn.init_Z() || ScaffoldModule.update_Z_5()) {
+      } else if (SilentMovementCoordinator.init_Z() || ScaffoldModule.update_Z_5()) {
          return false;
       } else if (!MC.player.isUsingItem() && !MC.player.isHandsBusy()) {
          return MC.gui != null && MC.gui.screen() == null && MC.gui.overlay() == null ? !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20() : false;
@@ -272,30 +272,30 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       this.put = -1;
       this.write_V_6();
       if (this.read_Z_6()) {
-         autismclient.util.aD.init(this.id());
+         autismclient.util.SilentRotationManager.init(this.id());
          if (MC != null && MC.player != null) {
-            autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+            autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
          }
       }
    }
 
    private boolean read_Z_6() {
-      return this.id().equals(autismclient.util.aD.init_Str());
+      return this.id().equals(autismclient.util.SilentRotationManager.init_Str());
    }
 
-   private void init_V_ce_DataUtil(ce.Inner_DataUtil goal) {
+   private void init_V_ce_DataUtil(RotationMath.Inner_DataUtil goal) {
       this.init_V_ce_DataUtil_Z(goal, false);
    }
 
-   private void init_V_ce_DataUtil_Z(ce.Inner_DataUtil goal, boolean pinQuiet) {
+   private void init_V_ce_DataUtil_Z(RotationMath.Inner_DataUtil goal, boolean pinQuiet) {
       if (goal != null) {
-         autismclient.util.aD.init_V_Str(this.id(), 15, goal);
+         autismclient.util.SilentRotationManager.init_V_Str(this.id(), 15, goal);
       } else if (this.read_Z_6()) {
-         autismclient.util.aD.init(this.id());
+         autismclient.util.SilentRotationManager.init(this.id());
       }
 
       if (this.read_Z_6()) {
-         autismclient.util.aD.init_V_Str_5(this.id(), MC.player, pinQuiet);
+         autismclient.util.SilentRotationManager.init_V_Str_5(this.id(), MC.player, pinQuiet);
       }
    }
 
@@ -406,10 +406,10 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       }
 
       if (source.init_InteractionHand() == InteractionHand.OFF_HAND) {
-         if (autismclient.util.ah.load_Z(this.id()) || autismclient.util.s.load_Z()) {
+         if (autismclient.util.InventorySlotArbiter.load_Z(this.id()) || autismclient.util.ClientInteractionOverride.load_Z()) {
             return null;
          }
-      } else if (autismclient.util.ah.init(source.load(), this.id())) {
+      } else if (autismclient.util.InventorySlotArbiter.init(source.load(), this.id())) {
          return null;
       }
 
@@ -418,7 +418,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return null;
       }
 
-      ce.Inner_DataUtil rotation = ce.init(Vec3.atCenterOf(cell), eye);
+      RotationMath.Inner_DataUtil rotation = RotationMath.init(Vec3.atCenterOf(cell), eye);
       return Math.abs(rotation.load()) > autismclient.util.U.init_D()
          ? null
          : new AutoTrapModule.Inner_BufferHelper(false, source.init_I(), new AABB(cell), source.load(), source.init_InteractionHand(), rotation, true);
@@ -476,7 +476,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
                   Vec3 velocity = target.position().subtract(target.oldPosition());
 
                   for (BlockPos offset : this.init(trapPos, dimensions, velocity, mustBeOnGround, web, trapBlocks, eye)) {
-                     ce.Inner_DataUtil rotation = this.init(origin.offset(offset), placedState, eye, reach, slot.init_ItemStack(), slot.init_InteractionHand());
+                     RotationMath.Inner_DataUtil rotation = this.init(origin.offset(offset), placedState, eye, reach, slot.init_ItemStack(), slot.init_InteractionHand());
                      if (rotation != null) {
                         this.set = target.getId();
                         return new AutoTrapModule.Inner_BufferHelper(
@@ -508,8 +508,8 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       ItemStack offhand = MC.player.getOffhandItem();
       if (items.contains(offhand.getItem())
          && (this.init_PathHelper_CachePo == null || !offhand.is(Items.LAVA_BUCKET))
-         && !autismclient.util.ah.load_Z(this.id())
-         && !autismclient.util.s.load_Z()) {
+         && !autismclient.util.InventorySlotArbiter.load_Z(this.id())
+         && !autismclient.util.ClientInteractionOverride.load_Z()) {
          return new AutoTrapModule.Inner_ConfigStore(-1, InteractionHand.OFF_HAND, offhand);
       }
 
@@ -518,7 +518,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       int bestDistance = 2147483647;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.ah.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
             ItemStack stack = MC.player.getInventory().getItem(slot);
             if (items.contains(stack.getItem()) && (this.init_PathHelper_CachePo == null || !stack.is(Items.LAVA_BUCKET))) {
                int distance = Math.abs(slot - selected);
@@ -640,8 +640,8 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
    }
 
    private float init_F_Entity_Vec3(Entity entity, Vec3 eyes) {
-      ce.Inner_DataUtil toCenter = ce.init(entity.getBoundingBox().getCenter(), eyes);
-      return ce.load(ce.init(MC.player), toCenter);
+      RotationMath.Inner_DataUtil toCenter = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
+      return RotationMath.load(RotationMath.init(MC.player), toCenter);
    }
 
    private void read_V_6() {
@@ -913,7 +913,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       return box.intersects(unit) ? box.intersect(unit).getSize() : 0.0;
    }
 
-   private ce.Inner_DataUtil init(BlockPos cell, BlockState placedState, Vec3 eye, double reach, ItemStack material, InteractionHand hand) {
+   private RotationMath.Inner_DataUtil init(BlockPos cell, BlockState placedState, Vec3 eye, double reach, ItemStack material, InteractionHand hand) {
       if (MC.level.isOutsideBuildHeight(cell)) {
          return null;
       }
@@ -937,7 +937,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
 
       autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool(
          new autismclient.util.U.Inner_StateCache(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
-            .init_U_StateCache_ce_DataUtil(ce.init(MC.player))
+            .init_U_StateCache_ce_DataUtil(RotationMath.init(MC.player))
             .init_U_StateCache_D(autismclient.util.U.init_D())
             .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
             .load(false)
@@ -975,7 +975,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       return ScaffoldModule.read_Z_F(Math.abs(pitch));
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
       int tick = ck.init_ck().state_I();
       if (tick == this.start) {
          return null;
@@ -1005,17 +1005,17 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return null;
       }
 
-      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
       if (!wire.init_Z()) {
          return null;
       }
 
-      ce.Inner_DataUtil wireRotation = new ce.Inner_DataUtil(wire.read(), wire.write());
+      RotationMath.Inner_DataUtil wireRotation = new RotationMath.Inner_DataUtil(wire.read(), wire.write());
       if (!init_Z_F(wireRotation.load())) {
          return null;
       }
 
-      ce.Inner_DataUtil silent = cn.init_ce_DataUtil(MC.player);
+      RotationMath.Inner_DataUtil silent = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
       if (silent != null && !init_Z_ce_DataUtil_ce_DataUtil_2(silent, wireRotation)) {
          return null;
       }
@@ -1039,7 +1039,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return null;
       }
 
-      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.s.load_Z()) {
+      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
          return null;
       }
 
@@ -1080,7 +1080,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       return wireRotation;
    }
 
-   private ce.Inner_DataUtil init(AutoTrapModule.Inner_BufferHelper plan, int tick, ce.Inner_DataUtil wireRotation) {
+   private RotationMath.Inner_DataUtil init(AutoTrapModule.Inner_BufferHelper plan, int tick, RotationMath.Inner_DataUtil wireRotation) {
       AutoTrapModule.Inner_CachePool source = this.init_PathHelper_CachePo;
       if (source == null) {
          return null;
@@ -1100,7 +1100,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
          return null;
       }
 
-      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.s.load_Z()) {
+      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
          return null;
       }
 
@@ -1119,7 +1119,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
       return !this.init(plan, ray, stack) ? null : wireRotation;
    }
 
-   private BlockHitResult init_BlockHitResult_ce_DataUtil(ce.Inner_DataUtil rotation) {
+   private BlockHitResult init_BlockHitResult_ce_DataUtil(RotationMath.Inner_DataUtil rotation) {
       Vec3 eye = MC.player.getEyePosition();
       Vec3 end = eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(this.init_D_3()));
       HitResult result = MC.level
@@ -1169,7 +1169,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.read_Z();
+      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
    }
 
    private boolean load(AutoTrapModule.Inner_BufferHelper plan) {
@@ -1197,7 +1197,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
             return false;
          }
 
-         if (!autismclient.util.ah.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             return false;
          }
 
@@ -1208,7 +1208,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
 
             autismclient.util.aw.init_V(MC, slot);
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
 
          this.size = tick;
@@ -1220,14 +1220,14 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
 
    private boolean init(AutoTrapModule.Inner_BufferHelper plan, BlockHitResult ray, ItemStack stack) {
       if (!stack.isEmpty() && stack.isItemEnabled(MC.level.enabledFeatures())) {
-         return !bM.init(this.id()) ? false : autismclient.util.s.init(ray, plan.init_InteractionHand());
+         return !PerTickPlacementLock.init(this.id()) ? false : autismclient.util.ClientInteractionOverride.init(ray, plan.init_InteractionHand());
       } else {
          return false;
       }
    }
 
-   private static boolean init_Z_ce_DataUtil_ce_DataUtil_2(ce.Inner_DataUtil first, ce.Inner_DataUtil second) {
-      return Math.abs(ce.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
+   private static boolean init_Z_ce_DataUtil_ce_DataUtil_2(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
+      return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
    }
 
    private void write_V_6() {
@@ -1248,7 +1248,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
                this.prev = -1;
                this.valid = 0;
             } else if (this.valid > 0 && --this.valid <= 0) {
-               if (!autismclient.util.ah.init(this.next, this.id()) && this.init_Z_I_I(this.next, MC.player.getInventory().getSelectedSlot())) {
+               if (!autismclient.util.InventorySlotArbiter.init(this.next, this.id()) && this.init_Z_I_I(this.next, MC.player.getInventory().getSelectedSlot())) {
                   this.next = -1;
                   this.prev = -1;
                } else {
@@ -1260,7 +1260,7 @@ public final class AutoTrapModule extends Module implements cn.Inner_DataUtil {
    }
 
    private record Inner_BufferHelper(
-      boolean init_Z, int init_I, AABB init_AABB, int load_I, InteractionHand init_InteractionHand, ce.Inner_DataUtil init_ce_DataUtil, boolean load_Z
+      boolean init_Z, int init_I, AABB init_AABB, int load_I, InteractionHand init_InteractionHand, RotationMath.Inner_DataUtil init_ce_DataUtil, boolean load_Z
    ) {
    }
 

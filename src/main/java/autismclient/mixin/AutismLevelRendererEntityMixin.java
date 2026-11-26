@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.modules.FrameEspCatalog;
 import autismclient.modules.am;
-import autismclient.util.ch;
+import autismclient.util.ServerRotationTracker;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.world.entity.Entity;
@@ -17,7 +17,7 @@ public class AutismLevelRendererEntityMixin {
    private void autism$espEntityOutline(Entity entity, float partialTickTime, CallbackInfoReturnable<EntityRenderState> cir) {
       EntityRenderState state = cir.getReturnValue();
       if (state != null) {
-         ch.init_V_Entity_2(entity, state, partialTickTime);
+         ServerRotationTracker.init_V_Entity_2(entity, state, partialTickTime);
          if (am.put()) {
             int frameOutline = FrameEspCatalog.init_I(entity);
             if (frameOutline != 0) {

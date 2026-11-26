@@ -7,7 +7,7 @@ import autismclient.modules.Module;
 import autismclient.modules.TeamsModule;
 import autismclient.modules.al;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.aD;
+import autismclient.util.SilentRotationManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public final class Autism {
 
     /** The AUTISM module that holds the look this tick, or null. */
     public static String aimOwner() {
-        return aD.init_Str();
+        return SilentRotationManager.init_Str();
     }
 
     /** Left alone by AUTISM's own Crystal Aura: a bot (AntiBot) or a friend Teams protects from attacks. */

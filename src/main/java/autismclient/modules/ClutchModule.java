@@ -9,12 +9,12 @@ import autismclient.mixin.accessor.AutismEntityAccessor;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.mixin.accessor.AutismLocalPlayerAccessor;
 import autismclient.util.AutismConfig;
-import autismclient.util.bM;
+import autismclient.util.PerTickPlacementLock;
 import autismclient.util.cd;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import autismclient.util.cg;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
@@ -83,7 +83,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class ClutchModule extends Module implements cn.Inner_DataUtil {
+public final class ClutchModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    private static final int init_I = 8;
    private static final int load_I = 8;
    private static final int read_I = 20;
@@ -266,7 +266,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    public static boolean close_Z_8() {
       ClutchModule clutch = init_j();
-      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.aD.init_Str()) && !aD.init_Z() && !FreecamController.init_Z();
+      return clutch != null && clutch.init_Z && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    public static boolean open_Z_5() {
@@ -345,7 +345,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean tick_Z_6() {
-      return "clutch".equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.init_Z();
+      return "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.init_Z();
    }
 
    public static void init_V_ClientboundDamageE_3(ClientboundDamageEventPacket packet) {
@@ -576,7 +576,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       this.pool = -2147483648;
       this.write_V_20();
       if (this.init_Z) {
-         autismclient.util.s.write_V();
+         autismclient.util.ClientInteractionOverride.write_V();
          this.push_V_4();
       }
    }
@@ -679,7 +679,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       if (clutch != null && MC.player != null && before != null) {
          if (MC.player.position().distanceToSqr(before) > 16.0) {
             if (clutch.init_Z) {
-               autismclient.util.s.write_V();
+               autismclient.util.ClientInteractionOverride.write_V();
             }
 
             int slot = clutch.valid;
@@ -1176,12 +1176,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                               }
 
                               if (!this.update_Z) {
-                                 ce.Inner_DataUtil aim = autismclient.util.aD.init_ce_DataUtil();
+                                 RotationMath.Inner_DataUtil aim = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                                  if (aim == null) {
-                                    aim = ce.init(MC.player);
+                                    aim = RotationMath.init(MC.player);
                                  }
 
-                                 autismclient.util.aD.init_V_Str(this.id(), 50, aim);
+                                 autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, aim);
                               }
                            }
                         } else {
@@ -1192,14 +1192,14 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                               this.update_Z = false;
                               this.next = this.write_I_7();
                               this.valid = -1;
-                              autismclient.util.s.write_V();
-                              autismclient.util.aD.init_V();
+                              autismclient.util.ClientInteractionOverride.write_V();
+                              autismclient.util.SilentRotationManager.init_V();
                            }
 
                            this.prev = slot;
-                           boolean hand = autismclient.util.ah.init_Z(this.id(), this.prev);
+                           boolean hand = autismclient.util.InventorySlotArbiter.init_Z(this.id(), this.prev);
                            if (hand && (MC.player.getInventory().getSelectedSlot() != this.prev || reacquiringHand)) {
-                              autismclient.util.as.init_V_I(this.prev);
+                              autismclient.util.VirtualInputDispatcher.init_V_I(this.prev);
                            }
 
                            if (!route.init_k_JsonUtil().init_Z_2() && !route.init_Z()) {
@@ -1265,7 +1265,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                            if (next == null) {
                               this.init_j_DataUtil = null;
                               this.load_Str = "Turning to the catch";
-                              autismclient.util.aD.init_V_Str(this.id(), 50, route.init_ce_DataUtil_k_NetHelper_I(link, this.load_I_k_NetHelper(link)));
+                              autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, route.init_ce_DataUtil_k_NetHelper_I(link, this.load_I_k_NetHelper(link)));
                               this.read_V(this.set);
                            } else {
                               this.init_j_DataUtil = next;
@@ -1334,7 +1334,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                                  }
                               }
 
-                              autismclient.util.aD.init_V_Str(this.id(), 50, this.init_j_DataUtil.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil());
+                              autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, this.init_j_DataUtil.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil());
                               this.read_V(this.set);
                               if (hand) {
                                  this.start();
@@ -1370,9 +1370,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    private void read_V(int ticksLeft) {
       if ((this.state == 4 || this.init_j_DataUtil != null && this.init_j_DataUtil.read) && ticksLeft <= 1) {
-         autismclient.util.aD.init_V_Str_3(this.id(), MC.player, 180.0F);
+         autismclient.util.SilentRotationManager.init_V_Str_3(this.id(), MC.player, 180.0F);
       } else {
-         autismclient.util.aD.init_V_Str_4(this.id(), MC.player, ticksLeft);
+         autismclient.util.SilentRotationManager.init_V_Str_4(this.id(), MC.player, ticksLeft);
       }
    }
 
@@ -1396,9 +1396,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       this.next = placement ? this.write_I_7() : -1;
       if (placement) {
          this.valid = -1;
-         autismclient.util.aD.init_V();
-         autismclient.util.s.write_V();
-         autismclient.util.as.update_V();
+         autismclient.util.SilentRotationManager.init_V();
+         autismclient.util.ClientInteractionOverride.write_V();
+         autismclient.util.VirtualInputDispatcher.update_V();
          if (MC.player.isUsingItem()) {
             MC.gameMode.releaseUsingItem(MC.player);
          }
@@ -1776,7 +1776,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private ClutchFallPhysics.Inner_ConfigStore load_i_ConfigStore() {
       Input input = this.init_Input_2();
       autismclient.ai.a.NodeWalker.Inner_DataUtil pressed = new autismclient.ai.a.NodeWalker.Inner_DataUtil(
-         (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, cn.init_F(MC.player)
+         (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, SilentMovementCoordinator.init_F(MC.player)
       );
       return ClutchFallPhysics.init_i_ConfigStore_NodeWalker_StreamU(
          autismclient.ai.a.NodeWalker.Inner_StreamUtil.of(MC.player),
@@ -1790,7 +1790,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private Vec3 init_Vec3_7() {
       return this.init_Z
          ? init_Vec3_Input_F(this.init_Input_2(), MC.player.getYRot())
-         : init_Vec3_Input_F(MC.player.input.keyPresses, cn.init_F(MC.player, MC.player.getYRot()));
+         : init_Vec3_Input_F(MC.player.input.keyPresses, SilentMovementCoordinator.init_F(MC.player, MC.player.getYRot()));
    }
 
    private static Vec3 init_Vec3_Input_F(Input input, float keyYaw) {
@@ -1806,7 +1806,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return this.prev >= 0
             && this.prev == selected
             && this.init_Z_ItemStack_9(MC.player.getInventory().getItem(selected))
-            && !autismclient.util.ah.init(selected, this.id())
+            && !autismclient.util.InventorySlotArbiter.init(selected, this.id())
             && ScaffoldModule.load_I_I(selected) > 0
          ? selected
          : this.sync_I_2();
@@ -1818,7 +1818,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       int most = 0;
 
       for (int i = 0; i < 9; i++) {
-         if (this.init_Z_ItemStack_9(MC.player.getInventory().getItem(i)) && !autismclient.util.ah.init(i, this.id())) {
+         if (this.init_Z_ItemStack_9(MC.player.getInventory().getItem(i)) && !autismclient.util.InventorySlotArbiter.init(i, this.id())) {
             int available = ScaffoldModule.load_I_I(i);
             if (i == selected && available >= 8) {
                return selected;
@@ -1879,12 +1879,12 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
          double eyeHeight = MC.player.getEyeHeight();
          double range = MC.player.blockInteractionRange() - 0.03;
-         ce.Inner_DataUtil from = this.init_ce_DataUtil_6();
+         RotationMath.Inner_DataUtil from = this.init_ce_DataUtil_6();
          ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> turnCost = link -> {
             Vec3 eye = forecast.load().isEmpty()
                ? ClutchModule.Inner_BufferHelper.init(bodies, eyeHeight, this.load_I_k_NetHelper(link))
                : forecast.load().get(Mth.clamp(this.load_I_k_NetHelper(link), 0, forecast.load().size() - 1));
-            float angle = ce.load(from, ClutchModule.Inner_BufferHelper.init_ce_DataUtil_Vec3_k_NetHelper(eye, link));
+            float angle = RotationMath.load(from, ClutchModule.Inner_BufferHelper.init_ce_DataUtil_Vec3_k_NetHelper(eye, link));
             return Math.max(0.0F, angle / this.init_I_k_NetHelper(link) - 25.0F) * 0.04;
          };
          ClutchBlockPlanner.Inner_JsonUtil plan = null;
@@ -2160,7 +2160,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          }
 
          int raw = ((AutismLivingEntityAccessor)MC.player).autism$calculateFallDamage(fall, 1.0F);
-         double result = raw <= 0 ? 0.0 : byRaw.computeIfAbsent(raw, amount -> autismclient.util.S.init(MC.player, source, amount.intValue(), true));
+         double result = raw <= 0 ? 0.0 : byRaw.computeIfAbsent(raw, amount -> autismclient.util.ExplosionDamageCalculator.init(MC.player, source, amount.intValue(), true));
          byFall.put(bits, result);
          return result;
       };
@@ -2176,13 +2176,13 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_6() {
-      ce.Inner_DataUtil look = "clutch".equals(autismclient.util.aD.init_Str()) ? autismclient.util.aD.init_ce_DataUtil() : null;
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_6() {
+      RotationMath.Inner_DataUtil look = "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) ? autismclient.util.SilentRotationManager.init_ce_DataUtil() : null;
       if (look == null) {
-         look = cn.init_ce_DataUtil(MC.player);
+         look = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
       }
 
-      return look != null ? look : ce.init(MC.player);
+      return look != null ? look : RotationMath.init(MC.player);
    }
 
    private int init_I_k_NetHelper(ClutchBlockPlanner.Inner_NetHelper link) {
@@ -2198,7 +2198,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       int at = route.init_k_JsonUtil().read() ? link.init_I() : this.load_I_k_NetHelper(link);
       double reach = MC.player.blockInteractionRange() - 0.03;
       autismclient.util.U.Inner_NetHelper placement = autismclient.util.U.init(stack, MC.player, InteractionHand.MAIN_HAND);
-      ce.Inner_DataUtil from = this.init_ce_DataUtil_6();
+      RotationMath.Inner_DataUtil from = this.init_ce_DataUtil_6();
       autismclient.util.U.Inner_StreamUtil budget = new autismclient.util.U.Inner_StreamUtil(24);
       boolean sneaking = MC.player.isSecondaryUseActive();
       Vec3 eye = this.close_Z ? MC.player.getEyePosition() : route.init(at);
@@ -2253,7 +2253,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       return prepared;
    }
 
-   private BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, ce.Inner_DataUtil rotation, double reach) {
+   private BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Inner_DataUtil rotation, double reach) {
       HitResult result = MC.level
          .clip(new ClipContext(eye, eye.add(Vec3.directionFromRotation(rotation.load(), rotation.init()).scale(reach)), Block.OUTLINE, Fluid.NONE, MC.player));
       return result instanceof BlockHitResult hit && result.getType() == Type.BLOCK ? hit : null;
@@ -2267,7 +2267,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          && this.init_j_ConfigStore != null
          && this.init_j_ConfigStore.init_I < this.read_I_9()
          && !BlinkPacketManager.load_Z()) {
-         ce.Inner_DataUtil rotation = autismclient.util.aD.init_ce_DataUtil();
+         RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
          if (rotation == null) {
             return this.init_Z_Str_3("No rotation");
          }
@@ -2304,9 +2304,9 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                this.init_j_DataUtil.init_Direction,
                this.init_j_DataUtil.read
             );
-            autismclient.util.aD.init_V_Str(this.id(), 50, carry.init_U_DataUtil().init_ce_DataUtil());
+            autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, carry.init_U_DataUtil().init_ce_DataUtil());
             this.read_V(1);
-            rotation = autismclient.util.aD.init_ce_DataUtil();
+            rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
             if (rotation == null) {
                return this.init_Z_Str_3("No rotation");
             }
@@ -2369,13 +2369,13 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                   return this.init_Z_Str_3("Placement obstructed");
                }
 
-               if (!autismclient.util.ah.read_Z(this.id()) || !bM.init(this.id())) {
+               if (!autismclient.util.InventorySlotArbiter.read_Z(this.id()) || !PerTickPlacementLock.init(this.id())) {
                   return this.init_Z_Str_3("Placement hand busy");
                }
 
                if (this.init_j_DataUtil.read
-                  ? autismclient.util.s.init(hit, InteractionHand.MAIN_HAND, rotation)
-                  : autismclient.util.s.init(hit, InteractionHand.MAIN_HAND)) {
+                  ? autismclient.util.ClientInteractionOverride.init(hit, InteractionHand.MAIN_HAND, rotation)
+                  : autismclient.util.ClientInteractionOverride.init(hit, InteractionHand.MAIN_HAND)) {
                   this.init_BlockHitResult = hit;
                   this.update_BlockPos = placedCell.immutable();
                   this.frame = this.init_j_DataUtil.load_I;
@@ -2390,7 +2390,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                   }
 
                   this.load_Str = "Catch placed";
-                  autismclient.util.aD.init_V_Str(this.id(), 50, rotation);
+                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, rotation);
                   return true;
                } else {
                   return this.init_Z_Str_3("Click queue");
@@ -2403,7 +2403,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private autismclient.util.U.Inner_CachePool init_U_CachePool_j_DataUtil(
-      ClutchModule.Inner_DataUtil candidatePlan, ce.Inner_DataUtil rotation, Vec3 wireEye, double reach
+      ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Inner_DataUtil rotation, Vec3 wireEye, double reach
    ) {
       Vec3 eye = MC.player.getEyePosition();
       Vec3 next = this.read_Vec3 != null ? this.read_Vec3 : eye.add(MC.player.getDeltaMovement());
@@ -2424,7 +2424,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private autismclient.util.U.Inner_CachePool init(
-      ClutchModule.Inner_DataUtil candidatePlan, ce.Inner_DataUtil rotation, Vec3 eye, Vec3 next, Vec3 wireEye, double reach, int lead
+      ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Inner_DataUtil rotation, Vec3 eye, Vec3 next, Vec3 wireEye, double reach, int lead
    ) {
       boolean moving = this.state == 4
          && lead <= 1
@@ -2463,10 +2463,10 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          }
       }
 
-      List<ce.Inner_DataUtil> goals = new ArrayList<>();
+      List<RotationMath.Inner_DataUtil> goals = new ArrayList<>();
 
       for (Vec3 point : points) {
-         goals.add(ce.init_ce_DataUtil(ce.init(point, eye), rotation));
+         goals.add(RotationMath.init_ce_DataUtil(RotationMath.init(point, eye), rotation));
       }
 
       if (this.state == 4) {
@@ -2481,7 +2481,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                reach,
                rotation.init(),
                rotation.load(),
-               ce.init(),
+               RotationMath.init(),
                margin,
                yaw -> this.init_i_DataUtil_I_F(lead, (float)yaw)
             )
@@ -2496,16 +2496,16 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                reach,
                rotation.init(),
                rotation.load(),
-               ce.init(),
+               RotationMath.init(),
                margin
             );
 
          for (int i = counts.size() - 1; i >= 0; i--) {
-            goals.addFirst(new ce.Inner_DataUtil(counts.get(i).init(), counts.get(i).load()));
+            goals.addFirst(new RotationMath.Inner_DataUtil(counts.get(i).init(), counts.get(i).load()));
          }
       }
 
-      for (ce.Inner_DataUtil goal : goals) {
+      for (RotationMath.Inner_DataUtil goal : goals) {
          ClutchFallPhysics.Inner_DataUtil window = moving ? this.init_i_DataUtil_I_F(lead, goal.init()) : null;
          Vec3 clickEye = window == null ? eye : window.init_Vec3();
          Vec3 nextEye = window == null ? next : window.load();
@@ -2527,7 +2527,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
                   .load(margin)
                   .init_U_StateCache_U_StreamUtil(budget);
                autismclient.util.U.Inner_DataUtil aim = new autismclient.util.U.Inner_DataUtil(
-                  point, goal, goal, clickEye.distanceTo(point), ce.load(rotation, goal), autismclient.util.U.Inner_UiHelper.NEAREST
+                  point, goal, goal, clickEye.distanceTo(point), RotationMath.load(rotation, goal), autismclient.util.U.Inner_UiHelper.NEAREST
                );
                autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool_U_TaskQueue(option, aim, request, null);
                if (candidate != null
@@ -2591,7 +2591,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       }
 
       if (this.pop_Z_3() && MC.player.onGround() && (!input.shift() || input.jump()) && !put() && this.set()) {
-         Vec3 wish = init_Vec3_Input_F(input, cn.init_F(MC.player));
+         Vec3 wish = init_Vec3_Input_F(input, SilentMovementCoordinator.init_F(MC.player));
          Vec3 motion = MC.player.getDeltaMovement();
          AABB body = MC.player.getBoundingBox();
          Vec3 centre = body.getCenter();
@@ -2650,7 +2650,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          true,
          sprint,
          input.shift(),
-         cn.init_F(MC.player)
+         SilentMovementCoordinator.init_F(MC.player)
       );
       autismclient.ai.a.NodeWalker.Inner_CachePool world = autismclient.ai.a.NodeWalker.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
       boolean unsafe = this.init_Z_NodeWalker_StreamU(start, pressed, world);
@@ -2704,7 +2704,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private Input load_Input_Input_2(Input input) {
-      float keyYaw = cn.init_F(MC.player);
+      float keyYaw = SilentMovementCoordinator.init_F(MC.player);
       Vec3 motion = MC.player.getDeltaMovement();
       Vec3 wish = init_Vec3_Input_F(input, keyYaw);
       boolean stocked = this.sync_I_2() >= 0;
@@ -2782,10 +2782,10 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          if (clutch != null && MC.player != null && (clutch.isEnabled() || clutch.init_Z)) {
             ClutchModule.Inner_ConfigStore old = clutch.init_j_ConfigStore;
             Vec3 fallback = old == null ? MC.player.position() : old.init_Vec3;
-            ce.Inner_DataUtil oldAim = old == null ? ce.init(MC.player) : old.init_ce_DataUtil;
+            RotationMath.Inner_DataUtil oldAim = old == null ? RotationMath.init(MC.player) : old.init_ce_DataUtil;
             clutch.init_j_ConfigStore = new ClutchModule.Inner_ConfigStore(
                new Vec3(move.getX(fallback.x), move.getY(fallback.y), move.getZ(fallback.z)),
-               new ce.Inner_DataUtil(move.getYRot(oldAim.init()), move.getXRot(oldAim.load())),
+               new RotationMath.Inner_DataUtil(move.getYRot(oldAim.init()), move.getXRot(oldAim.load())),
                MC.player.getEyeHeight(),
                clutch.read_I_9()
             );
@@ -2796,7 +2796,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private void poll_V_5() {
       if (!this.update_Z) {
          this.update_Z = true;
-         autismclient.util.ah.load_V(this.id());
+         autismclient.util.InventorySlotArbiter.load_V(this.id());
          if (this.bool("restore-slot") && this.next >= 0 && this.prev >= 0 && this.next != this.prev) {
             this.valid = this.next;
             this.size = this.prev;
@@ -2804,8 +2804,8 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             this.run_V_3();
          }
 
-         if ("clutch".equals(autismclient.util.aD.init_Str()) && !this.valid()) {
-            autismclient.util.aD.init(this.id());
+         if ("clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && !this.valid()) {
+            autismclient.util.SilentRotationManager.init(this.id());
          }
       }
    }
@@ -2813,7 +2813,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    private void push_V_4() {
       if (this.init_Z) {
          this.init_j_DataUtil = null;
-         autismclient.util.ah.load_V(this.id());
+         autismclient.util.InventorySlotArbiter.load_V(this.id());
          if (MC.player != null && MC.level != null && MC.player.isAlive()) {
             if (!this.load_Z && !this.update_Z) {
                this.load_Z = true;
@@ -2828,17 +2828,17 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
             }
 
             this.get++;
-            ce.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
+            RotationMath.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
             boolean bridge = this.valid();
             if (this.update_Z) {
                this.load_V_Z_3(bridge);
             } else {
-               if (bridge && "clutch".equals(autismclient.util.aD.init_Str()) && this.get < 20) {
-                  ce.Inner_DataUtil goal = resume != null ? resume : ce.init(MC.player);
-                  autismclient.util.aD.init_V_Str(this.id(), 50, goal);
-                  autismclient.util.aD.init_V_Str_4(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
-                  ce.Inner_DataUtil end = autismclient.util.aD.init_ce_DataUtil();
-                  if (end != null && ce.load(end, goal) > 1.0F) {
+               if (bridge && "clutch".equals(autismclient.util.SilentRotationManager.init_Str()) && this.get < 20) {
+                  RotationMath.Inner_DataUtil goal = resume != null ? resume : RotationMath.init(MC.player);
+                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 50, goal);
+                  autismclient.util.SilentRotationManager.init_V_Str_4(this.id(), MC.player, Math.max(1, Math.min(8, 19 - this.get)));
+                  RotationMath.Inner_DataUtil end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  if (end != null && RotationMath.load(end, goal) > 1.0F) {
                      this.load_Str = "Handing back";
                      return;
                   }
@@ -2857,8 +2857,8 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private void load_V_Z_3(boolean bridge) {
-      ce.Inner_DataUtil end = autismclient.util.aD.init_ce_DataUtil();
-      boolean ours = "clutch".equals(autismclient.util.aD.init_Str());
+      RotationMath.Inner_DataUtil end = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+      boolean ours = "clutch".equals(autismclient.util.SilentRotationManager.init_Str());
       if (bridge && end != null) {
          if (ours) {
             float offset = ScaffoldModule.load_F_F_F(end.init(), MC.player.getYRot());
@@ -2876,10 +2876,10 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
          ScaffoldModule.load_V_ce_DataUtil(end);
          if (ours) {
-            autismclient.util.aD.load_V();
+            autismclient.util.SilentRotationManager.load_V();
          }
       } else if (ours) {
-         autismclient.util.aD.init(this.id());
+         autismclient.util.SilentRotationManager.init(this.id());
       }
 
       if (this.sync_Z) {
@@ -2896,14 +2896,14 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
 
    private void pop_V_3() {
       if (!this.init_Z && MC.player != null && this.tick_Z_6()) {
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
    }
 
    private void run_V_3() {
       if (this.valid >= 0 && MC.player != null) {
          if ((!this.init_Z || this.load_Z || this.update_Z) && --this.data >= 0 && MC.player.getInventory().getSelectedSlot() == this.size) {
-            autismclient.util.as.init(this.valid, this.size);
+            autismclient.util.VirtualInputDispatcher.init(this.valid, this.size);
          } else {
             this.valid = -1;
          }
@@ -2926,7 +2926,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
       this.init_i_TaskQueue = null;
       this.poll_I = -2147483648;
       if (this.init_Z) {
-         autismclient.util.s.write_V();
+         autismclient.util.ClientInteractionOverride.write_V();
       }
 
       this.push_V_4();
@@ -2939,11 +2939,11 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
    }
 
    private void get_V_3() {
-      if ("clutch".equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.load_V();
+      if ("clutch".equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.load_V();
       }
 
-      autismclient.util.ah.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.update_V(this.id());
       this.init_Map.clear();
       this.load_Map.clear();
       this.init_i_TaskQueue = null;
@@ -3005,7 +3005,7 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          return this.load.isEmpty() ? init(this.init_List, this.init_D, tick) : this.load.get(Mth.clamp(tick, 0, this.load.size() - 1));
       }
 
-      ce.Inner_DataUtil init_ce_DataUtil_k_NetHelper_I(ClutchBlockPlanner.Inner_NetHelper link, int tick) {
+      RotationMath.Inner_DataUtil init_ce_DataUtil_k_NetHelper_I(ClutchBlockPlanner.Inner_NetHelper link, int tick) {
          return init_ce_DataUtil_Vec3_k_NetHelper(this.init(tick), link);
       }
 
@@ -3014,21 +3014,21 @@ public final class ClutchModule extends Module implements cn.Inner_DataUtil {
          return new Vec3((body.minX + body.maxX) * 0.5, body.minY + eyeHeight, (body.minZ + body.maxZ) * 0.5);
       }
 
-      static ce.Inner_DataUtil init(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
+      static RotationMath.Inner_DataUtil init(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_NetHelper link, int tick) {
          return init_ce_DataUtil_Vec3_k_NetHelper(init(bodies, eyeHeight, tick), link);
       }
 
-      static ce.Inner_DataUtil init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
+      static RotationMath.Inner_DataUtil init_ce_DataUtil_Vec3_k_NetHelper(Vec3 eye, ClutchBlockPlanner.Inner_NetHelper link) {
          BlockPos support = link.load_BlockPos();
-         ce.Inner_DataUtil goal = ce.init(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
-         return new ce.Inner_DataUtil(goal.init(), Mth.clamp(goal.load(), -89.5F, 89.5F));
+         RotationMath.Inner_DataUtil goal = RotationMath.init(ClutchBlockPlanner.init_Vec3_Vec3(eye, support.getX(), support.getY(), support.getZ(), link.init_Direction()), eye);
+         return new RotationMath.Inner_DataUtil(goal.init(), Mth.clamp(goal.load(), -89.5F, 89.5F));
       }
    }
 
    private record Inner_CachePool(int init_I, ClutchFallPhysics.Inner_StreamUtil init_i_StreamUtil, boolean init_Z, boolean load_Z, Vec3 init_Vec3, Vec3 load_Vec3, int load_I) {
    }
 
-   private record Inner_ConfigStore(Vec3 init_Vec3, ce.Inner_DataUtil init_ce_DataUtil, double init_D, int init_I) {
+   private record Inner_ConfigStore(Vec3 init_Vec3, RotationMath.Inner_DataUtil init_ce_DataUtil, double init_D, int init_I) {
    }
 
    private record Inner_DataUtil(

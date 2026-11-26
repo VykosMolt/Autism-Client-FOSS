@@ -244,7 +244,7 @@ final class V {
 
          R.init(eye.add(this.init_V_StreamUtil.flight.direction.scale(16.0)));
          if (this.init_V_StreamUtil.interceptTicks == 0 && k.load(this.init_Minecraft, ball)) {
-            autismclient.util.ch.Inner_CachePool wire = autismclient.util.ch.init_ch_CachePool();
+            autismclient.util.ServerRotationTracker.Inner_CachePool wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
             if (!wire.init_Z()) {
                return null;
             }
@@ -892,7 +892,7 @@ final class V {
          this.init_Minecraft.options.keyRight,
          this.init_Minecraft.options.keySprint
       )) {
-         key.setDown(autismclient.util.aB.init(key).autism$physicalForBody());
+         key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
       }
    }
 

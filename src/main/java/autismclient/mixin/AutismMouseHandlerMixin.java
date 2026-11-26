@@ -10,10 +10,10 @@ import autismclient.modules.AutoArmorModule;
 import autismclient.modules.FreecamController;
 import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.G;
+import autismclient.util.ClickRateTracker;
 import autismclient.util.aS;
-import autismclient.util.aZ;
-import autismclient.util.ba;
+import autismclient.util.MouseDeltaAccumulator;
+import autismclient.util.MouseMovementRouter;
 import autismclient.util.cf;
 import autismclient.util.ck;
 import autismclient.util.cx;
@@ -113,7 +113,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "handleAccumulatedMovement", at = @At("HEAD"))
    private void autism$clearQueuedMouseInputWhenUnavailable(CallbackInfo ci) {
-      aZ.init(this.accumulatedDX, this.accumulatedDY, ck.init_ck().state_I());
+      MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, ck.init_ck().state_I());
       if (!AutismLiteVariant.enabled() && this.minecraft.gui.screen() == null && (Math.abs(this.accumulatedDX) > 0.5 || Math.abs(this.accumulatedDY) > 0.5)) {
          cc ai = cc.load_cc();
          if (ai != null) {
@@ -121,7 +121,7 @@ public abstract class AutismMouseHandlerMixin {
          }
       }
 
-      ba.init_V();
+      MouseMovementRouter.init_V();
    }
 
    @Inject(method = "onButton", at = @At("HEAD"))
@@ -141,9 +141,9 @@ public abstract class AutismMouseHandlerMixin {
          if (this.minecraft != null && this.minecraft.gui.screen() == null) {
             int b = Compat263.mouseInfoGlfwButton(button);
             if (b == 0) {
-               G.init_V();
+               ClickRateTracker.init_V();
             } else if (b == 1) {
-               G.load_V();
+               ClickRateTracker.load_V();
             }
          }
       }
@@ -193,8 +193,8 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "handleAccumulatedMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MouseHandler;turnPlayer(D)V"))
    private void autism$applyQueuedRawMouseInput(CallbackInfo ci) {
-      ba.Inner_DataUtil delta = ba.init_ba_DataUtil();
-      if (ba.load_Z()) {
+      MouseMovementRouter.Inner_DataUtil delta = MouseMovementRouter.init_ba_DataUtil();
+      if (MouseMovementRouter.load_Z()) {
          this.accumulatedDX = delta.init_D();
          this.accumulatedDY = delta.load();
       } else if (!delta.init_Z()) {
@@ -210,7 +210,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @ModifyExpressionValue(method = "turnPlayer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;smoothCamera:Z"))
    private boolean autism$avoidDoubleSmoothingTelly(boolean original) {
-      return original && !ba.init_Z(ba.Inner_StreamUtil.SCAFFOLD_TELLY) && !ba.init_Z();
+      return original && !MouseMovementRouter.init_Z(MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY) && !MouseMovementRouter.init_Z();
    }
 
    @Unique
@@ -231,7 +231,7 @@ public abstract class AutismMouseHandlerMixin {
          this.accumulatedDY = 0.0;
          this.autism$simulatedDX = 0.0;
          this.autism$simulatedDY = 0.0;
-         ba.load_V();
+         MouseMovementRouter.load_V();
          ci.cancel();
       }
    }

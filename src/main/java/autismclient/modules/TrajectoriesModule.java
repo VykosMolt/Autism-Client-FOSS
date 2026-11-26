@@ -3,8 +3,8 @@ package autismclient.modules;
 import autismclient.api.module.BoolSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ce;
-import autismclient.util.cn;
+import autismclient.util.RotationMath;
+import autismclient.util.SilentMovementCoordinator;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.Direction;
@@ -124,7 +124,7 @@ public final class TrajectoriesModule extends Module {
          if (item != null && this.bool(item.init())) {
             float yaw = player.getYRot();
             float pitch = player.getXRot();
-            ce.Inner_DataUtil rotation = cn.load(MC.player);
+            RotationMath.Inner_DataUtil rotation = SilentMovementCoordinator.load(MC.player);
             if (rotation != null) {
                yaw = rotation.init();
                pitch = rotation.load();

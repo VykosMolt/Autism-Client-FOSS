@@ -7,11 +7,11 @@ import autismclient.api.module.DoubleSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cN;
-import autismclient.util.cO;
-import autismclient.util.cP;
+import autismclient.util.BacktrackPacketQueue;
+import autismclient.util.BacktrackPositionTracker;
+import autismclient.util.BacktrackTrailHistory;
 import autismclient.util.cd;
-import autismclient.util.ch;
+import autismclient.util.ServerRotationTracker;
 import java.util.ArrayDeque;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -60,9 +60,9 @@ public final class BacktrackModule extends Module {
    private final AtomicLong init_AtomicLong = new AtomicLong();
    private long read_J;
    private final Map<Packet<?>, BacktrackModule.Inner_DataUtil> init_Map = new IdentityHashMap<>();
-   private final cN<Packet<?>> init_cN = new cN<>(128);
-   private final cO init_cO = new cO();
-   private final cP init_cP = new cP();
+   private final BacktrackPacketQueue<Packet<?>> init_cN = new BacktrackPacketQueue<>(128);
+   private final BacktrackPositionTracker init_cO = new BacktrackPositionTracker();
+   private final BacktrackTrailHistory init_cP = new BacktrackTrailHistory();
    private ClientLevel init_ClientLevel;
    private LocalPlayer init_LocalPlayer;
    private ClientPacketListener init_ClientPacketListen;
@@ -372,7 +372,7 @@ public final class BacktrackModule extends Module {
       }
 
       if ("Combat".equals(this.choice("target"))) {
-         String owner = autismclient.util.aD.init_Str();
+         String owner = autismclient.util.SilentRotationManager.init_Str();
 
          for (String id : new String[]{owner == null ? "" : owner, "anchor-aura", "crystal-aura", "kill-aura"}) {
             Module module = al.init_Module_Str(id);
@@ -434,7 +434,7 @@ public final class BacktrackModule extends Module {
                      if (aura.load_LivingEntity_3() == this.init_LivingEntity && aura.init_Z_I_7(lookahead)) {
                         return true;
                      }
-                  } else if (autismclient.util.aI.init(this.init_LocalPlayer)
+                  } else if (autismclient.util.LegacyCombatDetector.init(this.init_LocalPlayer)
                      || init_Z_D_I(
                         (1.0F - this.init_LocalPlayer.getAttackStrengthScale(0.0F)) * this.init_LocalPlayer.getCurrentItemAttackStrengthDelay(), lookahead
                      )) {
@@ -470,7 +470,7 @@ public final class BacktrackModule extends Module {
          && module.init_Z_21()
          && module.load_Z_10()
          && module.integer("hold-time") > 0
-         && autismclient.util.aI.init(attacker)) {
+         && autismclient.util.LegacyCombatDetector.init(attacker)) {
          if (module.init_Z_LivingEntity_J(module.init_LivingEntity, System.nanoTime())) {
             return false;
          }
@@ -483,7 +483,7 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean init_Z_LivingEntity_J(LivingEntity victim, long now) {
-      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
       if (wire.init_Z() && wire.init_Vec3() != null) {
          Vec3 eye = wire.init_Vec3().add(0.0, this.init_LocalPlayer.getEyeHeight(), 0.0);
          Vec3 look = Vec3.directionFromRotation(wire.write(), wire.read());
@@ -725,7 +725,7 @@ public final class BacktrackModule extends Module {
    }
 
    private void load(LivingEntity victim, long now) {
-      if (victim == this.load_LivingEntity && autismclient.util.aI.init(this.init_LocalPlayer) && (this.poll == 0L || now - this.poll > 75000000L)) {
+      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.init(this.init_LocalPlayer) && (this.poll == 0L || now - this.poll > 75000000L)) {
          int ping = this.init_I_13();
 
          for (long attack : this.init_ArrayDeque) {

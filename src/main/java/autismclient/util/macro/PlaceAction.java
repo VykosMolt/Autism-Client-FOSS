@@ -44,14 +44,14 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
                init(mc, target);
                boolean sneaking = this.sneak;
                if (sneaking) {
-                  autismclient.util.aP.init(mc, this.sneakMode);
+                  autismclient.util.SneakPacketController.init(mc, this.sneakMode);
                }
 
                try {
                   mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                } finally {
                   if (sneaking) {
-                     autismclient.util.aP.load(mc, this.sneakMode);
+                     autismclient.util.SneakPacketController.load(mc, this.sneakMode);
                   }
                }
 

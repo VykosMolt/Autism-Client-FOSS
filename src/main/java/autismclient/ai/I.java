@@ -182,7 +182,7 @@ final class I {
             if (!this.update_Z && mc.player != null && mc.level != null) {
                this.update_I++;
                if (mc.gui.screen() != null) {
-                  autismclient.util.ai.init();
+                  autismclient.util.BlockAttackGraceWindow.init();
                   this.load_V_2();
                   this.init_DataUtil.init_V();
                   this.load_Z = false;
@@ -282,7 +282,7 @@ final class I {
                boolean fixedRow = this.init_Z && this.read_I % 2 == 1;
                if (fixedRow && !this.load_Z) {
                   float yaw = Math.abs(heading.x) > Math.abs(heading.z) ? 0.0F : 90.0F;
-                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.ce.Inner_DataUtil(yaw, 80.0F));
+                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(yaw, 80.0F));
                   this.load_Z = true;
                }
 
@@ -639,7 +639,7 @@ final class I {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.util.ai.init();
+            autismclient.util.BlockAttackGraceWindow.init();
             if (mc.player != null) {
                this.load_V_2();
             }
@@ -704,7 +704,7 @@ final class I {
 
    static void init(Minecraft mc) {
       mc.options.keyAttack.setDown(false);
-      if (mc.gameMode != null && mc.gameMode.isDestroying() && !autismclient.util.ai.init(mc)) {
+      if (mc.gameMode != null && mc.gameMode.isDestroying() && !autismclient.util.BlockAttackGraceWindow.init(mc)) {
          mc.gameMode.stopDestroyBlock();
       }
 
@@ -766,7 +766,7 @@ final class I {
             if (!this.load_Z && mc.player != null && mc.level != null) {
                this.read_I++;
                if (mc.gui.screen() != null) {
-                  autismclient.util.ai.init();
+                  autismclient.util.BlockAttackGraceWindow.init();
                   this.load();
                   this.init_DataUtil.init_V();
                   return this.init("Field work paused while a screen is open");
@@ -1123,7 +1123,7 @@ final class I {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.util.ai.init();
+            autismclient.util.BlockAttackGraceWindow.init();
             if (mc.player != null) {
                this.load();
             }

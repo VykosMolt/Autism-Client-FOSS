@@ -1,6 +1,6 @@
 package autismclient.ai.a;
 
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -148,7 +148,7 @@ public final class AiPacePlayback {
 
       NodeWalker.Inner_DataUtil var11 = var10.applied();
       if (var2 != null && var1.onGround() && !var11.jump() && !var11.sneak()) {
-         ce.Inner_DataUtil var12 = ce.init(var2, var1.getEyePosition());
+         RotationMath.Inner_DataUtil var12 = RotationMath.init(var2, var1.getEyePosition());
          NodeWalker.Inner_DataUtil var13 = putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(var11, var12.init());
          NodeWalker.Inner_StreamUtil var14 = var7 != null ? NodeWalker.fill(var9, var13, var7) : null;
          boolean var15 = var14 == null
@@ -169,7 +169,7 @@ public final class AiPacePlayback {
       }
 
       float var16 = var4 != null && this.putAt_TextPool_IoHelper.putAt_Z() && this.putAt_TextPool_IoHelper.flowTemp() - this.store <= 4
-         ? ce.init(var4, var1.getEyePosition()).load()
+         ? RotationMath.init(var4, var1.getEyePosition()).load()
          : this.putAt_F_LocalPlayer(var1);
       putAt_V_LocalPlayer(var1, var11, var16);
       return AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach;
@@ -2032,7 +2032,7 @@ public final class AiPacePlayback {
       PacketUtil.load();
       float var4 = var0.getYRot();
       float var5 = var0.getXRot();
-      ce.init_V_LocalPlayer(var0, new ce.Inner_DataUtil(var1.yaw(), var2), false);
+      RotationMath.init_V_LocalPlayer(var0, new RotationMath.Inner_DataUtil(var1.yaw(), var2), false);
       AiCameraTurn.putAt(var0, var4, var5);
       var3.options.keyUp.setDown(var1.forward() > 0.0);
       var3.options.keyDown.setDown(var1.forward() < 0.0);

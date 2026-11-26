@@ -6,8 +6,8 @@ import autismclient.AutismClientAddon;
 import autismclient.ai.cG;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ai;
-import autismclient.util.ce;
+import autismclient.util.BlockAttackGraceWindow;
+import autismclient.util.RotationMath;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -72,7 +72,7 @@ public final class AiBlockDigger {
    private String fill_Str = "";
    private BiPredicate<BlockState, ItemStack> putAt_BiPredicate = (var0, var1x) -> true;
    private Set<BlockPos> putAt_Set = Set.of();
-   private Consumer<ce.Inner_DataUtil> fill_Consumer;
+   private Consumer<RotationMath.Inner_DataUtil> fill_Consumer;
    private Vec3 putAt_Vec3;
    private float readEx_F;
    private Vec3 fill_Vec3;
@@ -122,7 +122,7 @@ public final class AiBlockDigger {
       return AiBlockDigger.Inner_CacheHelper.readEx;
    }
 
-   public AiBlockDigger putAt_JsonCache_Consumer(Consumer<ce.Inner_DataUtil> var1) {
+   public AiBlockDigger putAt_JsonCache_Consumer(Consumer<RotationMath.Inner_DataUtil> var1) {
       this.fill_Consumer = var1;
       return this;
    }
@@ -255,7 +255,7 @@ public final class AiBlockDigger {
 
                   this.putAt_IntConsumer.accept(var17);
                   Vec3 var18 = this.putAt_Vec3_BlockPos_BlockHitResult(this.putAt_BlockPos, var15);
-                  ce.Inner_DataUtil var20 = this.putAt_TaskUtil_CacheHelp();
+                  RotationMath.Inner_DataUtil var20 = this.putAt_TaskUtil_CacheHelp();
                   if (var20 != null) {
                      this.fill_Consumer.accept(var20);
                   } else {
@@ -519,7 +519,7 @@ public final class AiBlockDigger {
       }
 
       prevEx_I = var0.player.tickCount;
-      ai.init(var0.player);
+      BlockAttackGraceWindow.init(var0.player);
       return false;
    }
 
@@ -669,13 +669,13 @@ public final class AiBlockDigger {
          if (var15 > 0) {
             Vec3 var5 = this.putAt_Minecraft.player.getEyePosition();
             Vec3 var6 = this.putAt_Vec3_BlockPos_BlockHitResult(var1, var2);
-            ce.Inner_DataUtil var7 = ce.init(this.putAt_Minecraft.player);
-            ce.Inner_DataUtil var8 = ce.init(var6, var5);
+            RotationMath.Inner_DataUtil var7 = RotationMath.init(this.putAt_Minecraft.player);
+            RotationMath.Inner_DataUtil var8 = RotationMath.init(var6, var5);
             float var9 = Mth.wrapDegrees(var8.init() - var7.init());
             float var10 = var8.load() - var7.load();
             if (!(Math.abs(var9) + Math.abs(var10) < 0.5F)) {
                float var11 = 1.0F / (var15 + 1);
-               ce.Inner_DataUtil var12 = new ce.Inner_DataUtil(var7.init() + var9 * var11, var7.load() + var10 * var11);
+               RotationMath.Inner_DataUtil var12 = new RotationMath.Inner_DataUtil(var7.init() + var9 * var11, var7.load() + var10 * var11);
                Vec3 var13 = Vec3.directionFromRotation(var12.load(), var12.init());
                BlockHitResult var14 = this.putAt_Minecraft
                   .level
@@ -697,7 +697,7 @@ public final class AiBlockDigger {
       }
    }
 
-   private ce.Inner_DataUtil putAt_TaskUtil_CacheHelp() {
+   private RotationMath.Inner_DataUtil putAt_TaskUtil_CacheHelp() {
       if (this.fill_Consumer != null
          && this.putAt_Vec3 != null
          && this.prevEx_Z
@@ -734,7 +734,7 @@ public final class AiBlockDigger {
                         )
                      );
                   if (var16.getType() == Type.BLOCK && var16.getBlockPos().equals(this.putAt_BlockPos) && EventBus.init(var16, var12) >= 0.06) {
-                     return new ce.Inner_DataUtil(EventBus.init(var15), EventBus.load(var15));
+                     return new RotationMath.Inner_DataUtil(EventBus.init(var15), EventBus.load(var15));
                   }
                }
 
@@ -804,7 +804,7 @@ public final class AiBlockDigger {
 
       if (this.prevEx_Z && this.putAt_Minecraft.gameMode != null && this.value(this.putAt_BlockPos)) {
          this.putAt_Minecraft.gameMode.stopDestroyBlock();
-         ai.init();
+         BlockAttackGraceWindow.init();
       }
 
       this.prevEx_Z = false;
@@ -852,7 +852,7 @@ public final class AiBlockDigger {
    }
 
    public String init_Str() { return this.putAt_Str(); }
-   public AiBlockDigger init_RefQueue_DataUtil_Consumer(Consumer<ce.Inner_DataUtil> aim) { return this.putAt_JsonCache_Consumer(aim); }
+   public AiBlockDigger init_RefQueue_DataUtil_Consumer(Consumer<RotationMath.Inner_DataUtil> aim) { return this.putAt_JsonCache_Consumer(aim); }
    public AiBlockDigger init_RefQueue_DataUtil_BiPredicate(BiPredicate<BlockState, ItemStack> accept) { return this.putAt_JsonCache_BiPredicate(accept); }
    public AiBlockDigger init_RefQueue_DataUtil_Set(Set<BlockPos> sealedWater) { return this.putAt_JsonCache_Set(sealedWater); }
    public Inner_DataUtil_2 init_RefQueue_DataUtil__BlockPos(BlockPos target) { return Inner_DataUtil_2.from(this.putAt_JsonCache_CacheHel_BlockPos(target)); }

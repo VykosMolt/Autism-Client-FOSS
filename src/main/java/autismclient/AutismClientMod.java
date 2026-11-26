@@ -28,7 +28,7 @@ import autismclient.util.KeyHolder;
 import autismclient.util.StreamGate;
 import autismclient.util.W;
 import autismclient.util.aA;
-import autismclient.util.aC;
+import autismclient.util.KillAuraHitMarkerRenderer;
 import autismclient.util.aE;
 import autismclient.util.aF;
 import autismclient.util.aN;
@@ -144,7 +144,7 @@ public final class AutismClientMod implements ClientModInitializer {
          KeyHolder.init();
       }
 
-      aC.init_V();
+      KillAuraHitMarkerRenderer.init_V();
       HoleEspModule.init_V_12();
       autismclient.commands.CommandManager.init_V();
       if (!AutismLiteVariant.enabled()) {

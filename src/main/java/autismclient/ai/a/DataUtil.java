@@ -1,11 +1,11 @@
 package autismclient.ai.a;
 
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.aD;
-import autismclient.util.ap;
-import autismclient.util.ce;
-import autismclient.util.ch;
-import autismclient.util.cn;
+import autismclient.util.SilentRotationManager;
+import autismclient.util.RotationStreamPlanner;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
+import autismclient.util.SilentMovementCoordinator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +36,7 @@ public final class DataUtil {
    private static final double load_D = 1.0;
    private static final double read_D = 64.0;
    static final float init_F = 7.0F;
-   private ce.Inner_DataUtil init_ce_DataUtil;
+   private RotationMath.Inner_DataUtil init_ce_DataUtil;
    private static volatile String init_Str = "";
    private Vec3 init_Vec3;
    private int init_I = -1;
@@ -72,9 +72,9 @@ public final class DataUtil {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player != null && point != null) {
          Vec3 eye = player.getEyePosition();
-         ce.Inner_DataUtil rotation = ce.init(point, eye);
+         RotationMath.Inner_DataUtil rotation = RotationMath.init(point, eye);
          if (init_Z_Vec3(point.subtract(eye))) {
-            ce.Inner_DataUtil kept = new ce.Inner_DataUtil(this.init_ce_DataUtil != null ? this.init_ce_DataUtil.init() : player.getYRot(), rotation.load());
+            RotationMath.Inner_DataUtil kept = new RotationMath.Inner_DataUtil(this.init_ce_DataUtil != null ? this.init_ce_DataUtil.init() : player.getYRot(), rotation.load());
             if (init(player, eye, kept, point)) {
                rotation = kept;
             }
@@ -85,7 +85,7 @@ public final class DataUtil {
       }
    }
 
-   private static boolean init(LocalPlayer player, Vec3 eye, ce.Inner_DataUtil kept, Vec3 point) {
+   private static boolean init(LocalPlayer player, Vec3 eye, RotationMath.Inner_DataUtil kept, Vec3 point) {
       ClientLevel level = Minecraft.getInstance().level;
       if (level == null) {
          return true;
@@ -112,10 +112,10 @@ public final class DataUtil {
       return vertical > 0.4 && (horizontal < 0.4 || horizontal < vertical / 2.75);
    }
 
-   public void init_V_ce_DataUtil(ce.Inner_DataUtil rotation) {
+   public void init_V_ce_DataUtil(RotationMath.Inner_DataUtil rotation) {
       if (rotation != null) {
          this.init_Vec3 = null;
-         if (this.init_ce_DataUtil == null || ce.init_F(this.init_ce_DataUtil, rotation) > 1.0E-4) {
+         if (this.init_ce_DataUtil == null || RotationMath.init_F(this.init_ce_DataUtil, rotation) > 1.0E-4) {
             this.load_I = 0;
          }
 
@@ -123,7 +123,7 @@ public final class DataUtil {
       }
    }
 
-   public ce.Inner_DataUtil init_ce_DataUtil() {
+   public RotationMath.Inner_DataUtil init_ce_DataUtil() {
       return this.init_ce_DataUtil;
    }
 
@@ -176,7 +176,7 @@ public final class DataUtil {
       LocalPlayer player = Minecraft.getInstance().player;
       if (player != null && this.init_ce_DataUtil != null && (this.init_Z || this.read_I != player.tickCount && write != player.tickCount)) {
          if (!this.init_Z) {
-            ce.Inner_DataUtil target = this.init_ce_DataUtil_LocalPlayer_ce_DataUtil(player, this.init_ce_DataUtil);
+            RotationMath.Inner_DataUtil target = this.init_ce_DataUtil_LocalPlayer_ce_DataUtil(player, this.init_ce_DataUtil);
             init_Str = String.format(
                Locale.ROOT,
                "aim@%x speed %s goal %.0f/%.0f%s%s",
@@ -191,56 +191,56 @@ public final class DataUtil {
             float prevPitch = player.getXRot();
             float yaw = prevYaw + init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(target.init() - prevYaw), this.init_DataUtil_DataUtil);
             float pitch = prevPitch + init_F_F_DataUtil_DataUtil(target.load() - prevPitch, this.init_DataUtil_DataUtil);
-            ce.Inner_DataUtil stepped = new ce.Inner_DataUtil(yaw, pitch);
+            RotationMath.Inner_DataUtil stepped = new RotationMath.Inner_DataUtil(yaw, pitch);
             if (Minecraft.getInstance().level != null) {
                stepped = this.init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft.getInstance(), stepped);
             }
 
-            ce.init_V_LocalPlayer(player, stepped, false);
+            RotationMath.init_V_LocalPlayer(player, stepped, false);
             AiCameraTurn.putAt(player, prevYaw, prevPitch);
             this.read_I = player.tickCount;
             write = player.tickCount;
             this.load_I = this.init_D() <= 1.0 ? this.load_I + 1 : 0;
          } else {
             g.init(true);
-            aD.init_V_Str("ai-assistant", 1, this.init_ce_DataUtil);
-            aD.init(
+            SilentRotationManager.init_V_Str("ai-assistant", 1, this.init_ce_DataUtil);
+            SilentRotationManager.init(
                "ai-assistant", player, this.init_DataUtil_DataUtil.init_F, this.init_DataUtil_DataUtil.load_F, this.init_DataUtil_DataUtil.init_ap_StreamUtil
             );
-            ce.Inner_DataUtil packetRotation = cn.init_ce_DataUtil();
-            this.load_I = packetRotation != null && ce.init_F(packetRotation, this.init_ce_DataUtil) <= 1.0 ? this.load_I + 1 : 0;
+            RotationMath.Inner_DataUtil packetRotation = SilentMovementCoordinator.init_ce_DataUtil();
+            this.load_I = packetRotation != null && RotationMath.init_F(packetRotation, this.init_ce_DataUtil) <= 1.0 ? this.load_I + 1 : 0;
          }
       }
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_LocalPlayer_ce_DataUtil(LocalPlayer player, ce.Inner_DataUtil rotation) {
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_LocalPlayer_ce_DataUtil(LocalPlayer player, RotationMath.Inner_DataUtil rotation) {
       Minecraft mc = Minecraft.getInstance();
       return mc.level != null && this.init_ce_DataUtil != null ? this.init_ce_DataUtil_Minecraft_ce_DataUtil(mc, rotation) : rotation;
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft mc, ce.Inner_DataUtil rotation) {
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Inner_DataUtil rotation) {
       if (!this.init_Z_Minecraft_ce_DataUtil(mc, rotation)) {
          return rotation;
       }
 
       for (float dip : new float[]{8.0F, 14.0F, 20.0F}) {
-         ce.Inner_DataUtil candidate = new ce.Inner_DataUtil(rotation.init(), Math.min(90.0F, rotation.load() + dip));
+         RotationMath.Inner_DataUtil candidate = new RotationMath.Inner_DataUtil(rotation.init(), Math.min(90.0F, rotation.load() + dip));
          if (!this.init_Z_Minecraft_ce_DataUtil(mc, candidate)) {
             return candidate;
          }
       }
 
       for (float side : new float[]{7.0F, -7.0F, 14.0F, -14.0F}) {
-         ce.Inner_DataUtil candidate = new ce.Inner_DataUtil(rotation.init() + side, rotation.load());
+         RotationMath.Inner_DataUtil candidate = new RotationMath.Inner_DataUtil(rotation.init() + side, rotation.load());
          if (!this.init_Z_Minecraft_ce_DataUtil(mc, candidate)) {
             return candidate;
          }
       }
 
-      return new ce.Inner_DataUtil(rotation.init() + 7.0F, rotation.load());
+      return new RotationMath.Inner_DataUtil(rotation.init() + 7.0F, rotation.load());
    }
 
-   private boolean init_Z_Minecraft_ce_DataUtil(Minecraft mc, ce.Inner_DataUtil rotation) {
+   private boolean init_Z_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Inner_DataUtil rotation) {
       Vec3 view = Vec3.directionFromRotation(rotation.load(), rotation.init()).normalize();
       Vec3 eye = mc.player.getEyePosition();
 
@@ -258,7 +258,7 @@ public final class DataUtil {
       return false;
    }
 
-   private static Entity init_Entity_Minecraft_ce_DataUtil(Minecraft mc, ce.Inner_DataUtil rotation) {
+   private static Entity init_Entity_Minecraft_ce_DataUtil(Minecraft mc, RotationMath.Inner_DataUtil rotation) {
       Vec3 view = Vec3.directionFromRotation(rotation.load(), rotation.init()).normalize();
       Vec3 eye = mc.player.getEyePosition();
 
@@ -287,7 +287,7 @@ public final class DataUtil {
 
    public double init_D() {
       LocalPlayer player = Minecraft.getInstance().player;
-      return player != null && this.init_ce_DataUtil != null ? ce.init_F(ce.init(player), this.init_ce_DataUtil) : 0.0;
+      return player != null && this.init_ce_DataUtil != null ? RotationMath.init_F(RotationMath.init(player), this.init_ce_DataUtil) : 0.0;
    }
 
    public static BlockHitResult init_BlockHitResult() {
@@ -333,7 +333,7 @@ public final class DataUtil {
       } else if (!this.init_Z) {
          return init_Z_Entity(target);
       } else {
-         ce.Inner_DataUtil rotation = cn.init_ce_DataUtil();
+         RotationMath.Inner_DataUtil rotation = SilentMovementCoordinator.init_ce_DataUtil();
          if (rotation == null) {
             return false;
          } else {
@@ -357,7 +357,7 @@ public final class DataUtil {
       if (player == null) {
          return Vec3.ZERO;
       } else if (!AutismLiteVariant.enabled() && autismclient.ai.ClassCache.init()) {
-         ch.Inner_CachePool wire = ch.init_ch_CachePool();
+         ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
          return !wire.init_Z() ? Vec3.ZERO : Vec3.directionFromRotation(wire.write(), wire.read());
       } else {
          return player.getLookAngle();
@@ -526,25 +526,25 @@ public final class DataUtil {
    }
 
    public enum Inner_DataUtil {
-      init_DataUtil_DataUtil(28.0F, 28.0F, 22.0F, ap.Inner_StreamUtil.STANDARD),
-      load_DataUtil_DataUtil(54.0F, 54.0F, 38.0F, ap.Inner_StreamUtil.STANDARD),
-      read_DataUtil_DataUtil(45.0F, 45.0F, 180.0F, ap.Inner_StreamUtil.STANDARD),
-      write(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.STANDARD),
-      update(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.TELLY_FLICK),
-      sync(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.STANDARD, true),
-      flush(72.0F, 72.0F, 100.0F, ap.Inner_StreamUtil.TELLY_FLICK, true);
+      init_DataUtil_DataUtil(28.0F, 28.0F, 22.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      load_DataUtil_DataUtil(54.0F, 54.0F, 38.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      read_DataUtil_DataUtil(45.0F, 45.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      write(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      update(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK),
+      sync(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD, true),
+      flush(72.0F, 72.0F, 100.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK, true);
 
       final float init_F;
       final float load_F;
       final float read_F;
-      final ap.Inner_StreamUtil init_ap_StreamUtil;
+      final RotationStreamPlanner.Inner_StreamUtil init_ap_StreamUtil;
       final boolean init_Z;
 
-      Inner_DataUtil(float yawCap, float pitchCap, float cameraCap, ap.Inner_StreamUtil profile) {
+      Inner_DataUtil(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile) {
          this(yawCap, pitchCap, cameraCap, profile, false);
       }
 
-      Inner_DataUtil(float yawCap, float pitchCap, float cameraCap, ap.Inner_StreamUtil profile, boolean linear) {
+      Inner_DataUtil(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile, boolean linear) {
          this.init_F = yawCap;
          this.load_F = pitchCap;
          this.read_F = cameraCap;

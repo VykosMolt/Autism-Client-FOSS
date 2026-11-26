@@ -1817,3 +1817,62 @@ Phase6A	class	autismclient/util/l	autismclient/util/PacketWireCaptureHandler	aut
 Phase6A	class	autismclient/util/m	autismclient/util/BedSleepDesyncHelper	autismclient/util/m	applied	Clears local bed sleeping pose/screen while preserving bed anchor
 Phase6A	class	autismclient/util/n	autismclient/util/SystemClipboardHelper	autismclient/util/n	applied	Cross-platform Wayland/X11/GLFW clipboard bridge with async write worker
 Phase6A	class	autismclient/util/o	autismclient/util/MacroClipboardCodec	autismclient/util/o	applied	Clipboard & NBT/Base64 codec for macros, macro steps, and queued packets
+Phase6B	class	autismclient/util/ByteReader	autismclient/util/PlayerMotionEnvelope	autismclient/util/ByteReader	applied	Computes next-tick horizontal reachable player AABB from friction/speed/motion
+Phase6B	class	autismclient/util/DataPipe	autismclient/util/ManualInteractionYield	autismclient/util/DataPipe	applied	Detects manual digging/using under silent aim and yields/buffers attack/use clicks
+Phase6B	class	autismclient/util/EventBus	autismclient/util/QueuedCombatAction	autismclient/util/EventBus	applied	Queues one-shot block/entity combat actions with legality predicate and dispatch receipt
+Phase6B	class	autismclient/util/FileCache	autismclient/util/LatencyTickWindow	autismclient/util/FileCache	applied	Latency-scaled tick-expiring bounded key window (3-16 ticks)
+Phase6B	class	autismclient/util/G	autismclient/util/ClickRateTracker	autismclient/util/G	applied	48-sample nanosecond ring buffers tracking left/right CPS and click recency
+Phase6B	class	autismclient/util/HashUtil	autismclient/util/StickyPlacementSelector	autismclient/util/HashUtil	applied	Preserves last chosen block placement candidate index across ticks
+Phase6B	class	autismclient/util/IoWorker	autismclient/util/ServerVerifiedBlockState	autismclient/util/IoWorker	applied	Reads server-verified BlockState from MC BlockStatePredictionHandler
+Phase6B	class	autismclient/util/JsonUtil	autismclient/util/ActivationModeLatch	autismclient/util/JsonUtil	applied	Hold/Press/Always keybind activation state latch
+Phase6B	class	autismclient/util/ListPool	autismclient/util/CombatInteractionController	autismclient/util/ListPool	applied	Coordinates legit KillAura attack/use/block-interaction state and crosshair snapshots
+Phase6B	class	autismclient/util/NetHelper	autismclient/util/ActionCooldownScheduler	autismclient/util/NetHelper	applied	Per-action nanosecond cooldown/cadence scheduler and PvP tick budget helper
+Phase6B	class	autismclient/util/PacketUtil	autismclient/util/HitboxRayHelper	autismclient/util/PacketUtil	applied	Ray-casts AABB.clip within range and computes inset aim points inside AABB
+Phase6B	class	autismclient/util/PoolEntry	autismclient/util/SessionContextWatcher	autismclient/util/PoolEntry	applied	Watches (world, player, connection) identity and runs reset callback on change
+Phase6B	class	autismclient/util/RenderState	autismclient/util/PendingCrystalAttackCache	autismclient/util/RenderState	applied	IdentityHashMap tracking recently attacked crystal entities/cells with latency expiry
+Phase6B	class	autismclient/util/RingBuffer	autismclient/util/TargetSwitchHysteresis	autismclient/util/RingBuffer	applied	Hysteresis comparator for target switching across HP, FOV, and distance modes
+Phase6B	class	autismclient/util/S	autismclient/util/ExplosionDamageCalculator	autismclient/util/S	applied	Minecraft explosion damage calculator with 256-entry LRU cache and armor/resistance sim
+Phase6B	class	autismclient/util/StateCache	autismclient/util/CombatAimSpeedController	autismclient/util/StateCache	applied	Wraps rotation-speed-multiplier setting and CombatAimEngine target tracker
+Phase6B	class	autismclient/util/SyncManager	autismclient/util/BlastShieldPosFinder	autismclient/util/SyncManager	applied	Finds candidate BlockPos cells between player AABB and explosion source for shielding
+Phase6B	class	autismclient/util/TableIndex	autismclient/util/TargetLeadDamageEstimator	autismclient/util/TableIndex	applied	Predicts moving target AABB over horizonTicks and evaluates target/self blast damage
+Phase6B	class	autismclient/util/TaskTimer	autismclient/util/ArmorEvaluationHelper	autismclient/util/TaskTimer	applied	Scores and ranks inventory armor pieces by protection and enchant weights per slot
+Phase6B	class	autismclient/util/TextFormat	autismclient/util/BlockSequenceSyncTracker	autismclient/util/TextFormat	applied	Tracks pending client-predicted block action sequence until acknowledged
+Phase6B	class	autismclient/util/UiHelper	autismclient/util/WeaponDamageCalculator	autismclient/util/UiHelper	applied	Simulates Attributes.ATTACK_DAMAGE for candidate ItemStacks with Strength/Weakness
+Phase6B	class	autismclient/util/aB	autismclient/util/KeyMappingControl	autismclient/util/aB	applied	Duck interface on KeyMapping for physical state, simulated press, click count, and refocus
+Phase6B	class	autismclient/util/aC	autismclient/util/KillAuraHitMarkerRenderer	autismclient/util/aC	applied	World LevelRenderEvents renderer drawing pulsing KillAura hit-marker box
+Phase6B	class	autismclient/util/aD	autismclient/util/SilentRotationManager	autismclient/util/aD	applied	Central priority arbiter for silent server-side rotations across combat/utility modules
+Phase6B	class	autismclient/util/aI	autismclient/util/LegacyCombatDetector	autismclient/util/aI	applied	Detects 1.8/no-cooldown combat servers via ATTACK_SPEED, ViaFabricPlus, or ticker scale
+Phase6B	class	autismclient/util/aP	autismclient/util/SneakPacketController	autismclient/util/aP	applied	Controls Packet vs Keybind sneaking via keyShift and ServerboundPlayerInputPacket
+Phase6B	class	autismclient/util/aY	autismclient/util/SilentMiningCoordinator	autismclient/util/aY	applied	Coordinates silent-rotation block mining requests (BedNuker/AutoFarm) and owner state
+Phase6B	class	autismclient/util/aZ	autismclient/util/MouseDeltaAccumulator	autismclient/util/aZ	applied	Accumulates raw mouse (dx, dy) counts per tick and converts to yaw/pitch degrees
+Phase6B	class	autismclient/util/ah	autismclient/util/InventorySlotArbiter	autismclient/util/ah	applied	Priority arbiter for hotbar/inventory slot ownership (auto-totem/clutch priority 100)
+Phase6B	class	autismclient/util/ai	autismclient/util/BlockAttackGraceWindow	autismclient/util/ai	applied	2-tick grace window suppressing vanilla block attack/continueAttack after automated actions
+Phase6B	class	autismclient/util/am	autismclient/util/HumanHandProfile	autismclient/util/am	applied	Seeded record (hand.seed) of per-player biomechanical aim/turn parameters
+Phase6B	class	autismclient/util/an	autismclient/util/HumanizedAimStepper	autismclient/util/an	applied	Humanized saccade/pursuit aim step generator driven by HumanHandProfile
+Phase6B	class	autismclient/util/ap	autismclient/util/RotationStreamPlanner	autismclient/util/ap	applied	GCD-quantized rotation-stream trajectory planner seeded from server rotation
+Phase6B	class	autismclient/util/as	autismclient/util/VirtualInputDispatcher	autismclient/util/as	applied	Virtual click/use/attack input queue coordinating Scaffold, FastExp, FastBlock, and tickets
+Phase6B	class	autismclient/util/bL	autismclient/util/PlacementTickStamp	autismclient/util/bL	applied	Records client tick of last block placement for Scaffold/ClientInteractionOverride
+Phase6B	class	autismclient/util/bM	autismclient/util/PerTickPlacementLock	autismclient/util/bM	applied	Single-module per-tick placement ownership lock across building/PvP modules
+Phase6B	class	autismclient/util/ba	autismclient/util/MouseMovementRouter	autismclient/util/ba	applied	Routes smooth camera/mouse delta pulses by source through accumulators and smoother
+Phase6B	class	autismclient/util/bb	autismclient/util/MovementInputFixer	autismclient/util/bb	applied	Remaps player Input between cameraYaw and silentYaw with optional footing safety
+Phase6B	class	autismclient/util/cD	autismclient/util/LedgeFootingPredictor	autismclient/util/cD	applied	3-tick ground-physics ledge-drop predictor returning MovementInputFixer footing callback
+Phase6B	class	autismclient/util/cM	autismclient/util/HumanizedTurnPlanner	autismclient/util/cM	applied	Humanized smooth-turn yaw/pitch arc generator outputting quantized mouse counts
+Phase6B	class	autismclient/util/cN	autismclient/util/BacktrackPacketQueue	autismclient/util/cN	applied	Bounded time-delayed packet queue (300ms window) scoped to BacktrackModule target
+Phase6B	class	autismclient/util/cO	autismclient/util/BacktrackPositionTracker	autismclient/util/cO	applied	Wraps MC VecDeltaCodec to track exact server-side entity position for Backtrack
+Phase6B	class	autismclient/util/cP	autismclient/util/BacktrackTrailHistory	autismclient/util/cP	applied	Maintains 450ms delayed entity position trail and drawn/received hitboxes for Backtrack
+Phase6B	class	autismclient/util/cW	autismclient/util/GuardedInputTicket	autismclient/util/cW	applied	Package-private guarded one-shot action ticket with receipt held by VirtualInputDispatcher
+Phase6B	class	autismclient/util/ce	autismclient/util/RotationMath	autismclient/util/ce	applied	Yaw/pitch rotation math helper and immutable (yaw, pitch) rotation record
+Phase6B	class	autismclient/util/ch	autismclient/util/ServerRotationTracker	autismclient/util/ch	applied	Tracks server-sent ServerboundMovePlayerPacket yaw/pitch/pos and silent entity rendering
+Phase6B	class	autismclient/util/ci	autismclient/util/SprintStateTracker	autismclient/util/ci	applied	Tracks client/server sprint transitions, round-trip ack timing, and attack sprint reset
+Phase6B	class	autismclient/util/cj	autismclient/util/EntityMotionTracker	autismclient/util/cj	applied	32-tick ring buffer tracking interpolated LivingEntity position and per-tick velocity
+Phase6B	class	autismclient/util/cn	autismclient/util/SilentMovementCoordinator	autismclient/util/cn	applied	Coordinates MovementInputFixer and silent-rotation look hooks across movement mixins
+Phase6B	class	autismclient/util/dg	autismclient/util/SmoothRotationIntegrator	autismclient/util/dg	applied	Seeded continuous yaw/pitch angular-velocity mouse-count smoother for ScaffoldModule
+Phase6B	class	autismclient/util/dh	autismclient/util/FractionalCountAccumulator	autismclient/util/dh	applied	Sub-pixel fractional (x, y) mouse-count remainder accumulator outputting integer counts
+Phase6B	class	autismclient/util/dk	autismclient/util/TimedMouseSmoother	autismclient/util/dk	applied	Time-sliced smooth mouse-delta distributor interpolating (dx, dy) over durationSeconds
+Phase6B	class	autismclient/util/q	autismclient/util/CombatAimEngine	autismclient/util/q	applied	Humanized spring/pursuit combat aim engine driven by HumanHandProfile
+Phase6B	class	autismclient/util/r	autismclient/util/CombatAttackDispatcher	autismclient/util/r	applied	Intercepts and dispatches combat attack actions with dispatch receipts
+Phase6B	class	autismclient/util/s	autismclient/util/ClientInteractionOverride	autismclient/util/s	applied	Central client-side block/entity hit-result and hand-interaction override coordinator
+Phase6B	class	autismclient/util/t	autismclient/util/RecentCombatTracker	autismclient/util/t	applied	5-second per-UUID tracker of LivingEntities recently attacked by local player
+Phase6B	class	autismclient/util/u	autismclient/util/AttackReachHelper	autismclient/util/u	applied	Computes effective AttackRange (incl. piercing momentum) and reach boundary crossings
+Phase6B	class	autismclient/util/x	autismclient/util/CombatTargetScorer	autismclient/util/x	applied	Scores candidate LivingEntity targets by look angle, distance, player bias, and attacker
+Phase6B	class	autismclient/util/y	autismclient/util/CommandProbeIdAllocator	autismclient/util/y	applied	Atomic transaction-ID allocator (>=2_000_000_000) tagging internal command suggestion probes

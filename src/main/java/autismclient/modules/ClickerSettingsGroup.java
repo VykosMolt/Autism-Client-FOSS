@@ -103,7 +103,7 @@ final class ClickerSettingsGroup {
    autismclient.util.a.ClickPatternEngine.Inner_ConfigStore init_DataUtil_ConfigSto() {
       if (this.init_DataUtil_ConfigSto == null) {
          try {
-            autismclient.util.am hand = autismclient.util.am.init_am();
+            autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.init_am();
             this.init_DataUtil_ConfigSto = new autismclient.util.a.ClickPatternEngine.Inner_ConfigStore(
                0.85 + 0.3 * init_D_D(hand.open()), 0.9 + 0.2 * init_D_D(hand.load_D()), hand.sync() >= 0.0
             );

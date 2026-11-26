@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 
-public final class ConfigStore implements autismclient.util.cn.Inner_DataUtil {
+public final class ConfigStore implements autismclient.util.SilentMovementCoordinator.Inner_DataUtil {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final ConfigStore init_ConfigStore = new ConfigStore();
    private boolean init_Z;
@@ -182,8 +182,8 @@ public final class ConfigStore implements autismclient.util.cn.Inner_DataUtil {
             this.read();
          }
 
-         if ("ai-assistant".equals(autismclient.util.aD.init_Str()) || autismclient.util.aD.init_Z()) {
-            autismclient.util.aD.init_V_Str_LocalPlayer("ai-assistant", init_Minecraft.player);
+         if ("ai-assistant".equals(autismclient.util.SilentRotationManager.init_Str()) || autismclient.util.SilentRotationManager.init_Z()) {
+            autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("ai-assistant", init_Minecraft.player);
          }
       }
    }
@@ -196,6 +196,6 @@ public final class ConfigStore implements autismclient.util.cn.Inner_DataUtil {
 
    @Override
    public boolean load_Z_23() {
-      return autismclient.ai.a.g.init(autismclient.util.aD.init_Z(), true, autismclient.util.cn.init_Z());
+      return autismclient.ai.a.g.init(autismclient.util.SilentRotationManager.init_Z(), true, autismclient.util.SilentMovementCoordinator.init_Z());
    }
 }

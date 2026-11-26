@@ -63,7 +63,7 @@ public final class TotemHitModule extends Module {
 
          for (int slot = 0; slot < 9; slot++) {
             ItemStack stack = MC.player.getInventory().getItem(slot);
-            if (stack.is(ItemTags.SWORDS) && !autismclient.util.ah.init(slot, "totem-hit")) {
+            if (stack.is(ItemTags.SWORDS) && !autismclient.util.InventorySlotArbiter.init(slot, "totem-hit")) {
                int enchantment = EnchantmentHelper.getItemEnchantmentLevel(knockback, stack);
                if (enchantment > bestLevel) {
                   best = slot;
@@ -107,7 +107,7 @@ public final class TotemHitModule extends Module {
          && !MacroExecutor.write_Z()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()
-         && !autismclient.util.aD.read_Z()
+         && !autismclient.util.SilentRotationManager.read_Z()
          && !ScaffoldModule.update_Z_5();
    }
 
@@ -130,24 +130,24 @@ public final class TotemHitModule extends Module {
                   if (this.write == -2147483648) {
                      if (selected != this.init_I || !MC.player.getMainHandItem().is(Items.TOTEM_OF_UNDYING)) {
                         this.init_V_24();
-                     } else if (autismclient.util.ah.init_Z("totem-hit", this.init_I)
-                        && autismclient.util.ah.init_Z("totem-hit", this.load)
+                     } else if (autismclient.util.InventorySlotArbiter.init_Z("totem-hit", this.init_I)
+                        && autismclient.util.InventorySlotArbiter.init_Z("totem-hit", this.load)
                         && this.init(this.load)) {
                         this.write = tick;
                         this.init_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
                      }
                   } else if (tick != this.write
                      && System.nanoTime() >= this.init_J
-                     && autismclient.util.UiHelper.init() instanceof EntityHitResult hit
+                     && autismclient.util.WeaponDamageCalculator.init() instanceof EntityHitResult hit
                      && hit.getEntity() == this.init_LivingEntity) {
-                     if (!autismclient.util.EventBus.init(
+                     if (!autismclient.util.QueuedCombatAction.init(
                         "totem-hit",
                         hit,
                         () -> this.init_Z_29()
                            && this.init_LivingEntity.isAlive()
                            && MC.player.getMainHandItem().is(ItemTags.SWORDS)
                            && !TeamsModule.init(this.init_LivingEntity, "killaura")
-                           && autismclient.util.UiHelper.init() instanceof EntityHitResult current
+                           && autismclient.util.WeaponDamageCalculator.init() instanceof EntityHitResult current
                            && current.getEntity() == this.init_LivingEntity,
                         () -> {
                            this.init_Z = true;
@@ -174,11 +174,11 @@ public final class TotemHitModule extends Module {
    }
 
    private boolean init(int slot) {
-      if (!autismclient.util.ah.init(slot, "totem-hit") && autismclient.util.ah.write_Z("totem-hit")) {
+      if (!autismclient.util.InventorySlotArbiter.init(slot, "totem-hit") && autismclient.util.InventorySlotArbiter.write_Z("totem-hit")) {
          try {
             autismclient.util.aw.init_V(MC, slot);
          } finally {
-            autismclient.util.ah.read_V("totem-hit");
+            autismclient.util.InventorySlotArbiter.read_V("totem-hit");
          }
 
          return true;
@@ -188,13 +188,13 @@ public final class TotemHitModule extends Module {
    }
 
    private void init_V_24() {
-      autismclient.util.EventBus.init("totem-hit");
+      autismclient.util.QueuedCombatAction.init("totem-hit");
       this.init_LivingEntity = null;
       this.init_Obj = null;
       this.init_I = this.load = -1;
       this.init_Z = false;
       this.init_ItemStack = ItemStack.EMPTY;
-      autismclient.util.ah.update_V("totem-hit");
+      autismclient.util.InventorySlotArbiter.update_V("totem-hit");
    }
 
    @Override
@@ -216,7 +216,7 @@ public final class TotemHitModule extends Module {
 
    @Override
    public void onDisable() {
-      autismclient.util.EventBus.init("totem-hit");
+      autismclient.util.QueuedCombatAction.init("totem-hit");
    }
 
    @Override

@@ -980,7 +980,7 @@ final class aD {
                   this.init_Minecraft.options.keySprint,
                   this.init_Minecraft.options.keyShift
                )) {
-                  key.setDown(autismclient.util.aB.init(key).autism$physicalForBody());
+                  key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
                }
             }
          }

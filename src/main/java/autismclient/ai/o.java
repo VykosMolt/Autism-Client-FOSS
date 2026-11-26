@@ -693,7 +693,7 @@ public final class o {
          Minecraft mc = Minecraft.getInstance();
          if (mc.options != null) {
             for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {
-               key.setDown(autismclient.util.aB.init(key).autism$physicalForBody());
+               key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
             }
          }
       }

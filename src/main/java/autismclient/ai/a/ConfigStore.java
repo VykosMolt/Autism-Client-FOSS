@@ -2,7 +2,7 @@ package autismclient.ai.a;
 
 import autismclient.ai.A;
 import autismclient.api.ai.AiOperation;
-import autismclient.util.aB;
+import autismclient.util.KeyMappingControl;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.List;
@@ -209,7 +209,7 @@ public final class ConfigStore {
          void init() {
             if (this.load_Z) {
                this.load_Z = false;
-               this.init_Minecraft.options.keyShift.setDown(aB.init(this.init_Minecraft.options.keyShift).autism$physicalForBody());
+               this.init_Minecraft.options.keyShift.setDown(KeyMappingControl.init(this.init_Minecraft.options.keyShift).autism$physicalForBody());
             }
          }
 

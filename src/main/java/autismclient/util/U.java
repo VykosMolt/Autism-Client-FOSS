@@ -117,7 +117,7 @@ public final class U {
    }
 
    public static double init_D() {
-      return 89.5 - ap.init_D_D(ce.init()) - 0.01;
+      return 89.5 - RotationStreamPlanner.init_D_D(RotationMath.init()) - 0.01;
    }
 
    public static void init(U.Inner_StateCache request, List<U.Inner_TaskQueue> out) {
@@ -215,7 +215,7 @@ public final class U {
       if (size - start >= 2) {
          List<U.Inner_TaskQueue> segment = new ArrayList<>(out.subList(start, size));
          Vec3 eye = request.init_Vec3();
-         ce.Inner_DataUtil from = request.init_ce_DataUtil();
+         RotationMath.Inner_DataUtil from = request.init_ce_DataUtil();
          Direction[] order = request.init_DirectionArr();
          segment.sort((left, right) -> {
             boolean leftUp = left.init_Direction() == Direction.UP;
@@ -250,9 +250,9 @@ public final class U {
       }
    }
 
-   private static float init(U.Inner_TaskQueue option, Vec3 eye, ce.Inner_DataUtil from) {
+   private static float init(U.Inner_TaskQueue option, Vec3 eye, RotationMath.Inner_DataUtil from) {
       Vec3 centre = init_Vec3(option.init_AABB(), option.init_Direction());
-      return ce.init_F(from, ce.init(centre, eye));
+      return RotationMath.init_F(from, RotationMath.init(centre, eye));
    }
 
    private static int init(Direction[] order, Direction face) {
@@ -308,14 +308,14 @@ public final class U {
                tier = U.Inner_UiHelper.NEAREST;
             }
 
-            ce.Inner_DataUtil goal = ce.init(point, eye);
+            RotationMath.Inner_DataUtil goal = RotationMath.init(point, eye);
             if (Math.abs(goal.load()) > request.load_D()) {
                Vec3 flat = init_Vec3_AABB(rect, face, eye, U.Inner_UiHelper.FLATTEST, request.read_D);
                if (flat == null || eye.distanceToSqr(flat) > reachSq) {
                   return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
                }
 
-               goal = ce.init(flat, eye);
+               goal = RotationMath.init(flat, eye);
                if (Math.abs(goal.load()) > request.load_D()) {
                   return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
                }
@@ -332,7 +332,7 @@ public final class U {
                      return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
                   }
 
-                  goal = new ce.Inner_DataUtil(goal.init(), pitch);
+                  goal = new RotationMath.Inner_DataUtil(goal.init(), pitch);
                }
             }
 
@@ -340,9 +340,9 @@ public final class U {
                return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
             }
 
-            ce.Inner_DataUtil from = init_ce_DataUtil(request);
-            ce.Inner_DataUtil emitted = request.write() ? ce.init_ce_DataUtil(goal, from == null ? goal : from) : goal;
-            float turn = from == null ? 0.0F : ce.init_F(from, goal);
+            RotationMath.Inner_DataUtil from = init_ce_DataUtil(request);
+            RotationMath.Inner_DataUtil emitted = request.write() ? RotationMath.init_ce_DataUtil(goal, from == null ? goal : from) : goal;
+            float turn = from == null ? 0.0F : RotationMath.init_F(from, goal);
             return new U.Inner_DataUtil(point, goal, emitted, eye.distanceTo(point), turn, tier);
          } else {
             return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
@@ -352,11 +352,11 @@ public final class U {
       }
    }
 
-   public static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, ce.Inner_DataUtil from) {
+   public static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, RotationMath.Inner_DataUtil from) {
       return init_Vec3_AABB_2(rect, face, eye, from, 1.0 / 0.0);
    }
 
-   private static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, ce.Inner_DataUtil from, double marginCap) {
+   private static Vec3 init_Vec3_AABB_2(AABB rect, Direction face, Vec3 eye, RotationMath.Inner_DataUtil from, double marginCap) {
       if (rect != null && face != null && eye != null) {
          Axis normal = face.getAxis();
          double plane = init_D(rect, face);
@@ -454,7 +454,7 @@ public final class U {
    }
 
    public static double init(double distance) {
-      double band = ap.init_D_D(ce.init());
+      double band = RotationStreamPlanner.init_D_D(RotationMath.init());
       return Math.max(0.12, Math.abs(distance) * Math.tan(Math.toRadians(band)));
    }
 
@@ -541,7 +541,7 @@ public final class U {
             double reach = request.init_D();
             double reachSq = reach * reach;
             boolean sneaking = request.init_Z() || option.init_Z() && request.load_Z();
-            ce.Inner_DataUtil cast = request.write() ? aim.load() : aim.init_ce_DataUtil();
+            RotationMath.Inner_DataUtil cast = request.write() ? aim.load() : aim.init_ce_DataUtil();
             boolean escaped = false;
 
             for (int rung = 0; rung < 4; rung++) {
@@ -596,7 +596,7 @@ public final class U {
                         cast,
                         cast,
                         eye.distanceTo(hit.getLocation()),
-                        init_ce_DataUtil(request) == null ? 0.0F : ce.init_F(init_ce_DataUtil(request), cast),
+                        init_ce_DataUtil(request) == null ? 0.0F : RotationMath.init_F(init_ce_DataUtil(request), cast),
                         aim.init_U_UiHelper()
                      );
                      return new U.Inner_CachePool(found, landed, hit, substituted, init(found, landed));
@@ -618,16 +618,16 @@ public final class U {
       }
    }
 
-   private static ce.Inner_DataUtil init_ce_DataUtil_Vec3(Vec3 point, ce.Inner_DataUtil cast, Vec3 eye, double reachSq, U.Inner_StateCache request) {
+   private static RotationMath.Inner_DataUtil init_ce_DataUtil_Vec3(Vec3 point, RotationMath.Inner_DataUtil cast, Vec3 eye, double reachSq, U.Inner_StateCache request) {
       if (point != null && !(eye.distanceToSqr(point) > reachSq)) {
-         ce.Inner_DataUtil next = ce.init(point, eye);
+         RotationMath.Inner_DataUtil next = RotationMath.init(point, eye);
          if (Math.abs(next.load()) > request.load_D()) {
             return null;
          }
 
          if (request.write()) {
-            ce.Inner_DataUtil from = init_ce_DataUtil(request);
-            next = ce.init_ce_DataUtil(next, from == null ? next : from);
+            RotationMath.Inner_DataUtil from = init_ce_DataUtil(request);
+            next = RotationMath.init_ce_DataUtil(next, from == null ? next : from);
             if (Math.abs(next.load()) > request.load_D()) {
                return null;
             }
@@ -726,7 +726,7 @@ public final class U {
    }
 
    public static BlockHitResult init_BlockHitResult_U_CachePool(
-      U.Inner_CachePool candidate, ce.Inner_DataUtil wire, Vec3 eye, double reach, U.Inner_StateCache request
+      U.Inner_CachePool candidate, RotationMath.Inner_DataUtil wire, Vec3 eye, double reach, U.Inner_StateCache request
    ) {
       if (candidate != null && wire != null && eye != null && request != null) {
          if (Math.abs(wire.load()) > 89.5F) {
@@ -914,7 +914,7 @@ public final class U {
       }
    }
 
-   public static BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, ce.Inner_DataUtil rotation, double reach, Level level, Entity entity) {
+   public static BlockHitResult init_BlockHitResult_Vec3(Vec3 eye, RotationMath.Inner_DataUtil rotation, double reach, Level level, Entity entity) {
       if (eye != null && rotation != null && level != null) {
          Vec3 end = eye.add(init(rotation).scale(reach));
          HitResult result = level.clip(
@@ -1215,20 +1215,20 @@ public final class U {
       return init_Z;
    }
 
-   private static Vec3 init(ce.Inner_DataUtil rotation) {
+   private static Vec3 init(RotationMath.Inner_DataUtil rotation) {
       float yaw = -rotation.init() * 0.017453292F;
       float pitch = -rotation.load() * 0.017453292F;
       float cosPitch = Mth.cos(pitch);
       return new Vec3(Mth.sin(yaw) * cosPitch, Mth.sin(pitch), Mth.cos(yaw) * cosPitch);
    }
 
-   private static ce.Inner_DataUtil init_ce_DataUtil(U.Inner_StateCache request) {
+   private static RotationMath.Inner_DataUtil init_ce_DataUtil(U.Inner_StateCache request) {
       if (request.init_ce_DataUtil() != null) {
          return request.init_ce_DataUtil();
       }
 
       Player player = init_Player();
-      return player == null ? null : new ce.Inner_DataUtil(player.getYRot(), player.getXRot());
+      return player == null ? null : new RotationMath.Inner_DataUtil(player.getYRot(), player.getXRot());
    }
 
    private static Level init_Level() {
@@ -1291,7 +1291,7 @@ public final class U {
    }
 
    public record Inner_DataUtil(
-      Vec3 init_Vec3, ce.Inner_DataUtil init_ce_DataUtil, ce.Inner_DataUtil load, double init_D, float init_F, U.Inner_UiHelper init_U_UiHelper
+      Vec3 init_Vec3, RotationMath.Inner_DataUtil init_ce_DataUtil, RotationMath.Inner_DataUtil load, double init_D, float init_F, U.Inner_UiHelper init_U_UiHelper
    ) {
    }
 
@@ -1332,7 +1332,7 @@ public final class U {
       private final Vec3 init_Vec3;
       private final double init_D;
       private U.Inner_NetHelper init_U_NetHelper;
-      private ce.Inner_DataUtil init_ce_DataUtil;
+      private RotationMath.Inner_DataUtil init_ce_DataUtil;
       private double load_D = U.init_D();
       private boolean init_Z;
       private boolean load_Z;
@@ -1369,7 +1369,7 @@ public final class U {
          return this;
       }
 
-      public U.Inner_StateCache init_U_StateCache_ce_DataUtil(ce.Inner_DataUtil from) {
+      public U.Inner_StateCache init_U_StateCache_ce_DataUtil(RotationMath.Inner_DataUtil from) {
          this.init_ce_DataUtil = from;
          return this;
       }
@@ -1459,7 +1459,7 @@ public final class U {
          return this.init_U_NetHelper;
       }
 
-      public ce.Inner_DataUtil init_ce_DataUtil() {
+      public RotationMath.Inner_DataUtil init_ce_DataUtil() {
          return this.init_ce_DataUtil;
       }
 

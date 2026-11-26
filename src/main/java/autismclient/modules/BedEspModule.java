@@ -508,7 +508,7 @@ public final class BedEspModule extends Module {
    static List<ItemStack> load_List() {
       List<ItemStack> tools = new ArrayList<>();
       tools.add(ItemStack.EMPTY);
-      boolean legacy = autismclient.util.aI.init(MC.player);
+      boolean legacy = autismclient.util.LegacyCombatDetector.init(MC.player);
 
       for (Item item : List.of(legacy ? Items.DIAMOND_PICKAXE : Items.NETHERITE_PICKAXE, legacy ? Items.DIAMOND_AXE : Items.NETHERITE_AXE, Items.SHEARS)) {
          ItemStack stack = new ItemStack(item);

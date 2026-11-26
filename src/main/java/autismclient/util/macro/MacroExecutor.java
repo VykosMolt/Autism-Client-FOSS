@@ -16,7 +16,7 @@ import autismclient.util.bi;
 import autismclient.util.bl;
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketTypeRegistry;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import autismclient.util.ck;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -2678,7 +2678,7 @@ public class MacroExecutor {
          return existing;
       }
 
-      int requestId = autismclient.util.y.init();
+      int requestId = autismclient.util.CommandProbeIdAllocator.init();
       CompletableFuture<List<String>> future = new CompletableFuture<>();
       MacroExecutor.Inner_EventBus listener = init_MacroExecutor_Even_Predicate(packet -> {
          if (packet instanceof ClientboundCommandSuggestionsPacket reply && reply.id() == requestId) {
@@ -5749,7 +5749,7 @@ public class MacroExecutor {
 
    private static void load_V_Minecraft_MacroAction(Minecraft mc, MacroAction action) {
       if (action instanceof AimTargetAction aim && aim.init_Z_3()) {
-         ce.Inner_DataUtil rotation = load_Obj_Minecraft(mc, () -> MacroAimController.init(mc, aim.init_M_DataUtil_Minecraft(mc)), null);
+         RotationMath.Inner_DataUtil rotation = load_Obj_Minecraft(mc, () -> MacroAimController.init(mc, aim.init_M_DataUtil_Minecraft(mc)), null);
          if (rotation != null) {
             MacroAimController.init(rotation);
             pop();
@@ -6147,7 +6147,7 @@ public class MacroExecutor {
                init_V_Minecraft_5(mc, () -> {
                   try {
                      if (sneaking) {
-                        autismclient.util.aP.init(mc, true);
+                        autismclient.util.SneakPacketController.init(mc, true);
                      }
 
                      action.execute(mc);
@@ -6184,7 +6184,7 @@ public class MacroExecutor {
                init_V_Minecraft_5(mc, () -> {
                   try {
                      if (sneaking) {
-                        autismclient.util.aP.init(mc, true);
+                        autismclient.util.SneakPacketController.init(mc, true);
                      }
 
                      action.execute(mc);
@@ -6202,7 +6202,7 @@ public class MacroExecutor {
             }
          } finally {
             if (sneaking) {
-               mc.execute(() -> autismclient.util.aP.init(mc, false));
+               mc.execute(() -> autismclient.util.SneakPacketController.init(mc, false));
             }
          }
       }
@@ -7700,7 +7700,7 @@ public class MacroExecutor {
          }
 
          mc.gameMode.startDestroyBlock(pos, dir);
-         autismclient.util.ai.init(mc.player);
+         autismclient.util.BlockAttackGraceWindow.init(mc.player);
          Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
          started[0] = true;
          return mc.level.getBlockState(pos).isAir() ? 1 : 0;
@@ -7735,7 +7735,7 @@ public class MacroExecutor {
             }
 
             mc.gameMode.startDestroyBlock(pos, dir);
-            autismclient.util.ai.init(mc.player);
+            autismclient.util.BlockAttackGraceWindow.init(mc.player);
             Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
             started[0] = true;
             if (instant && action.interact && !interactFirst && action.interactTiming != InteractTimingMode.AFTER_PLUS) {
@@ -7812,7 +7812,7 @@ public class MacroExecutor {
       }
 
       mc.gameMode.continueDestroyBlock(pos, dir);
-      autismclient.util.ai.init(mc.player);
+      autismclient.util.BlockAttackGraceWindow.init(mc.player);
       Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
       return mc.level.getBlockState(pos).isAir() ? 1 : 0;
    }
@@ -7840,7 +7840,7 @@ public class MacroExecutor {
          }
 
          mc.gameMode.continueDestroyBlock(pos, dir);
-         autismclient.util.ai.init(mc.player);
+         autismclient.util.BlockAttackGraceWindow.init(mc.player);
          Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
          if (action.interact && t == InteractTimingMode.AFTER && breaksThisTick) {
             init_V_Minecraft_7(mc, pos, dir);
@@ -7909,7 +7909,7 @@ public class MacroExecutor {
             }
 
             mc.gameMode.continueDestroyBlock(pos, dir);
-            autismclient.util.ai.init(mc.player);
+            autismclient.util.BlockAttackGraceWindow.init(mc.player);
             Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
             return mc.level.getBlockState(pos).isAir() ? 1 : 0;
          }, -1, action.h_());
@@ -7946,7 +7946,7 @@ public class MacroExecutor {
       }
 
       mc.gameMode.continueDestroyBlock(pos, dir);
-      autismclient.util.ai.init(mc.player);
+      autismclient.util.BlockAttackGraceWindow.init(mc.player);
       Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
       return mc.level.getBlockState(pos).isAir() ? 1 : 0;
    }
@@ -8049,12 +8049,12 @@ public class MacroExecutor {
    }
 
    private static void init_V_Minecraft_Str(Minecraft mc, String mode) {
-      autismclient.util.aP.init(mc, mode);
+      autismclient.util.SneakPacketController.init(mc, mode);
    }
 
    private static void load_V_Minecraft_Str(Minecraft mc, String mode) {
-      autismclient.util.aP.load(mc, mode);
-      if (!autismclient.util.aP.init(mode)) {
+      autismclient.util.SneakPacketController.load(mc, mode);
+      if (!autismclient.util.SneakPacketController.init(mode)) {
          load_V_Minecraft(mc);
       }
    }

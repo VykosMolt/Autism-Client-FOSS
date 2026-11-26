@@ -10,7 +10,7 @@ import autismclient.ai.af;
 import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import autismclient.util.U;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2022,7 +2022,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             return null;
          }
 
-         ce.Inner_DataUtil var11 = ce.init(var10, var15);
+         RotationMath.Inner_DataUtil var11 = RotationMath.init(var10, var15);
          float var12 = Math.abs(var11.load()) > 70.0F ? var1.getYRot() : var11.init();
          Vec3 var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var11.load(), var12).scale(Math.max(2.0, var10.distanceTo(var15))));
          float var14 = EventBus.load(var13.subtract(var1.getEyePosition()));
@@ -2144,8 +2144,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private static ce.Inner_DataUtil putAt_TaskUtil_CacheHelp_LocalPlayer(LocalPlayer var0) {
-      return new ce.Inner_DataUtil(var0.getYRot(), 90.0F);
+   private static RotationMath.Inner_DataUtil putAt_TaskUtil_CacheHelp_LocalPlayer(LocalPlayer var0) {
+      return new RotationMath.Inner_DataUtil(var0.getYRot(), 90.0F);
    }
 
    private boolean value(LocalPlayer var1) {
@@ -2862,7 +2862,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          }
 
          this.putAt_CacheHelper.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.write);
-         ce.Inner_DataUtil var7 = var6.init_U_DataUtil().init_ce_DataUtil();
+         RotationMath.Inner_DataUtil var7 = var6.init_U_DataUtil().init_ce_DataUtil();
          Vec3 var8 = this.putAt_Minecraft.player.getEyePosition();
          Vec3 var9 = var6.init_U_DataUtil().init_Vec3();
          boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == ClassCache.Inner_SyncManager.tick;
@@ -3244,7 +3244,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                ? var12.getY() + (var14 ? var13.max(Axis.Y) : var13.min(Axis.Y))
                : var12.getY() + (var14 ? 1.0 : 0.0);
             this.putAt_CacheHelper.init_V_ce_DataUtil(
-                  new ce.Inner_DataUtil(var2.getYRot(), AiMotionSafety.putAt_F_Vec3(var3, var2.getYRot(), var2.getXRot(), var14, var7))
+                  new RotationMath.Inner_DataUtil(var2.getYRot(), AiMotionSafety.putAt_F_Vec3(var3, var2.getYRot(), var2.getXRot(), var14, var7))
                );
             return;
          }
@@ -3266,7 +3266,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                   float var10 = (float)Math.toDegrees(Math.atan2(var3.y - var1.y, Math.max(0.3, var8)));
                   float var11 = NodeWalker.putAt_F_D(0.0, 0.0, var4, var5);
                   if (this.putAt_Z_Vec3(var3, var11, var10, BlockPos.containing(var1))) {
-                     this.putAt_CacheHelper.init_V_ce_DataUtil(new ce.Inner_DataUtil(var11, var10));
+                     this.putAt_CacheHelper.init_V_ce_DataUtil(new RotationMath.Inner_DataUtil(var11, var10));
                      return;
                   }
                }

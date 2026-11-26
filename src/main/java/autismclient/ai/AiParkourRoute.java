@@ -608,9 +608,9 @@ final class AiParkourRoute implements AiOperation {
          float var4 = var1.getXRot();
          float var5 = Mth.wrapDegrees(var2 - var3);
          float var6 = 20.0F - var4;
-         autismclient.util.ce.init_V_LocalPlayer(
+         autismclient.util.RotationMath.init_V_LocalPlayer(
             var1,
-            new autismclient.util.ce.Inner_DataUtil(var3 + Math.clamp(var5 * 0.3F, -12.0F, 12.0F), var4 + Math.clamp(var6 * 0.3F, -6.0F, 6.0F)),
+            new autismclient.util.RotationMath.Inner_DataUtil(var3 + Math.clamp(var5 * 0.3F, -12.0F, 12.0F), var4 + Math.clamp(var6 * 0.3F, -6.0F, 6.0F)),
             false
          );
          autismclient.ai.a.AiCameraTurn.putAt(var1, var3, var4);

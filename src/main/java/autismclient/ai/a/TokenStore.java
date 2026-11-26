@@ -8,7 +8,7 @@ import autismclient.ai.as;
 import autismclient.ai.at;
 import autismclient.ai.ca;
 import autismclient.api.ai.AiOperation;
-import autismclient.util.aB;
+import autismclient.util.KeyMappingControl;
 import autismclient.util.aw;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -893,7 +893,7 @@ public final class TokenStore {
                         this.init_Minecraft.options.keySprint,
                         this.init_Minecraft.options.keyShift
                      )) {
-                        key.setDown(aB.init(key).autism$physicalForBody());
+                        key.setDown(KeyMappingControl.init(key).autism$physicalForBody());
                      }
                   }
 

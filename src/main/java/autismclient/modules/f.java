@@ -28,17 +28,17 @@ import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismWaypoints;
 import autismclient.util.BookBotPageGenerator;
-import autismclient.util.bM;
+import autismclient.util.PerTickPlacementLock;
 import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cG;
 import autismclient.util.AutoFishMacroPresets;
-import autismclient.util.cM;
+import autismclient.util.HumanizedTurnPlanner;
 import autismclient.util.cc;
 import autismclient.util.cd;
-import autismclient.util.ce;
-import autismclient.util.cj;
+import autismclient.util.RotationMath;
+import autismclient.util.EntityMotionTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.PacketFilterListCodec;
 import autismclient.util.di;
 import autismclient.util.g.PkgCls_a;
@@ -308,27 +308,27 @@ public final class f {
 
    public static float init(float vanillaYaw) {
       f.Inner_EventBus fastUse = init_f_EventBus();
-      ce.Inner_DataUtil rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
+      RotationMath.Inner_DataUtil rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
       return rotation == null ? vanillaYaw : rotation.init();
    }
 
    public static float load(float vanillaPitch) {
       f.Inner_EventBus fastUse = init_f_EventBus();
-      ce.Inner_DataUtil rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
+      RotationMath.Inner_DataUtil rotation = fastUse == null ? null : fastUse.load_ce_DataUtil_4();
       return rotation == null ? vanillaPitch : rotation.load();
    }
 
    public static float init(LocalPlayer player, float vanillaYaw) {
-      ce.Inner_DataUtil rotation = init(player);
+      RotationMath.Inner_DataUtil rotation = init(player);
       return rotation == null ? vanillaYaw : rotation.init();
    }
 
    public static float load(LocalPlayer player, float vanillaPitch) {
-      ce.Inner_DataUtil rotation = init(player);
+      RotationMath.Inner_DataUtil rotation = init(player);
       return rotation == null ? vanillaPitch : rotation.load();
    }
 
-   private static ce.Inner_DataUtil init(LocalPlayer player) {
+   private static RotationMath.Inner_DataUtil init(LocalPlayer player) {
       Minecraft client = Minecraft.getInstance();
       if (player != null && client != null && player == client.player) {
          f.Inner_EventBus fastUse = init_f_EventBus();
@@ -416,7 +416,7 @@ public final class f {
             && MC.player != null
             && MC.gameMode != null
             && !"Packet".equals(this.choice("mode"))
-            && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())) {
+            && (autismclient.util.SilentRotationManager.init_Str() == null || !autismclient.util.SilentRotationManager.read_Z())) {
             this.init_V_34();
             if (this.load_Z_16()) {
                if (this.bool("anchor")) {
@@ -501,7 +501,7 @@ public final class f {
             .clip(new ClipContext(MC.player.position(), MC.player.position().subtract(0.0, 5.0, 0.0), Block.OUTLINE, Fluid.NONE, MC.player));
          if (ray != null && ray.getType() == Type.BLOCK) {
             BlockPos target = ray.getBlockPos().above();
-            if (!autismclient.util.ah.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                return false;
             }
 
@@ -518,7 +518,7 @@ public final class f {
                         return false;
                      }
 
-                     if (!bM.init(this.id())) {
+                     if (!PerTickPlacementLock.init(this.id())) {
                         return false;
                      }
 
@@ -529,7 +529,7 @@ public final class f {
                         return false;
                      }
 
-                     if (!bM.init(this.id())) {
+                     if (!PerTickPlacementLock.init(this.id())) {
                         return false;
                      }
 
@@ -544,7 +544,7 @@ public final class f {
                   autismclient.util.aw.init_V(MC, oldSlot);
                }
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
          } else {
             return false;
@@ -563,7 +563,7 @@ public final class f {
          }
 
          Vec3 preVelocity = MC.player.getDeltaMovement();
-         if (!autismclient.util.ah.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             return false;
          }
 
@@ -579,7 +579,7 @@ public final class f {
                   return false;
                }
 
-               if (!bM.init(this.id())) {
+               if (!PerTickPlacementLock.init(this.id())) {
                   return false;
                }
 
@@ -590,7 +590,7 @@ public final class f {
                autismclient.util.aw.init_V(MC, oldSlot);
             }
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
       }
 
@@ -666,7 +666,7 @@ public final class f {
                if (insidePlaced || snowBelow) {
                   int oldSlot = MC.player.getInventory().getSelectedSlot();
                   int bucket = this.init_I_Item_2(Items.BUCKET);
-                  if (bucket >= 0 && autismclient.util.ah.write_Z(this.id())) {
+                  if (bucket >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                      try {
                         autismclient.util.aw.init_V(MC, bucket);
 
@@ -677,7 +677,7 @@ public final class f {
                               return;
                            }
 
-                           if (!bM.init(this.id())) {
+                           if (!PerTickPlacementLock.init(this.id())) {
                               return;
                            }
 
@@ -689,7 +689,7 @@ public final class f {
                            autismclient.util.aw.init_V(MC, oldSlot);
                         }
                      } finally {
-                        autismclient.util.ah.read_V(this.id());
+                        autismclient.util.InventorySlotArbiter.read_V(this.id());
                      }
 
                      return;
@@ -812,7 +812,7 @@ public final class f {
       private boolean load_Z;
       private boolean read_Z;
       private int load_I;
-      private cM init_cM;
+      private HumanizedTurnPlanner init_cM;
       private float init_F;
       private boolean write_Z;
       private int read_I;
@@ -967,7 +967,7 @@ public final class f {
                this.init_Obj = MC.level;
             }
 
-            if (!AutoTotemModule.init_Z_6() && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())) {
+            if (!AutoTotemModule.init_Z_6() && (autismclient.util.SilentRotationManager.init_Str() == null || !autismclient.util.SilentRotationManager.read_Z())) {
                this.pop();
                if (this.isEnabled()) {
                   if (MC.gui.screen() == null && MC.gui.overlay() == null) {
@@ -1023,9 +1023,9 @@ public final class f {
       @Override
       public void onRenderLevel(float partialTick) {
          if (this.read_Z) {
-            if (!this.load_Z_17() || !autismclient.util.ba.read()) {
+            if (!this.load_Z_17() || !autismclient.util.MouseMovementRouter.read()) {
                this.init_V_Z_9(false);
-            } else if (autismclient.util.aZ.init(0, ck.init_ck().state_I())) {
+            } else if (autismclient.util.MouseDeltaAccumulator.init(0, ck.init_ck().state_I())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1) + partialTick);
@@ -1036,7 +1036,7 @@ public final class f {
       @Override
       public void onMouseRotation(double deltaYaw, double deltaPitch) {
          if (this.read_Z) {
-            if (autismclient.util.aZ.init(0, ck.init_ck().state_I())) {
+            if (autismclient.util.MouseDeltaAccumulator.init(0, ck.init_ck().state_I())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1));
@@ -1060,15 +1060,15 @@ public final class f {
 
       @Override
       public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-         return autismclient.util.as.init_Z_Str(this.id()) && !this.read_Z_16();
+         return autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id()) && !this.read_Z_16();
       }
 
       @Override
       public boolean onPacketSend(Packet<?> packet) {
          if (packet instanceof ServerboundUseItemPacket usePacket && this.init_Z_InteractionHand(usePacket.hand())) {
-            if (autismclient.util.as.init_Z_Str(this.id())) {
+            if (autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id())) {
                if (usePacket.hand() == this.init_InteractionHand) {
-                  autismclient.util.as.init_V_Str(this.id());
+                  autismclient.util.VirtualInputDispatcher.init_V_Str(this.id());
                }
 
                return false;
@@ -1082,19 +1082,19 @@ public final class f {
                return false;
             }
 
-            if (autismclient.util.ah.load() == null) {
+            if (autismclient.util.InventorySlotArbiter.load() == null) {
                this.load_V_25();
             }
          } else if (packet instanceof ServerboundUseItemOnPacket useOnPacket) {
             if (!this.init_Z
-               && !autismclient.util.as.init_Z_Str(this.id())
-               && autismclient.util.ah.load() == null
+               && !autismclient.util.VirtualInputDispatcher.init_Z_Str(this.id())
+               && autismclient.util.InventorySlotArbiter.load() == null
                && this.init_Z_InteractionHand(useOnPacket.hand())) {
                this.read_V_17();
                this.sync_I = Math.max(this.sync_I, 3);
             }
          } else if (packet instanceof ServerboundSetCarriedItemPacket carriedPacket) {
-            if (autismclient.util.ah.load() != null) {
+            if (autismclient.util.InventorySlotArbiter.load() != null) {
                return false;
             }
 
@@ -1194,7 +1194,7 @@ public final class f {
             return null;
          } else if (MC.player.getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof FishingRodItem) {
             return InteractionHand.MAIN_HAND;
-         } else if (autismclient.util.ah.load_Z(this.id())) {
+         } else if (autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
             return null;
          } else {
             return MC.player.getItemInHand(InteractionHand.OFF_HAND).getItem() instanceof FishingRodItem ? InteractionHand.OFF_HAND : null;
@@ -1220,8 +1220,8 @@ public final class f {
             && !MC.player.isHandsBusy()
             && !BlinkPacketManager.load_Z()
             && !AutoTotemModule.init_Z_6()
-            && (autismclient.util.aD.init_Str() == null || !autismclient.util.aD.read_Z())
-            && autismclient.util.ah.read_Z(this.id())
+            && (autismclient.util.SilentRotationManager.init_Str() == null || !autismclient.util.SilentRotationManager.read_Z())
+            && autismclient.util.InventorySlotArbiter.read_Z(this.id())
             && this.init_Z_38();
       }
 
@@ -1248,10 +1248,10 @@ public final class f {
          }
 
          if (!"Interaction API".equals(this.choice("click-mode"))) {
-            return autismclient.util.as.init(this.id(), this::read_Z_16, sent -> this.init(use, sent));
+            return autismclient.util.VirtualInputDispatcher.init(this.id(), this::read_Z_16, sent -> this.init(use, sent));
          }
 
-         if (!al.init_Z_HitResult(MC.hitResult, this.init_InteractionHand, this.id()) && autismclient.util.ah.write_Z(this.id())) {
+         if (!al.init_Z_HitResult(MC.hitResult, this.init_InteractionHand, this.id()) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             this.init_Z = true;
             this.load_Z = false;
 
@@ -1264,7 +1264,7 @@ public final class f {
                }
             } finally {
                this.init_Z = false;
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
 
             this.init(use, dispatched);
@@ -1315,7 +1315,7 @@ public final class f {
       }
 
       private void read_V_17() {
-         autismclient.util.as.load(this.id());
+         autismclient.util.VirtualInputDispatcher.load(this.id());
          this.init_BitSetUtil.load_V();
          this.init_BitSetUtil_CachePo = null;
          this.init_InteractionHand = null;
@@ -1372,7 +1372,7 @@ public final class f {
 
       private void sync() {
          int steps = this.integer("movement-steps");
-         if (steps > 0 && MC.player != null && autismclient.util.ba.read()) {
+         if (steps > 0 && MC.player != null && autismclient.util.MouseMovementRouter.read()) {
             if (!this.write_Z) {
                this.init_F = MC.player.getYRot();
                this.write_Z = true;
@@ -1392,10 +1392,10 @@ public final class f {
             }
 
             if (this.init_cM == null) {
-               this.init_cM = new cM(autismclient.util.am.init_am().init_am_Random(this.init_Random), this.init_Random);
+               this.init_cM = new HumanizedTurnPlanner(autismclient.util.HumanHandProfile.init_am().init_am_Random(this.init_Random), this.init_Random);
             }
 
-            autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AUTO_FISH);
+            autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
             this.init_cM
                .init_V_F(
                   MC.player.getYRot(),
@@ -1405,13 +1405,13 @@ public final class f {
                );
             this.read_Z = this.init_cM.init_Z();
             this.load_I = 0;
-            autismclient.util.ba.init(this.read_Z);
+            autismclient.util.MouseMovementRouter.init(this.read_Z);
          }
       }
 
       private void flush() {
          if (this.read_Z && MC.player != null) {
-            if (autismclient.util.ba.read() && !(this.load_I > Math.ceil(this.init_cM.init_D()) + 20.0)) {
+            if (autismclient.util.MouseMovementRouter.read() && !(this.load_I > Math.ceil(this.init_cM.init_D()) + 20.0)) {
                this.init_V_D(this.load_I);
                if (this.read_Z) {
                   this.load_I++;
@@ -1424,11 +1424,11 @@ public final class f {
 
       private void init_V_D(double elapsedTicks) {
          if (this.read_Z && this.init_cM != null && MC.player != null) {
-            cM.Inner_DataUtil step = this.init_cM.init_cM_DataUtil_D(elapsedTicks, MC.player.getYRot(), MC.player.getXRot(), ce.load());
+            HumanizedTurnPlanner.Inner_DataUtil step = this.init_cM.init_cM_DataUtil_D(elapsedTicks, MC.player.getYRot(), MC.player.getXRot(), RotationMath.load());
             if (step.init_Z()) {
                this.init_V_Z_9(false);
             } else {
-               autismclient.util.ba.init_V_ba_StreamUtil_3(autismclient.util.ba.Inner_StreamUtil.AUTO_FISH, step.init_J(), step.load());
+               autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_3(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH, step.init_J(), step.load());
             }
          }
       }
@@ -1440,7 +1440,7 @@ public final class f {
             this.init_cM.init_V();
          }
 
-         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AUTO_FISH);
+         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
          if (newAnchor) {
             this.write_Z = false;
             this.read_I = 0;
@@ -1513,8 +1513,8 @@ public final class f {
          if (this.bool("auto-select-rod")) {
             f.Inner_BufferHelper.Inner_CachePool selected = this.init_f_BufferHelper_Cac();
             if (selected == null || !selected.init_Z() || best.load() > selected.load()) {
-               if (best.init_I() >= 0 && best.init_I() < 9 && !autismclient.util.ah.init(best.init_I(), this.id())) {
-                  if (!autismclient.util.ah.write_Z(this.id())) {
+               if (best.init_I() >= 0 && best.init_I() < 9 && !autismclient.util.InventorySlotArbiter.init(best.init_I(), this.id())) {
+                  if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                      return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                   }
 
@@ -1522,16 +1522,16 @@ public final class f {
                      autismclient.util.aw.init_V(MC, best.init_I());
                      this.update_I = 1;
                   } finally {
-                     autismclient.util.ah.read_V(this.id());
+                     autismclient.util.InventorySlotArbiter.read_V(this.id());
                   }
 
                   return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                }
 
-               if (best.init_I() >= 9 && best.init_I() < 36 && !autismclient.util.ah.init(best.init_I(), this.id())) {
+               if (best.init_I() >= 9 && best.init_I() < 36 && !autismclient.util.InventorySlotArbiter.init(best.init_I(), this.id())) {
                   int target = MC.player.getInventory().getSelectedSlot();
-                  if (!autismclient.util.ah.init(target, this.id())) {
-                     if (!autismclient.util.ah.write_Z(this.id())) {
+                  if (!autismclient.util.InventorySlotArbiter.init(target, this.id())) {
+                     if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                         return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                      }
 
@@ -1542,7 +1542,7 @@ public final class f {
                            return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                         }
                      } finally {
-                        autismclient.util.ah.read_V(this.id());
+                        autismclient.util.InventorySlotArbiter.read_V(this.id());
                      }
                   }
                }
@@ -2089,7 +2089,7 @@ public final class f {
          output.load_V();
          output.init_V_Z(false);
          this.load_Z = true;
-         autismclient.util.as.init_V_Z(true);
+         autismclient.util.VirtualInputDispatcher.init_V_Z(true);
          return true;
       }
 
@@ -2107,7 +2107,7 @@ public final class f {
          this.init_J = -9223372036854775808L;
          if (this.load_Z) {
             this.load_Z = false;
-            autismclient.util.as.init_V_Z(false);
+            autismclient.util.VirtualInputDispatcher.init_V_Z(false);
          }
       }
 
@@ -2118,7 +2118,7 @@ public final class f {
             || MC.gui.screen() != null
             || ScaffoldModule.read_Z_12()
             || ScaffoldModule.update_Z_5()
-            || cn.init_ce_DataUtil() != null
+            || SilentMovementCoordinator.init_ce_DataUtil() != null
             || ScaffoldModule.flush_Z_5()
             || AutoTotemModule.init_Z_6()
             || !this.init_O.init_Z_ItemStack(MC.player.getMainHandItem());
@@ -2135,13 +2135,13 @@ public final class f {
 
       private void read() {
          boolean right = "Right".equals(this.choice("button"));
-         autismclient.util.as.init_V_Z(!right);
-         autismclient.util.as.load(right);
+         autismclient.util.VirtualInputDispatcher.init_V_Z(!right);
+         autismclient.util.VirtualInputDispatcher.load(right);
       }
 
       private void write() {
-         autismclient.util.as.init_V_Z(false);
-         autismclient.util.as.load(false);
+         autismclient.util.VirtualInputDispatcher.init_V_Z(false);
+         autismclient.util.VirtualInputDispatcher.load(false);
       }
    }
 
@@ -4492,8 +4492,8 @@ public final class f {
       private boolean load_Z;
       private boolean read;
       private int load_I;
-      private ce.Inner_DataUtil init_ce_DataUtil;
-      private ce.Inner_DataUtil load_ce_DataUtil;
+      private RotationMath.Inner_DataUtil init_ce_DataUtil;
+      private RotationMath.Inner_DataUtil load_ce_DataUtil;
 
       Inner_EventBus() {
          super("fast-use", "FastUse", ae.read, "Speeds up item use.");
@@ -4593,8 +4593,8 @@ public final class f {
       @Override
       public boolean onPacketSend(Packet<?> packet) {
          if (packet instanceof ServerboundMovePlayerPacket movement && movement.hasRotation() && MC != null && MC.player != null) {
-            ce.Inner_DataUtil base = this.init_ce_DataUtil_5();
-            this.load_ce_DataUtil = new ce.Inner_DataUtil(movement.getYRot(base.init()), movement.getXRot(base.load()));
+            RotationMath.Inner_DataUtil base = this.init_ce_DataUtil_5();
+            this.load_ce_DataUtil = new RotationMath.Inner_DataUtil(movement.getYRot(base.init()), movement.getXRot(base.load()));
          }
 
          return false;
@@ -4602,13 +4602,13 @@ public final class f {
 
       private void init_V_38() {
          if (this.init_ce_DataUtil == null) {
-            ce.Inner_DataUtil accepted = this.init_ce_DataUtil_5();
-            this.init_ce_DataUtil = ce.init_ce_DataUtil(new ce.Inner_DataUtil(accepted.init(), 90.0F), accepted);
+            RotationMath.Inner_DataUtil accepted = this.init_ce_DataUtil_5();
+            this.init_ce_DataUtil = RotationMath.init_ce_DataUtil(new RotationMath.Inner_DataUtil(accepted.init(), 90.0F), accepted);
             this.load_I = 5;
          }
 
          this.write_V_18();
-         if (cn.init_ce_DataUtil() == null && !cn.init_Z()) {
+         if (SilentMovementCoordinator.init_ce_DataUtil() == null && !SilentMovementCoordinator.init_Z()) {
             this.load_I = 5;
          }
       }
@@ -4618,10 +4618,10 @@ public final class f {
       }
 
       private boolean load_Z_20() {
-         if (cn.init_ce_DataUtil() == null && !cn.init_Z() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6()) {
+         if (SilentMovementCoordinator.init_ce_DataUtil() == null && !SilentMovementCoordinator.init_Z() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6()) {
             return this.load_Z
-               ? this.init_InteractionHand_4() != null && this.load_ce_DataUtil_4() != null && autismclient.util.as.init_Z()
-               : this.read && this.sync() && autismclient.util.as.load_Z();
+               ? this.init_InteractionHand_4() != null && this.load_ce_DataUtil_4() != null && autismclient.util.VirtualInputDispatcher.init_Z()
+               : this.read && this.sync() && autismclient.util.VirtualInputDispatcher.load_Z();
          } else {
             return false;
          }
@@ -4642,7 +4642,7 @@ public final class f {
       }
 
       private boolean write_Z_8() {
-         return MC.options != null && autismclient.util.aB.init(MC.options.keyUse).autism$isActuallyDown();
+         return MC.options != null && autismclient.util.KeyMappingControl.init(MC.options.keyUse).autism$isActuallyDown();
       }
 
       private InteractionHand init_InteractionHand_4() {
@@ -4672,7 +4672,7 @@ public final class f {
          } else if (this.load_Z) {
             return this.init_InteractionHand_4() != null && init(this.init_ce_DataUtil, this.init_ce_DataUtil_5());
          } else {
-            return !this.read ? false : this.sync() && this.load_ce_DataUtil_4() == null && cn.init_ce_DataUtil() == null && !cn.init_Z();
+            return !this.read ? false : this.sync() && this.load_ce_DataUtil_4() == null && SilentMovementCoordinator.init_ce_DataUtil() == null && !SilentMovementCoordinator.init_Z();
          }
       }
 
@@ -4684,11 +4684,11 @@ public final class f {
 
       private void read_V_19() {
          if (this.load_Z) {
-            autismclient.util.as.sync_V();
+            autismclient.util.VirtualInputDispatcher.sync_V();
          }
 
          if (this.read) {
-            autismclient.util.as.flush_V();
+            autismclient.util.VirtualInputDispatcher.flush_V();
          }
 
          this.load_Z = false;
@@ -4707,8 +4707,8 @@ public final class f {
       }
 
       private void update_V_14() {
-         autismclient.util.as.sync_V();
-         autismclient.util.as.flush_V();
+         autismclient.util.VirtualInputDispatcher.sync_V();
+         autismclient.util.VirtualInputDispatcher.flush_V();
          this.load_Z = false;
          this.read = false;
          this.load_V_28();
@@ -4717,19 +4717,19 @@ public final class f {
          this.load_ce_DataUtil = null;
       }
 
-      private ce.Inner_DataUtil init_ce_DataUtil_5() {
+      private RotationMath.Inner_DataUtil init_ce_DataUtil_5() {
          if (this.load_ce_DataUtil != null) {
             return this.load_ce_DataUtil;
          } else {
-            return MC != null && MC.player != null ? new ce.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()) : new ce.Inner_DataUtil(0.0F, 0.0F);
+            return MC != null && MC.player != null ? new RotationMath.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()) : new RotationMath.Inner_DataUtil(0.0F, 0.0F);
          }
       }
 
-      private ce.Inner_DataUtil load_ce_DataUtil_4() {
+      private RotationMath.Inner_DataUtil load_ce_DataUtil_4() {
          return this.load_I > 0 ? this.init_ce_DataUtil : null;
       }
 
-      private static boolean init(ce.Inner_DataUtil first, ce.Inner_DataUtil second) {
+      private static boolean init(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
          return first != null && second != null && Float.compare(first.init(), second.init()) == 0 && Float.compare(first.load(), second.load()) == 0;
       }
 
@@ -4770,9 +4770,9 @@ public final class f {
             }
 
             if (Inner_EventBus.this.load_Z) {
-               autismclient.util.as.read_V();
+               autismclient.util.VirtualInputDispatcher.read_V();
             } else {
-               autismclient.util.as.write_V();
+               autismclient.util.VirtualInputDispatcher.write_V();
             }
 
             return true;
@@ -6042,7 +6042,7 @@ public final class f {
             return true;
          }
 
-         ce.Inner_DataUtil current = cn.init_ce_DataUtil();
+         RotationMath.Inner_DataUtil current = SilentMovementCoordinator.init_ce_DataUtil();
          if (current == null) {
             return false;
          }
@@ -6089,7 +6089,7 @@ public final class f {
       public void tick() {
          if (MC.player != null && MC.level != null) {
             if (this.init) {
-               autismclient.util.aB.init(MC.options.keyJump).autism$simulatePress(false);
+               autismclient.util.KeyMappingControl.init(MC.options.keyJump).autism$simulatePress(false);
                this.init = false;
             } else if (MC.player.onGround()
                && !MC.player.isShiftKeyDown()
@@ -6097,7 +6097,7 @@ public final class f {
                && !MC.options.keyJump.isDown()
                && !(MC.player.input.getMoveVector().lengthSquared() <= 0.0F)
                && !this.init()) {
-               autismclient.util.aB.init(MC.options.keyJump).autism$simulatePress(true);
+               autismclient.util.KeyMappingControl.init(MC.options.keyJump).autism$simulatePress(true);
                this.init = true;
             }
          }
@@ -6114,7 +6114,7 @@ public final class f {
          if (this.init) {
             this.init = false;
             if (MC != null && MC.options != null) {
-               autismclient.util.aB.init(MC.options.keyJump).autism$simulatePress(false);
+               autismclient.util.KeyMappingControl.init(MC.options.keyJump).autism$simulatePress(false);
             }
          }
       }
@@ -7125,9 +7125,9 @@ public final class f {
       static final double read_D = 0.3;
       static final double write_D = 0.15;
       static final double update_D = 0.1;
-      private autismclient.util.q init_q;
-      private final autismclient.util.q.Inner_DataUtil init_q_DataUtil = new autismclient.util.q.Inner_DataUtil();
-      private autismclient.util.ap.Inner_TaskQueue init_ap_TaskQueue;
+      private autismclient.util.CombatAimEngine init_q;
+      private final autismclient.util.CombatAimEngine.Inner_DataUtil init_q_DataUtil = new autismclient.util.CombatAimEngine.Inner_DataUtil();
+      private autismclient.util.RotationStreamPlanner.Inner_TaskQueue init_ap_TaskQueue;
       private double sync_D;
       private double flush_D;
       private int write_I = -1;
@@ -7137,7 +7137,7 @@ public final class f {
       private double close_D;
       private double open_D;
       private boolean init_Z;
-      private final cj init_cj = new cj();
+      private final EntityMotionTracker init_cj = new EntityMotionTracker();
       private float init_F;
       private boolean load_Z;
       private int close_I = -2147483648;
@@ -7213,13 +7213,13 @@ public final class f {
             && MC.gui.screen() == null
             && !ScaffoldModule.read_Z_12()
             && !ScaffoldModule.update_Z_5()
-            && cn.init_ce_DataUtil() == null
+            && SilentMovementCoordinator.init_ce_DataUtil() == null
             && !ScaffoldModule.flush_Z_5()
             && !AutoTotemModule.init_Z_6()
             && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
-            && !autismclient.util.DataPipe.init()
+            && !autismclient.util.ManualInteractionYield.init()
             && this.init_O.init_Z_ItemStack(MC.player.getMainHandItem())
-            && (!this.bool("only-while-moving") || autismclient.util.aZ.init(4, ck.init_ck().state_I()))) {
+            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, ck.init_ck().state_I()))) {
             LivingEntity target = this.init_LivingEntity_4();
             if (target == null) {
                this.init_V_46();
@@ -7229,13 +7229,13 @@ public final class f {
                if (point == null) {
                   this.init_V_46();
                } else {
-                  ce.Inner_DataUtil wanted = ce.init(point, eyes);
-                  ce.Inner_DataUtil current = ce.init(MC.player);
+                  RotationMath.Inner_DataUtil wanted = RotationMath.init(point, eyes);
+                  RotationMath.Inner_DataUtil current = RotationMath.init(MC.player);
                   if (this.close_I != target.getId()) {
                      this.close_I = target.getId();
                      this.open_I = -2147483648;
                      this.poll = 0;
-                     autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
+                     autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
                   }
 
                   String axis = this.init_Str_14();
@@ -7246,12 +7246,12 @@ public final class f {
                      if (init_Z_Module_2(this)) {
                         this.init_V_LivingEntity(target, eyes, point, current, axis, safe);
                      } else if (safe) {
-                        autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
+                        autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
                      } else {
-                        ce.Inner_DataUtil applied = new ce.Inner_DataUtil(
+                        RotationMath.Inner_DataUtil applied = new RotationMath.Inner_DataUtil(
                            "Vertical".equals(axis) ? current.init() : wanted.init(), "Horizontal".equals(axis) ? current.load() : wanted.load()
                         );
-                        autismclient.util.ba.init_V_ba_StreamUtil_4(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST, current, applied);
+                        autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_4(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, current, applied);
                      }
                   }
                }
@@ -7261,10 +7261,10 @@ public final class f {
          }
       }
 
-      private void init_V_LivingEntity(LivingEntity target, Vec3 eyes, Vec3 point, ce.Inner_DataUtil current, String axis, boolean inSafeZone) {
-         autismclient.util.q hand = this.init_q_2();
+      private void init_V_LivingEntity(LivingEntity target, Vec3 eyes, Vec3 point, RotationMath.Inner_DataUtil current, String axis, boolean inSafeZone) {
+         autismclient.util.CombatAimEngine hand = this.init_q_2();
          if (this.init_ap_TaskQueue == null) {
-            this.init_ap_TaskQueue = new autismclient.util.ap.Inner_TaskQueue(new Random());
+            this.init_ap_TaskQueue = new autismclient.util.RotationStreamPlanner.Inner_TaskQueue(new Random());
          }
 
          int ticker = ((AutismLivingEntityAccessor)MC.player).autism$getAttackStrengthTicker();
@@ -7274,12 +7274,12 @@ public final class f {
 
          this.sync_I = ticker;
          this.init_V_LivingEntity_4(target);
-         double realized = this.load_Z ? Math.abs(ce.init(current.init(), this.init_F)) : 0.0;
+         double realized = this.load_Z ? Math.abs(RotationMath.init(current.init(), this.init_F)) : 0.0;
          this.init_F = current.init();
          this.load_Z = true;
-         double gcd = ce.init();
-         boolean noCooldown = autismclient.util.aI.init(MC.player);
-         this.init_q_DataUtil.init_q_DataUtil_Vec3_2(eyes, target.getBoundingBox(), autismclient.util.q.Inner_DataUtil.init(target.getBoundingBox(), point.y));
+         double gcd = RotationMath.init();
+         boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
+         this.init_q_DataUtil.init_q_DataUtil_Vec3_2(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.init(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.write_Z = true;
          this.init_q_DataUtil.open_D = target instanceof Player && this.init_cj.init_Z_LivingEntity(target)
             ? this.init_cj.init(eyes, this.init_q_DataUtil.init_D, ck.init_ck().state_I())
@@ -7304,10 +7304,10 @@ public final class f {
          int id = target.getId();
          this.init_q_DataUtil.load_Z = id != this.write_I;
          this.write_I = id;
-         if (!autismclient.util.ap.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
-            autismclient.util.ap.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, current);
+         if (!autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
+            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_ce_DataUtil(this.init_ap_TaskQueue, current);
          } else {
-            autismclient.util.ap.init_V_ap_TaskQueue_3(this.init_ap_TaskQueue, current, this.sync_D, this.flush_D, gcd);
+            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue_3(this.init_ap_TaskQueue, current, this.sync_D, this.flush_D, gcd);
          }
 
          double[] want = hand.init(this.init_q_DataUtil, current.init(), current.load(), 40.0, 40.0);
@@ -7315,17 +7315,17 @@ public final class f {
          double vertical = "Horizontal".equals(axis) ? 0.0 : this.init("vertical-speed", 0.2);
          double yaw = want[0] * horizontal;
          double pitch = init_D_D(want[1], vertical, yaw, realized, current.load(), this.init_q_DataUtil);
-         double[] own = autismclient.util.aZ.init(gcd, MC.options.invertMouseX().get(), MC.options.invertMouseY().get());
+         double[] own = autismclient.util.MouseDeltaAccumulator.init(gcd, MC.options.invertMouseX().get(), MC.options.invertMouseY().get());
          double[] pull = init_DArr_D(yaw, pitch, own[0], own[1], horizontal, vertical);
          yaw = pull[0];
          pitch = pull[1];
          this.update_I = Math.min(this.update_I + 1, 1000);
          if (!inSafeZone && (Math.abs(yaw) > 1.0E-6 || Math.abs(pitch) > 1.0E-6)) {
-            ce.Inner_DataUtil out = autismclient.util.ap.init_ce_DataUtil_ap_TaskQueue(this.init_ap_TaskQueue, yaw, pitch, 40.0F, 40.0F, gcd, 18.0);
-            double emitYaw = ce.init(out.init(), current.init());
+            RotationMath.Inner_DataUtil out = autismclient.util.RotationStreamPlanner.init_ce_DataUtil_ap_TaskQueue(this.init_ap_TaskQueue, yaw, pitch, 40.0F, 40.0F, gcd, 18.0);
+            double emitYaw = RotationMath.init(out.init(), current.init());
             double emitPitch = out.load() - current.load();
             if (Math.abs(emitYaw) > 1.0E-6 || Math.abs(emitPitch) > 1.0E-6) {
-               autismclient.util.ba.init_V_ba_StreamUtil_2(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
+               autismclient.util.MouseMovementRouter.init_V_ba_StreamUtil_2(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
                this.sync_D = emitYaw;
                this.flush_D = emitPitch;
                this.init(hand, target, out);
@@ -7336,7 +7336,7 @@ public final class f {
          this.sync_D = 0.0;
          this.flush_D = 0.0;
          this.init(hand, target, current);
-         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
+         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
       }
 
       static double[] init_DArr_D(double yaw, double pitch, double ownYaw, double ownPitch, double horizontal, double vertical) {
@@ -7359,7 +7359,7 @@ public final class f {
          }
       }
 
-      static double init_D_D(double want, double share, double yaw, double realized, double atPitch, autismclient.util.q.Inner_DataUtil frame) {
+      static double init_D_D(double want, double share, double yaw, double realized, double atPitch, autismclient.util.CombatAimEngine.Inner_DataUtil frame) {
          if (share <= 0.0) {
             return 0.0;
          }
@@ -7384,9 +7384,9 @@ public final class f {
          }
       }
 
-      private autismclient.util.q init_q_2() {
+      private autismclient.util.CombatAimEngine init_q_2() {
          if (this.init_q == null) {
-            this.init_q = autismclient.util.q.init_q();
+            this.init_q = autismclient.util.CombatAimEngine.init_q();
          }
 
          return this.init_q;
@@ -7405,19 +7405,19 @@ public final class f {
          this.open_D = target.getZ();
       }
 
-      private void init(autismclient.util.q hand, LivingEntity target, ce.Inner_DataUtil current) {
+      private void init(autismclient.util.CombatAimEngine hand, LivingEntity target, RotationMath.Inner_DataUtil current) {
          float perfectYaw = (float)(Math.toDegrees(Math.atan2(target.getZ() - MC.player.getZ(), target.getX() - MC.player.getX())) - 90.0);
          hand.init_V_D(current.init(), current.load(), perfectYaw, this.update_I * 50L <= 1050L && this.init_Z);
       }
 
       private void init_V_46() {
-         autismclient.util.aZ.init(0.0, false, false);
+         autismclient.util.MouseDeltaAccumulator.init(0.0, false, false);
          if (this.init_q != null) {
             this.init_q.init_V();
          }
 
          if (this.init_ap_TaskQueue != null) {
-            autismclient.util.ap.init_V_ap_TaskQueue(this.init_ap_TaskQueue);
+            autismclient.util.RotationStreamPlanner.init_V_ap_TaskQueue(this.init_ap_TaskQueue);
          }
 
          this.sync_D = 0.0;
@@ -7432,12 +7432,12 @@ public final class f {
          this.close_I = -2147483648;
          this.open_I = -2147483648;
          this.poll = 0;
-         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
+         autismclient.util.MouseMovementRouter.init_V(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
       }
 
       private LivingEntity init_LivingEntity_4() {
          double rangeSq = this.decimal("range") * this.decimal("range");
-         ce.Inner_DataUtil current = ce.init(MC.player);
+         RotationMath.Inner_DataUtil current = RotationMath.init(MC.player);
          Vec3 eyes = MC.player.getEyePosition();
          String priority = this.choice("priority");
          LivingEntity best = null;
@@ -7483,7 +7483,7 @@ public final class f {
          return best;
       }
 
-      private boolean init(LivingEntity entity, double rangeSq, ce.Inner_DataUtil current) {
+      private boolean init(LivingEntity entity, double rangeSq, RotationMath.Inner_DataUtil current) {
          if (entity == MC.player || entity.isRemoved() || !entity.isAlive()) {
             return false;
          }
@@ -7508,15 +7508,15 @@ public final class f {
             return false;
          }
 
-         ce.Inner_DataUtil toEntity = ce.init(entity.getBoundingBox().getCenter(), MC.player.getEyePosition());
-         return ce.init_F(current, toEntity) <= this.integer("fov");
+         RotationMath.Inner_DataUtil toEntity = RotationMath.init(entity.getBoundingBox().getCenter(), MC.player.getEyePosition());
+         return RotationMath.init_F(current, toEntity) <= this.integer("fov");
       }
 
-      private int init(LivingEntity a, LivingEntity b, String priority, ce.Inner_DataUtil current, Vec3 eyes) {
+      private int init(LivingEntity a, LivingEntity b, String priority, RotationMath.Inner_DataUtil current, Vec3 eyes) {
          int var10000;
          switch (priority) {
             case "Smart":
-               var10000 = Double.compare(autismclient.util.x.init(a, MC.player, current), autismclient.util.x.init(b, MC.player, current));
+               var10000 = Double.compare(autismclient.util.CombatTargetScorer.init(a, MC.player, current), autismclient.util.CombatTargetScorer.init(b, MC.player, current));
                break;
             case "Type":
                var10000 = Integer.compare(this.init_I_LivingEntity_3(a), this.init_I_LivingEntity_3(b));
@@ -7548,9 +7548,9 @@ public final class f {
          }
       }
 
-      private float init(LivingEntity entity, ce.Inner_DataUtil current, Vec3 eyes) {
-         ce.Inner_DataUtil toEntity = ce.init(entity.getBoundingBox().getCenter(), eyes);
-         return ce.init_F(current, toEntity);
+      private float init(LivingEntity entity, RotationMath.Inner_DataUtil current, Vec3 eyes) {
+         RotationMath.Inner_DataUtil toEntity = RotationMath.init(entity.getBoundingBox().getCenter(), eyes);
+         return RotationMath.init_F(current, toEntity);
       }
 
       private boolean init_Z_Entity_7(Entity entity) {
@@ -7671,7 +7671,7 @@ public final class f {
       }
 
       private Vec3 load(Vec3 eyes, AABB box) {
-         ce.Inner_DataUtil current = ce.init(MC.player);
+         RotationMath.Inner_DataUtil current = RotationMath.init(MC.player);
          Vec3 best = null;
          float bestAngle = 3.4028235E38F;
 
@@ -7685,7 +7685,7 @@ public final class f {
                   double z = Mth.lerp(iz / 2.0, box.minZ, box.maxZ);
                   Vec3 point = new Vec3(x, y, z);
                   if (this.init(eyes, point)) {
-                     float angle = ce.init_F(current, ce.init(point, eyes));
+                     float angle = RotationMath.init_F(current, RotationMath.init(point, eyes));
                      if (angle < bestAngle) {
                         bestAngle = angle;
                         best = point;
@@ -7708,7 +7708,7 @@ public final class f {
       }
 
       private boolean init_Z_ce_DataUtil(
-         ce.Inner_DataUtil current, ce.Inner_DataUtil targetRotation, Vec3 eyes, Vec3 targetPoint, LivingEntity target, String axis
+         RotationMath.Inner_DataUtil current, RotationMath.Inner_DataUtil targetRotation, Vec3 eyes, Vec3 targetPoint, LivingEntity target, String axis
       ) {
          int configured = this.integer("safe-zone");
          if (configured <= 0 || current == null || targetRotation == null || eyes == null || targetPoint == null || target == null) {
@@ -7724,13 +7724,13 @@ public final class f {
          double radius = targetWidth * (configured / 100.0);
          double distance = Math.max(1.0E-4, eyes.distanceTo(targetPoint));
          double angularRadius = Math.toDegrees(Math.atan2(radius, distance));
-         double hardwareStep = ce.load();
+         double hardwareStep = RotationMath.load();
          if (hardwareStep > 0.0 && Double.isFinite(hardwareStep)) {
             angularRadius = Math.max(angularRadius, hardwareStep);
          }
 
-         boolean yawInside = "Vertical".equals(axis) || Math.abs(ce.init(targetRotation.init(), current.init())) <= angularRadius;
-         boolean pitchInside = "Horizontal".equals(axis) || Math.abs(ce.init(targetRotation.load(), current.load())) <= angularRadius;
+         boolean yawInside = "Vertical".equals(axis) || Math.abs(RotationMath.init(targetRotation.init(), current.init())) <= angularRadius;
+         boolean pitchInside = "Horizontal".equals(axis) || Math.abs(RotationMath.init(targetRotation.load(), current.load())) <= angularRadius;
          return yawInside && pitchInside;
       }
 
@@ -8147,15 +8147,15 @@ public final class f {
 
             return true;
          } else {
-            if (!autismclient.util.ah.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                return false;
             }
 
             try {
                if (forward) {
-                  autismclient.util.as.init_V_I(clamped);
+                  autismclient.util.VirtualInputDispatcher.init_V_I(clamped);
                } else {
-                  autismclient.util.as.init(clamped, this.read_I);
+                  autismclient.util.VirtualInputDispatcher.init(clamped, this.read_I);
                }
 
                if (forward) {
@@ -8164,7 +8164,7 @@ public final class f {
 
                return true;
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
          }
       }
@@ -8185,7 +8185,7 @@ public final class f {
                return -1;
             }
 
-            if (autismclient.util.ah.init(best, this.id())) {
+            if (autismclient.util.InventorySlotArbiter.init(best, this.id())) {
                return -1;
             }
 
@@ -8199,7 +8199,7 @@ public final class f {
                return -1;
             }
 
-            if (!autismclient.util.ah.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                return -1;
             }
 
@@ -8208,7 +8208,7 @@ public final class f {
                   return -1;
                }
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
 
             return selected;
@@ -8449,7 +8449,7 @@ public final class f {
                   return false;
                }
 
-               if (autismclient.util.ah.load_Z(this.id())) {
+               if (autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
                   return false;
                }
 
@@ -8461,12 +8461,12 @@ public final class f {
                   return false;
                }
 
-               String placementOwner = bM.init();
+               String placementOwner = PerTickPlacementLock.init();
                if (placementOwner != null && !placementOwner.equals(this.id())) {
                   return false;
                }
 
-               if (!bM.init(this.id())) {
+               if (!PerTickPlacementLock.init(this.id())) {
                   return false;
                }
 

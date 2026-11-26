@@ -143,7 +143,7 @@ final class TextFormat {
                      return this.init(AiOperation.Status.FAILED, "No visible source face within reach at " + this.init_BlockPos.toShortString());
                   }
 
-                  this.init_DataUtil.init_V_ce_DataUtil(autismclient.util.ce.init(point, mc.player.getEyePosition()));
+                  this.init_DataUtil.init_V_ce_DataUtil(autismclient.util.RotationMath.init(point, mc.player.getEyePosition()));
                   this.init_DataUtil.load_V();
                   if (++this.load_I > 60) {
                      return this.init(AiOperation.Status.FAILED, "Could not aim at " + this.init_BlockPos.toShortString());
@@ -216,7 +216,7 @@ final class TextFormat {
             }
 
             boolean init_Z_9() {
-               autismclient.util.ch.Inner_CachePool wire = autismclient.util.ch.init_ch_CachePool();
+               autismclient.util.ServerRotationTracker.Inner_CachePool wire = autismclient.util.ServerRotationTracker.init_ch_CachePool();
                return wire.init_Z() && TextFormat.init(wire.read(), wire.write(), mc.player.getYRot(), mc.player.getXRot());
             }
 

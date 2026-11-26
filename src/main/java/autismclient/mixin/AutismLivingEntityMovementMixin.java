@@ -6,7 +6,7 @@ import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.NoJumpDelayModule;
 import autismclient.modules.ClutchModule;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -55,14 +55,14 @@ public class AutismLivingEntityMovementMixin {
    private Vec3 autism$killAuraSilentJump(Vec3 original) {
       LivingEntity entity = (LivingEntity)(Object)this;
       Vec3 scaffold = ScaffoldModule.init_Vec3_LivingEntity_Vec3_2(entity, original);
-      return cn.init(entity, scaffold);
+      return SilentMovementCoordinator.init(entity, scaffold);
    }
 
    @ModifyExpressionValue(method = "updateFallFlyingMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getXRot()F"))
    private float autism$killAuraSilentGlidePitch(float original) {
       LivingEntity entity = (LivingEntity)(Object)this;
       float scaffold = ScaffoldModule.init_F_LivingEntity_F(entity, original);
-      return cn.init(entity, scaffold);
+      return SilentMovementCoordinator.init(entity, scaffold);
    }
 
    @ModifyExpressionValue(
@@ -72,7 +72,7 @@ public class AutismLivingEntityMovementMixin {
    private Vec3 autism$killAuraSilentGlideLook(Vec3 original) {
       LivingEntity entity = (LivingEntity)(Object)this;
       Vec3 scaffold = ScaffoldModule.load_Vec3_LivingEntity_Vec3(entity, original);
-      return cn.load(entity, scaffold);
+      return SilentMovementCoordinator.load(entity, scaffold);
    }
 
    @Inject(method = "travelInFluid", at = @At("RETURN"))

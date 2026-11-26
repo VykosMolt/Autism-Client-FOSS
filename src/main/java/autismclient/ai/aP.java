@@ -94,7 +94,7 @@ public final class aP {
          }
 
          init_aO.init_V();
-         autismclient.util.s.write_V();
+         autismclient.util.ClientInteractionOverride.write_V();
          long window = mc.getWindow().handle();
 
          for (int key = 32; key <= 348; key++) {
@@ -498,7 +498,7 @@ public final class aP {
          Minecraft mc = Minecraft.getInstance();
          if (mode.init_JsonObject != null) {
             if (!mode.write) {
-               autismclient.util.aB.init(mc.options.keyUp).autism$simulatePress(false);
+               autismclient.util.KeyMappingControl.init(mc.options.keyUp).autism$simulatePress(false);
                mode.init_JsonObject.addProperty("movementControl", mc.player.position().distanceTo(mode.init_Vec3) > 0.005);
                mode.write = true;
             }
@@ -530,9 +530,9 @@ public final class aP {
             try {
                mc.hitResult = hit;
                attackBlocked = !((AutismMinecraftAccessor)mc).autism$startAttack();
-               autismclient.util.s.init("kill-aura", hit, true);
-               autismclient.util.s.update_V();
-               attackBlocked &= !autismclient.util.s.close_Z() && !((AutismMultiPlayerGameModeAccessor)mc.gameMode).autism$isDestroying();
+               autismclient.util.ClientInteractionOverride.init("kill-aura", hit, true);
+               autismclient.util.ClientInteractionOverride.update_V();
+               attackBlocked &= !autismclient.util.ClientInteractionOverride.close_Z() && !((AutismMultiPlayerGameModeAccessor)mc.gameMode).autism$isDestroying();
             } finally {
                mc.hitResult = previousHit;
             }
@@ -550,7 +550,7 @@ public final class aP {
             float pitch = mc.player.getXRot();
             mc.player.turn(12.0, -3.0);
             mode.init_Vec3 = mc.player.position();
-            autismclient.util.aB.init(mc.options.keyUp).autism$simulatePress(true);
+            autismclient.util.KeyMappingControl.init(mc.options.keyUp).autism$simulatePress(true);
             mode.init_JsonObject = ag.init_JsonObject_ObjArr(
                "moved",
                moved,

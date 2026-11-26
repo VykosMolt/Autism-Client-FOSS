@@ -1,6 +1,6 @@
 package autismclient.ai.a;
 
-import autismclient.util.aB;
+import autismclient.util.KeyMappingControl;
 import java.util.List;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
@@ -51,7 +51,7 @@ public final class AiMotionSafety {
             var0.options.keySprint,
             var0.options.keyShift
          )) {
-            var2.setDown(aB.init(var2).autism$physicalForBody());
+            var2.setDown(KeyMappingControl.init(var2).autism$physicalForBody());
          }
       }
    }

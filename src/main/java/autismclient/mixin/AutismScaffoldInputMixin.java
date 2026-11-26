@@ -11,7 +11,7 @@ import autismclient.modules.WTappingModule;
 import autismclient.modules.ClutchModule;
 import autismclient.modules.DangerModule;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.KeyboardInput;
@@ -36,7 +36,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
       }
 
       Input scaffold = ScaffoldModule.init_Input_ClientInput_Input_4(this, original);
-      Input aura = cn.init(this, scaffold);
+      Input aura = SilentMovementCoordinator.init(this, scaffold);
       if (!AutismLiteVariant.enabled()) {
          aura = DangerModule.init_Input_Input_4(aura);
       }

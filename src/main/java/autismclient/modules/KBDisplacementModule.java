@@ -6,12 +6,12 @@ import autismclient.api.module.IntSetting;
 import autismclient.api.module.ValueRange;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
-import autismclient.util.ce;
-import autismclient.util.ch;
-import autismclient.util.ci;
-import autismclient.util.cj;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
+import autismclient.util.SprintStateTracker;
+import autismclient.util.EntityMotionTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +59,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class KBDisplacementModule extends Module implements cn.Inner_DataUtil {
+public final class KBDisplacementModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    private int init_I = -2147483648;
    private boolean init_Z;
    private long init_J;
@@ -166,7 +166,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
             m.close,
             m.init_Str,
             m.init_Y.init_I(m.init_I_15()),
-            ci.load(),
+            SprintStateTracker.load(),
             var4
          );
       } else {
@@ -217,7 +217,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
          if (level != null && m.init_Z_LivingEntity_2(target)) {
             int tick = ck.init_ck().state_I();
             if (m.init_T.init_Z()) {
-               Runnable receipt = autismclient.util.r.init_Runnable(target);
+               Runnable receipt = autismclient.util.CombatAttackDispatcher.init_Runnable(target);
                if (!m.init_T.init(target, attack, receipt)) {
                   m.init_V_Z_5(false);
                   plain.run();
@@ -231,8 +231,8 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                int fallback = m.init_I_15();
                if (m.init_I != tick && m.write_I != tick && !m.init_Y.init_Z(target.getId(), tick, fallback) && !WTappingModule.load()) {
                   m.init_I = tick;
-                  ch.Inner_CachePool before = ch.init_ch_CachePool();
-                  float yaw = ch.init_F();
+                  ServerRotationTracker.Inner_CachePool before = ServerRotationTracker.init_ch_CachePool();
+                  float yaw = ServerRotationTracker.init_F();
                   float pitch = before.write();
                   if (before.init_Z() && Float.isFinite(yaw) && Float.isFinite(pitch)) {
                      Packet<?> packet = new ServerboundAttackPacket(target.getId());
@@ -246,9 +246,9 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                            Vec3 nextEye = terrain.init_Vec3_F(yaw).add(0.0, MC.player.getEyeHeight(), 0.0);
                            AABB nextBody = target.getBoundingBox().move(init_Vec3_LivingEntity_2(target));
                            terrain.init_F = AimHitboxHelper.init(pitch, nextEye, nextBody, nextEye, nextBody);
-                           terrain.init_Z = AimHitboxHelper.init(nextBody, nextEye, yaw, pitch, autismclient.util.u.init_D(MC.player));
-                           terrain.load_Z = ci.init_Z(MC.player.isSprinting()) && MC.player.getAttackStrengthScale(0.5F) > 0.9F
-                              || autismclient.util.aI.init(MC.player);
+                           terrain.init_Z = AimHitboxHelper.init(nextBody, nextEye, yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player));
+                           terrain.load_Z = SprintStateTracker.init_Z(MC.player.isSprinting()) && MC.player.getAttackStrengthScale(0.5F) > 0.9F
+                              || autismclient.util.LegacyCombatDetector.init(MC.player);
                            KBDisplacementModule.Inner_StreamUtil struck = m.init_X_StreamUtil_LivingEntity(target, terrain, tick, m.init_Y.init_I(fallback));
                            terrain.init_Vec3 = struck.init_Vec3();
                            boolean grounded = struck.init_Z();
@@ -263,7 +263,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                               target.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE),
                               extra,
                               reference,
-                              autismclient.util.aI.init()
+                              autismclient.util.LegacyCombatDetector.init()
                            );
                            byte var10000;
                            switch (m.choice("side")) {
@@ -282,7 +282,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                               m.integer("max-turn"), m.integer("fall-height"), m.bool("void-only"), side, m.integer("radius")
                            );
                            long started = System.nanoTime();
-                           plan = KnockbackThrowPlanner.init(input, yaw, ce.init(), settings, m.init_W_BufferHelper_LivingEntity(target, grounded, server), terrain);
+                           plan = KnockbackThrowPlanner.init(input, yaw, RotationMath.init(), settings, m.init_W_BufferHelper_LivingEntity(target, grounded, server), terrain);
                            m.init_V_J_W_NetHelper(System.nanoTime() - started, plan);
                         } catch (RuntimeException ignored) {
                            m.init_V_Str_2("error");
@@ -294,11 +294,11 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                            m.init_V_Str_2("plan:" + KnockbackThrowPlanner.init_Str);
                            plain.run();
                         } else {
-                           double reach = autismclient.util.u.init_D(MC.player) - 0.06;
+                           double reach = autismclient.util.AttackReachHelper.init_D(MC.player) - 0.06;
                            Vec3 nextEye = terrain.init_Vec3_F(plan.init_F()).add(0.0, MC.player.getEyeHeight(), 0.0);
-                           float inputYaw = cn.init_F(MC.player);
+                           float inputYaw = SilentMovementCoordinator.init_F(MC.player);
                            if (!(target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach)
-                              && autismclient.util.aD.load(new ce.Inner_DataUtil(plan.init_F(), terrain.init_F))) {
+                              && autismclient.util.SilentRotationManager.load(new RotationMath.Inner_DataUtil(plan.init_F(), terrain.init_F))) {
                               m.init_V_Str_2("redirect");
                               m.load_ClientLevel = level;
                               m.init_ClientPacketListen = MC.getConnection();
@@ -322,7 +322,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                                  + plan.init_W_JsonUtil().init_I()
                                  + " lead="
                                  + String.format(Locale.ROOT, "%.2f,%.2f", m.init_Vec3.x, m.init_Vec3.z);
-                              m.init_T.init(target, attack, autismclient.util.r.init_Runnable(target));
+                              m.init_T.init(target, attack, autismclient.util.CombatAttackDispatcher.init_Runnable(target));
                            } else {
                               m.init_V_Str_2(
                                  target.getBoundingBox().move(init_Vec3_LivingEntity_2(target)).distanceToSqr(nextEye) > reach * reach
@@ -365,7 +365,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
    }
 
    private KBDisplacementModule.Inner_StreamUtil init_X_StreamUtil_LivingEntity(LivingEntity target, KBDisplacementModule.Inner_CachePool terrain, int tick, int roundTrip) {
-      Vec3 latest = cj.init_Vec3_LivingEntity(target);
+      Vec3 latest = EntityMotionTracker.init_Vec3_LivingEntity(target);
       AABB body = target.getBoundingBox().move(latest.subtract(target.position()));
       boolean grounded = target.onGround();
       if (!(target instanceof Player)) {
@@ -454,7 +454,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                   this.init_Map.put(other.getId(), tick);
                }
 
-               Vec3 latest = cj.init_Vec3_LivingEntity(other);
+               Vec3 latest = EntityMotionTracker.init_Vec3_LivingEntity(other);
                KBDisplacementModule.Inner_BufferHelper old = this.load_Map.get(other.getId());
                if (old == null) {
                   this.load_Map.put(other.getId(), new KBDisplacementModule.Inner_BufferHelper(latest, tick, Vec3.ZERO));
@@ -479,7 +479,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
    }
 
    private static boolean read_Z_11() {
-      return "kb-displacement".equals(autismclient.util.aD.init_Str());
+      return "kb-displacement".equals(autismclient.util.SilentRotationManager.init_Str());
    }
 
    public static boolean init_Z_24() {
@@ -515,7 +515,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
 
       if (read_Z_11() && MC.options.keyUse.isDown()) {
          this.sync_V_5();
-         autismclient.util.aD.load_V();
+         autismclient.util.SilentRotationManager.load_V();
       } else {
          int tick = ck.init_ck().state_I();
          if (this.init_T.init_Z() && tick != this.read_I) {
@@ -523,8 +523,8 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
          }
 
          if (!this.init_T.init_Z() && this.update_I != tick) {
-            if (read_Z_11() && !autismclient.util.aD.init_Z()) {
-               autismclient.util.aD.init(this.id());
+            if (read_Z_11() && !autismclient.util.SilentRotationManager.init_Z()) {
+               autismclient.util.SilentRotationManager.init(this.id());
             }
 
             this.write_V_11();
@@ -534,14 +534,14 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
 
    public static void load_V_17() {
       if (read_Z_11() && al.init_Module_Str("kb-displacement") instanceof KBDisplacementModule m && !m.init_T.init_Z()) {
-         autismclient.util.aD.init_V_Str_LocalPlayer(m.id(), MC.player);
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(m.id(), MC.player);
       }
    }
 
    private void init_V_Z_5(boolean displaced) {
       boolean context = this.sync_Z_5();
-      float wireYaw = cn.init_F();
-      float wirePitch = cn.load_F();
+      float wireYaw = SilentMovementCoordinator.init_F();
+      float wirePitch = SilentMovementCoordinator.load_F();
       if (!Float.isFinite(wireYaw) || !Float.isFinite(wirePitch)) {
          wireYaw = this.load_F;
          wirePitch = this.read_F;
@@ -562,10 +562,10 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                   && target == this.load_ClientLevel.getEntity(target.getId())
                   && this.init_Z_LivingEntity_2(target)
                   && (
-                     AimHitboxHelper.init(target.getBoundingBox(), MC.player.getEyePosition(), yaw, pitch, autismclient.util.u.init_D(MC.player), 0.002)
+                     AimHitboxHelper.init(target.getBoundingBox(), MC.player.getEyePosition(), yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player), 0.002)
                         || flank
                            && AimHitboxHelper.init(
-                              target.getBoundingBox(), MC.player.getEyePosition(), this.update_F, this.sync_F, autismclient.util.u.init_D(MC.player), 0.002
+                              target.getBoundingBox(), MC.player.getEyePosition(), this.update_F, this.sync_F, autismclient.util.AttackReachHelper.init_D(MC.player), 0.002
                            )
                   ),
                value -> {
@@ -575,7 +575,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                }
             );
          this.close += queued - count;
-         if (flank && count > 0 && autismclient.util.aD.load(new ce.Inner_DataUtil(this.update_F, this.sync_F))) {
+         if (flank && count > 0 && autismclient.util.SilentRotationManager.load(new RotationMath.Inner_DataUtil(this.update_F, this.sync_F))) {
             this.update_I = ck.init_ck().state_I();
          }
 
@@ -609,7 +609,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
 
    @Override
    public boolean load_Z_23() {
-      return !cn.init_Z() && read_Z_11() && (this.init_T.init_Z() || this.update_I == ck.init_ck().state_I() || autismclient.util.aD.init_Z());
+      return !SilentMovementCoordinator.init_Z() && read_Z_11() && (this.init_T.init_Z() || this.update_I == ck.init_ck().state_I() || autismclient.util.SilentRotationManager.init_Z());
    }
 
    private boolean sync_Z_5() {
@@ -641,7 +641,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
    }
 
    private static boolean init_Z_AABB_4(AABB box, Vec3 eye, float yaw, float pitch) {
-      return AimHitboxHelper.init(box, eye, yaw, pitch, autismclient.util.u.init_D(MC.player));
+      return AimHitboxHelper.init(box, eye, yaw, pitch, autismclient.util.AttackReachHelper.init_D(MC.player));
    }
 
    public static Input init_Input_Input(Input input, float camera, float yaw) {
@@ -676,7 +676,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
    @Override
    public void tick() {
       if (!this.isEnabled() && read_Z_11()) {
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
 
       if (this.isEnabled()) {
@@ -713,7 +713,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                KnockbackThrowPlanner.init(
                   input,
                   MC.player.getYRot(),
-                  ce.init(),
+                  RotationMath.init(),
                   new KnockbackThrowPlanner.Inner_StateCache(100.0, 3.0, false, 0, radius),
                   new KnockbackThrowPlanner.Inner_BufferHelper(counter, new Vec3[0]),
                   new KBDisplacementModule.Inner_CachePool(MC.level, MC.player, MC.player.getXRot())
@@ -744,7 +744,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
          || MC.gui.overlay() != null
          || MC.options.keyUse.isDown()
          || MC.options.keyInventory.isDown()
-         || autismclient.util.DataPipe.init()
+         || autismclient.util.ManualInteractionYield.init()
          || MC.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10()
          || aD.init_Z()
          || FreecamController.init_Z()
@@ -786,7 +786,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
 
       if (ClutchModule.init_Z_49()
          || DangerModule.sync_Z_12()
-         || cn.init_Z()
+         || SilentMovementCoordinator.init_Z()
          || BedNukerModule.init_Z_23()
          || AutoTotemModule.init_Z_6()
          || AutoArmorModule.init_Z_20()
@@ -794,11 +794,11 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
          return false;
       }
 
-      if (cn.init_ce_DataUtil() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.aD.init_Str())) {
+      if (SilentMovementCoordinator.init_ce_DataUtil() != null && !QueuedAttackBuffer.init_Z_Str(autismclient.util.SilentRotationManager.init_Str())) {
          return false;
       }
 
-      double reach = autismclient.util.u.init_D(MC.player);
+      double reach = autismclient.util.AttackReachHelper.init_D(MC.player);
       return target.getBoundingBox().distanceToSqr(MC.player.getEyePosition()) <= reach * reach && MC.player.hasLineOfSight(target);
    }
 
@@ -809,9 +809,9 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
       return KnockbackThrowPlanner.init_D_D(
          MC.player.getAttributeValue(Attributes.ATTACK_KNOCKBACK),
          level,
-         ci.init_Z(MC.player.isSprinting()),
+         SprintStateTracker.init_Z(MC.player.isSprinting()),
          MC.player.getAttackStrengthScale(0.5F),
-         autismclient.util.aI.init(MC.player)
+         autismclient.util.LegacyCombatDetector.init(MC.player)
       );
    }
 
@@ -862,7 +862,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
       this.sync_V_5();
       this.init_bf.read_V();
       if (read_Z_11()) {
-         autismclient.util.aD.init(this.id());
+         autismclient.util.SilentRotationManager.init(this.id());
       }
    }
 
@@ -875,7 +875,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
       this.init_Y.init();
       this.load_Map.clear();
       if (read_Z_11()) {
-         autismclient.util.aD.load_V();
+         autismclient.util.SilentRotationManager.load_V();
       }
    }
 
@@ -934,7 +934,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
          this.init_LivingEntity = target;
          this.init_F = pitch;
          this.init_CollisionContext = CollisionContext.of(target);
-         this.load_F = cn.init_F(Module.MC.player);
+         this.load_F = SilentMovementCoordinator.init_F(Module.MC.player);
          this.init_I = level.getMinY();
          this.load_I = level.getMaxY();
       }
@@ -954,7 +954,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
                      o.keyShift.isDown(),
                      o.keySprint.isDown()
                   );
-                  Input keys = cn.init(raw, this.load_F, yaw);
+                  Input keys = SilentMovementCoordinator.init(raw, this.load_F, yaw);
                   boolean sprint = keys.forward() && !keys.backward() && (Module.MC.player.isSprinting() || MovementModuleHooks.init(raw.sprint(), false));
                   double speed = Module.MC.player.getAttributeValue(Attributes.MOVEMENT_SPEED);
                   if (sprint != Module.MC.player.isSprinting()) {
@@ -1014,7 +1014,7 @@ public final class KBDisplacementModule extends Module implements cn.Inner_DataU
             o.keyUp.isDown(), o.keyDown.isDown(), o.keyLeft.isDown(), o.keyRight.isDown(), o.keyJump.isDown(), o.keyShift.isDown(), o.keySprint.isDown()
          );
          if (raw.forward() && !raw.backward()) {
-            Input keys = cn.init(raw, this.load_F, yaw);
+            Input keys = SilentMovementCoordinator.init(raw, this.load_F, yaw);
             return keys.forward() && !keys.backward() && Math.abs(Mth.wrapDegrees(yaw - this.load_F)) <= 62.0;
          } else {
             return Math.abs(Mth.wrapDegrees(yaw - this.load_F)) <= 62.0;

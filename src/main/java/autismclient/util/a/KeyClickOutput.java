@@ -1,8 +1,8 @@
 package autismclient.util.a;
 
 import autismclient.modules.aD;
-import autismclient.util.aB;
-import autismclient.util.ci;
+import autismclient.util.KeyMappingControl;
+import autismclient.util.SprintStateTracker;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.KeyMapping;
@@ -67,7 +67,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
 
    public boolean load_Z() {
       KeyMapping mapping = this.init_KeyMapping();
-      return mapping != null && !mapping.isUnbound() && aB.init(mapping).autism$isActuallyDown();
+      return mapping != null && !mapping.isUnbound() && KeyMappingControl.init(mapping).autism$isActuallyDown();
    }
 
    @Override
@@ -75,7 +75,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       if (!this.load_Z && read_Z()) {
          KeyMapping mapping = this.init_KeyMapping();
          if (mapping != null && !mapping.isUnbound()) {
-            aB.init(mapping).autism$simulatePress(true);
+            KeyMappingControl.init(mapping).autism$simulatePress(true);
             this.update = System.nanoTime();
             this.load_Z = true;
             if (!this.init_Z) {
@@ -103,7 +103,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          this.load_J = -9223372036854775808L;
          KeyMapping mapping = this.init_KeyMapping();
          if (mapping != null) {
-            aB bridge = aB.init(mapping);
+            KeyMappingControl bridge = KeyMappingControl.init(mapping);
             if (!read_Z()) {
                bridge.autism$resetPressedState();
             } else if (!this.read_Z && bridge.autism$isActuallyDown()) {
@@ -180,7 +180,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          }
       } else if (init_Minecraft.hitResult instanceof EntityHitResult hit
          && hit.getEntity() instanceof Player
-         && ci.read()
+         && SprintStateTracker.read()
          && !(init_Minecraft.player.getAttackStrengthScale(0.5F) <= 0.9F)) {
          while (this.load_I < this.init_I && mapping.consumeClick()) {
             this.load_I++;
@@ -192,7 +192,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       KeyMapping mapping = this.init_KeyMapping();
       if (mapping != null) {
          for (int i = 0; i < this.load_I; i++) {
-            aB.init(mapping).autism$countClick();
+            KeyMappingControl.init(mapping).autism$countClick();
          }
       }
 

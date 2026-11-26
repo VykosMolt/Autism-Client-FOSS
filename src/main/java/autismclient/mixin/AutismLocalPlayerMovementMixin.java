@@ -12,8 +12,8 @@ import autismclient.modules.NoPushModule;
 import autismclient.modules.f;
 import autismclient.modules.DangerModule;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ci;
-import autismclient.util.cn;
+import autismclient.util.SprintStateTracker;
+import autismclient.util.SilentMovementCoordinator;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.client.Minecraft;
@@ -58,12 +58,12 @@ public class AutismLocalPlayerMovementMixin {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.init(player, original);
       float scaffold = ScaffoldModule.init_F_LocalPlayer_F(player, fastExp);
-      float yaw = cn.init(player, scaffold);
+      float yaw = SilentMovementCoordinator.init(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
          yaw = LeafDupeModule.init_F_LocalPlayer_F_2(player, yaw);
       }
 
-      cn.init(yaw);
+      SilentMovementCoordinator.init(yaw);
       return yaw;
    }
 
@@ -72,12 +72,12 @@ public class AutismLocalPlayerMovementMixin {
       LocalPlayer player = (LocalPlayer)(Object)this;
       float fastExp = f.load(player, original);
       float scaffold = ScaffoldModule.load_F_LocalPlayer_F(player, fastExp);
-      float pitch = cn.load(player, scaffold);
+      float pitch = SilentMovementCoordinator.load(player, scaffold);
       if (!AutismLiteVariant.enabled()) {
          pitch = LeafDupeModule.load_F_LocalPlayer_F_2(player, pitch);
       }
 
-      cn.load(pitch);
+      SilentMovementCoordinator.load(pitch);
       return pitch;
    }
 
@@ -101,7 +101,7 @@ public class AutismLocalPlayerMovementMixin {
    @ModifyExpressionValue(method = "sendIsSprintingIfNeeded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprinting()Z"))
    private boolean autism$sprintNetworkDecision(boolean original) {
       boolean announced = MovementModuleHooks.init(original);
-      ci.init_V(announced);
+      SprintStateTracker.init_V(announced);
       return announced;
    }
 
@@ -160,7 +160,7 @@ public class AutismLocalPlayerMovementMixin {
             LeafDupeModule.load_V_LocalPlayer_2((LocalPlayer)(Object)this);
          }
 
-         cn.init(Minecraft.getInstance());
+         SilentMovementCoordinator.init(Minecraft.getInstance());
          if (!AutismLiteVariant.enabled()) {
             KBDisplacementModule.init_V_21();
          }

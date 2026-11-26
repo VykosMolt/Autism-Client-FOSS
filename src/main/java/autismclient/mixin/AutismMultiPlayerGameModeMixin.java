@@ -12,10 +12,10 @@ import autismclient.modules.WTappingModule;
 import autismclient.modules.ClutchModule;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.W;
-import autismclient.util.ci;
+import autismclient.util.SprintStateTracker;
 import autismclient.util.ck;
-import autismclient.util.r;
-import autismclient.util.t;
+import autismclient.util.CombatAttackDispatcher;
+import autismclient.util.RecentCombatTracker;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -61,16 +61,16 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"))
    private void autism$recordAttackInputs(Player player, Entity entity, CallbackInfo ci) {
-      autismclient.util.ci.init(player);
+      autismclient.util.SprintStateTracker.init(player);
    }
 
    @Inject(method = "attack(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/Entity;)V", at = @At("RETURN"))
    private void autism$recordCombatEngagement(Player player, Entity entity, CallbackInfo ci) {
-      autismclient.util.ci.load(player);
+      autismclient.util.SprintStateTracker.load(player);
       if (!AutismLiteVariant.enabled()) {
          WTappingModule.init(player, entity);
-         r.init(player, entity);
-         t.init(player, entity);
+         CombatAttackDispatcher.init(player, entity);
+         RecentCombatTracker.init(player, entity);
          AntiBotTracker.init_V(entity);
       }
    }

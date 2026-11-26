@@ -13,8 +13,8 @@ import autismclient.mixin.accessor.AutismClientLevelPredictionAccessor;
 import autismclient.mixin.accessor.AutismLocalPlayerAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.mixin.accessor.AutismPlayerAccessor;
-import autismclient.util.ai;
-import autismclient.util.ch;
+import autismclient.util.BlockAttackGraceWindow;
+import autismclient.util.ServerRotationTracker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -344,19 +344,19 @@ public final class DataUtil implements EventBus {
 
    @Override
    public Vec3 init_Vec3() {
-      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
       return wire.init_Vec3() != null ? wire.init_Vec3() : this.init_LocalPlayer().position();
    }
 
    @Override
    public float write_F() {
-      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
       return wire.init_Z() && Float.isFinite(wire.read()) ? wire.read() : this.init_LocalPlayer().getYRot();
    }
 
    @Override
    public float update_F() {
-      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
       return wire.init_Z() && Float.isFinite(wire.write()) ? wire.write() : this.init_LocalPlayer().getXRot();
    }
 
@@ -770,7 +770,7 @@ public final class DataUtil implements EventBus {
                }
 
                if (c.init_BlockPos != null && this.init_Minecraft.gui.screen() == null) {
-                  ai.init(p);
+                  BlockAttackGraceWindow.init(p);
                   if (!c.init_BlockPos.equals(this.init_BlockPos)) {
                      this.init_Minecraft.gameMode.startDestroyBlock(c.init_BlockPos, c.init_Direction);
                      this.init_BlockPos = c.init_BlockPos;

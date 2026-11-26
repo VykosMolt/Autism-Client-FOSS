@@ -351,7 +351,7 @@ final class w {
                } else {
                   if (prefer != null && !this.read_Z) {
                      this.read_Z = true;
-                     if (w.init(autismclient.util.TaskTimer.init_Map_TaskTimer_BufferHe(this.init_TaskTimer_BufferHe(), allowCursed, true), prefer).isEmpty()) {
+                     if (w.init(autismclient.util.ArmorEvaluationHelper.init_Map_TaskTimer_BufferHe(this.init_TaskTimer_BufferHe(), allowCursed, true), prefer).isEmpty()) {
                         JsonObject data = ag.init_JsonObject_ObjArr(
                            "what",
                            "armor",
@@ -396,24 +396,24 @@ final class w {
          }
 
          w.Inner_StreamUtil init_w_StreamUtil() {
-            Map<EquipmentSlot, autismclient.util.TaskTimer.Inner_DataUtil> best = w.init(
-               autismclient.util.TaskTimer.init_Map_TaskTimer_BufferHe(this.init_TaskTimer_BufferHe(), allowCursed, true), threshold, prefer
+            Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = w.init(
+               autismclient.util.ArmorEvaluationHelper.init_Map_TaskTimer_BufferHe(this.init_TaskTimer_BufferHe(), allowCursed, true), threshold, prefer
             );
             if (preferElytra) {
-               autismclient.util.TaskTimer.Inner_DataUtil elytra = this.init_TaskTimer_DataUtil();
+               autismclient.util.ArmorEvaluationHelper.Inner_DataUtil elytra = this.init_TaskTimer_DataUtil();
                if (elytra != null) {
                   best.put(EquipmentSlot.CHEST, elytra);
                }
             }
 
-            for (EquipmentSlot slot : autismclient.util.TaskTimer.init_EquipmentSlotArr) {
-               autismclient.util.TaskTimer.Inner_DataUtil candidate = best.get(slot);
-               if (candidate != null && candidate.init_TaskTimer_StreamUt() != autismclient.util.TaskTimer.Inner_StreamUtil.ARMOR) {
+            for (EquipmentSlot slot : autismclient.util.ArmorEvaluationHelper.init_EquipmentSlotArr) {
+               autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
+               if (candidate != null && candidate.init_TaskTimer_StreamUt() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR) {
                   ItemStack wornStack = mc.player.getItemBySlot(slot);
-                  if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.TaskTimer.load_Z(wornStack)) {
+                  if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.load_Z(wornStack)) {
                      int armorMenuSlot = w.init_Map.get(slot);
                      if (wornStack.isEmpty()) {
-                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR && hotbarSwap
+                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap
                            ? new w.Inner_StreamUtil(
                               slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, w.Inner_DataUtil.init, w.init(candidate.init_ItemStack())
                            )
@@ -421,7 +421,7 @@ final class w {
                               slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, w.Inner_DataUtil.init, w.init(candidate.init_ItemStack())
                            );
                      } else {
-                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
+                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
                            ? new w.Inner_StreamUtil(
                               slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, w.Inner_DataUtil.init, w.init(candidate.init_ItemStack())
                            )
@@ -434,8 +434,8 @@ final class w {
             return null;
          }
 
-         autismclient.util.TaskTimer.Inner_BufferHelper init_TaskTimer_BufferHe() {
-            return new autismclient.util.TaskTimer.Inner_BufferHelper() {
+         autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper init_TaskTimer_BufferHe() {
+            return new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
                @Override
                public ItemStack init(int index) {
                   return mc.player.getInventory().getItem(index);
@@ -448,19 +448,19 @@ final class w {
             };
          }
 
-         autismclient.util.TaskTimer.Inner_DataUtil init_TaskTimer_DataUtil() {
+         autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil() {
             ItemStack wornChest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
             if (wornChest.is(Items.ELYTRA)) {
-               return new autismclient.util.TaskTimer.Inner_DataUtil(wornChest, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.ARMOR, -1);
+               return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(wornChest, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR, -1);
             }
 
             for (int inv = 0; inv < 36; inv++) {
                ItemStack stack = mc.player.getInventory().getItem(inv);
                if (stack.is(Items.ELYTRA)) {
-                  return new autismclient.util.TaskTimer.Inner_DataUtil(
+                  return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(
                      stack,
                      EquipmentSlot.CHEST,
-                     inv < 9 ? autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR : autismclient.util.TaskTimer.Inner_StreamUtil.INVENTORY,
+                     inv < 9 ? autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR : autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY,
                      inv
                   );
                }
@@ -468,11 +468,11 @@ final class w {
 
             ItemStack offhand = mc.player.getItemBySlot(EquipmentSlot.OFFHAND);
             return offhand.is(Items.ELYTRA)
-               ? new autismclient.util.TaskTimer.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.INVENTORY, 40)
+               ? new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, 40)
                : null;
          }
 
-         int init(autismclient.util.TaskTimer.Inner_DataUtil candidate) {
+         int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
             return autismclient.util.aw.load_I(mc, candidate.init_I());
          }
 
@@ -502,15 +502,15 @@ final class w {
       };
    }
 
-   static Map<EquipmentSlot, List<autismclient.util.TaskTimer.Inner_DataUtil>> init(
-      Map<EquipmentSlot, List<autismclient.util.TaskTimer.Inner_DataUtil>> byType, af.Inner_DataUtil prefer
+   static Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> init(
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, af.Inner_DataUtil prefer
    ) {
-      Map<EquipmentSlot, List<autismclient.util.TaskTimer.Inner_DataUtil>> matching = new EnumMap<>(EquipmentSlot.class);
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> matching = new EnumMap<>(EquipmentSlot.class);
 
-      for (Entry<EquipmentSlot, List<autismclient.util.TaskTimer.Inner_DataUtil>> entry : byType.entrySet()) {
-         List<autismclient.util.TaskTimer.Inner_DataUtil> kept = new ArrayList<>();
+      for (Entry<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> entry : byType.entrySet()) {
+         List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> kept = new ArrayList<>();
 
-         for (autismclient.util.TaskTimer.Inner_DataUtil candidate : entry.getValue()) {
+         for (autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate : entry.getValue()) {
             if (prefer.matches(candidate.init_ItemStack())) {
                kept.add(candidate);
             }
@@ -524,12 +524,12 @@ final class w {
       return matching;
    }
 
-   static Map<EquipmentSlot, autismclient.util.TaskTimer.Inner_DataUtil> init(
-      Map<EquipmentSlot, List<autismclient.util.TaskTimer.Inner_DataUtil>> byType, int threshold, af.Inner_DataUtil prefer
+   static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, int threshold, af.Inner_DataUtil prefer
    ) {
-      Map<EquipmentSlot, autismclient.util.TaskTimer.Inner_DataUtil> best = autismclient.util.TaskTimer.init_Map_Map_I(byType, threshold);
+      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = autismclient.util.ArmorEvaluationHelper.init_Map_Map_I(byType, threshold);
       if (prefer != null) {
-         best.putAll(autismclient.util.TaskTimer.init_Map_Map_I(init(byType, prefer), threshold));
+         best.putAll(autismclient.util.ArmorEvaluationHelper.init_Map_Map_I(init(byType, prefer), threshold));
       }
 
       return best;

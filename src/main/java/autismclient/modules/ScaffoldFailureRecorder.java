@@ -1,6 +1,6 @@
 package autismclient.modules;
 
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import com.google.gson.GsonBuilder;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -77,8 +77,8 @@ final class ScaffoldFailureRecorder {
       Direction init_Direction,
       Vec3 init_Vec3,
       Vec3 load_Vec3,
-      ce.Inner_DataUtil init_ce_DataUtil,
-      ce.Inner_DataUtil load_ce_DataUtil,
+      RotationMath.Inner_DataUtil init_ce_DataUtil,
+      RotationMath.Inner_DataUtil load_ce_DataUtil,
       Input init_Input,
       String load_Str
    ) {

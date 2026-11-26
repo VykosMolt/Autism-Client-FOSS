@@ -1,6 +1,6 @@
 package autismclient.util.h;
 
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot;
 import net.minecraft.world.InteractionHand;
@@ -53,11 +53,11 @@ public final class MerchantInteractHelper {
 
    public static boolean init(Minecraft mc, Vec3 point) {
       if (mc.player != null && mc.getConnection() != null) {
-         ce.Inner_DataUtil current = ce.init(mc.player);
-         ce.Inner_DataUtil goal = ce.init(point, mc.player.getEyePosition());
-         ce.Inner_DataUtil next = ce.init_ce_DataUtil(ce.init(current, goal, 30.0F, 30.0F), current);
-         ce.init_V_LocalPlayer(mc.player, next, false);
-         if (ce.init_F(next, goal) > 3.0F) {
+         RotationMath.Inner_DataUtil current = RotationMath.init(mc.player);
+         RotationMath.Inner_DataUtil goal = RotationMath.init(point, mc.player.getEyePosition());
+         RotationMath.Inner_DataUtil next = RotationMath.init_ce_DataUtil(RotationMath.init(current, goal, 30.0F, 30.0F), current);
+         RotationMath.init_V_LocalPlayer(mc.player, next, false);
+         if (RotationMath.init_F(next, goal) > 3.0F) {
             return false;
          }
 

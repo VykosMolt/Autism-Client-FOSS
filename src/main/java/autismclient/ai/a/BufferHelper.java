@@ -10,7 +10,7 @@ import autismclient.ai.cG;
 import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -347,9 +347,9 @@ public final class BufferHelper {
       return out;
    }
 
-   static double init(ce.Inner_DataUtil facing, Vec3 eye, BlockPos target) {
+   static double init(RotationMath.Inner_DataUtil facing, Vec3 eye, BlockPos target) {
       Vec3 centre = Vec3.atCenterOf(target);
-      ce.Inner_DataUtil look = ce.init(centre, eye);
+      RotationMath.Inner_DataUtil look = RotationMath.init(centre, eye);
       double turn = Math.abs(Mth.wrapDegrees(look.init() - facing.init())) + Math.abs(look.load() - facing.load());
       return turn + 8.0 * Math.sqrt(centre.distanceToSqr(eye));
    }
@@ -2677,7 +2677,7 @@ public final class BufferHelper {
                }
 
                BlockPos over = mc.player.blockPosition().above(2);
-               ce.Inner_DataUtil facing = ce.init(mc.player);
+               RotationMath.Inner_DataUtil facing = RotationMath.init(mc.player);
                BlockPos best = null;
                this.push_BlockPos = null;
                double bestScore = 1.7976931348623157E308;
@@ -2698,7 +2698,7 @@ public final class BufferHelper {
                      && (end == null || end.equals(feet) || !BufferHelper.init(end, t, treeMode && this.write_Set.contains(t.asLong())))
                      && BufferHelper.init(feet, t, treeMode && this.write_Set.contains(t.asLong()))) {
                      if (moving) {
-                        float yaw = ce.init(Vec3.atCenterOf(t), eye).init();
+                        float yaw = RotationMath.init(Vec3.atCenterOf(t), eye).init();
                         if (Math.abs(Mth.wrapDegrees(yaw - facing.init())) > 70.0F) {
                            continue;
                         }

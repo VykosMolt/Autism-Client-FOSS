@@ -291,7 +291,7 @@ final class B {
                   }
 
                   if (this.init_Minecraft.gui.screen() != null) {
-                     autismclient.util.ai.init();
+                     autismclient.util.BlockAttackGraceWindow.init();
                      autismclient.ai.a.AiMotionSafety.putAt_V();
                      this.init_DataUtil.init_V();
                      return this.read("Harvest paused while a screen is open");

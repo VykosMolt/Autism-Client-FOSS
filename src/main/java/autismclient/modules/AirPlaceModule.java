@@ -5,7 +5,7 @@ import autismclient.api.module.ColorSetting;
 import autismclient.api.module.DoubleSetting;
 import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismMinecraftAccessor;
-import autismclient.util.bM;
+import autismclient.util.PerTickPlacementLock;
 import java.util.List;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -83,23 +83,23 @@ public final class AirPlaceModule extends Module {
          && MC.options.keyUse.isDown()
          && ((AutismMinecraftAccessor)MC).autism$getRightClickDelay() <= 0
          && !BlinkPacketManager.load_Z()
-         && autismclient.util.ah.write_Z(this.id())) {
+         && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
          try {
-            if (!bM.init(this.id())) {
+            if (!PerTickPlacementLock.init(this.id())) {
                return;
             }
 
             this.init_V_BlockHitResult(placement.init_BlockHitResult());
             ((AutismMinecraftAccessor)MC).autism$setRightClickDelay(4);
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
       }
    }
 
    private void init_V_BlockHitResult(BlockHitResult hit) {
       for (InteractionHand hand : InteractionHand.values()) {
-         if (hand != InteractionHand.OFF_HAND || !autismclient.util.ah.load_Z(this.id())) {
+         if (hand != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.load_Z(this.id())) {
             ItemStack stack = MC.player.getItemInHand(hand);
             if (!stack.isItemEnabled(MC.level.enabledFeatures())) {
                return;

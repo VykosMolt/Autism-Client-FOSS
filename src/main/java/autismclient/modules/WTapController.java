@@ -2,10 +2,10 @@ package autismclient.modules;
 
 import autismclient.api.module.ValueRange;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
-import autismclient.util.cD;
-import autismclient.util.ci;
+import autismclient.util.LedgeFootingPredictor;
+import autismclient.util.SprintStateTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import java.util.Random;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
@@ -45,7 +45,7 @@ final class WTapController {
    void init(Player attacker, Entity entity) {
       if (attacker == init_Minecraft.player
          && entity instanceof LivingEntity target
-         && ci.sync()
+         && SprintStateTracker.sync()
          && this.update()
          && init_Minecraft.player.input.keyPresses.forward()
          && !init_Minecraft.player.input.keyPresses.backward()
@@ -106,7 +106,7 @@ final class WTapController {
    }
 
    private static boolean init_Z_Input(Input original) {
-      autismclient.util.bb.Inner_DataUtil footing = cD.init(init_Minecraft.player);
+      autismclient.util.MovementInputFixer.Inner_DataUtil footing = LedgeFootingPredictor.init(init_Minecraft.player);
       if (footing == null) {
          return false;
       }
@@ -192,7 +192,7 @@ final class WTapController {
          && init_Minecraft.player.isAlive()
          && !init_Minecraft.player.isSpectator()
          && !init_Minecraft.player.isUsingItem()
-         && !autismclient.util.DataPipe.init()
+         && !autismclient.util.ManualInteractionYield.init()
          && !(init_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10())
          && !init_Minecraft.player.isPassenger()
          && !init_Minecraft.player.getAbilities().flying
@@ -212,7 +212,7 @@ final class WTapController {
             && !AutoTotemModule.init_Z_6()
             && !AutoArmorModule.init_Z_20()
             && !autismclient.util.macro.MacroAimController.init_Z()
-            && !cn.init_Z();
+            && !SilentMovementCoordinator.init_Z();
       } else {
          return false;
       }
@@ -221,7 +221,7 @@ final class WTapController {
    private long init(ValueRange range, int minimum) {
       ValueRange band = (range == null ? (minimum > 0 ? load_ValueRange : init_ValueRange) : range).clamp(minimum, 200.0);
       this.init_D = this.init_D * 0.92 + this.init_Random.nextGaussian() * 0.035;
-      double style = (autismclient.util.am.init_am().close() - 0.9) * 0.5;
+      double style = (autismclient.util.HumanHandProfile.init_am().close() - 0.9) * 0.5;
       double sample = Math.max(0.0, Math.min(1.0, (this.init_Random.nextDouble() + this.init_Random.nextDouble()) * 0.5 + style + this.init_D));
       return Math.round((band.min() + (band.max() - band.min()) * sample) * 1000000.0);
    }

@@ -5,7 +5,7 @@ import autismclient.ai.A;
 import autismclient.api.ai.AiOperation;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.U;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
@@ -1110,7 +1110,7 @@ public final class b implements AiOperation {
 
             request.init_U_StateCache_EnumSet(faces);
             if (constraint.clickYaw() != null) {
-               request.init_U_StateCache_ce_DataUtil(new ce.Inner_DataUtil(constraint.clickYaw(), 0.0F));
+               request.init_U_StateCache_ce_DataUtil(new RotationMath.Inner_DataUtil(constraint.clickYaw(), 0.0F));
             }
          }
 

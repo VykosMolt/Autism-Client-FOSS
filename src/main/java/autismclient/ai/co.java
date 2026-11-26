@@ -1034,7 +1034,7 @@ final class co {
                this.update_I++;
                if (!this.flush_Z) {
                   float pitch = co.init_FArr[Math.min(co.init_FArr.length - 1, (this.update_I - 1) / 6)];
-                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.ce.Inner_DataUtil(mc.player.getYRot(), pitch));
+                  this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(mc.player.getYRot(), pitch));
                   this.init_DataUtil.load_V();
                   boolean clear = mc.hitResult == null
                      || mc.hitResult.getType() != Type.BLOCK

@@ -10,11 +10,11 @@ import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismDangerArrowAccessor;
 import autismclient.util.AutismConfig;
 import autismclient.util.cd;
-import autismclient.util.ce;
-import autismclient.util.ch;
-import autismclient.util.ci;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
+import autismclient.util.SprintStateTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.TeamColor;
 
-public final class DangerModule extends Module implements cn.Inner_DataUtil {
+public final class DangerModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    private static final int init_I = 40;
    private static final int load_I = 12;
    private static final double init_D = 64.0;
@@ -90,10 +90,10 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    private double read_D = 0.0 / 0.0;
    private String init_Str = "";
    private String load_Str = "Idle";
-   private ce.Inner_DataUtil init_ce_DataUtil;
-   private ce.Inner_DataUtil load_ce_DataUtil;
+   private RotationMath.Inner_DataUtil init_ce_DataUtil;
+   private RotationMath.Inner_DataUtil load_ce_DataUtil;
    private int push = -2147483648;
-   private ce.Inner_DataUtil read_ce_DataUtil;
+   private RotationMath.Inner_DataUtil read_ce_DataUtil;
 
    public DangerModule() {
       super("danger", "Danger", ae.init_ae, "Predict nearby projectiles and pearl landings; optionally return fireballs.");
@@ -272,8 +272,8 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          && danger.init_Z
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && "danger".equals(autismclient.util.aD.init_Str())
-         && autismclient.util.aD.read_Z();
+         && "danger".equals(autismclient.util.SilentRotationManager.init_Str())
+         && autismclient.util.SilentRotationManager.read_Z();
    }
 
    public static boolean sync_Z_12() {
@@ -347,7 +347,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean load_Z_23() {
-      return (this.init_Z || autismclient.util.aD.init_Z()) && !aD.init_Z() && !FreecamController.init_Z();
+      return (this.init_Z || autismclient.util.SilentRotationManager.init_Z()) && !aD.init_Z() && !FreecamController.init_Z();
    }
 
    @Override
@@ -372,12 +372,12 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    }
 
    private static boolean tick_Z_8() {
-      return "danger".equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.init_Z();
+      return "danger".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.init_Z();
    }
 
    private void load_V_35() {
       if (!this.init_Z && MC != null && MC.player != null && tick_Z_8()) {
-         autismclient.util.aD.init_V_Str_LocalPlayer("danger", MC.player);
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("danger", MC.player);
       }
    }
 
@@ -391,7 +391,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
          int nextTick = ck.init_ck().state_I();
          if (this.init_Z && nextTick - this.open > 1) {
-            autismclient.util.aD.init_V();
+            autismclient.util.SilentRotationManager.init_V();
          }
 
          this.open = nextTick;
@@ -411,8 +411,8 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                DangerModule.Inner_DataUtil attempt = this.init_Map.get(threat.init_Entity.getUUID());
                if (threat.init_Z && (attempt == null || FireballInterceptMath.init(this.open - attempt.init_I))) {
                   Fireball ball = (Fireball)threat.init_Entity;
-                  ce.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(ball);
-                  ch.Inner_CachePool wire = ch.init_ch_CachePool();
+                  RotationMath.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(ball);
+                  ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
                   double yaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
                   double pitch = wire.init_Z() ? wire.write() : MC.player.getXRot();
                   double strike = FireballInterceptMath.init_D_Vec3(
@@ -425,10 +425,10 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                      MC.player.entityInteractionRange() - 0.025,
                      40
                   );
-                  double yawDifference = ce.init(goal.init(), (float)yaw);
+                  double yawDifference = RotationMath.init(goal.init(), (float)yaw);
                   double pitchDifference = goal.load() - pitch;
-                  float step = FireballInterceptMath.init(yawDifference, pitchDifference, strike, threat.init_D, ce.init());
-                  int turn = FireballInterceptMath.init(yawDifference, pitchDifference, step, ce.init());
+                  float step = FireballInterceptMath.init(yawDifference, pitchDifference, strike, threat.init_D, RotationMath.init());
+                  int turn = FireballInterceptMath.init(yawDifference, pitchDifference, step, RotationMath.init());
                   boolean current = this.init_Z && !this.load_Z && this.init_Entity == ball;
                   if (this.init_Z_I_D_2(turn, strike)) {
                      int start = this.get() ? turn : Math.max(turn, init_I_D_D(yawDifference, pitchDifference));
@@ -458,10 +458,10 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                if (this.init_Entity != best.init_Entity) {
                   this.init_Entity = best.init_Entity;
                   this.sync = this.open;
-                  autismclient.util.aD.init_V();
+                  autismclient.util.SilentRotationManager.init_V();
                   this.init_Z = true;
                   this.read_ce_DataUtil = null;
-                  this.load_ce_DataUtil = autismclient.util.aD.init_ce_DataUtil();
+                  this.load_ce_DataUtil = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                }
 
                if (this.open - this.sync >= Math.max(12, 14) + 6) {
@@ -469,12 +469,12 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                   this.init_Str = "Return window ended";
                   this.flush_V_10();
                } else {
-                  ce.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(this.init_Entity);
-                  autismclient.util.aD.init_V_Str(this.id(), 40, goal);
+                  RotationMath.Inner_DataUtil goal = this.init_ce_DataUtil_Entity(this.init_Entity);
+                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, goal);
                   this.init_ce_DataUtil = this.load_ce_DataUtil;
-                  ce.Inner_DataUtil from = autismclient.util.aD.init_ce_DataUtil();
+                  RotationMath.Inner_DataUtil from = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                   if (from == null) {
-                     from = ce.init(MC.player);
+                     from = RotationMath.init(MC.player);
                   }
 
                   double strike = FireballInterceptMath.init_D_Vec3(
@@ -488,21 +488,21 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                      40
                   );
                   if (this.get()) {
-                     autismclient.util.aD.init_V_LocalPlayer_F(
-                        MC.player, FireballInterceptMath.init(ce.init(goal.init(), from.init()), goal.load() - from.load(), strike, best.init_D, ce.init())
+                     autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(
+                        MC.player, FireballInterceptMath.init(RotationMath.init(goal.init(), from.init()), goal.load() - from.load(), strike, best.init_D, RotationMath.init())
                      );
                   } else {
                      double deadline = (strike >= 0.0 ? Math.min(strike, best.init_D) : best.init_D) - 2.0;
-                     autismclient.util.aD.init_V_Str_4("danger", MC.player, Double.isFinite(deadline) ? Math.max(1, (int)Math.floor(deadline)) : 1);
+                     autismclient.util.SilentRotationManager.init_V_Str_4("danger", MC.player, Double.isFinite(deadline) ? Math.max(1, (int)Math.floor(deadline)) : 1);
                   }
 
-                  this.load_ce_DataUtil = autismclient.util.aD.init_ce_DataUtil();
+                  this.load_ce_DataUtil = autismclient.util.SilentRotationManager.init_ce_DataUtil();
                   this.init_Str = "Returning fireball";
                }
             }
          } else {
             if (this.init_Z) {
-               autismclient.util.aD.init_V();
+               autismclient.util.SilentRotationManager.init_V();
             }
 
             this.flush_V_10();
@@ -543,7 +543,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_Entity(Entity ball) {
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_Entity(Entity ball) {
       Vec3 eye = MC.player.getEyePosition();
       AABB box = ball.getBoundingBox();
       Entity shooter = ball instanceof Projectile projectile ? projectile.getOwner() : null;
@@ -551,7 +551,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          ? shooter.getBoundingBox().getCenter().add(shooter.getDeltaMovement().scale(Math.min(10.0, shooter.distanceTo(ball) / 1.5))).subtract(box.getCenter())
          : ball.getDeltaMovement().scale(-1.0);
       FireballInterceptMath.Inner_DataUtil aim = FireballInterceptMath.init(eye, this.init_Vec3_8(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
-      return ce.init(aim.load(), aim.init());
+      return RotationMath.init(aim.load(), aim.init());
    }
 
    private Vec3 init_Vec3_8() {
@@ -577,7 +577,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
 
    private boolean init_Z_I_D_2(int turn, double strike) {
       if (!MC.player.onGround() && !MC.player.getAbilities().flying) {
-         ce.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
+         RotationMath.Inner_DataUtil resume = ScaffoldModule.read_ce_DataUtil();
          if (resume == null) {
             return true;
          }
@@ -921,18 +921,18 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          this.load_Str = "Inactive";
       } else if (!read_Z_22() || this.flush == this.open) {
          this.load_Str = "Rotation or attack interval";
-      } else if (ci.init_Z()) {
+      } else if (SprintStateTracker.init_Z()) {
          this.load_Str = "Sprint still announced";
       } else {
          DangerModule.Inner_DataUtil previousAttempt = this.init_Map.get(this.init_Entity.getUUID());
          if (previousAttempt != null && !FireballInterceptMath.init(this.open - previousAttempt.init_I)) {
             this.load_Str = "Retry interval";
          } else {
-            ce.Inner_DataUtil rotation = autismclient.util.aD.init_ce_DataUtil();
-            ch.Inner_CachePool wire = ch.init_ch_CachePool();
+            RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
             if (rotation != null
                && wire.init_Z()
-               && !(Math.abs(ce.init(rotation.init(), wire.read())) > 0.15)
+               && !(Math.abs(RotationMath.init(rotation.init(), wire.read())) > 0.15)
                && !(Math.abs(rotation.load() - wire.write()) > 0.15)) {
                Vec3 eye = MC.player.getEyePosition();
                double reach = MC.player.entityInteractionRange() - 0.025;
@@ -946,7 +946,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                   this.load_Str = "Live ray or reach";
                } else if (MC.level.clip(new ClipContext(eye, hit.get(), Block.COLLIDER, Fluid.NONE, MC.player)).getType() != Type.MISS) {
                   this.load_Str = "Blocked ray";
-               } else if (!autismclient.util.ah.write_Z(this.id())) {
+               } else if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                   this.load_Str = "Hand busy";
                } else {
                   try {
@@ -976,7 +976,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                      this.load_Z = true;
                      this.close_V_9();
                   } finally {
-                     autismclient.util.ah.read_V(this.id());
+                     autismclient.util.InventorySlotArbiter.read_V(this.id());
                   }
                }
             } else {
@@ -993,7 +993,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
             this.init_Z = this.load_Z = false;
             this.init_Entity = null;
          } else if (MC != null && MC.player != null && MC.level != null) {
-            if (!this.id().equals(autismclient.util.aD.init_Str())) {
+            if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
                if (!this.load_Z) {
                   this.close_V_9();
                }
@@ -1007,25 +1007,25 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
                }
 
                this.load_Z = true;
-               ce.Inner_DataUtil bridgeResume = ScaffoldModule.read_ce_DataUtil();
+               RotationMath.Inner_DataUtil bridgeResume = ScaffoldModule.read_ce_DataUtil();
                Module scaffold = al.init_Module_Str("scaffold");
                if (bridgeResume != null || scaffold != null && scaffold.isEnabled()) {
-                  ce.Inner_DataUtil resume = bridgeResume != null ? bridgeResume : ce.init(MC.player);
-                  autismclient.util.aD.init_V_Str(this.id(), 40, resume);
-                  autismclient.util.aD.init_V_LocalPlayer_F(MC.player, (float)(180.0 + ce.init()));
-                  ce.Inner_DataUtil endpoint = autismclient.util.aD.init_ce_DataUtil();
-                  if (endpoint != null && ce.load(endpoint, resume) <= 1.0F) {
+                  RotationMath.Inner_DataUtil resume = bridgeResume != null ? bridgeResume : RotationMath.init(MC.player);
+                  autismclient.util.SilentRotationManager.init_V_Str(this.id(), 40, resume);
+                  autismclient.util.SilentRotationManager.init_V_LocalPlayer_F(MC.player, (float)(180.0 + RotationMath.init()));
+                  RotationMath.Inner_DataUtil endpoint = autismclient.util.SilentRotationManager.init_ce_DataUtil();
+                  if (endpoint != null && RotationMath.load(endpoint, resume) <= 1.0F) {
                      if (bridgeResume != null) {
                         ScaffoldModule.init_V_ce_DataUtil_3(endpoint);
                      }
 
-                     autismclient.util.aD.load_V();
+                     autismclient.util.SilentRotationManager.load_V();
                      this.init_Z = false;
                      this.load_Z = false;
                      this.init_Entity = null;
                   }
                } else {
-                  autismclient.util.aD.init("danger");
+                  autismclient.util.SilentRotationManager.init("danger");
                   this.init_Z = false;
                   this.load_Z = false;
                   this.init_Entity = null;
@@ -1038,7 +1038,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   public static ce.Inner_DataUtil init_ce_DataUtil_F_2(float partialTick) {
+   public static RotationMath.Inner_DataUtil init_ce_DataUtil_F_2(float partialTick) {
       DangerModule danger = init_z();
       if (danger == null
          || !"Visible".equalsIgnoreCase(danger.value("rotation"))
@@ -1054,7 +1054,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
          float progress = (ck.init_ck().state_I() - danger.push + partialTick) / 2.0F;
          if (danger.read_ce_DataUtil != null && !(progress >= 1.0F) && !(progress < 0.0F)) {
             progress = progress * progress * (3.0F - 2.0F * progress);
-            return ce.init_ce_DataUtil_ce_DataUtil(danger.read_ce_DataUtil, new ce.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()), progress);
+            return RotationMath.init_ce_DataUtil_ce_DataUtil(danger.read_ce_DataUtil, new RotationMath.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()), progress);
          } else {
             return null;
          }
@@ -1063,7 +1063,7 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
       } else {
          return danger.init_ce_DataUtil == null
             ? danger.load_ce_DataUtil
-            : ce.init_ce_DataUtil_ce_DataUtil(danger.init_ce_DataUtil, danger.load_ce_DataUtil, partialTick);
+            : RotationMath.init_ce_DataUtil_ce_DataUtil(danger.init_ce_DataUtil, danger.load_ce_DataUtil, partialTick);
       }
    }
 
@@ -1133,8 +1133,8 @@ public final class DangerModule extends Module implements cn.Inner_DataUtil {
    private void poll_V_6() {
       this.init_v.init_V();
       this.open_V_6();
-      if ("danger".equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.load_V();
+      if ("danger".equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.load_V();
       }
 
       this.init_List = List.of();

@@ -6,12 +6,12 @@ import autismclient.api.module.IntSetting;
 import autismclient.api.module.RegistryListSetting;
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bM;
+import autismclient.util.PerTickPlacementLock;
 import autismclient.util.cd;
-import autismclient.util.ce;
-import autismclient.util.ch;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.di;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -43,7 +43,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class SurroundModule extends Module implements cn.Inner_DataUtil {
+public final class SurroundModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    private static final Direction[] init_DirectionArr = new Direction[]{Direction.DOWN, Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
    private static final Direction[] load_DirectionArr = new Direction[]{Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH};
    private static final float init_F = 600.0F;
@@ -130,14 +130,14 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
    @Override
    public void onDisable() {
       this.init_V_23();
-      autismclient.util.aD.init(this.id());
+      autismclient.util.SilentRotationManager.init(this.id());
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_23();
-      if (this.id().equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.load_V();
+      if (this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.load_V();
       }
    }
 
@@ -152,7 +152,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
       this.close_I = -1;
       this.open = -1;
       this.poll = 0;
-      autismclient.util.ah.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.update_V(this.id());
    }
 
    @Override
@@ -162,13 +162,13 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean hasDisabledTickWork() {
-      return autismclient.util.aD.read_Z() && this.id().equals(autismclient.util.aD.init_Str());
+      return autismclient.util.SilentRotationManager.read_Z() && this.id().equals(autismclient.util.SilentRotationManager.init_Str());
    }
 
    @Override
    public void tick() {
-      if (!this.isEnabled() && MC != null && MC.player != null && this.id().equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (!this.isEnabled() && MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
    }
 
@@ -183,14 +183,14 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
          return false;
       } else {
          int age = ck.init_ck().state_I() - surround.flush_I;
-         return age >= 0 && age <= 5 && "surround".equals(autismclient.util.aD.init_Str());
+         return age >= 0 && age <= 5 && "surround".equals(autismclient.util.SilentRotationManager.init_Str());
       }
    }
 
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !cn.init_Z() && (autismclient.util.aD.init_Z() || enabled && this.read_Z_13());
+      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.read_Z_13());
    }
 
    private boolean read_Z_13() {
@@ -209,7 +209,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
          && !MC.player.isSpectator()
          && !MC.player.isUsingItem()
          && !MC.player.isHandsBusy()
-         && !cn.init_Z()
+         && !SilentMovementCoordinator.init_Z()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -229,9 +229,9 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
    }
 
    private void load_V_19() {
-      if (MC != null && MC.player != null && this.id().equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.init(this.id());
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
    }
 
@@ -387,13 +387,13 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
          return init_DirectionArr;
       }
 
-      ch.Inner_CachePool wire = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
       float fromYaw = wire.init_Z() ? wire.read() : MC.player.getYRot();
       int start = 0;
       float best = 3.4028235E38F;
 
       for (int i = 0; i < load_DirectionArr.length; i++) {
-         float turn = Math.abs(ce.init(load_DirectionArr[i].toYRot(), fromYaw));
+         float turn = Math.abs(RotationMath.init(load_DirectionArr[i].toYRot(), fromYaw));
          if (turn < best) {
             best = turn;
             start = i;
@@ -479,9 +479,9 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
          } else if (BlinkPacketManager.load_Z()) {
             this.load_V_19();
          } else if (!this.init_List.isEmpty() && slot >= 0) {
-            ch.Inner_CachePool wire = ch.init_ch_CachePool();
-            ce.Inner_DataUtil wireRotation = wire.init_Z() ? new ce.Inner_DataUtil(wire.read(), wire.write()) : null;
-            ce.Inner_DataUtil from = wireRotation != null ? wireRotation : ce.init(MC.player);
+            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+            RotationMath.Inner_DataUtil wireRotation = wire.init_Z() ? new RotationMath.Inner_DataUtil(wire.read(), wire.write()) : null;
+            RotationMath.Inner_DataUtil from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
             ItemStack material = MC.player.getInventory().getItem(slot);
             SurroundModule.Inner_StreamUtil plan = this.init_aK_StreamUtil_ce_DataUtil(from, material, null);
             if (plan == null) {
@@ -501,7 +501,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
                }
 
                if (fire && aimed) {
-                  ce.Inner_DataUtil outgoing = cn.init_ce_DataUtil(MC.player);
+                  RotationMath.Inner_DataUtil outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
                   if (outgoing != null && !(Math.abs(outgoing.load() - wireRotation.load()) > 0.05F)) {
                      this.init(plan, hit);
                   }
@@ -516,35 +516,35 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private boolean init(ce.Inner_DataUtil goal, boolean holdPitch) {
-      autismclient.util.aD.init_V_Str(this.id(), 25, goal);
+   private boolean init(RotationMath.Inner_DataUtil goal, boolean holdPitch) {
+      autismclient.util.SilentRotationManager.init_V_Str(this.id(), 25, goal);
       this.flush_I = ck.init_ck().state_I();
-      if (!this.id().equals(autismclient.util.aD.init_Str())) {
+      if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
          return false;
       }
 
       int speed = this.integer("aim-speed");
-      autismclient.util.aD.init(this.id(), MC.player, init_F_I_2(speed), holdPitch ? 0.0F : init_F_I_2(speed), init_ap_StreamUtil_I(speed));
+      autismclient.util.SilentRotationManager.init(this.id(), MC.player, init_F_I_2(speed), holdPitch ? 0.0F : init_F_I_2(speed), init_ap_StreamUtil_I(speed));
       return true;
    }
 
-   private static autismclient.util.ap.Inner_StreamUtil init_ap_StreamUtil_I(int speed) {
-      autismclient.util.ap.Inner_StreamUtil var10000;
+   private static autismclient.util.RotationStreamPlanner.Inner_StreamUtil init_ap_StreamUtil_I(int speed) {
+      autismclient.util.RotationStreamPlanner.Inner_StreamUtil var10000;
       switch (speed) {
          case 2:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_2;
+            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_2;
             break;
          case 3:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_3;
+            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_3;
             break;
          case 4:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_4;
+            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_4;
             break;
          case 5:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_5;
+            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_5;
             break;
          default:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.STANDARD;
+            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.STANDARD;
       }
 
       return var10000;
@@ -569,7 +569,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
       return var10000;
    }
 
-   private SurroundModule.Inner_StreamUtil init_aK_StreamUtil_ce_DataUtil(ce.Inner_DataUtil from, ItemStack material, BlockPos skip) {
+   private SurroundModule.Inner_StreamUtil init_aK_StreamUtil_ce_DataUtil(RotationMath.Inner_DataUtil from, ItemStack material, BlockPos skip) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       AABB playerBox = MC.player.getBoundingBox();
@@ -607,7 +607,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
       }
    }
 
-   private BlockHitResult init(SurroundModule.Inner_StreamUtil plan, ce.Inner_DataUtil rotation) {
+   private BlockHitResult init(SurroundModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil rotation) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       autismclient.util.U.Inner_StateCache gate = new autismclient.util.U.Inner_StateCache(
@@ -626,21 +626,21 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
 
    private void init(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
-      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.ah.write_Z(this.id())) {
+      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
          try {
-            if (!autismclient.util.s.init(hit, hand)) {
+            if (!autismclient.util.ClientInteractionOverride.init(hit, hand)) {
                return;
             }
 
-            if (!bM.init(this.id())) {
-               autismclient.util.s.write_V();
+            if (!PerTickPlacementLock.init(this.id())) {
+               autismclient.util.ClientInteractionOverride.write_V();
                return;
             }
 
             this.close_V_5();
             this.init_BlockPos = plan.init_BlockPos();
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
       }
    }
@@ -666,7 +666,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.read_Z();
+      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
    }
 
    private void init_V_BlockPos_5(BlockPos cell) {
@@ -686,7 +686,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
       int best = -1;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.ah.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
             ItemStack stack = inventory.getItem(slot);
             if (this.init_Z_ItemStack_5(stack)) {
                if (slot == selected) {
@@ -704,7 +704,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
    }
 
    private void init_V_I_9(int slot) {
-      if (!BedDefenderModule.init_Z_10() && autismclient.util.ah.write_Z(this.id())) {
+      if (!BedDefenderModule.init_Z_10() && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
          try {
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.close_I < 0 && this.bool("switch-back")) {
@@ -714,7 +714,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
             autismclient.util.aw.init_V(MC, slot);
             this.open = slot;
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
       }
    }
@@ -727,14 +727,14 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
          } else if (this.open >= 0 && MC.player.getInventory().getSelectedSlot() != this.open) {
             this.close_I = -1;
             this.open = -1;
-         } else if (++this.poll >= 6 && autismclient.util.ah.write_Z(this.id())) {
+         } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
                autismclient.util.aw.init_V(MC, this.close_I);
                this.close_I = -1;
                this.open = -1;
                this.poll = 0;
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
          }
       }
@@ -777,7 +777,7 @@ public final class SurroundModule extends Module implements cn.Inner_DataUtil {
    }
 
    private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.U.Inner_CachePool init_U_CachePool) {
-      ce.Inner_DataUtil init_ce_DataUtil() {
+      RotationMath.Inner_DataUtil init_ce_DataUtil() {
          return this.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil();
       }
    }

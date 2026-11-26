@@ -28,9 +28,9 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismServerInfoOverlay;
 import autismclient.util.J;
 import autismclient.util.aQ;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import autismclient.util.cf;
-import autismclient.util.ci;
+import autismclient.util.SprintStateTracker;
 import autismclient.util.ck;
 import autismclient.util.SodiumRegionResourceProbe;
 import autismclient.util.e.LeafDupePacketTracker;
@@ -342,7 +342,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (player != null && packet.id() == player.getId()) {
          for (DataValue<?> value : packet.packedItems()) {
             if (value.id() == 0 && value.value() instanceof Byte flags) {
-               autismclient.util.ci.load((flags & 8) != 0);
+               autismclient.util.SprintStateTracker.load((flags & 8) != 0);
             }
          }
       }
@@ -460,7 +460,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$captureView() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
-         ce.Inner_DataUtil wire = ScaffoldModule.load_ce_DataUtil_3();
+         RotationMath.Inner_DataUtil wire = ScaffoldModule.load_ce_DataUtil_3();
          if (wire != null) {
             this.autism$viewYaw = mc.player.getYRot();
             this.autism$viewPitch = mc.player.getXRot();

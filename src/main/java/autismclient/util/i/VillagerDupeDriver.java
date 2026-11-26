@@ -4,7 +4,7 @@ import autismclient.AutismClientAddon;
 import autismclient.compat263.Compat263;
 import autismclient.modules.AutoTotemModule;
 import autismclient.modules.aD;
-import autismclient.util.ah;
+import autismclient.util.InventorySlotArbiter;
 import autismclient.util.aw;
 import autismclient.util.ck;
 import java.util.ArrayDeque;
@@ -212,7 +212,7 @@ public final class VillagerDupeDriver {
                return this.init(mc, player, opts, now, mode);
             } finally {
                if (this.sync_Z) {
-                  ah.read_V("villager-dupe");
+                  InventorySlotArbiter.read_V("villager-dupe");
                }
 
                this.sync_Z = false;
@@ -376,7 +376,7 @@ public final class VillagerDupeDriver {
    }
 
    private VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto_Minecraft(Minecraft mc, LocalPlayer player, VillagerDupeDriver.CachePool opts) {
-      if (opts.read() && !ah.load_Z("villager-dupe")) {
+      if (opts.read() && !InventorySlotArbiter.load_Z("villager-dupe")) {
          int slot = init_I_LocalPlayer_Z(player, player.hasInfiniteMaterials());
          if (slot < 0) {
             return VillagerDupeDriver.ConfigStore.EMERALD_IN_OFFHAND;
@@ -431,7 +431,7 @@ public final class VillagerDupeDriver {
          } else if (opts.write() && offhand.is(Items.TOTEM_OF_UNDYING)) {
             return VillagerDupeDriver.ConfigStore.TOTEM;
          } else {
-            return ah.load_Z("villager-dupe") ? VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN : null;
+            return InventorySlotArbiter.load_Z("villager-dupe") ? VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN : null;
          }
       } else {
          return null;
@@ -757,7 +757,7 @@ public final class VillagerDupeDriver {
 
    private boolean load_Z() {
       if (!this.sync_Z) {
-         this.sync_Z = ah.write_Z("villager-dupe");
+         this.sync_Z = InventorySlotArbiter.write_Z("villager-dupe");
       }
 
       return this.sync_Z;

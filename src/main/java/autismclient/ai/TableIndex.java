@@ -4402,18 +4402,18 @@ final class TableIndex {
                                                 }
 
                                                 if (!Float.isNaN(this.init_F)) {
-                                                   autismclient.util.ce.Inner_DataUtil hitRotation = autismclient.util.ce.init(
+                                                   autismclient.util.RotationMath.Inner_DataUtil hitRotation = autismclient.util.RotationMath.init(
                                                       hit.getLocation(), mc.player.getEyePosition()
                                                    );
                                                    float goalYaw = Math.abs(
-                                                            autismclient.util.ce.init_F(
-                                                               hitRotation, new autismclient.util.ce.Inner_DataUtil(this.init_F, hitRotation.load())
+                                                            autismclient.util.RotationMath.init_F(
+                                                               hitRotation, new autismclient.util.RotationMath.Inner_DataUtil(this.init_F, hitRotation.load())
                                                             )
                                                          )
                                                          <= this.read_D
                                                       ? hitRotation.init()
                                                       : this.init_F;
-                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.ce.Inner_DataUtil(goalYaw, hitRotation.load()));
+                                                   this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(goalYaw, hitRotation.load()));
                                                    this.init_DataUtil.load_V();
                                                 } else {
                                                    R.init(this.init_DataUtil, hit.getLocation());
@@ -4423,9 +4423,9 @@ final class TableIndex {
                                                    || autismclient.ai.a.DataUtil.init_Direction_BlockPos(hit.getBlockPos()) != hitFace
                                                    || !Float.isNaN(this.init_F)
                                                       && Math.abs(
-                                                            autismclient.util.ce.init_F(
-                                                               autismclient.util.ce.init(mc.player),
-                                                               new autismclient.util.ce.Inner_DataUtil(this.init_F, mc.player.getXRot())
+                                                            autismclient.util.RotationMath.init_F(
+                                                               autismclient.util.RotationMath.init(mc.player),
+                                                               new autismclient.util.RotationMath.Inner_DataUtil(this.init_F, mc.player.getXRot())
                                                             )
                                                          )
                                                          > this.read_D

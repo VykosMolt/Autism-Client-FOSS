@@ -505,7 +505,7 @@ public final class bA {
       if (down) {
          key.setDown(true);
       } else {
-         aB.init(key).autism$resetPressedState();
+         KeyMappingControl.init(key).autism$resetPressedState();
       }
    }
 

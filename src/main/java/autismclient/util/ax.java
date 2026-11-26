@@ -127,7 +127,7 @@ public final class ax {
 
    private static void init(KeyMapping binding) {
       if (binding != null && !autismclient.modules.FreecamController.init_Z_KeyMapping(binding)) {
-         boolean physical = aB.init(binding).autism$isActuallyDown();
+         boolean physical = KeyMappingControl.init(binding).autism$isActuallyDown();
          boolean pressed = physical || binding == init_Minecraft.options.keyShift && autismclient.modules.al.tick_Z();
          binding.setDown(pressed);
          if (physical) {

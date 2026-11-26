@@ -300,7 +300,7 @@ final class i {
 
       MobEffectInstance resistance = player.getEffect(MobEffects.RESISTANCE);
       ItemStack blocking = player.getItemBlockingWith();
-      float effectiveHealth = (float)autismclient.util.S.init_D_LivingEntity(player);
+      float effectiveHealth = (float)autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(player);
       i.Inner_TaskQueue verdict = init_i_TaskQueue_F(total, voidFall, i.Inner_CachePool.init);
       return new i.Inner_DataUtil(
          List.copyOf(sources),
@@ -362,8 +362,8 @@ final class i {
             eta = !creeper.isIgnited() && !(swell > 0.001F) ? -1 : init_I_F(swell);
          }
 
-         float damage = (float)autismclient.util.S.init_D_Vec3(
-            pos, power, autismclient.util.S.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, entity))
+         float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3(
+            pos, power, autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, entity))
          );
          if (damage > 0.0F) {
             out.add(new i.Inner_ConfigStore(kind, pos.x, pos.y, pos.z, damage, eta));
@@ -393,10 +393,10 @@ final class i {
 
             if (kind != null) {
                Vec3 blast = Vec3.atCenterOf(pos);
-               float damage = (float)autismclient.util.S.init_D_Vec3(
+               float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3(
                   blast,
                   init_F_Str(kind, false, 0.0),
-                  autismclient.util.S.Inner_CachePool.init_S_CachePool.init(exclude).init(autismclient.util.S.load(mc.level, blast))
+                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(exclude).init(autismclient.util.ExplosionDamageCalculator.load(mc.level, blast))
                );
                if (damage > 0.0F) {
                   out.add(new i.Inner_ConfigStore(kind, blast.x, blast.y, blast.z, damage, -1));
@@ -414,7 +414,7 @@ final class i {
          if (!(power <= 0.0F) && !(t.secondsToClosest() < 0.0)) {
             double ticks = t.secondsToClosest() * 20.0;
             Vec3 impact = new Vec3(t.x() + t.vx() * ticks, t.y() + t.vy() * ticks, t.z() + t.vz() * ticks);
-            float damage = (float)autismclient.util.S.init_D_Vec3_F(impact, power);
+            float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3_F(impact, power);
             if (damage > 0.0F) {
                out.add(new i.Inner_ConfigStore(kind, impact.x, impact.y, impact.z, damage, (int)Math.round(ticks)));
             }
@@ -604,12 +604,12 @@ final class i {
       i.Inner_CachePool init = new i.Inner_CachePool() {
          @Override
          public boolean init(float totalPredicted) {
-            return autismclient.util.S.init_Z_D(totalPredicted);
+            return autismclient.util.ExplosionDamageCalculator.init_Z_D(totalPredicted);
          }
 
          @Override
          public boolean load(float totalPredicted) {
-            return autismclient.util.S.load(totalPredicted);
+            return autismclient.util.ExplosionDamageCalculator.load(totalPredicted);
          }
       };
 

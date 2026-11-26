@@ -290,7 +290,7 @@ public final class cc {
    }
 
    static boolean init_Z_F(float worstSource) {
-      return worstSource > 0.0F && autismclient.util.S.load(worstSource);
+      return worstSource > 0.0F && autismclient.util.ExplosionDamageCalculator.load(worstSource);
    }
 
    static boolean init_Z_Str(String id) {
@@ -1641,7 +1641,7 @@ public final class cc {
    private void auditReleaseSwimJump(Minecraft mc) {
       if (this.update_Z) {
          this.update_Z = false;
-         mc.options.keyJump.setDown(autismclient.util.aB.init(mc.options.keyJump).autism$physicalForBody());
+         mc.options.keyJump.setDown(autismclient.util.KeyMappingControl.init(mc.options.keyJump).autism$physicalForBody());
       }
    }
 
@@ -2396,7 +2396,7 @@ public final class cc {
          for (KeyMapping key : List.of(
             mc.options.keyUp, mc.options.keyDown, mc.options.keyLeft, mc.options.keyRight, mc.options.keyJump, mc.options.keyAttack, mc.options.keyUse
          )) {
-            if (autismclient.util.aB.init(key).autism$isActuallyDown()) {
+            if (autismclient.util.KeyMappingControl.init(key).autism$isActuallyDown()) {
                return true;
             }
          }
@@ -2526,7 +2526,7 @@ public final class cc {
                Minecraft mc = Minecraft.getInstance();
                if (mc.options != null) {
                   for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {
-                     key.setDown(autismclient.util.aB.init(key).autism$physicalForBody());
+                     key.setDown(autismclient.util.KeyMappingControl.init(key).autism$physicalForBody());
                   }
                }
             }

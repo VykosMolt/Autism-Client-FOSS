@@ -1,6 +1,6 @@
 package autismclient.ai.a;
 
-import autismclient.util.aD;
+import autismclient.util.SilentRotationManager;
 
 public final class g {
    private static volatile boolean init;
@@ -22,6 +22,6 @@ public final class g {
 
    public static void init_V() {
       init = false;
-      aD.init("ai-assistant");
+      SilentRotationManager.init("ai-assistant");
    }
 }

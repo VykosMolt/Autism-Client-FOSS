@@ -56,7 +56,7 @@ final class bC {
             final autismclient.ai.a.DataUtil init_DataUtil = new autismclient.ai.a.DataUtil();
             final int init_I = mc.player.getInventory().getSelectedSlot();
             Entity init_Entity;
-            autismclient.util.ce.Inner_DataUtil init_ce_DataUtil;
+            autismclient.util.RotationMath.Inner_DataUtil init_ce_DataUtil;
             int load_I;
             int read;
             int write;
@@ -115,7 +115,7 @@ final class bC {
                            return weapon;
                         }
 
-                        autismclient.util.ce.Inner_DataUtil arc = this.init_ce_DataUtil(this.init_Entity);
+                        autismclient.util.RotationMath.Inner_DataUtil arc = this.init_ce_DataUtil(this.init_Entity);
                         if (arc != null) {
                            this.init_ce_DataUtil = arc;
                            this.read = 0;
@@ -151,7 +151,7 @@ final class bC {
                }
             }
 
-            AiOperation.Result init(autismclient.util.ce.Inner_DataUtil arc) {
+            AiOperation.Result init(autismclient.util.RotationMath.Inner_DataUtil arc) {
                this.init_DataUtil.init_V_ce_DataUtil(arc);
                this.init_DataUtil.load_V();
                if (!this.init_Z) {
@@ -176,7 +176,7 @@ final class bC {
                return this.init("Released shot " + this.load_I + "/" + shots);
             }
 
-            AiOperation.Result load(autismclient.util.ce.Inner_DataUtil arc) {
+            AiOperation.Result load(autismclient.util.RotationMath.Inner_DataUtil arc) {
                this.init_DataUtil.init_V_ce_DataUtil(arc);
                this.init_DataUtil.load_V();
                ItemStack held = mc.player.getMainHandItem();
@@ -202,7 +202,7 @@ final class bC {
                return this.init("Fired shot " + this.load_I + "/" + shots);
             }
 
-            AiOperation.Result read(autismclient.util.ce.Inner_DataUtil arc) {
+            AiOperation.Result read(autismclient.util.RotationMath.Inner_DataUtil arc) {
                this.init_DataUtil.init_V_ce_DataUtil(arc);
                this.init_DataUtil.load_V();
                if (!this.init_DataUtil.load_Z()) {
@@ -242,7 +242,7 @@ final class bC {
                }
             }
 
-            autismclient.util.ce.Inner_DataUtil init_ce_DataUtil(Entity at) {
+            autismclient.util.RotationMath.Inner_DataUtil init_ce_DataUtil(Entity at) {
                ItemStack held = mc.player.getMainHandItem();
                List<autismclient.modules.ProjectileBallistics.Inner_BufferHelper> possible = autismclient.modules.ProjectileBallistics.init(mc.player, held, true, false);
                if (possible.isEmpty()) {
@@ -257,7 +257,7 @@ final class bC {
                   point = point.add(motion.scale(flight));
                }
 
-               float yaw = autismclient.util.ce.init(point, mc.player.getEyePosition()).init();
+               float yaw = autismclient.util.RotationMath.init(point, mc.player.getEyePosition()).init();
                Vec3 inherited = autismclient.modules.ProjectileBallistics.init(mc.player);
                float best = 0.0F / 0.0F;
 
@@ -274,11 +274,11 @@ final class bC {
 
                for (float pitch = best + 2.0F; pitch >= best - 2.0F; pitch -= 0.15F) {
                   if (this.init(info, yaw, pitch, at, inherited)) {
-                     return new autismclient.util.ce.Inner_DataUtil(yaw, pitch);
+                     return new autismclient.util.RotationMath.Inner_DataUtil(yaw, pitch);
                   }
                }
 
-               return new autismclient.util.ce.Inner_DataUtil(yaw, best);
+               return new autismclient.util.RotationMath.Inner_DataUtil(yaw, best);
             }
 
             boolean init(autismclient.modules.ProjectileBallistics.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {

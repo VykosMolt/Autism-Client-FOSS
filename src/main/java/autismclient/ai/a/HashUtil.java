@@ -13,7 +13,7 @@ import autismclient.modules.al;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismWaypoints;
 import autismclient.util.cx;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.util.ArrayDeque;
@@ -3497,7 +3497,7 @@ public final class HashUtil {
                   this.putAt_CacheHelper.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.read_DataUtil_DataUtil);
                   if (var4x >= var7x) {
                      this.putAt_CacheHelper.init_V_ce_DataUtil(
-                           new ce.Inner_DataUtil(NodeWalker.putAt_F_D(var1x.getX(), var1x.getZ(), this.putAt_Vec3.x, this.putAt_Vec3.z), 0.0F)
+                           new RotationMath.Inner_DataUtil(NodeWalker.putAt_F_D(var1x.getX(), var1x.getZ(), this.putAt_Vec3.x, this.putAt_Vec3.z), 0.0F)
                         );
                   }
 

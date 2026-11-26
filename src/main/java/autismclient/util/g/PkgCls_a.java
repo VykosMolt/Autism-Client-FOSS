@@ -4,7 +4,7 @@ import autismclient.modules.TpClickModule;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.aB;
+import autismclient.util.KeyMappingControl;
 import autismclient.util.bA;
 import autismclient.util.bl;
 import autismclient.util.macro.ClipCollisionHelper;
@@ -1370,12 +1370,12 @@ public final class PkgCls_a {
 
    private static void read(Minecraft mc) {
       if (mc != null && mc.options != null) {
-         aB.init(mc.options.keyUp).autism$resetPressedState();
-         aB.init(mc.options.keyDown).autism$resetPressedState();
-         aB.init(mc.options.keyLeft).autism$resetPressedState();
-         aB.init(mc.options.keyRight).autism$resetPressedState();
-         aB.init(mc.options.keyJump).autism$resetPressedState();
-         aB.init(mc.options.keyShift).autism$resetPressedState();
+         KeyMappingControl.init(mc.options.keyUp).autism$resetPressedState();
+         KeyMappingControl.init(mc.options.keyDown).autism$resetPressedState();
+         KeyMappingControl.init(mc.options.keyLeft).autism$resetPressedState();
+         KeyMappingControl.init(mc.options.keyRight).autism$resetPressedState();
+         KeyMappingControl.init(mc.options.keyJump).autism$resetPressedState();
+         KeyMappingControl.init(mc.options.keyShift).autism$resetPressedState();
       }
    }
 

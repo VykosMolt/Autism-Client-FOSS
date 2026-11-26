@@ -7,7 +7,7 @@ import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ci;
+import autismclient.util.SprintStateTracker;
 import autismclient.util.ck;
 import autismclient.util.b.CustomMenuTracker;
 import autismclient.util.e.LeafDupePacketTracker;
@@ -128,7 +128,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
    @Inject(method = "handlePing", at = @At("HEAD"))
    private void autism$pingAfterOwnFlags(ClientboundPingPacket packet, CallbackInfo ci) {
       if (Minecraft.getInstance().isSameThread()) {
-         autismclient.util.ci.init(packet.getId());
+         autismclient.util.SprintStateTracker.init(packet.getId());
          if (!AutismLiteVariant.enabled()) {
             LeafDupePacketTracker.load(packet);
          }

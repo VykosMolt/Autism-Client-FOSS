@@ -227,7 +227,7 @@ final class cq {
                               inventory.setSelectedSlot(slot);
                            }
 
-                           this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.ce.Inner_DataUtil(this.init_Minecraft.player.getYRot(), -89.5F));
+                           this.init_DataUtil.init_V_ce_DataUtil(new autismclient.util.RotationMath.Inner_DataUtil(this.init_Minecraft.player.getYRot(), -89.5F));
                            this.init_DataUtil.load_V();
                            this.init_Minecraft.options.keyUse.setDown(true);
                            return ++this.sync > 100
@@ -299,7 +299,7 @@ final class cq {
                   this.read_Z = true;
                   this.init_DataUtil.init_V();
                   if (this.init_Minecraft.options != null) {
-                     this.init_Minecraft.options.keyUse.setDown(autismclient.util.aB.init(this.init_Minecraft.options.keyUse).autism$physicalForBody());
+                     this.init_Minecraft.options.keyUse.setDown(autismclient.util.KeyMappingControl.init(this.init_Minecraft.options.keyUse).autism$physicalForBody());
                   }
 
                   if (this.init_Minecraft.player == this.load_Obj && this.init_Minecraft.level == this.init_Obj) {

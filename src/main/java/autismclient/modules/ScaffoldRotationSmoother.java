@@ -1,20 +1,20 @@
 package autismclient.modules;
 
 import autismclient.api.module.ValueRange;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import java.util.Random;
 
 final class ScaffoldRotationSmoother {
    private final Random init_Random;
-   private final autismclient.util.am init_am;
+   private final autismclient.util.HumanHandProfile init_am;
    private double init_D;
    private double load_D;
    private boolean init_Z;
    private boolean load_Z;
    private boolean read_Z;
-   private ce.Inner_DataUtil init_ce_DataUtil;
-   private ce.Inner_DataUtil load_ce_DataUtil;
-   private ce.Inner_DataUtil read_ce_DataUtil;
+   private RotationMath.Inner_DataUtil init_ce_DataUtil;
+   private RotationMath.Inner_DataUtil load_ce_DataUtil;
+   private RotationMath.Inner_DataUtil read_ce_DataUtil;
    private double read_D;
    private double write_D;
    private double update_D;
@@ -27,14 +27,14 @@ final class ScaffoldRotationSmoother {
    private boolean write_Z;
    private boolean update_Z;
 
-   ScaffoldRotationSmoother(autismclient.util.am hand, Random random) {
+   ScaffoldRotationSmoother(autismclient.util.HumanHandProfile hand, Random random) {
       this.init_am = hand;
       this.init_Random = random;
    }
 
    static ScaffoldRotationSmoother init_aM() {
       Random random = new Random();
-      return new ScaffoldRotationSmoother(autismclient.util.am.init_am().init_am_Random(random), random);
+      return new ScaffoldRotationSmoother(autismclient.util.HumanHandProfile.init_am().init_am_Random(random), random);
    }
 
    void init_V() {
@@ -85,16 +85,16 @@ final class ScaffoldRotationSmoother {
       return init_I_D(this.init_Z ? this.load_D : band.max());
    }
 
-   int init(ValueRange band, ce.Inner_DataUtil from, ce.Inner_DataUtil target, double gcd) {
+   int init(ValueRange band, RotationMath.Inner_DataUtil from, RotationMath.Inner_DataUtil target, double gcd) {
       if (this.init_Z && this.update_Z && from != null && target != null) {
          double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
-         ce.Inner_DataUtil endpoint = new ce.Inner_DataUtil(from.init() + ce.init(target.init(), from.init()), target.load());
+         RotationMath.Inner_DataUtil endpoint = new RotationMath.Inner_DataUtil(from.init() + RotationMath.init(target.init(), from.init()), target.load());
          if (this.init(from, endpoint, band, quantum)) {
             return 1;
          }
 
          double limit = this.init(band, true) * 2.0F - quantum;
-         if (Math.abs(ce.init(target.init(), from.init())) <= limit && Math.abs(target.load() - from.load()) <= limit) {
+         if (Math.abs(RotationMath.init(target.init(), from.init())) <= limit && Math.abs(target.load() - from.load()) <= limit) {
             return 2;
          }
       }
@@ -115,7 +115,7 @@ final class ScaffoldRotationSmoother {
       return (float)(95.0 - 0.15 * percent);
    }
 
-   ce.Inner_DataUtil init(ce.Inner_DataUtil from, ce.Inner_DataUtil target, boolean isReturn, ValueRange band, double gcd, int tick) {
+   RotationMath.Inner_DataUtil init(RotationMath.Inner_DataUtil from, RotationMath.Inner_DataUtil target, boolean isReturn, ValueRange band, double gcd, int tick) {
       if (this.init_I == tick) {
          return this.read_ce_DataUtil;
       }
@@ -127,9 +127,9 @@ final class ScaffoldRotationSmoother {
       if (this.load_Z && this.read_ce_DataUtil != null) {
          float shift = 360.0F * Math.round((from.init() - this.read_ce_DataUtil.init()) / 360.0F);
          if (shift != 0.0F) {
-            this.init_ce_DataUtil = new ce.Inner_DataUtil(this.init_ce_DataUtil.init() + shift, this.init_ce_DataUtil.load());
+            this.init_ce_DataUtil = new RotationMath.Inner_DataUtil(this.init_ce_DataUtil.init() + shift, this.init_ce_DataUtil.load());
             if (this.load_ce_DataUtil != null) {
-               this.load_ce_DataUtil = new ce.Inner_DataUtil(this.load_ce_DataUtil.init() + shift, this.load_ce_DataUtil.load());
+               this.load_ce_DataUtil = new RotationMath.Inner_DataUtil(this.load_ce_DataUtil.init() + shift, this.load_ce_DataUtil.load());
             }
 
             this.close += shift;
@@ -141,12 +141,12 @@ final class ScaffoldRotationSmoother {
          && this.read_Z
          && isReturn
          && this.load_ce_DataUtil != null
-         && Math.abs(ce.init(target.init(), this.load_ce_DataUtil.init())) > 45.0F;
+         && Math.abs(RotationMath.init(target.init(), this.load_ce_DataUtil.init())) > 45.0F;
       if (changedCourse) {
          this.init_ce_DataUtil = from;
          this.read_D = 0.0;
          this.write_D = init_D_D(this.load_D);
-         this.close = from.init() + ce.init(target.init(), from.init());
+         this.close = from.init() + RotationMath.init(target.init(), from.init());
       }
 
       if (!this.load_Z || this.read_Z != isReturn) {
@@ -158,7 +158,7 @@ final class ScaffoldRotationSmoother {
             this.write_Z = true;
          }
 
-         this.open = isReturn && this.write_Z ? this.init_D_ce_DataUtil(target) : from.init() + ce.init(target.init(), from.init());
+         this.open = isReturn && this.write_Z ? this.init_D_ce_DataUtil(target) : from.init() + RotationMath.init(target.init(), from.init());
          this.read_D = 0.0;
          this.write_D = init_D_D(isReturn ? this.load_D : this.init_D);
          this.update_D = Math.max(0.84, Math.min(1.08, this.init_am.close() + 0.06 * this.init_Random.nextGaussian()));
@@ -168,10 +168,10 @@ final class ScaffoldRotationSmoother {
       if (isReturn && this.write_Z) {
          this.open = this.init_D_ce_DataUtil(target);
       } else {
-         this.open = this.open + ce.init(target.init(), (float)this.open);
+         this.open = this.open + RotationMath.init(target.init(), (float)this.open);
       }
 
-      this.load_ce_DataUtil = new ce.Inner_DataUtil((float)this.open, target.load());
+      this.load_ce_DataUtil = new RotationMath.Inner_DataUtil((float)this.open, target.load());
       if (this.update_Z
          && this.read_D == 0.0
          && Math.abs(this.load_ce_DataUtil.init() - this.init_ce_DataUtil.init()) <= this.init(band, isReturn) * 2.0F - gcd
@@ -196,41 +196,41 @@ final class ScaffoldRotationSmoother {
       return this.init(from, this.flush, band, gcd);
    }
 
-   private double init_D_ce_DataUtil(ce.Inner_DataUtil target) {
-      double courseChange = ce.init(target.init(), (float)this.close);
-      return Math.abs(courseChange) <= 45.0 ? this.close + courseChange : this.init_ce_DataUtil.init() + ce.init(target.init(), this.init_ce_DataUtil.init());
+   private double init_D_ce_DataUtil(RotationMath.Inner_DataUtil target) {
+      double courseChange = RotationMath.init(target.init(), (float)this.close);
+      return Math.abs(courseChange) <= 45.0 ? this.close + courseChange : this.init_ce_DataUtil.init() + RotationMath.init(target.init(), this.init_ce_DataUtil.init());
    }
 
-   private boolean init(ce.Inner_DataUtil from, ce.Inner_DataUtil target, ValueRange band, double gcd) {
+   private boolean init(RotationMath.Inner_DataUtil from, RotationMath.Inner_DataUtil target, ValueRange band, double gcd) {
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       long limit = (long)Math.floor(this.init(band, true) / quantum + 1.0E-9);
       return Math.abs(Math.round((target.init() - from.init()) / quantum)) <= limit && Math.abs(Math.round((target.load() - from.load()) / quantum)) <= limit;
    }
 
-   private ce.Inner_DataUtil init(ce.Inner_DataUtil from, double time, ValueRange band, double gcd) {
+   private RotationMath.Inner_DataUtil init(RotationMath.Inner_DataUtil from, double time, ValueRange band, double gcd) {
       double s = Math.min(1.0, time / this.write_D);
-      double progress = autismclient.util.an.init_D_D(Math.pow(s, this.update_D));
+      double progress = autismclient.util.HumanizedAimStepper.init_D_D(Math.pow(s, this.update_D));
       double yaw = this.load_ce_DataUtil.init() - this.init_ce_DataUtil.init();
       double pitch = this.load_ce_DataUtil.load() - this.init_ce_DataUtil.load();
       double distance = Math.hypot(yaw, pitch);
       double bend = s >= 1.0
          ? 0.0
          : Math.sin(3.141592653589793 * s) * Math.min(1.5, distance * Math.abs(this.sync)) * Math.signum(this.sync) * (this.write_D - 1.0);
-      ce.Inner_DataUtil desired = new ce.Inner_DataUtil(
+      RotationMath.Inner_DataUtil desired = new RotationMath.Inner_DataUtil(
          (float)(this.init_ce_DataUtil.init() + yaw * progress - (distance > 0.001 ? pitch / distance * bend : 0.0)),
          (float)(this.init_ce_DataUtil.load() + pitch * progress + (distance > 0.001 ? yaw / distance * bend : 0.0))
       );
       double quantum = Double.isFinite(gcd) && gcd > 0.0 ? gcd : 0.15;
       double interval = Math.floor(this.init_F_ValueRange(band) / quantum + 1.0E-9) * quantum;
       double reserve = Math.max(0.0, Math.ceil(this.write_D - time - 1.0E-9)) * Math.max(0.0, interval - quantum * 0.5);
-      desired = new ce.Inner_DataUtil(
+      desired = new RotationMath.Inner_DataUtil(
          (float)Math.max(this.load_ce_DataUtil.init() - reserve, Math.min(this.load_ce_DataUtil.init() + reserve, desired.init())),
          (float)Math.max(this.load_ce_DataUtil.load() - reserve, Math.min(this.load_ce_DataUtil.load() + reserve, desired.load()))
       );
-      return ce.load(from, desired, this.init_F_ValueRange(band), this.init_F_ValueRange(band), gcd);
+      return RotationMath.load(from, desired, this.init_F_ValueRange(band), this.init_F_ValueRange(band), gcd);
    }
 
-   void init(ce.Inner_DataUtil rotation, int tick) {
+   void init(RotationMath.Inner_DataUtil rotation, int tick) {
       if (this.init_I != tick && this.load_I == tick) {
          this.read_D = this.flush;
       }
@@ -246,7 +246,7 @@ final class ScaffoldRotationSmoother {
       }
    }
 
-   float init(ce.Inner_DataUtil from, ValueRange band, double gcd) {
+   float init(RotationMath.Inner_DataUtil from, ValueRange band, double gcd) {
       return this.load_Z && this.load_ce_DataUtil != null ? this.init(from, Math.min(this.write_D, this.read_D + 1.0), band, gcd).init() : from.init();
    }
 

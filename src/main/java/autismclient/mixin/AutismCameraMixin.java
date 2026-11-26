@@ -7,7 +7,7 @@ import autismclient.modules.FreecamController;
 import autismclient.modules.DangerModule;
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.ce;
+import autismclient.util.RotationMath;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -49,7 +49,7 @@ public abstract class AutismCameraMixin {
             return;
          }
 
-         ce.Inner_DataUtil rotation = DangerModule.init_ce_DataUtil_F_2(partialTick);
+         RotationMath.Inner_DataUtil rotation = DangerModule.init_ce_DataUtil_F_2(partialTick);
          if (rotation == null
             && mc.player != null
             && mc.options.getCameraType().isFirstPerson()

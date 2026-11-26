@@ -24,17 +24,17 @@ import autismclient.modules.am;
 import autismclient.modules.f;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.D;
-import autismclient.util.DataPipe;
-import autismclient.util.ListPool;
+import autismclient.util.ManualInteractionYield;
+import autismclient.util.CombatInteractionController;
 import autismclient.util.StreamGate;
 import autismclient.util.aT;
-import autismclient.util.aY;
-import autismclient.util.as;
+import autismclient.util.SilentMiningCoordinator;
+import autismclient.util.VirtualInputDispatcher;
 import autismclient.util.PayloadStudyTracker;
 import autismclient.util.cG;
 import autismclient.util.cd;
 import autismclient.util.ck;
-import autismclient.util.s;
+import autismclient.util.ClientInteractionOverride;
 import autismclient.util.i.VillagerDupeDriver;
 import autismclient.util.macro.MacroExecutor;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -177,17 +177,17 @@ public class AutismMinecraftClientMixin {
    private void autism$onTickHead(CallbackInfo ci) {
       cG.read((Minecraft)(Object)this);
       ck.init_ck().push_V();
-      as.open();
+      VirtualInputDispatcher.open();
       al.update_V();
-      s.init_V();
+      ClientInteractionOverride.init_V();
       am.read_V();
       if (!AutismLiteVariant.enabled()) {
-         aY.load();
+         SilentMiningCoordinator.load();
          ClassCache.init_V_Minecraft((Minecraft)(Object)this);
       }
 
       if (aD.read_Z()) {
-         as.push();
+         VirtualInputDispatcher.push();
       } else {
          LateRegisterSynthesizer.init((Minecraft)(Object)this);
          MovementModuleHooks.init_V();
@@ -261,13 +261,13 @@ public class AutismMinecraftClientMixin {
       if (!aD.read_Z()) {
          if (!AutismLiteVariant.enabled() && aP.load_Z()) {
             cir.setReturnValue(false);
-         } else if (s.update_Z()) {
-            if (!s.sync_Z()) {
+         } else if (ClientInteractionOverride.update_Z()) {
+            if (!ClientInteractionOverride.sync_Z()) {
                cir.setReturnValue(false);
             }
          } else {
             Minecraft client = (Minecraft)(Object)this;
-            if (client.hitResult instanceof BlockHitResult && autismclient.util.ai.init(client)) {
+            if (client.hitResult instanceof BlockHitResult && autismclient.util.BlockAttackGraceWindow.init(client)) {
                cir.setReturnValue(false);
             } else if (cd.init_Z()) {
                cir.setReturnValue(false);
@@ -275,7 +275,7 @@ public class AutismMinecraftClientMixin {
                cir.setReturnValue(false);
             } else if (al.init_Z_HitResult(client.hitResult)) {
                cir.setReturnValue(false);
-            } else if ((AutismLiteVariant.enabled() || !ListPool.update()) && !DataPipe.load()) {
+            } else if ((AutismLiteVariant.enabled() || !CombatInteractionController.update()) && !ManualInteractionYield.load()) {
                if (ck.init_ck().count()) {
                   ck.init_ck().index();
                   cir.setReturnValue(false);
@@ -291,15 +291,15 @@ public class AutismMinecraftClientMixin {
    private void autism$pilotContinueAttack(boolean leftClick, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled() && aP.load_Z()) {
          ci.cancel();
-      } else if (!AutismLiteVariant.enabled() && ListPool.update()) {
+      } else if (!AutismLiteVariant.enabled() && CombatInteractionController.update()) {
          ci.cancel();
       } else if (cd.init_Z()) {
          ci.cancel();
-      } else if (autismclient.util.ai.init((Minecraft)(Object)this)) {
+      } else if (autismclient.util.BlockAttackGraceWindow.init((Minecraft)(Object)this)) {
          ci.cancel();
       } else if (AutoTotemModule.init_Z_6() || AutoArmorModule.init_Z_20()) {
          ci.cancel();
-      } else if (!s.close_Z() && DataPipe.load()) {
+      } else if (!ClientInteractionOverride.close_Z() && ManualInteractionYield.load()) {
          ci.cancel();
       }
    }
@@ -308,7 +308,7 @@ public class AutismMinecraftClientMixin {
    private void autism$manualCombatUse(Operation<Void> original) {
       if (!AutismLiteVariant.enabled()) {
          Minecraft client = (Minecraft)(Object)this;
-         if (!s.read_Z() && client.player != null && client.hitResult instanceof EntityHitResult && KillAuraModule.init_Z_31()) {
+         if (!ClientInteractionOverride.read_Z() && client.player != null && client.hitResult instanceof EntityHitResult && KillAuraModule.init_Z_31()) {
             HitResult previous = client.hitResult;
             client.hitResult = BlockHitResult.miss(client.player.getEyePosition(), Direction.DOWN, client.player.blockPosition());
 
@@ -317,8 +317,8 @@ public class AutismMinecraftClientMixin {
             } finally {
                client.hitResult = previous;
             }
-         } else if (ListPool.init_Z(client)) {
-            ListPool.Inner_DataUtil frame = ListPool.init_ListPool_DataUtil(client);
+         } else if (CombatInteractionController.init_Z(client)) {
+            CombatInteractionController.Inner_DataUtil frame = CombatInteractionController.init_ListPool_DataUtil(client);
             if (frame != null) {
                try {
                   original.call();
@@ -339,15 +339,15 @@ public class AutismMinecraftClientMixin {
       if (!AutismLiteVariant.enabled() && aP.load_Z()) {
          ci.cancel();
       } else if (!aD.read_Z()) {
-         if (s.read_Z()) {
-            if (!s.write_Z()) {
+         if (ClientInteractionOverride.read_Z()) {
+            if (!ClientInteractionOverride.write_Z()) {
                ci.cancel();
             }
          } else {
             Minecraft client = (Minecraft)(Object)this;
             if (cd.init_Z()) {
                ci.cancel();
-            } else if (DataPipe.load()) {
+            } else if (ManualInteractionYield.load()) {
                ci.cancel();
             } else if (StreamGate.init_Z(client)) {
                ci.cancel();
@@ -367,7 +367,7 @@ public class AutismMinecraftClientMixin {
                   ci.cancel();
                } else if (al.init_Z_HitResult_InteractionHand(client.hitResult, InteractionHand.MAIN_HAND)) {
                   ci.cancel();
-               } else if (f.init_Z() && as.update_Z()) {
+               } else if (f.init_Z() && VirtualInputDispatcher.update_Z()) {
                   if (!f.read()) {
                      ci.cancel();
                   }
@@ -403,12 +403,12 @@ public class AutismMinecraftClientMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;hitResult:Lnet/minecraft/world/phys/HitResult;")
    )
    private HitResult autism$attackOnlyWhatTheCameraSees(HitResult original) {
-      if (s.close_Z()) {
+      if (ClientInteractionOverride.close_Z()) {
          return original;
       }
 
       Minecraft client = (Minecraft)(Object)this;
-      HitResult hit = DataPipe.init(client, original);
+      HitResult hit = ManualInteractionYield.init(client, original);
       return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, true, true) : hit;
    }
 
@@ -417,12 +417,12 @@ public class AutismMinecraftClientMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;hitResult:Lnet/minecraft/world/phys/HitResult;")
    )
    private HitResult autism$mineOnlyWhatTheCameraSees(HitResult original) {
-      if (s.close_Z()) {
+      if (ClientInteractionOverride.close_Z()) {
          return original;
       }
 
       Minecraft client = (Minecraft)(Object)this;
-      HitResult hit = DataPipe.init(client, original);
+      HitResult hit = ManualInteractionYield.init(client, original);
       return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, true, true) : hit;
    }
 
@@ -431,11 +431,11 @@ public class AutismMinecraftClientMixin {
       at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;hitResult:Lnet/minecraft/world/phys/HitResult;")
    )
    private HitResult autism$useOnlyWhatTheCameraSees(HitResult original) {
-      if (!AutismLiteVariant.enabled() && ListPool.flush()) {
+      if (!AutismLiteVariant.enabled() && CombatInteractionController.flush()) {
          return original;
-      } else if (!s.flush_Z() && !ScaffoldModule.init_Z_26()) {
+      } else if (!ClientInteractionOverride.flush_Z() && !ScaffoldModule.init_Z_26()) {
          Minecraft client = (Minecraft)(Object)this;
-         HitResult hit = DataPipe.init(client, original);
+         HitResult hit = ManualInteractionYield.init(client, original);
          return !AutismLiteVariant.enabled() ? HandNoClipModule.init(client, hit, false, false) : hit;
       } else {
          return original;
@@ -459,19 +459,19 @@ public class AutismMinecraftClientMixin {
    private void autism$cancelCaptureOnEscape(CallbackInfo ci) {
       ScaffoldModule.write_V_12();
       if (!AutismLiteVariant.enabled()) {
-         ListPool.init_V((Minecraft)(Object)this);
+         CombatInteractionController.init_V((Minecraft)(Object)this);
       }
 
-      DataPipe.init_V((Minecraft)(Object)this);
-      s.update_V();
-      as.close();
+      ManualInteractionYield.init_V((Minecraft)(Object)this);
+      ClientInteractionOverride.update_V();
+      VirtualInputDispatcher.close();
       Minecraft client = (Minecraft)(Object)this;
       if (client.getWindow() == null) {
-         s.sync_V();
-         as.poll();
+         ClientInteractionOverride.sync_V();
+         VirtualInputDispatcher.poll();
       } else if (aD.read_Z()) {
-         s.sync_V();
-         as.poll();
+         ClientInteractionOverride.sync_V();
+         VirtualInputDispatcher.poll();
       } else {
          boolean escapeDown = CompatGLFW.glfwGetKey(client.getWindow().handle(), 256) == 1;
          boolean justPressed = escapeDown && !this.autism$escapeWasDown;
@@ -481,23 +481,23 @@ public class AutismMinecraftClientMixin {
          this.autism$inventoryWasDown = inventoryDown;
          if (justPressed || inventoryJustPressed) {
             if (justPressed && PayloadStudyTracker.load_Z()) {
-               s.sync_V();
-               as.poll();
+               ClientInteractionOverride.sync_V();
+               VirtualInputDispatcher.poll();
                ci.cancel();
                return;
             }
 
             if (ck.init_ck().flags()) {
-               s.sync_V();
-               as.poll();
+               ClientInteractionOverride.sync_V();
+               VirtualInputDispatcher.poll();
                ci.cancel();
                return;
             }
 
             ActionEditorOverlay actionEditor = ActionEditorOverlay.load_ActionEditorOverla();
             if (actionEditor != null && actionEditor.poll_Z_2()) {
-               s.sync_V();
-               as.poll();
+               ClientInteractionOverride.sync_V();
+               VirtualInputDispatcher.poll();
                ci.cancel();
             }
          }
@@ -513,8 +513,8 @@ public class AutismMinecraftClientMixin {
       try {
          original.call();
       } finally {
-         s.sync_V();
-         as.poll();
+         ClientInteractionOverride.sync_V();
+         VirtualInputDispatcher.poll();
          if (!AutismLiteVariant.enabled()) {
             autismclient.util.a.KeyClickOutput.write();
          }
@@ -524,7 +524,7 @@ public class AutismMinecraftClientMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            ListPool.load_V((Minecraft)(Object)this);
+            CombatInteractionController.load_V((Minecraft)(Object)this);
          }
       }
    }

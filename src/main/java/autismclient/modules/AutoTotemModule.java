@@ -277,7 +277,7 @@ public final class AutoTotemModule extends Module {
       this.add = -1;
       reset = -2147483648;
       start = -2147483648;
-      autismclient.util.ah.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.update_V(this.id());
    }
 
    @Override
@@ -322,7 +322,7 @@ public final class AutoTotemModule extends Module {
                this.write_J = -1L;
                boolean timed = this.push();
                if (!timed || now >= this.put) {
-                  boolean handedOver = mode == 1 && autismclient.util.ah.sync(this.id());
+                  boolean handedOver = mode == 1 && autismclient.util.InventorySlotArbiter.sync(this.id());
                   if (handedOver || System.currentTimeMillis() - this.read_J >= this.integer("switch-delay")) {
                      int fromSlot;
                      if (mode == 1) {
@@ -421,17 +421,17 @@ public final class AutoTotemModule extends Module {
       }
 
       if (tripLive) {
-         autismclient.util.ah.init_Z(this.id(), this.sync);
+         autismclient.util.InventorySlotArbiter.init_Z(this.id(), this.sync);
       } else if (this.push != 0) {
-         autismclient.util.ah.init_Z(this.id(), this.pop);
+         autismclient.util.InventorySlotArbiter.init_Z(this.id(), this.pop);
       } else {
-         autismclient.util.ah.load_V(this.id());
+         autismclient.util.InventorySlotArbiter.load_V(this.id());
       }
 
       if (!tripLive && this.push == 0 && !this.update_Z_2() && !init_Z_ItemStack_2(MC.player.getOffhandItem())) {
-         autismclient.util.ah.init_V(this.id());
+         autismclient.util.InventorySlotArbiter.init_V(this.id());
       } else {
-         autismclient.util.ah.init_Z(this.id());
+         autismclient.util.InventorySlotArbiter.init_Z(this.id());
       }
    }
 
@@ -519,11 +519,11 @@ public final class AutoTotemModule extends Module {
 
          String switchMode = this.choice("switch-mode");
          boolean smart = foreign || "Smart".equals(switchMode) && fromSlot >= 0 && fromSlot < 9;
-         if (isTotem && !autismclient.util.ah.init_Z(this.id())) {
+         if (isTotem && !autismclient.util.InventorySlotArbiter.init_Z(this.id())) {
             return false;
          }
 
-         if (!autismclient.util.ah.write_Z(this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             return false;
          }
 
@@ -545,7 +545,7 @@ public final class AutoTotemModule extends Module {
                switched = var10000;
             }
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
 
          if (switched && this.bool("pause-movement")) {
@@ -605,11 +605,11 @@ public final class AutoTotemModule extends Module {
                return false;
             }
 
-            if (isTotem && !autismclient.util.ah.init_Z(this.id())) {
+            if (isTotem && !autismclient.util.InventorySlotArbiter.init_Z(this.id())) {
                return false;
             }
 
-            if (!autismclient.util.ah.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                return false;
             }
 
@@ -617,7 +617,7 @@ public final class AutoTotemModule extends Module {
             try {
                clicked = autismclient.util.av.init(MC, from, 0, ContainerInput.PICKUP);
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
 
             if (!clicked) {
@@ -646,7 +646,7 @@ public final class AutoTotemModule extends Module {
             return false;
          }
 
-         if (isTotem && !autismclient.util.ah.init_Z(this.id())) {
+         if (isTotem && !autismclient.util.InventorySlotArbiter.init_Z(this.id())) {
             return false;
          }
 
@@ -654,14 +654,14 @@ public final class AutoTotemModule extends Module {
          int now = ck.init_ck().state_I();
          int selected = MC.player.getInventory().getSelectedSlot();
          if (selected == fromSlot) {
-            if (!autismclient.util.ah.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                return false;
             }
 
             try {
                connection.send(new ServerboundPlayerActionPacket(Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
 
             this.init_Item = MC.player.getOffhandItem().getItem();
@@ -671,14 +671,14 @@ public final class AutoTotemModule extends Module {
             this.close_V();
             return true;
          } else {
-            if (!autismclient.util.ah.write_Z(this.id())) {
+            if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                return false;
             }
 
             try {
                connection.send(new ServerboundSetCarriedItemPacket(fromSlot));
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
 
             this.push = 2;
@@ -706,7 +706,7 @@ public final class AutoTotemModule extends Module {
       if (now >= this.set) {
          if (!this.isEnabled() || this.flush_Z()) {
             this.write_V_3();
-         } else if (!autismclient.util.ah.write_Z(this.id())) {
+         } else if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             this.set = now + 1;
          } else {
             boolean stepped;
@@ -725,7 +725,7 @@ public final class AutoTotemModule extends Module {
 
                stepped = var10000;
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
 
             if (!stepped) {
@@ -790,20 +790,20 @@ public final class AutoTotemModule extends Module {
    private void write_V_3() {
       if (this.push == 2) {
          ClientPacketListener connection = MC.getConnection();
-         if (connection != null && this.tick != this.pop && autismclient.util.ah.write_Z(this.id())) {
+         if (connection != null && this.tick != this.pop && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
                connection.send(new ServerboundSetCarriedItemPacket(this.tick));
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
          }
       } else if (MC.player != null && MC.player.containerMenu == MC.player.inventoryMenu && !MC.player.containerMenu.getCarried().isEmpty()) {
          int from = autismclient.util.aw.load_I(MC, this.pop);
-         if (from >= 0 && autismclient.util.ah.write_Z(this.id())) {
+         if (from >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
                autismclient.util.av.init(MC, from, 0, ContainerInput.PICKUP);
             } finally {
-               autismclient.util.ah.read_V(this.id());
+               autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
          }
       }

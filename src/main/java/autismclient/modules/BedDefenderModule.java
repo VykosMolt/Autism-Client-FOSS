@@ -7,12 +7,12 @@ import autismclient.api.module.IntSetting;
 import autismclient.api.module.RegistryListSetting;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bM;
+import autismclient.util.PerTickPlacementLock;
 import autismclient.util.cd;
-import autismclient.util.ce;
-import autismclient.util.ch;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.di;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -69,7 +69,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class BedDefenderModule extends Module implements cn.Inner_DataUtil {
+public final class BedDefenderModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    static final String init_Str = Arrays.stream(DyeColor.values()).map(color -> "minecraft:" + color.getName() + "_wool").collect(Collectors.joining("|"));
    static final String load_Str = "minecraft:end_stone|" + init_Str + "|minecraft:oak_planks|minecraft:obsidian";
    private List<BedDefenderModule.Inner_CachePool> init_List = List.of();
@@ -256,14 +256,14 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
    @Override
    public void onDisable() {
       this.init_V_9();
-      autismclient.util.aD.init(this.id());
+      autismclient.util.SilentRotationManager.init(this.id());
    }
 
    @Override
    public void onGameLeft() {
       this.init_V_9();
-      if (this.id().equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.load_V();
+      if (this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.load_V();
       }
    }
 
@@ -286,7 +286,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       this.reset = -1;
       this.start = -1;
       this.stop = 0;
-      autismclient.util.ah.update_V(this.id());
+      autismclient.util.InventorySlotArbiter.update_V(this.id());
    }
 
    public static Input init_Input_ClientInput_Input_2(ClientInput source, Input original) {
@@ -331,13 +331,13 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
 
    @Override
    public boolean hasDisabledTickWork() {
-      return autismclient.util.aD.read_Z() && this.id().equals(autismclient.util.aD.init_Str());
+      return autismclient.util.SilentRotationManager.read_Z() && this.id().equals(autismclient.util.SilentRotationManager.init_Str());
    }
 
    @Override
    public void tick() {
-      if (MC != null && MC.player != null && !this.isEnabled() && this.id().equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (MC != null && MC.player != null && !this.isEnabled() && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
    }
 
@@ -359,14 +359,14 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          return false;
       } else {
          int var2 = ck.init_ck().state_I() - bed.add;
-         return bed.isEnabled() && !autismclient.util.aD.init_Z() && var2 >= 0 && var2 <= 5 && "bed-defender".equals(autismclient.util.aD.init_Str());
+         return bed.isEnabled() && !autismclient.util.SilentRotationManager.init_Z() && var2 >= 0 && var2 <= 5 && "bed-defender".equals(autismclient.util.SilentRotationManager.init_Str());
       }
    }
 
    @Override
    public boolean load_Z_23() {
       boolean enabled = this.isEnabled();
-      return !cn.init_Z() && (autismclient.util.aD.init_Z() || enabled && this.flush_Z_2());
+      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.flush_Z_2());
    }
 
    private boolean flush_Z_2() {
@@ -390,7 +390,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          && (!MC.player.isUsingItem() || KillAuraModule.read_Z_14())
          && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49() && !DangerModule.sync_Z_12())
          && !MC.player.isHandsBusy()
-         && !cn.init_Z()
+         && !SilentMovementCoordinator.init_Z()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -411,9 +411,9 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
 
    private void load_V_7() {
       this.add = -2147483648;
-      if (MC != null && MC.player != null && this.id().equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.init(this.id());
-         autismclient.util.aD.init_V_Str_LocalPlayer(this.id(), MC.player);
+      if (MC != null && MC.player != null && this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.init(this.id());
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer(this.id(), MC.player);
       }
    }
 
@@ -429,9 +429,9 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
             this.init_DyeColor = this.init_DyeColor();
             int slot = this.init_I_I(0);
             ItemStack material = slot < 0 ? ItemStack.EMPTY : MC.player.getInventory().getItem(slot);
-            ch.Inner_CachePool wire = ch.init_ch_CachePool();
-            ce.Inner_DataUtil wireRotation = wire.init_Z() ? new ce.Inner_DataUtil(wire.read(), wire.write()) : null;
-            ce.Inner_DataUtil from = wireRotation != null ? wireRotation : ce.init(MC.player);
+            ServerRotationTracker.Inner_CachePool wire = ServerRotationTracker.init_ch_CachePool();
+            RotationMath.Inner_DataUtil wireRotation = wire.init_Z() ? new RotationMath.Inner_DataUtil(wire.read(), wire.write()) : null;
+            RotationMath.Inner_DataUtil from = wireRotation != null ? wireRotation : RotationMath.init(MC.player);
             this.read_V_5();
             this.init_V_ItemStack(material);
             slot = this.init_I == 0 ? -1 : this.init_IArr[this.init_I];
@@ -446,7 +446,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       }
    }
 
-   private void init_V_ce_DataUtil_ItemStack(ce.Inner_DataUtil from, ItemStack material) {
+   private void init_V_ce_DataUtil_ItemStack(RotationMath.Inner_DataUtil from, ItemStack material) {
       this.read_Map.clear();
       this.write_Map.clear();
       this.close_Map.clear();
@@ -1106,7 +1106,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       return best;
    }
 
-   private void init_V_I(int slot, ItemStack material, ce.Inner_DataUtil wireRotation, ce.Inner_DataUtil from) {
+   private void init_V_I(int slot, ItemStack material, RotationMath.Inner_DataUtil wireRotation, RotationMath.Inner_DataUtil from) {
       if (!this.close_Z_2()) {
          this.load_V_7();
       } else if (this.open_Z()) {
@@ -1173,20 +1173,20 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       }
    }
 
-   private boolean init_Z_ce_DataUtil_Z(ce.Inner_DataUtil goal, boolean holdPitch) {
-      autismclient.util.aD.init_V_Str(this.id(), 30, goal);
+   private boolean init_Z_ce_DataUtil_Z(RotationMath.Inner_DataUtil goal, boolean holdPitch) {
+      autismclient.util.SilentRotationManager.init_V_Str(this.id(), 30, goal);
       this.add = ck.init_ck().state_I();
-      if (!this.id().equals(autismclient.util.aD.init_Str())) {
+      if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
          return false;
       }
 
-      autismclient.util.aD.init(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.ap.Inner_StreamUtil.BED_SHELL);
+      autismclient.util.SilentRotationManager.init(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.RotationStreamPlanner.Inner_StreamUtil.BED_SHELL);
       return true;
    }
 
-   private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, ce.Inner_DataUtil wire) {
-      double band = autismclient.util.ap.init_D_D(ce.init());
-      if (ce.init_F(wire, plan.init_ce_DataUtil()) > band * 2.0) {
+   private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil wire) {
+      double band = autismclient.util.RotationStreamPlanner.init_D_D(RotationMath.init());
+      if (RotationMath.init_F(wire, plan.init_ce_DataUtil()) > band * 2.0) {
          return false;
       }
 
@@ -1244,7 +1244,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       }
    }
 
-   private void load(ce.Inner_DataUtil from, ItemStack material) {
+   private void load(RotationMath.Inner_DataUtil from, ItemStack material) {
       long key = autismclient.util.U.init(this.read_List, MC.level);
       if (this.load_Z && key == this.init_J) {
          long ranks = this.init_J_3();
@@ -1311,7 +1311,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       }
    }
 
-   private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_ce_DataUtil(ce.Inner_DataUtil from, ItemStack material, BlockPos skip, boolean sneaking) {
+   private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_ce_DataUtil(RotationMath.Inner_DataUtil from, ItemStack material, BlockPos skip, boolean sneaking) {
       int size = this.write_List.size();
       if (size == 0) {
          return null;
@@ -1360,7 +1360,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
 
                this.next = index + 1 == size ? 0 : index + 1;
                if (plan != null && (stall == null || stall.load <= 0 || !stall.init_List.contains(plan.init_U_BufferHelper()))) {
-                  float angle = ce.init_F(from, plan.init_ce_DataUtil());
+                  float angle = RotationMath.init_F(from, plan.init_ce_DataUtil());
                   if (best == null || rank != bestRank || init_Z_Z(plan.init_Direction() == Direction.UP, angle, best, bestAngle)) {
                      best = plan;
                      bestAngle = angle;
@@ -1387,7 +1387,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
                for (autismclient.util.U.Inner_CachePool candidate : this.close_Map.getOrDefault(cell, List.of())) {
                   if (stall == null || stall.load <= 0 || !stall.init_List.contains(candidate.init_U_TaskQueue().init_U_BufferHelper())) {
                      BedDefenderModule.Inner_StreamUtil alternative = new BedDefenderModule.Inner_StreamUtil(cell, candidate.init_U_TaskQueue().init_U_BufferHelper(), candidate);
-                     if (earlier == null || ce.init_F(from, alternative.init_ce_DataUtil()) < ce.init_F(from, earlier.init_ce_DataUtil())) {
+                     if (earlier == null || RotationMath.init_F(from, alternative.init_ce_DataUtil()) < RotationMath.init_F(from, earlier.init_ce_DataUtil())) {
                         earlier = alternative;
                      }
                   }
@@ -1479,7 +1479,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
             }
 
             if (!(request.init_Vec3().distanceToSqr(point) > request.init_D() * request.init_D())) {
-               ce.Inner_DataUtil goal = ce.init(point, request.init_Vec3());
+               RotationMath.Inner_DataUtil goal = RotationMath.init(point, request.init_Vec3());
                if (!(Math.abs(goal.load()) > request.load_D())) {
                   if (request.init_U_StreamUtil() != null && !request.init_U_StreamUtil().init_Z()) {
                      if (request.init_U_StreamUtil() != this.init_U_StreamUtil) {
@@ -1490,7 +1490,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
                      return null;
                   }
 
-                  ce.Inner_DataUtil emitted = ce.init_ce_DataUtil(goal, request.init_ce_DataUtil() == null ? goal : request.init_ce_DataUtil());
+                  RotationMath.Inner_DataUtil emitted = RotationMath.init_ce_DataUtil(goal, request.init_ce_DataUtil() == null ? goal : request.init_ce_DataUtil());
                   if (!(Math.abs(emitted.load()) > request.load_D())) {
                      BlockHitResult hit = autismclient.util.U.init_BlockHitResult_Vec3(request.init_Vec3(), emitted, request.init_D(), MC.level, MC.player);
                      if (hit != null) {
@@ -1516,7 +1516,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
                                  emitted,
                                  emitted,
                                  request.init_Vec3().distanceTo(hit.getLocation()),
-                                 request.init_ce_DataUtil() == null ? 0.0F : ce.init_F(request.init_ce_DataUtil(), emitted),
+                                 request.init_ce_DataUtil() == null ? 0.0F : RotationMath.init_F(request.init_ce_DataUtil(), emitted),
                                  autismclient.util.U.Inner_UiHelper.ESCAPE
                               );
                               refusal[0] = autismclient.util.U.Inner_JsonUtil.NONE;
@@ -1563,7 +1563,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       return FaceVisibilitySolver.init(request.init_Vec3(), option.init_AABB(), option.init_Direction(), blockers, preferred);
    }
 
-   private autismclient.util.U.Inner_StateCache init_U_StateCache_ce_DataUtil(ce.Inner_DataUtil from, ItemStack material, boolean sneaking, StringBuilder trace) {
+   private autismclient.util.U.Inner_StateCache init_U_StateCache_ce_DataUtil(RotationMath.Inner_DataUtil from, ItemStack material, boolean sneaking, StringBuilder trace) {
       Vec3 eye = MC.player.getEyePosition();
       return new autismclient.util.U.Inner_StateCache(
             null, eye, MC.player.blockInteractionRange(), autismclient.util.U.init(material, MC.player, InteractionHand.MAIN_HAND)
@@ -1627,7 +1627,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          : false;
    }
 
-   private BlockHitResult init_BlockHitResult_ListPool_StreamUti(BedDefenderModule.Inner_StreamUtil plan, ce.Inner_DataUtil rotation, boolean sneaking) {
+   private BlockHitResult init_BlockHitResult_ListPool_StreamUti(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil rotation, boolean sneaking) {
       ItemStack held = MC.player.getItemInHand(InteractionHand.MAIN_HAND);
       autismclient.util.U.Inner_StateCache gate = this.init_U_StateCache_ce_DataUtil(rotation, held, sneaking, null)
          .init_U_StateCache_BlockPos(plan.init_BlockPos());
@@ -1642,14 +1642,14 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
 
    private void init_V_ListPool_StreamUti_BlockHitResult(BedDefenderModule.Inner_StreamUtil plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
-      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.ah.write_Z(this.id())) {
+      if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
          try {
-            if (!autismclient.util.s.init(hit, hand)) {
+            if (!autismclient.util.ClientInteractionOverride.init(hit, hand)) {
                return;
             }
 
-            if (!bM.init(this.id())) {
-               autismclient.util.s.write_V();
+            if (!PerTickPlacementLock.init(this.id())) {
+               autismclient.util.ClientInteractionOverride.write_V();
                return;
             }
 
@@ -1657,7 +1657,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
             this.write_BlockPos = plan.init_BlockPos();
             this.load_Set.add(plan.init_BlockPos().immutable());
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
       }
    }
@@ -1683,7 +1683,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
 
    @Override
    public boolean shouldCancelAttack(HitResult hitResult) {
-      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.read_Z();
+      return hitResult instanceof EntityHitResult && this.id().equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
    }
 
    private void init_V_BlockPos(BlockPos cell) {
@@ -1704,7 +1704,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
       int best = -1;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (!autismclient.util.ah.init(slot, this.id())) {
+         if (!autismclient.util.InventorySlotArbiter.init(slot, this.id())) {
             ItemStack stack = inventory.getItem(slot);
             if (this.init_Z_ItemStack_I(stack, layer) && (best < 0 || init_Z_ItemStack(stack, inventory.getItem(best), slot == selected, best == selected))) {
                best = slot;
@@ -1736,7 +1736,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
    }
 
    private void init_V_I_3(int slot) {
-      if (autismclient.util.ah.write_Z(this.id())) {
+      if (autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
          try {
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.reset < 0 && this.bool("switch-back")) {
@@ -1746,7 +1746,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
             autismclient.util.aw.init_V(MC, slot);
             this.start = slot;
          } finally {
-            autismclient.util.ah.read_V(this.id());
+            autismclient.util.InventorySlotArbiter.read_V(this.id());
          }
       }
    }
@@ -1761,14 +1761,14 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
             this.start = -1;
          } else {
             boolean fighting = al.init_Module_Str("kill-aura") instanceof KillAuraModule aura && aura.isEnabled();
-            if ((++this.stop >= 6 || fighting) && autismclient.util.ah.write_Z(this.id())) {
+            if ((++this.stop >= 6 || fighting) && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                try {
                   autismclient.util.aw.init_V(MC, this.reset);
                   this.reset = -1;
                   this.start = -1;
                   this.stop = 0;
                } finally {
-                  autismclient.util.ah.read_V(this.id());
+                  autismclient.util.InventorySlotArbiter.read_V(this.id());
                }
             }
          }
@@ -1885,7 +1885,7 @@ public final class BedDefenderModule extends Module implements cn.Inner_DataUtil
          return this.init_U_CachePool.init_U_TaskQueue().init_Direction();
       }
 
-      ce.Inner_DataUtil init_ce_DataUtil() {
+      RotationMath.Inner_DataUtil init_ce_DataUtil() {
          return this.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil();
       }
 

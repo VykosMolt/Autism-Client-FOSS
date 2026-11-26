@@ -5,7 +5,7 @@ import autismclient.api.module.EnumSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
 import net.minecraft.world.damagesource.DamageSource;
@@ -140,7 +140,7 @@ public final class AntiKnockbackModule extends Module {
          if (m.read_I != -2147483648 && age >= 0 && age <= 6) {
             boolean ground = MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() == 0;
             boolean braking = m.init_ab.init_I() > 0;
-            Input result = m.init_ab.init(original, MC.player.getDeltaMovement(), cn.init_F(MC.player), ground);
+            Input result = m.init_ab.init(original, MC.player.getDeltaMovement(), SilentMovementCoordinator.init_F(MC.player), ground);
             if (result.jump() && !original.jump()) {
                m.load_J++;
             }

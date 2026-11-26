@@ -12,7 +12,7 @@ import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.bk;
-import autismclient.util.ch;
+import autismclient.util.ServerRotationTracker;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -361,11 +361,11 @@ public final class LeafDupeModule extends Module {
                         this.init_V_Str_ObjArr("Waiting: %s.", blocked);
                      } else {
                         int slot = this.load_I_11();
-                        if (autismclient.util.ah.init(slot, "leaf-dupe")) {
+                        if (autismclient.util.InventorySlotArbiter.init(slot, "leaf-dupe")) {
                            this.read_Str = "Hand busy";
                         } else {
                            if (!this.init_Z_I_8(slot)) {
-                              if (!autismclient.util.ah.write_Z("leaf-dupe")) {
+                              if (!autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
                                  this.read_Str = "Hand busy";
                                  return;
                               }
@@ -374,7 +374,7 @@ public final class LeafDupeModule extends Module {
                               try {
                                  selected = this.init_Z_I_5(slot, this.init_ac_DataUtil, null);
                               } finally {
-                                 autismclient.util.ah.read_V("leaf-dupe");
+                                 autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
                               }
 
                               if (!selected) {
@@ -383,7 +383,7 @@ public final class LeafDupeModule extends Module {
                               }
                            }
 
-                           if (slot == 40 && autismclient.util.ah.load_Z("leaf-dupe")) {
+                           if (slot == 40 && autismclient.util.InventorySlotArbiter.load_Z("leaf-dupe")) {
                               this.read_Str = "Hand busy";
                            } else {
                               Vec3 eye = this.init_Vec3_5();
@@ -449,15 +449,15 @@ public final class LeafDupeModule extends Module {
                   && autismclient.util.e.LeafDupeValidator.init(MC.player.getEyePosition(), looks, this.read_BlockPos, reach)
                   && autismclient.util.e.LeafDupeValidator.init(MC.player.getEyePosition(), looks, this.init_BlockPos, reach)) {
                   int slot = this.load_I_11();
-                  if (this.init_Z_I_8(slot) && !autismclient.util.ah.init(slot, "leaf-dupe") && (slot != 40 || !autismclient.util.ah.load_Z("leaf-dupe"))) {
-                     if (!autismclient.util.ah.write_Z("leaf-dupe")) {
+                  if (this.init_Z_I_8(slot) && !autismclient.util.InventorySlotArbiter.init(slot, "leaf-dupe") && (slot != 40 || !autismclient.util.InventorySlotArbiter.load_Z("leaf-dupe"))) {
+                     if (!autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
                         this.read_Str = "Hand busy";
                      } else {
                         boolean sent;
                         try {
                            sent = this.init_Z_InteractionHand_Vec3(this.init_InteractionHand_I(slot), eye);
                         } finally {
-                           autismclient.util.ah.read_V("leaf-dupe");
+                           autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
                         }
 
                         if (sent) {
@@ -507,7 +507,7 @@ public final class LeafDupeModule extends Module {
          this.init_ac_DataUtil = current;
       }
 
-      if (!autismclient.util.ah.write_Z("leaf-dupe")) {
+      if (!autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
          this.read_Str = "Hand busy";
          return false;
       }
@@ -518,7 +518,7 @@ public final class LeafDupeModule extends Module {
             return false;
          }
       } finally {
-         autismclient.util.ah.read_V("leaf-dupe");
+         autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
       }
 
       double damage = state.getDestroyProgress(MC.player, MC.level, current.init_BlockPos);
@@ -556,7 +556,7 @@ public final class LeafDupeModule extends Module {
                   if (!init_Z_D_4(damage) || MC.player.blockActionRestricted(MC.level, current.init_BlockPos, MC.gameMode.getPlayerMode())) {
                      this.read_Str = "Cannot mine target";
                      this.sync();
-                  } else if (autismclient.util.ah.write_Z("leaf-dupe")) {
+                  } else if (autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
                      try (BlockStatePredictionHandler prediction = this.init_BlockStatePredicti().startPredicting()) {
                         ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(
                            Action.START_DESTROY_BLOCK, current.init_BlockPos, hit.getDirection(), prediction.currentSequence()
@@ -566,7 +566,7 @@ public final class LeafDupeModule extends Module {
                         );
                         MC.getConnection().send(packet);
                      } finally {
-                        autismclient.util.ah.read_V("leaf-dupe");
+                        autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
                      }
                   }
                }
@@ -574,11 +574,11 @@ public final class LeafDupeModule extends Module {
                this.sync();
             }
          } else {
-            if (autismclient.util.ah.write_Z("leaf-dupe")) {
+            if (autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
                try {
                   this.init_Z_I_5(current.init_I, current, null);
                } finally {
-                  autismclient.util.ah.read_V("leaf-dupe");
+                  autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
                }
             }
 
@@ -607,7 +607,7 @@ public final class LeafDupeModule extends Module {
 
       for (int slot = 0; slot < 9; slot++) {
          ItemStack stack = MC.player.getInventory().getItem(slot);
-         if (!autismclient.util.ah.init(slot, "leaf-dupe") && init_Z_ItemStack_BlockState(stack, state)) {
+         if (!autismclient.util.InventorySlotArbiter.init(slot, "leaf-dupe") && init_Z_ItemStack_BlockState(stack, state)) {
             float speed = autismclient.util.ArrayUtil.init(MC, stack, state);
             if (speed > bestSpeed || speed == bestSpeed && slot == MC.player.getInventory().getSelectedSlot()) {
                best = slot;
@@ -627,7 +627,7 @@ public final class LeafDupeModule extends Module {
    }
 
    private boolean init_Z_I_5(int slot, LeafDupeModule.Inner_DataUtil owner, autismclient.util.e.LeafDupePacketTracker.Inner_StreamUtil previous) {
-      if (slot >= 0 && slot <= 8 && !autismclient.util.ah.init(slot, "leaf-dupe")) {
+      if (slot >= 0 && slot <= 8 && !autismclient.util.InventorySlotArbiter.init(slot, "leaf-dupe")) {
          MC.player.getInventory().setSelectedSlot(slot);
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(slot);
          if (previous == null && autismclient.util.e.LeafDupePacketTracker.init_I() == slot) {
@@ -688,7 +688,7 @@ public final class LeafDupeModule extends Module {
             && current.init_Connection == MC.getConnection().getConnection()
             && MC.gameMode != null
             && MC.player.getInventory().getSelectedSlot() == current.load_I
-            && autismclient.util.ah.read_Z("leaf-dupe")
+            && autismclient.util.InventorySlotArbiter.read_Z("leaf-dupe")
             && autismclient.util.e.LeafDupePacketTracker.init_I() >= 0) {
             ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(autismclient.util.e.LeafDupePacketTracker.init_I());
          }
@@ -738,14 +738,14 @@ public final class LeafDupeModule extends Module {
          && !MC.player.isUsingItem()
          && MC.player.isAlive()
          && !MC.player.hasInfiniteMaterials()
-         && autismclient.util.ah.read_Z("leaf-dupe")
-         && !autismclient.util.ah.init(receipt.init_I(), "leaf-dupe")
+         && autismclient.util.InventorySlotArbiter.read_Z("leaf-dupe")
+         && !autismclient.util.InventorySlotArbiter.init(receipt.init_I(), "leaf-dupe")
          && proof.init(owner, MC.player.getEyePosition(), module.init_Vec3_5());
       if (valid && packet instanceof ServerboundUseItemOnPacket use) {
          ItemStack stack = use.hand() == InteractionHand.OFF_HAND ? MC.player.getOffhandItem() : MC.player.getInventory().getItem(receipt.init_I());
          valid = stack.is(Items.BONE_MEAL)
             && autismclient.util.e.LeafDupePacketTracker.init(owner.init_DataUtil_StreamUti, owner.init_BlockPos)
-            && (use.hand() != InteractionHand.OFF_HAND || !autismclient.util.ah.load_Z("leaf-dupe"));
+            && (use.hand() != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.load_Z("leaf-dupe"));
       } else if (valid && packet instanceof ServerboundPlayerActionPacket action) {
          valid = ItemStack.isSameItemSameComponents(owner.init_ItemStack, MC.player.getInventory().getItem(owner.init_I));
          if (action.getAction() == Action.START_DESTROY_BLOCK) {
@@ -1079,19 +1079,19 @@ public final class LeafDupeModule extends Module {
    private Vec3 init_Vec3_5() {
       AutismLocalPlayerAccessor player = (AutismLocalPlayerAccessor)MC.player;
       double eyeHeight = MC.player.getEyeY() - MC.player.getY();
-      Vec3 written = ch.init_ch_CachePool().init_Vec3();
+      Vec3 written = ServerRotationTracker.init_ch_CachePool().init_Vec3();
       return written != null
          ? written.add(0.0, eyeHeight, 0.0)
          : new Vec3(player.autism$getLastSentX(), player.autism$getLastSentY() + eyeHeight, player.autism$getLastSentZ());
    }
 
    private float init_F_6() {
-      float written = ch.init_F();
+      float written = ServerRotationTracker.init_F();
       return Float.isFinite(written) ? written : ((AutismLocalPlayerAccessor)MC.player).autism$getLastSentYaw();
    }
 
    private float load_F_4() {
-      ch.Inner_CachePool written = ch.init_ch_CachePool();
+      ServerRotationTracker.Inner_CachePool written = ServerRotationTracker.init_ch_CachePool();
       return written.init_Z() ? written.write() : ((AutismLocalPlayerAccessor)MC.player).autism$getLastSentPitch();
    }
 
@@ -1109,7 +1109,7 @@ public final class LeafDupeModule extends Module {
       } else if (!MC.player.isAlive() || MC.player.isSpectator() || MC.player.isPassenger() || MC.getCameraEntity() != MC.player) {
          return "Player unavailable";
       } else if (!MC.player.isUsingItem() && !MC.options.keyAttack.isDown() && !MC.options.keyUse.isDown()) {
-         return !autismclient.util.ah.read_Z("leaf-dupe") ? "Hand busy" : null;
+         return !autismclient.util.InventorySlotArbiter.read_Z("leaf-dupe") ? "Hand busy" : null;
       } else {
          return "Manual input";
       }
@@ -1423,13 +1423,13 @@ public final class LeafDupeModule extends Module {
             float lastYaw = LeafDupeModule.this.init_F_6();
             float[] aim = autismclient.util.e.LeafDupeValidator.init_FArr_Vec3(eye, autismclient.util.e.LeafDupeValidator.init(eye, this.init_BlockPos), lastYaw);
             LeafDupeModule.init_V_F(aim[0], aim[1], 100);
-         } else if (autismclient.util.ah.write_Z("leaf-dupe")) {
+         } else if (autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
             try {
                if (!LeafDupeModule.this.load_Z_I_4(this.init_I)) {
                   this.init_V();
                }
             } finally {
-               autismclient.util.ah.read_V("leaf-dupe");
+               autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
             }
          }
       }
@@ -1444,7 +1444,7 @@ public final class LeafDupeModule extends Module {
                   && LeafDupeModule.this.init_I_21() >= 1) {
                   if (!Module.MC.player.getItemInHand(this.init_InteractionHand).is(Items.BONE_MEAL)) {
                      this.init_V();
-                  } else if (autismclient.util.ah.write_Z("leaf-dupe")) {
+                  } else if (autismclient.util.InventorySlotArbiter.write_Z("leaf-dupe")) {
                      try {
                         BlockHitResult hit = LeafDupeModule.this.init_BlockHitResult_BlockPos_Vec3(this.init_BlockPos, eye);
                         if (hit == null) {
@@ -1454,7 +1454,7 @@ public final class LeafDupeModule extends Module {
 
                         LeafDupeModule.this.init_V_InteractionHand(this.init_InteractionHand, this.init_BlockPos, hit.getLocation(), hit.getDirection());
                      } finally {
-                        autismclient.util.ah.read_V("leaf-dupe");
+                        autismclient.util.InventorySlotArbiter.read_V("leaf-dupe");
                      }
 
                      if (LeafDupeModule.this.init_BoolSetting.get()) {
@@ -1483,8 +1483,8 @@ public final class LeafDupeModule extends Module {
                      || Module.MC.player.getInventory().getSelectedSlot() == this.load
                      || Module.MC.player.getInventory().getSelectedSlot() == this.init_I
                )
-               && (this.init_InteractionHand != InteractionHand.OFF_HAND || !autismclient.util.ah.load_Z("leaf-dupe"))
-               && !autismclient.util.ah.init(
+               && (this.init_InteractionHand != InteractionHand.OFF_HAND || !autismclient.util.InventorySlotArbiter.load_Z("leaf-dupe"))
+               && !autismclient.util.InventorySlotArbiter.init(
                   this.init_InteractionHand == InteractionHand.OFF_HAND ? 40 : Module.MC.player.getInventory().getSelectedSlot(), "leaf-dupe"
                )
             ? autismclient.ai.a.CachePool.init(Module.MC, this.init_BlockPos, LeafDupeModule.this.init_Vec3_5()) != null

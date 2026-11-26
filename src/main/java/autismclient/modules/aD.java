@@ -125,7 +125,7 @@ public final class aD {
          }
 
          al.tick_V();
-         autismclient.util.as.pop();
+         autismclient.util.VirtualInputDispatcher.pop();
       });
    }
 
@@ -162,7 +162,7 @@ public final class aD {
    public static void read_V() {
       autismclient.util.PacketCaptureState.update();
       al.tick_V();
-      autismclient.util.as.pop();
+      autismclient.util.VirtualInputDispatcher.pop();
       autismclient.util.aE.init_aE().read_V();
       if (MacroExecutor.write_Z()) {
          MacroExecutor.read_V();
@@ -171,7 +171,7 @@ public final class aD {
       autismclient.util.D.init_V();
       autismclient.util.macro.PacketGateManager.load_V();
       BlinkPacketManager.load_V();
-      autismclient.util.aD.load_V();
+      autismclient.util.SilentRotationManager.load_V();
       autismclient.util.macro.PingSpoofScheduler.load_V();
       autismclient.util.macro.PingSpoofScheduler.read_V();
       if (!AutismLiteVariant.enabled()) {

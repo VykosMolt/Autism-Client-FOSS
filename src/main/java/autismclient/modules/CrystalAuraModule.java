@@ -11,12 +11,12 @@ import autismclient.api.module.RegistryListSetting;
 import autismclient.mixin.accessor.AutismMinecraftAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bM;
+import autismclient.util.PerTickPlacementLock;
 import autismclient.util.cd;
-import autismclient.util.ce;
-import autismclient.util.ch;
+import autismclient.util.RotationMath;
+import autismclient.util.ServerRotationTracker;
 import autismclient.util.ck;
-import autismclient.util.cn;
+import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil {
+public final class CrystalAuraModule extends Module implements SilentMovementCoordinator.Inner_DataUtil {
    public static final String init_Str = "crystal-aura";
    private static final float init_F = 6.0F;
    private static final double init_D = 2.0;
@@ -89,7 +89,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private static final int tick = 2;
    private static final int run = 40;
    private static final int get = 16;
-   private autismclient.util.S.Inner_CachePool init_S_CachePool;
+   private autismclient.util.ExplosionDamageCalculator.Inner_CachePool init_S_CachePool;
    private static final EnumSet<Direction> init_EnumSet = EnumSet.allOf(Direction.class);
    private static final double[] init_DArr = new double[]{0.3, 0.5, 0.7};
    private static final int set = 4;
@@ -109,11 +109,11 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private String load_Str;
    private int reset;
    private BlockPos init_BlockPos;
-   private final autismclient.util.NetHelper init_NetHelper;
-   private final autismclient.util.StateCache init_StateCache;
-   private final autismclient.util.PoolEntry init_PoolEntry;
-   private final autismclient.util.TableIndex init_TableIndex;
-   private final autismclient.util.JsonUtil init_JsonUtil;
+   private final autismclient.util.ActionCooldownScheduler init_NetHelper;
+   private final autismclient.util.CombatAimSpeedController init_StateCache;
+   private final autismclient.util.SessionContextWatcher init_PoolEntry;
+   private final autismclient.util.TargetLeadDamageEstimator init_TableIndex;
+   private final autismclient.util.ActivationModeLatch init_JsonUtil;
    private int start;
    private long read_J;
    private long write_J;
@@ -136,7 +136,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private double push_D;
    private BlockPos read_BlockPos;
    private LivingEntity read_LivingEntity;
-   private final autismclient.util.HashUtil init_HashUtil;
+   private final autismclient.util.StickyPlacementSelector init_HashUtil;
    private int cache;
    private BlockPos write_BlockPos;
    private BlockPos update_BlockPos;
@@ -151,9 +151,9 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private BlockPos flush_BlockPos;
    private int index;
    private int count;
-   private final autismclient.util.FileCache<BlockPos> init_FileCache;
-   private final autismclient.util.FileCache<EndCrystal> load_FileCache;
-   private final autismclient.util.RenderState init_RenderState;
+   private final autismclient.util.LatencyTickWindow<BlockPos> init_FileCache;
+   private final autismclient.util.LatencyTickWindow<EndCrystal> load_FileCache;
+   private final autismclient.util.PendingCrystalAttackCache init_RenderState;
    private int flags;
    private BlockPos close_BlockPos;
    private int level;
@@ -173,30 +173,30 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
    public CrystalAuraModule() {
       super("crystal-aura", "CrystalAura", ae.init_ae, "Places and detonates end crystals.");
-      this.init_S_CachePool = autismclient.util.S.Inner_CachePool.init_S_CachePool.init(true);
+      this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(true);
       this.init_Random = new Random();
       this.load_Str = "";
       this.reset = -2147483648;
-      this.init_NetHelper = new autismclient.util.NetHelper();
-      this.init_StateCache = new autismclient.util.StateCache();
-      this.init_PoolEntry = new autismclient.util.PoolEntry();
-      this.init_TableIndex = new autismclient.util.TableIndex();
-      this.init_JsonUtil = new autismclient.util.JsonUtil();
+      this.init_NetHelper = new autismclient.util.ActionCooldownScheduler();
+      this.init_StateCache = new autismclient.util.CombatAimSpeedController();
+      this.init_PoolEntry = new autismclient.util.SessionContextWatcher();
+      this.init_TableIndex = new autismclient.util.TargetLeadDamageEstimator();
+      this.init_JsonUtil = new autismclient.util.ActivationModeLatch();
       this.init_Set = Set.of();
       this.stop = -1;
       this.next = -1;
       this.valid = -2147483648;
       this.data = -1;
       this.value = -2147483648;
-      this.init_HashUtil = new autismclient.util.HashUtil();
+      this.init_HashUtil = new autismclient.util.StickyPlacementSelector();
       this.cache = -2147483648;
       this.state = -2147483648;
       this.node = -1;
       this.pool = -2147483648;
       this.index = -2147483648;
-      this.init_FileCache = new autismclient.util.FileCache<>(16);
-      this.load_FileCache = new autismclient.util.FileCache<>(16);
-      this.init_RenderState = new autismclient.util.RenderState();
+      this.init_FileCache = new autismclient.util.LatencyTickWindow<>(16);
+      this.load_FileCache = new autismclient.util.LatencyTickWindow<>(16);
+      this.init_RenderState = new autismclient.util.PendingCrystalAttackCache();
       this.flags = -2147483648;
       this.level = -1;
       this.block = -2147483648;
@@ -217,7 +217,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             .description("Auto chooses blast positions; Aimed starts combos at your crosshair.")
             .build()
       );
-      this.add(autismclient.util.StateCache.init_DoubleSetting().build());
+      this.add(autismclient.util.CombatAimSpeedController.init_DoubleSetting().build());
       this.add(new BoolSetting("silent", "Silent", true).group("Aim").build());
       this.add(new BoolSetting("move-fix", "Move Fix", true).group("Aim").description("Walk where you look").visibleWhen(() -> this.bool("silent")).build());
       this.add(
@@ -420,7 +420,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          this.prev = delay;
       }
 
-      autismclient.util.aD.init("crystal-aura");
+      autismclient.util.SilentRotationManager.init("crystal-aura");
    }
 
    @Override
@@ -433,14 +433,14 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       }
 
       this.init_V_51();
-      if ("crystal-aura".equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.load_V();
+      if ("crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.load_V();
       }
    }
 
    private void init_V_51() {
       this.init_StateCache.init_V();
-      autismclient.util.EventBus.init("crystal-aura");
+      autismclient.util.QueuedCombatAction.init("crystal-aura");
       this.init_PoolEntry.init();
       this.update_J = 0L;
       this.auditHasUpdateDeadline = false;
@@ -494,7 +494,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       this.state = -2147483648;
       this.init_Map.clear();
       this.read_V_22();
-      autismclient.util.ah.update_V("crystal-aura");
+      autismclient.util.InventorySlotArbiter.update_V("crystal-aura");
    }
 
    @Override
@@ -504,15 +504,15 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
    @Override
    public boolean hasDisabledTickWork() {
-      return init_Z || this.bool("crystal-view") || "crystal-aura".equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.read_Z() || this.stop >= 0;
+      return init_Z || this.bool("crystal-view") || "crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z() || this.stop >= 0;
    }
 
    @Override
    public void tick() {
       this.sync_V_12();
       if (!this.isEnabled() && MC != null && MC.player != null) {
-         if ("crystal-aura".equals(autismclient.util.aD.init_Str())) {
-            autismclient.util.aD.init_V_Str_LocalPlayer("crystal-aura", MC.player);
+         if ("crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
+            autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("crystal-aura", MC.player);
          }
 
          if (MC.level != null) {
@@ -601,7 +601,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    }
 
    public static boolean read_Z_21() {
-      return init_Z_51() && "crystal-aura".equals(autismclient.util.aD.init_Str());
+      return init_Z_51() && "crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str());
    }
 
    public static boolean init_Z_BlockPos_6(BlockPos cell) {
@@ -680,7 +680,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       }
 
       boolean enabled = this.isEnabled();
-      return !cn.init_Z() && (autismclient.util.aD.init_Z() || enabled && this.push());
+      return !SilentMovementCoordinator.init_Z() && (autismclient.util.SilentRotationManager.init_Z() || enabled && this.push());
    }
 
    private static boolean auditBeforeDeadline(boolean active, long deadline) {
@@ -725,7 +725,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    }
 
    private void init_V_LivingEntity_6(LivingEntity previous) {
-      if (previous != null && (!previous.isAlive() || previous.isRemoved() || !(autismclient.util.S.init_D_LivingEntity(previous) > 0.0))) {
+      if (previous != null && (!previous.isAlive() || previous.isRemoved() || !(autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(previous) > 0.0))) {
          this.start = 0;
          if (this.bool("stop-on-kill")) {
             this.write_J = System.nanoTime() + this.integer("stop-delay") * 1000000L;
@@ -753,7 +753,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !BlinkPacketManager.load_Z()
-         && !cn.init_Z()
+         && !SilentMovementCoordinator.init_Z()
          && !ScaffoldModule.update_Z_5()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20();
@@ -778,8 +778,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
          this.init_PoolEntry.init(MC.level, MC.player, MC.getConnection(), () -> {
             this.init_V_51();
-            if ("crystal-aura".equals(autismclient.util.aD.init_Str())) {
-               autismclient.util.aD.load_V();
+            if ("crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
+               autismclient.util.SilentRotationManager.load_V();
             }
          });
          if (MC.gui.screen() == null && MC.missTime > 10) {
@@ -831,9 +831,9 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             return;
          }
 
-         this.init_S_CachePool = autismclient.util.S.Inner_CachePool.init_S_CachePool.init(this.bool("terrain"));
+         this.init_S_CachePool = autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(this.bool("terrain"));
          if (this.flush_BlockPos != null) {
-            if (MC.level.getBlockState(this.flush_BlockPos) != autismclient.util.IoWorker.init(MC.level, this.flush_BlockPos)) {
+            if (MC.level.getBlockState(this.flush_BlockPos) != autismclient.util.ServerVerifiedBlockState.init(MC.level, this.flush_BlockPos)) {
                if (!this.init_Z_LivingEntity_4(enemy)) {
                   this.load_V_34();
                }
@@ -844,13 +844,13 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             this.flush_BlockPos = null;
          }
 
-         this.init_HitResult = "Aimed".equals(this.choice("aim-mode")) ? autismclient.util.UiHelper.init() : null;
+         this.init_HitResult = "Aimed".equals(this.choice("aim-mode")) ? autismclient.util.WeaponDamageCalculator.init() : null;
          CrystalAuraModule.Inner_NetHelper place = null;
          CrystalAuraModule.Inner_TaskQueue obsidian = null;
          CrystalAuraModule.Inner_TaskQueue defend = null;
 
          CrystalAuraModule.Inner_ConfigStore destroy;
-         try (autismclient.util.S.Inner_ConfigStore pass = autismclient.util.S.init_S_ConfigStore()) {
+         try (autismclient.util.ExplosionDamageCalculator.Inner_ConfigStore pass = autismclient.util.ExplosionDamageCalculator.init_S_ConfigStore()) {
             defend = this.init_t_TaskQueue_U_StreamUtil_Z(new autismclient.util.U.Inner_StreamUtil(48), true);
             if (defend != null) {
                this.read_V_22();
@@ -932,17 +932,17 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                || defend != null && defend.init_InteractionHand() != InteractionHand.OFF_HAND
                || this.stop >= 0;
             if (borrowsHand) {
-               autismclient.util.ah.update_Z("crystal-aura");
+               autismclient.util.InventorySlotArbiter.update_Z("crystal-aura");
             } else {
-               autismclient.util.ah.write_V("crystal-aura");
+               autismclient.util.InventorySlotArbiter.write_V("crystal-aura");
             }
 
             if (destroy != null) {
                this.write_V_21();
             }
 
-            ce.Inner_DataUtil wire = this.init_ce_DataUtil_7();
-            ce.Inner_DataUtil goal = destroy != null
+            RotationMath.Inner_DataUtil wire = this.init_ce_DataUtil_7();
+            RotationMath.Inner_DataUtil goal = destroy != null
                ? destroy.init_ce_DataUtil()
                : (
                   place != null
@@ -970,7 +970,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                return;
             }
 
-            ce.Inner_DataUtil outgoing = cn.init_ce_DataUtil(MC.player);
+            RotationMath.Inner_DataUtil outgoing = SilentMovementCoordinator.init_ce_DataUtil(MC.player);
             if (outgoing == null || !init_Z_ce_DataUtil_ce_DataUtil_5(outgoing, wire)) {
                if (destroy != null) {
                   this.load_Str = "outgoing";
@@ -1009,8 +1009,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       }
    }
 
-   private static boolean init_Z_ce_DataUtil_ce_DataUtil_5(ce.Inner_DataUtil first, ce.Inner_DataUtil second) {
-      return Math.abs(ce.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
+   private static boolean init_Z_ce_DataUtil_ce_DataUtil_5(RotationMath.Inner_DataUtil first, RotationMath.Inner_DataUtil second) {
+      return Math.abs(RotationMath.init(first.init(), second.init())) <= 0.05F && Math.abs(first.load() - second.load()) <= 0.05F;
    }
 
    private boolean init_Z_LivingEntity_4(LivingEntity enemy) {
@@ -1022,21 +1022,21 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
    private void load_V_34() {
       this.init_StateCache.init_V();
-      autismclient.util.ah.write_V("crystal-aura");
-      if ("crystal-aura".equals(autismclient.util.aD.init_Str())) {
-         autismclient.util.aD.init("crystal-aura");
-         autismclient.util.aD.init_V_Str_LocalPlayer("crystal-aura", MC.player);
+      autismclient.util.InventorySlotArbiter.write_V("crystal-aura");
+      if ("crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str())) {
+         autismclient.util.SilentRotationManager.init("crystal-aura");
+         autismclient.util.SilentRotationManager.init_V_Str_LocalPlayer("crystal-aura", MC.player);
       }
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_7() {
-      ch.Inner_CachePool snapshot = ch.init_ch_CachePool();
-      return !snapshot.init_Z() ? null : new ce.Inner_DataUtil(snapshot.read(), snapshot.write());
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_7() {
+      ServerRotationTracker.Inner_CachePool snapshot = ServerRotationTracker.init_ch_CachePool();
+      return !snapshot.init_Z() ? null : new RotationMath.Inner_DataUtil(snapshot.read(), snapshot.write());
    }
 
-   private ce.Inner_DataUtil load_ce_DataUtil_5() {
-      ce.Inner_DataUtil wire = this.init_ce_DataUtil_7();
-      return wire != null ? wire : ce.init(MC.player);
+   private RotationMath.Inner_DataUtil load_ce_DataUtil_5() {
+      RotationMath.Inner_DataUtil wire = this.init_ce_DataUtil_7();
+      return wire != null ? wire : RotationMath.init(MC.player);
    }
 
    private boolean init_Z_Z_4(boolean destroy) {
@@ -1056,7 +1056,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                destroy ? "destroy" : "place",
                tick,
                now,
-               autismclient.util.NetHelper.init_J_I(this.integer(destroy ? "destroy-delay" : "place-delay"), this.integer("jitter"), this.init_Random)
+               autismclient.util.ActionCooldownScheduler.init_J_I(this.integer(destroy ? "destroy-delay" : "place-delay"), this.integer("jitter"), this.init_Random)
             );
       }
 
@@ -1161,7 +1161,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                && !AntiBotTracker.load_Z(entity)
                && !TeamsModule.init(entity, "killaura")
                && entity.hurtTime <= this.integer("hurt-time")
-               && autismclient.util.S.init_D_LivingEntity(entity) > 0.0
+               && autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(entity) > 0.0
          );
       if (found.isEmpty()) {
          return null;
@@ -1189,7 +1189,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          double grace = range + 0.5;
          double incumbentDistanceSq = init_D_AABB_Vec3_3(incumbent.getBoundingBox(), eye);
          if (incumbentDistanceSq <= grace * grace
-            && (best == null || !autismclient.util.RingBuffer.init(mode, bestScore, this.init(mode, incumbent, incumbentDistanceSq, eye)))) {
+            && (best == null || !autismclient.util.TargetSwitchHysteresis.init(mode, bestScore, this.init(mode, incumbent, incumbentDistanceSq, eye)))) {
             return incumbent;
          }
       }
@@ -1201,10 +1201,10 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       double var10000;
       switch (mode) {
          case "HP":
-            var10000 = autismclient.util.S.init_D_LivingEntity(entity);
+            var10000 = autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(entity);
             break;
          case "FOV":
-            var10000 = ce.load(ce.init(MC.player), ce.init(entity.getBoundingBox().getCenter(), eye));
+            var10000 = RotationMath.load(RotationMath.init(MC.player), RotationMath.init(entity.getBoundingBox().getCenter(), eye));
             break;
          default:
             var10000 = distanceSq;
@@ -1289,7 +1289,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          if (!this.load_FileCache.init(crystal, tick)
             && (!"Aimed".equals(this.choice("aim-mode")) || this.init_HitResult instanceof EntityHitResult aimed && aimed.getEntity() == crystal)
             && !(init_D_AABB_Vec3_3(crystal.getBoundingBox(), eye) > rangeSq)) {
-            autismclient.util.S.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, crystal.position(), blastTarget);
+            autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, crystal.position(), blastTarget);
             if (this.init_Z_LivingEntity_S_BufferHelper(enemy, rank) && this.init_Z_Vec3_4(crystal.position())) {
                choices.add(new CrystalAuraModule.Inner_BufferHelper(crystal, rank));
             }
@@ -1308,7 +1308,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             break;
          }
 
-         ce.Inner_DataUtil goal = this.init_ce_DataUtil_EndCrystal_D(choice.init_EndCrystal(), range);
+         RotationMath.Inner_DataUtil goal = this.init_ce_DataUtil_EndCrystal_D(choice.init_EndCrystal(), range);
          if (goal != null) {
             return new CrystalAuraModule.Inner_ConfigStore(choice.init_EndCrystal(), goal, range);
          }
@@ -1317,27 +1317,27 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return null;
    }
 
-   private ce.Inner_DataUtil init_ce_DataUtil_EndCrystal_D(EndCrystal crystal, double range) {
+   private RotationMath.Inner_DataUtil init_ce_DataUtil_EndCrystal_D(EndCrystal crystal, double range) {
       Vec3 eye = MC.player.getEyePosition();
-      ce.Inner_DataUtil wire = this.load_ce_DataUtil_5();
+      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
       AABB box = crystal.getBoundingBox();
-      if (autismclient.util.PacketUtil.init(
+      if (autismclient.util.HitboxRayHelper.init(
             box, eye, Vec3.directionFromRotation(wire.load(), wire.init()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
          )
          != null) {
          return wire;
       }
 
-      ce.Inner_DataUtil best = null;
+      RotationMath.Inner_DataUtil best = null;
       float bestDelta = 3.4028235E38F;
-      Vec3 nearest = autismclient.util.PacketUtil.init(box, eye);
-      ce.Inner_DataUtil nearAim = ce.init(nearest, eye);
-      if (autismclient.util.PacketUtil.init(
+      Vec3 nearest = autismclient.util.HitboxRayHelper.init(box, eye);
+      RotationMath.Inner_DataUtil nearAim = RotationMath.init(nearest, eye);
+      if (autismclient.util.HitboxRayHelper.init(
             box, eye, Vec3.directionFromRotation(nearAim.load(), nearAim.init()), range, pointx -> this.init_Z_Vec3_Vec3_3(eye, pointx)
          )
          != null) {
          best = nearAim;
-         bestDelta = ce.load(nearAim, wire);
+         bestDelta = RotationMath.load(nearAim, wire);
       }
 
       for (double fx : init_DArr) {
@@ -1346,8 +1346,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                Vec3 point = new Vec3(Mth.lerp(fx, box.minX, box.maxX), Mth.lerp(fy, box.minY, box.maxY), Mth.lerp(fz, box.minZ, box.maxZ));
                double distance = eye.distanceTo(point);
                if (!(distance > range) && !this.init_Z_Vec3_Vec3_3(eye, point)) {
-                  ce.Inner_DataUtil rotation = ce.init(point, eye);
-                  float delta = ce.load(rotation, wire);
+                  RotationMath.Inner_DataUtil rotation = RotationMath.init(point, eye);
+                  float delta = RotationMath.load(rotation, wire);
                   if (delta < bestDelta) {
                      bestDelta = delta;
                      best = rotation;
@@ -1360,7 +1360,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return best;
    }
 
-   private Vec3 init_Vec3_t_ConfigStore_ce_DataUtil(CrystalAuraModule.Inner_ConfigStore plan, ce.Inner_DataUtil wire) {
+   private Vec3 init_Vec3_t_ConfigStore_ce_DataUtil(CrystalAuraModule.Inner_ConfigStore plan, RotationMath.Inner_DataUtil wire) {
       if (!plan.init_EndCrystal().isAlive()) {
          return null;
       }
@@ -1371,7 +1371,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
       Vec3 eye = MC.player.getEyePosition();
       Vec3 look = Vec3.directionFromRotation(wire.load(), wire.init());
-      Vec3 hit = autismclient.util.PacketUtil.init(
+      Vec3 hit = autismclient.util.HitboxRayHelper.init(
          plan.init_EndCrystal().getBoundingBox(), eye, look, plan.init_D(), point -> this.init_Z_Vec3_Vec3_3(eye, point)
       );
       if (hit == null) {
@@ -1388,7 +1388,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       }
 
       LivingEntity enemy = this.init_LivingEntity;
-      if (!autismclient.util.ah.write_Z("crystal-aura")) {
+      if (!autismclient.util.InventorySlotArbiter.write_Z("crystal-aura")) {
          this.load_Str = "hand-group";
          return false;
       }
@@ -1396,10 +1396,10 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       try {
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$ensureHasSentCarriedItem();
       } finally {
-         autismclient.util.ah.read_V("crystal-aura");
+         autismclient.util.InventorySlotArbiter.read_V("crystal-aura");
       }
 
-      if (!autismclient.util.EventBus.init(
+      if (!autismclient.util.QueuedCombatAction.init(
          "crystal-aura",
          new EntityHitResult(crystal, hitPoint),
          () -> this.push()
@@ -1454,7 +1454,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       }
 
       Vec3 eye = player.getEyePosition();
-      ce.Inner_DataUtil wire = this.load_ce_DataUtil_5();
+      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
       autismclient.util.U.Inner_JsonUtil[] refusal = new autismclient.util.U.Inner_JsonUtil[1];
       List<CrystalAuraModule.Inner_JsonUtil> entries = new ArrayList<>();
       List<autismclient.util.U.Inner_TaskQueue> scan = new ArrayList<>();
@@ -1512,7 +1512,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return null;
    }
 
-   private void init(BlockPos support, BlockState state, BlockPos cell, Vec3 eye, ce.Inner_DataUtil wire, List<autismclient.util.U.Inner_TaskQueue> out) {
+   private void init(BlockPos support, BlockState state, BlockPos cell, Vec3 eye, RotationMath.Inner_DataUtil wire, List<autismclient.util.U.Inner_TaskQueue> out) {
       boolean requiresSneak = autismclient.util.U.init_Z(state, support);
       List<CrystalAuraModule.Inner_SyncManager> keyed = new ArrayList<>();
 
@@ -1523,7 +1523,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             autismclient.util.U.Inner_TaskQueue option = new autismclient.util.U.Inner_TaskQueue(
                cell, support, face, 1, state, rect, init_D_AABB_Direction_2(rect, face), autismclient.util.U.init(rect, face, eye), requiresSneak, intent
             );
-            double turn = ce.load(ce.init(autismclient.util.U.init_Vec3(rect, face), eye), wire);
+            double turn = RotationMath.load(RotationMath.init(autismclient.util.U.init_Vec3(rect, face), eye), wire);
             keyed.add(new CrystalAuraModule.Inner_SyncManager(option, turn));
          }
       }
@@ -1566,7 +1566,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       double rangeSq = range * range;
       AABB nextBox = player.getBoundingBox().move(player.getDeltaMovement());
       AABB blastTarget = this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5);
-      autismclient.util.S.Inner_CachePool targetOptions = this.init_S_CachePool.init(blastTarget);
+      autismclient.util.ExplosionDamageCalculator.Inner_CachePool targetOptions = this.init_S_CachePool.init(blastTarget);
       List<CrystalAuraModule.Inner_DataUtil> candidates = new ArrayList<>();
       MutableBlockPos cursor = new MutableBlockPos();
 
@@ -1579,7 +1579,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             if (!this.bool("only-above") || !(source.y < enemy.getY())) {
                double distanceSq = eye.distanceToSqr(source);
                if (!(distanceSq > rangeSq)) {
-                  double bound = autismclient.util.S.load_D(enemy, source, 6.0F, targetOptions);
+                  double bound = autismclient.util.ExplosionDamageCalculator.load_D(enemy, source, 6.0F, targetOptions);
                   if (!(bound < floor) && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && !this.write(cursor)) {
                      candidates.add(new CrystalAuraModule.Inner_DataUtil(cursor.immutable(), source, bound, distanceSq));
                   }
@@ -1604,7 +1604,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
          if (this.init_Z_Vec3_9(eye, candidate.init_BlockPos(), candidate.init_Vec3())) {
             evaluated++;
-            autismclient.util.S.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, candidate.init_Vec3(), blastTarget);
+            autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(enemy, candidate.init_Vec3(), blastTarget);
             if (!this.init_Z_LivingEntity_S_BufferHelper(enemy, rank)) {
                if (this.bool("defend") && this.load_List.size() < 4 && rank.load() >= floor && rank.read() > this.decimal("max-self-damage")) {
                   this.load_List.add(new CrystalAuraModule.Inner_StateCache(candidate.init_BlockPos(), rank, candidate.load()));
@@ -1720,7 +1720,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       if (!occupants.isEmpty()
          && context.getLevel() == MC.level
          && context.getPlayer() == MC.player
-         && autismclient.util.EventBus.init("crystal-aura", context.getClickedPos())) {
+         && autismclient.util.QueuedCombatAction.init("crystal-aura", context.getClickedPos())) {
          if (al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() && aura.bool("fast-replace")) {
             BlockPos cell = context.getClickedPos().above();
             return occupants.stream().filter(entity -> !aura.init_Z_Entity_BlockPos(entity, cell)).toList();
@@ -1759,10 +1759,10 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return dx * dx + dy * dy + dz * dz <= radius * radius;
    }
 
-   private BlockHitResult init_BlockHitResult_t_NetHelper_ce_DataUtil(CrystalAuraModule.Inner_NetHelper plan, ce.Inner_DataUtil wire) {
+   private BlockHitResult init_BlockHitResult_t_NetHelper_ce_DataUtil(CrystalAuraModule.Inner_NetHelper plan, RotationMath.Inner_DataUtil wire) {
       if (plan.init_InteractionHand() == null) {
          return null;
-      } else if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.s.load_Z()) {
+      } else if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
          return null;
       } else {
          BlockPos support = plan.init_BlockPos();
@@ -1791,7 +1791,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          LivingEntity enemy = this.init_LivingEntity;
          if (al.init_Z_HitResult(hit, hand, "crystal-aura")) {
             return false;
-         } else if (!autismclient.util.EventBus.init(
+         } else if (!autismclient.util.QueuedCombatAction.init(
             "crystal-aura",
             hit,
             hand,
@@ -1804,8 +1804,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             () -> this.init_V_t_NetHelper(plan)
          )) {
             return false;
-         } else if (!bM.init("crystal-aura")) {
-            autismclient.util.s.write_V();
+         } else if (!PerTickPlacementLock.init("crystal-aura")) {
+            autismclient.util.ClientInteractionOverride.write_V();
             return false;
          } else {
             return true;
@@ -1832,7 +1832,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    public boolean shouldCancelAttack(HitResult hitResult) {
       return autismclient.aggressivepvp.Versions.running(autismclient.aggressivepvp.Versions.crystal)
          ? false
-         : hitResult instanceof EntityHitResult && "crystal-aura".equals(autismclient.util.aD.init_Str()) && autismclient.util.aD.read_Z();
+         : hitResult instanceof EntityHitResult && "crystal-aura".equals(autismclient.util.SilentRotationManager.init_Str()) && autismclient.util.SilentRotationManager.read_Z();
    }
 
    private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_LivingEntity(LivingEntity enemy, autismclient.util.U.Inner_StreamUtil budget, double rivalDamage) {
@@ -1842,7 +1842,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          return null;
       }
 
-      boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.ah.load_Z("crystal-aura") && !autismclient.util.s.load_Z();
+      boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.load_Z("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z();
       int slot = offhand ? -1 : this.init_I_30();
       if (!offhand && slot < 0) {
          return null;
@@ -1857,10 +1857,10 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       double rangeSq = range * range;
       AABB nextBox = player.getBoundingBox().move(player.getDeltaMovement());
       AABB blastTarget = this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5);
-      autismclient.util.S.Inner_CachePool targetOptions = this.init_S_CachePool.init(blastTarget);
+      autismclient.util.ExplosionDamageCalculator.Inner_CachePool targetOptions = this.init_S_CachePool.init(blastTarget);
       BlockState obsidianState = Blocks.OBSIDIAN.defaultBlockState();
       List<autismclient.util.U.Inner_TaskQueue> supportFaces = new ArrayList<>();
-      AABB solidNextBox = autismclient.util.ByteReader.init(player);
+      AABB solidNextBox = autismclient.util.PlayerMotionEnvelope.init(player);
       List<CrystalAuraModule.Inner_DataUtil> candidates = new ArrayList<>();
       MutableBlockPos cursor = new MutableBlockPos();
 
@@ -1869,9 +1869,9 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          Vec3 source = new Vec3(cursor.getX() + 0.5, cursor.getY() + 1.0, cursor.getZ() + 0.5);
          if ((!"Aimed".equals(this.choice("aim-mode")) || cursor.equals(this.init_BlockPos_8())) && (!this.bool("only-above") || !(source.y < enemy.getY()))) {
             if (this.read(cursor)) {
-               double supportBound = autismclient.util.S.load_D(enemy, source, 6.0F, targetOptions);
+               double supportBound = autismclient.util.ExplosionDamageCalculator.load_D(enemy, source, 6.0F, targetOptions);
                if (supportBound >= floor && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && this.init_Z_Vec3_9(eye, cursor, source)) {
-                  autismclient.util.S.Inner_BufferHelper supportRank = this.init_S_BufferHelper_LivingEntity(enemy, source, blastTarget);
+                  autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper supportRank = this.init_S_BufferHelper_LivingEntity(enemy, source, blastTarget);
                   if (this.init_Z_LivingEntity_S_BufferHelper(enemy, supportRank)) {
                      rivalDamage = Math.max(rivalDamage, supportRank.load());
                   }
@@ -1883,7 +1883,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                && (AutismLiteVariant.enabled() || !BacktrackModule.init_Z_AABB_2(new AABB(cursor)))) {
                double distanceSq = eye.distanceToSqr(source);
                if (!(distanceSq > rangeSq)) {
-                  double bound = autismclient.util.S.load_D(enemy, source, 6.0F, targetOptions);
+                  double bound = autismclient.util.ExplosionDamageCalculator.load_D(enemy, source, 6.0F, targetOptions);
                   if (!(bound < floor) && this.init_Z_BlockPos_AABB_3(cursor, nextBox) && !this.write(cursor)) {
                      supportFaces.clear();
                      autismclient.util.U.init(this.init(cursor.immutable(), material, hand, range, eye, this.load_ce_DataUtil_5()), supportFaces);
@@ -1911,7 +1911,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          }
 
          evaluated++;
-         autismclient.util.S.Inner_BufferHelper rank = autismclient.util.TableIndex.init(
+         autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = autismclient.util.TargetLeadDamageEstimator.init(
             enemy, candidate.init_Vec3(), 6.0F, this.init_S_CachePool.init(candidate.init_BlockPos()), blastTarget
          );
          if (this.init_Z_LivingEntity_S_BufferHelper(enemy, rank) && this.init_Z_Vec3_4(candidate.init_Vec3())) {
@@ -1938,7 +1938,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          return null;
       }
 
-      ce.Inner_DataUtil wire = this.load_ce_DataUtil_5();
+      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
       autismclient.util.U.Inner_JsonUtil[] refusal = new autismclient.util.U.Inner_JsonUtil[1];
       int limit = Math.min(4, accepted.size());
 
@@ -1965,7 +1965,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return builderDamage >= rivalDamage + 5.0 && builderDamage >= rivalDamage * 2.0;
    }
 
-   private autismclient.util.U.Inner_StateCache init(BlockPos cell, ItemStack stack, InteractionHand hand, double range, Vec3 eye, ce.Inner_DataUtil wire) {
+   private autismclient.util.U.Inner_StateCache init(BlockPos cell, ItemStack stack, InteractionHand hand, double range, Vec3 eye, RotationMath.Inner_DataUtil wire) {
       return new autismclient.util.U.Inner_StateCache(cell, eye, range, autismclient.util.U.init(stack, MC.player, hand))
          .init_U_StateCache_ce_DataUtil(wire)
          .init_U_StateCache_D(autismclient.util.U.init_D())
@@ -1974,7 +1974,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          .load(false);
    }
 
-   private BlockHitResult init_BlockHitResult_t_TaskQueue_ce_DataUtil(CrystalAuraModule.Inner_TaskQueue plan, ce.Inner_DataUtil wire) {
+   private BlockHitResult init_BlockHitResult_t_TaskQueue_ce_DataUtil(CrystalAuraModule.Inner_TaskQueue plan, RotationMath.Inner_DataUtil wire) {
       if (!AutismLiteVariant.enabled() && BacktrackModule.init_Z_AABB_2(new AABB(plan.init_BlockPos()))) {
          return null;
       }
@@ -1983,12 +1983,12 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          return null;
       }
 
-      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.s.load_Z()) {
+      if (plan.init_InteractionHand() == InteractionHand.OFF_HAND && autismclient.util.ClientInteractionOverride.load_Z()) {
          return null;
       }
 
       BlockPos cell = plan.init_BlockPos();
-      if (autismclient.util.ByteReader.init(MC.player).intersects(new AABB(cell))) {
+      if (autismclient.util.PlayerMotionEnvelope.init(MC.player).intersects(new AABB(cell))) {
          return null;
       }
 
@@ -2022,7 +2022,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          InteractionHand hand = plan.init_InteractionHand();
          if (al.init_Z_HitResult(hit, hand, "crystal-aura")) {
             return false;
-         } else if (!autismclient.util.EventBus.init(
+         } else if (!autismclient.util.QueuedCombatAction.init(
             "crystal-aura",
             hit,
             hand,
@@ -2033,8 +2033,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             }
          )) {
             return false;
-         } else if (!bM.init("crystal-aura")) {
-            autismclient.util.s.write_V();
+         } else if (!PerTickPlacementLock.init("crystal-aura")) {
+            autismclient.util.ClientInteractionOverride.write_V();
             return false;
          } else {
             return true;
@@ -2079,7 +2079,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       int bestSteps = 2147483647;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (init_Z_ItemStack_10(player.getInventory().getItem(slot)) && !autismclient.util.ah.init(slot, "crystal-aura")) {
+         if (init_Z_ItemStack_10(player.getInventory().getItem(slot)) && !autismclient.util.InventorySlotArbiter.init(slot, "crystal-aura")) {
             int steps = Math.abs(slot - selected);
             steps = Math.min(steps, 9 - steps);
             if (steps < bestSteps) {
@@ -2162,7 +2162,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             return null;
          }
 
-         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.ah.load_Z("crystal-aura") && !autismclient.util.s.load_Z();
+         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.load_Z("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z();
          int slot = offhand ? -1 : this.init_I_30();
          if (!offhand && slot < 0) {
             return null;
@@ -2174,10 +2174,10 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          double rangeSq = range * range;
          AABB playerBox = player.getBoundingBox();
          Vec3 delta = player.getDeltaMovement();
-         AABB nextBox = autismclient.util.ByteReader.init(player);
+         AABB nextBox = autismclient.util.PlayerMotionEnvelope.init(player);
          double worst = threats.get(0).init_D();
          LinkedHashSet<BlockPos> candidates = new LinkedHashSet<>();
-         List<List<BlockPos>> rays = threats.stream().map(threatx -> autismclient.util.SyncManager.init(playerBox, nextBox, threatx.init_Vec3())).toList();
+         List<List<BlockPos>> rays = threats.stream().map(threatx -> autismclient.util.BlastShieldPosFinder.init(playerBox, nextBox, threatx.init_Vec3())).toList();
 
          for (int i = 0; i < 24 && candidates.size() < 24; i++) {
             for (List<BlockPos> ray : rays) {
@@ -2194,7 +2194,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                double after = 0.0;
 
                for (CrystalAuraModule.Inner_CachePool threat : threats) {
-                  after = Math.max(after, autismclient.util.S.read(player, threat.init_Vec3(), threat.init_F(), threat.init_S_CachePool().init(cell)));
+                  after = Math.max(after, autismclient.util.ExplosionDamageCalculator.read(player, threat.init_Vec3(), threat.init_F(), threat.init_S_CachePool().init(cell)));
                }
 
                double reduction = worst - after;
@@ -2242,7 +2242,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          }
 
          LocalPlayer player = MC.player;
-         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.ah.load_Z("crystal-aura") && !autismclient.util.s.load_Z();
+         boolean offhand = init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.load_Z("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z();
          int slot = offhand ? -1 : this.init_I_30();
          if (!offhand && slot < 0) {
             return null;
@@ -2252,7 +2252,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          ItemStack stack = offhand ? player.getOffhandItem() : player.getInventory().getItem(slot);
          Vec3 eye = player.getEyePosition();
          double range = player.blockInteractionRange();
-         AABB next = autismclient.util.ByteReader.init(player);
+         AABB next = autismclient.util.PlayerMotionEnvelope.init(player);
          AABB targetBox = this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5);
          ArrayList<CrystalAuraModule.Inner_StreamUtil> viable = new ArrayList<>();
 
@@ -2260,7 +2260,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             Vec3 source = Vec3.atBottomCenterOf(support.init_BlockPos().above());
             int tested = 0;
 
-            for (BlockPos cell : autismclient.util.SyncManager.init(player.getBoundingBox(), next, source)) {
+            for (BlockPos cell : autismclient.util.BlastShieldPosFinder.init(player.getBoundingBox(), next, source)) {
                if (!cell.equals(support.init_BlockPos())
                   && !cell.equals(support.init_BlockPos().above())
                   && !new AABB(cell).clip(eye, source).isPresent()
@@ -2269,10 +2269,10 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                      break;
                   }
 
-                  autismclient.util.S.Inner_CachePool covered = this.init_S_CachePool.init(cell);
-                  autismclient.util.S.Inner_BufferHelper rank = autismclient.util.TableIndex.init(enemy, source, 6.0F, covered, targetBox);
+                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool covered = this.init_S_CachePool.init(cell);
+                  autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = autismclient.util.TargetLeadDamageEstimator.init(enemy, source, 6.0F, covered, targetBox);
                   if (this.init_Z_LivingEntity_S_BufferHelper(enemy, rank)
-                     && autismclient.util.SyncManager.init(
+                     && autismclient.util.BlastShieldPosFinder.init(
                         support.init_S_BufferHelper().load(),
                         support.init_S_BufferHelper().read(),
                         rank.load(),
@@ -2281,7 +2281,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
                         this.decimal("max-self-damage"),
                         this.bool("efficient")
                      )
-                     && (!this.bool("protect-friends") || autismclient.util.UiHelper.init(source, 6.0F, covered, this.decimal("max-friend-damage")))) {
+                     && (!this.bool("protect-friends") || autismclient.util.WeaponDamageCalculator.init(source, 6.0F, covered, this.decimal("max-friend-damage")))) {
                      viable.add(new CrystalAuraModule.Inner_StreamUtil(cell, rank.load() - rank.read()));
                   }
                }
@@ -2376,7 +2376,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
       for (EndCrystal crystal : MC.level.getEntitiesOfClass(EndCrystal.class, near, Entity::isAlive)) {
          if (!this.init_RenderState.init(crystal, ck.init_ck().state_I())) {
-            double bound = autismclient.util.S.load(crystal.position(), 6.0F, this.init_S_CachePool);
+            double bound = autismclient.util.ExplosionDamageCalculator.load(crystal.position(), 6.0F, this.init_S_CachePool);
             if (bound > maximum) {
                sources.add(new CrystalAuraModule.Inner_CachePool(crystal.position(), 6.0F, this.init_S_CachePool, bound));
             }
@@ -2395,9 +2395,9 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             Boolean works = MC.level.environmentAttributes().getValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS, cursor);
             if (!Boolean.TRUE.equals(works)) {
                BlockPos cell = cursor.immutable();
-               autismclient.util.S.Inner_CachePool blast = this.init_S_CachePool.init(List.of(cell));
+               autismclient.util.ExplosionDamageCalculator.Inner_CachePool blast = this.init_S_CachePool.init(List.of(cell));
                Vec3 source = Vec3.atCenterOf(cell);
-               double bound = autismclient.util.S.load(source, 5.0F, blast);
+               double bound = autismclient.util.ExplosionDamageCalculator.load(source, 5.0F, blast);
                if (bound > maximum) {
                   sources.add(new CrystalAuraModule.Inner_CachePool(source, 5.0F, blast, bound));
                }
@@ -2412,7 +2412,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             Vec3 offset = source.subtract(player.position());
             if ((!(direction.horizontalDistanceSqr() > 0.25) || !(offset.x * direction.x + offset.z * direction.z <= 0.0))
                && !(enemy.getEyePosition().distanceToSqr(Vec3.atCenterOf(cursor)) > enemy.blockInteractionRange() * enemy.blockInteractionRange())) {
-               double bound = autismclient.util.S.load(source, 6.0F, this.init_S_CachePool);
+               double bound = autismclient.util.ExplosionDamageCalculator.load(source, 6.0F, this.init_S_CachePool);
                if (bound > maximum) {
                   sources.add(new CrystalAuraModule.Inner_CachePool(source, 6.0F, this.init_S_CachePool, bound));
                }
@@ -2425,7 +2425,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
 
       for (int i = 0; i < Math.min(12, sources.size()); i++) {
          CrystalAuraModule.Inner_CachePool source = sources.get(i);
-         double damage = autismclient.util.S.read(player, source.init_Vec3(), source.init_F(), source.init_S_CachePool());
+         double damage = autismclient.util.ExplosionDamageCalculator.read(player, source.init_Vec3(), source.init_F(), source.init_S_CachePool());
          if (damage > maximum) {
             threats.add(new CrystalAuraModule.Inner_CachePool(source.init_Vec3(), source.init_F(), source.init_S_CachePool(), damage));
          }
@@ -2490,7 +2490,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          Vec3 heldSource = new Vec3(this.load_BlockPos.getX() + 0.5, this.load_BlockPos.getY() + 1.0, this.load_BlockPos.getZ() + 0.5);
          if (this.init_Z_LivingEntity_S_BufferHelper(
                enemy,
-               autismclient.util.TableIndex.init(
+               autismclient.util.TargetLeadDamageEstimator.init(
                   enemy, heldSource, 6.0F, this.init_S_CachePool.init(this.load_BlockPos), this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5)
                )
             )
@@ -2546,8 +2546,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private boolean get() {
       LocalPlayer player = MC.player;
       return this.data < 0
-         ? init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.ah.load_Z("crystal-aura")
-         : !autismclient.util.ah.init(this.data, "crystal-aura") && init_Z_ItemStack_10(player.getInventory().getItem(this.data));
+         ? init_Z_ItemStack_10(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.load_Z("crystal-aura")
+         : !autismclient.util.InventorySlotArbiter.init(this.data, "crystal-aura") && init_Z_ItemStack_10(player.getInventory().getItem(this.data));
    }
 
    private CrystalAuraModule.Inner_TaskQueue init_t_TaskQueue_U_StreamUtil(autismclient.util.U.Inner_StreamUtil budget) {
@@ -2588,7 +2588,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          && this.put()
          && this.read(this.read_BlockPos)
          && this.init_Z_BlockPos_AABB_3(this.read_BlockPos, MC.player.getBoundingBox().move(MC.player.getDeltaMovement()))) {
-         autismclient.util.S.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(
+         autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank = this.init_S_BufferHelper_LivingEntity(
             enemy,
             new Vec3(this.read_BlockPos.getX() + 0.5, this.read_BlockPos.getY() + 1.0, this.read_BlockPos.getZ() + 0.5),
             this.init_AABB_LivingEntity(enemy, this.read_I_10(), 1.5)
@@ -2614,7 +2614,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       }
 
       Vec3 eye = player.getEyePosition();
-      ce.Inner_DataUtil wire = this.load_ce_DataUtil_5();
+      RotationMath.Inner_DataUtil wire = this.load_ce_DataUtil_5();
       BlockPos support = this.read_BlockPos;
       BlockPos cell = support.above();
       BlockState state = MC.level.getBlockState(support);
@@ -2667,7 +2667,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    private boolean set() {
       return this.valid != ck.init_ck().state_I()
          && !auditBeforeDeadline(this.auditHasUpdateDeadline, this.update_J)
-         && autismclient.util.UiHelper.init(MC.player, MC.player.getMainHandItem()) > 0.0;
+         && autismclient.util.WeaponDamageCalculator.init(MC.player, MC.player.getMainHandItem()) > 0.0;
    }
 
    private void write_V_21() {
@@ -2676,8 +2676,8 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          double bestDamage = 0.0;
 
          for (int slot = 0; slot < 9; slot++) {
-            if (!autismclient.util.ah.init(slot, "crystal-aura")) {
-               double damage = autismclient.util.UiHelper.init(MC.player, MC.player.getInventory().getItem(slot));
+            if (!autismclient.util.InventorySlotArbiter.init(slot, "crystal-aura")) {
+               double damage = autismclient.util.WeaponDamageCalculator.init(MC.player, MC.player.getInventory().getItem(slot));
                if (damage > bestDamage) {
                   best = slot;
                   bestDamage = damage;
@@ -2703,17 +2703,17 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    }
 
    private boolean init_Z_Vec3_4(Vec3 source) {
-      return !this.bool("protect-friends") || autismclient.util.UiHelper.init(source, 6.0F, this.init_S_CachePool, this.decimal("max-friend-damage"));
+      return !this.bool("protect-friends") || autismclient.util.WeaponDamageCalculator.init(source, 6.0F, this.init_S_CachePool, this.decimal("max-friend-damage"));
    }
 
    private boolean put() {
       LocalPlayer player = MC.player;
-      return load_Z_ItemStack_3(player.getOffhandItem()) && !autismclient.util.ah.load_Z("crystal-aura") ? true : this.load_I_16() >= 0;
+      return load_Z_ItemStack_3(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.load_Z("crystal-aura") ? true : this.load_I_16() >= 0;
    }
 
    private InteractionHand init_InteractionHand_5() {
       LocalPlayer player = MC.player;
-      if (load_Z_ItemStack_3(player.getOffhandItem()) && !autismclient.util.ah.load_Z("crystal-aura") && !autismclient.util.s.load_Z()) {
+      if (load_Z_ItemStack_3(player.getOffhandItem()) && !autismclient.util.InventorySlotArbiter.load_Z("crystal-aura") && !autismclient.util.ClientInteractionOverride.load_Z()) {
          return InteractionHand.OFF_HAND;
       }
 
@@ -2755,7 +2755,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             return false;
          }
 
-         if (!autismclient.util.ah.write_Z("crystal-aura")) {
+         if (!autismclient.util.InventorySlotArbiter.write_Z("crystal-aura")) {
             return false;
          }
 
@@ -2764,7 +2764,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             this.update_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
             this.auditHasUpdateDeadline = true;
          } finally {
-            autismclient.util.ah.read_V("crystal-aura");
+            autismclient.util.InventorySlotArbiter.read_V("crystal-aura");
          }
 
          this.valid = tick;
@@ -2781,7 +2781,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       int bestSteps = 2147483647;
 
       for (int slot = 0; slot < 9; slot++) {
-         if (load_Z_ItemStack_3(player.getInventory().getItem(slot)) && !autismclient.util.ah.init(slot, "crystal-aura")) {
+         if (load_Z_ItemStack_3(player.getInventory().getItem(slot)) && !autismclient.util.InventorySlotArbiter.init(slot, "crystal-aura")) {
             int steps = Math.abs(slot - selected);
             steps = Math.min(steps, 9 - steps);
             if (steps < bestSteps) {
@@ -2805,7 +2805,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
             }
          } else if (this.prev > 0) {
             this.prev--;
-         } else if (!autismclient.util.ah.init(this.stop, "crystal-aura") && this.load_Z_I_6(this.stop)) {
+         } else if (!autismclient.util.InventorySlotArbiter.init(this.stop, "crystal-aura") && this.load_Z_I_6(this.stop)) {
             this.stop = -1;
             this.next = -1;
          }
@@ -2820,14 +2820,14 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return this.init_TableIndex.init_AABB_LivingEntity(enemy, ck.init_ck().state_I(), horizonTicks, maxLead);
    }
 
-   private autismclient.util.S.Inner_BufferHelper init_S_BufferHelper_LivingEntity(LivingEntity enemy, Vec3 source, AABB targetBox) {
-      return autismclient.util.TableIndex.init(enemy, source, 6.0F, this.init_S_CachePool, targetBox);
+   private autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper_LivingEntity(LivingEntity enemy, Vec3 source, AABB targetBox) {
+      return autismclient.util.TargetLeadDamageEstimator.init(enemy, source, 6.0F, this.init_S_CachePool, targetBox);
    }
 
-   private boolean init_Z_LivingEntity_S_BufferHelper(LivingEntity enemy, autismclient.util.S.Inner_BufferHelper rank) {
-      return autismclient.util.S.init_Z_D(rank.read())
+   private boolean init_Z_LivingEntity_S_BufferHelper(LivingEntity enemy, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper rank) {
+      return autismclient.util.ExplosionDamageCalculator.init_Z_D(rank.read())
          ? false
-         : autismclient.util.UiHelper.init(rank.load(), rank.read(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
+         : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.read(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
    }
 
    private boolean init_Z_LivingEntity_3(LivingEntity enemy, Vec3 source, boolean placing) {
@@ -2843,7 +2843,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
          && this.init_Z_Vec3_4(source);
    }
 
-   private boolean init_Z_S_BufferHelper_S_BufferHelper(autismclient.util.S.Inner_BufferHelper candidate, autismclient.util.S.Inner_BufferHelper incumbent) {
+   private boolean init_Z_S_BufferHelper_S_BufferHelper(autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper candidate, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper incumbent) {
       int byTarget = Double.compare(candidate.load(), incumbent.load());
       return byTarget != 0 ? byTarget > 0 : candidate.read() < incumbent.read();
    }
@@ -2932,13 +2932,13 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
       return update_F;
    }
 
-   private record Inner_BufferHelper(EndCrystal init_EndCrystal, autismclient.util.S.Inner_BufferHelper init_S_BufferHelper) {
+   private record Inner_BufferHelper(EndCrystal init_EndCrystal, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper) {
    }
 
-   private record Inner_CachePool(Vec3 init_Vec3, float init_F, autismclient.util.S.Inner_CachePool init_S_CachePool, double init_D) {
+   private record Inner_CachePool(Vec3 init_Vec3, float init_F, autismclient.util.ExplosionDamageCalculator.Inner_CachePool init_S_CachePool, double init_D) {
    }
 
-   private record Inner_ConfigStore(EndCrystal init_EndCrystal, ce.Inner_DataUtil init_ce_DataUtil, double init_D) {
+   private record Inner_ConfigStore(EndCrystal init_EndCrystal, RotationMath.Inner_DataUtil init_ce_DataUtil, double init_D) {
    }
 
    private record Inner_DataUtil(BlockPos init_BlockPos, Vec3 init_Vec3, double init_D, double load) {
@@ -2959,7 +2959,7 @@ public final class CrystalAuraModule extends Module implements cn.Inner_DataUtil
    ) {
    }
 
-   private record Inner_StateCache(BlockPos init_BlockPos, autismclient.util.S.Inner_BufferHelper init_S_BufferHelper, double init_D) {
+   private record Inner_StateCache(BlockPos init_BlockPos, autismclient.util.ExplosionDamageCalculator.Inner_BufferHelper init_S_BufferHelper, double init_D) {
    }
 
    private record Inner_StreamUtil(BlockPos init_BlockPos, double init_D) {
