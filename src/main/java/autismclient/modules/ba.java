@@ -179,7 +179,7 @@ final class ba extends Module {
       } else {
          boolean noCooldown = autismclient.util.aI.init(MC.player);
          boolean timed = !noCooldown && this.bool("respect-cooldown");
-         boolean rage = !timed && this.init_h.init_BufferHelper() == autismclient.util.a.BufferHelper.sync_BufferHelper;
+         boolean rage = !timed && this.init_h.init_BufferHelper() == autismclient.util.a.BufferHelper.RAGE;
          boolean flinched = this.load_Z_15();
          boolean physical = this.init_StreamUtil.load_Z();
          if (physical && !this.load_Z && !timed) {

@@ -82,8 +82,8 @@ public class aE {
    private final CopyOnWriteArrayList<aE.Inner_TaskQueue> init_CopyOnWriteArrayLi = new CopyOnWriteArrayList<>();
    private static final int flush_I = 10;
    private volatile aE.Inner_NetHelper init_aE_NetHelper = null;
-   private volatile aE.Inner_JsonUtil init_aE_JsonUtil = aE.Inner_JsonUtil.init;
-   private volatile aE.Inner_StreamUtil init_aE_StreamUtil = aE.Inner_StreamUtil.init;
+   private volatile aE.Inner_JsonUtil init_aE_JsonUtil = aE.Inner_JsonUtil.IDLE;
+   private volatile aE.Inner_StreamUtil init_aE_StreamUtil = aE.Inner_StreamUtil.INSTANT;
    private volatile aE.Inner_ConfigStore init_aE_ConfigStore = null;
    private volatile long load_J = -1L;
    private final Map<String, Long> sync_Map = new ConcurrentHashMap<>();
@@ -288,7 +288,7 @@ public class aE {
 
    private void put() {
       this.init_aE_NetHelper = null;
-      this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+      this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
       this.sync_Map.clear();
       this.flush_Map.clear();
       this.close_Map.clear();
@@ -355,7 +355,7 @@ public class aE {
             this.init_aE_ConfigStore = null;
             this.open_Map.clear();
             this.init_Set.add(this.write_Str);
-            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.load);
+            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.PREPARING);
             AutismClientAddon.LOG.info("[Sync] Initiating GO-sync: execId={}", executionId);
             String assignmentStr = "";
             if (macroAssignments != null && !macroAssignments.isEmpty()) {
@@ -379,7 +379,7 @@ public class aE {
             preparePacket.init_I = method.ordinal();
             preparePacket.load_J = -1L;
             this.load(preparePacket);
-            this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.load, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
+            this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.PREPARING, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
             (new Thread(
                   () -> {
                      Thread.currentThread().setPriority(10);
@@ -397,16 +397,16 @@ public class aE {
                            LockSupport.parkNanos(500000L);
                         }
 
-                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.read);
-                        this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.read, this.init_Set.size() + "/" + expectedClients + " ready");
+                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.ALL_READY);
+                        this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.ALL_READY, this.init_Set.size() + "/" + expectedClients + " ready");
                         AutismClientAddon.LOG.info("[Sync] All {} clients ready!", this.init_Set.size());
-                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.write);
+                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.DISPATCHING_GO);
                         long targetTick = -1L;
-                        if (method == aE.Inner_StreamUtil.load) {
+                        if (method == aE.Inner_StreamUtil.TICK) {
                            long currentTick = this.load_J();
                            if (currentTick < 0L) {
                               AutismClientMessaging.sendPrefixed("§cCannot tick-sync without a loaded world.");
-                              this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+                              this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
                               return;
                            }
 
@@ -420,7 +420,7 @@ public class aE {
                         byte[] goPayload = this.init_BArr_DataUtil(
                            new autismclient.util.d.DataUtil.TaskQueue(this.read_Str, executionId, method.ordinal(), targetTick)
                         );
-                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
 
                         for (Entry<String, Socket> entryx : this.poll_Map.entrySet()) {
                            Socket clientSocket = entryx.getValue();
@@ -439,7 +439,7 @@ public class aE {
                            }
                         }
 
-                        if (method == aE.Inner_StreamUtil.load) {
+                        if (method == aE.Inner_StreamUtil.TICK) {
                            this.init_V_J_J(executionId, targetTick);
                         } else {
                            int hostOffset = this.load_I(this.write_Str);
@@ -454,7 +454,7 @@ public class aE {
                         }
                      } catch (Exception e) {
                         AutismClientAddon.LOG.error("[Sync] Error in GO-sync: ", e);
-                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
                      }
                   },
                   "Sync-GO-Initiator"
@@ -480,7 +480,7 @@ public class aE {
          this.load_Set.clear();
          this.init_aE_ConfigStore = null;
          this.init_Set.add(this.write_Str);
-         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.load);
+         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.PREPARING);
          AutismClientAddon.LOG.info("[Sync] Initiating queue flush GO-sync: execId={}", executionId);
          autismclient.util.d.DataUtil.HashUtil preparePacket = new autismclient.util.d.DataUtil.HashUtil(
             this.read_Str, executionId, false, "", "__QUEUE_FLUSH__", this.write_Str
@@ -488,7 +488,7 @@ public class aE {
          preparePacket.init_I = method.ordinal();
          preparePacket.load_J = -1L;
          this.load(preparePacket);
-         this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.load, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
+         this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.PREPARING, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
          (new Thread(() -> {
             Thread.currentThread().setPriority(10);
 
@@ -505,15 +505,15 @@ public class aE {
                   LockSupport.parkNanos(500000L);
                }
 
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.read);
-               this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.read, this.init_Set.size() + "/" + expectedClients + " ready");
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.write);
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.ALL_READY);
+               this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.ALL_READY, this.init_Set.size() + "/" + expectedClients + " ready");
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.DISPATCHING_GO);
                long targetTick = -1L;
-               if (method == aE.Inner_StreamUtil.load) {
+               if (method == aE.Inner_StreamUtil.TICK) {
                   long currentTick = this.load_J();
                   if (currentTick < 0L) {
                      AutismClientMessaging.sendPrefixed("§cCannot tick-sync without a loaded world.");
-                     this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+                     this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
                      return;
                   }
 
@@ -525,7 +525,7 @@ public class aE {
                }
 
                byte[] goPayload = this.init_BArr_DataUtil(new autismclient.util.d.DataUtil.TaskQueue(this.read_Str, executionId, method.ordinal(), targetTick));
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
 
                for (Entry<String, Socket> entry : this.poll_Map.entrySet()) {
                   Socket clientSocket = entry.getValue();
@@ -544,7 +544,7 @@ public class aE {
                   }
                }
 
-               if (method == aE.Inner_StreamUtil.load) {
+               if (method == aE.Inner_StreamUtil.TICK) {
                   this.init_V_J_J(executionId, targetTick);
                } else {
                   int hostOffset = this.load_I(this.write_Str);
@@ -559,7 +559,7 @@ public class aE {
                }
             } catch (Exception e) {
                AutismClientAddon.LOG.error("[Sync] Error in queue GO-sync: ", e);
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
             }
          }, "Sync-GO-QueueFlush") {
             {
@@ -603,7 +603,7 @@ public class aE {
          aE.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
          this.init_aE_StreamUtil = method;
          this.init_aE_NetHelper = new aE.Inner_NetHelper(executionId, isMacro, myMacroName, command, macro, false, method, targetTick);
-         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.load);
+         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.PREPARING);
          this.load(new autismclient.util.d.DataUtil.BufferHelper(this.read_Str, executionId, this.write_Str));
          AutismClientAddon.LOG.info("[Sync] Sent READY signal");
       }
@@ -613,7 +613,7 @@ public class aE {
       aE.Inner_NetHelper ctx = this.init_aE_NetHelper;
       if (ctx != null && executionId == ctx.init_J) {
          this.init_Set.add(username);
-         this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.load, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
+         this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.PREPARING, this.init_Set.size() + "/" + this.init_Map.size() + " ready");
          AutismClientAddon.LOG.info("[Sync] Client ready: {} (total: {})", username, this.init_Set.size());
       }
    }
@@ -627,15 +627,15 @@ public class aE {
             aE.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
             ctx.load_J = targetTick;
             this.init_aE_StreamUtil = method;
-            if (method == aE.Inner_StreamUtil.load && targetTick >= 0L) {
+            if (method == aE.Inner_StreamUtil.TICK && targetTick >= 0L) {
                AutismClientAddon.LOG.info("[Sync] Received GO! Scheduling tick execution for {}", targetTick);
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
                this.init_V_J_J(executionId, targetTick);
             } else {
                int offset = this.load_I(this.write_Str);
                if (offset > 0) {
                   AutismClientAddon.LOG.info("[Sync] Received GO! Applying {}ms offset before executing.", offset);
-                  this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+                  this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
 
                   try {
                      Thread.sleep(offset);
@@ -645,7 +645,7 @@ public class aE {
                   this.clear();
                } else {
                   AutismClientAddon.LOG.info("[Sync] Received GO! Executing immediately.");
-                  this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+                  this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
                   this.clear();
                }
             }
@@ -663,7 +663,7 @@ public class aE {
             } else if (this.load_Set.add(ctx.init_J)) {
                long executedAtMs = System.currentTimeMillis();
                long actualTick = this.load_J();
-               boolean tickMode = ctx.init_aE_StreamUtil == aE.Inner_StreamUtil.load;
+               boolean tickMode = ctx.init_aE_StreamUtil == aE.Inner_StreamUtil.TICK;
                boolean late = tickMode && (actualTick < 0L || ctx.load_J >= 0L && actualTick > ctx.load_J);
                if ("__QUEUE_FLUSH__".equals(ctx.load_Str)) {
                   ClientPacketListener nh = mc.getConnection();
@@ -705,7 +705,7 @@ public class aE {
                      this.read_Str, this.write_Str, executedAtMs, ctx.init_aE_StreamUtil.ordinal(), ctx.load_J, actualTick, late
                   )
                );
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.sync);
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.REPORTING);
                if (ctx.load_Z) {
                   (new Thread(() -> {
                      try {
@@ -716,7 +716,7 @@ public class aE {
                            LockSupport.parkNanos(1000000L);
                         }
 
-                        if (ctx.init_aE_StreamUtil == aE.Inner_StreamUtil.load) {
+                        if (ctx.init_aE_StreamUtil == aE.Inner_StreamUtil.TICK) {
                            this.load(ctx.load_J);
                         } else {
                            this.reset();
@@ -739,7 +739,7 @@ public class aE {
       this.sync_Map.put(username, timestampMs);
       this.flush_Map.put(username, System.nanoTime());
       aE.Inner_StreamUtil method = this.init_aE_StreamUtil_I(methodOrdinal);
-      if (method == aE.Inner_StreamUtil.load) {
+      if (method == aE.Inner_StreamUtil.TICK) {
          this.close_Map.put(username, new aE.Inner_StateCache(actualTick, late || targetTick >= 0L && actualTick > targetTick));
       }
 
@@ -799,11 +799,11 @@ public class aE {
                   }
 
                   aE.Inner_NetHelper sc = this.init_aE_NetHelper;
-                  if (sc != null && sc.init_J == execId && sc.init_aE_StreamUtil == aE.Inner_StreamUtil.load) {
+                  if (sc != null && sc.init_J == execId && sc.init_aE_StreamUtil == aE.Inner_StreamUtil.TICK) {
                      aE.Inner_ConfigStore s = this.init_aE_ConfigStore;
                      if (s != null && s.init_J == execId) {
                         this.init_aE_ConfigStore = null;
-                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+                        this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
                         this.clear();
                      }
                   }
@@ -826,10 +826,10 @@ public class aE {
       aE.Inner_ConfigStore scheduled = this.init_aE_ConfigStore;
       if (scheduled != null && currentTick >= scheduled.load) {
          aE.Inner_NetHelper ctx = this.init_aE_NetHelper;
-         if (ctx != null && ctx.init_J == scheduled.init_J && ctx.init_aE_StreamUtil == aE.Inner_StreamUtil.load) {
+         if (ctx != null && ctx.init_J == scheduled.init_J && ctx.init_aE_StreamUtil == aE.Inner_StreamUtil.TICK) {
             ctx.load_J = scheduled.load;
             this.init_aE_ConfigStore = null;
-            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.update);
+            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.EXECUTING);
             this.clear();
          } else {
             this.init_aE_ConfigStore = null;
@@ -838,30 +838,30 @@ public class aE {
    }
 
    private int init_I_aE_StreamUtil(aE.Inner_StreamUtil method) {
-      return method == aE.Inner_StreamUtil.load ? this.close_Map.size() : this.flush_Map.size();
+      return method == aE.Inner_StreamUtil.TICK ? this.close_Map.size() : this.flush_Map.size();
    }
 
    private aE.Inner_StreamUtil init_aE_StreamUtil_I(int ordinal) {
       aE.Inner_StreamUtil[] values = aE.Inner_StreamUtil.values();
-      return ordinal >= 0 && ordinal < values.length ? values[ordinal] : aE.Inner_StreamUtil.init;
+      return ordinal >= 0 && ordinal < values.length ? values[ordinal] : aE.Inner_StreamUtil.INSTANT;
    }
 
    private aE.Inner_StreamUtil init_aE_StreamUtil_Str(String name) {
       if (name == null) {
-         return aE.Inner_StreamUtil.init;
+         return aE.Inner_StreamUtil.INSTANT;
       }
 
       try {
          return aE.Inner_StreamUtil.valueOf(name.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
-         return aE.Inner_StreamUtil.init;
+         return aE.Inner_StreamUtil.INSTANT;
       }
    }
 
    private void reset() {
       Map<String, Long> timings = this.flush_Map.isEmpty() ? this.sync_Map : this.flush_Map;
       if (timings.size() < 2) {
-         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.flush);
+         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.DONE);
       } else {
          long earliest = 9223372036854775807L;
          long latest = -9223372036854775808L;
@@ -901,8 +901,8 @@ public class aE {
          AutismClientMessaging.sendPrefixed(report);
          this.load(new autismclient.util.d.DataUtil.Inner_DataUtil(this.read_Str, "__SYNC__", report));
          this.load(new autismclient.util.d.DataUtil.Inner_DataUtil(this.read_Str, "__SPREAD_DATA__", spreadNanos + "\t" + latestClient + "\t" + timings.size()));
-         this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.flush, totalSpreadMs + "ms spread");
-         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.flush);
+         this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.DONE, totalSpreadMs + "ms spread");
+         this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.DONE);
          this.push(this.flush_Runnable);
          (new Thread(() -> {
             try {
@@ -910,8 +910,8 @@ public class aE {
             } catch (InterruptedException var2x) {
             }
 
-            if (this.init_aE_JsonUtil == aE.Inner_JsonUtil.flush) {
-               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+            if (this.init_aE_JsonUtil == aE.Inner_JsonUtil.DONE) {
+               this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
             }
          }, "Sync-ResetIdle") {
             {
@@ -957,7 +957,7 @@ public class aE {
          maxOffset * 50000000L,
          perfect ? "" : "tick",
          Math.max(this.close_Map.size(), expected),
-         aE.Inner_StreamUtil.load,
+         aE.Inner_StreamUtil.TICK,
          targetTick,
          maxOffset,
          perfect,
@@ -978,8 +978,8 @@ public class aE {
             targetTick + "\t" + maxOffset + "\t" + Math.max(this.close_Map.size(), expected) + "\t" + perfect + "\t" + report
          )
       );
-      this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.flush, perfect ? "tick perfect" : maxOffset + " tick offset");
-      this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.flush);
+      this.init_V_aE_JsonUtil_Str(aE.Inner_JsonUtil.DONE, perfect ? "tick perfect" : maxOffset + " tick offset");
+      this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.DONE);
       this.push(this.flush_Runnable);
       (new Thread(() -> {
          try {
@@ -987,8 +987,8 @@ public class aE {
          } catch (InterruptedException var2) {
          }
 
-         if (this.init_aE_JsonUtil == aE.Inner_JsonUtil.flush) {
-            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+         if (this.init_aE_JsonUtil == aE.Inner_JsonUtil.DONE) {
+            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
          }
       }, "Sync-ResetIdle") {
          {
@@ -1103,12 +1103,12 @@ public class aE {
                   searchSocket.setTcpNoDelay(true);
                   DataOutputStream out = new DataOutputStream(searchSocket.getOutputStream());
                   DataInputStream in = new DataInputStream(searchSocket.getInputStream());
-                  out.writeInt(autismclient.util.d.StreamUtil.init_StreamUtil.init());
+                  out.writeInt(autismclient.util.d.StreamUtil.SEARCH_REQUEST.init());
                   out.writeUTF("");
                   out.flush();
                   int typeId = in.readInt();
                   String foundSessionId = in.readUTF();
-                  if (typeId == autismclient.util.d.StreamUtil.load.init()) {
+                  if (typeId == autismclient.util.d.StreamUtil.SESSION.init()) {
                      autismclient.util.d.DataUtil.TokenStore session = new autismclient.util.d.DataUtil.TokenStore();
                      session.init(foundSessionId);
                      session.init(in);
@@ -1224,28 +1224,28 @@ public class aE {
 
    public aE.Inner_CachePool init_aE_CachePool_Str(String username) {
       if (username.equals(this.write_Str)) {
-         return aE.Inner_CachePool.init;
+         return aE.Inner_CachePool.HEALTHY;
       }
 
       Long lastBeat = this.pop.get(username);
       if (lastBeat == null) {
-         return aE.Inner_CachePool.read;
+         return aE.Inner_CachePool.UNKNOWN;
       }
 
       long elapsed = System.currentTimeMillis() - lastBeat;
-      return elapsed > 15000L ? aE.Inner_CachePool.load : aE.Inner_CachePool.init;
+      return elapsed > 15000L ? aE.Inner_CachePool.STALE : aE.Inner_CachePool.HEALTHY;
    }
 
    private void init_V_DataUtil(autismclient.util.d.DataUtil packet) {
       try {
          switch (packet.init_StreamUtil()) {
-            case init_StreamUtil:
-            case get:
-            case set:
-            case clear:
+            case SEARCH_REQUEST:
+            case PLAYER_OFFSETS:
+            case CLIENT_OFFSET_UPDATE:
+            case EXECUTE_NOW:
             default:
                break;
-            case load:
+            case SESSION:
                if (packet instanceof autismclient.util.d.DataUtil.TokenStore p) {
                   String sid = p.init_Str();
                   String host = p.load;
@@ -1258,7 +1258,7 @@ public class aE {
                   }
                }
                break;
-            case read:
+            case JOIN:
                if (packet instanceof autismclient.util.d.DataUtil.JsonUtil && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.JsonUtil p = (autismclient.util.d.DataUtil.JsonUtil)packet;
                   String username = p.load;
@@ -1277,7 +1277,7 @@ public class aE {
                   }
                }
                break;
-            case update:
+            case CLIENT_LIST:
                if (packet instanceof autismclient.util.d.DataUtil.Inner_StreamUtil && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.Inner_StreamUtil p = (autismclient.util.d.DataUtil.Inner_StreamUtil)packet;
                   if (!this.load_Z) {
@@ -1313,7 +1313,7 @@ public class aE {
                   }
                }
                break;
-            case sync:
+            case LEAVE:
                if (packet instanceof autismclient.util.d.DataUtil.StateCache && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.StateCache p = (autismclient.util.d.DataUtil.StateCache)packet;
                   String username = p.load;
@@ -1357,66 +1357,66 @@ public class aE {
                   }
                }
                break;
-            case write:
+            case REQUEST_CLIENT_LIST:
                if (this.load_Z) {
                   this.valid();
                }
                break;
-            case flush:
+            case REQUEST_MACRO:
                this.update(packet);
                break;
-            case close:
+            case MACRO_DATA:
                this.read_V_DataUtil(packet);
                break;
-            case size:
+            case MACRO_DATA_CHUNK:
                this.write(packet);
                break;
-            case open:
+            case MACRO_DELETE:
                this.flush(packet);
                break;
-            case poll:
+            case MACRO_LIST:
                this.close(packet);
                break;
-            case pop:
+            case PRESET_DATA:
                this.sync(packet);
                break;
-            case push:
+            case QUEUE_SYNC:
                if (packet instanceof autismclient.util.d.DataUtil.PoolEntry && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.PoolEntry qp = (autismclient.util.d.DataUtil.PoolEntry)packet;
                   this.read(qp.load, qp.read);
                }
                break;
-            case tick:
+            case CHAT_MESSAGE:
                if (packet instanceof autismclient.util.d.DataUtil.Inner_DataUtil && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.Inner_DataUtil cp = (autismclient.util.d.DataUtil.Inner_DataUtil)packet;
                   this.write(cp.load, cp.read);
                }
                break;
-            case put:
+            case PREPARE_EXECUTION:
                if (packet instanceof autismclient.util.d.DataUtil.HashUtil && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.HashUtil p = (autismclient.util.d.DataUtil.HashUtil)packet;
                   this.init(p.init_J, p.init_Z, p.load_Str, p.read, p.write, p.update, p.init_I, p.load_J);
                }
                break;
-            case add:
+            case CLIENT_READY:
                if (packet instanceof autismclient.util.d.DataUtil.BufferHelper && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.BufferHelper p = (autismclient.util.d.DataUtil.BufferHelper)packet;
                   this.init_V_J_Str(p.init_J, p.load);
                }
                break;
-            case reset:
+            case GO:
                if (packet instanceof autismclient.util.d.DataUtil.TaskQueue && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.TaskQueue p = (autismclient.util.d.DataUtil.TaskQueue)packet;
                   this.init_V_J(p.init_J, p.init_I, p.load);
                }
                break;
-            case run:
+            case TCP_COMMAND_ACK:
                if (packet instanceof autismclient.util.d.DataUtil.MethodUtil && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.MethodUtil p = (autismclient.util.d.DataUtil.MethodUtil)packet;
                   this.init(p.load_Str, p.init_J, p.init_I, p.load_J, p.read, p.init_Z);
                }
                break;
-            case start:
+            case HEARTBEAT:
                if (packet instanceof autismclient.util.d.DataUtil.NetHelper && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.NetHelper p = (autismclient.util.d.DataUtil.NetHelper)packet;
                   if (!p.load.equals(this.write_Str)) {
@@ -1427,25 +1427,25 @@ public class aE {
                   }
                }
                break;
-            case next:
+            case REQUEST_SYNC:
                if (packet instanceof autismclient.util.d.DataUtil.BitSetUtil && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.BitSetUtil p = (autismclient.util.d.DataUtil.BitSetUtil)packet;
                   this.init(p.load, p.init_Z, p.read, p.write);
                }
                break;
-            case prev:
+            case OFFSET_SYNC:
                if (packet instanceof autismclient.util.d.DataUtil.ByteReader && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.ByteReader p = (autismclient.util.d.DataUtil.ByteReader)packet;
                   this.init_V_Str_2(p.load, p.read, p.init_I);
                }
                break;
-            case valid:
+            case MACRO_STEP_PROGRESS:
                if (packet instanceof autismclient.util.d.DataUtil.TextFormat && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.TextFormat p = (autismclient.util.d.DataUtil.TextFormat)packet;
                   this.init(p.load_Str, p.init_I, p.load_I, p.read);
                }
                break;
-            case stop:
+            case SYNC_STATE_UPDATE:
                if (packet instanceof autismclient.util.d.DataUtil.FieldCache && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.FieldCache p = (autismclient.util.d.DataUtil.FieldCache)packet;
                   aE.Inner_JsonUtil[] states = aE.Inner_JsonUtil.values();
@@ -1458,7 +1458,7 @@ public class aE {
                   }
                }
                break;
-            case data:
+            case MACRO_ASSIGNMENT_SYNC:
                if (packet instanceof autismclient.util.d.DataUtil.SyncManager && packet.init_Str().equals(this.read_Str)) {
                   autismclient.util.d.DataUtil.SyncManager p = (autismclient.util.d.DataUtil.SyncManager)packet;
                   if (!p.load.equals(this.write_Str)) {
@@ -1504,9 +1504,9 @@ public class aE {
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
             int packetType = in.readInt();
             String packetSession = in.readUTF();
-            if (packetType == autismclient.util.d.StreamUtil.init_StreamUtil.init()) {
+            if (packetType == autismclient.util.d.StreamUtil.SEARCH_REQUEST.init()) {
                AutismClientAddon.LOG.info("[TCP] Received search request, responding with session info");
-               out.writeInt(autismclient.util.d.StreamUtil.load.init());
+               out.writeInt(autismclient.util.d.StreamUtil.SESSION.init());
                out.writeUTF(this.read_Str);
                new autismclient.util.d.DataUtil.TokenStore(this.read_Str, 0L, this.write_Str).init(out);
                out.flush();
@@ -1514,7 +1514,7 @@ public class aE {
                return;
             }
 
-            if (packetType != autismclient.util.d.StreamUtil.read.init()) {
+            if (packetType != autismclient.util.d.StreamUtil.JOIN.init()) {
                return;
             }
 
@@ -2257,7 +2257,7 @@ public class aE {
                   boolean perfect = Boolean.parseBoolean(parts[3]);
                   String tickReport = parts[4];
                   this.init_aE_TaskQueue = new aE.Inner_TaskQueue(
-                     maxOffset * 50000000L, perfect ? "" : "tick", count, aE.Inner_StreamUtil.load, targetTick, maxOffset, perfect, tickReport
+                     maxOffset * 50000000L, perfect ? "" : "tick", count, aE.Inner_StreamUtil.TICK, targetTick, maxOffset, perfect, tickReport
                   );
                   this.init_CopyOnWriteArrayLi.add(this.init_aE_TaskQueue);
 
@@ -2288,7 +2288,7 @@ public class aE {
 
                aE.Inner_StreamUtil method = this.init_aE_StreamUtil_Str(modeName);
                if (this.load_Z) {
-                  if (this.init_aE_JsonUtil != aE.Inner_JsonUtil.init && this.init_aE_JsonUtil != aE.Inner_JsonUtil.flush) {
+                  if (this.init_aE_JsonUtil != aE.Inner_JsonUtil.IDLE && this.init_aE_JsonUtil != aE.Inner_JsonUtil.DONE) {
                      this.load(
                         new autismclient.util.d.DataUtil.Inner_DataUtil(this.read_Str, this.write_Str, "__EXEC_METHOD__:" + this.init_aE_StreamUtil.name())
                      );
@@ -2382,7 +2382,7 @@ public class aE {
    }
 
    private boolean close_Z() {
-      return this.init_aE_JsonUtil == aE.Inner_JsonUtil.init || this.init_aE_JsonUtil == aE.Inner_JsonUtil.flush;
+      return this.init_aE_JsonUtil == aE.Inner_JsonUtil.IDLE || this.init_aE_JsonUtil == aE.Inner_JsonUtil.DONE;
    }
 
    private boolean open_Z() {
@@ -2401,8 +2401,8 @@ public class aE {
          this.init_aE_NetHelper = null;
          this.init_aE_ConfigStore = null;
          this.load_Set.clear();
-         if (this.init_aE_JsonUtil != aE.Inner_JsonUtil.init && this.init_aE_JsonUtil != aE.Inner_JsonUtil.flush) {
-            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.init);
+         if (this.init_aE_JsonUtil != aE.Inner_JsonUtil.IDLE && this.init_aE_JsonUtil != aE.Inner_JsonUtil.DONE) {
+            this.init_V_aE_JsonUtil(aE.Inner_JsonUtil.IDLE);
          }
       }
    }
@@ -2428,8 +2428,8 @@ public class aE {
    }
 
    public void init_V_aE_StreamUtil(aE.Inner_StreamUtil method) {
-      aE.Inner_StreamUtil next = method != null ? method : aE.Inner_StreamUtil.init;
-      if (this.init_aE_JsonUtil != aE.Inner_JsonUtil.init && this.init_aE_JsonUtil != aE.Inner_JsonUtil.flush) {
+      aE.Inner_StreamUtil next = method != null ? method : aE.Inner_StreamUtil.INSTANT;
+      if (this.init_aE_JsonUtil != aE.Inner_JsonUtil.IDLE && this.init_aE_JsonUtil != aE.Inner_JsonUtil.DONE) {
          AutismClientMessaging.sendPrefixed("§cCannot change execution method while LAN Sync is active.");
       } else if (this.read_Str != null && !this.load_Z) {
          this.load(new autismclient.util.d.DataUtil.Inner_DataUtil(this.read_Str, this.write_Str, "__EXEC_METHOD__:" + next.name()));
@@ -2451,7 +2451,7 @@ public class aE {
    }
 
    public void pop() {
-      this.init_V_aE_StreamUtil(this.init_aE_StreamUtil == aE.Inner_StreamUtil.init ? aE.Inner_StreamUtil.load : aE.Inner_StreamUtil.init);
+      this.init_V_aE_StreamUtil(this.init_aE_StreamUtil == aE.Inner_StreamUtil.INSTANT ? aE.Inner_StreamUtil.TICK : aE.Inner_StreamUtil.INSTANT);
    }
 
    public void tick() {
@@ -2954,9 +2954,9 @@ public class aE {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read;
+      HEALTHY,
+      STALE,
+      UNKNOWN;
    }
 
    private static final class Inner_ConfigStore {
@@ -2986,13 +2986,13 @@ public class aE {
    }
 
    public enum Inner_JsonUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      IDLE,
+      PREPARING,
+      ALL_READY,
+      DISPATCHING_GO,
+      EXECUTING,
+      REPORTING,
+      DONE;
    }
 
    public static class Inner_NetHelper {
@@ -3006,7 +3006,7 @@ public class aE {
       public volatile long load_J;
 
       public Inner_NetHelper(long executionId, boolean isMacro, String macroName, String command, aM macro, boolean isInitiator) {
-         this(executionId, isMacro, macroName, command, macro, isInitiator, aE.Inner_StreamUtil.init, -1L);
+         this(executionId, isMacro, macroName, command, macro, isInitiator, aE.Inner_StreamUtil.INSTANT, -1L);
       }
 
       public Inner_NetHelper(
@@ -3025,7 +3025,7 @@ public class aE {
          this.load_Str = command;
          this.init_aM = macro;
          this.load_Z = isInitiator;
-         this.init_aE_StreamUtil = executionMethod != null ? executionMethod : aE.Inner_StreamUtil.init;
+         this.init_aE_StreamUtil = executionMethod != null ? executionMethod : aE.Inner_StreamUtil.INSTANT;
          this.load_J = targetTick;
       }
    }
@@ -3041,8 +3041,8 @@ public class aE {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load;
+      INSTANT,
+      TICK;
    }
 
    public static class Inner_TaskQueue {
@@ -3056,7 +3056,7 @@ public class aE {
       public final String load_Str;
 
       public Inner_TaskQueue(long spreadNanos, String lateClient, int clientCount) {
-         this(spreadNanos, lateClient, clientCount, aE.Inner_StreamUtil.init, -1L, 0, false, "");
+         this(spreadNanos, lateClient, clientCount, aE.Inner_StreamUtil.INSTANT, -1L, 0, false, "");
       }
 
       public Inner_TaskQueue(
@@ -3072,7 +3072,7 @@ public class aE {
          this.init_J = spreadNanos;
          this.init_Str = lateClient;
          this.init_I = clientCount;
-         this.init_aE_StreamUtil = executionMethod != null ? executionMethod : aE.Inner_StreamUtil.init;
+         this.init_aE_StreamUtil = executionMethod != null ? executionMethod : aE.Inner_StreamUtil.INSTANT;
          this.load_J = targetTick;
          this.load_I = maxTickOffset;
          this.init_Z = perfectTickSync;

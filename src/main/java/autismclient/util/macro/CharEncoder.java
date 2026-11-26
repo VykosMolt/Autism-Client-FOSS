@@ -97,7 +97,7 @@ public class CharEncoder implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.value;
+      return StreamGate.GO_TO;
    }
 
    @Override

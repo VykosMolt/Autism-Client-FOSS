@@ -141,7 +141,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
       final FileCache.Inner_BufferHelper session = FileCache.init(this);
       final long generation = FileCache.init_J(session, packId);
       FileCache.Inner_DataUtil policy = FileCache.init_FileCache_DataUtil(session, packId);
-      if (policy != null && policy != FileCache.Inner_DataUtil.load && FileCache.init_Z(session, packId, generation)) {
+      if (policy != null && policy != FileCache.Inner_DataUtil.FULL && FileCache.init_Z(session, packId, generation)) {
          final CompletableFuture<Void> future = new CompletableFuture<>();
          @SuppressWarnings("unchecked")
          final java.util.function.BiConsumer<UUID, FinalResult>[] callbackRef = new java.util.function.BiConsumer[1];

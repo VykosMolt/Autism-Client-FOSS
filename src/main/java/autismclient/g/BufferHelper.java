@@ -34,7 +34,7 @@ public final class BufferHelper {
       Objects.requireNonNull(connection, "connection");
       Objects.requireNonNull(mode, "mode");
       if (peerAddress instanceof LocalAddress || connection.isMemoryConnection() || connection.getReceiving() == PacketFlow.SERVERBOUND) {
-         mode = BufferHelper.Inner_CachePool.load;
+         mode = BufferHelper.Inner_CachePool.MODDED;
       }
 
       List<Socket> retired = List.of();
@@ -454,8 +454,8 @@ public final class BufferHelper {
    }
 
    public enum Inner_CachePool {
-      init,
-      load;
+      VANILLA,
+      MODDED;
    }
 
    public record Inner_ConfigStore(bZ init_bZ, String init_Str, int init_I, String load, String read) {
@@ -520,7 +520,7 @@ public final class BufferHelper {
       }
 
       public BufferHelper.Inner_CachePool init_BufferHelper_Cache() {
-         return this.read() ? BufferHelper.Inner_CachePool.load : this.init_BufferHelper_Cache;
+         return this.read() ? BufferHelper.Inner_CachePool.MODDED : this.init_BufferHelper_Cache;
       }
 
       public boolean init_Z() {

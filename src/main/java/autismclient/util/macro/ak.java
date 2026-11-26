@@ -92,7 +92,7 @@ public class ak implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.entry;
+      return StreamGate.TOGGLE_MODULE;
    }
 
    @Override

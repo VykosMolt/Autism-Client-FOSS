@@ -40,7 +40,7 @@ public class AutismLogoRendererMixin {
          int logoY = heightOffset + 0;
          graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            cu.init(PACKUTIL_LOGO, ct.Inner_DataUtil.init),
+            cu.init(PACKUTIL_LOGO, ct.Inner_DataUtil.ACCENT),
             logoX,
             logoY,
             0.0F,

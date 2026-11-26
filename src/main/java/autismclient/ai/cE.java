@@ -337,14 +337,14 @@ final class cE {
 
    static autismclient.gui.e.ConfigStore init_ConfigStore_I(int style) {
       if ((style & 1) != 0) {
-         return autismclient.gui.e.ConfigStore.read;
+         return autismclient.gui.e.ConfigStore.TITLE;
       } else {
-         return (style & 2) != 0 ? autismclient.gui.e.ConfigStore.load : autismclient.gui.e.ConfigStore.init_ConfigStore;
+         return (style & 2) != 0 ? autismclient.gui.e.ConfigStore.LABEL : autismclient.gui.e.ConfigStore.BODY;
       }
    }
 
    static float init_F_I(int style) {
-      float body = autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore);
+      float body = autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY);
       return (style & 16) != 0 ? body * 1.15F : body;
    }
 

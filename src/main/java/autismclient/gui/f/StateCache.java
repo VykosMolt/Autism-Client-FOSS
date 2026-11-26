@@ -13,26 +13,26 @@ public interface StateCache {
    }
 
    default EventBus init_EventBus_I_2(int mouseX, int mouseY, int button) {
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    default EventBus load(int mouseX, int mouseY, int button) {
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    default EventBus init_EventBus_I(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    default EventBus init_EventBus_I(int mouseX, int mouseY, double amount) {
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    default EventBus read(int key, int scanCode, int modifiers) {
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    default EventBus init_EventBus_C(char chr) {
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 }

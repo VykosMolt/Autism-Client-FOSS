@@ -4,8 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class aH implements MacroAction {
-   public aH.Inner_StreamUtil countMode = aH.Inner_StreamUtil.init;
-   public aH.Inner_DataUtil comparison = aH.Inner_DataUtil.load;
+   public aH.Inner_StreamUtil countMode = aH.Inner_StreamUtil.FREE_SLOTS;
+   public aH.Inner_DataUtil comparison = aH.Inner_DataUtil.AT_MOST;
    public int slots = 0;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -17,7 +17,7 @@ public class aH implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_F_StreamGate;
+      return StreamGate.WAIT_FREE_SLOTS;
    }
 
    public boolean init(Minecraft mc) {
@@ -34,7 +34,7 @@ public class aH implements MacroAction {
             }
          }
 
-         int actual = this.countMode == aH.Inner_StreamUtil.load ? filled : free;
+         int actual = this.countMode == aH.Inner_StreamUtil.FILLED_SLOTS ? filled : free;
          return this.init(actual, Math.max(0, Math.min(36, this.slots)));
       } else {
          return false;
@@ -44,19 +44,19 @@ public class aH implements MacroAction {
    private boolean init(int actual, int target) {
       boolean var10000;
       switch (this.comparison) {
-         case init:
+         case BELOW:
             var10000 = actual < target;
             break;
-         case load:
+         case AT_MOST:
             var10000 = actual <= target;
             break;
-         case read:
+         case EXACT:
             var10000 = actual == target;
             break;
-         case write:
+         case AT_LEAST:
             var10000 = actual >= target;
             break;
-         case update:
+         case ABOVE:
             var10000 = actual > target;
             break;
          default:
@@ -81,8 +81,8 @@ public class aH implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.countMode = i.init(aH.Inner_StreamUtil.class, tag.getStringOr("countMode", aH.Inner_StreamUtil.init.name()), aH.Inner_StreamUtil.init);
-      this.comparison = i.init(aH.Inner_DataUtil.class, tag.getStringOr("comparison", aH.Inner_DataUtil.load.name()), aH.Inner_DataUtil.load);
+      this.countMode = i.init(aH.Inner_StreamUtil.class, tag.getStringOr("countMode", aH.Inner_StreamUtil.FREE_SLOTS.name()), aH.Inner_StreamUtil.FREE_SLOTS);
+      this.comparison = i.init(aH.Inner_DataUtil.class, tag.getStringOr("comparison", aH.Inner_DataUtil.AT_MOST.name()), aH.Inner_DataUtil.AT_MOST);
       this.slots = Math.max(0, Math.min(36, tag.getIntOr("slots", 0)));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
@@ -94,25 +94,25 @@ public class aH implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Wait " + (this.countMode == aH.Inner_StreamUtil.load ? "Filled" : "Free") + " Slots " + this.init() + " " + Math.max(0, Math.min(36, this.slots));
+      return "Wait " + (this.countMode == aH.Inner_StreamUtil.FILLED_SLOTS ? "Filled" : "Free") + " Slots " + this.init() + " " + Math.max(0, Math.min(36, this.slots));
    }
 
    private String init() {
       String var10000;
       switch (this.comparison) {
-         case init:
+         case BELOW:
             var10000 = "<";
             break;
-         case load:
+         case AT_MOST:
             var10000 = "<=";
             break;
-         case read:
+         case EXACT:
             var10000 = "=";
             break;
-         case write:
+         case AT_LEAST:
             var10000 = ">=";
             break;
-         case update:
+         case ABOVE:
             var10000 = ">";
             break;
          default:
@@ -138,15 +138,15 @@ public class aH implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      BELOW,
+      AT_MOST,
+      EXACT,
+      AT_LEAST,
+      ABOVE;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load;
+      FREE_SLOTS,
+      FILLED_SLOTS;
    }
 }

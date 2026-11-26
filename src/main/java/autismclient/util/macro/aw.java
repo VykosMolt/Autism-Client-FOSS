@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 public class aw implements CacheEntry, MacroAction {
    public List<String> entityIds = new ArrayList<>();
    public boolean mustBeLookingAt = false;
-   public aw.Inner_DataUtil checkMode = aw.Inner_DataUtil.init;
+   public aw.Inner_DataUtil checkMode = aw.Inner_DataUtil.RADIUS;
    public boolean centerOnPlayer = true;
    public double radius = 6.0;
    public boolean containerEntitiesOnly = false;
@@ -88,10 +88,10 @@ public class aw implements CacheEntry, MacroAction {
          try {
             this.checkMode = aw.Inner_DataUtil.valueOf(tag.getStringOr("checkMode", "RADIUS"));
          } catch (Exception e) {
-            this.checkMode = aw.Inner_DataUtil.init;
+            this.checkMode = aw.Inner_DataUtil.RADIUS;
          }
       } else {
-         this.checkMode = this.mustBeLookingAt ? aw.Inner_DataUtil.load : aw.Inner_DataUtil.init;
+         this.checkMode = this.mustBeLookingAt ? aw.Inner_DataUtil.LOOKING_AT : aw.Inner_DataUtil.RADIUS;
       }
 
       this.centerOnPlayer = tag.getBooleanOr("centerOnPlayer", true);
@@ -120,16 +120,16 @@ public class aw implements CacheEntry, MacroAction {
       aw.Inner_DataUtil var10001;
       switch (condition) {
          case "WITHIN_REACH":
-            var10001 = aw.Inner_DataUtil.read;
+            var10001 = aw.Inner_DataUtil.WITHIN_REACH;
             break;
          case "MOUNTED_IN":
-            var10001 = aw.Inner_DataUtil.write;
+            var10001 = aw.Inner_DataUtil.MOUNTED_IN;
             break;
          case "NEARBY":
-            var10001 = aw.Inner_DataUtil.update;
+            var10001 = aw.Inner_DataUtil.NEARBY;
             break;
          default:
-            var10001 = aw.Inner_DataUtil.load;
+            var10001 = aw.Inner_DataUtil.LOOKING_AT;
       }
 
       this.checkMode = var10001;
@@ -144,8 +144,8 @@ public class aw implements CacheEntry, MacroAction {
       if (mc != null && mc.player != null && mc.level != null) {
          boolean var10000;
          switch (this.checkMode) {
-            case init:
-            case update:
+            case RADIUS:
+            case NEARBY:
                Vec3 center = this.centerOnPlayer
                   ? new Vec3(mc.player.getX(), mc.player.getY(), mc.player.getZ())
                   : new Vec3(this.f_x_D, this.f_y_D, this.f_z_D);
@@ -161,10 +161,10 @@ public class aw implements CacheEntry, MacroAction {
 
                var10000 = found;
                break;
-            case load:
+            case LOOKING_AT:
                var10000 = this.init(mc.crosshairPickEntity);
                break;
-            case read: {
+            case WITHIN_REACH: {
                double reachSq = mc.player.blockInteractionRange() * mc.player.blockInteractionRange();
                boolean found2 = false;
 
@@ -178,7 +178,7 @@ public class aw implements CacheEntry, MacroAction {
                var10000 = found2;
                break;
             }
-            case write:
+            case MOUNTED_IN:
                var10000 = this.init(mc.player.getVehicle());
                break;
             default:
@@ -229,16 +229,16 @@ public class aw implements CacheEntry, MacroAction {
 
    public Entity init_Entity(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         if (this.checkMode == aw.Inner_DataUtil.load) {
+         if (this.checkMode == aw.Inner_DataUtil.LOOKING_AT) {
             return this.init(mc.crosshairPickEntity) ? mc.crosshairPickEntity : null;
          }
 
-         if (this.checkMode == aw.Inner_DataUtil.write) {
+         if (this.checkMode == aw.Inner_DataUtil.MOUNTED_IN) {
             return this.init(mc.player.getVehicle()) ? mc.player.getVehicle() : null;
          }
 
          Vec3 center = this.centerOnPlayer ? mc.player.position() : new Vec3(this.f_x_D, this.f_y_D, this.f_z_D);
-         double maxDistance = this.checkMode == aw.Inner_DataUtil.read ? mc.player.blockInteractionRange() : this.radius;
+         double maxDistance = this.checkMode == aw.Inner_DataUtil.WITHIN_REACH ? mc.player.blockInteractionRange() : this.radius;
          double maxDistanceSq = maxDistance * maxDistance;
          Entity nearest = null;
          double nearestDistance = 1.7976931348623157E308;
@@ -261,7 +261,7 @@ public class aw implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.chunk;
+      return StreamGate.WAIT_ENTITY;
    }
 
    @Override
@@ -287,19 +287,19 @@ public class aw implements CacheEntry, MacroAction {
 
       String var10000;
       switch (this.checkMode) {
-         case init:
+         case RADIUS:
             var10000 = "r=" + (int)this.radius;
             break;
-         case load:
+         case LOOKING_AT:
             var10000 = "look";
             break;
-         case read:
+         case WITHIN_REACH:
             var10000 = "reach";
             break;
-         case write:
+         case MOUNTED_IN:
             var10000 = "mounted";
             break;
-         case update:
+         case NEARBY:
             var10000 = "nearby " + (int)this.radius;
             break;
          default:
@@ -336,10 +336,10 @@ public class aw implements CacheEntry, MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      RADIUS,
+      LOOKING_AT,
+      WITHIN_REACH,
+      MOUNTED_IN,
+      NEARBY;
    }
 }

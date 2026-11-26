@@ -66,26 +66,26 @@ public final class PkgCls_a {
    public static PkgCls_a.Inner_StreamUtil init_a_StreamUtil_Str(String arguments, Vec3 origin, int configuredPackets, int configuredPause) {
       String trimmed = arguments == null ? "" : arguments.trim();
       if (trimmed.isEmpty()) {
-         return new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.sync, null, 0, 0, "");
+         return new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.HELP, null, 0, 0, "");
       }
 
       String[] parts = trimmed.split("\\s+");
       String first = parts[0].toLowerCase(Locale.ROOT);
       if ("stop".equals(first)) {
          return parts.length == 1
-            ? new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.load, null, 0, 0, "")
+            ? new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.STOP, null, 0, 0, "")
             : PkgCls_a.Inner_StreamUtil.init("Usage: tp stop");
       }
 
       if ("status".equals(first)) {
          return parts.length == 1
-            ? new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.read, null, 0, 0, "")
+            ? new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.STATUS, null, 0, 0, "")
             : PkgCls_a.Inner_StreamUtil.init("Usage: tp status");
       }
 
       if ("reset".equals(first)) {
          return parts.length == 1
-            ? new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.update, null, 20, 500, "")
+            ? new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.RESET, null, 20, 500, "")
             : PkgCls_a.Inner_StreamUtil.init("Usage: tp reset");
       }
 
@@ -100,7 +100,7 @@ public final class PkgCls_a {
             } else {
                return pause == null
                   ? PkgCls_a.Inner_StreamUtil.init("pauseMs must be 50-10000")
-                  : new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.write, null, packets, pause, "");
+                  : new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.CONFIG, null, packets, pause, "");
             }
          }
       } else {
@@ -143,7 +143,7 @@ public final class PkgCls_a {
 
                return option != parts.length
                   ? PkgCls_a.Inner_StreamUtil.init("Usage: tp <x> <y> <z> [maxPackets] [pauseMs]")
-                  : new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.init, new Vec3(x, y, z), packets, pause, "");
+                  : new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.START, new Vec3(x, y, z), packets, pause, "");
             } else {
                return PkgCls_a.Inner_StreamUtil.init("Coordinates must be numbers or ~ offsets");
             }
@@ -191,7 +191,7 @@ public final class PkgCls_a {
 
       Vec3 origin = init_Vec3_LocalPlayer(player);
       PkgCls_a.Inner_StreamUtil request = init_a_StreamUtil_Str(action.init(), origin, action.maxPackets, action.pauseMs);
-      if (request.init_a_DataUtil() != PkgCls_a.Inner_DataUtil.init) {
+      if (request.init_a_DataUtil() != PkgCls_a.Inner_DataUtil.START) {
          return new PkgCls_a.Inner_StateCache(false, request.init_Str().isBlank() ? "Invalid TP action" : request.init_Str());
       }
 
@@ -209,7 +209,7 @@ public final class PkgCls_a {
    public static void init_V_J_Str(long id, String reason) {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore_J(id);
       if (job != null) {
-         init_V_a_ConfigStore(job, bl.Inner_DataUtil.write, reason == null ? "macro stopped" : reason);
+         init_V_a_ConfigStore(job, bl.Inner_DataUtil.CANCELLED, reason == null ? "macro stopped" : reason);
       }
    }
 
@@ -227,27 +227,27 @@ public final class PkgCls_a {
    }
 
    private static String init_Str_a_StreamUtil(PkgCls_a.Inner_StreamUtil request) {
-      if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.flush) {
+      if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.ERROR) {
          return request.init_Str();
-      } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.sync) {
+      } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.HELP) {
          return "Usage: tp <x> <y> <z> [maxPackets] [pauseMs]";
-      } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.write || request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.update) {
+      } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.CONFIG || request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.RESET) {
          AutismConfig config = AutismConfig.getGlobal();
          config.tpMaxPackets = request.init_I();
          config.tpPauseMs = request.load();
          config.save();
          return "TP defaults: " + request.init_I() + " packets, " + request.load() + " ms";
-      } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.read) {
+      } else if (request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.STATUS) {
          return init_Str_status();
       } else {
-         return request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.load ? init_Str_stop("stopped by command") : null;
+         return request.init_a_DataUtil() == PkgCls_a.Inner_DataUtil.STOP ? init_Str_stop("stopped by command") : null;
       }
    }
 
    public static void init_V_Minecraft(Minecraft mc) {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
       boolean settling = job != null && job.close != 0L;
-      boolean blockInput = job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && mc != null && !settling && aR.init_Z_30();
+      boolean blockInput = job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && mc != null && !settling && aR.init_Z_30();
       if (blockInput) {
          load(mc);
          init_Z = true;
@@ -493,7 +493,7 @@ public final class PkgCls_a {
    }
 
    private static boolean init_Z_a_ConfigStore(PkgCls_a.Inner_ConfigStore job) {
-      return AutismLiteVariant.enabled() ? job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init : false;
+      return AutismLiteVariant.enabled() ? job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN : false;
    }
 
    private static void init_V_a_ConfigStore_J(PkgCls_a.Inner_ConfigStore job, long now) {
@@ -537,7 +537,7 @@ public final class PkgCls_a {
             }
          }
       } else {
-         return job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.load ? job.init_Vec3 : job.init_Vec3;
+         return job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.POV ? job.init_Vec3 : job.init_Vec3;
       }
    }
 
@@ -727,7 +727,7 @@ public final class PkgCls_a {
    static boolean init_Z_F_BufferHelper(F.Inner_BufferHelper route, Vec3 from, Vec3 destination) {
       return route != null
          && route.load()
-         && (route.init_F_ConfigStore() == F.Inner_ConfigStore.read || init_Z_Vec3(from, route.init_List().getLast(), destination));
+         && (route.init_F_ConfigStore() == F.Inner_ConfigStore.ESCAPE || init_Z_Vec3(from, route.init_List().getLast(), destination));
    }
 
    private static boolean init_Z_a_ConfigStore_J(PkgCls_a.Inner_ConfigStore job, long now) {
@@ -1112,7 +1112,7 @@ public final class PkgCls_a {
    private static boolean load(PkgCls_a.Inner_ConfigStore job, PkgCls_a.Inner_TaskQueue frame) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.getConnection() != null && mc.player != null) {
-         boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && aR.load_Z_12();
+         boolean noFall = job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && aR.load_Z_12();
          boolean previousOwnedSend = write();
 
          try {
@@ -1145,7 +1145,7 @@ public final class PkgCls_a {
    }
 
    private static Vec3 init_Vec3_a_ConfigStore_Vec3(PkgCls_a.Inner_ConfigStore job, Vec3 position) {
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && aR.read()) {
+      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && aR.read()) {
          long now = System.currentTimeMillis();
          if (now - job.tick < 1000L) {
             return position;
@@ -1260,7 +1260,7 @@ public final class PkgCls_a {
    }
 
    private static boolean init_Z_a_ConfigStore_Z(PkgCls_a.Inner_ConfigStore job, boolean vehicle) {
-      if (job.init_a_NetHelper != PkgCls_a.Inner_NetHelper.init) {
+      if (job.init_a_NetHelper != PkgCls_a.Inner_NetHelper.MAIN) {
          return false;
       } else {
          Minecraft mc = Minecraft.getInstance();
@@ -1275,7 +1275,7 @@ public final class PkgCls_a {
 
    public static boolean init_Z() {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
-      return job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init;
+      return job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN;
    }
 
    public static boolean load_Z() {
@@ -1319,7 +1319,7 @@ public final class PkgCls_a {
       }
 
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore;
-      return job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && !load_Z() ? job.close == 0L : false;
+      return job != null && job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && !load_Z() ? job.close == 0L : false;
    }
 
    public static void init_V_Str(String reason) {
@@ -1417,19 +1417,19 @@ public final class PkgCls_a {
          }
       }
 
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && job.init_LocalPlayer != null) {
+      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && job.init_LocalPlayer != null) {
          job.init_LocalPlayer.setDeltaMovement(Vec3.ZERO);
       }
 
       if (job.init_J != 0L) {
-         bl.init(job.init_J, bl.Inner_DataUtil.write);
+         bl.init(job.init_J, bl.Inner_DataUtil.CANCELLED);
       }
 
       return "TP stopped";
    }
 
    private static void init_V_a_ConfigStore_3(PkgCls_a.Inner_ConfigStore job, boolean success, String reason) {
-      init_V_a_ConfigStore(job, success ? bl.Inner_DataUtil.load : bl.Inner_DataUtil.read, reason);
+      init_V_a_ConfigStore(job, success ? bl.Inner_DataUtil.SUCCEEDED : bl.Inner_DataUtil.FAILED, reason);
    }
 
    private static void init_V_a_ConfigStore(PkgCls_a.Inner_ConfigStore job, bl.Inner_DataUtil completion, String reason) {
@@ -1441,12 +1441,12 @@ public final class PkgCls_a {
          init_a_ConfigStore = null;
       }
 
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && init_Z) {
+      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && init_Z) {
          init_Z = false;
          read(Minecraft.getInstance());
       }
 
-      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.init && job.init_LocalPlayer != null) {
+      if (job.init_a_NetHelper == PkgCls_a.Inner_NetHelper.MAIN && job.init_LocalPlayer != null) {
          job.init_LocalPlayer.setDeltaMovement(Vec3.ZERO);
       }
 
@@ -1454,7 +1454,7 @@ public final class PkgCls_a {
          bl.init(job.init_J, completion);
       }
 
-      boolean success = completion == bl.Inner_DataUtil.load;
+      boolean success = completion == bl.Inner_DataUtil.SUCCEEDED;
       String color = success ? "§a" : "§e";
       AutismClientMessaging.sendPrefixed(color + "TP " + (success ? "complete: " : "stopped: ") + "§f" + reason);
    }
@@ -1624,7 +1624,7 @@ public final class PkgCls_a {
 
       static PkgCls_a.Inner_ConfigStore init(LocalPlayer player, Object connection, Object level, Entity vehicle, PkgCls_a.Inner_StreamUtil request) {
          return new PkgCls_a.Inner_ConfigStore(
-            PkgCls_a.Inner_NetHelper.init,
+            PkgCls_a.Inner_NetHelper.MAIN,
             player,
             connection,
             level,
@@ -1641,7 +1641,7 @@ public final class PkgCls_a {
          LocalPlayer player, Object connection, Object level, Entity vehicle, PkgCls_a.Inner_StreamUtil request, long macroId
       ) {
          return new PkgCls_a.Inner_ConfigStore(
-            PkgCls_a.Inner_NetHelper.init,
+            PkgCls_a.Inner_NetHelper.MAIN,
             player,
             connection,
             level,
@@ -1656,13 +1656,13 @@ public final class PkgCls_a {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      START,
+      STOP,
+      STATUS,
+      CONFIG,
+      RESET,
+      HELP,
+      ERROR;
    }
 
    public static final class Inner_JsonUtil {
@@ -1718,8 +1718,8 @@ public final class PkgCls_a {
    }
 
    private enum Inner_NetHelper {
-      init,
-      load;
+      MAIN,
+      POV;
    }
 
    public record Inner_StateCache(boolean init_Z, String init_Str) {
@@ -1727,7 +1727,7 @@ public final class PkgCls_a {
 
    public record Inner_StreamUtil(PkgCls_a.Inner_DataUtil init_a_DataUtil, Vec3 init_Vec3, int init_I, int load, String init_Str) {
       static PkgCls_a.Inner_StreamUtil init(String message) {
-         return new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.flush, null, 0, 0, message);
+         return new PkgCls_a.Inner_StreamUtil(PkgCls_a.Inner_DataUtil.ERROR, null, 0, 0, message);
       }
    }
 

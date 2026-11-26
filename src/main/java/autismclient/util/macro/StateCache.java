@@ -10,8 +10,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 
 public class StateCache implements MacroAction {
-   public StateCache.Inner_StreamUtil slotSource = StateCache.Inner_StreamUtil.init;
-   public StateCache.Inner_DataUtil containerSource = StateCache.Inner_DataUtil.init;
+   public StateCache.Inner_StreamUtil slotSource = StateCache.Inner_StreamUtil.SINGLE;
+   public StateCache.Inner_DataUtil containerSource = StateCache.Inner_DataUtil.CURRENT;
    public int slot = 0;
    public int startSlot = 0;
    public int endSlot = 0;
@@ -38,7 +38,7 @@ public class StateCache implements MacroAction {
 
    boolean init(Minecraft mc, int visibleSlot) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
-         int handlerSlot = this.containerSource != StateCache.Inner_DataUtil.init && this.containerSource != StateCache.Inner_DataUtil.read
+         int handlerSlot = this.containerSource != StateCache.Inner_DataUtil.CURRENT && this.containerSource != StateCache.Inner_DataUtil.PLAYER_INVENTORY
             ? visibleSlot
             : autismclient.util.aw.load_I(mc, visibleSlot);
          if (handlerSlot < 0) {
@@ -63,17 +63,17 @@ public class StateCache implements MacroAction {
    private int init(Minecraft mc) {
       int var10000;
       switch (this.containerSource) {
-         case init:
+         case CURRENT:
             var10000 = mc.player.containerMenu.containerId;
             break;
-         case load:
+         case SAVED_GUI:
             AbstractContainerMenu saved = ck.init_ck().init_AbstractContainerM();
             var10000 = saved == null ? this.savedContainerId : saved.containerId;
             break;
-         case read:
+         case PLAYER_INVENTORY:
             var10000 = 0;
             break;
-         case write:
+         case MANUAL:
             var10000 = this.manualContainerId;
             break;
          default:
@@ -86,10 +86,10 @@ public class StateCache implements MacroAction {
    public List<Integer> init() {
       ArrayList<Integer> out = new ArrayList<>();
       switch (this.slotSource) {
-         case init:
+         case SINGLE:
             out.add(this.slot);
             break;
-         case load:
+         case RANGE:
             int a = Math.min(this.startSlot, this.endSlot);
             int b = Math.max(this.startSlot, this.endSlot);
 
@@ -97,7 +97,7 @@ public class StateCache implements MacroAction {
                out.add(i);
             }
             break;
-         case read:
+         case LIST:
             for (String raw : this.slots) {
                try {
                   out.add(Integer.parseInt(raw.trim()));
@@ -105,7 +105,7 @@ public class StateCache implements MacroAction {
                }
             }
             break;
-         case write:
+         case CAPTURED_SEQUENCE:
             for (String raw : this.slots) {
                try {
                   out.add(Integer.parseInt(raw.trim()));
@@ -119,7 +119,7 @@ public class StateCache implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_x_StreamGate;
+      return StreamGate.CONTAINER_CLICK_SEQUENCE;
    }
 
    @Override
@@ -143,8 +143,8 @@ public class StateCache implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.slotSource = i.init(StateCache.Inner_StreamUtil.class, tag.getStringOr("slotSource", "SINGLE"), StateCache.Inner_StreamUtil.init);
-      this.containerSource = i.init(StateCache.Inner_DataUtil.class, tag.getStringOr("containerSource", "CURRENT"), StateCache.Inner_DataUtil.init);
+      this.slotSource = i.init(StateCache.Inner_StreamUtil.class, tag.getStringOr("slotSource", "SINGLE"), StateCache.Inner_StreamUtil.SINGLE);
+      this.containerSource = i.init(StateCache.Inner_DataUtil.class, tag.getStringOr("containerSource", "CURRENT"), StateCache.Inner_DataUtil.CURRENT);
       this.slot = tag.getIntOr("slot", 0);
       this.startSlot = tag.getIntOr("startSlot", 0);
       this.endSlot = tag.getIntOr("endSlot", 0);
@@ -183,16 +183,16 @@ public class StateCache implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      CURRENT,
+      SAVED_GUI,
+      PLAYER_INVENTORY,
+      MANUAL;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      SINGLE,
+      RANGE,
+      LIST,
+      CAPTURED_SEQUENCE;
    }
 }

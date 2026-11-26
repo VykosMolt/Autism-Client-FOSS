@@ -16,7 +16,7 @@ public class az implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_j_StreamGate;
+      return StreamGate.WAIT_LAN_STEP;
    }
 
    @Override

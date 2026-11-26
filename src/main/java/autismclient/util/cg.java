@@ -29,7 +29,7 @@ public final class cg {
    }
 
    public static void init(boolean enabled, boolean custom, int customArgb) {
-      init(cg.Inner_DataUtil.init, enabled, custom, customArgb);
+      init(cg.Inner_DataUtil.SCAFFOLD, enabled, custom, customArgb);
    }
 
    public static void init(cg.Inner_DataUtil source, boolean enabled, boolean custom, int customArgb) {
@@ -40,7 +40,7 @@ public final class cg {
    }
 
    public static void init_V() {
-      init_V(cg.Inner_DataUtil.init);
+      init_V(cg.Inner_DataUtil.SCAFFOLD);
    }
 
    public static void init_V(cg.Inner_DataUtil source) {
@@ -57,7 +57,7 @@ public final class cg {
    }
 
    public static void init(BlockPos pos) {
-      init(cg.Inner_DataUtil.init, pos);
+      init(cg.Inner_DataUtil.SCAFFOLD, pos);
    }
 
    public static void init(cg.Inner_DataUtil source, BlockPos pos) {
@@ -114,7 +114,7 @@ public final class cg {
                   Minecraft mc = Minecraft.getInstance();
                   if (mc != null && mc.level != null) {
                      long now = System.nanoTime();
-                     int accent = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.init);
+                     int accent = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.ACCENT);
                      Vec3 origin = context.levelState().cameraRenderState.pos;
                      context.submitNodeCollector()
                         .submitCustomGeometry(
@@ -193,8 +193,8 @@ public final class cg {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      SCAFFOLD,
+      CLUTCH;
    }
 
    private record Inner_StreamUtil(boolean init_Z, boolean load, int init_I) {

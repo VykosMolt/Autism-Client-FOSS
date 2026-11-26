@@ -23,11 +23,11 @@ public final class DataUtil {
             Matcher reg = init.matcher(line);
             if (reg.find()) {
                String command = line.substring(reg.start(), reg.end()).toLowerCase(Locale.ROOT);
-               return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.load, command, init(line, reg.end()));
+               return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.REGISTER, command, init(line, reg.end()));
             } else {
                Matcher log = load.matcher(line);
                return log.find()
-                  ? new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.read, line.substring(log.start(), log.end()).toLowerCase(Locale.ROOT), 1)
+                  ? new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.LOGIN, line.substring(log.start(), log.end()).toLowerCase(Locale.ROOT), 1)
                   : DataUtil.Inner_DataUtil.init_DataUtil_DataUtil;
             }
          }
@@ -64,7 +64,7 @@ public final class DataUtil {
    }
 
    public record Inner_DataUtil(DataUtil.Inner_StreamUtil init_DataUtil_StreamUti, String init_Str, int init_I) {
-      public static final DataUtil.Inner_DataUtil init_DataUtil_DataUtil = new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.init, "", 0);
+      public static final DataUtil.Inner_DataUtil init_DataUtil_DataUtil = new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.NONE, "", 0);
 
       public String init(String password) {
          String line = this.init_Str + " " + password;
@@ -73,8 +73,8 @@ public final class DataUtil {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      NONE,
+      REGISTER,
+      LOGIN;
    }
 }

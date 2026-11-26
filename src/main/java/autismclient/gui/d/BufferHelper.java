@@ -51,8 +51,8 @@ public final class BufferHelper extends KeyHolder {
       this.init_Screen = parent;
       this.init_Module = module;
       this.init_Setting = option;
-      this.init_BufferHelper_DataU = mode == null ? BufferHelper.Inner_DataUtil.update : mode;
-      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write) {
+      this.init_BufferHelper_DataU = mode == null ? BufferHelper.Inner_DataUtil.RAW : mode;
+      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT) {
          this.init_BitSetUtil.init_BitSetUtil_Function(this::init_Component_Str);
          this.init_BitSetUtil.sync(1376389388);
          this.init_BitSetUtil.read_BitSetUtil_Z(false);
@@ -93,7 +93,7 @@ public final class BufferHelper extends KeyHolder {
             ui, panel, headerH, "Edit " + this.init_BufferHelper_DataU.init_Str, mx >= x && mx < x + w && my >= y && my < y + headerH
          );
          this.init_NetHelper = autismclient.gui.f.b.IoWorker.init(panel, headerH);
-         int footerRows = this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write ? 2 : 1;
+         int footerRows = this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT ? 2 : 1;
          int footerHeight = pad * 2 + footerRows * ctrlH + (footerRows - 1) * 2;
          int footerTop = y + h - footerHeight;
          int tipY = y + headerH + 2;
@@ -116,7 +116,7 @@ public final class BufferHelper extends KeyHolder {
          int cancelW = autismclient.gui.f.RenderState.load(ui.init_PoolEntry().init("Cancel"));
          int cancelX = x + w - pad - cancelW;
          int saveX = cancelX - 2 - saveW;
-         if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write) {
+         if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT) {
             int toolbarX = x + pad;
             int toolbarW = Math.max(1, w - pad * 2);
             int cellW = Math.max(1, (toolbarW - 6) / 4);
@@ -222,20 +222,20 @@ public final class BufferHelper extends KeyHolder {
    public boolean keyPressed(KeyEvent input) {
       boolean ctrl = (Compat263.keyEventGlfwModifiers(input) & 10) != 0;
       boolean shift = (Compat263.keyEventGlfwModifiers(input) & 1) != 0;
-      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write && ctrl && Compat263.keyEventGlfwKey(input) == 83) {
+      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT && ctrl && Compat263.keyEventGlfwKey(input) == 83) {
          this.load_V_3();
          return true;
       }
 
-      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write && ctrl && shift && Compat263.keyEventGlfwKey(input) == 70) {
+      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT && ctrl && shift && Compat263.keyEventGlfwKey(input) == 70) {
          this.read();
          return true;
       }
 
-      if (this.init_BufferHelper_DataU != BufferHelper.Inner_DataUtil.write
+      if (this.init_BufferHelper_DataU != BufferHelper.Inner_DataUtil.FULL_NBT
          || !ctrl
          || Compat263.keyEventGlfwKey(input) != 257 && Compat263.keyEventGlfwKey(input) != 335) {
-         if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write && Compat263.keyEventGlfwKey(input) == 258 && this.init_BitSetUtil.load_Z()) {
+         if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT && Compat263.keyEventGlfwKey(input) == 258 && this.init_BitSetUtil.load_Z()) {
             this.init_BitSetUtil.write("  ");
             return true;
          } else if (Compat263.keyEventGlfwKey(input) == 256) {
@@ -290,7 +290,7 @@ public final class BufferHelper extends KeyHolder {
    }
 
    private boolean init_Z_2() {
-      if (this.init_BufferHelper_DataU != BufferHelper.Inner_DataUtil.write) {
+      if (this.init_BufferHelper_DataU != BufferHelper.Inner_DataUtil.FULL_NBT) {
          return true;
       }
 
@@ -315,7 +315,7 @@ public final class BufferHelper extends KeyHolder {
    }
 
    private void read() {
-      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.write) {
+      if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT) {
          String repaired = dl.init_Str(this.init_BitSetUtil.init_Str());
          ItemStack stack = ay.init_ItemStack(repaired);
          if (stack.isEmpty()) {
@@ -419,17 +419,17 @@ public final class BufferHelper extends KeyHolder {
       String value = raw == null ? "" : raw;
       String var10000;
       switch (this.init_BufferHelper_DataU) {
-         case init_BufferHelper_DataU:
+         case LORE:
             var10000 = value.replace("|", "\n");
             break;
-         case load_BufferHelper_DataU:
+         case ENCHANTMENTS:
             var10000 = String.join("\n", load_List_Str(value));
             break;
-         case read:
+         case ATTRIBUTES:
          default:
             var10000 = value;
             break;
-         case write:
+         case FULL_NBT:
             var10000 = az.init_Str_Str(value);
       }
 
@@ -440,10 +440,10 @@ public final class BufferHelper extends KeyHolder {
       String value = displayed == null ? "" : displayed;
       String var10000;
       switch (this.init_BufferHelper_DataU) {
-         case init_BufferHelper_DataU:
+         case LORE:
             var10000 = String.join("|", init_List_Str(value));
             break;
-         case load_BufferHelper_DataU:
+         case ENCHANTMENTS:
             var10000 = String.join(",", init_List_Str(value));
             break;
          default:
@@ -524,11 +524,11 @@ public final class BufferHelper extends KeyHolder {
    }
 
    public enum Inner_DataUtil {
-      init_BufferHelper_DataU("Lore", "One lore line per row. Order is preserved."),
-      load_BufferHelper_DataU("Enchantments", "One enchantment per row: minecraft:id:level"),
-      read("Attributes", "Raw attribute component rows. Advanced values stay exact."),
-      write("Full ItemStack NBT", "Complete ItemStack SNBT. Saving validates every field before it can be applied."),
-      update("Raw Data", "Exact raw value. Multiline editing does not discard data.");
+      LORE("Lore", "One lore line per row. Order is preserved."),
+      ENCHANTMENTS("Enchantments", "One enchantment per row: minecraft:id:level"),
+      ATTRIBUTES("Attributes", "Raw attribute component rows. Advanced values stay exact."),
+      FULL_NBT("Full ItemStack NBT", "Complete ItemStack SNBT. Saving validates every field before it can be applied."),
+      RAW("Raw Data", "Exact raw value. Multiline editing does not discard data.");
 
       private final String init_Str;
       private final String load_Str;

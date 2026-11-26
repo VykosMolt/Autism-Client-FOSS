@@ -41,7 +41,7 @@ public final class JsonUtil {
    }
 
    public void init(ct.Inner_StreamUtil state) {
-      this.clear = ct.init_I_I_2(-50373, ct.Inner_DataUtil.init, state);
+      this.clear = ct.init_I_I_2(-50373, ct.Inner_DataUtil.ACCENT, state);
       this.init = 1208486416;
       this.update = this.init(1777705, 212, 0.035F);
       this.sync = this.init(1711912, 230, 0.035F);
@@ -60,14 +60,14 @@ public final class JsonUtil {
       this.put = this.init(34, 0.06F);
       this.add = 385875967;
       this.write = this.init(84, 0.06F);
-      this.reset = ct.init_I_I_2(-7397596, ct.Inner_DataUtil.init, state);
-      this.start = ct.init_I_I_2(1157577531, ct.Inner_DataUtil.init, state);
-      this.stop = ct.init_I_I_2(-12588930, ct.Inner_DataUtil.sync, state);
-      this.next = ct.init_I_I_2(1715464318, ct.Inner_DataUtil.sync, state);
-      this.prev = ct.init_I_I_2(-854534, ct.Inner_DataUtil.read, state);
-      this.valid = ct.init_I_I_2(-6774093, ct.Inner_DataUtil.read, state);
-      this.size = ct.init_I_I_2(-10853776, ct.Inner_DataUtil.read, state);
-      this.data = ct.init_I_I_2(-43691, ct.Inner_DataUtil.flush, state);
+      this.reset = ct.init_I_I_2(-7397596, ct.Inner_DataUtil.ACCENT, state);
+      this.start = ct.init_I_I_2(1157577531, ct.Inner_DataUtil.ACCENT, state);
+      this.stop = ct.init_I_I_2(-12588930, ct.Inner_DataUtil.SUCCESS, state);
+      this.next = ct.init_I_I_2(1715464318, ct.Inner_DataUtil.SUCCESS, state);
+      this.prev = ct.init_I_I_2(-854534, ct.Inner_DataUtil.TEXT, state);
+      this.valid = ct.init_I_I_2(-6774093, ct.Inner_DataUtil.TEXT, state);
+      this.size = ct.init_I_I_2(-10853776, ct.Inner_DataUtil.TEXT, state);
+      this.data = ct.init_I_I_2(-43691, ct.Inner_DataUtil.DANGER, state);
    }
 
    private int init(int rgb, int alpha, float tint) {

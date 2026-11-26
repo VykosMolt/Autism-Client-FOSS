@@ -107,7 +107,7 @@ public final class ap {
    public static ap.Inner_ConfigStore init_ap_ConfigStore_ap_TaskQueue(
       ap.Inner_TaskQueue s, ce.Inner_DataUtil goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
    ) {
-      return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, ap.Inner_StreamUtil.init_ap_StreamUtil);
+      return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, ap.Inner_StreamUtil.STANDARD);
    }
 
    public static ap.Inner_ConfigStore init_ap_ConfigStore_ap_TaskQueue(
@@ -132,7 +132,7 @@ public final class ap {
 
       s.sync = goal.init();
       s.flush = goal.load();
-      s.update = profile == ap.Inner_StreamUtil.init_ap_StreamUtil ? init_D_D_Random(s.update, s.init_Random) : 1.0;
+      s.update = profile == ap.Inner_StreamUtil.STANDARD ? init_D_D_Random(s.update, s.init_Random) : 1.0;
       s.read_I = init_I_I_Random(s.read_I, s.init_Random);
       s.write_I = init_I_I_Random(s.write_I, s.init_Random);
       double effectiveYaw = goal.init() + (applyGoalOffset ? rolls.update : 0.0);
@@ -186,7 +186,7 @@ public final class ap {
    public static ce.Inner_DataUtil init_ce_DataUtil_ap_TaskQueue(
       ap.Inner_TaskQueue s, ce.Inner_DataUtil goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
    ) {
-      return init_ce_DataUtil_ap_TaskQueue_2(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, ap.Inner_StreamUtil.init_ap_StreamUtil);
+      return init_ce_DataUtil_ap_TaskQueue_2(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, ap.Inner_StreamUtil.STANDARD);
    }
 
    public static ce.Inner_DataUtil init_ce_DataUtil_ap_TaskQueue_2(
@@ -691,15 +691,15 @@ public final class ap {
    }
 
    public enum Inner_StreamUtil {
-      init_ap_StreamUtil(0.7, 0.3, 0.55, 0.35, 8.0, 10.0),
-      load_ap_StreamUtil(0.97, 0.03, 0.92, 0.06, 16.0, 2.0),
-      read_ap_StreamUtil(0.97, 0.03, 0.97, 0.03, 60.0, 8.0),
-      write_ap_StreamUtil(0.95, 0.05, 0.985, 0.015, 68.0, 8.0),
-      update_ap_StreamUtil(0.8, 0.2, 0.65, 0.3, 11.0, 7.0),
-      sync_ap_StreamUtil(0.9, 0.1, 0.75, 0.24, 14.0, 4.0),
-      flush(0.95, 0.05, 0.91, 0.08, 31.5, 9.0),
-      close(0.97, 0.03, 0.97, 0.02, 62.0, 18.0),
-      open(0.88, 0.12, 0.982, 0.016, 46.0, 12.0);
+      STANDARD(0.7, 0.3, 0.55, 0.35, 8.0, 10.0),
+      DANGER_RETURN(0.97, 0.03, 0.92, 0.06, 16.0, 2.0),
+      TELLY_FLICK(0.97, 0.03, 0.97, 0.03, 60.0, 8.0),
+      TELLY_AIR_FLICK(0.95, 0.05, 0.985, 0.015, 68.0, 8.0),
+      SURROUND_FAST_2(0.8, 0.2, 0.65, 0.3, 11.0, 7.0),
+      SURROUND_FAST_3(0.9, 0.1, 0.75, 0.24, 14.0, 4.0),
+      SURROUND_FAST_4(0.95, 0.05, 0.91, 0.08, 31.5, 9.0),
+      SURROUND_FAST_5(0.97, 0.03, 0.97, 0.02, 62.0, 18.0),
+      BED_SHELL(0.88, 0.12, 0.982, 0.016, 46.0, 12.0);
 
       private final double init_D;
       private final double load_D;

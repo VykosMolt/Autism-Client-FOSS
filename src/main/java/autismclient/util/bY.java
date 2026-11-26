@@ -269,7 +269,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
          existing.write = updated.write;
          existing.update = updated.update;
          if (identityChanged) {
-            existing.init_bW_CachePool = bW.Inner_CachePool.init;
+            existing.init_bW_CachePool = bW.Inner_CachePool.UNCHECKED;
             existing.init_J = 0L;
             existing.init_V();
          }
@@ -490,7 +490,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
          }
 
          for (bW proxy : this.init_List) {
-            if (proxy != null && proxy.init_Z() && (all || proxy.init_bW_CachePool == bW.Inner_CachePool.init)) {
+            if (proxy != null && proxy.init_Z() && (all || proxy.init_bW_CachePool == bW.Inner_CachePool.UNCHECKED)) {
                targets.add(new bY.Inner_NetHelper(proxy, init_Str_bW(proxy)));
                active.add(proxy);
             }
@@ -509,7 +509,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
          this.load_List = List.copyOf(active);
 
          for (bW proxy : active) {
-            proxy.init_bW_CachePool = bW.Inner_CachePool.load;
+            proxy.init_bW_CachePool = bW.Inner_CachePool.CHECKING;
             proxy.init_J = 0L;
          }
 
@@ -550,8 +550,8 @@ public final class bY extends df<bW> implements Iterable<bW> {
          this.load_List = List.of();
 
          for (bW proxy : active) {
-            if (proxy.init_bW_CachePool == bW.Inner_CachePool.load) {
-               proxy.init_bW_CachePool = bW.Inner_CachePool.init;
+            if (proxy.init_bW_CachePool == bW.Inner_CachePool.CHECKING) {
+               proxy.init_bW_CachePool = bW.Inner_CachePool.UNCHECKED;
                proxy.init_J = 0L;
             }
          }
@@ -769,7 +769,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
          bY.Inner_ConfigStore probe = init(target.init_bW(), timeout, destinationHost, destinationPort);
 
          for (int attempts = 0;
-            probe.init_bW_DataUtil().init_bW_CachePool() != bW.Inner_CachePool.write && attempts < retryCount && this.load_Z_J(generation);
+            probe.init_bW_DataUtil().init_bW_CachePool() != bW.Inner_CachePool.ALIVE && attempts < retryCount && this.load_Z_J(generation);
             attempts++
          ) {
             probe = init(target.init_bW(), timeout, destinationHost, destinationPort);
@@ -783,8 +783,8 @@ public final class bY extends df<bW> implements Iterable<bW> {
       if (destinationHost != null && !destinationHost.isBlank() && destinationPort > 0) {
          ca.Inner_DataUtil verified = ca.init(proxy, destinationHost, destinationPort, timeout);
          bW.Inner_DataUtil result = verified.init_Z()
-            ? new bW.Inner_DataUtil(bW.Inner_CachePool.write, verified.init_J(), 1)
-            : new bW.Inner_DataUtil(bW.Inner_CachePool.read, 0L, 2);
+            ? new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.init_J(), 1)
+            : new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
          return new bY.Inner_ConfigStore(result, verified.init_bZ());
       } else {
          return new bY.Inner_ConfigStore(proxy.init_bW_DataUtil_I(timeout), null);
@@ -793,7 +793,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
 
    public synchronized boolean init(bW proxy, bW.Inner_DataUtil result, bZ workingType) {
       if (proxy != null && result != null && !this.init_AtomicBoolean.get() && this.init_List.contains(proxy)) {
-         if (result.init_bW_CachePool() == bW.Inner_CachePool.write && workingType != null) {
+         if (result.init_bW_CachePool() == bW.Inner_CachePool.ALIVE && workingType != null) {
             proxy.init_bZ = workingType;
          }
 
@@ -811,7 +811,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
       if (this.init_J_2 == generation && this.init_AtomicBoolean.get() && !this.load_AtomicBoolean.get()) {
          bW proxy = target.init_bW();
          if (this.init_List.contains(proxy) && target.init_Str().equals(init_Str_bW(proxy))) {
-            if (probe.init_bW_DataUtil().init_bW_CachePool() == bW.Inner_CachePool.write && probe.init_bZ() != null) {
+            if (probe.init_bW_DataUtil().init_bW_CachePool() == bW.Inner_CachePool.ALIVE && probe.init_bZ() != null) {
                proxy.init_bZ = probe.init_bZ();
             }
 
@@ -1016,8 +1016,8 @@ public final class bY extends df<bW> implements Iterable<bW> {
    public synchronized void init_V_2() {
       if (!this.init_AtomicBoolean.get() && !this.read_AtomicBoolean.get()) {
          int before = this.init_List.size();
-         this.init_List.removeIf(proxy -> this.load_Z && proxy.init_bW_CachePool == bW.Inner_CachePool.read);
-         this.init_List.removeIf(proxy -> this.write_I > 0 && proxy.init_bW_CachePool == bW.Inner_CachePool.write && proxy.init_J >= this.write_I);
+         this.init_List.removeIf(proxy -> this.load_Z && proxy.init_bW_CachePool == bW.Inner_CachePool.DEAD);
+         this.init_List.removeIf(proxy -> this.write_I > 0 && proxy.init_bW_CachePool == bW.Inner_CachePool.ALIVE && proxy.init_J >= this.write_I);
          List<bW> sorted = new ArrayList<>(this.init_List);
          sorted.sort(bY::init_I_bW_bW);
          if (this.update_I > 0 && sorted.size() > this.update_I) {
@@ -1099,8 +1099,8 @@ public final class bY extends df<bW> implements Iterable<bW> {
    }
 
    private static int init_I_bW_bW(bW a, bW b) {
-      boolean aliveA = a != null && a.init_bW_CachePool == bW.Inner_CachePool.write;
-      boolean aliveB = b != null && b.init_bW_CachePool == bW.Inner_CachePool.write;
+      boolean aliveA = a != null && a.init_bW_CachePool == bW.Inner_CachePool.ALIVE;
+      boolean aliveB = b != null && b.init_bW_CachePool == bW.Inner_CachePool.ALIVE;
       if (aliveA != aliveB) {
          return aliveA ? -1 : 1;
       } else {
@@ -1112,12 +1112,12 @@ public final class bY extends df<bW> implements Iterable<bW> {
       if (!line.isBlank() && !line.startsWith("#")) {
          Matcher m = init_Pattern.matcher(line);
          if (m.find()) {
-            return init(m.group(1), init_Str_Str(m.group(2)), Integer.parseInt(m.group(3)), m.group(4), bZ.init);
+            return init(m.group(1), init_Str_Str(m.group(2)), Integer.parseInt(m.group(3)), m.group(4), bZ.Socks4);
          }
 
          m = load_Pattern.matcher(line);
          if (m.find()) {
-            bW proxy = init(null, init_Str_Str(m.group(1)), Integer.parseInt(m.group(2)), null, bZ.load);
+            bW proxy = init(null, init_Str_Str(m.group(1)), Integer.parseInt(m.group(2)), null, bZ.Socks5);
             if (m.group(3) != null) {
                proxy.write = m.group(3);
             }
@@ -1134,7 +1134,7 @@ public final class bY extends df<bW> implements Iterable<bW> {
             }
 
             String typeName = m.group("type");
-            bZ defaultType = m.group("pass") == null && !"socks".equals(typeName) ? bZ.init : bZ.load;
+            bZ defaultType = m.group("pass") == null && !"socks".equals(typeName) ? bZ.Socks4 : bZ.Socks5;
             bW proxy = init(null, init_Str_Str(m.group("addr")), Integer.parseInt(m.group("port")), typeName, defaultType);
             if (m.group("user") != null) {
                proxy.write = m.group("user");
@@ -1160,13 +1160,13 @@ public final class bY extends df<bW> implements Iterable<bW> {
       proxy.load_Str = name == null ? "" : name.trim();
       proxy.read = address;
       proxy.init_I = port;
-      proxy.init_bZ = defaultType == null ? bZ.load : defaultType;
+      proxy.init_bZ = defaultType == null ? bZ.Socks5 : defaultType;
       if (typeName != null) {
          String lower = typeName.toLowerCase();
          if (lower.contains("4")) {
-            proxy.init_bZ = bZ.init;
+            proxy.init_bZ = bZ.Socks4;
          } else if (lower.contains("5")) {
-            proxy.init_bZ = bZ.load;
+            proxy.init_bZ = bZ.Socks5;
          }
       }
 

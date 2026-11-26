@@ -172,13 +172,13 @@ public final class CharEncoder {
          case init:
          case load:
          case read:
-            var10000 = init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.read);
+            var10000 = init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.TEXT);
             break;
          case write:
-            var10000 = init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.read);
+            var10000 = init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.TEXT);
             break;
          case update:
-            var10000 = init_I_I_ct_DataUtil(-45747, ct.Inner_DataUtil.init);
+            var10000 = init_I_I_ct_DataUtil(-45747, ct.Inner_DataUtil.ACCENT);
             break;
          default:
             throw new MatchException(null, null);
@@ -200,7 +200,7 @@ public final class CharEncoder {
    }
 
    private int init_I_I(int rgb, int alpha, float tint) {
-      int accent = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.init);
+      int accent = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.ACCENT);
       int tinted = j.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
       return alpha << 24 | tinted & 16777215;
    }
@@ -222,7 +222,7 @@ public final class CharEncoder {
    }
 
    public int run() {
-      return init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.open);
+      return init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.HEADER);
    }
 
    public int get() {
@@ -238,25 +238,25 @@ public final class CharEncoder {
    }
 
    public int add() {
-      return init_I_I_ct_DataUtil(this.read(2756114), ct.Inner_DataUtil.flush);
+      return init_I_I_ct_DataUtil(this.read(2756114), ct.Inner_DataUtil.DANGER);
    }
 
    public int clear() {
-      return init_I_I_ct_DataUtil(-33411, ct.Inner_DataUtil.flush);
+      return init_I_I_ct_DataUtil(-33411, ct.Inner_DataUtil.DANGER);
    }
 
    public int init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-         case write:
-         case update:
+         case PRIMARY:
+         case DANGER:
+         case SUCCESS:
             var10000 = j.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.2F);
             break;
-         case load:
+         case SECONDARY:
             var10000 = this.init_JsonUtil().load;
             break;
-         case read:
+         case GHOST:
             var10000 = this.init_JsonUtil().open;
             break;
          default:
@@ -269,17 +269,17 @@ public final class CharEncoder {
    private int flush(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-            var10000 = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.close);
+         case PRIMARY:
+            var10000 = init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.BUTTON);
             break;
-         case write:
+         case DANGER:
             var10000 = this.init_JsonUtil().data;
             break;
-         case update:
+         case SUCCESS:
             var10000 = this.init_JsonUtil().stop;
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = this.init_JsonUtil().set;
             break;
          default:
@@ -296,15 +296,15 @@ public final class CharEncoder {
    private int close(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-         case write:
-         case update:
+         case PRIMARY:
+         case DANGER:
+         case SUCCESS:
             var10000 = j.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.07F);
             break;
-         case load:
+         case SECONDARY:
             var10000 = this.init_JsonUtil().load;
             break;
-         case read:
+         case GHOST:
             var10000 = this.init_JsonUtil().open;
             break;
          default:
@@ -317,13 +317,13 @@ public final class CharEncoder {
    public int load(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-         case write:
-         case update:
+         case PRIMARY:
+         case DANGER:
+         case SUCCESS:
             var10000 = this.flush(variant);
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = this.init_JsonUtil().set;
             break;
          default:
@@ -336,13 +336,13 @@ public final class CharEncoder {
    public int read(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-         case write:
-         case update:
+         case PRIMARY:
+         case DANGER:
+         case SUCCESS:
             var10000 = j.init_I_I(this.close(variant), this.flush(variant), 0.5F);
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = autismclient.gui.f.PacketUtil.init(this.init_JsonUtil().set, 0.75F);
             break;
          default:
@@ -355,13 +355,13 @@ public final class CharEncoder {
    public int write(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-         case write:
-         case update:
+         case PRIMARY:
+         case DANGER:
+         case SUCCESS:
             var10000 = j.init_I_I(this.flush(variant), -1, 0.18F);
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = this.init_JsonUtil().run;
             break;
          default:
@@ -374,17 +374,17 @@ public final class CharEncoder {
    public int update(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read);
+         case PRIMARY:
+            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT);
             break;
-         case write:
-            var10000 = init_I_I_ct_DataUtil(-42406, ct.Inner_DataUtil.flush);
+         case DANGER:
+            var10000 = init_I_I_ct_DataUtil(-42406, ct.Inner_DataUtil.DANGER);
             break;
-         case update:
-            var10000 = init_I_I_ct_DataUtil(-4656181, ct.Inner_DataUtil.sync);
+         case SUCCESS:
+            var10000 = init_I_I_ct_DataUtil(-4656181, ct.Inner_DataUtil.SUCCESS);
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = this.load(l.read);
             break;
          default:
@@ -397,17 +397,17 @@ public final class CharEncoder {
    public int sync(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
-         case init:
-            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read);
+         case PRIMARY:
+            var10000 = init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT);
             break;
-         case write:
-            var10000 = init_I_I_ct_DataUtil(-6521989, ct.Inner_DataUtil.flush);
+         case DANGER:
+            var10000 = init_I_I_ct_DataUtil(-6521989, ct.Inner_DataUtil.DANGER);
             break;
-         case update:
-            var10000 = init_I_I_ct_DataUtil(-7821680, ct.Inner_DataUtil.sync);
+         case SUCCESS:
+            var10000 = init_I_I_ct_DataUtil(-7821680, ct.Inner_DataUtil.SUCCESS);
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = this.load(l.write);
             break;
          default:
@@ -418,10 +418,10 @@ public final class CharEncoder {
    }
 
    public int init_I_ByteReader_StreamU_Z(ByteReader.Inner_StreamUtil variant, boolean active) {
-      if (variant == ByteReader.Inner_StreamUtil.sync) {
+      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
          return 1430088703;
       } else {
-         return variant == ByteReader.Inner_StreamUtil.flush
+         return variant == ByteReader.Inner_StreamUtil.FILTER_OFF
             ? 1713842993
             : this.init_I_ByteReader_StreamU_Z_2(this.init_ByteReader_StreamU_ByteReader_StreamU(variant), active);
       }
@@ -432,9 +432,9 @@ public final class CharEncoder {
    }
 
    public int load(ByteReader.Inner_StreamUtil variant, boolean active) {
-      if (variant == ByteReader.Inner_StreamUtil.sync) {
+      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
          return -9466369;
-      } else if (variant == ByteReader.Inner_StreamUtil.flush) {
+      } else if (variant == ByteReader.Inner_StreamUtil.FILTER_OFF) {
          return -11117210;
       } else {
          return active
@@ -448,17 +448,17 @@ public final class CharEncoder {
    }
 
    public int init_I_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
-      if (variant == ByteReader.Inner_StreamUtil.sync) {
+      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
          return -7231489;
       } else {
-         return variant == ByteReader.Inner_StreamUtil.flush ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+         return variant == ByteReader.Inner_StreamUtil.FILTER_OFF ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
       }
    }
 
    public int read(ByteReader.Inner_StreamUtil variant, boolean active) {
-      if (variant == ByteReader.Inner_StreamUtil.sync) {
+      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
          return -1;
-      } else if (variant == ByteReader.Inner_StreamUtil.flush) {
+      } else if (variant == ByteReader.Inner_StreamUtil.FILTER_OFF) {
          return -4669753;
       } else {
          return active
@@ -474,26 +474,26 @@ public final class CharEncoder {
    private autismclient.gui.f.c.ByteReader.Inner_StreamUtil init_ByteReader_StreamU_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
       autismclient.gui.f.c.ByteReader.Inner_StreamUtil var10000;
       switch (variant) {
-         case write:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init;
+         case PRIMARY:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY;
             break;
-         case init:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load;
+         case SECONDARY:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY;
             break;
-         case update:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.read;
+         case GHOST:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.GHOST;
             break;
-         case load:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write;
+         case DANGER:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER;
             break;
-         case read:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update;
+         case SUCCESS:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS;
             break;
-         case sync:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init;
+         case FILTER_ON:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY;
             break;
-         case flush:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.read;
+         case FILTER_OFF:
+            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.GHOST;
             break;
          default:
             throw new MatchException(null, null);
@@ -519,11 +519,11 @@ public final class CharEncoder {
    }
 
    public int prev() {
-      return init_I_I_ct_DataUtil(this.read(2308139), ct.Inner_DataUtil.write);
+      return init_I_I_ct_DataUtil(this.read(2308139), ct.Inner_DataUtil.TOGGLE);
    }
 
    public int valid() {
-      return init_I_I_ct_DataUtil(this.read(1183762), ct.Inner_DataUtil.close);
+      return init_I_I_ct_DataUtil(this.read(1183762), ct.Inner_DataUtil.BUTTON);
    }
 
    public int size() {

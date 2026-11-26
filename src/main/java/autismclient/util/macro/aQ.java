@@ -36,8 +36,8 @@ public class aQ implements MacroAction {
    private static final int init_I = 11;
    public final List<String> entries = new ArrayList<>();
    public final List<ArrayUtil> entryTargets = new ArrayList<>();
-   public aQ.Inner_StreamUtil mode = aQ.Inner_StreamUtil.init;
-   public aQ.Inner_ConfigStore transferMode = aQ.Inner_ConfigStore.init;
+   public aQ.Inner_StreamUtil mode = aQ.Inner_StreamUtil.PUT_IN;
+   public aQ.Inner_ConfigStore transferMode = aQ.Inner_ConfigStore.FAST;
    public int safeClickDelayTicks = 1;
    public boolean safeClickDelayAfterPickup = true;
    public boolean safeClickDelayBeforeReturn = true;
@@ -162,15 +162,15 @@ public class aQ implements MacroAction {
    public aQ.Inner_DataUtil init_aQ_DataUtil_I(int entryIndex) {
       if (entryIndex >= 0 && entryIndex < this.entryAmountModes.size()) {
          aQ.Inner_DataUtil mode = this.entryAmountModes.get(entryIndex);
-         return mode == null ? aQ.Inner_DataUtil.init : mode;
+         return mode == null ? aQ.Inner_DataUtil.FULL_STK : mode;
       } else {
-         return aQ.Inner_DataUtil.init;
+         return aQ.Inner_DataUtil.FULL_STK;
       }
    }
 
    public void init_V_I_aQ_DataUtil(int entryIndex, aQ.Inner_DataUtil mode) {
       this.load_V_I(entryIndex + 1);
-      this.entryAmountModes.set(entryIndex, mode == null ? aQ.Inner_DataUtil.init : mode);
+      this.entryAmountModes.set(entryIndex, mode == null ? aQ.Inner_DataUtil.FULL_STK : mode);
    }
 
    public int read_I_I(int entryIndex) {
@@ -189,7 +189,7 @@ public class aQ implements MacroAction {
 
    public void load_V_I(int targetSize) {
       while (this.entryAmountModes.size() < targetSize) {
-         this.entryAmountModes.add(aQ.Inner_DataUtil.init);
+         this.entryAmountModes.add(aQ.Inner_DataUtil.FULL_STK);
       }
 
       while (this.entryAmountModes.size() > targetSize) {
@@ -259,13 +259,13 @@ public class aQ implements MacroAction {
             InventoryMenu handler = mc.player.inventoryMenu;
             if (handler.getCarried().isEmpty()) {
                switch (this.mode) {
-                  case init:
+                  case PUT_IN:
                      this.init_V_InventoryMenu_Minecraft(handler, mc);
                      return;
-                  case load:
+                  case TAKE_OUT:
                      this.load(handler, mc);
                      return;
-                  case read:
+                  case DROP:
                      this.read(handler, mc);
                      return;
                   default:
@@ -292,7 +292,7 @@ public class aQ implements MacroAction {
                this.init_V_InventoryMenu_Z(playerHandler, true);
             } else {
                AbstractContainerMenu containerHandler = mc.player.containerMenu;
-               if (this.mode == aQ.Inner_StreamUtil.init) {
+               if (this.mode == aQ.Inner_StreamUtil.PUT_IN) {
                   for (int slotId : this.init_List_AbstractContainerM_InventoryMenu(containerHandler, playerHandler)) {
                      mc.gameMode.handleContainerInput(containerHandler.containerId, slotId, 0, ContainerInput.QUICK_MOVE, mc.player);
                   }
@@ -301,13 +301,13 @@ public class aQ implements MacroAction {
                mc.getConnection().send(new ServerboundContainerClosePacket(containerHandler.containerId));
                mc.player.containerMenu = playerHandler;
                switch (this.mode) {
-                  case init:
+                  case PUT_IN:
                      this.init_V_InventoryMenu_Minecraft(playerHandler, mc);
                      break;
-                  case load:
+                  case TAKE_OUT:
                      this.load(playerHandler, mc);
                      break;
-                  case read:
+                  case DROP:
                      this.read(playerHandler, mc);
                }
 
@@ -697,7 +697,7 @@ public class aQ implements MacroAction {
    public CompoundTag toTag() {
       this.load_V_4();
       CompoundTag tag = new CompoundTag();
-      tag.putString("type", StreamGate.add.name());
+      tag.putString("type", StreamGate.XCARRY.name());
       tag.putString("mode", this.mode.name());
       tag.putString("transferMode", this.transferMode.name());
       tag.putInt("safeClickDelayTicks", write(this.safeClickDelayTicks));
@@ -741,7 +741,7 @@ public class aQ implements MacroAction {
       try {
          this.mode = aQ.Inner_StreamUtil.valueOf(modeStr);
       } catch (IllegalArgumentException e) {
-         this.mode = aQ.Inner_StreamUtil.init;
+         this.mode = aQ.Inner_StreamUtil.PUT_IN;
       }
 
       String transferModeStr = tag.getStringOr("transferMode", "FAST");
@@ -749,7 +749,7 @@ public class aQ implements MacroAction {
       try {
          this.transferMode = aQ.Inner_ConfigStore.valueOf(transferModeStr);
       } catch (IllegalArgumentException e) {
-         this.transferMode = aQ.Inner_ConfigStore.init;
+         this.transferMode = aQ.Inner_ConfigStore.FAST;
       }
 
       this.safeClickDelayTicks = write(tag.getIntOr("safeClickDelayTicks", 1));
@@ -784,10 +784,10 @@ public class aQ implements MacroAction {
 
       if (tag.contains("entryAmountModes")) {
          for (Tag element : tag.getList("entryAmountModes").orElse(new ListTag())) {
-            aQ.Inner_DataUtil amountMode = aQ.Inner_DataUtil.init;
+            aQ.Inner_DataUtil amountMode = aQ.Inner_DataUtil.FULL_STK;
 
             try {
-               amountMode = aQ.Inner_DataUtil.valueOf(element.asString().orElse(aQ.Inner_DataUtil.init.name()));
+               amountMode = aQ.Inner_DataUtil.valueOf(element.asString().orElse(aQ.Inner_DataUtil.FULL_STK.name()));
             } catch (IllegalArgumentException var9) {
             }
 
@@ -816,7 +816,7 @@ public class aQ implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.add;
+      return StreamGate.XCARRY;
    }
 
    @Override
@@ -824,24 +824,24 @@ public class aQ implements MacroAction {
       String var10000;
       label23:
       switch (this.mode) {
-         case init:
+         case PUT_IN:
             switch (this.transferMode) {
-               case init:
+               case FAST:
                   var10000 = "XCarry";
                   break label23;
-               case load:
+               case CLICK:
                   var10000 = "XCarry Click";
                   break label23;
-               case read:
+               case SAFE_CLICK:
                   var10000 = "XCarry Safe";
                   break label23;
                default:
                   throw new MatchException(null, null);
             }
-         case load:
+         case TAKE_OUT:
             var10000 = "XCarry Out";
             break;
-         case read:
+         case DROP:
             var10000 = "XCarry Drop";
             break;
          default:
@@ -1303,7 +1303,7 @@ public class aQ implements MacroAction {
             for (aQ.Inner_BufferHelper row : entry.getValue()) {
                row.sync = 0;
                row.flush = row.write;
-               if (row.init_aQ_DataUtil == aQ.Inner_DataUtil.load) {
+               if (row.init_aQ_DataUtil == aQ.Inner_DataUtil.CUSTOM) {
                   int desired = Math.min(Math.min(row.read, row.update), Math.max(0, remaining));
                   int reserved = Math.max(row.write, desired);
                   row.flush = desired;
@@ -1659,19 +1659,19 @@ public class aQ implements MacroAction {
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load,
-      read;
+      FAST,
+      CLICK,
+      SAFE_CLICK;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      FULL_STK,
+      CUSTOM;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      PUT_IN,
+      TAKE_OUT,
+      DROP;
    }
 }

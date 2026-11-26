@@ -101,7 +101,7 @@ public final class ac extends Module {
    public ac() {
       super("leaf-dupe", "Leaf Dupe", ae.sync, "Automatically bone meals a small dripleaf and re-breaks a whitelisted block.");
       this.init_EnumSetting = this.add(
-         new EnumSetting<>("leaf-selection", "Find Dripleaf", ac.Inner_BufferHelper.init, ac.Inner_BufferHelper.values())
+         new EnumSetting<>("leaf-selection", "Find Dripleaf", ac.Inner_BufferHelper.Automatic, ac.Inner_BufferHelper.values())
             .description("Finds a reachable upper half without its lower half. Custom fixes one position.")
             .group("Dripleaf")
       );
@@ -109,7 +109,7 @@ public final class ac extends Module {
          new StringSetting("leaf-position", "Position", "")
             .description("Block coordinates: X, Y, Z.")
             .group("Dripleaf")
-            .visibleWhen(() -> this.init_EnumSetting.get() == ac.Inner_BufferHelper.load)
+            .visibleWhen(() -> this.init_EnumSetting.get() == ac.Inner_BufferHelper.Custom)
       );
       this.add(
          new ActionSetting(
@@ -117,10 +117,10 @@ public final class ac extends Module {
             )
             .buttonLabel("Set Looked-At")
             .group("Dripleaf")
-            .visibleWhen(() -> this.init_EnumSetting.get() == ac.Inner_BufferHelper.load)
+            .visibleWhen(() -> this.init_EnumSetting.get() == ac.Inner_BufferHelper.Custom)
       );
       this.load_EnumSetting = this.add(
-         new EnumSetting<>("dupe-selection", "Find Target", ac.Inner_BufferHelper.init, ac.Inner_BufferHelper.values())
+         new EnumSetting<>("dupe-selection", "Find Target", ac.Inner_BufferHelper.Automatic, ac.Inner_BufferHelper.values())
             .description("Finds a visible whitelisted block and starts it automatically with a suitable hotbar tool.")
             .group("Target")
       );
@@ -134,7 +134,7 @@ public final class ac extends Module {
          new StringSetting("dupe-block-position", "Position", "")
             .description("Block coordinates: X, Y, Z.")
             .group("Target")
-            .visibleWhen(() -> this.load_EnumSetting.get() == ac.Inner_BufferHelper.load)
+            .visibleWhen(() -> this.load_EnumSetting.get() == ac.Inner_BufferHelper.Custom)
       );
       this.add(
          new ActionSetting(
@@ -142,10 +142,10 @@ public final class ac extends Module {
             )
             .buttonLabel("Set Looked-At")
             .group("Target")
-            .visibleWhen(() -> this.load_EnumSetting.get() == ac.Inner_BufferHelper.load)
+            .visibleWhen(() -> this.load_EnumSetting.get() == ac.Inner_BufferHelper.Custom)
       );
       this.read_EnumSetting = this.add(
-         new EnumSetting<>("reset-selection", "Find Reset Block", ac.Inner_BufferHelper.init, ac.Inner_BufferHelper.values())
+         new EnumSetting<>("reset-selection", "Find Reset Block", ac.Inner_BufferHelper.Automatic, ac.Inner_BufferHelper.values())
             .description("Finds a reachable plain block to click, preferring the block under you.")
             .group("Reset Block")
       );
@@ -153,7 +153,7 @@ public final class ac extends Module {
          new StringSetting("reset-block-position", "Position", "")
             .description("Block coordinates: X, Y, Z.")
             .group("Reset Block")
-            .visibleWhen(() -> this.read_EnumSetting.get() == ac.Inner_BufferHelper.load)
+            .visibleWhen(() -> this.read_EnumSetting.get() == ac.Inner_BufferHelper.Custom)
       );
       this.add(
          new ActionSetting(
@@ -163,7 +163,7 @@ public final class ac extends Module {
             )
             .buttonLabel("Set Looked-At")
             .group("Reset Block")
-            .visibleWhen(() -> this.read_EnumSetting.get() == ac.Inner_BufferHelper.load)
+            .visibleWhen(() -> this.read_EnumSetting.get() == ac.Inner_BufferHelper.Custom)
       );
       this.init_IntSetting = this.add(
          new IntSetting("delay", "Cycle Delay", 0, 0, 200, 1).sliderRange(0.0, 20.0).unit("ticks").description("Extra wait between cycles.").group("Timing")
@@ -830,7 +830,7 @@ public final class ac extends Module {
    }
 
    private String init_Str_EnumSetting(EnumSetting<ac.Inner_BufferHelper> selection, StringSetting setting, String label) {
-      if (selection.get() == ac.Inner_BufferHelper.init) {
+      if (selection.get() == ac.Inner_BufferHelper.Automatic) {
          return "No " + label;
       } else {
          BlockPos custom = init_BlockPos_StringSetting(setting);
@@ -849,24 +849,24 @@ public final class ac extends Module {
    }
 
    private void init_V_Z_8(boolean force) {
-      if (this.init_EnumSetting.get() == ac.Inner_BufferHelper.load) {
+      if (this.init_EnumSetting.get() == ac.Inner_BufferHelper.Custom) {
          this.init_BlockPos = init_BlockPos_StringSetting(this.init_StringSetting);
       }
 
-      if (this.load_EnumSetting.get() == ac.Inner_BufferHelper.load) {
+      if (this.load_EnumSetting.get() == ac.Inner_BufferHelper.Custom) {
          this.load_BlockPos = init_BlockPos_StringSetting(this.load_StringSetting);
       }
 
-      if (this.read_EnumSetting.get() == ac.Inner_BufferHelper.load) {
+      if (this.read_EnumSetting.get() == ac.Inner_BufferHelper.Custom) {
          this.read_BlockPos = init_BlockPos_StringSetting(this.read_StringSetting);
       }
 
       if (force || --this.flush <= 0) {
          this.flush = 5;
          Vec3 eye = this.init_Vec3_5();
-         boolean leaf = this.init_EnumSetting.get() == ac.Inner_BufferHelper.init && !this.init_Z_BlockPos_Vec3_2(this.init_BlockPos, eye);
-         boolean target = this.load_EnumSetting.get() == ac.Inner_BufferHelper.init && !this.load_Z_BlockPos_Vec3(this.load_BlockPos, eye);
-         boolean reset = this.read_EnumSetting.get() == ac.Inner_BufferHelper.init && !this.read_Z_BlockPos_Vec3(this.read_BlockPos, eye);
+         boolean leaf = this.init_EnumSetting.get() == ac.Inner_BufferHelper.Automatic && !this.init_Z_BlockPos_Vec3_2(this.init_BlockPos, eye);
+         boolean target = this.load_EnumSetting.get() == ac.Inner_BufferHelper.Automatic && !this.load_Z_BlockPos_Vec3(this.load_BlockPos, eye);
+         boolean reset = this.read_EnumSetting.get() == ac.Inner_BufferHelper.Automatic && !this.read_Z_BlockPos_Vec3(this.read_BlockPos, eye);
          if (leaf || target || reset) {
             this.init_V_Vec3(eye, leaf, target, reset);
          }
@@ -1387,8 +1387,8 @@ public final class ac extends Module {
    }
 
    private enum Inner_BufferHelper {
-      init,
-      load;
+      Automatic,
+      Custom;
    }
 
    private final class Inner_CachePool {

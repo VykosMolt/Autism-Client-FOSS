@@ -45,10 +45,10 @@ public final class aS extends Module {
          this.add(
             new BoolSetting(item.init(), item.load_Str, true)
                .description(
-                  item == aS.Inner_StreamUtil.pop
+                  item == aS.Inner_StreamUtil.FIRE
                      ? "Preview fireballs and the blocks their explosion can destroy."
                      : (
-                        item == aS.Inner_StreamUtil.write
+                        item == aS.Inner_StreamUtil.PEARL
                            ? "Show the held flight and remember your thrown pearl's final landing until it arrives."
                            : "Show the trajectory when holding this item."
                      )
@@ -166,7 +166,7 @@ public final class aS extends Module {
                   if (result.init_List().size() > 1) {
                      flights.add(
                         new aS.Inner_ConfigStore(
-                           result, shot.init_aX_DataUtil().init_aX_StreamUtil() == aX.Inner_StreamUtil.sync, init(result.init_HitResult(), item, stack)
+                           result, shot.init_aX_DataUtil().init_aX_StreamUtil() == aX.Inner_StreamUtil.ROCKET, init(result.init_HitResult(), item, stack)
                         )
                      );
                   }
@@ -200,7 +200,7 @@ public final class aS extends Module {
                      visual.init_Z(),
                      result.isEmpty(),
                      visual.init_aS_BufferHelper(),
-                     item == aS.Inner_StreamUtil.write && flight.init_HitResult() != null ? init_Vec3_aX_CachePool(flight) : null
+                     item == aS.Inner_StreamUtil.PEARL && flight.init_HitResult() != null ? init_Vec3_aX_CachePool(flight) : null
                   )
                );
             }
@@ -224,36 +224,36 @@ public final class aS extends Module {
          return null;
       } else {
          PotionContents potion = stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
-         boolean area = (item == aS.Inner_StreamUtil.flush || item == aS.Inner_StreamUtil.close) && (potion.hasEffects() || potion.is(Potions.WATER));
-         double areaRadius = !potion.is(Potions.WATER) && item != aS.Inner_StreamUtil.flush ? 3.0 : 4.0;
+         boolean area = (item == aS.Inner_StreamUtil.SPLASH || item == aS.Inner_StreamUtil.LINGERING) && (potion.hasEffects() || potion.is(Potions.WATER));
+         double areaRadius = !potion.is(Potions.WATER) && item != aS.Inner_StreamUtil.SPLASH ? 3.0 : 4.0;
          if (!(hit instanceof BlockHitResult block)) {
             return area ? new aS.Inner_BufferHelper(hit.getLocation(), new Vec3(0.0, 1.0, 0.0), areaRadius, false, true) : null;
          } else {
             Direction direction = block.getDirection();
             Vec3 normal = new Vec3(direction.getStepX(), direction.getStepY(), direction.getStepZ());
-            boolean water = item == aS.Inner_StreamUtil.poll && MC.level.getFluidState(block.getBlockPos()).is(FluidTags.WATER);
+            boolean water = item == aS.Inner_StreamUtil.FISHING && MC.level.getFluidState(block.getBlockPos()).is(FluidTags.WATER);
             double var10000;
             switch (item) {
-               case write:
+               case PEARL:
                   var10000 = 0.35;
                   break;
-               case update:
-               case sync:
-               case open:
+               case SNOWBALL:
+               case EGG:
+               case EXPERIENCE:
                default:
                   var10000 = 0.24;
                   break;
-               case flush:
-               case close:
+               case SPLASH:
+               case LINGERING:
                   var10000 = area ? areaRadius : 0.24;
                   break;
-               case poll:
+               case FISHING:
                   var10000 = water ? 0.5 : 0.22;
                   break;
-               case push:
+               case WIND:
                   var10000 = 0.45;
                   break;
-               case pop:
+               case FIRE:
                   var10000 = 0.4;
             }
 
@@ -268,40 +268,40 @@ public final class aS extends Module {
    }
 
    private static int init(aS.Inner_StreamUtil item, ItemStack stack) {
-      if (item != aS.Inner_StreamUtil.flush && item != aS.Inner_StreamUtil.close) {
+      if (item != aS.Inner_StreamUtil.SPLASH && item != aS.Inner_StreamUtil.LINGERING) {
          int var10000;
          switch (item) {
-            case init_aS_StreamUtil:
-            case load_aS_StreamUtil:
+            case BOW:
+            case CROSSBOW:
                var10000 = -5711361;
                break;
-            case read:
+            case TRIDENT:
                var10000 = -7937320;
                break;
-            case write:
+            case PEARL:
                var10000 = -8329771;
                break;
-            case update:
+            case SNOWBALL:
                var10000 = -1903361;
                break;
-            case sync:
+            case EGG:
                var10000 = -991551;
                break;
-            case flush:
-            case close:
+            case SPLASH:
+            case LINGERING:
             default:
                var10000 = -3032321;
                break;
-            case open:
+            case EXPERIENCE:
                var10000 = -9081;
                break;
-            case poll:
+            case FISHING:
                var10000 = -5908241;
                break;
-            case push:
+            case WIND:
                var10000 = -4067841;
                break;
-            case pop:
+            case FIRE:
                var10000 = -19311;
          }
 
@@ -328,40 +328,40 @@ public final class aS extends Module {
       aS.Inner_StreamUtil var10000;
       switch (stack.getItem()) {
          case BowItem ignored:
-            var10000 = aS.Inner_StreamUtil.init_aS_StreamUtil;
+            var10000 = aS.Inner_StreamUtil.BOW;
             break;
          case CrossbowItem ignored:
-            var10000 = aS.Inner_StreamUtil.load_aS_StreamUtil;
+            var10000 = aS.Inner_StreamUtil.CROSSBOW;
             break;
          case TridentItem ignored:
-            var10000 = aS.Inner_StreamUtil.read;
+            var10000 = aS.Inner_StreamUtil.TRIDENT;
             break;
          case EnderpearlItem ignored:
-            var10000 = aS.Inner_StreamUtil.write;
+            var10000 = aS.Inner_StreamUtil.PEARL;
             break;
          case SnowballItem ignored:
-            var10000 = aS.Inner_StreamUtil.update;
+            var10000 = aS.Inner_StreamUtil.SNOWBALL;
             break;
          case EggItem ignored:
-            var10000 = aS.Inner_StreamUtil.sync;
+            var10000 = aS.Inner_StreamUtil.EGG;
             break;
          case SplashPotionItem ignored:
-            var10000 = aS.Inner_StreamUtil.flush;
+            var10000 = aS.Inner_StreamUtil.SPLASH;
             break;
          case LingeringPotionItem ignored:
-            var10000 = aS.Inner_StreamUtil.close;
+            var10000 = aS.Inner_StreamUtil.LINGERING;
             break;
          case ExperienceBottleItem ignored:
-            var10000 = aS.Inner_StreamUtil.open;
+            var10000 = aS.Inner_StreamUtil.EXPERIENCE;
             break;
          case FishingRodItem ignored:
-            var10000 = aS.Inner_StreamUtil.poll;
+            var10000 = aS.Inner_StreamUtil.FISHING;
             break;
          case WindChargeItem ignored:
-            var10000 = aS.Inner_StreamUtil.push;
+            var10000 = aS.Inner_StreamUtil.WIND;
             break;
          case FireChargeItem ignored:
-            var10000 = aS.Inner_StreamUtil.pop;
+            var10000 = aS.Inner_StreamUtil.FIRE;
             break;
          default:
             var10000 = null;
@@ -406,18 +406,18 @@ public final class aS extends Module {
    }
 
    public enum Inner_StreamUtil {
-      init_aS_StreamUtil("bow", "Bow"),
-      load_aS_StreamUtil("crossbow", "Crossbow"),
-      read("trident", "Trident"),
-      write("pearl", "Ender Pearls"),
-      update("snowball", "Snowballs"),
-      sync("egg", "Eggs"),
-      flush("splash-potion", "Splash Potions"),
-      close("lingering-potion", "Lingering Potions"),
-      open("experience", "Experience Bottles"),
-      poll("fishing", "Fishing Rod"),
-      push("wind-charge", "Wind Charges"),
-      pop("fire-charge", "Fire Charges");
+      BOW("bow", "Bow"),
+      CROSSBOW("crossbow", "Crossbow"),
+      TRIDENT("trident", "Trident"),
+      PEARL("pearl", "Ender Pearls"),
+      SNOWBALL("snowball", "Snowballs"),
+      EGG("egg", "Eggs"),
+      SPLASH("splash-potion", "Splash Potions"),
+      LINGERING("lingering-potion", "Lingering Potions"),
+      EXPERIENCE("experience", "Experience Bottles"),
+      FISHING("fishing", "Fishing Rod"),
+      WIND("wind-charge", "Wind Charges"),
+      FIRE("fire-charge", "Fire Charges");
 
       final String init_Str;
       final String load_Str;

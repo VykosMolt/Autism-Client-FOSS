@@ -348,7 +348,7 @@ public class ActionEditorOverlay extends bj {
    private H init_H;
    private bE init_bE;
    private boolean run_Z = false;
-   private ActionEditorOverlay.TaskQueue init_ActionEditorOverla_3 = ActionEditorOverlay.TaskQueue.write;
+   private ActionEditorOverlay.TaskQueue init_ActionEditorOverla_3 = ActionEditorOverlay.TaskQueue.BINARY_REPLAY;
    private int f_h_I = 0;
    private int f_i_I = 0;
    private boolean get_Z = false;
@@ -366,7 +366,7 @@ public class ActionEditorOverlay extends bj {
    private int f_k_I = -1;
    private int f_l_I = -1;
    private List<aD.Inner_DataUtil> run_List;
-   private aD.Inner_StreamUtil init_aD_StreamUtil = aD.Inner_StreamUtil.init;
+   private aD.Inner_StreamUtil init_aD_StreamUtil = aD.Inner_StreamUtil.NOT_EMPTY;
    private int f_m_I = 1;
    private boolean stop_Z = false;
    private boolean next_Z = false;
@@ -389,41 +389,41 @@ public class ActionEditorOverlay extends bj {
    private int f_y_I = 0;
    private boolean cache_Z = false;
    private static final List<bJ.Inner_BufferHelper> get_List = List.of(
-      bJ.Inner_BufferHelper.init_bJ_BufferHelper,
-      bJ.Inner_BufferHelper.load_bJ_BufferHelper,
-      bJ.Inner_BufferHelper.read,
-      bJ.Inner_BufferHelper.write,
-      bJ.Inner_BufferHelper.update,
-      bJ.Inner_BufferHelper.sync,
-      bJ.Inner_BufferHelper.flush,
-      bJ.Inner_BufferHelper.close,
-      bJ.Inner_BufferHelper.open,
-      bJ.Inner_BufferHelper.poll,
-      bJ.Inner_BufferHelper.push,
-      bJ.Inner_BufferHelper.pop,
-      bJ.Inner_BufferHelper.run,
-      bJ.Inner_BufferHelper.get,
-      bJ.Inner_BufferHelper.put,
-      bJ.Inner_BufferHelper.add,
-      bJ.Inner_BufferHelper.clear,
-      bJ.Inner_BufferHelper.reset,
-      bJ.Inner_BufferHelper.start,
-      bJ.Inner_BufferHelper.stop,
-      bJ.Inner_BufferHelper.next,
-      bJ.Inner_BufferHelper.prev,
-      bJ.Inner_BufferHelper.valid,
-      bJ.Inner_BufferHelper.size,
-      bJ.Inner_BufferHelper.data
+      bJ.Inner_BufferHelper.BYTE,
+      bJ.Inner_BufferHelper.UNSIGNED_BYTE,
+      bJ.Inner_BufferHelper.BOOLEAN,
+      bJ.Inner_BufferHelper.SHORT,
+      bJ.Inner_BufferHelper.UNSIGNED_SHORT,
+      bJ.Inner_BufferHelper.CHAR,
+      bJ.Inner_BufferHelper.INT,
+      bJ.Inner_BufferHelper.LONG,
+      bJ.Inner_BufferHelper.FLOAT,
+      bJ.Inner_BufferHelper.DOUBLE,
+      bJ.Inner_BufferHelper.JAVA_WRITE_UTF,
+      bJ.Inner_BufferHelper.RAW_BYTES,
+      bJ.Inner_BufferHelper.BYTE_ARRAY,
+      bJ.Inner_BufferHelper.STRING_BYTES,
+      bJ.Inner_BufferHelper.VAR_INT,
+      bJ.Inner_BufferHelper.VAR_LONG,
+      bJ.Inner_BufferHelper.MINECRAFT_STRING,
+      bJ.Inner_BufferHelper.IDENTIFIER,
+      bJ.Inner_BufferHelper.UUID_FIELD,
+      bJ.Inner_BufferHelper.BLOCK_POS,
+      bJ.Inner_BufferHelper.ENUM_VAR_INT,
+      bJ.Inner_BufferHelper.OPTIONAL_VALUE,
+      bJ.Inner_BufferHelper.NBT,
+      bJ.Inner_BufferHelper.ITEM_STACK,
+      bJ.Inner_BufferHelper.TEXT_COMPONENT
    );
    private static final List<String> set_List = init_List_2();
    private static final List<String> put_List = List.of("Raw UTF-8", "Hex", "DataOutput", "ByteBuf", "JSON", "Mixed");
    private static final List<bJ.Inner_StreamUtil> add_List = List.of(
-      bJ.Inner_StreamUtil.init_bJ_StreamUtil,
-      bJ.Inner_StreamUtil.load,
-      bJ.Inner_StreamUtil.read,
-      bJ.Inner_StreamUtil.write,
-      bJ.Inner_StreamUtil.update,
-      bJ.Inner_StreamUtil.sync
+      bJ.Inner_StreamUtil.RAW_UTF8,
+      bJ.Inner_StreamUtil.MANUAL_HEX,
+      bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT,
+      bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF,
+      bJ.Inner_StreamUtil.JSON_TEXT,
+      bJ.Inner_StreamUtil.ADVANCED_MIXED
    );
    private List<az.Inner_DataUtil> clear_List;
    private List<autismclient.util.macro.aM.Inner_CachePool> reset_List;
@@ -473,11 +473,11 @@ public class ActionEditorOverlay extends bj {
 
       boolean var10000;
       switch (type) {
-         case tick:
-         case mark:
-         case scan:
-         case parse:
-         case fill:
+         case INVENTORY:
+         case RESTORE_GUI:
+         case SAVE_GUI:
+         case SEND_TOGGLE:
+         case DESYNC:
             var10000 = true;
             break;
          default:
@@ -511,15 +511,15 @@ public class ActionEditorOverlay extends bj {
 
       boolean var10000;
       switch (type) {
-         case get:
-         case clear:
-         case reset:
-         case queue:
-         case f_j_StreamGate:
-         case write:
-         case f_C_StreamGate:
-         case f_W_StreamGate:
-         case table:
+         case CRAFT:
+         case DROP:
+         case ITEM:
+         case PAYLOAD:
+         case WAIT_LAN_STEP:
+         case WAIT_PACKET:
+         case WAIT_PACKET_MATCH:
+         case MULTI:
+         case WAIT_SLOT_CHANGE:
             var10000 = true;
             break;
          default:
@@ -576,7 +576,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean init_Z_StreamUtil(StreamUtil mode) {
-      return mode == StreamUtil.open ? true : mode == StreamUtil.sync || this.clear_Z();
+      return mode == StreamUtil.CUSTOM_MENU_BUTTON ? true : mode == StreamUtil.PACKET_NAME || this.clear_Z();
    }
 
    public void init_V_List(List<MacroAction> actions) {
@@ -722,7 +722,7 @@ public class ActionEditorOverlay extends bj {
 
       this.f_l_I = -1;
       this.run_List = new ArrayList<>();
-      this.init_aD_StreamUtil = aD.Inner_StreamUtil.init;
+      this.init_aD_StreamUtil = aD.Inner_StreamUtil.NOT_EMPTY;
       this.f_m_I = 1;
       if (action instanceof aD wsc) {
          for (aD.Inner_DataUtil e : wsc.entries) {
@@ -730,7 +730,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (action.getType() == StreamGate.table) {
+      if (action.getType() == StreamGate.WAIT_SLOT_CHANGE) {
          this.load_Map.put("listenDuringPreviousAction", action.listensDuringPreviousAction());
          k wscAddF = this.init_k_I(120);
          wscAddF.init_V_Component(Component.literal("Item name (optional)"));
@@ -1086,17 +1086,17 @@ public class ActionEditorOverlay extends bj {
          this.j();
       }
 
-      if (action.getType() == StreamGate.tick || action.getType() == StreamGate.valid || action.getType() == StreamGate.scan) {
+      if (action.getType() == StreamGate.INVENTORY || action.getType() == StreamGate.CLOSE_GUI || action.getType() == StreamGate.SAVE_GUI) {
          this.load_Map.put("sendPacket", !this.init_CompoundTag.getBooleanOr("sendPacket", true));
       }
 
-      if (action.getType() == StreamGate.f_b_StreamGate) {
+      if (action.getType() == StreamGate.STORE_ITEM) {
          this.load_Map.put("closeSendPkt", !this.init_CompoundTag.getBooleanOr("closeSendPkt", true));
       }
 
       this.store();
       this.node();
-      if (action.getType() == StreamGate.f_P_StreamGate) {
+      if (action.getType() == StreamGate.PLACE) {
          k slotF = this.init_k_I(52);
          slotF.poll(true);
          slotF.init_V_Component(Component.literal("Slot"));
@@ -1471,7 +1471,7 @@ public class ActionEditorOverlay extends bj {
                return true;
             }
 
-            if ("itemName".equals(key) && this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.pop) {
+            if ("itemName".equals(key) && this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
                k itemField = this.init_Map.get("itemName");
                k slotField = this.init_Map.get("slot");
                if (capturedTarget.update()) {
@@ -1543,7 +1543,7 @@ public class ActionEditorOverlay extends bj {
                }
 
                FieldDef field = this.read_FieldDef(key);
-               if (field != null && field.type() == CachePool.open) {
+               if (field != null && field.type() == CachePool.SLOT) {
                   tf.init_V_Str(String.valueOf(Math.max(0, visibleSlot)));
                } else if (useSlot) {
                   tf.init_V_Str(capturedTarget.write_Str());
@@ -1677,80 +1677,80 @@ public class ActionEditorOverlay extends bj {
                this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
             }));
          }
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.run) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SEND_PACKET) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.flush(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.write) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.update_V_GuiGraphicsExtract(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_C_StreamGate) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET_MATCH) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.sync(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_c_StreamGate) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SOUND) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.push(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.chunk) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_ENTITY) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.pop(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.pop) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.clear(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.level) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.LOOK_AT_BLOCK) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.start(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.push) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.ROTATE) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.reset(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.value) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.GO_TO) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.stop(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.size) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SWAP_SLOTS) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.next(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.poll) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLICK) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.prev(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.buffer) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DISCONNECT) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.valid(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.close) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_GUI) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.size(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.block) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.init_V_GuiGraphicsExtract(context, x, bodyTop, bodyBtm - this.run_I(), w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.put) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SELECT_SLOT) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.data(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.data) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_COOLDOWN) {
          int x = this.bind + 4;
          int w = this.f_b_I - 8;
          this.value(context, x, bodyTop, w, mouseX, mouseY, delta);
-      } else if (this.init_MacroAction == null || this.init_MacroAction.getType() != StreamGate.store && this.init_MacroAction.getType() != StreamGate.drain) {
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.table) {
+      } else if (this.init_MacroAction == null || this.init_MacroAction.getType() != StreamGate.OPEN_CONTAINER && this.init_MacroAction.getType() != StreamGate.INTERACT_ENTITY) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.add(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_D_StreamGate) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_INVENTORY_PREDICATE) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.cache(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_L_StreamGate) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CAPTURE_VALUE) {
             int contentBtm = bodyBtm - this.run_I();
             int contentAreaH = Math.max(0, contentBtm - bodyTop);
             int totalContentH = this.stop_I();
@@ -1782,11 +1782,11 @@ public class ActionEditorOverlay extends bj {
                   this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
                }));
             }
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.bind) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.queue(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_d_StreamGate) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.MINE) {
             int contentBtm = bodyBtm - this.run_I();
             int contentAreaH = Math.max(0, contentBtm - bodyTop);
             int totalContentH = this.stop_I();
@@ -1818,7 +1818,7 @@ public class ActionEditorOverlay extends bj {
                   this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
                }));
             }
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_g_StreamGate) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PAY) {
             int contentBtm = bodyBtm - this.run_I();
             int contentAreaH = Math.max(0, contentBtm - bodyTop);
             int totalContentH = this.stop_I();
@@ -1850,15 +1850,15 @@ public class ActionEditorOverlay extends bj {
                   this.f_e_I = Math.max(0, Math.min(maxScroll, rel * maxScroll / Math.max(1, capSbH)));
                }));
             }
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_a_StreamGate) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.get(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_b_StreamGate) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.run(context, x, bodyTop, w, mouseX, mouseY, delta);
-         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.entry) {
+         } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.TOGGLE_MODULE) {
             int x = this.bind + 4;
             int w = this.f_b_I - 8;
             this.put(context, x, bodyTop, w, mouseX, mouseY, delta);
@@ -1889,7 +1889,7 @@ public class ActionEditorOverlay extends bj {
 
             try {
                int y = bodyTop + 4 - this.f_e_I;
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
                   y = this.init_I_GuiGraphicsExtract_5(context, "packetOrder", x, y, w, mouseX, mouseY, delta);
                   BlockPos previewPos = null;
 
@@ -1930,12 +1930,12 @@ public class ActionEditorOverlay extends bj {
                }
 
                for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                  if (field.type() != CachePool.flush
+                  if (field.type() != CachePool.STRING_LIST
                      && !this.flush_Z(field.key())
                      && this.write(field)
                      && (
                         this.init_MacroAction == null
-                           || this.init_MacroAction.getType() != StreamGate.f_P_StreamGate
+                           || this.init_MacroAction.getType() != StreamGate.PLACE
                            || !"itemName".equals(field.key()) && !"packetOrder".equals(field.key())
                      )) {
                      this.init_V_GuiGraphicsExtract_5(context, field, x, y, w, mouseX, mouseY, delta);
@@ -1944,12 +1944,12 @@ public class ActionEditorOverlay extends bj {
                }
 
                for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                  if (field.type() == CachePool.flush
+                  if (field.type() == CachePool.STRING_LIST
                      && !this.flush_Z(field.key())
                      && this.write(field)
                      && (
                         this.init_MacroAction == null
-                           || this.init_MacroAction.getType() != StreamGate.f_P_StreamGate
+                           || this.init_MacroAction.getType() != StreamGate.PLACE
                            || !"itemName".equals(field.key()) && !"packetOrder".equals(field.key())
                      )) {
                      this.init_V_GuiGraphicsExtract_5(context, field, x, y, w, mouseX, mouseY, delta);
@@ -1957,17 +1957,17 @@ public class ActionEditorOverlay extends bj {
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.load) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET) {
                   this.load_V(context, x, y, w, mouseX, mouseY);
                   y += 52;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.run) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SEND_PACKET) {
                   this.write_V(context, x, y, w, mouseX, mouseY);
                   y += 52;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.bind) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
                   this.update_V(context, x, y, w, mouseX, mouseY);
                }
             } finally {
@@ -2001,7 +2001,7 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Exact Slots (" + this.init_MapStore.itemNames.size() + ")", font, p.parse(), x, cy + 2, false);
       boolean canClearAll = !this.init_MapStore.itemNames.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.load, canClearAll, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
          this.init_MapStore.itemNames.clear();
          this.init_MapStore.itemTimes.clear();
          this.init_MapStore.itemActionIdx.clear();
@@ -2039,9 +2039,9 @@ public class ActionEditorOverlay extends bj {
                boolean rowHovered = mx >= x && mx < x + itemW && my >= iy && my < iy + 13;
                String summaryAct = eiAct.load_Str;
                String var10000;
-               if (eiAct == N.read) {
+               if (eiAct == N.SWAP) {
                   var10000 = "H" + Math.max(1, Math.min(9, eiBtn + 1));
-               } else if (eiAct == N.flush) {
+               } else if (eiAct == N.PICKUP_ALL) {
                   var10000 = "";
                } else {
                   switch (eiBtn) {
@@ -2061,7 +2061,7 @@ public class ActionEditorOverlay extends bj {
                String summary = " • " + summaryAct + (summaryBtn.isBlank() ? "" : " " + summaryBtn) + (times != 1 ? " ×" + times : "");
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
                autismclient.gui.macro.editor.a.CachePool.init(
-                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, itemW, 13), rowHovered, selected, FileCache.Inner_DataUtil.init, true
+                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, itemW, 13), rowHovered, selected, FileCache.Inner_DataUtil.NORMAL, true
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
                   int fi = i;
@@ -2126,7 +2126,7 @@ public class ActionEditorOverlay extends bj {
       cy += selAreaH;
       TableIndex.init(ctx, x, cy + 2, w, p.c());
       cy += 6;
-      int addPickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+      int addPickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
       String addLbl = this.f_j_I >= 0 ? "New" : "+Add";
       int addBtnW = this.write_I(addLbl);
       int slotW = 26;
@@ -2145,8 +2145,8 @@ public class ActionEditorOverlay extends bj {
          entrySlotF.update(slotW);
          entrySlotF.init_V(ctx, mx, my, delta);
          boolean capturing = this.init_StreamUtil.init("_item_entries");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, StreamUtil.update, capturing, true, mx, my, () -> this.close_V("_item_entries"));
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_item_entries"));
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (this.f_j_I >= 0) {
                this.update_V_3();
             } else {
@@ -2161,7 +2161,7 @@ public class ActionEditorOverlay extends bj {
          int eiActIdx = this.init_MapStore.load_I(this.f_j_I);
          N eiAct = ACTIONS[eiActIdx];
          int eiBtn = this.init_MapStore.read_I(this.f_j_I);
-         boolean btnActive = eiAct == N.init_N || eiAct == N.load_N || eiAct == N.read;
+         boolean btnActive = eiAct == N.PICKUP || eiAct == N.QUICK_MOVE || eiAct == N.SWAP;
          int editIdx = this.f_j_I;
          int editTimesW = 28;
          int editGap = 3;
@@ -2172,9 +2172,9 @@ public class ActionEditorOverlay extends bj {
          }
 
          String var81;
-         if (eiAct == N.read) {
+         if (eiAct == N.SWAP) {
             var81 = "H" + Math.max(1, Math.min(9, eiBtn + 1));
-         } else if (eiAct == N.flush) {
+         } else if (eiAct == N.PICKUP_ALL) {
             var81 = "All";
          } else {
             switch (eiBtn) {
@@ -2216,7 +2216,7 @@ public class ActionEditorOverlay extends bj {
                editBtnW,
                13,
                btnLbl,
-               eiAct == N.read ? ByteReader.Inner_StreamUtil.write : ByteReader.Inner_StreamUtil.update,
+               eiAct == N.SWAP ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
                btnActive,
                mx,
                my,
@@ -2319,7 +2319,7 @@ public class ActionEditorOverlay extends bj {
          int stackX = x + invW + gap;
          this.init_V_Str("item_stack", stackOptions, mode.ordinal(), stackX, y + 2, stackW, 13, idx -> {
             while (this.init_MapStore.stackAmountModes.size() <= this.f_j_I) {
-               this.init_MapStore.stackAmountModes.add(MapStore.Inner_CachePool.init_MapStore_CachePool.ordinal());
+               this.init_MapStore.stackAmountModes.add(MapStore.Inner_CachePool.DEFAULT.ordinal());
             }
 
             this.init_MapStore.stackAmountModes.set(this.f_j_I, stackModes[Math.max(0, Math.min(idx, stackModes.length - 1))].ordinal());
@@ -2331,7 +2331,7 @@ public class ActionEditorOverlay extends bj {
       if (this.init_MapStore != null && this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
          ArrayUtil target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
          return target.update() && !target.init_Z()
-            ? this.init_MapStore.init_N_I(this.f_j_I) != N.flush
+            ? this.init_MapStore.init_N_I(this.f_j_I) != N.PICKUP_ALL
                || !this.load_Map.getOrDefault("item_useCursorItemForPickupAll", this.init_MapStore.useCursorItemForPickupAll)
             : false;
       } else {
@@ -2564,7 +2564,7 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Craft Entries (" + this.push_List.size() + ")", font, p.parse(), x, cy + 2, false);
       boolean canClearEntries = !this.push_List.isEmpty();
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + w - headerBtnW, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.load, canClearEntries, mx, my, () -> {
+         ctx, x + w - headerBtnW, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearEntries, mx, my, () -> {
             this.push_List.clear();
             this.set_V_2();
             EventBus craftVp = this.tick_Map.get("_craft_entries");
@@ -2634,7 +2634,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, siy, Math.max(1, nameW), 13),
                   rowHovered,
                   false,
-                  useMax ? FileCache.Inner_DataUtil.load : FileCache.Inner_DataUtil.init,
+                  useMax ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
                   true
                );
             }
@@ -2658,7 +2658,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       int rfX = x + w - refreshW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, rfX, cy, refreshW, 13, "Reload", ByteReader.Inner_StreamUtil.init, true, mx, my, this::open_V_2);
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, rfX, cy, refreshW, 13, "Reload", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, this::open_V_2);
       cy += 16;
       String query = srchF != null ? srchF.load_Str() : "";
       if (!query.equals(this.update_Str)) {
@@ -2699,8 +2699,8 @@ public class ActionEditorOverlay extends bj {
                   .anyMatch(e -> opt.init_Str != null && opt.init_Str.equals(e.init_Str) || opt.init_I >= 0 && opt.init_I == e.init_I);
                boolean hov = !inList && mx >= x && mx < x + recW && my >= ry && my < ry + 13;
                FileCache.Inner_DataUtil tone = inList
-                  ? FileCache.Inner_DataUtil.load
-                  : (opt.read_Z ? FileCache.Inner_DataUtil.init : FileCache.Inner_DataUtil.write);
+                  ? FileCache.Inner_DataUtil.READY
+                  : (opt.read_Z ? FileCache.Inner_DataUtil.NORMAL : FileCache.Inner_DataUtil.MISSING);
                autismclient.gui.macro.editor.a.CachePool.init(
                   ctx, this.init_Font, opt.init_Component, autismclient.gui.f.NetHelper.init(x, ry, recW, 13), hov, inList, tone, true
                );
@@ -2815,7 +2815,7 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Drop Entries (" + this.init_PacketUtil.itemNames.size() + ")", font, p.parse(), x, cy + 2, false);
       boolean canClearAll = !this.init_PacketUtil.itemNames.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.load, canClearAll, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
          this.init_PacketUtil.itemNames.clear();
          this.init_PacketUtil.itemTargets.clear();
          this.init_PacketUtil.itemCounts.clear();
@@ -2852,7 +2852,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, iy, dropItemW, 13),
                   rowHovered,
                   selected,
-                  FileCache.Inner_DataUtil.init,
+                  FileCache.Inner_DataUtil.NORMAL,
                   true
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
@@ -2902,7 +2902,7 @@ public class ActionEditorOverlay extends bj {
       cy += selAreaH;
       TableIndex.init(ctx, x, cy + 2, w, p.c());
       cy += 6;
-      int addPickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+      int addPickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
       String addLbl = this.f_k_I >= 0 ? "New" : "+Add";
       int addBtnW = this.write_I(addLbl);
       int slotW = 44;
@@ -2921,8 +2921,8 @@ public class ActionEditorOverlay extends bj {
          entrySlotF.update(slotW);
          entrySlotF.init_V(ctx, mx, my, delta);
          boolean capturing = this.init_StreamUtil.init("_drop_entries");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, StreamUtil.update, capturing, true, mx, my, () -> this.close_V("_drop_entries"));
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_drop_entries"));
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (this.f_k_I >= 0) {
                this.add_V_2();
             } else {
@@ -2940,14 +2940,14 @@ public class ActionEditorOverlay extends bj {
          : (
             noDropTargets
                ? (
-                  this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.init
+                  this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL
                      ? "No items selected: Drop All drops the entire main inventory and hotbar."
                      : "No items selected: Times drops the currently held item by the count below."
                )
                : "No row selected. These controls set defaults for newly added rows."
          );
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, dropHint);
-      boolean dropAllSelected = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.init;
+      boolean dropAllSelected = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL;
       String modeLabel = editingSelectedDrop ? "Selected Row" : (noDropTargets ? "No Items" : "Default Mode");
       int lw = this.init_I_I(w, modeLabel, font);
       this.init_V_GuiGraphicsExtract_3(ctx, modeLabel, x, cy, lw, font);
@@ -2961,7 +2961,7 @@ public class ActionEditorOverlay extends bj {
          modeBtns[1],
          13,
          "Drop All",
-         dropAllSelected ? ByteReader.Inner_StreamUtil.write : ByteReader.Inner_StreamUtil.update,
+         dropAllSelected ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
          true,
          mx,
          my,
@@ -2970,7 +2970,7 @@ public class ActionEditorOverlay extends bj {
                this.read_V_I_I(this.f_k_I, 0);
             } else {
                this.read_Map.put("drop_mode", 0);
-               this.init_PacketUtil.mode = PacketUtil.Inner_DataUtil.init;
+               this.init_PacketUtil.mode = PacketUtil.Inner_DataUtil.ALL;
             }
 
             this.next_V();
@@ -2983,7 +2983,7 @@ public class ActionEditorOverlay extends bj {
          modeBtns[3],
          13,
          "Times",
-         !dropAllSelected ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.update,
+         !dropAllSelected ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.GHOST,
          true,
          mx,
          my,
@@ -2992,7 +2992,7 @@ public class ActionEditorOverlay extends bj {
                this.read_V_I_I(this.f_k_I, Math.max(1, this.init_I_I_2(this.f_k_I)));
             } else {
                this.read_Map.put("drop_mode", 1);
-               this.init_PacketUtil.mode = PacketUtil.Inner_DataUtil.load;
+               this.init_PacketUtil.mode = PacketUtil.Inner_DataUtil.TIMES;
             }
 
             this.next_V();
@@ -3245,7 +3245,7 @@ public class ActionEditorOverlay extends bj {
          k countField = this.init_Map.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size();
-            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.init;
+            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL;
             int displayCount = editingSelectedDrop ? Math.max(1, this.init_I_I_2(this.f_k_I)) : Math.max(1, this.init_PacketUtil.dropCount);
             this.valid_Z = true;
             countField.init_V_Str(String.valueOf(displayCount));
@@ -3260,7 +3260,7 @@ public class ActionEditorOverlay extends bj {
          k countField = this.init_Map.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.f_k_I >= 0 && this.f_k_I < this.init_PacketUtil.itemNames.size();
-            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.init;
+            boolean dropAll = editingSelectedDrop ? this.init_I_I_2(this.f_k_I) == 0 : this.init_PacketUtil.mode == PacketUtil.Inner_DataUtil.ALL;
             if (!dropAll) {
                try {
                   int value = Math.max(1, Integer.parseInt(countField.load_Str().strip()));
@@ -3388,7 +3388,7 @@ public class ActionEditorOverlay extends bj {
             newSF.write(cy);
             newSF.update(stepW);
             newSF.init_V(ctx, mx, my, delta);
-            this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+            this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
                String uname = newUF.load_Str().strip();
                int step = 1;
 
@@ -3578,7 +3578,7 @@ public class ActionEditorOverlay extends bj {
          cy = this.init_I_GuiGraphicsExtract_2(ctx, font, "Field", "_wpm_field", fieldDisplay, fieldIdx, x, cy, w, i -> {
             rule.load = i <= 0 ? "" : fieldNames.get(i - 1);
             if (rule.load.isBlank()) {
-               rule.init_aM_StreamUtil = autismclient.util.macro.aM.Inner_StreamUtil.init;
+               rule.init_aM_StreamUtil = autismclient.util.macro.aM.Inner_StreamUtil.EXISTS;
             }
 
             List<String> vo = autismclient.util.macro.aM.init_List_Class_Str(packetClass, rule.load);
@@ -3607,7 +3607,7 @@ public class ActionEditorOverlay extends bj {
                w,
                i -> rule.init_aM_StreamUtil = autismclient.util.macro.aM.Inner_StreamUtil.values()[i]
             );
-            if (rule.init_aM_StreamUtil != autismclient.util.macro.aM.Inner_StreamUtil.init) {
+            if (rule.init_aM_StreamUtil != autismclient.util.macro.aM.Inner_StreamUtil.EXISTS) {
                List<String> valueOptions = autismclient.util.macro.aM.init_List_Class_Str(packetClass, rule.load);
                if (!valueOptions.isEmpty()) {
                   int valIdx = Math.max(0, valueOptions.indexOf(rule.read));
@@ -3678,7 +3678,7 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Rules (" + this.reset_List.size() + ")", font, p.parse(), x, y + 2, false);
       int clearW = this.write_I("Clear");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + w - clearW, y, clearW, 13, "Clear", ByteReader.Inner_StreamUtil.load, !this.reset_List.isEmpty(), mx, my, () -> {
+         ctx, x + w - clearW, y, clearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, !this.reset_List.isEmpty(), mx, my, () -> {
             this.reset_List.clear();
             this.f_z_I = -1;
          }
@@ -3709,7 +3709,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, iy, rowW, 13),
                   hovered,
                   selected,
-                  FileCache.Inner_DataUtil.init,
+                  FileCache.Inner_DataUtil.NORMAL,
                   true
                );
                int fi = i;
@@ -3752,7 +3752,7 @@ public class ActionEditorOverlay extends bj {
          apClearW,
          13,
          "Clear",
-         ByteReader.Inner_StreamUtil.load,
+         ByteReader.Inner_StreamUtil.DANGER,
          !actionPackets.isEmpty(),
          mx,
          my,
@@ -3889,7 +3889,7 @@ public class ActionEditorOverlay extends bj {
                autismclient.gui.f.NetHelper.init(x, iy, textW, 13),
                hovered,
                false,
-               FileCache.Inner_DataUtil.init,
+               FileCache.Inner_DataUtil.NORMAL,
                false
             );
             int rowIndex = i;
@@ -3907,7 +3907,7 @@ public class ActionEditorOverlay extends bj {
                   modeW,
                   13,
                   exact ? "E" : "R",
-                  exact ? ByteReader.Inner_StreamUtil.load : ByteReader.Inner_StreamUtil.read,
+                  exact ? ByteReader.Inner_StreamUtil.DANGER : ByteReader.Inner_StreamUtil.SUCCESS,
                   qp != null && qp.init_Packet != null,
                   mx,
                   my,
@@ -3916,7 +3916,7 @@ public class ActionEditorOverlay extends bj {
                      if (rowIndex >= 0 && rowIndex < updated.size()) {
                         ck.Inner_CachePool target = updated.get(rowIndex);
                         if (target != null && target.init_Packet != null) {
-                           target.init(target.init_Z() ? ck.Inner_BufferHelper.init : ck.Inner_BufferHelper.load);
+                           target.init(target.init_Z() ? ck.Inner_BufferHelper.REGENERATE : ck.Inner_BufferHelper.EXACT);
                            this.write(updated);
                         }
                      }
@@ -3961,7 +3961,7 @@ public class ActionEditorOverlay extends bj {
          AutismClientMessaging.sendPrefixed("Cleared packet list");
       });
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, bottomBtns[2], bottomY, bottomBtns[3], btnH, gbreakLbl, ByteReader.Inner_StreamUtil.init, !this.close_Z, mx, my, () -> {
+         ctx, bottomBtns[2], bottomY, bottomBtns[3], btnH, gbreakLbl, ByteReader.Inner_StreamUtil.SECONDARY, !this.close_Z, mx, my, () -> {
             if (!this.close_Z) {
                final int session = this.auditEditSession;
                ck.init_ck().init_V_Runnable(() -> init_Minecraft.execute(() -> {
@@ -4001,7 +4001,7 @@ public class ActionEditorOverlay extends bj {
             if (this.init_bE != null) {
                this.init_bE.read_Str = text != null && !text.isBlank() ? text.strip() : "minecraft:brand";
                this.init_bE.init_V();
-               this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.update, "");
+               this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.PREVIEW_ONLY, "");
             }
 
             this.data();
@@ -4026,7 +4026,7 @@ public class ActionEditorOverlay extends bj {
       contentField.init_V_Consumer(text -> {
          if (!this.start_Z) {
             this.get_Z = true;
-            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.init, text);
+            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.SCRIPT, text);
          }
       });
       this.init_Map.put("payload_content", contentField);
@@ -4044,7 +4044,7 @@ public class ActionEditorOverlay extends bj {
       hexView.init_V_LongSupplier(this::init_J);
       hexView.init_V_Consumer(text -> {
          if (!this.start_Z) {
-            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.load, text);
+            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.HEX, text);
          }
       });
       this.init_Map.put("payload_hex_view", hexView);
@@ -4062,7 +4062,7 @@ public class ActionEditorOverlay extends bj {
       utf8View.init_V_LongSupplier(this::init_J);
       utf8View.init_V_Consumer(text -> {
          if (!this.start_Z) {
-            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.read, text);
+            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.UTF8, text);
          }
       });
       this.init_Map.put("payload_utf8_view", utf8View);
@@ -4080,7 +4080,7 @@ public class ActionEditorOverlay extends bj {
       logicalView.init_V_LongSupplier(this::init_J);
       logicalView.init_V_Consumer(text -> {
          if (!this.start_Z) {
-            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.write, text);
+            this.init_V_ActionEditorOverla_Str(ActionEditorOverlay.NetHelper.LOGICAL, text);
          }
       });
       this.init_Map.put("payload_logical_view", logicalView);
@@ -4162,7 +4162,7 @@ public class ActionEditorOverlay extends bj {
                bytes,
                false,
                action.commandApiValue,
-               ActionEditorOverlay.TaskQueue.load,
+               ActionEditorOverlay.TaskQueue.BRAND_STRING,
                brandText != null ? brandText : AutismPayloadSupport.init_Str()
             );
          }
@@ -4171,17 +4171,17 @@ public class ActionEditorOverlay extends bj {
       Integer commandValue = AutismPayloadSupport.init_Integer(null, channel, bytes);
       boolean commandRecognized = action.commandApiRecognized || commandValue != null;
       int resolvedCommandValue = commandValue != null ? commandValue : action.commandApiValue;
-      ActionEditorOverlay.TaskQueue mode = ActionEditorOverlay.TaskQueue.write;
+      ActionEditorOverlay.TaskQueue mode = ActionEditorOverlay.TaskQueue.BINARY_REPLAY;
       String contentText = "";
       if (commandRecognized) {
-         mode = ActionEditorOverlay.TaskQueue.read;
+         mode = ActionEditorOverlay.TaskQueue.COMMAND_INT;
          contentText = String.valueOf(resolvedCommandValue);
       } else {
          String readableText = AutismPayloadSupport.write(bytes);
          if (readableText.isBlank() && bytes.length != 0) {
             contentText = "Binary payload (" + bytes.length + " bytes). Safe replay keeps the captured bytes.";
          } else {
-            mode = ActionEditorOverlay.TaskQueue.init;
+            mode = ActionEditorOverlay.TaskQueue.UTF8_TEXT;
             contentText = this.init_Str_Str(readableText);
          }
       }
@@ -4321,7 +4321,7 @@ public class ActionEditorOverlay extends bj {
          List<bJ.Inner_CachePool> fields = this.load_List();
          if (!this.clear_Z) {
             bJ.Inner_StreamUtil current = add_List.get(
-               Math.max(0, Math.min(this.read_Map.getOrDefault("payload_mode", this.init_I_bJ_StreamUtil(bJ.Inner_StreamUtil.sync)), add_List.size() - 1))
+               Math.max(0, Math.min(this.read_Map.getOrDefault("payload_mode", this.init_I_bJ_StreamUtil(bJ.Inner_StreamUtil.ADVANCED_MIXED)), add_List.size() - 1))
             );
             this.read_Map.put("payload_mode", this.init_I_bJ_StreamUtil(this.init_bJ_StreamUtil_Str(channel, fields, current)));
          }
@@ -4349,69 +4349,69 @@ public class ActionEditorOverlay extends bj {
    private bJ.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel, List<bJ.Inner_CachePool> fields, bJ.Inner_StreamUtil fallback) {
       List<bJ.Inner_CachePool> safeFields = fields == null ? List.of() : fields;
       if (AutismPayloadSupport.init_Z(channel)) {
-         return bJ.Inner_StreamUtil.write;
+         return bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF;
       }
 
       if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip())) {
-         return bJ.Inner_StreamUtil.read;
+         return bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT;
       }
 
       for (bJ.Inner_CachePool field : safeFields) {
          if (field != null) {
             switch (field.init_bJ_BufferHelper()) {
-               case tick:
-               case pop:
-               case run:
-                  return bJ.Inner_StreamUtil.load;
-               case push:
-               case init_bJ_BufferHelper:
-               case load_bJ_BufferHelper:
-               case read:
-               case write:
-               case update:
-               case sync:
-               case flush:
-               case close:
-               case open:
-               case poll:
-                  return bJ.Inner_StreamUtil.read;
-               case put:
-               case add:
-               case clear:
-               case reset:
-               case start:
-               case stop:
-               case next:
-               case prev:
-                  return bJ.Inner_StreamUtil.write;
-               case value:
-               case data:
-               case valid:
-               case size:
-                  return bJ.Inner_StreamUtil.update;
-               case get:
-               case set:
-                  return bJ.Inner_StreamUtil.init_bJ_StreamUtil;
+               case HEX_BYTES:
+               case RAW_BYTES:
+               case BYTE_ARRAY:
+                  return bJ.Inner_StreamUtil.MANUAL_HEX;
+               case JAVA_WRITE_UTF:
+               case BYTE:
+               case UNSIGNED_BYTE:
+               case BOOLEAN:
+               case SHORT:
+               case UNSIGNED_SHORT:
+               case CHAR:
+               case INT:
+               case LONG:
+               case FLOAT:
+               case DOUBLE:
+                  return bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT;
+               case VAR_INT:
+               case VAR_LONG:
+               case MINECRAFT_STRING:
+               case IDENTIFIER:
+               case UUID_FIELD:
+               case BLOCK_POS:
+               case ENUM_VAR_INT:
+               case OPTIONAL_VALUE:
+                  return bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF;
+               case JSON_STRING:
+               case TEXT_COMPONENT:
+               case NBT:
+               case ITEM_STACK:
+                  return bJ.Inner_StreamUtil.JSON_TEXT;
+               case STRING_BYTES:
+               case RAW_UTF8_STRING:
+                  return bJ.Inner_StreamUtil.RAW_UTF8;
             }
          }
       }
 
-      return fallback == null ? bJ.Inner_StreamUtil.sync : fallback;
+      return fallback == null ? bJ.Inner_StreamUtil.ADVANCED_MIXED : fallback;
    }
 
    private bJ.Inner_BufferHelper init_bJ_BufferHelper_Str(String channel, bJ.Inner_StreamUtil mode, List<bJ.Inner_CachePool> fields) {
       if (AutismPayloadSupport.init_Z(channel)) {
-         return bJ.Inner_BufferHelper.clear;
+         return bJ.Inner_BufferHelper.MINECRAFT_STRING;
       } else if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip())) {
-         return bJ.Inner_BufferHelper.push;
-      } else if (mode == bJ.Inner_StreamUtil.load) {
-         return bJ.Inner_BufferHelper.tick;
-      } else if (mode == bJ.Inner_StreamUtil.read) {
-         return bJ.Inner_BufferHelper.push;
-      } else if (mode == bJ.Inner_StreamUtil.write) {
-         return bJ.Inner_BufferHelper.clear;
+         return bJ.Inner_BufferHelper.JAVA_WRITE_UTF;
+      } else if (mode == bJ.Inner_StreamUtil.MANUAL_HEX) {
+         return bJ.Inner_BufferHelper.HEX_BYTES;
+      } else if (mode == bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT) {
+         return bJ.Inner_BufferHelper.JAVA_WRITE_UTF;
+      } else if (mode == bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF) {
+         return bJ.Inner_BufferHelper.MINECRAFT_STRING;
       } else {
-         return mode == bJ.Inner_StreamUtil.update ? bJ.Inner_BufferHelper.data : bJ.Inner_BufferHelper.get;
+         return mode == bJ.Inner_StreamUtil.JSON_TEXT ? bJ.Inner_BufferHelper.TEXT_COMPONENT : bJ.Inner_BufferHelper.STRING_BYTES;
       }
    }
 
@@ -4434,7 +4434,7 @@ public class ActionEditorOverlay extends bj {
             this.data();
          } else {
             switch (edit.init_ActionEditorOverla()) {
-               case init:
+               case SCRIPT:
                   if (this.init_bE.init_Z_Str(edit.init_Str())) {
                      this.tick(false);
                      this.run(false);
@@ -4442,16 +4442,16 @@ public class ActionEditorOverlay extends bj {
 
                   this.data();
                   break;
-               case load:
+               case HEX:
                   this.init_V_Str_2(edit.init_Str());
                   break;
-               case read:
+               case UTF8:
                   this.load_V_Str(edit.init_Str());
                   break;
-               case write:
+               case LOGICAL:
                   this.read_V(edit.init_Str());
                   break;
-               case update:
+               case PREVIEW_ONLY:
                   this.run(false);
             }
 
@@ -4551,12 +4551,12 @@ public class ActionEditorOverlay extends bj {
 
    private int init_I_bJ_BufferHelper(bJ.Inner_BufferHelper type) {
       int index = get_List.indexOf(type);
-      return index < 0 ? get_List.indexOf(bJ.Inner_BufferHelper.get) : index;
+      return index < 0 ? get_List.indexOf(bJ.Inner_BufferHelper.STRING_BYTES) : index;
    }
 
    private bJ.Inner_BufferHelper init_bJ_BufferHelper_I(int row) {
       int index = Math.max(
-         0, Math.min(this.read_Map.getOrDefault(this.init_Str_I(row), this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.get)), get_List.size() - 1)
+         0, Math.min(this.read_Map.getOrDefault(this.init_Str_I(row), this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.STRING_BYTES)), get_List.size() - 1)
       );
       return get_List.get(index);
    }
@@ -4571,7 +4571,7 @@ public class ActionEditorOverlay extends bj {
 
    private int init_I_bJ_StreamUtil(bJ.Inner_StreamUtil mode) {
       int index = add_List.indexOf(mode);
-      return index < 0 ? add_List.indexOf(bJ.Inner_StreamUtil.sync) : index;
+      return index < 0 ? add_List.indexOf(bJ.Inner_StreamUtil.ADVANCED_MIXED) : index;
    }
 
    private bJ.Inner_StreamUtil init_bJ_StreamUtil_Str(String channel) {
@@ -4595,7 +4595,7 @@ public class ActionEditorOverlay extends bj {
       int modeLabelW = 28;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Dir", font, p.bind(), x, cy + 3, false);
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), ByteReader.Inner_StreamUtil.init, true, mx, my, () -> {
+         ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
             this.push(true);
             if (this.init_bE != null) {
                this.init_bE.init_Str = bJ.init_Str(this.init_bE.init_Str);
@@ -4649,7 +4649,7 @@ public class ActionEditorOverlay extends bj {
                btnW,
                13,
                override ? "Override" : "Exact",
-               override ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.init,
+               override ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.SECONDARY,
                true,
                mx,
                my,
@@ -4673,7 +4673,7 @@ public class ActionEditorOverlay extends bj {
          autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Script", font, p.parse(), x, cy + 2, false);
          int psClearW = this.write_I("Clear");
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, x + w - psClearW, cy, psClearW, 13, "Clear", ByteReader.Inner_StreamUtil.load, !this.load_List().isEmpty(), mx, my, () -> {
+            ctx, x + w - psClearW, cy, psClearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, !this.load_List().isEmpty(), mx, my, () -> {
                k contentField = this.init_Map.get("payload_content");
                if (contentField != null) {
                   contentField.init_V_Str("");
@@ -4693,11 +4693,11 @@ public class ActionEditorOverlay extends bj {
             addButtonW,
             13,
             "Add",
-            ByteReader.Inner_StreamUtil.read,
+            ByteReader.Inner_StreamUtil.SUCCESS,
             true,
             mx,
             my,
-            () -> this.read_V(this.read_Map.getOrDefault("payload_add_type", this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.get)))
+            () -> this.read_V(this.read_Map.getOrDefault("payload_add_type", this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.STRING_BYTES)))
          );
          cy += 17;
          k contentField = this.init_Map.get("payload_content");
@@ -4762,7 +4762,7 @@ public class ActionEditorOverlay extends bj {
       String sendLbl = this.close_Z ? "Send: In Game" : "Send";
       int[] sendBtns = this.init_IArr_I(x, w, false, sendLbl, "Reset");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, ByteReader.Inner_StreamUtil.read, !this.close_Z && built.init_Z() && !modelBad, mx, my, () -> {
+         ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, ByteReader.Inner_StreamUtil.SUCCESS, !this.close_Z && built.init_Z() && !modelBad, mx, my, () -> {
             if (!this.close_Z) {
                try {
                   H action = this.load_H();
@@ -4773,7 +4773,7 @@ public class ActionEditorOverlay extends bj {
             }
          }
       );
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, sendBtns[2], cy, sendBtns[3], 13, "Reset", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, sendBtns[2], cy, sendBtns[3], 13, "Reset", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
          this.cache();
          this.fill();
       });
@@ -4793,7 +4793,7 @@ public class ActionEditorOverlay extends bj {
       for (int i = 0; i < tabs.length; i++) {
          int tx = x + i * (tabW + gap);
          int tw = i == tabs.length - 1 ? Math.max(30, x + w - tx) : tabW;
-         ByteReader.Inner_StreamUtil variant = this.f_i_I == i ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.init;
+         ByteReader.Inner_StreamUtil variant = this.f_i_I == i ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.SECONDARY;
          int index = i;
          this.init_ByteReader_GuiGraphicsExtract_2(ctx, tx, y, tw, 13, tabs[i], variant, true, mx, my, () -> {
             this.push(true);
@@ -5230,13 +5230,13 @@ public class ActionEditorOverlay extends bj {
          }
 
          if ("UUID".equals(normalized)) {
-            return bJ.Inner_BufferHelper.start;
+            return bJ.Inner_BufferHelper.UUID_FIELD;
          } else if ("UTF".equals(normalized) || "WRITEUTF".equals(normalized)) {
-            return bJ.Inner_BufferHelper.push;
+            return bJ.Inner_BufferHelper.JAVA_WRITE_UTF;
          } else if (!"MC_STRING".equals(normalized) && !"MINECRAFT_STRING".equals(normalized)) {
-            return !"COMPONENT".equals(normalized) && !"TEXT_COMPONENT".equals(normalized) ? null : bJ.Inner_BufferHelper.data;
+            return !"COMPONENT".equals(normalized) && !"TEXT_COMPONENT".equals(normalized) ? null : bJ.Inner_BufferHelper.TEXT_COMPONENT;
          } else {
-            return bJ.Inner_BufferHelper.clear;
+            return bJ.Inner_BufferHelper.MINECRAFT_STRING;
          }
       } else {
          return null;
@@ -5258,7 +5258,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_I_2(int x, int y, int w, int mx, int my, bJ.Inner_JsonUtil template) {
-      int idx = this.init_I_bJ_StreamUtil(template == null ? bJ.Inner_StreamUtil.sync : template.init_bJ_StreamUtil());
+      int idx = this.init_I_bJ_StreamUtil(template == null ? bJ.Inner_StreamUtil.ADVANCED_MIXED : template.init_bJ_StreamUtil());
       autismclient.gui.f.b.SyncManager dd = this.run_Map
          .computeIfAbsent("payload_mode", key -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, put_List, idx, newIdx -> {
             if (newIdx >= 0 && newIdx < add_List.size()) {
@@ -5322,20 +5322,20 @@ public class ActionEditorOverlay extends bj {
 
       int ax = valueX + valueW + gap;
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, ax, y + 2, actionW, btnH, "Up", ByteReader.Inner_StreamUtil.init, row > 0, mx, my, () -> this.update_V(row, -1)
+         ctx, ax, y + 2, actionW, btnH, "Up", ByteReader.Inner_StreamUtil.SECONDARY, row > 0, mx, my, () -> this.update_V(row, -1)
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, ax + actionW + gap, y + 2, actionW, btnH, "Dn", ByteReader.Inner_StreamUtil.init, row < this.f_h_I - 1, mx, my, () -> this.update_V(row, 1)
+         ctx, ax + actionW + gap, y + 2, actionW, btnH, "Dn", ByteReader.Inner_StreamUtil.SECONDARY, row < this.f_h_I - 1, mx, my, () -> this.update_V(row, 1)
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, ax + (actionW + gap) * 2, y + 2, actionW, btnH, "X", ByteReader.Inner_StreamUtil.load, this.f_h_I > 1, mx, my, () -> this.write_V(row)
+         ctx, ax + (actionW + gap) * 2, y + 2, actionW, btnH, "X", ByteReader.Inner_StreamUtil.DANGER, this.f_h_I > 1, mx, my, () -> this.write_V(row)
       );
       return y + 18;
    }
 
    private void init_V_I(int row, int x, int y, int w, int mx, int my) {
       String key = this.init_Str_I(row);
-      int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.get)), set_List.size() - 1));
+      int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(bJ.Inner_BufferHelper.STRING_BYTES)), set_List.size() - 1));
       autismclient.gui.f.b.SyncManager dd = this.run_Map
          .computeIfAbsent(key, cacheKey -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
       dd.init_SyncManager_I(x, y, w, 13)
@@ -5509,16 +5509,16 @@ public class ActionEditorOverlay extends bj {
    private String flush_Str() {
       String var10000;
       switch (this.init_ActionEditorOverla_3) {
-         case init:
+         case UTF8_TEXT:
             var10000 = "Payload Component";
             break;
-         case load:
+         case BRAND_STRING:
             var10000 = "Brand";
             break;
-         case read:
+         case COMMAND_INT:
             var10000 = "Payload Value";
             break;
-         case write:
+         case BINARY_REPLAY:
             var10000 = "Payload";
             break;
          default:
@@ -5691,7 +5691,7 @@ public class ActionEditorOverlay extends bj {
                commandField.update(fieldW);
                commandField.init_V(ctx, mx, my, delta);
                this.init_ByteReader_GuiGraphicsExtract_2(
-                  ctx, ctrlX + fieldW + 2, cy + 2, btnW, 13, "Sync", ByteReader.Inner_StreamUtil.update, true, mx, my, () -> {
+                  ctx, ctrlX + fieldW + 2, cy + 2, btnW, 13, "Sync", ByteReader.Inner_StreamUtil.GHOST, true, mx, my, () -> {
                      this.queue();
                      this.fill();
                   }
@@ -5757,7 +5757,7 @@ public class ActionEditorOverlay extends bj {
             this.fill();
          });
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, seedBtns[2], cy, seedBtns[3], 13, sendNowLbl, ByteReader.Inner_StreamUtil.read, !this.close_Z, mx, my, () -> {
+            ctx, seedBtns[2], cy, seedBtns[3], 13, sendNowLbl, ByteReader.Inner_StreamUtil.SUCCESS, !this.close_Z, mx, my, () -> {
                if (!this.close_Z) {
                   try {
                      H action = this.load_H();
@@ -5943,7 +5943,7 @@ public class ActionEditorOverlay extends bj {
       int btnH = 13;
       int[] presetBtns = this.init_IArr_I(x, w, false, "Default", "Module");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, presetBtns[0], y + 2, presetBtns[1], btnH, "Default", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> {
+         ctx, presetBtns[0], y + 2, presetBtns[1], btnH, "Default", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
             autismclient.util.macro.FileCache tmp = new autismclient.util.macro.FileCache();
             tmp.read();
             this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
@@ -5951,7 +5951,7 @@ public class ActionEditorOverlay extends bj {
          }
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, presetBtns[2], y + 2, presetBtns[3], btnH, "Module", ByteReader.Inner_StreamUtil.write, true, mx, my, () -> {
+         ctx, presetBtns[2], y + 2, presetBtns[3], btnH, "Module", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> {
             autismclient.util.macro.FileCache tmp = new autismclient.util.macro.FileCache();
             tmp.write();
             this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
@@ -5993,7 +5993,7 @@ public class ActionEditorOverlay extends bj {
          w,
          h,
          label,
-         toggleState ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.load,
+         toggleState ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.DANGER,
          true,
          mx,
          my,
@@ -6040,21 +6040,21 @@ public class ActionEditorOverlay extends bj {
       }
 
       int var10000;
-      switch (variant == null ? ByteReader.Inner_StreamUtil.init : variant) {
-         case read:
-            var10000 = ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.sync);
+      switch (variant == null ? ByteReader.Inner_StreamUtil.SECONDARY : variant) {
+         case SUCCESS:
+            var10000 = ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.SUCCESS);
             break;
-         case load:
-            var10000 = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.flush);
+         case DANGER:
+            var10000 = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.DANGER);
             break;
-         case write:
-         case sync:
-            var10000 = ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.close);
+         case PRIMARY:
+         case FILTER_ON:
+            var10000 = ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.BUTTON);
             break;
-         case update:
-         case flush:
-         case init:
-            var10000 = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.load);
+         case GHOST:
+         case FILTER_OFF:
+         case SECONDARY:
+            var10000 = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.OUTLINE);
             break;
          default:
             throw new MatchException(null, null);
@@ -6109,7 +6109,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, int mx, int my, Runnable action) {
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, x, y, w, h, label, ByteReader.Inner_StreamUtil.init, true, mx, my, action);
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, x, y, w, h, label, ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, action);
    }
 
    private int init_I_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int y, int w, String text) {
@@ -6332,14 +6332,14 @@ public class ActionEditorOverlay extends bj {
       if (this.init_ActionFieldSchema != null) {
          for (FieldDef field : this.init_ActionFieldSchema.fields()) {
             switch (field.type()) {
-               case write:
-               case update:
-               case load:
-               case read:
-               case open:
+               case TEXT:
+               case MACRO_SELECT:
+               case NUMBER:
+               case DECIMAL:
+               case SLOT:
                   this.init_V_Str_Str_2(field.key(), this.init_Str_FieldDef(field));
                   break;
-               case close:
+               case BLOCK_POS:
                   this.update_V(field.key());
             }
          }
@@ -6441,7 +6441,7 @@ public class ActionEditorOverlay extends bj {
                var10000 = "1024";
                break;
             case "title":
-               var10000 = this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_i_StreamGate ? "Book title" : "Optional title";
+               var10000 = this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.NBT_BOOK ? "Book title" : "Optional title";
                break;
             case "guiTitle":
                var10000 = "Optional title";
@@ -6502,15 +6502,15 @@ public class ActionEditorOverlay extends bj {
                break;
             default:
                switch (field.type()) {
-                  case write:
-                  case update:
+                  case TEXT:
+                  case MACRO_SELECT:
                      var10000 = this.update_Str(field.label());
                      break;
-                  case load:
-                  case read:
+                  case NUMBER:
+                  case DECIMAL:
                      var10000 = "0";
                      break;
-                  case open:
+                  case SLOT:
                      var10000 = "Slot #";
                      break;
                   default:
@@ -6547,38 +6547,38 @@ public class ActionEditorOverlay extends bj {
          this.close(ctx, x, y, w, mx, my);
       } else {
          switch (field.type()) {
-            case write:
-            case update:
-            case load:
-            case read:
-            case open:
+            case TEXT:
+            case MACRO_SELECT:
+            case NUMBER:
+            case DECIMAL:
+            case SLOT:
                this.load(ctx, field, x, y, w, mx, my, delta);
                break;
-            case close:
+            case BLOCK_POS:
                this.read(ctx, field, x, y, w, mx, my, delta);
                break;
-            case init:
+            case TOGGLE:
                this.write_V_GuiGraphicsExtract_2(ctx, field, x, y, w, mx, my);
                break;
-            case sync:
+            case ENUM:
                this.update_V_GuiGraphicsExtract_2(ctx, field, x, y, w, mx, my);
                break;
-            case flush:
+            case STRING_LIST:
                if (this.init_Z_FieldDef(field)) {
                   this.load_V_GuiGraphicsExtract_2(ctx, field, x, y, w, mx, my);
-               } else if (field.captureMode() == StreamUtil.write) {
+               } else if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
                   this.update(ctx, field, x, y, w, mx, my, delta);
                } else {
                   this.write(ctx, field, x, y, w, mx, my, delta);
                }
                break;
-            case poll:
+            case TARGET_SUMMARY:
                this.load(ctx, field, x, y, w);
                break;
-            case push:
+            case CAPTURE_BUTTON:
                this.init_V_GuiGraphicsExtract_4(ctx, field, x, y, w, mx, my);
                break;
-            case pop:
+            case CONDITION:
                this.init_V_GuiGraphicsExtract(ctx, field, x, y, w);
          }
       }
@@ -6662,7 +6662,7 @@ public class ActionEditorOverlay extends bj {
       k nameF = this.init_Map.get("itemName");
       k slotF = this.init_Map.get("place_itemSlot");
       if (nameF != null && slotF != null) {
-         int pickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int slotW = 26;
          int gap = 3;
          int pickX = x + w - pickW;
@@ -6677,7 +6677,7 @@ public class ActionEditorOverlay extends bj {
          slotF.update(slotW);
          slotF.init_V(ctx, mx, my, delta);
          boolean capt = this.init_StreamUtil.init("itemName");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y, pickW, 14, StreamUtil.update, capt, true, mx, my, () -> this.close_V("itemName"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y, pickW, 14, StreamUtil.ITEM_SLOT, capt, true, mx, my, () -> this.close_V("itemName"));
       }
    }
 
@@ -6698,14 +6698,14 @@ public class ActionEditorOverlay extends bj {
 
    private void init_V_GuiGraphicsExtract_4(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      int btnW = this.init_I_StreamUtil(StreamUtil.flush, "Re-capture", "Click slot...");
+      int btnW = this.init_I_StreamUtil(StreamUtil.PACKET_CLICK_TARGET, "Re-capture", "Click slot...");
       int btnH = 13;
       int lw = this.init_I_I(w, field.label(), font, btnW);
       this.init_V_GuiGraphicsExtract_3(ctx, field.label(), x, y, lw, font);
       boolean capturing = field.key().equals(this.write_Str);
       int btnX = x + w - btnW;
       this.init_ByteReader_GuiGraphicsExtract(
-         ctx, btnX, y + 2, btnW, btnH, StreamUtil.flush, capturing, true, mx, my, "Re-capture", "Click slot...", () -> this.sync_V(field.key())
+         ctx, btnX, y + 2, btnW, btnH, StreamUtil.PACKET_CLICK_TARGET, capturing, true, mx, my, "Re-capture", "Click slot...", () -> this.sync_V(field.key())
       );
    }
 
@@ -6718,7 +6718,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean init_Z_FieldDef(FieldDef field) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_q_StreamGate && field != null && "raceSteps".equals(field.key());
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.RACE && field != null && "raceSteps".equals(field.key());
    }
 
    private void load_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
@@ -6729,10 +6729,10 @@ public class ActionEditorOverlay extends bj {
       int addY = y + 13;
       int[] addBtns = this.init_IArr_I(x, w, false, "+ Condition", "+ Action");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, addBtns[0], addY, addBtns[1], 13, "+ Condition", ByteReader.Inner_StreamUtil.write, true, mx, my, () -> this.init_V_List_Z(values, true)
+         ctx, addBtns[0], addY, addBtns[1], 13, "+ Condition", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.init_V_List_Z(values, true)
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, addBtns[2], addY, addBtns[3], 13, "+ Action", ByteReader.Inner_StreamUtil.read, true, mx, my, () -> this.init_V_List_Z(values, false)
+         ctx, addBtns[2], addY, addBtns[3], 13, "+ Action", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> this.init_V_List_Z(values, false)
       );
       int listY = addY + 13 + 2;
       int rowH = 14;
@@ -6942,7 +6942,7 @@ public class ActionEditorOverlay extends bj {
 
    private bo.Inner_DataUtil init_bo_DataUtil() {
       FieldDef modeField = this.init_FieldDef_Str("mode");
-      if (modeField != null && modeField.type() == CachePool.sync && !modeField.enumOptions().isEmpty()) {
+      if (modeField != null && modeField.type() == CachePool.ENUM && !modeField.enumOptions().isEmpty()) {
          int idx = Math.max(0, Math.min(this.read_Map.getOrDefault("mode", 0), modeField.enumOptions().size() - 1));
          return bo.Inner_DataUtil.init(modeField.enumOptions().get(idx));
       } else {
@@ -7024,7 +7024,7 @@ public class ActionEditorOverlay extends bj {
       k tf = this.init_Map.get(key);
       if (tf != null) {
          Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-         if (field.type() == CachePool.update) {
+         if (field.type() == CachePool.MACRO_SELECT) {
             this.init_V_GuiGraphicsExtract_6(ctx, field, tf, x, y, w, mx, my);
          } else if (this.read(field)) {
             autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, p.parse(), x, y + 2, false);
@@ -7038,19 +7038,19 @@ public class ActionEditorOverlay extends bj {
                this.init_V_FieldDef(field, tf, x + w - variableW, y + 13, variableW);
             }
          } else {
-            boolean packetPick = field.captureMode() == StreamUtil.sync;
-            boolean slotPick = field.type() == CachePool.open && this.clear_Z();
-            boolean itemSlotPick = field.captureMode() == StreamUtil.update && this.clear_Z();
-            boolean menuButtonPick = field.captureMode() == StreamUtil.open;
+            boolean packetPick = field.captureMode() == StreamUtil.PACKET_NAME;
+            boolean slotPick = field.type() == CachePool.SLOT && this.clear_Z();
+            boolean itemSlotPick = field.captureMode() == StreamUtil.ITEM_SLOT && this.clear_Z();
+            boolean menuButtonPick = field.captureMode() == StreamUtil.CUSTOM_MENU_BUTTON;
             boolean nbtBookFilePick = this.init_MacroAction != null
-               && this.init_MacroAction.getType() == StreamGate.f_i_StreamGate
+               && this.init_MacroAction.getType() == StreamGate.NBT_BOOK
                && "customFilePath".equals(key);
             int lw = this.init_I_I(w, field.label(), font, !itemSlotPick && !packetPick && !slotPick && !menuButtonPick ? 56 : 88);
             this.init_V_GuiGraphicsExtract_3(ctx, field.label(), x, y, lw, font);
             int tfX = this.flush_I(x, lw);
             int variableW = this.close_Z(key) ? 24 : 0;
             if (menuButtonPick) {
-               int pickW = this.init_I_StreamUtil(StreamUtil.open, null, null);
+               int pickW = this.init_I_StreamUtil(StreamUtil.CUSTOM_MENU_BUTTON, null, null);
                int availableW = Math.max(1, this.close(w, lw) - (variableW > 0 ? variableW + 2 : 0));
                int tfW = Math.max(1, availableW - pickW - 2);
                tf.read(tfX);
@@ -7058,7 +7058,7 @@ public class ActionEditorOverlay extends bj {
                tf.update(tfW);
                tf.init_V(ctx, mx, my, delta);
                String fKey = key;
-               this.init_ByteReader_GuiGraphicsExtract(ctx, tfX + tfW + 2, y + 2, pickW, 13, StreamUtil.open, false, true, mx, my, () -> this.flush_V(fKey));
+               this.init_ByteReader_GuiGraphicsExtract(ctx, tfX + tfW + 2, y + 2, pickW, 13, StreamUtil.CUSTOM_MENU_BUTTON, false, true, mx, my, () -> this.flush_V(fKey));
                if (variableW > 0) {
                   this.init_V_FieldDef(field, tf, tfX + tfW + pickW + 4, y + 2, variableW);
                }
@@ -7071,7 +7071,7 @@ public class ActionEditorOverlay extends bj {
                tf.update(tfW);
                tf.init_V(ctx, mx, my, delta);
                this.init_ByteReader_GuiGraphicsExtract_2(
-                  ctx, tfX + tfW + 2, y + 2, pickW, 13, "Pick", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> this.init_V_k(tf)
+                  ctx, tfX + tfW + 2, y + 2, pickW, 13, "Pick", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.init_V_k(tf)
                );
                if (variableW > 0) {
                   this.init_V_FieldDef(field, tf, tfX + tfW + pickW + 4, y + 2, variableW);
@@ -7086,7 +7086,7 @@ public class ActionEditorOverlay extends bj {
                   this.init_V_FieldDef(field, tf, tfX + tfW + 2, y + 2, variableW);
                }
             } else {
-               int pickW = this.init_I_StreamUtil(packetPick ? StreamUtil.sync : StreamUtil.update, null, null);
+               int pickW = this.init_I_StreamUtil(packetPick ? StreamUtil.PACKET_NAME : StreamUtil.ITEM_SLOT, null, null);
                int availableW = Math.max(1, this.close(w, lw) - (variableW > 0 ? variableW + 2 : 0));
                int tfW = slotPick ? Math.max(26, availableW - pickW - 2) : Math.max(1, availableW - pickW - 2);
                tf.read(tfX);
@@ -7097,7 +7097,7 @@ public class ActionEditorOverlay extends bj {
                boolean capt = !packetPick && this.init_StreamUtil.init(key);
                String fKey = key;
                this.init_ByteReader_GuiGraphicsExtract(
-                  ctx, pkX, y + 2, pickW, 14, packetPick ? StreamUtil.sync : StreamUtil.update, capt, true, mx, my, () -> {
+                  ctx, pkX, y + 2, pickW, 14, packetPick ? StreamUtil.PACKET_NAME : StreamUtil.ITEM_SLOT, capt, true, mx, my, () -> {
                      if (packetPick) {
                         this.run_V(fKey);
                      } else {
@@ -7174,7 +7174,7 @@ public class ActionEditorOverlay extends bj {
 
    private boolean close_Z(String key) {
       return this.init_MacroAction != null
-         && this.init_MacroAction.getType() == StreamGate.f_h_StreamGate
+         && this.init_MacroAction.getType() == StreamGate.SEND_CHAT
          && "message".equals(key)
          && !this.flush_List.isEmpty();
    }
@@ -7232,19 +7232,19 @@ public class ActionEditorOverlay extends bj {
          }
 
          switch (capture.source) {
-            case init:
+            case GUI_TITLE:
                init_V_Set_2(tokens, capture.saveAs, "title", "type");
                break;
-            case load:
+            case RECENT_CHAT:
                init_V_Set_2(tokens, capture.saveAs, "sender", "message", "display", "source");
                break;
-            case read:
+            case SCOREBOARD:
                init_V_Set_2(tokens, capture.saveAs, "line", "name", "score", "row", "title", "objective");
                break;
-            case write:
-            case update:
-            case sync:
-            case flush:
+            case GUI_ITEM:
+            case PLAYER_ITEM:
+            case CURSOR_ITEM:
+            case HELD_ITEM:
                init_V_Set_2(tokens, capture.saveAs, "name", "id", "count", "slot", "lore", "lore1");
          }
       } else if (action instanceof V select && select.outputVariable != null && !select.outputVariable.isBlank()) {
@@ -7367,7 +7367,7 @@ public class ActionEditorOverlay extends bj {
                      autismclient.gui.f.NetHelper.init(x, iy, itemW, 14),
                      hovered,
                      selected,
-                     FileCache.Inner_DataUtil.init,
+                     FileCache.Inner_DataUtil.NORMAL,
                      false
                   );
                   String selectedMacro = macroName;
@@ -7381,7 +7381,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean read(FieldDef field) {
-      return field != null && "pattern".equals(field.key()) && this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.block;
+      return field != null && "pattern".equals(field.key()) && this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT;
    }
 
    private void update_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
@@ -7449,7 +7449,7 @@ public class ActionEditorOverlay extends bj {
       String key = field.key();
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       String[] axis = new String[]{"X", "Y", "Z"};
-      boolean hasCapture = field.captureMode() != StreamUtil.init && this.init_Z_StreamUtil(field.captureMode());
+      boolean hasCapture = field.captureMode() != StreamUtil.NONE && this.init_Z_StreamUtil(field.captureMode());
       int capBtnW = this.init_I_StreamUtil(field.captureMode(), null, null);
       int capBtnH = 13;
       int labelW = hasCapture ? w - capBtnW - 4 : w;
@@ -7457,7 +7457,7 @@ public class ActionEditorOverlay extends bj {
       if (this.init_MacroAction instanceof al && "position".equals(key) && !"OFFSET".equals(this.tick_Str("destination"))) {
          int currentW = autismclient.gui.f.b.k.init(this.init_Font, "Use current", font, p.scan()) + 12;
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, x + w - currentW, y, currentW, 13, "Use current", ByteReader.Inner_StreamUtil.init, init_Minecraft.player != null, mx, my, () -> {
+            ctx, x + w - currentW, y, currentW, 13, "Use current", ByteReader.Inner_StreamUtil.SECONDARY, init_Minecraft.player != null, mx, my, () -> {
                if (init_Minecraft.player != null) {
                   BlockPos position = init_Minecraft.player.blockPosition();
                   int[] values = new int[]{position.getX(), position.getY(), position.getZ()};
@@ -7527,7 +7527,7 @@ public class ActionEditorOverlay extends bj {
       );
       String sectionLabel = filter.isEmpty() ? field.label() + " (" + lst.size() + ")" : field.label() + " (" + filtered.size() + "/" + lst.size() + ")";
       autismclient.gui.f.b.k.init(ctx, this.init_Font, sectionLabel, font, p.parse(), x, y + 2, false);
-      boolean hasCapture = field.captureMode() != StreamUtil.init && this.init_Z_StreamUtil(field.captureMode());
+      boolean hasCapture = field.captureMode() != StreamUtil.NONE && this.init_Z_StreamUtil(field.captureMode());
       boolean hasSlotField = editable && this.reset_Z(key);
       int btnH = 13;
       int addY = y + 13;
@@ -7575,7 +7575,7 @@ public class ActionEditorOverlay extends bj {
       k fSlotField = slotField;
       if (af != null) {
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+            ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
                String nameText = af.load_Str().strip();
                String slotText = hasSlotField && fSlotField != null ? fSlotField.load_Str().strip() : "";
                String entry = write_Str_Str_Str(nameText, slotText);
@@ -7592,7 +7592,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       if (hasCapture) {
-         boolean isItemSlot = field.captureMode() == StreamUtil.update;
+         boolean isItemSlot = field.captureMode() == StreamUtil.ITEM_SLOT;
          boolean capturing = isItemSlot && this.init_StreamUtil.init(key);
          String fKey = key;
          FieldDef fField = field;
@@ -7632,12 +7632,12 @@ public class ActionEditorOverlay extends bj {
             int amountY = itemsY;
             autismclient.gui.f.b.k.init(ctx, this.init_Font, "Amount", this.init_CharEncoder.init_Identifier_l(l.read), p.parse(), x, amountY + 3, false);
             int modeX = x + 52;
-            boolean custom = this.init_aQ_DataUtil_I(editIdx) == aQ.Inner_DataUtil.load;
+            boolean custom = this.init_aQ_DataUtil_I(editIdx) == aQ.Inner_DataUtil.CUSTOM;
             int amountBtnW = Math.max(this.write_I("Count"), this.write_I("FullStk"));
             this.init_ByteReader_GuiGraphicsExtract_2(
-               ctx, modeX, amountY, amountBtnW, btnH, custom ? "Count" : "FullStk", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> {
-                  boolean nowCustom = this.init_aQ_DataUtil_I(selectedXCarryIndex) == aQ.Inner_DataUtil.load;
-                  this.init_V_I_aQ_DataUtil(selectedXCarryIndex, nowCustom ? aQ.Inner_DataUtil.init : aQ.Inner_DataUtil.load);
+               ctx, modeX, amountY, amountBtnW, btnH, custom ? "Count" : "FullStk", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
+                  boolean nowCustom = this.init_aQ_DataUtil_I(selectedXCarryIndex) == aQ.Inner_DataUtil.CUSTOM;
+                  this.init_V_I_aQ_DataUtil(selectedXCarryIndex, nowCustom ? aQ.Inner_DataUtil.FULL_STK : aQ.Inner_DataUtil.CUSTOM);
                   k cf = this.init_Map.get(key + "_xcarry_count");
                   if (cf != null) {
                      cf.init_V_Str(String.valueOf(this.write_I(selectedXCarryIndex)));
@@ -7680,7 +7680,7 @@ public class ActionEditorOverlay extends bj {
                Component displayValue = this.init_Component_Str(key, lst.get(ri), ri);
                boolean selected = editable && ri == editIdx;
                boolean hovered = mx >= x && mx < x + rowAreaW && my >= iy && my < iy + 14;
-               if (field.captureMode() == StreamUtil.sync) {
+               if (field.captureMode() == StreamUtil.PACKET_NAME) {
                   int textColor = this.init_I_Str(lst.get(ri), ri, selected);
                   autismclient.gui.macro.editor.a.CachePool.init(
                      ctx, this.init_Font, displayValue, autismclient.gui.f.NetHelper.init(x, iy, rowAreaW, 14), hovered, selected, textColor, this.reset_Z(key)
@@ -7693,7 +7693,7 @@ public class ActionEditorOverlay extends bj {
                      autismclient.gui.f.NetHelper.init(x, iy, rowAreaW, 14),
                      hovered,
                      selected,
-                     FileCache.Inner_DataUtil.init,
+                     FileCache.Inner_DataUtil.NORMAL,
                      this.reset_Z(key)
                   );
                }
@@ -7764,7 +7764,7 @@ public class ActionEditorOverlay extends bj {
                   this.sync_List.add(dd);
                   actionX += destW + 2;
                   int fAmountIndex = ri;
-                  boolean custom = this.init_aQ_DataUtil_I(fAmountIndex) == aQ.Inner_DataUtil.load;
+                  boolean custom = this.init_aQ_DataUtil_I(fAmountIndex) == aQ.Inner_DataUtil.CUSTOM;
                   String amountLabel = custom ? "x" + this.write_I(fAmountIndex) : "FullStk";
                   this.init_ByteReader_GuiGraphicsExtract_2(
                      ctx,
@@ -7773,13 +7773,13 @@ public class ActionEditorOverlay extends bj {
                      amountW,
                      13,
                      amountLabel,
-                     custom ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.init,
+                     custom ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.SECONDARY,
                      true,
                      mx,
                      my,
                      () -> {
-                        boolean nowCustom = this.init_aQ_DataUtil_I(fAmountIndex) == aQ.Inner_DataUtil.load;
-                        this.init_V_I_aQ_DataUtil(fAmountIndex, nowCustom ? aQ.Inner_DataUtil.init : aQ.Inner_DataUtil.load);
+                        boolean nowCustom = this.init_aQ_DataUtil_I(fAmountIndex) == aQ.Inner_DataUtil.CUSTOM;
+                        this.init_V_I_aQ_DataUtil(fAmountIndex, nowCustom ? aQ.Inner_DataUtil.FULL_STK : aQ.Inner_DataUtil.CUSTOM);
                         this.open_Map.put(key, fAmountIndex);
                         k cf = this.init_Map.get(key + "_xcarry_count");
                         if (cf != null) {
@@ -7869,7 +7869,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, siy, delX - x - 1, 13),
                   mx >= x && mx < delX - 1 && my >= siy && my < siy + 13,
                   false,
-                  FileCache.Inner_DataUtil.init,
+                  FileCache.Inner_DataUtil.NORMAL,
                   false
                );
                int fi = i;
@@ -7937,7 +7937,7 @@ public class ActionEditorOverlay extends bj {
                autismclient.gui.f.NetHelper.init(x, iy, catItemW, 13),
                hov,
                already,
-               already ? FileCache.Inner_DataUtil.load : FileCache.Inner_DataUtil.init,
+               already ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
                false
             );
             if (!already) {
@@ -7977,7 +7977,7 @@ public class ActionEditorOverlay extends bj {
          int closeX = this.bind + (this.f_b_I - closeW) / 2;
          TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, p.c());
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, closeX, btnY, closeW, btnH, "Close", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> this.set(false)
+            ctx, closeX, btnY, closeW, btnH, "Close", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
          );
       } else {
          String saveLbl = this.init_H != null ? "Save Macro" : "Save";
@@ -8007,11 +8007,11 @@ public class ActionEditorOverlay extends bj {
          }
 
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, sx, btnY, cancelW, btnH, "Cancel", ByteReader.Inner_StreamUtil.init, true, mx, my, () -> this.set(false)
+            ctx, sx, btnY, cancelW, btnH, "Cancel", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
          );
          int saveX = sx + cancelW + gap;
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, saveX, btnY, saveW, btnH, saveLbl, ByteReader.Inner_StreamUtil.write, true, mx, my, () -> this.set(true)
+            ctx, saveX, btnY, saveW, btnH, saveLbl, ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.set(true)
          );
       }
    }
@@ -8087,7 +8087,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       String pattern = "";
-      UtilCore.Inner_DataUtil mode = UtilCore.Inner_DataUtil.init;
+      UtilCore.Inner_DataUtil mode = UtilCore.Inner_DataUtil.MATCH;
       if (this.init_MacroAction instanceof au) {
          k field = this.init_Map.get("pattern");
          pattern = field == null ? "" : field.load_Str();
@@ -8106,7 +8106,7 @@ public class ActionEditorOverlay extends bj {
          mode = this.init_UtilCore_DataUtil();
       }
 
-      if (mode != UtilCore.Inner_DataUtil.init) {
+      if (mode != UtilCore.Inner_DataUtil.MATCH) {
          outputs.addAll(UtilCore.init(mode, pattern));
       }
 
@@ -8117,7 +8117,7 @@ public class ActionEditorOverlay extends bj {
       try {
          return UtilCore.Inner_DataUtil.valueOf(this.tick_Str("matchMode"));
       } catch (IllegalArgumentException | NullPointerException ignored) {
-         return UtilCore.Inner_DataUtil.init;
+         return UtilCore.Inner_DataUtil.MATCH;
       }
    }
 
@@ -8286,7 +8286,7 @@ public class ActionEditorOverlay extends bj {
       this.get(true);
       ck.init_ck().cache(false);
       this.level();
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
          autismclient.util.au.load();
       }
 
@@ -8359,8 +8359,8 @@ public class ActionEditorOverlay extends bj {
       for (FieldDef field : this.init_ActionFieldSchema.fields()) {
          String key = field.key();
          switch (field.type()) {
-            case write:
-            case update: {
+            case TEXT:
+            case MACRO_SELECT: {
                String v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getStringOr(key, "") : "";
                k f = this.init_k_I(80);
                f.init_V_Str(v);
@@ -8371,7 +8371,7 @@ public class ActionEditorOverlay extends bj {
                this.init_Map.put(key, f);
                break;
             }
-            case load: {
+            case NUMBER: {
                int v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getIntOr(key, 0) : 0;
                k f = this.init_k_I(80);
                if (!field.dynamic()) {
@@ -8383,7 +8383,7 @@ public class ActionEditorOverlay extends bj {
                this.init_Map.put(key, f);
                break;
             }
-            case read: {
+            case DECIMAL: {
                double v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getDoubleOr(key, 0.0) : 0.0;
                k f = this.init_k_I(80);
                if (!field.dynamic()) {
@@ -8395,7 +8395,7 @@ public class ActionEditorOverlay extends bj {
                this.init_Map.put(key, f);
                break;
             }
-            case open: {
+            case SLOT: {
                int v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getIntOr(key, 0) : 0;
                k f = this.init_k_I(50);
                if (!field.dynamic()) {
@@ -8407,7 +8407,7 @@ public class ActionEditorOverlay extends bj {
                this.init_Map.put(key, f);
                break;
             }
-            case close: {
+            case BLOCK_POS: {
                String[] xyzKeys = field.xyzKeys();
                boolean dbl = field.xyzDouble();
 
@@ -8435,10 +8435,10 @@ public class ActionEditorOverlay extends bj {
                }
                break;
             }
-            case init:
+            case TOGGLE:
                this.load_Map.put(key, this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getBooleanOr(key, false) : false);
                break;
-            case sync: {
+            case ENUM: {
                String v = this.init_CompoundTag.contains(key) ? this.init_CompoundTag.getStringOr(key, "") : "";
                List<String> opts = field.enumOptions();
                int idx = opts.indexOf(v);
@@ -8454,7 +8454,7 @@ public class ActionEditorOverlay extends bj {
                }
                break;
             }
-            case flush:
+            case STRING_LIST:
                List<String> list = new ArrayList<>();
                if (this.init_CompoundTag.contains(key)) {
                   for (Tag el : this.init_CompoundTag.getList(key).orElse(new ListTag())) {
@@ -8467,7 +8467,7 @@ public class ActionEditorOverlay extends bj {
 
                this.write_Map.put(key, list);
                k af = this.init_k_I(80);
-               if (field.captureMode() == StreamUtil.write) {
+               if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
                   af.init_V_Component(Component.literal("Search blocks..."));
                } else {
                   af.init_V_Component(Component.literal("Search / " + field.addLabel()));
@@ -8707,7 +8707,7 @@ public class ActionEditorOverlay extends bj {
                this.init_CompoundTag.put("entries", entriesTag);
                this.init_CompoundTag.putString("moduleName", "");
                this.init_CompoundTag.putString("toggleMode", ak.Inner_StreamUtil.init.name());
-            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.write) {
+            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET) {
                List<String> targets = this.init_List_List(this.close_List());
                ListTag packetList = new ListTag();
 
@@ -8722,7 +8722,7 @@ public class ActionEditorOverlay extends bj {
                if (saveAs != null) {
                   this.init_CompoundTag.putString("saveAs", saveAs.load_Str());
                }
-            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_C_StreamGate) {
+            } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET_MATCH) {
                this.y();
                ListTag rules = new ListTag();
                if (this.reset_List != null) {
@@ -8743,15 +8743,15 @@ public class ActionEditorOverlay extends bj {
                for (FieldDef field : this.init_ActionFieldSchema.fields()) {
                   String key = field.key();
                   switch (field.type()) {
-                     case write:
-                     case update:
+                     case TEXT:
+                     case MACRO_SELECT:
                         k f = this.init_Map.get(key);
                         if (f != null) {
                            this.init_CompoundTag.putString(key, f.load_Str());
                         }
                         break;
-                     case load:
-                     case open:
+                     case NUMBER:
+                     case SLOT:
                         k fx = this.init_Map.get(key);
                         if (fx == null) {
                            break;
@@ -8772,7 +8772,7 @@ public class ActionEditorOverlay extends bj {
                            }
                         }
                         break;
-                     case read:
+                     case DECIMAL:
                         k fxDbl = this.init_Map.get(key);
                         if (fxDbl == null) {
                            break;
@@ -8793,7 +8793,7 @@ public class ActionEditorOverlay extends bj {
                            }
                         }
                         break;
-                     case close:
+                     case BLOCK_POS:
                         String[] xyzKeys = field.xyzKeys();
                         boolean dbl = field.xyzDouble();
                         int i = 0;
@@ -8821,10 +8821,10 @@ public class ActionEditorOverlay extends bj {
                            }
                         }
                         break;
-                     case init:
+                     case TOGGLE:
                         this.init_CompoundTag.putBoolean(key, this.load_Map.getOrDefault(key, false));
                         break;
-                     case sync:
+                     case ENUM:
                         k bindingField = field.dynamic() ? this.init_Map.get(key) : null;
                         String binding = bindingField == null ? "" : bindingField.load_Str().strip();
                         if (field.dynamic() && !binding.isBlank()) {
@@ -8838,7 +8838,7 @@ public class ActionEditorOverlay extends bj {
                            }
                         }
                         break;
-                     case flush:
+                     case STRING_LIST:
                         List<String> items = this.write_Map.getOrDefault(key, Collections.emptyList());
                         ListTag nbt = new ListTag();
 
@@ -8856,7 +8856,7 @@ public class ActionEditorOverlay extends bj {
                   this.init_CompoundTag.putString("waitGuiName", "");
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.tick) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY) {
                   String mode = this.tick_Str("mode");
                   if ("CLOSE".equals(mode)) {
                      this.init_CompoundTag.putBoolean("waitForGuiBefore", false);
@@ -8867,7 +8867,7 @@ public class ActionEditorOverlay extends bj {
                   this.init_CompoundTag.putBoolean("sendPacket", !this.load_Map.getOrDefault("sendPacket", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.table) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
                   ListTag nbtEntries = new ListTag();
                   if (this.run_List != null) {
                      for (aD.Inner_DataUtil e : this.run_List) {
@@ -8887,7 +8887,7 @@ public class ActionEditorOverlay extends bj {
                   this.init_CompoundTag.putBoolean("listenDuringPreviousAction", this.load_Map.getOrDefault("listenDuringPreviousAction", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.pop) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
                   k slotField = this.init_Map.get("slot");
                   if (slotField == null || slotField.load_Str() == null || slotField.load_Str().strip().isEmpty()) {
                      this.init_CompoundTag.remove("slot");
@@ -8904,11 +8904,11 @@ public class ActionEditorOverlay extends bj {
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_i_StreamGate) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.NBT_BOOK) {
                   this.block();
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.size) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SWAP_SLOTS) {
                   boolean fromUseItemName = this.init_CompoundTag.getBooleanOr("fromUseItemName", false);
                   boolean toUseItemName = this.init_CompoundTag.getBooleanOr("toUseItemName", false);
                   if (fromUseItemName) {
@@ -8925,13 +8925,13 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null
-                  && this.init_MacroAction.getType() == StreamGate.value
+                  && this.init_MacroAction.getType() == StreamGate.GO_TO
                   && !this.init_CompoundTag.getBooleanOr("waitForArrival", false)) {
                   this.init_CompoundTag.putDouble("arrivalRadius", 2.0);
                   this.init_CompoundTag.putInt("timeoutMs", 60000);
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.poll) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLICK) {
                   if (!this.next_Z()) {
                      this.init_CompoundTag.putString("guiName", "");
                   }
@@ -8945,7 +8945,7 @@ public class ActionEditorOverlay extends bj {
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.add) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.XCARRY) {
                   this.init_CompoundTag.putInt("safeClickDelayTicks", aQ.write(this.init_CompoundTag.getIntOr("safeClickDelayTicks", 1)));
                   this.init_CompoundTag
                      .putBoolean(
@@ -8959,7 +8959,7 @@ public class ActionEditorOverlay extends bj {
                      );
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.buffer) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DISCONNECT) {
                   String mode = this.init_CompoundTag.getStringOr("mode", "DISCONNECT");
                   if ("DISCONNECT".equals(mode)) {
                      this.init_CompoundTag.putBoolean("useNextAction", false);
@@ -8973,38 +8973,38 @@ public class ActionEditorOverlay extends bj {
                }
 
                if (this.init_MacroAction != null
-                  && this.init_MacroAction.getType() == StreamGate.f_f_StreamGate
+                  && this.init_MacroAction.getType() == StreamGate.BREAK
                   && !this.init_CompoundTag.getBooleanOr("interact", false)) {
                   this.init_CompoundTag.putBoolean("runNextSteps", false);
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.valid) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLOSE_GUI) {
                   this.init_CompoundTag.putBoolean("sendPacket", !this.load_Map.getOrDefault("sendPacket", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.scan) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SAVE_GUI) {
                   this.init_CompoundTag.putBoolean("sendPacket", !this.load_Map.getOrDefault("sendPacket", false));
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_b_StreamGate) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM) {
                   this.init_CompoundTag.putBoolean("closeSendPkt", !this.load_Map.getOrDefault("closeSendPkt", false));
                }
 
                if (this.init_MacroAction != null
-                  && (this.init_MacroAction.getType() == StreamGate.store || this.init_MacroAction.getType() == StreamGate.drain)) {
+                  && (this.init_MacroAction.getType() == StreamGate.OPEN_CONTAINER || this.init_MacroAction.getType() == StreamGate.INTERACT_ENTITY)) {
                   List<String> selectedTargets = this.write_Map.getOrDefault("entityTargets", Collections.emptyList());
                   String entityTarget = selectedTargets.isEmpty() ? "" : selectedTargets.get(0);
                   this.init_CompoundTag.putString("entityTarget", entityTarget);
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.block) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
                   this.init_CompoundTag.putInt("fuzzyPercent", au.init_I_I_8(this.put_I()));
                   if (!this.next_Z()) {
                      this.init_CompoundTag.putString("waitGuiName", "");
                   }
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
                   if (!this.init_CompoundTag.getBooleanOr("manualDirection", false)) {
                      this.init_CompoundTag.remove("direction");
                   }
@@ -9541,7 +9541,7 @@ public class ActionEditorOverlay extends bj {
          return this.next_Z();
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.tick) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY) {
          String mode = this.tick_Str("mode");
          if ("waitForGuiBefore".equals(field.key()) || "waitForGuiAfter".equals(field.key())) {
             return "OPEN".equals(mode);
@@ -9552,7 +9552,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.chunk) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_ENTITY) {
          String checkMode = this.tick_Str("checkMode");
          if ("centerOnPlayer".equals(field.key()) || "radius".equals(field.key()) || "mustBeLookingAt".equals(field.key())) {
             return "RADIUS".equals(checkMode) || "NEARBY".equals(checkMode) && !"mustBeLookingAt".equals(field.key());
@@ -9563,7 +9563,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_a_StreamGate) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT) {
          String mode = this.tick_Str("mode");
          String openMode = this.tick_Str("openMode");
          boolean isDupeMode = "DUPE".equals(mode) || "DUPE_SPAM".equals(mode);
@@ -9593,13 +9593,13 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_v_StreamGate && "DISABLE_GATE".equals(this.tick_Str("mode"))) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET_GATE && "DISABLE_GATE".equals(this.tick_Str("mode"))) {
          String key = field.key();
          return "mode".equals(key) || "gateId".equals(key) || "flushOnDisable".equals(key);
       }
 
       if (this.init_MacroAction != null
-         && (this.init_MacroAction.getType() == StreamGate.f_R_StreamGate || this.init_MacroAction.getType() == StreamGate.f_S_StreamGate)) {
+         && (this.init_MacroAction.getType() == StreamGate.FPS || this.init_MacroAction.getType() == StreamGate.SPING)) {
          String endMode = this.tick_Str("endMode");
          boolean timeout = endMode.isEmpty() || "TIMEOUT".equals(endMode);
          boolean steps = "STEPS".equals(endMode);
@@ -9626,7 +9626,7 @@ public class ActionEditorOverlay extends bj {
          }
       }
 
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_L_StreamGate) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CAPTURE_VALUE) {
          String key = field.key();
          if ("listFilterText".equals(key) || "listStripPrefix".equals(key) || "listPickPosition".equals(key)) {
             String source = this.tick_Str("source");
@@ -9679,7 +9679,7 @@ public class ActionEditorOverlay extends bj {
 
    private boolean stop_Z() {
       return this.init_MacroAction != null
-         && this.init_MacroAction.getType() == StreamGate.add
+         && this.init_MacroAction.getType() == StreamGate.XCARRY
          && "PUT_IN".equals(this.tick_Str("mode"))
          && "SAFE_CLICK".equals(this.tick_Str("transferMode"));
    }
@@ -9700,7 +9700,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-         if (field.key().equals(key) && field.type() == CachePool.sync) {
+         if (field.key().equals(key) && field.type() == CachePool.ENUM) {
             List<String> opts = field.enumOptions();
             if (opts.isEmpty()) {
                return "";
@@ -9793,7 +9793,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void table() {
-      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate) {
+      if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
          ArrayUtil target = this.init_ArrayUtil();
          if (!target.init_Z() && !target.update()) {
             this.update_Map.remove("itemName");
@@ -10257,15 +10257,15 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean pop_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.table && "targetEntries".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE && "targetEntries".equals(key);
    }
 
    private boolean tick_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_b_StreamGate && "targetItems".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM && "targetItems".equals(key);
    }
 
    private boolean run_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_a_StreamGate && "targetItems".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT && "targetItems".equals(key);
    }
 
    private boolean get_Z(String key) {
@@ -10435,12 +10435,12 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean put_Z(String key) {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.add && "entries".equals(key);
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.XCARRY && "entries".equals(key);
    }
 
    private boolean add_Z(String key) {
       return this.init_MacroAction != null
-         && (this.init_MacroAction.getType() == StreamGate.store || this.init_MacroAction.getType() == StreamGate.drain)
+         && (this.init_MacroAction.getType() == StreamGate.OPEN_CONTAINER || this.init_MacroAction.getType() == StreamGate.INTERACT_ENTITY)
          && "entityTargets".equals(key);
    }
 
@@ -10646,7 +10646,7 @@ public class ActionEditorOverlay extends bj {
          ListTag modes = this.init_CompoundTag.getList("entryAmountModes").orElse(new ListTag());
 
          while (modes.size() < count) {
-            modes.add(StringTag.valueOf(aQ.Inner_DataUtil.init.name()));
+            modes.add(StringTag.valueOf(aQ.Inner_DataUtil.FULL_STK.name()));
          }
 
          while (modes.size() > count) {
@@ -10711,16 +10711,16 @@ public class ActionEditorOverlay extends bj {
       if (this.init_CompoundTag != null && index >= 0) {
          ListTag list = this.init_CompoundTag.getList("entryAmountModes").orElse(new ListTag());
          if (index >= list.size()) {
-            return aQ.Inner_DataUtil.init;
+            return aQ.Inner_DataUtil.FULL_STK;
          }
 
          try {
-            return aQ.Inner_DataUtil.valueOf(list.get(index).asString().orElse(aQ.Inner_DataUtil.init.name()));
+            return aQ.Inner_DataUtil.valueOf(list.get(index).asString().orElse(aQ.Inner_DataUtil.FULL_STK.name()));
          } catch (IllegalArgumentException ignored) {
-            return aQ.Inner_DataUtil.init;
+            return aQ.Inner_DataUtil.FULL_STK;
          }
       } else {
-         return aQ.Inner_DataUtil.init;
+         return aQ.Inner_DataUtil.FULL_STK;
       }
    }
 
@@ -10728,7 +10728,7 @@ public class ActionEditorOverlay extends bj {
       if (this.init_CompoundTag != null && index >= 0) {
          this.flush(Math.max(index + 1, this.write_Map.getOrDefault("entries", Collections.emptyList()).size()));
          ListTag list = this.init_CompoundTag.getList("entryAmountModes").orElse(new ListTag());
-         list.set(index, StringTag.valueOf((mode == null ? aQ.Inner_DataUtil.init : mode).name()));
+         list.set(index, StringTag.valueOf((mode == null ? aQ.Inner_DataUtil.FULL_STK : mode).name()));
          this.init_CompoundTag.put("entryAmountModes", list);
       }
    }
@@ -11264,7 +11264,7 @@ public class ActionEditorOverlay extends bj {
          int storeEditIdx = this.open_Map.getOrDefault("store_items_selected", -1);
          boolean storeEditing = storeEditIdx >= 0 && storeEditIdx < selected.size();
          k search = this.flush_Map.get("targetItems");
-         int pickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int addBtnW = this.write_I("+Add");
          int slotW = 44;
          int capBtnX = x + w - pickW;
@@ -11314,7 +11314,7 @@ public class ActionEditorOverlay extends bj {
          }
 
          k fStoreSlotF = storeSlotF;
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (search != null) {
                String nameText = search.load_Str().strip();
                String slotText = fStoreSlotF.load_Str().strip();
@@ -11333,7 +11333,7 @@ public class ActionEditorOverlay extends bj {
             }
          });
          boolean capturing = this.init_StreamUtil.init("targetItems");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, capBtnX, cy, pickW, 13, StreamUtil.update, capturing, true, mx, my, () -> this.close_V("targetItems"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, capBtnX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
          cy += 18;
          String filter = search != null ? search.load_Str().trim().toLowerCase() : "";
          List<String> filtered = this.init_List_Str_2("store_items_search", push_List(), filter, cc::init);
@@ -11411,7 +11411,7 @@ public class ActionEditorOverlay extends bj {
          boolean auditEditing = auditEditIdx >= 0 && auditEditIdx < selected.size();
          k search = this.flush_Map.get("targetItems");
          String addLabel = auditEditing ? "New" : "+Add";
-         int pickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int addBtnW = this.write_I(addLabel);
          int slotW = 26;
          int pickX = x + w - addBtnW - 3 - pickW;
@@ -11462,8 +11462,8 @@ public class ActionEditorOverlay extends bj {
 
          k fAuditSlotF = auditSlotF;
          boolean capturing = this.init_StreamUtil.init("targetItems");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.update, capturing, true, mx, my, () -> this.close_V("targetItems"));
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, addLabel, ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, addLabel, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (search != null) {
                if (this.open_Map.getOrDefault("audit_items_selected", -1) >= 0) {
                   this.open_Map.put("audit_items_selected", -1);
@@ -11671,7 +11671,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, iy, w, rowH),
                   hovered,
                   sel,
-                  sel ? FileCache.Inner_DataUtil.load : FileCache.Inner_DataUtil.init,
+                  sel ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
                   false
                );
                String name = row.load();
@@ -11693,7 +11693,7 @@ public class ActionEditorOverlay extends bj {
       boolean canClear = !selected.isEmpty();
       int tmClearW = this.write_I("Clear");
       int clearX = x + w - tmClearW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, tmClearW, 13, "Clear", ByteReader.Inner_StreamUtil.load, canClear, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, tmClearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
          selected.clear();
          EventBus vp = this.tick_Map.get("toggle_module_selected");
          if (vp != null) {
@@ -11734,7 +11734,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, iy + 1, rowW, 13),
                   hovered,
                   false,
-                  FileCache.Inner_DataUtil.init,
+                  FileCache.Inner_DataUtil.NORMAL,
                   false
                );
                int modeX = x + rowW + 2;
@@ -12038,7 +12038,7 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Slots (" + entries.size() + ")", font, p.parse(), x, cy + 2, false);
       boolean canClear = !entries.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.load, canClear, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
          entries.clear();
          this.f_l_I = -1;
          this.mark();
@@ -12064,7 +12064,7 @@ public class ActionEditorOverlay extends bj {
                Component rowLabel = Component.empty().append(targetDisp).append(Component.literal(modeSummary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
                autismclient.gui.macro.editor.a.CachePool.init(
-                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), rowHovered, selected, FileCache.Inner_DataUtil.init, true
+                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), rowHovered, selected, FileCache.Inner_DataUtil.NORMAL, true
                );
                int fi = i;
                if (iy + 13 > cy && iy < cy + selAreaH) {
@@ -12105,7 +12105,7 @@ public class ActionEditorOverlay extends bj {
       k wscAddF = this.flush_Map.get("_wsc_add");
       k wscSlotF = this.init_Map.get("wsc_slot");
       if (wscAddF != null && wscSlotF != null) {
-         int pickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int slotW = 44;
          int pickX = x + w - pickW;
          int slotX = pickX - 2 - slotW;
@@ -12118,7 +12118,7 @@ public class ActionEditorOverlay extends bj {
          wscAddF.init_V(ctx, mx, my, delta);
          wscSlotF.init_V(ctx, mx, my, delta);
          boolean capturing = this.init_StreamUtil.init("_wsc_entries");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.update, capturing, true, mx, my, () -> this.close_V("_wsc_entries"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_wsc_entries"));
       }
 
       cy += 16;
@@ -12145,7 +12145,7 @@ public class ActionEditorOverlay extends bj {
       });
       int cntX = x + modBtnW + 2;
       k countF = this.init_Map.get("wsc_count");
-      boolean countRelevant = curMode == aD.Inner_StreamUtil.read || curMode == aD.Inner_StreamUtil.write;
+      boolean countRelevant = curMode == aD.Inner_StreamUtil.COUNT_AT_LEAST || curMode == aD.Inner_StreamUtil.COUNT_BELOW;
       if (countF != null) {
          if (countRelevant) {
             countF.read(cntX);
@@ -12166,7 +12166,7 @@ public class ActionEditorOverlay extends bj {
       }
 
       int plusX = cntX + cntW + 2;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.read, true, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
          if (wscAddF != null && wscSlotF != null) {
             this.init_V_k_k(wscAddF, wscSlotF);
             this.f_l_I = -1;
@@ -12221,7 +12221,7 @@ public class ActionEditorOverlay extends bj {
          this.init_V_GuiGraphicsExtract_3(ctx, itemFieldDef.label(), x, y, labelW, font);
          int controlX = this.flush_I(x, labelW);
          int controlW = Math.max(1, this.close(w, labelW));
-         int pickW = this.init_I_StreamUtil(StreamUtil.update, null, null);
+         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
          int slotW = 34;
          int gap = 2;
          int itemW = Math.max(1, controlW - pickW - slotW - gap * 2);
@@ -12236,7 +12236,7 @@ public class ActionEditorOverlay extends bj {
          slotField.init_V(ctx, mx, my, delta);
          int pickX = slotX + slotW + gap;
          boolean capturing = this.init_StreamUtil.init("itemName");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y + 2, pickW, 14, StreamUtil.update, capturing, true, mx, my, () -> this.close_V("itemName"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y + 2, pickW, 14, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("itemName"));
          return y + 14 + 2;
       } else {
          int cy = this.init_I_GuiGraphicsExtract_5(ctx, "itemName", x, y, w, mx, my, delta);
@@ -12507,7 +12507,7 @@ public class ActionEditorOverlay extends bj {
             cellW,
             13,
             label,
-            selected ? ByteReader.Inner_StreamUtil.write : ByteReader.Inner_StreamUtil.update,
+            selected ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
             true,
             mx,
             my,
@@ -12544,7 +12544,7 @@ public class ActionEditorOverlay extends bj {
          this.init_V_GuiGraphicsExtract(ctx, slotBtns[0], cy, slotBtns[1], 13, "Selected", mx, my, this::f);
          boolean capturing = this.init_StreamUtil.init("wait_inventory_slot");
          this.init_ByteReader_GuiGraphicsExtract(
-            ctx, slotBtns[2], cy, slotBtns[3], 13, StreamUtil.update, capturing, true, mx, my, "Pick Slot", "Done", this::g
+            ctx, slotBtns[2], cy, slotBtns[3], 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, "Pick Slot", "Done", this::g
          );
          this.init_V_GuiGraphicsExtract(ctx, slotBtns[4], cy, slotBtns[5], 13, "Slot 0", mx, my, () -> this.poll(0));
          cy += 18;
@@ -12585,9 +12585,9 @@ public class ActionEditorOverlay extends bj {
       autismclient.util.macro.TaskQueue draft = this.init_TaskQueue();
       String primaryName = this.init_Str_TaskQueue(draft);
       String token = primaryName.isBlank() ? "" : "{" + primaryName + "}";
-      boolean exampleCapture = draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.load
-         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.init
-         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.read;
+      boolean exampleCapture = draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.RECENT_CHAT
+         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.GUI_TITLE
+         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.SCOREBOARD;
       autismclient.util.macro.TaskQueue.Inner_NetHelper preview = exampleCapture && !draft.exampleText.isBlank()
          ? draft.init_TaskQueue_NetHelpe()
          : draft.load_TaskQueue_NetHelpe_Minecraft(init_Minecraft);
@@ -12596,7 +12596,7 @@ public class ActionEditorOverlay extends bj {
          previewText = preview.init_Str();
       }
 
-      boolean derivingPattern = exampleCapture && !draft.exampleText.isBlank() && draft.matchMode != UtilCore.Inner_DataUtil.init;
+      boolean derivingPattern = exampleCapture && !draft.exampleText.isBlank() && draft.matchMode != UtilCore.Inner_DataUtil.MATCH;
       if (derivingPattern && draft.selectedText.isBlank()) {
          previewText = "Set Capture This";
       } else if (derivingPattern && draft.pattern.isBlank()) {
@@ -12610,16 +12610,16 @@ public class ActionEditorOverlay extends bj {
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "numberModifierAmount", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "waitForTrigger", x, cy, w, mx, my, delta);
       String behaviorHint;
-      if (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.close) {
+      if (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.COMMAND_AUTOFILL) {
          behaviorHint = "Asks server when run";
-      } else if (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.open) {
+      } else if (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.TABLIST) {
          behaviorHint = draft.waitForTrigger ? "Waits for player" : "Picks online player";
       } else {
          behaviorHint = draft.waitForTrigger
-            ? (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.read ? "Waits for row change" : "Waits for next match")
+            ? (draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.SCOREBOARD ? "Waits for row change" : "Waits for next match")
             : (
-               draft.source != autismclient.util.macro.TaskQueue.Inner_StateCache.load
-                     && draft.source != autismclient.util.macro.TaskQueue.Inner_StateCache.init
+               draft.source != autismclient.util.macro.TaskQueue.Inner_StateCache.RECENT_CHAT
+                     && draft.source != autismclient.util.macro.TaskQueue.Inner_StateCache.GUI_TITLE
                   ? "Reads value now"
                   : "Uses newest match"
             );
@@ -13074,8 +13074,8 @@ public class ActionEditorOverlay extends bj {
          return "";
       }
 
-      boolean listSource = draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.close
-         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.open;
+      boolean listSource = draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.COMMAND_AUTOFILL
+         || draft.source == autismclient.util.macro.TaskQueue.Inner_StateCache.TABLIST;
       if (!listSource) {
          Set<String> captured = UtilCore.init(draft.matchMode, draft.pattern);
          if (!captured.isEmpty()) {
@@ -13627,7 +13627,7 @@ public class ActionEditorOverlay extends bj {
       if (!sender.isEmpty() && !message.isEmpty()) {
          return sender + ": " + message;
       } else if (!message.isEmpty()) {
-         return (entry.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.load ? "[Server] " : "[Player] ") + message;
+         return (entry.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.SERVER ? "[Server] " : "[Player] ") + message;
       } else {
          return entry.read() == null ? "" : entry.read();
       }
@@ -13681,7 +13681,7 @@ public class ActionEditorOverlay extends bj {
                   MacroExecutor.Inner_PacketUtil value = values.get(i);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + itemH;
                   TableIndex.init(ctx, x, iy, itemW, itemH, hovered, false);
-                  int border = value.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.load
+                  int border = value.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.SERVER
                      ? (hovered ? -20134 : -3376606)
                      : (hovered ? -8597761 : -11627064);
                   this.sync_V(ctx, x, iy, itemW, itemH, border);
@@ -13800,10 +13800,10 @@ public class ActionEditorOverlay extends bj {
       if ("ENABLE".equals(mode)) {
          int[] addBtns = this.init_IArr_I(x, w, false, "Add C2S (" + c2sTargets.size() + ")", "Add S2C (" + s2cTargets.size() + ")");
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, addBtns[0], cy, addBtns[1], 13, "Add C2S (" + c2sTargets.size() + ")", ByteReader.Inner_StreamUtil.write, true, mx, my, () -> this.put(true)
+            ctx, addBtns[0], cy, addBtns[1], 13, "Add C2S (" + c2sTargets.size() + ")", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.put(true)
          );
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, addBtns[2], cy, addBtns[3], 13, "Add S2C (" + s2cTargets.size() + ")", ByteReader.Inner_StreamUtil.write, true, mx, my, () -> this.put(false)
+            ctx, addBtns[2], cy, addBtns[3], 13, "Add S2C (" + s2cTargets.size() + ")", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.put(false)
          );
          cy += 18;
          int[] loadBtns = this.init_IArr_I(x, w, false, "Load Queue", "Clear All");
@@ -13812,10 +13812,10 @@ public class ActionEditorOverlay extends bj {
          cy += 18;
          int[] presetBtns = this.init_IArr_I(x, w, false, "Default Preset", "Module Preset");
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, presetBtns[0], cy, presetBtns[1], 13, "Default Preset", ByteReader.Inner_StreamUtil.write, true, mx, my, this::m
+            ctx, presetBtns[0], cy, presetBtns[1], 13, "Default Preset", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, this::m
          );
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, presetBtns[2], cy, presetBtns[3], 13, "Module Preset", ByteReader.Inner_StreamUtil.write, true, mx, my, this::n
+            ctx, presetBtns[2], cy, presetBtns[3], 13, "Module Preset", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, this::n
          );
       }
    }
@@ -14368,7 +14368,7 @@ public class ActionEditorOverlay extends bj {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, label + " (" + values.size() + ")", font, p.parse(), x, y + 2, false);
       boolean canClear = !values.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, y, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.load, canClear, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, y, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
          clearAction.run();
          this.open_Map.put(listKey, -1);
          EventBus vp = this.tick_Map.get(listKey);
@@ -14402,7 +14402,7 @@ public class ActionEditorOverlay extends bj {
             Component richLabel = richFormatter == null ? null : richFormatter.apply(value);
             if (richLabel != null) {
                autismclient.gui.macro.editor.a.CachePool.init(
-                  ctx, this.init_Font, richLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), hovered, selected, FileCache.Inner_DataUtil.init, true
+                  ctx, this.init_Font, richLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), hovered, selected, FileCache.Inner_DataUtil.NORMAL, true
                );
             } else {
                autismclient.gui.macro.editor.a.CachePool.init(
@@ -14412,7 +14412,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, iy, rowW, 13),
                   hovered,
                   selected,
-                  FileCache.Inner_DataUtil.init,
+                  FileCache.Inner_DataUtil.NORMAL,
                   false
                );
             }
@@ -14517,7 +14517,7 @@ public class ActionEditorOverlay extends bj {
                   autismclient.gui.f.NetHelper.init(x, iy, itemW, rowH),
                   hovered,
                   selected,
-                  selected ? FileCache.Inner_DataUtil.load : FileCache.Inner_DataUtil.init,
+                  selected ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
                   false
                );
                T clickedValue = value;
@@ -14870,7 +14870,7 @@ public class ActionEditorOverlay extends bj {
             }
 
             autismclient.util.macro.aM.Inner_CachePool rule = new autismclient.util.macro.aM.Inner_CachePool();
-            rule.init_aM_DataUtil = c2s ? autismclient.util.macro.aM.Inner_DataUtil.init : autismclient.util.macro.aM.Inner_DataUtil.load;
+            rule.init_aM_DataUtil = c2s ? autismclient.util.macro.aM.Inner_DataUtil.C2S : autismclient.util.macro.aM.Inner_DataUtil.S2C;
             String name = bw.init_Str_Class(packetClass);
             rule.init_Str = name != null && !name.isBlank() ? name : bv.init_Str_Class(packetClass);
             this.reset_List.add(rule);
@@ -14947,7 +14947,7 @@ public class ActionEditorOverlay extends bj {
          fields.add(0, "");
          int idx = fields.indexOf(rule.load == null ? "" : rule.load);
          rule.load = fields.get((idx + 1 + fields.size()) % fields.size());
-         rule.init_aM_StreamUtil = rule.load.isBlank() ? autismclient.util.macro.aM.Inner_StreamUtil.init : rule.init_aM_StreamUtil;
+         rule.init_aM_StreamUtil = rule.load.isBlank() ? autismclient.util.macro.aM.Inner_StreamUtil.EXISTS : rule.init_aM_StreamUtil;
          List<String> options = autismclient.util.macro.aM.init_List_Class_Str(packetClass, rule.load);
          if (!options.isEmpty() && (rule.read == null || rule.read.isBlank() || !options.contains(rule.read))) {
             rule.read = options.get(0);
@@ -14962,7 +14962,7 @@ public class ActionEditorOverlay extends bj {
          return null;
       }
 
-      String direction = rule.init_aM_DataUtil == autismclient.util.macro.aM.Inner_DataUtil.read ? "" : rule.init_aM_DataUtil.name();
+      String direction = rule.init_aM_DataUtil == autismclient.util.macro.aM.Inner_DataUtil.ANY ? "" : rule.init_aM_DataUtil.name();
       return this.init_Class_Str_Str(direction, rule.init_Str == null ? "" : rule.init_Str);
    }
 
@@ -15296,16 +15296,16 @@ public class ActionEditorOverlay extends bj {
 
       int var10000;
       switch (field.type()) {
-         case update:
+         case MACRO_SELECT:
             var10000 = 87;
             break;
-         case close:
+         case BLOCK_POS:
             var10000 = 29;
             break;
-         case flush:
+         case STRING_LIST:
             if (this.init_Z_FieldDef(field)) {
                var10000 = 86;
-            } else if (field.captureMode() == StreamUtil.write) {
+            } else if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
                var10000 = 161;
             } else {
                int extraEditorRow = this.put_Z(field.key()) && this.open_Map.getOrDefault(field.key(), -1) >= 0 ? 15 : 0;
@@ -15356,7 +15356,7 @@ public class ActionEditorOverlay extends bj {
          }
 
          return h;
-      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.run) {
+      } else if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SEND_PACKET) {
          int h = 80;
          h += 16;
          h += 16;
@@ -15367,7 +15367,7 @@ public class ActionEditorOverlay extends bj {
 
          return h + 116;
       } else {
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_c_StreamGate) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SOUND) {
             int h = 4;
             h += this.write(this.load_FieldDef_Str("waitForGuiBefore")) ? 16 : 0;
             h += this.write(this.load_FieldDef_Str("waitForGuiAfter")) ? 16 : 0;
@@ -15380,7 +15380,7 @@ public class ActionEditorOverlay extends bj {
             return h + 78;
          }
 
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.chunk) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_ENTITY) {
             int h = 4;
             h += this.write(this.load_FieldDef_Str("checkMode")) ? 16 : 0;
             h += this.write(this.load_FieldDef_Str("radius")) ? 16 : 0;
@@ -15394,7 +15394,7 @@ public class ActionEditorOverlay extends bj {
             return h + 52;
          }
 
-         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.level) {
+         if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.LOOK_AT_BLOCK) {
             int h = 4;
             h += this.write(this.load_FieldDef_Str("targetMode")) ? 16 : 0;
             String mode = this.tick_Str("targetMode");
@@ -15416,7 +15416,7 @@ public class ActionEditorOverlay extends bj {
             h += this.write(this.load_FieldDef_Str("waitForCompletion")) ? 16 : 0;
             return h + 14;
          } else {
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.push) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.ROTATE) {
                int h = 4;
                h += this.write(this.load_FieldDef_Str("yaw")) ? 16 : 0;
                h += this.write(this.load_FieldDef_Str("pitch")) ? 16 : 0;
@@ -15427,7 +15427,7 @@ public class ActionEditorOverlay extends bj {
                return h + 14;
             }
 
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.value) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.GO_TO) {
                int h = 4;
                h += this.init_I_FieldDef(this.load_FieldDef_Str("pos")) + 2;
                h += 18;
@@ -15435,7 +15435,7 @@ public class ActionEditorOverlay extends bj {
                return h + 14;
             }
 
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.pop) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.USE_ITEM) {
                int h = 4;
                h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                h += this.write(this.load_FieldDef_Str("itemName")) ? 16 : 0;
@@ -15450,7 +15450,7 @@ public class ActionEditorOverlay extends bj {
                return h + 16;
             }
 
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_a_StreamGate) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.INVENTORY_AUDIT) {
                int h = 4;
                h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                h += this.write(this.load_FieldDef_Str("targetItems")) ? 92 : 0;
@@ -15469,7 +15469,7 @@ public class ActionEditorOverlay extends bj {
                h += this.write(this.load_FieldDef_Str("spamDelayMs")) ? 16 : 0;
                return h + 16;
             } else {
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.size) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SWAP_SLOTS) {
                   int h = 20;
                   h += this.write(this.load_FieldDef_Str("fromUseItemName")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("fromItemName")) ? 16 : 0;
@@ -15481,7 +15481,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.poll) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CLICK) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("clickType")) ? 16 : 0;
@@ -15491,7 +15491,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.buffer) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DISCONNECT) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("delayMs")) ? 16 : 0;
@@ -15506,7 +15506,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 12;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.close) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_GUI) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("waitMode")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("guiType")) ? 16 : 0;
@@ -15518,7 +15518,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.put) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.SELECT_SLOT) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("itemName")) ? 16 : 0;
@@ -15529,7 +15529,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.data) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_COOLDOWN) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("itemName")) ? 16 : 0;
                   h += 18;
@@ -15537,7 +15537,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.block) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_CHAT) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("pattern")) ? this.init_I_FieldDef(this.load_FieldDef_Str("pattern")) + 2 : 0;
                   h += 18;
@@ -15554,7 +15554,7 @@ public class ActionEditorOverlay extends bj {
                   return h + 16;
                }
 
-               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_L_StreamGate) {
+               if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.CAPTURE_VALUE) {
                   int h = 4;
                   h += this.write(this.load_FieldDef_Str("source")) ? 16 : 0;
                   h += this.write(this.load_FieldDef_Str("autofillCommand")) ? 16 : 0;
@@ -15590,8 +15590,8 @@ public class ActionEditorOverlay extends bj {
                   h += this.write(this.load_FieldDef_Str("waitForTrigger")) ? 16 : 0;
                   return h + 24;
                } else if (this.init_MacroAction == null
-                  || this.init_MacroAction.getType() != StreamGate.store && this.init_MacroAction.getType() != StreamGate.drain) {
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate) {
+                  || this.init_MacroAction.getType() != StreamGate.OPEN_CONTAINER && this.init_MacroAction.getType() != StreamGate.INTERACT_ENTITY) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
                      int h = 4;
                      h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                      h += 47;
@@ -15609,7 +15609,7 @@ public class ActionEditorOverlay extends bj {
                      return h + 36;
                   }
 
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.table) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_SLOT_CHANGE) {
                      int h = 4;
                      h += 16;
                      h += 16;
@@ -15619,7 +15619,7 @@ public class ActionEditorOverlay extends bj {
                      return h + 12;
                   }
 
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_D_StreamGate) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_INVENTORY_PREDICATE) {
                      int h = 4;
                      h += this.write(this.load_FieldDef_Str("listenDuringPreviousAction")) ? 16 : 0;
                      h += this.write(this.load_FieldDef_Str("condition")) ? 16 : 0;
@@ -15630,7 +15630,7 @@ public class ActionEditorOverlay extends bj {
                      return h + (this.write(this.load_FieldDef_Str("saveAs")) ? 16 : 0);
                   }
 
-                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.bind) {
+                  if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
                      int h = 4;
                      h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                      h += this.write(this.load_FieldDef_Str("flushOnDisable")) ? 16 : 0;
@@ -15640,7 +15640,7 @@ public class ActionEditorOverlay extends bj {
 
                      return h + 8;
                   } else {
-                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_d_StreamGate) {
+                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.MINE) {
                         int h = 4;
                         h += this.write(this.load_FieldDef_Str("packetOrder")) ? 16 : 0;
                         h += this.init_I_FieldDef(this.load_FieldDef_Str("targetBlocks")) + 2 + 4;
@@ -15654,7 +15654,7 @@ public class ActionEditorOverlay extends bj {
                         return h + 14;
                      }
 
-                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_g_StreamGate) {
+                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PAY) {
                         int h = 4;
                         h += this.write(this.load_FieldDef_Str("commandTemplate")) ? 16 : 0;
                         h += this.write(this.load_FieldDef_Str("amountInput")) ? 16 : 0;
@@ -15670,7 +15670,7 @@ public class ActionEditorOverlay extends bj {
                         return h + 48;
                      }
 
-                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_b_StreamGate) {
+                     if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.STORE_ITEM) {
                         int h = 4;
                         h += this.write(this.load_FieldDef_Str("mode")) ? 16 : 0;
                         h += this.write(this.load_FieldDef_Str("allItems")) ? 16 : 0;
@@ -15686,7 +15686,7 @@ public class ActionEditorOverlay extends bj {
                         h += this.write(this.load_FieldDef_Str("closeAfter")) ? 16 : 0;
                         return h + (this.write(this.load_FieldDef_Str("closeSendPkt")) ? 16 : 0);
                      } else {
-                        if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.entry) {
+                        if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.TOGGLE_MODULE) {
                            int h = 4;
                            h += 74;
                            h += 18;
@@ -15731,11 +15731,11 @@ public class ActionEditorOverlay extends bj {
 
                            return h;
                         } else {
-                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.write) {
+                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET) {
                               return 242;
                            }
 
-                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_C_StreamGate) {
+                           if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.WAIT_PACKET_MATCH) {
                               int rows = this.reset_List == null ? 1 : Math.max(1, Math.min(4, Math.max(1, this.reset_List.size())));
                               int h = 82 + rows * 14 + 5;
                               if (this.reset_List != null && !this.reset_List.isEmpty()) {
@@ -15744,7 +15744,7 @@ public class ActionEditorOverlay extends bj {
                                  h += 32;
                                  if (rule.load != null && !rule.load.isBlank()) {
                                     h += 16;
-                                    if (rule.init_aM_StreamUtil != autismclient.util.macro.aM.Inner_StreamUtil.init) {
+                                    if (rule.init_aM_StreamUtil != autismclient.util.macro.aM.Inner_StreamUtil.EXISTS) {
                                        h += 16;
                                     }
                                  }
@@ -15761,22 +15761,22 @@ public class ActionEditorOverlay extends bj {
                               int h = 4;
 
                               for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                                 if (field.type() != CachePool.flush && !this.flush_Z(field.key()) && this.write(field)) {
+                                 if (field.type() != CachePool.STRING_LIST && !this.flush_Z(field.key()) && this.write(field)) {
                                     h += this.init_I_FieldDef(field) + 2;
                                  }
                               }
 
                               for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                                 if (field.type() == CachePool.flush && !this.flush_Z(field.key()) && this.write(field)) {
+                                 if (field.type() == CachePool.STRING_LIST && !this.flush_Z(field.key()) && this.write(field)) {
                                     h += this.init_I_FieldDef(field) + 2;
                                  }
                               }
 
-                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.load) {
+                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET) {
                                  h += 52;
                               }
 
-                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.bind) {
+                              if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.DELAY_PACKETS) {
                                  h += 18;
                               }
 
@@ -15813,7 +15813,7 @@ public class ActionEditorOverlay extends bj {
       return this.init_MapStore != null
          && this.f_j_I >= 0
          && this.f_j_I < this.init_MapStore.itemNames.size()
-         && this.init_MapStore.init_N_I(this.f_j_I) == N.flush;
+         && this.init_MapStore.init_N_I(this.f_j_I) == N.PICKUP_ALL;
    }
 
    private int next_I() {
@@ -15979,8 +15979,8 @@ public class ActionEditorOverlay extends bj {
    }
 
    private void init_V_FieldDef_List(FieldDef field, List<String> lst) {
-      if (field.captureMode() == StreamUtil.sync) {
-         boolean both = this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_v_StreamGate;
+      if (field.captureMode() == StreamUtil.PACKET_NAME) {
+         boolean both = this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PACKET_GATE;
          if (!both) {
             Consumer<Class<? extends Packet<?>>> add = packetClass -> {
                if (packetClass != null && lst != null) {
@@ -16041,7 +16041,7 @@ public class ActionEditorOverlay extends bj {
          });
          ck state = ck.init_ck();
          state.read_V_Runnable(() -> this.init_V_Z_Z(true, false));
-         if (field.captureMode() == StreamUtil.load || field.captureMode() == StreamUtil.write) {
+         if (field.captureMode() == StreamUtil.BLOCK_ID || field.captureMode() == StreamUtil.BLOCK_CATALOG) {
             state.init_V_Consumer(pos -> {
                if (init_Minecraft.level != null) {
                   String id = BuiltInRegistries.BLOCK.getKey(init_Minecraft.level.getBlockState(pos).getBlock()).toString();
@@ -16052,7 +16052,7 @@ public class ActionEditorOverlay extends bj {
 
                this.init_V_Z_Z(true, false);
             });
-         } else if (field.captureMode() == StreamUtil.read) {
+         } else if (field.captureMode() == StreamUtil.ENTITY_ID) {
             boolean specificCapture = this.add_Z(field.key());
             boolean replaceOnCapture = this.clear_Z_Str(field.key());
             state.value(specificCapture);
@@ -16077,7 +16077,7 @@ public class ActionEditorOverlay extends bj {
    private void init_V_FieldDef(FieldDef field) {
       if (this.put_Z()) {
          if (this.init_MacroAction != null
-            && (this.init_MacroAction.getType() == StreamGate.f_e_StreamGate || this.init_MacroAction.getType() == StreamGate.f_f_StreamGate)
+            && (this.init_MacroAction.getType() == StreamGate.INSTA_BREAK || this.init_MacroAction.getType() == StreamGate.BREAK)
             && "blockPos".equals(field.key())) {
             this.B();
          } else {
@@ -16091,12 +16091,12 @@ public class ActionEditorOverlay extends bj {
                }
             });
             ck state = ck.init_ck();
-            state.state(this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate);
+            state.state(this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE);
             state.read_V_Runnable(() -> {
                state.state(false);
                this.init_V_Z_Z(true, false);
             });
-            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_P_StreamGate) {
+            if (this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.PLACE) {
                state.init_V_BiConsumer((pos, face) -> {
                   Direction useFace = face == null ? Direction.UP : face;
                   BlockPos targetPos = pos.relative(useFace);
@@ -16189,7 +16189,7 @@ public class ActionEditorOverlay extends bj {
          return "Action";
       }
 
-      if (type == StreamGate.f_W_StreamGate) {
+      if (type == StreamGate.MULTI) {
          return "Multi (unsupported)";
       }
 
@@ -16225,7 +16225,7 @@ public class ActionEditorOverlay extends bj {
    }
 
    private boolean isLegacyMulti() {
-      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.f_W_StreamGate;
+      return this.init_MacroAction != null && this.init_MacroAction.getType() == StreamGate.MULTI;
    }
 
    private String start_Str() {
@@ -16314,7 +16314,7 @@ public class ActionEditorOverlay extends bj {
    private record JsonUtil(String init_Str, byte[] init_BArr, boolean init_Z, int init_I, ActionEditorOverlay.TaskQueue init_ActionEditorOverla, String load) {
       private JsonUtil {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
-         init_ActionEditorOverla = init_ActionEditorOverla == null ? ActionEditorOverlay.TaskQueue.write : init_ActionEditorOverla;
+         init_ActionEditorOverla = init_ActionEditorOverla == null ? ActionEditorOverlay.TaskQueue.BINARY_REPLAY : init_ActionEditorOverla;
          load = load == null ? "" : load;
       }
 
@@ -16324,11 +16324,11 @@ public class ActionEditorOverlay extends bj {
    }
 
    private enum NetHelper {
-      init,
-      load,
-      read,
-      write,
-      update;
+      SCRIPT,
+      HEX,
+      UTF8,
+      LOGICAL,
+      PREVIEW_ONLY;
    }
 
    private record StateCache(ActionEditorOverlay.NetHelper init_ActionEditorOverla, String init_Str) {
@@ -16341,9 +16341,9 @@ public class ActionEditorOverlay extends bj {
    }
 
    private enum TaskQueue {
-      init,
-      load,
-      read,
-      write;
+      UTF8_TEXT,
+      BRAND_STRING,
+      COMMAND_INT,
+      BINARY_REPLAY;
    }
 }

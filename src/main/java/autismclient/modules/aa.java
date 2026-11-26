@@ -1142,10 +1142,10 @@ public final class aa extends Module implements cn.Inner_DataUtil {
                ? l.init(true, this.init_InteractionHand != null, raise, ownHit)
                : l.init_l_CachePool_Z(true, this.init_InteractionHand != null, MC.player.hurtTime, raise, ownHit);
             if (ck.init_ck().state_I() == this.pool) {
-               decision = l.Inner_CachePool.init;
+               decision = l.Inner_CachePool.DOWN;
             }
 
-            if (decision == l.Inner_CachePool.init) {
+            if (decision == l.Inner_CachePool.DOWN) {
                this.load_Str = this.init_InteractionHand != null ? "releaseForHit" : "attackSoon";
                this.load_V_Z_2(false);
             } else if (this.init_InteractionHand != null

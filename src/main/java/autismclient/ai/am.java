@@ -124,7 +124,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
    private void init_V_am_DataUtil(am.Inner_DataUtil request) {
       this.init_ArrayDeque.remove(request);
       if (request.load == null) {
-         request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.flush, "Tool cancelled before starting", "{}");
+         request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.CANCELLED, "Tool cancelled before starting", "{}");
       } else {
          o.init(request.load);
       }
@@ -135,7 +135,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
       init_am.init_ArrayDeque.clear();
 
       for (am.Inner_DataUtil request : cancelled) {
-         request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.flush, reason, "{}");
+         request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.CANCELLED, reason, "{}");
       }
    }
 
@@ -162,7 +162,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
                   queued.init_Z = "PAUSE".equals(operation);
                   queued.init_k_StreamUtil
                      .init(
-                        queued.init_Z ? autismclient.util.macro.k.Inner_ConfigStore.write : autismclient.util.macro.k.Inner_ConfigStore.load,
+                        queued.init_Z ? autismclient.util.macro.k.Inner_ConfigStore.PAUSED : autismclient.util.macro.k.Inner_ConfigStore.WAITING,
                         queued.init_Z ? "Paused before starting" : "Waiting for tool runner",
                         "{}"
                      );
@@ -212,7 +212,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
 
       init_am.init_ArrayDeque.removeIf(requestx -> {
          if (requestx.init_Obj != null && requestx.init_Obj != mc.level) {
-            requestx.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.flush, "World changed before tool started", "{}");
+            requestx.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.CANCELLED, "World changed before tool started", "{}");
             return true;
          } else {
             return requestx.init_k_StreamUtil.load().isDone();
@@ -228,7 +228,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
                init_am.init_am_DataUtil = request;
                request.load.load().whenComplete((outcome, error) -> {
                   if (error != null) {
-                     request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.sync, "Tool completion failed", "{}");
+                     request.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.FAILED, "Tool completion failed", "{}");
                   } else {
                      request.init_k_StreamUtil.init(outcome.init_k_ConfigStore(), outcome.init_Str(), outcome.load());
                   }
@@ -236,7 +236,7 @@ public final class am implements autismclient.util.macro.k.Inner_DataUtil {
                load_V_am_DataUtil(request);
             } catch (Exception error) {
                request.init_k_StreamUtil
-                  .init(autismclient.util.macro.k.Inner_ConfigStore.sync, error.getMessage() == null ? "Tool could not start" : error.getMessage(), "{}");
+                  .init(autismclient.util.macro.k.Inner_ConfigStore.FAILED, error.getMessage() == null ? "Tool could not start" : error.getMessage(), "{}");
             }
          }
       }

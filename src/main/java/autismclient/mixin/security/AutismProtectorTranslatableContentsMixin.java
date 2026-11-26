@@ -82,7 +82,7 @@ public abstract class AutismProtectorTranslatableContentsMixin implements NetHel
          return "\u0000__autism_allow__";
       } else {
          BufferHelper.Inner_StreamUtil origin = this.autism$packetOrigin;
-         if (origin != null && origin.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load && !HashUtil.close() && !StreamUtil.init_Z()) {
+         if (origin != null && origin.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED && !HashUtil.close() && !StreamUtil.init_Z()) {
             return "\u0000__autism_allow__";
          } else {
             return origin != null && !origin.init_Z() && BufferHelper.init_Z(origin) && origin.init_Connection().isMemoryConnection()

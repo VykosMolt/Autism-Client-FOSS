@@ -381,43 +381,43 @@ public final class DataUtil {
 
    public static DataUtil.Inner_DataUtil init_DataUtil_DataUtil(String body) {
       if (init_Z()) {
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.update, "Client commands are blocked while the client is hidden (panic mode)");
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.BLOCKED, "Client commands are blocked while the client is hidden (panic mode)");
       }
 
       if (!AutismLiteVariant.enabled() && !autismclient.e.RingBuffer.init()) {
          AutismClientMessaging.sendPrefixed("§cAutism is locked: early access requires the donator role. Sign in to unlock.");
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.update, "Autism is locked: early access requires the donator role");
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.BLOCKED, "Autism is locked: early access requires the donator role");
       }
 
       if (body == null) {
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.sync, "");
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.EMPTY, "");
       }
 
       String trimmed = body.trim();
       if (trimmed.isEmpty()) {
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.sync, "");
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.EMPTY, "");
       }
 
       if (init_Set.contains(load_Str(trimmed).toLowerCase(Locale.ROOT))) {
          init(trimmed, CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().create());
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.read, "Unknown command: " + load_Str(trimmed) + " (its add-on is disabled)");
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.UNKNOWN_COMMAND, "Unknown command: " + load_Str(trimmed) + " (its add-on is disabled)");
       }
 
       try {
          init_CommandDispatcher.execute(trimmed, AutismCommandSource.INSTANCE);
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.init, "");
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.EXECUTED, "");
       } catch (CommandSyntaxException e) {
          init(trimmed, e);
          String message = e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : "Incomplete or invalid command";
          boolean unknown = init_Command(load_Str(trimmed)) == null;
          return new DataUtil.Inner_DataUtil(
-            unknown ? DataUtil.Inner_StreamUtil.read : DataUtil.Inner_StreamUtil.load, unknown ? "Unknown command: " + load_Str(trimmed) : message
+            unknown ? DataUtil.Inner_StreamUtil.UNKNOWN_COMMAND : DataUtil.Inner_StreamUtil.SYNTAX_ERROR, unknown ? "Unknown command: " + load_Str(trimmed) : message
          );
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Commands] dispatch failed for '{}'", trimmed, t);
          String message = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
          AutismClientMessaging.sendPrefixed("§cCommand error: " + message);
-         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.write, message);
+         return new DataUtil.Inner_DataUtil(DataUtil.Inner_StreamUtil.ERROR, message);
       }
    }
 
@@ -455,16 +455,16 @@ public final class DataUtil {
 
    public record Inner_DataUtil(DataUtil.Inner_StreamUtil init_DataUtil_StreamUti, String init_Str) {
       public boolean init_Z() {
-         return this.init_DataUtil_StreamUti != DataUtil.Inner_StreamUtil.sync;
+         return this.init_DataUtil_StreamUti != DataUtil.Inner_StreamUtil.EMPTY;
       }
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      EXECUTED,
+      SYNTAX_ERROR,
+      UNKNOWN_COMMAND,
+      ERROR,
+      BLOCKED,
+      EMPTY;
    }
 }

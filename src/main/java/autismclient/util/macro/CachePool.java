@@ -16,14 +16,14 @@ public class CachePool implements E, M, MacroAction, aP {
    public boolean manualDirection = false;
    public boolean interact = false;
    public boolean runNextSteps = false;
-   public TaskTimer interactTiming = TaskTimer.load;
+   public TaskTimer interactTiming = TaskTimer.WITH;
    public int interactCustomMs = 0;
    public boolean sneak = false;
    public String sneakMode = "Packet";
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private transient List<MacroAction> init_List = null;
    private transient boolean init_Z = false;
    private boolean load = true;
@@ -97,7 +97,7 @@ public class CachePool implements E, M, MacroAction, aP {
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
       this.interact = tag.getBooleanOr("interact", false);
       this.runNextSteps = tag.getBooleanOr("runNextSteps", false);
-      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "WITH"), TaskTimer.load);
+      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "WITH"), TaskTimer.WITH);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.sneak = tag.getBooleanOr("sneak", false);
       this.raycast = tag.getBooleanOr("raycast", false);
@@ -114,7 +114,7 @@ public class CachePool implements E, M, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_f_StreamGate;
+      return StreamGate.BREAK;
    }
 
    public void init_V_List(List<MacroAction> nextActions) {

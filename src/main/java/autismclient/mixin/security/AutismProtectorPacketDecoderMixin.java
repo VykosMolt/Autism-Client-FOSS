@@ -32,7 +32,7 @@ public class AutismProtectorPacketDecoderMixin {
       StreamCodec instance, Object buffer, Operation<Object> original, @Local(argsOnly = true) ChannelHandlerContext channelContext
    ) {
       BufferHelper.Inner_StreamUtil context = autism$connectionContext(channelContext);
-      boolean modded = context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load;
+      boolean modded = context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED;
       TokenStore.init(context);
       ByteReader.init(modded);
 

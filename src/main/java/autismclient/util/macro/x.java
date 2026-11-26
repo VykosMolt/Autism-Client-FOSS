@@ -89,7 +89,7 @@ public class x implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.load;
+      return StreamGate.PACKET;
    }
 
    @Override

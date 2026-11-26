@@ -69,7 +69,7 @@ public final class TaskQueue {
       ClientPacketListener listener = client == null ? null : client.getConnection();
       if (client != null && client.player != null && listener != null) {
          BufferHelper.Inner_StreamUtil context = BufferHelper.init(listener);
-         if (context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load && HashUtil.update()) {
+         if (context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED && HashUtil.update()) {
             List<Identifier> channels = init(context.init_Connection(), load_J);
             if (channels != null) {
                init(context, channels, listener, listener::send);
@@ -160,7 +160,7 @@ public final class TaskQueue {
       }
 
       BufferHelper.Inner_StreamUtil context = BufferHelper.init_BufferHelper_Strea(connection);
-      if (context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load) {
+      if (context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED) {
          synchronized (init_Map) {
             TaskQueue.Inner_DataUtil existing = init_Map.get(connection);
             if (existing != null) {

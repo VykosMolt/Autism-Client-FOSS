@@ -97,7 +97,7 @@ public final class CharEncoder {
 
                   if (resources instanceof EventBus.Inner_BufferHelper isolated) {
                      EventBus.Inner_ConfigStore binding = isolated.init();
-                     if (policy != FileCache.Inner_DataUtil.init
+                     if (policy != FileCache.Inner_DataUtil.ISOLATED
                         || binding.init_FileCache_BufferHe() != session
                         || !packId.equals(binding.init_UUID())
                         || binding.init_J() != generation
@@ -112,7 +112,7 @@ public final class CharEncoder {
 
             if (policy == null) {
                generation = 0L;
-               policy = FileCache.Inner_DataUtil.load;
+               policy = FileCache.Inner_DataUtil.FULL;
             } else if (!FileCache.init_Z(session, packId, generation)) {
                return null;
             }
@@ -131,7 +131,7 @@ public final class CharEncoder {
          CharEncoder.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, resources.location().id());
          if (provenance != null && resources instanceof EventBus.Inner_BufferHelper isolated) {
             EventBus.Inner_ConfigStore binding = isolated.init();
-            if (provenance.init_FileCache_DataUtil() != FileCache.Inner_DataUtil.init
+            if (provenance.init_FileCache_DataUtil() != FileCache.Inner_DataUtil.ISOLATED
                || binding.init_FileCache_BufferHe() != session
                || !provenance.init_UUID().equals(binding.init_UUID())
                || provenance.init_J() != binding.init_J()) {
@@ -186,7 +186,7 @@ public final class CharEncoder {
          }
 
          for (CharEncoder.Inner_DataUtil pack : selection.init.values()) {
-            if (pack.init_FileCache_DataUtil() == FileCache.Inner_DataUtil.load
+            if (pack.init_FileCache_DataUtil() == FileCache.Inner_DataUtil.FULL
                && packId.equals(pack.init_UUID())
                && path.equals(pack.init_Path())
                && init_CharEncoder_Stream(session, pack.init_Str()) != null) {
@@ -225,11 +225,11 @@ public final class CharEncoder {
    }
 
    public static boolean load(FileCache.Inner_BufferHelper session, PackResources resources) {
-      return init_FileCache_DataUtil(session, resources) == FileCache.Inner_DataUtil.init;
+      return init_FileCache_DataUtil(session, resources) == FileCache.Inner_DataUtil.ISOLATED;
    }
 
    public static boolean load(FileCache.Inner_BufferHelper session, String repositoryId) {
-      return init_FileCache_DataUtil(session, repositoryId) == FileCache.Inner_DataUtil.init;
+      return init_FileCache_DataUtil(session, repositoryId) == FileCache.Inner_DataUtil.ISOLATED;
    }
 
    public static String init_Str(FileCache.Inner_BufferHelper session, UUID packId) {

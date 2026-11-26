@@ -33,13 +33,13 @@ public class ListPool implements MacroAction {
    private static final int write = 50;
    private static final int update = 3;
    private static final int sync = 25;
-   public ListPool.Inner_BufferHelper mode = ListPool.Inner_BufferHelper.init;
+   public ListPool.Inner_BufferHelper mode = ListPool.Inner_BufferHelper.DUPE;
    public List<String> targetItems = new ArrayList<>();
    public List<ArrayUtil> itemTargets = new ArrayList<>();
    public String openCommand = "/ec";
-   public ListPool.Inner_ConfigStore openMode = ListPool.Inner_ConfigStore.init;
+   public ListPool.Inner_ConfigStore openMode = ListPool.Inner_ConfigStore.COMMAND;
    public BlockPos containerPos = BlockPos.ZERO;
-   public ListPool.Inner_DataUtil dupeVector = ListPool.Inner_DataUtil.init;
+   public ListPool.Inner_DataUtil dupeVector = ListPool.Inner_DataUtil.DESYNC_REOPEN;
    public int delayBeforeReopen = 200;
    public int delayAfterReopen = 500;
    public int iterations = 1;
@@ -66,7 +66,7 @@ public class ListPool implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      if (mc != null && mc.player != null && this.mode != ListPool.Inner_BufferHelper.init && this.mode == ListPool.Inner_BufferHelper.load) {
+      if (mc != null && mc.player != null && this.mode != ListPool.Inner_BufferHelper.DUPE && this.mode == ListPool.Inner_BufferHelper.DUPE_SPAM) {
       }
    }
 
@@ -122,7 +122,7 @@ public class ListPool implements MacroAction {
                      }
                   }
 
-                  if (this.mode == ListPool.Inner_BufferHelper.load) {
+                  if (this.mode == ListPool.Inner_BufferHelper.DUPE_SPAM) {
                      int spamOpens = Math.max(1, Math.min(this.spamCount, 20));
                      int spamDelay = Math.max(10, Math.min(this.spamDelayMs, 1000));
                      this.init(mc, cmd, spamOpens, spamDelay);
@@ -253,31 +253,31 @@ public class ListPool implements MacroAction {
    private ListPool.Inner_NetHelper init_ListPool_NetHelper_Minecraft(Minecraft mc) throws InterruptedException {
       ListPool.Inner_NetHelper var10000;
       switch (this.dupeVector) {
-         case init:
+         case DESYNC_REOPEN:
             var10000 = this.load_ListPool_NetHelper(mc);
             break;
-         case load:
+         case CLOSE_NO_PACKET:
             var10000 = this.read(mc);
             break;
-         case read:
+         case SHIFT_CLICK_REOPEN:
             var10000 = this.write(mc);
             break;
-         case write:
+         case DELAYED_PACKETS:
             var10000 = this.sync(mc);
             break;
-         case update:
+         case SWAP_HOTBAR:
             var10000 = this.close(mc);
             break;
-         case sync:
+         case DROP_EXPLOIT:
             var10000 = this.open(mc);
             break;
-         case flush:
+         case DELAYED_DESYNC_REOPEN:
             var10000 = this.flush(mc);
             break;
-         case close:
+         case SWAP_DESYNC_REOPEN:
             var10000 = this.update(mc);
             break;
-         case open:
+         case DROP_DELAYED_PACKETS:
             var10000 = this.poll(mc);
             break;
          default:
@@ -670,7 +670,7 @@ public class ListPool implements MacroAction {
             previous = null;
             stablePolls = 0;
             if (attempts < maxAttempts && now >= nextAttemptAt) {
-               if (this.openMode == ListPool.Inner_ConfigStore.load) {
+               if (this.openMode == ListPool.Inner_ConfigStore.CONTAINER) {
                   this.init_V_Minecraft_BlockPos(mc, this.containerPos);
                } else {
                   this.init_V_Minecraft_Str(mc, cmd);
@@ -695,7 +695,7 @@ public class ListPool implements MacroAction {
    private void init(Minecraft mc, String cmd, int totalOpens, int delayMs) throws InterruptedException {
       for (int spam = 1; spam < totalOpens; spam++) {
          this.init_V_J(delayMs);
-         if (this.openMode == ListPool.Inner_ConfigStore.load) {
+         if (this.openMode == ListPool.Inner_ConfigStore.CONTAINER) {
             this.init_V_Minecraft_BlockPos(mc, this.containerPos);
          } else {
             this.init_V_Minecraft_Str(mc, cmd);
@@ -704,18 +704,18 @@ public class ListPool implements MacroAction {
    }
 
    private int init_I() {
-      if (this.mode == ListPool.Inner_BufferHelper.load) {
-         return Math.max(2, Math.min(this.spamCount, this.openMode == ListPool.Inner_ConfigStore.load ? 8 : 4));
+      if (this.mode == ListPool.Inner_BufferHelper.DUPE_SPAM) {
+         return Math.max(2, Math.min(this.spamCount, this.openMode == ListPool.Inner_ConfigStore.CONTAINER ? 8 : 4));
       } else {
-         return this.openMode == ListPool.Inner_ConfigStore.load ? 4 : 2;
+         return this.openMode == ListPool.Inner_ConfigStore.CONTAINER ? 4 : 2;
       }
    }
 
    private long init_J() {
-      int configuredDelay = this.mode == ListPool.Inner_BufferHelper.load
+      int configuredDelay = this.mode == ListPool.Inner_BufferHelper.DUPE_SPAM
          ? Math.max(10, Math.min(this.spamDelayMs, 1000))
          : Math.max(10, Math.min(this.transferRetryDelayMs, 500));
-      long fallback = this.openMode == ListPool.Inner_ConfigStore.load ? 175L : 250L;
+      long fallback = this.openMode == ListPool.Inner_ConfigStore.CONTAINER ? 175L : 250L;
       return Math.max(50L, Math.min(configuredDelay > 0 ? configuredDelay : fallback, 400L));
    }
 
@@ -1386,13 +1386,13 @@ public class ListPool implements MacroAction {
             if (!"AUTO_TEST".equals(modeStr) && !"GRAB".equals(modeStr) && !"SAVE".equals(modeStr) && !"COMPARE".equals(modeStr) && !"CLEAR".equals(modeStr)) {
                this.mode = ListPool.Inner_BufferHelper.valueOf(modeStr);
             } else {
-               this.mode = ListPool.Inner_BufferHelper.init;
+               this.mode = ListPool.Inner_BufferHelper.DUPE;
             }
          } catch (IllegalArgumentException ignored) {
-            this.mode = ListPool.Inner_BufferHelper.init;
+            this.mode = ListPool.Inner_BufferHelper.DUPE;
          }
       } else {
-         this.mode = ListPool.Inner_BufferHelper.init;
+         this.mode = ListPool.Inner_BufferHelper.DUPE;
       }
 
       this.itemTargets.clear();
@@ -1411,7 +1411,7 @@ public class ListPool implements MacroAction {
          try {
             this.openMode = ListPool.Inner_ConfigStore.valueOf(tag.getStringOr("openMode", "COMMAND"));
          } catch (IllegalArgumentException ignored) {
-            this.openMode = ListPool.Inner_ConfigStore.init;
+            this.openMode = ListPool.Inner_ConfigStore.COMMAND;
          }
       }
 
@@ -1423,7 +1423,7 @@ public class ListPool implements MacroAction {
          try {
             this.dupeVector = ListPool.Inner_DataUtil.valueOf(tag.getStringOr("dupeVector", "DESYNC_REOPEN"));
          } catch (IllegalArgumentException ignored) {
-            this.dupeVector = ListPool.Inner_DataUtil.init;
+            this.dupeVector = ListPool.Inner_DataUtil.DESYNC_REOPEN;
          }
       }
 
@@ -1470,20 +1470,20 @@ public class ListPool implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_a_StreamGate;
+      return StreamGate.INVENTORY_AUDIT;
    }
 
    @Override
    public String getDisplayName() {
-      String src = this.openMode == ListPool.Inner_ConfigStore.load
+      String src = this.openMode == ListPool.Inner_ConfigStore.CONTAINER
          ? "(" + this.containerPos.getX() + "," + this.containerPos.getY() + "," + this.containerPos.getZ() + ")"
          : this.init_Str_2();
       String var10000;
       switch (this.mode) {
-         case init:
+         case DUPE:
             var10000 = "Dupe " + this.dupeVector.name() + " " + src;
             break;
-         case load:
+         case DUPE_SPAM:
             var10000 = "DupeSpam " + this.dupeVector.name() + " " + src + " (x" + this.spamCount + ")";
             break;
          default:
@@ -1495,7 +1495,7 @@ public class ListPool implements MacroAction {
 
    @Override
    public String getIcon() {
-      return this.mode == ListPool.Inner_BufferHelper.load ? "DSP" : "DUP";
+      return this.mode == ListPool.Inner_BufferHelper.DUPE_SPAM ? "DSP" : "DUP";
    }
 
    @Override
@@ -1553,28 +1553,28 @@ public class ListPool implements MacroAction {
    }
 
    public enum Inner_BufferHelper {
-      init,
-      load;
+      DUPE,
+      DUPE_SPAM;
    }
 
    private record Inner_CachePool(String init_Str, long init_J, Map<Integer, ListPool.Inner_TaskQueue> init_Map) {
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load;
+      COMMAND,
+      CONTAINER;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open;
+      DESYNC_REOPEN,
+      CLOSE_NO_PACKET,
+      SHIFT_CLICK_REOPEN,
+      DELAYED_PACKETS,
+      SWAP_HOTBAR,
+      DROP_EXPLOIT,
+      DELAYED_DESYNC_REOPEN,
+      SWAP_DESYNC_REOPEN,
+      DROP_DELAYED_PACKETS;
    }
 
    private record Inner_NetHelper(int init_I, Map<String, Integer> init_Map) {

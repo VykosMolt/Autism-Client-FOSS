@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class s implements MacroAction {
-   public s.Inner_DataUtil direction = s.Inner_DataUtil.init;
+   public s.Inner_DataUtil direction = s.Inner_DataUtil.FORWARD;
    public int durationTicks = 20;
    public boolean nonBlocking = false;
    private boolean init = true;
@@ -25,16 +25,16 @@ public class s implements MacroAction {
 
       KeyMapping var10000;
       switch (this.direction) {
-         case init:
+         case FORWARD:
             var10000 = mc.options.keyUp;
             break;
-         case load:
+         case BACKWARD:
             var10000 = mc.options.keyDown;
             break;
-         case read:
+         case LEFT:
             var10000 = mc.options.keyLeft;
             break;
-         case write:
+         case RIGHT:
             var10000 = mc.options.keyRight;
             break;
          default:
@@ -76,7 +76,7 @@ public class s implements MacroAction {
          try {
             this.direction = s.Inner_DataUtil.valueOf(tag.getStringOr("direction", "FORWARD"));
          } catch (Exception e) {
-            this.direction = s.Inner_DataUtil.init;
+            this.direction = s.Inner_DataUtil.FORWARD;
          }
       }
 
@@ -95,7 +95,7 @@ public class s implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.flags;
+      return StreamGate.MOVE;
    }
 
    @Override
@@ -119,10 +119,10 @@ public class s implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      FORWARD,
+      BACKWARD,
+      LEFT,
+      RIGHT;
 
       public String init_Str() {
          return this.name().charAt(0) + this.name().substring(1).toLowerCase();

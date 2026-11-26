@@ -13,14 +13,14 @@ public class an implements E, MacroAction, aP {
    public String itemName = "";
    public ArrayUtil itemTarget = new ArrayUtil();
    public int slot = -1;
-   public an.Inner_DataUtil useMode = an.Inner_DataUtil.init;
+   public an.Inner_DataUtil useMode = an.Inner_DataUtil.AUTOMATIC;
    public boolean waitForFinish = true;
    public int holdTicks = 20;
    public int useCount = 1;
    public boolean sneak = false;
    public boolean waitForGui = false;
    public String guiName = "";
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private boolean init = true;
 
    @Override
@@ -46,7 +46,7 @@ public class an implements E, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.pop;
+      return StreamGate.USE_ITEM;
    }
 
    @Override
@@ -95,7 +95,7 @@ public class an implements E, MacroAction, aP {
          try {
             this.useMode = an.Inner_DataUtil.valueOf(modeName);
          } catch (IllegalArgumentException ignored) {
-            this.useMode = an.Inner_DataUtil.init;
+            this.useMode = an.Inner_DataUtil.AUTOMATIC;
          }
       }
 
@@ -159,7 +159,7 @@ public class an implements E, MacroAction, aP {
       String count = this.useCount > 1 ? " x" + this.useCount : "";
       String wait = this.waitForFinish ? ", wait" : "";
       String sneakLabel = this.sneak ? ", sneak" : "";
-      String base = this.useMode == an.Inner_DataUtil.load
+      String base = this.useMode == an.Inner_DataUtil.CUSTOM_HOLD
          ? "Use Item (" + item + ", hold " + this.holdTicks + "t" + wait + sneakLabel + ")"
          : "Use Item (" + item + count + wait + sneakLabel + ")";
       return base + aP.init_Str_aP(this);
@@ -191,7 +191,7 @@ public class an implements E, MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      AUTOMATIC,
+      CUSTOM_HOLD;
    }
 }

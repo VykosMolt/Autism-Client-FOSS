@@ -14,8 +14,8 @@ public class L implements MacroAction {
    public MacroAction triggerAction = new EventBus(0);
    public int bodyCount = 0;
    public int timeoutMs = 10000;
-   public String conditionType = L.Inner_DataUtil.write.name();
-   public String actionType = StreamGate.read.name();
+   public String conditionType = L.Inner_DataUtil.WAIT_PACKET.name();
+   public String actionType = StreamGate.PACKET_CLICK.name();
    public ArrayList<String> raceSteps = new ArrayList<>();
    public ArrayList<String> conditionTypes = new ArrayList<>();
    public ArrayList<String> actionTypes = new ArrayList<>();
@@ -35,8 +35,8 @@ public class L implements MacroAction {
       tag.putString("label", this.label == null ? "" : this.label);
       tag.putInt("bodyCount", Math.max(0, this.bodyCount));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
-      tag.putString("conditionType", this.conditionType == null ? L.Inner_DataUtil.write.name() : this.conditionType);
-      tag.putString("actionType", this.actionType == null ? StreamGate.read.name() : this.actionType);
+      tag.putString("conditionType", this.conditionType == null ? L.Inner_DataUtil.WAIT_PACKET.name() : this.conditionType);
+      tag.putString("actionType", this.actionType == null ? StreamGate.PACKET_CLICK.name() : this.actionType);
       tag.put("raceSteps", i.init(this.read()));
       tag.put("conditionTypes", i.init(this.init_List_2()));
       tag.put("actionTypes", i.init(this.write()));
@@ -54,8 +54,8 @@ public class L implements MacroAction {
       this.label = tag.getStringOr("label", "Race");
       this.bodyCount = Math.max(0, tag.getIntOr("bodyCount", 0));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 10000));
-      this.conditionType = read_Str(tag.getStringOr("conditionType", tag.getStringOr("triggerType", L.Inner_DataUtil.write.name())));
-      this.actionType = tag.getStringOr("actionType", StreamGate.read.name());
+      this.conditionType = read_Str(tag.getStringOr("conditionType", tag.getStringOr("triggerType", L.Inner_DataUtil.WAIT_PACKET.name())));
+      this.actionType = tag.getStringOr("actionType", StreamGate.PACKET_CLICK.name());
       this.raceSteps = i.init(tag.getList("raceSteps").orElse(new ListTag()));
       this.raceSteps.removeIf(s -> s == null || s.isBlank());
       boolean hasConditionTypes = tag.contains("conditionTypes");
@@ -72,7 +72,7 @@ public class L implements MacroAction {
 
       this.actionTypes.removeIf(s -> s == null || s.isBlank());
       if (this.actionTypes.isEmpty()) {
-         this.actionTypes.add(StreamGate.read.name());
+         this.actionTypes.add(StreamGate.PACKET_CLICK.name());
       }
 
       this.conditionTypes.replaceAll(L::read_Str);
@@ -89,7 +89,7 @@ public class L implements MacroAction {
          this.raceSteps.removeIf(s -> s == null || s.isBlank());
          this.load_V();
          if (this.actionTypes.isEmpty()) {
-            this.actionTypes.add(StreamGate.read.name());
+            this.actionTypes.add(StreamGate.PACKET_CLICK.name());
          }
       }
 
@@ -251,7 +251,7 @@ public class L implements MacroAction {
       }
 
       if (out.isEmpty()) {
-         out.add(this.actionType != null && !this.actionType.isBlank() ? this.actionType.trim().toUpperCase(Locale.ROOT) : StreamGate.read.name());
+         out.add(this.actionType != null && !this.actionType.isBlank() ? this.actionType.trim().toUpperCase(Locale.ROOT) : StreamGate.PACKET_CLICK.name());
       }
 
       return out;
@@ -293,138 +293,138 @@ public class L implements MacroAction {
       try {
          type = StreamGate.valueOf(typeName == null ? "" : typeName.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         type = StreamGate.read;
+         type = StreamGate.PACKET_CLICK;
       }
 
       MacroAction var10000;
       switch (type) {
-         case read:
+         case PACKET_CLICK:
             var10000 = new z();
             break;
-         case f_h_StreamGate:
+         case SEND_CHAT:
             var10000 = new W();
             break;
-         case queue:
+         case PAYLOAD:
             var10000 = new H();
             break;
-         case valid:
+         case CLOSE_GUI:
             var10000 = new JsonUtil();
             break;
-         case poll:
+         case CLICK:
             var10000 = new NetHelper();
             break;
-         case pop:
+         case USE_ITEM:
             var10000 = new an();
             break;
-         case reset:
+         case ITEM:
             var10000 = new MapStore();
             break;
-         case start:
+         case PICK_UP_ALL:
             var10000 = new I();
             break;
-         case add:
+         case XCARRY:
             var10000 = new aQ();
             break;
-         case clear:
+         case DROP:
             var10000 = new PacketUtil();
             break;
-         case put:
+         case SELECT_SLOT:
             var10000 = new V();
             break;
-         case size:
+         case SWAP_SLOTS:
             var10000 = new ai();
             break;
-         case run:
+         case SEND_PACKET:
             var10000 = new Y();
             break;
-         case tick:
+         case INVENTORY:
             var10000 = new RefQueue();
             break;
-         case mark:
+         case RESTORE_GUI:
             var10000 = new P();
             break;
-         case scan:
+         case SAVE_GUI:
             var10000 = new U();
             break;
-         case fill:
+         case DESYNC:
             var10000 = new TextFormat();
             break;
-         case f_i_StreamGate:
+         case NBT_BOOK:
             var10000 = new u();
             break;
-         case f_g_StreamGate:
+         case PAY:
             var10000 = new G();
             break;
-         case set:
+         case TRADE:
             var10000 = new am();
             break;
-         case f_e_StreamGate:
+         case INSTA_BREAK:
             var10000 = new MethodUtil();
             break;
-         case f_f_StreamGate:
+         case BREAK:
             var10000 = new CachePool();
             break;
-         case entry:
+         case TOGGLE_MODULE:
             var10000 = new ak();
             break;
-         case node:
+         case START_MACRO:
             var10000 = new af();
             break;
-         case cache:
+         case TOOLS:
             var10000 = new al();
             break;
-         case task:
+         case STOP_MACRO:
             var10000 = new ag();
             break;
-         case pool:
+         case SNEAK:
             var10000 = new ad();
             break;
-         case index:
+         case JUMP:
             var10000 = new NodeWalker();
             break;
-         case count:
+         case SPRINT:
             var10000 = new ae();
             break;
-         case f_v_StreamGate:
+         case PACKET_GATE:
             var10000 = new B();
             break;
-         case f_w_StreamGate:
+         case PACKET_BURST:
             var10000 = new y();
             break;
-         case f_x_StreamGate:
+         case CONTAINER_CLICK_SEQUENCE:
             var10000 = new StateCache();
             break;
-         case f_y_StreamGate:
+         case ASSERT:
             var10000 = new DataUtil();
             break;
-         case f_z_StreamGate:
+         case USE_ITEM_PHASE:
             var10000 = new ao();
             break;
-         case f_A_StreamGate:
+         case SEND_COMMAND_PACKET:
             var10000 = new X();
             break;
-         case f_Q_StreamGate:
+         case SIGN_EDIT:
             var10000 = new ac();
             break;
-         case f_K_StreamGate:
+         case MACRO_VARIABLES:
             var10000 = new o();
             break;
-         case f_M_StreamGate:
+         case FAKE_GAMEMODE:
             var10000 = new IoWorker();
             break;
-         case f_N_StreamGate:
+         case BUNDLE_DUPE_V2:
             var10000 = new BufferHelper();
             break;
-         case f_s_StreamGate:
+         case VCLIP:
             var10000 = new ap();
             break;
-         case f_t_StreamGate:
+         case HCLIP:
             var10000 = new TokenStore();
             break;
-         case f_u_StreamGate:
+         case TP:
             var10000 = new w();
             break;
-         case f_d_StreamGate:
+         case MINE:
             var10000 = new q();
             break;
          default:
@@ -437,47 +437,47 @@ public class L implements MacroAction {
 
    public static L.Inner_DataUtil init_L_DataUtil(MacroAction action) {
       if (action instanceof ax) {
-         return L.Inner_DataUtil.load;
+         return L.Inner_DataUtil.WAIT_GUI;
       } else if (action instanceof au) {
-         return L.Inner_DataUtil.read;
+         return L.Inner_DataUtil.WAIT_CHAT;
       } else if (action instanceof aB) {
-         return L.Inner_DataUtil.write;
+         return L.Inner_DataUtil.WAIT_PACKET;
       } else if (action instanceof ay) {
-         return L.Inner_DataUtil.update;
+         return L.Inner_DataUtil.WAIT_HEALTH;
       } else if (action instanceof aD) {
-         return L.Inner_DataUtil.sync;
+         return L.Inner_DataUtil.WAIT_SLOT_CHANGE;
       } else if (action instanceof at) {
-         return L.Inner_DataUtil.flush;
+         return L.Inner_DataUtil.WAIT_BLOCK;
       } else if (action instanceof aw) {
-         return L.Inner_DataUtil.close;
+         return L.Inner_DataUtil.WAIT_ENTITY;
       } else if (action instanceof av) {
-         return L.Inner_DataUtil.open;
+         return L.Inner_DataUtil.WAIT_COOLDOWN;
       } else if (action instanceof aE) {
-         return L.Inner_DataUtil.push;
+         return L.Inner_DataUtil.WAIT_SOUND;
       } else if (action instanceof aM) {
-         return L.Inner_DataUtil.pop;
+         return L.Inner_DataUtil.WAIT_PACKET_MATCH;
       } else if (action instanceof aK) {
-         return L.Inner_DataUtil.tick;
+         return L.Inner_DataUtil.WAIT_INVENTORY_PREDICATE;
       } else if (action instanceof ar) {
-         return L.Inner_DataUtil.run;
+         return L.Inner_DataUtil.WAIT_DURABILITY;
       } else if (action instanceof aH) {
-         return L.Inner_DataUtil.get;
+         return L.Inner_DataUtil.WAIT_FREE_SLOTS;
       } else if (action instanceof aL) {
-         return L.Inner_DataUtil.set;
+         return L.Inner_DataUtil.WAIT_MOVEMENT;
       } else if (action instanceof az) {
-         return L.Inner_DataUtil.put;
+         return L.Inner_DataUtil.WAIT_LAN_STEP;
       } else if (action instanceof aA) {
-         return L.Inner_DataUtil.add;
+         return L.Inner_DataUtil.WAIT_MACRO_STEP;
       } else if (action instanceof aI) {
-         return L.Inner_DataUtil.valid;
+         return L.Inner_DataUtil.WAIT_GAMEMODE_CHANGE;
       } else if (action instanceof aN || action instanceof aG || action instanceof aC || action instanceof aF) {
-         return L.Inner_DataUtil.set;
+         return L.Inner_DataUtil.WAIT_MOVEMENT;
       } else if (action instanceof aj) {
-         return L.Inner_DataUtil.clear;
+         return L.Inner_DataUtil.TICK_SYNC;
       } else if (action instanceof Q) {
-         return L.Inner_DataUtil.reset;
+         return L.Inner_DataUtil.REVISION_SYNC;
       } else {
-         return action instanceof aa ? L.Inner_DataUtil.start : L.Inner_DataUtil.init;
+         return action instanceof aa ? L.Inner_DataUtil.SERVER_TICK_SYNC : L.Inner_DataUtil.DELAY;
       }
    }
 
@@ -488,79 +488,79 @@ public class L implements MacroAction {
    private static MacroAction init(L.Inner_DataUtil type) {
       MacroAction var10000;
       switch (type) {
-         case init:
+         case DELAY:
             var10000 = new EventBus(0);
             break;
-         case load:
+         case WAIT_GUI:
             var10000 = new ax();
             break;
-         case read:
+         case WAIT_CHAT:
             var10000 = new au();
             break;
-         case write:
+         case WAIT_PACKET:
             var10000 = new aB();
             break;
-         case update:
+         case WAIT_HEALTH:
             var10000 = new ay();
             break;
-         case sync:
+         case WAIT_SLOT_CHANGE:
             var10000 = new aD();
             break;
-         case flush:
+         case WAIT_BLOCK:
             var10000 = new at();
             break;
-         case close:
+         case WAIT_ENTITY:
             var10000 = new aw();
             break;
-         case open:
+         case WAIT_COOLDOWN:
             var10000 = new av();
             break;
-         case poll:
+         case WAIT_POS:
             var10000 = new aN();
             break;
-         case push:
+         case WAIT_SOUND:
             var10000 = new aE();
             break;
-         case pop:
+         case WAIT_PACKET_MATCH:
             var10000 = new aM();
             break;
-         case tick:
+         case WAIT_INVENTORY_PREDICATE:
             var10000 = new aK();
             break;
-         case run:
+         case WAIT_DURABILITY:
             var10000 = new ar();
             break;
-         case get:
+         case WAIT_FREE_SLOTS:
             var10000 = new aH();
             break;
-         case set:
+         case WAIT_MOVEMENT:
             var10000 = new aL();
             break;
-         case put:
+         case WAIT_LAN_STEP:
             var10000 = new az();
             break;
-         case add:
+         case WAIT_MACRO_STEP:
             var10000 = new aA();
             break;
-         case clear:
+         case TICK_SYNC:
             var10000 = new aj();
             break;
-         case reset:
+         case REVISION_SYNC:
             var10000 = new Q();
             break;
-         case start:
+         case SERVER_TICK_SYNC:
             var10000 = new aa();
             break;
-         case stop:
+         case WAIT_WORLD_CHANGE:
             var10000 = new aG();
             break;
-         case next:
+         case WAIT_POSITION_DELTA:
             var10000 = new aC();
             break;
-         case prev:
+         case WAIT_TELEPORT:
             var10000 = new aF();
             break;
-         case valid:
+         case WAIT_GAMEMODE_CHANGE:
             var10000 = new aI();
             break;
          default:
@@ -571,46 +571,46 @@ public class L implements MacroAction {
    }
 
    private static MacroAction init(CompoundTag tag) {
-      L.Inner_DataUtil type = init_L_DataUtil(tag.getStringOr("triggerType", L.Inner_DataUtil.init.name()));
+      L.Inner_DataUtil type = init_L_DataUtil(tag.getStringOr("triggerType", L.Inner_DataUtil.DELAY.name()));
       MacroAction action = init(type);
       CompoundTag actionTag = autismclient.util.aM.init_CompoundTag_MacroAction(action);
       switch (type) {
-         case init:
+         case DELAY:
             actionTag.putBoolean("useTicks", tag.getBooleanOr("useTicks", false));
             actionTag.putInt("delayMs", tag.getIntOr("delayMs", 0));
             actionTag.putInt("delayTicks", tag.getIntOr("delayTicks", 1));
             break;
-         case load:
+         case WAIT_GUI:
             actionTag.putString("waitMode", tag.getStringOr("waitMode", "OPEN"));
             actionTag.putString("guiTitle", tag.getStringOr("guiTitle", ""));
             break;
-         case read:
+         case WAIT_CHAT:
             actionTag.putString("pattern", tag.getStringOr("pattern", ""));
             actionTag.putBoolean("useRegex", tag.getBooleanOr("useRegex", false));
             actionTag.putInt("fuzzyPercent", tag.getIntOr("fuzzyPercent", 100));
             break;
-         case write:
+         case WAIT_PACKET:
             actionTag.putString("packetName", tag.getStringOr("packetName", ""));
             init(tag, actionTag, "packetNames");
             break;
-         case update:
+         case WAIT_HEALTH:
             actionTag.putFloat("healthThreshold", (float)tag.getDoubleOr("healthThreshold", 20.0));
             actionTag.putString("comparison", tag.getStringOr("comparison", "Drops Below"));
-         case sync:
-         case pop:
-         case tick:
-         case run:
-         case get:
-         case set:
-         case put:
-         case add:
-         case clear:
-         case reset:
-         case start:
-         case stop:
+         case WAIT_SLOT_CHANGE:
+         case WAIT_PACKET_MATCH:
+         case WAIT_INVENTORY_PREDICATE:
+         case WAIT_DURABILITY:
+         case WAIT_FREE_SLOTS:
+         case WAIT_MOVEMENT:
+         case WAIT_LAN_STEP:
+         case WAIT_MACRO_STEP:
+         case TICK_SYNC:
+         case REVISION_SYNC:
+         case SERVER_TICK_SYNC:
+         case WAIT_WORLD_CHANGE:
          default:
             break;
-         case flush:
+         case WAIT_BLOCK:
             actionTag.putString("checkMode", tag.getStringOr("checkMode", "AT_POSITION"));
             actionTag.putString("waitBehavior", tag.getStringOr("waitBehavior", "PRESENT"));
             actionTag.putBoolean("anyBlock", tag.getBooleanOr("anyBlock", false));
@@ -620,7 +620,7 @@ public class L implements MacroAction {
             actionTag.putInt("z", tag.getIntOr("blockZ", tag.getIntOr("z", 0)));
             actionTag.putDouble("searchRadius", tag.getDoubleOr("searchRadius", 6.0));
             break;
-         case close:
+         case WAIT_ENTITY:
             actionTag.putString("checkMode", tag.getStringOr("entityCheckMode", "RADIUS"));
             init(tag, actionTag, "entityIds");
             actionTag.putBoolean("centerOnPlayer", tag.getBooleanOr("centerOnPlayer", true));
@@ -629,11 +629,11 @@ public class L implements MacroAction {
             actionTag.putDouble("y", tag.getDoubleOr("entityY", 0.0));
             actionTag.putDouble("z", tag.getDoubleOr("entityZ", 0.0));
             break;
-         case open:
+         case WAIT_COOLDOWN:
             actionTag.putString("itemName", tag.getStringOr("itemName", ""));
             actionTag.putBoolean("checkMainHand", tag.getBooleanOr("checkMainHand", true));
             break;
-         case poll:
+         case WAIT_POS:
             actionTag.putDouble("x", tag.getDoubleOr("x", 0.0));
             actionTag.putDouble("y", tag.getDoubleOr("y", 0.0));
             actionTag.putDouble("z", tag.getDoubleOr("z", 0.0));
@@ -643,12 +643,12 @@ public class L implements MacroAction {
             actionTag.putFloat("pitch", (float)tag.getDoubleOr("pitch", 0.0));
             actionTag.putFloat("rotLeeway", (float)tag.getDoubleOr("rotLeeway", 5.0));
             break;
-         case push:
+         case WAIT_SOUND:
             init(tag, actionTag, "soundIds");
             actionTag.putBoolean("checkDistance", tag.getBooleanOr("checkDistance", false));
             actionTag.putDouble("maxDistance", tag.getDoubleOr("maxDistance", 16.0));
             break;
-         case next:
+         case WAIT_POSITION_DELTA:
             actionTag.putDouble("distance", tag.getDoubleOr("distance", 5.0));
             actionTag.putBoolean("horizontalOnly", tag.getBooleanOr("horizontalOnly", false));
       }
@@ -662,46 +662,46 @@ public class L implements MacroAction {
       CompoundTag flat = new CompoundTag();
       switch (legacy) {
          case "POSITION_JUMP":
-            flat.putString("triggerType", L.Inner_DataUtil.next.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_POSITION_DELTA.name());
             flat.putDouble("distance", tag.getDoubleOr("positionTolerance", 5.0));
             break;
          case "WORLD_CHANGE":
-            flat.putString("triggerType", L.Inner_DataUtil.stop.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_WORLD_CHANGE.name());
             break;
          case "GUI_OPEN_BY_TITLE":
-            flat.putString("triggerType", L.Inner_DataUtil.load.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_GUI.name());
             flat.putString("waitMode", "OPEN");
             flat.putString("guiTitle", tag.getStringOr("guiTitleSubstr", ""));
             break;
          case "GUI_CLOSE_BY_TITLE":
-            flat.putString("triggerType", L.Inner_DataUtil.load.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_GUI.name());
             flat.putString("waitMode", "CLOSE");
             flat.putString("guiTitle", tag.getStringOr("guiTitleSubstr", ""));
             break;
          case "TELEPORT_PACKET":
-            flat.putString("triggerType", L.Inner_DataUtil.write.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_PACKET.name());
             flat.putString("packetName", "S2C:ClientboundPlayerPositionPacket");
             break;
          case "CHAT_MATCH":
-            flat.putString("triggerType", L.Inner_DataUtil.read.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_CHAT.name());
             flat.putString("pattern", tag.getStringOr("chatPattern", ""));
             flat.putBoolean("useRegex", tag.getBooleanOr("chatUseRegex", false));
             break;
          case "S2C_PACKET_CLASS":
-            flat.putString("triggerType", L.Inner_DataUtil.write.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_PACKET.name());
             flat.putString("packetName", "S2C:" + tag.getStringOr("s2cPacketClassName", ""));
             break;
          case "HEALTH_BELOW":
-            flat.putString("triggerType", L.Inner_DataUtil.update.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_HEALTH.name());
             flat.putDouble("healthThreshold", tag.getDoubleOr("healthBelowThreshold", 10.0));
             flat.putString("comparison", "Drops Below");
             break;
          case "SLOT_CHANGE":
          case "ITEM_FOUND":
-            flat.putString("triggerType", L.Inner_DataUtil.sync.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_SLOT_CHANGE.name());
             break;
          case "BLOCK_STATE":
-            flat.putString("triggerType", L.Inner_DataUtil.flush.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_BLOCK.name());
             ListTag blockIds = new ListTag();
             String blockId = tag.getStringOr("blockId", "");
             if (!blockId.isBlank()) {
@@ -714,16 +714,16 @@ public class L implements MacroAction {
             flat.putInt("blockZ", tag.getIntOr("blockZ", 0));
             break;
          case "ENTITY_NEAR":
-            flat.putString("triggerType", L.Inner_DataUtil.close.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_ENTITY.name());
             init(tag, flat, "entityNearIds", "entityIds");
             flat.putDouble("radius", tag.getDoubleOr("entityNearRadius", 8.0));
             break;
          case "COOLDOWN_READY":
-            flat.putString("triggerType", L.Inner_DataUtil.open.name());
+            flat.putString("triggerType", L.Inner_DataUtil.WAIT_COOLDOWN.name());
             flat.putString("itemName", tag.getStringOr("cooldownItemName", ""));
             break;
          default:
-            flat.putString("triggerType", L.Inner_DataUtil.init.name());
+            flat.putString("triggerType", L.Inner_DataUtil.DELAY.name());
             flat.putInt("delayMs", tag.getIntOr("manualDelayMs", 0));
       }
 
@@ -759,7 +759,7 @@ public class L implements MacroAction {
       try {
          return L.Inner_DataUtil.valueOf(raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         return L.Inner_DataUtil.init;
+         return L.Inner_DataUtil.DELAY;
       }
    }
 
@@ -771,7 +771,7 @@ public class L implements MacroAction {
          case "WAIT_WORLD_CHANGE":
          case "WAIT_POSITION_DELTA":
          case "WAIT_TELEPORT":
-            var10000 = L.Inner_DataUtil.set.name();
+            var10000 = L.Inner_DataUtil.WAIT_MOVEMENT.name();
             break;
          default:
             var10000 = key;
@@ -882,7 +882,7 @@ public class L implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_q_StreamGate;
+      return StreamGate.RACE;
    }
 
    @Override
@@ -901,30 +901,30 @@ public class L implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run,
-      get,
-      set,
-      put,
-      add,
-      clear,
-      reset,
-      start,
-      stop,
-      next,
-      prev,
-      valid;
+      DELAY,
+      WAIT_GUI,
+      WAIT_CHAT,
+      WAIT_PACKET,
+      WAIT_HEALTH,
+      WAIT_SLOT_CHANGE,
+      WAIT_BLOCK,
+      WAIT_ENTITY,
+      WAIT_COOLDOWN,
+      WAIT_POS,
+      WAIT_SOUND,
+      WAIT_PACKET_MATCH,
+      WAIT_INVENTORY_PREDICATE,
+      WAIT_DURABILITY,
+      WAIT_FREE_SLOTS,
+      WAIT_MOVEMENT,
+      WAIT_LAN_STEP,
+      WAIT_MACRO_STEP,
+      TICK_SYNC,
+      REVISION_SYNC,
+      SERVER_TICK_SYNC,
+      WAIT_WORLD_CHANGE,
+      WAIT_POSITION_DELTA,
+      WAIT_TELEPORT,
+      WAIT_GAMEMODE_CHANGE;
    }
 }

@@ -3,8 +3,8 @@ package autismclient.util.macro;
 import java.util.Locale;
 
 public enum D {
-   init,
-   load;
+   INSTANT,
+   GRIM;
 
    public static D init(String raw, D fallback) {
       if (raw == null) {
@@ -13,9 +13,9 @@ public enum D {
 
       switch (raw.trim().toUpperCase(Locale.ROOT)) {
          case "INSTANT":
-            return init;
+            return INSTANT;
          case "GRIM":
-            return load;
+            return GRIM;
          default:
             return fallback;
       }

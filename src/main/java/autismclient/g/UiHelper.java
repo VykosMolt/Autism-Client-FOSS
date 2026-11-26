@@ -307,10 +307,10 @@ public final class UiHelper {
       Objects.requireNonNull(hashFunction, "hashFunction");
       snapshot.init_V();
       String scopeHash = init(snapshot.init_Str(), snapshot.load_Str());
-      String mode = snapshot.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.init ? "vanilla-neutral-v1" : "modded-full-v1";
+      String mode = snapshot.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA ? "vanilla-neutral-v1" : "modded-full-v1";
       FileCache.Inner_BufferHelper session = FileCache.init_FileCache_BufferHe(snapshot.init_BufferHelper_Strea());
       FileCache.Inner_DataUtil policy = FileCache.init_FileCache_DataUtil(session, packId);
-      String protection = policy == FileCache.Inner_DataUtil.init ? "isolated-v1" : "full-v1";
+      String protection = policy == FileCache.Inner_DataUtil.ISOLATED ? "isolated-v1" : "full-v1";
       Path base = cacheDir.normalize();
       Path result = base.resolve("autism-v2")
          .resolve(snapshot.init_UUID().toString())

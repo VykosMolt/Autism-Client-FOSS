@@ -12,7 +12,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class PacketUtil implements E, MacroAction, aP {
-   public PacketUtil.Inner_DataUtil mode = PacketUtil.Inner_DataUtil.load;
+   public PacketUtil.Inner_DataUtil mode = PacketUtil.Inner_DataUtil.TIMES;
    public int dropCount = 1;
    public List<String> itemNames = new ArrayList<>();
    public List<ArrayUtil> itemTargets = new ArrayList<>();
@@ -21,14 +21,14 @@ public class PacketUtil implements E, MacroAction, aP {
    public boolean waitForGuiAfter = false;
    public String guiName = "";
    public boolean useHandlerSlots = true;
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private boolean init = true;
 
    public int init_I_I_4(int index) {
       if (index >= 0 && index < this.itemCounts.size()) {
          return Math.max(0, this.itemCounts.get(index));
       } else {
-         return this.mode == PacketUtil.Inner_DataUtil.init ? 0 : Math.max(1, this.dropCount);
+         return this.mode == PacketUtil.Inner_DataUtil.ALL ? 0 : Math.max(1, this.dropCount);
       }
    }
 
@@ -51,7 +51,7 @@ public class PacketUtil implements E, MacroAction, aP {
       if (mc.player != null && mc.gameMode != null) {
          List<ArrayUtil> targets = this.load();
          if (!this.init_Z_4()) {
-            if (this.mode == PacketUtil.Inner_DataUtil.init) {
+            if (this.mode == PacketUtil.Inner_DataUtil.ALL) {
                for (int i = 0; i < 36; i++) {
                   if (!mc.player.getInventory().getItem(i).isEmpty()) {
                      if (this.useHandlerSlots) {
@@ -229,7 +229,7 @@ public class PacketUtil implements E, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.clear;
+      return StreamGate.DROP;
    }
 
    @Override
@@ -260,7 +260,7 @@ public class PacketUtil implements E, MacroAction, aP {
       try {
          this.mode = PacketUtil.Inner_DataUtil.valueOf(tag.getStringOr("mode", "TIMES"));
       } catch (IllegalArgumentException ignored) {
-         this.mode = PacketUtil.Inner_DataUtil.load;
+         this.mode = PacketUtil.Inner_DataUtil.TIMES;
       }
 
       this.dropCount = tag.getIntOr("count", 1);
@@ -310,7 +310,7 @@ public class PacketUtil implements E, MacroAction, aP {
    public String getDisplayName() {
       List<ArrayUtil> targets = this.load();
       if (targets.isEmpty()) {
-         String untargeted = this.mode == PacketUtil.Inner_DataUtil.init ? "Drop Entire Inventory" : "Drop Held Item x" + Math.max(1, this.dropCount);
+         String untargeted = this.mode == PacketUtil.Inner_DataUtil.ALL ? "Drop Entire Inventory" : "Drop Held Item x" + Math.max(1, this.dropCount);
          return untargeted + aP.init_Str_aP(this);
       }
 
@@ -330,7 +330,7 @@ public class PacketUtil implements E, MacroAction, aP {
          first = first + " (+" + (targets.size() - 1) + ")";
       }
 
-      String base = this.mode == PacketUtil.Inner_DataUtil.init ? "Drop All [" + first + "]" : "Drop [" + first + "]";
+      String base = this.mode == PacketUtil.Inner_DataUtil.ALL ? "Drop All [" + first + "]" : "Drop [" + first + "]";
       return base + aP.init_Str_aP(this);
    }
 
@@ -411,7 +411,7 @@ public class PacketUtil implements E, MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      ALL,
+      TIMES;
    }
 }

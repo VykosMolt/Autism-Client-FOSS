@@ -294,22 +294,22 @@ public class AutismPacketInspectOverlay extends bj {
                for (AutismPacketInspectOverlay.Inner_CachePool button : this.init_List(footerY)) {
                   autismclient.gui.f.b.ByteReader.Inner_StreamUtil var10000;
                   switch (button.init_AutismPacketInspec()) {
-                     case init_AutismPacketInspec:
-                     case read:
-                     case update:
-                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init;
+                     case WAIT:
+                     case QUEUE:
+                     case ADD_PAYLOAD:
+                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY;
                         break;
-                     case load:
-                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read;
+                     case SEND:
+                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS;
                         break;
-                     case write:
-                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write;
+                     case EDIT_PAYLOAD:
+                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY;
                         break;
-                     case sync:
-                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write;
+                     case COPY_RAW:
+                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY;
                         break;
-                     case flush:
-                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update;
+                     case COPY:
+                        var10000 = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST;
                         break;
                      default:
                         throw new MatchException(null, null);
@@ -709,25 +709,25 @@ public class AutismPacketInspectOverlay extends bj {
    private void init_V(AutismPacketInspectOverlay.Inner_StreamUtil action) {
       if (action != null) {
          switch (action) {
-            case init_AutismPacketInspec:
+            case WAIT:
                bs.poll(this.init_AutismPacketLogger);
                break;
-            case load:
+            case SEND:
                this.init_V(this.init_AutismPacketLogger);
                break;
-            case read:
+            case QUEUE:
                bs.close(this.init_AutismPacketLogger);
                break;
-            case write:
+            case EDIT_PAYLOAD:
                bs.push(this.init_AutismPacketLogger);
                break;
-            case update:
+            case ADD_PAYLOAD:
                bs.pop(this.init_AutismPacketLogger);
                break;
-            case sync:
+            case COPY_RAW:
                this.close_V_11();
                break;
-            case flush:
+            case COPY:
                if (this.init_bu_JsonUtil != null) {
                   init_Minecraft.keyboardHandler.setClipboard(this.init_bu_JsonUtil.load());
                   bi.init("Copied packet inspection.");
@@ -989,29 +989,29 @@ public class AutismPacketInspectOverlay extends bj {
 
    private List<AutismPacketInspectOverlay.Inner_StreamUtil> init_List_9() {
       List<AutismPacketInspectOverlay.Inner_StreamUtil> actions = new ArrayList<>();
-      actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.flush);
+      actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.COPY);
       if (this.init_Z(this.init_AutismPacketLogger)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.sync);
+         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.COPY_RAW);
       }
 
       if (bs.init(this.init_AutismPacketLogger)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.read);
+         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.QUEUE);
       }
 
       if (bs.sync(this.init_AutismPacketLogger)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.write);
+         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.EDIT_PAYLOAD);
       }
 
       if (bs.flush(this.init_AutismPacketLogger)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.update);
+         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.ADD_PAYLOAD);
       }
 
       if (bs.write(this.init_AutismPacketLogger)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.load);
+         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.SEND);
       }
 
       if (bs.update(this.init_AutismPacketLogger)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.init_AutismPacketInspec);
+         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.WAIT);
       }
 
       return actions;
@@ -1202,13 +1202,13 @@ public class AutismPacketInspectOverlay extends bj {
    }
 
    private enum Inner_StreamUtil {
-      init_AutismPacketInspec("Wait"),
-      load("Send"),
-      read("Queue"),
-      write("Edit Payload"),
-      update("+Payload"),
-      sync("Raw Hex"),
-      flush("Copy");
+      WAIT("Wait"),
+      SEND("Send"),
+      QUEUE("Queue"),
+      EDIT_PAYLOAD("Edit Payload"),
+      ADD_PAYLOAD("+Payload"),
+      COPY_RAW("Raw Hex"),
+      COPY("Copy");
 
       private final String init_Str;
 

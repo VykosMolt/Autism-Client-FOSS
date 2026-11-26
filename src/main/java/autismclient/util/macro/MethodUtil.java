@@ -13,14 +13,14 @@ public class MethodUtil implements E, M, MacroAction, aP {
    public boolean autoPickaxe = true;
    public boolean manualDirection = false;
    public boolean interact = false;
-   public TaskTimer interactTiming = TaskTimer.load;
+   public TaskTimer interactTiming = TaskTimer.WITH;
    public int interactCustomMs = 0;
    public boolean sneak = false;
    public String sneakMode = "Packet";
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private boolean init = true;
    public boolean raycast = false;
 
@@ -88,7 +88,7 @@ public class MethodUtil implements E, M, MacroAction, aP {
       this.autoPickaxe = tag.getBooleanOr("autoPickaxe", true);
       this.manualDirection = tag.getBooleanOr("manualDirection", false);
       this.interact = tag.getBooleanOr("interact", false);
-      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "WITH"), TaskTimer.load);
+      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "WITH"), TaskTimer.WITH);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.sneak = tag.getBooleanOr("sneak", false);
       this.raycast = tag.getBooleanOr("raycast", false);
@@ -105,7 +105,7 @@ public class MethodUtil implements E, M, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_e_StreamGate;
+      return StreamGate.INSTA_BREAK;
    }
 
    @Override

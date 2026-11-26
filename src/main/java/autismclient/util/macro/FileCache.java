@@ -14,7 +14,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.Packet;
 
 public class FileCache implements MacroAction {
-   public FileCache.Inner_DataUtil mode = FileCache.Inner_DataUtil.init;
+   public FileCache.Inner_DataUtil mode = FileCache.Inner_DataUtil.ENABLE;
    public boolean flushOnDisable = true;
    public List<String> c2sPacketNames = new ArrayList<>();
    public List<String> s2cPacketNames = new ArrayList<>();
@@ -71,7 +71,7 @@ public class FileCache implements MacroAction {
    public void execute(Minecraft mc) {
       ck shared = ck.init_ck();
       autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
-      boolean shouldEnable = this.mode == FileCache.Inner_DataUtil.init;
+      boolean shouldEnable = this.mode == FileCache.Inner_DataUtil.ENABLE;
       int flushed = 0;
       if (!shouldEnable && this.flushOnDisable && mc.getConnection() != null) {
          flushed = shared.init_I_ClientPacketListen(mc.getConnection());
@@ -121,7 +121,7 @@ public class FileCache implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.bind;
+      return StreamGate.DELAY_PACKETS;
    }
 
    @Override
@@ -154,7 +154,7 @@ public class FileCache implements MacroAction {
          try {
             this.mode = FileCache.Inner_DataUtil.valueOf(tag.getStringOr("mode", "ENABLE"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = FileCache.Inner_DataUtil.init;
+            this.mode = FileCache.Inner_DataUtil.ENABLE;
          }
       }
 
@@ -186,9 +186,9 @@ public class FileCache implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String base = this.mode == FileCache.Inner_DataUtil.init ? "Delay Pkts: ON" : "Delay Pkts: OFF";
+      String base = this.mode == FileCache.Inner_DataUtil.ENABLE ? "Delay Pkts: ON" : "Delay Pkts: OFF";
       int total = this.c2sPacketNames.size() + this.s2cPacketNames.size();
-      if (this.mode == FileCache.Inner_DataUtil.init && total > 0) {
+      if (this.mode == FileCache.Inner_DataUtil.ENABLE && total > 0) {
          base = base + " (" + total + " pkts)";
       }
 
@@ -211,7 +211,7 @@ public class FileCache implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      ENABLE,
+      DISABLE;
    }
 }

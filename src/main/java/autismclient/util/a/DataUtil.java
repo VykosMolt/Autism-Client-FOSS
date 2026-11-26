@@ -58,7 +58,7 @@ public final class DataUtil {
    private final Random init_Random;
    private DataUtil.Inner_ConfigStore init_DataUtil_ConfigSto;
    private final Map<BufferHelper, DataUtil.Inner_CachePool> init_Map = new EnumMap<>(BufferHelper.class);
-   private CachePool init_CachePool = CachePool.init_CachePool(BufferHelper.init_BufferHelper);
+   private CachePool init_CachePool = CachePool.init_CachePool(BufferHelper.NORMAL);
    private DataUtil.Inner_CachePool init_DataUtil_CachePool;
    private double level;
    private double frame;
@@ -96,15 +96,15 @@ public final class DataUtil {
    public DataUtil(Random seed, DataUtil.Inner_ConfigStore personality) {
       this.init_Random = seed == null ? new Random() : seed;
       this.init_DataUtil_ConfigSto = personality == null ? DataUtil.Inner_ConfigStore.init_DataUtil_ConfigSto : personality;
-      this.level = BufferHelper.init_BufferHelper.sync_D * 2.5 * this.init_Random.nextGaussian();
+      this.level = BufferHelper.NORMAL.sync_D * 2.5 * this.init_Random.nextGaussian();
       this.frame = 0.2 * this.init_Random.nextGaussian();
-      this.init_Map.put(BufferHelper.init_BufferHelper, new DataUtil.Inner_BufferHelper(this.init_Random.nextLong()));
-      this.init_Map.put(BufferHelper.load_BufferHelper, new DataUtil.Inner_StreamUtil(this.init_Random.nextLong()));
-      this.init_Map.put(BufferHelper.read_BufferHelper, new DataUtil.Inner_DataUtil(this.init_Random.nextLong()));
-      this.init_Map.put(BufferHelper.write_BufferHelper, new DataUtil.Inner_JsonUtil(this.init_Random.nextLong(), false));
-      this.init_Map.put(BufferHelper.update_BufferHelper, new DataUtil.Inner_JsonUtil(this.init_Random.nextLong(), true));
-      this.init_Map.put(BufferHelper.sync_BufferHelper, new DataUtil.Inner_TaskQueue(this.init_Random.nextLong()));
-      this.init_DataUtil_CachePool = this.init_Map.get(BufferHelper.init_BufferHelper);
+      this.init_Map.put(BufferHelper.NORMAL, new DataUtil.Inner_BufferHelper(this.init_Random.nextLong()));
+      this.init_Map.put(BufferHelper.JITTER, new DataUtil.Inner_StreamUtil(this.init_Random.nextLong()));
+      this.init_Map.put(BufferHelper.BUTTERFLY, new DataUtil.Inner_DataUtil(this.init_Random.nextLong()));
+      this.init_Map.put(BufferHelper.DRAG, new DataUtil.Inner_JsonUtil(this.init_Random.nextLong(), false));
+      this.init_Map.put(BufferHelper.SCROLL, new DataUtil.Inner_JsonUtil(this.init_Random.nextLong(), true));
+      this.init_Map.put(BufferHelper.RAGE, new DataUtil.Inner_TaskQueue(this.init_Random.nextLong()));
+      this.init_DataUtil_CachePool = this.init_Map.get(BufferHelper.NORMAL);
    }
 
    public void init_V_DataUtil_ConfigSto(DataUtil.Inner_ConfigStore personality) {
@@ -309,9 +309,9 @@ public final class DataUtil {
 
    private double load_D() {
       BufferHelper technique = this.init_CachePool.init_BufferHelper;
-      boolean lapses = technique == BufferHelper.init_BufferHelper
-         || technique == BufferHelper.load_BufferHelper
-         || technique == BufferHelper.read_BufferHelper;
+      boolean lapses = technique == BufferHelper.NORMAL
+         || technique == BufferHelper.JITTER
+         || technique == BufferHelper.BUTTERFLY;
       return lapses && this.init_CachePool.sync > 0.0 ? 11.0 / this.init_CachePool.sync : 0.0;
    }
 
@@ -463,7 +463,7 @@ public final class DataUtil {
          return 0.0;
       }
 
-      double motorRate = technique == BufferHelper.read_BufferHelper ? this.chunk * 0.5 : this.chunk;
+      double motorRate = technique == BufferHelper.BUTTERFLY ? this.chunk * 0.5 : this.chunk;
       double comfort = technique.close * this.init_DataUtil_ConfigSto.load();
       double high = technique.open * this.init_DataUtil_ConfigSto.load();
       double q = Math.max(0.0, Math.min(1.0, (motorRate - comfort) / (high - comfort)));

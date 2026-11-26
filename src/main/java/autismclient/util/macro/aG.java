@@ -37,7 +37,7 @@ public class aG implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_l_StreamGate;
+      return StreamGate.WAIT_WORLD_CHANGE;
    }
 
    @Override

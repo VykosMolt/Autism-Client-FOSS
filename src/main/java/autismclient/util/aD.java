@@ -315,14 +315,14 @@ public final class aD {
       double angle = Math.max(0.0, remaining);
       if ((!(angle <= 4.0) || n <= 1 && !(angle <= 1.0)) && !(n >= 2.0 + angle / 16.0)) {
          if (n >= 1.0 + angle / 30.0) {
-            return new aD.Inner_StreamUtil(ap.Inner_StreamUtil.load_ap_StreamUtil, 37.0F, false);
+            return new aD.Inner_StreamUtil(ap.Inner_StreamUtil.DANGER_RETURN, 37.0F, false);
          } else {
             return n >= 1.0 + angle / 68.0
-               ? new aD.Inner_StreamUtil(ap.Inner_StreamUtil.write_ap_StreamUtil, 110.0F, false)
-               : new aD.Inner_StreamUtil(ap.Inner_StreamUtil.init_ap_StreamUtil, (float)Math.min(180.0, Math.max(30.0, angle / n + 2.0)), true);
+               ? new aD.Inner_StreamUtil(ap.Inner_StreamUtil.TELLY_AIR_FLICK, 110.0F, false)
+               : new aD.Inner_StreamUtil(ap.Inner_StreamUtil.STANDARD, (float)Math.min(180.0, Math.max(30.0, angle / n + 2.0)), true);
          }
       } else {
-         return new aD.Inner_StreamUtil(ap.Inner_StreamUtil.init_ap_StreamUtil, 40.0F, false);
+         return new aD.Inner_StreamUtil(ap.Inner_StreamUtil.STANDARD, 40.0F, false);
       }
    }
 
@@ -365,11 +365,11 @@ public final class aD {
    }
 
    public static void init_V_Str_5(String ownerId, LocalPlayer player, boolean pinQuiet) {
-      init_V_Str(ownerId, player, 72.0F, 72.0F, ap.Inner_StreamUtil.init_ap_StreamUtil, pinQuiet);
+      init_V_Str(ownerId, player, 72.0F, 72.0F, ap.Inner_StreamUtil.STANDARD, pinQuiet);
    }
 
    public static void init(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep) {
-      init(ownerId, player, maxYawStep, maxPitchStep, ap.Inner_StreamUtil.init_ap_StreamUtil);
+      init(ownerId, player, maxYawStep, maxPitchStep, ap.Inner_StreamUtil.STANDARD);
    }
 
    public static void init(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep, ap.Inner_StreamUtil profile) {

@@ -63,7 +63,7 @@ public final class aA {
 
    public static void init(aA.Inner_CachePool triggerJoin) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.joinMacroTriggerJoin = init(triggerJoin == null ? aA.Inner_CachePool.load_aA_CachePool : triggerJoin, config.joinMacroKeepEnabled).init();
+      config.joinMacroTriggerJoin = init(triggerJoin == null ? aA.Inner_CachePool.FIRST : triggerJoin, config.joinMacroKeepEnabled).init();
       sync();
       config.save();
    }
@@ -98,14 +98,14 @@ public final class aA {
       init_V();
       init_Z = false;
       load = true;
-      if (init_aA_StreamUtil() == aA.Inner_StreamUtil.init_aA_StreamUtil) {
-         load(aA.Inner_StreamUtil.init_aA_StreamUtil);
+      if (init_aA_StreamUtil() == aA.Inner_StreamUtil.JOINING) {
+         load(aA.Inner_StreamUtil.JOINING);
       }
    }
 
    public static void read_V() {
-      if (init_aA_StreamUtil() == aA.Inner_StreamUtil.load_aA_StreamUtil) {
-         load(aA.Inner_StreamUtil.load_aA_StreamUtil);
+      if (init_aA_StreamUtil() == aA.Inner_StreamUtil.WORLD) {
+         load(aA.Inner_StreamUtil.WORLD);
       }
    }
 
@@ -400,7 +400,7 @@ public final class aA {
                config.joinMacroName = "";
                config.joinMacroEnabled = false;
                config.save();
-            } else if (init_aA_CachePool() != aA.Inner_CachePool.init_aA_CachePool) {
+            } else if (init_aA_CachePool() != aA.Inner_CachePool.ANY) {
                init_I = 0;
             }
 
@@ -445,22 +445,22 @@ public final class aA {
    }
 
    private static aA.Inner_CachePool init(aA.Inner_CachePool triggerJoin, boolean keepEnabled) {
-      aA.Inner_CachePool value = triggerJoin == null ? aA.Inner_CachePool.load_aA_CachePool : triggerJoin;
-      if (keepEnabled && value == aA.Inner_CachePool.load_aA_CachePool) {
-         return aA.Inner_CachePool.init_aA_CachePool;
+      aA.Inner_CachePool value = triggerJoin == null ? aA.Inner_CachePool.FIRST : triggerJoin;
+      if (keepEnabled && value == aA.Inner_CachePool.FIRST) {
+         return aA.Inner_CachePool.ANY;
       } else {
-         return !keepEnabled && value == aA.Inner_CachePool.init_aA_CachePool ? aA.Inner_CachePool.load_aA_CachePool : value;
+         return !keepEnabled && value == aA.Inner_CachePool.ANY ? aA.Inner_CachePool.FIRST : value;
       }
    }
 
    public enum Inner_CachePool {
-      init_aA_CachePool("ANY", "Every Join", 0),
-      load_aA_CachePool("FIRST", "1st Join", 1),
-      read("SECOND", "2nd Join", 2),
-      write("THIRD", "3rd Join", 3),
-      update("FOURTH", "4th Join", 4),
-      sync("FIFTH", "5th Join", 5),
-      flush("SIXTH_PLUS", "6th+ Join", 6);
+      ANY("ANY", "Every Join", 0),
+      FIRST("FIRST", "1st Join", 1),
+      SECOND("SECOND", "2nd Join", 2),
+      THIRD("THIRD", "3rd Join", 3),
+      FOURTH("FOURTH", "4th Join", 4),
+      FIFTH("FIFTH", "5th Join", 5),
+      SIXTH_PLUS("SIXTH_PLUS", "6th+ Join", 6);
 
       private final String init_Str;
       private final String load_Str;
@@ -484,23 +484,23 @@ public final class aA {
          if (keepEnabled) {
             String var2;
             switch (this) {
-               case init_aA_CachePool:
-               case load_aA_CachePool:
+               case ANY:
+               case FIRST:
                   var2 = "Every Join";
                   break;
-               case read:
+               case SECOND:
                   var2 = "Every 2nd Join";
                   break;
-               case write:
+               case THIRD:
                   var2 = "Every 3rd Join";
                   break;
-               case update:
+               case FOURTH:
                   var2 = "Every 4th Join";
                   break;
-               case sync:
+               case FIFTH:
                   var2 = "Every 5th Join";
                   break;
-               case flush:
+               case SIXTH_PLUS:
                   var2 = "Every 6th Join";
                   break;
                default:
@@ -511,23 +511,23 @@ public final class aA {
          } else {
             String var10000;
             switch (this) {
-               case init_aA_CachePool:
-               case load_aA_CachePool:
+               case ANY:
+               case FIRST:
                   var10000 = "Next Join";
                   break;
-               case read:
+               case SECOND:
                   var10000 = "After 1 Transfer";
                   break;
-               case write:
+               case THIRD:
                   var10000 = "After 2 Transfers";
                   break;
-               case update:
+               case FOURTH:
                   var10000 = "After 3 Transfers";
                   break;
-               case sync:
+               case FIFTH:
                   var10000 = "After 4 Transfers";
                   break;
-               case flush:
+               case SIXTH_PLUS:
                   var10000 = "After 5+ Transfers";
                   break;
                default:
@@ -539,10 +539,10 @@ public final class aA {
       }
 
       public boolean init_Z_I(int joinOrdinal) {
-         if (this == init_aA_CachePool) {
+         if (this == ANY) {
             return true;
          } else {
-            return this == flush ? joinOrdinal >= this.init_I : joinOrdinal == this.init_I;
+            return this == SIXTH_PLUS ? joinOrdinal >= this.init_I : joinOrdinal == this.init_I;
          }
       }
 
@@ -559,23 +559,23 @@ public final class aA {
                aA.Inner_CachePool var10000;
                switch (ordinal) {
                   case 0:
-                     var10000 = init_aA_CachePool;
+                     var10000 = ANY;
                      break;
                   case 1:
                   default:
-                     var10000 = ordinal >= 6 ? flush : load_aA_CachePool;
+                     var10000 = ordinal >= 6 ? SIXTH_PLUS : FIRST;
                      break;
                   case 2:
-                     var10000 = read;
+                     var10000 = SECOND;
                      break;
                   case 3:
-                     var10000 = write;
+                     var10000 = THIRD;
                      break;
                   case 4:
-                     var10000 = update;
+                     var10000 = FOURTH;
                      break;
                   case 5:
-                     var10000 = sync;
+                     var10000 = FIFTH;
                }
 
                return var10000;
@@ -583,7 +583,7 @@ public final class aA {
             }
          }
 
-         return load_aA_CachePool;
+         return FIRST;
       }
    }
 
@@ -605,22 +605,22 @@ public final class aA {
          this.init++;
          boolean var10000;
          switch (timing) {
-            case init_aA_StreamUtil:
+            case JOINING:
                var10000 = joined;
                break;
-            case load_aA_StreamUtil:
+            case WORLD:
                var10000 = true;
                break;
-            case read:
+            case FIRST_TICK:
                var10000 = this.init >= 1;
                break;
-            case write:
+            case INVENTORY_READY:
                var10000 = mc.player != null && mc.player.inventoryMenu != null && mc.player.getInventory() != null;
                break;
-            case update:
+            case PLAYABLE:
                var10000 = aA.load(mc);
                break;
-            case sync:
+            case FULLY_READY:
                if (aA.load(mc)) {
                   this.load++;
                   var10000 = this.load >= 2;
@@ -638,16 +638,16 @@ public final class aA {
    }
 
    public enum Inner_StreamUtil {
-      init_aA_StreamUtil("JOINING", "Joining"),
-      load_aA_StreamUtil("WORLD", "In World"),
-      read("FIRST_TICK", "First Tick"),
-      write("INVENTORY_READY", "Inventory Ready"),
-      update("PLAYABLE", "Playable"),
-      sync("FULLY_READY", "Fully Ready");
+      JOINING("JOINING", "Joining"),
+      WORLD("WORLD", "In World"),
+      FIRST_TICK("FIRST_TICK", "First Tick"),
+      INVENTORY_READY("INVENTORY_READY", "Inventory Ready"),
+      PLAYABLE("PLAYABLE", "Playable"),
+      FULLY_READY("FULLY_READY", "Fully Ready");
 
       private final String init_Str;
       private final String load_Str;
-      public static final aA.Inner_StreamUtil flush = update;
+      public static final aA.Inner_StreamUtil flush = PLAYABLE;
 
       Inner_StreamUtil(String id, String label) {
          this.init_Str = id;
@@ -669,17 +669,17 @@ public final class aA {
 
       public static aA.Inner_StreamUtil init(String value) {
          if ("JOINING".equalsIgnoreCase(value)) {
-            return init_aA_StreamUtil;
+            return JOINING;
          } else if ("WORLD".equalsIgnoreCase(value)) {
-            return load_aA_StreamUtil;
+            return WORLD;
          } else if ("FIRST_TICK".equalsIgnoreCase(value) || "FIRSTTICK".equalsIgnoreCase(value)) {
-            return read;
+            return FIRST_TICK;
          } else if ("INVENTORY_READY".equalsIgnoreCase(value) || "INVENTORY".equalsIgnoreCase(value)) {
-            return write;
+            return INVENTORY_READY;
          } else if ("PLAYABLE".equalsIgnoreCase(value)) {
-            return update;
+            return PLAYABLE;
          } else {
-            return !"FULLY_READY".equalsIgnoreCase(value) && !"FULLYREADY".equalsIgnoreCase(value) ? flush : sync;
+            return !"FULLY_READY".equalsIgnoreCase(value) && !"FULLYREADY".equalsIgnoreCase(value) ? flush : FULLY_READY;
          }
       }
    }

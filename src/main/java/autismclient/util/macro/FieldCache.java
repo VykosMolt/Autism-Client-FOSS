@@ -16,7 +16,7 @@ public class FieldCache implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_T_StreamGate;
+      return StreamGate.IF;
    }
 
    public boolean init(Minecraft mc) {

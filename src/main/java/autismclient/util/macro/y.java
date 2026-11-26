@@ -24,7 +24,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.phys.Vec3;
 
 public class y implements MacroAction {
-   public y.Inner_DataUtil mode = y.Inner_DataUtil.init;
+   public y.Inner_DataUtil mode = y.Inner_DataUtil.CONTAINER_CLICK;
    public int count = 1;
    public int delayTicks = 0;
    public int slot = 0;
@@ -79,7 +79,7 @@ public class y implements MacroAction {
    private Packet<?> init_Packet(Minecraft mc) {
       Packet var10000;
       switch (this.mode) {
-         case init:
+         case CONTAINER_CLICK:
             var10000 = new ServerboundContainerClickPacket(
                mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : 0,
                mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.getStateId() : 0,
@@ -90,7 +90,7 @@ public class y implements MacroAction {
                HashedStack.EMPTY
             );
             break;
-         case load:
+         case ENTITY_INTERACT:
             int id = this.entityId;
             if (id < 0 && mc.crosshairPickEntity != null) {
                id = mc.crosshairPickEntity.getId();
@@ -98,33 +98,33 @@ public class y implements MacroAction {
 
             var10000 = id < 0 ? null : new ServerboundInteractPacket(id, this.init_InteractionHand_2(), Vec3.ZERO, false);
             break;
-         case read:
+         case CLIENT_COMMAND:
             var10000 = mc.player == null
                ? null
                : new ServerboundPlayerCommandPacket(mc.player, i.init(Action.class, this.playerCommand, Action.OPEN_INVENTORY));
             break;
-         case write:
+         case BUNDLE_SELECT:
             var10000 = new ServerboundSelectBundleItemPacket(
                this.slot >= 0 ? this.slot : 36 + (mc.player == null ? 0 : mc.player.getInventory().getSelectedSlot()), this.bundleIndex
             );
             break;
-         case update:
+         case USE_ITEM:
             var10000 = new ServerboundUseItemPacket(
                this.init_InteractionHand_2(), 0, mc.player == null ? 0.0F : mc.player.getYRot(), mc.player == null ? 0.0F : mc.player.getXRot()
             );
             break;
-         case sync:
+         case RELEASE_ITEM:
             var10000 = new ServerboundPlayerActionPacket(
                net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN
             );
             break;
-         case flush:
+         case SET_CARRIED_ITEM:
             var10000 = new ServerboundSetCarriedItemPacket(Math.max(0, Math.min(8, this.carriedSlot)));
             break;
-         case close:
+         case CLIENT_INFORMATION:
             var10000 = new ServerboundClientInformationPacket(ClientInformation.createDefault());
             break;
-         case open:
+         case CLOSE_CONTAINER:
             var10000 = new ServerboundContainerClosePacket(this.containerId);
             break;
          default:
@@ -144,7 +144,7 @@ public class y implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_w_StreamGate;
+      return StreamGate.PACKET_BURST;
    }
 
    @Override
@@ -170,7 +170,7 @@ public class y implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = i.init(y.Inner_DataUtil.class, tag.getStringOr("mode", "CONTAINER_CLICK"), y.Inner_DataUtil.init);
+      this.mode = i.init(y.Inner_DataUtil.class, tag.getStringOr("mode", "CONTAINER_CLICK"), y.Inner_DataUtil.CONTAINER_CLICK);
       this.count = tag.getIntOr("count", 1);
       this.delayTicks = tag.getIntOr("delayTicks", 0);
       this.slot = tag.getIntOr("slot", 0);
@@ -197,14 +197,14 @@ public class y implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open;
+      CONTAINER_CLICK,
+      ENTITY_INTERACT,
+      CLIENT_COMMAND,
+      BUNDLE_SELECT,
+      USE_ITEM,
+      RELEASE_ITEM,
+      SET_CARRIED_ITEM,
+      CLIENT_INFORMATION,
+      CLOSE_CONTAINER;
    }
 }

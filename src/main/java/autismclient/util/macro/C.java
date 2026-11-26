@@ -36,7 +36,7 @@ public final class C {
       if (action != null) {
          ownerRunId = Math.max(0L, ownerRunId);
          String id = action.gateId != null && !action.gateId.isBlank() ? action.gateId.trim() : "auto";
-         if (action.mode == B.Inner_CachePool.write) {
+         if (action.mode == B.Inner_CachePool.DISABLE_GATE) {
             init(id, ownerRunId);
          } else {
             String key = init(ownerRunId, id);
@@ -139,7 +139,7 @@ public final class C {
       if (autismclient.modules.aD.read_Z()) {
          load_V();
       } else {
-         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == B.Inner_CachePool.load && g.init_Z);
+         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == B.Inner_CachePool.DELAY && g.init_Z);
          load_V();
          if (flush) {
             ck.init_ck().init_I_ClientPacketListen(connection);
@@ -154,7 +154,7 @@ public final class C {
    }
 
    private static boolean load_Z() {
-      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == B.Inner_CachePool.load);
+      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == B.Inner_CachePool.DELAY);
    }
 
    private static String init_Str() {
@@ -193,15 +193,15 @@ public final class C {
 
    public static C.Inner_StreamUtil init(Packet<?> packet, String direction) {
       if (autismclient.modules.aD.read_Z()) {
-         return C.Inner_StreamUtil.init;
+         return C.Inner_StreamUtil.PASS;
       }
 
       if (packet != null && !init_ConcurrentHashMap.isEmpty()) {
          if (init(packet)) {
-            return C.Inner_StreamUtil.init;
+            return C.Inner_StreamUtil.PASS;
          }
 
-         C.Inner_StreamUtil result = C.Inner_StreamUtil.init;
+         C.Inner_StreamUtil result = C.Inner_StreamUtil.PASS;
          ClientPacketListener current = Minecraft.getInstance().getConnection();
          Iterator<C.Inner_DataUtil> gates = init_ConcurrentHashMap.values().iterator();
 
@@ -216,27 +216,27 @@ public final class C {
 
             boolean packetMatches = gate.load || init(gate.init_StrArr, packet, direction);
             switch (gate.init_B_CachePool) {
-               case init:
+               case CANCEL:
                   if (packetMatches) {
-                     return C.Inner_StreamUtil.load;
+                     return C.Inner_StreamUtil.CANCEL;
                   }
                   break;
-               case load:
+               case DELAY:
                   if (packetMatches) {
-                     result = C.Inner_StreamUtil.read;
+                     result = C.Inner_StreamUtil.DELAY;
                   }
                   break;
-               case read:
+               case ALLOW_ONLY:
                   if (!packetMatches) {
-                     return C.Inner_StreamUtil.load;
+                     return C.Inner_StreamUtil.CANCEL;
                   }
-               case write:
+               case DISABLE_GATE:
             }
          }
 
          return result;
       } else {
-         return C.Inner_StreamUtil.init;
+         return C.Inner_StreamUtil.PASS;
       }
    }
 
@@ -330,8 +330,8 @@ public final class C {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      PASS,
+      CANCEL,
+      DELAY;
    }
 }

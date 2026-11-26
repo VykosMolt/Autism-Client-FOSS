@@ -38,7 +38,7 @@ public final class FileCache {
       int buttonY = headerY + Math.max(0, (init_CharEncoder.init_I_l_I(l.load, 1) - buttonHeight) / 2) - 1;
       ByteReader button = ByteReader.init(buttonX, buttonY, buttonWidth, buttonHeight, Component.literal(label), b -> {});
       button.init_Z = enabled;
-      button.init_ByteReader_ByteReader_StreamU(enabled ? ByteReader.Inner_StreamUtil.init : ByteReader.Inner_StreamUtil.update);
+      button.init_ByteReader_ByteReader_StreamU(enabled ? ByteReader.Inner_StreamUtil.SECONDARY : ByteReader.Inner_StreamUtil.GHOST);
       ByteReader.init(context, textRenderer, button, mouseX, mouseY);
    }
 
@@ -86,20 +86,20 @@ public final class FileCache {
 
       int var10000;
       switch (tone) {
-         case init:
-            var10000 = selected ? ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read) : init_CharEncoder.load(l.read);
+         case NORMAL:
+            var10000 = selected ? ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT) : init_CharEncoder.load(l.read);
             break;
-         case load:
+         case READY:
             var10000 = selected ? -1507344 : -6426438;
             break;
-         case read:
+         case WARNING:
             var10000 = selected ? -3104 : -14726;
             break;
-         case write:
-            var10000 = ct.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ct.Inner_DataUtil.flush);
+         case MISSING:
+            var10000 = ct.init_I_I_ct_DataUtil(selected ? -4884 : -20561, ct.Inner_DataUtil.DANGER);
             break;
-         case update:
-            var10000 = ct.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ct.Inner_DataUtil.flush);
+         case DANGER:
+            var10000 = ct.init_I_I_ct_DataUtil(selected ? -5398 : -29556, ct.Inner_DataUtil.DANGER);
             break;
          default:
             throw new MatchException(null, null);
@@ -188,10 +188,10 @@ public final class FileCache {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      NORMAL,
+      READY,
+      WARNING,
+      MISSING,
+      DANGER;
    }
 }

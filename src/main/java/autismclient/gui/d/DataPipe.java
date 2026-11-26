@@ -61,7 +61,7 @@ public class DataPipe extends KeyHolder {
    private boolean load_Z;
 
    private static int read_I_6() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
    }
 
    public DataPipe(Screen parent, Module module, Setting<?, ?> option) {
@@ -116,8 +116,8 @@ public class DataPipe extends KeyHolder {
             fieldY,
             addW,
             fieldH,
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
-            DataPipe.Inner_CachePool.init,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+            DataPipe.Inner_CachePool.ADD,
             -1,
             mx,
             my
@@ -134,8 +134,8 @@ public class DataPipe extends KeyHolder {
             actionsY,
             clearW,
             fieldH,
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load,
-            DataPipe.Inner_CachePool.update,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER,
+            DataPipe.Inner_CachePool.CLEAR,
             -1,
             mx,
             my
@@ -151,8 +151,8 @@ public class DataPipe extends KeyHolder {
                actionsY,
                importW,
                fieldH,
-               autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write,
-               DataPipe.Inner_CachePool.open,
+               autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY,
+               DataPipe.Inner_CachePool.IMPORT,
                -1,
                mx,
                my
@@ -169,8 +169,8 @@ public class DataPipe extends KeyHolder {
                actionsY,
                scanW,
                fieldH,
-               autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write,
-               DataPipe.Inner_CachePool.sync,
+               autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY,
+               DataPipe.Inner_CachePool.SCAN,
                -1,
                mx,
                my
@@ -226,8 +226,8 @@ public class DataPipe extends KeyHolder {
                this.init(graphics, value, x + 4, this.init_I_I_I_4(rowY, rowH - 1), -791321, textW - 4);
                autismclient.gui.f.b.FileCache.load(graphics, delX, delY, delW, delH, over);
                int index = this.init(rows, allValues, i);
-               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.load, x, rowY, Math.max(1, textW), rowH, index));
-               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.read, delX, delY, delW, delH, index));
+               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.EDIT_ENTRY, x, rowY, Math.max(1, textW), rowH, index));
+               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.REMOVE, delX, delY, delW, delH, index));
             });
          }
       }
@@ -252,12 +252,12 @@ public class DataPipe extends KeyHolder {
                int countW = autismclient.gui.f.b.k.init(this.font, count, init_CharEncoder.init_Identifier_l(l.read), 0);
                this.init(graphics, row.init_Str(), x + 4, ty, -791321, w - countW - 12);
                this.init(graphics, count, x + w - 4 - countW, ty, read_I_6(), countW + 1);
-               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.close, x, rowY, w, rowH, i));
+               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.TOGGLE_RANK, x, rowY, w, rowH, i));
             } else {
                boolean picked = row.init_I() > 0;
                autismclient.gui.f.b.TableIndex.init(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
                this.init(graphics, (picked ? "[x] " : "[ ] ") + row.load_Str(), x + 8, ty, picked ? -791321 : read_I_6(), w - 12);
-               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.flush, x, rowY, w, rowH, i));
+               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.TOGGLE_PLAYER, x, rowY, w, rowH, i));
             }
          });
       }
@@ -273,7 +273,7 @@ public class DataPipe extends KeyHolder {
             int popupY = Math.max(4, fieldY - popupH - 2);
             int popupW = Math.min(fieldW, 170);
             int popupX = fieldX;
-            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.load));
+            this.init(graphics, popupX, popupY, popupW, popupH, 5, -301397749, ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.OUTLINE));
             int start = Math.max(0, Math.min(this.tick - visible + 1, suggestions.size() - visible));
 
             for (int i = 0; i < visible; i++) {
@@ -284,7 +284,7 @@ public class DataPipe extends KeyHolder {
                boolean over = mx >= popupX && mx < popupX + popupW && my >= y && my < y + rowH;
                autismclient.gui.f.b.TableIndex.init(graphics, popupX + 1, y, popupW - 2, rowH - 1, !selected && !over ? -1441722092 : -1441000940);
                this.init(graphics, suggestion, popupX + 4, this.init_I_I_I_4(y, rowH - 1), -791321, popupW - 8);
-               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.write, popupX + 1, y, popupW - 2, rowH, idx));
+               this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.SUGGESTION, popupX + 1, y, popupW - 2, rowH, idx));
             }
          }
       }
@@ -314,7 +314,7 @@ public class DataPipe extends KeyHolder {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
-      this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.poll, close.read(), close.write(), close.update(), close.sync(), -1));
+      this.init_List.add(new DataPipe.Inner_StreamUtil(DataPipe.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), -1));
    }
 
    @Override
@@ -346,48 +346,48 @@ public class DataPipe extends KeyHolder {
 
       for (int i = this.init_List.size() - 1; i >= 0; i--) {
          DataPipe.Inner_StreamUtil hit = this.init_List.get(i);
-         if (hit.init(mx, my) && (hit.init_DataPipe_CachePool != DataPipe.Inner_CachePool.read || this.init_Z_I_I(mx, my))) {
+         if (hit.init(mx, my) && (hit.init_DataPipe_CachePool != DataPipe.Inner_CachePool.REMOVE || this.init_Z_I_I(mx, my))) {
             switch (hit.init_DataPipe_CachePool) {
-               case init:
+               case ADD:
                   this.load_V_9();
                   break;
-               case load:
+               case EDIT_ENTRY:
                   this.init_V_I_4(hit.update);
                   break;
-               case read:
+               case REMOVE:
                   this.load(hit.update);
                   break;
-               case write:
+               case SUGGESTION:
                   this.read(hit.update);
                   break;
-               case update:
+               case CLEAR:
                   this.init_V_Str_2("");
                   this.read_V_6();
                   this.open_V_2();
                   break;
-               case sync:
+               case SCAN:
                   if (this.write_Z()) {
                      this.write_V_5();
                   } else {
                      this.update_V_5();
                   }
                   break;
-               case flush:
+               case TOGGLE_PLAYER:
                   List<DataPipe.Inner_DataUtil> rowsx = this.write_List();
                   if (hit.update >= 0 && hit.update < rowsx.size()) {
                      this.load_V(rowsx.get(hit.update).load_Str());
                   }
                   break;
-               case close:
+               case TOGGLE_RANK:
                   List<DataPipe.Inner_DataUtil> rows = this.write_List();
                   if (hit.update >= 0 && hit.update < rows.size()) {
                      this.read_V(rows.get(hit.update).init_Str());
                   }
                   break;
-               case open:
+               case IMPORT:
                   this.sync_V_4();
                   break;
-               case poll:
+               case CLOSE:
                   this.onClose();
             }
 
@@ -1172,16 +1172,16 @@ public class DataPipe extends KeyHolder {
    }
 
    private enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      ADD,
+      EDIT_ENTRY,
+      REMOVE,
+      SUGGESTION,
+      CLEAR,
+      SCAN,
+      TOGGLE_PLAYER,
+      TOGGLE_RANK,
+      IMPORT,
+      CLOSE;
    }
 
    private record Inner_DataUtil(String init_Str, String load_Str, int init_I, int load_I) {

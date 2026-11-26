@@ -115,7 +115,7 @@ public class Y implements MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.run;
+      return StreamGate.SEND_PACKET;
    }
 
    @Override

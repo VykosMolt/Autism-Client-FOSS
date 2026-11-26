@@ -7,7 +7,7 @@ final class BitSetUtil {
    static final int load_I = 8;
    private static final int read_I = 2;
    private static final int write_I = 4;
-   private BitSetUtil.Inner_StreamUtil init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.init;
+   private BitSetUtil.Inner_StreamUtil init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.IDLE;
    private long init_J;
    private long load_J;
    private long read_J;
@@ -30,11 +30,11 @@ final class BitSetUtil {
    }
 
    boolean init_Z() {
-      return this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.read
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.write
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.update
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.sync
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.flush;
+      return this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CAST_WAIT
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.FISHING
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CATCH_DELAY
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.REEL_PENDING
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.REEL_WAIT;
    }
 
    BitSetUtil.Inner_CachePool init(int observedHook, boolean autoCast, int timeoutTicks, int settleTicks, boolean movementBusy, IntSupplier recastDelay) {
@@ -49,33 +49,33 @@ final class BitSetUtil {
 
          return null;
       } else {
-         if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.read && this.init_J >= this.update_J) {
-            this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.write;
+         if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CAST_WAIT && this.init_J >= this.update_J) {
+            this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.FISHING;
          }
 
-         if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.flush) {
+         if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.REEL_WAIT) {
             if (observedHook == -1 && (this.update_I != -1 ? this.flush_I >= 2 : this.init_J - this.sync_J >= this.close_I)) {
                this.write();
             }
 
             return null;
          } else {
-            if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.write && autoCast && timeoutTicks > 0 && this.init_J - this.write_J >= timeoutTicks
+            if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.FISHING && autoCast && timeoutTicks > 0 && this.init_J - this.write_J >= timeoutTicks
                )
              {
-               this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.update;
+               this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.CATCH_DELAY;
                this.read_J = this.init_J;
             }
 
-            if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.update && this.init_J >= this.read_J) {
-               return this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(BitSetUtil.Inner_DataUtil.load, observedHook);
+            if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CATCH_DELAY && this.init_J >= this.read_J) {
+               return this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(BitSetUtil.Inner_DataUtil.REEL, observedHook);
             } else {
-               return (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.init || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.close)
+               return (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.IDLE || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.RECAST_DELAY)
                      && this.init_J >= this.read_J
                      && autoCast
                      && !movementBusy
                      && observedHook == -1
-                  ? this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(BitSetUtil.Inner_DataUtil.init, -1)
+                  ? this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(BitSetUtil.Inner_DataUtil.CAST, -1)
                   : null;
             }
          }
@@ -86,14 +86,14 @@ final class BitSetUtil {
       if (observed != -1) {
          this.flush_I = 0;
          if (observed != this.sync_I
-            || this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.close && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.load) {
+            || this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.RECAST_DELAY && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.CAST_PENDING) {
             if ((this.update_I == -1 || observed == this.update_I)
-               && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.init
-               && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.close
-               && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.load) {
+               && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.IDLE
+               && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.RECAST_DELAY
+               && this.init_BitSetUtil_StreamU != BitSetUtil.Inner_StreamUtil.CAST_PENDING) {
                this.update_I = observed;
-               if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.read && this.init_J >= this.update_J) {
-                  this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.write;
+               if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CAST_WAIT && this.init_J >= this.update_J) {
+                  this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.FISHING;
                }
             } else {
                this.read(observed);
@@ -101,7 +101,7 @@ final class BitSetUtil {
          } else {
             this.update();
             this.update_I = observed;
-            this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.flush;
+            this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.REEL_WAIT;
          }
       } else {
          if (this.flush_J != this.init_J) {
@@ -112,9 +112,9 @@ final class BitSetUtil {
          if (this.update_I != -1
             && this.flush_I >= 2
             && (
-               this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.write
-                  || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.update
-                  || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.sync
+               this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.FISHING
+                  || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CATCH_DELAY
+                  || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.REEL_PENDING
             )) {
             this.write();
          }
@@ -122,8 +122,8 @@ final class BitSetUtil {
    }
 
    boolean init_Z(int delay) {
-      if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.write && this.init_J >= this.update_J) {
-         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.update;
+      if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.FISHING && this.init_J >= this.update_J) {
+         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.CATCH_DELAY;
          this.read_J = this.init_J + Math.max(0, delay);
          return true;
       } else {
@@ -134,8 +134,8 @@ final class BitSetUtil {
    boolean init_Z_I_J(int delay, long clientTick) {
       boolean fresh = this.close_J == -9223372036854775808L || clientTick - this.close_J >= 4L;
       this.close_J = clientTick;
-      if (fresh && this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.read) {
-         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.update;
+      if (fresh && this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CAST_WAIT) {
+         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.CATCH_DELAY;
          this.read_J = Math.max(this.update_J, this.init_J + Math.max(0, delay));
          return true;
       } else {
@@ -145,7 +145,7 @@ final class BitSetUtil {
 
    private BitSetUtil.Inner_CachePool init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(BitSetUtil.Inner_DataUtil action, int observed) {
       this.load_BitSetUtil_StreamU = this.init_BitSetUtil_StreamU;
-      this.init_BitSetUtil_StreamU = action == BitSetUtil.Inner_DataUtil.init ? BitSetUtil.Inner_StreamUtil.load : BitSetUtil.Inner_StreamUtil.sync;
+      this.init_BitSetUtil_StreamU = action == BitSetUtil.Inner_DataUtil.CAST ? BitSetUtil.Inner_StreamUtil.CAST_PENDING : BitSetUtil.Inner_StreamUtil.REEL_PENDING;
       this.init_BitSetUtil_CachePo = new BitSetUtil.Inner_CachePool(++this.load_J, action, observed, this.init_J);
       return this.init_BitSetUtil_CachePo;
    }
@@ -153,7 +153,7 @@ final class BitSetUtil {
    boolean init_Z_BitSetUtil_CachePo_I(BitSetUtil.Inner_CachePool use, int observed) {
       if (this.init_BitSetUtil_CachePo == null || !this.init_BitSetUtil_CachePo.equals(use) || this.init_J - use.load() > 4L) {
          return false;
-      } else if (use.init_BitSetUtil_DataUti() == BitSetUtil.Inner_DataUtil.init) {
+      } else if (use.init_BitSetUtil_DataUti() == BitSetUtil.Inner_DataUtil.CAST) {
          return observed == -1;
       } else {
          return use.init_I() == -1 ? this.update_I == -1 || observed == this.update_I : observed == use.init_I();
@@ -165,19 +165,19 @@ final class BitSetUtil {
          boolean valid = this.init_Z_BitSetUtil_CachePo_I(use, observed);
          this.init_BitSetUtil_CachePo = null;
          if (dispatched && valid) {
-            if (use.init_BitSetUtil_DataUti() == BitSetUtil.Inner_DataUtil.init) {
+            if (use.init_BitSetUtil_DataUti() == BitSetUtil.Inner_DataUtil.CAST) {
                this.update_I = -1;
                this.sync_I = -1;
                this.flush_I = 0;
                this.write_J = this.init_J;
                this.update_J = this.init_J + 8L;
-               this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.read;
+               this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.CAST_WAIT;
             } else {
                this.update_I = observed != -1 ? observed : use.init_I();
                this.sync_I = this.update_I;
                this.flush_I = 0;
                this.sync_J = this.init_J;
-               this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.flush;
+               this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.REEL_WAIT;
             }
          } else {
             this.init_BitSetUtil_StreamU = this.load_BitSetUtil_StreamU;
@@ -190,7 +190,7 @@ final class BitSetUtil {
    private void write() {
       this.update();
       this.sync_I = this.update_I;
-      this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.close;
+      this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.RECAST_DELAY;
       this.read_J = this.init_J + Math.max(1, this.init_IntSupplier.getAsInt());
       this.init_Z = true;
    }
@@ -209,7 +209,7 @@ final class BitSetUtil {
       this.flush_J = -9223372036854775808L;
       this.write_J = this.init_J;
       this.update_J = this.init_J + 8L;
-      this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.read;
+      this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.CAST_WAIT;
       this.init_Z = false;
    }
 
@@ -221,25 +221,25 @@ final class BitSetUtil {
          this.sync_I = this.update_I;
          this.flush_I = 0;
          this.sync_J = this.init_J;
-         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.flush;
+         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.REEL_WAIT;
       } else {
          this.update_I = this.sync_I = -1;
          this.flush_I = 0;
          this.write_J = this.init_J;
          this.update_J = this.init_J + 8L;
-         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.read;
+         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.CAST_WAIT;
       }
    }
 
    void init_V() {
-      boolean wasCast = this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.read
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.write
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.update
-         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.sync;
+      boolean wasCast = this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CAST_WAIT
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.FISHING
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CATCH_DELAY
+         || this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.REEL_PENDING;
       this.init_V(-1);
       if (wasCast) {
          this.sync_J = this.init_J;
-         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.flush;
+         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.REEL_WAIT;
       }
    }
 
@@ -249,8 +249,8 @@ final class BitSetUtil {
          this.update();
       }
 
-      if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.update) {
-         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.write;
+      if (this.init_BitSetUtil_StreamU == BitSetUtil.Inner_StreamUtil.CATCH_DELAY) {
+         this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.FISHING;
       }
 
       this.init_Z = false;
@@ -263,7 +263,7 @@ final class BitSetUtil {
 
    void read() {
       this.update();
-      this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.init;
+      this.init_BitSetUtil_StreamU = BitSetUtil.Inner_StreamUtil.IDLE;
       this.update_I = this.sync_I = -1;
       this.flush_I = 0;
       this.read_J = this.write_J = this.update_J = this.sync_J = this.init_J = 0L;
@@ -275,18 +275,18 @@ final class BitSetUtil {
    }
 
    enum Inner_DataUtil {
-      init,
-      load;
+      CAST,
+      REEL;
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      IDLE,
+      CAST_PENDING,
+      CAST_WAIT,
+      FISHING,
+      CATCH_DELAY,
+      REEL_PENDING,
+      REEL_WAIT,
+      RECAST_DELAY;
    }
 }

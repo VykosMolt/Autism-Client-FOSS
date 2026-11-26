@@ -526,13 +526,13 @@ public final class DataUtil {
    }
 
    public enum Inner_DataUtil {
-      init_DataUtil_DataUtil(28.0F, 28.0F, 22.0F, ap.Inner_StreamUtil.init_ap_StreamUtil),
-      load_DataUtil_DataUtil(54.0F, 54.0F, 38.0F, ap.Inner_StreamUtil.init_ap_StreamUtil),
-      read_DataUtil_DataUtil(45.0F, 45.0F, 180.0F, ap.Inner_StreamUtil.init_ap_StreamUtil),
-      write(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.init_ap_StreamUtil),
-      update(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.read_ap_StreamUtil),
-      sync(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.init_ap_StreamUtil, true),
-      flush(72.0F, 72.0F, 100.0F, ap.Inner_StreamUtil.read_ap_StreamUtil, true);
+      init_DataUtil_DataUtil(28.0F, 28.0F, 22.0F, ap.Inner_StreamUtil.STANDARD),
+      load_DataUtil_DataUtil(54.0F, 54.0F, 38.0F, ap.Inner_StreamUtil.STANDARD),
+      read_DataUtil_DataUtil(45.0F, 45.0F, 180.0F, ap.Inner_StreamUtil.STANDARD),
+      write(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.STANDARD),
+      update(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.TELLY_FLICK),
+      sync(72.0F, 72.0F, 180.0F, ap.Inner_StreamUtil.STANDARD, true),
+      flush(72.0F, 72.0F, 100.0F, ap.Inner_StreamUtil.TELLY_FLICK, true);
 
       final float init_F;
       final float load_F;

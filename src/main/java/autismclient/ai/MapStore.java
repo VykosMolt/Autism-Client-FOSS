@@ -755,8 +755,8 @@ final class MapStore {
                   autismclient.util.bW proxy = new autismclient.util.bW();
                   proxy.load_Str = ag.init_Str_JsonObject(args, "name", load(args, "address"));
                   proxy.init_bZ = ag.init_Str_JsonObject(args, "type", "Socks5").equalsIgnoreCase("Socks4")
-                     ? autismclient.util.bZ.init
-                     : autismclient.util.bZ.load;
+                     ? autismclient.util.bZ.Socks4
+                     : autismclient.util.bZ.Socks5;
                   proxy.read = load(args, "address");
                   proxy.init_I = ag.init_I_JsonObject(args, "port", 0);
                   if (proxy.init_I < 1 || proxy.init_I > 65535) {

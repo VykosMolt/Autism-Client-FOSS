@@ -26,7 +26,7 @@ public class X implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_A_StreamGate;
+      return StreamGate.SEND_COMMAND_PACKET;
    }
 
    @Override

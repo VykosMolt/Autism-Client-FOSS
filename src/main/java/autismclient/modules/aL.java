@@ -253,12 +253,12 @@ public final class aL extends Module {
 
       UUID id = suspected.getUUID();
       aL.Inner_DataUtil verdict = init(self, suspected);
-      if (verdict == aL.Inner_DataUtil.init) {
+      if (verdict == aL.Inner_DataUtil.TEAMMATE) {
          this.read.add(id);
          return true;
       } else if (!this.read.contains(id)) {
          return false;
-      } else if (verdict == aL.Inner_DataUtil.load && !write(self) && !write(suspected)) {
+      } else if (verdict == aL.Inner_DataUtil.OPPONENT && !write(self) && !write(suspected)) {
          this.read.remove(id);
          return false;
       } else {
@@ -268,15 +268,15 @@ public final class aL extends Module {
 
    static aL.Inner_DataUtil init(boolean allied, Object ownColor, Object theirColor, Integer ownHelmet, Integer theirHelmet) {
       if (allied) {
-         return aL.Inner_DataUtil.init;
+         return aL.Inner_DataUtil.TEAMMATE;
       } else if (ownColor != null && ownColor.equals(theirColor)) {
-         return aL.Inner_DataUtil.init;
+         return aL.Inner_DataUtil.TEAMMATE;
       } else if (ownHelmet != null && ownHelmet.equals(theirHelmet)) {
-         return aL.Inner_DataUtil.init;
+         return aL.Inner_DataUtil.TEAMMATE;
       } else if (ownColor != null && theirColor != null) {
-         return aL.Inner_DataUtil.load;
+         return aL.Inner_DataUtil.OPPONENT;
       } else {
-         return ownHelmet != null && theirHelmet != null ? aL.Inner_DataUtil.load : aL.Inner_DataUtil.read;
+         return ownHelmet != null && theirHelmet != null ? aL.Inner_DataUtil.OPPONENT : aL.Inner_DataUtil.UNKNOWN;
       }
    }
 
@@ -335,8 +335,8 @@ public final class aL extends Module {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      TEAMMATE,
+      OPPONENT,
+      UNKNOWN;
    }
 }

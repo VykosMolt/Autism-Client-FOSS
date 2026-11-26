@@ -20,7 +20,7 @@ public class W implements MacroAction, aP {
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
-      tag.putString("type", StreamGate.f_h_StreamGate.name());
+      tag.putString("type", StreamGate.SEND_CHAT.name());
       tag.putString("message", this.message);
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
@@ -63,7 +63,7 @@ public class W implements MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_h_StreamGate;
+      return StreamGate.SEND_CHAT;
    }
 
    @Override

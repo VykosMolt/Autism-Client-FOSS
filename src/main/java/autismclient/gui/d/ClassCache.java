@@ -102,7 +102,7 @@ public class ClassCache extends KeyHolder {
                   autismclient.gui.f.b.ByteReader.init(
                         panelX + 4, footerY, backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
                );
             int defaultsWidth = this.init_I_Str_6("Defaults");
             this.init_List
@@ -110,7 +110,7 @@ public class ClassCache extends KeyHolder {
                   autismclient.gui.f.b.ByteReader.init(
                         panelX + panelW - 4 - defaultsWidth, footerY, defaultsWidth, ctl, Component.literal("Defaults"), b -> this.read_V_5()
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
                );
          }
 
@@ -153,7 +153,7 @@ public class ClassCache extends KeyHolder {
                      }
                   )
                   .init_ByteReader_ByteReader_StreamU(
-                     enabled ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load
+                     enabled ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
                   )
                   .init_ByteReader_Z(enabled)
                   .init_ByteReader_Str("proxy-config:" + label)

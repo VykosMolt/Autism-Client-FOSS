@@ -11,9 +11,9 @@ public final class bo {
    }
 
    public enum Inner_DataUtil {
-      init_bo_DataUtil("Left Click", "Left", 0, ContainerInput.PICKUP),
-      load_bo_DataUtil("Right Click", "Right", 1, ContainerInput.PICKUP),
-      read("Quick Move", "QMove", 0, ContainerInput.QUICK_MOVE);
+      LEFT_CLICK("Left Click", "Left", 0, ContainerInput.PICKUP),
+      RIGHT_CLICK("Right Click", "Right", 1, ContainerInput.PICKUP),
+      QUICK_MOVE("Quick Move", "QMove", 0, ContainerInput.QUICK_MOVE);
 
       public final String init_Str;
       public final String load_Str;
@@ -29,7 +29,7 @@ public final class bo {
 
       public static bo.Inner_DataUtil init(int index) {
          bo.Inner_DataUtil[] values = values();
-         return index >= 0 && index < values.length ? values[index] : init_bo_DataUtil;
+         return index >= 0 && index < values.length ? values[index] : LEFT_CLICK;
       }
 
       public static bo.Inner_DataUtil init(String name) {
@@ -41,7 +41,7 @@ public final class bo {
             }
          }
 
-         return init_bo_DataUtil;
+         return LEFT_CLICK;
       }
    }
 
@@ -49,7 +49,7 @@ public final class bo {
       int init_I, int load_I, int read_I, int write, String init_Str, String load_Str, String read_Str, bo.Inner_DataUtil init_bo_DataUtil, long init_J
    ) {
       public ServerboundContainerClickPacket init_ServerboundContain() {
-         bo.Inner_DataUtil effectiveMode = this.init_bo_DataUtil == null ? bo.Inner_DataUtil.init_bo_DataUtil : this.init_bo_DataUtil;
+         bo.Inner_DataUtil effectiveMode = this.init_bo_DataUtil == null ? bo.Inner_DataUtil.LEFT_CLICK : this.init_bo_DataUtil;
          return new ServerboundContainerClickPacket(
             this.init_I,
             this.load_I,
@@ -70,13 +70,13 @@ public final class bo {
             this.init_Str,
             this.load_Str,
             this.read_Str,
-            newMode == null ? bo.Inner_DataUtil.init_bo_DataUtil : newMode,
+            newMode == null ? bo.Inner_DataUtil.LEFT_CLICK : newMode,
             this.init_J
          );
       }
 
       public String init_Str() {
-         String modeName = (this.init_bo_DataUtil == null ? bo.Inner_DataUtil.init_bo_DataUtil : this.init_bo_DataUtil).init_Str;
+         String modeName = (this.init_bo_DataUtil == null ? bo.Inner_DataUtil.LEFT_CLICK : this.init_bo_DataUtil).init_Str;
          String item = this.read_Str != null && !this.read_Str.isBlank() ? this.read_Str : "empty";
          return modeName + " slot " + this.write + " [" + item + "] menu " + this.init_I + ":" + this.load_I;
       }
@@ -90,7 +90,7 @@ public final class bo {
          tag.putString("screenTitle", this.init_Str == null ? "" : this.init_Str);
          tag.putString("menuClass", this.load_Str == null ? "" : this.load_Str);
          tag.putString("itemSummary", this.read_Str == null ? "" : this.read_Str);
-         tag.putString("mode", (this.init_bo_DataUtil == null ? bo.Inner_DataUtil.init_bo_DataUtil : this.init_bo_DataUtil).name());
+         tag.putString("mode", (this.init_bo_DataUtil == null ? bo.Inner_DataUtil.LEFT_CLICK : this.init_bo_DataUtil).name());
          tag.putLong("capturedAtMs", this.init_J);
          return tag;
       }
@@ -113,7 +113,7 @@ public final class bo {
                tag.getStringOr("screenTitle", ""),
                tag.getStringOr("menuClass", ""),
                tag.getStringOr("itemSummary", ""),
-               bo.Inner_DataUtil.init(tag.getStringOr("mode", bo.Inner_DataUtil.init_bo_DataUtil.name())),
+               bo.Inner_DataUtil.init(tag.getStringOr("mode", bo.Inner_DataUtil.LEFT_CLICK.name())),
                tag.getLongOr("capturedAtMs", 0L)
             )
             : null;

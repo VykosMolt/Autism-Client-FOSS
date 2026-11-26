@@ -117,8 +117,8 @@ public class DataUtil extends Screen {
          NetHelper panel = NetHelper.init(px, py, panelW, panelH);
          PacketUtil.load(graphics, panel, 5, -435549684, this.init_I());
          NetHelper header = NetHelper.init(px, py, panelW, 14);
-         PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ct.Inner_DataUtil.open));
-         this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ct.Inner_DataUtil.read), header);
+         PacketUtil.read(graphics, NetHelper.init(px + 1, py + 1, panelW - 2, 13), 4, this.init(858003997, ct.Inner_DataUtil.HEADER));
+         this.init(graphics, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, this.init(-791321, ct.Inner_DataUtil.TEXT), header);
          NetHelper footer = NetHelper.init(px, panel.load() - 17, panelW, 17);
          NetHelper done = NetHelper.init(px + 4, footer.write(), panelW - 8, 13);
          this.init(graphics, done, "Done", done.init_Z(mx, my), true);
@@ -213,14 +213,14 @@ public class DataUtil extends Screen {
       return (g, rb, mx, my, clickable) -> {
          boolean on = getter.get();
          boolean hover = clickable && rb.init_Z(mx, my);
-         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ct.Inner_DataUtil.close) : 639113758, this.init(1717972012, ct.Inner_DataUtil.load));
-         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.read), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ct.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ct.Inner_DataUtil.OUTLINE));
+         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          NetHelper tog = NetHelper.init(rb.init() - 26, rb.write() + 2, 22, rb.sync() - 4);
          PacketUtil.load(
-            g, tog, 4, on ? this.init(-1474094563, ct.Inner_DataUtil.write) : 1074926358, on ? this.init(-39836, ct.Inner_DataUtil.write) : 1716936038
+            g, tog, 4, on ? this.init(-1474094563, ct.Inner_DataUtil.TOGGLE) : 1074926358, on ? this.init(-39836, ct.Inner_DataUtil.TOGGLE) : 1716936038
          );
          int knobX = on ? tog.init() - 10 : tog.read() + 2;
-         PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ct.Inner_DataUtil.write) : -7697782);
+         PacketUtil.init(g, NetHelper.init(knobX, tog.write() + 2, 8, tog.sync() - 4), on ? this.init(-50373, ct.Inner_DataUtil.TOGGLE) : -7697782);
          if (clickable) {
             this.init_V_NetHelper(rb, () -> setter.accept(!getter.get()), null);
          }
@@ -231,10 +231,10 @@ public class DataUtil extends Screen {
       this.set = Math.max(this.set, this.init(label));
       return (g, rb, mx, my, clickable) -> {
          boolean hover = clickable && rb.init_Z(mx, my);
-         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ct.Inner_DataUtil.close) : 639113758, this.init(1717972012, ct.Inner_DataUtil.load));
-         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.read), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, hover ? this.init(1075845661, ct.Inner_DataUtil.BUTTON) : 639113758, this.init(1717972012, ct.Inner_DataUtil.OUTLINE));
+         this.init(g, label, autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          int vw = k.init(this.font, value, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ct.Inner_DataUtil.init), rb.init() - vw - 6, this.init(rb));
+         this.init(g, value, autismclient.gui.f.a.DataUtil.init, this.init(-39836, ct.Inner_DataUtil.ACCENT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
             this.init_V_NetHelper(rb, onLeft, onRight);
          }
@@ -250,8 +250,8 @@ public class DataUtil extends Screen {
       }
 
       return (g, rb, mx, my, clickable) -> {
-         PacketUtil.load(g, rb, 4, 639113758, this.init(1717972012, ct.Inner_DataUtil.load));
-         this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.read), rb.read() + 6, this.init(rb));
+         PacketUtil.load(g, rb, 4, 639113758, this.init(1717972012, ct.Inner_DataUtil.OUTLINE));
+         this.init(g, "Command Prefix", autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          int ctrlW = Math.min(110, rb.update() / 2);
          NetHelper ctrl = NetHelper.init(rb.init() - ctrlW - 2, rb.write() + 1, ctrlW, rb.sync() - 2);
          this.init_RefQueue.init_V_NetHelper(ctrl);
@@ -278,13 +278,13 @@ public class DataUtil extends Screen {
             g,
             rb,
             4,
-            active ? this.init(1428429341, ct.Inner_DataUtil.init) : (hover ? this.init(1075845661, ct.Inner_DataUtil.close) : 639113758),
-            active ? this.init(-39836, ct.Inner_DataUtil.init) : this.init(1717972012, ct.Inner_DataUtil.load)
+            active ? this.init(1428429341, ct.Inner_DataUtil.ACCENT) : (hover ? this.init(1075845661, ct.Inner_DataUtil.BUTTON) : 639113758),
+            active ? this.init(-39836, ct.Inner_DataUtil.ACCENT) : this.init(1717972012, ct.Inner_DataUtil.OUTLINE)
          );
-         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.read), rb.read() + 6, this.init(rb));
+         this.init(g, k.init_Str(), autismclient.gui.f.a.DataUtil.load, this.init(-791321, ct.Inner_DataUtil.TEXT), rb.read() + 6, this.init(rb));
          String v = active ? "press a key..." : ValueSink.init_Str(k.init_IntSupplier().getAsInt());
          int vw = autismclient.gui.f.b.k.init(this.font, v, autismclient.gui.f.a.DataUtil.init, -4743522);
-         this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ct.Inner_DataUtil.read), rb.init() - vw - 6, this.init(rb));
+         this.init(g, v, autismclient.gui.f.a.DataUtil.init, this.init(-4743522, ct.Inner_DataUtil.TEXT), rb.init() - vw - 6, this.init(rb));
          if (clickable) {
             this.init_V_NetHelper(rb, () -> this.init_V(idx), null);
          }
@@ -325,7 +325,7 @@ public class DataUtil extends Screen {
    }
 
    private int init_I() {
-      return this.init(-5035221, ct.Inner_DataUtil.load);
+      return this.init(-5035221, ct.Inner_DataUtil.OUTLINE);
    }
 
    private void init(GuiGraphicsExtractor g, NetHelper b, String label, boolean hover, boolean primary) {

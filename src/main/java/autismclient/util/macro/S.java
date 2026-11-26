@@ -45,7 +45,7 @@ public class S implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.push;
+      return StreamGate.ROTATE;
    }
 
    @Override

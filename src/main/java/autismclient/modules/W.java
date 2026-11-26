@@ -120,8 +120,8 @@ final class W {
 
             W.Inner_ConfigStore unturned = world.init_W_ConfigStore_W_ConfigStore_F(input, yaw);
             W.Inner_JsonUtil original = init(unturned, yaw, world);
-            init_Str = original.init_W_TaskQueue == W.Inner_TaskQueue.update ? "unknown-terrain" : "already-falls";
-            if (original.init_W_TaskQueue != W.Inner_TaskQueue.update && !original.init(minimum, voidOnly)) {
+            init_Str = original.init_W_TaskQueue == W.Inner_TaskQueue.UNKNOWN ? "unknown-terrain" : "already-falls";
+            if (original.init_W_TaskQueue != W.Inner_TaskQueue.UNKNOWN && !original.init(minimum, voidOnly)) {
                double[] turns = init(maximumTurn);
                ArrayList<W.Inner_StreamUtil> candidates = new ArrayList<>(turns.length * 2);
                HashSet<Float> seen = new HashSet<>();
@@ -140,7 +140,7 @@ final class W {
                               V.Inner_CachePool flight = grid.init_V_CachePool_AABB(
                                  input.init_AABB, init(unturned, candidate), input.init_Z, W.Inner_SyncManager.init_W_SyncManager
                               );
-                              if (flight.init_W_TaskQueue() != W.Inner_TaskQueue.update) {
+                              if (flight.init_W_TaskQueue() != W.Inner_TaskQueue.UNKNOWN) {
                                  candidates.add(new W.Inner_StreamUtil(candidate, turn, flight));
                               }
                            }
@@ -195,7 +195,7 @@ final class W {
                   Comparator.<W.Inner_StreamUtil, Boolean>comparing(c -> !strafeHolds.get(c))
                      .thenComparing(c -> !robust.get(c))
                      .thenComparing(c -> c.init_V_CachePool.read_Z())
-                     .thenComparing(c -> c.init_V_CachePool.init_W_TaskQueue() != W.Inner_TaskQueue.read)
+                     .thenComparing(c -> c.init_V_CachePool.init_W_TaskQueue() != W.Inner_TaskQueue.VOID)
                      .thenComparingDouble(c -> c.init_D * 0.01 + c.init_V_CachePool.load_I() * 0.03)
                );
                init_Str = throwsFound.isEmpty() ? "no-throw" : "unconfirmed";
@@ -367,11 +367,11 @@ final class W {
 
          while (tick <= 64) {
             if (!world.init_Z_AABB(body.expandTowards(motion).inflate(0.001))) {
-               return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, tick);
+               return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, tick);
             }
 
             if (world.load_Z_AABB(body)) {
-               return new W.Inner_JsonUtil(W.Inner_TaskQueue.init, 0.0, tick);
+               return new W.Inner_JsonUtil(W.Inner_TaskQueue.SAFE, 0.0, tick);
             }
 
             double block = ground ? world.init_D_AABB(body) : 0.6;
@@ -385,21 +385,21 @@ final class W {
                Vec3 wanted = Math.abs(motion.y) < 1.0E-8 ? new Vec3(motion.x, -0.01, motion.z) : motion;
                Vec3 actual = world.init_Vec3_AABB_Vec3(body, wanted);
                if (!init(actual)) {
-                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, tick);
+                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, tick);
                }
 
                if (world.load_Z_AABB(body.expandTowards(actual))) {
-                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.init, 0.0, tick);
+                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.SAFE, 0.0, tick);
                }
 
                if (world.read(body.expandTowards(actual))) {
-                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.write, 1.0 / 0.0, tick);
+                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.LAVA, 1.0 / 0.0, tick);
                }
 
                ground = wanted.y < 0.0 && actual.y > wanted.y + 1.0E-7;
                body = body.move(actual);
                if (world.load_Z_AABB(body)) {
-                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.init, 0.0, tick);
+                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.SAFE, 0.0, tick);
                }
 
                motion = new Vec3(
@@ -423,7 +423,7 @@ final class W {
 
                   W.Inner_CachePool below = world.init_W_CachePool_AABB(region);
                   if (below != null && below.read && below.init_Z && !below.load) {
-                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.read, 1.0 / 0.0, tick);
+                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.VOID, 1.0 / 0.0, tick);
                   }
                }
 
@@ -433,36 +433,36 @@ final class W {
                }
 
                if (motion.horizontalDistance() > 0.03) {
-                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, tick);
+                  return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, tick);
                }
 
                W.Inner_CachePool floor = world.init_W_CachePool_AABB(body);
                if (floor != null && floor.read) {
                   if (floor.load) {
-                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.init, 0.0, tick);
+                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.SAFE, 0.0, tick);
                   }
 
                   if (floor.write) {
-                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.write, 1.0 / 0.0, tick);
+                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.LAVA, 1.0 / 0.0, tick);
                   }
 
                   if (floor.init_Z) {
-                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.read, 1.0 / 0.0, tick);
+                     return new W.Inner_JsonUtil(W.Inner_TaskQueue.VOID, 1.0 / 0.0, tick);
                   }
 
                   double drop = Math.max(0.0, input.read - floor.init_D);
-                  return new W.Inner_JsonUtil(drop > 1.0E-6 ? W.Inner_TaskQueue.load : W.Inner_TaskQueue.init, drop, tick);
+                  return new W.Inner_JsonUtil(drop > 1.0E-6 ? W.Inner_TaskQueue.DROP : W.Inner_TaskQueue.SAFE, drop, tick);
                }
 
-               return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, tick);
+               return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, tick);
             }
 
-            return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, tick);
+            return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, tick);
          }
 
-         return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, 64);
+         return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, 64);
       } else {
-         return new W.Inner_JsonUtil(W.Inner_TaskQueue.update, 0.0, 0);
+         return new W.Inner_JsonUtil(W.Inner_TaskQueue.UNKNOWN, 0.0, 0);
       }
    }
 
@@ -548,9 +548,9 @@ final class W {
 
    record Inner_JsonUtil(W.Inner_TaskQueue init_W_TaskQueue, double init_D, int init_I) {
       boolean init(double minimum, boolean voidOnly) {
-         return this.init_W_TaskQueue == W.Inner_TaskQueue.read
+         return this.init_W_TaskQueue == W.Inner_TaskQueue.VOID
             || !voidOnly
-               && (this.init_W_TaskQueue == W.Inner_TaskQueue.write || this.init_W_TaskQueue == W.Inner_TaskQueue.load && this.init_D + 1.0E-6 >= minimum);
+               && (this.init_W_TaskQueue == W.Inner_TaskQueue.LAVA || this.init_W_TaskQueue == W.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
       }
    }
 
@@ -588,11 +588,11 @@ final class W {
    }
 
    enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write,
-      update;
+      SAFE,
+      DROP,
+      VOID,
+      LAVA,
+      UNKNOWN;
    }
 
    interface Inner_UiHelper {

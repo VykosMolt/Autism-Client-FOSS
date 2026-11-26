@@ -396,12 +396,12 @@ public final class aF extends Module {
       private int read_I;
 
       private Inner_DataUtil() {
-         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt;
+         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.WAITING;
       }
 
       @Override
       public void init_V() {
-         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt;
+         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.WAITING;
          this.load_I = 0;
          this.init_Str = null;
          this.load_Z = false;
@@ -412,9 +412,9 @@ public final class aF extends Module {
 
       @Override
       public void load() {
-         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.write;
+         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
          HashUtil.flush();
-         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt;
+         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.WAITING;
          HashUtil.load(this.init_HashUtil_StreamUti);
          HashUtil.init(true, true);
          this.load_I = 0;
@@ -431,12 +431,12 @@ public final class aF extends Module {
             this.init_Z = true;
 
             try {
-               if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt) {
+               if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
                   if (aF.init(player, player.position())) {
-                     this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.load;
+                     this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.PHASING;
                   }
-               } else if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.load && !aF.init(player, player.position())) {
-                  this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.read;
+               } else if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.PHASING && !aF.init(player, player.position())) {
+                  this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.WALKING;
                   this.read_Z = true;
                }
             } finally {
@@ -454,7 +454,7 @@ public final class aF extends Module {
          } else if (this.load_Z) {
             this.load_Z = false;
             this.flush();
-         } else if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.read) {
+         } else if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.WALKING) {
             LocalPlayer player = Module.MC.player;
             if (player != null) {
                boolean collides = false;
@@ -485,7 +485,7 @@ public final class aF extends Module {
             return true;
          }
 
-         if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.load || this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.read
+         if (this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.PHASING || this.init_aF_DataUtil_DataUt == aF.Inner_DataUtil.Inner_DataUtil_2.WALKING
             )
           {
             this.load_I++;
@@ -495,9 +495,9 @@ public final class aF extends Module {
       }
 
       private void flush() {
-         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.write;
+         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
          HashUtil.flush();
-         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt;
+         this.init_aF_DataUtil_DataUt = aF.Inner_DataUtil.Inner_DataUtil_2.WAITING;
          HashUtil.init(false, true);
          this.load_I = 0;
          if (this.read_Z) {
@@ -516,22 +516,22 @@ public final class aF extends Module {
 
       private HashUtil.Inner_DataUtil init(Packet<?> packet, boolean incoming) {
          if (aD.read_Z()) {
-            return HashUtil.Inner_DataUtil.init_HashUtil_DataUtil;
+            return HashUtil.Inner_DataUtil.FLUSH;
          } else {
             aF.Inner_DataUtil.Inner_DataUtil_2 current = this.init_aF_DataUtil_DataUt;
-            if (current == aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt) {
-               return HashUtil.Inner_DataUtil.init_HashUtil_DataUtil;
+            if (current == aF.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
+               return HashUtil.Inner_DataUtil.FLUSH;
             } else if (!(packet instanceof ClientboundBlockUpdatePacket)
                && !(packet instanceof ClientboundBlockEventPacket)
                && !(packet instanceof ClientboundSectionBlocksUpdatePacket)
                && !(packet instanceof ClientboundLevelChunkWithLightPacket)
                && !(packet instanceof ClientboundChunkBatchFinishedPacket)
                && !(packet instanceof ClientboundSetTitleTextPacket)) {
-               return current != aF.Inner_DataUtil.Inner_DataUtil_2.load && current != aF.Inner_DataUtil.Inner_DataUtil_2.read
-                  ? HashUtil.Inner_DataUtil.load
-                  : HashUtil.Inner_DataUtil.read;
+               return current != aF.Inner_DataUtil.Inner_DataUtil_2.PHASING && current != aF.Inner_DataUtil.Inner_DataUtil_2.WALKING
+                  ? HashUtil.Inner_DataUtil.PASS
+                  : HashUtil.Inner_DataUtil.QUEUE;
             } else {
-               return HashUtil.Inner_DataUtil.load;
+               return HashUtil.Inner_DataUtil.PASS;
             }
          }
       }
@@ -547,14 +547,14 @@ public final class aF extends Module {
       @Override
       public String init_Str() {
          aF.Inner_DataUtil.Inner_DataUtil_2 current = this.init_aF_DataUtil_DataUt;
-         return current == aF.Inner_DataUtil.Inner_DataUtil_2.init_aF_DataUtil_DataUt ? "" : current.name().toLowerCase(Locale.ROOT);
+         return current == aF.Inner_DataUtil.Inner_DataUtil_2.WAITING ? "" : current.name().toLowerCase(Locale.ROOT);
       }
 
       private enum Inner_DataUtil_2 {
-         init_aF_DataUtil_DataUt(false),
-         load(false),
-         read(true),
-         write(true);
+         WAITING(false),
+         PHASING(false),
+         WALKING(true),
+         FLUSHING(true);
 
          final boolean init_Z;
 

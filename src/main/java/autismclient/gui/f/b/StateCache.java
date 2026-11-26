@@ -17,13 +17,13 @@ public final class StateCache {
          int resolved = autismclient.gui.f.PacketUtil.init(color, alpha);
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, size, size);
          switch (direction) {
-            case init:
+            case RIGHT:
                autismclient.gui.f.PacketUtil.init(context, bounds, false, resolved);
                break;
-            case load:
+            case DOWN:
                autismclient.gui.f.PacketUtil.init(context, bounds, true, resolved);
                break;
-            case read:
+            case UP:
                autismclient.gui.f.PacketUtil.write(context, bounds, resolved);
          }
       }
@@ -43,8 +43,8 @@ public final class StateCache {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      RIGHT,
+      DOWN,
+      UP;
    }
 }

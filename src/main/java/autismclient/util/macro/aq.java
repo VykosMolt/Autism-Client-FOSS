@@ -10,8 +10,8 @@ import net.minecraft.nbt.CompoundTag;
 public final class aq implements ContextMacroAction {
    private static final int init_I = 64;
    private static final int load = 10;
-   public autismclient.util.i.DataUtil.Inner_DataUtil filter = autismclient.util.i.DataUtil.Inner_DataUtil.init_DataUtil_DataUtil;
-   public aq.Inner_StreamUtil targets = aq.Inner_StreamUtil.init;
+   public autismclient.util.i.DataUtil.Inner_DataUtil filter = autismclient.util.i.DataUtil.Inner_DataUtil.ALL;
+   public aq.Inner_StreamUtil targets = aq.Inner_StreamUtil.ALL_IN_RANGE;
    public int count = 1;
    public int intervalTicks = 1;
    public int stopAfter = 0;
@@ -33,7 +33,7 @@ public final class aq implements ContextMacroAction {
             this.autoEmerald,
             this.autoShears,
             this.keepTotem,
-            this.targets == aq.Inner_StreamUtil.load,
+            this.targets == aq.Inner_StreamUtil.NEAREST,
             this.refresh,
             init(this.intervalTicks, 1, 20)
          ),
@@ -87,7 +87,7 @@ public final class aq implements ContextMacroAction {
       try {
          this.targets = aq.Inner_StreamUtil.valueOf(tag.getStringOr("targets", "ALL_IN_RANGE"));
       } catch (IllegalArgumentException e) {
-         this.targets = aq.Inner_StreamUtil.init;
+         this.targets = aq.Inner_StreamUtil.ALL_IN_RANGE;
       }
 
       this.count = init(tag.getIntOr("count", 1), 0, 64);
@@ -104,13 +104,13 @@ public final class aq implements ContextMacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_Y_StreamGate;
+      return StreamGate.VILLAGER_DUPE;
    }
 
    @Override
    public String getDisplayName() {
       String passes = this.count <= 0 ? (this.stopAfter > 0 ? " / " + this.stopAfter + " items" : " / until stopped") : " x" + this.count;
-      return "Villager Dupe / " + this.filter.init() + (this.targets == aq.Inner_StreamUtil.load ? " / Nearest" : "") + passes;
+      return "Villager Dupe / " + this.filter.init() + (this.targets == aq.Inner_StreamUtil.NEAREST ? " / Nearest" : "") + passes;
    }
 
    @Override
@@ -143,7 +143,7 @@ public final class aq implements ContextMacroAction {
       private int update;
       private boolean write_Z;
       volatile int init_I;
-      volatile autismclient.util.i.DataUtil.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.DataUtil.ConfigStore.load_DataUtil_ConfigSto;
+      volatile autismclient.util.i.DataUtil.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.DataUtil.ConfigStore.WAITING;
       volatile boolean init_Z;
       volatile boolean load_Z;
       volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
@@ -220,7 +220,7 @@ public final class aq implements ContextMacroAction {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load;
+      ALL_IN_RANGE,
+      NEAREST;
    }
 }

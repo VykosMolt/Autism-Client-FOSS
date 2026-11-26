@@ -15,13 +15,13 @@ import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 
 public class O implements MacroAction {
-   public O.Inner_CachePool startEvent = O.Inner_CachePool.init;
-   public O.Inner_StreamUtil endEvent = O.Inner_StreamUtil.init;
-   public O.Inner_DataUtil endCondition = O.Inner_DataUtil.init;
+   public O.Inner_CachePool startEvent = O.Inner_CachePool.ACTION_START;
+   public O.Inner_StreamUtil endEvent = O.Inner_StreamUtil.GUI_OPEN;
+   public O.Inner_DataUtil endCondition = O.Inner_DataUtil.GUI_OPEN;
    public String reportLabel = "Report";
-   public String startConditionType = L.Inner_DataUtil.init.name();
-   public String startActionType = StreamGate.reset.name();
-   public String endConditionType = L.Inner_DataUtil.load.name();
+   public String startConditionType = L.Inner_DataUtil.DELAY.name();
+   public String startActionType = StreamGate.ITEM.name();
+   public String endConditionType = L.Inner_DataUtil.WAIT_GUI.name();
    public int conditionCount = 0;
    public String commandText = "";
    public String endGuiTitle = "";
@@ -92,8 +92,8 @@ public class O implements MacroAction {
    }
 
    private Long auditAwaitStartNanos(Minecraft mc) {
-      if (this.startEvent != O.Inner_CachePool.init && this.startEvent != O.Inner_CachePool.write) {
-         Predicate<Packet<?>> startMatch = this.startEvent == O.Inner_CachePool.load
+      if (this.startEvent != O.Inner_CachePool.ACTION_START && this.startEvent != O.Inner_CachePool.MANUAL) {
+         Predicate<Packet<?>> startMatch = this.startEvent == O.Inner_CachePool.COMMAND_SENT
             ? p -> p instanceof ServerboundChatCommandPacket
                || p instanceof ServerboundChatCommandSignedPacket
                || p instanceof ServerboundChatPacket spc && spc.message() != null && spc.message().startsWith("/")
@@ -101,7 +101,7 @@ public class O implements MacroAction {
          MacroExecutor.Inner_EventBus sendListener = MacroExecutor.load_MacroExecutor_Even_Predicate(startMatch);
 
          try {
-            if (this.startEvent == O.Inner_CachePool.load) {
+            if (this.startEvent == O.Inner_CachePool.COMMAND_SENT) {
                String command = init_Str_Str_2(this.commandText);
                if (command.isBlank()) {
                   sendListener.init_V();
@@ -135,39 +135,39 @@ public class O implements MacroAction {
    private MacroAction write_MacroAction() {
       MacroAction var10000;
       switch (this.endCondition) {
-         case init: {
+         case GUI_OPEN: {
             ax action = new ax();
-            action.waitMode = ax.Inner_DataUtil.init;
+            action.waitMode = ax.Inner_DataUtil.OPEN;
             action.guiTitle = this.endGuiTitle == null ? "" : this.endGuiTitle;
             var10000 = action;
             break;
          }
-         case load: {
+         case GUI_CLOSE: {
             ax action = new ax();
-            action.waitMode = ax.Inner_DataUtil.load;
+            action.waitMode = ax.Inner_DataUtil.CLOSE;
             action.guiTitle = this.endGuiTitle == null ? "" : this.endGuiTitle;
             var10000 = action;
             break;
          }
-         case read: {
+         case TELEPORT_PACKET: {
             aB action = new aB("S2C:" + ClientboundPlayerPositionPacket.class.getSimpleName());
             var10000 = action;
             break;
          }
-         case write: {
+         case WORLD_CHANGE: {
             aG action = new aG();
             action.targetDimension = this.endTargetDimension == null ? "" : this.endTargetDimension;
             var10000 = action;
             break;
          }
-         case update: {
+         case POSITION_DELTA: {
             aC action = new aC();
             action.distance = this.endDistance;
             action.horizontalOnly = this.endHorizontalOnly;
             var10000 = action;
             break;
          }
-         case sync:
+         case PACKET:
             var10000 = new aB(this.endPacketName == null ? "" : this.endPacketName);
             break;
          default:
@@ -184,9 +184,9 @@ public class O implements MacroAction {
       tag.putString("startEvent", this.startEvent.name());
       tag.putString("endEvent", this.init_O_StreamUtil().name());
       tag.putString("endCondition", this.endCondition.name());
-      tag.putString("startConditionType", this.startConditionType == null ? L.Inner_DataUtil.init.name() : this.startConditionType);
-      tag.putString("startActionType", this.startActionType == null ? StreamGate.reset.name() : this.startActionType);
-      tag.putString("endConditionType", this.endConditionType == null ? L.Inner_DataUtil.load.name() : this.endConditionType);
+      tag.putString("startConditionType", this.startConditionType == null ? L.Inner_DataUtil.DELAY.name() : this.startConditionType);
+      tag.putString("startActionType", this.startActionType == null ? StreamGate.ITEM.name() : this.startActionType);
+      tag.putString("endConditionType", this.endConditionType == null ? L.Inner_DataUtil.WAIT_GUI.name() : this.endConditionType);
       tag.putInt("conditionCount", Math.max(0, this.conditionCount));
       tag.putString("reportLabel", this.reportLabel == null ? "" : this.reportLabel);
       tag.putString("commandText", this.commandText == null ? "" : this.commandText);
@@ -205,14 +205,14 @@ public class O implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       try {
-         this.startEvent = O.Inner_CachePool.valueOf(tag.getStringOr("startEvent", O.Inner_CachePool.init.name()));
+         this.startEvent = O.Inner_CachePool.valueOf(tag.getStringOr("startEvent", O.Inner_CachePool.ACTION_START.name()));
       } catch (IllegalArgumentException e) {
-         this.startEvent = O.Inner_CachePool.init;
+         this.startEvent = O.Inner_CachePool.ACTION_START;
       }
 
       this.reportLabel = tag.getStringOr("reportLabel", "Report");
-      this.startConditionType = tag.getStringOr("startConditionType", L.Inner_DataUtil.init.name());
-      this.startActionType = tag.getStringOr("startActionType", StreamGate.reset.name());
+      this.startConditionType = tag.getStringOr("startConditionType", L.Inner_DataUtil.DELAY.name());
+      this.startActionType = tag.getStringOr("startActionType", StreamGate.ITEM.name());
       this.endConditionType = tag.getStringOr("endConditionType", "");
       this.conditionCount = Math.max(0, tag.getIntOr("conditionCount", 0));
       this.commandText = tag.getStringOr("commandText", "");
@@ -222,9 +222,9 @@ public class O implements MacroAction {
       this.positionTolerance = tag.getDoubleOr("positionTolerance", 5.0);
       if (tag.contains("endCondition")) {
          try {
-            this.endCondition = O.Inner_DataUtil.valueOf(tag.getStringOr("endCondition", O.Inner_DataUtil.init.name()));
+            this.endCondition = O.Inner_DataUtil.valueOf(tag.getStringOr("endCondition", O.Inner_DataUtil.GUI_OPEN.name()));
          } catch (IllegalArgumentException e) {
-            this.endCondition = O.Inner_DataUtil.init;
+            this.endCondition = O.Inner_DataUtil.GUI_OPEN;
          }
 
          this.endGuiTitle = tag.getStringOr("endGuiTitle", this.guiTitleSubstr);
@@ -237,9 +237,9 @@ public class O implements MacroAction {
          }
       } else {
          try {
-            this.endEvent = O.Inner_StreamUtil.valueOf(tag.getStringOr("endEvent", O.Inner_StreamUtil.init.name()));
+            this.endEvent = O.Inner_StreamUtil.valueOf(tag.getStringOr("endEvent", O.Inner_StreamUtil.GUI_OPEN.name()));
          } catch (IllegalArgumentException e) {
-            this.endEvent = O.Inner_StreamUtil.init;
+            this.endEvent = O.Inner_StreamUtil.GUI_OPEN;
          }
 
          this.init_V_6();
@@ -248,23 +248,23 @@ public class O implements MacroAction {
 
    private void init_V_6() {
       switch (this.endEvent) {
-         case init:
-            this.endCondition = O.Inner_DataUtil.init;
+         case GUI_OPEN:
+            this.endCondition = O.Inner_DataUtil.GUI_OPEN;
             this.endGuiTitle = this.guiTitleSubstr;
             break;
-         case load:
-            this.endCondition = O.Inner_DataUtil.load;
+         case GUI_CLOSE:
+            this.endCondition = O.Inner_DataUtil.GUI_CLOSE;
             this.endGuiTitle = this.guiTitleSubstr;
             break;
-         case read:
-            this.endCondition = O.Inner_DataUtil.write;
+         case WORLD_CHANGE:
+            this.endCondition = O.Inner_DataUtil.WORLD_CHANGE;
             this.endTargetDimension = "";
             break;
-         case write:
-            this.endCondition = O.Inner_DataUtil.read;
+         case TELEPORT_PACKET:
+            this.endCondition = O.Inner_DataUtil.TELEPORT_PACKET;
             break;
-         case update:
-            this.endCondition = O.Inner_DataUtil.update;
+         case POSITION_JUMP:
+            this.endCondition = O.Inner_DataUtil.POSITION_DELTA;
             this.endDistance = this.positionTolerance;
             this.endHorizontalOnly = false;
       }
@@ -275,21 +275,21 @@ public class O implements MacroAction {
    private O.Inner_StreamUtil init_O_StreamUtil() {
       O.Inner_StreamUtil var10000;
       switch (this.endCondition) {
-         case init:
-            var10000 = O.Inner_StreamUtil.init;
+         case GUI_OPEN:
+            var10000 = O.Inner_StreamUtil.GUI_OPEN;
             break;
-         case load:
-            var10000 = O.Inner_StreamUtil.load;
+         case GUI_CLOSE:
+            var10000 = O.Inner_StreamUtil.GUI_CLOSE;
             break;
-         case read:
-         case sync:
-            var10000 = O.Inner_StreamUtil.write;
+         case TELEPORT_PACKET:
+         case PACKET:
+            var10000 = O.Inner_StreamUtil.TELEPORT_PACKET;
             break;
-         case write:
-            var10000 = O.Inner_StreamUtil.read;
+         case WORLD_CHANGE:
+            var10000 = O.Inner_StreamUtil.WORLD_CHANGE;
             break;
-         case update:
-            var10000 = O.Inner_StreamUtil.update;
+         case POSITION_DELTA:
+            var10000 = O.Inner_StreamUtil.POSITION_JUMP;
             break;
          default:
             throw new MatchException(null, null);
@@ -300,7 +300,7 @@ public class O implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_r_StreamGate;
+      return StreamGate.REPORT;
    }
 
    @Override
@@ -323,14 +323,14 @@ public class O implements MacroAction {
          : (
             this.startConditionType != null && !this.startConditionType.isBlank()
                ? this.startConditionType
-               : (this.startEvent == null ? O.Inner_CachePool.init.name() : this.startEvent.name())
+               : (this.startEvent == null ? O.Inner_CachePool.ACTION_START.name() : this.startEvent.name())
          );
    }
 
    private String read_Str() {
       return this.endConditionType != null && !this.endConditionType.isBlank()
          ? this.endConditionType
-         : (this.endCondition == null ? O.Inner_DataUtil.init.name() : this.endCondition.name());
+         : (this.endCondition == null ? O.Inner_DataUtil.GUI_OPEN.name() : this.endCondition.name());
    }
 
    public MacroAction init_MacroAction_2() {
@@ -368,21 +368,21 @@ public class O implements MacroAction {
    private String write_Str() {
       String var10000;
       switch (this.endCondition) {
-         case init:
-         case load:
-            var10000 = L.Inner_DataUtil.load.name();
+         case GUI_OPEN:
+         case GUI_CLOSE:
+            var10000 = L.Inner_DataUtil.WAIT_GUI.name();
             break;
-         case read:
-            var10000 = L.Inner_DataUtil.prev.name();
+         case TELEPORT_PACKET:
+            var10000 = L.Inner_DataUtil.WAIT_TELEPORT.name();
             break;
-         case write:
-            var10000 = L.Inner_DataUtil.stop.name();
+         case WORLD_CHANGE:
+            var10000 = L.Inner_DataUtil.WAIT_WORLD_CHANGE.name();
             break;
-         case update:
-            var10000 = L.Inner_DataUtil.next.name();
+         case POSITION_DELTA:
+            var10000 = L.Inner_DataUtil.WAIT_POSITION_DELTA.name();
             break;
-         case sync:
-            var10000 = L.Inner_DataUtil.write.name();
+         case PACKET:
+            var10000 = L.Inner_DataUtil.WAIT_PACKET.name();
             break;
          default:
             throw new MatchException(null, null);
@@ -401,26 +401,26 @@ public class O implements MacroAction {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write;
+      ACTION_START,
+      COMMAND_SENT,
+      GUI_CLICK_SENT,
+      MANUAL;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      GUI_OPEN,
+      GUI_CLOSE,
+      TELEPORT_PACKET,
+      WORLD_CHANGE,
+      POSITION_DELTA,
+      PACKET;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      GUI_OPEN,
+      GUI_CLOSE,
+      WORLD_CHANGE,
+      TELEPORT_PACKET,
+      POSITION_JUMP;
    }
 }

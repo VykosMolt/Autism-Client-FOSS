@@ -68,7 +68,7 @@ public final class PacketUtil {
    ) {
       ByteReader button = ByteReader.init(x, y, width, height, Component.literal(label), ignored -> {});
       button.read(width);
-      button.init_ByteReader_ByteReader_StreamU(state ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.load);
+      button.init_ByteReader_ByteReader_StreamU(state ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.DANGER);
       button.init_ByteReader_Z(state).init_ByteReader_Str(animationKey);
       button.init_Z = enabled;
       ByteReader.init(graphics, font, button, mouseX, mouseY);
@@ -77,6 +77,6 @@ public final class PacketUtil {
    public static void init(
       GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height, String label, boolean selected, int mouseX, int mouseY
    ) {
-      init(graphics, font, x, y, width, height, label, selected ? ByteReader.Inner_StreamUtil.write : ByteReader.Inner_StreamUtil.update, true, mouseX, mouseY);
+      init(graphics, font, x, y, width, height, label, selected ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST, true, mouseX, mouseY);
    }
 }

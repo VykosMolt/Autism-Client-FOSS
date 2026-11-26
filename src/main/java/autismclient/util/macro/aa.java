@@ -15,7 +15,7 @@ public class aa implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.prev;
+      return StreamGate.SERVER_TICK_SYNC;
    }
 
    @Override

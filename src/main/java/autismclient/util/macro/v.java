@@ -14,7 +14,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
 public class v implements M, MacroAction, aP {
-   public v.Inner_DataUtil targetMode = v.Inner_DataUtil.init;
+   public v.Inner_DataUtil targetMode = v.Inner_DataUtil.BLOCK;
    public BlockPos blockPos = BlockPos.ZERO;
    public String entityTarget = "";
    public List<String> entityTargets = new ArrayList<>();
@@ -37,10 +37,10 @@ public class v implements M, MacroAction, aP {
 
    @Override
    public M.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
-      if (this.targetMode == v.Inner_DataUtil.init) {
+      if (this.targetMode == v.Inner_DataUtil.BLOCK) {
          return M.Inner_DataUtil.init(this.blockPos);
       } else {
-         autismclient.util.E target = this.targetMode == v.Inner_DataUtil.read ? ck.init_ck().init_E() : this.init_E_2();
+         autismclient.util.E target = this.targetMode == v.Inner_DataUtil.LAST_TARGET ? ck.init_ck().init_E() : this.init_E_2();
          if (target == null) {
             return null;
          } else {
@@ -69,7 +69,7 @@ public class v implements M, MacroAction, aP {
 
    public boolean init_Z_Minecraft_4(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         if (this.targetMode == v.Inner_DataUtil.load) {
+         if (this.targetMode == v.Inner_DataUtil.ENTITY) {
             List<String> refs = this.init_List_13();
             boolean sentAny = false;
 
@@ -88,7 +88,7 @@ public class v implements M, MacroAction, aP {
 
             return sentAny;
          } else {
-            autismclient.util.E target = this.targetMode == v.Inner_DataUtil.init ? autismclient.util.E.init_E_BlockPos(this.blockPos) : ck.init_ck().init_E();
+            autismclient.util.E target = this.targetMode == v.Inner_DataUtil.BLOCK ? autismclient.util.E.init_E_BlockPos(this.blockPos) : ck.init_ck().init_E();
             return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
          }
       } else {
@@ -101,7 +101,7 @@ public class v implements M, MacroAction, aP {
          return false;
       }
 
-      if (this.targetMode == v.Inner_DataUtil.load) {
+      if (this.targetMode == v.Inner_DataUtil.ENTITY) {
          List<String> refs = this.init_List_13();
          boolean hasTarget = false;
 
@@ -118,7 +118,7 @@ public class v implements M, MacroAction, aP {
 
          return hasTarget;
       } else {
-         autismclient.util.E target = this.targetMode == v.Inner_DataUtil.init ? autismclient.util.E.init_E_BlockPos(this.blockPos) : ck.init_ck().init_E();
+         autismclient.util.E target = this.targetMode == v.Inner_DataUtil.BLOCK ? autismclient.util.E.init_E_BlockPos(this.blockPos) : ck.init_ck().init_E();
          return target != null && target.load_Z(mc);
       }
    }
@@ -126,13 +126,13 @@ public class v implements M, MacroAction, aP {
    public void init_V_Minecraft_9(Minecraft mc) {
       if (mc != null) {
          if (mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
-            this.targetMode = v.Inner_DataUtil.load;
+            this.targetMode = v.Inner_DataUtil.ENTITY;
             this.entityTarget = autismclient.util.E.init_Str_Entity(entityHit.getEntity());
             if (!this.entityTarget.isBlank() && !this.entityTargets.contains(this.entityTarget)) {
                this.entityTargets.add(this.entityTarget);
             }
          } else if (mc.hitResult instanceof BlockHitResult blockHit) {
-            this.targetMode = v.Inner_DataUtil.init;
+            this.targetMode = v.Inner_DataUtil.BLOCK;
             this.blockPos = blockHit.getBlockPos();
             this.entityTarget = "";
             this.entityTargets.clear();
@@ -189,7 +189,7 @@ public class v implements M, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.store;
+      return StreamGate.OPEN_CONTAINER;
    }
 
    @Override
@@ -211,14 +211,14 @@ public class v implements M, MacroAction, aP {
    public String getDisplayName() {
       String var10000;
       switch (this.targetMode) {
-         case init:
+         case BLOCK:
             var10000 = this.blockPos.getX() + "," + this.blockPos.getY() + "," + this.blockPos.getZ();
             break;
-         case load:
+         case ENTITY:
             List<String> refs = this.init_List_13();
             var10000 = refs.isEmpty() ? "(none)" : (refs.size() == 1 ? init_Str_Str_10(refs.get(0)) : refs.size() + " entities");
             break;
-         case read:
+         case LAST_TARGET:
             var10000 = "Last Target";
             break;
          default:
@@ -268,7 +268,7 @@ public class v implements M, MacroAction, aP {
       try {
          this.targetMode = v.Inner_DataUtil.valueOf(tag.getStringOr("targetMode", "BLOCK"));
       } catch (IllegalArgumentException ignored) {
-         this.targetMode = v.Inner_DataUtil.init;
+         this.targetMode = v.Inner_DataUtil.BLOCK;
       }
 
       this.entityTargets.clear();
@@ -305,8 +305,8 @@ public class v implements M, MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      BLOCK,
+      ENTITY,
+      LAST_TARGET;
    }
 }

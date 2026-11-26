@@ -56,7 +56,7 @@ public class NodeWalker implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.index;
+      return StreamGate.JUMP;
    }
 
    @Override

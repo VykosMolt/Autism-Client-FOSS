@@ -75,7 +75,7 @@ public final class ByteReader {
    public static boolean init(ParticleProvider<?> provider, BufferHelper.Inner_StreamUtil context) {
       return provider != null
          && context != null
-         && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.init
+         && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA
          && !provider.getClass().getName().startsWith("net.minecraft.client.particle.");
    }
 

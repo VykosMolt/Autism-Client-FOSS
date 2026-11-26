@@ -1,16 +1,16 @@
 package autismclient.gui.macro.editor;
 
 public enum CachePool {
-   init,
-   load,
-   read,
-   write,
-   update,
-   sync,
-   flush,
-   close,
-   open,
-   poll,
-   push,
-   pop;
+   TOGGLE,
+   NUMBER,
+   DECIMAL,
+   TEXT,
+   MACRO_SELECT,
+   ENUM,
+   STRING_LIST,
+   BLOCK_POS,
+   SLOT,
+   TARGET_SUMMARY,
+   CAPTURE_BUTTON,
+   CONDITION;
 }

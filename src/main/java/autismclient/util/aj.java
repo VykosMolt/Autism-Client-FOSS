@@ -363,7 +363,7 @@ public final class aj {
             bedrock = this.init_B(cellX + direction.getStepX(), cellY, cellZ + direction.getStepZ()) == 4;
          }
 
-         this.init_V_aj_DataUtil(new aj.Inner_DataUtil(bedrock ? aj.Inner_StreamUtil.init : aj.Inner_StreamUtil.load, new BlockPos(cellX, cellY, cellZ), 1, 1));
+         this.init_V_aj_DataUtil(new aj.Inner_DataUtil(bedrock ? aj.Inner_StreamUtil.ONE_BY_ONE_BEDROCK : aj.Inner_StreamUtil.ONE_BY_ONE, new BlockPos(cellX, cellY, cellZ), 1, 1));
       }
 
       private void init(int cellX, int cellY, int cellZ, Direction open) {
@@ -381,7 +381,7 @@ public final class aj {
             boolean alongX = open.getAxis() == Axis.X;
             this.init_V_aj_DataUtil(
                new aj.Inner_DataUtil(
-                  aj.Inner_StreamUtil.read, new BlockPos(Math.min(cellX, otherX), cellY, Math.min(cellZ, otherZ)), alongX ? 2 : 1, alongX ? 1 : 2
+                  aj.Inner_StreamUtil.ONE_BY_TWO, new BlockPos(Math.min(cellX, otherX), cellY, Math.min(cellZ, otherZ)), alongX ? 2 : 1, alongX ? 1 : 2
                )
             );
          }
@@ -397,7 +397,7 @@ public final class aj {
                int cx = bx + d1.getStepX();
                int cz = bz + d1.getStepZ();
                if (this.init_Z(cx, cellY, cz, d1, d2)) {
-                  this.init_V_aj_DataUtil(new aj.Inner_DataUtil(aj.Inner_StreamUtil.write, new BlockPos(Math.min(cellX, cx), cellY, Math.min(cellZ, cz)), 2, 2));
+                  this.init_V_aj_DataUtil(new aj.Inner_DataUtil(aj.Inner_StreamUtil.TWO_BY_TWO, new BlockPos(Math.min(cellX, cx), cellY, Math.min(cellZ, cz)), 2, 2));
                }
             }
          }
@@ -523,7 +523,7 @@ public final class aj {
       }
 
       public boolean init_Z() {
-         return this.init_aj_StreamUtil == aj.Inner_StreamUtil.init;
+         return this.init_aj_StreamUtil == aj.Inner_StreamUtil.ONE_BY_ONE_BEDROCK;
       }
 
       public int read() {
@@ -591,9 +591,9 @@ public final class aj {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      ONE_BY_ONE_BEDROCK,
+      ONE_BY_ONE,
+      ONE_BY_TWO,
+      TWO_BY_TWO;
    }
 }

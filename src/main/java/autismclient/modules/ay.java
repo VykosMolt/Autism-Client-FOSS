@@ -82,16 +82,16 @@ public final class ay extends Module {
    private final BoolSetting chunk = this.add(new BoolSetting("sunrise-glow", "Sunset Glow", false).group("Sky").description("Hide sunrise/sunset glow"));
    private final BoolSetting table = this.add(new BoolSetting("clouds", "Clouds", false).group("Sky").description("Hide the clouds"));
    private final EnumSetting<ay.Inner_DataUtil> init_EnumSetting = this.add(
-      new EnumSetting<>("time", "Time", ay.Inner_DataUtil.init, ay.Inner_DataUtil.values()).group("Time & Weather").description("Force a client time")
+      new EnumSetting<>("time", "Time", ay.Inner_DataUtil.VANILLA, ay.Inner_DataUtil.values()).group("Time & Weather").description("Force a client time")
    );
    private final IntSetting init_IntSetting = this.add(
       new IntSetting("custom-time", "Custom Time", 6000, 0, 24000, 100)
          .group("Time & Weather")
          .description("Custom time in ticks")
-         .visibleWhen(() -> this.init_EnumSetting.get() == ay.Inner_DataUtil.close)
+         .visibleWhen(() -> this.init_EnumSetting.get() == ay.Inner_DataUtil.CUSTOM)
    );
    private final EnumSetting<ay.Inner_StreamUtil> load_EnumSetting = this.add(
-      new EnumSetting<>("weather-changer", "Weather Changer", ay.Inner_StreamUtil.init, ay.Inner_StreamUtil.values())
+      new EnumSetting<>("weather-changer", "Weather Changer", ay.Inner_StreamUtil.VANILLA, ay.Inner_StreamUtil.values())
          .group("Time & Weather")
          .description("Force client weather")
    );
@@ -195,17 +195,17 @@ public final class ay extends Module {
       az.chunk = this.chunk.get();
       az.table = this.table.get();
       ay.Inner_DataUtil tm = this.init_EnumSetting.get();
-      az.store = tm != ay.Inner_DataUtil.init;
+      az.store = tm != ay.Inner_DataUtil.VANILLA;
       az.init_J = this.init(tm);
       ay.Inner_StreamUtil wm = this.load_EnumSetting.get();
-      az.drain = wm != ay.Inner_StreamUtil.init;
+      az.drain = wm != ay.Inner_StreamUtil.VANILLA;
       float var10000;
       switch (wm) {
-         case read:
-         case update:
+         case RAIN:
+         case THUNDER:
             var10000 = 1.0F;
             break;
-         case write:
+         case SNOW:
             var10000 = 0.9F;
             break;
          default:
@@ -213,7 +213,7 @@ public final class ay extends Module {
       }
 
       az.init_F = var10000;
-      az.load_F = wm == ay.Inner_StreamUtil.update ? 1.0F : 0.0F;
+      az.load_F = wm == ay.Inner_StreamUtil.THUNDER ? 1.0F : 0.0F;
       az.init_List = this.load_RegistryListSettin.get();
       az.f_b_Z = this.store.get();
       az.fill = this.drain.get();
@@ -228,28 +228,28 @@ public final class ay extends Module {
    private long init(ay.Inner_DataUtil mode) {
       long var10000;
       switch (mode) {
-         case init:
+         case VANILLA:
             var10000 = 0L;
             break;
-         case load:
+         case DAY:
             var10000 = 1000L;
             break;
-         case read:
+         case NOON:
             var10000 = 6000L;
             break;
-         case write:
+         case SUNSET:
             var10000 = 12610L;
             break;
-         case update:
+         case NIGHT:
             var10000 = 13000L;
             break;
-         case sync:
+         case MIDNIGHT:
             var10000 = 18000L;
             break;
-         case flush:
+         case SUNRISE:
             var10000 = 23041L;
             break;
-         case close:
+         case CUSTOM:
             var10000 = this.init_IntSetting.get().intValue();
             break;
          default:
@@ -267,21 +267,21 @@ public final class ay extends Module {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      VANILLA,
+      DAY,
+      NOON,
+      SUNSET,
+      NIGHT,
+      MIDNIGHT,
+      SUNRISE,
+      CUSTOM;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      VANILLA,
+      CLEAR,
+      RAIN,
+      SNOW,
+      THUNDER;
    }
 }

@@ -14,7 +14,7 @@ public class NetHelper implements E, MacroAction, aP {
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
 
    public NetHelper() {
    }
@@ -27,7 +27,7 @@ public class NetHelper implements E, MacroAction, aP {
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
-         if (this.type == NetHelper.Inner_DataUtil.init) {
+         if (this.type == NetHelper.Inner_DataUtil.LEFT) {
             ((AutismMinecraftAccessor)mc).autism$startAttack();
          } else if (mc.hitResult == null || mc.hitResult.getType() == Type.MISS) {
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
@@ -76,14 +76,14 @@ public class NetHelper implements E, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.poll;
+      return StreamGate.CLICK;
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putString("clickType", (this.type == null ? NetHelper.Inner_DataUtil.load : this.type).name());
+      tag.putString("clickType", (this.type == null ? NetHelper.Inner_DataUtil.RIGHT : this.type).name());
       tag.putInt("clickCount", this.clickCount);
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
@@ -98,12 +98,12 @@ public class NetHelper implements E, MacroAction, aP {
          try {
             this.type = NetHelper.Inner_DataUtil.valueOf(tag.getStringOr("clickType", "RIGHT"));
          } catch (IllegalArgumentException e) {
-            this.type = NetHelper.Inner_DataUtil.load;
+            this.type = NetHelper.Inner_DataUtil.RIGHT;
          }
       }
 
       if (this.type == null) {
-         this.type = NetHelper.Inner_DataUtil.load;
+         this.type = NetHelper.Inner_DataUtil.RIGHT;
       }
 
       if (tag.contains("clickCount")) {
@@ -121,7 +121,7 @@ public class NetHelper implements E, MacroAction, aP {
 
    @Override
    public String getDisplayName() {
-      String base = this.type == NetHelper.Inner_DataUtil.init ? "Left Click" : "Right Click";
+      String base = this.type == NetHelper.Inner_DataUtil.LEFT ? "Left Click" : "Right Click";
       if (this.clickCount > 1) {
          base = base + " x" + this.clickCount;
       }
@@ -131,11 +131,11 @@ public class NetHelper implements E, MacroAction, aP {
 
    @Override
    public String getIcon() {
-      return this.type == NetHelper.Inner_DataUtil.init ? "L" : "R";
+      return this.type == NetHelper.Inner_DataUtil.LEFT ? "L" : "R";
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      LEFT,
+      RIGHT;
    }
 }

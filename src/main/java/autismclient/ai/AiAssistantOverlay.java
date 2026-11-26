@@ -93,14 +93,14 @@ final class AiAssistantOverlay extends autismclient.util.bj {
 
    @Override
    public cX.Inner_DataUtil init_cX_DataUtil() {
-      return this.write_Z ? cX.Inner_DataUtil.write : super.init_cX_DataUtil();
+      return this.write_Z ? cX.Inner_DataUtil.BACKGROUND_STATUS : super.init_cX_DataUtil();
    }
 
    private void set_V() {
       boolean next = !this.write_Z;
       this.write_Z = next;
       this.init_cc.init_V_Consumer(s -> s.pinned = next);
-      bk.init_bk().init_V_cX_cX_DataUtil(this, next ? cX.Inner_DataUtil.write : cX.Inner_DataUtil.init);
+      bk.init_bk().init_V_cX_cX_DataUtil(this, next ? cX.Inner_DataUtil.BACKGROUND_STATUS : cX.Inner_DataUtil.HOST_SCREEN);
       if (!next && Minecraft.getInstance().gui.screen() == null) {
          this.init_V_Z(false);
       }

@@ -48,32 +48,32 @@ final class i {
          return false;
       }
 
-      if (hit.init_Z && hit.init_i_StreamUtil != i.Inner_StreamUtil.close) {
+      if (hit.init_Z && hit.init_i_StreamUtil != i.Inner_StreamUtil.FALL) {
          return false;
       }
 
       boolean var10000;
       switch (hit.init_i_StreamUtil) {
-         case init:
-         case load:
+         case MELEE:
+         case SERVER_PUSH:
             var10000 = melee;
             break;
-         case read:
-         case write:
-         case update:
+         case FIREBALL:
+         case WIND:
+         case BLAST:
             var10000 = explosions;
             break;
-         case sync:
-         case flush:
+         case ARROW:
+         case SNOWBALL:
             var10000 = projectiles;
             break;
-         case close:
+         case FALL:
             var10000 = ownAllowed;
             break;
-         case open:
+         case GUARD:
             var10000 = true;
             break;
-         case poll:
+         case OTHER:
             var10000 = false;
             break;
          default:
@@ -88,7 +88,7 @@ final class i {
    }
 
    static boolean init_Z_i_TaskQueue(i.Inner_TaskQueue hit) {
-      return hit == null || hit.init_Z() || hit.init_i_StreamUtil() == i.Inner_StreamUtil.close || hit.init_i_StreamUtil() == i.Inner_StreamUtil.open;
+      return hit == null || hit.init_Z() || hit.init_i_StreamUtil() == i.Inner_StreamUtil.FALL || hit.init_i_StreamUtil() == i.Inner_StreamUtil.GUARD;
    }
 
    static int init_I_I(int earliest, int latest, boolean enemyFlight) {
@@ -187,13 +187,13 @@ final class i {
          }
 
          steps.add(new i.Inner_UiHelper(body, new Vec3(state.vx(), state.vy(), state.vz()), tick, state.onGround()));
-         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.init : medium.at(body);
-         if (contact == i.Inner_BufferHelper.load) {
+         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.NONE : medium.at(body);
+         if (contact == i.Inner_BufferHelper.CUSHION) {
             return new i.Inner_ConfigStore(List.copyOf(steps), false, edge);
          }
 
          fallen += Math.max(0.0, beforeY - state.y());
-         if (contact == i.Inner_BufferHelper.read || fallen > maxDrop && state.onGround()) {
+         if (contact == i.Inner_BufferHelper.HAZARD || fallen > maxDrop && state.onGround()) {
             return new i.Inner_ConfigStore(List.copyOf(steps), true, edge);
          }
 
@@ -382,14 +382,14 @@ final class i {
 
          steps.add(new i.Inner_UiHelper(body, new Vec3(state.vx(), state.vy(), state.vz()), tick, state.onGround()));
          eyes.add(init_Vec3_NodeWalker_StreamU(state));
-         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.init : medium.at(body);
+         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.NONE : medium.at(body);
          fallen += Math.max(0.0, previousY - state.y());
          exceeded |= fallen > allowed;
-         if (contact == i.Inner_BufferHelper.load) {
+         if (contact == i.Inner_BufferHelper.CUSHION) {
             return new i.Inner_ConfigStore(List.copyOf(steps), false, edge, List.copyOf(eyes));
          }
 
-         if (contact == i.Inner_BufferHelper.read || exceeded && state.onGround()) {
+         if (contact == i.Inner_BufferHelper.HAZARD || exceeded && state.onGround()) {
             return new i.Inner_ConfigStore(List.copyOf(steps), true, edge, List.copyOf(eyes));
          }
 
@@ -579,12 +579,12 @@ final class i {
             motion = new Vec3(var28.x * (grounded ? 0.546 : 0.91), (var28.y - 0.08) * 0.98, var28.z * (grounded ? 0.546 : 0.91));
             grounded = supported;
             steps.add(new i.Inner_UiHelper(body, motion, t, supported));
-            i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.init : medium.at(body);
-            if (contact == i.Inner_BufferHelper.read) {
+            i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.NONE : medium.at(body);
+            if (contact == i.Inner_BufferHelper.HAZARD) {
                return new i.Inner_ConfigStore(List.copyOf(steps), true, edge);
             }
 
-            if (contact == i.Inner_BufferHelper.load) {
+            if (contact == i.Inner_BufferHelper.CUSHION) {
                return new i.Inner_ConfigStore(List.copyOf(steps), false, edge);
             }
 
@@ -634,12 +634,12 @@ final class i {
 
          boolean supported = wanted.y < 0.0 && actual.y > wanted.y + 1.0E-7;
          body = body.move(actual);
-         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.init : medium.at(body);
-         if (contact == i.Inner_BufferHelper.read) {
+         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.NONE : medium.at(body);
+         if (contact == i.Inner_BufferHelper.HAZARD) {
             return false;
          }
 
-         if (contact == i.Inner_BufferHelper.load) {
+         if (contact == i.Inner_BufferHelper.CUSHION) {
             return true;
          }
 
@@ -677,12 +677,12 @@ final class i {
          double before = state.y();
          state = autismclient.ai.a.NodeWalker.load(state, autismclient.ai.a.NodeWalker.Inner_DataUtil.NONE, world);
          AABB body = state.box(false);
-         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.init : medium.at(body);
-         if (contact == i.Inner_BufferHelper.read) {
+         i.Inner_BufferHelper contact = medium == null ? i.Inner_BufferHelper.NONE : medium.at(body);
+         if (contact == i.Inner_BufferHelper.HAZARD) {
             return false;
          }
 
-         if (contact == i.Inner_BufferHelper.load) {
+         if (contact == i.Inner_BufferHelper.CUSHION) {
             return true;
          }
 
@@ -756,9 +756,9 @@ final class i {
    }
 
    enum Inner_BufferHelper {
-      init,
-      load,
-      read;
+      NONE,
+      CUSHION,
+      HAZARD;
    }
 
    interface Inner_CachePool {
@@ -811,16 +811,16 @@ final class i {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      MELEE,
+      SERVER_PUSH,
+      FIREBALL,
+      WIND,
+      BLAST,
+      ARROW,
+      SNOWBALL,
+      FALL,
+      GUARD,
+      OTHER;
    }
 
    interface Inner_SyncManager {

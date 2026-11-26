@@ -61,17 +61,17 @@ public class HashUtil extends KeyHolder implements autismclient.gui.f.StreamUtil
    private long init_J;
 
    public HashUtil(Screen parent) {
-      this(parent, HashUtil.Inner_DataUtil.init);
+      this(parent, HashUtil.Inner_DataUtil.IN_GAME);
    }
 
    public HashUtil(Screen parent, HashUtil.Inner_DataUtil mode) {
       super(Component.literal("Autism Modules"));
       this.init_Screen = parent;
-      this.init_HashUtil_DataUtil = mode == null ? HashUtil.Inner_DataUtil.init : mode;
+      this.init_HashUtil_DataUtil = mode == null ? HashUtil.Inner_DataUtil.IN_GAME : mode;
    }
 
    public boolean init_Z_5() {
-      return this.init_HashUtil_DataUtil == HashUtil.Inner_DataUtil.load;
+      return this.init_HashUtil_DataUtil == HashUtil.Inner_DataUtil.TITLE_SETUP;
    }
 
    public autismclient.gui.f.d.ConfigStore init_ConfigStore() {
@@ -909,8 +909,8 @@ public class HashUtil extends KeyHolder implements autismclient.gui.f.StreamUtil
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      IN_GAME,
+      TITLE_SETUP;
    }
 
    private final class Inner_StreamUtil implements autismclient.gui.f.d.ConfigStore.Inner_BufferHelper {

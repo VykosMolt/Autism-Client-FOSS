@@ -66,7 +66,7 @@ public final class w implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_u_StreamGate;
+      return StreamGate.TP;
    }
 
    @Override

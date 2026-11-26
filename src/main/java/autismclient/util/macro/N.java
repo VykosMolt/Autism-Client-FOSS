@@ -47,7 +47,7 @@ public class N implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.frame;
+      return StreamGate.REPEAT;
    }
 
    @Override

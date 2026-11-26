@@ -18,12 +18,12 @@ public class q implements E, MacroAction {
    public int minedCountTarget = 64;
    public boolean stopAfterTime = false;
    public int timeoutSeconds = 60;
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private boolean init = true;
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_d_StreamGate;
+      return StreamGate.MINE;
    }
 
    @Override

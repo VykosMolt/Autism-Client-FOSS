@@ -12,7 +12,7 @@ public class KickDupeBlockingCheck {
       ao hold = new ao();
       hold.holdTicks = 5;
       ByteReader autoDisconnect = new ByteReader();
-      autoDisconnect.mode = ByteReader.Inner_StreamUtil.write;
+      autoDisconnect.mode = ByteReader.Inner_StreamUtil.AUTO_DISCONNECT;
       check(!ByteReader.blocksClientThread(instant), "use item without hold must run");
       check(ByteReader.blocksClientThread(hold), "use item with hold must be skipped");
       check(ByteReader.blocksClientThread(new BufferHelper()), "bundle dupe must be skipped");

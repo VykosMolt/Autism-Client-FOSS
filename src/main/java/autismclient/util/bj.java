@@ -39,7 +39,7 @@ public abstract class bj extends cF implements cX {
 
    @Override
    public cX.Inner_DataUtil init_cX_DataUtil() {
-      return this.read_Z ? cX.Inner_DataUtil.write : cX.super.init_cX_DataUtil();
+      return this.read_Z ? cX.Inner_DataUtil.BACKGROUND_STATUS : cX.super.init_cX_DataUtil();
    }
 
    protected void pop_V() {

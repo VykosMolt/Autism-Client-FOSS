@@ -241,7 +241,7 @@ final class V {
                }
 
                if (moved == -1.0 / 0.0) {
-                  return new V.Inner_CachePool(W.Inner_TaskQueue.init, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
+                  return new V.Inner_CachePool(W.Inner_TaskQueue.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
                }
 
                if (Math.abs(moved - d) > 1.0E-9) {
@@ -280,7 +280,7 @@ final class V {
          }
 
          if ((caught & this.init_J_D_D(y, y + h)) != 0L) {
-            return new V.Inner_CachePool(W.Inner_TaskQueue.init, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
+            return new V.Inner_CachePool(W.Inner_TaskQueue.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
          }
 
          if (crossTick < 0 && !landed && this.init_Z_D(x, z, hw, hd)) {
@@ -313,13 +313,13 @@ final class V {
    }
 
    private V.Inner_CachePool init_V_CachePool_I(int tick, double x, double z) {
-      return new V.Inner_CachePool(W.Inner_TaskQueue.update, 0.0, tick, x, z, false, -1, 0.0, false, false);
+      return new V.Inner_CachePool(W.Inner_TaskQueue.UNKNOWN, 0.0, tick, x, z, false, -1, 0.0, false, false);
    }
 
    private V.Inner_CachePool init(double x, double z, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed) {
       double drop = Math.max(0.0, this.load_D - y);
-      W.Inner_TaskQueue kind = drop > 1.0E-6 ? W.Inner_TaskQueue.load : W.Inner_TaskQueue.init;
-      boolean edge = crossTick >= 0 && kind == W.Inner_TaskQueue.load && !this.init_Z && drop + 1.0E-6 >= this.read_D;
+      W.Inner_TaskQueue kind = drop > 1.0E-6 ? W.Inner_TaskQueue.DROP : W.Inner_TaskQueue.SAFE;
+      boolean edge = crossTick >= 0 && kind == W.Inner_TaskQueue.DROP && !this.init_Z && drop + 1.0E-6 >= this.read_D;
       return new V.Inner_CachePool(kind, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed);
    }
 
@@ -360,18 +360,18 @@ final class V {
 
       boolean edge = crossTick >= 0;
       if (caught) {
-         return new V.Inner_CachePool(W.Inner_TaskQueue.init, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
+         return new V.Inner_CachePool(W.Inner_TaskQueue.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
       }
 
       if (top == -1.0 / 0.0) {
          return new V.Inner_CachePool(
-            lava ? W.Inner_TaskQueue.write : W.Inner_TaskQueue.read, 1.0 / 0.0, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed
+            lava ? W.Inner_TaskQueue.LAVA : W.Inner_TaskQueue.VOID, 1.0 / 0.0, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed
          );
       }
 
       double drop = this.load_D - top;
       return !this.init_Z && drop + 1.0E-6 >= this.read_D
-         ? new V.Inner_CachePool(W.Inner_TaskQueue.load, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed)
+         ? new V.Inner_CachePool(W.Inner_TaskQueue.DROP, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed)
          : null;
    }
 
@@ -592,9 +592,9 @@ final class V {
       boolean read_Z
    ) {
       boolean init(double minimum, boolean voidOnly) {
-         return this.init_W_TaskQueue == W.Inner_TaskQueue.read
+         return this.init_W_TaskQueue == W.Inner_TaskQueue.VOID
             || !voidOnly
-               && (this.init_W_TaskQueue == W.Inner_TaskQueue.write || this.init_W_TaskQueue == W.Inner_TaskQueue.load && this.init_D + 1.0E-6 >= minimum);
+               && (this.init_W_TaskQueue == W.Inner_TaskQueue.LAVA || this.init_W_TaskQueue == W.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
       }
    }
 

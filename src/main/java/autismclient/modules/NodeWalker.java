@@ -96,8 +96,8 @@ public final class NodeWalker {
                12,
                (int)Math.ceil(
                      autismclient.gui.e.SyncManager.load(
-                        autismclient.gui.e.ConfigStore.init_ConfigStore,
-                        autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore)
+                        autismclient.gui.e.ConfigStore.BODY,
+                        autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
                      )
                   )
                   + 2

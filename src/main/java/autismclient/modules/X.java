@@ -195,7 +195,7 @@ public final class X extends Module implements cn.Inner_DataUtil {
             .visibleWhen(() -> !this.bool("void-only"))
       );
       this.add(
-         new EnumSetting<>("side", "Side", X.Inner_DataUtil.init, X.Inner_DataUtil.values(), Enum::name)
+         new EnumSetting<>("side", "Side", X.Inner_DataUtil.Auto, X.Inner_DataUtil.values(), Enum::name)
             .description("Choose either side automatically, or restrict the displacement side.")
       );
       this.add(new IntSetting("max-turn", "Max Turn", 100, 15, 180, 5).description("Largest temporary turn from the attack's existing server direction."));
@@ -824,8 +824,8 @@ public final class X extends Module implements cn.Inner_DataUtil {
       Module canceller = al.init_Module_Str("packet-canceller");
       if (!HashUtil.init_Z() && (!autismclient.util.macro.J.read_Z() || !autismclient.util.macro.J.load_Z()) && !ck.init_ck().reset_Z()) {
          return canceller == null || !canceller.isEnabled() || !canceller.onPacketSend(look) && !canceller.onPacketSend(attack)
-            ? autismclient.util.macro.C.init(look, "C2S") == autismclient.util.macro.C.Inner_StreamUtil.init
-               && autismclient.util.macro.C.init(attack, "C2S") == autismclient.util.macro.C.Inner_StreamUtil.init
+            ? autismclient.util.macro.C.init(look, "C2S") == autismclient.util.macro.C.Inner_StreamUtil.PASS
+               && autismclient.util.macro.C.init(attack, "C2S") == autismclient.util.macro.C.Inner_StreamUtil.PASS
             : false;
       } else {
          return false;
@@ -1316,9 +1316,9 @@ public final class X extends Module implements cn.Inner_DataUtil {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      Auto,
+      Left,
+      Right;
    }
 
    private record Inner_StreamUtil(AABB init_AABB, boolean init_Z, int init_I, Vec3 init_Vec3) {

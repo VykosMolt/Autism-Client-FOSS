@@ -148,7 +148,7 @@ public class StreamUtil extends HashUtil {
                   drawY,
                   underlineX + underlineWidth,
                   drawY + context.init_CharEncoder().load(1),
-                  ct.init_I_I_ct_DataUtil(this.load_I, ct.Inner_DataUtil.init)
+                  ct.init_I_I_ct_DataUtil(this.load_I, ct.Inner_DataUtil.ACCENT)
                );
          }
       }

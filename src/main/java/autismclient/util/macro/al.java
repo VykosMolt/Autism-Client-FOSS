@@ -323,7 +323,7 @@ public final class al implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.cache;
+      return StreamGate.TOOLS;
    }
 
    @Override

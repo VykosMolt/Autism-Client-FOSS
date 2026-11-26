@@ -20,15 +20,15 @@ public final class cs {
    public static int init_I(cs.Inner_DataUtil tone) {
       int var10000;
       switch (tone) {
-         case init:
-         case load:
-         case read:
+         case TITLE:
+         case LABEL:
+         case BODY:
             var10000 = p.scan();
             break;
-         case write:
+         case MUTED:
             var10000 = p.a();
             break;
-         case update:
+         case ACCENT:
             var10000 = p.init();
             break;
          default:
@@ -43,7 +43,7 @@ public final class cs {
    }
 
    public static MutableComponent init(String value, int color) {
-      Identifier fontId = init_Identifier(cs.Inner_DataUtil.read);
+      Identifier fontId = init_Identifier(cs.Inner_DataUtil.BODY);
       return Component.literal(value == null ? "" : value).setStyle(Style.EMPTY.withFont(init(fontId)).withColor(color));
    }
 
@@ -97,15 +97,15 @@ public final class cs {
    private static Identifier init_Identifier(cs.Inner_DataUtil tone) {
       Identifier var10000;
       switch (tone) {
-         case init:
+         case TITLE:
             var10000 = autismclient.gui.f.a.DataUtil.read;
             break;
-         case load:
+         case LABEL:
             var10000 = autismclient.gui.f.a.DataUtil.load;
             break;
-         case read:
-         case write:
-         case update:
+         case BODY:
+         case MUTED:
+         case ACCENT:
             var10000 = autismclient.gui.f.a.DataUtil.init;
             break;
          default:
@@ -120,10 +120,10 @@ public final class cs {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      TITLE,
+      LABEL,
+      BODY,
+      MUTED,
+      ACCENT;
    }
 }

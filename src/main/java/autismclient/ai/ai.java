@@ -331,7 +331,7 @@ public final class ai {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null && mc.getConnection() != null) {
          autismclient.util.aE.Inner_JsonUtil state = lan.init_aE_JsonUtil();
-         if (state != autismclient.util.aE.Inner_JsonUtil.init && state != autismclient.util.aE.Inner_JsonUtil.flush) {
+         if (state != autismclient.util.aE.Inner_JsonUtil.IDLE && state != autismclient.util.aE.Inner_JsonUtil.DONE) {
             throw new IllegalStateException("LAN Sync is busy with another synchronized action (" + state.name() + ")");
          }
       } else {

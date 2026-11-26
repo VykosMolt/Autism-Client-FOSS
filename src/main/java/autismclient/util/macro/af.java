@@ -43,7 +43,7 @@ public class af implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.node;
+      return StreamGate.START_MACRO;
    }
 
    @Override

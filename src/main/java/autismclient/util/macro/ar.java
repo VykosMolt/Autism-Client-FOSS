@@ -5,11 +5,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 public class ar implements MacroAction {
-   public ar.Inner_CachePool targetMode = ar.Inner_CachePool.init;
+   public ar.Inner_CachePool targetMode = ar.Inner_CachePool.HELD;
    public String itemName = "";
    public int slot = 0;
-   public ar.Inner_StreamUtil measurement = ar.Inner_StreamUtil.init;
-   public ar.Inner_DataUtil comparison = ar.Inner_DataUtil.load;
+   public ar.Inner_StreamUtil measurement = ar.Inner_StreamUtil.REMAINING;
+   public ar.Inner_DataUtil comparison = ar.Inner_DataUtil.AT_MOST;
    public int value = 2;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -22,20 +22,20 @@ public class ar implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_E_StreamGate;
+      return StreamGate.WAIT_DURABILITY;
    }
 
    public boolean init(Minecraft mc) {
       if (mc != null && mc.player != null) {
          boolean var10000;
          switch (this.targetMode) {
-            case init:
+            case HELD:
                var10000 = this.init_Z(mc.player.getMainHandItem()) || this.init_Z(mc.player.getOffhandItem());
                break;
-            case load:
+            case ITEM:
                var10000 = this.load(mc);
                break;
-            case read:
+            case SLOT:
                var10000 = this.init_Z(this.init(mc, this.slot));
                break;
             default:
@@ -103,13 +103,13 @@ public class ar implements MacroAction {
       int remaining = Math.max(0, stack.getMaxDamage() - stack.getDamageValue());
       int var10000;
       switch (this.measurement) {
-         case init:
+         case REMAINING:
             var10000 = remaining;
             break;
-         case load:
+         case DAMAGE_USED:
             var10000 = Math.max(0, stack.getDamageValue());
             break;
-         case read:
+         case PERCENT_REMAINING:
             var10000 = stack.getMaxDamage() <= 0 ? 100 : Math.round(remaining * 100.0F / stack.getMaxDamage());
             break;
          default:
@@ -120,26 +120,26 @@ public class ar implements MacroAction {
    }
 
    private int load(ItemStack stack) {
-      int max = this.measurement == ar.Inner_StreamUtil.read ? 100 : Math.max(0, stack == null ? 2048 : stack.getMaxDamage());
+      int max = this.measurement == ar.Inner_StreamUtil.PERCENT_REMAINING ? 100 : Math.max(0, stack == null ? 2048 : stack.getMaxDamage());
       return Math.max(0, Math.min(max, this.value));
    }
 
    private boolean init(int actual, int target) {
       boolean var10000;
       switch (this.comparison) {
-         case init:
+         case BELOW:
             var10000 = actual < target;
             break;
-         case load:
+         case AT_MOST:
             var10000 = actual <= target;
             break;
-         case read:
+         case EXACT:
             var10000 = actual == target;
             break;
-         case write:
+         case AT_LEAST:
             var10000 = actual >= target;
             break;
-         case update:
+         case ABOVE:
             var10000 = actual > target;
             break;
          default:
@@ -168,11 +168,11 @@ public class ar implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = i.init(ar.Inner_CachePool.class, tag.getStringOr("targetMode", ar.Inner_CachePool.init.name()), ar.Inner_CachePool.init);
+      this.targetMode = i.init(ar.Inner_CachePool.class, tag.getStringOr("targetMode", ar.Inner_CachePool.HELD.name()), ar.Inner_CachePool.HELD);
       this.itemName = tag.getStringOr("itemName", "");
       this.slot = Math.max(0, Math.min(40, tag.getIntOr("slot", 0)));
-      this.measurement = i.init(ar.Inner_StreamUtil.class, tag.getStringOr("measurement", ar.Inner_StreamUtil.init.name()), ar.Inner_StreamUtil.init);
-      this.comparison = i.init(ar.Inner_DataUtil.class, tag.getStringOr("comparison", ar.Inner_DataUtil.load.name()), ar.Inner_DataUtil.load);
+      this.measurement = i.init(ar.Inner_StreamUtil.class, tag.getStringOr("measurement", ar.Inner_StreamUtil.REMAINING.name()), ar.Inner_StreamUtil.REMAINING);
+      this.comparison = i.init(ar.Inner_DataUtil.class, tag.getStringOr("comparison", ar.Inner_DataUtil.AT_MOST.name()), ar.Inner_DataUtil.AT_MOST);
       this.value = Math.max(0, tag.getIntOr("value", 2));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.useNext = tag.getBooleanOr("useNext", false);
@@ -191,13 +191,13 @@ public class ar implements MacroAction {
    private String init() {
       String var10000;
       switch (this.targetMode) {
-         case init:
+         case HELD:
             var10000 = "Held";
             break;
-         case load:
+         case ITEM:
             var10000 = this.itemName != null && !this.itemName.isBlank() ? ArrayUtil.update(this.itemName).load_Str() : "Held";
             break;
-         case read:
+         case SLOT:
             var10000 = "#" + Math.max(0, Math.min(40, this.slot));
             break;
          default:
@@ -210,13 +210,13 @@ public class ar implements MacroAction {
    private String load() {
       String var10000;
       switch (this.measurement) {
-         case init:
+         case REMAINING:
             var10000 = "remaining";
             break;
-         case load:
+         case DAMAGE_USED:
             var10000 = "damage";
             break;
-         case read:
+         case PERCENT_REMAINING:
             var10000 = "%";
             break;
          default:
@@ -229,19 +229,19 @@ public class ar implements MacroAction {
    private String read() {
       String var10000;
       switch (this.comparison) {
-         case init:
+         case BELOW:
             var10000 = "<";
             break;
-         case load:
+         case AT_MOST:
             var10000 = "<=";
             break;
-         case read:
+         case EXACT:
             var10000 = "=";
             break;
-         case write:
+         case AT_LEAST:
             var10000 = ">=";
             break;
-         case update:
+         case ABOVE:
             var10000 = ">";
             break;
          default:
@@ -267,22 +267,22 @@ public class ar implements MacroAction {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read;
+      HELD,
+      ITEM,
+      SLOT;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      BELOW,
+      AT_MOST,
+      EXACT,
+      AT_LEAST,
+      ABOVE;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      REMAINING,
+      DAMAGE_USED,
+      PERCENT_REMAINING;
    }
 }

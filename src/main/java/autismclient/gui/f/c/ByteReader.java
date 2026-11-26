@@ -19,7 +19,7 @@ public class ByteReader extends TableIndex {
    private Identifier init_Identifier;
    private int write_I = 10;
    private int update_I = 4;
-   private ByteReader.Inner_DataUtil init_ByteReader_DataUti = ByteReader.Inner_DataUtil.init;
+   private ByteReader.Inner_DataUtil init_ByteReader_DataUti = ByteReader.Inner_DataUtil.CENTER;
    private l init_l = l.read;
    private boolean write_Z;
    private boolean update_Z;
@@ -34,7 +34,7 @@ public class ByteReader extends TableIndex {
 
    public ByteReader(String text, ByteReader.Inner_StreamUtil variant, Runnable onPress) {
       this.init_Str = text == null ? "" : text;
-      this.init_ByteReader_StreamU = variant == null ? ByteReader.Inner_StreamUtil.load : variant;
+      this.init_ByteReader_StreamU = variant == null ? ByteReader.Inner_StreamUtil.SECONDARY : variant;
       this.init_Runnable = onPress;
       this.write = 13.0F;
    }
@@ -50,7 +50,7 @@ public class ByteReader extends TableIndex {
    }
 
    public ByteReader init_ByteReader_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
-      this.init_ByteReader_StreamU = variant == null ? ByteReader.Inner_StreamUtil.load : variant;
+      this.init_ByteReader_StreamU = variant == null ? ByteReader.Inner_StreamUtil.SECONDARY : variant;
       return this;
    }
 
@@ -143,7 +143,7 @@ public class ByteReader extends TableIndex {
    }
 
    public ByteReader init_ByteReader_ByteReader_DataUti(ByteReader.Inner_DataUtil contentAlignment) {
-      this.init_ByteReader_DataUti = contentAlignment == null ? ByteReader.Inner_DataUtil.init : contentAlignment;
+      this.init_ByteReader_DataUti = contentAlignment == null ? ByteReader.Inner_DataUtil.CENTER : contentAlignment;
       return this;
    }
 
@@ -244,7 +244,7 @@ public class ByteReader extends TableIndex {
       );
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
       if (this.update_Z) {
-         float target = this.init_ByteReader_StreamU == ByteReader.Inner_StreamUtil.update ? 1.0F : 0.0F;
+         float target = this.init_ByteReader_StreamU == ByteReader.Inner_StreamUtil.SUCCESS ? 1.0F : 0.0F;
          if (!this.sync_Z) {
             this.open = target;
             this.sync_Z = true;
@@ -277,17 +277,17 @@ public class ByteReader extends TableIndex {
    public static autismclient.gui.f.b.CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
       autismclient.gui.f.b.CachePool.Inner_DataUtil var10000;
       switch (variant) {
-         case init:
+         case PRIMARY:
             var10000 = autismclient.gui.f.b.CachePool.Inner_DataUtil.read;
             break;
-         case load:
-         case read:
+         case SECONDARY:
+         case GHOST:
             var10000 = autismclient.gui.f.b.CachePool.Inner_DataUtil.init;
             break;
-         case write:
+         case DANGER:
             var10000 = autismclient.gui.f.b.CachePool.Inner_DataUtil.update;
             break;
-         case update:
+         case SUCCESS:
             var10000 = autismclient.gui.f.b.CachePool.Inner_DataUtil.write;
             break;
          default:
@@ -323,15 +323,15 @@ public class ByteReader extends TableIndex {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      CENTER,
+      START;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      PRIMARY,
+      SECONDARY,
+      GHOST,
+      DANGER,
+      SUCCESS;
    }
 }

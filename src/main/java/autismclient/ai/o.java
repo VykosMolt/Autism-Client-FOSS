@@ -179,9 +179,9 @@ public final class o {
          load_k_StreamUtil = created.init_k_StreamUtil;
          created.init_k_StreamUtil.init(() -> Minecraft.getInstance().execute(() -> init(created.init_k_StreamUtil)));
          if (lease != null) {
-            created.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.load, "Starting " + id, "{}");
+            created.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.WAITING, "Starting " + id, "{}");
          } else {
-            created.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.load, "Waiting for shared controls", "{}");
+            created.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.WAITING, "Waiting for shared controls", "{}");
          }
 
          init_AiOperation_Result = null;
@@ -290,7 +290,7 @@ public final class o {
          AutismClientMessaging.sendPrefixed("§7" + a.init_Str + " is already paused - " + load_Str() + " resume continues.");
       } else if (a.load_AiOperation == null && !init_Set.contains(a.init_Str)) {
          a.init_Z = true;
-         a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.write, "Paused", a.write);
+         a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.PAUSED, "Paused", a.write);
          load(a);
          AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " paused (inputs released; its deadline keeps running) - " + load_Str() + " resume continues.");
       } else {
@@ -308,7 +308,7 @@ public final class o {
          a.init_Z = false;
          a.init_k_StreamUtil
             .init(
-               a.init_AutoCloseable == null ? autismclient.util.macro.k.Inner_ConfigStore.load : autismclient.util.macro.k.Inner_ConfigStore.read,
+               a.init_AutoCloseable == null ? autismclient.util.macro.k.Inner_ConfigStore.WAITING : autismclient.util.macro.k.Inner_ConfigStore.RUNNING,
                "Resumed",
                a.write
             );
@@ -362,7 +362,7 @@ public final class o {
                   return;
                }
 
-               a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.load, "Starting " + a.init_Str, a.write);
+               a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.WAITING, "Starting " + a.init_Str, a.write);
             }
 
             if (mc.player != null && mc.player.isAlive() && a.init_List.contains("INPUT") && a.init_List.contains("ROTATION")) {
@@ -532,7 +532,7 @@ public final class o {
       a.read = result.message();
       a.write = data == null ? "{}" : data;
       if (!result.terminal()) {
-         a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.read, a.read, a.write);
+         a.init_k_StreamUtil.init(autismclient.util.macro.k.Inner_ConfigStore.RUNNING, a.read, a.write);
          if (init_o_DataUtil == a) {
             String title = a.init_Str.substring(a.init_Str.indexOf(':') + 1).replace('_', ' ');
             String pretty = title.isEmpty() ? a.init_Str : Character.toUpperCase(title.charAt(0)) + title.substring(1);

@@ -40,7 +40,7 @@ public final class DataUtil {
       String capturingLabel,
       Runnable action
    ) {
-      autismclient.gui.macro.editor.StreamUtil resolvedMode = mode == null ? autismclient.gui.macro.editor.StreamUtil.init : mode;
+      autismclient.gui.macro.editor.StreamUtil resolvedMode = mode == null ? autismclient.gui.macro.editor.StreamUtil.NONE : mode;
       Runnable resolvedAction = action == null ? () -> {} : action;
       ByteReader button = ByteReader.init(
          bounds.read(),
@@ -50,7 +50,7 @@ public final class DataUtil {
          Component.literal(init(resolvedMode, capturing, idleLabel, capturingLabel)),
          ignored -> resolvedAction.run()
       );
-      button.init_ByteReader_ByteReader_StreamU(capturing ? ByteReader.Inner_StreamUtil.read : ByteReader.Inner_StreamUtil.write);
+      button.init_ByteReader_ByteReader_StreamU(capturing ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.PRIMARY);
       button.init_Z = active;
       ByteReader.init(graphics, font, button, mouseX, mouseY);
       return button;
@@ -74,21 +74,21 @@ public final class DataUtil {
       }
 
       String var10000;
-      switch (mode == null ? autismclient.gui.macro.editor.StreamUtil.init : mode) {
-         case update:
-         case sync:
-         case close:
-         case open:
-         case poll:
+      switch (mode == null ? autismclient.gui.macro.editor.StreamUtil.NONE : mode) {
+         case ITEM_SLOT:
+         case PACKET_NAME:
+         case CUSTOM_MENU_INPUT:
+         case CUSTOM_MENU_BUTTON:
+         case CUSTOM_MENU_TITLE:
             var10000 = "Pick";
             break;
-         case flush:
+         case PACKET_CLICK_TARGET:
             var10000 = "Re-capture";
             break;
-         case load:
-         case read:
-         case write:
-         case init:
+         case BLOCK_ID:
+         case ENTITY_ID:
+         case BLOCK_CATALOG:
+         case NONE:
             var10000 = "Capture";
             break;
          default:

@@ -19,7 +19,7 @@ public final class n extends Module {
    public n() {
       super("crosshair", "Crosshair", ae.update, "Custom crosshair shapes and colors.");
       this.add(
-         new ChoiceSetting("style", "Style", p.Inner_NetHelper.init_p_NetHelper.init_Str, p.Inner_NetHelper.init_StrArr())
+         new ChoiceSetting("style", "Style", p.Inner_NetHelper.CROSS.init_Str, p.Inner_NetHelper.init_StrArr())
             .description("Crosshair shape.")
             .group("Shape")
             .build()
@@ -48,7 +48,7 @@ public final class n extends Module {
          new DoubleSetting("gap", "Gap", 2.0, 0.0, 8.0, 0.5)
             .description("Space around the dot.")
             .group("Shape")
-            .visibleWhen(() -> this.init_p_NetHelper() == p.Inner_NetHelper.load)
+            .visibleWhen(() -> this.init_p_NetHelper() == p.Inner_NetHelper.TACTICAL)
             .build()
       );
       this.add(new BoolSetting("invert", "Invert", false).description("Negative, like vanilla's.").group("Look").build());
@@ -126,7 +126,7 @@ public final class n extends Module {
    }
 
    private boolean init_Z_50() {
-      return this.init_p_NetHelper() == p.Inner_NetHelper.update;
+      return this.init_p_NetHelper() == p.Inner_NetHelper.CUSTOM;
    }
 
    public double init_D_14() {
@@ -157,7 +157,7 @@ public final class n extends Module {
    }
 
    public static m load_m() {
-      return p.init(p.Inner_NetHelper.load, 16, 1.0, 2.0, -1);
+      return p.init(p.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
    }
 
    public q.Inner_DataUtil init_q_DataUtil_m(m drawing) {

@@ -44,19 +44,19 @@ public final class aX {
    private static final aX.Inner_DataUtil init = new aX.Inner_DataUtil(0.03, 0.125, 1.5, 0.9900000095367432, 0.800000011920929, 0.0F, true, true, false);
    private static final aX.Inner_DataUtil load = new aX.Inner_DataUtil(0.05, 0.125, 0.5, 0.9900000095367432, 0.800000011920929, -20.0F, true, true, false);
    private static final aX.Inner_DataUtil read = new aX.Inner_DataUtil(0.07, 0.125, 0.7, 0.9900000095367432, 0.800000011920929, -20.0F, true, true, false);
-   private static final aX.Inner_DataUtil write = new aX.Inner_DataUtil(0.03, 0.125, 1.1, 0.92, 0.92, 0.0F, false, true, true, aX.Inner_StreamUtil.read);
+   private static final aX.Inner_DataUtil write = new aX.Inner_DataUtil(0.03, 0.125, 1.1, 0.92, 0.92, 0.0F, false, true, true, aX.Inner_StreamUtil.FISHING);
    private static final aX.Inner_DataUtil update = new aX.Inner_DataUtil(0.05, 0.25, 2.5, 0.9900000095367432, 0.9900000095367432, 0.0F, true, false, false);
    private static final aX.Inner_DataUtil sync = new aX.Inner_DataUtil(0.05, 0.25, 3.0, 0.9900000095367432, 0.6000000238418579, 0.0F, true, false, false);
    private static final aX.Inner_DataUtil flush = new aX.Inner_DataUtil(
       0.05, 0.25, 3.1500000953674316, 0.9900000095367432, 0.6000000238418579, 0.0F, false, false, false
    );
    private static final aX.Inner_DataUtil close = new aX.Inner_DataUtil(
-      0.0, 0.125, 1.600000023841858, 1.0, 1.0, 0.0F, false, false, false, aX.Inner_StreamUtil.sync
+      0.0, 0.125, 1.600000023841858, 1.0, 1.0, 0.0F, false, false, false, aX.Inner_StreamUtil.ROCKET
    );
    private static final aX.Inner_DataUtil open = new aX.Inner_DataUtil(
-      0.0, 0.5, 1.5, 0.949999988079071, 0.800000011920929, 0.0F, true, true, false, aX.Inner_StreamUtil.write
+      0.0, 0.5, 1.5, 0.949999988079071, 0.800000011920929, 0.0F, true, true, false, aX.Inner_StreamUtil.FIREBALL
    );
-   private static final aX.Inner_DataUtil poll = new aX.Inner_DataUtil(0.0, 0.15625, 1.5, 1.0, 1.0, 0.0F, true, true, false, aX.Inner_StreamUtil.update);
+   private static final aX.Inner_DataUtil poll = new aX.Inner_DataUtil(0.0, 0.15625, 1.5, 1.0, 1.0, 0.0F, true, true, false, aX.Inner_StreamUtil.WIND);
 
    private aX() {
    }
@@ -196,7 +196,7 @@ public final class aX {
    static Vec3 init(float yaw, float pitch, aX.Inner_DataUtil info) {
       float yr = yaw * 0.017453292F;
       float pr = pitch * 0.017453292F;
-      if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.read) {
+      if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.FISHING) {
          Vec3 direction = new Vec3(-Mth.sin(yr), Mth.clamp(-Math.tan(pr), -5.0, 5.0), Mth.cos(yr));
          return direction.scale(0.6 / direction.length() + 0.5);
       } else {
@@ -218,23 +218,23 @@ public final class aX {
    }
 
    static Vec3 init(Entity owner, float yaw, aX.Inner_DataUtil info) {
-      if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.read) {
+      if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.FISHING) {
          double angle = yaw * 0.017453292F;
          return new Vec3(owner.getX() - Math.sin(angle) * 0.3, owner.getEyeY(), owner.getZ() + Math.cos(angle) * 0.3);
       } else {
-         double offset = info.init_aX_StreamUtil() == aX.Inner_StreamUtil.update
+         double offset = info.init_aX_StreamUtil() == aX.Inner_StreamUtil.WIND
             ? 0.0
-            : (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.sync ? 0.15000000596046448 : 0.10000000149011612);
+            : (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.ROCKET ? 0.15000000596046448 : 0.10000000149011612);
          return new Vec3(owner.getX(), owner.getEyeY() - offset, owner.getZ());
       }
    }
 
    static Vec3 init(Vec3 velocity, aX.Inner_DataUtil info, boolean water) {
       double drag = water ? info.update() : info.write();
-      if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.write) {
+      if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.FIREBALL) {
          return velocity.add(velocity.normalize().scale(0.1)).scale(drag);
       } else {
-         return info.init_aX_StreamUtil() == aX.Inner_StreamUtil.load
+         return info.init_aX_StreamUtil() == aX.Inner_StreamUtil.ARROW
             ? velocity.scale(drag).add(0.0, -info.init_D(), 0.0)
             : velocity.add(0.0, -info.init_D(), 0.0).scale(drag);
       }
@@ -266,18 +266,18 @@ public final class aX {
          for (int tick = 0; tick < Math.min(240, maxTicks); tick++) {
             boolean water = world.load(pos);
             Vec3 collisionVelocity = velocity;
-            if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.load) {
+            if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.ARROW) {
                if (water) {
                   velocity = velocity.scale(info.update());
                }
-            } else if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.read) {
+            } else if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.FISHING) {
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
             } else {
                velocity = init(velocity, info, water);
                collisionVelocity = velocity;
             }
 
-            Vec3 next = pos.add(info.init_aX_StreamUtil() == aX.Inner_StreamUtil.load ? collisionVelocity : velocity);
+            Vec3 next = pos.add(info.init_aX_StreamUtil() == aX.Inner_StreamUtil.ARROW ? collisionVelocity : velocity);
             if (!init(next) || !world.init(next)) {
                break;
             }
@@ -290,13 +290,13 @@ public final class aX {
 
             points.add(next);
             pos = next;
-            if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.load) {
+            if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.ARROW) {
                if (!world.load(pos)) {
                   velocity = velocity.scale(info.write());
                }
 
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
-            } else if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.read) {
+            } else if (info.init_aX_StreamUtil() == aX.Inner_StreamUtil.FISHING) {
                velocity = velocity.scale(info.write());
             }
          }
@@ -401,7 +401,7 @@ public final class aX {
             copiesPlayerVelocity,
             beforeMove,
             stopsOnFluid,
-            beforeMove ? aX.Inner_StreamUtil.init : aX.Inner_StreamUtil.load
+            beforeMove ? aX.Inner_StreamUtil.THROWABLE : aX.Inner_StreamUtil.ARROW
          );
       }
 
@@ -413,11 +413,11 @@ public final class aX {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      THROWABLE,
+      ARROW,
+      FISHING,
+      FIREBALL,
+      WIND,
+      ROCKET;
    }
 }

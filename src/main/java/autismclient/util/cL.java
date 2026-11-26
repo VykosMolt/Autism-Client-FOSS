@@ -14,14 +14,14 @@ public final class cL {
 
    public static aM init(cL.Inner_DataUtil preset) {
       aM var10000;
-      switch (preset == null ? cL.Inner_DataUtil.read : preset) {
-         case init:
+      switch (preset == null ? cL.Inner_DataUtil.CUSTOM : preset) {
+         case FREE_SLOTS:
             var10000 = init("AutoFish - Free Slots Stop", init_aH());
             break;
-         case load:
+         case DURABILITY:
             var10000 = init("AutoFish - Durability Stop", init_ar());
             break;
-         case read:
+         case CUSTOM:
             var10000 = init("AutoFish - Custom Stop", init_aH());
             break;
          default:
@@ -49,11 +49,11 @@ public final class cL {
       if (name == null) {
          return null;
       } else if (init(name, "AutoFish - Free Slots Stop")) {
-         return cL.Inner_DataUtil.init;
+         return cL.Inner_DataUtil.FREE_SLOTS;
       } else if (init(name, "AutoFish - Durability Stop")) {
-         return cL.Inner_DataUtil.load;
+         return cL.Inner_DataUtil.DURABILITY;
       } else {
-         return init(name, "AutoFish - Custom Stop") ? cL.Inner_DataUtil.read : null;
+         return init(name, "AutoFish - Custom Stop") ? cL.Inner_DataUtil.CUSTOM : null;
       }
    }
 
@@ -158,8 +158,8 @@ public final class cL {
 
    private static autismclient.util.macro.aH init_aH() {
       autismclient.util.macro.aH action = new autismclient.util.macro.aH();
-      action.countMode = autismclient.util.macro.aH.Inner_StreamUtil.init;
-      action.comparison = autismclient.util.macro.aH.Inner_DataUtil.load;
+      action.countMode = autismclient.util.macro.aH.Inner_StreamUtil.FREE_SLOTS;
+      action.comparison = autismclient.util.macro.aH.Inner_DataUtil.AT_MOST;
       action.slots = 0;
       action.timeoutMs = 0;
       return action;
@@ -167,10 +167,10 @@ public final class cL {
 
    private static autismclient.util.macro.ar init_ar() {
       autismclient.util.macro.ar action = new autismclient.util.macro.ar();
-      action.targetMode = autismclient.util.macro.ar.Inner_CachePool.load;
+      action.targetMode = autismclient.util.macro.ar.Inner_CachePool.ITEM;
       action.itemName = "minecraft:fishing_rod";
-      action.measurement = autismclient.util.macro.ar.Inner_StreamUtil.init;
-      action.comparison = autismclient.util.macro.ar.Inner_DataUtil.load;
+      action.measurement = autismclient.util.macro.ar.Inner_StreamUtil.REMAINING;
+      action.comparison = autismclient.util.macro.ar.Inner_DataUtil.AT_MOST;
       action.value = 2;
       action.useNext = true;
       action.timeoutMs = 0;
@@ -178,8 +178,8 @@ public final class cL {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      FREE_SLOTS,
+      DURABILITY,
+      CUSTOM;
    }
 }

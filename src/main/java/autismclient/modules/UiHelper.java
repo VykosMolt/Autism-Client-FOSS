@@ -136,9 +136,9 @@ final class UiHelper {
       if (before.getBlock() == after.getBlock()) {
          return null;
       } else if (before.isAir() && init_Z_BlockState_Z(after, true)) {
-         return autismclient.util.DataUtil.Inner_CachePool.init;
+         return autismclient.util.DataUtil.Inner_CachePool.PLACE;
       } else {
-         return after.isAir() && init_Z_BlockState_Z(before, false) ? autismclient.util.DataUtil.Inner_CachePool.load : null;
+         return after.isAir() && init_Z_BlockState_Z(before, false) ? autismclient.util.DataUtil.Inner_CachePool.BREAK : null;
       }
    }
 
@@ -159,7 +159,7 @@ final class UiHelper {
             }
 
             this.load_Map
-               .put(pos.asLong(), new UiHelper.Inner_CachePool(kind == autismclient.util.DataUtil.Inner_CachePool.init ? after : before, kind, at + 10000L));
+               .put(pos.asLong(), new UiHelper.Inner_CachePool(kind == autismclient.util.DataUtil.Inner_CachePool.PLACE ? after : before, kind, at + 10000L));
             if (this.init_Map.getOrDefault(pos.asLong(), 0L) <= at && at >= this.load_J && !this.init_Z_BlockPos_J(pos, at)) {
                this.init_DataUtil
                   .init_V_DataUtil_StreamUti(
@@ -393,7 +393,7 @@ final class UiHelper {
                   }
 
                   if (focus != null
-                     && focus.init_DataUtil_CachePool == autismclient.util.DataUtil.Inner_CachePool.init
+                     && focus.init_DataUtil_CachePool == autismclient.util.DataUtil.Inner_CachePool.PLACE
                      && p.distManhattan(pos) == 1
                      && (focus.init_BlockState.getBlock() == Blocks.MELON || focus.init_BlockState.getBlock() == Blocks.PUMPKIN)
                      && (state.getBlock() instanceof StemBlock || state.getBlock() instanceof AttachedStemBlock)) {
@@ -498,7 +498,7 @@ final class UiHelper {
    }
 
    static boolean init(BlockState state, autismclient.util.DataUtil.Inner_CachePool kind, boolean fluid, boolean heat) {
-      if (kind == autismclient.util.DataUtil.Inner_CachePool.load) {
+      if (kind == autismclient.util.DataUtil.Inner_CachePool.BREAK) {
          return heat && state.ignitedByLava();
       }
 

@@ -37,7 +37,7 @@ final class C {
             try {
                double radius = Double.parseDouble(saved.get("relevance-radius"));
                if (Double.isFinite(radius)) {
-                  result.put(key, Double.toString(Math.clamp(radius, 1.0, 30.0) * (kind == A.Inner_StreamUtil.write ? 2 : 1)));
+                  result.put(key, Double.toString(Math.clamp(radius, 1.0, 30.0) * (kind == A.Inner_StreamUtil.PEARL ? 2 : 1)));
                }
             } catch (NumberFormatException var11) {
             }

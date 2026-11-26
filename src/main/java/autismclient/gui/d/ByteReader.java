@@ -93,7 +93,7 @@ public final class ByteReader extends KeyHolder {
             0,
             ctl,
             "Back",
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
             true,
             () -> this.minecraft.gui.setScreen(this.init_Screen)
          );
@@ -102,14 +102,14 @@ public final class ByteReader extends KeyHolder {
             autismclient.gui.f.NetHelper.init(x, this.push(), panelW, this.reset()),
             5,
             -401402080,
-            ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.load)
+            ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.OUTLINE)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(this.start(), this.stop(), this.next(), this.valid()),
             5,
             -1206840035,
-            ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.load)
+            ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.OUTLINE)
          );
          int titleX = this.open() + this.init_I_Str_3("Back") + 4;
          autismclient.gui.f.b.k.init(
@@ -135,11 +135,11 @@ public final class ByteReader extends KeyHolder {
       int x = this.set() + this.put() + 2;
       int y = this.get();
       int ctl = this.write_I_2();
-      this.init_V_I(x, y, 0, ctl, "Edit", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, this.init_aM() != null, () -> this.init_V_aM_2(this.init_aM()));
+      this.init_V_I(x, y, 0, ctl, "Edit", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, this.init_aM() != null, () -> this.init_V_aM_2(this.init_aM()));
       x += this.init_I_Str_3("Edit") + 2;
-      this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read, true, () -> this.init_V_aM_2(null));
+      this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS, true, () -> this.init_V_aM_2(null));
       x += this.init_I_Str_3("Create") + 2;
-      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, this::load_V_4);
+      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, this::load_V_4);
    }
 
    private void load_V_4() {
@@ -176,7 +176,7 @@ public final class ByteReader extends KeyHolder {
          0,
          ctl,
          keep ? "Stays Enabled" : "Clears After",
-         keep ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         keep ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          true,
          () -> aA.load(!aA.init_Z())
       );
@@ -382,12 +382,12 @@ public final class ByteReader extends KeyHolder {
          bounds,
          4,
          selected
-            ? ct.init_I_I_ct_DataUtil(976607347, ct.Inner_DataUtil.sync)
-            : (hovered ? ct.init_I_I_ct_DataUtil(606804509, ct.Inner_DataUtil.init) : 403771667)
+            ? ct.init_I_I_ct_DataUtil(976607347, ct.Inner_DataUtil.SUCCESS)
+            : (hovered ? ct.init_I_I_ct_DataUtil(606804509, ct.Inner_DataUtil.ACCENT) : 403771667)
       );
       if (selected) {
          autismclient.gui.f.PacketUtil.load(
-            graphics, bounds.load(1, 1, 1, 1), 3, ct.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ct.Inner_DataUtil.sync)
+            graphics, bounds.load(1, 1, 1, 1), 3, ct.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ct.Inner_DataUtil.SUCCESS)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics, autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write() + 2, 2, bounds.sync() - 4), 1, ValueSink.open
@@ -569,7 +569,7 @@ public final class ByteReader extends KeyHolder {
 
    private void init_V_aM_2(aM macro) {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
-      bk.init_bk().init_V_cX_cX_DataUtil(editor, cX.Inner_DataUtil.init);
+      bk.init_bk().init_V_cX_cX_DataUtil(editor, cX.Inner_DataUtil.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {
          if (saved != null && saved.init_Str != null && !saved.init_Str.isBlank()) {
             aA.init_V(saved.init_Str);
@@ -760,20 +760,20 @@ public final class ByteReader extends KeyHolder {
    private aA.Inner_CachePool[] init_aA_CachePoolArr() {
       return aA.init_Z()
          ? new aA.Inner_CachePool[]{
-            aA.Inner_CachePool.init_aA_CachePool,
-            aA.Inner_CachePool.read,
-            aA.Inner_CachePool.write,
-            aA.Inner_CachePool.update,
-            aA.Inner_CachePool.sync,
-            aA.Inner_CachePool.flush
+            aA.Inner_CachePool.ANY,
+            aA.Inner_CachePool.SECOND,
+            aA.Inner_CachePool.THIRD,
+            aA.Inner_CachePool.FOURTH,
+            aA.Inner_CachePool.FIFTH,
+            aA.Inner_CachePool.SIXTH_PLUS
          }
          : new aA.Inner_CachePool[]{
-            aA.Inner_CachePool.load_aA_CachePool,
-            aA.Inner_CachePool.read,
-            aA.Inner_CachePool.write,
-            aA.Inner_CachePool.update,
-            aA.Inner_CachePool.sync,
-            aA.Inner_CachePool.flush
+            aA.Inner_CachePool.FIRST,
+            aA.Inner_CachePool.SECOND,
+            aA.Inner_CachePool.THIRD,
+            aA.Inner_CachePool.FOURTH,
+            aA.Inner_CachePool.FIFTH,
+            aA.Inner_CachePool.SIXTH_PLUS
          };
    }
 

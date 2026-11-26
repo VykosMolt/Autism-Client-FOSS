@@ -11,9 +11,9 @@ public class V implements E, MacroAction {
    public int slot = 0;
    public String itemName = "";
    public ArrayUtil itemTarget = new ArrayUtil();
-   public V.Inner_DataUtil strategy = V.Inner_DataUtil.init;
+   public V.Inner_DataUtil strategy = V.Inner_DataUtil.FIRST_MATCH;
    public String outputVariable = "";
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
 
    @Override
    public void execute(Minecraft mc) {
@@ -27,7 +27,7 @@ public class V implements E, MacroAction {
             }
          }
 
-         if (this.strategy == V.Inner_DataUtil.update) {
+         if (this.strategy == V.Inner_DataUtil.EMPTY_SLOT) {
             int empty = this.init_I_Minecraft(mc);
             if (empty >= 0) {
                autismclient.util.aw.init_V(mc, empty);
@@ -37,7 +37,7 @@ public class V implements E, MacroAction {
          }
 
          if (!targets.isEmpty()) {
-            if (this.strategy != V.Inner_DataUtil.init) {
+            if (this.strategy != V.Inner_DataUtil.FIRST_MATCH) {
                int best = this.init_I_Minecraft_List(mc, targets);
                if (best >= 0) {
                   autismclient.util.aw.init_V(mc, best);
@@ -68,7 +68,7 @@ public class V implements E, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.put;
+      return StreamGate.SELECT_SLOT;
    }
 
    @Override
@@ -90,7 +90,7 @@ public class V implements E, MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.slot = tag.getIntOr("slot", 0);
-      this.strategy = i.init(V.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), V.Inner_DataUtil.init);
+      this.strategy = i.init(V.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), V.Inner_DataUtil.FIRST_MATCH);
       this.outputVariable = tag.getStringOr("outputVariable", "");
       this.itemTarget = tag.getCompound("itemName")
          .map(ArrayUtil::init_ArrayUtil_CompoundTag)
@@ -183,7 +183,7 @@ public class V implements E, MacroAction {
 
    private int init_I_Minecraft_List(Minecraft mc, List<ArrayUtil> targets) {
       int bestSlot = -1;
-      int bestMetric = this.strategy == V.Inner_DataUtil.read ? 2147483647 : -2147483648;
+      int bestMetric = this.strategy == V.Inner_DataUtil.WORST_DURABILITY ? 2147483647 : -2147483648;
 
       for (int i = 0; i < 9; i++) {
          ItemStack stack = mc.player.getInventory().getItem(i);
@@ -199,13 +199,13 @@ public class V implements E, MacroAction {
          if (matches) {
             int var10000;
             switch (this.strategy) {
-               case load:
+               case BEST_DURABILITY:
                   var10000 = stack.isDamageableItem() ? stack.getMaxDamage() - stack.getDamageValue() : 2147483647;
                   break;
-               case read:
+               case WORST_DURABILITY:
                   var10000 = stack.isDamageableItem() ? stack.getMaxDamage() - stack.getDamageValue() : 2147483647;
                   break;
-               case write:
+               case LARGEST_STACK:
                   var10000 = stack.getCount();
                   break;
                default:
@@ -213,7 +213,7 @@ public class V implements E, MacroAction {
             }
 
             int metric = var10000;
-            if (this.strategy == V.Inner_DataUtil.read && metric < bestMetric || this.strategy != V.Inner_DataUtil.read && metric > bestMetric) {
+            if (this.strategy == V.Inner_DataUtil.WORST_DURABILITY && metric < bestMetric || this.strategy != V.Inner_DataUtil.WORST_DURABILITY && metric > bestMetric) {
                bestMetric = metric;
                bestSlot = i;
             }
@@ -224,10 +224,10 @@ public class V implements E, MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      FIRST_MATCH,
+      BEST_DURABILITY,
+      WORST_DURABILITY,
+      LARGEST_STACK,
+      EMPTY_SLOT;
    }
 }

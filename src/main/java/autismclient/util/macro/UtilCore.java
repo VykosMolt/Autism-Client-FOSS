@@ -43,16 +43,16 @@ public final class UtilCore {
          return Optional.empty();
       }
 
-      UtilCore.Inner_DataUtil effective = mode == null ? UtilCore.Inner_DataUtil.init : mode;
+      UtilCore.Inner_DataUtil effective = mode == null ? UtilCore.Inner_DataUtil.MATCH : mode;
       Optional var10000;
       switch (effective) {
-         case init:
+         case MATCH:
             var10000 = Optional.empty();
             break;
-         case load:
+         case CAPTURE:
             var10000 = init(pattern, candidate);
             break;
-         case read:
+         case REGEX:
             var10000 = load(pattern, candidate);
             break;
          default:
@@ -63,9 +63,9 @@ public final class UtilCore {
    }
 
    public static Set<String> init(UtilCore.Inner_DataUtil mode, String pattern) {
-      Pattern parser = mode == UtilCore.Inner_DataUtil.read ? load_Pattern : init_Pattern;
+      Pattern parser = mode == UtilCore.Inner_DataUtil.REGEX ? load_Pattern : init_Pattern;
       String source = pattern == null ? "" : pattern;
-      if (mode != UtilCore.Inner_DataUtil.read) {
+      if (mode != UtilCore.Inner_DataUtil.REGEX) {
          source = init_Str(source);
       }
 
@@ -143,7 +143,7 @@ public final class UtilCore {
          return Optional.of(new UtilCore.Inner_StreamUtil(sourceCandidate, Map.of()));
       }
 
-      List<String> names = new ArrayList<>(init(UtilCore.Inner_DataUtil.read, regex));
+      List<String> names = new ArrayList<>(init(UtilCore.Inner_DataUtil.REGEX, regex));
 
       try {
          Matcher matcher = init_Pattern(regex).matcher(sourceCandidate);
@@ -199,9 +199,9 @@ public final class UtilCore {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      MATCH,
+      CAPTURE,
+      REGEX;
    }
 
    public record Inner_StreamUtil(String init_Str, Map<String, l> init_Map) {

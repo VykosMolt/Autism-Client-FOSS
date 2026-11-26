@@ -14,7 +14,7 @@ public class KeyHolder implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_V_StreamGate;
+      return StreamGate.LABEL;
    }
 
    public static String init(String s) {

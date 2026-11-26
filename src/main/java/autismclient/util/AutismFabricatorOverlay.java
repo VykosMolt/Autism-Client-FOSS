@@ -350,7 +350,7 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    public AutismFabricatorOverlay(AbstractContainerScreen<?> parentScreen) {
-      this.init_AutismFabricatorOv = AutismFabricatorOverlay.Inner_DataUtil.init_AutismFabricatorOv;
+      this.init_AutismFabricatorOv = AutismFabricatorOverlay.Inner_DataUtil.CLICK;
       this.init_AbstractContainerS = parentScreen;
       this.next_V_2();
       this.put = this.flush_I;
@@ -1221,7 +1221,7 @@ public class AutismFabricatorOverlay extends bj {
             "Selected craft: "
                + option.load_Str
                + " | "
-               + (option.init_J_ConfigStore == J.Inner_ConfigStore.load ? "Table" : "2x2")
+               + (option.init_J_ConfigStore == J.Inner_ConfigStore.TABLE_3X3 ? "Table" : "2x2")
                + " | "
                + J.init_Str(option),
             option.read_Z ? ChatFormatting.GREEN : ChatFormatting.RED
@@ -1460,7 +1460,7 @@ public class AutismFabricatorOverlay extends bj {
                int labelX = this.get + 4;
                int fieldX = this.run_I_5();
                int fieldWidth = this.get_I_5();
-               cs.init(context, init_Minecraft.font, "Action", cs.Inner_DataUtil.write, labelX, this.init_I_I_4(this.reset_I_2()), false);
+               cs.init(context, init_Minecraft.font, "Action", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.reset_I_2()), false);
                if (this.init_SyncManager == null) {
                   this.init_SyncManager = new autismclient.gui.f.b.SyncManager(
                      fieldX, this.reset_I_2(), fieldWidth, push_I_7(), this.load_List, this.next, idx -> {
@@ -1486,8 +1486,8 @@ public class AutismFabricatorOverlay extends bj {
                }
 
                if (this.pop_Z_3()) {
-                  cs.init(context, init_Minecraft.font, "Slot", cs.Inner_DataUtil.write, labelX, this.init_I_I_4(this.start_I_5()), false);
-                  cs.init(context, init_Minecraft.font, "Item", cs.Inner_DataUtil.write, labelX, this.init_I_I_4(this.stop_I_2()), false);
+                  cs.init(context, init_Minecraft.font, "Slot", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.start_I_5()), false);
+                  cs.init(context, init_Minecraft.font, "Item", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.stop_I_2()), false);
                }
 
                if (this.push_Z_4()) {
@@ -1496,7 +1496,7 @@ public class AutismFabricatorOverlay extends bj {
                         context,
                         init_Minecraft.font,
                         this.run_Z_2() ? "Drop Mode" : "Click",
-                        cs.Inner_DataUtil.write,
+                        cs.Inner_DataUtil.MUTED,
                         labelX,
                         this.init_I_I_4(this.next_I_2()),
                         false
@@ -1541,7 +1541,7 @@ public class AutismFabricatorOverlay extends bj {
                      }
                   }
 
-                  cs.init(context, init_Minecraft.font, this.read_Str_4(), cs.Inner_DataUtil.write, labelX, this.init_I_I_4(this.prev_I()), false);
+                  cs.init(context, init_Minecraft.font, this.read_Str_4(), cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.prev_I()), false);
                } else {
                   this.sync_V_5();
                   int listX = this.flags();
@@ -1581,7 +1581,7 @@ public class AutismFabricatorOverlay extends bj {
                            12,
                            hovered,
                            selected,
-                           autismclient.gui.f.b.FileCache.Inner_DataUtil.init,
+                           autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL,
                            true
                         );
                         boolean removeHovered = mouseX >= listX + planContentWidth - 16
@@ -1598,7 +1598,7 @@ public class AutismFabricatorOverlay extends bj {
                   autismclient.gui.f.b.PoolEntry.Inner_DataUtil craftPlanScrollbar = this.init_PoolEntry_DataUtil();
                   autismclient.gui.f.b.PoolEntry.init(context, craftPlanScrollbar, craftPlanScrollbar.init(mouseX, mouseY), this.state == 1);
                   if (this.init_ItemStack.isEmpty()) {
-                     cs.init(context, init_Minecraft.font, "Recipe: none selected", cs.Inner_DataUtil.write, listX, this.entry(), false);
+                     cs.init(context, init_Minecraft.font, "Recipe: none selected", cs.Inner_DataUtil.MUTED, listX, this.entry(), false);
                   } else {
                      Component summaryText = Component.empty()
                         .append(this.init_ItemStack.getHoverName().copy())
@@ -1612,7 +1612,7 @@ public class AutismFabricatorOverlay extends bj {
                      cs.init(context, init_Minecraft.font, summaryText.getString(), p.a(), listX, this.entry(), false);
                   }
 
-                  cs.init(context, init_Minecraft.font, "Amount", cs.Inner_DataUtil.write, labelX, this.init_I_I_4(this.size()), false);
+                  cs.init(context, init_Minecraft.font, "Amount", cs.Inner_DataUtil.MUTED, labelX, this.init_I_I_4(this.size()), false);
                   this.init(context, this.cache(), this.size(), this.data(), push_I_7(), "Use Max", this.push_Z, "fabricator:use-max", mouseX, mouseY);
                   autismclient.gui.f.b.FileCache.init(context, init_Minecraft.font, "Recipes", listX, this.node());
                   int listY = this.count();
@@ -1656,7 +1656,7 @@ public class AutismFabricatorOverlay extends bj {
                            this.close_I,
                            hovered,
                            selected,
-                           option.read_Z ? autismclient.gui.f.b.FileCache.Inner_DataUtil.load : autismclient.gui.f.b.FileCache.Inner_DataUtil.write,
+                           option.read_Z ? autismclient.gui.f.b.FileCache.Inner_DataUtil.READY : autismclient.gui.f.b.FileCache.Inner_DataUtil.MISSING,
                            true
                         );
                         autismclient.gui.f.b.FileCache.init(context, listX + 2, rowY + this.close_I - 1, recipeContentWidth - 2);
@@ -1668,9 +1668,9 @@ public class AutismFabricatorOverlay extends bj {
                   autismclient.gui.f.b.PoolEntry.Inner_DataUtil craftListScrollbar = this.load_PoolEntry_DataUtil();
                   autismclient.gui.f.b.PoolEntry.init(context, craftListScrollbar, craftListScrollbar.init(mouseX, mouseY), this.state == 2);
                   String recipeCountLine = cs.init(
-                     init_Minecraft.font, this.valid + " ready / " + this.flush_List.size() + " total", listWidth, cs.Inner_DataUtil.write
+                     init_Minecraft.font, this.valid + " ready / " + this.flush_List.size() + " total", listWidth, cs.Inner_DataUtil.MUTED
                   );
-                  cs.init(context, init_Minecraft.font, recipeCountLine, cs.Inner_DataUtil.write, listX, listY + this.open_I + 2, false);
+                  cs.init(context, init_Minecraft.font, recipeCountLine, cs.Inner_DataUtil.MUTED, listX, listY + this.open_I + 2, false);
                }
 
                int btnY = this.set_I_5();
@@ -1679,11 +1679,11 @@ public class AutismFabricatorOverlay extends bj {
                int bw = (btnArea - gap * 2) / 3;
                int bx = this.get + 4;
                String sendLabel = this.poll_Z_5() ? (this.poll_Z ? "Crafting..." : "Craft") : "Send";
-               this.init(context, bx, btnY, bw, this.reset, sendLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mouseX, mouseY);
+               this.init(context, bx, btnY, bw, this.reset, sendLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mouseX, mouseY);
                bx += bw + gap;
-               this.init(context, bx, btnY, bw, this.reset, "Queue", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mouseX, mouseY);
+               this.init(context, bx, btnY, bw, this.reset, "Queue", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mouseX, mouseY);
                bx += bw + gap;
-               this.init(context, bx, btnY, bw, this.reset, "Macro", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mouseX, mouseY);
+               this.init(context, bx, btnY, bw, this.reset, "Macro", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mouseX, mouseY);
                int infoWidth = this.put - 8;
                int statusY = this.put_I_2();
                if (statusY + 9 < btnY) {
@@ -1723,7 +1723,7 @@ public class AutismFabricatorOverlay extends bj {
                      break;
                   }
 
-                  cs.init(context, init_Minecraft.font, actionLines.get(i), cs.Inner_DataUtil.write, this.get + 4, lineY, false);
+                  cs.init(context, init_Minecraft.font, actionLines.get(i), cs.Inner_DataUtil.MUTED, this.get + 4, lineY, false);
                }
 
                if (!this.sync_List.isEmpty()) {
@@ -1926,10 +1926,10 @@ public class AutismFabricatorOverlay extends bj {
             return;
          }
 
-         if (this.init_AutismFabricatorOv == AutismFabricatorOverlay.Inner_DataUtil.update) {
+         if (this.init_AutismFabricatorOv == AutismFabricatorOverlay.Inner_DataUtil.DROP) {
             autismclient.util.macro.PacketUtil dropAction = new autismclient.util.macro.PacketUtil();
             dropAction.useHandlerSlots = true;
-            dropAction.mode = this.flush_Z ? autismclient.util.macro.PacketUtil.Inner_DataUtil.init : autismclient.util.macro.PacketUtil.Inner_DataUtil.load;
+            dropAction.mode = this.flush_Z ? autismclient.util.macro.PacketUtil.Inner_DataUtil.ALL : autismclient.util.macro.PacketUtil.Inner_DataUtil.TIMES;
             dropAction.dropCount = this.flush_Z ? 0 : repeats;
             String entry = enteredSlot != null ? "#" + enteredSlot + (!itemName.isEmpty() ? "|" + itemName : "") : itemName;
             if (!entry.isBlank()) {
@@ -2033,7 +2033,7 @@ public class AutismFabricatorOverlay extends bj {
                return;
             }
 
-            if (this.init_AutismFabricatorOv == AutismFabricatorOverlay.Inner_DataUtil.update && !queue) {
+            if (this.init_AutismFabricatorOv == AutismFabricatorOverlay.Inner_DataUtil.DROP && !queue) {
                int queuedCount = ck.init_ck().init_I_ClientPacketListen(handler);
                int sent = O.init(init_Minecraft, slot, this.flush_Z ? 0 : repeats);
                if (sent <= 0) {
@@ -2189,7 +2189,7 @@ public class AutismFabricatorOverlay extends bj {
 
             List<Packet<?>> packets = J.init_List(init_Minecraft, entry.init_Str, entry.init_I, desiredAmount);
             if (packets.isEmpty()) {
-               String msg = option.init_J_ConfigStore == J.Inner_ConfigStore.load
+               String msg = option.init_J_ConfigStore == J.Inner_ConfigStore.TABLE_3X3
                      && (init_Minecraft.player == null || !(init_Minecraft.player.containerMenu instanceof CraftingMenu))
                   ? "Open a crafting table to queue " + entry.load_Str + "."
                   : "Could not plan " + entry.load_Str + " from this inventory.";
@@ -2267,7 +2267,7 @@ public class AutismFabricatorOverlay extends bj {
             return planInfo + " | Recipe: none selected";
          }
 
-         String source = this.init_J_TaskQueue != null && this.init_J_TaskQueue.init_J_ConfigStore == J.Inner_ConfigStore.load ? "Table" : "2x2";
+         String source = this.init_J_TaskQueue != null && this.init_J_TaskQueue.init_J_ConfigStore == J.Inner_ConfigStore.TABLE_3X3 ? "Table" : "2x2";
          String availability = this.init_J_TaskQueue != null ? J.init_Str(this.init_J_TaskQueue) : "Unavailable";
          String amountMode = this.push_Z ? "Max" : "x" + Math.max(1, this.store());
          return planInfo + " | Recipe: " + this.init_ItemStack.getHoverName().getString() + " | " + source + " | " + availability + " | " + amountMode;
@@ -2536,7 +2536,7 @@ public class AutismFabricatorOverlay extends bj {
    }
 
    private enum Inner_DataUtil {
-      init_AutismFabricatorOv("Click", "Use Left or Right on the resolved slot.") {
+      CLICK("Click", "Use Left or Right on the resolved slot.") {
          @Override
          boolean init() {
             return true;
@@ -2544,22 +2544,22 @@ public class AutismFabricatorOverlay extends bj {
 
          @Override
          N init_N(boolean dropWholeStack) {
-            return N.init_N;
+            return N.PICKUP;
          }
       },
-      load_AutismFabricatorOv("Quick Move", "Shift-click the resolved slot.") {
+      QUICK_MOVE("Quick Move", "Shift-click the resolved slot.") {
          @Override
          N init_N(boolean dropWholeStack) {
-            return N.load_N;
+            return N.QUICK_MOVE;
          }
       },
-      read("Pick Up All", "Double-click the resolved slot. Usually needs you to hold a matching stack first.") {
+      PICKUP_ALL("Pick Up All", "Double-click the resolved slot. Usually needs you to hold a matching stack first.") {
          @Override
          N init_N(boolean dropWholeStack) {
-            return N.flush;
+            return N.PICKUP_ALL;
          }
       },
-      write("Craft", "Choose a craftable item, set the total amount, then send, queue, or add it to a macro.") {
+      CRAFT_RESULT("Craft", "Choose a craftable item, set the total amount, then send, queue, or add it to a macro.") {
          @Override
          boolean read() {
             return true;
@@ -2567,10 +2567,10 @@ public class AutismFabricatorOverlay extends bj {
 
          @Override
          N init_N(boolean dropWholeStack) {
-            return N.load_N;
+            return N.QUICK_MOVE;
          }
       },
-      update("Drop", "Drop from the resolved slot. If slot and item are both set, both must match.") {
+      DROP("Drop", "Drop from the resolved slot. If slot and item are both set, both must match.") {
          @Override
          boolean load() {
             return true;
@@ -2578,7 +2578,7 @@ public class AutismFabricatorOverlay extends bj {
 
          @Override
          N init_N(boolean dropWholeStack) {
-            return dropWholeStack ? N.open : N.close;
+            return dropWholeStack ? N.DROP_STACK : N.DROP_ITEM;
          }
 
          @Override
@@ -2586,7 +2586,7 @@ public class AutismFabricatorOverlay extends bj {
             return dropWholeStack ? "Drops the whole stack from the selected slot." : "Drops one item at a time from the selected slot.";
          }
       },
-      sync("Packet", "Replay a captured slot click with the captured container id and state.") {
+      PACKET("Packet", "Replay a captured slot click with the captured container id and state.") {
          @Override
          boolean init() {
             return true;
@@ -2599,7 +2599,7 @@ public class AutismFabricatorOverlay extends bj {
 
          @Override
          N init_N(boolean dropWholeStack) {
-            return N.init_N;
+            return N.PICKUP;
          }
       };
 

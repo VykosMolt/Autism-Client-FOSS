@@ -221,7 +221,7 @@ final class e {
                               return this.init(AiOperation.Status.UNCERTAIN, result.init_Str);
                            }
 
-                           if (result.init_J_CachePool_DataUt == autismclient.util.J.Inner_CachePool.Inner_DataUtil.load) {
+                           if (result.init_J_CachePool_DataUt == autismclient.util.J.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL) {
                               AiOperation.Result rejection = AiOperation.Result.failed(
                                  A.put,
                                  result.init_Str,

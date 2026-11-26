@@ -210,7 +210,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @ModifyExpressionValue(method = "turnPlayer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;smoothCamera:Z"))
    private boolean autism$avoidDoubleSmoothingTelly(boolean original) {
-      return original && !ba.init_Z(ba.Inner_StreamUtil.write) && !ba.init_Z();
+      return original && !ba.init_Z(ba.Inner_StreamUtil.SCAFFOLD_TELLY) && !ba.init_Z();
    }
 
    @Unique

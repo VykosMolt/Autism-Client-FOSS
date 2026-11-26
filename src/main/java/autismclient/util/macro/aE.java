@@ -26,7 +26,7 @@ public class aE implements CacheEntry, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_c_StreamGate;
+      return StreamGate.WAIT_SOUND;
    }
 
    @Override

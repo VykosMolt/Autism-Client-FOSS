@@ -62,7 +62,7 @@ public final class cb {
    private static void init_V(Font textRenderer, int panelWidth, int maxLines) {
       ck shared = ck.init_ck();
       boolean isSending = shared.run_Z();
-      String modeStr = shared.load_ck_DataUtil() == ck.Inner_DataUtil.load ? "ms" : "t";
+      String modeStr = shared.load_ck_DataUtil() == ck.Inner_DataUtil.MS ? "ms" : "t";
       int queueRevision = shared.read_I();
       long now = System.nanoTime();
       if (init_Z_Z(isSending, modeStr, maxLines, panelWidth, queueRevision, now)) {

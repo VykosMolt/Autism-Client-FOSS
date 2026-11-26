@@ -28,7 +28,7 @@ public class Q implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.next;
+      return StreamGate.REVISION_SYNC;
    }
 
    @Override

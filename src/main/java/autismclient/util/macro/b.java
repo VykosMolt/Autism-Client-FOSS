@@ -539,7 +539,7 @@ public class b {
             for (int i = 0; i < action.entries.size(); i++) {
                aD.Inner_DataUtil e = action.entries.get(i);
                ArrayUtil entryTarget = e.init_ArrayUtil();
-               if (e.init_aD_StreamUtil == aD.Inner_StreamUtil.update && entryTarget != null && entryTarget.init_Z()) {
+               if (e.init_aD_StreamUtil == aD.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.init_Z()) {
                   int slotNum = entryTarget.init_I;
                   int handlerSlot = autismclient.util.aw.read_I(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
@@ -554,7 +554,7 @@ public class b {
       CompletableFuture<Void> future = new CompletableFuture<>();
       b.Inner_ByteReader condition = new b.Inner_ByteReader(action, initialNames, initialCounts, future);
       init_List.add(condition);
-      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.init_aD_StreamUtil == aD.Inner_StreamUtil.update);
+      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.init_aD_StreamUtil == aD.Inner_StreamUtil.ANY_CHANGE);
       if (!hasAnyChange && init_Z_Minecraft_b_EventBus(mc, condition)) {
          condition.init_V();
          init_List.remove(condition);
@@ -730,17 +730,17 @@ public class b {
       public boolean init_Z_Minecraft(Minecraft mc) {
          if (mc.level != null && mc.player != null) {
             switch (this.init_aw.checkMode) {
-               case load:
+               case LOOKING_AT:
                   Entity targeted = mc.crosshairPickEntity;
                   if (targeted != null && targeted != mc.player) {
                      return this.init(targeted);
                   }
 
                   return false;
-               case write:
+               case MOUNTED_IN:
                   Entity vehicle = mc.player.getVehicle();
                   return vehicle != null && this.init(vehicle);
-               case read:
+               case WITHIN_REACH:
                   double reachSq = mc.player.blockInteractionRange() * mc.player.blockInteractionRange();
 
                   for (Entity entity : mc.level.entitiesForRendering()) {
@@ -750,7 +750,7 @@ public class b {
                   }
 
                   return false;
-               case update:
+               case NEARBY:
                default:
                   Vec3 center = this.init_aw.centerOnPlayer
                      ? new Vec3(mc.player.getX(), mc.player.getY(), mc.player.getZ())
@@ -841,17 +841,17 @@ public class b {
          if (entryTarget.init_Z()) {
             int slotNum = entryTarget.init_I;
             if (handler == null) {
-               return e.init_aD_StreamUtil == aD.Inner_StreamUtil.load;
+               return e.init_aD_StreamUtil == aD.Inner_StreamUtil.IS_EMPTY;
             } else {
                int handlerSlot = autismclient.util.aw.read_I(mc, slotNum);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(handlerSlot).getItem();
                   return this.init(stack, entryTarget, slotNum, e, entryIdx);
                } else {
-                  return e.init_aD_StreamUtil == aD.Inner_StreamUtil.load;
+                  return e.init_aD_StreamUtil == aD.Inner_StreamUtil.IS_EMPTY;
                }
             }
-         } else if (e.init_aD_StreamUtil == aD.Inner_StreamUtil.load) {
+         } else if (e.init_aD_StreamUtil == aD.Inner_StreamUtil.IS_EMPTY) {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
@@ -900,19 +900,19 @@ public class b {
          boolean nameMatches = target == null || !target.update() || !stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot);
          boolean var10000;
          switch (e.init_aD_StreamUtil) {
-            case init:
+            case NOT_EMPTY:
                var10000 = !stack.isEmpty() && nameMatches;
                break;
-            case load:
+            case IS_EMPTY:
                var10000 = stack.isEmpty();
                break;
-            case read:
+            case COUNT_AT_LEAST:
                var10000 = !stack.isEmpty() && nameMatches && stack.getCount() >= e.init_I;
                break;
-            case write:
+            case COUNT_BELOW:
                var10000 = stack.isEmpty() || nameMatches && stack.getCount() < e.init_I;
                break;
-            case update:
+            case ANY_CHANGE:
                String initName = this.init_Map.getOrDefault(entryIdx, "");
                int initCount = this.load.getOrDefault(entryIdx, 0);
                String curName = b.init(stack);
@@ -1628,10 +1628,10 @@ public class b {
       @Override
       public boolean init_Z_Minecraft(Minecraft mc) {
          if (mc.level != null && mc.player != null) {
-            boolean destroyed = this.init_at.waitBehavior == at.Inner_StreamUtil.load;
+            boolean destroyed = this.init_at.waitBehavior == at.Inner_StreamUtil.DESTROYED;
             boolean anyBlock = this.init_at.anyBlock;
             switch (this.init_at.checkMode) {
-               case init:
+               case AT_POSITION:
                   Block b = mc.level.getBlockState(this.init_at.blockPos).getBlock();
                   boolean isAir = b == Blocks.AIR;
                   if (destroyed) {
@@ -1655,7 +1655,7 @@ public class b {
 
                      return true;
                   }
-               case load:
+               case IN_REACH:
                   int r = (int)Math.ceil(this.init_at.searchRadius);
                   int cx = (int)mc.player.getX();
                   int cy = (int)mc.player.getY();
@@ -1700,7 +1700,7 @@ public class b {
 
                      return false;
                   }
-               case read:
+               case LOOKING_AT:
                   if (destroyed) {
                      if (mc.hitResult != null && mc.hitResult.getType() == Type.BLOCK) {
                         if (!anyBlock && !this.init_Set.isEmpty()) {

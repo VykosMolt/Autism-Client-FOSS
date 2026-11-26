@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class ah implements MacroAction {
-   public ah.Inner_DataUtil mode = ah.Inner_DataUtil.load;
+   public ah.Inner_DataUtil mode = ah.Inner_DataUtil.STORE;
    public List<String> targetItems = new ArrayList<>();
    public List<ArrayUtil> itemTargets = new ArrayList<>();
    public boolean persistent = false;
@@ -77,7 +77,7 @@ public class ah implements MacroAction {
                Slot slot = h.slots.get(i);
                if (slot != null) {
                   boolean playerInventorySlot = autismclient.util.aw.init_Z(mc, slot);
-                  if ((this.mode != ah.Inner_DataUtil.init || !playerInventorySlot) && (this.mode != ah.Inner_DataUtil.load || playerInventorySlot)) {
+                  if ((this.mode != ah.Inner_DataUtil.LOOT || !playerInventorySlot) && (this.mode != ah.Inner_DataUtil.STORE || playerInventorySlot)) {
                      ItemStack stack = slot.getItem();
                      if (!stack.isEmpty()) {
                         int visibleSlot = autismclient.util.aw.init_I(mc, i);
@@ -104,7 +104,7 @@ public class ah implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_b_StreamGate;
+      return StreamGate.STORE_ITEM;
    }
 
    @Override
@@ -128,7 +128,7 @@ public class ah implements MacroAction {
          try {
             this.mode = ah.Inner_DataUtil.valueOf(tag.getStringOr("mode", "LOOT"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = ah.Inner_DataUtil.init;
+            this.mode = ah.Inner_DataUtil.LOOT;
          }
       }
 
@@ -167,7 +167,7 @@ public class ah implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String modeStr = this.mode == ah.Inner_DataUtil.init ? "Loot" : "Store";
+      String modeStr = this.mode == ah.Inner_DataUtil.LOOT ? "Loot" : "Store";
       if (this.allItems) {
          return modeStr + " All" + (this.persistent ? " [Inf]" : "");
       }
@@ -271,7 +271,7 @@ public class ah implements MacroAction {
 
    @Override
    public String getIcon() {
-      return this.mode == ah.Inner_DataUtil.init ? "LOT" : "STR";
+      return this.mode == ah.Inner_DataUtil.LOOT ? "LOT" : "STR";
    }
 
    @Override
@@ -332,7 +332,7 @@ public class ah implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      LOOT,
+      STORE;
    }
 }

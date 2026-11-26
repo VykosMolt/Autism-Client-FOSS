@@ -525,9 +525,9 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
    }
 
    private boolean init_Z_BufferHelper_Cache(BufferHelper.Inner_CachePool plan) {
-      return plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.update
+      return plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.DETONATE
          ? true
-         : plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.write && this.init_Z && plan.init_BlockPos().equals(this.load_BlockPos);
+         : plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.CHARGE && this.init_Z && plan.init_BlockPos().equals(this.load_BlockPos);
    }
 
    @Override
@@ -639,8 +639,8 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
          boolean allowed = wire != null && this.init_Z_BufferHelper_Confi(plan.init_BufferHelper_Confi()) && mayAct;
          boolean slotReady = allowed && this.init_Z_I_Z(plan.init_I(), finishing);
          boolean finishSwitchRefused = finishing && allowed && !slotReady && MC.player.getInventory().getSelectedSlot() != plan.init_I();
-         boolean useStep = plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.write
-            || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.update;
+         boolean useStep = plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.CHARGE
+            || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.DETONATE;
          BlockHitResult alignedUse = wire != null && useStep ? this.init_BlockHitResult_BufferHelper_Cache_ce_DataUtil(plan, wire) : null;
          BlockHitResult hit = slotReady ? (alignedUse != null ? alignedUse : this.init_BlockHitResult_BufferHelper_Cache_ce_DataUtil(plan, wire)) : null;
          if (mayAct && !releasedToDefend && !finishSwitchRefused) {
@@ -724,15 +724,15 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
    private int init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore step) {
       String var10000;
       switch (step) {
-         case init:
-         case load:
-         case read:
+         case SUPPORT:
+         case PLACE:
+         case SHIELD:
             var10000 = "place-delay";
             break;
-         case write:
+         case CHARGE:
             var10000 = "charge-delay";
             break;
-         case update:
+         case DETONATE:
             var10000 = "detonate-delay";
             break;
          default:
@@ -854,12 +854,12 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
             } else {
                return this.read_Z && tick - this.size < init_I()
                   ? null
-                  : this.init_BufferHelper_Cache_BlockPos(cell, BufferHelper.Inner_ConfigStore.write, range, budget);
+                  : this.init_BufferHelper_Cache_BlockPos(cell, BufferHelper.Inner_ConfigStore.CHARGE, range, budget);
             }
          } else if (this.bool("detonate") && this.init_Z_BlockPos_BlockState(cell, state)) {
             return this.load_Z && tick - this.valid < init_I()
                ? null
-               : this.init_BufferHelper_Cache_BlockPos(cell, BufferHelper.Inner_ConfigStore.update, range, budget);
+               : this.init_BufferHelper_Cache_BlockPos(cell, BufferHelper.Inner_ConfigStore.DETONATE, range, budget);
          } else {
             return null;
          }
@@ -873,9 +873,9 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
       if (adopted != null) {
          BlockState state = MC.level.getBlockState(adopted);
          BufferHelper.Inner_ConfigStore step = state.getValue(RespawnAnchorBlock.CHARGE) > 0
-            ? BufferHelper.Inner_ConfigStore.update
-            : BufferHelper.Inner_ConfigStore.write;
-         boolean usable = step == BufferHelper.Inner_ConfigStore.update
+            ? BufferHelper.Inner_ConfigStore.DETONATE
+            : BufferHelper.Inner_ConfigStore.CHARGE;
+         boolean usable = step == BufferHelper.Inner_ConfigStore.DETONATE
             ? this.bool("detonate") && this.init_Z_BlockPos_BlockState(adopted, state)
             : this.open();
          boolean refused = true;
@@ -887,7 +887,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
                return plan;
             }
 
-            refused = outcome[0] != autismclient.util.U.Inner_JsonUtil.push || this.load_Z_BlockPos(adopted);
+            refused = outcome[0] != autismclient.util.U.Inner_JsonUtil.NO_BUDGET || this.load_Z_BlockPos(adopted);
          }
 
          if (refused) {
@@ -954,7 +954,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
             return plan;
          }
 
-         if (outcome[0] == autismclient.util.U.Inner_JsonUtil.push) {
+         if (outcome[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
             this.read_BlockPos = cell;
             return null;
          }
@@ -1036,9 +1036,9 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
 
       BufferHelper.Inner_CachePool plan = this.init_BufferHelper_Cache_LivingEntity(enemy, tick, range, budget);
       if (plan != null
-         && (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.load || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.init)) {
-         this.update_BlockPos = plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.init ? plan.read() : plan.init_BlockPos();
-         this.push_BlockPos = plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.init ? plan.init_BlockPos() : null;
+         && (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.PLACE || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SUPPORT)) {
+         this.update_BlockPos = plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SUPPORT ? plan.read() : plan.init_BlockPos();
+         this.push_BlockPos = plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SUPPORT ? plan.init_BlockPos() : null;
          this.sync_BlockPos = plan.load();
          this.write_Z = plan.init_Z();
          this.cache = plan.init_I();
@@ -1096,15 +1096,15 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
 
    private int load_I() {
       return autismclient.util.NetHelper.init_I_I(
-         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.load), this.integer("switch-delay"), autismclient.util.macro.ab.init_I()
+         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.PLACE), this.integer("switch-delay"), autismclient.util.macro.ab.init_I()
       );
    }
 
    private int init_I_Z(boolean shielded) {
       return autismclient.util.NetHelper.init(
-         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.load),
-         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.write),
-         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.update),
+         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.PLACE),
+         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.CHARGE),
+         this.init_I_BufferHelper_Confi(BufferHelper.Inner_ConfigStore.DETONATE),
          this.integer("switch-delay"),
          autismclient.util.macro.ab.init_I(),
          shielded
@@ -1218,7 +1218,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
       );
       return candidate == null
          ? null
-         : new BufferHelper.Inner_CachePool(cell, BufferHelper.Inner_ConfigStore.load, slot, candidate, range, shield, shieldObsidian, null);
+         : new BufferHelper.Inner_CachePool(cell, BufferHelper.Inner_ConfigStore.PLACE, slot, candidate, range, shield, shieldObsidian, null);
    }
 
    private BufferHelper.Inner_CachePool init_BufferHelper_Cache_BlockPos_2(
@@ -1238,7 +1238,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
          );
          return candidate == null
             ? null
-            : new BufferHelper.Inner_CachePool(supportCell, BufferHelper.Inner_ConfigStore.init, slot, candidate, range, null, false, anchorCell);
+            : new BufferHelper.Inner_CachePool(supportCell, BufferHelper.Inner_ConfigStore.SUPPORT, slot, candidate, range, null, false, anchorCell);
       } else {
          return null;
       }
@@ -1257,7 +1257,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
       autismclient.util.U.Inner_StreamUtil budget,
       autismclient.util.U.Inner_JsonUtil[] outcome
    ) {
-      int slot = step == BufferHelper.Inner_ConfigStore.write ? this.init_I_Predicate(BufferHelper::load_Z_ItemStack) : this.write_I();
+      int slot = step == BufferHelper.Inner_ConfigStore.CHARGE ? this.init_I_Predicate(BufferHelper::load_Z_ItemStack) : this.write_I();
       if (slot < 0) {
          return null;
       }
@@ -1285,7 +1285,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
       );
       return candidate == null
          ? null
-         : new BufferHelper.Inner_CachePool(cell, BufferHelper.Inner_ConfigStore.read, slot, candidate, range, null, obsidian, null);
+         : new BufferHelper.Inner_CachePool(cell, BufferHelper.Inner_ConfigStore.SHIELD, slot, candidate, range, null, obsidian, null);
    }
 
    private autismclient.util.U.Inner_StateCache init_U_StateCache_BlockPos(BlockPos cell, ItemStack stack, double range) {
@@ -1391,7 +1391,7 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
             return candidate;
          }
 
-         if (refusal[0] == autismclient.util.U.Inner_JsonUtil.push) {
+         if (refusal[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
             this.init_HashUtil.init(aim.init_U_TaskQueue());
             return null;
          }
@@ -1412,11 +1412,11 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
       LocalPlayer player = MC.player;
       autismclient.util.U.Inner_StateCache var10000;
       switch (plan.init_BufferHelper_Confi()) {
-         case init:
-         case load:
+         case SUPPORT:
+         case PLACE:
             var10000 = this.init_U_StateCache_BlockPos(plan.init_BlockPos(), player.getMainHandItem(), plan.init_D());
             break;
-         case read:
+         case SHIELD:
             var10000 = this.init_U_StateCache_BlockPos(
                plan.init_BlockPos(),
                player.getMainHandItem(),
@@ -1424,8 +1424,8 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
                this.init_U_NetHelper_BlockPos_ItemStack(this.load_BlockPos, player.getMainHandItem())
             );
             break;
-         case write:
-         case update:
+         case CHARGE:
+         case DETONATE:
             var10000 = this.init_U_StateCache_BlockPos_D(plan.init_BlockPos(), plan.init_D());
             break;
          default:
@@ -1468,12 +1468,12 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
       }
 
       this.init_V_BufferHelper_Confi(plan.init_BufferHelper_Confi());
-      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.init) {
+      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SUPPORT) {
          this.init_V_BlockPos(plan.read(), plan.init_BlockPos(), tick);
          this.entry++;
       }
 
-      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.load) {
+      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.PLACE) {
          if (this.load_BlockPos == null || !this.load_BlockPos.equals(plan.init_BlockPos())) {
             this.init_V_BlockPos(plan.init_BlockPos(), tick, plan.load(), plan.init_Z());
          }
@@ -1487,16 +1487,16 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
          }
       }
 
-      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.read) {
+      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SHIELD) {
          this.node++;
       }
 
-      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.write) {
+      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.CHARGE) {
          this.read_Z = true;
          this.size = tick;
       }
 
-      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.update) {
+      if (plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.DETONATE) {
          this.load_Z = true;
          this.valid = tick;
       }
@@ -1511,9 +1511,9 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
    private boolean load_Z_BufferHelper_Cache(BufferHelper.Inner_CachePool plan) {
       if (!AutismLiteVariant.enabled()
          && (
-            plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.init
-               || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.load
-               || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.read
+            plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SUPPORT
+               || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.PLACE
+               || plan.init_BufferHelper_Confi() == BufferHelper.Inner_ConfigStore.SHIELD
          )
          && TaskTimer.init_Z_AABB_2(new AABB(plan.init_BlockPos()))) {
          return false;
@@ -1524,32 +1524,32 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
          && autismclient.util.IoWorker.init(MC.level, plan.init_BlockPos()).getBlock() instanceof RespawnAnchorBlock;
       boolean var10000;
       switch (plan.init_BufferHelper_Confi()) {
-         case init:
+         case SUPPORT:
             var10000 = !anchor
                && read_Z_ItemStack(MC.player.getMainHandItem())
                && this.init_Z_BlockState(Blocks.OBSIDIAN.defaultBlockState(), plan.init_BlockPos(), this.init_AABB())
                && this.init_Z_BlockPos_AABB(plan.read(), this.init_AABB())
                && this.init_Z_LivingEntity(this.init_LivingEntity, plan.read(), plan.init_BlockPos(), null);
             break;
-         case load:
+         case PLACE:
             var10000 = !anchor
                && init_Z_ItemStack(MC.player.getMainHandItem())
                && this.init_Z_BlockState(Blocks.RESPAWN_ANCHOR.defaultBlockState(), plan.init_BlockPos(), this.init_AABB())
                && this.init_Z_LivingEntity(this.init_LivingEntity, plan.init_BlockPos(), null, plan.load());
             break;
-         case read:
+         case SHIELD:
             var10000 = state.canBeReplaced()
                && this.init_Z_BlockState(init_BlockState_Z(plan.init_Z()), plan.init_BlockPos(), this.init_AABB())
                && (plan.init_Z() ? read_Z_ItemStack(MC.player.getMainHandItem()) : load_Z_ItemStack(MC.player.getMainHandItem()));
             break;
-         case write:
+         case CHARGE:
             var10000 = !this.init_TextFormat.init(MC.level)
                && anchor
                && state.getValue(RespawnAnchorBlock.CHARGE) < 4
                && load_Z_ItemStack(MC.player.getMainHandItem())
                && this.poll(plan.init_BlockPos());
             break;
-         case update:
+         case DETONATE:
             var10000 = !this.init_TextFormat.init(MC.level)
                && anchor
                && !load_Z_ItemStack(MC.player.getMainHandItem())
@@ -2513,11 +2513,11 @@ public final class BufferHelper extends Module implements cn.Inner_DataUtil {
    }
 
    private enum Inner_ConfigStore {
-      init,
-      load,
-      read,
-      write,
-      update;
+      SUPPORT,
+      PLACE,
+      SHIELD,
+      CHARGE,
+      DETONATE;
    }
 
    private record Inner_DataUtil(BlockPos init) implements autismclient.util.U.Inner_NetHelper {

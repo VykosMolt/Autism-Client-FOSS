@@ -21,7 +21,7 @@ final class f {
          && !result.init_Z
          && !result.load
          && result.init_I == 0
-         && result.init_J_CachePool_DataUt == autismclient.util.J.Inner_CachePool.Inner_DataUtil.load;
+         && result.init_J_CachePool_DataUt == autismclient.util.J.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL;
    }
 
    static JsonObject init_JsonObject_g_CachePool(g.Inner_CachePool plan, int firstStep, String target, int seconds, g.Inner_CachePool... obligations) {

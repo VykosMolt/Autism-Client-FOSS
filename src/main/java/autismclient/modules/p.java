@@ -20,7 +20,7 @@ public final class p {
       int s0;
       List<p.Inner_ConfigStore> shapes;
       switch (style) {
-         case load: {
+         case TACTICAL: {
             int g = Math.max(0, (int)Math.round(gap * u));
             int l = Math.max(1, (int)Math.round(5.0 * u));
             int c = g + l;
@@ -34,7 +34,7 @@ public final class p {
             );
             break;
          }
-         case read: {
+         case CIRCLE: {
             double outer = 7.0 * u;
             double half = t / 2.0;
             double dot = Math.max(1.0, t * 0.75);
@@ -44,7 +44,7 @@ public final class p {
             shapes = List.of(new p.Inner_BufferHelper(c, c, radius, half), new p.Inner_StreamUtil(c, c, dot));
             break;
          }
-         case write: {
+         case CHEVRON: {
             double length = 7.0 * u;
             double half = t / 2.0;
             double dx = length * Math.cos(Math.toRadians(45.0));
@@ -125,7 +125,7 @@ public final class p {
 
    public static m init(p.Inner_NetHelper style, int size, double thickness, double gap, int argb) {
       int n = m.init_Z(size) ? size : 16;
-      p.Inner_CachePool raster = init(style.init_Z() ? style : p.Inner_NetHelper.init_p_NetHelper, (n - 1) / 15.0, thickness, gap, 0, 0);
+      p.Inner_CachePool raster = init(style.init_Z() ? style : p.Inner_NetHelper.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
       int[] pixels = new int[n * n];
       int offset = (n - raster.init_I()) / 2;
       int baseAlpha = argb >>> 24;
@@ -243,11 +243,11 @@ public final class p {
    }
 
    public enum Inner_NetHelper {
-      init_p_NetHelper("Cross"),
-      load("Tactical"),
-      read("Circle"),
-      write("Chevron"),
-      update("Custom");
+      CROSS("Cross"),
+      TACTICAL("Tactical"),
+      CIRCLE("Circle"),
+      CHEVRON("Chevron"),
+      CUSTOM("Custom");
 
       public final String init_Str;
 
@@ -256,7 +256,7 @@ public final class p {
       }
 
       public boolean init_Z() {
-         return this != update;
+         return this != CUSTOM;
       }
 
       public static p.Inner_NetHelper init(String label) {
@@ -268,7 +268,7 @@ public final class p {
             }
          }
 
-         return init_p_NetHelper;
+         return CROSS;
       }
 
       public static String[] init_StrArr() {

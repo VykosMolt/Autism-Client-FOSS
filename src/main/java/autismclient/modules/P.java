@@ -271,16 +271,16 @@ public final class P extends Module implements autismclient.util.aj.Inner_Config
    private int init(autismclient.util.aj.Inner_StreamUtil type) {
       int var10000;
       switch (type) {
-         case init:
+         case ONE_BY_ONE_BEDROCK:
             var10000 = this.update_I;
             break;
-         case load:
+         case ONE_BY_ONE:
             var10000 = this.sync_I;
             break;
-         case read:
+         case ONE_BY_TWO:
             var10000 = this.flush;
             break;
-         case write:
+         case TWO_BY_TWO:
             var10000 = this.close;
             break;
          default:

@@ -282,7 +282,7 @@ public final class cu {
 
    public static Identifier load(Identifier original) {
       ct.Inner_StreamUtil st = ct.init_ct_StreamUtil();
-      if (!st.init_Z_ct_DataUtil(ct.Inner_DataUtil.update)) {
+      if (!st.init_Z_ct_DataUtil(ct.Inner_DataUtil.BACKDROP)) {
          return original;
       }
 
@@ -323,7 +323,7 @@ public final class cu {
          NativeImage recolored = null;
 
          try (NativeImage src = NativeImage.read(png)) {
-            recolored = src.mappedCopy(argb -> ct.load(argb, ct.Inner_DataUtil.update, st));
+            recolored = src.mappedCopy(argb -> ct.load(argb, ct.Inner_DataUtil.BACKDROP, st));
          } catch (Throwable tx) {
             AutismClientAddon.LOG.warn("Failed to build themed panorama overlay", tx);
          }
@@ -357,7 +357,7 @@ public final class cu {
       load_Z = false;
       init_AbstractTexture = null;
       ct.Inner_StreamUtil st = ct.init_ct_StreamUtil();
-      if (st.init_Z_ct_DataUtil(ct.Inner_DataUtil.update)) {
+      if (st.init_Z_ct_DataUtil(ct.Inner_DataUtil.BACKDROP)) {
          load_Z = true;
          init(st, autismclient.gui.CachePool.init("Recoloring backdrop"));
       }
@@ -479,12 +479,12 @@ public final class cu {
       }
 
       private static int init_I_ct_StreamUtil(ct.Inner_StreamUtil st) {
-         int sig = Float.floatToIntBits(st.init_F_ct_DataUtil(ct.Inner_DataUtil.update)) * 31 + Float.floatToIntBits(st.load_F(ct.Inner_DataUtil.update));
+         int sig = Float.floatToIntBits(st.init_F_ct_DataUtil(ct.Inner_DataUtil.BACKDROP)) * 31 + Float.floatToIntBits(st.load_F(ct.Inner_DataUtil.BACKDROP));
          return sig == 0 ? 1 : sig;
       }
 
       public void init_V_ct_StreamUtil(ct.Inner_StreamUtil st) {
-         int sig = this.init_ct_DataUtil == ct.Inner_DataUtil.update ? init_I_ct_StreamUtil(st) : st.load_I(this.init_ct_DataUtil);
+         int sig = this.init_ct_DataUtil == ct.Inner_DataUtil.BACKDROP ? init_I_ct_StreamUtil(st) : st.load_I(this.init_ct_DataUtil);
          if (sig != this.init_I) {
             this.init_I = sig;
             synchronized (this.init_Obj) {
@@ -524,9 +524,9 @@ public final class cu {
 
                for (int y = 0; y < h; y++) {
                   for (int x = 0; x < w; x++) {
-                     out[y * w + x] = this.init_ct_DataUtil == ct.Inner_DataUtil.update
+                     out[y * w + x] = this.init_ct_DataUtil == ct.Inner_DataUtil.BACKDROP
                         ? ct.init_I_I(
-                           this.init_NativeImage.getPixel(x, y), st.init_F_ct_DataUtil(ct.Inner_DataUtil.update), st.load_F(ct.Inner_DataUtil.update)
+                           this.init_NativeImage.getPixel(x, y), st.init_F_ct_DataUtil(ct.Inner_DataUtil.BACKDROP), st.load_F(ct.Inner_DataUtil.BACKDROP)
                         )
                         : ct.load(this.init_NativeImage.getPixel(x, y), this.init_ct_DataUtil, st);
                   }
@@ -608,8 +608,8 @@ public final class cu {
          TextureContents contents = super.loadContents(resourceManager);
          cu.init_Z = true;
          ct.Inner_StreamUtil st = ct.init_ct_StreamUtil();
-         float hue = st.init_F_ct_DataUtil(ct.Inner_DataUtil.update);
-         float sat = st.load_F(ct.Inner_DataUtil.update);
+         float hue = st.init_F_ct_DataUtil(ct.Inner_DataUtil.BACKDROP);
+         float sat = st.load_F(ct.Inner_DataUtil.BACKDROP);
          NativeImage img = contents.image();
          int changed = 0;
 

@@ -92,7 +92,7 @@ public class aN implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.state;
+      return StreamGate.WAIT_POS;
    }
 
    @Override

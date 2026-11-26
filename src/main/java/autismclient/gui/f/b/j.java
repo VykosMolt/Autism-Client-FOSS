@@ -45,7 +45,7 @@ public final class j {
    }
 
    public static int init(int boxY, int boxHeight, int fontHeight, int offset) {
-      autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init_ConfigStore;
+      autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.BODY;
       if (face.init_StreamUtil() != null) {
          return Math.round(autismclient.gui.e.SyncManager.init(face, boxY, boxHeight, autismclient.gui.e.SyncManager.init_F_ConfigStore(face)));
       }

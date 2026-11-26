@@ -123,7 +123,7 @@ public final class EventBus {
       Map<UUID, Long> generations = new LinkedHashMap<>();
       if (session != null && requests != null) {
          for (UUID id : requests.keySet()) {
-            if (FileCache.init_FileCache_DataUtil(session, id) == FileCache.Inner_DataUtil.load) {
+            if (FileCache.init_FileCache_DataUtil(session, id) == FileCache.Inner_DataUtil.FULL) {
                generations.put(id, FileCache.init_J(session, id));
             }
          }
@@ -228,7 +228,7 @@ public final class EventBus {
       }
 
       FileCache.Inner_DataUtil policy = FileCache.init_FileCache_DataUtil(session, packId);
-      return policy == FileCache.Inner_DataUtil.load ? false : policy != null || FileCache.init_Z(session, packId);
+      return policy == FileCache.Inner_DataUtil.FULL ? false : policy != null || FileCache.init_Z(session, packId);
    }
 
    public static FileResourcesSupplier init(FileCache.Inner_BufferHelper session, UUID packId, Path path, Supplier<FileResourcesSupplier> ordinary) {
@@ -241,10 +241,10 @@ public final class EventBus {
       EventBus.Inner_ConfigStore isolation = new EventBus.Inner_ConfigStore(session, packId, generation, path);
       if (path != null
          && FileCache.init_Z(session)
-         && policy != FileCache.Inner_DataUtil.read
+         && policy != FileCache.Inner_DataUtil.DECLINE
          && (policy == null || FileCache.init_Z(session, packId, generation))
          && (policy != null || !FileCache.load_Z(session) || CharEncoder.init(session, packId, path))) {
-         if (policy != FileCache.Inner_DataUtil.init) {
+         if (policy != FileCache.Inner_DataUtil.ISOLATED) {
             return ordinary.get();
          }
 

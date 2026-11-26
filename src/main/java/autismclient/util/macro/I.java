@@ -26,7 +26,7 @@ public class I implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.start;
+      return StreamGate.PICK_UP_ALL;
    }
 
    @Override

@@ -98,7 +98,7 @@ public class G implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_g_StreamGate;
+      return StreamGate.PAY;
    }
 
    @Override

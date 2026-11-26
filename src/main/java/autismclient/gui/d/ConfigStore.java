@@ -220,7 +220,7 @@ public final class ConfigStore extends KeyHolder {
       int w = this.open.update() - pad * 2;
       int top = this.open.write() + pad;
       int controlsH;
-      if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.init_ConfigStore_DataUt) {
+      if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.ENCHANTMENTS) {
          int labelW = ui.init_PoolEntry().init("Level");
          ui.init_PoolEntry()
             .load(
@@ -330,7 +330,7 @@ public final class ConfigStore extends KeyHolder {
       if (!filter.equals(this.init_Str)) {
          this.init_Str = filter;
          List<ConfigStore.Inner_StreamUtil> rows = new ArrayList<>();
-         if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.load_ConfigStore_DataUt) {
+         if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.ATTRIBUTES) {
             for (Entry<ResourceKey<Attribute>, Attribute> entry : BuiltInRegistries.ATTRIBUTE.entrySet()) {
                Identifier id = entry.getKey().identifier();
                Attribute attribute = entry.getValue();
@@ -410,9 +410,9 @@ public final class ConfigStore extends KeyHolder {
                      this.init_Screen,
                      this.init_Module,
                      this.init_Setting,
-                     this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.init_ConfigStore_DataUt
-                        ? BufferHelper.Inner_DataUtil.load_BufferHelper_DataU
-                        : BufferHelper.Inner_DataUtil.read
+                     this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.ENCHANTMENTS
+                        ? BufferHelper.Inner_DataUtil.ENCHANTMENTS
+                        : BufferHelper.Inner_DataUtil.ATTRIBUTES
                   )
                );
          }
@@ -575,7 +575,7 @@ public final class ConfigStore extends KeyHolder {
       if (index >= 0 && index < this.read_List.size()) {
          this.update_I = index;
          String entry = this.read_List.get(index);
-         if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.init_ConfigStore_DataUt) {
+         if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.ENCHANTMENTS) {
             int split = entry.lastIndexOf(58);
             this.load_BitSetUtil.init_BitSetUtil_Str(split > 0 && split < entry.length() - 1 ? entry.substring(split + 1) : "1");
          } else {
@@ -588,13 +588,13 @@ public final class ConfigStore extends KeyHolder {
    }
 
    private String load(String id) {
-      return this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.init_ConfigStore_DataUt
+      return this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.ENCHANTMENTS
          ? write(id) + ":" + init_I_I_2(init_I_Str_I(this.load_BitSetUtil.init_Str(), 1), 1, 255)
          : this.init_Str_Str_Str(id, null);
    }
 
    private String read(String existing) {
-      if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.init_ConfigStore_DataUt) {
+      if (this.init_ConfigStore_DataUt == ConfigStore.Inner_DataUtil.ENCHANTMENTS) {
          int split = existing.lastIndexOf(58);
          String id = split > 0 ? existing.substring(0, split) : existing;
          return write(id) + ":" + init_I_I_2(init_I_Str_I(this.load_BitSetUtil.init_Str(), 1), 1, 255);
@@ -855,8 +855,8 @@ public final class ConfigStore extends KeyHolder {
    }
 
    public enum Inner_DataUtil {
-      init_ConfigStore_DataUt("Enchantments", "Pick an enchantment, set its level, then add it."),
-      load_ConfigStore_DataUt("Attributes", "Pick an attribute and keep the exact modifier controls editable.");
+      ENCHANTMENTS("Enchantments", "Pick an enchantment, set its level, then add it."),
+      ATTRIBUTES("Attributes", "Pick an attribute and keep the exact modifier controls editable.");
 
       private final String init_Str;
       private final String load_Str;

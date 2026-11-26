@@ -59,11 +59,11 @@ public class EventBus extends Screen {
    private int put;
 
    private static int init_I() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
    }
 
    private static int init_I_I(int argb) {
-      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.ACCENT);
    }
 
    public EventBus(Screen parent, String id) {
@@ -123,9 +123,9 @@ public class EventBus extends Screen {
          autismclient.gui.f.b.PoolEntry.init(graphics, metrics, metrics.init(hoverX, hoverY), this.init_Z);
          int footerY = this.update(panel);
          int ctrlH = this.update();
-         this.init(graphics, "Back", x + 4, footerY, this.init_I_Str("Back"), ctrlH, hoverX, hoverY, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
+         this.init(graphics, "Back", x + 4, footerY, this.init_I_Str("Back"), ctrlH, hoverX, hoverY, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
          this.init(
-            graphics, "Reset", this.load(x), footerY, this.init_I_Str("Reset"), ctrlH, hoverX, hoverY, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write
+            graphics, "Reset", this.load(x), footerY, this.init_I_Str("Reset"), ctrlH, hoverX, hoverY, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY
          );
          boolean enabled = al.init_AutismConfig_HudEl_Str(this.init_Str).enabled;
          int switchX = x + w - 4 - 20;
@@ -191,12 +191,12 @@ public class EventBus extends Screen {
       this.init(graphics, row.load_Str, x + 4, textY, -791321, labelColW - 8);
       int valueX = x + labelColW;
       int valueW = this.read(w);
-      if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.init) {
+      if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.BOOL) {
          boolean on = this.init_Z_Str(row.init_Str);
          this.init(graphics, on, x + w - 4 - 20, y, rowH, "hud-elem-settings:" + this.init_Str + ":" + row.init_Str);
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.load) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.ENUM) {
          this.init(row, valueX, ctrlY, valueW, ctrlH);
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.read) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.COLOR) {
          int pickW = this.load("Pick");
          int color = al.init_I_Str_I(al.init_Str_Str_Str(this.init_Str, row.init_Str), this.read(row.init_Str));
          int swatchX = valueX;
@@ -206,12 +206,12 @@ public class EventBus extends Screen {
          );
          int hexX = swatchX + swatchW + 4;
          this.init(graphics, "#" + String.format(Locale.ROOT, "%06X", color & 16777215), hexX, textY, -791321, Math.max(1, valueX + valueW - pickW - 4 - hexX));
-         this.init(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.flush) {
+         this.init(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.MODULE_LIST) {
          String editLabel = "Edit (" + this.read_List().size() + ")";
          int editW = this.load(editLabel);
-         this.init(graphics, editLabel, valueX + valueW - editW, ctrlY, editW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.write) {
+         this.init(graphics, editLabel, valueX + valueW - editW, ctrlY, editW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.NUMBER) {
          double value = al.init_D_Str(this.init_Str, row.init_Str, row.init_D);
          this.init(
             graphics,
@@ -225,17 +225,17 @@ public class EventBus extends Screen {
             mx,
             my
          );
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.update) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.ITEM) {
          int pickW = this.load("Pick");
          String raw = al.init_Str_Str_Str(this.init_Str, row.init_Str);
          String itemName = raw != null && !raw.isBlank() ? cc.init(raw.contains(":") ? raw : "minecraft:" + raw) : "None";
          this.init(graphics, itemName, valueX, textY, -791321, Math.max(1, valueW - pickW - 4));
-         this.init(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.sync) {
+         this.init(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.PICK) {
          String buttonLabel = row.init_List.isEmpty() ? "Pick…" : row.init_List.get(0);
          int pickW = this.load(buttonLabel);
          this.init(graphics, init_Str_Str(al.init_Str_Str_Str(this.init_Str, row.init_Str)), valueX, textY, -791321, Math.max(1, valueW - pickW - 4));
-         this.init(graphics, buttonLabel, valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
+         this.init(graphics, buttonLabel, valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
       }
    }
 
@@ -456,7 +456,7 @@ public class EventBus extends Screen {
             int rowsW = this.flush(panel);
             EventBus.Inner_StreamUtil row = this.init_EventBus_StreamUti(mx, my, rowsX, bodyTop - this.tick, rowsW, bodyTop, bodyBottom);
             if (row != null && !row.init_Z()) {
-               if (row.init_EventBus_CachePool != EventBus.Inner_CachePool.load) {
+               if (row.init_EventBus_CachePool != EventBus.Inner_CachePool.ENUM) {
                   this.init(row, Compat263.mouseEventGlfwButton(event), mx, my, rowsX + this.push(), this.read(rowsW));
                }
 
@@ -621,17 +621,17 @@ public class EventBus extends Screen {
 
    private void init(EventBus.Inner_StreamUtil row, int button, int mx, int my, int valueX, int valueW) {
       int dir = button == 1 ? -1 : 1;
-      if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.init) {
+      if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.BOOL) {
          al.init_V_Str(this.init_Str, row.init_Str, Boolean.toString(!this.init_Z_Str(row.init_Str)));
          this.write_V();
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.read) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.COLOR) {
          this.init_V_Str_NetHelper(row.init_Str, autismclient.gui.f.NetHelper.init(valueX, Math.max(0, my - this.flush() / 2), valueW, this.flush()));
          this.write_V();
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.flush) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.MODULE_LIST) {
          this.load_Z = true;
          this.get = 0;
          this.write_V();
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.write) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.NUMBER) {
          int fieldX = valueX + this.write(valueW) + 4;
          if (mx >= fieldX && mx < fieldX + 40) {
             this.init_V_Str_Str(row.init_Str, al.init_Str_Str_Str(this.init_Str, row.init_Str));
@@ -642,12 +642,12 @@ public class EventBus extends Screen {
          this.init_V_EventBus_StreamUti_D(row, value);
          this.init_EventBus_StreamUti = row;
          this.write_V();
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.update) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.ITEM) {
          this.write_V();
          this.minecraft
             .gui
             .setScreen(new TextFormat(this, al.init_Str_Str_Str(this.init_Str, row.init_Str), valuex -> al.init_V_Str(this.init_Str, row.init_Str, valuex)));
-      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.sync) {
+      } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.PICK) {
          this.write_V();
          String elementId = this.init_Str;
          String settingId = row.init_Str;
@@ -697,7 +697,7 @@ public class EventBus extends Screen {
          this.write_V();
       } else {
          String editingText = this.init_k == null ? "" : this.init_k.load_Str();
-         if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.write) {
+         if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.NUMBER) {
             try {
                this.init_V_EventBus_StreamUti_D(row, Double.parseDouble(editingText.trim()));
             } catch (NumberFormatException var4) {
@@ -801,14 +801,14 @@ public class EventBus extends Screen {
 
       if ("watermark".equals(this.init_Str)) {
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("Logo"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("logo-width", "Width", EventBus.Inner_CachePool.write, 48.0, 420.0, 1.0));
+         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("logo-width", "Width", EventBus.Inner_CachePool.NUMBER, 48.0, 420.0, 1.0));
       } else if ("gif".equals(this.init_Str)) {
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("GIF"));
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-path", "Image", "Pick…"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-width", "Width", EventBus.Inner_CachePool.write, 16.0, 512.0, 1.0));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-height", "Height", EventBus.Inner_CachePool.write, 16.0, 512.0, 1.0));
+         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-width", "Width", EventBus.Inner_CachePool.NUMBER, 16.0, 512.0, 1.0));
+         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-height", "Height", EventBus.Inner_CachePool.NUMBER, 16.0, 512.0, 1.0));
          if (!al.init_Str_Str_Str(this.init_Str, "gif-path").isBlank()) {
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-fps", "Framerate (FPS)", EventBus.Inner_CachePool.write, 0.0, 60.0, 1.0));
+            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("gif-fps", "Framerate (FPS)", EventBus.Inner_CachePool.NUMBER, 0.0, 60.0, 1.0));
             rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("gif-quality", "Quality", "Low", "Medium", "High", "Original"));
             rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("gif-natural", "Match File Aspect"));
          }
@@ -856,7 +856,7 @@ public class EventBus extends Screen {
 
          boolean flatSlots = isSlots && "Flat".equals(al.init_Str_Str_Str(this.init_Str, "slot-style"));
          if (!flatSlots) {
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("outline-width", "Outline Width", EventBus.Inner_CachePool.write, 1.0, 6.0, 1.0));
+            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("outline-width", "Outline Width", EventBus.Inner_CachePool.NUMBER, 1.0, 6.0, 1.0));
          }
       }
 
@@ -890,17 +890,17 @@ public class EventBus extends Screen {
          }
 
          if ("Rainbow".equals(mode) || "Gradient".equals(mode)) {
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-speed", "Animation Speed", EventBus.Inner_CachePool.write, 0.1, 2.0, 0.05));
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-spread", "Row Spread", EventBus.Inner_CachePool.write, 0.001, 0.12, 0.001));
+            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-speed", "Animation Speed", EventBus.Inner_CachePool.NUMBER, 0.1, 2.0, 0.05));
+            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-spread", "Row Spread", EventBus.Inner_CachePool.NUMBER, 0.001, 0.12, 0.001));
             rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_2("rainbow-direction", "Direction", "Forward", "Reverse"));
          }
 
          if ("Rainbow".equals(mode)) {
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-saturation", "Saturation", EventBus.Inner_CachePool.write, 0.0, 0.35, 0.05));
-            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-brightness", "Brightness", EventBus.Inner_CachePool.write, 0.0, 1.0, 0.05));
+            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-saturation", "Saturation", EventBus.Inner_CachePool.NUMBER, 0.0, 0.35, 0.05));
+            rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("rainbow-brightness", "Brightness", EventBus.Inner_CachePool.NUMBER, 0.0, 1.0, 0.05));
          }
 
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("stair-snap", "Stair Snap", EventBus.Inner_CachePool.write, 0.0, 24.0, 1.0));
+         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("stair-snap", "Stair Snap", EventBus.Inner_CachePool.NUMBER, 0.0, 24.0, 1.0));
          rows.add(EventBus.Inner_StreamUtil.write("hidden-modules", "Hidden Modules"));
       }
 
@@ -972,7 +972,7 @@ public class EventBus extends Screen {
 
       if ("fps_graph".equals(this.init_Str)) {
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("FPS Graph"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("graph-samples", "Samples", EventBus.Inner_CachePool.write, 50.0, 200.0, 10.0));
+         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("graph-samples", "Samples", EventBus.Inner_CachePool.NUMBER, 50.0, 200.0, 10.0));
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str_Str("show-current-fps", "Show Current FPS"));
       }
 
@@ -987,7 +987,7 @@ public class EventBus extends Screen {
 
       if (isKeystrokes) {
          rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("Keystrokes"));
-         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("keystroke-size", "Key Size", EventBus.Inner_CachePool.write, 12.0, 40.0, 1.0));
+         rows.add(EventBus.Inner_StreamUtil.init_EventBus_StreamUti_Str("keystroke-size", "Key Size", EventBus.Inner_CachePool.NUMBER, 12.0, 40.0, 1.0));
          if (customColors) {
             rows.add(EventBus.Inner_StreamUtil.load("keystroke-active-color", "Fill Color"));
             rows.add(EventBus.Inner_StreamUtil.load("keystroke-idle-color", "Key Color"));
@@ -999,8 +999,8 @@ public class EventBus extends Screen {
       }
 
       for (int i = rows.size() - 1; i >= 0; i--) {
-         if (rows.get(i).init_EventBus_CachePool == EventBus.Inner_CachePool.close
-            && (i == rows.size() - 1 || rows.get(i + 1).init_EventBus_CachePool == EventBus.Inner_CachePool.close)) {
+         if (rows.get(i).init_EventBus_CachePool == EventBus.Inner_CachePool.SECTION
+            && (i == rows.size() - 1 || rows.get(i + 1).init_EventBus_CachePool == EventBus.Inner_CachePool.SECTION)) {
             rows.remove(i);
          }
       }
@@ -1273,14 +1273,14 @@ public class EventBus extends Screen {
    }
 
    private enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      BOOL,
+      ENUM,
+      COLOR,
+      NUMBER,
+      ITEM,
+      PICK,
+      MODULE_LIST,
+      SECTION;
    }
 
    private record Inner_DataUtil(long init_J, List<EventBus.Inner_StreamUtil> init_List) {
@@ -1290,19 +1290,19 @@ public class EventBus extends Screen {
       String init_Str, String load_Str, EventBus.Inner_CachePool init_EventBus_CachePool, double init_D, double load_D, double read, List<String> init_List
    ) {
       static EventBus.Inner_StreamUtil init_EventBus_StreamUti_Str(String label) {
-         return new EventBus.Inner_StreamUtil("", label, EventBus.Inner_CachePool.close, 0.0, 0.0, 1.0, List.of());
+         return new EventBus.Inner_StreamUtil("", label, EventBus.Inner_CachePool.SECTION, 0.0, 0.0, 1.0, List.of());
       }
 
       static EventBus.Inner_StreamUtil init_EventBus_StreamUti_Str_Str(String key, String label) {
-         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.init, 0.0, 1.0, 1.0, List.of());
+         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.BOOL, 0.0, 1.0, 1.0, List.of());
       }
 
       static EventBus.Inner_StreamUtil init_EventBus_StreamUti_Str_2(String key, String label, String... choices) {
-         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.load, 0.0, 1.0, 1.0, List.of(choices));
+         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.ENUM, 0.0, 1.0, 1.0, List.of(choices));
       }
 
       static EventBus.Inner_StreamUtil load(String key, String label) {
-         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.read, 0.0, 1.0, 1.0, List.of());
+         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.COLOR, 0.0, 1.0, 1.0, List.of());
       }
 
       static EventBus.Inner_StreamUtil init_EventBus_StreamUti_Str(String key, String label, EventBus.Inner_CachePool type, double min, double max, double step) {
@@ -1310,19 +1310,19 @@ public class EventBus extends Screen {
       }
 
       static EventBus.Inner_StreamUtil read(String key, String label) {
-         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.update, 0.0, 1.0, 1.0, List.of());
+         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.ITEM, 0.0, 1.0, 1.0, List.of());
       }
 
       static EventBus.Inner_StreamUtil init_EventBus_StreamUti_Str(String key, String label, String buttonLabel) {
-         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.sync, 0.0, 1.0, 1.0, List.of(buttonLabel));
+         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.PICK, 0.0, 1.0, 1.0, List.of(buttonLabel));
       }
 
       static EventBus.Inner_StreamUtil write(String key, String label) {
-         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.flush, 0.0, 1.0, 1.0, List.of());
+         return new EventBus.Inner_StreamUtil(key, label, EventBus.Inner_CachePool.MODULE_LIST, 0.0, 1.0, 1.0, List.of());
       }
 
       boolean init_Z() {
-         return this.init_EventBus_CachePool == EventBus.Inner_CachePool.close;
+         return this.init_EventBus_CachePool == EventBus.Inner_CachePool.SECTION;
       }
    }
 }

@@ -12,14 +12,14 @@ public final class as {
    private static boolean load_Z;
    private static cW init_cW;
    private static cW load_cW;
-   private static as.Inner_DataUtil init_as_DataUtil = as.Inner_DataUtil.init;
+   private static as.Inner_DataUtil init_as_DataUtil = as.Inner_DataUtil.NONE;
    private static long init_J;
    private static int init_I = -1;
    private static int load_I = -1;
    private static boolean read_Z;
    private static boolean write;
-   private static as.Inner_DataUtil load_as_DataUtil = as.Inner_DataUtil.init;
-   private static as.Inner_DataUtil read_as_DataUtil = as.Inner_DataUtil.init;
+   private static as.Inner_DataUtil load_as_DataUtil = as.Inner_DataUtil.NONE;
+   private static as.Inner_DataUtil read_as_DataUtil = as.Inner_DataUtil.NONE;
    private static long load_J;
    private static long read_J;
    private static KeyMapping init_KeyMapping;
@@ -87,24 +87,24 @@ public final class as {
    public static void init_V_J(long generation) {
       if (generation > 0L && !autismclient.modules.aD.read_Z()) {
          init_J = generation;
-         init_V_as_DataUtil(as.Inner_DataUtil.write);
+         init_V_as_DataUtil(as.Inner_DataUtil.SCAFFOLD);
       }
    }
 
    public static void read_V() {
-      init_V_as_DataUtil(as.Inner_DataUtil.read);
+      init_V_as_DataUtil(as.Inner_DataUtil.FAST_EXP);
    }
 
    public static void write_V() {
-      init_V_as_DataUtil(as.Inner_DataUtil.load);
+      init_V_as_DataUtil(as.Inner_DataUtil.FAST_BLOCK);
    }
 
    public static boolean init_Z() {
-      return init_Z_as_DataUtil(as.Inner_DataUtil.read);
+      return init_Z_as_DataUtil(as.Inner_DataUtil.FAST_EXP);
    }
 
    public static boolean load_Z() {
-      return init_Z_as_DataUtil(as.Inner_DataUtil.load);
+      return init_Z_as_DataUtil(as.Inner_DataUtil.FAST_BLOCK);
    }
 
    public static boolean init_Z_J(long generation) {
@@ -112,7 +112,7 @@ public final class as {
          return false;
       }
 
-      if (!init_Z_as_DataUtil(as.Inner_DataUtil.write)) {
+      if (!init_Z_as_DataUtil(as.Inner_DataUtil.SCAFFOLD)) {
          return false;
       }
 
@@ -122,7 +122,7 @@ public final class as {
    }
 
    public static boolean read_Z() {
-      return read_as_DataUtil == as.Inner_DataUtil.write;
+      return read_as_DataUtil == as.Inner_DataUtil.SCAFFOLD;
    }
 
    public static long init_J() {
@@ -130,13 +130,13 @@ public final class as {
    }
 
    public static void update_V() {
-      if (init_as_DataUtil == as.Inner_DataUtil.write
-         || load_as_DataUtil == as.Inner_DataUtil.write
-         || read_as_DataUtil == as.Inner_DataUtil.write
+      if (init_as_DataUtil == as.Inner_DataUtil.SCAFFOLD
+         || load_as_DataUtil == as.Inner_DataUtil.SCAFFOLD
+         || read_as_DataUtil == as.Inner_DataUtil.SCAFFOLD
          || init_J != 0L
          || load_J != 0L
          || read_J != 0L) {
-         load(as.Inner_DataUtil.write);
+         load(as.Inner_DataUtil.SCAFFOLD);
          init_J = 0L;
          load_J = 0L;
          read_J = 0L;
@@ -144,23 +144,23 @@ public final class as {
    }
 
    public static boolean write_Z() {
-      return read_as_DataUtil == as.Inner_DataUtil.read;
+      return read_as_DataUtil == as.Inner_DataUtil.FAST_EXP;
    }
 
    public static boolean update_Z() {
-      return load_as_DataUtil == as.Inner_DataUtil.read || load_as_DataUtil == as.Inner_DataUtil.load;
+      return load_as_DataUtil == as.Inner_DataUtil.FAST_EXP || load_as_DataUtil == as.Inner_DataUtil.FAST_BLOCK;
    }
 
    public static void sync_V() {
-      load(as.Inner_DataUtil.read);
+      load(as.Inner_DataUtil.FAST_EXP);
    }
 
    public static void flush_V() {
-      load(as.Inner_DataUtil.load);
+      load(as.Inner_DataUtil.FAST_BLOCK);
    }
 
    private static void init_V_as_DataUtil(as.Inner_DataUtil owner) {
-      if (!autismclient.modules.aD.read_Z() && owner != null && owner != as.Inner_DataUtil.init) {
+      if (!autismclient.modules.aD.read_Z() && owner != null && owner != as.Inner_DataUtil.NONE) {
          init_as_DataUtil = owner;
       }
    }
@@ -174,14 +174,14 @@ public final class as {
          return false;
       }
 
-      load_as_DataUtil = as.Inner_DataUtil.init;
+      load_as_DataUtil = as.Inner_DataUtil.NONE;
       read_as_DataUtil = owner;
       return true;
    }
 
    private static void load(as.Inner_DataUtil owner) {
       if (init_as_DataUtil == owner) {
-         init_as_DataUtil = as.Inner_DataUtil.init;
+         init_as_DataUtil = as.Inner_DataUtil.NONE;
       }
 
       if (load_as_DataUtil == owner && init_Minecraft != null && init_Minecraft.options != null) {
@@ -190,14 +190,14 @@ public final class as {
       }
 
       if (load_as_DataUtil == owner) {
-         load_as_DataUtil = as.Inner_DataUtil.init;
+         load_as_DataUtil = as.Inner_DataUtil.NONE;
       }
 
       if (read_as_DataUtil == owner) {
-         read_as_DataUtil = as.Inner_DataUtil.init;
+         read_as_DataUtil = as.Inner_DataUtil.NONE;
       }
 
-      if (owner == as.Inner_DataUtil.write) {
+      if (owner == as.Inner_DataUtil.SCAFFOLD) {
          init_J = 0L;
          load_J = 0L;
          read_J = 0L;
@@ -282,7 +282,7 @@ public final class as {
             init_Z = false;
          }
 
-         if (init_cW != null && !combatOwnsUse && !load_Z && init_as_DataUtil == as.Inner_DataUtil.init) {
+         if (init_cW != null && !combatOwnsUse && !load_Z && init_as_DataUtil == as.Inner_DataUtil.NONE) {
             boolean physicalUse = init_Minecraft.options.keyUse.isDown() || ((AutismKeyMappingAccessor)init_Minecraft.options.keyUse).autism$clickCount() > 0;
             if (physicalUse) {
                run();
@@ -294,11 +294,11 @@ public final class as {
             }
          }
 
-         if (!combatOwnsUse && (load_Z || init_as_DataUtil != as.Inner_DataUtil.init)) {
-            boolean plainWinsTick = init_as_DataUtil != as.Inner_DataUtil.init && init(load_Z, init_as_DataUtil == as.Inner_DataUtil.write);
-            load_as_DataUtil = plainWinsTick ? as.Inner_DataUtil.init : init_as_DataUtil;
-            load_J = load_as_DataUtil == as.Inner_DataUtil.write ? init_J : 0L;
-            if (load_as_DataUtil != as.Inner_DataUtil.init) {
+         if (!combatOwnsUse && (load_Z || init_as_DataUtil != as.Inner_DataUtil.NONE)) {
+            boolean plainWinsTick = init_as_DataUtil != as.Inner_DataUtil.NONE && init(load_Z, init_as_DataUtil == as.Inner_DataUtil.SCAFFOLD);
+            load_as_DataUtil = plainWinsTick ? as.Inner_DataUtil.NONE : init_as_DataUtil;
+            load_J = load_as_DataUtil == as.Inner_DataUtil.SCAFFOLD ? init_J : 0L;
+            if (load_as_DataUtil != as.Inner_DataUtil.NONE) {
                while (init_Minecraft.options.keyUse.consumeClick()) {
                }
             }
@@ -322,8 +322,8 @@ public final class as {
 
          if (!combatOwnsUse) {
             load_Z = false;
-            if (load_as_DataUtil != as.Inner_DataUtil.init || init_as_DataUtil == as.Inner_DataUtil.init) {
-               init_as_DataUtil = as.Inner_DataUtil.init;
+            if (load_as_DataUtil != as.Inner_DataUtil.NONE || init_as_DataUtil == as.Inner_DataUtil.NONE) {
+               init_as_DataUtil = as.Inner_DataUtil.NONE;
                init_J = 0L;
             }
          }
@@ -352,8 +352,8 @@ public final class as {
             write = false;
          }
 
-         load_as_DataUtil = as.Inner_DataUtil.init;
-         read_as_DataUtil = as.Inner_DataUtil.init;
+         load_as_DataUtil = as.Inner_DataUtil.NONE;
+         read_as_DataUtil = as.Inner_DataUtil.NONE;
          load_J = 0L;
          read_J = 0L;
          if (init_KeyMapping != null) {
@@ -363,8 +363,8 @@ public final class as {
       } else {
          read_Z = false;
          write = false;
-         load_as_DataUtil = as.Inner_DataUtil.init;
-         read_as_DataUtil = as.Inner_DataUtil.init;
+         load_as_DataUtil = as.Inner_DataUtil.NONE;
+         read_as_DataUtil = as.Inner_DataUtil.NONE;
          load_J = 0L;
          read_J = 0L;
       }
@@ -392,7 +392,7 @@ public final class as {
       run();
       init_Z = false;
       load_Z = false;
-      init_as_DataUtil = as.Inner_DataUtil.init;
+      init_as_DataUtil = as.Inner_DataUtil.NONE;
       init_J = 0L;
       load_J = 0L;
       read_J = 0L;
@@ -406,7 +406,7 @@ public final class as {
       run();
       init_Z = false;
       load_Z = false;
-      init_as_DataUtil = as.Inner_DataUtil.init;
+      init_as_DataUtil = as.Inner_DataUtil.NONE;
       init_J = 0L;
       load_J = 0L;
       read_J = 0L;
@@ -451,9 +451,9 @@ public final class as {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      NONE,
+      FAST_BLOCK,
+      FAST_EXP,
+      SCAFFOLD;
    }
 }

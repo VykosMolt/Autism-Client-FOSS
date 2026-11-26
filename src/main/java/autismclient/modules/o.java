@@ -141,7 +141,7 @@ public final class o {
 
          int level = Math.round(255.0F * opacity);
          init(graphics, RenderPipelines.CROSSHAIR, entry, 2, x, y, 0xFF000000 | level << 16 | level << 8 | level);
-      } else if (look.init_p_NetHelper() == p.Inner_NetHelper.update) {
+      } else if (look.init_p_NetHelper() == p.Inner_NetHelper.CUSTOM) {
          init(graphics, RenderPipelines.GUI_TEXTURED, entry, 0, x, y, init(-1, opacity));
       } else {
          init(graphics, RenderPipelines.GUI_TEXTURED, entry, 1, x, y, init(look.init_I(), opacity));
@@ -223,13 +223,13 @@ public final class o {
       }
 
       o.Inner_DataUtil init(q.Inner_DataUtil look, int guiScale, int maxPixels) {
-         boolean custom = look.init_p_NetHelper() == p.Inner_NetHelper.update;
+         boolean custom = look.init_p_NetHelper() == p.Inner_NetHelper.CUSTOM;
          int outlinePx = look.load_Z() ? Math.max(1, (int)Math.round(look.write_D() * guiScale)) : 0;
          o.Inner_StreamUtil key = new o.Inner_StreamUtil(
             look.init_p_NetHelper(),
             look.init_D(),
             custom ? 0.0 : look.load_D(),
-            look.init_p_NetHelper() == p.Inner_NetHelper.load ? look.read_D() : 0.0,
+            look.init_p_NetHelper() == p.Inner_NetHelper.TACTICAL ? look.read_D() : 0.0,
             outlinePx,
             guiScale,
             maxPixels,

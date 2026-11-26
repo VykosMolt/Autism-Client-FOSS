@@ -115,13 +115,13 @@ public final class UiHelper implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.open;
+      return StreamGate.CUSTOM_MENU;
    }
 
    @Override
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
-      tag.putString("type", StreamGate.open.name());
+      tag.putString("type", StreamGate.CUSTOM_MENU.name());
       tag.put("fieldValues", i.init(this.fieldValues));
       tag.putString("clickButton", this.clickButton);
       tag.putInt("timeoutMs", this.init());

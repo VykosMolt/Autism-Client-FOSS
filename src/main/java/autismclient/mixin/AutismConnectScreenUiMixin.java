@@ -91,7 +91,7 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
       if (aD.init_Z()) {
          graphics.centeredText(font, text, x, y, color);
       } else {
-         int accent = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.init) & 16777215;
+         int accent = ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.ACCENT) & 16777215;
          int rowHeight = 12;
          int top = y - STEP_LABELS.length * rowHeight / 2 + 1;
          char spin = SPINNER[(int)(System.currentTimeMillis() / 100L % SPINNER.length)];

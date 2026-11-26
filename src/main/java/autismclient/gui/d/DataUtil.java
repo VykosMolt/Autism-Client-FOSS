@@ -265,11 +265,11 @@ public final class DataUtil extends Screen {
          return true;
       }
 
-      if (this.init_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.EventBus.load) {
+      if (this.init_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.EventBus.HANDLED) {
          return true;
       }
 
-      if (this.load_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.EventBus.load) {
+      if (this.load_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.EventBus.HANDLED) {
          return true;
       }
 
@@ -352,11 +352,11 @@ public final class DataUtil extends Screen {
          this.read(cA.init_I_D(event.x()));
          return true;
       } else if (this.init_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
-         == autismclient.gui.f.EventBus.load) {
+         == autismclient.gui.f.EventBus.HANDLED) {
          return true;
       } else {
          return this.load_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
-               == autismclient.gui.f.EventBus.load
+               == autismclient.gui.f.EventBus.HANDLED
             ? true
             : true;
       }

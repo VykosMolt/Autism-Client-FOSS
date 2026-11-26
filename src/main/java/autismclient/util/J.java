@@ -182,12 +182,12 @@ public final class J {
       long perfStart = bK.init_J();
       List<J.Inner_RenderState> contexts = new ArrayList<>();
       if (snap.init_Z) {
-         contexts.add(init(snap, snap.load_Z ? J.Inner_ConfigStore.init : J.Inner_ConfigStore.load, snap.init_I, snap.load_I, snap.load_List));
+         contexts.add(init(snap, snap.load_Z ? J.Inner_ConfigStore.PLAYER_2X2 : J.Inner_ConfigStore.TABLE_3X3, snap.init_I, snap.load_I, snap.load_List));
          if (snap.load_Z) {
-            contexts.add(init(snap, J.Inner_ConfigStore.load, 3, 3, List.of()));
+            contexts.add(init(snap, J.Inner_ConfigStore.TABLE_3X3, 3, 3, List.of()));
          }
       } else {
-         contexts.add(init(snap, J.Inner_ConfigStore.load, 3, 3, List.of()));
+         contexts.add(init(snap, J.Inner_ConfigStore.TABLE_3X3, 3, 3, List.of()));
       }
 
       List<ItemStack> bag = init(snap.init_List);
@@ -218,7 +218,7 @@ public final class J {
       List<J.Inner_TaskQueue> options = new ArrayList<>(optionsByKey.values());
       options.sort(
          Comparator.<J.Inner_TaskQueue, Boolean>comparing(optionx -> !optionx.read_Z)
-            .thenComparing(optionx -> optionx.init_J_ConfigStore != J.Inner_ConfigStore.init)
+            .thenComparing(optionx -> optionx.init_J_ConfigStore != J.Inner_ConfigStore.PLAYER_2X2)
             .thenComparing(optionx -> -optionx.update)
             .thenComparing(optionx -> optionx.load_Str, String.CASE_INSENSITIVE_ORDER)
             .thenComparing(optionx -> optionx.init_Str, String.CASE_INSENSITIVE_ORDER)
@@ -287,7 +287,7 @@ public final class J {
             } else if (candidate.read_Z != existing.read_Z) {
                preferCandidate = candidate.read_Z;
             } else if (candidate.init_J_ConfigStore != existing.init_J_ConfigStore) {
-               preferCandidate = candidate.init_J_ConfigStore == J.Inner_ConfigStore.init;
+               preferCandidate = candidate.init_J_ConfigStore == J.Inner_ConfigStore.PLAYER_2X2;
             } else if (candidate.update != existing.update) {
                preferCandidate = candidate.update > existing.update;
             } else if (!existing.init() && candidate.init()) {
@@ -540,7 +540,7 @@ public final class J {
             init(mc, preparedContext);
          }
       } else {
-         return requestedOption.init_J_ConfigStore != J.Inner_ConfigStore.load && requestedOption.init_aK_StreamUtil.init(2, 2)
+         return requestedOption.init_J_ConfigStore != J.Inner_ConfigStore.TABLE_3X3 && requestedOption.init_aK_StreamUtil.init(2, 2)
             ? J.Inner_CachePool.init("Open your inventory or a crafting screen first.")
             : J.Inner_CachePool.init("No reachable crafting table is available.");
       }
@@ -609,19 +609,19 @@ public final class J {
             crafts += run.init_I_ConfigStore().load_I();
          } else {
             J.Inner_DataUtil confirm = init(mc, menu, run);
-            if (confirm == J.Inner_DataUtil.init) {
+            if (confirm == J.Inner_DataUtil.CONFIRMED) {
                crafts += run.init_I_ConfigStore().load_I();
             } else {
-               if (confirm != J.Inner_DataUtil.write && confirm != J.Inner_DataUtil.update && confirm != J.Inner_DataUtil.read) {
+               if (confirm != J.Inner_DataUtil.INTERRUPTED && confirm != J.Inner_DataUtil.UNCONFIRMED && confirm != J.Inner_DataUtil.CLOSED) {
                   Integer now = init(mc, () -> init_I(mc, option.init_ItemStack));
                   int expected = (crafts + run.init_I_ConfigStore().load_I()) * perCraft;
-                  if (confirm == J.Inner_DataUtil.load && now != null && now - before >= expected) {
+                  if (confirm == J.Inner_DataUtil.MISMATCH && now != null && now - before >= expected) {
                      crafts += run.init_I_ConfigStore().load_I();
                      continue;
                   }
 
-                  failure = confirm == J.Inner_DataUtil.read ? "The crafting screen closed." : "The server did not accept the craft.";
-                  if (confirm == J.Inner_DataUtil.load) {
+                  failure = confirm == J.Inner_DataUtil.CLOSED ? "The crafting screen closed." : "The server did not accept the craft.";
+                  if (confirm == J.Inner_DataUtil.MISMATCH) {
                      init_V(mc, menu);
                   }
                   break;
@@ -755,7 +755,7 @@ public final class J {
 
       while (System.nanoTime() < deadline) {
          if (Thread.currentThread().isInterrupted()) {
-            return J.Inner_DataUtil.write;
+            return J.Inner_DataUtil.INTERRUPTED;
          }
 
          J.Inner_DataUtil state = init(mc, () -> {
@@ -776,13 +776,13 @@ public final class J {
                   boolean matches = init(menu, run);
                   if (matches && allAnswers) {
                      init_Str = "answers " + packets + "/" + stale + " in " + (now - started) / 1000000L + " ms";
-                     return J.Inner_DataUtil.init;
+                     return J.Inner_DataUtil.CONFIRMED;
                   } else {
-                     return !matches && allAnswers && now - last[2] > 300000000L ? J.Inner_DataUtil.load : null;
+                     return !matches && allAnswers && now - last[2] > 300000000L ? J.Inner_DataUtil.MISMATCH : null;
                   }
                }
             } else {
-               return J.Inner_DataUtil.read;
+               return J.Inner_DataUtil.CLOSED;
             }
          });
          if (state != null) {
@@ -790,7 +790,7 @@ public final class J {
          }
       }
 
-      return J.Inner_DataUtil.update;
+      return J.Inner_DataUtil.UNCONFIRMED;
    }
 
    private static boolean init(AbstractCraftingMenu menu, J.Inner_JsonUtil run) {
@@ -1683,7 +1683,7 @@ public final class J {
       }
 
       private Inner_CachePool(boolean success, boolean uncertain, String message, int craftedAmount) {
-         this(success, uncertain, message, craftedAmount, J.Inner_CachePool.Inner_DataUtil.init);
+         this(success, uncertain, message, craftedAmount, J.Inner_CachePool.Inner_DataUtil.NONE);
       }
 
       private Inner_CachePool(boolean success, boolean uncertain, String message, int craftedAmount, J.Inner_CachePool.Inner_DataUtil rejection) {
@@ -1707,26 +1707,26 @@ public final class J {
       }
 
       public static J.Inner_CachePool load(String message) {
-         return new J.Inner_CachePool(false, false, message, 0, J.Inner_CachePool.Inner_DataUtil.load);
+         return new J.Inner_CachePool(false, false, message, 0, J.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL);
       }
 
       public enum Inner_DataUtil {
-         init,
-         load;
+         NONE,
+         INVENTORY_FULL;
       }
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load;
+      PLAYER_2X2,
+      TABLE_3X3;
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      CONFIRMED,
+      MISMATCH,
+      CLOSED,
+      INTERRUPTED,
+      UNCONFIRMED;
    }
 
    public record Inner_EventBus(String init_Str, Item init_Item, int init_I, boolean init_Z, List<J.Inner_UiHelper> init_List) {
@@ -1889,7 +1889,7 @@ public final class J {
          this.update = Math.max(0, Math.min(this.read_I, this.write_I));
          this.read_Z = this.update > 0;
          this.sync = this.update * Math.max(1, this.init_ItemStack.getCount());
-         this.init_J_ConfigStore = craftSource == null ? J.Inner_ConfigStore.init : craftSource;
+         this.init_J_ConfigStore = craftSource == null ? J.Inner_ConfigStore.PLAYER_2X2 : craftSource;
          Identifier id = this.init_ItemStack.getItem() == null ? null : BuiltInRegistries.ITEM.getKey(this.init_ItemStack.getItem());
          this.read_Str = id == null ? "" : id.toString();
          this.write_Str = (this.load_Str + " " + this.read_Str + " " + this.init_Str).toLowerCase();

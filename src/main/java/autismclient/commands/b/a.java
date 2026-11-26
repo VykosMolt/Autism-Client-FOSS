@@ -29,13 +29,13 @@ public class a extends Command {
       root.then(init("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("top").executes(ctx -> {
          ap.Inner_CachePool options = ap.Inner_CachePool.init(0.0);
-         options.init_ap_StreamUtil = ap.Inner_StreamUtil.load;
+         options.init_ap_StreamUtil = ap.Inner_StreamUtil.TOP;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("bottom").executes(ctx -> {
          ap.Inner_CachePool options = ap.Inner_CachePool.init(0.0);
-         options.init_ap_StreamUtil = ap.Inner_StreamUtil.read;
+         options.init_ap_StreamUtil = ap.Inner_StreamUtil.BOTTOM;
          init(options);
          return 1;
       }));

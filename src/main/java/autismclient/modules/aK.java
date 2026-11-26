@@ -532,19 +532,19 @@ public final class aK extends Module implements cn.Inner_DataUtil {
       autismclient.util.ap.Inner_StreamUtil var10000;
       switch (speed) {
          case 2:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.update_ap_StreamUtil;
+            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_2;
             break;
          case 3:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.sync_ap_StreamUtil;
+            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_3;
             break;
          case 4:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.flush;
+            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_4;
             break;
          case 5:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.close;
+            var10000 = autismclient.util.ap.Inner_StreamUtil.SURROUND_FAST_5;
             break;
          default:
-            var10000 = autismclient.util.ap.Inner_StreamUtil.init_ap_StreamUtil;
+            var10000 = autismclient.util.ap.Inner_StreamUtil.STANDARD;
       }
 
       return var10000;

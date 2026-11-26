@@ -201,7 +201,7 @@ public final class AutismAdminToolsOverlay extends bj {
          autismclient.gui.f.NetHelper tab = d.init(strip, init_StrArr.length, i, 2);
          boolean active = i == this.put;
          d.init(context, tab, init_StrArr[i], active);
-         this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.init, tab, null, Integer.toString(i)));
+         this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.TAB, tab, null, Integer.toString(i)));
       }
 
       int bodyY = y + pop_I_4() + 4;
@@ -235,7 +235,7 @@ public final class AutismAdminToolsOverlay extends bj {
          autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(body.init() - 6, body.write(), 6, body.sync());
          autismclient.gui.f.b.UtilCore.Inner_DataUtil metrics = autismclient.gui.f.b.UtilCore.init(track, this.start, body.sync(), this.reset);
          autismclient.gui.f.b.UtilCore.init_V_SyncManager(context, metrics, this.update_Z);
-         this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.poll, track, null, ""));
+         this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.SCROLLBAR, track, null, ""));
       }
    }
 
@@ -404,7 +404,7 @@ public final class AutismAdminToolsOverlay extends bj {
          boolean active = i == this.add;
          d.init(context, tab, load_StrArr[i], active);
          this.init_V_AutismAdminToolsOv(
-            new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.load, tab, null, Integer.toString(i))
+            new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.ITEM_TAB, tab, null, Integer.toString(i))
          );
       }
 
@@ -643,7 +643,7 @@ public final class AutismAdminToolsOverlay extends bj {
       autismclient.gui.f.NetHelper preview = flow.init_NetHelper(add_I_2());
       this.init_V_SyncManager(context, "Full ItemStack SNBT", preview);
       this.init_V_AutismAdminToolsOv(
-         new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.open, preview, null, "edit-item-stack")
+         new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.ACTION, preview, null, "edit-item-stack")
       );
       List<String> lines = az.init_List_Str(module.value("nbt-item-stack"));
       int x = preview.read() + 6;
@@ -721,7 +721,7 @@ public final class AutismAdminToolsOverlay extends bj {
       autismclient.gui.f.b.UiHelper.init(
          context, toggle, Boolean.parseBoolean(module.value(wait.id())), toggle.init_Z(mouseX, mouseY), "admintools:" + module.id() + "/" + wait.id()
       );
-      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.read, waitRow, wait, ""));
+      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.BOOLEAN, waitRow, wait, ""));
       this.load_V_SyncManager_2(
          context, wait.label(), toggle.init() + 5, context.init_PoolEntry().init_I(waitRow), Math.max(1, waitRow.init() - toggle.init() - 7)
       );
@@ -804,7 +804,7 @@ public final class AutismAdminToolsOverlay extends bj {
             autismclient.gui.f.b.CachePool.init(context, cell, action.init, tone, cell.init_Z(mouseX, mouseY), false);
             this.init_V_AutismAdminToolsOv(
                new AutismAdminToolsOverlay.Inner_ConfigStore(
-                  AutismAdminToolsOverlay.Inner_TaskQueue.open,
+                  AutismAdminToolsOverlay.Inner_TaskQueue.ACTION,
                   cell,
                   action.load == null ? null : this.init_Setting_Module_Str(module, action.load),
                   action.read
@@ -898,7 +898,7 @@ public final class AutismAdminToolsOverlay extends bj {
          );
          this.init_V_AutismAdminToolsOv(
             new AutismAdminToolsOverlay.Inner_ConfigStore(
-               AutismAdminToolsOverlay.Inner_TaskQueue.open,
+               AutismAdminToolsOverlay.Inner_TaskQueue.ACTION,
                bounds,
                action.load == null ? null : this.init_Setting_Module_Str(module, action.load),
                action.read
@@ -927,8 +927,8 @@ public final class AutismAdminToolsOverlay extends bj {
          focused
       );
       autismclient.gui.f.b.CachePool.init(context, clear, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, clear.init_Z(mouseX, mouseY), false);
-      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.flush, bind, option, ""));
-      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.close, clear, option, ""));
+      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.KEYBIND, bind, option, ""));
+      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.CLEAR_KEYBIND, clear, option, ""));
    }
 
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager context, Module module, int x, int y, int w, int mouseX, int mouseY, String... ids) {
@@ -981,7 +981,7 @@ public final class AutismAdminToolsOverlay extends bj {
             focused ? this.init_AutismAdminToolsOv.load_I() : -1,
             focused ? this.init_I_SyncManager_NetHelper(context, bounds) : 0
          );
-         this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.write, bounds, option, ""));
+         this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.TEXT, bounds, option, ""));
       }
    }
 
@@ -1022,7 +1022,7 @@ public final class AutismAdminToolsOverlay extends bj {
          autismclient.gui.f.b.UiHelper.init(
             context, toggle, Boolean.parseBoolean(module.value(option.id())), bounds.init_Z(mouseX, mouseY), "admintools:" + module.id() + "/" + option.id()
          );
-         this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.read, bounds, option, ""));
+         this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.BOOLEAN, bounds, option, ""));
          this.load_V_SyncManager_2(
             context,
             label,
@@ -1071,8 +1071,8 @@ public final class AutismAdminToolsOverlay extends bj {
          focused ? this.init_AutismAdminToolsOv.load_I() : -1,
          focused ? this.init_I_SyncManager_NetHelper(context, value) : 0
       );
-      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.update, slider, option, ""));
-      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.write, value, option, ""));
+      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.SLIDER, slider, option, ""));
+      this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.TEXT, value, option, ""));
    }
 
    private void init_V_SyncManager(
@@ -1087,7 +1087,7 @@ public final class AutismAdminToolsOverlay extends bj {
       boolean open = this.init_RefQueue != null && this.init_Setting == option && this.init_RefQueue.init_NetHelper().equals(bounds);
       autismclient.gui.f.b.UiHelper.init(context, bounds, label, bounds.init_Z(mouseX, mouseY), open);
       this.init_V_AutismAdminToolsOv(
-         new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.sync, bounds, option, String.join("\u0000", choices))
+         new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.DROPDOWN, bounds, option, String.join("\u0000", choices))
       );
       if (!open && this.init_RefQueue != null && this.init_RefQueue.init_NetHelper().equals(bounds)) {
          this.init_Setting = option;
@@ -1173,11 +1173,11 @@ public final class AutismAdminToolsOverlay extends bj {
             AutismAdminToolsOverlay.Inner_ConfigStore hit = this.init_List.get(i);
             if (hit.init_NetHelper.init_Z((int)mouseX, (int)mouseY)) {
                switch (hit.init_AutismAdminToolsOv) {
-                  case init:
+                  case TAB:
                      this.put = load_I_I(init_I_Str_I_2(hit.init_Str, 0), 0, init_StrArr.length - 1);
                      this.reset = 0;
                      return true;
-                  case load:
+                  case ITEM_TAB:
                      this.add = load_I_I(init_I_Str_I_2(hit.init_Str, 0), 0, load_StrArr.length - 1);
                      if (this.add == 3) {
                         module.sync_V_9();
@@ -1185,24 +1185,24 @@ public final class AutismAdminToolsOverlay extends bj {
 
                      this.reset = 0;
                      return true;
-                  case read:
+                  case BOOLEAN:
                      module.setValue(hit.init_Setting.id(), Boolean.toString(!Boolean.parseBoolean(module.value(hit.init_Setting.id()))));
                      if (hit.init_Setting.id().startsWith("nbt-")) {
                         module.sync_V_9();
                      }
 
                      return true;
-                  case write:
+                  case TEXT:
                      if (button == 0 && (this.load_NetHelper == null || this.load_NetHelper.init_Z((int)mouseX, (int)mouseY))) {
                         this.init_V_Module(module, hit.init_Setting, (int)mouseX, hit.init_NetHelper);
                      }
 
                      return true;
-                  case update:
+                  case SLIDER:
                      this.read_Setting = hit.init_Setting;
                      this.load_V_Module_I(module, (int)mouseX);
                      return true;
-                  case sync:
+                  case DROPDOWN:
                      List<String> values = hit.init_Str.isEmpty() ? List.of() : List.of(hit.init_Str.split("\u0000", -1));
                      String selected = hit.init_Setting == null ? read_StrArr[this.clear] : module.value(hit.init_Setting.id());
                      this.init_Setting = hit.init_Setting;
@@ -1219,16 +1219,16 @@ public final class AutismAdminToolsOverlay extends bj {
                      });
                      this.init_RefQueue.init_V_2();
                      return true;
-                  case flush:
+                  case KEYBIND:
                      this.load_Setting = hit.init_Setting;
                      return true;
-                  case close:
+                  case CLEAR_KEYBIND:
                      module.setValue(hit.init_Setting.id(), "-1");
                      return true;
-                  case open:
+                  case ACTION:
                      this.init_V_f_DataUtil_AutismAdminToolsOv(module, hit);
                      return true;
-                  case poll:
+                  case SCROLLBAR:
                      autismclient.gui.f.b.UtilCore.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
                      if (metrics != null && metrics.init_I() > 0) {
                         this.stop = metrics.load().init_Z((int)mouseX, (int)mouseY) ? (int)mouseY - metrics.load().write() : metrics.load().sync() / 2;
@@ -1272,20 +1272,20 @@ public final class AutismAdminToolsOverlay extends bj {
                this.init_V_f_DataUtil(module);
                break;
             case "edit-lore":
-               this.init_V_Module(module, "nbt-item-lore", autismclient.gui.d.BufferHelper.Inner_DataUtil.init_BufferHelper_DataU);
+               this.init_V_Module(module, "nbt-item-lore", autismclient.gui.d.BufferHelper.Inner_DataUtil.LORE);
                break;
             case "edit-enchants":
-               this.init_V_Module_2(module, "nbt-enchants", autismclient.gui.d.ConfigStore.Inner_DataUtil.init_ConfigStore_DataUt);
+               this.init_V_Module_2(module, "nbt-enchants", autismclient.gui.d.ConfigStore.Inner_DataUtil.ENCHANTMENTS);
                break;
             case "edit-attributes":
-               this.init_V_Module_2(module, "nbt-attributes", autismclient.gui.d.ConfigStore.Inner_DataUtil.load_ConfigStore_DataUt);
+               this.init_V_Module_2(module, "nbt-attributes", autismclient.gui.d.ConfigStore.Inner_DataUtil.ATTRIBUTES);
                break;
             case "edit-custom-data":
-               this.init_V_Module(module, "nbt-custom-data", autismclient.gui.d.BufferHelper.Inner_DataUtil.update);
+               this.init_V_Module(module, "nbt-custom-data", autismclient.gui.d.BufferHelper.Inner_DataUtil.RAW);
                break;
             case "edit-item-stack":
                module.sync_V_9();
-               this.init_V_Module(module, "nbt-item-stack", autismclient.gui.d.BufferHelper.Inner_DataUtil.write);
+               this.init_V_Module(module, "nbt-item-stack", autismclient.gui.d.BufferHelper.Inner_DataUtil.FULL_NBT);
                break;
             case "copy-item-stack-snbt":
                Minecraft mcx = Minecraft.getInstance();
@@ -1847,7 +1847,7 @@ public final class AutismAdminToolsOverlay extends bj {
    private void load_V_Module_I(Module module, int mouseX) {
       if (module != null && this.read_Setting != null) {
          for (AutismAdminToolsOverlay.Inner_ConfigStore hit : this.init_List) {
-            if (hit.init_AutismAdminToolsOv == AutismAdminToolsOverlay.Inner_TaskQueue.update && hit.init_Setting == this.read_Setting) {
+            if (hit.init_AutismAdminToolsOv == AutismAdminToolsOverlay.Inner_TaskQueue.SLIDER && hit.init_Setting == this.read_Setting) {
                double value = c.init(
                   mouseX,
                   hit.init_NetHelper.read(),
@@ -2037,15 +2037,15 @@ public final class AutismAdminToolsOverlay extends bj {
    }
 
    private enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      TAB,
+      ITEM_TAB,
+      BOOLEAN,
+      TEXT,
+      SLIDER,
+      DROPDOWN,
+      KEYBIND,
+      CLEAR_KEYBIND,
+      ACTION,
+      SCROLLBAR;
    }
 }

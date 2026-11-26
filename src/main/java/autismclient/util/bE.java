@@ -17,7 +17,7 @@ public final class bE {
    public List<bJ.Inner_CachePool> init_List = new ArrayList<>();
    public byte[] init_BArr = new byte[0];
    public byte[] load_BArr = new byte[0];
-   public bE.Inner_StreamUtil init_bE_StreamUtil = bE.Inner_StreamUtil.read;
+   public bE.Inner_StreamUtil init_bE_StreamUtil = bE.Inner_StreamUtil.USER_EDITED;
    public String flush = "";
    public String close = "Binary";
    public boolean init_Z = false;
@@ -98,7 +98,7 @@ public final class bE {
          : ("CONFIGURATION".equals(action.payloadPhase) ? "CONFIGURATION" : "");
       action.payloadClassName = this.write_Str == null ? "" : this.write_Str;
       action.payloadPacketId = this.init_I;
-      action.payloadProvenance = this.init_bE_StreamUtil == null ? bE.Inner_StreamUtil.read.init() : this.init_bE_StreamUtil.init();
+      action.payloadProvenance = this.init_bE_StreamUtil == null ? bE.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init();
       action.payloadEncodingMode = this.sync();
       action.payloadFields = bJ.init(this.init_List);
       action.payloadData = AutismPayloadSupport.init_Str(this.init_BArr);
@@ -173,7 +173,7 @@ public final class bE {
          return false;
       } else {
          this.init_V_bE(parsed);
-         this.init_bE_StreamUtil = bE.Inner_StreamUtil.read;
+         this.init_bE_StreamUtil = bE.Inner_StreamUtil.USER_EDITED;
          this.init_V();
          return true;
       }
@@ -181,7 +181,7 @@ public final class bE {
 
    public boolean load_Z_Str(String hex) {
       try {
-         this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), bE.Inner_StreamUtil.read);
+         this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), bE.Inner_StreamUtil.USER_EDITED);
          this.flush = "";
          return true;
       } catch (Throwable t) {
@@ -192,7 +192,7 @@ public final class bE {
    }
 
    public boolean read(String text) {
-      this.init_V_BArr_bE_StreamUtil((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), bE.Inner_StreamUtil.read);
+      this.init_V_BArr_bE_StreamUtil((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), bE.Inner_StreamUtil.USER_EDITED);
       return true;
    }
 
@@ -252,9 +252,9 @@ public final class bE {
 
             parsed.init_I = logical.init_I;
             parsed.read_Str = logical.init_Str;
-            parsed.init_V_BArr_bE_StreamUtil(logical.init_BArr, bE.Inner_StreamUtil.read);
+            parsed.init_V_BArr_bE_StreamUtil(logical.init_BArr, bE.Inner_StreamUtil.USER_EDITED);
          } else if (bodyHex != null) {
-            parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), bE.Inner_StreamUtil.read);
+            parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), bE.Inner_StreamUtil.USER_EDITED);
          }
       } catch (Throwable t) {
          this.flush = AutismPayloadSupport.init(t);
@@ -263,7 +263,7 @@ public final class bE {
       }
 
       this.init_V_bE(parsed);
-      this.init_bE_StreamUtil = bE.Inner_StreamUtil.read;
+      this.init_bE_StreamUtil = bE.Inner_StreamUtil.USER_EDITED;
       this.flush = "";
       this.init_V();
       return true;
@@ -351,7 +351,7 @@ public final class bE {
          sb.append("sourceProtocol = ").append(this.update_Str).append('\n');
       }
 
-      sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? bE.Inner_StreamUtil.read.init() : this.init_bE_StreamUtil.init()).append('\n');
+      sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? bE.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init()).append('\n');
       sb.append("bodyBytes = ").append(this.init_BArr == null ? 0 : this.init_BArr.length).append('\n');
       sb.append("decoded = ").append(this.update()).append('\n');
       sb.append("bodyHex = ").append(AutismPayloadSupport.init_Str(this.init_BArr)).append('\n');
@@ -415,7 +415,7 @@ public final class bE {
       this.init_List = new ArrayList<>(AutismPayloadSupport.init_List(this.init_BArr));
       this.sync = AutismPayloadSupport.init_Str(this.read_Str, this.init_BArr);
       this.close = init_Str_BArr(this.init_BArr);
-      this.init_bE_StreamUtil = source == null ? bE.Inner_StreamUtil.read : source;
+      this.init_bE_StreamUtil = source == null ? bE.Inner_StreamUtil.USER_EDITED : source;
       this.load_V();
       this.flush = "";
       this.init_V();
@@ -608,9 +608,9 @@ public final class bE {
    }
 
    public enum Inner_StreamUtil {
-      init_bE_StreamUtil("capturedExact"),
-      load("reencodedFromPayload"),
-      read("userEdited");
+      CAPTURED_EXACT("capturedExact"),
+      REENCODED_FROM_PAYLOAD("reencodedFromPayload"),
+      USER_EDITED("userEdited");
 
       private final String init_Str;
 
@@ -632,9 +632,9 @@ public final class bE {
                }
             }
 
-            return read;
+            return USER_EDITED;
          } else {
-            return read;
+            return USER_EDITED;
          }
       }
    }

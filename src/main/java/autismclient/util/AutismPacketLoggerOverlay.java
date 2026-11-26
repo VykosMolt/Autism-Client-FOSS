@@ -171,7 +171,7 @@ public class AutismPacketLoggerOverlay extends bj {
    private int prev;
    private String load_Str = "";
    private final k init_k;
-   private AutismPacketLoggerOverlay.Inner_DataUtil init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.init_AutismPacketLogger;
+   private AutismPacketLoggerOverlay.Inner_DataUtil init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.ALL;
    private boolean open_Z = true;
    private int valid = 0;
    private boolean poll_Z;
@@ -295,18 +295,18 @@ public class AutismPacketLoggerOverlay extends bj {
          switch (category.trim().toUpperCase(Locale.ROOT)) {
             case "INVENTORY":
             case "INV":
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.load;
+               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.INVENTORY;
                break;
             case "MOVEMENT":
             case "MOVE":
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.read;
+               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.MOVEMENT;
                break;
             case "PAYLOAD":
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.write;
+               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD;
                break;
             case "ALL":
             default:
-               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.init_AutismPacketLogger;
+               this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.ALL;
          }
       }
 
@@ -317,7 +317,7 @@ public class AutismPacketLoggerOverlay extends bj {
       this.init_k.init_V_Str("");
       this.load_Str = "";
       this.valid = 0;
-      this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.init_AutismPacketLogger;
+      this.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_DataUtil.ALL;
       this.poll_Z = false;
       this.pop_Z = true;
    }
@@ -1063,7 +1063,7 @@ public class AutismPacketLoggerOverlay extends bj {
          int total = 0;
 
          for (AutismPacketLoggerOverlay.Inner_CachePool r : this.load_List) {
-            total += r.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.load ? r.init_I : 1;
+            total += r.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.GROUP ? r.init_I : 1;
          }
 
          int bodyMx = mx;
@@ -1107,7 +1107,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      int ey = drawBase + i * this.put_I_6();
                      if (ey + this.put_I_6() > contentY && ey < contentEndY) {
                         AutismPacketLoggerOverlay.Inner_CachePool row = this.load_List.get(i);
-                        if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.load) {
+                        if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.GROUP) {
                            this.init_V_GuiGraphicsExtract_7(ctx, row, ey, bodyMx, bodyMy);
                         } else {
                            this.init_V_GuiGraphicsExtract_8(ctx, row.init_AutismPacketLogger, ey, bodyMx, bodyMy);
@@ -1142,7 +1142,7 @@ public class AutismPacketLoggerOverlay extends bj {
       }
 
       String summary = this.write_Z ? "Paused  " + total : Integer.toString(total);
-      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.write) {
+      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD) {
          bD.Inner_BufferHelper subscriptionStatus = bD.init_bD_BufferHelper();
          String channelStatus = subscriptionStatus == null ? "" : subscriptionStatus.init_Str();
          if (!channelStatus.isBlank()) {
@@ -1224,25 +1224,25 @@ public class AutismPacketLoggerOverlay extends bj {
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[0], this.reset_I_5(), row1.init_StrArr[0], !this.write_Z, "packet-logger:capture", mx, my);
       x += row1.init_IArr[0] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[1] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[2] + row1.init_I;
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[3], this.reset_I_5(), row1.init_StrArr[3], this.open_Z, "packet-logger:grouping", mx, my);
       x += row1.init_IArr[3] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[4] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[5] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
       );
       x = this.init_I_2 + 4;
       int sw = this.prev_I_4();
@@ -1264,7 +1264,7 @@ public class AutismPacketLoggerOverlay extends bj {
          x += bw + gap;
       }
 
-      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.write) {
+      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD) {
          String listenLabel = this.poll_Z ? "Filtered" : "All";
          int listenW = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
          autismclient.gui.f.b.PacketUtil.init(ctx, this.init_Font, x, row2Y, listenW, this.reset_I_5(), listenLabel, this.poll_Z, mx, my);
@@ -1310,7 +1310,7 @@ public class AutismPacketLoggerOverlay extends bj {
          x,
          y + (this.put_I_6() - 8) / 2,
          8,
-         exp ? autismclient.gui.f.b.StateCache.Inner_DataUtil.load : autismclient.gui.f.b.StateCache.Inner_DataUtil.init,
+         exp ? autismclient.gui.f.b.StateCache.Inner_DataUtil.DOWN : autismclient.gui.f.b.StateCache.Inner_DataUtil.RIGHT,
          hov ? -659730 : -1582374,
          -1204153320,
          1.0F
@@ -1385,7 +1385,7 @@ public class AutismPacketLoggerOverlay extends bj {
       autismclient.gui.f.b.TableIndex.init(ctx, this.init_I_2 + 4, startY, this.reset - 8);
       int y = startY + 3;
       boolean hh = mx >= this.init_I_2 + 4 && mx <= this.init_I_2 + 150 && my >= y && my < y + this.put_I_6();
-      int blockedColor = hh ? ct.init_I_I_ct_DataUtil(-30584, ct.Inner_DataUtil.flush) : ct.init_I_I_ct_DataUtil(-39322, ct.Inner_DataUtil.flush);
+      int blockedColor = hh ? ct.init_I_I_ct_DataUtil(-30584, ct.Inner_DataUtil.DANGER) : ct.init_I_I_ct_DataUtil(-39322, ct.Inner_DataUtil.DANGER);
       autismclient.gui.f.PacketUtil.init(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2 + 6, y + 1, 9, 9), this.push_Z, blockedColor);
       this.init_V_GuiGraphicsExtract_8(ctx, "Blocked (" + this.sync_Set.size() + ")", autismclient.gui.f.b.l.load, blockedColor, this.init_I_2 + 17, y + 1);
       int ubX = this.init_I_2 + this.reset - 58;
@@ -1600,7 +1600,7 @@ public class AutismPacketLoggerOverlay extends bj {
          x += dirW + gap;
       }
 
-      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.write) {
+      if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD) {
          String listenLabel = this.poll_Z ? "Filtered" : "All";
          int listenW = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
          if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + listenW) {
@@ -1620,7 +1620,7 @@ public class AutismPacketLoggerOverlay extends bj {
       );
       if (idx >= 0 && idx < this.load_List.size()) {
          AutismPacketLoggerOverlay.Inner_CachePool row = this.load_List.get(idx);
-         if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.load) {
+         if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.GROUP) {
             int bx = this.init_I_2 + this.reset - 28;
             if (button == 0 && mouseX >= bx && mouseX <= bx + 24 && row.init_Class != null) {
                String n = bv.init_Str_Class((Class<? extends Packet<?>>)row.init_Class);
@@ -1640,7 +1640,7 @@ public class AutismPacketLoggerOverlay extends bj {
             }
          }
 
-         if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.init && row.init_AutismPacketLogger != null) {
+         if (row.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_RenderState.ENTRY && row.init_AutismPacketLogger != null) {
             int menuIconX = this.init_I_2 + this.reset - 16;
             if (button == 1 || button == 0 && mouseX >= menuIconX) {
                this.init_V_AutismPacketLogger_2(row.init_AutismPacketLogger, (int)mouseX, (int)mouseY);
@@ -1823,14 +1823,14 @@ public class AutismPacketLoggerOverlay extends bj {
 
    private synchronized List<AutismPacketLoggerOverlay.Inner_JsonUtil> init_List_10() {
       switch (this.init_AutismPacketLogger_2) {
-         case init_AutismPacketLogger:
+         case ALL:
          default:
             return new ArrayList<>(this.init_Deque);
-         case load:
+         case INVENTORY:
             return new ArrayList<>(this.load_Deque);
-         case read:
+         case MOVEMENT:
             return new ArrayList<>(this.read_Deque);
-         case write:
+         case PAYLOAD:
             return new ArrayList<>(this.write_Deque);
       }
    }
@@ -1862,7 +1862,7 @@ public class AutismPacketLoggerOverlay extends bj {
       for (AutismPacketLoggerOverlay.Inner_JsonUtil e : source) {
          if (!this.load(e.init_Class)
             && (
-               this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.Inner_DataUtil.write
+               this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD
                   || !this.poll_Z
                   || this.init_bB_StreamUtil_AutismPacketLogger(e) != null
             )
@@ -1902,7 +1902,7 @@ public class AutismPacketLoggerOverlay extends bj {
          String key = e.read_Str;
          if (groupedKeys.contains(key) && added.add(key)) {
             AutismPacketLoggerOverlay.Inner_CachePool h = new AutismPacketLoggerOverlay.Inner_CachePool();
-            h.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_RenderState.load;
+            h.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_RenderState.GROUP;
             h.init_Str = key;
             h.init_I = counts.get(key);
             h.load = dirs.get(key);
@@ -1913,7 +1913,7 @@ public class AutismPacketLoggerOverlay extends bj {
                for (AutismPacketLoggerOverlay.Inner_JsonUtil child : reversed) {
                   if (child.read_Str.equals(key)) {
                      AutismPacketLoggerOverlay.Inner_CachePool r = new AutismPacketLoggerOverlay.Inner_CachePool();
-                     r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_RenderState.init;
+                     r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_RenderState.ENTRY;
                      r.init_AutismPacketLogger = child;
                      rows.add(r);
                   }
@@ -1925,7 +1925,7 @@ public class AutismPacketLoggerOverlay extends bj {
       for (AutismPacketLoggerOverlay.Inner_JsonUtil e : reversed) {
          if (!groupedKeys.contains(e.read_Str)) {
             AutismPacketLoggerOverlay.Inner_CachePool r = new AutismPacketLoggerOverlay.Inner_CachePool();
-            r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_RenderState.init;
+            r.init_AutismPacketLogger_2 = AutismPacketLoggerOverlay.Inner_RenderState.ENTRY;
             r.init_AutismPacketLogger = e;
             rows.add(r);
          }
@@ -2016,7 +2016,7 @@ public class AutismPacketLoggerOverlay extends bj {
       for (AutismPacketLoggerOverlay.Inner_JsonUtil e : source) {
          if (!this.load(e.init_Class)
             && (
-               this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.Inner_DataUtil.write
+               this.init_AutismPacketLogger_2 != AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD
                   || !this.poll_Z
                   || this.init_bB_StreamUtil_AutismPacketLogger(e) != null
             )
@@ -2116,7 +2116,7 @@ public class AutismPacketLoggerOverlay extends bj {
    }
 
    private int prev_I_4() {
-      return this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.write ? 108 : this.next_I_5();
+      return this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD ? 108 : this.next_I_5();
    }
 
    private int valid_I_3() {
@@ -2224,7 +2224,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      this.pop_I_20(),
                      rowH,
                      "Clear",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER,
                      true,
                      mx,
                      my
@@ -2238,7 +2238,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      this.tick_I_18(),
                      rowH,
                      "Reset",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -2540,39 +2540,39 @@ public class AutismPacketLoggerOverlay extends bj {
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore init(String label) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.init, label, -1, null, -1, null, null, null, null);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.HEADER, label, -1, null, -1, null, null, null, null);
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore load(String label) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.flush, label, -1, null, -1, null, null, null, null);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.EMPTY, label, -1, null, -1, null, null, null, null);
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore init(int index, AutismConfig.PayloadChannelRegistrationRule rule) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.load, null, -1, null, index, rule, null, null, null);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.REGISTRATION, null, -1, null, index, rule, null, null, null);
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore read(String channel) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.read, null, -1, null, -1, null, channel, null, null);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.LEARNED, null, -1, null, -1, null, channel, null, null);
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore init(int index, AutismConfig.PayloadChannelFilterRule rule) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.write, null, index, rule, -1, null, null, null, null);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.ACTIVE, null, index, rule, -1, null, null, null, null);
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore init(AutismPacketLoggerOverlay.Inner_UiHelper family) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.update, null, -1, null, -1, null, null, family, null);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.FAMILY, null, -1, null, -1, null, null, family, null);
       }
 
       static AutismPacketLoggerOverlay.Inner_ConfigStore init(bB.Inner_CachePool preset) {
-         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.sync, null, -1, null, -1, null, null, null, preset);
+         return new AutismPacketLoggerOverlay.Inner_ConfigStore(AutismPacketLoggerOverlay.Inner_TaskQueue.PRESET, null, -1, null, -1, null, null, null, preset);
       }
    }
 
    public enum Inner_DataUtil {
-      init_AutismPacketLogger("All"),
-      load("INV"),
-      read("Move"),
-      write("Payload");
+      ALL("All"),
+      INVENTORY("INV"),
+      MOVEMENT("Move"),
+      PAYLOAD("Payload");
 
       public final String init_Str;
 
@@ -2649,8 +2649,8 @@ public class AutismPacketLoggerOverlay extends bj {
    }
 
    enum Inner_RenderState {
-      init,
-      load;
+      ENTRY,
+      GROUP;
    }
 
    private static final class Inner_StateCache {
@@ -2691,13 +2691,13 @@ public class AutismPacketLoggerOverlay extends bj {
    }
 
    private enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      HEADER,
+      REGISTRATION,
+      LEARNED,
+      ACTIVE,
+      FAMILY,
+      PRESET,
+      EMPTY;
    }
 
    private static final class Inner_UiHelper {
@@ -2994,7 +2994,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      addW,
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      this.poll_Z_14() ? "Save" : "Add",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
@@ -3009,7 +3009,7 @@ public class AutismPacketLoggerOverlay extends bj {
                         this.size(),
                         AutismPacketLoggerOverlay.this.add_I_13(),
                         "Cancel",
-                        autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                        autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                         true,
                         mx,
                         my
@@ -3028,8 +3028,8 @@ public class AutismPacketLoggerOverlay extends bj {
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[0],
                      AutismPacketLoggerOverlay.this.init_bB.read_Z()
-                        ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update
-                        : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                        ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST
+                        : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
@@ -3043,7 +3043,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      controls.init_IArr[1],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[1],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
@@ -3057,7 +3057,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      controls.init_IArr[2],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[2],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
@@ -3071,7 +3071,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      controls.init_IArr[3],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[3],
-                     this.sync_Z ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                     this.sync_Z ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -3085,7 +3085,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      controls.init_IArr[4],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[4],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
@@ -3099,7 +3099,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      controls.init_IArr[5],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[5],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -3113,7 +3113,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      controls.init_IArr[6],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[6],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -3135,7 +3135,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      lockW,
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      registrationUnlocked ? "Registration : On" : "Registration : Off",
-                     registrationUnlocked ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                     registrationUnlocked ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -3213,10 +3213,10 @@ public class AutismPacketLoggerOverlay extends bj {
             ctx,
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             -15594225,
-            ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.load),
-            ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.load)
+            ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.OUTLINE),
+            ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.OUTLINE)
          );
-         this.init(ctx, "Payload Registration Warning", autismclient.gui.f.b.l.load, ct.init_I_I_ct_DataUtil(-19276, ct.Inner_DataUtil.flush), x, w, y + 10);
+         this.init(ctx, "Payload Registration Warning", autismclient.gui.f.b.l.load, ct.init_I_I_ct_DataUtil(-19276, ct.Inner_DataUtil.DANGER), x, w, y + 10);
          this.init(ctx, "Servers can see every registered channel.", autismclient.gui.f.b.l.read, p.scan(), x, w, y + 30);
          this.init(ctx, "This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, p.scan(), x, w, y + 43);
          this.init(ctx, "Passive logging and decoding still work while locked.", autismclient.gui.f.b.l.write, p.parse(), x, w, y + 60);
@@ -3234,7 +3234,7 @@ public class AutismPacketLoggerOverlay extends bj {
             cancelW,
             AutismPacketLoggerOverlay.this.add_I_13(),
             "Cancel",
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
             true,
             mx,
             my
@@ -3248,7 +3248,7 @@ public class AutismPacketLoggerOverlay extends bj {
             acceptW,
             AutismPacketLoggerOverlay.this.add_I_13(),
             this.load_Str_10(),
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER,
             ready,
             mx,
             my
@@ -3297,7 +3297,7 @@ public class AutismPacketLoggerOverlay extends bj {
          int bodyTop = this.load_I + 14;
          int contentW = 0;
          contentW = Math.max(
-            contentW, this.init_I_Str_3("Payload Registration Warning", autismclient.gui.f.b.l.load, ct.init_I_I_ct_DataUtil(-19276, ct.Inner_DataUtil.flush))
+            contentW, this.init_I_Str_3("Payload Registration Warning", autismclient.gui.f.b.l.load, ct.init_I_I_ct_DataUtil(-19276, ct.Inner_DataUtil.DANGER))
          );
          contentW = Math.max(contentW, this.init_I_Str_3("Servers can see every registered channel.", autismclient.gui.f.b.l.read, p.scan()));
          contentW = Math.max(contentW, this.init_I_Str_3("This can identify this client or selected plugins.", autismclient.gui.f.b.l.read, p.scan()));
@@ -3353,7 +3353,7 @@ public class AutismPacketLoggerOverlay extends bj {
          int right = this.clear_I_7();
          int width = Math.max(1, right - left);
          int x = left + 4;
-         if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.init) {
+         if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.HEADER) {
             boolean groupHeader = this.load_Map.getOrDefault(this.init_Str_2(row.init_Str), 0) > 0;
             boolean groupOn = groupHeader && this.load_Z_2(row.init_Str);
             ctx.fill(left, y, right, y + 14, p.clear());
@@ -3378,7 +3378,7 @@ public class AutismPacketLoggerOverlay extends bj {
                this.load(ctx, row.init_Str, channelX, y);
                this.init(ctx, statusX, y + 1, statusW, 12, groupOn ? "ON" : "OFF", groupOn);
             }
-         } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.flush) {
+         } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.EMPTY) {
             ctx.fill(left, y, right, y + 14, p.flags());
             AutismPacketLoggerOverlay.this.init_V_GuiGraphicsExtract_8(
                ctx,
@@ -3396,7 +3396,7 @@ public class AutismPacketLoggerOverlay extends bj {
             );
          } else {
             boolean hover = mx >= left && mx < right && my >= y && my < y + 14;
-            if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.update) {
+            if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.FAMILY) {
                AutismPacketLoggerOverlay.Inner_UiHelper family = row.init_AutismPacketLogger_2;
                if (family != null) {
                   int total = family.init_I();
@@ -3433,7 +3433,7 @@ public class AutismPacketLoggerOverlay extends bj {
                   this.init_V_GuiGraphicsExtract_9(ctx, total + "ch", total > 0 ? -7346000 : p.bind(), channelX, y);
                   this.init(ctx, statusX, y + 1, 30, 12, allEnabled ? "ON" : "OFF", allEnabled);
                }
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.load) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.REGISTRATION) {
                AutismConfig.PayloadChannelRegistrationRule rule = row.init_AutismConfig_Paylo_2;
                boolean enabled = rule != null && rule.enabled;
                int fill = enabled ? p.init(hover) : (hover ? p.level() : p.flags());
@@ -3492,10 +3492,10 @@ public class AutismPacketLoggerOverlay extends bj {
                   autismclient.gui.f.PacketUtil.read(
                      ctx,
                      autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9),
-                     hu ? ct.init_I_I_ct_DataUtil(-39322, ct.Inner_DataUtil.flush) : p.parse()
+                     hu ? ct.init_I_I_ct_DataUtil(-39322, ct.Inner_DataUtil.DANGER) : p.parse()
                   );
                }
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.read) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.LEARNED) {
                ctx.fill(left, y, right, y + 14, hover ? p.level() : p.flags());
                int statusX = right - 30 - 4;
                int sourceX = statusX - 56;
@@ -3518,7 +3518,7 @@ public class AutismPacketLoggerOverlay extends bj {
                   ctx, "Learned", autismclient.gui.f.b.l.write, p.parse(), sourceX, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
                );
                this.init(ctx, statusX, y + 1, 30, 12, "OFF", false);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.write) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.ACTIVE) {
                AutismConfig.PayloadChannelFilterRule rule = row.init_AutismConfig_Paylo;
                int fill = rule.enabled ? p.init(hover) : (hover ? p.level() : p.flags());
                ctx.fill(left, y, right, y + 14, fill);
@@ -3560,7 +3560,7 @@ public class AutismPacketLoggerOverlay extends bj {
                   ctx, "E", autismclient.gui.f.b.l.write, eu ? -7346000 : p.parse(), editX + 3, this.init_I_I_l(y, autismclient.gui.f.b.l.write)
                );
                autismclient.gui.f.PacketUtil.read(
-                  ctx, autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9), hu ? ct.init_I_I_ct_DataUtil(-39322, ct.Inner_DataUtil.flush) : p.parse()
+                  ctx, autismclient.gui.f.NetHelper.init(removeX + 3, y + 2, 9, 9), hu ? ct.init_I_I_ct_DataUtil(-39322, ct.Inner_DataUtil.DANGER) : p.parse()
                );
             } else {
                bB.Inner_CachePool preset = row.init_bB_CachePool;
@@ -3653,13 +3653,13 @@ public class AutismPacketLoggerOverlay extends bj {
             bD.Inner_CachePool impact = this.init_bD_CachePool(preset.read());
             String label;
             int color;
-            if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.init_bB_BufferHelper) {
+            if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.EXACT) {
                label = impact.init_I() > 0 ? impact.init_Str() : "Exact";
                color = -7346000;
-            } else if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.load) {
+            } else if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.CORE) {
                label = preset.init_bB_BufferHelper().init_Str();
                color = -7346000;
-            } else if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.write) {
+            } else if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.UNVERIFIED) {
                label = preset.init_bB_BufferHelper().init_Str();
                color = p.entry();
             } else {
@@ -4299,16 +4299,16 @@ public class AutismPacketLoggerOverlay extends bj {
          if (preset != null && preset.init_bB_BufferHelper() != null) {
             byte var10000;
             switch (preset.init_bB_BufferHelper()) {
-               case init_bB_BufferHelper:
+               case EXACT:
                   var10000 = 0;
                   break;
-               case load:
+               case CORE:
                   var10000 = 1;
                   break;
-               case read:
+               case TEMPLATE:
                   var10000 = 2;
                   break;
-               case write:
+               case UNVERIFIED:
                   var10000 = 3;
                   break;
                default:
@@ -4404,18 +4404,18 @@ public class AutismPacketLoggerOverlay extends bj {
       private String init(int index) {
          if (index >= 0 && index < this.init_List.size()) {
             AutismPacketLoggerOverlay.Inner_ConfigStore row = this.init_List.get(index);
-            if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.write && row.init_AutismConfig_Paylo != null) {
+            if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.ACTIVE && row.init_AutismConfig_Paylo != null) {
                return "custom:" + bB.init_Str_Str(row.init_AutismConfig_Paylo.pattern);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.load && row.init_AutismConfig_Paylo_2 != null) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.REGISTRATION && row.init_AutismConfig_Paylo_2 != null) {
                return "reg:" + bC.init_Str_Str(row.init_AutismConfig_Paylo_2.channel);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.read && row.load_Str != null) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.LEARNED && row.load_Str != null) {
                return "learned:" + bC.init_Str_Str(row.load_Str);
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.sync && row.init_bB_CachePool != null) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.PRESET && row.init_bB_CachePool != null) {
                return "preset:" + row.init_bB_CachePool.init_Str();
-            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.update && row.init_AutismPacketLogger_2 != null) {
+            } else if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.FAMILY && row.init_AutismPacketLogger_2 != null) {
                return "family:" + row.init_AutismPacketLogger_2.init_Str();
             } else {
-               return row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.init && row.init_Str != null ? "header:" + row.init_Str : null;
+               return row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.HEADER && row.init_Str != null ? "header:" + row.init_Str : null;
             }
          } else {
             return null;
@@ -4582,7 +4582,7 @@ public class AutismPacketLoggerOverlay extends bj {
                int index = (int)((my - listTop + this.flush_I) / 14.0);
                if (index >= 0 && index < this.init_List.size()) {
                   AutismPacketLoggerOverlay.Inner_ConfigStore row = this.init_List.get(index);
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.load) {
+                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.REGISTRATION) {
                      boolean editable = this.init_Z(row.init_AutismConfig_Paylo_2);
                      int removeX = editable ? this.clear_I_7() - 14 : this.clear_I_7();
                      int editX = editable ? removeX - 14 : this.clear_I_7();
@@ -4604,7 +4604,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.read) {
+                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.LEARNED) {
                      if (!this.init_Z(List.of(row.load_Str))) {
                         this.stop_V_6();
                         return true;
@@ -4618,7 +4618,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.write) {
+                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.ACTIVE) {
                      if (this.write(mx, my, listTop + index * 14 - this.flush_I)) {
                         this.write(row.init_I, row.init_AutismConfig_Paylo);
                         return true;
@@ -4638,7 +4638,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.update) {
+                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.FAMILY) {
                      int rowY = listTop + index * 14 - this.flush_I;
                      if (this.write(mx, my, rowY)) {
                         this.init_V(row.init_AutismPacketLogger_2);
@@ -4663,10 +4663,10 @@ public class AutismPacketLoggerOverlay extends bj {
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.sync) {
+                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.PRESET) {
                      if (!this.write(mx, my, listTop + index * 14 - this.flush_I)) {
                         if (row.init_bB_CachePool != null
-                           && row.init_bB_CachePool.init_bB_BufferHelper() == bB.Inner_BufferHelper.init_bB_BufferHelper
+                           && row.init_bB_CachePool.init_bB_BufferHelper() == bB.Inner_BufferHelper.EXACT
                            && !this.init_Z(row.init_bB_CachePool)
                            && !this.init_Z(List.of(row.init_bB_CachePool.read()))) {
                            this.stop_V_6();
@@ -4687,7 +4687,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      return true;
                   }
 
-                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.init
+                  if (row.init_AutismPacketLogger == AutismPacketLoggerOverlay.Inner_TaskQueue.HEADER
                      && this.load_Map.getOrDefault(this.init_Str_2(row.init_Str), 0) > 0) {
                      if (this.write(mx, my, listTop + index * 14 - this.flush_I)) {
                         this.write_V_2(row.init_Str);
@@ -4750,7 +4750,7 @@ public class AutismPacketLoggerOverlay extends bj {
             } else if (this.open_I >= 0) {
                this.load_V_2(normalized);
             } else {
-               boolean filterChanged = AutismPacketLoggerOverlay.this.init_bB.load(label, normalized, bB.Inner_DataUtil.init);
+               boolean filterChanged = AutismPacketLoggerOverlay.this.init_bB.load(label, normalized, bB.Inner_DataUtil.ANY);
                boolean registrationChanged = false;
                if (bC.load_Z_Str(normalized)) {
                   registrationChanged = AutismPacketLoggerOverlay.this.init_bC.load(label, normalized, "custom");
@@ -4805,7 +4805,7 @@ public class AutismPacketLoggerOverlay extends bj {
                   this.read_V_2(oldChannel);
                }
 
-               AutismPacketLoggerOverlay.this.init_bB.load(normalized, normalized, bB.Inner_DataUtil.init);
+               AutismPacketLoggerOverlay.this.init_bB.load(normalized, normalized, bB.Inner_DataUtil.ANY);
                this.write_V_20();
                this.sync_V_15();
                this.put_V_7();
@@ -5170,7 +5170,7 @@ public class AutismPacketLoggerOverlay extends bj {
                      skipped++;
                   } else {
                      boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "learned");
-                     AutismPacketLoggerOverlay.this.init_bB.load(normalized, normalized, bB.Inner_DataUtil.init);
+                     AutismPacketLoggerOverlay.this.init_bB.load(normalized, normalized, bB.Inner_DataUtil.ANY);
                      if (regChanged) {
                         added++;
                      }
@@ -5200,7 +5200,7 @@ public class AutismPacketLoggerOverlay extends bj {
                   skipped++;
                } else {
                   boolean regChanged = AutismPacketLoggerOverlay.this.init_bC.load(normalized, normalized, "learned");
-                  AutismPacketLoggerOverlay.this.init_bB.load(normalized, normalized, bB.Inner_DataUtil.init);
+                  AutismPacketLoggerOverlay.this.init_bB.load(normalized, normalized, bB.Inner_DataUtil.ANY);
                   if (regChanged) {
                      added++;
                   }
@@ -5211,7 +5211,7 @@ public class AutismPacketLoggerOverlay extends bj {
          this.init_Map_2();
 
          for (bB.Inner_CachePool preset : this.write_Map.values()) {
-            if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.init_bB_BufferHelper) {
+            if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.EXACT) {
                AutismPacketLoggerOverlay.this.init_bB.write_Z_bB_CachePool(preset);
                String normalized = bC.init_Str_Str(preset.read());
                if (bC.load_Z_Str(normalized)) {

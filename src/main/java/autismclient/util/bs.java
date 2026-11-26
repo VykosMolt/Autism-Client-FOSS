@@ -112,7 +112,7 @@ public final class bs {
             action.waitForGuiBefore = false;
             action.waitForGuiAfter = false;
             action.guiName = "";
-            action.packets.add(new ck.Inner_CachePool(entry.init_Packet, 0, ck.Inner_BufferHelper.load));
+            action.packets.add(new ck.Inner_CachePool(entry.init_Packet, 0, ck.Inner_BufferHelper.EXACT));
             macroEditor.init_V_MacroAction_2(action);
             bk.init_bk().update_V(macroEditor);
             AutismClientMessaging.sendPrefixed("Added send action: " + entry.load_Str);

@@ -31,13 +31,13 @@ import net.minecraft.world.phys.HitResult.Type;
 public class ByteReader implements MacroAction {
    private boolean init_Z = true;
    public int delayMs = 0;
-   public ByteReader.Inner_StreamUtil mode = ByteReader.Inner_StreamUtil.init;
-   public ByteReader.Inner_BufferHelper lagMethod = ByteReader.Inner_BufferHelper.init;
-   public ByteReader.Inner_CachePool kickMethod = ByteReader.Inner_CachePool.init;
+   public ByteReader.Inner_StreamUtil mode = ByteReader.Inner_StreamUtil.DISCONNECT;
+   public ByteReader.Inner_BufferHelper lagMethod = ByteReader.Inner_BufferHelper.CLICK_SLOT;
+   public ByteReader.Inner_CachePool kickMethod = ByteReader.Inner_CachePool.HURT;
    public int packetCount = 200;
    public boolean useNextAction = false;
    private transient List<MacroAction> init_List = null;
-   public ByteReader.Inner_DataUtil trigger = ByteReader.Inner_DataUtil.init;
+   public ByteReader.Inner_DataUtil trigger = ByteReader.Inner_DataUtil.TELEPORT;
    public double targetX = 0.0;
    public double targetY = 0.0;
    public double targetZ = 0.0;
@@ -49,16 +49,16 @@ public class ByteReader implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       switch (this.mode) {
-         case init:
+         case DISCONNECT:
             this.init_V(mc);
             break;
-         case load:
+         case KICK:
             this.read_V(mc);
             break;
-         case read:
+         case KICK_DUPE:
             this.write(mc);
             break;
-         case write:
+         case AUTO_DISCONNECT:
             this.load_V(mc);
       }
    }
@@ -91,7 +91,7 @@ public class ByteReader implements MacroAction {
             }
 
             switch (this.trigger) {
-               case init:
+               case TELEPORT:
                   long now = System.currentTimeMillis();
                   if (now - lastPositionCheck >= 50L) {
                      double dist = Math.sqrt(
@@ -116,7 +116,7 @@ public class ByteReader implements MacroAction {
                      lastPositionCheck = now;
                   }
                   break;
-               case load:
+               case POSITION:
                   double dx = mc.player.getX() - initialX;
                   double dy = mc.player.getY() - initialY;
                   double dz = mc.player.getZ() - initialZ;
@@ -134,14 +134,14 @@ public class ByteReader implements MacroAction {
                      lastPositionCheck = nowPos;
                   }
                   break;
-               case read:
+               case WORLD_CHANGE:
                   String currentWorld = mc.level != null ? mc.level.dimension().identifier().toString() : "";
                   if (!currentWorld.equals(initialWorld) && !currentWorld.isEmpty()) {
                      AutismClientMessaging.sendPrefixed("§aWorld change detected!");
                      triggered = true;
                   }
                   break;
-               case write:
+               case GUI_CLOSE:
                   Screen curScreen = mc.gui.screen();
                   if (prevScreen != null && curScreen == null) {
                      AutismClientMessaging.sendPrefixed("§aGUI close detected!");
@@ -150,7 +150,7 @@ public class ByteReader implements MacroAction {
 
                   prevScreen = curScreen;
                   break;
-               case update:
+               case INVENTORY_CLEAR:
                   if (!initialInventoryEmpty && this.init_Z_2(mc)) {
                      AutismClientMessaging.sendPrefixed("§aInventory clear detected!");
                      triggered = true;
@@ -270,7 +270,7 @@ public class ByteReader implements MacroAction {
          || act instanceof BufferHelper
          || act instanceof UiHelper
          || act instanceof O
-         || act instanceof ByteReader reader && reader.mode == ByteReader.Inner_StreamUtil.write;
+         || act instanceof ByteReader reader && reader.mode == ByteReader.Inner_StreamUtil.AUTO_DISCONNECT;
    }
 
    private boolean load_Z(Minecraft mc) {
@@ -323,14 +323,14 @@ public class ByteReader implements MacroAction {
 
    private boolean read_Z(Minecraft mc) {
       switch (this.lagMethod) {
-         case load:
+         case BOAT_NBT:
             Entity vehicle = mc.player.getVehicle();
             if (!(vehicle instanceof ChestBoat) && !(vehicle instanceof AbstractMinecartContainer)) {
                AutismClientMessaging.sendPrefixed("§cYou must be in a Chest Boat or Minecart with Chest for BoatNBT!");
                return false;
             }
             break;
-         case read:
+         case ENTITY_NBT:
             if (mc.hitResult == null || mc.hitResult.getType() != Type.ENTITY) {
                AutismClientMessaging.sendPrefixed("§cYou must be looking at an entity for EntityNBT!");
                return false;
@@ -348,18 +348,18 @@ public class ByteReader implements MacroAction {
 
    private void update(Minecraft mc) {
       switch (this.lagMethod) {
-         case init:
+         case CLICK_SLOT:
             for (int i = 0; i < this.packetCount; i++) {
                mc.getConnection()
                   .send(new ServerboundContainerClickPacket(0, 0, (short)0, (byte)0, ContainerInput.PICKUP, new Int2ObjectArrayMap<>(), HashedStack.EMPTY));
             }
             break;
-         case load:
+         case BOAT_NBT:
             for (int i = 0; i < this.packetCount; i++) {
                mc.getConnection().send(new ServerboundPlayerCommandPacket(mc.player, Action.OPEN_INVENTORY));
             }
             break;
-         case read:
+         case ENTITY_NBT:
             if (mc.hitResult instanceof EntityHitResult ehr) {
                Entity target = ehr.getEntity();
 
@@ -375,10 +375,10 @@ public class ByteReader implements MacroAction {
 
    private void sync(Minecraft mc) {
       switch (this.kickMethod) {
-         case init:
+         case HURT:
             mc.getConnection().send(new ServerboundInteractPacket(mc.player.getId(), InteractionHand.MAIN_HAND, Vec3.ZERO, false));
             break;
-         case load:
+         case CLIENT_SETTINGS:
             ClientInformation opts = new ClientInformation(
                mc.options.languageCode,
                -2,
@@ -392,7 +392,7 @@ public class ByteReader implements MacroAction {
             );
             mc.getConnection().send(new ServerboundClientInformationPacket(opts));
             break;
-         case read:
+         case INVALID_SLOT:
             mc.getConnection().send(new ServerboundSetCarriedItemPacket(-1));
       }
    }
@@ -433,7 +433,7 @@ public class ByteReader implements MacroAction {
          try {
             this.mode = ByteReader.Inner_StreamUtil.valueOf(tag.getStringOr("mode", "DISCONNECT"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = ByteReader.Inner_StreamUtil.init;
+            this.mode = ByteReader.Inner_StreamUtil.DISCONNECT;
          }
       }
 
@@ -441,7 +441,7 @@ public class ByteReader implements MacroAction {
          try {
             this.lagMethod = ByteReader.Inner_BufferHelper.valueOf(tag.getStringOr("lagMethod", "CLICK_SLOT"));
          } catch (IllegalArgumentException ignored) {
-            this.lagMethod = ByteReader.Inner_BufferHelper.init;
+            this.lagMethod = ByteReader.Inner_BufferHelper.CLICK_SLOT;
          }
       }
 
@@ -449,7 +449,7 @@ public class ByteReader implements MacroAction {
          try {
             this.kickMethod = ByteReader.Inner_CachePool.valueOf(tag.getStringOr("kickMethod", "HURT"));
          } catch (IllegalArgumentException ignored) {
-            this.kickMethod = ByteReader.Inner_CachePool.init;
+            this.kickMethod = ByteReader.Inner_CachePool.HURT;
          }
       }
 
@@ -465,7 +465,7 @@ public class ByteReader implements MacroAction {
          try {
             this.trigger = ByteReader.Inner_DataUtil.valueOf(tag.getStringOr("trigger", "TELEPORT"));
          } catch (IllegalArgumentException ignored) {
-            this.trigger = ByteReader.Inner_DataUtil.init;
+            this.trigger = ByteReader.Inner_DataUtil.TELEPORT;
          }
       }
 
@@ -500,38 +500,38 @@ public class ByteReader implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.buffer;
+      return StreamGate.DISCONNECT;
    }
 
    @Override
    public String getDisplayName() {
       String var3;
       switch (this.mode) {
-         case init:
+         case DISCONNECT:
             var3 = this.delayMs > 0 ? "Disconnect (" + this.delayMs + "ms)" : "Disconnect";
             break;
-         case load:
+         case KICK:
             var3 = "Kick (" + this.lagMethod.name() + ", " + this.kickMethod.name() + ", " + this.packetCount + ")";
             break;
-         case read:
+         case KICK_DUPE:
             String action = this.useNextAction ? "Next Actions" : "Bundle";
             var3 = "Kick Dupe (" + this.lagMethod.name() + ", " + this.kickMethod.name() + ", " + this.packetCount + ", " + action + ")";
             break;
-         case write:
+         case AUTO_DISCONNECT:
             switch (this.trigger) {
-               case init:
+               case TELEPORT:
                   var3 = "Loading Screen";
                   break;
-               case load:
+               case POSITION:
                   var3 = String.format("Pos Jump > %.0f blocks", this.tolerance);
                   break;
-               case read:
+               case WORLD_CHANGE:
                   var3 = "World Change";
                   break;
-               case write:
+               case GUI_CLOSE:
                   var3 = "GUI Close";
                   break;
-               case update:
+               case INVENTORY_CLEAR:
                   var3 = "Inv Clear";
                   break;
                default:
@@ -550,7 +550,7 @@ public class ByteReader implements MacroAction {
 
    @Override
    public String getIcon() {
-      return this.mode == ByteReader.Inner_StreamUtil.write ? "ADC" : "DC";
+      return this.mode == ByteReader.Inner_StreamUtil.AUTO_DISCONNECT ? "ADC" : "DC";
    }
 
    @Override
@@ -564,29 +564,29 @@ public class ByteReader implements MacroAction {
    }
 
    public enum Inner_BufferHelper {
-      init,
-      load,
-      read;
+      CLICK_SLOT,
+      BOAT_NBT,
+      ENTITY_NBT;
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read;
+      HURT,
+      CLIENT_SETTINGS,
+      INVALID_SLOT;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      TELEPORT,
+      POSITION,
+      WORLD_CHANGE,
+      GUI_CLOSE,
+      INVENTORY_CLEAR;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      DISCONNECT,
+      KICK,
+      KICK_DUPE,
+      AUTO_DISCONNECT;
    }
 }

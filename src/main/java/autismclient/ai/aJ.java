@@ -90,7 +90,7 @@ public final class aJ {
                int cap = hasMs ? 300000 : 6000;
                if (delay >= 0 && delay <= cap) {
                   autismclient.util.ck shared = autismclient.util.ck.init_ck();
-                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.ck.Inner_DataUtil.load : autismclient.util.ck.Inner_DataUtil.init);
+                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.ck.Inner_DataUtil.MS : autismclient.util.ck.Inner_DataUtil.TICKS);
                   List<autismclient.util.ck.Inner_CachePool> queued = shared.load_List();
                   queued.add(new autismclient.util.ck.Inner_CachePool(packet, delay, init(regenerate)));
                   shared.load_V_List(queued);
@@ -281,7 +281,7 @@ public final class aJ {
    }
 
    private static autismclient.util.ck.Inner_BufferHelper init(boolean regenerate) {
-      return regenerate ? autismclient.util.ck.Inner_BufferHelper.init : autismclient.util.ck.Inner_BufferHelper.load;
+      return regenerate ? autismclient.util.ck.Inner_BufferHelper.REGENERATE : autismclient.util.ck.Inner_BufferHelper.EXACT;
    }
 
    private static String init(Packet<?> packet) {

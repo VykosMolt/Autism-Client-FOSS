@@ -18,12 +18,12 @@ public final class ValueSink {
    }
 
    public static void init() {
-      update = ct.init_I_I_ct_DataUtil(-9547177, ct.Inner_DataUtil.load);
-      sync = ct.init_I_I_ct_DataUtil(-12588930, ct.Inner_DataUtil.sync);
-      flush = ct.init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.read);
-      close = ct.init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.read);
-      open = ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.sync);
-      poll = ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.flush);
+      update = ct.init_I_I_ct_DataUtil(-9547177, ct.Inner_DataUtil.OUTLINE);
+      sync = ct.init_I_I_ct_DataUtil(-12588930, ct.Inner_DataUtil.SUCCESS);
+      flush = ct.init_I_I_ct_DataUtil(-854534, ct.Inner_DataUtil.TEXT);
+      close = ct.init_I_I_ct_DataUtil(-6774093, ct.Inner_DataUtil.TEXT);
+      open = ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.SUCCESS);
+      poll = ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.DANGER);
    }
 
    static {

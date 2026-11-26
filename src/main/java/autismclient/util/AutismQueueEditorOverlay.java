@@ -310,7 +310,7 @@ public class AutismQueueEditorOverlay extends bj {
    private int init(GuiGraphicsExtractor context, int x, int y, int h, String label, int mouseX, int mouseY, String tip, Runnable action) {
       int width = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 24, 96);
       autismclient.gui.f.b.PacketUtil.init(
-         context, this.init_Font, x, y, width, h, label, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update, true, mouseX, mouseY
+         context, this.init_Font, x, y, width, h, label, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mouseX, mouseY
       );
       this.load_List.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
       this.init(x, y, width, h, mouseX, mouseY, tip);
@@ -328,7 +328,7 @@ public class AutismQueueEditorOverlay extends bj {
    private void init(
       GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action
    ) {
-      this.init(context, x, y, w, h, label, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, active, mouseX, mouseY, tip, action);
+      this.init(context, x, y, w, h, label, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, active, mouseX, mouseY, tip, action);
    }
 
    private void init(
@@ -542,7 +542,7 @@ public class AutismQueueEditorOverlay extends bj {
                   replayWidth,
                   this.next(),
                   "Replay",
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -589,7 +589,7 @@ public class AutismQueueEditorOverlay extends bj {
                   captureModeBtnWidth,
                   this.next(),
                   captureAsExact ? "E" : "R",
-                  captureAsExact ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                  captureAsExact ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                   true,
                   mouseX,
                   mouseY,
@@ -598,7 +598,7 @@ public class AutismQueueEditorOverlay extends bj {
                      autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
                      boolean nowExact = !module.next_Z();
                      module.close(nowExact);
-                     ck.Inner_BufferHelper bulkMode = nowExact ? ck.Inner_BufferHelper.load : ck.Inner_BufferHelper.init;
+                     ck.Inner_BufferHelper bulkMode = nowExact ? ck.Inner_BufferHelper.EXACT : ck.Inner_BufferHelper.REGENERATE;
                      int updated = 0;
 
                      for (ck.Inner_CachePool qp : ck.init_ck().load_List()) {
@@ -622,7 +622,7 @@ public class AutismQueueEditorOverlay extends bj {
                   clearWidth,
                   this.next(),
                   "Clear",
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER,
                   true,
                   mouseX,
                   mouseY,
@@ -635,7 +635,7 @@ public class AutismQueueEditorOverlay extends bj {
                   }
                );
                boolean captureModeOn = ck.init_ck().chunk();
-               String delayModeLabel = ck.init_ck().init_ck_DataUtil() == ck.Inner_DataUtil.init ? "Ticks" : "Ms";
+               String delayModeLabel = ck.init_ck().init_ck_DataUtil() == ck.Inner_DataUtil.TICKS ? "Ticks" : "Ms";
                int modeWidth = this.init_I_Str_5(delayModeLabel, 34, 44);
                int captureWidth = this.init_I_Str_5("Capture", 56, 72);
                int plus1Width = this.init_I_Str_5("+1", 22, 28);
@@ -651,14 +651,14 @@ public class AutismQueueEditorOverlay extends bj {
                   modeWidth,
                   this.next(),
                   delayModeLabel,
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
                   "Toggle delay unit: Ticks or milliseconds",
                   () -> {
                      ck.init_ck().flush_V();
-                     String newMode = ck.init_ck().init_ck_DataUtil() == ck.Inner_DataUtil.init ? "Ticks" : "Ms";
+                     String newMode = ck.init_ck().init_ck_DataUtil() == ck.Inner_DataUtil.TICKS ? "Ticks" : "Ms";
                      AutismClientMessaging.sendPrefixed("§aDelay mode: " + newMode);
                   }
                );
@@ -687,7 +687,7 @@ public class AutismQueueEditorOverlay extends bj {
                   plus1Width,
                   this.next(),
                   "+1",
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -701,7 +701,7 @@ public class AutismQueueEditorOverlay extends bj {
                   plus10Width,
                   this.next(),
                   "+10",
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -715,7 +715,7 @@ public class AutismQueueEditorOverlay extends bj {
                   plus20Width,
                   this.next(),
                   "+20",
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                   true,
                   mouseX,
                   mouseY,
@@ -729,7 +729,7 @@ public class AutismQueueEditorOverlay extends bj {
                   sendWidth,
                   this.next(),
                   this.flush_Z ? "In Game" : "Send Q",
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                   !this.flush_Z,
                   mouseX,
                   mouseY,
@@ -752,7 +752,7 @@ public class AutismQueueEditorOverlay extends bj {
                      syncWidth,
                      this.next(),
                      "Sync",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                      !this.flush_Z,
                      mouseX,
                      mouseY,
@@ -766,7 +766,7 @@ public class AutismQueueEditorOverlay extends bj {
                      syncExecWidth,
                      this.next(),
                      "Sync Exec",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                      !this.flush_Z,
                      mouseX,
                      mouseY,
@@ -780,7 +780,7 @@ public class AutismQueueEditorOverlay extends bj {
                      context,
                      this.init_Font,
                      "Queue empty",
-                     cs.Inner_DataUtil.write,
+                     cs.Inner_DataUtil.MUTED,
                      this.flush_I + 10,
                      j.init(this.push_I_23(), this.start_I_14(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                      false
@@ -846,7 +846,7 @@ public class AutismQueueEditorOverlay extends bj {
                            this.start_I_14(),
                            hovered,
                            selected,
-                           grouped ? autismclient.gui.f.b.FileCache.Inner_DataUtil.read : autismclient.gui.f.b.FileCache.Inner_DataUtil.init
+                           grouped ? autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING : autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
                         );
                         String label = "#" + packet.init_I() + " " + bv.init_Str_Packet(packet.init_Packet);
                         String delayText = String.valueOf(packet.load_I());
@@ -890,7 +890,7 @@ public class AutismQueueEditorOverlay extends bj {
                            modeBtnW,
                            this.stop(),
                            exact ? "E" : "R",
-                           exact ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+                           exact ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
                            true,
                            mouseX,
                            mouseY
@@ -903,7 +903,7 @@ public class AutismQueueEditorOverlay extends bj {
                            delayBtnWidth,
                            this.stop(),
                            delayText,
-                           autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write,
+                           autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY,
                            true,
                            mouseX,
                            mouseY
@@ -1000,7 +1000,7 @@ public class AutismQueueEditorOverlay extends bj {
                }
 
                if (region.write(mouseX, mouseY) && button == 0) {
-                  ck.Inner_BufferHelper next = region.init_ck_CachePool.init_Z() ? ck.Inner_BufferHelper.init : ck.Inner_BufferHelper.load;
+                  ck.Inner_BufferHelper next = region.init_ck_CachePool.init_Z() ? ck.Inner_BufferHelper.REGENERATE : ck.Inner_BufferHelper.EXACT;
                   region.init_ck_CachePool.init(next);
                   return true;
                }
@@ -1135,7 +1135,7 @@ public class AutismQueueEditorOverlay extends bj {
          for (ck.Inner_CachePool packet : queue) {
             if (packet.init_I() == this.pop) {
                packet.init(packet.load_I() + increment);
-               String modeStr = ck.init_ck().load_ck_DataUtil() == ck.Inner_DataUtil.init ? "ticks" : "ms";
+               String modeStr = ck.init_ck().load_ck_DataUtil() == ck.Inner_DataUtil.TICKS ? "ticks" : "ms";
                AutismClientMessaging.sendPrefixed("§aPacket #" + packet.init_I() + " delay: " + packet.load_I() + " " + modeStr);
                return;
             }

@@ -167,7 +167,7 @@ public class H implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.queue;
+      return StreamGate.PAYLOAD;
    }
 
    @Override

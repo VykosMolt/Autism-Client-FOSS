@@ -408,12 +408,12 @@ final class w {
 
             for (EquipmentSlot slot : autismclient.util.TaskTimer.init_EquipmentSlotArr) {
                autismclient.util.TaskTimer.Inner_DataUtil candidate = best.get(slot);
-               if (candidate != null && candidate.init_TaskTimer_StreamUt() != autismclient.util.TaskTimer.Inner_StreamUtil.read) {
+               if (candidate != null && candidate.init_TaskTimer_StreamUt() != autismclient.util.TaskTimer.Inner_StreamUtil.ARMOR) {
                   ItemStack wornStack = mc.player.getItemBySlot(slot);
                   if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.TaskTimer.load_Z(wornStack)) {
                      int armorMenuSlot = w.init_Map.get(slot);
                      if (wornStack.isEmpty()) {
-                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.init && hotbarSwap
+                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR && hotbarSwap
                            ? new w.Inner_StreamUtil(
                               slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, w.Inner_DataUtil.init, w.init(candidate.init_ItemStack())
                            )
@@ -421,7 +421,7 @@ final class w {
                               slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, w.Inner_DataUtil.init, w.init(candidate.init_ItemStack())
                            );
                      } else {
-                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.init && hotbarSwap && swapArmor
+                        return candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
                            ? new w.Inner_StreamUtil(
                               slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, w.Inner_DataUtil.init, w.init(candidate.init_ItemStack())
                            )
@@ -451,7 +451,7 @@ final class w {
          autismclient.util.TaskTimer.Inner_DataUtil init_TaskTimer_DataUtil() {
             ItemStack wornChest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
             if (wornChest.is(Items.ELYTRA)) {
-               return new autismclient.util.TaskTimer.Inner_DataUtil(wornChest, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.read, -1);
+               return new autismclient.util.TaskTimer.Inner_DataUtil(wornChest, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.ARMOR, -1);
             }
 
             for (int inv = 0; inv < 36; inv++) {
@@ -460,7 +460,7 @@ final class w {
                   return new autismclient.util.TaskTimer.Inner_DataUtil(
                      stack,
                      EquipmentSlot.CHEST,
-                     inv < 9 ? autismclient.util.TaskTimer.Inner_StreamUtil.init : autismclient.util.TaskTimer.Inner_StreamUtil.load,
+                     inv < 9 ? autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR : autismclient.util.TaskTimer.Inner_StreamUtil.INVENTORY,
                      inv
                   );
                }
@@ -468,7 +468,7 @@ final class w {
 
             ItemStack offhand = mc.player.getItemBySlot(EquipmentSlot.OFFHAND);
             return offhand.is(Items.ELYTRA)
-               ? new autismclient.util.TaskTimer.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.load, 40)
+               ? new autismclient.util.TaskTimer.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.INVENTORY, 40)
                : null;
          }
 

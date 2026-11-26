@@ -426,7 +426,7 @@ public final class j {
    }
 
    public static String init_Str(String raw) {
-      return init(raw, j.Inner_DataUtil.init);
+      return init(raw, j.Inner_DataUtil.AUTO);
    }
 
    public static String init(String raw, j.Inner_DataUtil style) {
@@ -443,7 +443,7 @@ public final class j {
    }
 
    public static String load_Str(String raw) {
-      return load(raw, j.Inner_DataUtil.init);
+      return load(raw, j.Inner_DataUtil.AUTO);
    }
 
    public static String load(String raw, j.Inner_DataUtil style) {
@@ -489,7 +489,7 @@ public final class j {
          token = token.substring(0, token.length() - 1);
       }
 
-      String cleaned = style == j.Inner_DataUtil.load && !scaled ? sync(token) : flush(token);
+      String cleaned = style == j.Inner_DataUtil.WHOLE && !scaled ? sync(token) : flush(token);
       if (!cleaned.isEmpty() && !"-".equals(cleaned) && !"+".equals(cleaned)) {
          return init(new BigDecimal(cleaned).multiply(multiplier));
       } else {
@@ -610,7 +610,7 @@ public final class j {
 
       if ("last_sent".equals(key)) {
          String sent = ck.init_ck().load_Str();
-         return Optional.of(l.init(l.Inner_DataUtil.init, sent, Map.of("raw", l.init_l_Obj(sent))));
+         return Optional.of(l.init(l.Inner_DataUtil.TEXT, sent, Map.of("raw", l.init_l_Obj(sent))));
       }
 
       if (mc != null && mc.player != null) {
@@ -701,8 +701,8 @@ public final class j {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      AUTO,
+      WHOLE;
    }
 
    private record Inner_StreamUtil(String init_Str, int init_I, String load, String read) {

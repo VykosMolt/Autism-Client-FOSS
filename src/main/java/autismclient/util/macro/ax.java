@@ -10,10 +10,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 
 public class ax implements MacroAction {
-   public ax.Inner_DataUtil waitMode = ax.Inner_DataUtil.init;
+   public ax.Inner_DataUtil waitMode = ax.Inner_DataUtil.OPEN;
    public String guiType = "ANY";
    public String guiTitle = "";
-   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.init;
+   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.MATCH;
    public String saveAs = "";
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -21,7 +21,7 @@ public class ax implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.close;
+      return StreamGate.WAIT_GUI;
    }
 
    @Override
@@ -30,7 +30,7 @@ public class ax implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String prefix = this.waitMode == ax.Inner_DataUtil.load ? "Wait GUI Close: " : "Wait GUI Open: ";
+      String prefix = this.waitMode == ax.Inner_DataUtil.CLOSE ? "Wait GUI Close: " : "Wait GUI Open: ";
       String type = this.guiType != null && !this.guiType.isBlank() && !"ANY".equals(this.guiType) ? this.guiType : "Any";
       return prefix + type + (this.guiTitle.isEmpty() ? "" : " \"" + this.guiTitle + "\"");
    }
@@ -90,7 +90,7 @@ public class ax implements MacroAction {
       }
 
       String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
-      if (this.matchMode == UtilCore.Inner_DataUtil.init) {
+      if (this.matchMode == UtilCore.Inner_DataUtil.MATCH) {
          j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
          if (!resolved.init_Z()) {
             return Optional.empty();
@@ -111,7 +111,7 @@ public class ax implements MacroAction {
       if (snapshot != null && (anyType || f.init_Z(this.guiType))) {
          String title = snapshot.title();
          Map<String, l> captures = Map.of();
-         if (this.matchMode == UtilCore.Inner_DataUtil.init) {
+         if (this.matchMode == UtilCore.Inner_DataUtil.MATCH) {
             j.Inner_CachePool resolved = n.init_j_CachePool_Str_Minecraft(this.guiTitle, Minecraft.getInstance());
             if (!resolved.init_Z() || !resolved.init_Str().isBlank() && !title.toLowerCase(Locale.ROOT).contains(resolved.init_Str().toLowerCase(Locale.ROOT))) {
                return Optional.empty();
@@ -127,7 +127,7 @@ public class ax implements MacroAction {
 
          Map<String, l> values = new LinkedHashMap<>(captures);
          if (this.saveAs != null && !this.saveAs.isBlank()) {
-            values.put(this.saveAs, l.init(l.Inner_DataUtil.poll, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj("CUSTOM_MENU"))));
+            values.put(this.saveAs, l.init(l.Inner_DataUtil.GUI, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj("CUSTOM_MENU"))));
          }
 
          return Optional.of(values);
@@ -142,7 +142,7 @@ public class ax implements MacroAction {
          Map<String, l> properties = new LinkedHashMap<>();
          properties.put("title", l.init_l_Obj(title));
          properties.put("type", l.init_l_Obj(f.init_Str(screen)));
-         values.put(this.saveAs, l.init(l.Inner_DataUtil.poll, title, properties));
+         values.put(this.saveAs, l.init(l.Inner_DataUtil.GUI, title, properties));
       }
 
       return values;
@@ -155,7 +155,7 @@ public class ax implements MacroAction {
       tag.putString("waitMode", this.waitMode.name());
       tag.putString("guiType", this.guiType == null ? "ANY" : this.guiType);
       tag.putString("guiTitle", this.guiTitle);
-      tag.putString("matchMode", (this.matchMode == null ? UtilCore.Inner_DataUtil.init : this.matchMode).name());
+      tag.putString("matchMode", (this.matchMode == null ? UtilCore.Inner_DataUtil.MATCH : this.matchMode).name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("timeoutMs", this.timeoutMs);
       tag.putBoolean("enabled", this.init);
@@ -169,7 +169,7 @@ public class ax implements MacroAction {
          try {
             this.waitMode = ax.Inner_DataUtil.valueOf(tag.getStringOr("waitMode", "OPEN"));
          } catch (IllegalArgumentException ignored) {
-            this.waitMode = ax.Inner_DataUtil.init;
+            this.waitMode = ax.Inner_DataUtil.OPEN;
          }
       }
 
@@ -180,7 +180,7 @@ public class ax implements MacroAction {
       }
 
       this.guiType = tag.getStringOr("guiType", "ANY");
-      this.matchMode = i.init(UtilCore.Inner_DataUtil.class, tag.getStringOr("matchMode", "MATCH"), UtilCore.Inner_DataUtil.init);
+      this.matchMode = i.init(UtilCore.Inner_DataUtil.class, tag.getStringOr("matchMode", "MATCH"), UtilCore.Inner_DataUtil.MATCH);
       this.saveAs = tag.getStringOr("saveAs", "");
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       if (tag.contains("enabled")) {
@@ -208,7 +208,7 @@ public class ax implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      OPEN,
+      CLOSE;
    }
 }

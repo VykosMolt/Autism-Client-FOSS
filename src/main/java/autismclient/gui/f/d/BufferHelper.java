@@ -139,7 +139,7 @@ final class BufferHelper {
                      boolean collapsed = this.init_ConfigStore.init_Z_Module_Str(module, row.init_Str());
                      boolean hovered = bounds.init_Z(context.read(), context.write());
                      TaskQueue.init(context, bounds, row.init_Str(), collapsed, hovered);
-                     this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.get, bounds, module, null, row.init_Str(), -1);
+                     this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.GROUP, bounds, module, null, row.init_Str(), -1);
                   }
 
                   y += groupH + 1;
@@ -181,7 +181,7 @@ final class BufferHelper {
             autismclient.gui.f.b.CachePool.init(
                context, back, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, back.init_Z(context.read(), context.write()), false
             );
-            this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.poll, back, module, null, "", -1);
+            this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.BACK, back, module, null, "", -1);
             y += rowH;
          }
 
@@ -193,7 +193,7 @@ final class BufferHelper {
                );
             NetHelper toggle = ConfigStore.init_NetHelper_NetHelper_I(row, row.init());
             g.init(context, toggle, module.isEnabled(), toggle.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
-            this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.push, toggle, module, null, "", -1);
+            this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TOGGLE_MODULE, toggle, module, null, "", -1);
             y += rowH;
          }
 
@@ -214,7 +214,7 @@ final class BufferHelper {
             bind.init_Z(context.read(), context.write()),
             listening
          );
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.pop, bind, module, null, "", -1);
+         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
          y += rowH + 4;
          String hint = listening ? "Esc, Backspace or Delete clears the bind" : "Click the keybind to change it";
          context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), hint, x, y, w, context.init_TableIndex().init_JsonUtil().valid);
@@ -223,7 +223,7 @@ final class BufferHelper {
          autismclient.gui.f.b.CachePool.init(
             context, macro, "Create toggle macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, macro.init_Z(context.read(), context.write()), false
          );
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.run, macro, module, null, "", -1);
+         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       } finally {
          this.init_ConfigStore.init_V_SyncManager(context);
       }
@@ -240,7 +240,7 @@ final class BufferHelper {
       autismclient.gui.f.b.CachePool.init(
          context, back, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, back.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.poll, back, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.BACK, back, module, null, "", -1);
       NetHelper pill = ConfigStore.init_NetHelper_NetHelper_I(strip, content.init() - 4);
       int right = pill.read() - 4;
       NetHelper bind = NetHelper.init(right - 34, controlY, 34, controlH);
@@ -253,18 +253,18 @@ final class BufferHelper {
       autismclient.gui.f.b.CachePool.init(
          context, macro, "+Macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, macro.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.run, macro, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       autismclient.gui.f.b.CachePool.init(
          context, reset, "Reset", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, reset.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.tick, reset, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.RESET_MODULE, reset, module, null, "", -1);
       EventBus.init(context, bind, module.keybind(), this.init_ConfigStore.init_Z_Module(module), bind.init_Z(context.read(), context.write()));
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.pop, bind, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
       if (module.hasActivationToggle()) {
          g.init(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
       }
 
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.push, pill, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TOGGLE_MODULE, pill, module, null, "", -1);
       PacketUtil.init_V_GuiGraphicsExtract_2(
          context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.init_JsonUtil().put
       );
@@ -298,7 +298,7 @@ final class BufferHelper {
             active.init_Z(context.read(), context.write()),
             on
          );
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.push, active, module, null, "", -1);
+         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TOGGLE_MODULE, active, module, null, "", -1);
          x = active.init() + gap;
       }
 
@@ -309,15 +309,15 @@ final class BufferHelper {
       autismclient.gui.f.b.CachePool.init(
          context, bind, bindLabel, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, bind.init_Z(context.read(), context.write()), binding
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.pop, bind, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.BIND_MODULE, bind, module, null, "", -1);
       autismclient.gui.f.b.CachePool.init(
          context, reset, "Reset", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, reset.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.tick, reset, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.RESET_MODULE, reset, module, null, "", -1);
       autismclient.gui.f.b.CachePool.init(
          context, macro, "Macro", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, macro.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.run, macro, module, null, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MACRO_MODULE, macro, module, null, "", -1);
       PacketUtil.init_V_GuiGraphicsExtract_2(
          context.init_GuiGraphicsExtract(), content.read(), content.write() + headerH - 1, content.update(), theme.init_JsonUtil().put
       );
@@ -464,11 +464,11 @@ final class BufferHelper {
       }
 
       if (option.displayMode() == DisplayMode.FILE_PICKER) {
-         this.init(context, module, option, control, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, ConfigStore.Inner_CachePool.put);
+         this.init(context, module, option, control, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, ConfigStore.Inner_CachePool.FILE_PICKER);
       } else if (option.displayMode() == DisplayMode.READONLY_SUMMARY) {
          this.update(context, module, option, control);
       } else if (macroDisplay) {
-         this.init(context, module, option, control, "Select", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, ConfigStore.Inner_CachePool.valid);
+         this.init(context, module, option, control, "Select", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, ConfigStore.Inner_CachePool.MACRO_PICKER);
       } else if (option.displayMode() == DisplayMode.RANGE_SLIDER) {
          this.read(context, module, option, control);
       } else {
@@ -482,7 +482,7 @@ final class BufferHelper {
                   hovered || toggle.init_Z(context.read(), context.write()),
                   module.id() + "/" + option.id()
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.set, bounds, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.OPTION, bounds, module, option, "", -1);
                break;
             case INTEGER:
             case DOUBLE:
@@ -492,11 +492,11 @@ final class BufferHelper {
                int dropW = this.init_I(module, option, control.update());
                NetHelper dropdown = NetHelper.init(control.init() - dropW, control.write(), dropW, control.sync());
                RefQueue.init_V_SyncManager(context, dropdown, module.displayValue(option), dropdown.init_Z(context.read(), context.write()), false);
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.start, dropdown, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.DROPDOWN, dropdown, module, option, "", -1);
                break;
             case STRING:
                this.init(context, control, module, option, "<empty>");
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.reset, control, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TEXT_FIELD, control, module, option, "", -1);
                break;
             case COLOR:
                this.write(context, module, option, control);
@@ -514,7 +514,7 @@ final class BufferHelper {
                autismclient.gui.f.b.CachePool.init(
                   context, edit, "Edit", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, edit.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.next, edit, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.LIST_EDITOR, edit, module, option, "", -1);
                break;
             }
             case PACKET_LIST: {
@@ -525,7 +525,7 @@ final class BufferHelper {
                autismclient.gui.f.b.CachePool.init(
                   context, edit, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, edit.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.prev, edit, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.PACKET_EDITOR, edit, module, option, "", -1);
                break;
             }
             case KEYBIND:
@@ -542,15 +542,15 @@ final class BufferHelper {
                autismclient.gui.f.b.CachePool.init(
                   context, clear, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, clear.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.size, bind, module, option, "", -1);
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.data, clear, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.BIND_OPTION, bind, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.RESET_OPTION_BIND, clear, module, option, "", -1);
                break;
             case ACTION:
                String buttonLabel = option instanceof ActionSetting action ? action.buttonLabel() : "Run";
                autismclient.gui.f.b.CachePool.init(
                   context, control, buttonLabel, autismclient.gui.f.b.CachePool.Inner_DataUtil.read, control.init_Z(context.read(), context.write()), false
                );
-               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.set, control, module, option, "", -1);
+               this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.OPTION, control, module, option, "", -1);
          }
       }
    }
@@ -569,7 +569,7 @@ final class BufferHelper {
    private void load(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
       if (option.displayMode() == DisplayMode.NUMERIC_TEXT_FIELD) {
          this.init(context, control, module, option, "");
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.reset, control, module, option, "", -1);
+         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TEXT_FIELD, control, module, option, "", -1);
       } else {
          double current = option.kind() == Kind.INTEGER
             ? ConfigStore.init_I_Str_I(module.value(option.id()), ConfigStore.init_I_Str_I(option.defaultValue(), 0))
@@ -599,8 +599,8 @@ final class BufferHelper {
                );
          }
 
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.add, slider, module, option, "", -1);
-         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.reset, value, module, option, "", -1);
+         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.SLIDER, slider, module, option, "", -1);
+         this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TEXT_FIELD, value, module, option, "", -1);
       }
    }
 
@@ -647,7 +647,7 @@ final class BufferHelper {
             value.update(),
             context.init_TableIndex().init_JsonUtil().prev
          );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.clear, slider, module, option, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.RANGE_SLIDER, slider, module, option, "", -1);
    }
 
    private void write(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
@@ -672,8 +672,8 @@ final class BufferHelper {
       autismclient.gui.f.b.CachePool.init(
          context, pick, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, pick.init_Z(context.read(), context.write()), false
       );
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.stop, pick, module, option, "", -1);
-      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.stop, value, module, option, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.COLOR_PICKER, pick, module, option, "", -1);
+      this.init_ConfigStore.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.COLOR_PICKER, value, module, option, "", -1);
    }
 
    private void init(
@@ -895,7 +895,7 @@ final class BufferHelper {
       if (module != null && option != null) {
          double ratio = (double)(mx - hit.init_NetHelper().read()) / Math.max(1, hit.init_NetHelper().update());
          ratio = Math.max(0.0, Math.min(1.0, ratio));
-         if (hit.init_ConfigStore_CacheP() == ConfigStore.Inner_CachePool.clear) {
+         if (hit.init_ConfigStore_CacheP() == ConfigStore.Inner_CachePool.RANGE_SLIDER) {
             this.init_V_ConfigStore_Stream_D(hit, ratio);
          } else {
             double value = option.sliderMin() + ratio * (option.sliderMax() - option.sliderMin());

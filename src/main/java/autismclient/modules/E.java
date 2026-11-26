@@ -67,7 +67,7 @@ public final class E extends Module {
       this.init_ColorSetting = this.add(new ColorSetting("color", "Color", -11279164).description("Color of the frame ESP, arrow, tracer and light column."));
       this.init_DoubleSetting = this.add(new DoubleSetting("scale", "Scale", 1.0, 0.5, 2.0, 0.05).description("Size of the direction icon, prompt and label."));
       this.init_EnumSetting = this.add(
-         new EnumSetting<>("display", "Display", E.Inner_DataUtil.init, E.Inner_DataUtil.values()).description("Show distance or target coordinates.")
+         new EnumSetting<>("display", "Display", E.Inner_DataUtil.DISTANCE, E.Inner_DataUtil.values()).description("Show distance or target coordinates.")
       );
       this.add(new BoolSetting("frames", "Frame ESP", true).description("Highlight portal frames."));
       this.add(new BoolSetting("tracer", "Tracers", true).description("Show one tracer to the destination."));
@@ -384,7 +384,7 @@ public final class E extends Module {
    }
 
    boolean read_Z_2() {
-      return this.init_EnumSetting.get() == E.Inner_DataUtil.load;
+      return this.init_EnumSetting.get() == E.Inner_DataUtil.COORDINATES;
    }
 
    boolean write_Z() {
@@ -449,8 +449,8 @@ public final class E extends Module {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load;
+      DISTANCE,
+      COORDINATES;
    }
 
    private record Inner_StreamUtil(UUID init_UUID, long init_J, cS.Inner_StreamUtil init_cS_StreamUtil) {

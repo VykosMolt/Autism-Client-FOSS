@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 public class ap implements MacroAction {
    private static final double init_D = 0.5;
    private static final double load = 128.0;
-   public ap.Inner_StreamUtil mode = ap.Inner_StreamUtil.init;
+   public ap.Inner_StreamUtil mode = ap.Inner_StreamUtil.MANUAL;
    public double deltaY = 0.0;
    public boolean useSegmented = true;
    public int segmentBlocks = 10;
@@ -51,7 +51,7 @@ public class ap implements MacroAction {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          LocalPlayer player = mc.player;
          double blocks = options.init_D;
-         if (options.init_ap_StreamUtil != ap.Inner_StreamUtil.init) {
+         if (options.init_ap_StreamUtil != ap.Inner_StreamUtil.MANUAL) {
             ap.Inner_DataUtil target = init(player, options.init_ap_StreamUtil);
             if (!target.init_Z()) {
                if (options.update) {
@@ -116,7 +116,7 @@ public class ap implements MacroAction {
             }
          }
 
-         String prefix = options.init_ap_StreamUtil == ap.Inner_StreamUtil.init
+         String prefix = options.init_ap_StreamUtil == ap.Inner_StreamUtil.MANUAL
             ? "vclip " + blocks
             : "vclip " + options.init_ap_StreamUtil.name().toLowerCase(Locale.ROOT) + " -> " + String.format(Locale.ROOT, "%.2f", blocks);
          String message = prefix + " (" + packetsRequired + " packet" + (packetsRequired == 1 ? "" : "s") + ")";
@@ -135,10 +135,10 @@ public class ap implements MacroAction {
    }
 
    private static ap.Inner_DataUtil init(LocalPlayer player, ap.Inner_StreamUtil mode) {
-      if (mode == ap.Inner_StreamUtil.load) {
+      if (mode == ap.Inner_StreamUtil.TOP) {
          return init_ap_DataUtil(player);
       } else {
-         return mode == ap.Inner_StreamUtil.read ? load(player) : new ap.Inner_DataUtil(true, 0.0, "manual");
+         return mode == ap.Inner_StreamUtil.BOTTOM ? load(player) : new ap.Inner_DataUtil(true, 0.0, "manual");
       }
    }
 
@@ -238,7 +238,7 @@ public class ap implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = init(tag.getStringOr("mode", ap.Inner_StreamUtil.init.name()));
+      this.mode = init(tag.getStringOr("mode", ap.Inner_StreamUtil.MANUAL.name()));
       this.deltaY = tag.getDoubleOr("deltaY", 0.0);
       this.useSegmented = tag.getBooleanOr("useSegmented", true);
       this.segmentBlocks = Math.max(1, tag.getIntOr("segmentBlocks", 10));
@@ -253,15 +253,15 @@ public class ap implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_s_StreamGate;
+      return StreamGate.VCLIP;
    }
 
    @Override
    public String getDisplayName() {
-      if (this.mode == ap.Inner_StreamUtil.load) {
+      if (this.mode == ap.Inner_StreamUtil.TOP) {
          return "VClip Top";
       } else {
-         return this.mode == ap.Inner_StreamUtil.read ? "VClip Bottom" : "VClip Y=" + String.format(Locale.ROOT, "%.2f", this.deltaY);
+         return this.mode == ap.Inner_StreamUtil.BOTTOM ? "VClip Bottom" : "VClip Y=" + String.format(Locale.ROOT, "%.2f", this.deltaY);
       }
    }
 
@@ -282,9 +282,9 @@ public class ap implements MacroAction {
 
    private static ap.Inner_StreamUtil init(String value) {
       try {
-         return ap.Inner_StreamUtil.valueOf(value == null ? ap.Inner_StreamUtil.init.name() : value.toUpperCase(Locale.ROOT));
+         return ap.Inner_StreamUtil.valueOf(value == null ? ap.Inner_StreamUtil.MANUAL.name() : value.toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         return ap.Inner_StreamUtil.init;
+         return ap.Inner_StreamUtil.MANUAL;
       }
    }
 
@@ -292,7 +292,7 @@ public class ap implements MacroAction {
    }
 
    public static final class Inner_CachePool {
-      public ap.Inner_StreamUtil init_ap_StreamUtil = ap.Inner_StreamUtil.init;
+      public ap.Inner_StreamUtil init_ap_StreamUtil = ap.Inner_StreamUtil.MANUAL;
       public double init_D = 0.0;
       public boolean init_Z = true;
       public int init_I = 10;
@@ -318,8 +318,8 @@ public class ap implements MacroAction {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      MANUAL,
+      TOP,
+      BOTTOM;
    }
 }

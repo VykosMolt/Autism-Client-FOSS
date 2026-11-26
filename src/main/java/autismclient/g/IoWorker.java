@@ -16,8 +16,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.resources.Identifier;
 
 public final class IoWorker {
-   private static final IoWorker.Inner_DataUtil init_IoWorker_DataUtil = new IoWorker.Inner_DataUtil(IoWorker.Inner_DataUtil.Inner_DataUtil_2.init, null);
-   private static final IoWorker.Inner_DataUtil load_IoWorker_DataUtil = new IoWorker.Inner_DataUtil(IoWorker.Inner_DataUtil.Inner_DataUtil_2.load, null);
+   private static final IoWorker.Inner_DataUtil init_IoWorker_DataUtil = new IoWorker.Inner_DataUtil(IoWorker.Inner_DataUtil.Inner_DataUtil_2.PASS, null);
+   private static final IoWorker.Inner_DataUtil load_IoWorker_DataUtil = new IoWorker.Inner_DataUtil(IoWorker.Inner_DataUtil.Inner_DataUtil_2.DROP, null);
    private static final String init_Str = "minecraft";
    private static final String load_Str = "register";
    private static final String read = "unregister";
@@ -92,7 +92,7 @@ public final class IoWorker {
             }
          } else {
             IoWorker.Inner_DataUtil verdict = init(connection, payload);
-            if ("register".equals(path) && verdict.init_IoWorker_DataUtil_ != IoWorker.Inner_DataUtil.Inner_DataUtil_2.load) {
+            if ("register".equals(path) && verdict.init_IoWorker_DataUtil_ != IoWorker.Inner_DataUtil.Inner_DataUtil_2.DROP) {
                TaskQueue.init_V(connection);
             }
 
@@ -130,7 +130,7 @@ public final class IoWorker {
             return kept.isEmpty()
                ? load_IoWorker_DataUtil
                : new IoWorker.Inner_DataUtil(
-                  IoWorker.Inner_DataUtil.Inner_DataUtil_2.read, new ServerboundCustomPayloadPacket(new RegistrationPayload(registrationPayload.type(), kept))
+                  IoWorker.Inner_DataUtil.Inner_DataUtil_2.REPLACE, new ServerboundCustomPayloadPacket(new RegistrationPayload(registrationPayload.type(), kept))
                );
          }
       } else {
@@ -202,9 +202,9 @@ public final class IoWorker {
       }
 
       public enum Inner_DataUtil_2 {
-         init,
-         load,
-         read;
+         PASS,
+         DROP,
+         REPLACE;
       }
    }
 }

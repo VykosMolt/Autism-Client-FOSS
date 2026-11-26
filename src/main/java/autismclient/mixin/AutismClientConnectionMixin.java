@@ -132,7 +132,7 @@ public abstract class AutismClientConnectionMixin {
 
    @Unique
    private static void autism$snapshotPrivacyMode(Connection connection, SocketAddress peerAddress) {
-      BufferHelper.Inner_CachePool mode = AutismConfig.getGlobal().spoofClientVanilla ? BufferHelper.Inner_CachePool.init : BufferHelper.Inner_CachePool.load;
+      BufferHelper.Inner_CachePool mode = AutismConfig.getGlobal().spoofClientVanilla ? BufferHelper.Inner_CachePool.VANILLA : BufferHelper.Inner_CachePool.MODDED;
       BufferHelper.init(connection, mode, false, peerAddress);
    }
 
@@ -421,13 +421,13 @@ public abstract class AutismClientConnectionMixin {
                            } else if (!forceBookOrSignPacket) {
                               if (!shared.get_Z()) {
                                  autismclient.util.macro.C.Inner_StreamUtil gateResult = autismclient.util.macro.C.init(packet, "C2S");
-                                 if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.load) {
+                                 if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.CANCEL) {
                                     aI.load_V_Packet(packet);
                                     ci.cancel();
                                     return;
                                  }
 
-                                 if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.read) {
+                                 if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.DELAY) {
                                     shared.init_V_Packet(packet);
                                     ci.cancel();
                                     return;
@@ -470,8 +470,8 @@ public abstract class AutismClientConnectionMixin {
 
                                           PoolEntry captureModule = PoolEntry.init_PoolEntry();
                                           ck.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
-                                             ? ck.Inner_BufferHelper.load
-                                             : ck.Inner_BufferHelper.init;
+                                             ? ck.Inner_BufferHelper.EXACT
+                                             : ck.Inner_BufferHelper.REGENERATE;
                                           shared.init_V_Packet_ck_BufferHelper(packet, captureMode);
                                           ci.cancel();
                                        }
@@ -590,9 +590,9 @@ public abstract class AutismClientConnectionMixin {
                      } else {
                         ck shared = ck.init_ck();
                         autismclient.util.macro.C.Inner_StreamUtil gateResult = autismclient.util.macro.C.init(packet, "S2C");
-                        if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.load) {
+                        if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.CANCEL) {
                            ci.cancel();
-                        } else if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.read) {
+                        } else if (gateResult == autismclient.util.macro.C.Inner_StreamUtil.DELAY) {
                            shared.init_V_Packet(packet);
                            ci.cancel();
                         } else if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {

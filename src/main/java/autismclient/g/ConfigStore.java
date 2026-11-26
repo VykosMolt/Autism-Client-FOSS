@@ -18,10 +18,10 @@ public final class ConfigStore {
    private static final int load_I = 1024;
    private static final Map<BufferHelper.Inner_StreamUtil, Set<ServerboundCustomQueryAnswerPacket>> init_Map = new IdentityHashMap<>();
    private static final ConfigStore.Inner_DataUtil init_ConfigStore_DataUt = new ConfigStore.Inner_DataUtil(
-      ConfigStore.Inner_DataUtil.Inner_DataUtil_2.init, null
+      ConfigStore.Inner_DataUtil.Inner_DataUtil_2.PASS, null
    );
    private static final ConfigStore.Inner_DataUtil load_ConfigStore_DataUt = new ConfigStore.Inner_DataUtil(
-      ConfigStore.Inner_DataUtil.Inner_DataUtil_2.load, null
+      ConfigStore.Inner_DataUtil.Inner_DataUtil_2.DROP, null
    );
 
    private ConfigStore() {
@@ -55,13 +55,13 @@ public final class ConfigStore {
    }
 
    private static boolean init_Z(BufferHelper.Inner_StreamUtil context) {
-      return context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load;
+      return context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED;
    }
 
    public static void init(Connection connection, ServerboundCustomQueryAnswerPacket answer) {
       if (connection != null && answer != null) {
          BufferHelper.Inner_StreamUtil context = BufferHelper.init_BufferHelper_Strea(connection);
-         if (context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.init) {
+         if (context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA) {
             try {
                if (answer.payload() != null) {
                   return;
@@ -123,20 +123,20 @@ public final class ConfigStore {
          return load_ConfigStore_DataUt;
       }
 
-      if (context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.init) {
+      if (context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA) {
          return payload instanceof BrandPayload ? init(new ServerboundCustomPayloadPacket(new BrandPayload("vanilla"))) : load_ConfigStore_DataUt;
       }
 
       IoWorker.Inner_DataUtil verdict = IoWorker.init(connection, packet, false);
       ConfigStore.Inner_DataUtil var10000;
       switch (verdict.init_IoWorker_DataUtil_) {
-         case init:
+         case PASS:
             var10000 = init_ConfigStore_DataUt;
             break;
-         case load:
+         case DROP:
             var10000 = load_ConfigStore_DataUt;
             break;
-         case read:
+         case REPLACE:
             var10000 = init(verdict.init_Packet);
             break;
          default:
@@ -147,7 +147,7 @@ public final class ConfigStore {
    }
 
    private static ConfigStore.Inner_DataUtil init(BufferHelper.Inner_StreamUtil context, ServerboundCustomQueryAnswerPacket answer) {
-      if (context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load) {
+      if (context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED) {
          return init_ConfigStore_DataUt;
       }
 
@@ -172,7 +172,7 @@ public final class ConfigStore {
    }
 
    private static ConfigStore.Inner_DataUtil init(Packet<?> replacement) {
-      return replacement == null ? load_ConfigStore_DataUt : new ConfigStore.Inner_DataUtil(ConfigStore.Inner_DataUtil.Inner_DataUtil_2.read, replacement);
+      return replacement == null ? load_ConfigStore_DataUt : new ConfigStore.Inner_DataUtil(ConfigStore.Inner_DataUtil.Inner_DataUtil_2.REPLACE, replacement);
    }
 
    static void init() {
@@ -193,9 +193,9 @@ public final class ConfigStore {
       }
 
       public enum Inner_DataUtil_2 {
-         init,
-         load,
-         read;
+         PASS,
+         DROP,
+         REPLACE;
       }
    }
 }

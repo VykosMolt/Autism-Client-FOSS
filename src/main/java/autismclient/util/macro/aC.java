@@ -41,7 +41,7 @@ public class aC implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_m_StreamGate;
+      return StreamGate.WAIT_POSITION_DELTA;
    }
 
    @Override

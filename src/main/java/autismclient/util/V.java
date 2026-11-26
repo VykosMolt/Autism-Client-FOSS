@@ -7,7 +7,7 @@ public final class V {
    private static final long init_J = 1024L;
    private static final long load_J = 20000000L;
    private static volatile boolean init_Z;
-   private static volatile V.Inner_DataUtil init_V_DataUtil = V.Inner_DataUtil.init;
+   private static volatile V.Inner_DataUtil init_V_DataUtil = V.Inner_DataUtil.OFFSET;
    private static volatile boolean load_Z = false;
    private static double init_D;
    private static double load_D;
@@ -41,7 +41,7 @@ public final class V {
    }
 
    public static void init(V.Inner_DataUtil m, boolean spoofY) {
-      init_V_DataUtil = m == null ? V.Inner_DataUtil.init : m;
+      init_V_DataUtil = m == null ? V.Inner_DataUtil.OFFSET : m;
       load_Z = spoofY;
       load_V();
       init_Z = true;
@@ -105,12 +105,12 @@ public final class V {
       double fy;
       double fz;
       switch (init_V_DataUtil) {
-         case load:
+         case SCALED:
             fx = (x - sync) * write + init_D;
             fy = y + load_D;
             fz = (z - flush) * update + read_D;
             break;
-         case read:
+         case ROTATED:
             double dx = x - open;
             double dz = z - poll;
             double c = Math.cos(close);
@@ -119,7 +119,7 @@ public final class V {
             fz = dx * s + dz * c + read_D;
             fy = y + load_D;
             break;
-         case write:
+         case SCRAMBLED:
             long rx = Math.floorDiv((long)Math.floor(x), 1024L);
             long ry = Math.floorDiv((long)Math.floor(y), 1024L);
             long rz = Math.floorDiv((long)Math.floor(z), 1024L);
@@ -127,12 +127,12 @@ public final class V {
             fz = z + init(read_J, rx, rz, 1);
             fy = y + init(read_J ^ -7046029254386353131L, ry, 0L, 2);
             break;
-         case update:
+         case FROZEN:
             fx = push;
             fy = pop;
             fz = tick;
             break;
-         case sync:
+         case CUSTOM:
             fx = x + reset;
             fy = y + start;
             fz = z + stop;
@@ -143,7 +143,7 @@ public final class V {
             fz = z + read_D;
       }
 
-      if (!load_Z && init_V_DataUtil != V.Inner_DataUtil.update) {
+      if (!load_Z && init_V_DataUtil != V.Inner_DataUtil.FROZEN) {
          fy = y;
       }
 
@@ -174,11 +174,11 @@ public final class V {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      OFFSET,
+      SCALED,
+      ROTATED,
+      SCRAMBLED,
+      FROZEN,
+      CUSTOM;
    }
 }

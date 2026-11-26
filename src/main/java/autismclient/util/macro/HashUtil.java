@@ -21,7 +21,7 @@ public class HashUtil implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_B_StreamGate;
+      return StreamGate.END_PACKET_GATE;
    }
 
    @Override

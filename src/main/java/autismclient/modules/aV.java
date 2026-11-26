@@ -69,7 +69,7 @@ final class aV {
 
             for (int i = 0; i < Math.min(32, this.init_List.size()); i++) {
                ThrownEnderpearl pearl = this.init_List.get(i);
-               A.Inner_DataUtil flight = A.init(mc.level, pearl, A.Inner_StreamUtil.write);
+               A.Inner_DataUtil flight = A.init(mc.level, pearl, A.Inner_StreamUtil.PEARL);
                if (flight.load() != null) {
                   this.init_Map.put(pearl.getUUID(), new aV.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.init_D()));
                }

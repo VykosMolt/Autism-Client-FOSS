@@ -225,7 +225,7 @@ public class AutismItemNbtInspectOverlay extends bj {
                         button.read(),
                         this.clear(),
                         button.init_Str(),
-                        button.init_Z() ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+                        button.init_Z() ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
                         true,
                         mouseX,
                         mouseY

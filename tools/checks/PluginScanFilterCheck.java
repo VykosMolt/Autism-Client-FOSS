@@ -64,10 +64,10 @@ public class PluginScanFilterCheck {
       Class<?> stateClass = Class.forName("autismclient.util.AutismServerInfoOverlay$Inner_RenderState");
       Method rootProbe = overlay.getDeclaredMethod("auditIsRootProbe", stateClass);
       rootProbe.setAccessible(true);
-      check((Boolean) rootProbe.invoke(null, state("/", "sync")), "/ is a root probe");
-      check((Boolean) rootProbe.invoke(null, state("/a", "sync")), "/a is a root probe");
-      check((Boolean) rootProbe.invoke(null, state("/ ", "init")), "scanner root kind is a root probe");
-      check(!(Boolean) rootProbe.invoke(null, state("/ab", "sync")), "/ab is not a root probe");
+      check((Boolean) rootProbe.invoke(null, state("/", "USER")), "/ is a root probe");
+      check((Boolean) rootProbe.invoke(null, state("/a", "USER")), "/a is a root probe");
+      check((Boolean) rootProbe.invoke(null, state("/ ", "ROOT")), "scanner root kind is a root probe");
+      check(!(Boolean) rootProbe.invoke(null, state("/ab", "USER")), "/ab is not a root probe");
       check(!(Boolean) rootProbe.invoke(null, (Object) null), "null is not a root probe");
 
       Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
@@ -93,7 +93,7 @@ public class PluginScanFilterCheck {
       tokens.add("zzns:zzkept");
       @SuppressWarnings("unchecked")
       List<Object> pending = (List<Object>) getField(live, "write_List");
-      pending.add(replyCtor.newInstance(0L, true, state("/ab", "sync"), null, tokens));
+      pending.add(replyCtor.newInstance(0L, true, state("/ab", "USER"), null, tokens));
       Method drain = overlay.getDeclaredMethod("close", boolean.class);
       drain.setAccessible(true);
       drain.invoke(live, true);

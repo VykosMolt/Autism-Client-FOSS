@@ -85,16 +85,16 @@ public final class CachePool {
    }
 
    public enum Inner_DataUtil {
-      init_CachePool_DataUtil("coal", "Coal", -11645352, "coal"),
-      load_CachePool_DataUtil("iron", "Iron", -2579078, "iron"),
-      read_CachePool_DataUtil("gold", "Gold", -204725, "gold"),
-      write("redstone", "Redstone", -50373, "redstone"),
-      update("diamond", "Diamond", -11869223, "diamond"),
-      sync("lapis", "Lapis", -12950816, "lapis"),
-      flush("copper", "Copper", -2065590, "copper"),
-      close("emerald", "Emerald", -13510293, "emerald"),
-      open("quartz", "Quartz", -1187110, "quartz"),
-      poll("debris", "Ancient Debris", -4689959, "ancient_debris");
+      COAL("coal", "Coal", -11645352, "coal"),
+      IRON("iron", "Iron", -2579078, "iron"),
+      GOLD("gold", "Gold", -204725, "gold"),
+      REDSTONE("redstone", "Redstone", -50373, "redstone"),
+      DIAMOND("diamond", "Diamond", -11869223, "diamond"),
+      LAPIS("lapis", "Lapis", -12950816, "lapis"),
+      COPPER("copper", "Copper", -2065590, "copper"),
+      EMERALD("emerald", "Emerald", -13510293, "emerald"),
+      QUARTZ("quartz", "Quartz", -1187110, "quartz"),
+      DEBRIS("debris", "Ancient Debris", -4689959, "ancient_debris");
 
       public final String init_Str;
       public final String load_Str;

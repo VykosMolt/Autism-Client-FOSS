@@ -90,7 +90,7 @@ public final class bB {
          return false;
       }
 
-      if (preset.init_bB_BufferHelper() != bB.Inner_BufferHelper.init_bB_BufferHelper) {
+      if (preset.init_bB_BufferHelper() != bB.Inner_BufferHelper.EXACT) {
          return false;
       }
 
@@ -688,7 +688,7 @@ public final class bB {
       for (AutismConfig.PayloadChannelFilterRule rule : this.read) {
          if (rule != null && rule.enabled && load(rule.pattern, channel)) {
             String label = rule.label != null && !rule.label.isBlank() ? rule.label : rule.pattern;
-            return new bB.Inner_StreamUtil(label, rule.pattern, bB.Inner_DataUtil.init);
+            return new bB.Inner_StreamUtil(label, rule.pattern, bB.Inner_DataUtil.ANY);
          }
       }
 
@@ -725,7 +725,7 @@ public final class bB {
    }
 
    public static boolean close(bB.Inner_CachePool preset) {
-      return preset != null && preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.init_bB_BufferHelper ? bC.load_Z_Str(preset.read()) : false;
+      return preset != null && preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.EXACT ? bC.load_Z_Str(preset.read()) : false;
    }
 
    public static String init_Str_bB_CachePool(bB.Inner_CachePool preset) {
@@ -763,11 +763,11 @@ public final class bB {
    private static bB.Inner_BufferHelper init_bB_BufferHelper_Str(String pattern) {
       String normalized = init_Str_Str(pattern);
       if (read_Z_Str(normalized)) {
-         return bB.Inner_BufferHelper.load;
+         return bB.Inner_BufferHelper.CORE;
       } else if (normalized.indexOf(42) >= 0) {
-         return bB.Inner_BufferHelper.read;
+         return bB.Inner_BufferHelper.TEMPLATE;
       } else {
-         return bC.load_Z_Str(normalized) ? bB.Inner_BufferHelper.write : bB.Inner_BufferHelper.read;
+         return bC.load_Z_Str(normalized) ? bB.Inner_BufferHelper.UNVERIFIED : bB.Inner_BufferHelper.TEMPLATE;
       }
    }
 
@@ -833,7 +833,7 @@ public final class bB {
          return false;
       }
 
-      bB.Inner_DataUtil dir = bB.Inner_DataUtil.init;
+      bB.Inner_DataUtil dir = bB.Inner_DataUtil.ANY;
       String key = write_Str_Str(normalized);
 
       for (AutismConfig.PayloadChannelFilterRule existing : this.read) {
@@ -950,7 +950,7 @@ public final class bB {
                }
 
                String pattern = init_Str_Str(preset.read());
-               if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.init_bB_BufferHelper) {
+               if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.EXACT) {
                   if (pattern.indexOf(42) >= 0) {
                      warnings.add("exact preset uses wildcard " + preset.read());
                   }
@@ -964,7 +964,7 @@ public final class bB {
                   }
                }
 
-               if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.load && !read_Z_Str(pattern)) {
+               if (preset.init_bB_BufferHelper() == bB.Inner_BufferHelper.CORE && !read_Z_Str(pattern)) {
                   warnings.add("core preset has non-core channel " + preset.read());
                }
 
@@ -1021,16 +1021,16 @@ public final class bB {
    private static void init(List<bB.Inner_CachePool> presets, String label, String pattern, String group) {
       String normalized = init_Str_Str(pattern);
       bB.Inner_BufferHelper kind = init_bB_BufferHelper_Str(normalized);
-      String evidence = kind == bB.Inner_BufferHelper.read ? "Template only; no exact public channel proof." : "";
+      String evidence = kind == bB.Inner_BufferHelper.TEMPLATE ? "Template only; no exact public channel proof." : "";
       init(presets, label, normalized, group, kind, evidence, load_Str_Str(normalized));
    }
 
    private static void init_V_List(List<bB.Inner_CachePool> presets, String label, String pattern, String group, String evidence) {
-      init(presets, label, init_Str_Str(pattern), group, bB.Inner_BufferHelper.init_bB_BufferHelper, evidence, "");
+      init(presets, label, init_Str_Str(pattern), group, bB.Inner_BufferHelper.EXACT, evidence, "");
    }
 
    private static void load_V_List(List<bB.Inner_CachePool> presets, String label, String pattern, String group, String evidence) {
-      init(presets, label, init_Str_Str(pattern), group, bB.Inner_BufferHelper.load, evidence, "");
+      init(presets, label, init_Str_Str(pattern), group, bB.Inner_BufferHelper.CORE, evidence, "");
    }
 
    private static void init(
@@ -1047,15 +1047,15 @@ public final class bB {
       bB.Inner_BufferHelper safeKind = kind == null ? init_bB_BufferHelper_Str(normalized) : kind;
       String safeEvidence = evidence == null ? "" : evidence;
       String safeTemplate = templatePrefix == null ? "" : templatePrefix;
-      boolean invalidExact = safeKind == bB.Inner_BufferHelper.init_bB_BufferHelper
+      boolean invalidExact = safeKind == bB.Inner_BufferHelper.EXACT
          && (safeEvidence.isBlank() || normalized.indexOf(42) >= 0 || !bC.load_Z_Str(normalized));
       if (invalidExact) {
-         safeKind = bB.Inner_BufferHelper.write;
+         safeKind = bB.Inner_BufferHelper.UNVERIFIED;
          safeTemplate = safeTemplate.isBlank() ? load_Str_Str(normalized) : safeTemplate;
          safeEvidence = safeEvidence.isBlank() ? "Exact channel proof missing; kept as editable template." : safeEvidence;
       }
 
-      presets.add(new bB.Inner_CachePool(label, normalized, bB.Inner_DataUtil.init, group, safeKind, safeEvidence, safeTemplate));
+      presets.add(new bB.Inner_CachePool(label, normalized, bB.Inner_DataUtil.ANY, group, safeKind, safeEvidence, safeTemplate));
    }
 
    static {
@@ -1065,10 +1065,10 @@ public final class bB {
    }
 
    public enum Inner_BufferHelper {
-      init_bB_BufferHelper("Exact"),
-      load("Core"),
-      read("Template"),
-      write("Unver");
+      EXACT("Exact"),
+      CORE("Core"),
+      TEMPLATE("Template"),
+      UNVERIFIED("Unver");
 
       private final String init_Str;
 
@@ -1081,7 +1081,7 @@ public final class bB {
       }
 
       public boolean init_Z() {
-         return this == read || this == write;
+         return this == TEMPLATE || this == UNVERIFIED;
       }
    }
 
@@ -1118,19 +1118,19 @@ public final class bB {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      ANY,
+      C2S,
+      S2C;
 
       public static bB.Inner_DataUtil init_bB_DataUtil_Str(String value) {
          if (value == null) {
-            return init;
+            return ANY;
          }
 
          try {
             return valueOf(value.trim().toUpperCase(Locale.ROOT));
          } catch (IllegalArgumentException ignored) {
-            return init;
+            return ANY;
          }
       }
 

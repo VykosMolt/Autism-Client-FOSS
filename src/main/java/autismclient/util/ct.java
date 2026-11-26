@@ -75,7 +75,7 @@ public final class ct {
    }
 
    public static int init_I_I(int argb) {
-      return init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.init);
+      return init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int init_I_I_ct_DataUtil(int argb, ct.Inner_DataUtil ch) {
@@ -110,7 +110,7 @@ public final class ct {
          float th = st.init_FArr[ci];
          float ts = st.load_FArr[ci];
          float tv = st.read[ci];
-         if (ch == ct.Inner_DataUtil.read) {
+         if (ch == ct.Inner_DataUtil.TEXT) {
             float outS = Math.min(0.4F, s + ts * 0.3F);
             return a << 24 | Color.HSBtoRGB(th, outS, v) & 16777215;
          }
@@ -165,7 +165,7 @@ public final class ct {
    }
 
    private static float init_F_F_ct_DataUtil(float h, ct.Inner_DataUtil ch) {
-      return ch == ct.Inner_DataUtil.update ? write(h) : 1.0F - init_F_F(0.092F, 0.11977778F, init_F_F_F(h, 0.0F));
+      return ch == ct.Inner_DataUtil.BACKDROP ? write(h) : 1.0F - init_F_F(0.092F, 0.11977778F, init_F_F_F(h, 0.0F));
    }
 
    private static float write(float h) {
@@ -197,16 +197,16 @@ public final class ct {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      ACCENT,
+      OUTLINE,
+      TEXT,
+      TOGGLE,
+      BACKDROP,
+      SUCCESS,
+      DANGER,
+      BUTTON,
+      HEADER,
+      HOVER;
    }
 
    public static final class Inner_StreamUtil {
@@ -222,30 +222,30 @@ public final class ct {
          this.init_Z = cfg.advanced;
          int[] targets = new int[ct.Inner_DataUtil.values().length];
          if (cfg.advanced) {
-            targets[ct.Inner_DataUtil.init.ordinal()] = cfg.accent;
-            targets[ct.Inner_DataUtil.load.ordinal()] = cfg.outline;
-            targets[ct.Inner_DataUtil.read.ordinal()] = cfg.text;
-            targets[ct.Inner_DataUtil.write.ordinal()] = cfg.toggle;
-            targets[ct.Inner_DataUtil.update.ordinal()] = cfg.backdrop;
-            targets[ct.Inner_DataUtil.sync.ordinal()] = cfg.success;
-            targets[ct.Inner_DataUtil.flush.ordinal()] = cfg.danger;
-            targets[ct.Inner_DataUtil.close.ordinal()] = cfg.button;
-            targets[ct.Inner_DataUtil.open.ordinal()] = cfg.header;
-            targets[ct.Inner_DataUtil.poll.ordinal()] = cfg.hover;
+            targets[ct.Inner_DataUtil.ACCENT.ordinal()] = cfg.accent;
+            targets[ct.Inner_DataUtil.OUTLINE.ordinal()] = cfg.outline;
+            targets[ct.Inner_DataUtil.TEXT.ordinal()] = cfg.text;
+            targets[ct.Inner_DataUtil.TOGGLE.ordinal()] = cfg.toggle;
+            targets[ct.Inner_DataUtil.BACKDROP.ordinal()] = cfg.backdrop;
+            targets[ct.Inner_DataUtil.SUCCESS.ordinal()] = cfg.success;
+            targets[ct.Inner_DataUtil.DANGER.ordinal()] = cfg.danger;
+            targets[ct.Inner_DataUtil.BUTTON.ordinal()] = cfg.button;
+            targets[ct.Inner_DataUtil.HEADER.ordinal()] = cfg.header;
+            targets[ct.Inner_DataUtil.HOVER.ordinal()] = cfg.hover;
          } else {
-            targets[ct.Inner_DataUtil.init.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.load.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.write.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.update.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.close.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.flush.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.open.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.poll.ordinal()] = cfg.master;
-            targets[ct.Inner_DataUtil.read.ordinal()] = ct.init_IArr[ct.Inner_DataUtil.read.ordinal()];
-            targets[ct.Inner_DataUtil.sync.ordinal()] = ct.init_IArr[ct.Inner_DataUtil.sync.ordinal()];
+            targets[ct.Inner_DataUtil.ACCENT.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.OUTLINE.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.TOGGLE.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.BACKDROP.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.BUTTON.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.DANGER.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.HEADER.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.HOVER.ordinal()] = cfg.master;
+            targets[ct.Inner_DataUtil.TEXT.ordinal()] = ct.init_IArr[ct.Inner_DataUtil.TEXT.ordinal()];
+            targets[ct.Inner_DataUtil.SUCCESS.ordinal()] = ct.init_IArr[ct.Inner_DataUtil.SUCCESS.ordinal()];
          }
 
-         int defaultMaster = ct.init_IArr[ct.Inner_DataUtil.init.ordinal()];
+         int defaultMaster = ct.init_IArr[ct.Inner_DataUtil.ACCENT.ordinal()];
          boolean any = false;
 
          for (int i = 0; i < targets.length; i++) {
@@ -254,7 +254,7 @@ public final class ct {
             this.load_FArr[i] = hsb[1];
             this.read[i] = hsb[2];
             this.write[i] = (targets[i] >>> 24 & 0xFF) / 255.0F;
-            int baseline = !cfg.advanced && i != ct.Inner_DataUtil.read.ordinal() && i != ct.Inner_DataUtil.sync.ordinal() ? defaultMaster : ct.init_IArr[i];
+            int baseline = !cfg.advanced && i != ct.Inner_DataUtil.TEXT.ordinal() && i != ct.Inner_DataUtil.SUCCESS.ordinal() ? defaultMaster : ct.init_IArr[i];
             boolean rgbDiff = (targets[i] & 16777215) != (baseline & 16777215);
             boolean alphaDiff = (targets[i] >>> 24 & 0xFF) != (baseline >>> 24 & 0xFF);
             this.init_ZArr[i] = rgbDiff || alphaDiff;

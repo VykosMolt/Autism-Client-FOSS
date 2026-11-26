@@ -22,16 +22,16 @@ public record s(p.Inner_NetHelper init_p_NetHelper, double init_D, double load) 
    public double read() {
       double var10000;
       switch (this.init_p_NetHelper) {
-         case init_p_NetHelper:
+         case CROSS:
             var10000 = 7.0 + this.init_D / 2.0;
             break;
-         case load:
+         case TACTICAL:
             var10000 = 5.0 + this.load + this.init_D / 2.0;
             break;
-         case read:
+         case CIRCLE:
             var10000 = this.load() + this.init_D / 2.0;
             break;
-         case write:
+         case CHEVRON:
             var10000 = 7.0 / Math.sqrt(2.0) + this.init_D / 2.0;
             break;
          default:
@@ -45,17 +45,17 @@ public record s(p.Inner_NetHelper init_p_NetHelper, double init_D, double load) 
       double half = this.init_D / 2.0;
       double var10000;
       switch (this.init_p_NetHelper) {
-         case init_p_NetHelper:
+         case CROSS:
             var10000 = Math.min(init(x, y, 7.0 + half, half), init(x, y, half, 7.0 + half));
             break;
-         case load:
+         case TACTICAL:
             double arm = half + this.load + 2.5;
             var10000 = Math.min(init(x, y, half, half), Math.min(init(Math.abs(x) - arm, y, 2.5, half), init(x, Math.abs(y) - arm, half, 2.5)));
             break;
-         case read:
+         case CIRCLE:
             var10000 = Math.min(Math.abs(Math.hypot(x, y) - this.load()) - half, Math.hypot(x, y) - this.init_D());
             break;
-         case write:
+         case CHEVRON:
             double end = 7.0 / Math.sqrt(2.0);
             double px = Math.abs(x);
             double t = Math.clamp((px + y) / (2.0 * end), 0.0, 1.0);

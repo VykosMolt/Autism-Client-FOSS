@@ -25,7 +25,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 
 public class ClassCache implements MacroAction {
-   public static final autismclient.util.aA.Inner_StreamUtil DEFAULT_WHEN = autismclient.util.aA.Inner_StreamUtil.update;
+   public static final autismclient.util.aA.Inner_StreamUtil DEFAULT_WHEN = autismclient.util.aA.Inner_StreamUtil.PLAYABLE;
    public static final int DEFAULT_TIMEOUT_SEC = 60;
    public static final int MAX_TIMEOUT_SEC = 300;
    static final long init_J = 5000L;
@@ -205,7 +205,7 @@ public class ClassCache implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_X_StreamGate;
+      return StreamGate.JOIN;
    }
 
    @Override
@@ -318,19 +318,19 @@ public class ClassCache implements MacroAction {
 
          if (this.init_ClassCache_DataUti != null) {
             switch (this.init_ClassCache_DataUti.init_ClassCache_StreamU_Minecraft_J(this.init_Minecraft, now)) {
-               case init:
+               case ALIVE:
                   if (!this.init_ClassCache_DataUti.init_Z_Minecraft(this.init_Minecraft)) {
                      this.load_J += elapsed;
                   }
 
                   this.init_V_Str(this.init_I > 1 ? "Joining " + this.init_Str + " (try " + this.init_I + ")" : "Joining " + this.init_Str);
                   break;
-               case load:
+               case FAILED:
                   this.load_J += elapsed;
                   this.init(screen, now);
                   this.init_ClassCache_DataUti = null;
                   break;
-               case read:
+               case CANCELLED:
                   bi.init("Join cancelled - macro stopped", -14249);
                   return false;
             }
@@ -494,34 +494,34 @@ public class ClassCache implements MacroAction {
 
       ClassCache.Inner_StreamUtil init_ClassCache_StreamU_Minecraft_J(Minecraft mc, long now) {
          if (!this.load_Z) {
-            return now - this.init_J > 10000L ? ClassCache.Inner_StreamUtil.load : ClassCache.Inner_StreamUtil.init;
+            return now - this.init_J > 10000L ? ClassCache.Inner_StreamUtil.FAILED : ClassCache.Inner_StreamUtil.ALIVE;
          }
 
          ConnectScreen connecting = this.init_ConnectScreen;
          if (connecting == null) {
-            return ClassCache.Inner_StreamUtil.load;
+            return ClassCache.Inner_StreamUtil.FAILED;
          }
 
          AutismConnectScreenAccessor access = (AutismConnectScreenAccessor)connecting;
          if (access.autism$aborted()) {
-            return this.read ? ClassCache.Inner_StreamUtil.load : ClassCache.Inner_StreamUtil.read;
+            return this.read ? ClassCache.Inner_StreamUtil.FAILED : ClassCache.Inner_StreamUtil.CANCELLED;
          }
 
          Screen current = cx.init_Screen(mc);
          if (current == connecting || init_Z_AutismConnectScree(access)) {
             this.load_J = -1L;
-            return ClassCache.Inner_StreamUtil.init;
+            return ClassCache.Inner_StreamUtil.ALIVE;
          }
 
          if (current instanceof DisconnectedScreen) {
-            return ClassCache.Inner_StreamUtil.load;
+            return ClassCache.Inner_StreamUtil.FAILED;
          }
 
          if (this.load_J < 0L) {
             this.load_J = now;
          }
 
-         return now - this.load_J > 2000L ? ClassCache.Inner_StreamUtil.load : ClassCache.Inner_StreamUtil.init;
+         return now - this.load_J > 2000L ? ClassCache.Inner_StreamUtil.FAILED : ClassCache.Inner_StreamUtil.ALIVE;
       }
 
       boolean init_Z_Minecraft(Minecraft mc) {
@@ -541,8 +541,8 @@ public class ClassCache implements MacroAction {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      ALIVE,
+      FAILED,
+      CANCELLED;
    }
 }

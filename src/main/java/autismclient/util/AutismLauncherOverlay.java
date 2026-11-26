@@ -193,7 +193,7 @@ public class AutismLauncherOverlay extends bj {
       this.init_DataUtil.init_PacketUtil_2().init(new autismclient.gui.f.c.IoWorker(1, 0, 1, 1)).init(this.get_I_9());
       this.init_StateCache.init_PacketUtil_3().init_TableIndex_TableIndex(this.init_DataUtil);
       autismclient.gui.f.c.ByteReader macrosButton = this.init(
-         "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             AutismMacroEditorOverlay macroEditorOverlay = AutismMacroEditorOverlay.init_AutismMacroEditorO_2();
             if (macroEditorOverlay != null && macroEditorOverlay.sync_Z()) {
                if (this.init_AutismMacroListOve != null) {
@@ -210,7 +210,7 @@ public class AutismLauncherOverlay extends bj {
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
             macrosButton,
-            this.init("Fabricator", autismclient.gui.f.a.DataUtil.flush, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            this.init("Fabricator", autismclient.gui.f.a.DataUtil.flush, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
                if (this.init_AutismFabricatorOv != null) {
                   this.init_V_cX(this.init_AutismFabricatorOv);
                }
@@ -222,12 +222,12 @@ public class AutismLauncherOverlay extends bj {
 
       this.init_V_PacketUtil(
          this.init_DataUtil.init_PacketUtil_2(),
-         this.init("LAN Sync", autismclient.gui.f.a.DataUtil.update, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         this.init("LAN Sync", autismclient.gui.f.a.DataUtil.update, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             if (this.init_AutismLANSyncOverl != null) {
                this.init_V_cX(this.init_AutismLANSyncOverl);
             }
          }),
-         this.init("Queue", autismclient.gui.f.a.DataUtil.poll, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         this.init("Queue", autismclient.gui.f.a.DataUtil.poll, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             if (this.init_AutismQueueEditorO != null) {
                this.init_V_cX(this.init_AutismQueueEditorO);
             }
@@ -235,11 +235,11 @@ public class AutismLauncherOverlay extends bj {
       );
       this.init_V_PacketUtil(
          this.init_DataUtil.init_PacketUtil_2(),
-         this.init("Logger", autismclient.gui.f.a.DataUtil.open, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         this.init("Logger", autismclient.gui.f.a.DataUtil.open, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             AutismPacketLoggerOverlay overlay = this.init_AutismPacketLogger();
             this.init_V_cX(overlay);
          }),
-         this.init("Packets", autismclient.gui.f.a.DataUtil.close, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         this.init("Packets", autismclient.gui.f.a.DataUtil.close, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             if (this.init_AutismCustomFilter != null) {
                this.init_V_cX(this.init_AutismCustomFilter);
             }
@@ -247,11 +247,11 @@ public class AutismLauncherOverlay extends bj {
       );
       this.init_V_PacketUtil(
          this.init_DataUtil.init_PacketUtil_2(),
-         this.init("Server Info", autismclient.gui.f.a.DataUtil.push, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         this.init("Server Info", autismclient.gui.f.a.DataUtil.push, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             AutismServerInfoOverlay overlay = this.init_AutismServerInfoOv();
             this.init_V_cX(overlay);
          }),
-         this.init("Settings", autismclient.gui.f.a.DataUtil.write, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         this.init("Settings", autismclient.gui.f.a.DataUtil.write, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             if (this.init_AutismKeybindOverl != null) {
                this.init_V_cX(this.init_AutismKeybindOverl);
             }
@@ -260,12 +260,12 @@ public class AutismLauncherOverlay extends bj {
       if (!AutismLiteVariant.enabled()) {
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
-            this.init("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            this.init("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
                   autismclient.ai.ConfigStore.init_ConfigStore().read();
                }
             }),
-            this.init("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            this.init("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
                   autismclient.ai.cV.load_V();
                }
@@ -274,30 +274,30 @@ public class AutismLauncherOverlay extends bj {
       }
 
       this.init_V_Str_Identifier("PACKET", autismclient.gui.f.a.DataUtil.tick);
-      this.init_ByteReader = this.init("Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this::update_V_9).load_ByteReader_Z(true);
-      this.load_ByteReader = this.init("Delay", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this::sync_V_8).load_ByteReader_Z(true);
+      this.init_ByteReader = this.init("Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER, this::update_V_9).load_ByteReader_Z(true);
+      this.load_ByteReader = this.init("Delay", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER, this::sync_V_8).load_ByteReader_Z(true);
       this.init_V_PacketUtil(this.init_DataUtil.init_PacketUtil_2(), this.init_ByteReader, this.load_ByteReader);
       this.init_V_PacketUtil(
          this.init_DataUtil.init_PacketUtil_2(),
-         this.init("Flush", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::flush_V_8),
-         this.init("Clear", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::close_V_7)
+         this.init("Flush", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::flush_V_8),
+         this.init("Clear", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::close_V_7)
       );
       if (this.update_Z) {
          this.init_V_Str_Identifier("SCREEN", autismclient.gui.f.a.DataUtil.run);
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
-            this.init("Close", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this.init_Runnable != null ? this.init_Runnable : aG::update),
-            this.init("De-sync", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this.load_Runnable != null ? this.load_Runnable : this::open_V_6)
+            this.init("Close", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this.init_Runnable != null ? this.init_Runnable : aG::update),
+            this.init("De-sync", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER, this.load_Runnable != null ? this.load_Runnable : this::open_V_6)
          );
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
-            this.init("Save", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::poll_V_4),
-            this.init("Load", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::set_V_4)
+            this.init("Save", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::poll_V_4),
+            this.init("Load", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::set_V_4)
          );
          this.init_V_PacketUtil(
             this.init_DataUtil.init_PacketUtil_2(),
-            this.init("Title", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, aG::open),
-            this.init("Disc+Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write, this::put_V_3)
+            this.init("Title", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, aG::open),
+            this.init("Disc+Send", null, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER, this::put_V_3)
          );
       }
 
@@ -384,7 +384,7 @@ public class AutismLauncherOverlay extends bj {
    }
 
    private autismclient.gui.f.c.ByteReader init(autismclient.gui.f.c.PacketUtil parent, String label, Identifier icon, Runnable action) {
-      autismclient.gui.f.c.ByteReader button = this.init(label, icon, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, action);
+      autismclient.gui.f.c.ByteReader button = this.init(label, icon, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, action);
       parent.init_TableIndex_TableIndex(button);
       return button;
    }
@@ -413,7 +413,7 @@ public class AutismLauncherOverlay extends bj {
          .read_ByteReader_I(0);
       if (icon != null) {
          button.init_ByteReader_Identifier(icon)
-            .init_ByteReader_ByteReader_DataUti(autismclient.gui.f.c.ByteReader.Inner_DataUtil.load)
+            .init_ByteReader_ByteReader_DataUti(autismclient.gui.f.c.ByteReader.Inner_DataUtil.START)
             .write(this.add_I_9())
             .update(this.clear_I_3());
       }
@@ -506,7 +506,7 @@ public class AutismLauncherOverlay extends bj {
             this.init_ByteReader.init_ByteReader_Str("Send");
             this.init_ByteReader
                .init_ByteReader_ByteReader_StreamU(
-                  sending ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write
+                  sending ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER
                );
          }
 
@@ -515,7 +515,7 @@ public class AutismLauncherOverlay extends bj {
             this.load_ByteReader.init_ByteReader_Str("Delay");
             this.load_ByteReader
                .init_ByteReader_ByteReader_StreamU(
-                  delaying ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.write
+                  delaying ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER
                );
          }
 

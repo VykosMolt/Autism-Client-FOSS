@@ -43,9 +43,9 @@ public class TaskQueue implements CacheEntry, MacroAction {
    private static final Comparator<PlayerScoreEntry> init_Comparator = Comparator.comparing(PlayerScoreEntry::value)
       .reversed()
       .thenComparing(PlayerScoreEntry::owner, String.CASE_INSENSITIVE_ORDER);
-   public TaskQueue.Inner_StateCache source = TaskQueue.Inner_StateCache.init;
+   public TaskQueue.Inner_StateCache source = TaskQueue.Inner_StateCache.GUI_TITLE;
    public String saveAs = "value";
-   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.init;
+   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.MATCH;
    public String pattern = "";
    public String exampleText = "";
    public String selectedText = "";
@@ -54,16 +54,16 @@ public class TaskQueue implements CacheEntry, MacroAction {
    public int scoreboardRowIndex = -1;
    public String scoreboardObjective = "";
    public int slot = -1;
-   public TaskQueue.Inner_CachePool itemText = TaskQueue.Inner_CachePool.init;
-   public TaskQueue.Inner_BufferHelper numberMode = TaskQueue.Inner_BufferHelper.init;
-   public TaskQueue.Inner_TaskQueue numberModifier = TaskQueue.Inner_TaskQueue.init;
+   public TaskQueue.Inner_CachePool itemText = TaskQueue.Inner_CachePool.NAME;
+   public TaskQueue.Inner_BufferHelper numberMode = TaskQueue.Inner_BufferHelper.OFF;
+   public TaskQueue.Inner_TaskQueue numberModifier = TaskQueue.Inner_TaskQueue.NONE;
    public double numberModifierAmount = 1.0;
-   public boolean waitForTrigger = init_Z_TaskQueue_StateCac(TaskQueue.Inner_StateCache.init);
+   public boolean waitForTrigger = init_Z_TaskQueue_StateCac(TaskQueue.Inner_StateCache.GUI_TITLE);
    public String autofillCommand = "";
    public int autofillTimeoutMs = 5000;
    public boolean autofillCacheList = true;
-   public ConfigStore.Inner_CachePool listSelection = ConfigStore.Inner_CachePool.init;
-   public ConfigStore.Inner_DataUtil listFilter = ConfigStore.Inner_DataUtil.init;
+   public ConfigStore.Inner_CachePool listSelection = ConfigStore.Inner_CachePool.RANDOM;
+   public ConfigStore.Inner_DataUtil listFilter = ConfigStore.Inner_DataUtil.NONE;
    public String listFilterText = "";
    public String listExcludeText = "";
    public int listPickPosition = 1;
@@ -95,7 +95,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
          return TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Game unavailable");
       }
 
-      if (this.source == TaskQueue.Inner_StateCache.load) {
+      if (this.source == TaskQueue.Inner_StateCache.RECENT_CHAT) {
          List<MacroExecutor.Inner_PacketUtil> messages = MacroExecutor.load_List();
          if (messages.isEmpty()) {
             return TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent chat");
@@ -109,7 +109,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
          }
 
          return TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent message matches");
-      } else if (this.source == TaskQueue.Inner_StateCache.init) {
+      } else if (this.source == TaskQueue.Inner_StateCache.GUI_TITLE) {
          TaskQueue.Inner_NetHelper current = this.read_TaskQueue_NetHelpe(mc);
          if (current.init_Z()) {
             return current;
@@ -141,7 +141,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
             return TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str(filterError);
          }
 
-         if (this.source == TaskQueue.Inner_StateCache.close || this.source == TaskQueue.Inner_StateCache.poll) {
+         if (this.source == TaskQueue.Inner_StateCache.COMMAND_AUTOFILL || this.source == TaskQueue.Inner_StateCache.NAMESCRAPE) {
             return TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Fetched when macro runs");
          }
       }
@@ -155,16 +155,16 @@ public class TaskQueue implements CacheEntry, MacroAction {
       if (captured != null && query != null && !query.isBlank()) {
          Map<String, l> props = new LinkedHashMap<>(captured.init_l().init_Map());
          props.put("query", l.init_l_Obj(query));
-         captured = new TaskQueue.Inner_DataUtil(captured.init_Str(), l.init(l.Inner_DataUtil.init, captured.init_l().init_Str(), props));
+         captured = new TaskQueue.Inner_DataUtil(captured.init_Str(), l.init(l.Inner_DataUtil.TEXT, captured.init_l().init_Str(), props));
       }
 
       return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(captured);
    }
 
    private boolean init_Z_6() {
-      return this.source == TaskQueue.Inner_StateCache.close
-         || this.source == TaskQueue.Inner_StateCache.open
-         || this.source == TaskQueue.Inner_StateCache.poll;
+      return this.source == TaskQueue.Inner_StateCache.COMMAND_AUTOFILL
+         || this.source == TaskQueue.Inner_StateCache.TABLIST
+         || this.source == TaskQueue.Inner_StateCache.NAMESCRAPE;
    }
 
    public TaskQueue.Inner_NetHelper init_TaskQueue_NetHelpe_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil chat) {
@@ -300,7 +300,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
                : new TaskQueue.Inner_NetHelper(true, captured.init_Str, additions, "Ready");
          }
 
-         if (this.matchMode != UtilCore.Inner_DataUtil.init && this.pattern != null && !this.pattern.isBlank()) {
+         if (this.matchMode != UtilCore.Inner_DataUtil.MATCH && this.pattern != null && !this.pattern.isBlank()) {
             Optional<UtilCore.Inner_StreamUtil> result = UtilCore.init(this.matchMode, this.pattern, captured.init_Str);
             if (result.isEmpty()) {
                return TaskQueue.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("Pattern does not match");
@@ -314,7 +314,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
          }
 
          additions = new LinkedHashMap<>(init(additions, this.saveAs, captured.init_l));
-         if (this.init_TaskQueue_BufferHe() != TaskQueue.Inner_BufferHelper.init) {
+         if (this.init_TaskQueue_BufferHe() != TaskQueue.Inner_BufferHelper.OFF) {
             additions = new LinkedHashMap<>(init(additions, this.saveAs, this.init_TaskQueue_BufferHe()));
          }
 
@@ -333,30 +333,30 @@ public class TaskQueue implements CacheEntry, MacroAction {
    }
 
    public static boolean init_Z_TaskQueue_StateCac(TaskQueue.Inner_StateCache source) {
-      return source == TaskQueue.Inner_StateCache.load;
+      return source == TaskQueue.Inner_StateCache.RECENT_CHAT;
    }
 
    public String init_Str_4() {
       if (this.init_Z_6()) {
          return "";
       } else {
-         TaskQueue.Inner_TaskQueue modifier = this.numberModifier == null ? TaskQueue.Inner_TaskQueue.init : this.numberModifier;
-         if (modifier == TaskQueue.Inner_TaskQueue.init) {
+         TaskQueue.Inner_TaskQueue modifier = this.numberModifier == null ? TaskQueue.Inner_TaskQueue.NONE : this.numberModifier;
+         if (modifier == TaskQueue.Inner_TaskQueue.NONE) {
             return "";
          } else if (!Double.isFinite(this.numberModifierAmount)) {
             return "Enter a valid modifier";
          } else {
-            return modifier == TaskQueue.Inner_TaskQueue.update && this.numberModifierAmount == 0.0 ? "Cannot divide by zero" : "";
+            return modifier == TaskQueue.Inner_TaskQueue.DIVIDE && this.numberModifierAmount == 0.0 ? "Cannot divide by zero" : "";
          }
       }
    }
 
    private TaskQueue.Inner_BufferHelper init_TaskQueue_BufferHe() {
-      return this.numberMode == null ? TaskQueue.Inner_BufferHelper.init : this.numberMode;
+      return this.numberMode == null ? TaskQueue.Inner_BufferHelper.OFF : this.numberMode;
    }
 
    private j.Inner_DataUtil init_j_DataUtil() {
-      return this.init_TaskQueue_BufferHe() == TaskQueue.Inner_BufferHelper.read ? j.Inner_DataUtil.load : j.Inner_DataUtil.init;
+      return this.init_TaskQueue_BufferHe() == TaskQueue.Inner_BufferHelper.DROP_CENTS ? j.Inner_DataUtil.WHOLE : j.Inner_DataUtil.AUTO;
    }
 
    private TaskQueue.Inner_ConfigStore init_TaskQueue_ConfigSt_Map(Map<String, l> values) {
@@ -365,8 +365,8 @@ public class TaskQueue implements CacheEntry, MacroAction {
          return TaskQueue.Inner_ConfigStore.init(error);
       }
 
-      TaskQueue.Inner_TaskQueue modifier = this.numberModifier == null ? TaskQueue.Inner_TaskQueue.init : this.numberModifier;
-      if (modifier != TaskQueue.Inner_TaskQueue.init && values != null && !values.isEmpty()) {
+      TaskQueue.Inner_TaskQueue modifier = this.numberModifier == null ? TaskQueue.Inner_TaskQueue.NONE : this.numberModifier;
+      if (modifier != TaskQueue.Inner_TaskQueue.NONE && values != null && !values.isEmpty()) {
          BigDecimal operand = BigDecimal.valueOf(this.numberModifierAmount);
          String outputName = m.load(this.saveAs);
          boolean targetTracked = !outputName.isBlank() && values.containsKey(outputName);
@@ -398,25 +398,25 @@ public class TaskQueue implements CacheEntry, MacroAction {
       try {
          BigDecimal var10000;
          switch (modifier) {
-            case init:
+            case NONE:
                var10000 = number;
                break;
-            case load:
+            case PLUS:
                var10000 = number.add(operand);
                break;
-            case read:
+            case MINUS:
                var10000 = number.subtract(operand);
                break;
-            case write:
+            case MULTIPLY:
                var10000 = number.multiply(operand);
                break;
-            case update:
+            case DIVIDE:
                var10000 = init_BigDecimal_BigDecimal_BigDecimal(number, operand);
                break;
-            case sync:
+            case PLUS_PERCENT:
                var10000 = load(number, BigDecimal.ONE.add(init_BigDecimal_BigDecimal(operand)));
                break;
-            case flush:
+            case MINUS_PERCENT:
                var10000 = load(number, BigDecimal.ONE.subtract(init_BigDecimal_BigDecimal(operand)));
                break;
             default:
@@ -454,7 +454,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
    }
 
    private static BigDecimal init_BigDecimal(l value, boolean embedded, j.Inner_DataUtil style) {
-      if (value != null && value.init_l_DataUtil() != l.Inner_DataUtil.sync && value.init_l_DataUtil() != l.Inner_DataUtil.write) {
+      if (value != null && value.init_l_DataUtil() != l.Inner_DataUtil.SLOT && value.init_l_DataUtil() != l.Inner_DataUtil.IDENTIFIER) {
          try {
             return new BigDecimal(embedded ? j.init(value.init_Str(), style) : j.load(value.init_Str(), style));
          } catch (IllegalArgumentException ignored) {
@@ -480,16 +480,16 @@ public class TaskQueue implements CacheEntry, MacroAction {
    }
 
    static Map<String, l> init_Map_Map(Map<String, l> values) {
-      return init(values, "", TaskQueue.Inner_BufferHelper.load);
+      return init(values, "", TaskQueue.Inner_BufferHelper.SUFFIX_KMB);
    }
 
    static Map<String, l> init_Map_Map_Str(Map<String, l> values, String saveAs) {
-      return init(values, saveAs, TaskQueue.Inner_BufferHelper.load);
+      return init(values, saveAs, TaskQueue.Inner_BufferHelper.SUFFIX_KMB);
    }
 
    static Map<String, l> init(Map<String, l> values, String saveAs, TaskQueue.Inner_BufferHelper mode) {
       if (values != null && !values.isEmpty()) {
-         j.Inner_DataUtil style = mode == TaskQueue.Inner_BufferHelper.read ? j.Inner_DataUtil.load : j.Inner_DataUtil.init;
+         j.Inner_DataUtil style = mode == TaskQueue.Inner_BufferHelper.DROP_CENTS ? j.Inner_DataUtil.WHOLE : j.Inner_DataUtil.AUTO;
          String outputName = m.load(saveAs);
          Map<String, l> normalized = new LinkedHashMap<>();
          values.forEach((name, value) -> normalized.put(name, init_l(value, !outputName.isBlank() && outputName.equals(name), style)));
@@ -510,13 +510,13 @@ public class TaskQueue implements CacheEntry, MacroAction {
 
    private TaskQueue.Inner_DataUtil init_TaskQueue_DataUtil_Minecraft(Minecraft mc) {
       TaskQueue.Inner_DataUtil var10000;
-      switch (this.source == null ? TaskQueue.Inner_StateCache.init : this.source) {
-         case init:
+      switch (this.source == null ? TaskQueue.Inner_StateCache.GUI_TITLE : this.source) {
+         case GUI_TITLE:
             Screen screen = mc.gui.screen();
             if (screen != null && !f.init_Z(screen)) {
                String title = screen.getTitle() == null ? "" : screen.getTitle().getString();
                var10000 = new TaskQueue.Inner_DataUtil(
-                  title, l.init(l.Inner_DataUtil.poll, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj(f.init_Str(screen))))
+                  title, l.init(l.Inner_DataUtil.GUI, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj(f.init_Str(screen))))
                );
             } else {
                CustomMenuSnapshot menu = autismclient.util.b.CachePool.init_CustomMenuSnapshot();
@@ -525,39 +525,39 @@ public class TaskQueue implements CacheEntry, MacroAction {
                } else {
                   String title = menu.title();
                   var10000 = new TaskQueue.Inner_DataUtil(
-                     title, l.init(l.Inner_DataUtil.poll, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj("CUSTOM_MENU")))
+                     title, l.init(l.Inner_DataUtil.GUI, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj("CUSTOM_MENU")))
                   );
                }
             }
             break;
-         case load:
+         case RECENT_CHAT:
             List<MacroExecutor.Inner_PacketUtil> messages = MacroExecutor.load_List();
             var10000 = messages.isEmpty() ? null : this.init_TaskQueue_DataUtil_MacroExecutor_Pack(messages.get(0));
             break;
-         case read:
+         case SCOREBOARD:
             var10000 = this.init_TaskQueue_DataUtil_TaskQueue_JsonUtil(this.init_TaskQueue_JsonUtil_Minecraft(mc));
             break;
-         case write:
+         case GUI_ITEM:
             var10000 = this.init_TaskQueue_DataUtil_Minecraft_Z(mc, false);
             break;
-         case update:
+         case PLAYER_ITEM:
             var10000 = this.read_TaskQueue_DataUtil(mc);
             break;
-         case sync:
+         case CURSOR_ITEM:
             var10000 = mc.player != null && mc.player.containerMenu != null
                ? this.init_TaskQueue_DataUtil_ItemStack_I(mc.player.containerMenu.getCarried(), -1)
                : null;
             break;
-         case flush:
+         case HELD_ITEM:
             var10000 = mc.player == null
                ? null
                : this.init_TaskQueue_DataUtil_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot());
             break;
-         case close:
-         case poll:
+         case COMMAND_AUTOFILL:
+         case NAMESCRAPE:
             var10000 = null;
             break;
-         case open:
+         case TABLIST:
             var10000 = this.load_TaskQueue_DataUtil_Minecraft(mc);
             break;
          default:
@@ -620,7 +620,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
          props.put("prefix", l.init_l_Obj(prefix));
       }
 
-      return new TaskQueue.Inner_DataUtil(value, l.init(l.Inner_DataUtil.init, value, props));
+      return new TaskQueue.Inner_DataUtil(value, l.init(l.Inner_DataUtil.TEXT, value, props));
    }
 
    private TaskQueue.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil chat) {
@@ -634,7 +634,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
       props.put("message", l.init_l_Obj(chat.load()));
       props.put("display", l.init_l_Obj(display));
       props.put("source", l.init_l_Obj(chat.init_MacroExecutor_Task() == null ? "" : chat.init_MacroExecutor_Task().name()));
-      return new TaskQueue.Inner_DataUtil(display, l.init(l.Inner_DataUtil.init, display, props));
+      return new TaskQueue.Inner_DataUtil(display, l.init(l.Inner_DataUtil.TEXT, display, props));
    }
 
    private TaskQueue.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Hash(MacroExecutor.Inner_HashUtil gui) {
@@ -644,7 +644,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
 
       String title = gui.init_Str() == null ? "" : gui.init_Str();
       return new TaskQueue.Inner_DataUtil(
-         title, l.init(l.Inner_DataUtil.poll, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj(gui.load() == null ? "" : gui.load())))
+         title, l.init(l.Inner_DataUtil.GUI, title, Map.of("title", l.init_l_Obj(title), "type", l.init_l_Obj(gui.load() == null ? "" : gui.load())))
       );
    }
 
@@ -660,7 +660,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
       props.put("row", l.init_l_Number(BigDecimal.valueOf(line.init_I() + 1L)));
       props.put("title", l.init_l_Obj(line.read()));
       props.put("objective", l.init_l_Obj(line.load()));
-      return new TaskQueue.Inner_DataUtil(line.flush(), l.init(l.Inner_DataUtil.init, line.flush(), props));
+      return new TaskQueue.Inner_DataUtil(line.flush(), l.init(l.Inner_DataUtil.TEXT, line.flush(), props));
    }
 
    private TaskQueue.Inner_DataUtil init_TaskQueue_DataUtil_Minecraft_Z(Minecraft mc, boolean playerOnly) {
@@ -745,14 +745,14 @@ public class TaskQueue implements CacheEntry, MacroAction {
          }
 
          String var10000;
-         switch (this.itemText == null ? TaskQueue.Inner_CachePool.init : this.itemText) {
-            case init:
+         switch (this.itemText == null ? TaskQueue.Inner_CachePool.NAME : this.itemText) {
+            case NAME:
                var10000 = name;
                break;
-            case load:
+            case ID:
                var10000 = itemId;
                break;
-            case read:
+            case LORE:
                var10000 = loreText;
                break;
             default:
@@ -760,7 +760,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
          }
 
          String text = var10000;
-         return new TaskQueue.Inner_DataUtil(text, l.init(l.Inner_DataUtil.update, text, props));
+         return new TaskQueue.Inner_DataUtil(text, l.init(l.Inner_DataUtil.ITEM, text, props));
       } else {
          return null;
       }
@@ -819,7 +819,7 @@ public class TaskQueue implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_L_StreamGate;
+      return StreamGate.CAPTURE_VALUE;
    }
 
    @Override
@@ -856,9 +856,9 @@ public class TaskQueue implements CacheEntry, MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putString("source", (this.source == null ? TaskQueue.Inner_StateCache.init : this.source).name());
+      tag.putString("source", (this.source == null ? TaskQueue.Inner_StateCache.GUI_TITLE : this.source).name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
-      tag.putString("matchMode", (this.matchMode == null ? UtilCore.Inner_DataUtil.init : this.matchMode).name());
+      tag.putString("matchMode", (this.matchMode == null ? UtilCore.Inner_DataUtil.MATCH : this.matchMode).name());
       tag.putString("pattern", this.pattern == null ? "" : this.pattern);
       tag.putString("exampleText", this.exampleText == null ? "" : this.exampleText);
       tag.putString("selectedText", this.selectedText == null ? "" : this.selectedText);
@@ -867,16 +867,16 @@ public class TaskQueue implements CacheEntry, MacroAction {
       tag.putInt("scoreboardRowIndex", this.scoreboardRowIndex);
       tag.putString("scoreboardObjective", this.scoreboardObjective == null ? "" : this.scoreboardObjective);
       tag.putInt("slot", this.slot);
-      tag.putString("itemText", (this.itemText == null ? TaskQueue.Inner_CachePool.init : this.itemText).name());
+      tag.putString("itemText", (this.itemText == null ? TaskQueue.Inner_CachePool.NAME : this.itemText).name());
       tag.putString("numberMode", this.init_TaskQueue_BufferHe().name());
-      tag.putString("numberModifier", (this.numberModifier == null ? TaskQueue.Inner_TaskQueue.init : this.numberModifier).name());
+      tag.putString("numberModifier", (this.numberModifier == null ? TaskQueue.Inner_TaskQueue.NONE : this.numberModifier).name());
       tag.putDouble("numberModifierAmount", this.numberModifierAmount);
       tag.putBoolean("waitForTrigger", this.waitForTrigger);
       tag.putString("autofillCommand", this.autofillCommand == null ? "" : this.autofillCommand);
       tag.putInt("autofillTimeoutMs", this.autofillTimeoutMs);
       tag.putBoolean("autofillCacheList", this.autofillCacheList);
-      tag.putString("listSelection", (this.listSelection == null ? ConfigStore.Inner_CachePool.init : this.listSelection).name());
-      tag.putString("listFilter", (this.listFilter == null ? ConfigStore.Inner_DataUtil.init : this.listFilter).name());
+      tag.putString("listSelection", (this.listSelection == null ? ConfigStore.Inner_CachePool.RANDOM : this.listSelection).name());
+      tag.putString("listFilter", (this.listFilter == null ? ConfigStore.Inner_DataUtil.NONE : this.listFilter).name());
       tag.putString("listFilterText", this.listFilterText == null ? "" : this.listFilterText);
       tag.putString("listExcludeText", this.listExcludeText == null ? "" : this.listExcludeText);
       tag.putInt("listPickPosition", this.listPickPosition);
@@ -888,9 +888,9 @@ public class TaskQueue implements CacheEntry, MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.source = i.init(TaskQueue.Inner_StateCache.class, tag.getStringOr("source", "GUI_TITLE"), TaskQueue.Inner_StateCache.init);
+      this.source = i.init(TaskQueue.Inner_StateCache.class, tag.getStringOr("source", "GUI_TITLE"), TaskQueue.Inner_StateCache.GUI_TITLE);
       this.saveAs = tag.getStringOr("saveAs", "value");
-      this.matchMode = i.init(UtilCore.Inner_DataUtil.class, tag.getStringOr("matchMode", "MATCH"), UtilCore.Inner_DataUtil.init);
+      this.matchMode = i.init(UtilCore.Inner_DataUtil.class, tag.getStringOr("matchMode", "MATCH"), UtilCore.Inner_DataUtil.MATCH);
       this.pattern = tag.getStringOr("pattern", "");
       this.exampleText = tag.getStringOr("exampleText", "");
       this.selectedText = tag.getStringOr("selectedText", "");
@@ -899,18 +899,18 @@ public class TaskQueue implements CacheEntry, MacroAction {
       this.scoreboardRowIndex = tag.getIntOr("scoreboardRowIndex", -1);
       this.scoreboardObjective = tag.getStringOr("scoreboardObjective", "");
       this.slot = tag.getIntOr("slot", -1);
-      this.itemText = i.init(TaskQueue.Inner_CachePool.class, tag.getStringOr("itemText", "NAME"), TaskQueue.Inner_CachePool.init);
+      this.itemText = i.init(TaskQueue.Inner_CachePool.class, tag.getStringOr("itemText", "NAME"), TaskQueue.Inner_CachePool.NAME);
       this.numberMode = tag.contains("numberMode")
-         ? i.init(TaskQueue.Inner_BufferHelper.class, tag.getStringOr("numberMode", "OFF"), TaskQueue.Inner_BufferHelper.init)
-         : (tag.getBooleanOr("normalizeNumbers", false) ? TaskQueue.Inner_BufferHelper.load : TaskQueue.Inner_BufferHelper.init);
-      this.numberModifier = i.init(TaskQueue.Inner_TaskQueue.class, tag.getStringOr("numberModifier", "NONE"), TaskQueue.Inner_TaskQueue.init);
+         ? i.init(TaskQueue.Inner_BufferHelper.class, tag.getStringOr("numberMode", "OFF"), TaskQueue.Inner_BufferHelper.OFF)
+         : (tag.getBooleanOr("normalizeNumbers", false) ? TaskQueue.Inner_BufferHelper.SUFFIX_KMB : TaskQueue.Inner_BufferHelper.OFF);
+      this.numberModifier = i.init(TaskQueue.Inner_TaskQueue.class, tag.getStringOr("numberModifier", "NONE"), TaskQueue.Inner_TaskQueue.NONE);
       this.numberModifierAmount = tag.getDoubleOr("numberModifierAmount", 1.0);
       this.waitForTrigger = tag.getBooleanOr("waitForTrigger", init_Z_TaskQueue_StateCac(this.source));
       this.autofillCommand = tag.getStringOr("autofillCommand", "");
       this.autofillTimeoutMs = tag.getIntOr("autofillTimeoutMs", 5000);
       this.autofillCacheList = tag.getBooleanOr("autofillCacheList", true);
-      this.listSelection = i.init(ConfigStore.Inner_CachePool.class, tag.getStringOr("listSelection", "RANDOM"), ConfigStore.Inner_CachePool.init);
-      this.listFilter = i.init(ConfigStore.Inner_DataUtil.class, tag.getStringOr("listFilter", "NONE"), ConfigStore.Inner_DataUtil.init);
+      this.listSelection = i.init(ConfigStore.Inner_CachePool.class, tag.getStringOr("listSelection", "RANDOM"), ConfigStore.Inner_CachePool.RANDOM);
+      this.listFilter = i.init(ConfigStore.Inner_DataUtil.class, tag.getStringOr("listFilter", "NONE"), ConfigStore.Inner_DataUtil.NONE);
       this.listFilterText = tag.getStringOr("listFilterText", "");
       this.listExcludeText = tag.getStringOr("listExcludeText", "");
       this.listPickPosition = tag.getIntOr("listPickPosition", 1);
@@ -920,15 +920,15 @@ public class TaskQueue implements CacheEntry, MacroAction {
    }
 
    public enum Inner_BufferHelper {
-      init,
-      load,
-      read;
+      OFF,
+      SUFFIX_KMB,
+      DROP_CENTS;
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read;
+      NAME,
+      ID,
+      LORE;
    }
 
    private record Inner_ConfigStore(boolean init_Z, Map<String, l> init_Map, String init_Str) {
@@ -966,28 +966,28 @@ public class TaskQueue implements CacheEntry, MacroAction {
    }
 
    public enum Inner_StateCache {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      GUI_TITLE,
+      RECENT_CHAT,
+      SCOREBOARD,
+      GUI_ITEM,
+      PLAYER_ITEM,
+      CURSOR_ITEM,
+      HELD_ITEM,
+      COMMAND_AUTOFILL,
+      TABLIST,
+      NAMESCRAPE;
    }
 
    private record Inner_StreamUtil(boolean init_Z, ArrayUtil init_ArrayUtil) {
    }
 
    public enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      NONE,
+      PLUS,
+      MINUS,
+      MULTIPLY,
+      DIVIDE,
+      PLUS_PERCENT,
+      MINUS_PERCENT;
    }
 }

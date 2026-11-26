@@ -28,7 +28,7 @@ public class aj implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.stop;
+      return StreamGate.TICK_SYNC;
    }
 
    @Override

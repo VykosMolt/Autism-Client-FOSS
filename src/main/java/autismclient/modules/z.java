@@ -104,7 +104,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
 
       for (A.Inner_StreamUtil kind : A.Inner_StreamUtil.values()) {
          this.init_V_A_StreamUtil(kind);
-         if (kind == A.Inner_StreamUtil.init_A_StreamUtil) {
+         if (kind == A.Inner_StreamUtil.FIREBALL) {
             this.add(
                new BoolSetting("auto-return", "Auto Return", true)
                   .group(kind.load())
@@ -112,7 +112,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                   .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
             );
             this.add(
-               new EnumSetting<>("rotation", "Rotation", z.Inner_StreamUtil.init, z.Inner_StreamUtil.values())
+               new EnumSetting<>("rotation", "Rotation", z.Inner_StreamUtil.SILENT, z.Inner_StreamUtil.values())
                   .group(kind.load())
                   .visibleWhen(() -> this.init_Z_A_StreamUtil(kind) && this.bool("auto-return"))
             );
@@ -122,7 +122,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                   .description("Red blocks at risk from incoming fireballs and your own shots; dimmer edges are less likely")
                   .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
             );
-         } else if (kind == A.Inner_StreamUtil.write) {
+         } else if (kind == A.Inner_StreamUtil.PEARL) {
             this.add(
                new BoolSetting("pearl-ghost", "Landing Ghost", true)
                   .group(kind.load())
@@ -241,7 +241,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
             .description("Compact projectile icon and direction arrow, colored green to red by distance")
             .visibleWhen(() -> this.init_Z_A_StreamUtil(kind))
       );
-      int multiplier = kind == A.Inner_StreamUtil.write ? 2 : 1;
+      int multiplier = kind == A.Inner_StreamUtil.PEARL ? 2 : 1;
       this.add(
          new DoubleSetting(key + "radius", "Warning Radius", 15 * multiplier, multiplier, 30 * multiplier, 1.0)
             .group(group)
@@ -333,7 +333,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
    public boolean open_Z_6() {
       return !this.write_List.isEmpty()
          || this.load_List.stream().anyMatch(w -> this.init_Z_A_StreamUtil_Str(w.init_A_StreamUtil(), "trajectory"))
-         || this.init_Z_A_StreamUtil(A.Inner_StreamUtil.write) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
+         || this.init_Z_A_StreamUtil(A.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
    }
 
    public int init_I_A_BufferHelper(A.Inner_BufferHelper warning) {
@@ -403,7 +403,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
 
          this.write_V_22();
          this.read_V_23();
-         if (this.isEnabled() && this.init_Z_A_StreamUtil(A.Inner_StreamUtil.init_A_StreamUtil) && this.bool("auto-return") && this.set()) {
+         if (this.isEnabled() && this.init_Z_A_StreamUtil(A.Inner_StreamUtil.FIREBALL) && this.bool("auto-return") && this.set()) {
             z.Inner_CachePool best = null;
             boolean landingPriority = false;
 
@@ -517,7 +517,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
    }
 
    private void read_V_23() {
-      if (this.isEnabled() && this.init_Z_A_StreamUtil(A.Inner_StreamUtil.init_A_StreamUtil) && this.bool("auto-return")) {
+      if (this.isEnabled() && this.init_Z_A_StreamUtil(A.Inner_StreamUtil.FIREBALL) && this.bool("auto-return")) {
          for (z.Inner_CachePool threat : this.init_List) {
             if (threat.init_Z && threat.load_Z) {
                z.Inner_DataUtil attempt = this.init_Map.get(threat.init_Entity.getUUID());
@@ -657,7 +657,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                );
                boolean hits = impact >= 0.0;
                if (!hits) {
-                  A.Inner_DataUtil flight = A.init(MC.level, ball, A.Inner_StreamUtil.init_A_StreamUtil);
+                  A.Inner_DataUtil flight = A.init(MC.level, ball, A.Inner_StreamUtil.FIREBALL);
                   Vec3 landing = flight.init_Vec3();
                   if (landing != null && MC.player.getBoundingBox().distanceToSqr(landing) <= 12.25) {
                      impact = flight.init_D();
@@ -709,7 +709,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
       if (this.isEnabled() && !aD.init_Z()) {
          double range = 64.0;
          List<A.Inner_BufferHelper> result = new ArrayList<>();
-         boolean showPearlGhosts = this.init_Z_A_StreamUtil(A.Inner_StreamUtil.write) && this.bool("pearl-ghost");
+         boolean showPearlGhosts = this.init_Z_A_StreamUtil(A.Inner_StreamUtil.PEARL) && this.bool("pearl-ghost");
          HashMap<UUID, A.Inner_BufferHelper> landingModels = new HashMap<>();
          HashSet<UUID> predictedPearls = new HashSet<>();
          List<Projectile> candidates = MC.level
@@ -736,7 +736,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                A.Inner_DataUtil flight = A.init(MC.level, ball, kind);
                Player owner = ball.getOwner() instanceof Player player ? player : null;
                A.Inner_BufferHelper warning = new A.Inner_BufferHelper(ball, owner, kind, false, flight, this.init_I_Player(owner));
-               if (kind == A.Inner_StreamUtil.write) {
+               if (kind == A.Inner_StreamUtil.PEARL) {
                   predictedPearls.add(ball.getUUID());
                   if (showPearlGhosts && A.init(warning)) {
                      landingModels.put(ball.getUUID(), warning);
@@ -770,13 +770,13 @@ public final class z extends Module implements cn.Inner_DataUtil {
             for (int i = 0; i < Math.min(16, distantPearls.size()); i++) {
                ThrownEnderpearl pearl = distantPearls.get(i);
                Player owner = (Player)pearl.getOwner();
-               A.Inner_DataUtil flight = A.init(MC.level, pearl, A.Inner_StreamUtil.write);
-               A.Inner_BufferHelper warning = new A.Inner_BufferHelper(pearl, owner, A.Inner_StreamUtil.write, false, flight, this.init_I_Player(owner));
+               A.Inner_DataUtil flight = A.init(MC.level, pearl, A.Inner_StreamUtil.PEARL);
+               A.Inner_BufferHelper warning = new A.Inner_BufferHelper(pearl, owner, A.Inner_StreamUtil.PEARL, false, flight, this.init_I_Player(owner));
                if (A.init(warning)) {
                   landingModels.put(pearl.getUUID(), warning);
                }
 
-               if (A.init(flight, A.Inner_StreamUtil.write, MC.player.position(), this.init_D_A_StreamUtil(A.Inner_StreamUtil.write))) {
+               if (A.init(flight, A.Inner_StreamUtil.PEARL, MC.player.position(), this.init_D_A_StreamUtil(A.Inner_StreamUtil.PEARL))) {
                   result.add(warning);
                }
             }
@@ -788,7 +788,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                player -> player == MC.player
                   || !player.isAlive()
                   || player.isSpectator()
-                  || player.distanceToSqr(MC.player) > range * range && (!showPearlGhosts || init_A_StreamUtil_Player(player) != A.Inner_StreamUtil.write)
+                  || player.distanceToSqr(MC.player) > range * range && (!showPearlGhosts || init_A_StreamUtil_Player(player) != A.Inner_StreamUtil.PEARL)
                   || aL.init_Z_Entity_5(player)
                   || !this.init_Z_Player_3(player)
                   || ByteReader.init_Z(player)
@@ -809,7 +809,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                            break;
                         }
 
-                        if (kind != A.Inner_StreamUtil.load_A_StreamUtil || shot.init_aX_DataUtil().init_D() != 0.0) {
+                        if (kind != A.Inner_StreamUtil.ARROW || shot.init_aX_DataUtil().init_D() != 0.0) {
                            A.Inner_DataUtil flight = A.init(MC.level, owner, kind, shot);
                            A.Inner_BufferHelper warning = new A.Inner_BufferHelper(owner, owner, kind, true, flight, this.init_I_Player(owner));
                            if (showPearlGhosts && A.init(warning)) {
@@ -838,7 +838,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
                .thenComparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(MC.player.position()))
          );
          this.read_List = List.copyOf(models);
-         if (this.init_Z_A_StreamUtil(A.Inner_StreamUtil.init_A_StreamUtil) && this.bool("fireball-blast-blocks")) {
+         if (this.init_Z_A_StreamUtil(A.Inner_StreamUtil.FIREBALL) && this.bool("fireball-blast-blocks")) {
             ArrayList<A.Inner_BufferHelper> blastSources = new ArrayList<>(this.load_List);
             List<LargeFireball> own = MC.level
                .getEntitiesOfClass(
@@ -854,9 +854,9 @@ public final class z extends Module implements cn.Inner_DataUtil {
 
             for (int i = 0; i < Math.min(8, own.size()); i++) {
                LargeFireball ball = own.get(i);
-               A.Inner_DataUtil flight = A.init(MC.level, ball, A.Inner_StreamUtil.init_A_StreamUtil);
+               A.Inner_DataUtil flight = A.init(MC.level, ball, A.Inner_StreamUtil.FIREBALL);
                if (flight.init_Vec3() != null) {
-                  blastSources.add(new A.Inner_BufferHelper(ball, MC.player, A.Inner_StreamUtil.init_A_StreamUtil, false, flight, -1));
+                  blastSources.add(new A.Inner_BufferHelper(ball, MC.player, A.Inner_StreamUtil.FIREBALL, false, flight, -1));
                }
             }
 
@@ -1159,7 +1159,7 @@ public final class z extends Module implements cn.Inner_DataUtil {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load;
+      SILENT,
+      VISIBLE;
    }
 }

@@ -64,7 +64,7 @@ public final class aJ {
 
             for (int face = 0; face < init_FArr2.length; face++) {
                Identifier texture = recolor
-                  ? cu.init_Identifier(init_IdentifierArr[face], ct.init_ct_StreamUtil().init_I_ct_DataUtil(ct.Inner_DataUtil.update))
+                  ? cu.init_Identifier(init_IdentifierArr[face], ct.init_ct_StreamUtil().init_I_ct_DataUtil(ct.Inner_DataUtil.BACKDROP))
                   : cu.init_Identifier(init_IdentifierArr[face], customColor);
                if (texture != null) {
                   VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));

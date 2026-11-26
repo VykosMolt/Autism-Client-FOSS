@@ -169,7 +169,7 @@ public class aM {
 
             autismclient.util.macro.StreamGate type = autismclient.util.macro.StreamGate.valueOf(typeName);
             MacroAction action = init_MacroAction_StreamGate(type);
-            if (type == autismclient.util.macro.StreamGate.sync) {
+            if (type == autismclient.util.macro.StreamGate.WAIT_ITEM) {
                ((autismclient.util.macro.aD)action).init(actionTag);
             } else {
                action.fromTag(actionTag);
@@ -227,311 +227,311 @@ public class aM {
    private static MacroAction init_MacroAction_StreamGate(autismclient.util.macro.StreamGate type) {
       MacroAction var10000;
       switch (type) {
-         case init:
+         case DELAY:
             var10000 = new autismclient.util.macro.EventBus();
             break;
-         case load:
+         case PACKET:
             var10000 = new autismclient.util.macro.x();
             break;
-         case read:
+         case PACKET_CLICK:
             var10000 = new autismclient.util.macro.z();
             break;
-         case write:
+         case WAIT_PACKET:
             var10000 = new autismclient.util.macro.aB();
             break;
-         case update:
+         case WAIT_HEALTH:
             var10000 = new autismclient.util.macro.ay();
             break;
-         case sync:
-         case table:
+         case WAIT_ITEM:
+         case WAIT_SLOT_CHANGE:
             var10000 = new autismclient.util.macro.aD();
             break;
-         case flush:
+         case WAIT_BLOCK:
             var10000 = new autismclient.util.macro.at();
             break;
-         case close:
+         case WAIT_GUI:
             var10000 = new autismclient.util.macro.ax();
             break;
-         case open:
+         case CUSTOM_MENU:
             var10000 = new autismclient.util.macro.UiHelper();
             break;
-         case poll:
+         case CLICK:
             var10000 = new autismclient.util.macro.NetHelper();
             break;
-         case push:
+         case ROTATE:
             var10000 = new autismclient.util.macro.S();
             break;
-         case pop:
+         case USE_ITEM:
             var10000 = new autismclient.util.macro.an();
             break;
-         case tick:
+         case INVENTORY:
             var10000 = new autismclient.util.macro.RefQueue();
             break;
-         case run:
+         case SEND_PACKET:
             var10000 = new autismclient.util.macro.Y();
             break;
-         case get:
+         case CRAFT:
             var10000 = new autismclient.util.macro.SyncManager();
             break;
-         case set:
+         case TRADE:
             var10000 = new autismclient.util.macro.am();
             break;
-         case put:
+         case SELECT_SLOT:
             var10000 = new autismclient.util.macro.V();
             break;
-         case add:
+         case XCARRY:
             var10000 = new autismclient.util.macro.aQ();
             break;
-         case clear:
+         case DROP:
             var10000 = new autismclient.util.macro.PacketUtil();
             break;
-         case reset:
+         case ITEM:
             var10000 = new autismclient.util.macro.MapStore();
             break;
-         case start:
+         case PICK_UP_ALL:
             var10000 = new autismclient.util.macro.I();
             break;
-         case stop:
+         case TICK_SYNC:
             var10000 = new autismclient.util.macro.aj();
             break;
-         case next:
+         case REVISION_SYNC:
             var10000 = new autismclient.util.macro.Q();
             break;
-         case prev:
+         case SERVER_TICK_SYNC:
             var10000 = new autismclient.util.macro.aa();
             break;
-         case valid:
+         case CLOSE_GUI:
             var10000 = new autismclient.util.macro.JsonUtil();
             break;
-         case size:
+         case SWAP_SLOTS:
             var10000 = new autismclient.util.macro.ai();
             break;
-         case data:
+         case WAIT_COOLDOWN:
             var10000 = new autismclient.util.macro.av();
             break;
-         case value:
+         case GO_TO:
             var10000 = new autismclient.util.macro.CharEncoder();
             break;
-         case state:
+         case WAIT_POS:
             var10000 = new autismclient.util.macro.aN();
             break;
-         case queue:
+         case PAYLOAD:
             var10000 = new autismclient.util.macro.H();
             break;
-         case buffer:
+         case DISCONNECT:
             var10000 = new autismclient.util.macro.ByteReader();
             break;
-         case f_X_StreamGate:
+         case JOIN:
             var10000 = new autismclient.util.macro.ClassCache();
             break;
-         case entry:
+         case TOGGLE_MODULE:
             var10000 = new autismclient.util.macro.ak();
             break;
-         case node:
+         case START_MACRO:
             var10000 = new autismclient.util.macro.af();
             break;
-         case cache:
+         case TOOLS:
             var10000 = new autismclient.util.macro.al();
             break;
-         case task:
+         case STOP_MACRO:
             var10000 = new autismclient.util.macro.ag();
             break;
-         case pool:
+         case SNEAK:
             var10000 = new autismclient.util.macro.ad();
             break;
-         case index:
+         case JUMP:
             var10000 = new autismclient.util.macro.NodeWalker();
             break;
-         case count:
+         case SPRINT:
             var10000 = new autismclient.util.macro.ae();
             break;
-         case flags:
+         case MOVE:
             var10000 = new autismclient.util.macro.s();
             break;
-         case level:
+         case LOOK_AT_BLOCK:
             var10000 = new autismclient.util.macro.ValueSink();
             break;
-         case frame:
+         case REPEAT:
             var10000 = new autismclient.util.macro.N();
             break;
-         case block:
+         case WAIT_CHAT:
             var10000 = new autismclient.util.macro.au();
             break;
-         case chunk:
+         case WAIT_ENTITY:
             var10000 = new autismclient.util.macro.aw();
             break;
-         case store:
+         case OPEN_CONTAINER:
             var10000 = new autismclient.util.macro.v();
             break;
-         case drain:
+         case INTERACT_ENTITY:
             var10000 = new autismclient.util.macro.PathHelper();
             break;
-         case fill:
+         case DESYNC:
             var10000 = new autismclient.util.macro.TextFormat();
             break;
-         case mark:
+         case RESTORE_GUI:
             var10000 = new autismclient.util.macro.P();
             break;
-         case scan:
+         case SAVE_GUI:
             var10000 = new autismclient.util.macro.U();
             break;
-         case parse:
+         case SEND_TOGGLE:
             var10000 = new autismclient.util.macro.Z();
             break;
-         case bind:
+         case DELAY_PACKETS:
             var10000 = new autismclient.util.macro.FileCache();
             break;
-         case f_a_StreamGate:
+         case INVENTORY_AUDIT:
             var10000 = new autismclient.util.macro.ListPool();
             break;
-         case f_b_StreamGate:
+         case STORE_ITEM:
             var10000 = new autismclient.util.macro.ah();
             break;
-         case f_c_StreamGate:
+         case WAIT_SOUND:
             var10000 = new autismclient.util.macro.aE();
             break;
-         case f_d_StreamGate:
+         case MINE:
             var10000 = new autismclient.util.macro.q();
             break;
-         case f_e_StreamGate:
+         case INSTA_BREAK:
             var10000 = new autismclient.util.macro.MethodUtil();
             break;
-         case f_f_StreamGate:
+         case BREAK:
             var10000 = new autismclient.util.macro.CachePool();
             break;
-         case f_g_StreamGate:
+         case PAY:
             var10000 = new autismclient.util.macro.G();
             break;
-         case f_i_StreamGate:
+         case NBT_BOOK:
             var10000 = new autismclient.util.macro.u();
             break;
-         case f_h_StreamGate:
+         case SEND_CHAT:
             var10000 = new autismclient.util.macro.W();
             break;
-         case f_j_StreamGate:
+         case WAIT_LAN_STEP:
             var10000 = new autismclient.util.macro.az();
             break;
-         case f_k_StreamGate:
+         case WAIT_MACRO_STEP:
             var10000 = new autismclient.util.macro.aA();
             break;
-         case f_l_StreamGate:
+         case WAIT_WORLD_CHANGE:
             var10000 = new autismclient.util.macro.aG();
             break;
-         case f_m_StreamGate:
+         case WAIT_POSITION_DELTA:
             var10000 = new autismclient.util.macro.aC();
             break;
-         case f_n_StreamGate:
+         case WAIT_TELEPORT:
             var10000 = new autismclient.util.macro.aF();
             break;
-         case f_o_StreamGate:
+         case WAIT_GAMEMODE_CHANGE:
             var10000 = new autismclient.util.macro.aI();
             break;
-         case f_p_StreamGate:
+         case WAIT_MOVEMENT:
             var10000 = new autismclient.util.macro.aL();
             break;
-         case f_q_StreamGate:
+         case RACE:
             var10000 = new autismclient.util.macro.L();
             break;
-         case f_r_StreamGate:
+         case REPORT:
             var10000 = new autismclient.util.macro.O();
             break;
-         case f_s_StreamGate:
+         case VCLIP:
             var10000 = new autismclient.util.macro.ap();
             break;
-         case f_t_StreamGate:
+         case HCLIP:
             var10000 = new autismclient.util.macro.TokenStore();
             break;
-         case f_u_StreamGate:
+         case TP:
             var10000 = new autismclient.util.macro.w();
             break;
-         case f_v_StreamGate:
+         case PACKET_GATE:
             var10000 = new autismclient.util.macro.B();
             break;
-         case f_B_StreamGate:
+         case END_PACKET_GATE:
             var10000 = new autismclient.util.macro.HashUtil();
             break;
-         case f_w_StreamGate:
+         case PACKET_BURST:
             var10000 = new autismclient.util.macro.y();
             break;
-         case f_x_StreamGate:
+         case CONTAINER_CLICK_SEQUENCE:
             var10000 = new autismclient.util.macro.StateCache();
             break;
-         case f_y_StreamGate:
+         case ASSERT:
             var10000 = new autismclient.util.macro.DataUtil();
             break;
-         case f_z_StreamGate:
+         case USE_ITEM_PHASE:
             var10000 = new autismclient.util.macro.ao();
             break;
-         case f_A_StreamGate:
+         case SEND_COMMAND_PACKET:
             var10000 = new autismclient.util.macro.X();
             break;
-         case f_C_StreamGate:
+         case WAIT_PACKET_MATCH:
             var10000 = new autismclient.util.macro.aM();
             break;
-         case f_D_StreamGate:
+         case WAIT_INVENTORY_PREDICATE:
             var10000 = new autismclient.util.macro.aK();
             break;
-         case f_E_StreamGate:
+         case WAIT_DURABILITY:
             var10000 = new autismclient.util.macro.ar();
             break;
-         case f_F_StreamGate:
+         case WAIT_FREE_SLOTS:
             var10000 = new autismclient.util.macro.aH();
             break;
-         case f_G_StreamGate:
+         case WAIT_ENTITY_TARGET:
             var10000 = new autismclient.util.macro.as();
             break;
-         case f_H_StreamGate:
+         case WAIT_GUI_TYPE:
             var10000 = new autismclient.util.macro.aJ();
             break;
-         case f_I_StreamGate:
+         case BRANCH:
             var10000 = new autismclient.util.macro.StreamUtil();
             break;
-         case f_J_StreamGate:
+         case FINALLY:
             var10000 = new autismclient.util.macro.PoolEntry();
             break;
-         case f_K_StreamGate:
+         case MACRO_VARIABLES:
             var10000 = new autismclient.util.macro.o();
             break;
-         case f_L_StreamGate:
+         case CAPTURE_VALUE:
             var10000 = new autismclient.util.macro.TaskQueue();
             break;
-         case f_M_StreamGate:
+         case FAKE_GAMEMODE:
             var10000 = new autismclient.util.macro.IoWorker();
             break;
-         case f_N_StreamGate:
+         case BUNDLE_DUPE_V2:
             var10000 = new autismclient.util.macro.BufferHelper();
             break;
-         case f_O_StreamGate:
+         case ROLLBACK:
             var10000 = new autismclient.util.macro.R();
             break;
-         case f_P_StreamGate:
+         case PLACE:
             var10000 = new autismclient.util.macro.K();
             break;
-         case f_Q_StreamGate:
+         case SIGN_EDIT:
             var10000 = new autismclient.util.macro.ac();
             break;
-         case f_R_StreamGate:
+         case FPS:
             var10000 = new autismclient.util.macro.RingBuffer();
             break;
-         case f_S_StreamGate:
+         case SPING:
             var10000 = new autismclient.util.macro.T();
             break;
-         case f_T_StreamGate:
+         case IF:
             var10000 = new autismclient.util.macro.FieldCache();
             break;
-         case f_U_StreamGate:
+         case FLOW:
             var10000 = new autismclient.util.macro.TableIndex();
             break;
-         case f_V_StreamGate:
+         case LABEL:
             var10000 = new autismclient.util.macro.KeyHolder();
             break;
-         case f_W_StreamGate:
+         case MULTI:
             var10000 = new autismclient.util.macro.t();
             break;
-         case f_Y_StreamGate:
+         case VILLAGER_DUPE:
             var10000 = new autismclient.util.macro.aq();
             break;
-         case f_Z_StreamGate:
+         case WAIT_VILLAGER_ITEM:
             var10000 = new autismclient.util.macro.aO();
             break;
          default:

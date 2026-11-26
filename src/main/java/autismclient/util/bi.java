@@ -9,7 +9,7 @@ public final class bi {
    private static final f init_f = new f(2100L, 140.0F, 220.0F, 4, 4, 18);
 
    private static int load() {
-      return ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.sync);
+      return ct.init_I_I_ct_DataUtil(-13248397, ct.Inner_DataUtil.SUCCESS);
    }
 
    private bi() {

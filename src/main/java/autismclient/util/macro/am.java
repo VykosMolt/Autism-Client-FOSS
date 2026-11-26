@@ -9,9 +9,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.MerchantMenu;
 
 public final class am implements ContextMacroAction {
-   public am.Inner_StreamUtil target = am.Inner_StreamUtil.init;
+   public am.Inner_StreamUtil target = am.Inner_StreamUtil.OPEN_SCREEN;
    public double range = 4.0;
-   public am.Inner_DataUtil selection = am.Inner_DataUtil.init;
+   public am.Inner_DataUtil selection = am.Inner_DataUtil.OFFER;
    public int offerNumber = 1;
    public String resultItem = "minecraft:emerald";
    public String enchantment = "minecraft:mending";
@@ -29,10 +29,10 @@ public final class am implements ContextMacroAction {
 
    public autismclient.util.h.StreamUtil init() {
       return new autismclient.util.h.StreamUtil(
-         this.selection == am.Inner_DataUtil.init ? init(this.offerNumber, 1, 512) : 0,
-         this.selection == am.Inner_DataUtil.load ? List.of(autismclient.util.h.StreamUtil.init(this.resultItem)) : List.of(),
+         this.selection == am.Inner_DataUtil.OFFER ? init(this.offerNumber, 1, 512) : 0,
+         this.selection == am.Inner_DataUtil.ITEM ? List.of(autismclient.util.h.StreamUtil.init(this.resultItem)) : List.of(),
          List.of(),
-         this.selection == am.Inner_DataUtil.read
+         this.selection == am.Inner_DataUtil.BOOK
             ? List.of(new autismclient.util.h.StreamUtil.Inner_DataUtil(this.enchantment, init(this.minLevel, 1, 255), 0))
             : List.of(),
          this.exactLevel,
@@ -42,7 +42,7 @@ public final class am implements ContextMacroAction {
 
    @Override
    public void run(MacroExecutionContext ctx) {
-      if (this.selection != am.Inner_DataUtil.load || this.resultItem != null && !this.resultItem.isBlank()) {
+      if (this.selection != am.Inner_DataUtil.ITEM || this.resultItem != null && !this.resultItem.isBlank()) {
          autismclient.util.h.CachePool session = new autismclient.util.h.CachePool(
             this.init(), this.untilUnavailable ? 10000 : init(this.amount, 1, 10000), this.delayTicks, this.timeoutTicks, this.emeraldBudget, this.keepEmeralds
          );
@@ -57,10 +57,10 @@ public final class am implements ContextMacroAction {
                return;
             }
 
-            if (this.target == am.Inner_StreamUtil.init || this.init(ctx)) {
+            if (this.target == am.Inner_StreamUtil.OPEN_SCREEN || this.init(ctx)) {
                while (ctx.isActive()) {
                   autismclient.util.h.CachePool.Inner_CachePool state = ctx.callOnClientThread(
-                     () -> ctx.isActive() ? session.init_CachePool_CachePoo_Minecraft(ctx.mc()) : autismclient.util.h.CachePool.Inner_CachePool.tick
+                     () -> ctx.isActive() ? session.init_CachePool_CachePoo_Minecraft(ctx.mc()) : autismclient.util.h.CachePool.Inner_CachePool.CANCELLED
                   );
                   if (state == null) {
                      return;
@@ -71,7 +71,7 @@ public final class am implements ContextMacroAction {
                      ctx.setVariable("trade_count", session.init_I());
                      ctx.setVariable("trade_spent", session.load_I());
                      ctx.setVariable("trade_status", session.init_CachePool_CachePoo().name());
-                     if (session.init_CachePool_CachePoo() != autismclient.util.h.CachePool.Inner_CachePool.load) {
+                     if (session.init_CachePool_CachePoo() != autismclient.util.h.CachePool.Inner_CachePool.COMPLETE) {
                         ctx.runOnClientThread(
                            () -> AutismClientMessaging.sendPrefixed("Trade: " + session.init_Str() + " (" + session.init_I() + " completed)")
                         );
@@ -115,7 +115,7 @@ public final class am implements ContextMacroAction {
          return false;
       }
 
-      Entity entity = ctx.callOnClientThread(() -> autismclient.util.h.BufferHelper.init(ctx.mc(), this.target == am.Inner_StreamUtil.load, this.range));
+      Entity entity = ctx.callOnClientThread(() -> autismclient.util.h.BufferHelper.init(ctx.mc(), this.target == am.Inner_StreamUtil.AIMED, this.range));
       if (entity == null) {
          return false;
       }
@@ -167,7 +167,7 @@ public final class am implements ContextMacroAction {
       try {
          this.target = am.Inner_StreamUtil.valueOf(tag.getStringOr("target", "OPEN_SCREEN"));
       } catch (IllegalArgumentException e) {
-         this.target = am.Inner_StreamUtil.init;
+         this.target = am.Inner_StreamUtil.OPEN_SCREEN;
       }
 
       this.range = tag.getDoubleOr("range", 4.0);
@@ -176,7 +176,7 @@ public final class am implements ContextMacroAction {
       try {
          this.selection = am.Inner_DataUtil.valueOf(tag.getStringOr("selection", "OFFER"));
       } catch (IllegalArgumentException e) {
-         this.selection = am.Inner_DataUtil.init;
+         this.selection = am.Inner_DataUtil.OFFER;
       }
 
       this.offerNumber = init(tag.getIntOr("offerNumber", 1), 1, 512);
@@ -197,20 +197,20 @@ public final class am implements ContextMacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.set;
+      return StreamGate.TRADE;
    }
 
    @Override
    public String getDisplayName() {
       String var10000;
       switch (this.selection) {
-         case init:
+         case OFFER:
             var10000 = "Offer " + this.offerNumber;
             break;
-         case load:
+         case ITEM:
             var10000 = this.resultItem;
             break;
-         case read:
+         case BOOK:
             var10000 = this.enchantment + " " + this.minLevel;
             break;
          default:
@@ -240,14 +240,14 @@ public final class am implements ContextMacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      OFFER,
+      ITEM,
+      BOOK;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      OPEN_SCREEN,
+      AIMED,
+      NEAREST;
    }
 }

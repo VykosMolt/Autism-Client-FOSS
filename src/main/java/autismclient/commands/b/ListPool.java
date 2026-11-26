@@ -44,7 +44,7 @@ public class ListPool extends Command {
          AutismClientMessaging.sendPrefixed(
             "§7seed: "
                + (
-                  seedStatus == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.read
+                  seedStatus == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.INVALID
                      ? "§cINVALID"
                      : (seed == null ? "§cNONE - enter a signed 64-bit value" : "§f" + seed)
                )
@@ -69,7 +69,7 @@ public class ListPool extends Command {
             );
          AutismClientMessaging.sendPrefixed("§7local Minecraft 26.2 worldgen: " + worldgen);
          if (autismclient.util.oresim.StreamUtil.read_Z()
-            || autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.update) {
+            || autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
             AutismClientMessaging.sendPrefixed("§c" + autismclient.util.oresim.StreamUtil.init_Str());
          }
 

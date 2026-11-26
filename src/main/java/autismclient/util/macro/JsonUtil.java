@@ -63,7 +63,7 @@ public class JsonUtil implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.valid;
+      return StreamGate.CLOSE_GUI;
    }
 
    @Override

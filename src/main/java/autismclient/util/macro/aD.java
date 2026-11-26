@@ -64,14 +64,14 @@ public class aD implements CacheEntry, MacroAction {
                try {
                   entry.init_aD_StreamUtil = aD.Inner_StreamUtil.valueOf(entryTag.getStringOr("mode", "NOT_EMPTY"));
                } catch (IllegalArgumentException ignored) {
-                  entry.init_aD_StreamUtil = aD.Inner_StreamUtil.init;
+                  entry.init_aD_StreamUtil = aD.Inner_StreamUtil.NOT_EMPTY;
                }
 
                this.entries.add(entry);
             }
          }
       } else {
-         aD.Inner_StreamUtil globalMode = aD.Inner_StreamUtil.init;
+         aD.Inner_StreamUtil globalMode = aD.Inner_StreamUtil.NOT_EMPTY;
          int globalCount = 1;
          if (tag.contains("waitMode")) {
             try {
@@ -141,7 +141,7 @@ public class aD implements CacheEntry, MacroAction {
          target = itemName;
       }
 
-      this.entries.add(new aD.Inner_DataUtil(target, aD.Inner_StreamUtil.init, 1));
+      this.entries.add(new aD.Inner_DataUtil(target, aD.Inner_StreamUtil.NOT_EMPTY, 1));
       this.init = true;
    }
 
@@ -151,7 +151,7 @@ public class aD implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.table;
+      return StreamGate.WAIT_SLOT_CHANGE;
    }
 
    @Override
@@ -201,7 +201,7 @@ public class aD implements CacheEntry, MacroAction {
    public static class Inner_DataUtil {
       public String init_Str = "";
       public ArrayUtil init_ArrayUtil = new ArrayUtil();
-      public aD.Inner_StreamUtil init_aD_StreamUtil = aD.Inner_StreamUtil.init;
+      public aD.Inner_StreamUtil init_aD_StreamUtil = aD.Inner_StreamUtil.NOT_EMPTY;
       public int init_I = 1;
 
       public Inner_DataUtil() {
@@ -223,19 +223,19 @@ public class aD implements CacheEntry, MacroAction {
       public String init_Str() {
          String var10000;
          switch (this.init_aD_StreamUtil) {
-            case init:
+            case NOT_EMPTY:
                var10000 = "has";
                break;
-            case load:
+            case IS_EMPTY:
                var10000 = "empty";
                break;
-            case read:
+            case COUNT_AT_LEAST:
                var10000 = ">=" + this.init_I;
                break;
-            case write:
+            case COUNT_BELOW:
                var10000 = "<" + this.init_I;
                break;
-            case update:
+            case ANY_CHANGE:
                var10000 = "~";
                break;
             default:
@@ -266,10 +266,10 @@ public class aD implements CacheEntry, MacroAction {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      NOT_EMPTY,
+      IS_EMPTY,
+      COUNT_AT_LEAST,
+      COUNT_BELOW,
+      ANY_CHANGE;
    }
 }

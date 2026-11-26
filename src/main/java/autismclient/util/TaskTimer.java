@@ -53,19 +53,19 @@ public final class TaskTimer {
       Map<EquipmentSlot, List<TaskTimer.Inner_DataUtil>> byType = new EnumMap<>(EquipmentSlot.class);
 
       for (int inv = 0; inv < 9; inv++) {
-         init_V_Map(byType, stacks.init(inv), inv, TaskTimer.Inner_StreamUtil.init, allowCursed);
+         init_V_Map(byType, stacks.init(inv), inv, TaskTimer.Inner_StreamUtil.HOTBAR, allowCursed);
       }
 
       for (int inv = 9; inv < 36; inv++) {
-         init_V_Map(byType, stacks.init(inv), inv, TaskTimer.Inner_StreamUtil.load, allowCursed);
+         init_V_Map(byType, stacks.init(inv), inv, TaskTimer.Inner_StreamUtil.INVENTORY, allowCursed);
       }
 
       if (offhandAvailable) {
-         init_V_Map(byType, stacks.init(EquipmentSlot.OFFHAND), 40, TaskTimer.Inner_StreamUtil.load, allowCursed);
+         init_V_Map(byType, stacks.init(EquipmentSlot.OFFHAND), 40, TaskTimer.Inner_StreamUtil.INVENTORY, allowCursed);
       }
 
       for (EquipmentSlot slot : init_EquipmentSlotArr) {
-         init_V_Map(byType, stacks.init(slot), -1, TaskTimer.Inner_StreamUtil.read, allowCursed);
+         init_V_Map(byType, stacks.init(slot), -1, TaskTimer.Inner_StreamUtil.ARMOR, allowCursed);
       }
 
       return byType;
@@ -74,7 +74,7 @@ public final class TaskTimer {
    private static void init_V_Map(
       Map<EquipmentSlot, List<TaskTimer.Inner_DataUtil>> byType, ItemStack stack, int invIndex, TaskTimer.Inner_StreamUtil kind, boolean allowCursed
    ) {
-      if (stack != null && !stack.isEmpty() && init_Z_ItemStack(stack) && (kind == TaskTimer.Inner_StreamUtil.read || allowCursed || !load_Z(stack))) {
+      if (stack != null && !stack.isEmpty() && init_Z_ItemStack(stack) && (kind == TaskTimer.Inner_StreamUtil.ARMOR || allowCursed || !load_Z(stack))) {
          EquipmentSlot slot = init_EquipmentSlot_ItemStack(stack);
          if (slot != null && init_Z_EquipmentSlot(slot)) {
             byType.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(new TaskTimer.Inner_DataUtil(stack, slot, kind, invIndex));
@@ -148,8 +148,8 @@ public final class TaskTimer {
          .thenComparingDouble(c -> init_D_D(load_D(c.init_ItemStack())))
          .thenComparingInt(c -> load_I(c.init_ItemStack()))
          .thenComparingInt(c -> read(c.init_ItemStack()))
-         .thenComparing(c -> c.init_TaskTimer_StreamUt() == TaskTimer.Inner_StreamUtil.read)
-         .thenComparing(c -> c.init_TaskTimer_StreamUt() == TaskTimer.Inner_StreamUtil.init);
+         .thenComparing(c -> c.init_TaskTimer_StreamUt() == TaskTimer.Inner_StreamUtil.ARMOR)
+         .thenComparing(c -> c.init_TaskTimer_StreamUt() == TaskTimer.Inner_StreamUtil.HOTBAR);
    }
 
    private static double init_D_TaskTimer_DataUtil_Map(TaskTimer.Inner_DataUtil candidate, Map<EquipmentSlot, TaskTimer.Inner_CachePool> kit) {
@@ -286,8 +286,8 @@ public final class TaskTimer {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      HOTBAR,
+      INVENTORY,
+      ARMOR;
    }
 }

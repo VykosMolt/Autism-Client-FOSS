@@ -209,12 +209,12 @@ public final class FileCache {
             FileCache.Inner_StreamUtil previous = session.init_Map.get(packId);
             session.update++;
             generation = ++session.write;
-            if (policy != FileCache.Inner_DataUtil.load) {
+            if (policy != FileCache.Inner_DataUtil.FULL) {
                session.init_Z = true;
             }
 
             FileCache.Inner_StreamUtil push = new FileCache.Inner_StreamUtil(packId, generation, policy);
-            if (policy != FileCache.Inner_DataUtil.load && !init_Z(previous) && init_I(session) >= 32) {
+            if (policy != FileCache.Inner_DataUtil.FULL && !init_Z(previous) && init_I(session) >= 32) {
                push.pop = true;
                tracked = false;
             }
@@ -235,7 +235,7 @@ public final class FileCache {
    }
 
    private static boolean init_Z(FileCache.Inner_StreamUtil push) {
-      return push != null && push.init_FileCache_DataUtil != FileCache.Inner_DataUtil.load && !push.pop && !push.push;
+      return push != null && push.init_FileCache_DataUtil != FileCache.Inner_DataUtil.FULL && !push.pop && !push.push;
    }
 
    private static int init_I(FileCache.Inner_BufferHelper session) {
@@ -251,7 +251,7 @@ public final class FileCache {
    }
 
    private static boolean load(FileCache.Inner_StreamUtil push) {
-      return push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.load || push.pop || push.push;
+      return push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.FULL || push.pop || push.push;
    }
 
    private static void read_V(FileCache.Inner_BufferHelper session) {
@@ -317,11 +317,11 @@ public final class FileCache {
                return session.init_Z ? -1L : 0L;
             }
 
-            if (push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.load) {
+            if (push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.FULL) {
                return 0L;
             }
 
-            if (!init_Z(session, packId, push.init_J) || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.read || push.close || push.push) {
+            if (!init_Z(session, packId, push.init_J) || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.DECLINE || push.close || push.push) {
                return -1L;
             }
 
@@ -353,14 +353,14 @@ public final class FileCache {
          boolean progress = false;
          synchronized (init_Obj) {
             FileCache.Inner_StreamUtil push = session.init_Map.get(packId);
-            if (push == null || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.load || !init_Z(session, packId, push.init_J)) {
+            if (push == null || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.FULL || !init_Z(session, packId, push.init_J)) {
                return false;
             }
 
             push.init_PackLoadFeedback = vanilla;
             if (!push.close && !push.push) {
                if (update == Update.ACCEPTED) {
-                  if (!push.init_Z && push.init_FileCache_DataUtil != FileCache.Inner_DataUtil.read) {
+                  if (!push.init_Z && push.init_FileCache_DataUtil != FileCache.Inner_DataUtil.DECLINE) {
                      push.init_Z = true;
                      push.read_J++;
                      progress = true;
@@ -388,7 +388,7 @@ public final class FileCache {
          boolean progress = false;
          synchronized (init_Obj) {
             FileCache.Inner_StreamUtil push = session.init_Map.get(packId);
-            if (push == null || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.load || !init_Z(session, packId, push.init_J)) {
+            if (push == null || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.FULL || !init_Z(session, packId, push.init_J)) {
                return false;
             }
 
@@ -648,7 +648,7 @@ public final class FileCache {
          }
 
          FileCache.Inner_StreamUtil push = send.init_FileCache_BufferHe.init_Map.get(send.init_UUID);
-         if (push == null || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.load || push.init_ServerboundResourc != send.init_ServerboundResourc) {
+         if (push == null || push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.FULL || push.init_ServerboundResourc != send.init_ServerboundResourc) {
             return false;
          }
 
@@ -682,7 +682,7 @@ public final class FileCache {
    }
 
    private static Action init_ServerboundResourc(FileCache.Inner_StreamUtil push) {
-      if (push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.load || push.pop || push.push || push.init_ServerboundResourc != null) {
+      if (push.init_FileCache_DataUtil == FileCache.Inner_DataUtil.FULL || push.pop || push.push || push.init_ServerboundResourc != null) {
          return null;
       }
 
@@ -1017,9 +1017,9 @@ public final class FileCache {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      ISOLATED,
+      FULL,
+      DECLINE;
    }
 
    @FunctionalInterface

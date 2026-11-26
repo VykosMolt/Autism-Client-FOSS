@@ -99,18 +99,18 @@ public final class ByteReader {
          List<StateCache> components = this.init.get(layer);
          if (components != null && !components.isEmpty()) {
             for (int i = components.size() - 1; i >= 0; i--) {
-               if (call.invoke(components.get(i)) == EventBus.load) {
-                  return EventBus.load;
+               if (call.invoke(components.get(i)) == EventBus.HANDLED) {
+                  return EventBus.HANDLED;
                }
             }
 
-            if (layer == TextFormat.update) {
-               return EventBus.load;
+            if (layer == TextFormat.MODAL) {
+               return EventBus.HANDLED;
             }
          }
       }
 
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    private EventBus init_EventBus_I_3(int mouseX, int mouseY, ByteReader.Inner_DataUtil call) {
@@ -123,22 +123,22 @@ public final class ByteReader {
             for (int i = components.size() - 1; i >= 0; i--) {
                StateCache component = components.get(i);
                NetHelper bounds = component.load_NetHelper();
-               if (bounds != null && bounds.init_Z(mouseX, mouseY) && call.invoke(component) == EventBus.load) {
-                  return EventBus.load;
+               if (bounds != null && bounds.init_Z(mouseX, mouseY) && call.invoke(component) == EventBus.HANDLED) {
+                  return EventBus.HANDLED;
                }
             }
 
             if (init_Z_TextFormat(layer)) {
-               return EventBus.load;
+               return EventBus.HANDLED;
             }
          }
       }
 
-      return EventBus.init;
+      return EventBus.IGNORED;
    }
 
    private static boolean init_Z_TextFormat(TextFormat layer) {
-      return layer == TextFormat.read || layer == TextFormat.update;
+      return layer == TextFormat.DROPDOWN || layer == TextFormat.MODAL;
    }
 
    @FunctionalInterface

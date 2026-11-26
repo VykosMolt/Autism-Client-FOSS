@@ -11,8 +11,8 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
 public class at implements MacroAction {
-   public at.Inner_DataUtil checkMode = at.Inner_DataUtil.init;
-   public at.Inner_StreamUtil waitBehavior = at.Inner_StreamUtil.init;
+   public at.Inner_DataUtil checkMode = at.Inner_DataUtil.AT_POSITION;
+   public at.Inner_StreamUtil waitBehavior = at.Inner_StreamUtil.PLACED;
    public boolean anyBlock = true;
    public List<String> blockIds = new ArrayList<>();
    public BlockPos blockPos = BlockPos.ZERO;
@@ -23,7 +23,7 @@ public class at implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.flush;
+      return StreamGate.WAIT_BLOCK;
    }
 
    @Override
@@ -34,7 +34,7 @@ public class at implements MacroAction {
    public String getDisplayName() {
       String blockDesc;
       if (this.anyBlock) {
-         blockDesc = this.waitBehavior == at.Inner_StreamUtil.load ? "any block gone" : "any block";
+         blockDesc = this.waitBehavior == at.Inner_StreamUtil.DESTROYED ? "any block gone" : "any block";
       } else if (this.blockIds.isEmpty()) {
          blockDesc = "no blocks set";
       } else {
@@ -44,16 +44,16 @@ public class at implements MacroAction {
          }
       }
 
-      String verb = this.waitBehavior == at.Inner_StreamUtil.load ? "Destroyed" : "Placed";
+      String verb = this.waitBehavior == at.Inner_StreamUtil.DESTROYED ? "Destroyed" : "Placed";
       String var10000;
       switch (this.checkMode) {
-         case init:
+         case AT_POSITION:
             var10000 = "Wait " + verb + " @ " + this.blockPos.getX() + "," + this.blockPos.getY() + "," + this.blockPos.getZ();
             break;
-         case load:
+         case IN_REACH:
             var10000 = "Wait " + verb + ": " + blockDesc + " nearby";
             break;
-         case read:
+         case LOOKING_AT:
             var10000 = "Wait " + verb + ": look at " + blockDesc;
             break;
          default:
@@ -108,7 +108,7 @@ public class at implements MacroAction {
          try {
             this.checkMode = at.Inner_DataUtil.valueOf(tag.getStringOr("checkMode", "AT_POSITION"));
          } catch (IllegalArgumentException ignored) {
-            this.checkMode = at.Inner_DataUtil.init;
+            this.checkMode = at.Inner_DataUtil.AT_POSITION;
          }
       }
 
@@ -116,7 +116,7 @@ public class at implements MacroAction {
          try {
             this.waitBehavior = at.Inner_StreamUtil.valueOf(tag.getStringOr("waitBehavior", "PLACED"));
          } catch (IllegalArgumentException ignored) {
-            this.waitBehavior = at.Inner_StreamUtil.init;
+            this.waitBehavior = at.Inner_StreamUtil.PLACED;
          }
       }
 
@@ -155,13 +155,13 @@ public class at implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      AT_POSITION,
+      IN_REACH,
+      LOOKING_AT;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load;
+      PLACED,
+      DESTROYED;
    }
 }

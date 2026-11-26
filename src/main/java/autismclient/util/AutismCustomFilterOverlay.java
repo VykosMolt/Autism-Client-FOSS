@@ -208,14 +208,14 @@ public class AutismCustomFilterOverlay extends bj {
                y = this.init(context, mouseX, mouseY, x, y, width, "Presets", () -> {
                   this.init_AutismCustomFilter_2.load_V_6();
                   bk.init_bk().update_V(this.init_AutismCustomFilter_2);
-               }, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true);
+               }, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true);
                String counts = "C2S " + module.load_Set().size() + " | S2C " + module.read_Set().size();
-               int countsW = cs.init(this.init_Font, counts, cs.Inner_DataUtil.write);
+               int countsW = cs.init(this.init_Font, counts, cs.Inner_DataUtil.MUTED);
                cs.init(
                   context,
                   this.init_Font,
                   counts,
-                  cs.Inner_DataUtil.write,
+                  cs.Inner_DataUtil.MUTED,
                   x + width - countsW,
                   j.init(presetsY, this.set_I_3(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                   false
@@ -284,7 +284,7 @@ public class AutismCustomFilterOverlay extends bj {
                   .load_V_BiConsumer_Collection((packetClass, selected) -> this.init_V_Z_2(false, packetClass, selected), module.read_Set());
             }
          },
-         autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          true
       );
       y += Math.max(this.clear(), this.set_I_3()) + this.put();
@@ -317,7 +317,7 @@ public class AutismCustomFilterOverlay extends bj {
                      this.reset(),
                      hovered,
                      false,
-                     c2s ? autismclient.gui.f.b.FileCache.Inner_DataUtil.read : autismclient.gui.f.b.FileCache.Inner_DataUtil.init
+                     c2s ? autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING : autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
                   );
                   int iconSize = this.reset() - 2;
                   int iconX = x + 2 + contentWidth - iconSize - 1;
@@ -347,12 +347,12 @@ public class AutismCustomFilterOverlay extends bj {
                : "Click a row to remove"
          );
       if (!footer.isEmpty()) {
-         int footerW = cs.init(this.init_Font, footer, cs.Inner_DataUtil.write);
+         int footerW = cs.init(this.init_Font, footer, cs.Inner_DataUtil.MUTED);
          cs.init(
             context,
             this.init_Font,
             footer,
-            cs.Inner_DataUtil.write,
+            cs.Inner_DataUtil.MUTED,
             x + width - footerW,
             j.init(headerY, this.prev(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
             false
@@ -487,7 +487,7 @@ public class AutismCustomFilterOverlay extends bj {
          w,
          this.set_I_3(),
          label,
-         enabled ? variant : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+         enabled ? variant : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
          enabled,
          mouseX,
          mouseY

@@ -38,7 +38,7 @@ public class MapStore extends KeyHolder {
    private final Set<String> init_Set = new HashSet<>();
    private EditBox init_EditBox;
    private String init_Str = "";
-   private MapStore.Inner_DataUtil init_MapStore_DataUtil = MapStore.Inner_DataUtil.init;
+   private MapStore.Inner_DataUtil init_MapStore_DataUtil = MapStore.Inner_DataUtil.BY_SERVER;
    private List<MapStore.Inner_StreamUtil> write_List = List.of();
    private int write_I;
    private int update;
@@ -77,7 +77,7 @@ public class MapStore extends KeyHolder {
    }
 
    private String init_Str_5() {
-      return this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.init ? "Search servers or plugins..." : "Search plugins...";
+      return this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.BY_SERVER ? "Search servers or plugins..." : "Search plugins...";
    }
 
    private void init_V_MapStore_DataUtil(MapStore.Inner_DataUtil next) {
@@ -149,7 +149,7 @@ public class MapStore extends KeyHolder {
    private List<MapStore.Inner_StreamUtil> load_List_3() {
       String query = this.init_Str.toLowerCase(Locale.ROOT);
       List<MapStore.Inner_ConfigStore> servers = this.init_List_7();
-      return this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.init ? this.init_List_List_Str(servers, query) : this.load(servers, query);
+      return this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.BY_SERVER ? this.init_List_List_Str(servers, query) : this.load(servers, query);
    }
 
    private List<MapStore.Inner_StreamUtil> init_List_List_Str(List<MapStore.Inner_ConfigStore> servers, String query) {
@@ -171,7 +171,7 @@ public class MapStore extends KeyHolder {
             String key = "srv:" + server.init_Str.toLowerCase(Locale.ROOT);
             boolean open = this.init_Set.contains(key);
             MapStore.Inner_StreamUtil row = MapStore.Inner_StreamUtil.init(
-               MapStore.Inner_BufferHelper.init,
+               MapStore.Inner_BufferHelper.SERVER,
                key,
                server.read,
                server.init_List.size() + (server.init_List.size() == 1 ? " plugin  " : " plugins  ") + init_Str_J(server.init_J),
@@ -197,13 +197,13 @@ public class MapStore extends KeyHolder {
                }
 
                for (String plugin : shown) {
-                  rows.add(MapStore.Inner_StreamUtil.init(MapStore.Inner_BufferHelper.load, plugin, ""));
+                  rows.add(MapStore.Inner_StreamUtil.init(MapStore.Inner_BufferHelper.SERVER_PLUGIN, plugin, ""));
                }
             }
          }
       }
 
-      this.write_I = rows.isEmpty() ? 0 : (int)rows.stream().filter(r -> r.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.init).count();
+      this.write_I = rows.isEmpty() ? 0 : (int)rows.stream().filter(r -> r.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER).count();
       return rows;
    }
 
@@ -231,13 +231,13 @@ public class MapStore extends KeyHolder {
          String key = "plg:" + entry.getKey().toLowerCase(Locale.ROOT);
          boolean open = this.init_Set.contains(key);
          MapStore.Inner_StreamUtil row = MapStore.Inner_StreamUtil.init(
-            MapStore.Inner_BufferHelper.read, key, entry.getKey(), "on " + count + (count == 1 ? " server" : " servers"), open
+            MapStore.Inner_BufferHelper.PLUGIN, key, entry.getKey(), "on " + count + (count == 1 ? " server" : " servers"), open
          );
          row.load_List = entry.getValue();
          rows.add(row);
          if (open) {
             for (MapStore.Inner_ConfigStore server : entry.getValue()) {
-               rows.add(MapStore.Inner_StreamUtil.init(MapStore.Inner_BufferHelper.write, server.read, init_Str_J(server.init_J)));
+               rows.add(MapStore.Inner_StreamUtil.init(MapStore.Inner_BufferHelper.PLUGIN_SERVER, server.read, init_Str_J(server.init_J)));
             }
          }
       }
@@ -323,12 +323,12 @@ public class MapStore extends KeyHolder {
       this.init_List
          .add(
             autismclient.gui.f.b.ByteReader.init(
-                  toggleX, toggleY, toggleW, ctl, Component.literal("By Server"), b -> this.init_V_MapStore_DataUtil(MapStore.Inner_DataUtil.init)
+                  toggleX, toggleY, toggleW, ctl, Component.literal("By Server"), b -> this.init_V_MapStore_DataUtil(MapStore.Inner_DataUtil.BY_SERVER)
                )
                .init_ByteReader_ByteReader_StreamU(
-                  this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.init
-                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read
-                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init
+                  this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.BY_SERVER
+                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS
+                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY
                )
          );
       this.init_List
@@ -339,12 +339,12 @@ public class MapStore extends KeyHolder {
                   toggleW,
                   ctl,
                   Component.literal("By Plugin"),
-                  b -> this.init_V_MapStore_DataUtil(MapStore.Inner_DataUtil.load)
+                  b -> this.init_V_MapStore_DataUtil(MapStore.Inner_DataUtil.BY_PLUGIN)
                )
                .init_ByteReader_ByteReader_StreamU(
-                  this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.load
-                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read
-                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init
+                  this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.BY_PLUGIN
+                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS
+                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY
                )
          );
       this.write_List = this.load_List_3();
@@ -365,16 +365,16 @@ public class MapStore extends KeyHolder {
             row.init_I = rowY;
             this.read_List.add(row);
             boolean fullyVisible = rowY >= top && rowY + rowH <= bottom;
-            boolean parent = row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.init || row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.read;
+            boolean parent = row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER || row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.PLUGIN;
             if (parent && fullyVisible) {
                int btnY = rowY + (rowH - btnH) / 2;
                int cursor = this.data() - 1;
-               if (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.init) {
+               if (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER) {
                   cursor -= btnH;
                   this.init_List
                      .add(
                         autismclient.gui.f.b.ByteReader.init(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
-                           .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load)
+                           .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER)
                            .init_ByteReader_Identifier(cz.open)
                      );
                   cursor -= 2;
@@ -384,7 +384,7 @@ public class MapStore extends KeyHolder {
                this.init_List
                   .add(
                      autismclient.gui.f.b.ByteReader.init(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.load_V_MapStore_StreamUti(row))
-                        .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                        .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
                   );
                this.load_List.add(new MapStore.Inner_CachePool(this.size(), rowY, Math.max(1, cursor - 4 - this.size()), rowH, row.init_Str));
             }
@@ -411,7 +411,7 @@ public class MapStore extends KeyHolder {
    }
 
    private void init_V_MapStore_StreamUti(MapStore.Inner_StreamUtil row) {
-      if (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.init && row.write != null) {
+      if (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER && row.write != null) {
          AutismConfig.getGlobal().removePluginScan(row.write);
          this.init_Set.remove(row.init_Str);
          this.init_J = AutismConfig.getGlobal().pluginScanRevision();
@@ -422,11 +422,11 @@ public class MapStore extends KeyHolder {
    private void load_V_MapStore_StreamUti(MapStore.Inner_StreamUtil row) {
       String text;
       String note;
-      if (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.init && row.init_List != null) {
+      if (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER && row.init_List != null) {
          text = String.join("\n", row.init_List);
          note = "Copied " + row.init_List.size() + " plugins from " + row.load_Str;
       } else {
-         if (row.init_MapStore_BufferHel != MapStore.Inner_BufferHelper.read || row.load_List == null) {
+         if (row.init_MapStore_BufferHel != MapStore.Inner_BufferHelper.PLUGIN || row.load_List == null) {
             return;
          }
 
@@ -458,7 +458,7 @@ public class MapStore extends KeyHolder {
          this.init_V_GuiGraphicsExtract_2(graphics, this.reset(), this.clear(), this.start(), this.stop(), -1206840035);
          String count = this.write_I
             + (
-               this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.init
+               this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.BY_SERVER
                   ? (this.write_I == 1 ? " server" : " servers")
                   : (this.write_I == 1 ? " plugin" : " plugins")
             );
@@ -468,7 +468,7 @@ public class MapStore extends KeyHolder {
          int titleX = this.pop() + this.read() + 4;
          this.init(graphics, "Plugin Library", titleX, headerTextY, ValueSink.flush, Math.max(1, countX - 8 - titleX));
          this.init(graphics, count, countX, headerTextY, ValueSink.close, countW + 4);
-         String header = this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.init ? "Servers you have scanned" : "Plugin -> servers running it";
+         String header = this.init_MapStore_DataUtil == MapStore.Inner_DataUtil.BY_SERVER ? "Servers you have scanned" : "Plugin -> servers running it";
          this.init(graphics, header, this.reset() + 4, this.init_I_I_I_5(this.clear() + 4, 12), ValueSink.close, this.start() - 8);
          String queryLower = this.init_Str.toLowerCase(Locale.ROOT);
          autismclient.gui.f.HashUtil.init_HashUtil()
@@ -513,7 +513,7 @@ public class MapStore extends KeyHolder {
    }
 
    private void init(GuiGraphicsExtractor graphics, MapStore.Inner_StreamUtil row, int mx, int my, String queryLower) {
-      boolean child = row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.load || row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.write;
+      boolean child = row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER_PLUGIN || row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.PLUGIN_SERVER;
       int x = this.size();
       int y = row.init_I;
       int w = this.data() - this.size();
@@ -537,7 +537,7 @@ public class MapStore extends KeyHolder {
       int baseColor = child ? -3158065 : ValueSink.flush;
       int secondaryColor = ValueSink.close;
       int secondaryW = row.read.isEmpty() ? 0 : k.init(this.font, row.read, init_Identifier(), secondaryColor);
-      int rowActionReserve = child ? 0 : this.update() + 2 + (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.init ? this.open() + 2 : 0);
+      int rowActionReserve = child ? 0 : this.update() + 2 + (row.init_MapStore_BufferHel == MapStore.Inner_BufferHelper.SERVER ? this.open() + 2 : 0);
       int rightLimit = this.data() - rowActionReserve - 4;
       int secondaryX = Math.max(textLeft + 20, rightLimit - secondaryW);
       int primaryMax = Math.max(20, (row.read.isEmpty() ? rightLimit : secondaryX - 8) - textLeft);
@@ -782,10 +782,10 @@ public class MapStore extends KeyHolder {
    }
 
    private enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write;
+      SERVER,
+      SERVER_PLUGIN,
+      PLUGIN,
+      PLUGIN_SERVER;
    }
 
    private static final class Inner_CachePool {
@@ -825,8 +825,8 @@ public class MapStore extends KeyHolder {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load;
+      BY_SERVER,
+      BY_PLUGIN;
    }
 
    private static final class Inner_StreamUtil {

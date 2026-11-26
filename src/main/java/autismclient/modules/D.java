@@ -88,10 +88,10 @@ public final class D {
                   }
 
                   if (danger.init_Z_A_StreamUtil_Str(warning.init_A_StreamUtil(), "trajectory") && warning.init_A_DataUtil().init_Vec3() != null) {
-                     Vec3 at = warning.init_A_StreamUtil() == A.Inner_StreamUtil.write
+                     Vec3 at = warning.init_A_StreamUtil() == A.Inner_StreamUtil.PEARL
                         ? warning.init_A_DataUtil().load()
                         : warning.init_A_DataUtil().init_Vec3();
-                     init(pose, lines, at.add(0.0, 0.025, 0.0), warning.init_A_StreamUtil() == A.Inner_StreamUtil.write ? 0.48 : 0.24, camera, color);
+                     init(pose, lines, at.add(0.0, 0.025, 0.0), warning.init_A_StreamUtil() == A.Inner_StreamUtil.PEARL ? 0.48 : 0.24, camera, color);
                   }
                }
             }
@@ -102,7 +102,7 @@ public final class D {
                load(pose.last(), fill, danger.update_List(), camera);
             }
 
-            if (danger.init_Z_A_StreamUtil(A.Inner_StreamUtil.write) && danger.bool("pearl-ghost")) {
+            if (danger.init_Z_A_StreamUtil(A.Inner_StreamUtil.PEARL) && danger.bool("pearl-ghost")) {
                ArrayList<A.Inner_BufferHelper> ghosts = new ArrayList<>(danger.write_List());
                ghosts.removeIf(
                   warningx -> warningx.init_A_DataUtil().load() == null

@@ -3,7 +3,7 @@ package autismclient.modules;
 final class be {
    private static final long init_J = 900000000L;
    private static final long load_J = 250000000L;
-   private be.Inner_DataUtil init_be_DataUtil = be.Inner_DataUtil.init;
+   private be.Inner_DataUtil init_be_DataUtil = be.Inner_DataUtil.IDLE;
    private long read_J;
    private long write;
    private long update;
@@ -17,13 +17,13 @@ final class be {
    boolean init(long now, int tick, long delay, long duration, boolean selected) {
       this.init_V(now);
       if (selected
-         && this.init_be_DataUtil == be.Inner_DataUtil.init
+         && this.init_be_DataUtil == be.Inner_DataUtil.IDLE
          && tick > this.read_I
          && delay >= 0L
          && delay <= 200000000L
          && duration >= 1L
          && duration <= 200000000L) {
-         this.init_be_DataUtil = be.Inner_DataUtil.load;
+         this.init_be_DataUtil = be.Inner_DataUtil.HIT;
          this.read_J = now + 900000000L;
          this.write = delay;
          this.update = duration;
@@ -35,11 +35,11 @@ final class be {
 
    boolean init_Z(long now) {
       this.init_V(now);
-      if (this.init_be_DataUtil != be.Inner_DataUtil.load) {
+      if (this.init_be_DataUtil != be.Inner_DataUtil.HIT) {
          return false;
       }
 
-      this.init_be_DataUtil = be.Inner_DataUtil.read;
+      this.init_be_DataUtil = be.Inner_DataUtil.DELAY;
       this.write += now;
       return true;
    }
@@ -51,20 +51,20 @@ final class be {
       }
 
       this.init_V(now);
-      if (this.init_be_DataUtil == be.Inner_DataUtil.read && now >= this.write) {
+      if (this.init_be_DataUtil == be.Inner_DataUtil.DELAY && now >= this.write) {
          if (now - this.write > 250000000L) {
             this.init_V();
             return false;
          }
 
-         this.init_be_DataUtil = be.Inner_DataUtil.write;
+         this.init_be_DataUtil = be.Inner_DataUtil.RELEASE;
          this.sync = now + this.update;
          this.init_I = tick;
          this.load_I = (int)Math.max(1L, (this.update + 50000000L - 1L) / 50000000L);
          this.close++;
       }
 
-      if (this.init_be_DataUtil != be.Inner_DataUtil.write) {
+      if (this.init_be_DataUtil != be.Inner_DataUtil.RELEASE) {
          return false;
       } else if (tick != this.init_I && (now >= this.sync || tick - this.init_I >= this.load_I)) {
          this.init_V();
@@ -76,13 +76,13 @@ final class be {
    }
 
    private void init_V(long now) {
-      if (this.init_be_DataUtil == be.Inner_DataUtil.load && now > this.read_J) {
+      if (this.init_be_DataUtil == be.Inner_DataUtil.HIT && now > this.read_J) {
          this.init_V();
       }
    }
 
    boolean init_Z() {
-      return this.init_be_DataUtil != be.Inner_DataUtil.init;
+      return this.init_be_DataUtil != be.Inner_DataUtil.IDLE;
    }
 
    boolean load(long now) {
@@ -91,7 +91,7 @@ final class be {
    }
 
    boolean load_Z() {
-      return this.init_be_DataUtil == be.Inner_DataUtil.write;
+      return this.init_be_DataUtil == be.Inner_DataUtil.RELEASE;
    }
 
    long init_J() {
@@ -99,7 +99,7 @@ final class be {
    }
 
    void init_V() {
-      this.init_be_DataUtil = be.Inner_DataUtil.init;
+      this.init_be_DataUtil = be.Inner_DataUtil.IDLE;
       this.read_J = this.write = this.update = this.sync = 0L;
    }
 
@@ -110,9 +110,9 @@ final class be {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      IDLE,
+      HIT,
+      DELAY,
+      RELEASE;
    }
 }

@@ -329,7 +329,7 @@ public final class F {
          if (reached && !cleaned.isEmpty()) {
             return init(cleaned, "segmented");
          } else if (allowPartial && !cleaned.isEmpty()) {
-            return new F.Inner_BufferHelper(F.Inner_ConfigStore.load, cleaned, unloadedFrontier ? "loaded frontier" : "route stopped before target");
+            return new F.Inner_BufferHelper(F.Inner_ConfigStore.PARTIAL, cleaned, unloadedFrontier ? "loaded frontier" : "route stopped before target");
          } else {
             return unloadedFrontier
                ? init_F_BufferHelper_Str("loaded frontier unavailable")
@@ -345,14 +345,14 @@ public final class F {
    ) {
       if (view != null && start != null && target != null) {
          if (start.distanceTo(target) <= 0.05) {
-            return new F.Inner_BufferHelper(F.Inner_ConfigStore.init, List.of(), "arrived");
+            return new F.Inner_BufferHelper(F.Inner_ConfigStore.COMPLETE, List.of(), "arrived");
          }
 
          if (!(Math.hypot(target.x - start.x, target.z - start.z) <= 0.05)) {
             F.Inner_BufferHelper horizontal = init_F_BufferHelper_F_StreamUtil(
                view, start, new Vec3(target.x, start.y, target.z), frontierRadius, verticalRange, maxWaypoints, true
             );
-            if (horizontal.init_F_ConfigStore() == F.Inner_ConfigStore.write) {
+            if (horizontal.init_F_ConfigStore() == F.Inner_ConfigStore.BLOCKED) {
                return horizontal;
             }
 
@@ -360,11 +360,11 @@ public final class F {
             Vec3 end = route.isEmpty() ? start : route.getLast();
             boolean atTargetColumn = Math.hypot(end.x - target.x, end.z - target.z) <= 0.5;
             if (!atTargetColumn || !init(view, target)) {
-               return new F.Inner_BufferHelper(F.Inner_ConfigStore.load, init(start, route), horizontal.init_Str());
+               return new F.Inner_BufferHelper(F.Inner_ConfigStore.PARTIAL, init(start, route), horizontal.init_Str());
             }
 
             if (!init(view, end, target)) {
-               return new F.Inner_BufferHelper(F.Inner_ConfigStore.load, init(start, route), "lava-safe target approach unavailable");
+               return new F.Inner_BufferHelper(F.Inner_ConfigStore.PARTIAL, init(start, route), "lava-safe target approach unavailable");
             }
 
             if (!init_Z(end, target)) {
@@ -393,7 +393,7 @@ public final class F {
    public static F.Inner_BufferHelper read(F.Inner_StreamUtil view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints) {
       if (view != null && start != null && target != null) {
          if (start.distanceTo(target) <= 0.05) {
-            return new F.Inner_BufferHelper(F.Inner_ConfigStore.init, List.of(), "arrived");
+            return new F.Inner_BufferHelper(F.Inner_ConfigStore.COMPLETE, List.of(), "arrived");
          }
 
          F.Inner_CachePool probe = new F.Inner_CachePool(view, 1800);
@@ -429,7 +429,7 @@ public final class F {
                }
 
                if (topExit != null && init_Z(topProbe, start, topExit)) {
-                  return new F.Inner_BufferHelper(F.Inner_ConfigStore.read, init(start, List.of(topExit)), "VClip Top preparatory escape");
+                  return new F.Inner_BufferHelper(F.Inner_ConfigStore.ESCAPE, init(start, List.of(topExit)), "VClip Top preparatory escape");
                }
 
                if (anchor != null) {
@@ -454,11 +454,11 @@ public final class F {
                   if (localAnchor != null) {
                      List<Vec3> localRoute = init_List_F_CachePool_2(probe, start, localAnchor, target.y, Math.min(16.0, range));
                      if (!localRoute.isEmpty()) {
-                        return new F.Inner_BufferHelper(F.Inner_ConfigStore.load, localRoute, "stable obstacle frontier");
+                        return new F.Inner_BufferHelper(F.Inner_ConfigStore.PARTIAL, localRoute, "stable obstacle frontier");
                      }
                   }
 
-                  return new F.Inner_BufferHelper(F.Inner_ConfigStore.load, init(start, List.of(advance)), "air obstacle frontier");
+                  return new F.Inner_BufferHelper(F.Inner_ConfigStore.PARTIAL, init(start, List.of(advance)), "air obstacle frontier");
                } else {
                   return init_F_BufferHelper_F_StreamUtil(
                      view, start, target, radius, probe.init() ? "probe-budget unrestricted fallback" : "unrestricted clip fallback"
@@ -681,7 +681,7 @@ public final class F {
       List<Vec3> route = init_List_F_StreamUtil(view, start, target, frontierRadius);
       return route.isEmpty()
          ? init_F_BufferHelper_Str("lava safety wait: " + detail)
-         : new F.Inner_BufferHelper(init_Z(route.getLast(), target) ? F.Inner_ConfigStore.init : F.Inner_ConfigStore.load, route, detail);
+         : new F.Inner_BufferHelper(init_Z(route.getLast(), target) ? F.Inner_ConfigStore.COMPLETE : F.Inner_ConfigStore.PARTIAL, route, detail);
    }
 
    public static List<Vec3> init_List_F_StreamUtil(F.Inner_StreamUtil view, Vec3 start, Vec3 target, double frontierRadius) {
@@ -798,7 +798,7 @@ public final class F {
             completed.add(target);
             return init(init(start, completed), detail + " then VClip target");
          } else {
-            return new F.Inner_BufferHelper(F.Inner_ConfigStore.load, cleaned, detail);
+            return new F.Inner_BufferHelper(F.Inner_ConfigStore.PARTIAL, cleaned, detail);
          }
       }
    }
@@ -1229,22 +1229,22 @@ public final class F {
    }
 
    private static F.Inner_BufferHelper init(List<Vec3> waypoints, String detail) {
-      return new F.Inner_BufferHelper(F.Inner_ConfigStore.init, waypoints, detail);
+      return new F.Inner_BufferHelper(F.Inner_ConfigStore.COMPLETE, waypoints, detail);
    }
 
    private static F.Inner_BufferHelper init_F_BufferHelper_Str(String detail) {
-      return new F.Inner_BufferHelper(F.Inner_ConfigStore.write, List.of(), detail);
+      return new F.Inner_BufferHelper(F.Inner_ConfigStore.BLOCKED, List.of(), detail);
    }
 
    public record Inner_BufferHelper(F.Inner_ConfigStore init_F_ConfigStore, List<Vec3> init_List, String init_Str) {
       public Inner_BufferHelper {
-         init_F_ConfigStore = init_F_ConfigStore == null ? F.Inner_ConfigStore.write : init_F_ConfigStore;
+         init_F_ConfigStore = init_F_ConfigStore == null ? F.Inner_ConfigStore.BLOCKED : init_F_ConfigStore;
          init_List = init_List == null ? List.of() : List.copyOf(init_List);
          init_Str = init_Str == null ? "" : init_Str;
       }
 
       public boolean init_Z() {
-         return this.init_F_ConfigStore == F.Inner_ConfigStore.init;
+         return this.init_F_ConfigStore == F.Inner_ConfigStore.COMPLETE;
       }
 
       public boolean load() {
@@ -1309,10 +1309,10 @@ public final class F {
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load,
-      read,
-      write;
+      COMPLETE,
+      PARTIAL,
+      ESCAPE,
+      BLOCKED;
    }
 
    private record Inner_DataUtil(boolean init, boolean load) {

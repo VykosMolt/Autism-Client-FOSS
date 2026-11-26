@@ -31,7 +31,7 @@ final class aU {
 
       for (int tick = 0; tick < 240; tick++) {
          if (!world.init_Z(body.expandTowards(velocity))) {
-            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.update, fallen, 1.0F);
+            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.UNKNOWN, fallen, 1.0F);
          }
 
          aU.Inner_DataUtil contact = world.init_aU_DataUtil(body);
@@ -53,7 +53,7 @@ final class aU {
          }
 
          if (grounded && velocity.horizontalDistance() < 1.0E-4) {
-            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.init, fallen, world.init_F(body), impactTick);
+            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.LAND, fallen, world.init_F(body), impactTick);
          }
 
          if (!grounded) {
@@ -61,7 +61,7 @@ final class aU {
          }
 
          if (body.maxY < world.init() - 16) {
-            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.write, fallen, 1.0F);
+            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.VOID, fallen, 1.0F);
          }
 
          double drag = grounded ? world.init_D(body) : 0.91;
@@ -82,14 +82,14 @@ final class aU {
             }
 
             if (moved.y <= down.y + 1.0E-7) {
-               return new aU.Inner_StreamUtil(aU.Inner_DataUtil.write, fallen - moved.y, 1.0F);
+               return new aU.Inner_StreamUtil(aU.Inner_DataUtil.VOID, fallen - moved.y, 1.0F);
             }
 
-            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.init, fallen - moved.y, world.init_F(body.move(moved)), 241);
+            return new aU.Inner_StreamUtil(aU.Inner_DataUtil.LAND, fallen - moved.y, world.init_F(body.move(moved)), 241);
          }
       }
 
-      return new aU.Inner_StreamUtil(aU.Inner_DataUtil.update, fallen, 1.0F);
+      return new aU.Inner_StreamUtil(aU.Inner_DataUtil.UNKNOWN, fallen, 1.0F);
    }
 
    static int init(int rawDamage, int ticks, boolean bypassCooldown) {
@@ -97,8 +97,8 @@ final class aU {
    }
 
    static int init(aU.Inner_DataUtil end, double damage, double health, double maxHealth, double thresholdPercent) {
-      if (end != aU.Inner_DataUtil.write && end != aU.Inner_DataUtil.read && !(damage >= health)) {
-         return end != aU.Inner_DataUtil.update && Double.isFinite(damage) && !(damage >= maxHealth * Math.clamp(thresholdPercent, 1.0, 100.0) / 100.0)
+      if (end != aU.Inner_DataUtil.VOID && end != aU.Inner_DataUtil.HAZARD && !(damage >= health)) {
+         return end != aU.Inner_DataUtil.UNKNOWN && Double.isFinite(damage) && !(damage >= maxHealth * Math.clamp(thresholdPercent, 1.0, 100.0) / 100.0)
             ? -10099317
             : -12971;
       } else {
@@ -150,13 +150,13 @@ final class aU {
                         || state.is(Blocks.SOUL_FIRE)
                         || state.is(Blocks.CACTUS)
                         || state.is(Blocks.SWEET_BERRY_BUSH)) {
-                        return aU.Inner_DataUtil.read;
+                        return aU.Inner_DataUtil.HAZARD;
                      }
 
                      water |= fluid.is(FluidTags.WATER) && at.getY() + fluid.getHeight(mc.level, at) > box.minY;
                   }
 
-                  return water ? aU.Inner_DataUtil.load : null;
+                  return water ? aU.Inner_DataUtil.WATER : null;
                }
 
                @Override
@@ -215,11 +215,11 @@ final class aU {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      LAND,
+      WATER,
+      HAZARD,
+      VOID,
+      UNKNOWN;
    }
 
    record Inner_StreamUtil(aU.Inner_DataUtil init_aU_DataUtil, double init_D, float init_F, int init_I) {

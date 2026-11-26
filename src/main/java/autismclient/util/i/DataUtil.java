@@ -80,15 +80,15 @@ public final class DataUtil {
    }
 
    public DataUtil.BufferHelper init_DataUtil_BufferHel_Minecraft_DataUtil_CachePool(Minecraft mc, DataUtil.CachePool opts) {
-      return this.init_DataUtil_BufferHel_Minecraft(mc, opts, DataUtil.StreamUtil.init);
+      return this.init_DataUtil_BufferHel_Minecraft(mc, opts, DataUtil.StreamUtil.SHEAR);
    }
 
    public DataUtil.BufferHelper load(Minecraft mc, DataUtil.CachePool opts) {
-      return this.init_DataUtil_BufferHel_Minecraft(mc, opts, DataUtil.StreamUtil.load);
+      return this.init_DataUtil_BufferHel_Minecraft(mc, opts, DataUtil.StreamUtil.HOLD);
    }
 
    public DataUtil.BufferHelper read(Minecraft mc, DataUtil.CachePool opts) {
-      return this.init_DataUtil_BufferHel_Minecraft(mc, opts, DataUtil.StreamUtil.read);
+      return this.init_DataUtil_BufferHel_Minecraft(mc, opts, DataUtil.StreamUtil.WATCH);
    }
 
    public boolean init_Z() {
@@ -137,7 +137,7 @@ public final class DataUtil {
 
    public DataUtil.ConfigStore init_DataUtil_ConfigSto_Minecraft_DataUtil_CachePool(Minecraft mc, DataUtil.CachePool opts) {
       if (!load_Z_Minecraft(mc)) {
-         return DataUtil.ConfigStore.read;
+         return DataUtil.ConfigStore.NO_WORLD;
       }
 
       LocalPlayer player = mc.player;
@@ -156,7 +156,7 @@ public final class DataUtil {
          return false;
       }
 
-      DataUtil.Inner_DataUtil wanted = filter == null ? DataUtil.Inner_DataUtil.init_DataUtil_DataUtil : filter;
+      DataUtil.Inner_DataUtil wanted = filter == null ? DataUtil.Inner_DataUtil.ALL : filter;
 
       for (AbstractVillager villager : mc.level.getEntitiesOfClass(AbstractVillager.class, player.getBoundingBox().inflate(reach), Entity::isAlive)) {
          if (init_Z_LocalPlayer(player, villager, traders) && wanted.init_Z_ItemStack(villager.getMainHandItem())) {
@@ -178,7 +178,7 @@ public final class DataUtil {
 
    private DataUtil.BufferHelper init_DataUtil_BufferHel_Minecraft(Minecraft mc, DataUtil.CachePool opts, DataUtil.StreamUtil mode) {
       if (!load_Z_Minecraft(mc)) {
-         return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.read);
+         return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.NO_WORLD);
       }
 
       LocalPlayer player = mc.player;
@@ -190,14 +190,14 @@ public final class DataUtil {
             this.load_V();
          }
 
-         return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.write);
+         return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.SCREEN);
       } else {
-         if (mode == DataUtil.StreamUtil.read) {
-            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.load_DataUtil_ConfigSto);
+         if (mode == DataUtil.StreamUtil.WATCH) {
+            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.WAITING);
          }
 
          if (player.isSpectator()) {
-            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.sync);
+            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.SPECTATOR);
          }
 
          if (player.isAlive()
@@ -218,7 +218,7 @@ public final class DataUtil {
                this.sync_Z = false;
             }
          } else {
-            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.update);
+            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.BUSY);
          }
       }
    }
@@ -230,8 +230,8 @@ public final class DataUtil {
          return new DataUtil.BufferHelper(0, emerald);
       }
 
-      if (mode == DataUtil.StreamUtil.load) {
-         return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.load_DataUtil_ConfigSto);
+      if (mode == DataUtil.StreamUtil.HOLD) {
+         return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.WAITING);
       }
 
       boolean creative = player.hasInfiniteMaterials();
@@ -242,10 +242,10 @@ public final class DataUtil {
             this.init_V(mc, player, opts, now);
          }
 
-         return new DataUtil.BufferHelper(0, shears == null ? DataUtil.ConfigStore.load_DataUtil_ConfigSto : shears);
+         return new DataUtil.BufferHelper(0, shears == null ? DataUtil.ConfigStore.WAITING : shears);
       } else {
          if (player.isShiftKeyDown()) {
-            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.flush);
+            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.SNEAKING);
          }
 
          if (shears != null) {
@@ -255,7 +255,7 @@ public final class DataUtil {
          if (!this.init_Z_I(now) && init_I_I_I(now, this.tick) >= opts.init_I()) {
             targets.removeIf(villagerx -> this.init_Z_Minecraft_3(mc, villagerx, now));
             if (targets.isEmpty()) {
-               return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.load_DataUtil_ConfigSto);
+               return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.WAITING);
             }
 
             DataUtil.ConfigStore ready = this.load(mc, player, opts, creative, now);
@@ -266,11 +266,11 @@ public final class DataUtil {
             int budget = creative ? 2147483647 : init_I_ItemStack_I(player.getOffhandItem(), this.init_I_Minecraft_I(mc, now));
             int count = Math.min(targets.size(), opts.update() ? Math.min(1, budget) : budget);
             if (count <= 0) {
-               return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.run);
+               return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.SHEARS_WORN);
             }
 
             if (!this.load_Z()) {
-               return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.update);
+               return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.BUSY);
             }
 
             boolean swing = false;
@@ -299,9 +299,9 @@ public final class DataUtil {
             }
 
             this.init_V(mc, player, opts, now);
-            return new DataUtil.BufferHelper(count, DataUtil.ConfigStore.init_DataUtil_ConfigSto);
+            return new DataUtil.BufferHelper(count, DataUtil.ConfigStore.SHEARED);
          } else {
-            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.load_DataUtil_ConfigSto);
+            return new DataUtil.BufferHelper(0, DataUtil.ConfigStore.WAITING);
          }
       }
    }
@@ -316,11 +316,11 @@ public final class DataUtil {
          return null;
       } else {
          if (this.init_Z && System.nanoTime() - this.read_J < this.write_J) {
-            return DataUtil.ConfigStore.load_DataUtil_ConfigSto;
+            return DataUtil.ConfigStore.WAITING;
          }
 
          if (init_I_I_I(now, this.pop) == 0) {
-            return DataUtil.ConfigStore.update;
+            return DataUtil.ConfigStore.BUSY;
          }
 
          int slot = this.init_Z && init_Z_Inventory_I(inventory, this.close) ? this.close : init_I_Inventory(inventory);
@@ -331,11 +331,11 @@ public final class DataUtil {
                   return this.init_DataUtil_ConfigSto_Minecraft(mc, player, opts);
                }
 
-               return DataUtil.ConfigStore.open;
+               return DataUtil.ConfigStore.NO_EMERALD;
             }
 
             if (!opts.load()) {
-               return DataUtil.ConfigStore.poll;
+               return DataUtil.ConfigStore.EMERALD_NOT_IN_HOTBAR;
             }
 
             int into = read_I_Inventory(inventory);
@@ -344,7 +344,7 @@ public final class DataUtil {
             }
 
             if (!this.load_Z() || !aw.init(mc, from, into)) {
-               return DataUtil.ConfigStore.update;
+               return DataUtil.ConfigStore.BUSY;
             }
 
             slot = into;
@@ -352,19 +352,19 @@ public final class DataUtil {
 
          if (inventory.getSelectedSlot() != slot) {
             if (!this.load_Z()) {
-               return DataUtil.ConfigStore.update;
+               return DataUtil.ConfigStore.BUSY;
             }
 
             aw.init_V(mc, slot);
             if (inventory.getSelectedSlot() != slot) {
-               return DataUtil.ConfigStore.update;
+               return DataUtil.ConfigStore.BUSY;
             }
 
             this.pop = now;
          }
 
          if (!player.getMainHandItem().is(Items.EMERALD)) {
-            return DataUtil.ConfigStore.update;
+            return DataUtil.ConfigStore.BUSY;
          }
 
          if (this.init_Z) {
@@ -379,15 +379,15 @@ public final class DataUtil {
       if (opts.read() && !ah.load_Z("villager-dupe")) {
          int slot = init_I_LocalPlayer_Z(player, player.hasInfiniteMaterials());
          if (slot < 0) {
-            return DataUtil.ConfigStore.push;
+            return DataUtil.ConfigStore.EMERALD_IN_OFFHAND;
          } else if (this.load_Z() && aw.init_Z(mc, slot)) {
             this.load_V_LocalPlayer(player);
-            return DataUtil.ConfigStore.update;
+            return DataUtil.ConfigStore.BUSY;
          } else {
-            return DataUtil.ConfigStore.update;
+            return DataUtil.ConfigStore.BUSY;
          }
       } else {
-         return DataUtil.ConfigStore.push;
+         return DataUtil.ConfigStore.EMERALD_IN_OFFHAND;
       }
    }
 
@@ -398,15 +398,15 @@ public final class DataUtil {
       }
 
       if (load_I_Inventory(inventory) >= 0) {
-         return opts.load() ? null : DataUtil.ConfigStore.poll;
+         return opts.load() ? null : DataUtil.ConfigStore.EMERALD_NOT_IN_HOTBAR;
       }
 
       if (!player.getOffhandItem().is(Items.EMERALD)) {
-         return DataUtil.ConfigStore.open;
+         return DataUtil.ConfigStore.NO_EMERALD;
       }
 
       boolean freed = opts.read() && init_I_LocalPlayer_Z(player, player.hasInfiniteMaterials()) >= 0;
-      return freed ? null : DataUtil.ConfigStore.push;
+      return freed ? null : DataUtil.ConfigStore.EMERALD_IN_OFFHAND;
    }
 
    private DataUtil.ConfigStore init(Minecraft mc, LocalPlayer player, DataUtil.CachePool opts, boolean creative, int now) {
@@ -416,22 +416,22 @@ public final class DataUtil {
          boolean settling = offhandShears && !creative && init_I_ItemStack_I(offhand, 0) > 0;
          if (!opts.read()) {
             if (settling) {
-               return DataUtil.ConfigStore.update;
+               return DataUtil.ConfigStore.BUSY;
             } else if (offhandShears) {
-               return DataUtil.ConfigStore.run;
+               return DataUtil.ConfigStore.SHEARS_WORN;
             } else {
-               return init_Z_LocalPlayer(player) ? DataUtil.ConfigStore.tick : DataUtil.ConfigStore.pop;
+               return init_Z_LocalPlayer(player) ? DataUtil.ConfigStore.SHEARS_NOT_IN_OFFHAND : DataUtil.ConfigStore.NO_SHEARS;
             }
          } else if (init_I_LocalPlayer_Z(player, creative) < 0) {
             if (settling) {
-               return DataUtil.ConfigStore.update;
+               return DataUtil.ConfigStore.BUSY;
             } else {
-               return !offhandShears && !init_Z_LocalPlayer(player) ? DataUtil.ConfigStore.pop : DataUtil.ConfigStore.run;
+               return !offhandShears && !init_Z_LocalPlayer(player) ? DataUtil.ConfigStore.NO_SHEARS : DataUtil.ConfigStore.SHEARS_WORN;
             }
          } else if (opts.write() && offhand.is(Items.TOTEM_OF_UNDYING)) {
-            return DataUtil.ConfigStore.get;
+            return DataUtil.ConfigStore.TOTEM;
          } else {
-            return ah.load_Z("villager-dupe") ? DataUtil.ConfigStore.close : null;
+            return ah.load_Z("villager-dupe") ? DataUtil.ConfigStore.OFFHAND_TAKEN : null;
          }
       } else {
          return null;
@@ -448,12 +448,12 @@ public final class DataUtil {
       if (!offhand.is(Items.SHEARS) || !creative && init_I_ItemStack_I(offhand, this.init_I_Minecraft_I(mc, now)) <= 0) {
          int slot = init_I_LocalPlayer_Z(player, creative);
          if (slot < 0) {
-            return DataUtil.ConfigStore.pop;
+            return DataUtil.ConfigStore.NO_SHEARS;
          } else if (this.load_Z() && aw.init_Z(mc, slot)) {
             this.load_V_LocalPlayer(player);
-            return player.getOffhandItem().is(Items.SHEARS) ? null : DataUtil.ConfigStore.update;
+            return player.getOffhandItem().is(Items.SHEARS) ? null : DataUtil.ConfigStore.BUSY;
          } else {
-            return DataUtil.ConfigStore.update;
+            return DataUtil.ConfigStore.BUSY;
          }
       } else {
          return null;
@@ -883,7 +883,7 @@ public final class DataUtil {
    ) {
       public CachePool {
          if (init_DataUtil_DataUtil == null) {
-            init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.init_DataUtil_DataUtil;
+            init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.ALL;
          }
 
          init_I = Math.max(1, init_I);
@@ -891,21 +891,21 @@ public final class DataUtil {
    }
 
    public enum ConfigStore {
-      init_DataUtil_ConfigSto("", ""),
-      load_DataUtil_ConfigSto("", ""),
-      read("No world", "Not in a world"),
-      write("Screen open", "Screen open"),
-      update("Busy", "Hands busy"),
-      sync("Spectator", "In spectator"),
-      flush("Sneaking", "Stop sneaking to shear"),
-      close("Offhand busy", "Offhand in use"),
-      open("No emerald", "Need an emerald"),
-      poll("No emerald", "Emerald not in hotbar"),
-      push("No emerald", "Emerald in offhand"),
-      pop("No shears", "Need shears"),
-      tick("No shears", "Shears not in offhand"),
-      run("Shears worn", "Shears worn out"),
-      get("Totem", "Totem in offhand");
+      SHEARED("", ""),
+      WAITING("", ""),
+      NO_WORLD("No world", "Not in a world"),
+      SCREEN("Screen open", "Screen open"),
+      BUSY("Busy", "Hands busy"),
+      SPECTATOR("Spectator", "In spectator"),
+      SNEAKING("Sneaking", "Stop sneaking to shear"),
+      OFFHAND_TAKEN("Offhand busy", "Offhand in use"),
+      NO_EMERALD("No emerald", "Need an emerald"),
+      EMERALD_NOT_IN_HOTBAR("No emerald", "Emerald not in hotbar"),
+      EMERALD_IN_OFFHAND("No emerald", "Emerald in offhand"),
+      NO_SHEARS("No shears", "Need shears"),
+      SHEARS_NOT_IN_OFFHAND("No shears", "Shears not in offhand"),
+      SHEARS_WORN("Shears worn", "Shears worn out"),
+      TOTEM("Totem", "Totem in offhand");
 
       private final String init_Str;
       private final String load_Str;
@@ -926,13 +926,13 @@ public final class DataUtil {
       public boolean init_Z() {
          boolean var10000;
          switch (this) {
-            case open:
-            case poll:
-            case push:
-            case pop:
-            case tick:
-            case run:
-            case get:
+            case NO_EMERALD:
+            case EMERALD_NOT_IN_HOTBAR:
+            case EMERALD_IN_OFFHAND:
+            case NO_SHEARS:
+            case SHEARS_NOT_IN_OFFHAND:
+            case SHEARS_WORN:
+            case TOTEM:
                var10000 = true;
                break;
             default:
@@ -943,15 +943,15 @@ public final class DataUtil {
       }
 
       public boolean load_Z() {
-         return this == init_DataUtil_ConfigSto || this == load_DataUtil_ConfigSto;
+         return this == SHEARED || this == WAITING;
       }
    }
 
    public enum Inner_DataUtil {
-      init_DataUtil_DataUtil("All"),
-      load("Saddles"),
-      read("Horse Armor"),
-      write("Carpets");
+      ALL("All"),
+      SADDLE("Saddles"),
+      HORSE_ARMOR("Horse Armor"),
+      CARPET("Carpets");
 
       private static volatile Set<Item> init_Set;
       private final String init_Str;
@@ -971,13 +971,13 @@ public final class DataUtil {
 
          boolean var10000;
          switch (this) {
-            case init_DataUtil_DataUtil:
+            case ALL:
                var10000 = true;
                break;
-            case load:
+            case SADDLE:
                var10000 = stack.is(Items.SADDLE);
                break;
-            case read:
+            case HORSE_ARMOR:
                var10000 = stack.is(Items.LEATHER_HORSE_ARMOR)
                   || stack.is(Items.COPPER_HORSE_ARMOR)
                   || stack.is(Items.IRON_HORSE_ARMOR)
@@ -985,7 +985,7 @@ public final class DataUtil {
                   || stack.is(Items.DIAMOND_HORSE_ARMOR)
                   || stack.is(Items.NETHERITE_HORSE_ARMOR);
                break;
-            case write:
+            case CARPET:
                var10000 = init_Z_Item(stack.getItem());
                break;
             default:
@@ -997,7 +997,7 @@ public final class DataUtil {
 
       public static DataUtil.Inner_DataUtil init_DataUtil_DataUtil_Str(String token) {
          if (token == null) {
-            return init_DataUtil_DataUtil;
+            return ALL;
          }
 
          String key = token.trim().toLowerCase(Locale.ROOT);
@@ -1012,11 +1012,11 @@ public final class DataUtil {
          }
 
          if (key.equals("saddle")) {
-            return load;
+            return SADDLE;
          } else if (!key.equals("horse_armor") && !key.equals("horse_armour") && !key.endsWith("_horse_armor")) {
-            return !key.equals("carpet") && !key.endsWith("_carpet") ? init_DataUtil_DataUtil : write;
+            return !key.equals("carpet") && !key.endsWith("_carpet") ? ALL : CARPET;
          } else {
-            return read;
+            return HORSE_ARMOR;
          }
       }
 
@@ -1031,9 +1031,9 @@ public final class DataUtil {
    }
 
    private enum StreamUtil {
-      init,
-      load,
-      read;
+      SHEAR,
+      HOLD,
+      WATCH;
    }
 
    private static final class TaskQueue {

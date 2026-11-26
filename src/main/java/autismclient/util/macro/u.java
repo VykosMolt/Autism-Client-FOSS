@@ -365,7 +365,7 @@ public class u implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_i_StreamGate;
+      return StreamGate.NBT_BOOK;
    }
 
    @Override

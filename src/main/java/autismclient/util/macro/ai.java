@@ -62,7 +62,7 @@ public class ai implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.size;
+      return StreamGate.SWAP_SLOTS;
    }
 
    @Override

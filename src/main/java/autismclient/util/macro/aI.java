@@ -6,8 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.GameType;
 
 public class aI implements CacheEntry, MacroAction {
-   public aI.Inner_DataUtil match = aI.Inner_DataUtil.init;
-   public aI.Inner_StreamUtil gameMode = aI.Inner_StreamUtil.init;
+   public aI.Inner_DataUtil match = aI.Inner_DataUtil.ANY_CHANGE;
+   public aI.Inner_StreamUtil gameMode = aI.Inner_StreamUtil.SURVIVAL;
    public boolean detectFake = false;
    public boolean listenDuringPreviousAction = false;
    public int timeoutMs = 0;
@@ -34,8 +34,8 @@ public class aI implements CacheEntry, MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.match = i.init(aI.Inner_DataUtil.class, tag.getStringOr("match", aI.Inner_DataUtil.init.name()), aI.Inner_DataUtil.init);
-      this.gameMode = i.init(aI.Inner_StreamUtil.class, tag.getStringOr("gameMode", aI.Inner_StreamUtil.init.name()), aI.Inner_StreamUtil.init);
+      this.match = i.init(aI.Inner_DataUtil.class, tag.getStringOr("match", aI.Inner_DataUtil.ANY_CHANGE.name()), aI.Inner_DataUtil.ANY_CHANGE);
+      this.gameMode = i.init(aI.Inner_StreamUtil.class, tag.getStringOr("gameMode", aI.Inner_StreamUtil.SURVIVAL.name()), aI.Inner_StreamUtil.SURVIVAL);
       this.detectFake = tag.getBooleanOr("detectFake", false);
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
@@ -48,12 +48,12 @@ public class aI implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_o_StreamGate;
+      return StreamGate.WAIT_GAMEMODE_CHANGE;
    }
 
    @Override
    public String getDisplayName() {
-      String suffix = this.match == aI.Inner_DataUtil.load ? " -> " + this.init_Str_6() : " Change";
+      String suffix = this.match == aI.Inner_DataUtil.TO_MODE ? " -> " + this.init_Str_6() : " Change";
       return "Wait Gamemode" + suffix + (this.detectFake ? " (fake ok)" : "");
    }
 
@@ -73,22 +73,22 @@ public class aI implements CacheEntry, MacroAction {
    }
 
    public boolean init(GameType mode) {
-      return mode == null ? false : this.match == aI.Inner_DataUtil.init || mode == this.init_GameType();
+      return mode == null ? false : this.match == aI.Inner_DataUtil.ANY_CHANGE || mode == this.init_GameType();
    }
 
    public GameType init_GameType() {
       GameType var10000;
       switch (this.gameMode) {
-         case init:
+         case SURVIVAL:
             var10000 = GameType.SURVIVAL;
             break;
-         case load:
+         case CREATIVE:
             var10000 = GameType.CREATIVE;
             break;
-         case read:
+         case ADVENTURE:
             var10000 = GameType.ADVENTURE;
             break;
-         case write:
+         case SPECTATOR:
             var10000 = GameType.SPECTATOR;
             break;
          default:
@@ -114,14 +114,14 @@ public class aI implements CacheEntry, MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      ANY_CHANGE,
+      TO_MODE;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      SURVIVAL,
+      CREATIVE,
+      ADVENTURE,
+      SPECTATOR;
    }
 }

@@ -1258,7 +1258,7 @@ public final class bu {
       AutismPayloadSupport.Inner_StreamUtil snapshot, byte[] raw, bu.Inner_ConfigStore builder
    ) {
       bu.Inner_CachePool kind = init_bu_CachePool_BArr(raw);
-      if (kind == bu.Inner_CachePool.init_bu_CachePool) {
+      if (kind == bu.Inner_CachePool.NONE) {
          return bu.Inner_BufferHelper.init_bu_BufferHelper;
       } else {
          byte[] decoded = init_BArr_BArr_bu_CachePool(raw, kind);
@@ -1420,7 +1420,7 @@ public final class bu {
    }
 
    private static CompoundTag init_CompoundTag_BArr(byte[] raw) {
-      if (init_bu_CachePool_BArr(raw) != bu.Inner_CachePool.load) {
+      if (init_bu_CachePool_BArr(raw) != bu.Inner_CachePool.GZIP) {
          return null;
       }
 
@@ -1640,7 +1640,7 @@ public final class bu {
          if (utf8 != null && utf8.length() >= 4) {
             return new bu.Inner_BufferHelper(true, false, true, false);
          } else {
-            return init_bu_CachePool_BArr(bytes) != bu.Inner_CachePool.init_bu_CachePool
+            return init_bu_CachePool_BArr(bytes) != bu.Inner_CachePool.NONE
                ? new bu.Inner_BufferHelper(true, true, false, false)
                : bu.Inner_BufferHelper.init_bu_BufferHelper;
          }
@@ -1971,20 +1971,20 @@ public final class bu {
          int b0 = raw[0] & 255;
          int b1 = raw[1] & 255;
          if (b0 == 31 && b1 == 139) {
-            return bu.Inner_CachePool.load;
+            return bu.Inner_CachePool.GZIP;
          } else {
-            return b0 == 120 && (b1 == 1 || b1 == 94 || b1 == 156 || b1 == 218) ? bu.Inner_CachePool.read : bu.Inner_CachePool.init_bu_CachePool;
+            return b0 == 120 && (b1 == 1 || b1 == 94 || b1 == 156 || b1 == 218) ? bu.Inner_CachePool.ZLIB : bu.Inner_CachePool.NONE;
          }
       } else {
-         return bu.Inner_CachePool.init_bu_CachePool;
+         return bu.Inner_CachePool.NONE;
       }
    }
 
    private static byte[] init_BArr_BArr_bu_CachePool(byte[] raw, bu.Inner_CachePool kind) {
-      if (raw != null && raw.length != 0 && kind != null && kind != bu.Inner_CachePool.init_bu_CachePool) {
+      if (raw != null && raw.length != 0 && kind != null && kind != bu.Inner_CachePool.NONE) {
          try {
             ByteArrayInputStream source = new ByteArrayInputStream(raw);
-            InputStream input = kind == bu.Inner_CachePool.load ? new GZIPInputStream(source) : new InflaterInputStream(source);
+            InputStream input = kind == bu.Inner_CachePool.GZIP ? new GZIPInputStream(source) : new InflaterInputStream(source);
 
             try (
                input;
@@ -2085,9 +2085,9 @@ public final class bu {
 
    private static void load_V_BArr_bu_ConfigStore(byte[] raw, bu.Inner_ConfigStore builder) {
       bu.Inner_CachePool kind = init_bu_CachePool_BArr(raw);
-      if (kind == bu.Inner_CachePool.load) {
+      if (kind == bu.Inner_CachePool.GZIP) {
          builder.load("Compression Hint: gzip stream header", p.entry());
-      } else if (kind == bu.Inner_CachePool.read) {
+      } else if (kind == bu.Inner_CachePool.ZLIB) {
          builder.load("Compression Hint: zlib/deflate stream header", p.entry());
       }
    }
@@ -3621,14 +3621,14 @@ public final class bu {
       if (type.isRecord()) {
          for (RecordComponent component : type.getRecordComponents()) {
             Object value = init_Obj_Method_Obj(component.getAccessor(), owner);
-            init_V_Map(properties, init_Str_Class_RecordComponent(type, component), value, bu.Inner_RenderState.init);
+            init_V_Map(properties, init_Str_Class_RecordComponent(type, component), value, bu.Inner_RenderState.RECORD);
          }
       }
 
       Arrays.stream(type.getMethods())
          .filter(method -> init_Z_Method(method))
          .sorted(Comparator.comparing(Method::getName, String.CASE_INSENSITIVE_ORDER))
-         .forEach(method -> init_V_Map(properties, init_Str_Method(method), init_Obj_Method_Obj(method, owner), bu.Inner_RenderState.load));
+         .forEach(method -> init_V_Map(properties, init_Str_Method(method), init_Obj_Method_Obj(method, owner), bu.Inner_RenderState.METHOD));
       if (properties.isEmpty()) {
          init_V_Map(properties, owner, type);
       }
@@ -3645,7 +3645,7 @@ public final class bu {
             String alias = init_Str_StrArr(
                init_Str_Class_RecordComponent(type, component), init_Str_Class_Map(component.getAccessor().getReturnType(), labelCounts)
             );
-            init_V_Map(properties, alias, value, bu.Inner_RenderState.init);
+            init_V_Map(properties, alias, value, bu.Inner_RenderState.RECORD);
          }
       }
    }
@@ -5096,9 +5096,9 @@ public final class bu {
    }
 
    private enum Inner_CachePool {
-      init_bu_CachePool("none"),
-      load("gzip"),
-      read("zlib/deflate");
+      NONE("none"),
+      GZIP("gzip"),
+      ZLIB("zlib/deflate");
 
       private final String init_Str;
 
@@ -5200,8 +5200,8 @@ public final class bu {
    }
 
    private enum Inner_RenderState {
-      init,
-      load;
+      RECORD,
+      METHOD;
    }
 
    private record Inner_StateCache(String init, String load) {

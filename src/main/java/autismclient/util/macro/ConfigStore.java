@@ -15,7 +15,7 @@ public final class ConfigStore {
    }
 
    public static String init(ConfigStore.Inner_DataUtil mode, String text) {
-      if (mode == ConfigStore.Inner_DataUtil.sync && text != null && !text.isBlank()) {
+      if (mode == ConfigStore.Inner_DataUtil.REGEX && text != null && !text.isBlank()) {
          try {
             Pattern.compile(text);
             return "";
@@ -29,9 +29,9 @@ public final class ConfigStore {
 
    public static List<String> init(List<String> candidates, ConfigStore.Inner_DataUtil mode, String text) {
       if (candidates != null && !candidates.isEmpty()) {
-         ConfigStore.Inner_DataUtil effective = mode == null ? ConfigStore.Inner_DataUtil.init : mode;
-         if (effective != ConfigStore.Inner_DataUtil.init && text != null && !text.isBlank()) {
-            if (effective == ConfigStore.Inner_DataUtil.sync) {
+         ConfigStore.Inner_DataUtil effective = mode == null ? ConfigStore.Inner_DataUtil.NONE : mode;
+         if (effective != ConfigStore.Inner_DataUtil.NONE && text != null && !text.isBlank()) {
+            if (effective == ConfigStore.Inner_DataUtil.REGEX) {
                Pattern pattern;
                try {
                   pattern = Pattern.compile(text);
@@ -57,16 +57,16 @@ public final class ConfigStore {
                      String lower = candidate.toLowerCase(Locale.ROOT);
                      boolean var10000;
                      switch (effective) {
-                        case load:
+                        case PREFIX:
                            var10000 = lower.startsWith(needle);
                            break;
-                        case read:
+                        case SUFFIX:
                            var10000 = lower.endsWith(needle);
                            break;
-                        case write:
+                        case CONTAINS:
                            var10000 = lower.contains(needle);
                            break;
-                        case update:
+                        case NOT_CONTAINS:
                            var10000 = !lower.contains(needle);
                            break;
                         default:
@@ -136,10 +136,10 @@ public final class ConfigStore {
          String match = text.trim();
          if (match.isEmpty()) {
             return value;
-         } else if (mode == ConfigStore.Inner_DataUtil.load && value.regionMatches(true, 0, match, 0, match.length())) {
+         } else if (mode == ConfigStore.Inner_DataUtil.PREFIX && value.regionMatches(true, 0, match, 0, match.length())) {
             return value.substring(match.length());
          } else {
-            return mode == ConfigStore.Inner_DataUtil.read
+            return mode == ConfigStore.Inner_DataUtil.SUFFIX
                   && value.length() >= match.length()
                   && value.regionMatches(true, value.length() - match.length(), match, 0, match.length())
                ? value.substring(0, value.length() - match.length())
@@ -158,13 +158,13 @@ public final class ConfigStore {
       List<String> pool, ConfigStore.Inner_CachePool selection, int position, ConfigStore.Inner_BufferHelper state
    ) {
       if (pool != null && !pool.isEmpty()) {
-         ConfigStore.Inner_CachePool effective = selection == null ? ConfigStore.Inner_CachePool.init : selection;
+         ConfigStore.Inner_CachePool effective = selection == null ? ConfigStore.Inner_CachePool.RANDOM : selection;
          int var10000;
          switch (effective) {
-            case init:
+            case RANDOM:
                var10000 = state == null ? 0 : ThreadLocalRandom.current().nextInt(pool.size());
                break;
-            case load:
+            case SEQUENTIAL:
                if (state == null) {
                   var10000 = 0;
                } else {
@@ -173,7 +173,7 @@ public final class ConfigStore {
                   var10000 = next;
                }
                break;
-            case read:
+            case RANDOM_NO_REPEAT:
                if (state == null) {
                   var10000 = 0;
                } else {
@@ -198,13 +198,13 @@ public final class ConfigStore {
                   var10000 = picked;
                }
                break;
-            case write:
+            case FIRST:
                var10000 = 0;
                break;
-            case update:
+            case LAST:
                var10000 = pool.size() - 1;
                break;
-            case sync:
+            case POSITION:
                var10000 = Math.max(1, Math.min(position, pool.size())) - 1;
                break;
             default:
@@ -228,21 +228,21 @@ public final class ConfigStore {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      RANDOM,
+      SEQUENTIAL,
+      RANDOM_NO_REPEAT,
+      FIRST,
+      LAST,
+      POSITION;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      NONE,
+      PREFIX,
+      SUFFIX,
+      CONTAINS,
+      NOT_CONTAINS,
+      REGEX;
    }
 
    public record Inner_StreamUtil(String init_Str, int init_I, List<String> init_List) {

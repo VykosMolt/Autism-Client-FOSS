@@ -5,7 +5,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.nbt.CompoundTag;
 
 public class RefQueue implements MacroAction, aP {
-   public RefQueue.Inner_DataUtil mode = RefQueue.Inner_DataUtil.init;
+   public RefQueue.Inner_DataUtil mode = RefQueue.Inner_DataUtil.OPEN;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
    public String guiName = "";
@@ -14,7 +14,7 @@ public class RefQueue implements MacroAction, aP {
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null) {
-         if (this.mode == RefQueue.Inner_DataUtil.init) {
+         if (this.mode == RefQueue.Inner_DataUtil.OPEN) {
             mc.execute(() -> mc.gui.setScreen(new InventoryScreen(mc.player)));
          } else {
             mc.execute(() -> autismclient.util.af.init(mc, this.sendPacket, false));
@@ -24,7 +24,7 @@ public class RefQueue implements MacroAction, aP {
 
    @Override
    public boolean read_Z() {
-      return this.mode == RefQueue.Inner_DataUtil.init && this.waitForGuiBefore;
+      return this.mode == RefQueue.Inner_DataUtil.OPEN && this.waitForGuiBefore;
    }
 
    @Override
@@ -34,7 +34,7 @@ public class RefQueue implements MacroAction, aP {
 
    @Override
    public boolean write_Z() {
-      return this.mode == RefQueue.Inner_DataUtil.init && this.waitForGuiAfter;
+      return this.mode == RefQueue.Inner_DataUtil.OPEN && this.waitForGuiAfter;
    }
 
    @Override
@@ -54,7 +54,7 @@ public class RefQueue implements MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.tick;
+      return StreamGate.INVENTORY;
    }
 
    @Override
@@ -75,7 +75,7 @@ public class RefQueue implements MacroAction, aP {
          try {
             this.mode = RefQueue.Inner_DataUtil.valueOf(tag.getStringOr("mode", "OPEN"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = RefQueue.Inner_DataUtil.init;
+            this.mode = RefQueue.Inner_DataUtil.OPEN;
          }
       }
 
@@ -92,7 +92,7 @@ public class RefQueue implements MacroAction, aP {
 
    @Override
    public String getDisplayName() {
-      if (this.mode == RefQueue.Inner_DataUtil.init) {
+      if (this.mode == RefQueue.Inner_DataUtil.OPEN) {
          return "Inv Open" + aP.init_Str_aP(this);
       } else {
          return this.sendPacket ? "Inv Close" : "Inv Close (no pkt)";
@@ -105,7 +105,7 @@ public class RefQueue implements MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      OPEN,
+      CLOSE;
    }
 }

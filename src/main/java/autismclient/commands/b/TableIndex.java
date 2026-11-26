@@ -28,13 +28,13 @@ public class TableIndex extends Command {
       root.then(init("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("forward").executes(ctx -> {
          autismclient.util.macro.TokenStore.Inner_BufferHelper options = autismclient.util.macro.TokenStore.Inner_BufferHelper.init(0.0);
-         options.init_TokenStore_CachePo = autismclient.util.macro.TokenStore.Inner_CachePool.load;
+         options.init_TokenStore_CachePo = autismclient.util.macro.TokenStore.Inner_CachePool.FORWARD;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("back").executes(ctx -> {
          autismclient.util.macro.TokenStore.Inner_BufferHelper options = autismclient.util.macro.TokenStore.Inner_BufferHelper.init(0.0);
-         options.init_TokenStore_CachePo = autismclient.util.macro.TokenStore.Inner_CachePool.read;
+         options.init_TokenStore_CachePo = autismclient.util.macro.TokenStore.Inner_CachePool.BACK;
          init(options);
          return 1;
       }));

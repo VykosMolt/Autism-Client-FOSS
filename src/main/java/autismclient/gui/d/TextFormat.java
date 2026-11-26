@@ -50,7 +50,7 @@ public final class TextFormat extends KeyHolder {
    private List<TextFormat.Inner_DataUtil> read_List = List.of();
 
    private static int read() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
    }
 
    public TextFormat(Screen parent, String selectedId, Consumer<String> onPick) {
@@ -149,7 +149,7 @@ public final class TextFormat extends KeyHolder {
          }
       }
 
-      this.load_List.add(new TextFormat.Inner_StreamUtil(TextFormat.Inner_CachePool.load, x, y, w, rowH, entry.init_Str));
+      this.load_List.add(new TextFormat.Inner_StreamUtil(TextFormat.Inner_CachePool.ITEM, x, y, w, rowH, entry.init_Str));
    }
 
    private void init(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
@@ -165,7 +165,7 @@ public final class TextFormat extends KeyHolder {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Pick Item", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
-      this.load_List.add(new TextFormat.Inner_StreamUtil(TextFormat.Inner_CachePool.init, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.load_List.add(new TextFormat.Inner_StreamUtil(TextFormat.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -190,12 +190,12 @@ public final class TextFormat extends KeyHolder {
 
       for (int i = this.load_List.size() - 1; i >= 0; i--) {
          TextFormat.Inner_StreamUtil hit = this.load_List.get(i);
-         if (hit.init(mx, my) && (hit.init_TextFormat_CachePo != TextFormat.Inner_CachePool.load || this.init_NetHelper_5().init_Z(mx, my))) {
+         if (hit.init(mx, my) && (hit.init_TextFormat_CachePo != TextFormat.Inner_CachePool.ITEM || this.init_NetHelper_5().init_Z(mx, my))) {
             switch (hit.init_TextFormat_CachePo) {
-               case init:
+               case CLOSE:
                   this.onClose();
                   break;
-               case load:
+               case ITEM:
                   this.init_V_Str_9(hit.init_Str);
             }
 
@@ -410,8 +410,8 @@ public final class TextFormat extends KeyHolder {
    }
 
    private enum Inner_CachePool {
-      init,
-      load;
+      CLOSE,
+      ITEM;
    }
 
    private record Inner_DataUtil(String init_Str, String load, String read, ItemStack init_ItemStack) {

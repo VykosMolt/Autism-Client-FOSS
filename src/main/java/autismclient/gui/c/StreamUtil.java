@@ -39,7 +39,7 @@ public final class StreamUtil {
    private final BitSetUtil load_BitSetUtil = init_BitSetUtil_Str_I("Profile name", 48);
    private final BitSetUtil read_BitSetUtil = init_BitSetUtil_Str_I("Server address or *.domain", 80);
    private String init_Str;
-   private StreamUtil.Inner_StreamUtil init_StreamUtil_StreamU = StreamUtil.Inner_StreamUtil.init;
+   private StreamUtil.Inner_StreamUtil init_StreamUtil_StreamU = StreamUtil.Inner_StreamUtil.NONE;
    private AutismProfile init_AutismProfile;
    private boolean init_Z = true;
    private boolean load_Z = true;
@@ -161,7 +161,7 @@ public final class StreamUtil {
             "New profile",
             cz.pop,
             CachePool.Inner_DataUtil.read,
-            () -> this.init(StreamUtil.Inner_StreamUtil.load)
+            () -> this.init(StreamUtil.Inner_StreamUtil.CREATE)
          );
          this.init_V_SyncManager_3(ctx, this.init_BitSetUtil, NetHelper.init(bar.read(), bar.write(), right - 4 - bar.read(), bar.sync()));
       }
@@ -309,8 +309,8 @@ public final class StreamUtil {
       };
       Runnable[] actions = new Runnable[]{
          active ? null : () -> this.load_V_AutismProfile(p),
-         () -> this.init(StreamUtil.Inner_StreamUtil.read),
-         () -> this.init(StreamUtil.Inner_StreamUtil.write),
+         () -> this.init(StreamUtil.Inner_StreamUtil.RENAME),
+         () -> this.init(StreamUtil.Inner_StreamUtil.DUPLICATE),
          canDelete ? () -> this.read_V_AutismProfile(p) : null
       };
 
@@ -374,21 +374,21 @@ public final class StreamUtil {
    }
 
    private void init(autismclient.gui.f.SyncManager ctx) {
-      boolean create = this.init_StreamUtil_StreamU == StreamUtil.Inner_StreamUtil.load;
+      boolean create = this.init_StreamUtil_StreamU == StreamUtil.Inner_StreamUtil.CREATE;
       NetHelper box = this.init_NetHelper_I_I(220, this.load_I());
       this.init_V_SyncManager_NetHelper(ctx, box);
       String var10000;
       switch (this.init_StreamUtil_StreamU) {
-         case init:
+         case NONE:
             var10000 = "";
             break;
-         case load:
+         case CREATE:
             var10000 = "New profile";
             break;
-         case read:
+         case RENAME:
             var10000 = "Rename profile";
             break;
-         case write:
+         case DUPLICATE:
             var10000 = "Duplicate profile";
             break;
          default:
@@ -476,7 +476,7 @@ public final class StreamUtil {
 
    private int load_I() {
       int h = 12 + sync_I() + 8 + 2 * update_I();
-      if (this.init_StreamUtil_StreamU == StreamUtil.Inner_StreamUtil.load) {
+      if (this.init_StreamUtil_StreamU == StreamUtil.Inner_StreamUtil.CREATE) {
          h += 3 * sync_I() + 4 + 4;
       }
 
@@ -526,7 +526,7 @@ public final class StreamUtil {
    }
 
    public boolean init_Z() {
-      return this.init_StreamUtil_StreamU != StreamUtil.Inner_StreamUtil.init || this.init_AutismProfile != null;
+      return this.init_StreamUtil_StreamU != StreamUtil.Inner_StreamUtil.NONE || this.init_AutismProfile != null;
    }
 
    public void init_V() {
@@ -579,7 +579,7 @@ public final class StreamUtil {
    private void init(StreamUtil.Inner_StreamUtil mode) {
       this.load_V();
       this.init_StreamUtil_StreamU = mode;
-      if (mode == StreamUtil.Inner_StreamUtil.load) {
+      if (mode == StreamUtil.Inner_StreamUtil.CREATE) {
          this.init_Z = true;
          this.load_Z = true;
          this.read_Z = true;
@@ -588,15 +588,15 @@ public final class StreamUtil {
       AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
       this.load_BitSetUtil
          .init_BitSetUtil_Str(
-            mode == StreamUtil.Inner_StreamUtil.read && sel != null
+            mode == StreamUtil.Inner_StreamUtil.RENAME && sel != null
                ? sel.displayName
-               : (mode == StreamUtil.Inner_StreamUtil.write && sel != null ? sel.displayName + " copy" : "")
+               : (mode == StreamUtil.Inner_StreamUtil.DUPLICATE && sel != null ? sel.displayName + " copy" : "")
          );
       this.load_BitSetUtil.init_V_Z(true);
    }
 
    private void write_V() {
-      this.init_StreamUtil_StreamU = StreamUtil.Inner_StreamUtil.init;
+      this.init_StreamUtil_StreamU = StreamUtil.Inner_StreamUtil.NONE;
       this.load_BitSetUtil.init_V_Z(false);
       this.load_BitSetUtil.init_BitSetUtil_Str("");
    }
@@ -606,25 +606,25 @@ public final class StreamUtil {
       if (name.isEmpty()) {
          bi.read("Enter a name.");
       } else {
-         String exclude = this.init_StreamUtil_StreamU == StreamUtil.Inner_StreamUtil.read ? this.init_Str : null;
+         String exclude = this.init_StreamUtil_StreamU == StreamUtil.Inner_StreamUtil.RENAME ? this.init_Str : null;
          if (this.init_bV.init_Z_Str_Str(name, exclude)) {
             bi.read("Name already in use.");
          } else {
             switch (this.init_StreamUtil_StreamU) {
-               case load:
+               case CREATE:
                   AutismProfile p = this.init_bV.init(name, this.init_Z, this.load_Z, this.read_Z);
                   if (p != null) {
                      this.init(p);
                      this.init_bV.read(p);
                   }
                   break;
-               case read:
+               case RENAME:
                   AutismProfile selx = this.init_bV.init_AutismProfile_Str(this.init_Str);
                   if (selx != null) {
                      this.init_bV.init_Z_AutismProfile_Str(selx, name);
                   }
                   break;
-               case write:
+               case DUPLICATE:
                   AutismProfile sel = this.init_bV.init_AutismProfile_Str(this.init_Str);
                   AutismProfile d = this.init_bV.init_AutismProfile_AutismProfile_Str(sel, name);
                   if (d != null) {
@@ -886,9 +886,9 @@ public final class StreamUtil {
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      NONE,
+      CREATE,
+      RENAME,
+      DUPLICATE;
    }
 }

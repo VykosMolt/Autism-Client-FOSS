@@ -36,15 +36,15 @@ public final class ListPool extends ChannelOutboundHandlerAdapter {
          } else {
             ConfigStore.Inner_DataUtil verdict = ConfigStore.init(this.init_Connection, packet);
             switch (verdict.init_ConfigStore_DataUt) {
-               case init:
+               case PASS:
                   HashUtil.load(packet);
                   super.write(ctx, msg, promise);
                   break;
-               case read:
+               case REPLACE:
                   HashUtil.load(packet);
                   super.write(ctx, verdict.init_Packet, promise);
                   break;
-               case load:
+               case DROP:
                   HashUtil.load(packet);
                   promise.setSuccess();
             }
@@ -57,13 +57,13 @@ public final class ListPool extends ChannelOutboundHandlerAdapter {
          ConfigStore.Inner_DataUtil verdict = ConfigStore.init(connection, packet);
          Packet var10000;
          switch (verdict.init_ConfigStore_DataUt) {
-            case init:
+            case PASS:
                var10000 = packet;
                break;
-            case read:
+            case REPLACE:
                var10000 = verdict.init_Packet;
                break;
-            case load:
+            case DROP:
                var10000 = null;
                break;
             default:
@@ -116,7 +116,7 @@ public final class ListPool extends ChannelOutboundHandlerAdapter {
       ConfigStore.Inner_DataUtil verdict = ConfigStore.init(connection, packet);
       HashUtil.load(packet);
       switch (verdict.init_ConfigStore_DataUt) {
-         case init:
+         case PASS:
             boolean marked = false;
 
             try {
@@ -132,7 +132,7 @@ public final class ListPool extends ChannelOutboundHandlerAdapter {
 
                throw failure;
             }
-         case read:
+         case REPLACE:
             Packet<?> replacement = verdict.init_Packet;
             if (replacement != null && init(channel)) {
                boolean markedRep = false;
@@ -181,7 +181,7 @@ public final class ListPool extends ChannelOutboundHandlerAdapter {
             }
 
             return false;
-         case load:
+         case DROP:
             return false;
          default:
             return false;

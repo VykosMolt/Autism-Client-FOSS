@@ -43,27 +43,27 @@ public final class aa {
    }
 
    private static boolean init(aa.Inner_DataUtil kind) {
-      return kind == aa.Inner_DataUtil.write || kind == aa.Inner_DataUtil.load;
+      return kind == aa.Inner_DataUtil.REPLANT || kind == aa.Inner_DataUtil.REPLANT_RECENT;
    }
 
    private static double init(aa.Inner_DataUtil kind, boolean planting) {
-      return kind == aa.Inner_DataUtil.update ? 8.0 : (kind == aa.Inner_DataUtil.read && planting ? 6.0 : 0.0);
+      return kind == aa.Inner_DataUtil.TILL ? 8.0 : (kind == aa.Inner_DataUtil.BONEMEAL && planting ? 6.0 : 0.0);
    }
 
    private static double init(float yaw, float pitch, int selected, aa.Inner_StreamUtil<?> next) {
       double yawDelta = Math.abs(Math.IEEEremainder(next.init_F() - yaw, 360.0));
       double turn = Math.hypot(yawDelta, next.load() - pitch) / 20.0;
       double change = next.init_I() >= 0 && next.init_I() != selected ? 2.0 : 0.0;
-      double use = next.init_aa_DataUtil() == aa.Inner_DataUtil.init ? 1.0 : 4.0;
+      double use = next.init_aa_DataUtil() == aa.Inner_DataUtil.HARVEST ? 1.0 : 4.0;
       return turn + change + use;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      HARVEST,
+      REPLANT_RECENT,
+      BONEMEAL,
+      REPLANT,
+      TILL;
    }
 
    public record Inner_StreamUtil<T>(T init_Obj, aa.Inner_DataUtil init_aa_DataUtil, float init_F, float load, int init_I, boolean init_Z) {

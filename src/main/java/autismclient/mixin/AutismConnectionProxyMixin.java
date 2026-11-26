@@ -47,10 +47,10 @@ public abstract class AutismConnectionProxyMixin {
          String user = username == null ? "" : username;
          String pass = password == null ? "" : password;
          switch (type) {
-            case init:
+            case Socks4:
                pipeline.addFirst("autism_socks4_proxy", new Socks4ProxyHandler(target, user));
                break;
-            case load:
+            case Socks5:
                pipeline.addFirst("autism_socks5_proxy", new Socks5ProxyHandler(target, user, pass));
          }
       }

@@ -22,9 +22,9 @@ public final class CachePool {
    public final double tick;
 
    private CachePool(CachePool.Inner_DataUtil b) {
-      this.init_BufferHelper = b.init_BufferHelper == null ? BufferHelper.init_BufferHelper : b.init_BufferHelper;
+      this.init_BufferHelper = b.init_BufferHelper == null ? BufferHelper.NORMAL : b.init_BufferHelper;
       double ceiling = Math.min(this.init_BufferHelper.load_D, 30.0);
-      if (this.init_BufferHelper == BufferHelper.sync_BufferHelper) {
+      if (this.init_BufferHelper == BufferHelper.RAGE) {
          double cps = init(init(b.load_D, this.init_BufferHelper.write_D), 1.0, ceiling);
          this.load_D = cps;
          this.read = cps;
@@ -111,21 +111,21 @@ public final class CachePool {
       private double pop = 1.0;
 
       private Inner_DataUtil(BufferHelper technique) {
-         this.init_BufferHelper = technique == null ? BufferHelper.init_BufferHelper : technique;
+         this.init_BufferHelper = technique == null ? BufferHelper.NORMAL : technique;
          this.init_D = this.init_BufferHelper.read_D;
          this.load_D = this.init_BufferHelper.write_D;
          switch (this.init_BufferHelper) {
-            case read_BufferHelper:
+            case BUTTERFLY:
                this.load(10.0, 80.0);
                break;
-            case write_BufferHelper:
+            case DRAG:
                this.load(5.0, 35.0);
                break;
             default:
                this.load(40.0, 90.0);
          }
 
-         if (this.init_BufferHelper == BufferHelper.update_BufferHelper) {
+         if (this.init_BufferHelper == BufferHelper.SCROLL) {
             this.init_CachePool_DataUtil_I_I(4, 9);
             this.read(100.0, 250.0);
          } else {

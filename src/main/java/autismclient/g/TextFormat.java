@@ -134,7 +134,7 @@ public final class TextFormat {
             TextFormat.Inner_ConfigStore target = init_TextFormat_ConfigS_InetSocketAddress(socketAddress);
             List<InetAddress> addresses = init_List_Str_TextFormat_StreamU(target.load(), resolver);
             TextFormat.Inner_DataUtil kind = init_TextFormat_DataUti_List(addresses);
-            if (kind == TextFormat.Inner_DataUtil.update) {
+            if (kind == TextFormat.Inner_DataUtil.SPECIAL) {
                throw new IOException("The configured proxy address is not a unicast address");
             } else {
                return new TextFormat.Inner_BufferHelper(
@@ -299,7 +299,7 @@ public final class TextFormat {
          }
       }
 
-      if (kind == TextFormat.Inner_DataUtil.update) {
+      if (kind == TextFormat.Inner_DataUtil.SPECIAL) {
          throw new IOException("Special-use DNS addresses are not accepted");
       } else {
          return kind;
@@ -307,12 +307,12 @@ public final class TextFormat {
    }
 
    private static boolean init_Z_InetAddress(InetAddress address, int port, TextFormat.Inner_DataUtil kind, UiHelper.Inner_BufferHelper snapshot) {
-      if (kind == TextFormat.Inner_DataUtil.init) {
+      if (kind == TextFormat.Inner_DataUtil.PUBLIC) {
          return true;
       }
 
       if (snapshot.init_Z()) {
-         return kind == TextFormat.Inner_DataUtil.read;
+         return kind == TextFormat.Inner_DataUtil.LOOPBACK;
       }
 
       if (snapshot.init_SocketAddress() instanceof InetSocketAddress peer && peer.getAddress() != null) {
@@ -321,8 +321,8 @@ public final class TextFormat {
             return false;
          } else {
             return snapshot.init_ServerData_Type() == net.minecraft.client.multiplayer.ServerData.Type.LAN
-               ? kind == TextFormat.Inner_DataUtil.load || kind == TextFormat.Inner_DataUtil.write
-               : kind == TextFormat.Inner_DataUtil.load && port == peer.getPort();
+               ? kind == TextFormat.Inner_DataUtil.PRIVATE || kind == TextFormat.Inner_DataUtil.LINK_LOCAL
+               : kind == TextFormat.Inner_DataUtil.PRIVATE && port == peer.getPort();
          }
       } else {
          return false;
@@ -332,17 +332,17 @@ public final class TextFormat {
    private static TextFormat.Inner_DataUtil init_TextFormat_DataUti_InetAddress(InetAddress address) {
       byte[] bytes = address.getAddress();
       if (address.isAnyLocalAddress() || address.isMulticastAddress() || init_Z_BArr(bytes) || init_Z_InetAddress_BArr(address, bytes)) {
-         return TextFormat.Inner_DataUtil.update;
+         return TextFormat.Inner_DataUtil.SPECIAL;
       } else if (address.isLoopbackAddress()) {
-         return TextFormat.Inner_DataUtil.read;
+         return TextFormat.Inner_DataUtil.LOOPBACK;
       } else if (address.isLinkLocalAddress()) {
-         return TextFormat.Inner_DataUtil.write;
+         return TextFormat.Inner_DataUtil.LINK_LOCAL;
       } else if (address.isSiteLocalAddress() || load(bytes) || read(bytes)) {
-         return TextFormat.Inner_DataUtil.load;
+         return TextFormat.Inner_DataUtil.PRIVATE;
       } else if (address instanceof Inet4Address) {
-         return TextFormat.Inner_DataUtil.init;
+         return TextFormat.Inner_DataUtil.PUBLIC;
       } else {
-         return address instanceof Inet6Address ? TextFormat.Inner_DataUtil.init : TextFormat.Inner_DataUtil.update;
+         return address instanceof Inet6Address ? TextFormat.Inner_DataUtil.PUBLIC : TextFormat.Inner_DataUtil.SPECIAL;
       }
    }
 
@@ -525,11 +525,11 @@ public final class TextFormat {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      PUBLIC,
+      PRIVATE,
+      LOOPBACK,
+      LINK_LOCAL,
+      SPECIAL;
    }
 
    @FunctionalInterface

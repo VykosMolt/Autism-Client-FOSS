@@ -48,7 +48,7 @@ public class EventBus implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.init;
+      return StreamGate.DELAY;
    }
 
    @Override

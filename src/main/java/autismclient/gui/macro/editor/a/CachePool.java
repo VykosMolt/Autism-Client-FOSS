@@ -74,21 +74,21 @@ public final class CachePool {
       boolean minecraftText
    ) {
       int var10000;
-      switch (tone == null ? FileCache.Inner_DataUtil.init : tone) {
-         case load:
+      switch (tone == null ? FileCache.Inner_DataUtil.NORMAL : tone) {
+         case READY:
             var10000 = selected ? -1507344 : -6426438;
             break;
-         case read:
+         case WARNING:
             var10000 = selected ? -3104 : -14726;
             break;
-         case write:
+         case MISSING:
             var10000 = selected ? -4884 : -20561;
             break;
-         case update:
+         case DANGER:
             var10000 = selected ? -5398 : -29556;
             break;
-         case init:
-            var10000 = selected ? ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read) : -1;
+         case NORMAL:
+            var10000 = selected ? ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT) : -1;
             break;
          default:
             throw new MatchException(null, null);

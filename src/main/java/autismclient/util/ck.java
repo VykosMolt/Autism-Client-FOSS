@@ -65,8 +65,8 @@ public final class ck {
    private boolean tick_Z = false;
    private static final int write_I = 32;
    private final Deque<ck.Inner_ConfigStore> init_Deque = new ArrayDeque<>(32);
-   private volatile ck.Inner_DataUtil init_ck_DataUtil = ck.Inner_DataUtil.init;
-   private ck.Inner_DataUtil load_ck_DataUtil = ck.Inner_DataUtil.init;
+   private volatile ck.Inner_DataUtil init_ck_DataUtil = ck.Inner_DataUtil.TICKS;
+   private ck.Inner_DataUtil load_ck_DataUtil = ck.Inner_DataUtil.TICKS;
    private long init_J = 0L;
    private int update_I = 0;
    private long load_J = -1L;
@@ -591,7 +591,7 @@ public final class ck {
    }
 
    private int init_I_ck_DataUtil(ck.Inner_DataUtil mode) {
-      if (mode == ck.Inner_DataUtil.load) {
+      if (mode == ck.Inner_DataUtil.MS) {
          return this.init_J <= 0L ? 0 : (int)Math.max(0L, (System.nanoTime() - this.init_J) / 1000000L);
       } else {
          return Math.max(0, this.pool - this.update_I);
@@ -645,7 +645,7 @@ public final class ck {
    }
 
    private int buffer_I() {
-      if (this.load_ck_DataUtil == ck.Inner_DataUtil.load) {
+      if (this.load_ck_DataUtil == ck.Inner_DataUtil.MS) {
          long now = System.nanoTime();
          long reference = this.load_J > 0L ? this.load_J : this.init_J;
          int delta = reference > 0L ? (int)Math.max(0L, (now - reference) / 1000000L) : 0;
@@ -680,11 +680,11 @@ public final class ck {
    }
 
    public synchronized void init_V_Packet(Packet<?> packet) {
-      this.init_V_Packet_ck_BufferHelper(packet, ck.Inner_BufferHelper.init);
+      this.init_V_Packet_ck_BufferHelper(packet, ck.Inner_BufferHelper.REGENERATE);
    }
 
    public synchronized void load_V_Packet(Packet<?> packet) {
-      this.init_V_Packet_ck_BufferHelper(packet, ck.Inner_BufferHelper.load);
+      this.init_V_Packet_ck_BufferHelper(packet, ck.Inner_BufferHelper.EXACT);
    }
 
    public synchronized void init_V_Packet_ck_BufferHelper(Packet<?> packet, ck.Inner_BufferHelper replayMode) {
@@ -706,7 +706,7 @@ public final class ck {
                this.tick_V();
             }
 
-            if (this.init_ck_DataUtil == ck.Inner_DataUtil.init) {
+            if (this.init_ck_DataUtil == ck.Inner_DataUtil.TICKS) {
                int tick = this.pool;
                if (this.task < 0) {
                   this.task = tick;
@@ -733,11 +733,11 @@ public final class ck {
    }
 
    private ck.Inner_BufferHelper init_ck_BufferHelper_Packet_ck_BufferHelper(Packet<?> packet, ck.Inner_BufferHelper replayMode) {
-      ck.Inner_BufferHelper mode = replayMode == null ? ck.Inner_BufferHelper.init : replayMode;
-      return mode == ck.Inner_BufferHelper.init
+      ck.Inner_BufferHelper mode = replayMode == null ? ck.Inner_BufferHelper.REGENERATE : replayMode;
+      return mode == ck.Inner_BufferHelper.REGENERATE
             && packet instanceof ServerboundContainerClosePacket closePacket
             && this.init_Z_I(this.init_I_ServerboundContain(closePacket))
-         ? ck.Inner_BufferHelper.load
+         ? ck.Inner_BufferHelper.EXACT
          : mode;
    }
 
@@ -982,7 +982,7 @@ public final class ck {
 
          for (ck.Inner_CachePool qp : this.load_List) {
             boolean shouldSend;
-            if (this.load_ck_DataUtil == ck.Inner_DataUtil.load) {
+            if (this.load_ck_DataUtil == ck.Inner_DataUtil.MS) {
                long elapsedMs = (System.nanoTime() - this.init_J) / 1000000L;
                shouldSend = elapsedMs >= qp.load_I() && !qp.load_Z();
             } else {
@@ -1227,7 +1227,7 @@ public final class ck {
       this.load_J = -1L;
       this.sync_I = -1;
       this.flush_I = 0;
-      this.load_ck_DataUtil = ck.Inner_DataUtil.init;
+      this.load_ck_DataUtil = ck.Inner_DataUtil.TICKS;
       this.read_J = -1L;
       this.task = -1;
       this.set_V();
@@ -1332,7 +1332,7 @@ public final class ck {
    }
 
    public void flush_V() {
-      this.init_ck_DataUtil = this.init_ck_DataUtil == ck.Inner_DataUtil.init ? ck.Inner_DataUtil.load : ck.Inner_DataUtil.init;
+      this.init_ck_DataUtil = this.init_ck_DataUtil == ck.Inner_DataUtil.TICKS ? ck.Inner_DataUtil.MS : ck.Inner_DataUtil.TICKS;
    }
 
    public boolean stop_Z() {
@@ -2021,8 +2021,8 @@ public final class ck {
    }
 
    public enum Inner_BufferHelper {
-      init,
-      load;
+      REGENERATE,
+      EXACT;
    }
 
    public static class Inner_CachePool {
@@ -2034,7 +2034,7 @@ public final class ck {
       private volatile boolean init_Z;
 
       public Inner_CachePool(Packet<?> packet, int delay) {
-         this(packet, delay, ck.Inner_BufferHelper.init);
+         this(packet, delay, ck.Inner_BufferHelper.REGENERATE);
       }
 
       public Inner_CachePool(Packet<?> packet, int delay, ck.Inner_BufferHelper replayMode) {
@@ -2042,11 +2042,11 @@ public final class ck {
          this.init_I = init_AtomicInteger.getAndIncrement();
          this.load = delay;
          this.init_Z = false;
-         this.init_ck_BufferHelper = replayMode == null ? ck.Inner_BufferHelper.init : replayMode;
+         this.init_ck_BufferHelper = replayMode == null ? ck.Inner_BufferHelper.REGENERATE : replayMode;
       }
 
       public Inner_CachePool(Packet<?> packet, int delay, int existingId) {
-         this(packet, delay, existingId, ck.Inner_BufferHelper.init);
+         this(packet, delay, existingId, ck.Inner_BufferHelper.REGENERATE);
       }
 
       public Inner_CachePool(Packet<?> packet, int delay, int existingId, ck.Inner_BufferHelper replayMode) {
@@ -2054,7 +2054,7 @@ public final class ck {
          this.init_I = existingId;
          this.load = delay;
          this.init_Z = false;
-         this.init_ck_BufferHelper = replayMode == null ? ck.Inner_BufferHelper.init : replayMode;
+         this.init_ck_BufferHelper = replayMode == null ? ck.Inner_BufferHelper.REGENERATE : replayMode;
       }
 
       public int init_I() {
@@ -2070,7 +2070,7 @@ public final class ck {
       }
 
       public boolean init_Z() {
-         return this.init_ck_BufferHelper == ck.Inner_BufferHelper.load;
+         return this.init_ck_BufferHelper == ck.Inner_BufferHelper.EXACT;
       }
 
       public synchronized void init(int newDelay) {
@@ -2081,7 +2081,7 @@ public final class ck {
 
       public synchronized void init(ck.Inner_BufferHelper mode) {
          if (!this.init_Z) {
-            this.init_ck_BufferHelper = mode == null ? ck.Inner_BufferHelper.init : mode;
+            this.init_ck_BufferHelper = mode == null ? ck.Inner_BufferHelper.REGENERATE : mode;
          }
       }
 
@@ -2115,8 +2115,8 @@ public final class ck {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      TICKS,
+      MS;
    }
 
    public record Inner_StreamUtil(List<ck.Inner_CachePool> init_List, int init_I) {

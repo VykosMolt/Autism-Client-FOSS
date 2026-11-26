@@ -156,8 +156,8 @@ public final class DataUtil {
    }
 
    public enum Inner_CachePool {
-      init,
-      load;
+      PLACE,
+      BREAK;
    }
 
    private static final class Inner_ConfigStore {
@@ -182,7 +182,7 @@ public final class DataUtil {
             if (this.init_Map.size() >= 4) {
                long first = this.init_Map.values().stream().mapToLong(DataUtil.Inner_StreamUtil::init_J).min().orElse(c.init_J);
                if (c.init_J - first >= 450L) {
-                  int placements = (int)this.init_Map.values().stream().filter(e -> e.init_DataUtil_CachePool == DataUtil.Inner_CachePool.init).count();
+                  int placements = (int)this.init_Map.values().stream().filter(e -> e.init_DataUtil_CachePool == DataUtil.Inner_CachePool.PLACE).count();
                   this.init_DataUtil_BufferHel = new DataUtil.Inner_BufferHelper(
                      c.init_BlockPos, placements, this.init_Map.size() - placements, c.init_J + 8000L
                   );

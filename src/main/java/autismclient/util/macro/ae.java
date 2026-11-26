@@ -7,7 +7,7 @@ public class ae implements E, MacroAction {
    public boolean sprint = true;
    private boolean init = true;
    public boolean persistent = false;
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
 
    public ae() {
    }
@@ -57,7 +57,7 @@ public class ae implements E, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.count;
+      return StreamGate.SPRINT;
    }
 
    @Override

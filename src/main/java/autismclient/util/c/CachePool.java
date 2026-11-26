@@ -76,15 +76,15 @@ public final class CachePool {
    }
 
    public static Identifier init_Identifier_Str(String path, double targetFps, double quality, String owner) {
-      return init(path, targetFps, false, quality, CachePool.NetHelper.init_CachePool_NetHelpe, owner);
+      return init(path, targetFps, false, quality, CachePool.NetHelper.HUD, owner);
    }
 
    public static Identifier init_Identifier_Str_2(String path, double targetFps, boolean keepAspect, double quality) {
-      return init(path, targetFps, keepAspect, quality, CachePool.NetHelper.load, null);
+      return init(path, targetFps, keepAspect, quality, CachePool.NetHelper.CAPE, null);
    }
 
    public static Identifier load(String path, double targetFps, boolean keepAspect, double quality) {
-      return init(path, targetFps, keepAspect, quality, CachePool.NetHelper.read, null);
+      return init(path, targetFps, keepAspect, quality, CachePool.NetHelper.SHIELD, null);
    }
 
    public static int[] init_IArr_Str(String path) {
@@ -147,7 +147,7 @@ public final class CachePool {
                read(created);
             }
          }
-      } else if (entry.init_CachePool_TaskQueu != CachePool.TaskQueue.init && entry.init_Path != null && now >= entry.read_J) {
+      } else if (entry.init_CachePool_TaskQueu != CachePool.TaskQueue.LOADING && entry.init_Path != null && now >= entry.read_J) {
          entry.read_J = now + 1000L;
 
          try {
@@ -157,7 +157,7 @@ public final class CachePool {
             if (mtime != entry.init_J || size != entry.load_J) {
                entry.init_J = mtime;
                entry.load_J = size;
-               entry.init_CachePool_TaskQueu = CachePool.TaskQueue.init;
+               entry.init_CachePool_TaskQueu = CachePool.TaskQueue.LOADING;
                write(entry);
                read(entry);
             }
@@ -170,11 +170,11 @@ public final class CachePool {
       }
 
       init_V_CachePool_StreamUt(entry, fps, now);
-      if (entry.init_CachePool_TaskQueu == CachePool.TaskQueue.load) {
+      if (entry.init_CachePool_TaskQueu == CachePool.TaskQueue.READY) {
          return entry.init_Identifier;
       } else {
          CachePool.Inner_StreamUtil fallback = entry.init_CachePool_StreamUt;
-         if (fallback != null && fallback.init_CachePool_TaskQueu == CachePool.TaskQueue.load) {
+         if (fallback != null && fallback.init_CachePool_TaskQueu == CachePool.TaskQueue.READY) {
             init_V_CachePool_StreamUt(fallback, fps, now);
             return fallback.init_Identifier;
          } else {
@@ -195,14 +195,14 @@ public final class CachePool {
    private static void init_V_CachePool_StreamUt(CachePool.Inner_StreamUtil entry) {
       CachePool.Inner_StreamUtil previous = load_Map.put(entry.load_Str, entry);
       if (previous != null && previous != entry) {
-         CachePool.Inner_StreamUtil keep = previous.init_CachePool_TaskQueu == CachePool.TaskQueue.load ? previous : previous.init_CachePool_StreamUt;
+         CachePool.Inner_StreamUtil keep = previous.init_CachePool_TaskQueu == CachePool.TaskQueue.READY ? previous : previous.init_CachePool_StreamUt;
          previous.init_CachePool_StreamUt = null;
          if (previous != keep) {
             init_J_CachePool_StreamUt(previous);
          }
 
          if (keep != null && keep != entry) {
-            if (entry.init_CachePool_TaskQueu == CachePool.TaskQueue.init) {
+            if (entry.init_CachePool_TaskQueu == CachePool.TaskQueue.LOADING) {
                if (entry.init_CachePool_StreamUt != null && entry.init_CachePool_StreamUt != keep) {
                   init_J_CachePool_StreamUt(entry.init_CachePool_StreamUt);
                }
@@ -337,7 +337,7 @@ public final class CachePool {
                payload.init_IArr(),
                payload.init_I(),
                entry.load_D,
-               entry.init_CachePool_NetHelpe == CachePool.NetHelper.init_CachePool_NetHelpe
+               entry.init_CachePool_NetHelpe == CachePool.NetHelper.HUD
             );
             Minecraft.getInstance().getTextureManager().register(entry.init_Identifier, texture);
          } catch (Throwable t) {
@@ -353,7 +353,7 @@ public final class CachePool {
 
          entry.init_CachePool_DataUtil = texture;
          entry.sync = texture.init_J;
-         entry.init_CachePool_TaskQueu = CachePool.TaskQueue.load;
+         entry.init_CachePool_TaskQueu = CachePool.TaskQueue.READY;
          entry.read_Str = null;
          entry.init_J = payload.init_J();
          entry.load_J = payload.load_J();
@@ -367,8 +367,8 @@ public final class CachePool {
    }
 
    private static void init(CachePool.Inner_StreamUtil entry, String reason) {
-      boolean report = entry.init_CachePool_TaskQueu != CachePool.TaskQueue.read || !reason.equals(entry.read_Str);
-      entry.init_CachePool_TaskQueu = CachePool.TaskQueue.read;
+      boolean report = entry.init_CachePool_TaskQueu != CachePool.TaskQueue.FAILED || !reason.equals(entry.read_Str);
+      entry.init_CachePool_TaskQueu = CachePool.TaskQueue.FAILED;
       entry.read_Str = reason;
       load(entry);
       if (report) {
@@ -417,10 +417,10 @@ public final class CachePool {
          init_V_BooleanSupplier(stale);
          CachePool.JsonUtil var10000;
          switch (entry.init_CachePool_NetHelpe) {
-            case load:
+            case CAPE:
                var10000 = init_CachePool_JsonUtil_DataUtil_DataUtil(decoded, entry.init_Z, entry.init_D, stale);
                break;
-            case read:
+            case SHIELD:
                var10000 = load(decoded, entry.init_Z, entry.init_D, stale);
                break;
             default:
@@ -431,7 +431,7 @@ public final class CachePool {
          int[][] argbFrames = transformed.init_IArr2();
          int width = transformed.init_I();
          int height = transformed.load();
-         boolean mipmap = entry.init_CachePool_NetHelpe == CachePool.NetHelper.init_CachePool_NetHelpe;
+         boolean mipmap = entry.init_CachePool_NetHelpe == CachePool.NetHelper.HUD;
          NativeImage[][] chains = new NativeImage[argbFrames.length][];
 
          try {
@@ -887,7 +887,7 @@ public final class CachePool {
       final boolean init_Z;
       final double init_D;
       volatile double load_D;
-      volatile CachePool.TaskQueue init_CachePool_TaskQueu = CachePool.TaskQueue.init;
+      volatile CachePool.TaskQueue init_CachePool_TaskQueu = CachePool.TaskQueue.LOADING;
       volatile String read_Str;
       volatile long init_J = -1L;
       volatile long load_J = -1L;
@@ -915,9 +915,9 @@ public final class CachePool {
    }
 
    private enum NetHelper {
-      init_CachePool_NetHelpe("hud"),
-      load("cape"),
-      read("shield");
+      HUD("hud"),
+      CAPE("cape"),
+      SHIELD("shield");
 
       final String init_Str;
 
@@ -927,8 +927,8 @@ public final class CachePool {
    }
 
    private enum TaskQueue {
-      init,
-      load,
-      read;
+      LOADING,
+      READY,
+      FAILED;
    }
 }

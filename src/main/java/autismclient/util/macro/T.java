@@ -8,7 +8,7 @@ public class T implements MacroAction {
    public int pingDelayMs = 250;
    public boolean realIncoming = false;
    public boolean realOutgoing = false;
-   public String endMode = T.Inner_DataUtil.init.name();
+   public String endMode = T.Inner_DataUtil.TIMEOUT.name();
    public int stepCount = 1;
    public boolean useTicks = false;
    public int durationMs = 1000;
@@ -74,7 +74,7 @@ public class T implements MacroAction {
       }
 
       if (tag.contains("endMode")) {
-         this.endMode = T.Inner_DataUtil.init(tag.getStringOr("endMode", T.Inner_DataUtil.init.name())).name();
+         this.endMode = T.Inner_DataUtil.init(tag.getStringOr("endMode", T.Inner_DataUtil.TIMEOUT.name())).name();
       }
 
       if (tag.contains("stepCount")) {
@@ -104,20 +104,20 @@ public class T implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_S_StreamGate;
+      return StreamGate.SPING;
    }
 
    @Override
    public String getDisplayName() {
       String var10000;
       switch (this.init_T_DataUtil()) {
-         case init:
+         case TIMEOUT:
             var10000 = this.useTicks ? Math.max(0, this.durationTicks) + " ticks" : Math.max(0, this.durationMs) + " ms";
             break;
-         case load:
+         case STEPS:
             var10000 = this.init_I_4() + (this.init_I_4() == 1 ? " step" : " steps");
             break;
-         case read:
+         case END:
             var10000 = "until end";
             break;
          default:
@@ -126,7 +126,7 @@ public class T implements MacroAction {
 
       String window = var10000;
       String real = this.realIncoming && this.realOutgoing ? " [real]" : (this.realIncoming ? " [real in]" : (this.realOutgoing ? " [real out]" : ""));
-      String suffix = this.init_T_DataUtil() == T.Inner_DataUtil.init && this.continueNextActions ? " [cont]" : "";
+      String suffix = this.init_T_DataUtil() == T.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
       return "Ping: +" + Math.max(0, this.pingDelayMs) + " ms (" + window + ")" + real + suffix;
    }
 
@@ -146,19 +146,19 @@ public class T implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      TIMEOUT,
+      STEPS,
+      END;
 
       public static T.Inner_DataUtil init(String raw) {
          if (raw == null) {
-            return init;
+            return TIMEOUT;
          }
 
          try {
             return valueOf(raw.trim().toUpperCase(Locale.ROOT));
          } catch (IllegalArgumentException ignored) {
-            return init;
+            return TIMEOUT;
          }
       }
    }

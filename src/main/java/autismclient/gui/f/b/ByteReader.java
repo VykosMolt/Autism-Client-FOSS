@@ -18,7 +18,7 @@ public final class ByteReader {
    private int write;
    private int update;
    private Component init_Component;
-   private ByteReader.Inner_StreamUtil init_ByteReader_StreamU = ByteReader.Inner_StreamUtil.init;
+   private ByteReader.Inner_StreamUtil init_ByteReader_StreamU = ByteReader.Inner_StreamUtil.SECONDARY;
    private l init_l = l.read;
    private Boolean init_Boolean;
    private String init_Str;
@@ -124,7 +124,7 @@ public final class ByteReader {
                button.init_Identifier,
                iconHovered,
                button.init_Z,
-               button.init_ByteReader_StreamU == ByteReader.Inner_StreamUtil.load
+               button.init_ByteReader_StreamU == ByteReader.Inner_StreamUtil.DANGER
             );
          } else {
             String label = cs.init(button.init_Component.getString());
@@ -147,23 +147,23 @@ public final class ByteReader {
                || upperLabel.equals("DISABLED")
                || upperLabel.endsWith(": DISABLED");
             ByteReader.Inner_StreamUtil variant = button.init_ByteReader_StreamU;
-            if (variant == ByteReader.Inner_StreamUtil.init && inferredDanger) {
-               variant = ByteReader.Inner_StreamUtil.load;
+            if (variant == ByteReader.Inner_StreamUtil.SECONDARY && inferredDanger) {
+               variant = ByteReader.Inner_StreamUtil.DANGER;
             }
 
-            if (variant == ByteReader.Inner_StreamUtil.init && toggleOn) {
-               variant = ByteReader.Inner_StreamUtil.read;
+            if (variant == ByteReader.Inner_StreamUtil.SECONDARY && toggleOn) {
+               variant = ByteReader.Inner_StreamUtil.SUCCESS;
             }
 
-            if (variant == ByteReader.Inner_StreamUtil.init && toggleOff) {
-               variant = ByteReader.Inner_StreamUtil.load;
+            if (variant == ByteReader.Inner_StreamUtil.SECONDARY && toggleOff) {
+               variant = ByteReader.Inner_StreamUtil.DANGER;
             }
 
             boolean hovered = button.init(mouseX, mouseY);
             autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(context, textRenderer, mouseX, mouseY);
             autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(button.load_I, button.read, button.write, button.update);
-            boolean allowInferredToggle = button.init_ByteReader_StreamU != ByteReader.Inner_StreamUtil.sync
-               && button.init_ByteReader_StreamU != ByteReader.Inner_StreamUtil.flush;
+            boolean allowInferredToggle = button.init_ByteReader_StreamU != ByteReader.Inner_StreamUtil.FILTER_ON
+               && button.init_ByteReader_StreamU != ByteReader.Inner_StreamUtil.FILTER_OFF;
             Boolean resolvedToggleState = button.init_Boolean != null
                ? button.init_Boolean
                : (allowInferredToggle ? (toggleOn ? Boolean.TRUE : (toggleOff ? Boolean.FALSE : null)) : null);
@@ -177,13 +177,13 @@ public final class ByteReader {
                   var10000 = button.load_Boolean;
                } else {
                   switch (variant) {
-                     case load:
-                     case read:
-                     case write:
-                     case sync:
+                     case DANGER:
+                     case SUCCESS:
+                     case PRIMARY:
+                     case FILTER_ON:
                         var10000 = true;
                         break;
-                     case update:
+                     case GHOST:
                      default:
                         var10000 = false;
                   }
@@ -195,7 +195,7 @@ public final class ByteReader {
 
             if (!button.init_Z && !Boolean.TRUE.equals(button.load_Boolean)) {
                int radius = 3;
-               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ct.init_I_I_ct_DataUtil(-2009060816, ct.Inner_DataUtil.load));
+               autismclient.gui.f.PacketUtil.load(context, bounds, radius, ct.init_I_I_ct_DataUtil(-2009060816, ct.Inner_DataUtil.OUTLINE));
                autismclient.gui.f.PacketUtil.load(context, bounds.init(1), Math.max(1, radius - 1), 1711276032);
             }
          }
@@ -243,7 +243,7 @@ public final class ByteReader {
    }
 
    public ByteReader init_ByteReader_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
-      this.init_ByteReader_StreamU = variant == null ? ByteReader.Inner_StreamUtil.init : variant;
+      this.init_ByteReader_StreamU = variant == null ? ByteReader.Inner_StreamUtil.SECONDARY : variant;
       return this;
    }
 
@@ -254,19 +254,19 @@ public final class ByteReader {
    private static CachePool.Inner_DataUtil init_CachePool_DataUtil_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
       CachePool.Inner_DataUtil var10000;
       switch (variant) {
-         case init:
-         case update:
-         case flush:
+         case SECONDARY:
+         case GHOST:
+         case FILTER_OFF:
             var10000 = CachePool.Inner_DataUtil.init;
             break;
-         case load:
+         case DANGER:
             var10000 = CachePool.Inner_DataUtil.update;
             break;
-         case read:
-         case sync:
+         case SUCCESS:
+         case FILTER_ON:
             var10000 = CachePool.Inner_DataUtil.write;
             break;
-         case write:
+         case PRIMARY:
             var10000 = CachePool.Inner_DataUtil.read;
             break;
          default:
@@ -286,12 +286,12 @@ public final class ByteReader {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      SECONDARY,
+      DANGER,
+      SUCCESS,
+      PRIMARY,
+      GHOST,
+      FILTER_ON,
+      FILTER_OFF;
    }
 }

@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class StreamUtil implements MacroAction {
-   public StreamUtil.Inner_DataUtil conditionKind = StreamUtil.Inner_DataUtil.init;
+   public StreamUtil.Inner_DataUtil conditionKind = StreamUtil.Inner_DataUtil.ALWAYS;
    public String value = "";
    public int thenSteps = 1;
    public int elseSteps = 0;
@@ -15,7 +15,7 @@ public class StreamUtil implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_I_StreamGate;
+      return StreamGate.BRANCH;
    }
 
    public boolean init(Minecraft mc) {
@@ -31,19 +31,19 @@ public class StreamUtil implements MacroAction {
       String resolved = resolution.init_Str();
       boolean var10000;
       switch (this.conditionKind) {
-         case init:
+         case ALWAYS:
             var10000 = true;
             break;
-         case load:
+         case GUI_TYPE:
             var10000 = f.init(mc.gui.screen(), resolved);
             break;
-         case read:
+         case INVENTORY_ITEM:
             var10000 = aK.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update(resolved));
             break;
-         case write:
+         case ENTITY_TARGET:
             var10000 = mc.crosshairPickEntity != null;
             break;
-         case update:
+         case HELD_ITEM:
             var10000 = mc.player != null
                && ArrayUtil.update(resolved).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot()) >= 0;
             break;
@@ -67,7 +67,7 @@ public class StreamUtil implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.conditionKind = i.init(StreamUtil.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), StreamUtil.Inner_DataUtil.init);
+      this.conditionKind = i.init(StreamUtil.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), StreamUtil.Inner_DataUtil.ALWAYS);
       this.value = tag.getStringOr("value", "");
       this.thenSteps = tag.getIntOr("thenSteps", 1);
       this.elseSteps = tag.getIntOr("elseSteps", 0);
@@ -84,10 +84,10 @@ public class StreamUtil implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      ALWAYS,
+      GUI_TYPE,
+      INVENTORY_ITEM,
+      ENTITY_TARGET,
+      HELD_ITEM;
    }
 }

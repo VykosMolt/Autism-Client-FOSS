@@ -121,7 +121,7 @@ public class AutismServerInfoOverlay extends bj {
    private AutismServerInfoOverlay.Inner_PacketUtil init_AutismServerInfoOv_3;
    private long read_J = 1L;
    private final bR init_bR = new bR();
-   private AutismServerInfoOverlay.Inner_ByteReader init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.init;
+   private AutismServerInfoOverlay.Inner_ByteReader init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
    private String close_Str = "";
    private int queue;
    private int buffer;
@@ -907,13 +907,13 @@ public class AutismServerInfoOverlay extends bj {
       this.init_V_Str_9("TPS:", tps, null);
       List<String> detectedAcs = this.init_List_13();
       if (this.tick_Z) {
-         this.init_V_Str_9("AntiCheats:", "Scanning...", ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.flush));
+         this.init_V_Str_9("AntiCheats:", "Scanning...", ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.DANGER));
       } else if (!this.pop_Z) {
-         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.flush));
+         this.init_V_Str_9("AntiCheats:", "Probe Plugins First", ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.DANGER));
       } else if (detectedAcs.isEmpty()) {
          this.init_V_Str_9("AntiCheats:", "None detected", null);
       } else {
-         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.flush));
+         this.init_V_Str_9("AntiCheats:", String.join(", ", detectedAcs), ct.init_I_I_ct_DataUtil(-48060, ct.Inner_DataUtil.DANGER));
       }
 
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_PacketUtil);
@@ -922,7 +922,7 @@ public class AutismServerInfoOverlay extends bj {
       this.init_CharEncoder_2
          .init_PacketUtil()
          .init_TableIndex_TableIndex(
-            new autismclient.gui.f.c.ByteReader("Copy Report", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::d_V_2)
+            new autismclient.gui.f.c.ByteReader("Copy Report", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::d_V_2)
                .load_ByteReader_I(this.count_I_2())
          );
    }
@@ -981,7 +981,7 @@ public class AutismServerInfoOverlay extends bj {
          .init_PacketUtil()
          .init_TableIndex_TableIndex(new autismclient.gui.f.c.PoolEntry("If you get kicked increase the delay.", autismclient.gui.f.b.l.write));
       autismclient.gui.f.c.ByteReader startProbe = new autismclient.gui.f.c.ByteReader(
-         this.sync_Z ? "Join a Server to Probe" : "Start Probing", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::mark_V_2
+         this.sync_Z ? "Join a Server to Probe" : "Start Probing", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::mark_V_2
       );
       startProbe.load_ByteReader_I(this.count_I_2());
       startProbe.read_TableIndex_Z(!this.sync_Z);
@@ -989,7 +989,7 @@ public class AutismServerInfoOverlay extends bj {
       if (!this.load_List.isEmpty()) {
          this.init_CharEncoder_2
             .init_PacketUtil()
-            .init_TableIndex_TableIndex(new autismclient.gui.f.c.ByteReader("Back to Results", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+            .init_TableIndex_TableIndex(new autismclient.gui.f.c.ByteReader("Back to Results", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
                this.put_Z = false;
                this.pop_Z = true;
                this.tick_Z = false;
@@ -1047,11 +1047,11 @@ public class AutismServerInfoOverlay extends bj {
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(this.init_BitSetUtil);
       autismclient.gui.f.c.UiHelper buttons = new autismclient.gui.f.c.UiHelper().init(this.flags_I_2());
       buttons.init_TableIndex_TableIndex(
-         new autismclient.gui.f.c.ByteReader("Rescan", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> this.queue_V_2())
+         new autismclient.gui.f.c.ByteReader("Rescan", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> this.queue_V_2())
             .load_ByteReader_I(this.count_I_2())
       );
       buttons.init_TableIndex_TableIndex(
-         new autismclient.gui.f.c.ByteReader("Copy Plugins", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, this::e_V_2)
+         new autismclient.gui.f.c.ByteReader("Copy Plugins", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, this::e_V_2)
             .load_ByteReader_I(this.count_I_2())
       );
       this.init_CharEncoder_2.init_PacketUtil().init_TableIndex_TableIndex(buttons);
@@ -1082,7 +1082,7 @@ public class AutismServerInfoOverlay extends bj {
       boolean autoOn = AutismConfig.getGlobal().autoProbePlugins;
       return new autismclient.gui.f.c.ByteReader(
             "Auto Probe: " + (autoOn ? "ON" : "OFF"),
-            autoOn ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load,
+            autoOn ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY,
             this::state_V_2
          )
          .load_ByteReader_I(this.count_I_2());
@@ -1377,7 +1377,7 @@ public class AutismServerInfoOverlay extends bj {
       this.pop_Z = false;
       this.put_Z = false;
       this.read_V_3("clear");
-      this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.init;
+      this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
       this.close_Str = "";
       this.queue = 0;
       this.buffer = 0;
@@ -1460,11 +1460,11 @@ public class AutismServerInfoOverlay extends bj {
       this.put_Z = false;
       this.read_V_3("cache-load");
       this.init_AutismServerInfoOv = this.init_AutismServerInfoOv_Str(cached.scanStatus);
-      if (this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.init) {
-         this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.load;
+      if (this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.NONE) {
+         this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.COMPLETE;
       }
 
-      this.close_Str = this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.read ? "Cached partial scan" : "";
+      this.close_Str = this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.PARTIAL ? "Cached partial scan" : "";
       this.queue = Math.max(0, cached.totalProbes);
       this.buffer = Math.max(0, cached.answeredProbes);
       this.entry = Math.max(0, cached.retriedProbes);
@@ -1488,7 +1488,7 @@ public class AutismServerInfoOverlay extends bj {
          String key = this.load_Str_2(plugin);
          this.update_Map.put(key, this.init_AutismServerInfoOv_Str_2(cachedEvidence.get(key)));
          AutismServerInfoOverlay.Inner_JsonUtil copyEvidence = this.init_AutismServerInfoOv_Str_2(cachedCopyEvidence.get(key));
-         if (copyEvidence == AutismServerInfoOverlay.Inner_JsonUtil.pop) {
+         if (copyEvidence == AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN) {
             copyEvidence = this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(plugin, this.update_Map.get(key));
          }
 
@@ -1605,40 +1605,40 @@ public class AutismServerInfoOverlay extends bj {
    private int init_I_AutismServerInfoOv_3(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
       byte var10000;
       switch (evidence) {
-         case init:
+         case PAYLOAD_CHANNEL:
             var10000 = 0;
             break;
-         case load:
+         case COMMAND_GUI:
             var10000 = 4;
             break;
-         case read:
+         case COMMAND_TREE:
             var10000 = 1;
             break;
-         case write:
+         case USER_AUTOCOMPLETE:
             var10000 = 8;
             break;
-         case update:
+         case SCANNER_AUTOCOMPLETE:
             var10000 = 7;
             break;
-         case sync:
+         case NAMESPACE:
             var10000 = 2;
             break;
-         case flush:
+         case ROOT_HINT:
             var10000 = 3;
             break;
-         case close:
+         case HELP_HINT:
             var10000 = 10;
             break;
-         case open:
+         case PLUGIN_LIST:
             var10000 = 6;
             break;
-         case poll:
+         case VERSION_HINT:
             var10000 = 5;
             break;
-         case push:
+         case FEATURE:
             var10000 = 9;
             break;
-         case pop:
+         case UNKNOWN:
             var10000 = 11;
             break;
          default:
@@ -1650,17 +1650,17 @@ public class AutismServerInfoOverlay extends bj {
 
    private int init_I_AutismServerInfoOv(AutismServerInfoOverlay.Inner_ConfigStore confidence) {
       byte var10000;
-      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : confidence) {
-         case init:
+      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+         case EXACT:
             var10000 = 0;
             break;
-         case load:
+         case STRONG:
             var10000 = 1;
             break;
-         case read:
+         case FEATURE:
             var10000 = 2;
             break;
-         case write:
+         case UNKNOWN:
             var10000 = 3;
             break;
          default:
@@ -1674,7 +1674,7 @@ public class AutismServerInfoOverlay extends bj {
       AutismServerInfoOverlay.Inner_JsonUtil current, AutismServerInfoOverlay.Inner_JsonUtil candidate
    ) {
       if (current == null) {
-         return candidate == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : candidate;
+         return candidate == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : candidate;
       } else if (candidate == null) {
          return current;
       } else {
@@ -1684,33 +1684,33 @@ public class AutismServerInfoOverlay extends bj {
 
    private int load_I(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
       byte var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence) {
-         case init:
+      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+         case PAYLOAD_CHANNEL:
             var10000 = 4;
             break;
-         case load:
+         case COMMAND_GUI:
             var10000 = 5;
             break;
-         case read:
+         case COMMAND_TREE:
             var10000 = 0;
             break;
-         case write:
-         case push:
+         case USER_AUTOCOMPLETE:
+         case FEATURE:
             var10000 = 6;
             break;
-         case update:
-         case open:
+         case SCANNER_AUTOCOMPLETE:
+         case PLUGIN_LIST:
             var10000 = 2;
             break;
-         case sync:
-         case flush:
+         case NAMESPACE:
+         case ROOT_HINT:
             var10000 = 1;
             break;
-         case close:
-         case pop:
+         case HELP_HINT:
+         case UNKNOWN:
             var10000 = 7;
             break;
-         case poll:
+         case VERSION_HINT:
             var10000 = 3;
             break;
          default:
@@ -1724,7 +1724,7 @@ public class AutismServerInfoOverlay extends bj {
       AutismServerInfoOverlay.Inner_JsonUtil current, AutismServerInfoOverlay.Inner_JsonUtil candidate
    ) {
       if (candidate == null) {
-         return current == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : current;
+         return current == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : current;
       } else if (current == null) {
          return candidate;
       } else {
@@ -1734,16 +1734,16 @@ public class AutismServerInfoOverlay extends bj {
 
    private boolean init_Z_AutismServerInfoOv(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
       boolean var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence) {
-         case read:
-         case sync:
-         case flush:
-         case open:
+      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+         case COMMAND_TREE:
+         case NAMESPACE:
+         case ROOT_HINT:
+         case PLUGIN_LIST:
             var10000 = true;
             break;
-         case write:
-         case update:
-         case close:
+         case USER_AUTOCOMPLETE:
+         case SCANNER_AUTOCOMPLETE:
+         case HELP_HINT:
          default:
             var10000 = false;
       }
@@ -1753,19 +1753,19 @@ public class AutismServerInfoOverlay extends bj {
 
    private boolean load_Z(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
       boolean var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence) {
-         case init:
-         case load:
-         case read:
-         case sync:
-         case flush:
-         case open:
-         case poll:
+      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+         case PAYLOAD_CHANNEL:
+         case COMMAND_GUI:
+         case COMMAND_TREE:
+         case NAMESPACE:
+         case ROOT_HINT:
+         case PLUGIN_LIST:
+         case VERSION_HINT:
             var10000 = true;
             break;
-         case write:
-         case update:
-         case close:
+         case USER_AUTOCOMPLETE:
+         case SCANNER_AUTOCOMPLETE:
+         case HELP_HINT:
          default:
             var10000 = false;
       }
@@ -1777,7 +1777,7 @@ public class AutismServerInfoOverlay extends bj {
       AutismServerInfoOverlay.Inner_ConfigStore current, AutismServerInfoOverlay.Inner_ConfigStore candidate
    ) {
       if (current == null) {
-         return candidate == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : candidate;
+         return candidate == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : candidate;
       } else if (candidate == null) {
          return current;
       } else {
@@ -1787,26 +1787,26 @@ public class AutismServerInfoOverlay extends bj {
 
    private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_AutismServerInfoOv(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
       AutismServerInfoOverlay.Inner_ConfigStore var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence) {
-         case init:
-         case sync:
-         case poll:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.init;
+      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+         case PAYLOAD_CHANNEL:
+         case NAMESPACE:
+         case VERSION_HINT:
+            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
             break;
-         case load:
-         case read:
-         case write:
-         case update:
-         case close:
-         case open:
-         case push:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.read;
+         case COMMAND_GUI:
+         case COMMAND_TREE:
+         case USER_AUTOCOMPLETE:
+         case SCANNER_AUTOCOMPLETE:
+         case HELP_HINT:
+         case PLUGIN_LIST:
+         case FEATURE:
+            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
             break;
-         case flush:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.load;
+         case ROOT_HINT:
+            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.STRONG;
             break;
-         case pop:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.write;
+         case UNKNOWN:
+            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN;
             break;
          default:
             throw new MatchException(null, null);
@@ -1817,18 +1817,18 @@ public class AutismServerInfoOverlay extends bj {
 
    private boolean read(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
       boolean var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence) {
-         case write:
-         case update:
-         case close:
-         case push:
-         case pop:
+      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+         case USER_AUTOCOMPLETE:
+         case SCANNER_AUTOCOMPLETE:
+         case HELP_HINT:
+         case FEATURE:
+         case UNKNOWN:
             var10000 = true;
             break;
-         case sync:
-         case flush:
-         case open:
-         case poll:
+         case NAMESPACE:
+         case ROOT_HINT:
+         case PLUGIN_LIST:
+         case VERSION_HINT:
          default:
             var10000 = false;
       }
@@ -1839,14 +1839,14 @@ public class AutismServerInfoOverlay extends bj {
    private boolean init_Z_AutismServerInfoOv_4(AutismServerInfoOverlay.Inner_TextFormat entry) {
       return entry == null
          ? false
-         : entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.load || this.read(entry.init_AutismServerInfoOv_3);
+         : entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.FEATURE || this.read(entry.init_AutismServerInfoOv_3);
    }
 
    private boolean load(AutismServerInfoOverlay.Inner_TextFormat entry) {
       return entry != null
-         && entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.init
+         && entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.PLUGIN
          && !this.read(entry.init_AutismServerInfoOv_3)
-         && entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.Inner_JsonUtil.load;
+         && entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI;
    }
 
    private int init_I_AutismServerInfoOv_5(AutismServerInfoOverlay.Inner_TextFormat entry) {
@@ -1855,7 +1855,7 @@ public class AutismServerInfoOverlay extends bj {
       }
 
       int score = this.init_I_AutismServerInfoOv_3(entry.init_AutismServerInfoOv_3) * 100 + this.init_I_AutismServerInfoOv(entry.init_AutismServerInfoOv) * 10;
-      if (entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.load) {
+      if (entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.FEATURE) {
          score += 1000;
       }
 
@@ -1880,10 +1880,10 @@ public class AutismServerInfoOverlay extends bj {
          try {
             return AutismServerInfoOverlay.Inner_JsonUtil.valueOf(value);
          } catch (IllegalArgumentException ignored) {
-            return AutismServerInfoOverlay.Inner_JsonUtil.pop;
+            return AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
          }
       } else {
-         return AutismServerInfoOverlay.Inner_JsonUtil.pop;
+         return AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
       }
    }
 
@@ -1894,10 +1894,10 @@ public class AutismServerInfoOverlay extends bj {
          try {
             return AutismServerInfoOverlay.Inner_ConfigStore.valueOf(value);
          } catch (IllegalArgumentException ignored) {
-            return fallback == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : fallback;
+            return fallback == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : fallback;
          }
       } else {
-         return fallback == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : fallback;
+         return fallback == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : fallback;
       }
    }
 
@@ -1907,17 +1907,17 @@ public class AutismServerInfoOverlay extends bj {
       }
 
       int var10000;
-      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : confidence) {
-         case init:
+      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+         case EXACT:
             var10000 = p.cache();
             break;
-         case load:
+         case STRONG:
             var10000 = p.node();
             break;
-         case read:
+         case FEATURE:
             var10000 = p.entry();
             break;
-         case write:
+         case UNKNOWN:
             var10000 = this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
             break;
          default:
@@ -1929,17 +1929,17 @@ public class AutismServerInfoOverlay extends bj {
 
    private String init_Str_AutismServerInfoOv(AutismServerInfoOverlay.Inner_ConfigStore confidence) {
       String var10000;
-      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : confidence) {
-         case init:
+      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+         case EXACT:
             var10000 = "Exact";
             break;
-         case load:
+         case STRONG:
             var10000 = "Strong";
             break;
-         case read:
+         case FEATURE:
             var10000 = "Feature";
             break;
-         case write:
+         case UNKNOWN:
             var10000 = "Unknown";
             break;
          default:
@@ -1958,7 +1958,7 @@ public class AutismServerInfoOverlay extends bj {
             AutismServerInfoOverlay.Inner_JsonUtil evidence = this.update_Map
                .getOrDefault(
                   this.load_Str_2(plugin),
-                  existing != null && !existing.isEmpty() ? AutismServerInfoOverlay.Inner_JsonUtil.flush : AutismServerInfoOverlay.Inner_JsonUtil.pop
+                  existing != null && !existing.isEmpty() ? AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT : AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN
                );
             List<String> existingChannels = this.write_List_2(plugin);
             List<String> existingGuis = this.read_List_2(plugin);
@@ -1998,10 +1998,10 @@ public class AutismServerInfoOverlay extends bj {
          try {
             return AutismServerInfoOverlay.Inner_ByteReader.valueOf(value.trim().toUpperCase(Locale.ROOT));
          } catch (IllegalArgumentException ignored) {
-            return AutismServerInfoOverlay.Inner_ByteReader.init;
+            return AutismServerInfoOverlay.Inner_ByteReader.NONE;
          }
       } else {
-         return AutismServerInfoOverlay.Inner_ByteReader.init;
+         return AutismServerInfoOverlay.Inner_ByteReader.NONE;
       }
    }
 
@@ -2056,7 +2056,7 @@ public class AutismServerInfoOverlay extends bj {
       AutismServerInfoOverlay.Inner_ConfigStore confidence
    ) {
       return this.init_Z_Map(
-         entries, explicitKey, pluginName, commands, channels, guis, commandBacked, evidence, confidence, AutismServerInfoOverlay.Inner_EventBus.init
+         entries, explicitKey, pluginName, commands, channels, guis, commandBacked, evidence, confidence, AutismServerInfoOverlay.Inner_EventBus.PLUGIN
       );
    }
 
@@ -2075,7 +2075,7 @@ public class AutismServerInfoOverlay extends bj {
       if (pluginName != null && !pluginName.isBlank()) {
          String cleanName = pluginName.trim();
          String key = explicitKey != null && !explicitKey.isBlank() ? this.load_Str_2(explicitKey) : this.load_Str_2(cleanName);
-         if (!key.isEmpty() && (!sync_Set.contains(key) || evidence == AutismServerInfoOverlay.Inner_JsonUtil.init)) {
+         if (!key.isEmpty() && (!sync_Set.contains(key) || evidence == AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL)) {
             AutismServerInfoOverlay.Inner_TextFormat entry = entries.get(key);
             if (entry == null) {
                if (entries.size() >= 1000) {
@@ -2309,10 +2309,10 @@ public class AutismServerInfoOverlay extends bj {
       AutismServerInfoOverlay.Inner_TextFormat entry = new AutismServerInfoOverlay.Inner_TextFormat();
       entry.init_Str = "/" + token;
       entry.init_Z = true;
-      entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.Inner_EventBus.init;
-      entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.update;
-      entry.load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.pop;
-      entry.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.read;
+      entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
+      entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE;
+      entry.load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+      entry.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
       entry.init_Set.add(token);
       return entry;
    }
@@ -2396,23 +2396,23 @@ public class AutismServerInfoOverlay extends bj {
                      changed = true;
                   }
 
-                  if (entry.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.Inner_EventBus.init) {
-                     entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.Inner_EventBus.init;
+                  if (entry.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.Inner_EventBus.PLUGIN) {
+                     entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
                      changed = true;
                   }
 
-                  if (entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.Inner_JsonUtil.update) {
-                     entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.update;
+                  if (entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE) {
+                     entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE;
                      changed = true;
                   }
 
-                  if (entry.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.pop) {
-                     entry.load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.pop;
+                  if (entry.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN) {
+                     entry.load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
                      entry.load_Set.clear();
                      changed = true;
                   }
 
-                  entry.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.read;
+                  entry.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
                } else {
                   for (String command : entry.init_Set) {
                      String hintKey = this.load_Str_2("command_" + command);
@@ -2471,13 +2471,13 @@ public class AutismServerInfoOverlay extends bj {
       AutismServerInfoOverlay.Inner_EventBus current, AutismServerInfoOverlay.Inner_EventBus candidate
    ) {
       if (candidate == null) {
-         return current == null ? AutismServerInfoOverlay.Inner_EventBus.init : current;
+         return current == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : current;
       } else if (current == null) {
          return candidate;
       } else {
-         return current != AutismServerInfoOverlay.Inner_EventBus.init && candidate != AutismServerInfoOverlay.Inner_EventBus.init
-            ? AutismServerInfoOverlay.Inner_EventBus.load
-            : AutismServerInfoOverlay.Inner_EventBus.init;
+         return current != AutismServerInfoOverlay.Inner_EventBus.PLUGIN && candidate != AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+            ? AutismServerInfoOverlay.Inner_EventBus.FEATURE
+            : AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
       }
    }
 
@@ -2490,38 +2490,38 @@ public class AutismServerInfoOverlay extends bj {
          return stored;
       }
 
-      if (confidence != AutismServerInfoOverlay.Inner_ConfigStore.init && confidence != AutismServerInfoOverlay.Inner_ConfigStore.load) {
-         if (evidence != AutismServerInfoOverlay.Inner_JsonUtil.init
-            && evidence != AutismServerInfoOverlay.Inner_JsonUtil.poll
-            && evidence != AutismServerInfoOverlay.Inner_JsonUtil.sync) {
+      if (confidence != AutismServerInfoOverlay.Inner_ConfigStore.EXACT && confidence != AutismServerInfoOverlay.Inner_ConfigStore.STRONG) {
+         if (evidence != AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL
+            && evidence != AutismServerInfoOverlay.Inner_JsonUtil.VERSION_HINT
+            && evidence != AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE) {
             String lower = plugin == null ? "" : plugin.trim().toLowerCase(Locale.ROOT);
 
             for (String featureLabel : run_Map.values()) {
                if (lower.equals(featureLabel.toLowerCase(Locale.ROOT))) {
-                  return AutismServerInfoOverlay.Inner_EventBus.load;
+                  return AutismServerInfoOverlay.Inner_EventBus.FEATURE;
                }
             }
 
-            return AutismServerInfoOverlay.Inner_EventBus.init;
+            return AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
          } else {
-            return AutismServerInfoOverlay.Inner_EventBus.init;
+            return AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
          }
       } else {
-         return AutismServerInfoOverlay.Inner_EventBus.init;
+         return AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
       }
    }
 
    private AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_Str_AutismServerInfoOv_2(
       String plugin, AutismServerInfoOverlay.Inner_JsonUtil evidence
    ) {
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.pop || evidence == null) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN || evidence == null) {
          List<String> commands = this.init_List_Map_Str(this.init_Map, plugin);
          if (commands != null && !commands.isEmpty()) {
-            return AutismServerInfoOverlay.Inner_JsonUtil.flush;
+            return AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT;
          }
       }
 
-      return this.load_Z(evidence) ? evidence : AutismServerInfoOverlay.Inner_JsonUtil.pop;
+      return this.load_Z(evidence) ? evidence : AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
    }
 
    private List<String> init_List_Map_Str(Map<String, List<String>> map, String plugin) {
@@ -2607,10 +2607,10 @@ public class AutismServerInfoOverlay extends bj {
          this.read_Map.put(plugin, List.copyOf(guis));
          this.update_Map
             .put(
-               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_3 == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : entry.init_AutismServerInfoOv_3
+               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_3 == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : entry.init_AutismServerInfoOv_3
             );
          this.sync_Map
-            .put(this.load_Str_2(plugin), entry.load_AutismServerInfoOv == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : entry.load_AutismServerInfoOv);
+            .put(this.load_Str_2(plugin), entry.load_AutismServerInfoOv == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : entry.load_AutismServerInfoOv);
          List<String> copyCommands = new ArrayList<>(entry.load_Set);
          copyCommands.removeIf(cmd -> cmd == null || cmd.isBlank());
          copyCommands.sort(String.CASE_INSENSITIVE_ORDER);
@@ -2624,7 +2624,7 @@ public class AutismServerInfoOverlay extends bj {
             );
          this.close_Map
             .put(
-               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_2 == null ? AutismServerInfoOverlay.Inner_EventBus.init : entry.init_AutismServerInfoOv_2
+               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_2 == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : entry.init_AutismServerInfoOv_2
             );
       }
 
@@ -2711,28 +2711,28 @@ public class AutismServerInfoOverlay extends bj {
                List.of(),
                List.of(),
                !command.isBlank(),
-               AutismServerInfoOverlay.Inner_JsonUtil.sync,
-               AutismServerInfoOverlay.Inner_ConfigStore.init
+               AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE,
+               AutismServerInfoOverlay.Inner_ConfigStore.EXACT
             )
             : false;
       }
 
       String plugin = null;
-      AutismServerInfoOverlay.Inner_ConfigStore confidence = AutismServerInfoOverlay.Inner_ConfigStore.read;
-      AutismServerInfoOverlay.Inner_JsonUtil evidence = source == null ? AutismServerInfoOverlay.Inner_JsonUtil.push : source;
+      AutismServerInfoOverlay.Inner_ConfigStore confidence = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
+      AutismServerInfoOverlay.Inner_JsonUtil evidence = source == null ? AutismServerInfoOverlay.Inner_JsonUtil.FEATURE : source;
       if (this.init_Z_Str_6(token)) {
          plugin = token;
-         confidence = AutismServerInfoOverlay.Inner_ConfigStore.init;
-         evidence = AutismServerInfoOverlay.Inner_JsonUtil.sync;
+         confidence = AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
+         evidence = AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE;
       } else if (tick_Map.containsKey(token)) {
          plugin = tick_Map.get(token);
-         confidence = AutismServerInfoOverlay.Inner_ConfigStore.load;
-         evidence = AutismServerInfoOverlay.Inner_JsonUtil.flush;
+         confidence = AutismServerInfoOverlay.Inner_ConfigStore.STRONG;
+         evidence = AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT;
       }
 
       if (plugin != null && !plugin.isBlank()) {
          return this.init_Z_Map(
-            entries, null, plugin, List.of(token), List.of(), List.of(), true, evidence, confidence, AutismServerInfoOverlay.Inner_EventBus.init
+            entries, null, plugin, List.of(token), List.of(), List.of(), true, evidence, confidence, AutismServerInfoOverlay.Inner_EventBus.PLUGIN
          );
       }
 
@@ -2750,9 +2750,9 @@ public class AutismServerInfoOverlay extends bj {
 
          return changed;
       } else {
-         return source != AutismServerInfoOverlay.Inner_JsonUtil.write
-               && source != AutismServerInfoOverlay.Inner_JsonUtil.load
-               && source != AutismServerInfoOverlay.Inner_JsonUtil.update
+         return source != AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE
+               && source != AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI
+               && source != AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE
                && !run_Map.containsKey(token)
             ? false
             : this.init_Z_Map(
@@ -2763,9 +2763,9 @@ public class AutismServerInfoOverlay extends bj {
                List.of(),
                List.of(),
                true,
-               AutismServerInfoOverlay.Inner_JsonUtil.update,
-               AutismServerInfoOverlay.Inner_ConfigStore.read,
-               AutismServerInfoOverlay.Inner_EventBus.init
+               AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE,
+               AutismServerInfoOverlay.Inner_ConfigStore.FEATURE,
+               AutismServerInfoOverlay.Inner_EventBus.PLUGIN
             );
       }
    }
@@ -2839,7 +2839,7 @@ public class AutismServerInfoOverlay extends bj {
       if (state == null) {
          return false;
       }
-      if (state.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.init) {
+      if (state.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.ROOT) {
          return true;
       }
       String query = state.init_Str == null ? "" : state.init_Str.trim();
@@ -2923,7 +2923,7 @@ public class AutismServerInfoOverlay extends bj {
          if (players.contains(key) || players.contains(clean.toLowerCase(Locale.ROOT))) {
             return false;
          } else {
-            return (kind == AutismServerInfoOverlay.Inner_SyncManager.read || kind == AutismServerInfoOverlay.Inner_SyncManager.write)
+            return (kind == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST || kind == AutismServerInfoOverlay.Inner_SyncManager.VERSION)
                   && (key.equals("plugins") || key.equals("plugin") || key.equals("version") || key.equals("about"))
                ? false
                : key.chars().allMatch(ch -> Character.isLetterOrDigit(ch) || ch == 95 || ch == 45 || ch == 46);
@@ -2966,7 +2966,7 @@ public class AutismServerInfoOverlay extends bj {
          }
 
          for (Entry<String, Set<String>> entry : inferredMatches.entrySet()) {
-            this.init_Z_Map(entries, entry.getKey(), entry.getValue(), true, AutismServerInfoOverlay.Inner_JsonUtil.flush);
+            this.init_Z_Map(entries, entry.getKey(), entry.getValue(), true, AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT);
          }
       }
    }
@@ -3003,9 +3003,9 @@ public class AutismServerInfoOverlay extends bj {
             List.of(),
             List.of(),
             true,
-            AutismServerInfoOverlay.Inner_JsonUtil.update,
-            AutismServerInfoOverlay.Inner_ConfigStore.read,
-            AutismServerInfoOverlay.Inner_EventBus.init
+            AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE,
+            AutismServerInfoOverlay.Inner_ConfigStore.FEATURE,
+            AutismServerInfoOverlay.Inner_EventBus.PLUGIN
          );
       }
    }
@@ -3044,7 +3044,7 @@ public class AutismServerInfoOverlay extends bj {
                   fingerprint.init_List(),
                   List.of(),
                   false,
-                  AutismServerInfoOverlay.Inner_JsonUtil.init,
+                  AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL,
                   confidence
                );
             }
@@ -3058,7 +3058,7 @@ public class AutismServerInfoOverlay extends bj {
 
    private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_bQ_CachePool(bQ.Inner_CachePool fingerprint) {
       String basis = fingerprint == null ? "" : fingerprint.read();
-      return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.Inner_ConfigStore.load : AutismServerInfoOverlay.Inner_ConfigStore.init;
+      return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.Inner_ConfigStore.STRONG : AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
    }
 
    private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, bQ.Inner_CachePool fingerprint) {
@@ -3083,7 +3083,7 @@ public class AutismServerInfoOverlay extends bj {
                   fingerprint.init_List(),
                   entry.write,
                   entry.init_Z,
-                  AutismServerInfoOverlay.Inner_JsonUtil.init,
+                  AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL,
                   this.init_AutismServerInfoOv_bQ_CachePool(fingerprint)
                );
                removeKeys.add(key);
@@ -3207,14 +3207,14 @@ public class AutismServerInfoOverlay extends bj {
       Map<Integer, AutismServerInfoOverlay.Inner_RenderState> probes = new LinkedHashMap<>();
       Set<String> seen = new HashSet<>();
       int nextId = this.value_I_2();
-      nextId = this.init_I_Map(probes, seen, nextId, "/", AutismServerInfoOverlay.Inner_SyncManager.init, null);
-      nextId = this.init_I_Map(probes, seen, nextId, "/ ", AutismServerInfoOverlay.Inner_SyncManager.init, null);
-      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.Inner_SyncManager.read, "/plugins", "/pl", "/bukkit:plugins", "/bukkit:pl");
+      nextId = this.init_I_Map(probes, seen, nextId, "/", AutismServerInfoOverlay.Inner_SyncManager.ROOT, null);
+      nextId = this.init_I_Map(probes, seen, nextId, "/ ", AutismServerInfoOverlay.Inner_SyncManager.ROOT, null);
+      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST, "/plugins", "/pl", "/bukkit:plugins", "/bukkit:pl");
       nextId = this.init_I_Map(
          probes,
          seen,
          nextId,
-         AutismServerInfoOverlay.Inner_SyncManager.write,
+         AutismServerInfoOverlay.Inner_SyncManager.VERSION,
          "/ver",
          "/version",
          "/about",
@@ -3222,24 +3222,24 @@ public class AutismServerInfoOverlay extends bj {
          "/bukkit:ver",
          "/bukkit:version"
       );
-      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.Inner_SyncManager.load, "/help", "/?", "/bukkit:help", "/minecraft:help");
+      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.Inner_SyncManager.HELP, "/help", "/?", "/bukkit:help", "/minecraft:help");
 
       for (int i = 0; i < "abcdefghijklmnopqrstuvwxyz0123456789".length(); i++) {
          char prefix = "abcdefghijklmnopqrstuvwxyz0123456789".charAt(i);
          String rootProbe = "/" + prefix;
-         nextId = this.init_I_Map(probes, seen, nextId, rootProbe, AutismServerInfoOverlay.Inner_SyncManager.init, String.valueOf(prefix));
-         nextId = this.init_I_Map(probes, seen, nextId, "/help " + prefix, AutismServerInfoOverlay.Inner_SyncManager.load, String.valueOf(prefix));
-         nextId = this.init_I_Map(probes, seen, nextId, "/? " + prefix, AutismServerInfoOverlay.Inner_SyncManager.load, String.valueOf(prefix));
+         nextId = this.init_I_Map(probes, seen, nextId, rootProbe, AutismServerInfoOverlay.Inner_SyncManager.ROOT, String.valueOf(prefix));
+         nextId = this.init_I_Map(probes, seen, nextId, "/help " + prefix, AutismServerInfoOverlay.Inner_SyncManager.HELP, String.valueOf(prefix));
+         nextId = this.init_I_Map(probes, seen, nextId, "/? " + prefix, AutismServerInfoOverlay.Inner_SyncManager.HELP, String.valueOf(prefix));
       }
 
       for (String namespace : load_StrArr) {
-         nextId = this.init_I_Map(probes, seen, nextId, "/" + namespace + ":", AutismServerInfoOverlay.Inner_SyncManager.update, namespace);
+         nextId = this.init_I_Map(probes, seen, nextId, "/" + namespace + ":", AutismServerInfoOverlay.Inner_SyncManager.NAMESPACE, namespace);
       }
 
       for (String plugin : sync_StrArr) {
-         nextId = this.init_I_Map(probes, seen, nextId, "/version " + plugin, AutismServerInfoOverlay.Inner_SyncManager.write, plugin);
-         nextId = this.init_I_Map(probes, seen, nextId, "/ver " + plugin, AutismServerInfoOverlay.Inner_SyncManager.write, plugin);
-         nextId = this.init_I_Map(probes, seen, nextId, "/help " + plugin, AutismServerInfoOverlay.Inner_SyncManager.load, plugin);
+         nextId = this.init_I_Map(probes, seen, nextId, "/version " + plugin, AutismServerInfoOverlay.Inner_SyncManager.VERSION, plugin);
+         nextId = this.init_I_Map(probes, seen, nextId, "/ver " + plugin, AutismServerInfoOverlay.Inner_SyncManager.VERSION, plugin);
+         nextId = this.init_I_Map(probes, seen, nextId, "/help " + plugin, AutismServerInfoOverlay.Inner_SyncManager.HELP, plugin);
       }
 
       return probes;
@@ -3275,12 +3275,12 @@ public class AutismServerInfoOverlay extends bj {
          this.frame_V_2();
          if (this.tick_Z) {
             return true;
-         } else if (context.equals(this.open_Str) && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.load) {
+         } else if (context.equals(this.open_Str) && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.COMPLETE) {
             return true;
          } else {
             long cachedAt = AutismConfig.getGlobal().getPluginScanTimestampByAddress(address);
             boolean fresh = cachedAt > 0L && System.currentTimeMillis() - cachedAt < 5184000000L;
-            if (fresh && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.load) {
+            if (fresh && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.COMPLETE) {
                this.open_Str = context;
                return true;
             } else {
@@ -3360,18 +3360,18 @@ public class AutismServerInfoOverlay extends bj {
          AutismServerInfoOverlay.Inner_ByteReader outcome = requestedOutcome;
          if (outcome == null) {
             outcome = !processingFailed && !session.init_bS.init(session.sync, session.update, session.init_Set.size())
-               ? AutismServerInfoOverlay.Inner_ByteReader.load
-               : AutismServerInfoOverlay.Inner_ByteReader.read;
+               ? AutismServerInfoOverlay.Inner_ByteReader.COMPLETE
+               : AutismServerInfoOverlay.Inner_ByteReader.PARTIAL;
          }
 
          if (processingFailed && finalEntries.isEmpty()) {
-            outcome = AutismServerInfoOverlay.Inner_ByteReader.write;
+            outcome = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
          }
 
          boolean infrastructureFailure = processingFailed || session.sync > 0 || session.update > 0 || !session.init_Set.isEmpty();
          boolean restorePrevious = finalEntries.isEmpty() && infrastructureFailure && !session.init_Map.isEmpty();
          if (restorePrevious) {
-            outcome = AutismServerInfoOverlay.Inner_ByteReader.write;
+            outcome = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
          }
 
          this.init_V_AutismServerInfoOv_Str_2(
@@ -3403,11 +3403,11 @@ public class AutismServerInfoOverlay extends bj {
          try {
             if (restorePrevious) {
                this.init_V_Map_Z(session.init_Map, false);
-            } else if (outcome != AutismServerInfoOverlay.Inner_ByteReader.write || !finalEntries.isEmpty()) {
+            } else if (outcome != AutismServerInfoOverlay.Inner_ByteReader.FAILED || !finalEntries.isEmpty()) {
                this.init_V_Map_Z(finalEntries, true);
             }
          } catch (RuntimeException error) {
-            outcome = AutismServerInfoOverlay.Inner_ByteReader.write;
+            outcome = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
             this.close_Str = "Could not publish results";
             init_Logger.warn("Plugin scan {} could not publish results", session.init_J, error);
             if (!session.init_Map.isEmpty()) {
@@ -3432,17 +3432,17 @@ public class AutismServerInfoOverlay extends bj {
          this.init_AutismServerInfoOv = outcome;
          if (issue != null && !issue.isBlank()) {
             this.close_Str = issue;
-         } else if (outcome == AutismServerInfoOverlay.Inner_ByteReader.load) {
+         } else if (outcome == AutismServerInfoOverlay.Inner_ByteReader.COMPLETE) {
             this.close_Str = "";
          } else if (this.close_Str.isBlank()) {
-            this.close_Str = outcome == AutismServerInfoOverlay.Inner_ByteReader.read ? "Some probes did not reply" : "Scan failed";
+            this.close_Str = outcome == AutismServerInfoOverlay.Inner_ByteReader.PARTIAL ? "Some probes did not reply" : "Scan failed";
          }
 
          this.load_Set.clear();
          this.poll_Map.clear();
          this.push_Map.clear();
          this.pool_V_2();
-         if (outcome != AutismServerInfoOverlay.Inner_ByteReader.write || !this.load_List.isEmpty()) {
+         if (outcome != AutismServerInfoOverlay.Inner_ByteReader.FAILED || !this.load_List.isEmpty()) {
             this.level_V_2();
          }
 
@@ -3751,13 +3751,13 @@ public class AutismServerInfoOverlay extends bj {
             boolean timedOut = now - session.load_J >= this.read_J();
             if (allProbesSent && settledAfterSend && (!allResponsesReceived || settledAfterLastResponse) || timedOut) {
                AutismServerInfoOverlay.Inner_ByteReader outcome = !session.init_bS.init(session.sync, session.update, session.init_Set.size())
-                  ? AutismServerInfoOverlay.Inner_ByteReader.load
-                  : AutismServerInfoOverlay.Inner_ByteReader.read;
+                  ? AutismServerInfoOverlay.Inner_ByteReader.COMPLETE
+                  : AutismServerInfoOverlay.Inner_ByteReader.PARTIAL;
                this.init_V_AutismServerInfoOv_Str(outcome, timedOut && !allResponsesReceived ? "Some probes timed out" : "");
             }
          } catch (RuntimeException error) {
             this.init_V_AutismServerInfoOv(session, "lifecycle", error);
-            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.read, "Scan recovered from an error");
+            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.PARTIAL, "Scan recovered from an error");
          }
       }
    }
@@ -3774,7 +3774,7 @@ public class AutismServerInfoOverlay extends bj {
          AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
          if (session != null) {
             this.init_V_AutismServerInfoOv(session, "background tick", error);
-            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.read, "Scan recovered from an error");
+            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.PARTIAL, "Scan recovered from an error");
          } else {
             init_Logger.warn("Plugin scanner background update failed", error);
          }
@@ -3801,15 +3801,15 @@ public class AutismServerInfoOverlay extends bj {
                String ns = parts[0].toLowerCase();
                String cmd = parts[1];
                if (!sync_Set.contains(ns)) {
-                  this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.Inner_JsonUtil.read);
-                  this.init_Z_Map(entries, ns + ":" + cmd, AutismServerInfoOverlay.Inner_JsonUtil.read);
+                  this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
+                  this.init_Z_Map(entries, ns + ":" + cmd, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
                   this.init_V_Str_11(cmd);
                }
             } else {
                this.init_V_Str_11(name);
                String token = this.read_Str_3(name);
                if (run_Map.containsKey(token)) {
-                  this.init_Z_Map(entries, name, AutismServerInfoOverlay.Inner_JsonUtil.read);
+                  this.init_Z_Map(entries, name, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
                }
             }
          }
@@ -3864,7 +3864,7 @@ public class AutismServerInfoOverlay extends bj {
       this.pop_Z = false;
       this.put_Z = false;
       this.get_Z = false;
-      this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.init;
+      this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
       this.close_Str = "";
       this.load_Set.clear();
       this.poll_Map.clear();
@@ -3919,7 +3919,7 @@ public class AutismServerInfoOverlay extends bj {
          if ((forceLive || !this.pop_Z) && !this.tick_Z) {
             if (init_Minecraft.getConnection() == null) {
                this.pop_Z = true;
-               this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.write;
+               this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
                this.close_Str = "Not connected";
             } else {
                this.flags = this.state;
@@ -3937,7 +3937,7 @@ public class AutismServerInfoOverlay extends bj {
                this.load_Set.clear();
                this.poll_Map.clear();
                this.push_Map.clear();
-               this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.init;
+               this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
                this.close_Str = "";
                this.task_V_2();
 
@@ -3964,7 +3964,7 @@ public class AutismServerInfoOverlay extends bj {
                   this.drain_V_2();
                } catch (Exception error) {
                   this.init_V_AutismServerInfoOv(session, "startup", error);
-                  this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.read, "Scan recovered from a startup error");
+                  this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.PARTIAL, "Scan recovered from a startup error");
                }
             }
          }
@@ -3983,7 +3983,7 @@ public class AutismServerInfoOverlay extends bj {
                      return;
                   }
 
-                  this.pop_Map.put(id, new AutismServerInfoOverlay.Inner_RenderState(command, AutismServerInfoOverlay.Inner_SyncManager.sync, null));
+                  this.pop_Map.put(id, new AutismServerInfoOverlay.Inner_RenderState(command, AutismServerInfoOverlay.Inner_SyncManager.USER, null));
 
                   while (this.pop_Map.size() > 256) {
                      Integer first = this.pop_Map.keySet().iterator().next();
@@ -4017,7 +4017,7 @@ public class AutismServerInfoOverlay extends bj {
                init_Minecraft.execute(() -> {
                   try {
                      this.load_V_Str_Str_2(root, fullCommand);
-                     this.init_V_Str_8(fullCommand, AutismServerInfoOverlay.Inner_JsonUtil.write, null);
+                     this.init_V_Str_8(fullCommand, AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE, null);
                   } catch (Throwable t) {
                      this.init_V_Str_Throwable("outgoing-command", t);
                   }
@@ -4035,7 +4035,7 @@ public class AutismServerInfoOverlay extends bj {
                try {
                   AutismServerInfoOverlay.Inner_StreamUtil command = this.init_AutismServerInfoOv_J(System.currentTimeMillis());
                   if (command != null) {
-                     this.init_V_Str_8(command.load, AutismServerInfoOverlay.Inner_JsonUtil.load, title);
+                     this.init_V_Str_8(command.load, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI, title);
                      return;
                   }
 
@@ -4148,19 +4148,19 @@ public class AutismServerInfoOverlay extends bj {
 
          if (!this.read(entry.init_AutismServerInfoOv_3)) {
             entry.init_AutismServerInfoOv_3 = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(
-               entry.init_AutismServerInfoOv_3, AutismServerInfoOverlay.Inner_JsonUtil.load
+               entry.init_AutismServerInfoOv_3, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI
             );
          }
 
          entry.init_AutismServerInfoOv = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
-            entry.init_AutismServerInfoOv, AutismServerInfoOverlay.Inner_ConfigStore.read
+            entry.init_AutismServerInfoOv, AutismServerInfoOverlay.Inner_ConfigStore.FEATURE
          );
          this.update_Map
             .put(ownerKey, this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(this.update_Map.get(ownerKey), entry.init_AutismServerInfoOv_3));
          this.flush_Map
             .put(
                ownerKey,
-               this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.flush_Map.get(ownerKey), AutismServerInfoOverlay.Inner_ConfigStore.read)
+               this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.flush_Map.get(ownerKey), AutismServerInfoOverlay.Inner_ConfigStore.FEATURE)
             );
          return before != entry.write.size();
       } else {
@@ -4362,9 +4362,9 @@ public class AutismServerInfoOverlay extends bj {
                }
 
                boolean isArgCompletion = (reply.init_AutismServerInfoOv != null
-                     && (reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.read
-                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.write
-                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.load
+                     && (reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST
+                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.VERSION
+                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.HELP
                         || (reply.init_AutismServerInfoOv.init_Str != null && reply.init_AutismServerInfoOv.init_Str.contains(" "))))
                   || (reply.load != null && reply.load.init_Str != null && reply.load.init_Str.contains(" "));
                boolean rootProbe = auditIsRootProbe(reply.init_AutismServerInfoOv) || auditIsRootProbe(reply.load);
@@ -4403,23 +4403,23 @@ public class AutismServerInfoOverlay extends bj {
          String ns = parts[0].toLowerCase(Locale.ROOT);
          String cmd = parts.length > 1 ? parts[1] : "";
          if (!sync_Set.contains(ns)) {
-            this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.Inner_JsonUtil.read);
+            this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
             this.init_V_Str_11(cmd);
          }
 
-         this.init_Z_Map(entries, text, liveObservation ? AutismServerInfoOverlay.Inner_JsonUtil.write : AutismServerInfoOverlay.Inner_JsonUtil.read);
+         this.init_Z_Map(entries, text, liveObservation ? AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE : AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
       } else if (probe != null) {
-         if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.update && probe.load != null && !normalizedToken.isEmpty()) {
-            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.sync);
-            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.sync);
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.read
-            || probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.write) {
+         if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.NAMESPACE && probe.load != null && !normalizedToken.isEmpty()) {
+            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE);
+            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE);
+         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST
+            || probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.VERSION) {
             String pluginCandidate = text.trim();
             String pluginKey = this.load_Str_2(pluginCandidate);
             if (this.init_Z_Str_AutismServerInfoOv(pluginCandidate, probe.init_AutismServerInfoOv) && !tick_Map.containsKey(pluginKey)) {
-               AutismServerInfoOverlay.Inner_JsonUtil candidateEvidence = probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.read
-                  ? AutismServerInfoOverlay.Inner_JsonUtil.open
-                  : AutismServerInfoOverlay.Inner_JsonUtil.poll;
+               AutismServerInfoOverlay.Inner_JsonUtil candidateEvidence = probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST
+                  ? AutismServerInfoOverlay.Inner_JsonUtil.PLUGIN_LIST
+                  : AutismServerInfoOverlay.Inner_JsonUtil.VERSION_HINT;
                AutismServerInfoOverlay.Inner_ConfigStore candidateConfidence = this.init_AutismServerInfoOv_AutismServerInfoOv(candidateEvidence);
                this.init_Z_Map(
                   legacyEntries,
@@ -4431,7 +4431,7 @@ public class AutismServerInfoOverlay extends bj {
                   false,
                   candidateEvidence,
                   candidateConfidence,
-                  AutismServerInfoOverlay.Inner_EventBus.init
+                  AutismServerInfoOverlay.Inner_EventBus.PLUGIN
                );
                this.init_Z_Map(
                   entries,
@@ -4443,17 +4443,17 @@ public class AutismServerInfoOverlay extends bj {
                   false,
                   candidateEvidence,
                   candidateConfidence,
-                  AutismServerInfoOverlay.Inner_EventBus.init
+                  AutismServerInfoOverlay.Inner_EventBus.PLUGIN
                );
             }
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.load && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
-            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.close);
-            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.close);
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.init && !normalizedToken.isEmpty()) {
+         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.HELP && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
+            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.HELP_HINT);
+            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.HELP_HINT);
+         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.ROOT && !normalizedToken.isEmpty()) {
             this.init_Z_Map_Str(entries, normalizedToken);
          }
       } else if (observed != null && !normalizedToken.isEmpty()) {
-         this.init_Z_Map(entries, normalizedToken, AutismServerInfoOverlay.Inner_JsonUtil.write);
+         this.init_Z_Map(entries, normalizedToken, AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE);
       }
    }
 
@@ -4824,7 +4824,7 @@ public class AutismServerInfoOverlay extends bj {
                               false
                            );
                         }
-                     } else if (row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.load) {
+                     } else if (row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.PLUGIN) {
                         boolean standaloneCommandHint = this.init_Z_AutismServerInfoOv_2(row);
                         boolean selected = !standaloneCommandHint && this.read_Z_Str_Str(row.load, this.sync_Str);
                         boolean hovered = rowVisible && uiMouseX >= clipLeft && uiMouseX < clipLeft + rowContentW && uiMouseY >= rowTop && uiMouseY < rowBottom;
@@ -4847,7 +4847,7 @@ public class AutismServerInfoOverlay extends bj {
 
                         boolean isAnticheat = row.load != null && update_Set.contains(row.load.toLowerCase(Locale.ROOT));
                         int nameColor = isAnticheat
-                           ? ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.flush)
+                           ? ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.DANGER)
                            : this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, hovered);
                         String label = isAnticheat ? "! " + row.load : row.load;
                         int labelX = clipLeft + (standaloneCommandHint ? 5 : 13);
@@ -4917,8 +4917,8 @@ public class AutismServerInfoOverlay extends bj {
                            }
                         }
                      } else {
-                        boolean commandRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.read;
-                        boolean channelRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.update
+                        boolean commandRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.COMMAND;
+                        boolean channelRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.CHANNEL
                            && row.write != null
                            && !row.write.isBlank();
                         boolean clickableRow = commandRow || channelRow;
@@ -5002,20 +5002,20 @@ public class AutismServerInfoOverlay extends bj {
 
       int var10000;
       switch (row.init_AutismServerInfoOv_3) {
-         case init:
-         case load:
+         case HEADER:
+         case PLUGIN:
             var10000 = this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
             break;
-         case read:
+         case COMMAND:
             var10000 = -1716016;
             break;
-         case write:
+         case GUI:
             var10000 = p.entry();
             break;
-         case update:
+         case CHANNEL:
             var10000 = this.read_I_4(row.read == null ? null : row.read.replaceFirst("^ch\\s+", ""));
             break;
-         case sync:
+         case WHY:
             var10000 = this.init_I_AutismServerInfoOv_Z(row.init_AutismServerInfoOv, false);
             break;
          default:
@@ -5027,8 +5027,8 @@ public class AutismServerInfoOverlay extends bj {
 
    private boolean init_Z_AutismServerInfoOv_2(AutismServerInfoOverlay.Inner_StateCache row) {
       return row != null
-         && row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.load
-         && row.init_AutismServerInfoOv_4 == AutismServerInfoOverlay.Inner_JsonUtil.update
+         && row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.PLUGIN
+         && row.init_AutismServerInfoOv_4 == AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE
          && row.load != null
          && row.load.startsWith("/");
    }
@@ -5910,7 +5910,7 @@ public class AutismServerInfoOverlay extends bj {
                      grouped.get(groupTitle)
                         .add(
                            AutismServerInfoOverlay.Inner_StateCache.init(
-                              AutismServerInfoOverlay.Inner_FileCache.read,
+                              AutismServerInfoOverlay.Inner_FileCache.COMMAND,
                               plugin,
                               "cmd /" + command,
                               "/" + command,
@@ -5928,7 +5928,7 @@ public class AutismServerInfoOverlay extends bj {
                      grouped.get(groupTitle)
                         .add(
                            AutismServerInfoOverlay.Inner_StateCache.init(
-                              AutismServerInfoOverlay.Inner_FileCache.write,
+                              AutismServerInfoOverlay.Inner_FileCache.GUI,
                               plugin,
                               "gui " + gui,
                               null,
@@ -5947,7 +5947,7 @@ public class AutismServerInfoOverlay extends bj {
                      grouped.get(groupTitle)
                         .add(
                            AutismServerInfoOverlay.Inner_StateCache.init(
-                              AutismServerInfoOverlay.Inner_FileCache.update,
+                              AutismServerInfoOverlay.Inner_FileCache.CHANNEL,
                               plugin,
                               "ch " + label,
                               this.open(channel),
@@ -5988,23 +5988,23 @@ public class AutismServerInfoOverlay extends bj {
 
    private int init_I_AutismServerInfoOv_2(AutismServerInfoOverlay.Inner_FileCache type) {
       byte var10000;
-      switch (type == null ? AutismServerInfoOverlay.Inner_FileCache.sync : type) {
-         case init:
+      switch (type == null ? AutismServerInfoOverlay.Inner_FileCache.WHY : type) {
+         case HEADER:
             var10000 = 0;
             break;
-         case load:
+         case PLUGIN:
             var10000 = 1;
             break;
-         case read:
+         case COMMAND:
             var10000 = 2;
             break;
-         case write:
+         case GUI:
             var10000 = 3;
             break;
-         case update:
+         case CHANNEL:
             var10000 = 4;
             break;
-         case sync:
+         case WHY:
             var10000 = 5;
             break;
          default:
@@ -6015,7 +6015,7 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private boolean init_Z_AutismServerInfoOv_3(AutismServerInfoOverlay.Inner_TaskQueue detail) {
-      if (detail != null && detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.update && detail.init_List.size() == 1) {
+      if (detail != null && detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE && detail.init_List.size() == 1) {
          String command = detail.init_List.get(0);
          return command != null && detail.init_Str.equalsIgnoreCase("/" + command);
       } else {
@@ -6030,43 +6030,43 @@ public class AutismServerInfoOverlay extends bj {
    private String init_Str_AutismServerInfoOv(
       AutismServerInfoOverlay.Inner_EventBus resultKind, AutismServerInfoOverlay.Inner_ConfigStore confidence, AutismServerInfoOverlay.Inner_JsonUtil evidence
    ) {
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.update) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE) {
          return "Command Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.read) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE) {
          return "Command Tree";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.flush) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT) {
          return "Command Root Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.open) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.PLUGIN_LIST) {
          return "Plugin Command Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.poll) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.VERSION_HINT) {
          return "Version Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.init) {
+      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL) {
          return "Payload Channels";
       }
 
-      if (resultKind != AutismServerInfoOverlay.Inner_EventBus.load && !this.read(evidence)) {
+      if (resultKind != AutismServerInfoOverlay.Inner_EventBus.FEATURE && !this.read(evidence)) {
          String var10000;
-         switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : confidence) {
-            case init:
+         switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+            case EXACT:
                var10000 = "Exact Plugins";
                break;
-            case load:
+            case STRONG:
                var10000 = "Strong Matches";
                break;
-            case read:
+            case FEATURE:
                var10000 = "Other";
                break;
-            case write:
+            case UNKNOWN:
                var10000 = "Other";
                break;
             default:
@@ -6082,47 +6082,47 @@ public class AutismServerInfoOverlay extends bj {
    private String init_Str_AutismServerInfoOv_2(
       AutismServerInfoOverlay.Inner_EventBus resultKind, AutismServerInfoOverlay.Inner_JsonUtil evidence, AutismServerInfoOverlay.Inner_ConfigStore confidence
    ) {
-      if (resultKind == AutismServerInfoOverlay.Inner_EventBus.load) {
+      if (resultKind == AutismServerInfoOverlay.Inner_EventBus.FEATURE) {
          return "feature command";
       }
 
       String var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence) {
-         case init:
+      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+         case PAYLOAD_CHANNEL:
             var10000 = "payload channel";
             break;
-         case load:
+         case COMMAND_GUI:
             var10000 = "command and gui";
             break;
-         case read:
+         case COMMAND_TREE:
             var10000 = "command tree";
             break;
-         case write:
+         case USER_AUTOCOMPLETE:
             var10000 = "user autocomplete";
             break;
-         case update:
+         case SCANNER_AUTOCOMPLETE:
             var10000 = "command hint";
             break;
-         case sync:
+         case NAMESPACE:
             var10000 = "namespace";
             break;
-         case flush:
+         case ROOT_HINT:
             var10000 = "root hint";
             break;
-         case close:
+         case HELP_HINT:
             var10000 = "help hint";
             break;
-         case open:
+         case PLUGIN_LIST:
             var10000 = "plugin command hint";
             break;
-         case poll:
+         case VERSION_HINT:
             var10000 = "version hint";
             break;
-         case push:
+         case FEATURE:
             var10000 = "feature command";
             break;
-         case pop:
-            var10000 = confidence == AutismServerInfoOverlay.Inner_ConfigStore.write ? "unknown" : "weak hint";
+         case UNKNOWN:
+            var10000 = confidence == AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN ? "unknown" : "weak hint";
             break;
          default:
             throw new MatchException(null, null);
@@ -6141,34 +6141,34 @@ public class AutismServerInfoOverlay extends bj {
       }
 
       AutismServerInfoOverlay.Inner_JsonUtil evidence = detail.load_AutismServerInfoOv == null
-         ? AutismServerInfoOverlay.Inner_JsonUtil.pop
+         ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN
          : detail.load_AutismServerInfoOv;
       String var10000;
       switch (evidence) {
-         case init:
+         case PAYLOAD_CHANNEL:
             var10000 = "Payload Channel";
             break;
-         case load:
-         case write:
-         case push:
+         case COMMAND_GUI:
+         case USER_AUTOCOMPLETE:
+         case FEATURE:
             var10000 = "Other";
             break;
-         case read:
+         case COMMAND_TREE:
             var10000 = "Command Tree";
             break;
-         case update:
-         case close:
-         case pop:
+         case SCANNER_AUTOCOMPLETE:
+         case HELP_HINT:
+         case UNKNOWN:
             var10000 = "Other";
             break;
-         case sync:
-         case flush:
+         case NAMESPACE:
+         case ROOT_HINT:
             var10000 = "Command Root Hint";
             break;
-         case open:
+         case PLUGIN_LIST:
             var10000 = "Plugin Command Hint";
             break;
-         case poll:
+         case VERSION_HINT:
             var10000 = "Version Command Hint";
             break;
          default:
@@ -6304,7 +6304,7 @@ public class AutismServerInfoOverlay extends bj {
             List<String> guis = List.copyOf(builder.read);
             List<String> channels = this.init_List_Collection(builder.init_List);
             AutismServerInfoOverlay.Inner_JsonUtil evidence = this.update_Map
-               .getOrDefault(key, commands.isEmpty() ? AutismServerInfoOverlay.Inner_JsonUtil.pop : AutismServerInfoOverlay.Inner_JsonUtil.flush);
+               .getOrDefault(key, commands.isEmpty() ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT);
             AutismServerInfoOverlay.Inner_JsonUtil copyEvidence = this.sync_Map
                .getOrDefault(key, this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(displayName, evidence));
             AutismServerInfoOverlay.Inner_ConfigStore confidence = this.flush_Map.getOrDefault(key, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence));
@@ -6814,16 +6814,16 @@ public class AutismServerInfoOverlay extends bj {
             if (plugin != null && !plugin.isBlank()) {
                AutismServerInfoOverlay.Inner_TaskQueue detail = this.init_AutismServerInfoOv_Str_3(plugin);
                if (detail != null
-                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.close
-                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.pop) {
+                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.HELP_HINT
+                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN) {
                   String uiGroupTitle = this.init_Str_AutismServerInfoOv(
                      detail.init_AutismServerInfoOv_2, detail.init_AutismServerInfoOv, detail.init_AutismServerInfoOv_3
                   );
                   if (!"Command Hints".equals(uiGroupTitle)
                      && !"Other".equals(uiGroupTitle)
                      && (
-                        detail.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.Inner_EventBus.load
-                           || detail.load_AutismServerInfoOv == AutismServerInfoOverlay.Inner_JsonUtil.load
+                        detail.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.Inner_EventBus.FEATURE
+                           || detail.load_AutismServerInfoOv == AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI
                      )) {
                      grouped.computeIfAbsent(this.init_Str_AutismServerInfoOv_2(detail), unused -> new ArrayList<>()).add(detail);
                      copyCount++;
@@ -6889,10 +6889,10 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private enum Inner_ByteReader {
-      init,
-      load,
-      read,
-      write;
+      NONE,
+      COMPLETE,
+      PARTIAL,
+      FAILED;
    }
 
    private static final class Inner_CachePool {
@@ -6908,10 +6908,10 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private enum Inner_ConfigStore {
-      init,
-      load,
-      read,
-      write;
+      EXACT,
+      STRONG,
+      FEATURE,
+      UNKNOWN;
    }
 
    private static class Inner_DataUtil {
@@ -6935,17 +6935,17 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private enum Inner_EventBus {
-      init,
-      load;
+      PLUGIN,
+      FEATURE;
    }
 
    private enum Inner_FileCache {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      HEADER,
+      PLUGIN,
+      COMMAND,
+      GUI,
+      CHANNEL,
+      WHY;
    }
 
    private static final class Inner_HashUtil extends autismclient.gui.f.c.TableIndex {
@@ -6980,18 +6980,18 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private enum Inner_JsonUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop;
+      PAYLOAD_CHANNEL,
+      COMMAND_GUI,
+      COMMAND_TREE,
+      USER_AUTOCOMPLETE,
+      SCANNER_AUTOCOMPLETE,
+      NAMESPACE,
+      ROOT_HINT,
+      HELP_HINT,
+      PLUGIN_LIST,
+      VERSION_HINT,
+      FEATURE,
+      UNKNOWN;
    }
 
    private static final class Inner_NetHelper {
@@ -7160,9 +7160,9 @@ public class AutismServerInfoOverlay extends bj {
          this.load = plugin;
          this.read = label;
          this.write = actionCommand;
-         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.Inner_EventBus.init : resultKind;
-         this.init_AutismServerInfoOv_4 = evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence;
-         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : confidence;
+         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : resultKind;
+         this.init_AutismServerInfoOv_4 = evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence;
+         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence;
          this.init_I = Math.max(1, height);
          this.update = countLabel == null ? "" : countLabel;
          this.sync = searchText == null ? "" : searchText;
@@ -7170,14 +7170,14 @@ public class AutismServerInfoOverlay extends bj {
 
       static AutismServerInfoOverlay.Inner_StateCache init(String title, int height) {
          return new AutismServerInfoOverlay.Inner_StateCache(
-            AutismServerInfoOverlay.Inner_FileCache.init,
+            AutismServerInfoOverlay.Inner_FileCache.HEADER,
             title,
             null,
             title,
             null,
-            AutismServerInfoOverlay.Inner_EventBus.init,
-            AutismServerInfoOverlay.Inner_JsonUtil.pop,
-            AutismServerInfoOverlay.Inner_ConfigStore.write,
+            AutismServerInfoOverlay.Inner_EventBus.PLUGIN,
+            AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN,
+            AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN,
             height,
             "",
             init(title)
@@ -7194,7 +7194,7 @@ public class AutismServerInfoOverlay extends bj {
          String searchText
       ) {
          return new AutismServerInfoOverlay.Inner_StateCache(
-            AutismServerInfoOverlay.Inner_FileCache.load, null, plugin, plugin, null, resultKind, evidence, confidence, height, countLabel, searchText
+            AutismServerInfoOverlay.Inner_FileCache.PLUGIN, null, plugin, plugin, null, resultKind, evidence, confidence, height, countLabel, searchText
          );
       }
 
@@ -7209,12 +7209,12 @@ public class AutismServerInfoOverlay extends bj {
          String searchText
       ) {
          return new AutismServerInfoOverlay.Inner_StateCache(
-            type, null, plugin, label, actionCommand, AutismServerInfoOverlay.Inner_EventBus.init, evidence, confidence, height, "", searchText
+            type, null, plugin, label, actionCommand, AutismServerInfoOverlay.Inner_EventBus.PLUGIN, evidence, confidence, height, "", searchText
          );
       }
 
       boolean init() {
-         return this.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.init;
+         return this.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.HEADER;
       }
 
       private static String init(String text) {
@@ -7226,12 +7226,12 @@ public class AutismServerInfoOverlay extends bj {
    }
 
    private enum Inner_SyncManager {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      ROOT,
+      HELP,
+      PLUGIN_LIST,
+      VERSION,
+      NAMESPACE,
+      USER;
    }
 
    private static final class Inner_TableIndex extends autismclient.gui.f.c.TableIndex {
@@ -7373,10 +7373,10 @@ public class AutismServerInfoOverlay extends bj {
          this.init_List = commands == null ? List.of() : commands;
          this.load_List = guis == null ? List.of() : guis;
          this.read_List = channels == null ? List.of() : channels;
-         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.Inner_EventBus.init : resultKind;
-         this.init_AutismServerInfoOv_3 = evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : evidence;
-         this.load_AutismServerInfoOv = copyEvidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.pop : copyEvidence;
-         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.write : confidence;
+         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : resultKind;
+         this.init_AutismServerInfoOv_3 = evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence;
+         this.load_AutismServerInfoOv = copyEvidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : copyEvidence;
+         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence;
          this.read_Str = sourceLabel == null ? "" : sourceLabel;
          this.write_Str = countLabel == null ? "" : countLabel;
          this.write_List = copyCommands == null ? List.of() : copyCommands;
@@ -7388,9 +7388,9 @@ public class AutismServerInfoOverlay extends bj {
       String init_Str;
       boolean init_Z;
       AutismServerInfoOverlay.Inner_EventBus init_AutismServerInfoOv_2;
-      AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.pop;
-      AutismServerInfoOverlay.Inner_JsonUtil load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.pop;
-      AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.read;
+      AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+      AutismServerInfoOverlay.Inner_JsonUtil load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+      AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
       final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> load_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> read = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);

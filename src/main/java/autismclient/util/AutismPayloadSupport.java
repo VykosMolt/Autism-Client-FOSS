@@ -196,7 +196,7 @@ public final class AutismPayloadSupport {
                      payloadClassName,
                      protocolPhase,
                      packetId,
-                     bE.Inner_StreamUtil.init_bE_StreamUtil.init()
+                     bE.Inner_StreamUtil.CAPTURED_EXACT.init()
                   );
                } else {
                   return null;
@@ -248,27 +248,27 @@ public final class AutismPayloadSupport {
 
    private static AutismPayloadSupport.Inner_DataUtil init_AutismPayloadSuppo(CustomPacketPayload payload) {
       if (payload == null) {
-         return new AutismPayloadSupport.Inner_DataUtil(new byte[0], bE.Inner_StreamUtil.load.init());
+         return new AutismPayloadSupport.Inner_DataUtil(new byte[0], bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
       } else if (payload instanceof AutismPayloadSupport.RawCustomPacketPayload raw) {
-         return new AutismPayloadSupport.Inner_DataUtil(raw.bytes(), bE.Inner_StreamUtil.init_bE_StreamUtil.init());
+         return new AutismPayloadSupport.Inner_DataUtil(raw.bytes(), bE.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
          byte[] remembered = init_BArr(payload);
          if (remembered != null) {
-            return new AutismPayloadSupport.Inner_DataUtil(remembered, bE.Inner_StreamUtil.init_bE_StreamUtil.init());
+            return new AutismPayloadSupport.Inner_DataUtil(remembered, bE.Inner_StreamUtil.CAPTURED_EXACT.init());
          }
 
          byte[] codecBytes = read(payload);
          if (codecBytes != null) {
-            return new AutismPayloadSupport.Inner_DataUtil(codecBytes, bE.Inner_StreamUtil.load.init());
+            return new AutismPayloadSupport.Inner_DataUtil(codecBytes, bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
 
          try {
             Method writeMethod = payload.getClass().getMethod("write", FriendlyByteBuf.class);
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             writeMethod.invoke(payload, buf);
-            return new AutismPayloadSupport.Inner_DataUtil(init(buf), bE.Inner_StreamUtil.load.init());
+            return new AutismPayloadSupport.Inner_DataUtil(init(buf), bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          } catch (Throwable var5) {
-            return new AutismPayloadSupport.Inner_DataUtil(new byte[0], bE.Inner_StreamUtil.load.init());
+            return new AutismPayloadSupport.Inner_DataUtil(new byte[0], bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init());
          }
       }
    }
@@ -300,7 +300,7 @@ public final class AutismPayloadSupport {
             System.arraycopy(bytes, index[0], body, 0, body.length);
          }
 
-         return new AutismPayloadSupport.Inner_DataUtil(body, bE.Inner_StreamUtil.init_bE_StreamUtil.init());
+         return new AutismPayloadSupport.Inner_DataUtil(body, bE.Inner_StreamUtil.CAPTURED_EXACT.init());
       } else {
          return null;
       }
@@ -798,18 +798,18 @@ public final class AutismPayloadSupport {
       byte[] safeBytes = bytes == null ? new byte[0] : bytes;
       String mcString = read(safeBytes);
       if (mcString != null) {
-         return List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.clear, mcString, true));
+         return List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.MINECRAFT_STRING, mcString, true));
       }
 
       String writeUtf = update(safeBytes);
       if (writeUtf != null) {
-         return List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.push, writeUtf, true));
+         return List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.JAVA_WRITE_UTF, writeUtf, true));
       }
 
       String utf8 = write(safeBytes);
       return utf8.isBlank() && safeBytes.length != 0
-         ? List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.tick, init_Str(safeBytes), true))
-         : List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.get, utf8, true));
+         ? List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.HEX_BYTES, init_Str(safeBytes), true))
+         : List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.STRING_BYTES, utf8, true));
    }
 
    public static String init_Str(String channel, byte[] bytes) {
@@ -1130,7 +1130,7 @@ public final class AutismPayloadSupport {
    private record Inner_DataUtil(byte[] init_BArr, String init_Str) {
       private Inner_DataUtil {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
-         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : bE.Inner_StreamUtil.load.init();
+         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : bE.Inner_StreamUtil.REENCODED_FROM_PAYLOAD.init();
       }
 
       public byte[] init_BArr() {

@@ -29,7 +29,7 @@ public final class NodeWalker extends KnownPacksManager {
    }
 
    public static boolean init(BufferHelper.Inner_StreamUtil context) {
-      return context == null || context.init_BufferHelper_Cache() != BufferHelper.Inner_CachePool.load || !BufferHelper.init_Z(context);
+      return context == null || context.init_BufferHelper_Cache() != BufferHelper.Inner_CachePool.MODDED || !BufferHelper.init_Z(context);
    }
 
    @Override

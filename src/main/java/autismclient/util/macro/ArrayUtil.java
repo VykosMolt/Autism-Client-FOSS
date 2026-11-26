@@ -506,7 +506,7 @@ public final class ArrayUtil {
          if (trimmed.matches("\\{[A-Za-z_][A-Za-z0-9_.-]{0,63}}")) {
             String name = trimmed.substring(1, trimmed.length() - 1);
             Optional<l> value = n.init_Optional_Str(name);
-            if (value.isPresent() && value.get().init_l_DataUtil() == l.Inner_DataUtil.update) {
+            if (value.isPresent() && value.get().init_l_DataUtil() == l.Inner_DataUtil.ITEM) {
                l item = value.get();
                ArrayUtil resolved = new ArrayUtil();
                resolved.init_I = item.init_Optional_Str("slot").map(v -> init_I_Str_I(v.init_Str(), this.init_I)).orElse(this.init_I);

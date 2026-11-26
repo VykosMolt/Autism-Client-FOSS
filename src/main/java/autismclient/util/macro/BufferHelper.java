@@ -183,7 +183,7 @@ public class BufferHelper implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_N_StreamGate;
+      return StreamGate.BUNDLE_DUPE_V2;
    }
 
    @Override

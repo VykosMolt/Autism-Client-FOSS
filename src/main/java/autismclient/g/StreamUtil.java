@@ -45,7 +45,7 @@ public final class StreamUtil {
       }
 
       BufferHelper.Inner_StreamUtil context = BufferHelper.init(minecraft.getConnection());
-      return context == null || context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.init;
+      return context == null || context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA;
    }
 
    public static void init_V(Component component) {

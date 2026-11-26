@@ -627,7 +627,7 @@ public class AutismLANSyncOverlay extends bj {
 
    private void init_V_GuiGraphicsExtract_4(GuiGraphicsExtractor ctx, int mx, int my, int y) {
       int lx = this.pop + this.start;
-      this.init(ctx, "Not running", autismclient.gui.f.b.l.load, ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.flush), lx, y + 4);
+      this.init(ctx, "Not running", autismclient.gui.f.b.l.load, ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.DANGER), lx, y + 4);
       this.init(ctx, "LAN Sync is currently stopped", autismclient.gui.f.b.l.write, p.parse(), lx, y + 4 + this.reset);
    }
 
@@ -654,9 +654,9 @@ public class AutismLANSyncOverlay extends bj {
       int totalW = createW + gap + searchW;
       int createX = this.pop + this.start + Math.max(0, (this.run - this.start * 2 - totalW) / 2);
       int searchX = createX + createW + gap;
-      this.init(ctx, createX, btnY, createW, this.add, "Create", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mx, my);
+      this.init(ctx, createX, btnY, createW, this.add, "Create", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my);
       this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(createX, btnY, createW, this.add, () -> aE.init_aE().write_V()));
-      this.init(ctx, searchX, btnY, searchW, this.add, "Search", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mx, my);
+      this.init(ctx, searchX, btnY, searchW, this.add, "Search", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my);
       this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(searchX, btnY, searchW, this.add, () -> aE.init_aE().close_V()));
    }
 
@@ -673,7 +673,7 @@ public class AutismLANSyncOverlay extends bj {
          )
       );
       int cancelX = this.pop + (this.run - cancelW) / 2;
-      this.init(ctx, cancelX, btnY, cancelW, this.add, "Cancel Search", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mx, my);
+      this.init(ctx, cancelX, btnY, cancelW, this.add, "Cancel Search", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my);
       this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(cancelX, btnY, cancelW, this.add, () -> aE.init_aE().open_V()));
    }
 
@@ -706,7 +706,7 @@ public class AutismLANSyncOverlay extends bj {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int mouseX, int mouseY) {
       if (this.init_k != null) {
          int labelY = this.init_k.load_I() - this.next;
-         cs.init(ctx, this.init_Font, "Sync Send", cs.Inner_DataUtil.write, this.init_k.init_I(), labelY, false);
+         cs.init(ctx, this.init_Font, "Sync Send", cs.Inner_DataUtil.MUTED, this.init_k.init_I(), labelY, false);
          this.init_k.init_V(ctx, mouseX, mouseY, 0.0F);
       }
    }
@@ -759,7 +759,7 @@ public class AutismLANSyncOverlay extends bj {
       cy += this.reset;
       aE.Inner_TaskQueue spread = sync.init_aE_TaskQueue();
       if (spread != null) {
-         String spreadStr = spread.init_aE_StreamUtil == aE.Inner_StreamUtil.load
+         String spreadStr = spread.init_aE_StreamUtil == aE.Inner_StreamUtil.TICK
             ? (spread.init_Z ? "Tick perfect" : spread.load_I + " tick off")
             : String.format("%.1fms", spread.init());
          int spreadColor = this.init_I_D(spread.init());
@@ -801,7 +801,7 @@ public class AutismLANSyncOverlay extends bj {
          this.run - this.start * 2,
          this.add,
          "Leave Session",
-         autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          true,
          mx,
          my
@@ -835,8 +835,8 @@ public class AutismLANSyncOverlay extends bj {
       this.init(ctx, "Execution Method", autismclient.gui.f.b.l.write, p.parse(), lx, cy);
       cy += this.reset;
       int methodW = (rowWidth - 2) / 2;
-      boolean instant = sync.init_aE_StreamUtil() == aE.Inner_StreamUtil.init;
-      boolean syncIdle = sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.init || sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.flush;
+      boolean instant = sync.init_aE_StreamUtil() == aE.Inner_StreamUtil.INSTANT;
+      boolean syncIdle = sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.IDLE || sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.DONE;
       boolean canChangeMethod = syncIdle;
       this.init(
          ctx,
@@ -845,13 +845,13 @@ public class AutismLANSyncOverlay extends bj {
          methodW,
          this.add,
          "Instant",
-         instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          canChangeMethod,
          mx,
          my
       );
       if (canChangeMethod) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.init)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.INSTANT)));
       }
 
       int tickX = lx + methodW + 2;
@@ -863,13 +863,13 @@ public class AutismLANSyncOverlay extends bj {
          tickW,
          this.add,
          "Tick",
-         !instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         !instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          canChangeMethod,
          mx,
          my
       );
       if (canChangeMethod) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.load)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.TICK)));
       }
 
       cy += this.add + 2;
@@ -885,20 +885,20 @@ public class AutismLANSyncOverlay extends bj {
          boolean isSelected = client.init_Str.equals(this.read_Str);
          boolean isHov = this.init(mx, my, lx - 2, cy, this.run - this.start * 2 + 4, this.clear);
          autismclient.gui.f.b.FileCache.init(
-            ctx, this.init_Font, "", lx - 2, cy, rowWidth, this.clear, isHov, isSelected, autismclient.gui.f.b.FileCache.Inner_DataUtil.init
+            ctx, this.init_Font, "", lx - 2, cy, rowWidth, this.clear, isHov, isSelected, autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
          );
          autismclient.gui.f.b.StateCache.init(
             ctx,
             lx + 1,
             cy + 3,
             8,
-            isSelected ? autismclient.gui.f.b.StateCache.Inner_DataUtil.load : autismclient.gui.f.b.StateCache.Inner_DataUtil.init,
+            isSelected ? autismclient.gui.f.b.StateCache.Inner_DataUtil.DOWN : autismclient.gui.f.b.StateCache.Inner_DataUtil.RIGHT,
             isSelected ? -593937 : -1911596,
-            ct.init_I_I_ct_DataUtil(-1204284392, ct.Inner_DataUtil.load),
+            ct.init_I_I_ct_DataUtil(-1204284392, ct.Inner_DataUtil.OUTLINE),
             1.0F
          );
          aE.Inner_CachePool status = sync.init_aE_CachePool_Str(client.init_Str);
-         int dotColor = status == aE.Inner_CachePool.init ? -11141291 : (status == aE.Inner_CachePool.load ? -22016 : -7829368);
+         int dotColor = status == aE.Inner_CachePool.HEALTHY ? -11141291 : (status == aE.Inner_CachePool.STALE ? -22016 : -7829368);
          autismclient.gui.f.b.TableIndex.read(ctx, lx + 10, cy + 4, 5, 5, dotColor);
          boolean isSelf = client.init_Str.equals(sync.load_Str());
          int nameColor = isHov ? -2245633 : (client.init_Z ? -22016 : -1);
@@ -921,7 +921,7 @@ public class AutismLANSyncOverlay extends bj {
          }
 
          int nameMaxW = Math.max(20, rowWidth - 18 - rightReserve);
-         String displayName = cs.init(this.init_Font, client.init_Str, nameMaxW, cs.Inner_DataUtil.read);
+         String displayName = cs.init(this.init_Font, client.init_Str, nameMaxW, cs.Inner_DataUtil.BODY);
          autismclient.gui.f.b.k.init(
             ctx, this.init_Font, displayName, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), nameColor, lx + 18, cy + 3, false
          );
@@ -955,7 +955,7 @@ public class AutismLANSyncOverlay extends bj {
             autismclient.gui.f.b.TableIndex.load(ctx, lx + 4, cy, this.pop + this.run - this.start - lx - 8, detailH, p.update());
             int dx = lx + 10;
             int dy = cy + 4;
-            this.init(ctx, "Status: " + status.name(), autismclient.gui.f.b.l.read, status == aE.Inner_CachePool.init ? -11141291 : -22016, dx, dy);
+            this.init(ctx, "Status: " + status.name(), autismclient.gui.f.b.l.read, status == aE.Inner_CachePool.HEALTHY ? -11141291 : -22016, dx, dy);
             dy += this.reset;
             this.init(ctx, isSelf ? "(This is you)" : "Connected peer", autismclient.gui.f.b.l.write, p.bind(), dx, dy);
             dy += this.reset;
@@ -1003,7 +1003,7 @@ public class AutismLANSyncOverlay extends bj {
                   this.init_Font, "Reset", init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), init_CharEncoder.load(autismclient.gui.f.b.l.read)
                )
             );
-            this.init(ctx, ctrlX, dy, resetW, btnS, "Reset", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, true, mx, my);
+            this.init(ctx, ctrlX, dy, resetW, btnS, "Reset", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my);
             this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(ctrlX, dy, resetW, btnS, () -> sync.init_V_Str_I(peerName, 0)));
             cy += detailH + 2;
          }
@@ -1023,8 +1023,8 @@ public class AutismLANSyncOverlay extends bj {
       this.init(ctx, "Execution Method", autismclient.gui.f.b.l.write, p.parse(), lx, cy);
       cy += this.reset;
       int methodW = (btnW - 2) / 2;
-      boolean instant = sync.init_aE_StreamUtil() == aE.Inner_StreamUtil.init;
-      boolean syncIdle = sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.init || sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.flush;
+      boolean instant = sync.init_aE_StreamUtil() == aE.Inner_StreamUtil.INSTANT;
+      boolean syncIdle = sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.IDLE || sync.init_aE_JsonUtil() == aE.Inner_JsonUtil.DONE;
       this.init(
          ctx,
          lx,
@@ -1032,13 +1032,13 @@ public class AutismLANSyncOverlay extends bj {
          methodW,
          this.add,
          "Instant",
-         instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          syncIdle,
          mx,
          my
       );
       if (syncIdle) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.init)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, methodW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.INSTANT)));
       }
 
       int tickX = lx + methodW + 2;
@@ -1050,13 +1050,13 @@ public class AutismLANSyncOverlay extends bj {
          tickW,
          this.add,
          "Tick",
-         !instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+         !instant ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          syncIdle,
          mx,
          my
       );
       if (syncIdle) {
-         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.load)));
+         this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(tickX, cy, tickW, this.add, () -> sync.init_V_aE_StreamUtil(aE.Inner_StreamUtil.TICK)));
       }
 
       cy += this.add + 2;
@@ -1073,7 +1073,7 @@ public class AutismLANSyncOverlay extends bj {
          btnW,
          this.add,
          this.flush_Z ? "Delay: In Game" : delayLabel,
-         delayOn ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
+         delayOn ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
          syncIdle && !this.flush_Z,
          mx,
          my
@@ -1083,7 +1083,7 @@ public class AutismLANSyncOverlay extends bj {
       }
 
       cy += this.add + 2;
-      this.init(ctx, lx, cy, btnW, this.add, "Share Queue", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init, !this.flush_Z, mx, my);
+      this.init(ctx, lx, cy, btnW, this.add, "Share Queue", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, !this.flush_Z, mx, my);
       if (!this.flush_Z) {
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> {
             try {
@@ -1104,7 +1104,7 @@ public class AutismLANSyncOverlay extends bj {
          btnW,
          this.add,
          this.flush_Z ? "Execute: In Game" : "Sync Execute",
-         autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write,
+         autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY,
          syncIdle && !this.flush_Z,
          mx,
          my
@@ -1122,7 +1122,7 @@ public class AutismLANSyncOverlay extends bj {
       int cy = y + 4;
       int btnW = this.run - this.start * 2;
       String modeLabel = this.open_Z ? "Mode: Per-User" : "Mode: Shared Macro";
-      this.init(ctx, lx, cy, btnW, this.add, modeLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write, true, mx, my);
+      this.init(ctx, lx, cy, btnW, this.add, modeLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my);
       this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> {
          this.open_Z = !this.open_Z;
          this.load_Str = null;
@@ -1152,7 +1152,7 @@ public class AutismLANSyncOverlay extends bj {
 
       boolean anyRunning = MacroExecutor.load_Z();
       if (anyRunning && !this.flush_Z) {
-         this.init(ctx, lx, cy, btnW, this.add, "Sync Stop All", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load, true, mx, my);
+         this.init(ctx, lx, cy, btnW, this.add, "Sync Stop All", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, btnW, this.add, () -> sync.run()));
          cy += this.add + 4;
       }
@@ -1172,7 +1172,7 @@ public class AutismLANSyncOverlay extends bj {
 
       aE.Inner_TaskQueue spread = sync.init_aE_TaskQueue();
       if (spread != null) {
-         String spreadStr = spread.init_aE_StreamUtil == aE.Inner_StreamUtil.load
+         String spreadStr = spread.init_aE_StreamUtil == aE.Inner_StreamUtil.TICK
             ? (
                spread.init_Z
                   ? "Last: perfect tick " + spread.load_J + " (" + spread.init_I + " clients)"
@@ -1235,17 +1235,17 @@ public class AutismLANSyncOverlay extends bj {
       cy += 4;
       AutismLANSyncOverlay.Inner_CachePool syncStatus = this.init_AutismLANSyncOverl_aE_Str(sync, this.init_Str_2);
       if (this.init_Str_2 != null) {
-         String selectedLine = cs.init(this.init_Font, "Selected: " + this.init_Str_2, btnW, cs.Inner_DataUtil.read);
+         String selectedLine = cs.init(this.init_Font, "Selected: " + this.init_Str_2, btnW, cs.Inner_DataUtil.BODY);
          this.init(ctx, selectedLine, autismclient.gui.f.b.l.read, -1, lx, cy);
          cy += this.reset;
          if (!syncStatus.init_List.isEmpty()) {
-            String missingLine = cs.init(this.init_Font, "Missing on: " + this.init_Str_List(syncStatus.init_List), btnW, cs.Inner_DataUtil.read);
-            this.init(ctx, missingLine, autismclient.gui.f.b.l.read, ct.init_I_I_ct_DataUtil(-38037, ct.Inner_DataUtil.flush), lx, cy);
+            String missingLine = cs.init(this.init_Font, "Missing on: " + this.init_Str_List(syncStatus.init_List), btnW, cs.Inner_DataUtil.BODY);
+            this.init(ctx, missingLine, autismclient.gui.f.b.l.read, ct.init_I_I_ct_DataUtil(-38037, ct.Inner_DataUtil.DANGER), lx, cy);
             cy += this.reset;
          }
 
          if (!syncStatus.init_Map.isEmpty()) {
-            String differentLine = cs.init(this.init_Font, "Different on: " + this.init_Str_Map(syncStatus.init_Map), btnW, cs.Inner_DataUtil.read);
+            String differentLine = cs.init(this.init_Font, "Different on: " + this.init_Str_Map(syncStatus.init_Map), btnW, cs.Inner_DataUtil.BODY);
             this.init(ctx, differentLine, autismclient.gui.f.b.l.read, -14249, lx, cy);
             cy += this.reset;
          }
@@ -1268,14 +1268,14 @@ public class AutismLANSyncOverlay extends bj {
       boolean shareEnabled = this.init_Str_2 != null && sync.load_I() > 1;
       boolean executeEnabled = !this.flush_Z && this.init_Str_2 != null && syncStatus.init();
       if (shareEnabled) {
-         this.init(ctx, lx, cy, shareW, this.add, "Send To Peers", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read, true, mx, my);
+         this.init(ctx, lx, cy, shareW, this.add, "Send To Peers", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, shareW, this.add, () -> {
             if (this.init_Str_2 != null) {
                sync.load_Z(this.init_Str_2);
             }
          }));
       } else {
-         this.init(ctx, lx, cy, shareW, this.add, "Send To Peers", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read, false, mx, my);
+         this.init(ctx, lx, cy, shareW, this.add, "Send To Peers", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS, false, mx, my);
       }
 
       String executeLabel;
@@ -1290,14 +1290,14 @@ public class AutismLANSyncOverlay extends bj {
       }
 
       if (executeEnabled) {
-         this.init(ctx, executeX, cy, executeW, this.add, executeLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write, true, mx, my);
+         this.init(ctx, executeX, cy, executeW, this.add, executeLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(executeX, cy, executeW, this.add, () -> {
             if (this.init_Str_2 != null) {
                sync.load_V(this.init_Str_2);
             }
          }));
       } else {
-         this.init(ctx, executeX, cy, executeW, this.add, executeLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write, false, mx, my);
+         this.init(ctx, executeX, cy, executeW, this.add, executeLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY, false, mx, my);
       }
 
       return cy + this.add + 4;
@@ -1360,18 +1360,18 @@ public class AutismLANSyncOverlay extends bj {
                         lx + 1,
                         chevronY,
                         8,
-                        isExpanded ? autismclient.gui.f.b.StateCache.Inner_DataUtil.load : autismclient.gui.f.b.StateCache.Inner_DataUtil.init,
+                        isExpanded ? autismclient.gui.f.b.StateCache.Inner_DataUtil.DOWN : autismclient.gui.f.b.StateCache.Inner_DataUtil.RIGHT,
                         isExpanded ? -593937 : -1911596,
-                        ct.init_I_I_ct_DataUtil(-1204284392, ct.Inner_DataUtil.load),
+                        ct.init_I_I_ct_DataUtil(-1204284392, ct.Inner_DataUtil.OUTLINE),
                         1.0F
                      );
                   }
 
                   int textY = Math.max(cy + 3, clipTop + 1);
                   if (textY < clipBottom - 2) {
-                     String truncPeerLabel = cs.init(this.init_Font, peerLabel, peerNameMaxW, cs.Inner_DataUtil.read);
+                     String truncPeerLabel = cs.init(this.init_Font, peerLabel, peerNameMaxW, cs.Inner_DataUtil.BODY);
                      this.init(ctx, truncPeerLabel, autismclient.gui.f.b.l.read, isMe ? p.parse() : -1, lx + 10, textY);
-                     String truncAssign = cs.init(this.init_Font, assignLabel, maxAssignW, cs.Inner_DataUtil.read);
+                     String truncAssign = cs.init(this.init_Font, assignLabel, maxAssignW, cs.Inner_DataUtil.BODY);
                      int truncAssignW = autismclient.gui.f.b.k.init(
                         this.init_Font, truncAssign, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), assignColor
                      );
@@ -1505,8 +1505,8 @@ public class AutismLANSyncOverlay extends bj {
       LinkedHashSet<String> var521 = this.init_LinkedHashSet_AutismLANSyncOverl(var51);
       cy += 4;
       if (!var51.load.isEmpty()) {
-         String missingLine = cs.init(this.init_Font, "Missing: " + this.load(var51.load), btnW, cs.Inner_DataUtil.read);
-         this.init(ctx, missingLine, autismclient.gui.f.b.l.read, ct.init_I_I_ct_DataUtil(-38037, ct.Inner_DataUtil.flush), lx, cy);
+         String missingLine = cs.init(this.init_Font, "Missing: " + this.load(var51.load), btnW, cs.Inner_DataUtil.BODY);
+         this.init(ctx, missingLine, autismclient.gui.f.b.l.read, ct.init_I_I_ct_DataUtil(-38037, ct.Inner_DataUtil.DANGER), lx, cy);
          cy += this.reset;
       } else if (var51.init()) {
          this.init(ctx, "Assigned macros are ready", autismclient.gui.f.b.l.read, -9837157, lx, cy);
@@ -1521,14 +1521,14 @@ public class AutismLANSyncOverlay extends bj {
       int executeW = btnW - shareW - 2;
       if (!var521.isEmpty()) {
          String sendLabel = var521.size() > 1 ? "Send Missing (" + var521.size() + ")" : "Send Missing";
-         this.init(ctx, lx, cy, shareW, this.add, sendLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read, true, mx, my);
+         this.init(ctx, lx, cy, shareW, this.add, sendLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(lx, cy, shareW, this.add, () -> {
             for (String macroName : var521) {
                sync.load_Z(macroName);
             }
          }));
       } else {
-         this.init(ctx, lx, cy, shareW, this.add, "Send Missing", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read, false, mx, my);
+         this.init(ctx, lx, cy, shareW, this.add, "Send Missing", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS, false, mx, my);
       }
 
       String puLabel;
@@ -1541,7 +1541,7 @@ public class AutismLANSyncOverlay extends bj {
       }
 
       if (var51.load() && !this.flush_Z) {
-         this.init(ctx, executeX, cy, executeW, this.add, puLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write, true, mx, my);
+         this.init(ctx, executeX, cy, executeW, this.add, puLabel, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my);
          this.init_List.add(new AutismLANSyncOverlay.Inner_StreamUtil(executeX, cy, executeW, this.add, () -> {
             if (!var51.init.isEmpty()) {
                sync.init_V_Map(var51.init);
@@ -1555,7 +1555,7 @@ public class AutismLANSyncOverlay extends bj {
             executeW,
             this.add,
             this.flush_Z && var51.init() ? "Execute: In Game" : puLabel,
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY,
             false,
             mx,
             my
@@ -1702,11 +1702,11 @@ public class AutismLANSyncOverlay extends bj {
          drawH,
          mHov,
          isCurrent,
-         badge != null ? autismclient.gui.f.b.FileCache.Inner_DataUtil.read : autismclient.gui.f.b.FileCache.Inner_DataUtil.init
+         badge != null ? autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING : autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
       );
       int tx = detailLx;
       int nameMaxW = Math.max(24, detailRx - tx - importW - (badge != null ? 74 : 4));
-      String displayName = cs.init(this.init_Font, macroName, nameMaxW, cs.Inner_DataUtil.read);
+      String displayName = cs.init(this.init_Font, macroName, nameMaxW, cs.Inner_DataUtil.BODY);
       int textY = Math.max(cy + 3, clipTop + 1);
       if (textY < clipBottom - 2) {
          autismclient.gui.f.b.k.init(
@@ -1742,7 +1742,7 @@ public class AutismLANSyncOverlay extends bj {
                importW - 4,
                Math.min(rowPitch - 2, clipBottom - importY - 1),
                "Import",
-               autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init,
+               autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
                true,
                mx,
                my
@@ -1988,19 +1988,19 @@ public class AutismLANSyncOverlay extends bj {
 
    private int init_I_aE_JsonUtil(aE.Inner_JsonUtil state) {
       switch (state) {
-         case init:
+         case IDLE:
             return p.bind();
-         case load:
+         case PREPARING:
             return -22016;
-         case read:
+         case ALL_READY:
             return -11141291;
-         case write:
+         case DISPATCHING_GO:
             return -11141121;
-         case update:
+         case EXECUTING:
             return -11141291;
-         case sync:
+         case REPORTING:
             return -22016;
-         case flush:
+         case DONE:
             return -11141291;
          default:
             return p.parse();
@@ -2009,21 +2009,21 @@ public class AutismLANSyncOverlay extends bj {
 
    private String init_Str_aE_JsonUtil_aE(aE.Inner_JsonUtil state, aE sync) {
       switch (state) {
-         case init:
+         case IDLE:
             return "Idle";
-         case load:
+         case PREPARING:
             int ready = 0;
             int total = sync.load_I();
             return "Preparing (" + ready + "/" + total + " ready)";
-         case read:
+         case ALL_READY:
             return "All Ready!";
-         case write:
+         case DISPATCHING_GO:
             return "GO!";
-         case update:
+         case EXECUTING:
             return "Executing...";
-         case sync:
+         case REPORTING:
             return "Collecting results...";
-         case flush:
+         case DONE:
             return "Done";
          default:
             return state.name();
@@ -2034,7 +2034,7 @@ public class AutismLANSyncOverlay extends bj {
       if (spreadMs <= 1.0) {
          return -11141291;
       } else {
-         return spreadMs <= 5.0 ? -22016 : ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.flush);
+         return spreadMs <= 5.0 ? -22016 : ct.init_I_I_ct_DataUtil(-43691, ct.Inner_DataUtil.DANGER);
       }
    }
 

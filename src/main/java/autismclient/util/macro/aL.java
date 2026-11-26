@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class aL implements MacroAction {
-   public aL.Inner_DataUtil mode = aL.Inner_DataUtil.init;
+   public aL.Inner_DataUtil mode = aL.Inner_DataUtil.POSITION;
    public double f_x_D = 0.0;
    public double f_y_D = 0.0;
    public double f_z_D = 0.0;
@@ -28,16 +28,16 @@ public class aL implements MacroAction {
    public MacroAction init_MacroAction_3() {
       MacroAction var10000;
       switch (this.mode) {
-         case init:
+         case POSITION:
             var10000 = this.init_aN();
             break;
-         case load:
+         case POSITION_DELTA:
             var10000 = this.init_aC();
             break;
-         case read:
+         case WORLD_CHANGE:
             var10000 = this.init_aG();
             break;
-         case write:
+         case TELEPORT:
             var10000 = this.init_aF();
             break;
          default:
@@ -86,7 +86,7 @@ public class aL implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_p_StreamGate;
+      return StreamGate.WAIT_MOVEMENT;
    }
 
    @Override
@@ -113,7 +113,7 @@ public class aL implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = i.init(aL.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), aL.Inner_DataUtil.init);
+      this.mode = i.init(aL.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), aL.Inner_DataUtil.POSITION);
       this.f_x_D = tag.getDoubleOr("x", 0.0);
       this.f_y_D = tag.getDoubleOr("y", 0.0);
       this.f_z_D = tag.getDoubleOr("z", 0.0);
@@ -137,16 +137,16 @@ public class aL implements MacroAction {
    public String getDisplayName() {
       String var10000;
       switch (this.mode) {
-         case init:
+         case POSITION:
             var10000 = "Wait Pos " + String.format(Locale.ROOT, "%.0f,%.0f,%.0f", this.f_x_D, this.f_y_D, this.f_z_D);
             break;
-         case load:
+         case POSITION_DELTA:
             var10000 = "Wait Moved " + String.format(Locale.ROOT, "%.1f", this.distance);
             break;
-         case read:
+         case WORLD_CHANGE:
             var10000 = this.targetDimension != null && !this.targetDimension.isBlank() ? "Wait World: " + this.targetDimension : "Wait World Change";
             break;
-         case write:
+         case TELEPORT:
             var10000 = this.minDistance <= 0.0 ? "Wait Teleport" : "Wait Teleport " + String.format(Locale.ROOT, "%.1f", this.minDistance);
             break;
          default:
@@ -172,9 +172,9 @@ public class aL implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      POSITION,
+      POSITION_DELTA,
+      WORLD_CHANGE,
+      TELEPORT;
    }
 }

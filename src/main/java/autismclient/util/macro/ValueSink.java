@@ -22,7 +22,7 @@ public class ValueSink implements MacroAction {
    public int blockX = 0;
    public int blockY = 0;
    public int blockZ = 0;
-   public ValueSink.Inner_StreamUtil targetMode = ValueSink.Inner_StreamUtil.init;
+   public ValueSink.Inner_StreamUtil targetMode = ValueSink.Inner_StreamUtil.SPECIFIC;
    public List<String> blockIds = new ArrayList<>();
    public List<String> entityIds = new ArrayList<>();
    public double searchRadius = 16.0;
@@ -38,7 +38,7 @@ public class ValueSink implements MacroAction {
       this.blockX = x;
       this.blockY = y;
       this.blockZ = z;
-      this.targetMode = ValueSink.Inner_StreamUtil.init;
+      this.targetMode = ValueSink.Inner_StreamUtil.SPECIFIC;
    }
 
    public static String init_Str_Entity(Entity entity) {
@@ -59,13 +59,13 @@ public class ValueSink implements MacroAction {
       if (mc != null && mc.player != null && mc.level != null) {
          ValueSink.Inner_DataUtil var10000;
          switch (this.targetMode) {
-            case init:
+            case SPECIFIC:
                var10000 = init(mc.player.getEyePosition(), new Vec3(this.blockX + 0.5, this.blockY + 0.5, this.blockZ + 0.5));
                break;
-            case load:
+            case BLOCK:
                var10000 = this.load(mc);
                break;
-            case read:
+            case ENTITY:
                var10000 = this.read(mc);
                break;
             default:
@@ -135,12 +135,12 @@ public class ValueSink implements MacroAction {
 
       if (tag.contains("targetMode")) {
          try {
-            this.targetMode = ValueSink.Inner_StreamUtil.valueOf(tag.getStringOr("targetMode", ValueSink.Inner_StreamUtil.init.name()));
+            this.targetMode = ValueSink.Inner_StreamUtil.valueOf(tag.getStringOr("targetMode", ValueSink.Inner_StreamUtil.SPECIFIC.name()));
          } catch (Exception ignored) {
-            this.targetMode = ValueSink.Inner_StreamUtil.init;
+            this.targetMode = ValueSink.Inner_StreamUtil.SPECIFIC;
          }
       } else {
-         this.targetMode = ValueSink.Inner_StreamUtil.init;
+         this.targetMode = ValueSink.Inner_StreamUtil.SPECIFIC;
       }
 
       this.blockIds.clear();
@@ -174,20 +174,20 @@ public class ValueSink implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.level;
+      return StreamGate.LOOK_AT_BLOCK;
    }
 
    @Override
    public String getDisplayName() {
       String var10000;
       switch (this.targetMode) {
-         case init:
+         case SPECIFIC:
             var10000 = "(" + this.blockX + ", " + this.blockY + ", " + this.blockZ + ")";
             break;
-         case load:
+         case BLOCK:
             var10000 = this.init_Str_5();
             break;
-         case read:
+         case ENTITY:
             var10000 = this.load();
             break;
          default:
@@ -344,8 +344,8 @@ public class ValueSink implements MacroAction {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      SPECIFIC,
+      BLOCK,
+      ENTITY;
    }
 }

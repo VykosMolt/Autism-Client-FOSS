@@ -27,7 +27,7 @@ public class TokenStore implements MacroAction {
    private static TokenStore.Inner_TaskQueue init_TokenStore_TaskQue;
    private static TokenStore.Inner_StreamUtil init_TokenStore_StreamU;
    private static long init_J = -9223372036854775808L;
-   public TokenStore.Inner_CachePool mode = TokenStore.Inner_CachePool.init;
+   public TokenStore.Inner_CachePool mode = TokenStore.Inner_CachePool.MANUAL;
    public double blocks = 0.0;
    public boolean useSegmented = true;
    public int segmentBlocks = 10;
@@ -65,7 +65,7 @@ public class TokenStore implements MacroAction {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          LocalPlayer player = mc.player;
          double blocks = options.init_D;
-         if (options.init_TokenStore_CachePo != TokenStore.Inner_CachePool.init) {
+         if (options.init_TokenStore_CachePo != TokenStore.Inner_CachePool.MANUAL) {
             TokenStore.Inner_DataUtil target = init(player, options);
             if (!target.init_Z()) {
                if (options.update_Z) {
@@ -161,7 +161,7 @@ public class TokenStore implements MacroAction {
                packetCount = sent;
             }
 
-            String prefix = options.init_TokenStore_CachePo == TokenStore.Inner_CachePool.init
+            String prefix = options.init_TokenStore_CachePo == TokenStore.Inner_CachePool.MANUAL
                ? "hclip " + blocks
                : "hclip " + options.init_TokenStore_CachePo.name().toLowerCase(Locale.ROOT) + " -> " + String.format(Locale.ROOT, "%.2f", blocks);
             String message = prefix + " (" + packetCount + " packet" + (packetCount == 1 ? "" : "s") + ")";
@@ -374,7 +374,7 @@ public class TokenStore implements MacroAction {
    }
 
    private static TokenStore.Inner_DataUtil init(LocalPlayer player, TokenStore.Inner_BufferHelper options) {
-      int direction = options.init_TokenStore_CachePo == TokenStore.Inner_CachePool.read ? -1 : 1;
+      int direction = options.init_TokenStore_CachePo == TokenStore.Inner_CachePool.BACK ? -1 : 1;
       int radius = Math.max(1, Math.min(128, options.read_I));
       double yawRad = Math.toRadians(player.getYRot());
       double dirX = -Math.sin(yawRad) * direction;
@@ -404,7 +404,7 @@ public class TokenStore implements MacroAction {
          return new TokenStore.Inner_DataUtil(true, direction * requested, "route around obstruction");
       } else {
          return new TokenStore.Inner_DataUtil(
-            false, 0.0, options.init_TokenStore_CachePo == TokenStore.Inner_CachePool.read ? "no blocking run behind you" : "no blocking run in front of you"
+            false, 0.0, options.init_TokenStore_CachePo == TokenStore.Inner_CachePool.BACK ? "no blocking run behind you" : "no blocking run in front of you"
          );
       }
    }
@@ -496,7 +496,7 @@ public class TokenStore implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = init(tag.getStringOr("mode", TokenStore.Inner_CachePool.init.name()));
+      this.mode = init(tag.getStringOr("mode", TokenStore.Inner_CachePool.MANUAL.name()));
       this.blocks = tag.getDoubleOr("blocks", 0.0);
       this.useSegmented = tag.getBooleanOr("useSegmented", true);
       this.segmentBlocks = Math.max(1, tag.getIntOr("segmentBlocks", 10));
@@ -514,15 +514,15 @@ public class TokenStore implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_t_StreamGate;
+      return StreamGate.HCLIP;
    }
 
    @Override
    public String getDisplayName() {
-      if (this.mode == TokenStore.Inner_CachePool.load) {
+      if (this.mode == TokenStore.Inner_CachePool.FORWARD) {
          return "HClip Forward";
       } else {
-         return this.mode == TokenStore.Inner_CachePool.read ? "HClip Back" : "HClip " + String.format(Locale.ROOT, "%.2f", this.blocks);
+         return this.mode == TokenStore.Inner_CachePool.BACK ? "HClip Back" : "HClip " + String.format(Locale.ROOT, "%.2f", this.blocks);
       }
    }
 
@@ -543,14 +543,14 @@ public class TokenStore implements MacroAction {
 
    private static TokenStore.Inner_CachePool init(String value) {
       try {
-         return TokenStore.Inner_CachePool.valueOf(value == null ? TokenStore.Inner_CachePool.init.name() : value.toUpperCase(Locale.ROOT));
+         return TokenStore.Inner_CachePool.valueOf(value == null ? TokenStore.Inner_CachePool.MANUAL.name() : value.toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         return TokenStore.Inner_CachePool.init;
+         return TokenStore.Inner_CachePool.MANUAL;
       }
    }
 
    public static final class Inner_BufferHelper {
-      public TokenStore.Inner_CachePool init_TokenStore_CachePo = TokenStore.Inner_CachePool.init;
+      public TokenStore.Inner_CachePool init_TokenStore_CachePo = TokenStore.Inner_CachePool.MANUAL;
       public double init_D = 0.0;
       public boolean init_Z = true;
       public int init_I = 10;
@@ -576,9 +576,9 @@ public class TokenStore implements MacroAction {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read;
+      MANUAL,
+      FORWARD,
+      BACK;
    }
 
    public record Inner_ConfigStore(boolean init_Z, int init_I, String init_Str) {

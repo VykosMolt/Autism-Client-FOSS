@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemStack;
 public final class R implements MacroAction {
    private static final int init_I = 60;
    private boolean init_Z = true;
-   public R.Inner_DataUtil scope = R.Inner_DataUtil.init;
+   public R.Inner_DataUtil scope = R.Inner_DataUtil.ALL_CONTAINER;
    public ArrayList<String> slots = new ArrayList<>();
    public int startSlot = 0;
    public int endSlot = 26;
@@ -103,13 +103,13 @@ public final class R implements MacroAction {
 
    private List<Integer> init_List_I_2(int menuSize) {
       LinkedHashSet<Integer> result = new LinkedHashSet<>();
-      switch (this.scope == null ? R.Inner_DataUtil.init : this.scope) {
-         case init:
+      switch (this.scope == null ? R.Inner_DataUtil.ALL_CONTAINER : this.scope) {
+         case ALL_CONTAINER:
             for (int i = 0; i < menuSize; i++) {
                result.add(i);
             }
             break;
-         case load:
+         case CAPTURED_SLOTS:
             for (String raw : this.slots) {
                try {
                   result.add(Integer.parseInt(raw.trim()));
@@ -117,7 +117,7 @@ public final class R implements MacroAction {
                }
             }
             break;
-         case read:
+         case SLOT_RANGE:
             int first = Math.max(0, Math.min(this.startSlot, this.endSlot));
             int last = Math.min(menuSize - 1, Math.max(this.startSlot, this.endSlot));
 
@@ -294,7 +294,7 @@ public final class R implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.init_Z = tag.getBooleanOr("enabled", true);
-      this.scope = i.init(R.Inner_DataUtil.class, tag.getStringOr("scope", "ALL_CONTAINER"), R.Inner_DataUtil.init);
+      this.scope = i.init(R.Inner_DataUtil.class, tag.getStringOr("scope", "ALL_CONTAINER"), R.Inner_DataUtil.ALL_CONTAINER);
       this.slots = i.init(tag.getList("slots").orElse(new ListTag()));
       this.startSlot = tag.getIntOr("startSlot", 0);
       this.endSlot = tag.getIntOr("endSlot", 26);
@@ -302,7 +302,7 @@ public final class R implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_O_StreamGate;
+      return StreamGate.ROLLBACK;
    }
 
    @Override
@@ -329,9 +329,9 @@ public final class R implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      ALL_CONTAINER,
+      CAPTURED_SLOTS,
+      SLOT_RANGE;
    }
 
    private record Inner_StreamUtil(int init_I, ItemStack init_ItemStack) {

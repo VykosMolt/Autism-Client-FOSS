@@ -218,17 +218,17 @@ public final class UiHelper extends KeyHolder {
 
       try {
          autismclient.gui.f.PacketUtil.init(
-            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ct.init_I_I_ct_DataUtil(-15987181, ct.Inner_DataUtil.update)
+            graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ct.init_I_I_ct_DataUtil(-15987181, ct.Inner_DataUtil.BACKDROP)
          );
          UiHelper.Layout l = this.computeLayout();
-         int border = ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.load);
-         int textColor = ct.init_I_I_ct_DataUtil(ValueSink.flush, ct.Inner_DataUtil.read);
-         int muted = ct.init_I_I_ct_DataUtil(ValueSink.close, ct.Inner_DataUtil.read);
+         int border = ct.init_I_I_ct_DataUtil(ValueSink.update, ct.Inner_DataUtil.OUTLINE);
+         int textColor = ct.init_I_I_ct_DataUtil(ValueSink.flush, ct.Inner_DataUtil.TEXT);
+         int muted = ct.init_I_I_ct_DataUtil(ValueSink.close, ct.Inner_DataUtil.TEXT);
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(l.x(), l.y(), l.w(), l.h()),
             5,
-            ct.init_I_I_ct_DataUtil(-401402080, ct.Inner_DataUtil.close),
+            ct.init_I_I_ct_DataUtil(-401402080, ct.Inner_DataUtil.BUTTON),
             border
          );
          int titleY = this.init_I_I_I_10(l.y() + 6, this.write_I_14());

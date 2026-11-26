@@ -273,7 +273,7 @@ public final class ConfigStore {
       Map<String, NetHelper> out = new LinkedHashMap<>();
 
       for (ConfigStore.Inner_StreamUtil hit : this.read_List) {
-         if (hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.init) {
+         if (hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.WINDOW_HEADER) {
             out.putIfAbsent(hit.init_Str == null ? "" : hit.init_Str, hit.init_NetHelper);
          }
       }
@@ -292,7 +292,7 @@ public final class ConfigStore {
    public void write_V() {
       ConfigStore.Inner_StreamUtil hit = this.read_List
          .stream()
-         .filter(candidate -> candidate.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.update && "\u0000profiles".equals(candidate.init_Str))
+         .filter(candidate -> candidate.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.RAIL_ITEM && "\u0000profiles".equals(candidate.init_Str))
          .findFirst()
          .orElseThrow();
       int x = hit.init_NetHelper.read() + hit.init_NetHelper.update() / 2;
@@ -320,7 +320,7 @@ public final class ConfigStore {
       ConfigStore.Inner_StreamUtil hit = this.read_List
          .stream()
          .filter(
-            candidate -> candidate.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.start
+            candidate -> candidate.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.DROPDOWN
                && candidate.init_Setting != null
                && candidate.init_Setting.id().equals(optionId)
          )
@@ -341,7 +341,7 @@ public final class ConfigStore {
       ConfigStore.Inner_StreamUtil hit = this.read_List
          .stream()
          .filter(
-            candidate -> candidate.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.add
+            candidate -> candidate.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.SLIDER
                && candidate.init_Setting != null
                && candidate.init_Setting.id().equals(optionId)
          )
@@ -395,7 +395,7 @@ public final class ConfigStore {
          this.load_StreamUtil = null;
          ConfigStore.Inner_StreamUtil header = this.read_List
             .stream()
-            .filter(hit -> hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.init && "main-menu".equals(hit.init_Str))
+            .filter(hit -> hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.WINDOW_HEADER && "main-menu".equals(hit.init_Str))
             .findFirst()
             .orElseThrow();
          int hx = header.init_NetHelper.read() + 32;
@@ -491,7 +491,7 @@ public final class ConfigStore {
          NetHelper header = ClassCache.init(window, this.put);
          i.init(context, header, h <= this.put + 1, this.load_Z);
          this.init_V_ConfigStore_CacheP(
-            ConfigStore.Inner_CachePool.init, NetHelper.init(window.read(), window.write(), window.update(), this.put), null, null, "", -1
+            ConfigStore.Inner_CachePool.WINDOW_HEADER, NetHelper.init(window.read(), window.write(), window.update(), this.put), null, null, "", -1
          );
          this.load_V_SyncManager_NetHelper(context, window);
          if (h <= this.put) {
@@ -570,7 +570,7 @@ public final class ConfigStore {
       }
 
       ConfigStore.Inner_StreamUtil hit = this.init_ConfigStore_Stream_I_I(mouseX, mouseY);
-      return hit != null && hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.cache;
+      return hit != null && hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.CLASSIC_RESIZE;
    }
 
    private void load_V_SyncManager_NetHelper(SyncManager context, NetHelper window) {
@@ -600,7 +600,7 @@ public final class ConfigStore {
       context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), title, titleX, titleY, titleEnd - titleX, colors.prev);
       float closeT = autismclient.gui.f.DataUtil.init(autismclient.gui.f.DataUtil.init(close), close.init_Z(context.read(), context.write()));
       PacketUtil.read(context.init_GuiGraphicsExtract(), close.init(2), init_I_I(colors.valid, colors.data, closeT));
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.write, close, null, null, "", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.CLOSE, close, null, null, "", -1);
    }
 
    private void read(SyncManager context, NetHelper rail) {
@@ -650,7 +650,7 @@ public final class ConfigStore {
       cz.init(context.init_GuiGraphicsExtract(), init_Identifier_Str(key), iconX, iconY, iconSize, textColor);
       int labelX = iconX + iconSize + 5;
       context.init_PoolEntry().read(context.init_GuiGraphicsExtract(), label, labelX, context.init_PoolEntry().init_I(row), row.init() - 5 - labelX, textColor);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.update, row, null, null, key, -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.RAIL_ITEM, row, null, null, key, -1);
    }
 
    private static Identifier init_Identifier_Str(String key) {
@@ -772,12 +772,12 @@ public final class ConfigStore {
             descriptionLine.update(),
             theme.init_JsonUtil().valid
          );
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.flush, card, module, null, "", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MODULE, card, module, null, "", -1);
       EventBus.init(context, bindButton, module.keybind(), this.load_Module == module, bindButton.init_Z(context.read(), context.write()));
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.close, bindButton, module, null, "", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MODULE_BIND, bindButton, module, null, "", -1);
       if (module.hasActivationToggle()) {
          g.init(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "module-toggle:" + module.id());
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.push, pill, module, null, "", -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TOGGLE_MODULE, pill, module, null, "", -1);
       }
 
       if (hasSettings) {
@@ -790,7 +790,7 @@ public final class ConfigStore {
             true,
             false
          );
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.open, settings, module, null, "", -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MODULE_SETTINGS, settings, module, null, "", -1);
       }
 
       if (hovered && description != null && context.init_PoolEntry().init(description) > card.update() - 10) {
@@ -894,9 +894,9 @@ public final class ConfigStore {
       float sendT = autismclient.gui.f.BufferHelper.init("packet:send", ck.init_ck().read_Z());
       float delayT = autismclient.gui.f.BufferHelper.init("packet:delay", ck.init_ck().write_Z());
       MethodUtil.init(context, toggles[0], "Send", null, toggles[0].init_Z(context.read(), context.write()), sendT, MethodUtil.write);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.sync, toggles[0], null, null, "send", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.UTILITY, toggles[0], null, null, "send", -1);
       MethodUtil.init(context, toggles[1], "Delay", null, toggles[1].init_Z(context.read(), context.write()), delayT, MethodUtil.write);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.sync, toggles[1], null, null, "delay", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.UTILITY, toggles[1], null, null, "delay", -1);
       MethodUtil.init(
          context,
          toggles[1].read(),
@@ -941,12 +941,12 @@ public final class ConfigStore {
       MethodUtil.Inner_DataUtil edges
    ) {
       MethodUtil.init(context, cell, init_Str_ConfigStore_Config(entry), entry.init_Identifier(), tone, cell.init_Z(context.read(), context.write()), edges);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.sync, cell, null, null, entry.init_Str(), -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.UTILITY, cell, null, null, entry.init_Str(), -1);
    }
 
    private void init_V_SyncManager_4(SyncManager context, ConfigStore.Inner_DataUtil action, NetHelper cell, MethodUtil.Inner_DataUtil edges) {
       MethodUtil.init(context, cell, action.load(), null, action.init_CachePool_DataUtil(), cell.init_Z(context.read(), context.write()), edges);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.sync, cell, null, null, action.init_Str(), -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.UTILITY, cell, null, null, action.init_Str(), -1);
    }
 
    private static String init_Str_ConfigStore_Config(ConfigStore.Inner_ConfigStore entry) {
@@ -1040,7 +1040,7 @@ public final class ConfigStore {
          ConfigStore.Inner_StreamUtil clicked = this.init_ConfigStore_Stream_I_I(mx, my);
          boolean sameField = this.init_StreamUtil_2 != null
             && clicked != null
-            && clicked.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.reset
+            && clicked.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.TEXT_FIELD
             && clicked.init_Setting == this.init_StreamUtil_2.init_Obj;
          if (!sameField) {
             this.init_V_Z(true);
@@ -1049,7 +1049,7 @@ public final class ConfigStore {
          this.close_Z = false;
          this.open_Z = false;
          if (this.load_StreamUtil != null
-            && (clicked == null || clicked.init_ConfigStore_CacheP != ConfigStore.Inner_CachePool.reset || !"search".equals(clicked.init_Str))) {
+            && (clicked == null || clicked.init_ConfigStore_CacheP != ConfigStore.Inner_CachePool.TEXT_FIELD || !"search".equals(clicked.init_Str))) {
             this.poll();
          }
 
@@ -1057,13 +1057,13 @@ public final class ConfigStore {
             ConfigStore.Inner_StreamUtil hit = this.read_List.get(i);
             if (hit.init_NetHelper.init_Z(mx, my) && (hit.load == null || hit.load.init_Z(mx, my))) {
                if (button != 0
-                  && hit.init_ConfigStore_CacheP != ConfigStore.Inner_CachePool.flush
-                  && hit.init_ConfigStore_CacheP != ConfigStore.Inner_CachePool.init) {
+                  && hit.init_ConfigStore_CacheP != ConfigStore.Inner_CachePool.MODULE
+                  && hit.init_ConfigStore_CacheP != ConfigStore.Inner_CachePool.WINDOW_HEADER) {
                   return true;
                }
 
                switch (hit.init_ConfigStore_CacheP) {
-                  case init:
+                  case WINDOW_HEADER:
                      if (this.write_Z()) {
                         this.init_V_Str(hit.init_Str, mx, my, button);
                         return true;
@@ -1080,19 +1080,19 @@ public final class ConfigStore {
                      this.size = mx - this.get;
                      this.data = my - this.set;
                      return true;
-                  case load:
+                  case WINDOW_BODY:
                      if (this.write_Z()) {
                         this.flush(hit.init_Str);
                      }
 
                      return true;
-                  case read:
+                  case COLLAPSE:
                      if (button == 0) {
                         this.close(hit.init_Str);
                      }
 
                      return true;
-                  case write:
+                  case CLOSE:
                      if ("settings-window".equals(hit.init_Str)) {
                         this.open();
                      } else {
@@ -1100,17 +1100,17 @@ public final class ConfigStore {
                      }
 
                      return true;
-                  case update:
+                  case RAIL_ITEM:
                      this.open(hit.init_Str);
                      return true;
-                  case sync:
+                  case UTILITY:
                      if (button != 0) {
                         return true;
                      }
 
                      this.init_ConfigStore_Buffer.init(hit.init_Str);
                      return true;
-                  case flush:
+                  case MODULE:
                      if (button == 1) {
                         this.load_V_Module(hit.init_Module);
                      } else if (button == 2) {
@@ -1125,31 +1125,31 @@ public final class ConfigStore {
                      }
 
                      return true;
-                  case close:
+                  case MODULE_BIND:
                      if (button == 0) {
                         this.load_Module = hit.init_Module;
                      }
 
                      return true;
-                  case open:
+                  case MODULE_SETTINGS:
                      if (button == 0) {
                         this.load_V_Module(hit.init_Module);
                      }
 
                      return true;
-                  case poll:
+                  case BACK:
                      this.open();
                      return true;
-                  case push:
+                  case TOGGLE_MODULE:
                      if (hit.init_Module.hasActivationToggle()) {
                         this.init_V_Module(hit.init_Module);
                      }
 
                      return true;
-                  case pop:
+                  case BIND_MODULE:
                      this.load_Module = hit.init_Module;
                      return true;
-                  case tick:
+                  case RESET_MODULE:
                      if (this.init_ConfigStore_Buffer.init_Z()) {
                         hit.init_Module.resetConfiguredSettings();
                      } else {
@@ -1160,36 +1160,36 @@ public final class ConfigStore {
                      this.init_Setting = null;
                      AutismClientMessaging.sendPrefixed(hit.init_Module.name() + " settings reset to defaults.");
                      return true;
-                  case run:
+                  case MACRO_MODULE:
                      Module module = hit.init_Module;
                      this.open();
                      this.init_ConfigStore_Buffer.init(module);
                      return true;
-                  case get:
+                  case GROUP:
                      read_Map.put(hit.init_Module.id() + "|" + hit.init_Str, !read_Map.getOrDefault(hit.init_Module.id() + "|" + hit.init_Str, false));
                      return true;
-                  case set:
+                  case OPTION:
                      this.init_BufferHelper.init_V(hit.init_Module, hit.init_Setting, button);
                      return true;
-                  case put:
+                  case FILE_PICKER:
                      if (hit.init_Setting != null && hit.init_Setting.action() != null) {
                         hit.init_Setting.action().run();
                      }
 
                      return true;
-                  case add:
+                  case SLIDER:
                      this.update_Module = hit.init_Module;
                      this.read_Setting = hit.init_Setting;
                      this.node = -1;
                      this.init_BufferHelper.init_V_ConfigStore_Stream_I(hit, mx);
                      return true;
-                  case clear:
+                  case RANGE_SLIDER:
                      this.update_Module = hit.init_Module;
                      this.read_Setting = hit.init_Setting;
                      this.node = this.init_BufferHelper.init_I_ConfigStore_Stream_I(hit, mx);
                      this.init_BufferHelper.init_V_ConfigStore_Stream_I(hit, mx);
                      return true;
-                  case reset:
+                  case TEXT_FIELD:
                      if (button != 0) {
                         return true;
                      }
@@ -1205,13 +1205,13 @@ public final class ConfigStore {
                      }
 
                      return true;
-                  case start:
+                  case DROPDOWN:
                      this.init_V_ConfigStore_Stream(hit);
                      return true;
-                  case stop:
+                  case COLOR_PICKER:
                      this.init_V_Module(hit.init_Module, hit.init_Setting, hit.init_NetHelper);
                      return true;
-                  case next:
+                  case LIST_EDITOR:
                      if (hit.init_Setting != null) {
                         switch (hit.init_Setting.kind()) {
                            case STRING_LIST:
@@ -1223,20 +1223,20 @@ public final class ConfigStore {
                      }
 
                      return true;
-                  case prev:
+                  case PACKET_EDITOR:
                      this.init_ConfigStore_Buffer.init(hit.init_Module, hit.init_Setting);
                      return true;
-                  case valid:
+                  case MACRO_PICKER:
                      this.load_V_Module(hit.init_Module, hit.init_Setting, hit.init_NetHelper);
                      return true;
-                  case size:
+                  case BIND_OPTION:
                      this.read_Module = hit.init_Module;
                      this.init_Setting = hit.init_Setting;
                      return true;
-                  case data:
+                  case RESET_OPTION_BIND:
                      this.init_V_Module_2(hit.init_Module, hit.init_Setting, "-1");
                      return true;
-                  case value:
+                  case SCROLLBAR:
                      UtilCore.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_Str(hit.init_Str);
                      if (metrics != null && metrics.init_I() > 0) {
                         this.task = metrics.load(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
@@ -1245,7 +1245,7 @@ public final class ConfigStore {
                      }
 
                      return true;
-                  case cache:
+                  case CLASSIC_RESIZE:
                      this.init_V_ConfigStore_Stream(hit, mx, my);
                      return true;
                }
@@ -1661,7 +1661,7 @@ public final class ConfigStore {
 
    private ConfigStore.Inner_StreamUtil init_ConfigStore_Stream_Module_Setting(Module module, Setting<?, ?> option) {
       for (ConfigStore.Inner_StreamUtil hit : this.read_List) {
-         if ((hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.add || hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.clear)
+         if ((hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.SLIDER || hit.init_ConfigStore_CacheP == ConfigStore.Inner_CachePool.RANGE_SLIDER)
             && hit.init_Module == module
             && hit.init_Setting == option) {
             return hit;
@@ -1993,7 +1993,7 @@ public final class ConfigStore {
    private int read_I() {
       int descriptionHeight = (int)Math.ceil(
          autismclient.gui.e.SyncManager.init(
-            autismclient.gui.e.ConfigStore.init_ConfigStore, autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore)
+            autismclient.gui.e.ConfigStore.BODY, autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
          )
       );
       return 1 + this.reset + Math.max(RenderState.init(12), descriptionHeight) + 4 + 4;
@@ -2042,7 +2042,7 @@ public final class ConfigStore {
          this.init_V_Str_UtilCore_DataUtil(key, m);
          boolean hovered = m.init(context.read(), context.write());
          UtilCore.init(context, m, hovered, key.equals(this.pop_Str));
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.value, track, null, null, key, -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.SCROLLBAR, track, null, null, key, -1);
       }
    }
 
@@ -2170,7 +2170,7 @@ public final class ConfigStore {
          context.init_GuiGraphicsExtract().requestCursor(CursorTypes.RESIZE_NS);
       }
 
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.cache, grip, null, null, id, shownRows);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.CLASSIC_RESIZE, grip, null, null, id, shownRows);
    }
 
    private void init_V_ConfigStore_Stream(ConfigStore.Inner_StreamUtil hit, int mx, int my) {
@@ -2342,10 +2342,10 @@ public final class ConfigStore {
          context.init_PoolEntry().load(context.init_GuiGraphicsExtract(), label, row.read() + 6, context.init_PoolEntry().init_I(row), labelMax, nameColor);
       }
 
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.flush, row, module, null, "", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MODULE, row, module, null, "", -1);
       if (showBind) {
          EventBus.init(context, bindButton, module.keybind(), this.load_Module == module, bindButton.init_Z(context.read(), context.write()));
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.close, bindButton, module, null, "", -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MODULE_BIND, bindButton, module, null, "", -1);
       }
 
       if (settings != null) {
@@ -2358,7 +2358,7 @@ public final class ConfigStore {
             true,
             false
          );
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.open, settings, module, null, "", -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.MODULE_SETTINGS, settings, module, null, "", -1);
       }
 
       if (hovered) {
@@ -2437,14 +2437,14 @@ public final class ConfigStore {
       int header = this.put;
       boolean headerHovered = ClassCache.read(bounds, header, context.read(), context.write());
       FieldCache.init(context, bounds, title, collapsed, collapse, close, headerHovered, true, 4, 4, header);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.load, bounds, null, null, id, -1);
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.init, ClassCache.init(bounds, header), null, null, id, -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.WINDOW_BODY, bounds, null, null, id, -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.WINDOW_HEADER, ClassCache.init(bounds, header), null, null, id, -1);
       if (collapse) {
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.read, ClassCache.read(bounds, header), null, null, id, -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.COLLAPSE, ClassCache.read(bounds, header), null, null, id, -1);
       }
 
       if (close) {
-         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.write, ClassCache.load(bounds, header), null, null, id, -1);
+         this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.CLOSE, ClassCache.load(bounds, header), null, null, id, -1);
       }
    }
 
@@ -2485,7 +2485,7 @@ public final class ConfigStore {
             ? this.load_StreamUtil.init(Math.max(1, this.read_NetHelper.update() - 8), fragment -> context.init_PoolEntry().init(shown, fragment))
             : 0
       );
-      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.reset, this.read_NetHelper, null, null, "search", -1);
+      this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.TEXT_FIELD, this.read_NetHelper, null, null, "search", -1);
    }
 
    private void tick() {
@@ -2909,35 +2909,35 @@ public final class ConfigStore {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run,
-      get,
-      set,
-      put,
-      add,
-      clear,
-      reset,
-      start,
-      stop,
-      next,
-      prev,
-      valid,
-      size,
-      data,
-      value,
-      cache;
+      WINDOW_HEADER,
+      WINDOW_BODY,
+      COLLAPSE,
+      CLOSE,
+      RAIL_ITEM,
+      UTILITY,
+      MODULE,
+      MODULE_BIND,
+      MODULE_SETTINGS,
+      BACK,
+      TOGGLE_MODULE,
+      BIND_MODULE,
+      RESET_MODULE,
+      MACRO_MODULE,
+      GROUP,
+      OPTION,
+      FILE_PICKER,
+      SLIDER,
+      RANGE_SLIDER,
+      TEXT_FIELD,
+      DROPDOWN,
+      COLOR_PICKER,
+      LIST_EDITOR,
+      PACKET_EDITOR,
+      MACRO_PICKER,
+      BIND_OPTION,
+      RESET_OPTION_BIND,
+      SCROLLBAR,
+      CLASSIC_RESIZE;
    }
 
    private record Inner_ConfigStore(String init_Str, String load, Identifier init_Identifier) {

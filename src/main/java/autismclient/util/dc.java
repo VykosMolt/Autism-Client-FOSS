@@ -30,7 +30,7 @@ public final class dc {
       }
 
       dc.Inner_StreamUtil state = new dc.Inner_StreamUtil(
-         id, owner == null ? "" : owner, dc.Inner_DataUtil.init, true, false, this.init_LongSupplier.getAsLong() + Math.max(1L, timeoutMs)
+         id, owner == null ? "" : owner, dc.Inner_DataUtil.PENDING, true, false, this.init_LongSupplier.getAsLong() + Math.max(1L, timeoutMs)
       );
       this.init_Map.put(id, state);
       return state;
@@ -39,7 +39,7 @@ public final class dc {
    public synchronized boolean init_Z(long id) {
       dc.Inner_StreamUtil state = this.init_Map.get(id);
       if (state != null && !state.init_Z()) {
-         this.init_Map.put(id, new dc.Inner_StreamUtil(state.init_J(), state.init_Str(), dc.Inner_DataUtil.init, false, true, state.load_J()));
+         this.init_Map.put(id, new dc.Inner_StreamUtil(state.init_J(), state.init_Str(), dc.Inner_DataUtil.PENDING, false, true, state.load_J()));
          return true;
       } else {
          return false;
@@ -48,7 +48,7 @@ public final class dc {
 
    public synchronized boolean init(long id, dc.Inner_DataUtil completion) {
       dc.Inner_StreamUtil state = this.init_Map.get(id);
-      if (state != null && !state.init_Z() && completion != null && completion != dc.Inner_DataUtil.init) {
+      if (state != null && !state.init_Z() && completion != null && completion != dc.Inner_DataUtil.PENDING) {
          this.init_Map.put(id, new dc.Inner_StreamUtil(state.init_J(), state.init_Str(), completion, false, false, state.load_J()));
          this.read++;
          this.init_V();
@@ -71,7 +71,7 @@ public final class dc {
 
    public synchronized dc.Inner_StreamUtil init_dc_StreamUtil(long id) {
       dc.Inner_StreamUtil state = this.init_Map.get(id);
-      return state == null ? new dc.Inner_StreamUtil(id, "", dc.Inner_DataUtil.read, false, false, 0L) : state;
+      return state == null ? new dc.Inner_StreamUtil(id, "", dc.Inner_DataUtil.FAILED, false, false, 0L) : state;
    }
 
    public synchronized List<Long> init_List() {
@@ -100,15 +100,15 @@ public final class dc {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      PENDING,
+      SUCCEEDED,
+      FAILED,
+      CANCELLED;
    }
 
    public record Inner_StreamUtil(long init_J, String init_Str, dc.Inner_DataUtil init_dc_DataUtil, boolean init_Z, boolean load_Z, long load_J) {
       public boolean init_Z() {
-         return this.init_dc_DataUtil != dc.Inner_DataUtil.init;
+         return this.init_dc_DataUtil != dc.Inner_DataUtil.PENDING;
       }
 
       public boolean load_Z() {

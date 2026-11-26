@@ -1,6 +1,6 @@
 package autismclient.util;
 
 public enum bZ {
-   init,
-   load;
+   Socks4,
+   Socks5;
 }

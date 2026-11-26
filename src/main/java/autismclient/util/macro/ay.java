@@ -54,7 +54,7 @@ public class ay implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.update;
+      return StreamGate.WAIT_HEALTH;
    }
 
    @Override

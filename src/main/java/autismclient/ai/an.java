@@ -245,8 +245,8 @@ public final class an {
                   }
 
                   switch (f.type()) {
-                     case load:
-                     case open:
+                     case NUMBER:
+                     case SLOT:
                         if (!v.isJsonPrimitive() || !v.getAsJsonPrimitive().isNumber() || !Double.isFinite(v.getAsDouble())) {
                            throw new IllegalArgumentException("Field " + f.key() + " must be a number");
                         }
@@ -267,7 +267,7 @@ public final class an {
                            throw new IllegalArgumentException("Out of range " + f.key());
                         }
                         break;
-                     case read:
+                     case DECIMAL:
                         if (!v.isJsonPrimitive() || !v.getAsJsonPrimitive().isNumber()) {
                            throw new IllegalArgumentException("Field " + f.key() + " must be a number");
                         }
@@ -277,10 +277,10 @@ public final class an {
                            throw new IllegalArgumentException("Out of range " + f.key());
                         }
                         break;
-                     case init:
+                     case TOGGLE:
                         ag.init_Z_JsonObject(input, f.key(), false);
                         break;
-                     case sync:
+                     case ENUM:
                         if (!v.isJsonPrimitive()
                            || !v.getAsJsonPrimitive().isString()
                            || f.enumOptions().stream().noneMatch(o -> o.equalsIgnoreCase(v.getAsString()))) {
@@ -288,7 +288,7 @@ public final class an {
                         }
                   }
 
-                  if (f.type() == autismclient.gui.macro.editor.CachePool.init && ag.init_Z_JsonObject(input, f.key(), false)) {
+                  if (f.type() == autismclient.gui.macro.editor.CachePool.TOGGLE && ag.init_Z_JsonObject(input, f.key(), false)) {
                      for (String other : f.mutuallyExclusiveWith()) {
                         if (ag.init_Z_JsonObject(input, other, false)) {
                            throw new IllegalArgumentException("Mutually exclusive fields " + f.key() + " and " + other);
@@ -316,7 +316,7 @@ public final class an {
 
       a.Inner_BufferHelper type = a.Inner_BufferHelper.valueOf(ag.init_Str_JsonObject(node, "node", "GROUP"));
       ag.init_Z_JsonObject(node, "negate", false);
-      if (type == a.Inner_BufferHelper.init) {
+      if (type == a.Inner_BufferHelper.GROUP) {
          a.Inner_StreamUtil.valueOf(ag.init_Str_JsonObject(node, "combine", "ALL"));
          if (!node.has("children") || !node.get("children").isJsonArray() || node.getAsJsonArray("children").isEmpty()) {
             throw new IllegalArgumentException("Condition group must contain at least one explicit child");
@@ -365,36 +365,36 @@ public final class an {
    public static String init(StreamGate type) {
       String var10000;
       switch (type) {
-         case frame:
+         case REPEAT:
             var10000 = "Repeats the NEXT stepCount steps repeatCount times; this is not a nested action array.";
             break;
-         case f_U_StreamGate:
+         case FLOW:
             var10000 = "Branches to a label, step, relative offset, top, end, or stop; label targets must exist.";
             break;
-         case f_T_StreamGate:
+         case IF:
             var10000 = "Evaluates native macro conditions and controls subsequent flow; inspect serialized defaults for branch layout.";
             break;
-         case value:
-         case f_d_StreamGate:
+         case GO_TO:
+         case MINE:
             var10000 = "Delegates to an external navigation integration when present; does not provide native navigation. Use game:navigate for native travel.";
             break;
-         case entry:
+         case TOGGLE_MODULE:
             var10000 = "Changes module activation; enabling a module is not proof of its gameplay effect.";
             break;
-         case set:
+         case TRADE:
             var10000 = "Trades with a reachable merchant. Amount counts offer uses, not output items. Writes trade_count, trade_spent and trade_status; uncertain purchases are never repeated. Rerolling is the AutoTrade module.";
             break;
-         case get:
+         case CRAFT:
             var10000 = "Uses the client's crafting workflow; ingredients, recipe availability, station, and inventory capacity matter.";
             break;
-         case open:
+         case CUSTOM_MENU:
             var10000 = "Submits a server custom form using live adapter and generation data; stale forms require a fresh observation.";
             break;
-         case node:
-         case task:
+         case START_MACRO:
+         case STOP_MACRO:
             var10000 = "Controls another named macro. The target must exist; starting does not imply completion.";
             break;
-         case init:
+         case DELAY:
             var10000 = "Waits locally for the configured interval.";
             break;
          default:

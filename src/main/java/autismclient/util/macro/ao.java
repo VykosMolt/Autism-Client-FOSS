@@ -16,7 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class ao implements MacroAction {
-   public ao.Inner_DataUtil phase = ao.Inner_DataUtil.init;
+   public ao.Inner_DataUtil phase = ao.Inner_DataUtil.USE_ONCE;
    public String itemName = "";
    public String hand = "MAIN_HAND";
    public int holdTicks = 0;
@@ -90,18 +90,18 @@ public class ao implements MacroAction {
 
          InteractionHand h = this.init_InteractionHand();
          switch (this.phase) {
-            case init:
-            case load:
+            case USE_ONCE:
+            case START_USE:
                if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, h);
                } else {
                   this.init(mc, h);
                }
                break;
-            case read:
+            case RELEASE_USE:
                mc.getConnection().send(new ServerboundPlayerActionPacket(Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
                break;
-            case write:
+            case USE_BLOCK:
                if (mc.hitResult instanceof BlockHitResult bhr && mc.hitResult.getType() == Type.BLOCK) {
                   if (mc.gameMode != null) {
                      mc.gameMode.useItemOn(mc.player, h, bhr);
@@ -114,7 +114,7 @@ public class ao implements MacroAction {
                   this.init(mc, h);
                }
                break;
-            case update:
+            case SWING:
                mc.getConnection().send(new CompatSwingPacket(h));
          }
       }
@@ -131,7 +131,7 @@ public class ao implements MacroAction {
 
       B gate = new B();
       gate.gateId = this.gateId;
-      gate.mode = B.Inner_CachePool.init;
+      gate.mode = B.Inner_CachePool.CANCEL;
       if (this.gatePlayerActions) {
          gate.packetNames.add("ServerboundPlayerActionPacket");
       }
@@ -173,7 +173,7 @@ public class ao implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_z_StreamGate;
+      return StreamGate.USE_ITEM_PHASE;
    }
 
    @Override
@@ -200,7 +200,7 @@ public class ao implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.phase = i.init(ao.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), ao.Inner_DataUtil.init);
+      this.phase = i.init(ao.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), ao.Inner_DataUtil.USE_ONCE);
       this.itemName = tag.getStringOr("itemName", "");
       this.hand = tag.getStringOr("hand", "MAIN_HAND");
       this.holdTicks = tag.getIntOr("holdTicks", 0);
@@ -228,10 +228,10 @@ public class ao implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      USE_ONCE,
+      START_USE,
+      RELEASE_USE,
+      USE_BLOCK,
+      SWING;
    }
 }

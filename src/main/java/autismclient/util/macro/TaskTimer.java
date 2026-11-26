@@ -3,11 +3,11 @@ package autismclient.util.macro;
 import java.util.Locale;
 
 public enum TaskTimer {
-   init,
-   load,
-   read,
-   write,
-   update;
+   BEFORE,
+   WITH,
+   AFTER,
+   AFTER_PLUS,
+   CUSTOM;
 
    public static TaskTimer init(String raw, TaskTimer fallback) {
       if (raw == null) {
@@ -17,18 +17,18 @@ public enum TaskTimer {
       switch (raw.trim().toUpperCase(Locale.ROOT)) {
          case "BEFORE":
          case "TICK_BEFORE":
-            return init;
+            return BEFORE;
          case "WITH":
          case "SAME_TICK":
-            return load;
+            return WITH;
          case "AFTER":
-            return read;
+            return AFTER;
          case "AFTER_PLUS":
          case "AFTER+":
          case "TICK_AFTER":
-            return write;
+            return AFTER_PLUS;
          case "CUSTOM":
-            return update;
+            return CUSTOM;
          default:
             return fallback;
       }

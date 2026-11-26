@@ -32,25 +32,25 @@ import net.minecraft.world.phys.HitResult.Type;
 public final class A {
    static A.Inner_StreamUtil init(Entity entity) {
       if (entity instanceof Fireball) {
-         return A.Inner_StreamUtil.init_A_StreamUtil;
+         return A.Inner_StreamUtil.FIREBALL;
       } else if (entity instanceof AbstractArrow) {
-         return A.Inner_StreamUtil.load_A_StreamUtil;
+         return A.Inner_StreamUtil.ARROW;
       } else if (entity instanceof Snowball) {
-         return A.Inner_StreamUtil.read;
+         return A.Inner_StreamUtil.SNOWBALL;
       } else {
-         return entity instanceof ThrownEnderpearl ? A.Inner_StreamUtil.write : null;
+         return entity instanceof ThrownEnderpearl ? A.Inner_StreamUtil.PEARL : null;
       }
    }
 
    static A.Inner_StreamUtil init(ItemStack stack) {
       if (stack.is(Items.BOW) || stack.is(Items.CROSSBOW)) {
-         return A.Inner_StreamUtil.load_A_StreamUtil;
+         return A.Inner_StreamUtil.ARROW;
       } else if (stack.is(Items.SNOWBALL)) {
-         return A.Inner_StreamUtil.read;
+         return A.Inner_StreamUtil.SNOWBALL;
       } else if (stack.is(Items.ENDER_PEARL)) {
-         return A.Inner_StreamUtil.write;
+         return A.Inner_StreamUtil.PEARL;
       } else {
-         return stack.is(Items.FIRE_CHARGE) ? A.Inner_StreamUtil.init_A_StreamUtil : null;
+         return stack.is(Items.FIRE_CHARGE) ? A.Inner_StreamUtil.FIREBALL : null;
       }
    }
 
@@ -58,10 +58,10 @@ public final class A {
       boolean gravity = !projectile.isNoGravity();
       A.Inner_CachePool var10000;
       switch (kind) {
-         case init_A_StreamUtil:
+         case FIREBALL:
             var10000 = new A.Inner_CachePool(0.0, 0.949999988079071, 0.800000011920929, ((Fireball)projectile).accelerationPower, true);
             break;
-         case load_A_StreamUtil:
+         case ARROW:
             var10000 = new A.Inner_CachePool(gravity ? 0.05 : 0.0, 0.9900000095367432, 0.6000000238418579, 0.0, false);
             break;
          default:
@@ -96,11 +96,11 @@ public final class A {
          velocity = velocity.add(inherited);
       }
 
-      A.Inner_CachePool physics = kind == A.Inner_StreamUtil.init_A_StreamUtil
+      A.Inner_CachePool physics = kind == A.Inner_StreamUtil.FIREBALL
          ? new A.Inner_CachePool(0.0, 0.949999988079071, 0.800000011920929, 0.1, true)
-         : new A.Inner_CachePool(info.init_D(), info.write(), info.update(), 0.0, kind != A.Inner_StreamUtil.load_A_StreamUtil);
+         : new A.Inner_CachePool(info.init_D(), info.write(), info.update(), 0.0, kind != A.Inner_StreamUtil.ARROW);
       return init_A_DataUtil_A_ConfigStore(
-         init_A_ConfigStore_Level(level, owner, owner, 0, kind == A.Inner_StreamUtil.init_A_StreamUtil ? 1.0 : 0.25),
+         init_A_ConfigStore_Level(level, owner, owner, 0, kind == A.Inner_StreamUtil.FIREBALL ? 1.0 : 0.25),
          new Vec3(owner.getX(), owner.getEyeY() - 0.1, owner.getZ()),
          velocity,
          physics,
@@ -218,12 +218,12 @@ public final class A {
 
    static boolean init(A.Inner_DataUtil flight, A.Inner_StreamUtil kind, Vec3 player, double radius) {
       double range = radius;
-      Vec3 landing = kind == A.Inner_StreamUtil.write ? flight.load() : flight.init_Vec3();
+      Vec3 landing = kind == A.Inner_StreamUtil.PEARL ? flight.load() : flight.init_Vec3();
       if (landing != null && landing.distanceToSqr(player) <= range * range) {
          return true;
       }
 
-      if (kind != A.Inner_StreamUtil.write && flight.init_List().size() >= 2) {
+      if (kind != A.Inner_StreamUtil.PEARL && flight.init_List().size() >= 2) {
          List<Vec3> points = flight.init_List();
          double initial = points.getFirst().distanceToSqr(player);
 
@@ -245,7 +245,7 @@ public final class A {
 
    static boolean init(A.Inner_BufferHelper warning) {
       return warning != null
-         && warning.init_A_StreamUtil() == A.Inner_StreamUtil.write
+         && warning.init_A_StreamUtil() == A.Inner_StreamUtil.PEARL
          && init(warning.init_A_DataUtil())
          && warning.init_Player() != null
          && warning.init_Player().isAlive()
@@ -290,10 +290,10 @@ public final class A {
    }
 
    public enum Inner_StreamUtil {
-      init_A_StreamUtil("fireball", "Fireballs"),
-      load_A_StreamUtil("arrow", "Arrows"),
-      read("snowball", "Snowballs"),
-      write("pearl", "Ender Pearls");
+      FIREBALL("fireball", "Fireballs"),
+      ARROW("arrow", "Arrows"),
+      SNOWBALL("snowball", "Snowballs"),
+      PEARL("pearl", "Ender Pearls");
 
       private final String init_Str;
       private final String load_Str;
@@ -316,16 +316,16 @@ public final class A {
          if (this.init_ItemStack == null) {
             Item var10003;
             switch (this) {
-               case init_A_StreamUtil:
+               case FIREBALL:
                   var10003 = Items.FIRE_CHARGE;
                   break;
-               case load_A_StreamUtil:
+               case ARROW:
                   var10003 = Items.ARROW;
                   break;
-               case read:
+               case SNOWBALL:
                   var10003 = Items.SNOWBALL;
                   break;
-               case write:
+               case PEARL:
                   var10003 = Items.ENDER_PEARL;
                   break;
                default:

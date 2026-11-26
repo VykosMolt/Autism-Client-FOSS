@@ -3,15 +3,15 @@ package autismclient.util;
 import net.minecraft.world.inventory.ContainerInput;
 
 public enum N {
-   init_N("Pickup", "Pick", false),
-   load_N("Quick Move", "QMove", false),
-   read("Swap", "Swap", false),
-   write("Clone", "Clone", false),
-   update("Throw (2x)", "Throw", false),
-   sync("Quick Craft", "QCraft", false),
-   flush("Pick Up All", "All", false),
-   close("Drop Item (1x)", "Drop1", false),
-   open("Drop Stack", "DropStk", false);
+   PICKUP("Pickup", "Pick", false),
+   QUICK_MOVE("Quick Move", "QMove", false),
+   SWAP("Swap", "Swap", false),
+   CLONE("Clone", "Clone", false),
+   THROW("Throw (2x)", "Throw", false),
+   QUICK_CRAFT("Quick Craft", "QCraft", false),
+   PICKUP_ALL("Pick Up All", "All", false),
+   DROP_ITEM("Drop Item (1x)", "Drop1", false),
+   DROP_STACK("Drop Stack", "DropStk", false);
 
    public final String init_Str;
    public final String load_Str;
@@ -34,25 +34,25 @@ public enum N {
    public int init_I() {
       byte var10000;
       switch (this) {
-         case load_N:
+         case QUICK_MOVE:
             var10000 = 0;
             break;
-         case read:
-         case update:
-         case sync:
+         case SWAP:
+         case THROW:
+         case QUICK_CRAFT:
          default:
             var10000 = -1;
             break;
-         case write:
+         case CLONE:
             var10000 = 2;
             break;
-         case flush:
+         case PICKUP_ALL:
             var10000 = 0;
             break;
-         case close:
+         case DROP_ITEM:
             var10000 = 0;
             break;
-         case open:
+         case DROP_STACK:
             var10000 = 1;
       }
 
@@ -66,27 +66,27 @@ public enum N {
 
       ContainerInput var10000;
       switch (this) {
-         case init_N:
+         case PICKUP:
             var10000 = ContainerInput.PICKUP;
             break;
-         case load_N:
+         case QUICK_MOVE:
             var10000 = ContainerInput.QUICK_MOVE;
             break;
-         case read:
+         case SWAP:
             var10000 = ContainerInput.SWAP;
             break;
-         case write:
+         case CLONE:
             var10000 = ContainerInput.CLONE;
             break;
-         case update:
-         case close:
-         case open:
+         case THROW:
+         case DROP_ITEM:
+         case DROP_STACK:
             var10000 = ContainerInput.THROW;
             break;
-         case sync:
+         case QUICK_CRAFT:
             var10000 = ContainerInput.QUICK_CRAFT;
             break;
-         case flush:
+         case PICKUP_ALL:
             var10000 = ContainerInput.PICKUP_ALL;
             break;
          default:

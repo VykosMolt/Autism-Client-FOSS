@@ -339,20 +339,20 @@ public class bk {
    private cX.Inner_DataUtil init_cX_DataUtil(cX overlay) {
       Minecraft mc = Minecraft.getInstance();
       Screen screen = mc == null ? null : mc.gui.screen();
-      if (overlay != null && overlay.init_cX_DataUtil() == cX.Inner_DataUtil.write) {
-         return cX.Inner_DataUtil.write;
+      if (overlay != null && overlay.init_cX_DataUtil() == cX.Inner_DataUtil.BACKGROUND_STATUS) {
+         return cX.Inner_DataUtil.BACKGROUND_STATUS;
       } else if (!AutismLiteVariant.enabled() && screen instanceof autismclient.gui.d.HashUtil) {
-         return cX.Inner_DataUtil.load;
+         return cX.Inner_DataUtil.MODULE_MENU;
       } else if (!(screen instanceof autismclient.gui.d.TaskTimer) && screen != null && !(screen instanceof ChatScreen)) {
-         return cX.Inner_DataUtil.read;
+         return cX.Inner_DataUtil.CONTAINER_GUI;
       } else {
-         return overlay == null ? cX.Inner_DataUtil.init : overlay.init_cX_DataUtil();
+         return overlay == null ? cX.Inner_DataUtil.HOST_SCREEN : overlay.init_cX_DataUtil();
       }
    }
 
    private boolean load(cX overlay, Screen screen) {
-      cX.Inner_DataUtil scope = this.load_Map.getOrDefault(overlay, overlay == null ? cX.Inner_DataUtil.init : overlay.init_cX_DataUtil());
-      if (scope == cX.Inner_DataUtil.write) {
+      cX.Inner_DataUtil scope = this.load_Map.getOrDefault(overlay, overlay == null ? cX.Inner_DataUtil.HOST_SCREEN : overlay.init_cX_DataUtil());
+      if (scope == cX.Inner_DataUtil.BACKGROUND_STATUS) {
          return true;
       }
 
@@ -370,12 +370,12 @@ public class bk {
 
       boolean var10000;
       switch (scope) {
-         case write:
+         case BACKGROUND_STATUS:
             var10000 = true;
             break;
-         case init:
-         case load:
-         case read:
+         case HOST_SCREEN:
+         case MODULE_MENU:
+         case CONTAINER_GUI:
             var10000 = true;
             break;
          default:
@@ -432,7 +432,7 @@ public class bk {
       this.init_Set.clear();
 
       for (cX overlay : this.init_List) {
-         if (overlay != null && this.load_Map.getOrDefault(overlay, overlay.init_cX_DataUtil()) != cX.Inner_DataUtil.write) {
+         if (overlay != null && this.load_Map.getOrDefault(overlay, overlay.init_cX_DataUtil()) != cX.Inner_DataUtil.BACKGROUND_STATUS) {
             if (overlay.sync_Z()) {
                if (rememberWindows && overlay.update_Z()) {
                   this.init_V_cX_Z(overlay, true);
@@ -458,7 +458,7 @@ public class bk {
 
    public boolean read_Z() {
       for (cX overlay : this.init_List) {
-         if (overlay != null && overlay.sync_Z() && !this.load_Z(overlay) && !this.flush_Z(overlay) && overlay.init_cX_DataUtil() != cX.Inner_DataUtil.write) {
+         if (overlay != null && overlay.sync_Z() && !this.load_Z(overlay) && !this.flush_Z(overlay) && overlay.init_cX_DataUtil() != cX.Inner_DataUtil.BACKGROUND_STATUS) {
             return true;
          }
       }
@@ -1083,7 +1083,7 @@ public class bk {
 
          for (int i = this.init_List.size() - 1; i >= 0; i--) {
             cX overlay = this.init_List.get(i);
-            if (this.sync_Z(overlay) && this.init_ArrayUtil(overlay).load((int)mouseX, (int)mouseY, button) == autismclient.gui.f.EventBus.load) {
+            if (this.sync_Z(overlay) && this.init_ArrayUtil(overlay).load((int)mouseX, (int)mouseY, button) == autismclient.gui.f.EventBus.HANDLED) {
                return true;
             }
          }
@@ -1123,7 +1123,7 @@ public class bk {
          }
 
          boolean handled = this.init_ArrayUtil(this.read_cX).init_EventBus_I((int)mouseX, (int)mouseY, button, deltaX, deltaY)
-            == autismclient.gui.f.EventBus.load;
+            == autismclient.gui.f.EventBus.HANDLED;
          this.get();
          return handled;
       } else {
@@ -1134,7 +1134,7 @@ public class bk {
          for (int i = this.init_List.size() - 1; i >= 0; i--) {
             cX overlay = this.init_List.get(i);
             if (this.sync_Z(overlay)
-               && this.init_ArrayUtil(overlay).init_EventBus_I((int)mouseX, (int)mouseY, button, deltaX, deltaY) == autismclient.gui.f.EventBus.load) {
+               && this.init_ArrayUtil(overlay).init_EventBus_I((int)mouseX, (int)mouseY, button, deltaX, deltaY) == autismclient.gui.f.EventBus.HANDLED) {
                return true;
             }
          }
@@ -1183,7 +1183,7 @@ public class bk {
 
       for (int i = this.init_List.size() - 1; i >= 0; i--) {
          cX overlay = this.init_List.get(i);
-         if (this.sync_Z(overlay) && overlay.e_() && this.init_ArrayUtil(overlay).read(keyCode, scanCode, modifiers) == autismclient.gui.f.EventBus.load) {
+         if (this.sync_Z(overlay) && overlay.e_() && this.init_ArrayUtil(overlay).read(keyCode, scanCode, modifiers) == autismclient.gui.f.EventBus.HANDLED) {
             this.update_V(overlay);
             this.open(overlay);
             return true;
@@ -1199,7 +1199,7 @@ public class bk {
          return true;
       } else {
          cX keyboardTarget = this.load_cX();
-         if (keyboardTarget != null && this.init_ArrayUtil(keyboardTarget).read(keyCode, scanCode, modifiers) == autismclient.gui.f.EventBus.load) {
+         if (keyboardTarget != null && this.init_ArrayUtil(keyboardTarget).read(keyCode, scanCode, modifiers) == autismclient.gui.f.EventBus.HANDLED) {
             this.open(keyboardTarget);
             return true;
          } else {
@@ -1223,7 +1223,7 @@ public class bk {
             return true;
          } else {
             cX keyboardTarget = this.load_cX();
-            if (keyboardTarget != null && this.init_ArrayUtil(keyboardTarget).init(chr, modifiers) == autismclient.gui.f.EventBus.load) {
+            if (keyboardTarget != null && this.init_ArrayUtil(keyboardTarget).init(chr, modifiers) == autismclient.gui.f.EventBus.HANDLED) {
                this.open(keyboardTarget);
                return true;
             } else {
@@ -1347,7 +1347,7 @@ public class bk {
 
          for (cX overlay : this.init_List) {
             this.init_ByteReader
-               .init(this.close_Z(overlay) ? autismclient.gui.f.TextFormat.read : autismclient.gui.f.TextFormat.load, this.init_ArrayUtil(overlay));
+               .init(this.close_Z(overlay) ? autismclient.gui.f.TextFormat.DROPDOWN : autismclient.gui.f.TextFormat.FLOATING, this.init_ArrayUtil(overlay));
          }
 
          this.load_Z = false;

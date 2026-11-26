@@ -164,7 +164,7 @@ final class aG {
          case "structure":
             return new aG.Inner_ConfigStore(aG.Inner_SyncManager.flush, null, null, init_aG_StateCache_Str("stronghold"));
          case "ancient_debris":
-            return new aG.Inner_ConfigStore(aG.Inner_SyncManager.update, autismclient.util.oresim.CachePool.Inner_DataUtil.poll, null, null);
+            return new aG.Inner_ConfigStore(aG.Inner_SyncManager.update, autismclient.util.oresim.CachePool.Inner_DataUtil.DEBRIS, null, null);
          default:
             if (q.startsWith("structure:")) {
                return load(q.substring("structure:".length()));
@@ -343,7 +343,7 @@ final class aG {
             autismclient.util.oresim.BufferHelper.Inner_DataUtil stored = autismclient.util.oresim.BufferHelper.init(probe.init_Str());
             if (stored.init_Z()) {
                return new aG.Inner_NetHelper(stored.init_Long(), "stored");
-            } else if (stored.init_BufferHelper_Strea() == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.read) {
+            } else if (stored.init_BufferHelper_Strea() == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.INVALID) {
                throw new IllegalArgumentException(
                   "The stored oresim-seed for this server is not a signed decimal long; fix the xray module's oresim-seed setting or pass the seed argument"
                );
@@ -423,7 +423,7 @@ final class aG {
                   );
                }
 
-               if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.sync) {
+               if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
                   return this.init(
                      AiOperation.Status.FAILED,
                      "Ore simulation supports only the Overworld, Nether and End; the current dimension "

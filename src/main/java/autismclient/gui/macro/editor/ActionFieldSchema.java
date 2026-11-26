@@ -67,7 +67,7 @@ public final class ActionFieldSchema {
       private String addLabel;
       private String[] xyzKeys;
       private boolean xyzDouble;
-      private StreamUtil captureMode = StreamUtil.init;
+      private StreamUtil captureMode = StreamUtil.NONE;
       private String[] exclusiveWith;
       private boolean dynamic;
 
@@ -109,7 +109,7 @@ public final class ActionFieldSchema {
             this.addLabel = null;
             this.xyzKeys = null;
             this.xyzDouble = false;
-            this.captureMode = StreamUtil.init;
+            this.captureMode = StreamUtil.NONE;
             this.exclusiveWith = null;
             this.dynamic = false;
          }
@@ -124,53 +124,53 @@ public final class ActionFieldSchema {
       }
 
       public ActionFieldSchema.Builder toggle(String key, String label) {
-         return this.start(key, label, CachePool.init);
+         return this.start(key, label, CachePool.TOGGLE);
       }
 
       public ActionFieldSchema.Builder number(String key, String label) {
-         return this.start(key, label, CachePool.load);
+         return this.start(key, label, CachePool.NUMBER);
       }
 
       public ActionFieldSchema.Builder decimal(String key, String label) {
-         return this.start(key, label, CachePool.read);
+         return this.start(key, label, CachePool.DECIMAL);
       }
 
       public ActionFieldSchema.Builder text(String key, String label) {
-         return this.start(key, label, CachePool.write);
+         return this.start(key, label, CachePool.TEXT);
       }
 
       public ActionFieldSchema.Builder macroSelect(String key, String label) {
-         return this.start(key, label, CachePool.update);
+         return this.start(key, label, CachePool.MACRO_SELECT);
       }
 
       public ActionFieldSchema.Builder stringList(String key, String label) {
-         return this.start(key, label, CachePool.flush);
+         return this.start(key, label, CachePool.STRING_LIST);
       }
 
       public ActionFieldSchema.Builder blockPos(String key, String label) {
-         return this.start(key, label, CachePool.close);
+         return this.start(key, label, CachePool.BLOCK_POS);
       }
 
       public ActionFieldSchema.Builder slot(String key, String label) {
-         return this.start(key, label, CachePool.open);
+         return this.start(key, label, CachePool.SLOT);
       }
 
       public ActionFieldSchema.Builder targetSummary(String key, String label) {
-         return this.start(key, label, CachePool.poll);
+         return this.start(key, label, CachePool.TARGET_SUMMARY);
       }
 
       public ActionFieldSchema.Builder condition(String key, String label) {
-         return this.start(key, label, CachePool.pop);
+         return this.start(key, label, CachePool.CONDITION);
       }
 
       public ActionFieldSchema.Builder capturePacketClick(String key, String label) {
-         this.start(key, label, CachePool.push);
-         this.captureMode = StreamUtil.flush;
+         this.start(key, label, CachePool.CAPTURE_BUTTON);
+         this.captureMode = StreamUtil.PACKET_CLICK_TARGET;
          return this;
       }
 
       public ActionFieldSchema.Builder enumField(String key, String label, String... options) {
-         this.start(key, label, CachePool.sync);
+         this.start(key, label, CachePool.ENUM);
          this.enumOpts = new ArrayList<>(Arrays.asList(options));
          return this;
       }
@@ -239,42 +239,42 @@ public final class ActionFieldSchema {
       }
 
       public ActionFieldSchema.Builder captureBlock() {
-         this.captureMode = StreamUtil.load;
+         this.captureMode = StreamUtil.BLOCK_ID;
          return this;
       }
 
       public ActionFieldSchema.Builder captureEntity() {
-         this.captureMode = StreamUtil.read;
+         this.captureMode = StreamUtil.ENTITY_ID;
          return this;
       }
 
       public ActionFieldSchema.Builder captureCatalog() {
-         this.captureMode = StreamUtil.write;
+         this.captureMode = StreamUtil.BLOCK_CATALOG;
          return this;
       }
 
       public ActionFieldSchema.Builder captureItemSlot() {
-         this.captureMode = StreamUtil.update;
+         this.captureMode = StreamUtil.ITEM_SLOT;
          return this;
       }
 
       public ActionFieldSchema.Builder capturePacketName() {
-         this.captureMode = StreamUtil.sync;
+         this.captureMode = StreamUtil.PACKET_NAME;
          return this;
       }
 
       public ActionFieldSchema.Builder captureMenuInput() {
-         this.captureMode = StreamUtil.close;
+         this.captureMode = StreamUtil.CUSTOM_MENU_INPUT;
          return this;
       }
 
       public ActionFieldSchema.Builder captureMenuButton() {
-         this.captureMode = StreamUtil.open;
+         this.captureMode = StreamUtil.CUSTOM_MENU_BUTTON;
          return this;
       }
 
       public ActionFieldSchema.Builder captureMenuTitle() {
-         this.captureMode = StreamUtil.poll;
+         this.captureMode = StreamUtil.CUSTOM_MENU_TITLE;
          return this;
       }
 

@@ -24,7 +24,7 @@ public final class dl {
       int deficit = 0;
 
       for (dl.Inner_StreamUtil t : in) {
-         deficit += t.init_dl_DataUtil == dl.Inner_DataUtil.init ? 1 : (t.init_dl_DataUtil == dl.Inner_DataUtil.load ? -1 : 0);
+         deficit += t.init_dl_DataUtil == dl.Inner_DataUtil.OPEN ? 1 : (t.init_dl_DataUtil == dl.Inner_DataUtil.CLOSE ? -1 : 0);
       }
 
       List<dl.Inner_StreamUtil> out = new ArrayList<>(in.size() + 8);
@@ -32,7 +32,7 @@ public final class dl {
       dl.Inner_StreamUtil prev = null;
 
       for (dl.Inner_StreamUtil t : in) {
-         if (deficit > 0 && t.init_dl_DataUtil != dl.Inner_DataUtil.load && prev != null && t.init_I > prev.init_I) {
+         if (deficit > 0 && t.init_dl_DataUtil != dl.Inner_DataUtil.CLOSE && prev != null && t.init_I > prev.init_I) {
             while (deficit > 0 && !open.isEmpty() && open.peek().init_I < t.init_I && t.load <= open.peek().load) {
                init(out, open.pop());
                deficit--;
@@ -42,27 +42,27 @@ public final class dl {
          }
 
          switch (t.init_dl_DataUtil) {
-            case init:
+            case OPEN:
                init(out, prev, t);
                open.push(t);
                out.add(t);
                break;
-            case load:
+            case CLOSE:
                if (open.isEmpty()) {
                   continue;
                }
 
                init_V(out);
                dl.Inner_StreamUtil opener = open.pop();
-               out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.load, opener.init_Str.equals("{") ? "}" : "]", t.init_I, t.load));
+               out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.CLOSE, opener.init_Str.equals("{") ? "}" : "]", t.init_I, t.load));
                break;
-            case read:
+            case COMMA:
                dl.Inner_StreamUtil lastTok = init_dl_StreamUtil(out);
                if (lastTok == null
-                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.init
-                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.read
-                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.write
-                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.update) {
+                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.OPEN
+                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.COMMA
+                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.COLON
+                  || lastTok.init_dl_DataUtil == dl.Inner_DataUtil.SEMI) {
                   continue;
                }
 
@@ -94,32 +94,32 @@ public final class dl {
 
    private static void init(List<dl.Inner_StreamUtil> out, dl.Inner_StreamUtil prev, dl.Inner_StreamUtil t) {
       if (prev != null) {
-         boolean prevEnds = prev.init_dl_DataUtil == dl.Inner_DataUtil.sync
-            || prev.init_dl_DataUtil == dl.Inner_DataUtil.flush
-            || prev.init_dl_DataUtil == dl.Inner_DataUtil.load;
-         boolean starts = t.init_dl_DataUtil == dl.Inner_DataUtil.sync
-            || t.init_dl_DataUtil == dl.Inner_DataUtil.flush
-            || t.init_dl_DataUtil == dl.Inner_DataUtil.init;
+         boolean prevEnds = prev.init_dl_DataUtil == dl.Inner_DataUtil.ATOM
+            || prev.init_dl_DataUtil == dl.Inner_DataUtil.STRING
+            || prev.init_dl_DataUtil == dl.Inner_DataUtil.CLOSE;
+         boolean starts = t.init_dl_DataUtil == dl.Inner_DataUtil.ATOM
+            || t.init_dl_DataUtil == dl.Inner_DataUtil.STRING
+            || t.init_dl_DataUtil == dl.Inner_DataUtil.OPEN;
          if (prevEnds && starts) {
-            out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.read, ",", t.init_I, t.load));
+            out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.COMMA, ",", t.init_I, t.load));
          }
       }
    }
 
    private static void init(List<dl.Inner_StreamUtil> out, dl.Inner_StreamUtil opener) {
       dl.Inner_StreamUtil trailing = null;
-      if (!out.isEmpty() && out.get(out.size() - 1).init_dl_DataUtil == dl.Inner_DataUtil.read) {
+      if (!out.isEmpty() && out.get(out.size() - 1).init_dl_DataUtil == dl.Inner_DataUtil.COMMA) {
          trailing = out.remove(out.size() - 1);
       }
 
-      out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.load, opener.init_Str.equals("{") ? "}" : "]", opener.init_I, opener.load));
+      out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.CLOSE, opener.init_Str.equals("{") ? "}" : "]", opener.init_I, opener.load));
       if (trailing != null) {
          out.add(trailing);
       }
    }
 
    private static void init_V(List<dl.Inner_StreamUtil> out) {
-      if (!out.isEmpty() && out.get(out.size() - 1).init_dl_DataUtil == dl.Inner_DataUtil.read) {
+      if (!out.isEmpty() && out.get(out.size() - 1).init_dl_DataUtil == dl.Inner_DataUtil.COMMA) {
          out.remove(out.size() - 1);
       }
    }
@@ -160,21 +160,21 @@ public final class dl {
                   int j;
                   switch (c) {
                      case ',':
-                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.read, ",", line, lineIndent));
+                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.COMMA, ",", line, lineIndent));
                         continue;
                      case ':':
-                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.write, ":", line, lineIndent));
+                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.COLON, ":", line, lineIndent));
                         continue;
                      case ';':
-                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.update, ";", line, lineIndent));
+                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.SEMI, ";", line, lineIndent));
                         continue;
                      case '[':
                      case '{':
-                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.init, String.valueOf(c), line, lineIndent));
+                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.OPEN, String.valueOf(c), line, lineIndent));
                         continue;
                      case ']':
                      case '}':
-                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.load, String.valueOf(c), line, lineIndent));
+                        out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.CLOSE, String.valueOf(c), line, lineIndent));
                         continue;
                      default:
                         j = i;
@@ -184,7 +184,7 @@ public final class dl {
                      j++;
                   }
 
-                  out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.sync, s.substring(i, j), line, lineIndent));
+                  out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.ATOM, s.substring(i, j), line, lineIndent));
                   i = j - 1;
                } else {
                   int j = i + 1;
@@ -208,7 +208,7 @@ public final class dl {
                   }
 
                   String body = j < s.length() ? s.substring(i, j + 1) : s.substring(i) + c;
-                  out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.flush, body, line, lineIndent));
+                  out.add(new dl.Inner_StreamUtil(dl.Inner_DataUtil.STRING, body, line, lineIndent));
                   i = Math.min(j, s.length() - 1);
                }
             }
@@ -219,13 +219,13 @@ public final class dl {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      OPEN,
+      CLOSE,
+      COMMA,
+      COLON,
+      SEMI,
+      ATOM,
+      STRING;
    }
 
    private record Inner_StreamUtil(dl.Inner_DataUtil init_dl_DataUtil, String init_Str, int init_I, int load) {

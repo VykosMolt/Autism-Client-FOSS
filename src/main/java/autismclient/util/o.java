@@ -203,13 +203,13 @@ public class o {
    public static o.Inner_DataUtil init_o_DataUtil() {
       CompoundTag rootTag = init_CompoundTag();
       if (rootTag == null) {
-         return o.Inner_DataUtil.init;
+         return o.Inner_DataUtil.NONE;
       } else {
          String type = rootTag.getStringOr("type", "");
          if (!"autism_macro".equals(type) && !"autism_macro_list".equals(type)) {
-            return "autism_macro_steps".equals(type) ? o.Inner_DataUtil.read : o.Inner_DataUtil.init;
+            return "autism_macro_steps".equals(type) ? o.Inner_DataUtil.STEPS : o.Inner_DataUtil.NONE;
          } else {
-            return o.Inner_DataUtil.load;
+            return o.Inner_DataUtil.MACROS;
          }
       }
    }
@@ -562,12 +562,12 @@ public class o {
       try {
          int delay = tag.getIntOr("delay", 0);
          int id = tag.getIntOr("id", 0);
-         ck.Inner_BufferHelper replayMode = ck.Inner_BufferHelper.init;
+         ck.Inner_BufferHelper replayMode = ck.Inner_BufferHelper.REGENERATE;
          if (tag.contains("replayMode")) {
             try {
                replayMode = ck.Inner_BufferHelper.valueOf(tag.getStringOr("replayMode", "REGENERATE"));
             } catch (IllegalArgumentException ignored) {
-               replayMode = ck.Inner_BufferHelper.init;
+               replayMode = ck.Inner_BufferHelper.REGENERATE;
             }
          }
 
@@ -1434,9 +1434,9 @@ public class o {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      NONE,
+      MACROS,
+      STEPS;
    }
 
    public record Inner_StreamUtil(List<aM> init_List, boolean init_Z) {

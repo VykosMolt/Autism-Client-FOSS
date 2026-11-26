@@ -694,15 +694,15 @@ public final class ak {
       if (xray != null && xray.isEnabled() && init_Z(xray)) {
          boolean shaderCullMode = !load_Z(xray) && am.pop();
          Long parsedSeed = init_Long(xray);
-         if (init_BufferHelper_DataU.init_BufferHelper_Strea() == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.read) {
+         if (init_BufferHelper_DataU.init_BufferHelper_Strea() == autismclient.util.oresim.BufferHelper.Inner_StreamUtil.INVALID) {
             return "invalid seed";
          } else if (parsedSeed == null) {
             return "no seed";
          } else if (init_I(xray) == 0) {
             return "no ores";
-         } else if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.sync) {
+         } else if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
             return "unsupported dimension";
-         } else if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.update) {
+         } else if (autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
             return "unverified worldgen";
          } else if (autismclient.util.oresim.StreamUtil.read_Z()) {
             return "worldgen failed";
@@ -713,7 +713,7 @@ public final class ak {
             } else if (shaderCullMode) {
                return "Shader cull mode";
             } else {
-               return autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.load
+               return autismclient.util.oresim.StreamUtil.init_StreamUtil_BufferH() == autismclient.util.oresim.StreamUtil.Inner_BufferHelper.LOADING_CONTEXT
                   ? "loading worldgen"
                   : "waiting";
             }

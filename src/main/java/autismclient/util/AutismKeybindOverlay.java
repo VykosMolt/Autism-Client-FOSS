@@ -227,14 +227,14 @@ public class AutismKeybindOverlay extends bj {
             .init_StreamUtil(false);
          settingsPages.init_TableIndex_Z(true);
          settingsPages.init_TableIndex_TableIndex(
-            new autismclient.gui.f.c.ByteReader("Theme Color", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init, this::update_V_7)
+            new autismclient.gui.f.c.ByteReader("Theme Color", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY, this::update_V_7)
                .read_ByteReader_Z(true)
                .init_ByteReader_Z(true)
                .init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.load)
                .load_ByteReader_I(this.state())
          );
          settingsPages.init_TableIndex_TableIndex(
-            new autismclient.gui.f.c.ByteReader("Profiles", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init, this::sync_V_6)
+            new autismclient.gui.f.c.ByteReader("Profiles", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY, this::sync_V_6)
                .read_ByteReader_Z(true)
                .init_ByteReader_Z(true)
                .init_ByteReader_MethodUtil_DataUti(autismclient.gui.f.b.MethodUtil.read)
@@ -256,7 +256,7 @@ public class AutismKeybindOverlay extends bj {
             ((AutismProfilesOverlay)profiles).load(false);
             profiles.init_V_Z(true);
             bk manager = bk.init_bk();
-            manager.init_V_cX_cX_DataUtil(profiles, cX.Inner_DataUtil.init);
+            manager.init_V_cX_cX_DataUtil(profiles, cX.Inner_DataUtil.HOST_SCREEN);
             manager.update_V(profiles);
          }
       }
@@ -391,7 +391,7 @@ public class AutismKeybindOverlay extends bj {
             this.init_RefQueue = null;
          }
 
-         return result == autismclient.gui.f.EventBus.load;
+         return result == autismclient.gui.f.EventBus.HANDLED;
       } else if (this.read_Z_F_F(uiMouseX, uiMouseY)) {
          this.init_Z = false;
          this.put = -1;
@@ -461,7 +461,7 @@ public class AutismKeybindOverlay extends bj {
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
       if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
-         return this.init_RefQueue.load(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), button) == autismclient.gui.f.EventBus.load;
+         return this.init_RefQueue.load(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), button) == autismclient.gui.f.EventBus.HANDLED;
       } else if (this.write_Z) {
          this.write_Z = false;
          this.a__V();
@@ -480,7 +480,7 @@ public class AutismKeybindOverlay extends bj {
       if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
          return this.init_RefQueue.init_EventBus_I(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), button, deltaX, deltaY)
-            == autismclient.gui.f.EventBus.load;
+            == autismclient.gui.f.EventBus.HANDLED;
       }
 
       if (!this.write_Z) {
@@ -519,7 +519,7 @@ public class AutismKeybindOverlay extends bj {
       } else if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          autismclient.gui.f.c.RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
          return this.init_RefQueue.init_EventBus_I(Math.round(viewport.init_F_D(mouseX)), Math.round(viewport.load(mouseY)), amount)
-            == autismclient.gui.f.EventBus.load;
+            == autismclient.gui.f.EventBus.HANDLED;
       } else if (this.init_TextFormat.init_Z_D(mouseX, mouseY, amount)) {
          return true;
       } else if (this.init_CharEncoder_2.init_F_2() > 0.0F && this.init_Z_D_D(mouseX, mouseY)) {
@@ -931,7 +931,7 @@ public class AutismKeybindOverlay extends bj {
       }
 
       private autismclient.gui.f.c.ByteReader init(String label, String style, int width) {
-         return new autismclient.gui.f.c.ByteReader(label, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, () -> {
+         return new autismclient.gui.f.c.ByteReader(label, autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, () -> {
             AutismKeybindOverlay.this.init_AutismConfig().moduleMenuStyle = style;
             AutismKeybindOverlay.this.init_AutismConfig().save();
          }).read_ByteReader_F(width).init_ByteReader_F(width).load_ByteReader_F(width).init_ByteReader_I(5).load_ByteReader_I(AutismKeybindOverlay.queue());
@@ -947,11 +947,11 @@ public class AutismKeybindOverlay extends bj {
          boolean csgo = "CSGO".equals(AutismKeybindOverlay.this.init_AutismConfig().moduleMenuStyle);
          this.init_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               csgo ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init
+               csgo ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY
             );
          this.load_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               csgo ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load
+               csgo ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY
             );
          super.init_V_SyncManager(context);
          if (this.init_Z_F_F(context.init_F(), context.load())) {
@@ -971,7 +971,7 @@ public class AutismKeybindOverlay extends bj {
       private Inner_DataUtil() {
          super(
             new autismclient.gui.f.c.PoolEntry("Font Scale", autismclient.gui.f.b.l.read).load_PoolEntry(true),
-            new autismclient.gui.f.c.ByteReader("1x", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, null)
+            new autismclient.gui.f.c.ByteReader("1x", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, null)
                .read_ByteReader_F(AutismKeybindOverlay.this.value())
                .init_ByteReader_F(AutismKeybindOverlay.this.value())
                .load_ByteReader_F(AutismKeybindOverlay.this.value())
@@ -1026,7 +1026,7 @@ public class AutismKeybindOverlay extends bj {
          this.init_ByteReader.init_ByteReader_Str(scale == 1.0 ? "1x" : String.format(Locale.ROOT, "%.2fx", scale).replaceAll("0+x$", "x"));
          this.init_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               scale != 1.0 ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load
+               scale != 1.0 ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY
             );
          super.init_V_SyncManager(context);
          if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {
@@ -1057,7 +1057,7 @@ public class AutismKeybindOverlay extends bj {
       private Inner_JsonUtil(String label, String tooltip, BooleanSupplier getter, Consumer<Boolean> setter) {
          super(
             new autismclient.gui.f.c.PoolEntry(label, autismclient.gui.f.b.l.read).load_PoolEntry(true),
-            new autismclient.gui.f.c.ByteReader("OFF", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, null)
+            new autismclient.gui.f.c.ByteReader("OFF", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, null)
                .load_ByteReader_Z(true)
                .read_ByteReader_F(22.0F)
                .init_ByteReader_F(22.0F)
@@ -1124,7 +1124,7 @@ public class AutismKeybindOverlay extends bj {
       private Inner_NetHelper() {
          super(
             new autismclient.gui.f.c.PoolEntry("Overlay Scale", autismclient.gui.f.b.l.read).load_PoolEntry(true),
-            new autismclient.gui.f.c.ByteReader("1x", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load, null)
+            new autismclient.gui.f.c.ByteReader("1x", autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY, null)
                .read_ByteReader_F(AutismKeybindOverlay.this.value())
                .init_ByteReader_F(AutismKeybindOverlay.this.value())
                .load_ByteReader_F(AutismKeybindOverlay.this.value())
@@ -1163,7 +1163,7 @@ public class AutismKeybindOverlay extends bj {
          this.init_ByteReader.init_ByteReader_Str(cA.init_Str_D(scale));
          this.init_ByteReader
             .init_ByteReader_ByteReader_StreamU(
-               scale > 1.0 ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.init : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load
+               scale > 1.0 ? autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY : autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY
             );
          super.init_V_SyncManager(context);
          if (this.init_PoolEntry.init_Z_F_F(context.init_F(), context.load())) {

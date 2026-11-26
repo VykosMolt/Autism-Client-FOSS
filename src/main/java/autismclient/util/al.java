@@ -1533,7 +1533,7 @@ public final class al {
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha) {
       context.blit(
          RenderPipelines.GUI_TEXTURED,
-         cu.init(init_Identifier, ct.Inner_DataUtil.init),
+         cu.init(init_Identifier, ct.Inner_DataUtil.ACCENT),
          x,
          y,
          0.0F,
@@ -1709,9 +1709,9 @@ public final class al {
    }
 
    private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y) {
-      int fill = ct.init_I_I_ct_DataUtil(538579477, ct.Inner_DataUtil.update);
-      int lit = ct.init_I_I_ct_DataUtil(1435577909, ct.Inner_DataUtil.load);
-      int shade = ct.init_I_I_ct_DataUtil(1427835662, ct.Inner_DataUtil.update);
+      int fill = ct.init_I_I_ct_DataUtil(538579477, ct.Inner_DataUtil.BACKDROP);
+      int lit = ct.init_I_I_ct_DataUtil(1435577909, ct.Inner_DataUtil.OUTLINE);
+      int shade = ct.init_I_I_ct_DataUtil(1427835662, ct.Inner_DataUtil.BACKDROP);
       autismclient.gui.f.b.k.init(context, x, y, x + 18, y + 18, fill);
       autismclient.gui.f.b.k.init(context, x, y, x + 18, y + 1, lit);
       autismclient.gui.f.b.k.init(context, x, y + 17, x + 18, y + 18, shade);
@@ -1755,7 +1755,7 @@ public final class al {
             int baseColor = init_I_I(style.push(), style.poll(), face);
             int textColor = init_I_I_F(baseColor, alpha * (0.18F + (float)presence * 0.82F));
             int tw = init_IArr[i];
-            int halo = init_I_I_F(ct.init_I_I_ct_DataUtil(942148882, ct.Inner_DataUtil.update), alpha * (float)face);
+            int halo = init_I_I_F(ct.init_I_I_ct_DataUtil(942148882, ct.Inner_DataUtil.BACKDROP), alpha * (float)face);
             if (face > 0.0) {
                int haloTop = fullHeightHighlight ? y : y + 2;
                int haloBottom = fullHeightHighlight ? y + stripH : y + stripH - 2;
@@ -3331,34 +3331,34 @@ public final class al {
 
    private static ct.Inner_DataUtil init_ct_DataUtil_Str(String key) {
       if (key == null) {
-         return ct.Inner_DataUtil.init;
+         return ct.Inner_DataUtil.ACCENT;
       }
 
       ct.Inner_DataUtil var10000;
       switch (key) {
          case "outline-color":
-            var10000 = ct.Inner_DataUtil.load;
+            var10000 = ct.Inner_DataUtil.OUTLINE;
             break;
          case "label-color":
          case "value-color":
          case "text-color":
          case "module-info-color":
          case "keystroke-text-color":
-            var10000 = ct.Inner_DataUtil.read;
+            var10000 = ct.Inner_DataUtil.TEXT;
             break;
          case "background-color":
          case "keystroke-idle-color":
-            var10000 = ct.Inner_DataUtil.update;
+            var10000 = ct.Inner_DataUtil.BACKDROP;
             break;
          default:
-            var10000 = ct.Inner_DataUtil.init;
+            var10000 = ct.Inner_DataUtil.ACCENT;
       }
 
       return var10000;
    }
 
    private static int init_I_Z(boolean selected) {
-      return ct.init_I_I_ct_DataUtil(selected ? 942280982 : 571675672, ct.Inner_DataUtil.update);
+      return ct.init_I_I_ct_DataUtil(selected ? 942280982 : 571675672, ct.Inner_DataUtil.BACKDROP);
    }
 
    private static int init_I_I_F(int color, float alpha) {

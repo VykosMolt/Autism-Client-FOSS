@@ -42,7 +42,7 @@ final class ListPool {
       );
       AiOperation var10000;
       switch (dispatch.init_DataUtil_StreamUti()) {
-         case init:
+         case EXECUTED:
             String refusal = init(raw, "error");
             if (refusal != null) {
                var10000 = R.init(AiOperation.Status.FAILED, A.flush, "Client command " + typed + " refused: " + refusal, data);
@@ -53,8 +53,8 @@ final class ListPool {
                var10000 = R.init_AiOperation(AiOperation.Status.SUCCEEDED, said, data);
             }
             break;
-         case load:
-         case read:
+         case SYNTAX_ERROR:
+         case UNKNOWN_COMMAND:
             var10000 = R.init(
                AiOperation.Status.FAILED,
                A.flush,
@@ -62,13 +62,13 @@ final class ListPool {
                data
             );
             break;
-         case update:
+         case BLOCKED:
             var10000 = R.init(AiOperation.Status.FAILED, A.data, dispatch.init_Str(), data);
             break;
-         case write:
+         case ERROR:
             var10000 = R.init(AiOperation.Status.FAILED, A.flush, "Client command " + typed + " threw: " + dispatch.init_Str(), data);
             break;
-         case sync:
+         case EMPTY:
             var10000 = R.init(AiOperation.Status.FAILED, A.flush, "Empty command line", data);
             break;
          default:

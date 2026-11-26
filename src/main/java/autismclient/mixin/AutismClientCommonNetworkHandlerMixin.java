@@ -69,13 +69,13 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
 
             autismclient.g.FileCache.Inner_DataUtil selectedPolicy = RefQueue.init(context.init_BufferHelper_Cache(), sharedBypass, serializedBypass);
             RefQueue.Inner_StreamUtil verdict = RefQueue.init(packet, forceDeny, selectedPolicy != null);
-            if (verdict.init_RefQueue_DataUtil() != RefQueue.Inner_DataUtil.init) {
-               if (verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.update) {
+            if (verdict.init_RefQueue_DataUtil() != RefQueue.Inner_DataUtil.PASS) {
+               if (verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.INVALID_URL) {
                   this.send(new ServerboundResourcePackPacket(packet.id(), Action.INVALID_URL));
                   ci.cancel();
-               } else if (verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.load || verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.read) {
-                  autismclient.g.FileCache.Inner_DataUtil policy = verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.read
-                     ? autismclient.g.FileCache.Inner_DataUtil.read
+               } else if (verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.BYPASS_SUCCESS || verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.DECLINE) {
+                  autismclient.g.FileCache.Inner_DataUtil policy = verdict.init_RefQueue_DataUtil() == RefQueue.Inner_DataUtil.DECLINE
+                     ? autismclient.g.FileCache.Inner_DataUtil.DECLINE
                      : selectedPolicy;
 
                   URL url;

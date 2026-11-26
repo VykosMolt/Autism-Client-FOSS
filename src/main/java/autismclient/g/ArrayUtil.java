@@ -165,7 +165,7 @@ public final class ArrayUtil {
       if (context != null) {
          return context.init_BufferHelper_Cache();
       } else {
-         return HashUtil.sync() ? BufferHelper.Inner_CachePool.init : BufferHelper.Inner_CachePool.load;
+         return HashUtil.sync() ? BufferHelper.Inner_CachePool.VANILLA : BufferHelper.Inner_CachePool.MODDED;
       }
    }
 
@@ -251,7 +251,7 @@ public final class ArrayUtil {
 
                if (ArrayUtil.init(context) == this.init_BufferHelper_Cache && this.init_Obj == HashUtil.init_Obj()) {
                   ArrayUtil.Inner_BufferHelper server = this.load_IdentityHashMap.get(pack);
-                  if (this.init_BufferHelper_Cache == BufferHelper.Inner_CachePool.init && server == null) {
+                  if (this.init_BufferHelper_Cache == BufferHelper.Inner_CachePool.VANILLA && server == null) {
                      return false;
                   } else if (!this.init()) {
                      return this.load();

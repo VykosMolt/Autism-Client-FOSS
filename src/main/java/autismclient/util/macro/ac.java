@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 
 public class ac implements MacroAction, aP {
-   public ac.Inner_StreamUtil targetMode = ac.Inner_StreamUtil.init;
+   public ac.Inner_StreamUtil targetMode = ac.Inner_StreamUtil.CURRENT_SIGN_GUI;
    public String line1 = "";
    public String line2 = "";
    public String line3 = "";
@@ -22,7 +22,7 @@ public class ac implements MacroAction, aP {
    public boolean waitForGuiBefore = true;
    public boolean waitForGuiAfter = false;
    public String guiName = "SIGN";
-   public ac.Inner_DataUtil closeMode = ac.Inner_DataUtil.init;
+   public ac.Inner_DataUtil closeMode = ac.Inner_DataUtil.STAY_OPEN;
    public boolean closeAfterEdit = false;
    public boolean closeWithPacket = false;
    public boolean sendCommandAfter = false;
@@ -71,13 +71,13 @@ public class ac implements MacroAction, aP {
                   }
                }
 
-               ac.Inner_DataUtil mode = this.closeMode == null ? ac.Inner_DataUtil.init : this.closeMode;
-               if (mode == ac.Inner_DataUtil.write) {
+               ac.Inner_DataUtil mode = this.closeMode == null ? ac.Inner_DataUtil.STAY_OPEN : this.closeMode;
+               if (mode == ac.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY) {
                   mc.getConnection().send(new ServerboundContainerClosePacket(this.closePacketContainerId));
                }
 
-               if (mode == ac.Inner_DataUtil.load || mode == ac.Inner_DataUtil.read) {
-                  if (mode == ac.Inner_DataUtil.read && mc.player != null && mc.player.containerMenu != null) {
+               if (mode == ac.Inner_DataUtil.CLOSE_LOCAL || mode == ac.Inner_DataUtil.CLOSE_WITH_PACKET) {
+                  if (mode == ac.Inner_DataUtil.CLOSE_WITH_PACKET && mc.player != null && mc.player.containerMenu != null) {
                      mc.getConnection().send(new ServerboundContainerClosePacket(mc.player.containerMenu.containerId));
                   }
 
@@ -89,9 +89,9 @@ public class ac implements MacroAction, aP {
    }
 
    private BlockPos init_BlockPos_Minecraft(Minecraft mc) {
-      if (this.targetMode == ac.Inner_StreamUtil.read) {
+      if (this.targetMode == ac.Inner_StreamUtil.MANUAL_POS) {
          return new BlockPos(this.f_x_I, this.f_y_I, this.f_z_I);
-      } else if (this.targetMode == ac.Inner_StreamUtil.load) {
+      } else if (this.targetMode == ac.Inner_StreamUtil.LAST_INTERACTED_BLOCK) {
          return ck.init_ck().init_BlockPos();
       } else {
          return mc.gui.screen() instanceof cm access ? access.autism$getSignPos() : null;
@@ -99,12 +99,12 @@ public class ac implements MacroAction, aP {
    }
 
    private boolean init_Z_Minecraft_2(Minecraft mc) {
-      return this.targetMode == ac.Inner_StreamUtil.init && mc.gui.screen() instanceof cm access ? access.autism$isFrontText() : this.frontText;
+      return this.targetMode == ac.Inner_StreamUtil.CURRENT_SIGN_GUI && mc.gui.screen() instanceof cm access ? access.autism$isFrontText() : this.frontText;
    }
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_Q_StreamGate;
+      return StreamGate.SIGN_EDIT;
    }
 
    @Override
@@ -123,7 +123,7 @@ public class ac implements MacroAction, aP {
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      tag.putString("closeMode", this.closeMode == null ? ac.Inner_DataUtil.init.name() : this.closeMode.name());
+      tag.putString("closeMode", this.closeMode == null ? ac.Inner_DataUtil.STAY_OPEN.name() : this.closeMode.name());
       tag.putBoolean("sendCommandAfter", this.sendCommandAfter);
       tag.putString("commandAfter", this.commandAfter);
       tag.putInt("closePacketContainerId", this.closePacketContainerId);
@@ -132,7 +132,7 @@ public class ac implements MacroAction, aP {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = i.init(ac.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), ac.Inner_StreamUtil.init);
+      this.targetMode = i.init(ac.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), ac.Inner_StreamUtil.CURRENT_SIGN_GUI);
       this.line1 = tag.getStringOr("line1", "");
       this.line2 = tag.getStringOr("line2", "");
       this.line3 = tag.getStringOr("line3", "");
@@ -145,26 +145,26 @@ public class ac implements MacroAction, aP {
       this.waitForGuiAfter = tag.getBooleanOr("waitForGuiAfter", false);
       this.guiName = tag.getStringOr("guiName", "SIGN");
       if (tag.contains("closeMode")) {
-         this.closeMode = i.init(ac.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), ac.Inner_DataUtil.init);
+         this.closeMode = i.init(ac.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), ac.Inner_DataUtil.STAY_OPEN);
       } else if (tag.getBooleanOr("sendClosePacketAfter", false)) {
-         this.closeMode = ac.Inner_DataUtil.write;
+         this.closeMode = ac.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY;
       } else if (tag.getBooleanOr("closeAfterEdit", false)) {
-         this.closeMode = tag.getBooleanOr("closeWithPacket", false) ? ac.Inner_DataUtil.read : ac.Inner_DataUtil.load;
+         this.closeMode = tag.getBooleanOr("closeWithPacket", false) ? ac.Inner_DataUtil.CLOSE_WITH_PACKET : ac.Inner_DataUtil.CLOSE_LOCAL;
       } else {
-         this.closeMode = ac.Inner_DataUtil.init;
+         this.closeMode = ac.Inner_DataUtil.STAY_OPEN;
       }
 
-      this.closeAfterEdit = this.closeMode == ac.Inner_DataUtil.load || this.closeMode == ac.Inner_DataUtil.read;
-      this.closeWithPacket = this.closeMode == ac.Inner_DataUtil.read;
+      this.closeAfterEdit = this.closeMode == ac.Inner_DataUtil.CLOSE_LOCAL || this.closeMode == ac.Inner_DataUtil.CLOSE_WITH_PACKET;
+      this.closeWithPacket = this.closeMode == ac.Inner_DataUtil.CLOSE_WITH_PACKET;
       this.sendCommandAfter = tag.getBooleanOr("sendCommandAfter", false);
       this.commandAfter = tag.getStringOr("commandAfter", "");
-      this.sendClosePacketAfter = this.closeMode == ac.Inner_DataUtil.write;
+      this.sendClosePacketAfter = this.closeMode == ac.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY;
       this.closePacketContainerId = tag.getIntOr("closePacketContainerId", 0);
    }
 
    @Override
    public String getDisplayName() {
-      String suffix = this.closeMode != ac.Inner_DataUtil.init
+      String suffix = this.closeMode != ac.Inner_DataUtil.STAY_OPEN
          ? " + " + this.closeMode.name().toLowerCase(Locale.ROOT)
          : (this.sendCommandAfter ? " + command" : "");
       return "Edit sign" + suffix;
@@ -206,15 +206,15 @@ public class ac implements MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      STAY_OPEN,
+      CLOSE_LOCAL,
+      CLOSE_WITH_PACKET,
+      SEND_CLOSE_PACKET_ONLY;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      CURRENT_SIGN_GUI,
+      LAST_INTERACTED_BLOCK,
+      MANUAL_POS;
    }
 }

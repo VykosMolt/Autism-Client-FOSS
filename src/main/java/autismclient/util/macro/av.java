@@ -51,7 +51,7 @@ public class av implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.data;
+      return StreamGate.WAIT_COOLDOWN;
    }
 
    @Override

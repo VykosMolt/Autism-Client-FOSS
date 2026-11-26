@@ -4,10 +4,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class TableIndex implements MacroAction {
-   public TableIndex.Inner_StreamUtil target = TableIndex.Inner_StreamUtil.write;
+   public TableIndex.Inner_StreamUtil target = TableIndex.Inner_StreamUtil.LABEL;
    public int amount = 1;
    public String labelName = "";
-   public TableIndex.Inner_DataUtil onMissingLabel = TableIndex.Inner_DataUtil.init;
+   public TableIndex.Inner_DataUtil onMissingLabel = TableIndex.Inner_DataUtil.CONTINUE;
    public boolean conditional = false;
    public a condition = a.init_a();
    private boolean init = true;
@@ -18,7 +18,7 @@ public class TableIndex implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_U_StreamGate;
+      return StreamGate.FLOW;
    }
 
    public boolean init(Minecraft mc) {
@@ -43,10 +43,10 @@ public class TableIndex implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.target = i.init(TableIndex.Inner_StreamUtil.class, tag.getStringOr("target", "LABEL"), TableIndex.Inner_StreamUtil.write);
+      this.target = i.init(TableIndex.Inner_StreamUtil.class, tag.getStringOr("target", "LABEL"), TableIndex.Inner_StreamUtil.LABEL);
       this.amount = Math.max(0, tag.getIntOr("amount", 1));
       this.labelName = tag.getStringOr("labelName", "");
-      this.onMissingLabel = i.init(TableIndex.Inner_DataUtil.class, tag.getStringOr("onMissingLabel", "CONTINUE"), TableIndex.Inner_DataUtil.init);
+      this.onMissingLabel = i.init(TableIndex.Inner_DataUtil.class, tag.getStringOr("onMissingLabel", "CONTINUE"), TableIndex.Inner_DataUtil.CONTINUE);
       this.conditional = tag.getBooleanOr("conditional", false);
       this.condition = a.init(tag, "condition", "cond_");
       if (tag.contains("enabled")) {
@@ -58,25 +58,25 @@ public class TableIndex implements MacroAction {
    public String getDisplayName() {
       String var10000;
       switch (this.target) {
-         case init:
+         case FORWARD:
             var10000 = "skip " + this.amount;
             break;
-         case load:
+         case BACK:
             var10000 = "back " + this.amount;
             break;
-         case read:
+         case STEP:
             var10000 = "step " + this.amount;
             break;
-         case write:
+         case LABEL:
             var10000 = "→ " + (this.labelName != null && !this.labelName.isBlank() ? this.labelName : "?");
             break;
-         case update:
+         case TOP:
             var10000 = "→ top";
             break;
-         case sync:
+         case END:
             var10000 = "→ end";
             break;
-         case flush:
+         case STOP:
             var10000 = "stop";
             break;
          default:
@@ -103,17 +103,17 @@ public class TableIndex implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      CONTINUE,
+      STOP;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      FORWARD,
+      BACK,
+      STEP,
+      LABEL,
+      TOP,
+      END,
+      STOP;
    }
 }

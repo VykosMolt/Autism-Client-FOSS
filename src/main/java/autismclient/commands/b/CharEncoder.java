@@ -27,8 +27,8 @@ final class CharEncoder {
       target.then(init("shift-right", CharEncoder.Inner_StreamUtil.init("Shift Right", ContainerInput.QUICK_MOVE, 1), executor));
       target.then(init("clone", CharEncoder.Inner_StreamUtil.init("Clone", ContainerInput.CLONE, 2), executor));
       target.then(init("pickup-all", CharEncoder.Inner_StreamUtil.init("Pick Up All", ContainerInput.PICKUP_ALL, 0), executor));
-      target.then(init("drop-item", CharEncoder.Inner_StreamUtil.init("Drop Item", CharEncoder.Inner_CachePool.load), executor));
-      target.then(load("drop-stack", CharEncoder.Inner_StreamUtil.init("Drop Stack", CharEncoder.Inner_CachePool.read), executor));
+      target.then(init("drop-item", CharEncoder.Inner_StreamUtil.init("Drop Item", CharEncoder.Inner_CachePool.ITEM), executor));
+      target.then(load("drop-stack", CharEncoder.Inner_StreamUtil.init("Drop Stack", CharEncoder.Inner_CachePool.STACK), executor));
       LiteralArgumentBuilder<AutismCommandSource> swap = LiteralArgumentBuilder.<AutismCommandSource>literal("swap");
       RequiredArgumentBuilder<AutismCommandSource, Integer> hotbar = (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument(
             "swap-hotbar", IntegerArgumentType.integer(1, 9)
@@ -76,7 +76,7 @@ final class CharEncoder {
       if (handlerSlot >= 0 && handlerSlot < mc.player.containerMenu.slots.size()) {
          int requested = Math.max(1, times);
          int completed = 0;
-         if (spec.init_CharEncoder_CacheP() == CharEncoder.Inner_CachePool.load) {
+         if (spec.init_CharEncoder_CacheP() == CharEncoder.Inner_CachePool.ITEM) {
             ItemStack stack = mc.player.containerMenu.slots.get(handlerSlot).getItem();
             if (!stack.isEmpty()) {
                int actual = Math.min(requested, stack.getCount());
@@ -84,7 +84,7 @@ final class CharEncoder {
                   completed = actual;
                }
             }
-         } else if (spec.init_CharEncoder_CacheP() == CharEncoder.Inner_CachePool.read) {
+         } else if (spec.init_CharEncoder_CacheP() == CharEncoder.Inner_CachePool.STACK) {
             completed = O.init(mc, handlerSlot, 0) > 0 ? 1 : 0;
          } else {
             for (int i = 0; i < requested && av.init(mc, handlerSlot, spec.init_I(), spec.init_ContainerInput()); i++) {
@@ -95,8 +95,8 @@ final class CharEncoder {
          if (completed == 0) {
             AutismClientMessaging.sendPrefixed("§cCould not click §f" + targetLabel + "§c.");
          } else {
-            String repeat = completed > 1 && spec.init_CharEncoder_CacheP() != CharEncoder.Inner_CachePool.read ? " x" + completed : "";
-            String partial = completed < requested && spec.init_CharEncoder_CacheP() != CharEncoder.Inner_CachePool.read
+            String repeat = completed > 1 && spec.init_CharEncoder_CacheP() != CharEncoder.Inner_CachePool.STACK ? " x" + completed : "";
+            String partial = completed < requested && spec.init_CharEncoder_CacheP() != CharEncoder.Inner_CachePool.STACK
                ? " §e(" + completed + "/" + requested + ")"
                : "";
             AutismClientMessaging.sendPrefixed("§a" + spec.init_Str() + " clicked §f" + targetLabel + "§a" + repeat + "." + partial);
@@ -131,9 +131,9 @@ final class CharEncoder {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read;
+      NONE,
+      ITEM,
+      STACK;
    }
 
    @FunctionalInterface
@@ -143,11 +143,11 @@ final class CharEncoder {
 
    record Inner_StreamUtil(String init_Str, ContainerInput init_ContainerInput, int init_I, CharEncoder.Inner_CachePool init_CharEncoder_CacheP) {
       static CharEncoder.Inner_StreamUtil init(String label, ContainerInput input, int button) {
-         return new CharEncoder.Inner_StreamUtil(label, input, button, CharEncoder.Inner_CachePool.init);
+         return new CharEncoder.Inner_StreamUtil(label, input, button, CharEncoder.Inner_CachePool.NONE);
       }
 
       static CharEncoder.Inner_StreamUtil init(String label, CharEncoder.Inner_CachePool dropMode) {
-         return new CharEncoder.Inner_StreamUtil(label, ContainerInput.THROW, dropMode == CharEncoder.Inner_CachePool.read ? 1 : 0, dropMode);
+         return new CharEncoder.Inner_StreamUtil(label, ContainerInput.THROW, dropMode == CharEncoder.Inner_CachePool.STACK ? 1 : 0, dropMode);
       }
    }
 }

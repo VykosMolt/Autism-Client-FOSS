@@ -390,7 +390,7 @@ public final class DataUtil {
          loader = new URLClassLoader(new URL[]{classesDir.toUri().toURL()}, DataUtil.class.getClassLoader());
       } catch (Exception e) {
          report.init("classloader", "Could not create class loader over " + classesDir + ": " + init(e));
-         return init(addonId, DataUtil.Inner_DataUtil.read, report);
+         return init(addonId, DataUtil.Inner_DataUtil.FAILED, report);
       }
 
       try {
@@ -399,12 +399,12 @@ public final class DataUtil {
             entryClass = Class.forName(entryClassName.trim(), true, loader);
          } catch (Throwable t) {
             report.init("load", "Could not load entry class '" + entryClassName + "': " + init(t));
-            return init(addonId, DataUtil.Inner_DataUtil.read, report);
+            return init(addonId, DataUtil.Inner_DataUtil.FAILED, report);
          }
 
          if (!AutismAddon.class.isAssignableFrom(entryClass)) {
             report.init("load", entryClass.getName() + " does not extend " + AutismAddon.class.getName() + ".");
-            return init(addonId, DataUtil.Inner_DataUtil.read, report);
+            return init(addonId, DataUtil.Inner_DataUtil.FAILED, report);
          }
 
          AutismAddon addon;
@@ -412,7 +412,7 @@ public final class DataUtil {
             addon = (AutismAddon)entryClass.getDeclaredConstructor().newInstance();
          } catch (Throwable t) {
             report.init("construct", "Failed to construct " + entryClass.getName() + ": " + init(t));
-            return init(addonId, DataUtil.Inner_DataUtil.read, report);
+            return init(addonId, DataUtil.Inner_DataUtil.FAILED, report);
          }
 
          int declared;
@@ -420,32 +420,32 @@ public final class DataUtil {
             declared = addon.apiVersion();
          } catch (AbstractMethodError e) {
             report.write("Missing apiVersion() override.");
-            return init(addonId, DataUtil.Inner_DataUtil.update, report);
+            return init(addonId, DataUtil.Inner_DataUtil.MISSING_API_VERSION, report);
          } catch (Throwable t) {
             report.init("apiVersion", "apiVersion() threw: " + init(t));
-            return init(addonId, DataUtil.Inner_DataUtil.read, report);
+            return init(addonId, DataUtil.Inner_DataUtil.FAILED, report);
          }
 
          report.init(declared);
          if (declared <= 0) {
             report.write("Invalid API version " + declared + ".");
-            return init(addonId, DataUtil.Inner_DataUtil.update, report);
+            return init(addonId, DataUtil.Inner_DataUtil.MISSING_API_VERSION, report);
          }
 
          if (declared > ApiVersion.CURRENT) {
             report.read("Needs API v" + declared + ", host provides v" + ApiVersion.CURRENT + ".");
-            return init(addonId, DataUtil.Inner_DataUtil.write, report);
+            return init(addonId, DataUtil.Inner_DataUtil.NEEDS_NEWER_API, report);
          }
 
          addon.name = name;
          addon.authors = "";
          report.init(addon);
          if (!init(addonId, addon, "Runtime addon")) {
-            return init(addonId, DataUtil.Inner_DataUtil.read, report);
+            return init(addonId, DataUtil.Inner_DataUtil.FAILED, report);
          }
 
          load.put(addonId, new DataUtil.ConfigStore(addon, loader));
-         return new DataUtil.TaskQueue(addonId, DataUtil.Inner_DataUtil.init_DataUtil_DataUtil.name(), "Loaded runtime addon '" + name + "'.", init(report));
+         return new DataUtil.TaskQueue(addonId, DataUtil.Inner_DataUtil.LOADED.name(), "Loaded runtime addon '" + name + "'.", init(report));
       } finally {
          if (!load.containsKey(addonId)) {
             init(addonId, loader);
@@ -612,11 +612,11 @@ public final class DataUtil {
    }
 
    public enum Inner_DataUtil {
-      init_DataUtil_DataUtil("Loaded", false),
-      load("Disabled on restart", false),
-      read("Failed", true),
-      write("Needs newer API", true),
-      update("Missing apiVersion", true);
+      LOADED("Loaded", false),
+      DISABLED("Disabled on restart", false),
+      FAILED("Failed", true),
+      NEEDS_NEWER_API("Needs newer API", true),
+      MISSING_API_VERSION("Missing apiVersion", true);
 
       private final String init_Str;
       private final boolean init_Z;
@@ -643,7 +643,7 @@ public final class DataUtil {
       private int init_I;
       private int load_I = -1;
       private int read_I = 4;
-      private DataUtil.Inner_DataUtil init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.read;
+      private DataUtil.Inner_DataUtil init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.FAILED;
       private String update = "discovered";
       private String sync = "";
       private final Map<String, Integer> init_Map = new LinkedHashMap<>();
@@ -685,31 +685,31 @@ public final class DataUtil {
       }
 
       private void init_V() {
-         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.init_DataUtil_DataUtil;
+         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.LOADED;
          this.update = "loaded";
          this.sync = "";
       }
 
       private void load(String reason) {
-         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.load;
+         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.DISABLED;
          this.update = "disabled";
          this.sync = reason == null ? "" : reason;
       }
 
       private void init(String phase, String reason) {
-         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.read;
+         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.FAILED;
          this.update = phase != null && !phase.isBlank() ? phase : "failed";
          this.sync = reason == null ? "" : reason;
       }
 
       private void read(String reason) {
-         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.write;
+         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.NEEDS_NEWER_API;
          this.update = "apiVersion";
          this.sync = reason == null ? "" : reason;
       }
 
       private void write(String reason) {
-         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.update;
+         this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.MISSING_API_VERSION;
          this.update = "apiVersion";
          this.sync = reason == null ? "" : reason;
       }

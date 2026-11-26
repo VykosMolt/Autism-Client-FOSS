@@ -14,7 +14,7 @@ import java.util.function.BooleanSupplier;
 
 final class h {
    static final String init_Str = "technique";
-   static final autismclient.util.a.BufferHelper init_BufferHelper = autismclient.util.a.BufferHelper.read_BufferHelper;
+   static final autismclient.util.a.BufferHelper init_BufferHelper = autismclient.util.a.BufferHelper.BUTTERFLY;
    static final ValueRange init_ValueRange = new ValueRange(12.0, 14.5);
    private static final String load_Str = "Free Spin";
    private static final double init_D = 300.0;
@@ -73,10 +73,10 @@ final class h {
    }
 
    private ValueRange init_ValueRange_BufferHelper(autismclient.util.a.BufferHelper kind) {
-      ValueRange own = kind == autismclient.util.a.BufferHelper.read_BufferHelper && this.load_ValueRange != null
+      ValueRange own = kind == autismclient.util.a.BufferHelper.BUTTERFLY && this.load_ValueRange != null
          ? this.load_ValueRange
          : new ValueRange(kind.read_D, kind.write_D);
-      if (this.load_D <= 0.0 || own.max() <= this.load_D || kind == autismclient.util.a.BufferHelper.sync_BufferHelper && !this.init_Z) {
+      if (this.load_D <= 0.0 || own.max() <= this.load_D || kind == autismclient.util.a.BufferHelper.RAGE && !this.init_Z) {
          return own;
       }
 
@@ -181,7 +181,7 @@ final class h {
          this.load_Str = key + "-cps";
          this.read_Str = key + "-interval";
          this.init_BooleanSupplier = () -> h.this.init_BooleanSupplier.getAsBoolean() && h.this.init_BufferHelper() == kind;
-         if (kind == autismclient.util.a.BufferHelper.sync_BufferHelper) {
+         if (kind == autismclient.util.a.BufferHelper.RAGE) {
             double rate = h.this.init_ValueRange_BufferHelper(kind).max();
             this.init_DoubleSetting = this.init(
                new DoubleSetting(this.load_Str, "CPS", rate, 1.0, kind.load_D, 0.1).description("Fixed rate, no humanizing"), null
@@ -208,21 +208,21 @@ final class h {
                null
             );
             switch (kind) {
-               case init_BufferHelper:
+               case NORMAL:
                   this.load_RangeSetting = this.init(this.init(key, 40, 90, 150), null);
                   break;
-               case load_BufferHelper:
+               case JITTER:
                   this.load_IntSetting = this.init(
                      new IntSetting(key + "-wobble", "Wobble", 100, 0, 300, 10).unit("%").description("Hand tension variation"), null
                   );
                   break;
-               case read_BufferHelper:
+               case BUTTERFLY:
                   this.load_RangeSetting = this.init(this.init(key, 10, 80, 120), null);
                   this.read_IntSetting = this.init(
                      new IntSetting(key + "-sync", "Finger Sync", 100, 25, 400, 25).unit("%").description("Finger coordination strength"), null
                   );
                   break;
-               case write_BufferHelper:
+               case DRAG:
                   this.read_RangeSetting = this.init(
                      new RangeSetting(key + "-stroke", "Stroke", new ValueRange(5, 10), 2.0, 16.0, 1.0).description("Clicks per drag stroke"), null
                   );
@@ -232,7 +232,7 @@ final class h {
                   );
                   this.load_RangeSetting = this.init(this.init(key, 5, 35, 60), null);
                   break;
-               case update_BufferHelper:
+               case SCROLL:
                   this.init_ChoiceSetting = this.init(
                      new ChoiceSetting(key + "-wheel", "Wheel", "Notched", "Notched", "Free Spin").description("Notched or free spinning"), null
                   );

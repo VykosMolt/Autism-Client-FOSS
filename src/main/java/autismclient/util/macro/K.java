@@ -21,10 +21,10 @@ public class K implements E, M, MacroAction, aP {
    public boolean sneak = false;
    public String sneakMode = "Packet";
    public boolean interact = false;
-   public TaskTimer interactTiming = TaskTimer.read;
+   public TaskTimer interactTiming = TaskTimer.AFTER;
    public int interactCustomMs = 0;
    public String guiName = "";
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private boolean init = true;
    public boolean raycast = false;
 
@@ -163,7 +163,7 @@ public class K implements E, M, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_P_StreamGate;
+      return StreamGate.PLACE;
    }
 
    @Override
@@ -264,7 +264,7 @@ public class K implements E, M, MacroAction, aP {
       this.raycast = tag.getBooleanOr("raycast", false);
       this.sneakMode = tag.getStringOr("sneakMode", "Packet");
       this.interact = tag.getBooleanOr("interact", false);
-      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "AFTER"), TaskTimer.read);
+      this.interactTiming = TaskTimer.init(tag.getStringOr("interactTiming", "AFTER"), TaskTimer.AFTER);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.guiName = tag.getStringOr("guiName", "");
       this.init = tag.getBooleanOr("enabled", true);

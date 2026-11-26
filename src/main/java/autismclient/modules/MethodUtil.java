@@ -37,7 +37,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class MethodUtil extends Module {
-   private MethodUtil.Inner_DataUtil init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.init;
+   private MethodUtil.Inner_DataUtil init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.SEARCH;
    private Entity init_Entity;
    private MerchantMenu init_MerchantMenu;
    private Object init_Obj;
@@ -239,7 +239,7 @@ public final class MethodUtil extends Module {
       this.init_Z = this.init_Z_12();
       this.load_Z = this.choice("match").equals("Profession");
       this.read_Z = this.bool("lock");
-      this.init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.init;
+      this.init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.SEARCH;
       this.init_Str = "Searching";
       this.init_Obj = MC.level;
       if (MC.player != null && MC.level != null) {
@@ -280,7 +280,7 @@ public final class MethodUtil extends Module {
             );
             this.init_MethodUtil_StreamU = MethodUtil.Inner_StreamUtil.valueOf(this.choice("profession"));
             if (this.init_Z) {
-               if (this.load_Z_6() && this.init_MethodUtil_StreamU != MethodUtil.Inner_StreamUtil.open) {
+               if (this.load_Z_6() && this.init_MethodUtil_StreamU != MethodUtil.Inner_StreamUtil.LIBRARIAN) {
                   throw new IllegalArgumentException("Choose Librarian for enchanted books");
                }
 
@@ -373,7 +373,7 @@ public final class MethodUtil extends Module {
             } else if (this.init_Z
                && this.init_MerchantMenu == null
                && MC.player.containerMenu instanceof MerchantMenu
-               && this.init_MethodUtil_DataUti != MethodUtil.Inner_DataUtil.load) {
+               && this.init_MethodUtil_DataUti != MethodUtil.Inner_DataUtil.OPEN) {
                this.init_Str = "Close the current trade screen";
             } else if (this.init_Z) {
                this.sync();
@@ -386,7 +386,7 @@ public final class MethodUtil extends Module {
 
    private void read() {
       if (MC.player.containerMenu instanceof MerchantMenu menu) {
-         if (this.init_MerchantMenu == null && !this.choice("target").equals("Open screen") && this.init_MethodUtil_DataUti != MethodUtil.Inner_DataUtil.load) {
+         if (this.init_MerchantMenu == null && !this.choice("target").equals("Open screen") && this.init_MethodUtil_DataUti != MethodUtil.Inner_DataUtil.OPEN) {
             this.init_Str = "Close the current trade screen";
          } else if (menu.getOffers().isEmpty() && ++this.load_I < this.integer("timeout")) {
             this.init_Str = "Loading offers";
@@ -396,7 +396,7 @@ public final class MethodUtil extends Module {
          }
       } else if (this.choice("target").equals("Open screen")) {
          this.init_Str = "Open a trade screen";
-      } else if (this.init_MethodUtil_DataUti == MethodUtil.Inner_DataUtil.load) {
+      } else if (this.init_MethodUtil_DataUti == MethodUtil.Inner_DataUtil.OPEN) {
          if (++this.load_I >= this.integer("timeout")) {
             this.update();
          } else {
@@ -445,16 +445,16 @@ public final class MethodUtil extends Module {
          this.init_CachePool = null;
          if (this.init_Z) {
             this.init(
-               result == autismclient.util.h.CachePool.Inner_CachePool.load ? "Match purchased and locked" : "Match found; " + this.init_Str,
-               result == autismclient.util.h.CachePool.Inner_CachePool.load
+               result == autismclient.util.h.CachePool.Inner_CachePool.COMPLETE ? "Match purchased and locked" : "Match found; " + this.init_Str,
+               result == autismclient.util.h.CachePool.Inner_CachePool.COMPLETE
             );
-         } else if (result != autismclient.util.h.CachePool.Inner_CachePool.pop
-            && result != autismclient.util.h.CachePool.Inner_CachePool.push
-            && result != autismclient.util.h.CachePool.Inner_CachePool.poll
-            && result != autismclient.util.h.CachePool.Inner_CachePool.close
-            && result != autismclient.util.h.CachePool.Inner_CachePool.open
-            && result != autismclient.util.h.CachePool.Inner_CachePool.tick
-            && result != autismclient.util.h.CachePool.Inner_CachePool.write) {
+         } else if (result != autismclient.util.h.CachePool.Inner_CachePool.UNCERTAIN
+            && result != autismclient.util.h.CachePool.Inner_CachePool.REJECTED
+            && result != autismclient.util.h.CachePool.Inner_CachePool.CURSOR_BUSY
+            && result != autismclient.util.h.CachePool.Inner_CachePool.INVENTORY_FULL
+            && result != autismclient.util.h.CachePool.Inner_CachePool.BUDGET
+            && result != autismclient.util.h.CachePool.Inner_CachePool.CANCELLED
+            && result != autismclient.util.h.CachePool.Inner_CachePool.NO_MENU) {
             if (this.integer("trade-limit") > 0 && this.sync_I >= this.integer("trade-limit")) {
                this.init("Trade limit reached", true);
             } else if (this.choice("target").equals("Open screen")) {
@@ -475,7 +475,7 @@ public final class MethodUtil extends Module {
 
       this.poll();
       this.init_Entity = null;
-      this.init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.init;
+      this.init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.SEARCH;
       this.load_I = 0;
       this.update_I = this.init_I + this.integer("delay");
    }
@@ -489,7 +489,7 @@ public final class MethodUtil extends Module {
             this.init("Job change timed out; check workstation access", false);
          } else {
             switch (this.init_MethodUtil_DataUti) {
-               case init:
+               case SEARCH:
                   if (villager.getVillagerData().profession().is(VillagerProfession.NONE)) {
                      if (!init(false, false, villager.getVillagerData().level(), villager.getVillagerXp(), false)) {
                         this.init("Villager profession is locked", false);
@@ -498,30 +498,30 @@ public final class MethodUtil extends Module {
 
                      if (MC.level.getBlockState(this.init_BlockPos).isAir()) {
                         this.write_Z = true;
-                        this.init(MethodUtil.Inner_DataUtil.sync, "Placing workstation");
+                        this.init(MethodUtil.Inner_DataUtil.PLACE, "Placing workstation");
                      } else {
-                        this.init(MethodUtil.Inner_DataUtil.write, "Removing selected workstation");
+                        this.init(MethodUtil.Inner_DataUtil.BREAK, "Removing selected workstation");
                      }
                   } else {
                      this.flush();
                   }
                   break;
-               case load:
+               case OPEN:
                   if (MC.player.containerMenu instanceof MerchantMenu menu) {
                      this.init_MerchantMenu = menu;
                      if (!menu.getOffers().isEmpty()) {
-                        this.init(MethodUtil.Inner_DataUtil.read, "Inspecting offers");
+                        this.init(MethodUtil.Inner_DataUtil.INSPECT, "Inspecting offers");
                      }
                   } else if (this.load_I >= this.integer("timeout")) {
                      this.init("Villager did not open", false);
                   }
                   break;
-               case read:
+               case INSPECT:
                   MerchantMenu menu = this.init_MerchantMenu;
                   boolean match = this.init_Z_Villager(villager) && (this.load_Z || this.init_I_MerchantMenu(menu) >= 0);
                   if (match) {
                      if (this.read_Z) {
-                        this.init(MethodUtil.Inner_DataUtil.close, "Locking match");
+                        this.init(MethodUtil.Inner_DataUtil.LOCK, "Locking match");
                         this.init_V_I_4(1);
                      } else {
                         this.init("Match found; trade once to lock it", true);
@@ -544,9 +544,9 @@ public final class MethodUtil extends Module {
 
                   this.poll();
                   this.read_I = this.init_I;
-                  this.init(MethodUtil.Inner_DataUtil.write, "Removing selected workstation");
+                  this.init(MethodUtil.Inner_DataUtil.BREAK, "Removing selected workstation");
                   break;
-               case write:
+               case BREAK:
                   if (this.bool("work-hours") && !init_Z_J(MC.level.getOverworldClockTime())) {
                      this.read_I = this.init_I;
                      this.load_I = 0;
@@ -568,7 +568,7 @@ public final class MethodUtil extends Module {
                      MC.gameMode.stopDestroyBlock();
                      this.update_Z = false;
                      this.write_Z = true;
-                     this.init(MethodUtil.Inner_DataUtil.update, "Waiting for unemployment");
+                     this.init(MethodUtil.Inner_DataUtil.LOSE_JOB, "Waiting for unemployment");
                      return;
                   }
 
@@ -602,17 +602,17 @@ public final class MethodUtil extends Module {
 
                   Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
                   break;
-               case update:
+               case LOSE_JOB:
                   if (villager.getVillagerData().profession().is(VillagerProfession.NONE)) {
-                     this.init(MethodUtil.Inner_DataUtil.sync, "Placing workstation");
+                     this.init(MethodUtil.Inner_DataUtil.PLACE, "Placing workstation");
                   } else if (!MC.level.getBlockState(this.init_BlockPos).isAir()) {
                      this.write_Z = false;
-                     this.init(MethodUtil.Inner_DataUtil.write, "Workstation break rejected");
+                     this.init(MethodUtil.Inner_DataUtil.BREAK, "Workstation break rejected");
                   }
                   break;
-               case sync:
+               case PLACE:
                   if (MC.level.getBlockState(this.init_BlockPos).is(this.init_MethodUtil_StreamU.init_Block)) {
-                     this.init(MethodUtil.Inner_DataUtil.flush, "Waiting for profession");
+                     this.init(MethodUtil.Inner_DataUtil.ACQUIRE_JOB, "Waiting for profession");
                      return;
                   }
 
@@ -622,15 +622,15 @@ public final class MethodUtil extends Module {
                   }
 
                   if (this.load_Z(this.init_MethodUtil_StreamU.init_Block)) {
-                     this.init(MethodUtil.Inner_DataUtil.flush, "Waiting for profession");
+                     this.init(MethodUtil.Inner_DataUtil.ACQUIRE_JOB, "Waiting for profession");
                   }
                   break;
-               case flush:
+               case ACQUIRE_JOB:
                   if (!this.init_Z_Villager(villager)
                      || !MC.level.getBlockState(this.init_BlockPos).is(this.init_MethodUtil_StreamU.init_Block)
                      || this.pop >= 0 && !autismclient.util.h.DataUtil.init_Z(MC.level, this.pop)) {
                      if (this.pop >= 0 && autismclient.util.h.DataUtil.init_Z(MC.level, this.pop) && MC.level.getBlockState(this.init_BlockPos).isAir()) {
-                        this.init(MethodUtil.Inner_DataUtil.sync, "Retrying workstation placement");
+                        this.init(MethodUtil.Inner_DataUtil.PLACE, "Retrying workstation placement");
                      } else if (!villager.getVillagerData().profession().is(VillagerProfession.NONE) && !this.init_Z_Villager(villager)) {
                         this.init("Villager claimed another workstation", false);
                      }
@@ -639,10 +639,10 @@ public final class MethodUtil extends Module {
                      this.close++;
                      this.read_I = this.init_I;
                      this.open();
-                     this.init(MethodUtil.Inner_DataUtil.init, "Inspecting new profession");
+                     this.init(MethodUtil.Inner_DataUtil.SEARCH, "Inspecting new profession");
                      this.flush();
                   }
-               case close:
+               case LOCK:
             }
          }
       } else {
@@ -716,7 +716,7 @@ public final class MethodUtil extends Module {
                .interact(
                   MC.player, this.init_Entity, new EntityHitResult(this.init_Entity, this.init_Entity.getBoundingBox().getCenter()), InteractionHand.MAIN_HAND
                );
-            this.init(MethodUtil.Inner_DataUtil.load, "Opening villager");
+            this.init(MethodUtil.Inner_DataUtil.OPEN, "Opening villager");
          }
       }
    }
@@ -969,7 +969,7 @@ public final class MethodUtil extends Module {
       this.poll = -1;
       this.push = -1;
       this.pop = -1;
-      this.init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.init;
+      this.init_MethodUtil_DataUti = MethodUtil.Inner_DataUtil.SEARCH;
       this.init_Str = "Stopped";
       Map var2 = this.init_Map;
       if (var2 != null) {
@@ -978,30 +978,30 @@ public final class MethodUtil extends Module {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      SEARCH,
+      OPEN,
+      INSPECT,
+      BREAK,
+      LOSE_JOB,
+      PLACE,
+      ACQUIRE_JOB,
+      LOCK;
    }
 
    public enum Inner_StreamUtil {
-      init_MethodUtil_StreamU(Blocks.BLAST_FURNACE),
-      load(Blocks.SMOKER),
-      read(Blocks.CARTOGRAPHY_TABLE),
-      write(Blocks.BREWING_STAND),
-      update(Blocks.COMPOSTER),
-      sync(Blocks.BARREL),
-      flush(Blocks.FLETCHING_TABLE),
-      close(Blocks.CAULDRON),
-      open(Blocks.LECTERN),
-      poll(Blocks.STONECUTTER),
-      push(Blocks.LOOM),
-      pop(Blocks.SMITHING_TABLE),
-      tick(Blocks.GRINDSTONE);
+      ARMORER(Blocks.BLAST_FURNACE),
+      BUTCHER(Blocks.SMOKER),
+      CARTOGRAPHER(Blocks.CARTOGRAPHY_TABLE),
+      CLERIC(Blocks.BREWING_STAND),
+      FARMER(Blocks.COMPOSTER),
+      FISHERMAN(Blocks.BARREL),
+      FLETCHER(Blocks.FLETCHING_TABLE),
+      LEATHERWORKER(Blocks.CAULDRON),
+      LIBRARIAN(Blocks.LECTERN),
+      MASON(Blocks.STONECUTTER),
+      SHEPHERD(Blocks.LOOM),
+      TOOLSMITH(Blocks.SMITHING_TABLE),
+      WEAPONSMITH(Blocks.GRINDSTONE);
 
       final Block init_Block;
 

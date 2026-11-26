@@ -645,7 +645,7 @@ public final class u implements ClassCache.Inner_JsonUtil {
                      return candidate;
                   }
 
-                  if (refusal[0] == U.Inner_JsonUtil.push) {
+                  if (refusal[0] == U.Inner_JsonUtil.NO_BUDGET) {
                      break;
                   }
                }

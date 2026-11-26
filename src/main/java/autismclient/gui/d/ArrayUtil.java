@@ -43,8 +43,8 @@ public class ArrayUtil extends KeyHolder {
    private EditBox write_EditBox;
    private EditBox update_EditBox;
    private EditBox sync_EditBox;
-   private bZ init_bZ = bZ.load;
-   private ArrayUtil.Inner_DataUtil init_ArrayUtil_DataUtil = ArrayUtil.Inner_DataUtil.init;
+   private bZ init_bZ = bZ.Socks5;
+   private ArrayUtil.Inner_DataUtil init_ArrayUtil_DataUtil = ArrayUtil.Inner_DataUtil.ALL;
    private bW init_bW;
    private String init_Str = "";
    private int update_I;
@@ -117,7 +117,7 @@ public class ArrayUtil extends KeyHolder {
             autismclient.gui.f.b.ByteReader.init(
                   this.open_I(), this.pop_I(), backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                )
-               .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+               .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
          );
       if (!this.init_Z()) {
          int actionGap = 2;
@@ -136,9 +136,9 @@ public class ArrayUtil extends KeyHolder {
          int[] actionWidths = this.init_IArr_I_2(usableW, actionGap, typeLabel, addLabel, clearLabel, refreshLabel, "Cleanup", importLabel, "Config");
          int actionX = this.open_I();
          this.init_List.add(autismclient.gui.f.b.ByteReader.init(actionX, actionY, actionWidths[0], ctl, Component.literal(typeLabel), b -> {
-            this.init_bZ = this.init_bZ == bZ.load ? bZ.init : bZ.load;
+            this.init_bZ = this.init_bZ == bZ.Socks5 ? bZ.Socks4 : bZ.Socks5;
             this.load_V();
-         }).init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init));
+         }).init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY));
          actionX += actionWidths[0] + actionGap;
          this.init_List.add(autismclient.gui.f.b.ByteReader.init(actionX, actionY, actionWidths[1], ctl, Component.literal(addLabel), b -> {
             if (this.init_bW == null) {
@@ -146,13 +146,13 @@ public class ArrayUtil extends KeyHolder {
             } else {
                this.write_V();
             }
-         }).init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write));
+         }).init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY));
          actionX += actionWidths[1] + actionGap;
          this.init_List
             .add(
                autismclient.gui.f.b.ByteReader.init(actionX, actionY, actionWidths[2], ctl, Component.literal(clearLabel), b -> this.get_V())
                   .init_ByteReader_ByteReader_StreamU(
-                     this.init_bW == null ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load
+                     this.init_bW == null ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
                   )
             );
          actionX += actionWidths[2] + actionGap;
@@ -160,7 +160,7 @@ public class ArrayUtil extends KeyHolder {
                actionX, actionY, actionWidths[3], ctl, Component.literal(refreshLabel), b -> this.update_V()
             )
             .init_ByteReader_ByteReader_StreamU(
-               refreshRunning ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init
+               refreshRunning ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY
             );
          refresh.init_Z = !importRunning;
          this.init_List.add(refresh);
@@ -168,7 +168,7 @@ public class ArrayUtil extends KeyHolder {
          autismclient.gui.f.b.ByteReader cleanup = autismclient.gui.f.b.ByteReader.init(
                actionX, actionY, actionWidths[4], ctl, Component.literal("Cleanup"), b -> this.sync_V()
             )
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init);
+            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY);
          cleanup.init_Z = !refreshRunning && !importRunning;
          this.init_List.add(cleanup);
          actionX += actionWidths[4] + actionGap;
@@ -176,7 +176,7 @@ public class ArrayUtil extends KeyHolder {
             .add(
                autismclient.gui.f.b.ByteReader.init(actionX, actionY, actionWidths[5], ctl, Component.literal(importLabel), b -> this.open_V())
                   .init_ByteReader_ByteReader_StreamU(
-                     importRunning ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init
+                     importRunning ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY
                   )
             );
          actionX += actionWidths[5] + actionGap;
@@ -185,33 +185,33 @@ public class ArrayUtil extends KeyHolder {
                autismclient.gui.f.b.ByteReader.init(
                      actionX, actionY, actionWidths[6], ctl, Component.literal("Config"), b -> this.minecraft.gui.setScreen(new ClassCache(this))
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
             );
          int filterY = this.set_I();
          int filterX = this.open_I();
          int filterGap = 2;
          int[] filterWidths = this.init_IArr_I_2(usableW, filterGap, "All", "Alive", "Dead", "Unchecked", "Enabled", "Sort", "Clear All");
-         this.init_V_I(filterX, filterY, filterWidths[0], ArrayUtil.Inner_DataUtil.init, "All");
+         this.init_V_I(filterX, filterY, filterWidths[0], ArrayUtil.Inner_DataUtil.ALL, "All");
          filterX += filterWidths[0] + filterGap;
-         this.init_V_I(filterX, filterY, filterWidths[1], ArrayUtil.Inner_DataUtil.load, "Alive");
+         this.init_V_I(filterX, filterY, filterWidths[1], ArrayUtil.Inner_DataUtil.ALIVE, "Alive");
          filterX += filterWidths[1] + filterGap;
-         this.init_V_I(filterX, filterY, filterWidths[2], ArrayUtil.Inner_DataUtil.read, "Dead");
+         this.init_V_I(filterX, filterY, filterWidths[2], ArrayUtil.Inner_DataUtil.DEAD, "Dead");
          filterX += filterWidths[2] + filterGap;
-         this.init_V_I(filterX, filterY, filterWidths[3], ArrayUtil.Inner_DataUtil.write, "Unchecked");
+         this.init_V_I(filterX, filterY, filterWidths[3], ArrayUtil.Inner_DataUtil.UNCHECKED, "Unchecked");
          filterX += filterWidths[3] + filterGap;
-         this.init_V_I(filterX, filterY, filterWidths[4], ArrayUtil.Inner_DataUtil.update, "Enabled");
+         this.init_V_I(filterX, filterY, filterWidths[4], ArrayUtil.Inner_DataUtil.ENABLED, "Enabled");
          filterX += filterWidths[4] + filterGap;
          autismclient.gui.f.b.ByteReader sort = autismclient.gui.f.b.ByteReader.init(
                filterX, filterY, filterWidths[5], ctl, Component.literal("Sort"), b -> this.flush_V()
             )
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init);
+            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY);
          sort.init_Z = !refreshRunning && !importRunning && manager.close_I() > 1;
          this.init_List.add(sort);
          filterX += filterWidths[5] + filterGap;
          autismclient.gui.f.b.ByteReader clearAll = autismclient.gui.f.b.ByteReader.init(
                filterX, filterY, filterWidths[6], ctl, Component.literal("Clear All"), b -> this.close_V()
             )
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load);
+            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER);
          clearAll.init_Z = !refreshRunning && !importRunning && manager.close_I() > 0;
          this.init_List.add(clearAll);
          List<bW> proxies = this.load_List();
@@ -246,7 +246,7 @@ public class ArrayUtil extends KeyHolder {
          this.cache() + 4, btnY, toggleW, btnH, Component.literal(proxy.init_Z ? "ON" : "OFF"), b -> this.init_V_bW(proxy)
       );
       toggle.init_ByteReader_ByteReader_StreamU(
-            proxy.init_Z ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load
+            proxy.init_Z ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
          )
          .init_ByteReader_Z(proxy.init_Z)
          .init_ByteReader_Str("proxy-enabled:" + proxy.read + ":" + proxy.init_I);
@@ -254,12 +254,12 @@ public class ArrayUtil extends KeyHolder {
       int deleteX = this.state() - 1 - btnH;
       int checkX = deleteX - 2 - checkW;
       autismclient.gui.f.b.ByteReader check = autismclient.gui.f.b.ByteReader.init(
-         checkX, btnY, checkW, btnH, Component.literal(proxy.init_bW_CachePool == bW.Inner_CachePool.load ? "..." : "Check"), b -> this.read_V_bW(proxy)
+         checkX, btnY, checkW, btnH, Component.literal(proxy.init_bW_CachePool == bW.Inner_CachePool.CHECKING ? "..." : "Check"), b -> this.read_V_bW(proxy)
       );
-      check.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write);
-      check.init_Z = proxy.init_bW_CachePool != bW.Inner_CachePool.load;
+      check.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
+      check.init_Z = proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING;
       autismclient.gui.f.b.ByteReader delete = autismclient.gui.f.b.ByteReader.init(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.load_V_bW(proxy));
-      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load).init_ByteReader_Identifier(cz.open);
+      delete.init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER).init_ByteReader_Identifier(cz.open);
       return new ArrayUtil.Inner_StreamUtil(proxy, rowY, activeSection, toggle, check, delete);
    }
 
@@ -271,7 +271,7 @@ public class ArrayUtil extends KeyHolder {
          this.load_V();
       });
       button.init_ByteReader_ByteReader_StreamU(
-         this.init_ArrayUtil_DataUtil == value ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.sync : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.flush
+         this.init_ArrayUtil_DataUtil == value ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.FILTER_ON : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.FILTER_OFF
       );
       this.init_List.add(button);
    }
@@ -358,8 +358,8 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private void read_V_bW(bW proxy) {
-      if (proxy != null && proxy.init_bW_CachePool != bW.Inner_CachePool.load) {
-         proxy.init_bW_CachePool = bW.Inner_CachePool.load;
+      if (proxy != null && proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING) {
+         proxy.init_bW_CachePool = bW.Inner_CachePool.CHECKING;
          proxy.init_J = 0L;
          this.load_V();
          autismclient.util.ClassCache.init_Future_Str_Runnable("Autism-Proxy-Check", () -> {
@@ -550,12 +550,12 @@ public class ArrayUtil extends KeyHolder {
    private void pop_V() {
       if (this.init_ByteReader == null || this.init_ByteReader.write() != this.read_I()) {
          this.init_ByteReader = autismclient.gui.f.b.ByteReader.init(0, 0, 1, this.read_I(), Component.literal("From File"), b -> this.poll_V())
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init);
+            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY);
       }
 
       if (this.load_ByteReader == null || this.load_ByteReader.write() != this.read_I()) {
          this.load_ByteReader = autismclient.gui.f.b.ByteReader.init(0, 0, 1, this.read_I(), Component.literal("From Clipboard"), b -> this.push_V())
-            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init);
+            .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY);
       }
    }
 
@@ -934,7 +934,7 @@ public class ArrayUtil extends KeyHolder {
          this.read_EditBox.setValue(proxy.init_I <= 0 ? "" : Integer.toString(proxy.init_I));
          this.write_EditBox.setValue(init_Str_Str(proxy.write));
          this.update_EditBox.setValue(proxy.update == null ? "" : proxy.update);
-         this.init_bZ = proxy.init_bZ == null ? bZ.load : proxy.init_bZ;
+         this.init_bZ = proxy.init_bZ == null ? bZ.Socks5 : proxy.init_bZ;
       }
 
       this.load_V();
@@ -945,7 +945,7 @@ public class ArrayUtil extends KeyHolder {
       long listRevision = manager.init_J();
       long refreshRevision = manager.init_bY_TaskQueue().load_J();
       String query = load_Str_Str(this.init_Str);
-      boolean statusSensitive = this.init_ArrayUtil_DataUtil != ArrayUtil.Inner_DataUtil.init || !query.isEmpty();
+      boolean statusSensitive = this.init_ArrayUtil_DataUtil != ArrayUtil.Inner_DataUtil.ALL || !query.isEmpty();
       boolean cacheValid = this.load_ArrayUtil_DataUtil == this.init_ArrayUtil_DataUtil
          && query.equals(this.load_Str)
          && this.read_J == listRevision
@@ -956,7 +956,7 @@ public class ArrayUtil extends KeyHolder {
 
       List<bW> proxies = manager.init_List();
       List<bW> filtered;
-      if (query.isEmpty() && this.init_ArrayUtil_DataUtil == ArrayUtil.Inner_DataUtil.init) {
+      if (query.isEmpty() && this.init_ArrayUtil_DataUtil == ArrayUtil.Inner_DataUtil.ALL) {
          filtered = proxies;
       } else {
          filtered = new ArrayList<>();
@@ -1010,19 +1010,19 @@ public class ArrayUtil extends KeyHolder {
    private boolean init_Z_bW(bW proxy) {
       boolean var10000;
       switch (this.init_ArrayUtil_DataUtil) {
-         case init:
+         case ALL:
             var10000 = true;
             break;
-         case load:
-            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.write;
+         case ALIVE:
+            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.ALIVE;
             break;
-         case read:
-            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.read;
+         case DEAD:
+            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.DEAD;
             break;
-         case write:
-            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.init || proxy.init_bW_CachePool == bW.Inner_CachePool.load;
+         case UNCHECKED:
+            var10000 = proxy.init_bW_CachePool == bW.Inner_CachePool.UNCHECKED || proxy.init_bW_CachePool == bW.Inner_CachePool.CHECKING;
             break;
-         case update:
+         case ENABLED:
             var10000 = proxy.init_Z;
             break;
          default:
@@ -1058,16 +1058,16 @@ public class ArrayUtil extends KeyHolder {
 
       String var10000;
       switch (proxy.init_bW_CachePool) {
-         case write:
+         case ALIVE:
             var10000 = proxy.init_J + "ms";
             break;
-         case read:
+         case DEAD:
             var10000 = "Dead";
             break;
-         case load:
+         case CHECKING:
             var10000 = "Checking";
             break;
-         case init:
+         case UNCHECKED:
             var10000 = "Unchecked";
             break;
          default:
@@ -1391,19 +1391,19 @@ public class ArrayUtil extends KeyHolder {
    }
 
    private static int load_I_I(int argb) {
-      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.load);
+      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.OUTLINE);
    }
 
    private static int read_I_I(int argb) {
-      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.sync);
+      return ct.init_I_I_ct_DataUtil(argb, ct.Inner_DataUtil.SUCCESS);
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      ALL,
+      ALIVE,
+      DEAD,
+      UNCHECKED,
+      ENABLED;
    }
 
    private record Inner_StreamUtil(

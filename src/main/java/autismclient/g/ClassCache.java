@@ -38,7 +38,7 @@ public final class ClassCache {
             ClassCache.Inner_BufferHelper sourced = snapshot.init_Map.get(key);
             if (sourced != null) {
                ClassCache.Inner_StreamUtil entry = sourced.init_ClassCache_StreamU();
-               if (entry.init_ClassCache_CachePo() == ClassCache.Inner_CachePool.init) {
+               if (entry.init_ClassCache_CachePo() == ClassCache.Inner_CachePool.VANILLA) {
                   return entry.init_Str();
                }
 
@@ -72,9 +72,9 @@ public final class ClassCache {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read;
+      VANILLA,
+      MOD,
+      OTHER;
    }
 
    public static final class Inner_DataUtil implements AutoCloseable {
@@ -104,7 +104,7 @@ public final class ClassCache {
          Objects.requireNonNull(key, "key");
          Objects.requireNonNull(value, "value");
          if (source instanceof VanillaPackResources) {
-            this.init(ClassCache.Inner_CachePool.init, key, value);
+            this.init(ClassCache.Inner_CachePool.VANILLA, key, value);
          } else if (ArrayUtil.init(this.init_ResourceManager, source, sourcePackId)) {
             this.init(init_ClassCache_CachePo_PackResources(source), key, value, source, sourcePackId);
          }
@@ -118,13 +118,13 @@ public final class ClassCache {
          Objects.requireNonNull(origin, "origin");
          Objects.requireNonNull(key, "key");
          Objects.requireNonNull(value, "value");
-         if (origin == ClassCache.Inner_CachePool.init) {
+         if (origin == ClassCache.Inner_CachePool.VANILLA) {
             this.load.put(key, value);
          }
 
-         if (origin == ClassCache.Inner_CachePool.load) {
+         if (origin == ClassCache.Inner_CachePool.MOD) {
             ClassCache.Inner_BufferHelper existing = this.init_Map.get(key);
-            if (existing != null && existing.init_ClassCache_StreamU().init_ClassCache_CachePo() == ClassCache.Inner_CachePool.init) {
+            if (existing != null && existing.init_ClassCache_StreamU().init_ClassCache_CachePo() == ClassCache.Inner_CachePool.VANILLA) {
                return;
             }
          }
@@ -134,11 +134,11 @@ public final class ClassCache {
 
       private static ClassCache.Inner_CachePool init_ClassCache_CachePo_PackResources(PackResources source) {
          if (source instanceof JsonUtil) {
-            return ClassCache.Inner_CachePool.read;
+            return ClassCache.Inner_CachePool.OTHER;
          }
 
          String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : BitSetUtil.init(source.getClass());
-         return modId == null ? ClassCache.Inner_CachePool.read : ClassCache.Inner_CachePool.load;
+         return modId == null ? ClassCache.Inner_CachePool.OTHER : ClassCache.Inner_CachePool.MOD;
       }
 
       public void init(List<String> removed, Map<String, String> renamed) {

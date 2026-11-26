@@ -55,7 +55,7 @@ public final class FieldDef {
       this.addLabel = addLabel != null ? addLabel : "Add";
       this.xyzKeys = xyzKeys != null ? (String[])xyzKeys.clone() : new String[]{"x", "y", "z"};
       this.xyzDouble = xyzDouble;
-      this.captureMode = captureMode != null ? captureMode : StreamUtil.init;
+      this.captureMode = captureMode != null ? captureMode : StreamUtil.NONE;
       this.mutuallyExclusiveWith = mutuallyExclusiveWith != null ? (String[])mutuallyExclusiveWith.clone() : new String[0];
       this.dynamic = dynamic;
    }

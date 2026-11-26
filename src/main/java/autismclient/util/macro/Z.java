@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class Z implements MacroAction {
-   public Z.Inner_DataUtil mode = Z.Inner_DataUtil.init;
+   public Z.Inner_DataUtil mode = Z.Inner_DataUtil.ENABLE;
    private boolean init = true;
 
    public void init() {
@@ -19,12 +19,12 @@ public class Z implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       ck shared = ck.init_ck();
-      shared.read_V_Z(this.mode == Z.Inner_DataUtil.init);
+      shared.read_V_Z(this.mode == Z.Inner_DataUtil.ENABLE);
    }
 
    @Override
    public StreamGate getType() {
-      return StreamGate.parse;
+      return StreamGate.SEND_TOGGLE;
    }
 
    @Override
@@ -42,7 +42,7 @@ public class Z implements MacroAction {
          try {
             this.mode = Z.Inner_DataUtil.valueOf(tag.getStringOr("mode", "ENABLE"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = Z.Inner_DataUtil.init;
+            this.mode = Z.Inner_DataUtil.ENABLE;
          }
       }
 
@@ -53,7 +53,7 @@ public class Z implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return this.mode == Z.Inner_DataUtil.init ? "Send Pkts: ON" : "Send Pkts: OFF";
+      return this.mode == Z.Inner_DataUtil.ENABLE ? "Send Pkts: ON" : "Send Pkts: OFF";
    }
 
    @Override
@@ -72,7 +72,7 @@ public class Z implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      ENABLE,
+      DISABLE;
    }
 }

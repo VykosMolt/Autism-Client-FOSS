@@ -12,14 +12,14 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.EntityHitResult;
 
 public class PathHelper implements E, M, MacroAction, aP {
-   public PathHelper.Inner_DataUtil targetMode = PathHelper.Inner_DataUtil.init;
+   public PathHelper.Inner_DataUtil targetMode = PathHelper.Inner_DataUtil.ENTITY;
    public List<String> entityTargets = new ArrayList<>();
    public boolean waitForTarget = true;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
    public boolean raycast = false;
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
    private boolean init = true;
 
    @Override
@@ -43,7 +43,7 @@ public class PathHelper implements E, M, MacroAction, aP {
    }
 
    private autismclient.util.E init_E() {
-      if (this.targetMode == PathHelper.Inner_DataUtil.load) {
+      if (this.targetMode == PathHelper.Inner_DataUtil.LAST_TARGET) {
          return ck.init_ck().init_E();
       }
 
@@ -66,7 +66,7 @@ public class PathHelper implements E, M, MacroAction, aP {
 
    public boolean init_Z_Minecraft(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         if (this.targetMode != PathHelper.Inner_DataUtil.load) {
+         if (this.targetMode != PathHelper.Inner_DataUtil.LAST_TARGET) {
             boolean sentAny = false;
 
             for (String ref : this.entityTargets) {
@@ -97,7 +97,7 @@ public class PathHelper implements E, M, MacroAction, aP {
          return false;
       }
 
-      if (this.targetMode == PathHelper.Inner_DataUtil.load) {
+      if (this.targetMode == PathHelper.Inner_DataUtil.LAST_TARGET) {
          autismclient.util.E target = ck.init_ck().init_E();
          return target != null && target.load_Z(mc);
       }
@@ -120,7 +120,7 @@ public class PathHelper implements E, M, MacroAction, aP {
 
    public void init_V_Minecraft_3(Minecraft mc) {
       if (mc != null && mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
-         this.targetMode = PathHelper.Inner_DataUtil.init;
+         this.targetMode = PathHelper.Inner_DataUtil.ENTITY;
          String ref = autismclient.util.E.init_Str_Entity(entityHit.getEntity());
          if (!ref.isBlank() && !this.entityTargets.contains(ref)) {
             this.entityTargets.add(ref);
@@ -178,7 +178,7 @@ public class PathHelper implements E, M, MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.drain;
+      return StreamGate.INTERACT_ENTITY;
    }
 
    @Override
@@ -199,7 +199,7 @@ public class PathHelper implements E, M, MacroAction, aP {
    @Override
    public String getDisplayName() {
       String targetLabel;
-      if (this.targetMode == PathHelper.Inner_DataUtil.load) {
+      if (this.targetMode == PathHelper.Inner_DataUtil.LAST_TARGET) {
          targetLabel = "Last Target";
       } else if (this.entityTargets.isEmpty()) {
          targetLabel = "(none)";
@@ -247,7 +247,7 @@ public class PathHelper implements E, M, MacroAction, aP {
       try {
          this.targetMode = PathHelper.Inner_DataUtil.valueOf(mode);
       } catch (IllegalArgumentException ignored) {
-         this.targetMode = PathHelper.Inner_DataUtil.init;
+         this.targetMode = PathHelper.Inner_DataUtil.ENTITY;
       }
 
       this.entityTargets.clear();
@@ -277,7 +277,7 @@ public class PathHelper implements E, M, MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      ENTITY,
+      LAST_TARGET;
    }
 }

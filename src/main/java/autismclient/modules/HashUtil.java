@@ -116,7 +116,7 @@ public final class HashUtil {
    }
 
    private static HashUtil.Inner_DataUtil init(Packet<?> packet, boolean incoming) {
-      HashUtil.Inner_DataUtil merged = HashUtil.Inner_DataUtil.init_HashUtil_DataUtil;
+      HashUtil.Inner_DataUtil merged = HashUtil.Inner_DataUtil.FLUSH;
 
       for (HashUtil.Inner_StreamUtil policy : init_List) {
          HashUtil.Inner_DataUtil hold;
@@ -139,11 +139,11 @@ public final class HashUtil {
       boolean wasOutgoing = load_Z;
       init_Z = incoming;
       load_Z = outgoing;
-      if (wasIncoming && !incoming && !init_Queue.isEmpty() && (init_List.isEmpty() || init(null, true) != HashUtil.Inner_DataUtil.read)) {
+      if (wasIncoming && !incoming && !init_Queue.isEmpty() && (init_List.isEmpty() || init(null, true) != HashUtil.Inner_DataUtil.QUEUE)) {
          flush();
       }
 
-      if (wasOutgoing && !outgoing && !load_Queue.isEmpty() && (init_List.isEmpty() || init(null, false) != HashUtil.Inner_DataUtil.read)) {
+      if (wasOutgoing && !outgoing && !load_Queue.isEmpty() && (init_List.isEmpty() || init(null, false) != HashUtil.Inner_DataUtil.QUEUE)) {
          close();
       }
    }
@@ -164,7 +164,7 @@ public final class HashUtil {
       update = actions;
       if (((wasMovement && !movement) || (wasActions && !actions))
          && !load_Queue.isEmpty()
-         && (init_List.isEmpty() || init(null, false) != HashUtil.Inner_DataUtil.read)) {
+         && (init_List.isEmpty() || init(null, false) != HashUtil.Inner_DataUtil.QUEUE)) {
          close();
       }
    }
@@ -302,7 +302,7 @@ public final class HashUtil {
          read();
          auditDiscardClone();
          return false;
-      } else if (!init_List.isEmpty() && init(packet, true) == HashUtil.Inner_DataUtil.read) {
+      } else if (!init_List.isEmpty() && init(packet, true) == HashUtil.Inner_DataUtil.QUEUE) {
          if (sync(packet) || flush(packet)) {
             return false;
          } else if (close(packet)) {
@@ -335,7 +335,7 @@ public final class HashUtil {
          return false;
       }
 
-      if (!init_List.isEmpty() && init(packet, false) == HashUtil.Inner_DataUtil.read) {
+      if (!init_List.isEmpty() && init(packet, false) == HashUtil.Inner_DataUtil.QUEUE) {
          if (!open(packet) && !poll(packet)) {
             load_Queue.add(packet);
             return true;
@@ -377,11 +377,11 @@ public final class HashUtil {
    public static void write() {
       if ((!init_List.isEmpty() || poll || push) && init_Minecraft != null && init_Minecraft.getConnection() != null) {
          if (!init_List.isEmpty()) {
-            if (!init_Z && init(null, true) == HashUtil.Inner_DataUtil.init_HashUtil_DataUtil) {
+            if (!init_Z && init(null, true) == HashUtil.Inner_DataUtil.FLUSH) {
                poll = true;
             }
 
-            if (!load_Z && init(null, false) == HashUtil.Inner_DataUtil.init_HashUtil_DataUtil) {
+            if (!load_Z && init(null, false) == HashUtil.Inner_DataUtil.FLUSH) {
                push = true;
             }
          }
@@ -585,9 +585,9 @@ public final class HashUtil {
    }
 
    public enum Inner_DataUtil {
-      init_HashUtil_DataUtil(0),
-      load(1),
-      read(2);
+      FLUSH(0),
+      PASS(1),
+      QUEUE(2);
 
       private final int init_I;
 

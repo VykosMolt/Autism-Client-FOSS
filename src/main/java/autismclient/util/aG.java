@@ -165,14 +165,14 @@ public final class aG {
    }
 
    public static int init_I() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
    }
 
    public static int[] init_IArr() {
       return new int[]{
-         ct.init_I_I_ct_DataUtil(-46518, ct.Inner_DataUtil.init),
-         ct.init_I_I_ct_DataUtil(-791321, ct.Inner_DataUtil.read),
-         ct.init_I_I_ct_DataUtil(-7350273, ct.Inner_DataUtil.init)
+         ct.init_I_I_ct_DataUtil(-46518, ct.Inner_DataUtil.ACCENT),
+         ct.init_I_I_ct_DataUtil(-791321, ct.Inner_DataUtil.TEXT),
+         ct.init_I_I_ct_DataUtil(-7350273, ct.Inner_DataUtil.ACCENT)
       };
    }
 }

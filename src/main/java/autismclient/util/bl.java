@@ -20,14 +20,14 @@ public final class bl {
       try {
          result = autismclient.util.g.PkgCls_a.init_a_StateCache_w_bl_StreamUtil(action, handle);
       } catch (RuntimeException | Error error) {
-         init_dc.init(id, dc.Inner_DataUtil.read);
+         init_dc.init(id, dc.Inner_DataUtil.FAILED);
          throw error;
       }
 
       if (result != null && result.init_Z()) {
          init_dc.init_Z(id);
       } else {
-         init_dc.init(id, dc.Inner_DataUtil.read);
+         init_dc.init(id, dc.Inner_DataUtil.FAILED);
       }
 
       return handle;
@@ -43,16 +43,16 @@ public final class bl {
    }
 
    public static void init(long id, String reason) {
-      if (init_bl_DataUtil(id) == bl.Inner_DataUtil.init) {
+      if (init_bl_DataUtil(id) == bl.Inner_DataUtil.PENDING) {
          autismclient.util.g.PkgCls_a.init_V_J_Str(id, reason);
-         init_dc.init(id, dc.Inner_DataUtil.write);
+         init_dc.init(id, dc.Inner_DataUtil.CANCELLED);
       }
    }
 
    public static void init(Minecraft client) {
       for (long id : init_dc.init_List()) {
          autismclient.util.g.PkgCls_a.load(id, "timeout");
-         init_dc.init(id, dc.Inner_DataUtil.read);
+         init_dc.init(id, dc.Inner_DataUtil.FAILED);
       }
 
       autismclient.util.g.PkgCls_a.init_V_Minecraft(client);
@@ -62,7 +62,7 @@ public final class bl {
       autismclient.util.g.PkgCls_a.init_V_Str(reason);
 
       for (long id : init_dc.load()) {
-         init_dc.init(id, dc.Inner_DataUtil.write);
+         init_dc.init(id, dc.Inner_DataUtil.CANCELLED);
       }
    }
 
@@ -82,10 +82,10 @@ public final class bl {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      PENDING,
+      SUCCEEDED,
+      FAILED,
+      CANCELLED;
    }
 
    public record Inner_StreamUtil(long init_J, String init_Str) {

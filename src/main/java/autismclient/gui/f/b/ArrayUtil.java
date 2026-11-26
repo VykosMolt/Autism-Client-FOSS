@@ -144,7 +144,7 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
    @Override
    public autismclient.gui.f.EventBus init_EventBus_I_2(int mouseX, int mouseY, int button) {
       this.init_cX.init_Z_D_3(mouseX, mouseY, button);
-      return autismclient.gui.f.EventBus.load;
+      return autismclient.gui.f.EventBus.HANDLED;
    }
 
    @Override
@@ -160,7 +160,7 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
    @Override
    public autismclient.gui.f.EventBus init_EventBus_I(int mouseX, int mouseY, double amount) {
       this.init_cX.init_Z_D_2(mouseX, mouseY, amount);
-      return autismclient.gui.f.EventBus.load;
+      return autismclient.gui.f.EventBus.HANDLED;
    }
 
    @Override
@@ -178,6 +178,6 @@ public final class ArrayUtil implements autismclient.gui.f.StateCache {
    }
 
    private static autismclient.gui.f.EventBus init_EventBus_Z(boolean handled) {
-      return handled ? autismclient.gui.f.EventBus.load : autismclient.gui.f.EventBus.init;
+      return handled ? autismclient.gui.f.EventBus.HANDLED : autismclient.gui.f.EventBus.IGNORED;
    }
 }

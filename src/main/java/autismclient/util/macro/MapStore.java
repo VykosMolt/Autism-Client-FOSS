@@ -36,21 +36,21 @@ public class MapStore implements MacroAction, aP {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final autismclient.util.N[] init_NArr = autismclient.util.N.values();
    private static final int[] init_IArr = new int[]{
-      autismclient.util.N.init_N.ordinal(),
-      autismclient.util.N.load_N.ordinal(),
-      autismclient.util.N.read.ordinal(),
-      autismclient.util.N.write.ordinal(),
-      autismclient.util.N.close.ordinal(),
-      autismclient.util.N.open.ordinal()
+      autismclient.util.N.PICKUP.ordinal(),
+      autismclient.util.N.QUICK_MOVE.ordinal(),
+      autismclient.util.N.SWAP.ordinal(),
+      autismclient.util.N.CLONE.ordinal(),
+      autismclient.util.N.DROP_ITEM.ordinal(),
+      autismclient.util.N.DROP_STACK.ordinal()
    };
    private static final int[] load = new int[]{
-      autismclient.util.N.init_N.ordinal(),
-      autismclient.util.N.flush.ordinal(),
-      autismclient.util.N.load_N.ordinal(),
-      autismclient.util.N.read.ordinal(),
-      autismclient.util.N.write.ordinal(),
-      autismclient.util.N.close.ordinal(),
-      autismclient.util.N.open.ordinal()
+      autismclient.util.N.PICKUP.ordinal(),
+      autismclient.util.N.PICKUP_ALL.ordinal(),
+      autismclient.util.N.QUICK_MOVE.ordinal(),
+      autismclient.util.N.SWAP.ordinal(),
+      autismclient.util.N.CLONE.ordinal(),
+      autismclient.util.N.DROP_ITEM.ordinal(),
+      autismclient.util.N.DROP_STACK.ordinal()
    };
 
    public int init_I_I_3(int index) {
@@ -72,11 +72,11 @@ public class MapStore implements MacroAction, aP {
    }
 
    public String init_Str_I_2(int index) {
-      if (this.init_N_I(index) == autismclient.util.N.flush) {
+      if (this.init_N_I(index) == autismclient.util.N.PICKUP_ALL) {
          return "All";
       }
 
-      if (this.init_N_I(index) == autismclient.util.N.read) {
+      if (this.init_N_I(index) == autismclient.util.N.SWAP) {
          int hotbarSlot = Math.max(0, Math.min(8, this.read_I(index))) + 1;
          return "Hotbar " + hotbarSlot;
       }
@@ -122,7 +122,7 @@ public class MapStore implements MacroAction, aP {
          this.itemButtons.add(this.button);
       }
 
-      if (this.init_N_I(index) != autismclient.util.N.flush) {
+      if (this.init_N_I(index) != autismclient.util.N.PICKUP_ALL) {
          int limit = init_I_N(this.init_N_I(index));
          if (limit > 1) {
             int current = this.read_I(index);
@@ -136,7 +136,7 @@ public class MapStore implements MacroAction, aP {
          this.itemButtons.add(this.button);
       }
 
-      if (this.init_N_I(index) != autismclient.util.N.flush) {
+      if (this.init_N_I(index) != autismclient.util.N.PICKUP_ALL) {
          int limit = init_I_N(this.init_N_I(index));
          if (limit > 1) {
             int current = this.read_I(index);
@@ -199,11 +199,11 @@ public class MapStore implements MacroAction, aP {
    }
 
    private static String init_Str_N_I(autismclient.util.N action, int b) {
-      if (action == autismclient.util.N.flush) {
+      if (action == autismclient.util.N.PICKUP_ALL) {
          return "All";
       }
 
-      if (action == autismclient.util.N.read) {
+      if (action == autismclient.util.N.SWAP) {
          return "H" + (Math.max(0, Math.min(8, b)) + 1);
       }
 
@@ -236,11 +236,11 @@ public class MapStore implements MacroAction, aP {
    }
 
    public boolean init_Z_I_2(int index) {
-      return this.init_MapStore_DataUtil_I(index) == MapStore.Inner_DataUtil.read;
+      return this.init_MapStore_DataUtil_I(index) == MapStore.Inner_DataUtil.PLAYER_INVENTORY;
    }
 
    public void init_V_I_Z(int index, boolean value) {
-      this.init_V_I_MapStore_DataUtil(index, value ? MapStore.Inner_DataUtil.read : MapStore.Inner_DataUtil.init_MapStore_DataUtil);
+      this.init_V_I_MapStore_DataUtil(index, value ? MapStore.Inner_DataUtil.PLAYER_INVENTORY : MapStore.Inner_DataUtil.BOTH);
    }
 
    public MapStore.Inner_DataUtil init_MapStore_DataUtil_I(int index) {
@@ -248,8 +248,8 @@ public class MapStore implements MacroAction, aP {
          return MapStore.Inner_DataUtil.values()[close(this.itemSearchScopes.get(index))];
       } else {
          return index >= 0 && index < this.preferPlayerInventory.size() && Boolean.TRUE.equals(this.preferPlayerInventory.get(index))
-            ? MapStore.Inner_DataUtil.read
-            : MapStore.Inner_DataUtil.init_MapStore_DataUtil;
+            ? MapStore.Inner_DataUtil.PLAYER_INVENTORY
+            : MapStore.Inner_DataUtil.BOTH;
       }
    }
 
@@ -262,10 +262,10 @@ public class MapStore implements MacroAction, aP {
 
    public void init_V_I_MapStore_DataUtil(int index, MapStore.Inner_DataUtil scope) {
       if (index >= 0) {
-         MapStore.Inner_DataUtil safe = scope == null ? MapStore.Inner_DataUtil.init_MapStore_DataUtil : scope;
+         MapStore.Inner_DataUtil safe = scope == null ? MapStore.Inner_DataUtil.BOTH : scope;
 
          while (this.itemSearchScopes.size() <= index) {
-            this.itemSearchScopes.add(MapStore.Inner_DataUtil.init_MapStore_DataUtil.ordinal());
+            this.itemSearchScopes.add(MapStore.Inner_DataUtil.BOTH.ordinal());
          }
 
          this.itemSearchScopes.set(index, safe.ordinal());
@@ -274,21 +274,21 @@ public class MapStore implements MacroAction, aP {
             this.preferPlayerInventory.add(false);
          }
 
-         this.preferPlayerInventory.set(index, safe == MapStore.Inner_DataUtil.read);
+         this.preferPlayerInventory.set(index, safe == MapStore.Inner_DataUtil.PLAYER_INVENTORY);
       }
    }
 
    public MapStore.Inner_CachePool init_MapStore_CachePool_I(int index) {
       int raw = index >= 0 && index < this.stackAmountModes.size()
          ? this.stackAmountModes.get(index)
-         : MapStore.Inner_CachePool.init_MapStore_CachePool.ordinal();
+         : MapStore.Inner_CachePool.DEFAULT.ordinal();
       return MapStore.Inner_CachePool.values()[flush(raw)];
    }
 
    public void write(int index, int direction) {
       if (index >= 0) {
          while (this.stackAmountModes.size() <= index) {
-            this.stackAmountModes.add(MapStore.Inner_CachePool.init_MapStore_CachePool.ordinal());
+            this.stackAmountModes.add(MapStore.Inner_CachePool.DEFAULT.ordinal());
          }
 
          int current = flush(this.stackAmountModes.get(index));
@@ -316,7 +316,7 @@ public class MapStore implements MacroAction, aP {
             if (entryTarget != null) {
                String entryName = init_Str_Str(entryTarget.write_Str());
                int configuredEntrySlot = entryTarget.init_Z() ? entryTarget.init_I : -1;
-               if (eiAction == autismclient.util.N.flush && this.useCursorItemForPickupAll) {
+               if (eiAction == autismclient.util.N.PICKUP_ALL && this.useCursorItemForPickupAll) {
                   out.add(new MapStore.Inner_StreamUtil(eiAction, eiButton, -1, entryTarget, clickCount));
                } else {
                   int slotToUse;
@@ -353,7 +353,7 @@ public class MapStore implements MacroAction, aP {
             effectiveButton = action.init_I();
          }
 
-         if (action == autismclient.util.N.flush && this.useCursorItemForPickupAll) {
+         if (action == autismclient.util.N.PICKUP_ALL && this.useCursorItemForPickupAll) {
             out.add(new MapStore.Inner_StreamUtil(action, effectiveButton, -1, ArrayUtil.init_ArrayUtil_I(this.targetSlot), this.times));
             return out;
          }
@@ -364,7 +364,7 @@ public class MapStore implements MacroAction, aP {
          }
 
          out.add(new MapStore.Inner_StreamUtil(action, effectiveButton, resolvedTargetSlot, null, this.times));
-      } else if (this.init_N() == autismclient.util.N.flush && this.useCursorItemForPickupAll) {
+      } else if (this.init_N() == autismclient.util.N.PICKUP_ALL && this.useCursorItemForPickupAll) {
          out.add(new MapStore.Inner_StreamUtil(this.init_N(), this.init_I_2(), -1, null, this.times));
       }
 
@@ -372,15 +372,15 @@ public class MapStore implements MacroAction, aP {
    }
 
    private static void init_V_Minecraft_MapStore_StreamUti(Minecraft mc, MapStore.Inner_StreamUtil e) {
-      boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.N.flush && e.load() < 0;
+      boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.N.PICKUP_ALL && e.load() < 0;
       if (cursorPickupAll) {
          autismclient.util.K.init(mc, e.init_ArrayUtil(), e.read());
-      } else if (e.init_N() != autismclient.util.N.close && e.init_N() != autismclient.util.N.open) {
+      } else if (e.init_N() != autismclient.util.N.DROP_ITEM && e.init_N() != autismclient.util.N.DROP_STACK) {
          for (int j = 0; j < e.read(); j++) {
             autismclient.util.av.init(mc, e.load(), e.init_I(), e.init_N().init_ContainerInput());
          }
       } else {
-         autismclient.util.O.init(mc, e.load(), e.init_N() == autismclient.util.N.open ? 0 : e.read());
+         autismclient.util.O.init(mc, e.load(), e.init_N() == autismclient.util.N.DROP_STACK ? 0 : e.read());
       }
    }
 
@@ -405,17 +405,17 @@ public class MapStore implements MacroAction, aP {
          }
 
          for (MapStore.Inner_StreamUtil e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
-            boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.N.flush && e.load() < 0;
+            boolean cursorPickupAll = e.init_ArrayUtil() != null || e.init_N() == autismclient.util.N.PICKUP_ALL && e.load() < 0;
             if (cursorPickupAll) {
                ArrayUtil t = e.init_ArrayUtil();
 
                for (int j = 0; j < e.read(); j++) {
                   plan.add(() -> autismclient.util.K.init(mc, t, 1));
                }
-            } else if (e.init_N() == autismclient.util.N.open) {
+            } else if (e.init_N() == autismclient.util.N.DROP_STACK) {
                int fs = e.load();
                plan.add(() -> autismclient.util.O.init(mc, fs, 0));
-            } else if (e.init_N() == autismclient.util.N.close) {
+            } else if (e.init_N() == autismclient.util.N.DROP_ITEM) {
                int fs = e.load();
 
                for (int j = 0; j < e.read(); j++) {
@@ -443,7 +443,7 @@ public class MapStore implements MacroAction, aP {
    }
 
    private int init_I_AbstractContainerM_ArrayUtil(AbstractContainerMenu handler, ArrayUtil target) {
-      return this.init(handler, target, MapStore.Inner_DataUtil.init_MapStore_DataUtil, MapStore.Inner_CachePool.init_MapStore_CachePool);
+      return this.init(handler, target, MapStore.Inner_DataUtil.BOTH, MapStore.Inner_CachePool.DEFAULT);
    }
 
    private int init(AbstractContainerMenu handler, ArrayUtil target, MapStore.Inner_DataUtil searchScope, MapStore.Inner_CachePool amountMode) {
@@ -451,17 +451,17 @@ public class MapStore implements MacroAction, aP {
          return -1;
       }
 
-      MapStore.Inner_CachePool mode = amountMode == null ? MapStore.Inner_CachePool.init_MapStore_CachePool : amountMode;
-      MapStore.Inner_DataUtil scope = searchScope == null ? MapStore.Inner_DataUtil.init_MapStore_DataUtil : searchScope;
+      MapStore.Inner_CachePool mode = amountMode == null ? MapStore.Inner_CachePool.DEFAULT : amountMode;
+      MapStore.Inner_DataUtil scope = searchScope == null ? MapStore.Inner_DataUtil.BOTH : searchScope;
       int var10000;
       switch (scope) {
-         case init_MapStore_DataUtil:
+         case BOTH:
             var10000 = this.init(handler, target, mode, null);
             break;
-         case load:
+         case GUI:
             var10000 = this.init(handler, target, mode, false);
             break;
-         case read:
+         case PLAYER_INVENTORY:
             var10000 = this.init(handler, target, mode, true);
             break;
          default:
@@ -474,7 +474,7 @@ public class MapStore implements MacroAction, aP {
    private int init(AbstractContainerMenu handler, ArrayUtil target, MapStore.Inner_CachePool mode, Boolean playerInventoryOnly) {
       int bestSlot = -1;
       int bestScore = -1;
-      int bestCount = mode == MapStore.Inner_CachePool.load ? 2147483647 : -1;
+      int bestCount = mode == MapStore.Inner_CachePool.LEAST ? 2147483647 : -1;
 
       for (Slot slot : handler.slots) {
          if (slot != null && !slot.getItem().isEmpty()) {
@@ -504,9 +504,9 @@ public class MapStore implements MacroAction, aP {
    private boolean init(MapStore.Inner_CachePool mode, int score, int count, int bestScore, int bestCount) {
       if (bestScore < 0) {
          return true;
-      } else if (mode == MapStore.Inner_CachePool.load) {
+      } else if (mode == MapStore.Inner_CachePool.LEAST) {
          return count != bestCount ? count < bestCount : score > bestScore;
-      } else if (mode == MapStore.Inner_CachePool.read) {
+      } else if (mode == MapStore.Inner_CachePool.MOST) {
          return count != bestCount ? count > bestCount : score > bestScore;
       } else {
          return score > bestScore;
@@ -572,7 +572,7 @@ public class MapStore implements MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.reset;
+      return StreamGate.ITEM;
    }
 
    @Override
@@ -722,7 +722,7 @@ public class MapStore implements MacroAction, aP {
             try {
                this.itemSearchScopes.add(close(Integer.parseInt(el.asString().orElse("0"))));
             } catch (NumberFormatException ignored) {
-               this.itemSearchScopes.add(MapStore.Inner_DataUtil.init_MapStore_DataUtil.ordinal());
+               this.itemSearchScopes.add(MapStore.Inner_DataUtil.BOTH.ordinal());
             }
          }
       } else {
@@ -730,14 +730,14 @@ public class MapStore implements MacroAction, aP {
             this.itemSearchScopes
                .add(
                   Boolean.TRUE.equals(this.preferPlayerInventory.get(i))
-                     ? MapStore.Inner_DataUtil.read.ordinal()
-                     : MapStore.Inner_DataUtil.init_MapStore_DataUtil.ordinal()
+                     ? MapStore.Inner_DataUtil.PLAYER_INVENTORY.ordinal()
+                     : MapStore.Inner_DataUtil.BOTH.ordinal()
                );
          }
       }
 
       while (this.itemSearchScopes.size() < this.itemNames.size()) {
-         this.itemSearchScopes.add(MapStore.Inner_DataUtil.init_MapStore_DataUtil.ordinal());
+         this.itemSearchScopes.add(MapStore.Inner_DataUtil.BOTH.ordinal());
       }
 
       while (this.itemSearchScopes.size() > this.itemNames.size()) {
@@ -754,13 +754,13 @@ public class MapStore implements MacroAction, aP {
             try {
                this.stackAmountModes.add(flush(Integer.parseInt(el.asString().orElse("0"))));
             } catch (NumberFormatException ignored) {
-               this.stackAmountModes.add(MapStore.Inner_CachePool.init_MapStore_CachePool.ordinal());
+               this.stackAmountModes.add(MapStore.Inner_CachePool.DEFAULT.ordinal());
             }
          }
       }
 
       while (this.stackAmountModes.size() < this.itemNames.size()) {
-         this.stackAmountModes.add(MapStore.Inner_CachePool.init_MapStore_CachePool.ordinal());
+         this.stackAmountModes.add(MapStore.Inner_CachePool.DEFAULT.ordinal());
       }
 
       while (this.stackAmountModes.size() > this.itemNames.size()) {
@@ -839,11 +839,11 @@ public class MapStore implements MacroAction, aP {
    }
 
    public String load_Str() {
-      if (this.init_N() == autismclient.util.N.flush) {
+      if (this.init_N() == autismclient.util.N.PICKUP_ALL) {
          return "All";
       }
 
-      if (this.init_N() == autismclient.util.N.read) {
+      if (this.init_N() == autismclient.util.N.SWAP) {
          int hotbarSlot = Math.max(0, Math.min(8, this.init_I_2())) + 1;
          return "Hotbar " + hotbarSlot;
       }
@@ -867,7 +867,7 @@ public class MapStore implements MacroAction, aP {
    }
 
    public void read_V() {
-      if (this.init_N() != autismclient.util.N.flush) {
+      if (this.init_N() != autismclient.util.N.PICKUP_ALL) {
          int limit = init_I_N(this.init_N());
          if (limit > 1) {
             this.button = (this.init_I_2() + 1) % limit;
@@ -876,7 +876,7 @@ public class MapStore implements MacroAction, aP {
    }
 
    public void write_V() {
-      if (this.init_N() != autismclient.util.N.flush) {
+      if (this.init_N() != autismclient.util.N.PICKUP_ALL) {
          int limit = init_I_N(this.init_N());
          if (limit > 1) {
             this.button = (this.init_I_2() - 1 + limit) % limit;
@@ -897,19 +897,19 @@ public class MapStore implements MacroAction, aP {
    }
 
    private static boolean init_Z_N(autismclient.util.N action) {
-      return action != autismclient.util.N.load_N && action.load();
+      return action != autismclient.util.N.QUICK_MOVE && action.load();
    }
 
    private static int init_I_N(autismclient.util.N action) {
       byte var10000;
       switch (action) {
-         case read:
+         case SWAP:
             var10000 = 9;
             break;
-         case init_N:
+         case PICKUP:
             var10000 = 3;
             break;
-         case load_N:
+         case QUICK_MOVE:
             var10000 = 2;
             break;
          default:
@@ -921,7 +921,7 @@ public class MapStore implements MacroAction, aP {
 
    private static int init_I_N_I(autismclient.util.N action, int rawButton) {
       if (action == null) {
-         action = autismclient.util.N.init_N;
+         action = autismclient.util.N.PICKUP;
       }
 
       if (init_Z_N(action)) {
@@ -944,15 +944,15 @@ public class MapStore implements MacroAction, aP {
          }
       }
 
-      return autismclient.util.N.init_N.ordinal();
+      return autismclient.util.N.PICKUP.ordinal();
    }
 
    private static int flush(int rawMode) {
-      return rawMode >= 0 && rawMode < MapStore.Inner_CachePool.values().length ? rawMode : MapStore.Inner_CachePool.init_MapStore_CachePool.ordinal();
+      return rawMode >= 0 && rawMode < MapStore.Inner_CachePool.values().length ? rawMode : MapStore.Inner_CachePool.DEFAULT.ordinal();
    }
 
    private static int close(int rawScope) {
-      return rawScope >= 0 && rawScope < MapStore.Inner_DataUtil.values().length ? rawScope : MapStore.Inner_DataUtil.init_MapStore_DataUtil.ordinal();
+      return rawScope >= 0 && rawScope < MapStore.Inner_DataUtil.values().length ? rawScope : MapStore.Inner_DataUtil.BOTH.ordinal();
    }
 
    private static int init_I_I_I(int current, int direction) {
@@ -1035,9 +1035,9 @@ public class MapStore implements MacroAction, aP {
    }
 
    public enum Inner_CachePool {
-      init_MapStore_CachePool("Default"),
-      load("Least"),
-      read("Most");
+      DEFAULT("Default"),
+      LEAST("Least"),
+      MOST("Most");
 
       public final String init_Str;
 
@@ -1047,9 +1047,9 @@ public class MapStore implements MacroAction, aP {
    }
 
    public enum Inner_DataUtil {
-      init_MapStore_DataUtil("Both"),
-      load("GUI"),
-      read("Player Inventory");
+      BOTH("Both"),
+      GUI("GUI"),
+      PLAYER_INVENTORY("Player Inventory");
 
       public final String init_Str;
 

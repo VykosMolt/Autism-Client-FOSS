@@ -46,59 +46,59 @@ public abstract class DataUtil {
 
    public static DataUtil init(StreamUtil type, String sessionId) {
       switch (type) {
-         case init_StreamUtil:
+         case SEARCH_REQUEST:
             return new DataUtil.CharEncoder(sessionId);
-         case load:
+         case SESSION:
             return new DataUtil.TokenStore(sessionId, 0L, "");
-         case read:
+         case JOIN:
             return new DataUtil.JsonUtil(sessionId, "");
-         case write:
+         case REQUEST_CLIENT_LIST:
             return new DataUtil.TableIndex(sessionId);
-         case update:
+         case CLIENT_LIST:
             return new DataUtil.Inner_StreamUtil(sessionId, new ArrayList<>());
-         case sync:
+         case LEAVE:
             return new DataUtil.StateCache(sessionId, "");
-         case flush:
+         case REQUEST_MACRO:
             return new DataUtil.RingBuffer(sessionId, "");
-         case close:
+         case MACRO_DATA:
             return new DataUtil.RenderState(sessionId, "", "", "", (byte)0);
-         case open:
+         case MACRO_DELETE:
             return new DataUtil.EventBus(sessionId, "", "");
-         case poll:
+         case MACRO_LIST:
             return new DataUtil.FileCache(sessionId, "", new ArrayList<>());
-         case push:
+         case QUEUE_SYNC:
             return new DataUtil.PoolEntry(sessionId, "", "");
-         case pop:
+         case PRESET_DATA:
             return new DataUtil.IoWorker(sessionId, "", "", "");
-         case tick:
+         case CHAT_MESSAGE:
             return new DataUtil.Inner_DataUtil(sessionId, "", "");
-         case run:
+         case TCP_COMMAND_ACK:
             return new DataUtil.MethodUtil(sessionId, "", 0L);
-         case get:
+         case PLAYER_OFFSETS:
             return new DataUtil.PacketUtil(sessionId, new HashMap<>());
-         case set:
+         case CLIENT_OFFSET_UPDATE:
             return new DataUtil.CachePool(sessionId, "", "", 0);
-         case put:
+         case PREPARE_EXECUTION:
             return new DataUtil.HashUtil(sessionId, 0L, false, "", "", "");
-         case add:
+         case CLIENT_READY:
             return new DataUtil.BufferHelper(sessionId, 0L, "");
-         case clear:
+         case EXECUTE_NOW:
             return new DataUtil.ConfigStore(sessionId, 0L, 0L);
-         case reset:
+         case GO:
             return new DataUtil.TaskQueue(sessionId, 0L);
-         case start:
+         case HEARTBEAT:
             return new DataUtil.NetHelper(sessionId, "", 0L);
-         case stop:
+         case SYNC_STATE_UPDATE:
             return new DataUtil.FieldCache(sessionId, 0, "");
-         case next:
+         case REQUEST_SYNC:
             return new DataUtil.BitSetUtil(sessionId, "", false, "", "");
-         case prev:
+         case OFFSET_SYNC:
             return new DataUtil.ByteReader(sessionId, "", "", 0);
-         case valid:
+         case MACRO_STEP_PROGRESS:
             return new DataUtil.TextFormat(sessionId, "", 0, 0, "");
-         case size:
+         case MACRO_DATA_CHUNK:
             return new DataUtil.UiHelper(sessionId, "", "", (byte)0, 0, 0, new byte[0]);
-         case data:
+         case MACRO_ASSIGNMENT_SYNC:
             return new DataUtil.SyncManager(sessionId, "", "");
          default:
             return null;
@@ -113,7 +113,7 @@ public abstract class DataUtil {
       public int init_I = 0;
 
       public BitSetUtil(String sessionId, String senderUsername, boolean isMacro, String macroName, String command) {
-         super(StreamUtil.next, sessionId);
+         super(StreamUtil.REQUEST_SYNC, sessionId);
          this.load = senderUsername != null ? senderUsername : "";
          this.init_Z = isMacro;
          this.read = macroName != null ? macroName : "";
@@ -121,7 +121,7 @@ public abstract class DataUtil {
       }
 
       public BitSetUtil() {
-         super(StreamUtil.next, "");
+         super(StreamUtil.REQUEST_SYNC, "");
       }
 
       @Override
@@ -153,13 +153,13 @@ public abstract class DataUtil {
       public String load;
 
       public BufferHelper(String sessionId, long executionId, String senderUsername) {
-         super(StreamUtil.add, sessionId);
+         super(StreamUtil.CLIENT_READY, sessionId);
          this.init_J = executionId;
          this.load = senderUsername;
       }
 
       public BufferHelper() {
-         super(StreamUtil.add, "");
+         super(StreamUtil.CLIENT_READY, "");
       }
 
       @Override
@@ -181,14 +181,14 @@ public abstract class DataUtil {
       public int init_I;
 
       public ByteReader(String sessionId, String senderUsername, String targetUsername, int offsetMs) {
-         super(StreamUtil.prev, sessionId);
+         super(StreamUtil.OFFSET_SYNC, sessionId);
          this.load = senderUsername != null ? senderUsername : "";
          this.read = targetUsername != null ? targetUsername : "";
          this.init_I = offsetMs;
       }
 
       public ByteReader() {
-         super(StreamUtil.prev, "");
+         super(StreamUtil.OFFSET_SYNC, "");
       }
 
       @Override
@@ -212,14 +212,14 @@ public abstract class DataUtil {
       public int init_I;
 
       public CachePool(String sessionId, String senderUsername, String targetUsername, int offsetMs) {
-         super(StreamUtil.set, sessionId);
+         super(StreamUtil.CLIENT_OFFSET_UPDATE, sessionId);
          this.load = senderUsername;
          this.read = targetUsername;
          this.init_I = offsetMs;
       }
 
       public CachePool() {
-         super(StreamUtil.set, "");
+         super(StreamUtil.CLIENT_OFFSET_UPDATE, "");
       }
 
       @Override
@@ -239,11 +239,11 @@ public abstract class DataUtil {
 
    public static class CharEncoder extends DataUtil {
       public CharEncoder(String sessionId) {
-         super(StreamUtil.init_StreamUtil, sessionId);
+         super(StreamUtil.SEARCH_REQUEST, sessionId);
       }
 
       public CharEncoder() {
-         super(StreamUtil.init_StreamUtil, "");
+         super(StreamUtil.SEARCH_REQUEST, "");
       }
 
       @Override
@@ -260,13 +260,13 @@ public abstract class DataUtil {
       public long load;
 
       public ConfigStore(String sessionId, long executionId, long targetTime) {
-         super(StreamUtil.clear, sessionId);
+         super(StreamUtil.EXECUTE_NOW, sessionId);
          this.init_J = executionId;
          this.load = targetTime;
       }
 
       public ConfigStore() {
-         super(StreamUtil.clear, "");
+         super(StreamUtil.EXECUTE_NOW, "");
       }
 
       @Override
@@ -287,13 +287,13 @@ public abstract class DataUtil {
       public String read;
 
       public EventBus(String sessionId, String senderUsername, String macroName) {
-         super(StreamUtil.open, sessionId);
+         super(StreamUtil.MACRO_DELETE, sessionId);
          this.load = senderUsername;
          this.read = macroName;
       }
 
       public EventBus() {
-         super(StreamUtil.open, "");
+         super(StreamUtil.MACRO_DELETE, "");
       }
 
       @Override
@@ -314,13 +314,13 @@ public abstract class DataUtil {
       public String load;
 
       public FieldCache(String sessionId, int stateOrdinal, String detail) {
-         super(StreamUtil.stop, sessionId);
+         super(StreamUtil.SYNC_STATE_UPDATE, sessionId);
          this.init_I = stateOrdinal;
          this.load = detail != null ? detail : "";
       }
 
       public FieldCache() {
-         super(StreamUtil.stop, "");
+         super(StreamUtil.SYNC_STATE_UPDATE, "");
       }
 
       @Override
@@ -341,13 +341,13 @@ public abstract class DataUtil {
       public List<String> init_List = new ArrayList<>();
 
       public FileCache(String sessionId, String senderUsername, List<String> macroNames) {
-         super(StreamUtil.poll, sessionId);
+         super(StreamUtil.MACRO_LIST, sessionId);
          this.load = senderUsername;
          this.init_List = macroNames;
       }
 
       public FileCache() {
-         super(StreamUtil.poll, "");
+         super(StreamUtil.MACRO_LIST, "");
       }
 
       @Override
@@ -383,7 +383,7 @@ public abstract class DataUtil {
       public long load_J = -1L;
 
       public HashUtil(String sessionId, long executionId, boolean isMacro, String targetName, String queueData, String senderUsername) {
-         super(StreamUtil.put, sessionId);
+         super(StreamUtil.PREPARE_EXECUTION, sessionId);
          this.init_J = executionId;
          this.init_Z = isMacro;
          this.load_Str = targetName;
@@ -400,7 +400,7 @@ public abstract class DataUtil {
       }
 
       public HashUtil() {
-         super(StreamUtil.put, "");
+         super(StreamUtil.PREPARE_EXECUTION, "");
       }
 
       @Override
@@ -451,13 +451,13 @@ public abstract class DataUtil {
       public String read;
 
       public Inner_DataUtil(String sessionId, String senderUsername, String message) {
-         super(StreamUtil.tick, sessionId);
+         super(StreamUtil.CHAT_MESSAGE, sessionId);
          this.load = senderUsername != null ? senderUsername : "";
          this.read = message != null ? message : "";
       }
 
       public Inner_DataUtil() {
-         super(StreamUtil.tick, "");
+         super(StreamUtil.CHAT_MESSAGE, "");
       }
 
       @Override
@@ -478,7 +478,7 @@ public abstract class DataUtil {
       public int init_I = 0;
 
       public Inner_StreamUtil(String sessionId, List<DataUtil.Inner_StreamUtil.Inner_DataUtil> clients) {
-         super(StreamUtil.update, sessionId);
+         super(StreamUtil.CLIENT_LIST, sessionId);
          this.init_List = clients;
       }
 
@@ -488,7 +488,7 @@ public abstract class DataUtil {
       }
 
       public Inner_StreamUtil() {
-         super(StreamUtil.update, "");
+         super(StreamUtil.CLIENT_LIST, "");
       }
 
       @Override
@@ -536,14 +536,14 @@ public abstract class DataUtil {
       public String write;
 
       public IoWorker(String sessionId, String senderUsername, String presetName, String presetJson) {
-         super(StreamUtil.pop, sessionId);
+         super(StreamUtil.PRESET_DATA, sessionId);
          this.load = senderUsername;
          this.read = presetName;
          this.write = presetJson;
       }
 
       public IoWorker() {
-         super(StreamUtil.pop, "");
+         super(StreamUtil.PRESET_DATA, "");
       }
 
       @Override
@@ -565,12 +565,12 @@ public abstract class DataUtil {
       public String load;
 
       public JsonUtil(String sessionId, String username) {
-         super(StreamUtil.read, sessionId);
+         super(StreamUtil.JOIN, sessionId);
          this.load = username;
       }
 
       public JsonUtil() {
-         super(StreamUtil.read, "");
+         super(StreamUtil.JOIN, "");
       }
 
       @Override
@@ -593,7 +593,7 @@ public abstract class DataUtil {
       public boolean init_Z = false;
 
       public MethodUtil(String sessionId, String senderUsername, long executeNanoTime) {
-         super(StreamUtil.run, sessionId);
+         super(StreamUtil.TCP_COMMAND_ACK, sessionId);
          this.load_Str = senderUsername != null ? senderUsername : "";
          this.init_J = executeNanoTime;
       }
@@ -607,7 +607,7 @@ public abstract class DataUtil {
       }
 
       public MethodUtil() {
-         super(StreamUtil.run, "");
+         super(StreamUtil.TCP_COMMAND_ACK, "");
       }
 
       @Override
@@ -644,13 +644,13 @@ public abstract class DataUtil {
       public long init_J;
 
       public NetHelper(String sessionId, String senderUsername, long timestamp) {
-         super(StreamUtil.start, sessionId);
+         super(StreamUtil.HEARTBEAT, sessionId);
          this.load = senderUsername != null ? senderUsername : "";
          this.init_J = timestamp;
       }
 
       public NetHelper() {
-         super(StreamUtil.start, "");
+         super(StreamUtil.HEARTBEAT, "");
       }
 
       @Override
@@ -670,12 +670,12 @@ public abstract class DataUtil {
       public Map<String, Integer> init_Map = new HashMap<>();
 
       public PacketUtil(String sessionId, Map<String, Integer> offsets) {
-         super(StreamUtil.get, sessionId);
+         super(StreamUtil.PLAYER_OFFSETS, sessionId);
          this.init_Map = offsets != null ? new HashMap<>(offsets) : new HashMap<>();
       }
 
       public PacketUtil() {
-         super(StreamUtil.get, "");
+         super(StreamUtil.PLAYER_OFFSETS, "");
       }
 
       @Override
@@ -706,13 +706,13 @@ public abstract class DataUtil {
       public String read;
 
       public PoolEntry(String sessionId, String queueData, String senderUsername) {
-         super(StreamUtil.push, sessionId);
+         super(StreamUtil.QUEUE_SYNC, sessionId);
          this.load = queueData;
          this.read = senderUsername;
       }
 
       public PoolEntry() {
-         super(StreamUtil.push, "");
+         super(StreamUtil.QUEUE_SYNC, "");
       }
 
       @Override
@@ -735,7 +735,7 @@ public abstract class DataUtil {
       public byte init_B;
 
       public RenderState(String sessionId, String senderUsername, String macroName, String nbtData, byte sourceType) {
-         super(StreamUtil.close, sessionId);
+         super(StreamUtil.MACRO_DATA, sessionId);
          this.load = senderUsername;
          this.read = macroName;
          this.write = nbtData != null ? nbtData : "";
@@ -743,7 +743,7 @@ public abstract class DataUtil {
       }
 
       public RenderState() {
-         super(StreamUtil.close, "");
+         super(StreamUtil.MACRO_DATA, "");
       }
 
       @Override
@@ -772,12 +772,12 @@ public abstract class DataUtil {
       public String load;
 
       public RingBuffer(String sessionId, String macroName) {
-         super(StreamUtil.flush, sessionId);
+         super(StreamUtil.REQUEST_MACRO, sessionId);
          this.load = macroName;
       }
 
       public RingBuffer() {
-         super(StreamUtil.flush, "");
+         super(StreamUtil.REQUEST_MACRO, "");
       }
 
       @Override
@@ -795,12 +795,12 @@ public abstract class DataUtil {
       public String load;
 
       public StateCache(String sessionId, String username) {
-         super(StreamUtil.sync, sessionId);
+         super(StreamUtil.LEAVE, sessionId);
          this.load = username;
       }
 
       public StateCache() {
-         super(StreamUtil.sync, "");
+         super(StreamUtil.LEAVE, "");
       }
 
       @Override
@@ -819,13 +819,13 @@ public abstract class DataUtil {
       public String read = "";
 
       public SyncManager(String sessionId, String senderUsername, String assignments) {
-         super(StreamUtil.data, sessionId);
+         super(StreamUtil.MACRO_ASSIGNMENT_SYNC, sessionId);
          this.load = senderUsername != null ? senderUsername : "";
          this.read = assignments != null ? assignments : "";
       }
 
       public SyncManager() {
-         super(StreamUtil.data, "");
+         super(StreamUtil.MACRO_ASSIGNMENT_SYNC, "");
       }
 
       @Override
@@ -843,11 +843,11 @@ public abstract class DataUtil {
 
    public static class TableIndex extends DataUtil {
       public TableIndex(String sessionId) {
-         super(StreamUtil.write, sessionId);
+         super(StreamUtil.REQUEST_CLIENT_LIST, sessionId);
       }
 
       public TableIndex() {
-         super(StreamUtil.write, "");
+         super(StreamUtil.REQUEST_CLIENT_LIST, "");
       }
 
       @Override
@@ -865,7 +865,7 @@ public abstract class DataUtil {
       public long load = -1L;
 
       public TaskQueue(String sessionId, long executionId) {
-         super(StreamUtil.reset, sessionId);
+         super(StreamUtil.GO, sessionId);
          this.init_J = executionId;
       }
 
@@ -876,7 +876,7 @@ public abstract class DataUtil {
       }
 
       public TaskQueue() {
-         super(StreamUtil.reset, "");
+         super(StreamUtil.GO, "");
       }
 
       @Override
@@ -907,7 +907,7 @@ public abstract class DataUtil {
       public String read;
 
       public TextFormat(String sessionId, String senderUsername, int completedStep, int totalSteps, String macroName) {
-         super(StreamUtil.valid, sessionId);
+         super(StreamUtil.MACRO_STEP_PROGRESS, sessionId);
          this.load_Str = senderUsername != null ? senderUsername : "";
          this.init_I = completedStep;
          this.load_I = totalSteps;
@@ -915,7 +915,7 @@ public abstract class DataUtil {
       }
 
       public TextFormat() {
-         super(StreamUtil.valid, "");
+         super(StreamUtil.MACRO_STEP_PROGRESS, "");
       }
 
       @Override
@@ -941,7 +941,7 @@ public abstract class DataUtil {
       public byte init_B;
 
       public TokenStore(String sessionId, long startTime, String hostName, byte transportType) {
-         super(StreamUtil.load, sessionId);
+         super(StreamUtil.SESSION, sessionId);
          this.init_J = startTime;
          this.load = hostName;
          this.init_B = transportType;
@@ -952,7 +952,7 @@ public abstract class DataUtil {
       }
 
       public TokenStore() {
-         super(StreamUtil.load, "");
+         super(StreamUtil.SESSION, "");
       }
 
       @Override
@@ -985,7 +985,7 @@ public abstract class DataUtil {
       public byte[] init_BArr;
 
       public UiHelper(String sessionId, String senderUsername, String macroName, byte sourceType, int chunkIndex, int totalChunks, byte[] chunkData) {
-         super(StreamUtil.size, sessionId);
+         super(StreamUtil.MACRO_DATA_CHUNK, sessionId);
          this.load_Str = senderUsername != null ? senderUsername : "";
          this.read_Str = macroName != null ? macroName : "";
          this.init_B = sourceType;
@@ -995,7 +995,7 @@ public abstract class DataUtil {
       }
 
       public UiHelper() {
-         super(StreamUtil.size, "");
+         super(StreamUtil.MACRO_DATA_CHUNK, "");
       }
 
       @Override

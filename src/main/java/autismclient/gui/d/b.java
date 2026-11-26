@@ -58,7 +58,7 @@ public class b extends KeyHolder {
    private List<AutismWaypoints.Waypoint> read_List = List.of();
 
    private static int read_I_17() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
    }
 
    public b(Screen parent) {
@@ -114,8 +114,8 @@ public class b extends KeyHolder {
             fieldY,
             addW,
             ctl,
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read,
-            b.Inner_StreamUtil.init,
+            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+            b.Inner_StreamUtil.ADD,
             "",
             mx,
             my
@@ -171,7 +171,7 @@ public class b extends KeyHolder {
                autismclient.gui.f.PacketUtil.load(
                   graphics,
                   autismclient.gui.f.NetHelper.init(swatchX, swatchY, 18, 10),
-                  !swatchOver && !waypoint.name().equals(this.load_Str) ? init_CharEncoder.set() : ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.load)
+                  !swatchOver && !waypoint.name().equals(this.load_Str) ? init_CharEncoder.set() : ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.OUTLINE)
                );
                int nameX = swatchX + 18 + 4;
                k nameField = this.init_Map.get(waypoint.name());
@@ -188,9 +188,9 @@ public class b extends KeyHolder {
                int coordsX = nameX + 120 + 8;
                this.init(graphics, waypoint.x() + " " + waypoint.y() + " " + waypoint.z(), coordsX, this.init_I_6(rowY, rowH), read_I_17(), delX - 4 - coordsX);
                autismclient.gui.f.b.FileCache.load(graphics, delX, delY, del, del, over);
-               this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.update, x, rowY, w, rowH, waypoint.name()));
-               this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.load, swatchX, swatchY, 18, 10, waypoint.name()));
-               this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.write, delX, delY, del, del, waypoint.name()));
+               this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.ROW, x, rowY, w, rowH, waypoint.name()));
+               this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.SWATCH, swatchX, swatchY, 18, 10, waypoint.name()));
+               this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.REMOVE, delX, delY, del, del, waypoint.name()));
             }
          );
       }
@@ -215,7 +215,7 @@ public class b extends KeyHolder {
          autismclient.gui.f.PacketUtil.load(
             graphics, autismclient.gui.f.NetHelper.init(px, swatchY, 18, 10), !over && init_IArr[i] != current ? init_CharEncoder.set() : -1
          );
-         this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.read, px, swatchY, 18, 10, Integer.toHexString(i)));
+         this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.PRESET, px, swatchY, 18, 10, Integer.toHexString(i)));
       }
 
       int ctl = this.flush_I_9();
@@ -257,7 +257,7 @@ public class b extends KeyHolder {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Waypoints", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
-      this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.sync, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.init_List.add(new b.Inner_DataUtil(b.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -304,28 +304,28 @@ public class b extends KeyHolder {
          b.Inner_DataUtil hit = this.init_List.get(i);
          if (hit.init(mx, my)
             && (
-               hit.init_b_StreamUtil != b.Inner_StreamUtil.write
-                     && hit.init_b_StreamUtil != b.Inner_StreamUtil.load
-                     && hit.init_b_StreamUtil != b.Inner_StreamUtil.update
+               hit.init_b_StreamUtil != b.Inner_StreamUtil.REMOVE
+                     && hit.init_b_StreamUtil != b.Inner_StreamUtil.SWATCH
+                     && hit.init_b_StreamUtil != b.Inner_StreamUtil.ROW
                   || this.init_Z(mx, my)
             )) {
             switch (hit.init_b_StreamUtil) {
-               case init:
+               case ADD:
                   this.load_V_24();
                   break;
-               case load:
+               case SWATCH:
                   this.write(hit.init_Str);
                   break;
-               case read:
+               case PRESET:
                   this.update(hit.init_Str);
                   break;
-               case write:
+               case REMOVE:
                   this.init_V_Str_10(hit.init_Str);
                   break;
-               case update:
+               case ROW:
                   this.load(hit.init_Str);
                   break;
-               case sync:
+               case CLOSE:
                   this.onClose();
             }
 
@@ -814,7 +814,7 @@ public class b extends KeyHolder {
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {
       autismclient.gui.f.PacketUtil.init(
-         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ct.init_I_I_ct_DataUtil(-1721357268, ct.Inner_DataUtil.load)
+         graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill, ct.init_I_I_ct_DataUtil(-1721357268, ct.Inner_DataUtil.OUTLINE)
       );
    }
 
@@ -836,11 +836,11 @@ public class b extends KeyHolder {
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      ADD,
+      SWATCH,
+      PRESET,
+      REMOVE,
+      ROW,
+      CLOSE;
    }
 }

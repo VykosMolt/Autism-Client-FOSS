@@ -44,7 +44,7 @@ public final class DataPipe {
    private U.Inner_JsonUtil init_U_JsonUtil;
 
    public DataPipe() {
-      this.init_U_JsonUtil = U.Inner_JsonUtil.init_U_JsonUtil;
+      this.init_U_JsonUtil = U.Inner_JsonUtil.NONE;
       this.init_DataUtil.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.read_DataUtil_DataUtil);
    }
 
@@ -67,7 +67,7 @@ public final class DataPipe {
       this.init_Z = false;
       this.init_J = target == null ? 0L : ca.init_J_BlockPos(target);
       this.init_Str = "";
-      this.init_U_JsonUtil = U.Inner_JsonUtil.init_U_JsonUtil;
+      this.init_U_JsonUtil = U.Inner_JsonUtil.NONE;
       this.init_DataUtil.init_V();
    }
 

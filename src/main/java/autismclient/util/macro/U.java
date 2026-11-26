@@ -17,7 +17,7 @@ public class U implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.scan;
+      return StreamGate.SAVE_GUI;
    }
 
    @Override

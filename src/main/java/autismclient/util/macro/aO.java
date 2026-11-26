@@ -8,7 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public final class aO implements ContextMacroAction {
    private static final int init_I = 1200;
-   public autismclient.util.i.DataUtil.Inner_DataUtil filter = autismclient.util.i.DataUtil.Inner_DataUtil.init_DataUtil_DataUtil;
+   public autismclient.util.i.DataUtil.Inner_DataUtil filter = autismclient.util.i.DataUtil.Inner_DataUtil.ALL;
    public boolean traders = true;
    public boolean holdEmerald = true;
    public int timeoutTicks = 0;
@@ -23,7 +23,7 @@ public final class aO implements ContextMacroAction {
          CompletableFuture<Void> next = watcher.init_CompletableFuture;
          autismclient.util.i.DataUtil.ConfigStore status = watcher.init_DataUtil_ConfigSto;
          ctx.setStatus(
-            !status.load_Z() && status != autismclient.util.i.DataUtil.ConfigStore.write
+            !status.load_Z() && status != autismclient.util.i.DataUtil.ConfigStore.SCREEN
                ? "Waiting for a villager item (" + status.init_Str() + ")"
                : "Waiting for a villager item"
          );
@@ -59,7 +59,7 @@ public final class aO implements ContextMacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_Z_StreamGate;
+      return StreamGate.WAIT_VILLAGER_ITEM;
    }
 
    @Override
@@ -97,7 +97,7 @@ public final class aO implements ContextMacroAction {
       private final boolean write = aO.this.holdEmerald;
       final int init_I;
       private int load_I;
-      volatile autismclient.util.i.DataUtil.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.DataUtil.ConfigStore.load_DataUtil_ConfigSto;
+      volatile autismclient.util.i.DataUtil.ConfigStore init_DataUtil_ConfigSto = autismclient.util.i.DataUtil.ConfigStore.WAITING;
       volatile boolean init_Z;
       volatile boolean load_Z;
       volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();

@@ -27,7 +27,7 @@ final class aW {
          Vec3 explosion = null;
 
          for (aS.Inner_CachePool path : paths) {
-            if (path.init_aS_StreamUtil() == aS.Inner_StreamUtil.pop && path.init_HitResult() != null) {
+            if (path.init_aS_StreamUtil() == aS.Inner_StreamUtil.FIRE && path.init_HitResult() != null) {
                explosion = path.init_HitResult().getLocation();
             }
          }

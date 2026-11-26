@@ -153,7 +153,7 @@ public final class DataUtil {
                   socket.connect(new InetSocketAddress(proxy.init_Str(), proxy.init_I()), 3000);
                   DataInputStream input = new DataInputStream(socket.getInputStream());
                   OutputStream output = socket.getOutputStream();
-                  if (proxy.init_bZ() == bZ.init) {
+                  if (proxy.init_bZ() == bZ.Socks4) {
                      if (literal && address.length != 4) {
                         throw new IOException("SOCKS4 does not support IPv6 destinations");
                      }
@@ -256,7 +256,7 @@ public final class DataUtil {
    public static boolean init(Object userConnection, String channel, byte[] data) {
       Connection owner = init(userConnection);
       autismclient.g.BufferHelper.Inner_StreamUtil context = autismclient.g.BufferHelper.init_BufferHelper_Strea(owner);
-      return context != null && context.init_BufferHelper_Cache() != autismclient.g.BufferHelper.Inner_CachePool.init
+      return context != null && context.init_BufferHelper_Cache() != autismclient.g.BufferHelper.Inner_CachePool.VANILLA
          ? !"vv:mod_details".equals(channel)
          : false;
    }

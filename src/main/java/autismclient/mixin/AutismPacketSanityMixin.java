@@ -99,7 +99,7 @@ public abstract class AutismPacketSanityMixin {
    @Unique
    private static boolean autism$suppressesCorrections(PacketListener listener) {
       BufferHelper.Inner_StreamUtil context = BufferHelper.init(listener);
-      return context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.load;
+      return context != null && context.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.MODDED;
    }
 
    @Inject(method = "handleAddObjective", at = @At("HEAD"), cancellable = true, require = 0)

@@ -41,7 +41,7 @@ public class aF implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_n_StreamGate;
+      return StreamGate.WAIT_TELEPORT;
    }
 
    @Override

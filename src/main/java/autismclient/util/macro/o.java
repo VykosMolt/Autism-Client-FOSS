@@ -32,7 +32,7 @@ public class o implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_K_StreamGate;
+      return StreamGate.MACRO_VARIABLES;
    }
 
    @Override

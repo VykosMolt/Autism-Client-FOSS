@@ -95,7 +95,7 @@ public class AutismProtectorConnectionTrackingMixin {
 
    private BufferHelper.Inner_StreamUtil autism$context(SocketAddress peerAddress, boolean multiChannel) {
       Connection connection = (Connection)(Object)this;
-      BufferHelper.Inner_CachePool mode = HashUtil.sync() ? BufferHelper.Inner_CachePool.init : BufferHelper.Inner_CachePool.load;
+      BufferHelper.Inner_CachePool mode = HashUtil.sync() ? BufferHelper.Inner_CachePool.VANILLA : BufferHelper.Inner_CachePool.MODDED;
       this.autism$privacyContext = BufferHelper.init(connection, mode, false, peerAddress);
       return this.autism$privacyContext;
    }

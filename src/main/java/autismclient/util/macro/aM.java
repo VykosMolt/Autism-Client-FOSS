@@ -18,10 +18,10 @@ import net.minecraft.network.protocol.Packet;
 
 public class aM implements CacheEntry, MacroAction {
    public final List<aM.Inner_CachePool> rules = new ArrayList<>();
-   public aM.Inner_DataUtil direction = aM.Inner_DataUtil.init;
+   public aM.Inner_DataUtil direction = aM.Inner_DataUtil.C2S;
    public String packetName = "";
    public String fieldName = "";
-   public aM.Inner_StreamUtil operator = aM.Inner_StreamUtil.init;
+   public aM.Inner_StreamUtil operator = aM.Inner_StreamUtil.EXISTS;
    public String value = "";
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -35,7 +35,7 @@ public class aM implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_C_StreamGate;
+      return StreamGate.WAIT_PACKET_MATCH;
    }
 
    public List<aM.Inner_CachePool> init_List_9() {
@@ -49,7 +49,7 @@ public class aM implements CacheEntry, MacroAction {
 
    public aM.Inner_CachePool init_aM_CachePool_aM_DataUtil_Str(aM.Inner_DataUtil direction, String packetName) {
       aM.Inner_CachePool rule = new aM.Inner_CachePool();
-      rule.init_aM_DataUtil = direction == null ? aM.Inner_DataUtil.read : direction;
+      rule.init_aM_DataUtil = direction == null ? aM.Inner_DataUtil.ANY : direction;
       rule.init_Str = packetName == null ? "" : packetName;
       this.rules.add(rule);
       this.init_V_11();
@@ -62,7 +62,7 @@ public class aM implements CacheEntry, MacroAction {
          this.direction = first.init_aM_DataUtil;
          this.packetName = first.init_Str == null ? "" : first.init_Str;
          this.fieldName = first.load == null ? "" : first.load;
-         this.operator = first.init_aM_StreamUtil == null ? aM.Inner_StreamUtil.init : first.init_aM_StreamUtil;
+         this.operator = first.init_aM_StreamUtil == null ? aM.Inner_StreamUtil.EXISTS : first.init_aM_StreamUtil;
          this.value = first.read == null ? "" : first.read;
       }
    }
@@ -83,7 +83,7 @@ public class aM implements CacheEntry, MacroAction {
    }
 
    private boolean init(aM.Inner_CachePool rule, Packet<?> packet, String packetDirection) {
-      if (rule.init_aM_DataUtil != aM.Inner_DataUtil.read && !rule.init_aM_DataUtil.name().equalsIgnoreCase(packetDirection)) {
+      if (rule.init_aM_DataUtil != aM.Inner_DataUtil.ANY && !rule.init_aM_DataUtil.name().equalsIgnoreCase(packetDirection)) {
          return false;
       }
 
@@ -93,8 +93,8 @@ public class aM implements CacheEntry, MacroAction {
 
       if (rule.load != null && !rule.load.isBlank()) {
          Object field = this.init_Obj_Packet_Str(packet, rule.load);
-         aM.Inner_StreamUtil op = rule.init_aM_StreamUtil == null ? aM.Inner_StreamUtil.init : rule.init_aM_StreamUtil;
-         if (op == aM.Inner_StreamUtil.init) {
+         aM.Inner_StreamUtil op = rule.init_aM_StreamUtil == null ? aM.Inner_StreamUtil.EXISTS : rule.init_aM_StreamUtil;
+         if (op == aM.Inner_StreamUtil.EXISTS) {
             return field != null;
          }
 
@@ -102,16 +102,16 @@ public class aM implements CacheEntry, MacroAction {
          String expected = rule.read == null ? "" : rule.read;
          boolean var10000;
          switch (op) {
-            case init:
+            case EXISTS:
                var10000 = field != null;
                break;
-            case load:
+            case EQUALS:
                var10000 = actual.equalsIgnoreCase(expected);
                break;
-            case read:
+            case CONTAINS:
                var10000 = actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT));
                break;
-            case write:
+            case NOT_EQUALS:
                var10000 = !actual.equalsIgnoreCase(expected);
                break;
             default:
@@ -126,10 +126,10 @@ public class aM implements CacheEntry, MacroAction {
 
    private aM.Inner_CachePool init_aM_CachePool() {
       aM.Inner_CachePool rule = new aM.Inner_CachePool();
-      rule.init_aM_DataUtil = this.direction == null ? aM.Inner_DataUtil.init : this.direction;
+      rule.init_aM_DataUtil = this.direction == null ? aM.Inner_DataUtil.C2S : this.direction;
       rule.init_Str = this.packetName == null ? "" : this.packetName;
       rule.load = this.fieldName == null ? "" : this.fieldName;
-      rule.init_aM_StreamUtil = this.operator == null ? aM.Inner_StreamUtil.init : this.operator;
+      rule.init_aM_StreamUtil = this.operator == null ? aM.Inner_StreamUtil.EXISTS : this.operator;
       rule.read = this.value == null ? "" : this.value;
       return rule;
    }
@@ -280,10 +280,10 @@ public class aM implements CacheEntry, MacroAction {
          }
       }
 
-      this.direction = i.init(aM.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), aM.Inner_DataUtil.init);
+      this.direction = i.init(aM.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), aM.Inner_DataUtil.C2S);
       this.packetName = tag.getStringOr("packetName", "");
       this.fieldName = tag.getStringOr("fieldName", "");
-      this.operator = i.init(aM.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), aM.Inner_StreamUtil.init);
+      this.operator = i.init(aM.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), aM.Inner_StreamUtil.EXISTS);
       this.value = tag.getStringOr("value", "");
       if (this.rules.isEmpty() && (tag.contains("packetName") || tag.contains("fieldName"))) {
          this.rules.add(this.init_aM_CachePool());
@@ -327,10 +327,10 @@ public class aM implements CacheEntry, MacroAction {
    }
 
    public static class Inner_CachePool {
-      public aM.Inner_DataUtil init_aM_DataUtil = aM.Inner_DataUtil.init;
+      public aM.Inner_DataUtil init_aM_DataUtil = aM.Inner_DataUtil.C2S;
       public String init_Str = "";
       public String load = "";
-      public aM.Inner_StreamUtil init_aM_StreamUtil = aM.Inner_StreamUtil.init;
+      public aM.Inner_StreamUtil init_aM_StreamUtil = aM.Inner_StreamUtil.EXISTS;
       public String read = "";
 
       public aM.Inner_CachePool init_aM_CachePool() {
@@ -355,25 +355,25 @@ public class aM implements CacheEntry, MacroAction {
 
       static aM.Inner_CachePool init(CompoundTag tag) {
          aM.Inner_CachePool rule = new aM.Inner_CachePool();
-         rule.init_aM_DataUtil = i.init(aM.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), aM.Inner_DataUtil.init);
+         rule.init_aM_DataUtil = i.init(aM.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), aM.Inner_DataUtil.C2S);
          rule.init_Str = tag.getStringOr("packetName", "");
          rule.load = tag.getStringOr("fieldName", "");
-         rule.init_aM_StreamUtil = i.init(aM.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), aM.Inner_StreamUtil.init);
+         rule.init_aM_StreamUtil = i.init(aM.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), aM.Inner_StreamUtil.EXISTS);
          rule.read = tag.getStringOr("value", "");
          return rule;
       }
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      C2S,
+      S2C,
+      ANY;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      EXISTS,
+      EQUALS,
+      CONTAINS,
+      NOT_EQUALS;
    }
 }

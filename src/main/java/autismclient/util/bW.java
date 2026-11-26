@@ -22,13 +22,13 @@ import net.minecraft.nbt.Tag;
 public class bW {
    public String init_Str = UUID.randomUUID().toString();
    public String load_Str = "";
-   public bZ init_bZ = bZ.load;
+   public bZ init_bZ = bZ.Socks5;
    public String read = "";
    public int init_I = 0;
    public boolean init_Z = false;
    public String write = "";
    public String update = "";
-   public volatile bW.Inner_CachePool init_bW_CachePool = bW.Inner_CachePool.init;
+   public volatile bW.Inner_CachePool init_bW_CachePool = bW.Inner_CachePool.UNCHECKED;
    public volatile long init_J = 0L;
    public volatile bW.Inner_StreamUtil init_bW_StreamUtil = bW.Inner_StreamUtil.init;
    public volatile String sync = "";
@@ -180,7 +180,7 @@ public class bW {
    }
 
    public synchronized int init_I_I(int timeoutMs) {
-      this.init_bW_CachePool = bW.Inner_CachePool.load;
+      this.init_bW_CachePool = bW.Inner_CachePool.CHECKING;
       bW.Inner_DataUtil result = this.init_bW_DataUtil_I(timeoutMs);
       this.init_V_bW_DataUtil(result);
       return result.init_I();
@@ -189,30 +189,30 @@ public class bW {
    public synchronized bW.Inner_DataUtil init_bW_DataUtil_I(int timeoutMs) {
       ca.Inner_DataUtil verified = ca.init(this, "example.com", 80, timeoutMs);
       if (!verified.init_Z()) {
-         return new bW.Inner_DataUtil(bW.Inner_CachePool.read, 0L, 2);
+         return new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
       }
 
       if (verified.init_bZ() != null) {
          this.init_bZ = verified.init_bZ();
       }
 
-      return new bW.Inner_DataUtil(bW.Inner_CachePool.write, verified.init_J(), 1);
+      return new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.init_J(), 1);
    }
 
    public synchronized void init_V_bW_DataUtil(bW.Inner_DataUtil result) {
       if (result == null) {
-         this.init_bW_CachePool = bW.Inner_CachePool.init;
+         this.init_bW_CachePool = bW.Inner_CachePool.UNCHECKED;
          this.init_J = 0L;
       } else {
          this.init_bW_CachePool = result.init_bW_CachePool();
-         this.init_J = result.init_bW_CachePool() == bW.Inner_CachePool.write ? result.init_J() : 0L;
+         this.init_J = result.init_bW_CachePool() == bW.Inner_CachePool.ALIVE ? result.init_J() : 0L;
       }
    }
 
    private bW.Inner_BufferHelper init_bW_BufferHelper_bZ_I(bZ checkType, int timeoutMs) {
       try {
          Instant before = Instant.now();
-         boolean alive = checkType == bZ.init ? this.init_Z_I(timeoutMs) : this.load_Z_I(timeoutMs);
+         boolean alive = checkType == bZ.Socks4 ? this.init_Z_I(timeoutMs) : this.load_Z_I(timeoutMs);
          if (alive) {
             return new bW.Inner_BufferHelper(true, false, Duration.between(before, Instant.now()).toMillis());
          }
@@ -324,7 +324,7 @@ public class bW {
       CompoundTag tag = new CompoundTag();
       tag.putString("id", this.write());
       tag.putString("name", init_Str_Str(this.load_Str));
-      tag.putString("type", this.init_bZ == null ? bZ.load.name() : this.init_bZ.name());
+      tag.putString("type", this.init_bZ == null ? bZ.Socks5.name() : this.init_bZ.name());
       tag.putString("address", init_Str_Str(this.read));
       tag.putInt("port", this.init_I);
       tag.putBoolean("enabled", this.init_Z);
@@ -351,12 +351,12 @@ public class bW {
       }
 
       this.load_Str = tag.getStringOr("name", "");
-      String typeName = tag.getStringOr("type", bZ.load.name());
+      String typeName = tag.getStringOr("type", bZ.Socks5.name());
 
       try {
          this.init_bZ = bZ.valueOf(typeName);
       } catch (IllegalArgumentException e) {
-         this.init_bZ = typeName.toLowerCase(Locale.ROOT).contains("4") ? bZ.init : bZ.load;
+         this.init_bZ = typeName.toLowerCase(Locale.ROOT).contains("4") ? bZ.Socks4 : bZ.Socks5;
       }
 
       this.read = tag.getStringOr("address", "");
@@ -378,7 +378,7 @@ public class bW {
       this.poll = tag.getStringOr("geoCity", "");
       this.push = tag.getStringOr("geoSubdivision", "");
       this.load_J = tag.getLongOr("geoCheckedAt", 0L);
-      this.init_bW_CachePool = bW.Inner_CachePool.init;
+      this.init_bW_CachePool = bW.Inner_CachePool.UNCHECKED;
       this.init_J = 0L;
       return this;
    }
@@ -410,24 +410,24 @@ public class bW {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write;
+      UNCHECKED,
+      CHECKING,
+      DEAD,
+      ALIVE;
 
       public String init_Str() {
          String var10000;
          switch (this) {
-            case init:
+            case UNCHECKED:
                var10000 = "";
                break;
-            case load:
+            case CHECKING:
                var10000 = "...";
                break;
-            case read:
+            case DEAD:
                var10000 = "X";
                break;
-            case write:
+            case ALIVE:
                var10000 = "O";
                break;
             default:
@@ -440,14 +440,14 @@ public class bW {
       public int init_I() {
          int var10000;
          switch (this) {
-            case init:
-            case load:
+            case UNCHECKED:
+            case CHECKING:
                var10000 = -5723992;
                break;
-            case read:
+            case DEAD:
                var10000 = -42406;
                break;
-            case write:
+            case ALIVE:
                var10000 = -10813551;
                break;
             default:
@@ -460,7 +460,7 @@ public class bW {
 
    public record Inner_DataUtil(bW.Inner_CachePool init_bW_CachePool, long init_J, int init_I) {
       public Inner_DataUtil {
-         init_bW_CachePool = init_bW_CachePool == null ? bW.Inner_CachePool.read : init_bW_CachePool;
+         init_bW_CachePool = init_bW_CachePool == null ? bW.Inner_CachePool.DEAD : init_bW_CachePool;
          init_J = Math.max(0L, init_J);
       }
    }

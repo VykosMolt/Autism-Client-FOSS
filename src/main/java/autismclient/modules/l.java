@@ -23,18 +23,18 @@ final class l {
       if (threat && ticksUntilOwnHit > 0) {
          int raise = Math.max(0, raiseTicks);
          if (raised) {
-            return ticksUntilOwnHit <= 1 ? l.Inner_CachePool.init : l.Inner_CachePool.load;
+            return ticksUntilOwnHit <= 1 ? l.Inner_CachePool.DOWN : l.Inner_CachePool.HOLD;
          } else {
-            return ticksUntilOwnHit <= raise + 1 ? l.Inner_CachePool.init : l.Inner_CachePool.read;
+            return ticksUntilOwnHit <= raise + 1 ? l.Inner_CachePool.DOWN : l.Inner_CachePool.RAISE;
          }
       } else {
-         return l.Inner_CachePool.init;
+         return l.Inner_CachePool.DOWN;
       }
    }
 
    static l.Inner_CachePool init(boolean threat, boolean raised, int raiseTicks, int ticksUntilClick) {
       return !raised && threat && raiseTicks == 0 && ticksUntilClick == 1
-         ? l.Inner_CachePool.read
+         ? l.Inner_CachePool.RAISE
          : init_l_CachePool_Z(threat, raised, 0, raiseTicks, ticksUntilClick);
    }
 
@@ -334,9 +334,9 @@ final class l {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read;
+      DOWN,
+      HOLD,
+      RAISE;
    }
 
    static final class Inner_ConfigStore {

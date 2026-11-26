@@ -217,7 +217,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
    private void init_V_49() {
       cg.init(
-         cg.Inner_DataUtil.load,
+         cg.Inner_DataUtil.CLUTCH,
          this.isEnabled() && this.bool("place-animation"),
          this.bool("animation-custom"),
          am.init_I_Module(this, "animation-color", -50373)
@@ -357,20 +357,20 @@ public final class j extends Module implements cn.Inner_DataUtil {
          Entity direct = damage.getDirectEntity();
          Entity owner = damage.getEntity();
          i.Inner_StreamUtil cause = init_i_StreamUtil_Entity(direct);
-         if (cause == i.Inner_StreamUtil.poll && damage.is(DamageTypes.ARROW)) {
-            cause = i.Inner_StreamUtil.sync;
+         if (cause == i.Inner_StreamUtil.OTHER && damage.is(DamageTypes.ARROW)) {
+            cause = i.Inner_StreamUtil.ARROW;
          }
 
-         if (cause == i.Inner_StreamUtil.poll && (damage.is(DamageTypes.PLAYER_ATTACK) || damage.is(DamageTypes.MOB_ATTACK))) {
-            cause = i.Inner_StreamUtil.init;
+         if (cause == i.Inner_StreamUtil.OTHER && (damage.is(DamageTypes.PLAYER_ATTACK) || damage.is(DamageTypes.MOB_ATTACK))) {
+            cause = i.Inner_StreamUtil.MELEE;
          }
 
          j.Inner_CachePool seen = direct == null ? null : clutch.init_Map.get(direct.getId());
          boolean own = owner == MC.player || owner == null && seen != null && seen.init_Z;
          i.Inner_TaskQueue hit = new i.Inner_TaskQueue(
-            cause, own, cause != i.Inner_StreamUtil.poll || owner instanceof LivingEntity || direct instanceof Projectile && owner != null, clutch.read_I_9()
+            cause, own, cause != i.Inner_StreamUtil.OTHER || owner instanceof LivingEntity || direct instanceof Projectile && owner != null, clutch.read_I_9()
          );
-         if (cause != i.Inner_StreamUtil.poll || direct instanceof Projectile) {
+         if (cause != i.Inner_StreamUtil.OTHER || direct instanceof Projectile) {
             clutch.start = clutch.init_Z_i_TaskQueue(hit) ? -2147483648 : clutch.read_I_9();
             if (!clutch.init_Z_i_TaskQueue(hit)) {
                clutch.write_V_20();
@@ -386,7 +386,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             if (!hit.init_Z()) {
                clutch.entry = -2147483648;
             }
-         } else if (hit.init_Z() && cause != i.Inner_StreamUtil.poll) {
+         } else if (hit.init_Z() && cause != i.Inner_StreamUtil.OTHER) {
             clutch.read_V_21();
          }
 
@@ -399,7 +399,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             + " eligible="
             + clutch.init_Z_i_TaskQueue(hit);
          clutch.stop = clutch.read_I_9();
-         if (!clutch.init_Z_i_TaskQueue(hit) && cause == i.Inner_StreamUtil.poll && owner == null && direct == null) {
+         if (!clutch.init_Z_i_TaskQueue(hit) && cause == i.Inner_StreamUtil.OTHER && owner == null && direct == null) {
             clutch.reset = clutch.read_I_9();
             if (i.init_Z_I(clutch.read_I_9(), clutch.clear, 2)) {
                clutch.init_V_Z_10(true);
@@ -505,7 +505,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
          double best = 16.0;
 
          for (j.Inner_CachePool sample : clutch.init_Map.values()) {
-            if ((sample.init_i_StreamUtil == i.Inner_StreamUtil.read || sample.init_i_StreamUtil == i.Inner_StreamUtil.write)
+            if ((sample.init_i_StreamUtil == i.Inner_StreamUtil.FIREBALL || sample.init_i_StreamUtil == i.Inner_StreamUtil.WIND)
                && i.init_Z_I(clutch.read_I_9(), sample.load_I, 5)) {
                double distance = sample.init_Vec3.distanceToSqr(packet.center());
                if (distance < best) {
@@ -524,7 +524,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
                ? nearest.init_Z || i.init_Z_I(clutch.read_I_9(), clutch.entry, 3)
                : ownBlast || i.init_Z_I(clutch.read_I_9(), clutch.entry, 3);
             i.Inner_TaskQueue hit = new i.Inner_TaskQueue(
-               nearest != null ? nearest.init_i_StreamUtil : i.Inner_StreamUtil.update, own, nearest == null || nearest.load_Z, clutch.read_I_9()
+               nearest != null ? nearest.init_i_StreamUtil : i.Inner_StreamUtil.BLAST, own, nearest == null || nearest.load_Z, clutch.read_I_9()
             );
             if (nearest == null && !clutch.init_Z_i_TaskQueue(hit)) {
                boolean enemyHit = clutch.init_i_TaskQueue != null
@@ -602,7 +602,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
             this.read_V_21();
          } else {
             this.init_Str = this.init_Str + " server impulse hurt=" + hurt;
-            this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.load, false, true, this.read_I_9());
+            this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.SERVER_PUSH, false, true, this.read_I_9());
             this.poll_I = this.push_I = this.read_I_9();
             this.write_BlockPos = this.read_BlockPos;
             this.update_V_16();
@@ -658,13 +658,13 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
    private static i.Inner_StreamUtil init_i_StreamUtil_Entity(Entity entity) {
       if (entity instanceof Fireball) {
-         return i.Inner_StreamUtil.read;
+         return i.Inner_StreamUtil.FIREBALL;
       } else if (entity instanceof AbstractWindCharge) {
-         return i.Inner_StreamUtil.write;
+         return i.Inner_StreamUtil.WIND;
       } else if (entity instanceof AbstractArrow) {
-         return i.Inner_StreamUtil.sync;
+         return i.Inner_StreamUtil.ARROW;
       } else {
-         return !(entity instanceof Snowball) && !(entity instanceof ThrownEgg) ? i.Inner_StreamUtil.poll : i.Inner_StreamUtil.flush;
+         return !(entity instanceof Snowball) && !(entity instanceof ThrownEgg) ? i.Inner_StreamUtil.OTHER : i.Inner_StreamUtil.SNOWBALL;
       }
    }
 
@@ -709,12 +709,12 @@ public final class j extends Module implements cn.Inner_DataUtil {
       this.init_Map.values().removeIf(sample -> !i.init_Z_I(tick, sample.load_I, 5));
 
       for (Entity entity : MC.level
-         .getEntities(MC.player, MC.player.getBoundingBox().inflate(10.0), candidate -> init_i_StreamUtil_Entity(candidate) != i.Inner_StreamUtil.poll)) {
+         .getEntities(MC.player, MC.player.getBoundingBox().inflate(10.0), candidate -> init_i_StreamUtil_Entity(candidate) != i.Inner_StreamUtil.OTHER)) {
          Projectile projectile = (Projectile)entity;
          Entity owner = projectile.getOwner();
          j.Inner_CachePool old = this.init_Map.get(entity.getId());
          boolean own = owner != null ? owner == MC.player : old != null && old.init_Z;
-         boolean launched = init_i_StreamUtil_Entity(entity) == i.Inner_StreamUtil.read || init_i_StreamUtil_Entity(entity) == i.Inner_StreamUtil.write;
+         boolean launched = init_i_StreamUtil_Entity(entity) == i.Inner_StreamUtil.FIREBALL || init_i_StreamUtil_Entity(entity) == i.Inner_StreamUtil.WIND;
          if (old == null
             && owner == null
             && launched
@@ -788,7 +788,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
          if (result != null && result.consumesAction()) {
             aI.init_V_I_I(clutch.frame, clutch.block);
             if (clutch.update_BlockPos != null && MC.level != null && !MC.level.getBlockState(clutch.update_BlockPos).isAir()) {
-               cg.init(cg.Inner_DataUtil.load, clutch.update_BlockPos);
+               cg.init(cg.Inner_DataUtil.CLUTCH, clutch.update_BlockPos);
             }
          }
 
@@ -1011,7 +1011,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
                      }
 
                      if (walkingEdge) {
-                        this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.close, true, true, tick);
+                        this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.FALL, true, true, tick);
                         this.write_BlockPos = this.read_BlockPos;
                         this.push_I = tick;
                      }
@@ -1460,7 +1460,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
       }
 
       if (this.get_Z_3()) {
-         this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.open, false, true, tick);
+         this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.GUARD, false, true, tick);
          this.write_BlockPos = this.read_BlockPos;
          this.push_I = tick;
          this.poll_I = -2147483648;
@@ -1472,7 +1472,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
          return false;
       }
 
-      this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.close, true, true, tick);
+      this.init_i_TaskQueue = new i.Inner_TaskQueue(i.Inner_StreamUtil.FALL, true, true, tick);
       this.write_BlockPos = this.read_BlockPos;
       this.push_I = tick;
       this.poll_I = -2147483648;
@@ -1543,15 +1543,15 @@ public final class j extends Module implements cn.Inner_DataUtil {
                BlockState state = MC.level.getBlockState(pos);
                FluidState fluid = state.getFluidState();
                if (fluid.is(FluidTags.LAVA)) {
-                  return i.Inner_BufferHelper.read;
+                  return i.Inner_BufferHelper.HAZARD;
                }
 
                if (fluid.is(FluidTags.WATER) && y + fluid.getHeight(MC.level, pos) > box.minY) {
-                  return i.Inner_BufferHelper.load;
+                  return i.Inner_BufferHelper.CUSHION;
                }
 
                if (state.is(Blocks.COBWEB) || state.is(Blocks.POWDER_SNOW)) {
-                  return i.Inner_BufferHelper.load;
+                  return i.Inner_BufferHelper.CUSHION;
                }
             }
          }
@@ -1559,7 +1559,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
       Vec3 centre = body.getCenter();
       pos.set(Mth.floor(centre.x), Mth.floor(body.minY - 0.05), Mth.floor(centre.z));
-      return MC.level.getBlockState(pos).is(Blocks.SLIME_BLOCK) ? i.Inner_BufferHelper.load : i.Inner_BufferHelper.init;
+      return MC.level.getBlockState(pos).is(Blocks.SLIME_BLOCK) ? i.Inner_BufferHelper.CUSHION : i.Inner_BufferHelper.NONE;
    }
 
    private double init_D_13() {
@@ -2529,7 +2529,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
                   .load(margin)
                   .init_U_StateCache_U_StreamUtil(budget);
                autismclient.util.U.Inner_DataUtil aim = new autismclient.util.U.Inner_DataUtil(
-                  point, goal, goal, clickEye.distanceTo(point), ce.load(rotation, goal), autismclient.util.U.Inner_UiHelper.load
+                  point, goal, goal, clickEye.distanceTo(point), ce.load(rotation, goal), autismclient.util.U.Inner_UiHelper.NEAREST
                );
                autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool_U_TaskQueue(option, aim, request, null);
                if (candidate != null
@@ -2925,7 +2925,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
 
    @Override
    public void onDisable() {
-      cg.init_V(cg.Inner_DataUtil.load);
+      cg.init_V(cg.Inner_DataUtil.CLUTCH);
       this.init_i_TaskQueue = null;
       this.poll_I = -2147483648;
       if (this.init_Z) {
@@ -2938,7 +2938,7 @@ public final class j extends Module implements cn.Inner_DataUtil {
    @Override
    public void onGameLeft() {
       this.get_V_3();
-      cg.load(cg.Inner_DataUtil.load);
+      cg.load(cg.Inner_DataUtil.CLUTCH);
    }
 
    private void get_V_3() {

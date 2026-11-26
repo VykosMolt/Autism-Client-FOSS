@@ -10,7 +10,7 @@ import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 
 public class z implements MacroAction {
    public bo.Inner_StreamUtil target;
-   public String mode = bo.Inner_DataUtil.init_bo_DataUtil.name();
+   public String mode = bo.Inner_DataUtil.LEFT_CLICK.name();
    public int times = 1;
    public boolean queue = false;
    private transient boolean init = false;
@@ -33,7 +33,7 @@ public class z implements MacroAction {
 
    private bo.Inner_DataUtil init_bo_DataUtil() {
       if (this.target != null && (this.mode == null || this.mode.isBlank())) {
-         return this.target.init_bo_DataUtil() == null ? bo.Inner_DataUtil.init_bo_DataUtil : this.target.init_bo_DataUtil();
+         return this.target.init_bo_DataUtil() == null ? bo.Inner_DataUtil.LEFT_CLICK : this.target.init_bo_DataUtil();
       } else {
          return bo.Inner_DataUtil.init(this.mode);
       }
@@ -120,7 +120,7 @@ public class z implements MacroAction {
       if (this.mode == null || this.mode.isBlank()) {
          this.mode = this.target != null && this.target.init_bo_DataUtil() != null
             ? this.target.init_bo_DataUtil().name()
-            : bo.Inner_DataUtil.init_bo_DataUtil.name();
+            : bo.Inner_DataUtil.LEFT_CLICK.name();
       }
 
       if (this.target != null) {
@@ -130,7 +130,7 @@ public class z implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.read;
+      return StreamGate.PACKET_CLICK;
    }
 
    @Override

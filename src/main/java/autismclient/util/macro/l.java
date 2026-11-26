@@ -13,26 +13,26 @@ public final class l {
    private final Map<String, l> init_Map;
 
    private l(l.Inner_DataUtil kind, String value, Map<String, l> properties) {
-      this.init_l_DataUtil = kind == null ? l.Inner_DataUtil.init : kind;
+      this.init_l_DataUtil = kind == null ? l.Inner_DataUtil.TEXT : kind;
       this.init_Str = init_Str_Str(value);
       this.init_Map = properties != null && !properties.isEmpty() ? Collections.unmodifiableMap(new LinkedHashMap<>(properties)) : Map.of();
    }
 
    public static l init_l_Obj(Object value) {
-      return new l(l.Inner_DataUtil.init, value == null ? "" : String.valueOf(value), Map.of());
+      return new l(l.Inner_DataUtil.TEXT, value == null ? "" : String.valueOf(value), Map.of());
    }
 
    public static l init_l_Number(Number value) {
       String rendered = value == null ? "0" : new BigDecimal(value.toString()).stripTrailingZeros().toPlainString();
-      return new l(l.Inner_DataUtil.load, rendered, Map.of());
+      return new l(l.Inner_DataUtil.NUMBER, rendered, Map.of());
    }
 
    public static l init_l_Str(String value) {
-      return new l(l.Inner_DataUtil.write, value, Map.of());
+      return new l(l.Inner_DataUtil.IDENTIFIER, value, Map.of());
    }
 
    public static l init_l_I(int value) {
-      return new l(l.Inner_DataUtil.sync, Integer.toString(value), Map.of());
+      return new l(l.Inner_DataUtil.SLOT, Integer.toString(value), Map.of());
    }
 
    public static l init(l.Inner_DataUtil kind, String value, Map<String, l> properties) {
@@ -102,15 +102,15 @@ public final class l {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      TEXT,
+      NUMBER,
+      BOOLEAN,
+      IDENTIFIER,
+      ITEM,
+      SLOT,
+      ENTITY,
+      PACKET,
+      POSITION,
+      GUI;
    }
 }

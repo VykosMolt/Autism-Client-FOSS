@@ -127,7 +127,7 @@ public class t implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_W_StreamGate;
+      return StreamGate.MULTI;
    }
 
    @Override

@@ -50,14 +50,14 @@ public class StateCache extends EditBox {
       String value = this.getValue();
       return !this.load
          && acc.autism$formatters().isEmpty()
-         && (value.isEmpty() || autismclient.gui.e.SyncManager.init(autismclient.gui.e.ConfigStore.init_ConfigStore, value));
+         && (value.isEmpty() || autismclient.gui.e.SyncManager.init(autismclient.gui.e.ConfigStore.BODY, value));
    }
 
    private float init(String text) {
       return autismclient.gui.e.SyncManager.init_F(
-         autismclient.gui.e.ConfigStore.init_ConfigStore,
+         autismclient.gui.e.ConfigStore.BODY,
          text,
-         autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore)
+         autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
       );
    }
 
@@ -156,7 +156,7 @@ public class StateCache extends EditBox {
             this.init_V();
             autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, StateCache.Inner_DataUtil.init(), mouseX, mouseY);
             autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
-            autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init_ConfigStore;
+            autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.BODY;
             float size = autismclient.gui.e.SyncManager.init_F_ConfigStore(face);
             if (this.isBordered()) {
                autismclient.gui.f.PacketUtil.load(

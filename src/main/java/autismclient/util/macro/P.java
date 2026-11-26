@@ -56,7 +56,7 @@ public class P implements MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.mark;
+      return StreamGate.RESTORE_GUI;
    }
 
    @Override

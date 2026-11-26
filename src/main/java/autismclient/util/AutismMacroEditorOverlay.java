@@ -68,7 +68,7 @@ public class AutismMacroEditorOverlay extends bj {
    private aM load_aM;
    private boolean update_Z = false;
    private boolean sync_Z = false;
-   private AutismMacroEditorOverlay.Inner_DataUtil init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.init;
+   private AutismMacroEditorOverlay.Inner_DataUtil init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.NORMAL;
    private Consumer<aM> init_Consumer = null;
    private int tick_I;
    private int run_I;
@@ -1163,7 +1163,7 @@ public class AutismMacroEditorOverlay extends bj {
          for (MacroAction action : actions) {
             if (action instanceof autismclient.util.macro.B gate) {
                gate.gateId = UUID.randomUUID().toString();
-               pendingGateId = gate.scope == autismclient.util.macro.B.Inner_BufferHelper.load ? null : gate.gateId;
+               pendingGateId = gate.scope == autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS ? null : gate.gateId;
             } else if (action instanceof autismclient.util.macro.HashUtil endGate && pendingGateId != null) {
                endGate.gateId = pendingGateId;
                pendingGateId = null;
@@ -1548,7 +1548,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.push_List
                   .add(
                      new AutismMacroEditorOverlay.Inner_UiHelper(
-                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.init
+                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.ENTER
                      )
                   );
             } else if (previous.load != snapshot.load) {
@@ -1556,7 +1556,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.push_List
                   .add(
                      new AutismMacroEditorOverlay.Inner_UiHelper(
-                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, previous.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.load
+                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, previous.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.MOVE
                      )
                   );
             }
@@ -1568,7 +1568,7 @@ public class AutismMacroEditorOverlay extends bj {
                this.push_List
                   .add(
                      new AutismMacroEditorOverlay.Inner_UiHelper(
-                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.read
+                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.EXIT
                      )
                   );
             }
@@ -1602,13 +1602,13 @@ public class AutismMacroEditorOverlay extends bj {
       this.push_List.removeIf(motion -> {
          float var10000;
          switch (motion.init_AutismMacroEditorO) {
-            case init:
+            case ENTER:
                var10000 = 0.14F;
                break;
-            case load:
+            case MOVE:
                var10000 = 0.14F;
                break;
-            case read:
+            case EXIT:
                var10000 = 0.12F;
                break;
             default:
@@ -1624,7 +1624,7 @@ public class AutismMacroEditorOverlay extends bj {
 
    private float init_F_I(int stableId) {
       AutismMacroEditorOverlay.Inner_UiHelper motion = this.init_AutismMacroEditorO_I_3(stableId);
-      return motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.init ? this.init_F_F(motion.init_F) : 1.0F;
+      return motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.ENTER ? this.init_F_F(motion.init_F) : 1.0F;
    }
 
    private int init_I_AutismMacroEditorO_I(AutismMacroEditorOverlay.Inner_UiHelper motion, int baseListY) {
@@ -1642,13 +1642,13 @@ public class AutismMacroEditorOverlay extends bj {
       float eased = this.init_F_F(motion.init_F);
       int var10000;
       switch (motion.init_AutismMacroEditorO) {
-         case init:
+         case ENTER:
             var10000 = Math.round((1.0F - eased) * -18.0F);
             break;
-         case load:
+         case MOVE:
             var10000 = 0;
             break;
-         case read:
+         case EXIT:
             var10000 = Math.round(eased * 20.0F);
             break;
          default:
@@ -1666,13 +1666,13 @@ public class AutismMacroEditorOverlay extends bj {
       float eased = this.init_F_F(motion.init_F);
       float var10000;
       switch (motion.init_AutismMacroEditorO) {
-         case init:
+         case ENTER:
             var10000 = 0.45F + 0.55F * eased;
             break;
-         case load:
+         case MOVE:
             var10000 = 1.0F;
             break;
-         case read:
+         case EXIT:
             var10000 = Math.max(0.0F, 1.0F - eased);
             break;
          default:
@@ -2197,11 +2197,11 @@ public class AutismMacroEditorOverlay extends bj {
    private void valid_V() {
       autismclient.util.macro.ValueSink action = new autismclient.util.macro.ValueSink();
       if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.ENTITY && init_Minecraft.crosshairPickEntity != null) {
-         action.targetMode = autismclient.util.macro.ValueSink.Inner_StreamUtil.read;
+         action.targetMode = autismclient.util.macro.ValueSink.Inner_StreamUtil.ENTITY;
          action.entityIds.add(autismclient.util.macro.ValueSink.init_Str_Entity(init_Minecraft.crosshairPickEntity));
       } else if (init_Minecraft.hitResult != null && init_Minecraft.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)init_Minecraft.hitResult;
-         action.targetMode = autismclient.util.macro.ValueSink.Inner_StreamUtil.init;
+         action.targetMode = autismclient.util.macro.ValueSink.Inner_StreamUtil.SPECIFIC;
          action.blockX = hit.getBlockPos().getX();
          action.blockY = hit.getBlockPos().getY();
          action.blockZ = hit.getBlockPos().getZ();
@@ -2361,7 +2361,7 @@ public class AutismMacroEditorOverlay extends bj {
          if (!(this.init_aM.init_List.get(headerIndex) instanceof autismclient.util.macro.B gate)) {
             return 0;
          } else {
-            if (gate.scope == autismclient.util.macro.B.Inner_BufferHelper.load) {
+            if (gate.scope == autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS) {
                return 0;
             }
 
@@ -2434,7 +2434,7 @@ public class AutismMacroEditorOverlay extends bj {
          int index = this.init_aM.init_List.indexOf(gate);
          if (index >= 0) {
             int end = index + this.sync_I(index);
-            if (gate.scope == autismclient.util.macro.B.Inner_BufferHelper.load) {
+            if (gate.scope == autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS) {
                if (end > index && end < this.init_aM.init_List.size() && this.init_aM.init_List.get(end) instanceof autismclient.util.macro.HashUtil) {
                   this.init_aM.init_List.remove(end);
                }
@@ -2515,9 +2515,9 @@ public class AutismMacroEditorOverlay extends bj {
       if (action == null || !action.isEnabled()) {
          return false;
       } else if (action instanceof autismclient.util.macro.RingBuffer fps) {
-         return fps.init_RingBuffer_DataUti() != autismclient.util.macro.RingBuffer.Inner_DataUtil.init;
+         return fps.init_RingBuffer_DataUti() != autismclient.util.macro.RingBuffer.Inner_DataUtil.TIMEOUT;
       } else {
-         return action instanceof autismclient.util.macro.T sping ? sping.init_T_DataUtil() != autismclient.util.macro.T.Inner_DataUtil.init : false;
+         return action instanceof autismclient.util.macro.T sping ? sping.init_T_DataUtil() != autismclient.util.macro.T.Inner_DataUtil.TIMEOUT : false;
       }
    }
 
@@ -2527,13 +2527,13 @@ public class AutismMacroEditorOverlay extends bj {
          int last = this.init_aM.init_List.size() - 1;
          int covered;
          if (action instanceof autismclient.util.macro.RingBuffer fps) {
-            covered = fps.init_RingBuffer_DataUti() == autismclient.util.macro.RingBuffer.Inner_DataUtil.read ? last - headerIndex : fps.init_I_3();
+            covered = fps.init_RingBuffer_DataUti() == autismclient.util.macro.RingBuffer.Inner_DataUtil.END ? last - headerIndex : fps.init_I_3();
          } else {
             if (!(action instanceof autismclient.util.macro.T sping)) {
                return headerIndex;
             }
 
-            covered = sping.init_T_DataUtil() == autismclient.util.macro.T.Inner_DataUtil.read ? last - headerIndex : sping.init_I_4();
+            covered = sping.init_T_DataUtil() == autismclient.util.macro.T.Inner_DataUtil.END ? last - headerIndex : sping.init_I_4();
          }
 
          long end = (long)headerIndex + Math.max(0, covered);
@@ -2590,7 +2590,7 @@ public class AutismMacroEditorOverlay extends bj {
 
    private void cache_V() {
       autismclient.util.macro.RefQueue action = new autismclient.util.macro.RefQueue();
-      action.mode = autismclient.util.macro.RefQueue.Inner_DataUtil.init;
+      action.mode = autismclient.util.macro.RefQueue.Inner_DataUtil.OPEN;
       this.init_V_MacroAction_2(action);
    }
 
@@ -2651,13 +2651,13 @@ public class AutismMacroEditorOverlay extends bj {
    private List<MacroAction> update_List_2() {
       List<MacroAction> actions = new ArrayList<>();
       autismclient.util.macro.DataUtil assertBundle = new autismclient.util.macro.DataUtil();
-      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.flush;
+      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.HAS_BUNDLE;
       assertBundle.message = "Must have a bundle";
       actions.add(assertBundle);
       autismclient.util.macro.ByteReader dupe = new autismclient.util.macro.ByteReader();
-      dupe.mode = autismclient.util.macro.ByteReader.Inner_StreamUtil.read;
-      dupe.lagMethod = autismclient.util.macro.ByteReader.Inner_BufferHelper.init;
-      dupe.kickMethod = autismclient.util.macro.ByteReader.Inner_CachePool.init;
+      dupe.mode = autismclient.util.macro.ByteReader.Inner_StreamUtil.KICK_DUPE;
+      dupe.lagMethod = autismclient.util.macro.ByteReader.Inner_BufferHelper.CLICK_SLOT;
+      dupe.kickMethod = autismclient.util.macro.ByteReader.Inner_CachePool.HURT;
       dupe.packetCount = 200;
       actions.add(dupe);
       return actions;
@@ -2673,7 +2673,7 @@ public class AutismMacroEditorOverlay extends bj {
       selectSlotOne.slot = 0;
       actions.add(selectSlotOne);
       autismclient.util.macro.DataUtil assertBundle = new autismclient.util.macro.DataUtil();
-      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.close;
+      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.BUNDLE_V2_READY;
       assertBundle.message = "Slot 1 must contain a one-item bundle and no container GUI can be open";
       actions.add(assertBundle);
       actions.add(new autismclient.util.macro.BufferHelper());
@@ -2712,7 +2712,7 @@ public class AutismMacroEditorOverlay extends bj {
       mine.delayTicks = 0;
       actions.add(mine);
       autismclient.util.macro.StateCache clicks = new autismclient.util.macro.StateCache();
-      clicks.slotSource = autismclient.util.macro.StateCache.Inner_StreamUtil.load;
+      clicks.slotSource = autismclient.util.macro.StateCache.Inner_StreamUtil.RANGE;
       clicks.startSlot = 100;
       clicks.endSlot = 126;
       clicks.containerInput = "QUICK_MOVE";
@@ -2724,10 +2724,10 @@ public class AutismMacroEditorOverlay extends bj {
       List<MacroAction> actions = new ArrayList<>();
       autismclient.util.macro.V select = new autismclient.util.macro.V();
       select.itemName = "Trident or bow";
-      select.strategy = autismclient.util.macro.V.Inner_DataUtil.load;
+      select.strategy = autismclient.util.macro.V.Inner_DataUtil.BEST_DURABILITY;
       actions.add(select);
       autismclient.util.macro.ao phase = new autismclient.util.macro.ao();
-      phase.phase = autismclient.util.macro.ao.Inner_DataUtil.load;
+      phase.phase = autismclient.util.macro.ao.Inner_DataUtil.START_USE;
       phase.holdTicks = 100;
       phase.gateDuringHold = true;
       phase.gatePlayerActions = true;
@@ -2770,18 +2770,18 @@ public class AutismMacroEditorOverlay extends bj {
    private List<MacroAction> tick_List() {
       List<MacroAction> actions = new ArrayList<>();
       autismclient.util.macro.DataUtil assertBundle = new autismclient.util.macro.DataUtil();
-      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.init;
+      assertBundle.check = autismclient.util.macro.DataUtil.Inner_DataUtil.HELD_ITEM;
       assertBundle.itemName = "Bundle";
       assertBundle.message = "Must hold a bundle";
       actions.add(assertBundle);
       autismclient.util.macro.y burst = new autismclient.util.macro.y();
-      burst.mode = autismclient.util.macro.y.Inner_DataUtil.write;
+      burst.mode = autismclient.util.macro.y.Inner_DataUtil.BUNDLE_SELECT;
       burst.count = 1;
       burst.slot = -1;
       burst.bundleIndex = -1337;
       actions.add(burst);
       autismclient.util.macro.ao use = new autismclient.util.macro.ao();
-      use.phase = autismclient.util.macro.ao.Inner_DataUtil.init;
+      use.phase = autismclient.util.macro.ao.Inner_DataUtil.USE_ONCE;
       use.itemName = "Bundle";
       actions.add(use);
       return actions;
@@ -2805,7 +2805,7 @@ public class AutismMacroEditorOverlay extends bj {
 
    private List<AutismMacroEditorOverlay.Inner_NetHelper> init_List_AutismMacroEditorO(AutismMacroEditorOverlay.Inner_JsonUtil mode) {
       List<AutismMacroEditorOverlay.Inner_NetHelper> entries = new ArrayList<>();
-      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.init) {
+      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
          this.init_V_List(entries, "flow", "Chat", "Send a chat message or slash command.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.W()));
          this.init_V_List(
             entries, "flow", "Delay", "Pause for a time in ms or ticks.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.EventBus(1000))
@@ -2976,7 +2976,7 @@ public class AutismMacroEditorOverlay extends bj {
             "interaction",
             "Mouse Click",
             "Simulate mouse clicks in world.",
-            () -> this.init_V_MacroAction_2(new autismclient.util.macro.NetHelper(autismclient.util.macro.NetHelper.Inner_DataUtil.load))
+            () -> this.init_V_MacroAction_2(new autismclient.util.macro.NetHelper(autismclient.util.macro.NetHelper.Inner_DataUtil.RIGHT))
          );
          this.init_V_List(
             entries, "network", "Packet", "Send captured packets from the queue.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.Y())
@@ -2986,7 +2986,7 @@ public class AutismMacroEditorOverlay extends bj {
             g.gateId = UUID.randomUUID().toString();
             boolean wholePassDefault = this.init_aM != null && this.init_aM.init_Z && this.init_aM.init_List.isEmpty();
             if (wholePassDefault) {
-               g.scope = autismclient.util.macro.B.Inner_BufferHelper.load;
+               g.scope = autismclient.util.macro.B.Inner_BufferHelper.MACRO_PASS;
             }
 
             this.init_V_MacroAction_2(g);
@@ -3060,7 +3060,7 @@ public class AutismMacroEditorOverlay extends bj {
          this.init_V_List(
             entries, "flow", "Stop Macro", "Stop this, all, or a selected macro.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.ag())
          );
-      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.read) {
+      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
          this.init_V_List(entries, "singleplayer", "Rollback", "Local container duplicate", () -> this.write(this.sync_List_2()));
          this.init_V_List(entries, "dupe", "Bundle Dupe V3", "Paper / Spigot", () -> this.write(this.update_List_2()));
          this.init_V_List(entries, "dupe", "Bundle Dupe V2", "Paper / Spigot", () -> this.write(this.flush_List_2()));
@@ -3154,9 +3154,9 @@ public class AutismMacroEditorOverlay extends bj {
          );
       }
 
-      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.init) {
+      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
          this.init_V_List_Z_2(entries, false);
-      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.read) {
+      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
          this.read_V(entries);
       } else {
          this.init_V_List_Z_2(entries, true);
@@ -3218,13 +3218,13 @@ public class AutismMacroEditorOverlay extends bj {
             }
          }
       };
-      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.init) {
+      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("flow", "Flow", -11352981));
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("movement", "Movement", -42406));
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("interaction", "Interaction", -12268476));
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("inventory", "Inventory", -11182));
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("network", "Packets", -10835457));
-      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.read) {
+      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("singleplayer", "Singleplayer", -12268476));
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("dupe", "Duplication", -10835457));
          addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("trade", "Trade", -11182));
@@ -3675,19 +3675,19 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    public void init_V_aM_Z(aM macroToEdit, boolean reopenMacroListOnClose) {
-      this.init_V_aM(macroToEdit, reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil.init, null, false);
+      this.init_V_aM(macroToEdit, reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, null, false);
    }
 
    public void load_V_aM(aM sharedMacro) {
-      this.init_V_aM(sharedMacro, false, AutismMacroEditorOverlay.Inner_DataUtil.init, null, true);
+      this.init_V_aM(sharedMacro, false, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, null, true);
    }
 
    public void init_V_aM_Consumer_2(aM macroToEdit, Consumer<aM> onSaveComplete) {
-      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.load, onSaveComplete, false);
+      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.JOIN_MACRO_MENU, onSaveComplete, false);
    }
 
    public void load_V_aM_Consumer(aM macroToEdit, Consumer<aM> onSaveComplete) {
-      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.init, onSaveComplete, false);
+      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, onSaveComplete, false);
    }
 
    private void init_V_aM(
@@ -3708,7 +3708,7 @@ public class AutismMacroEditorOverlay extends bj {
       this.read_aM = null;
       this.init_aM = null;
       this.sync_Z = reopenMacroListOnClose;
-      this.init_AutismMacroEditorO = context == null ? AutismMacroEditorOverlay.Inner_DataUtil.init : context;
+      this.init_AutismMacroEditorO = context == null ? AutismMacroEditorOverlay.Inner_DataUtil.NORMAL : context;
       this.init_Consumer = onSaveComplete;
       this.write_Z = true;
       ck.init_ck().init_V_Z(true);
@@ -3763,7 +3763,7 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private boolean value_Z() {
-      return this.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_DataUtil.load;
+      return this.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_DataUtil.JOIN_MACRO_MENU;
    }
 
    private boolean cache_Z() {
@@ -3846,7 +3846,7 @@ public class AutismMacroEditorOverlay extends bj {
       this.run_Z = false;
       this.init_CompoundTag = null;
       this.sync_Z = false;
-      this.init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.init;
+      this.init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.NORMAL;
       this.init_Consumer = null;
       ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(true);
       this.next_V_3();
@@ -4364,7 +4364,7 @@ public class AutismMacroEditorOverlay extends bj {
             builderButtonY,
             addActionW,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.init),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.ACTION),
             !stepListLocked
          );
          groupX += addActionW + builderGroupGap;
@@ -4374,7 +4374,7 @@ public class AutismMacroEditorOverlay extends bj {
             builderButtonY,
             addConditionalW,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.load),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.CONDITIONAL),
             !stepListLocked
          );
          groupX += addConditionalW + builderGroupGap;
@@ -4384,7 +4384,7 @@ public class AutismMacroEditorOverlay extends bj {
             builderButtonY,
             presetsW,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.read),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.PRESET),
             !stepListLocked
          );
       } else {
@@ -4398,7 +4398,7 @@ public class AutismMacroEditorOverlay extends bj {
             builderButtonY,
             sideBuilderWidth,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.init),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.ACTION),
             !stepListLocked
          );
          this.init(
@@ -4407,7 +4407,7 @@ public class AutismMacroEditorOverlay extends bj {
             builderButtonY,
             conditionalBuilderWidth,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.load),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.CONDITIONAL),
             !stepListLocked
          );
          this.init(
@@ -4416,7 +4416,7 @@ public class AutismMacroEditorOverlay extends bj {
             builderButtonY,
             sideBuilderWidth,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.read),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.PRESET),
             !stepListLocked
          );
       }
@@ -4708,7 +4708,7 @@ public class AutismMacroEditorOverlay extends bj {
             race.load_V();
             race.conditionType = race.conditionTypes.isEmpty() ? "" : race.conditionTypes.get(0);
             race.triggerAction = race.conditionTypes.isEmpty() ? new autismclient.util.macro.EventBus(0) : race.init_MacroAction();
-            race.actionType = race.actionTypes.isEmpty() ? autismclient.util.macro.StreamGate.read.name() : race.actionTypes.get(0);
+            race.actionType = race.actionTypes.isEmpty() ? autismclient.util.macro.StreamGate.PACKET_CLICK.name() : race.actionTypes.get(0);
             race.bodyCount = replacement.size();
             this.fill_V();
          }
@@ -5037,7 +5037,7 @@ public class AutismMacroEditorOverlay extends bj {
                         int actionY = y + visualIndex * this.mark_I();
                         if (this.init_Z_I_2(actionY)) {
                            AutismMacroEditorOverlay.Inner_UiHelper motion = this.init_AutismMacroEditorO_I_3(this.write_I(action));
-                           int animatedY = motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.load
+                           int animatedY = motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.MOVE
                               ? this.init_I_AutismMacroEditorO_I(motion, y)
                               : actionY;
                            int enterOffset = this.init_I_AutismMacroEditorO(motion);
@@ -5060,7 +5060,7 @@ public class AutismMacroEditorOverlay extends bj {
                   }
 
                   for (AutismMacroEditorOverlay.Inner_UiHelper motion : this.push_List) {
-                     if (motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.read) {
+                     if (motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.EXIT) {
                         int actionY = this.init_I_AutismMacroEditorO_I(motion, y);
                         if (this.init_Z_I_2(actionY)) {
                            this.init_V_GuiGraphicsExtract_5(
@@ -5116,13 +5116,13 @@ public class AutismMacroEditorOverlay extends bj {
                   int[] b = this.load_List.get(ix);
                   boolean enabled = this.update_List.get(ix);
                   String lbl = ix == this.put_I ? this.init_Str_Z_3(macroCurrentlyRunning) : this.init_List.get(ix);
-                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init;
+                  autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY;
                   if (ix == this.put_I) {
                      variant = macroCurrentlyRunning
-                        ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load
-                        : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read;
+                        ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
+                        : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS;
                   } else if ("Save".equals(lbl)) {
-                     variant = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read;
+                     variant = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS;
                   }
 
                   if (ix == this.put_I) {
@@ -5280,7 +5280,7 @@ public class AutismMacroEditorOverlay extends bj {
       int bodyIndent = groupBody ? 10 : 0;
       boolean hoverRow = interactive && mouseX >= rowLeft - 1 && mouseX <= rowRight + 1 && mouseY >= actionY && mouseY < actionY + this.mark_I();
       boolean selectedRow = interactive && this.read_Z(actionIndex);
-      int bgColor = selectedRow ? ct.init_I_I_ct_DataUtil(1715082778, ct.Inner_DataUtil.init) : (hoverRow ? p.level() : p.flags());
+      int bgColor = selectedRow ? ct.init_I_I_ct_DataUtil(1715082778, ct.Inner_DataUtil.ACCENT) : (hoverRow ? p.level() : p.flags());
       autismclient.gui.f.b.TableIndex.init(
          context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.f.c.SyncManager.init(bgColor, alpha)
       );
@@ -5305,7 +5305,7 @@ public class AutismMacroEditorOverlay extends bj {
          autismclient.gui.f.PacketUtil.load(
             context,
             autismclient.gui.f.NetHelper.init(rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2),
-            autismclient.gui.f.c.SyncManager.init(ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.load), alpha)
+            autismclient.gui.f.c.SyncManager.init(ct.init_I_I_ct_DataUtil(-42149, ct.Inner_DataUtil.OUTLINE), alpha)
          );
       }
 
@@ -5511,9 +5511,9 @@ public class AutismMacroEditorOverlay extends bj {
       int pickerY = this.C();
       int pickerW = this.x();
       int pickerH = this.A();
-      String title = this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.Inner_JsonUtil.init
+      String title = this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION
          ? "Add Action"
-         : (this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.Inner_JsonUtil.read ? "Presets" : "Add Conditional");
+         : (this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET ? "Presets" : "Add Conditional");
       autismclient.gui.f.b.FieldCache.init(
          autismclient.gui.f.UiHelper.init(context, this.init_Font, mouseX, mouseY),
          autismclient.gui.f.NetHelper.init(pickerX, pickerY, pickerW, pickerH),
@@ -5760,11 +5760,11 @@ public class AutismMacroEditorOverlay extends bj {
                boolean enabled = this.update_List.get(i);
                boolean macroCurrentlyRunning = this.state_Z();
                String label = i == this.put_I ? this.init_Str_Z_3(macroCurrentlyRunning) : this.init_List.get(i);
-               autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init;
+               autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant = autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY;
                if (i == this.put_I) {
                   variant = macroCurrentlyRunning
-                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load
-                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read;
+                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
+                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS;
                }
 
                Runnable secondary = i < this.write_List.size() ? this.write_List.get(i) : null;
@@ -6587,8 +6587,8 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      NORMAL,
+      JOIN_MACRO_MENU;
    }
 
    private static final class Inner_EventBus {
@@ -6644,9 +6644,9 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private enum Inner_JsonUtil {
-      init,
-      load,
-      read;
+      ACTION,
+      CONDITIONAL,
+      PRESET;
    }
 
    private static final class Inner_NetHelper {
@@ -6664,9 +6664,9 @@ public class AutismMacroEditorOverlay extends bj {
    }
 
    private enum Inner_RenderState {
-      init,
-      load,
-      read;
+      ENTER,
+      MOVE,
+      EXIT;
    }
 
    private final class Inner_StateCache implements cX {

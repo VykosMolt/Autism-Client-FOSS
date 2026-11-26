@@ -60,7 +60,7 @@ public interface cX {
    }
 
    default cX.Inner_DataUtil init_cX_DataUtil() {
-      return cX.Inner_DataUtil.init;
+      return cX.Inner_DataUtil.HOST_SCREEN;
    }
 
    default boolean f_() {
@@ -121,9 +121,9 @@ public interface cX {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      HOST_SCREEN,
+      MODULE_MENU,
+      CONTAINER_GUI,
+      BACKGROUND_STATUS;
    }
 }

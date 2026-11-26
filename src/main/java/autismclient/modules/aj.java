@@ -468,8 +468,8 @@ public final class aj {
             10,
             (int)Math.ceil(
                   autismclient.gui.e.SyncManager.load(
-                     autismclient.gui.e.ConfigStore.init_ConfigStore,
-                     autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore)
+                     autismclient.gui.e.ConfigStore.BODY,
+                     autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
                   )
                )
                + 2
@@ -676,11 +676,11 @@ public final class aj {
    }
 
    private static float init_F(String text) {
-      return !init_Z && autismclient.gui.e.SyncManager.init(autismclient.gui.e.ConfigStore.init_ConfigStore, text)
+      return !init_Z && autismclient.gui.e.SyncManager.init(autismclient.gui.e.ConfigStore.BODY, text)
          ? autismclient.gui.e.SyncManager.init_F(
-            autismclient.gui.e.ConfigStore.init_ConfigStore,
+            autismclient.gui.e.ConfigStore.BODY,
             text,
-            autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore)
+            autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
          )
          : init_Minecraft.font.width(text);
    }
@@ -786,7 +786,7 @@ public final class aj {
                   context.pose().popMatrix();
                }
             } else {
-               float size = autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore);
+               float size = autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY);
 
                for (aj.Inner_NetHelper run : this.init_List) {
                   int tint = run.init_Integer == null ? color : color & 0xFF000000 | run.init_Integer;
@@ -832,14 +832,14 @@ public final class aj {
 
    private record Inner_NetHelper(String init_Str, autismclient.gui.e.ConfigStore init_ConfigStore, Integer init_Integer, float init_F, boolean init_Z) {
       static aj.Inner_NetHelper init(String text, Style style) {
-         autismclient.gui.e.ConfigStore face = style.isBold() ? autismclient.gui.e.ConfigStore.read : autismclient.gui.e.ConfigStore.init_ConfigStore;
+         autismclient.gui.e.ConfigStore face = style.isBold() ? autismclient.gui.e.ConfigStore.TITLE : autismclient.gui.e.ConfigStore.BODY;
          TextColor color = style.getColor();
          return new aj.Inner_NetHelper(
             text,
             face,
             color == null ? null : color.getValue(),
             autismclient.gui.e.SyncManager.init_F(
-               face, text, autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.init_ConfigStore)
+               face, text, autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
             ),
             style.isItalic()
          );

@@ -5,14 +5,14 @@ import net.minecraft.nbt.CompoundTag;
 
 public class ag implements MacroAction {
    public String macroName = "";
-   public ag.Inner_DataUtil target = ag.Inner_DataUtil.init;
+   public ag.Inner_DataUtil target = ag.Inner_DataUtil.SELF;
    private boolean init = true;
 
    @Override
    public void execute(Minecraft mc) {
-      if (this.target == ag.Inner_DataUtil.read) {
+      if (this.target == ag.Inner_DataUtil.ALL) {
          MacroExecutor.read_V();
-      } else if (this.target == ag.Inner_DataUtil.load && this.macroName != null && !this.macroName.isBlank()) {
+      } else if (this.target == ag.Inner_DataUtil.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
          MacroExecutor.init_V_Str(this.macroName);
       }
    }
@@ -30,9 +30,9 @@ public class ag implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       try {
-         this.target = ag.Inner_DataUtil.valueOf(tag.getStringOr("target", ag.Inner_DataUtil.init.name()));
+         this.target = ag.Inner_DataUtil.valueOf(tag.getStringOr("target", ag.Inner_DataUtil.SELF.name()));
       } catch (Exception ignored) {
-         this.target = ag.Inner_DataUtil.init;
+         this.target = ag.Inner_DataUtil.SELF;
       }
 
       this.macroName = tag.getStringOr("macroName", "");
@@ -43,15 +43,15 @@ public class ag implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.task;
+      return StreamGate.STOP_MACRO;
    }
 
    @Override
    public String getDisplayName() {
-      if (this.target == ag.Inner_DataUtil.load && this.macroName != null && !this.macroName.isBlank()) {
+      if (this.target == ag.Inner_DataUtil.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
          return "Stop: " + this.macroName;
       } else {
-         return this.target == ag.Inner_DataUtil.read ? "Stop All Macros" : "Stop This Macro";
+         return this.target == ag.Inner_DataUtil.ALL ? "Stop All Macros" : "Stop This Macro";
       }
    }
 
@@ -71,8 +71,8 @@ public class ag implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      SELF,
+      SELECTED,
+      ALL;
    }
 }

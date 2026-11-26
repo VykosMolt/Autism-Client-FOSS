@@ -266,62 +266,62 @@ public final class U {
    }
 
    public static U.Inner_DataUtil init(U.Inner_TaskQueue option, U.Inner_StateCache request, U.Inner_JsonUtil[] refusal) {
-      init(refusal, U.Inner_JsonUtil.init_U_JsonUtil);
+      init(refusal, U.Inner_JsonUtil.NONE);
       if (option != null && request != null) {
          Level level = init_Level();
          Direction face = option.init_Direction();
          if (level == null) {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.load, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
          }
 
          BlockPos support = option.load_BlockPos();
          BlockState state = level.getBlockState(support);
          if (state != option.init_BlockState()) {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.load, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
          }
 
          if (request.init_Predicate() != null && request.init_Predicate().test(option.init_U_BufferHelper())) {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.flush, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.BANNED, request, face);
          }
 
          boolean sneaking = request.init_Z() || option.init_Z() && request.load_Z();
          if (request.init_U_NetHelper() != null && request.init_U_NetHelper().init(state, support, sneaking)) {
             Vec3 eye = request.init_Vec3();
             if (init_Z_Vec3(eye, support, face, level)) {
-               return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.read, request, face);
+               return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.SELF_OCCLUDED, request, face);
             }
 
             AABB rect = option.init_AABB();
             Vec3 point = init_Vec3_AABB_2(rect, face, eye, init_ce_DataUtil(request), request.read_D);
             if (point == null) {
-               return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.write, request, face);
+               return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.BEHIND_PLANE, request, face);
             }
 
-            U.Inner_UiHelper tier = U.Inner_UiHelper.init;
+            U.Inner_UiHelper tier = U.Inner_UiHelper.CENTRE;
             double reachSq = request.init_D() * request.init_D();
             if (eye.distanceToSqr(point) > reachSq) {
-               point = init_Vec3_AABB(rect, face, eye, U.Inner_UiHelper.load, request.read_D);
+               point = init_Vec3_AABB(rect, face, eye, U.Inner_UiHelper.NEAREST, request.read_D);
                if (point == null || eye.distanceToSqr(point) > reachSq) {
-                  return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.update, request, face);
+                  return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.OUT_OF_REACH, request, face);
                }
 
-               tier = U.Inner_UiHelper.load;
+               tier = U.Inner_UiHelper.NEAREST;
             }
 
             ce.Inner_DataUtil goal = ce.init(point, eye);
             if (Math.abs(goal.load()) > request.load_D()) {
-               Vec3 flat = init_Vec3_AABB(rect, face, eye, U.Inner_UiHelper.read, request.read_D);
+               Vec3 flat = init_Vec3_AABB(rect, face, eye, U.Inner_UiHelper.FLATTEST, request.read_D);
                if (flat == null || eye.distanceToSqr(flat) > reachSq) {
-                  return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.sync, request, face);
+                  return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
                }
 
                goal = ce.init(flat, eye);
                if (Math.abs(goal.load()) > request.load_D()) {
-                  return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.sync, request, face);
+                  return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
                }
 
                point = flat;
-               tier = U.Inner_UiHelper.read;
+               tier = U.Inner_UiHelper.FLATTEST;
             }
 
             if (face.getAxis().isHorizontal() && request.load_Vec3() != null) {
@@ -329,7 +329,7 @@ public final class U {
                if (window != null) {
                   float pitch = (float)Mth.clamp(goal.load(), window[0], window[1]);
                   if (Math.abs(pitch) > request.load_D()) {
-                     return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.sync, request, face);
+                     return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.PAST_PITCH_CAP, request, face);
                   }
 
                   goal = new ce.Inner_DataUtil(goal.init(), pitch);
@@ -337,7 +337,7 @@ public final class U {
             }
 
             if (!request.init_U_NetHelper().lands(new BlockHitResult(point, face, support, false), request.init_BlockPos())) {
-               return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.load, request, face);
+               return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
             }
 
             ce.Inner_DataUtil from = init_ce_DataUtil(request);
@@ -345,10 +345,10 @@ public final class U {
             float turn = from == null ? 0.0F : ce.init_F(from, goal);
             return new U.Inner_DataUtil(point, goal, emitted, eye.distanceTo(point), turn, tier);
          } else {
-            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.load, request, face);
+            return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, face);
          }
       } else {
-         return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.load, request, null);
+         return init_U_DataUtil_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NOT_A_SUPPORT, request, null);
       }
    }
 
@@ -408,8 +408,8 @@ public final class U {
          Axis first = init(normal, true);
          Axis second = init(normal, false);
          double margin = Math.min(init(eye.distanceTo(init_Vec3(rect, face))), Math.max(0.03, marginCap));
-         boolean centred = tier == U.Inner_UiHelper.init;
-         boolean away = tier == U.Inner_UiHelper.read || tier == U.Inner_UiHelper.write;
+         boolean centred = tier == U.Inner_UiHelper.CENTRE;
+         boolean away = tier == U.Inner_UiHelper.FLATTEST || tier == U.Inner_UiHelper.ESCAPE;
          return init_Vec3_Direction_Axis(
             normal,
             plane,
@@ -531,7 +531,7 @@ public final class U {
    public static U.Inner_CachePool init_U_CachePool_U_TaskQueue(
       U.Inner_TaskQueue option, U.Inner_DataUtil aim, U.Inner_StateCache request, U.Inner_JsonUtil[] refusal
    ) {
-      init(refusal, U.Inner_JsonUtil.init_U_JsonUtil);
+      init(refusal, U.Inner_JsonUtil.NONE);
       if (option != null && aim != null && request != null) {
          Level level = init_Level();
          Player player = init_Player();
@@ -546,7 +546,7 @@ public final class U {
 
             for (int rung = 0; rung < 4; rung++) {
                if (request.init_U_StreamUtil() != null && !request.init_U_StreamUtil().init_Z()) {
-                  return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.push, request, face);
+                  return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.NO_BUDGET, request, face);
                }
 
                BlockHitResult hit = init_BlockHitResult_Vec3(eye, cast, reach, level, player);
@@ -570,20 +570,20 @@ public final class U {
                   }
 
                   if (escaped) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? U.Inner_JsonUtil.open : U.Inner_JsonUtil.poll, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? U.Inner_JsonUtil.RAY_MISSED : U.Inner_JsonUtil.RAY_WRONG_CELL, request, face);
                   }
 
                   escaped = true;
                   cast = init_ce_DataUtil_Vec3(
-                     init_Vec3_AABB(option.init_AABB(), face, eye, U.Inner_UiHelper.write, request.read_D), cast, eye, reachSq, request
+                     init_Vec3_AABB(option.init_AABB(), face, eye, U.Inner_UiHelper.ESCAPE, request.read_D), cast, eye, reachSq, request
                   );
                   if (cast == null) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? U.Inner_JsonUtil.open : U.Inner_JsonUtil.poll, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, hit == null ? U.Inner_JsonUtil.RAY_MISSED : U.Inner_JsonUtil.RAY_WRONG_CELL, request, face);
                   }
                } else {
                   U.Inner_ConfigStore landing = init_U_ConfigStore(hitState, hitPos, hit);
                   if (landing == null) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.open, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.RAY_MISSED, request, face);
                   }
 
                   AABB hitRect = landing.init_AABB();
@@ -604,17 +604,17 @@ public final class U {
 
                   cast = init_ce_DataUtil_Vec3(init_Vec3_AABB_2(hitRect, hitFace, eye, cast, request.read_D), cast, eye, reachSq, request);
                   if (cast == null) {
-                     return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.open, request, face);
+                     return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.RAY_MISSED, request, face);
                   }
                }
             }
 
-            return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.open, request, face);
+            return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.RAY_MISSED, request, face);
          } else {
-            return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.open, request, face);
+            return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.RAY_MISSED, request, face);
          }
       } else {
-         return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.open, request, null);
+         return init_U_CachePool_U_JsonUtilArr(refusal, U.Inner_JsonUtil.RAY_MISSED, request, null);
       }
    }
 
@@ -666,7 +666,7 @@ public final class U {
    }
 
    public static U.Inner_CachePool init(U.Inner_StateCache request, U.Inner_JsonUtil[] outcome) {
-      init(outcome, U.Inner_JsonUtil.init_U_JsonUtil);
+      init(outcome, U.Inner_JsonUtil.NONE);
       if (request != null && request.init_BlockPos() != null) {
          Level level = init_Level();
          if (level == null) {
@@ -677,7 +677,7 @@ public final class U {
          List<U.Inner_TaskQueue> found = slot.init_List;
          int size = found.size();
          if (size == 0) {
-            init(outcome, U.Inner_JsonUtil.load);
+            init(outcome, U.Inner_JsonUtil.NOT_A_SUPPORT);
             return null;
          }
 
@@ -686,7 +686,7 @@ public final class U {
          }
 
          U.Inner_JsonUtil[] refusal = new U.Inner_JsonUtil[1];
-         U.Inner_JsonUtil last = U.Inner_JsonUtil.load;
+         U.Inner_JsonUtil last = U.Inner_JsonUtil.NOT_A_SUPPORT;
          int start = slot.init_I;
 
          for (int step = 0; step < size; step++) {
@@ -702,9 +702,9 @@ public final class U {
                slot.init_I = index + 1 == size ? 0 : index + 1;
             } else {
                U.Inner_CachePool candidate = init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
-               if (refusal[0] == U.Inner_JsonUtil.push) {
+               if (refusal[0] == U.Inner_JsonUtil.NO_BUDGET) {
                   slot.init_I = index;
-                  init(outcome, U.Inner_JsonUtil.push);
+                  init(outcome, U.Inner_JsonUtil.NO_BUDGET);
                   return null;
                }
 
@@ -1296,17 +1296,17 @@ public final class U {
    }
 
    public enum Inner_JsonUtil {
-      init_U_JsonUtil("ok"),
-      load("ns"),
-      read("so"),
-      write("sd"),
-      update("rc"),
-      sync("pc"),
-      flush("st"),
-      close("pr"),
-      open("rm"),
-      poll("rw"),
-      push("bg");
+      NONE("ok"),
+      NOT_A_SUPPORT("ns"),
+      SELF_OCCLUDED("so"),
+      BEHIND_PLANE("sd"),
+      OUT_OF_REACH("rc"),
+      PAST_PITCH_CAP("pc"),
+      BANNED("st"),
+      OUTRANKED("pr"),
+      RAY_MISSED("rm"),
+      RAY_WRONG_CELL("rw"),
+      NO_BUDGET("bg");
 
       private final String init_Str;
 
@@ -1559,9 +1559,9 @@ public final class U {
    }
 
    public enum Inner_UiHelper {
-      init,
-      load,
-      read,
-      write;
+      CENTRE,
+      NEAREST,
+      FLATTEST,
+      ESCAPE;
    }
 }

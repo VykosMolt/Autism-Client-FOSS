@@ -7,7 +7,7 @@ public class ad implements E, MacroAction {
    public boolean sneak = true;
    private boolean init = true;
    public boolean persistent = false;
-   public volatile D packetOrder = D.init;
+   public volatile D packetOrder = D.INSTANT;
 
    public ad() {
    }
@@ -53,7 +53,7 @@ public class ad implements E, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.pool;
+      return StreamGate.SNEAK;
    }
 
    @Override

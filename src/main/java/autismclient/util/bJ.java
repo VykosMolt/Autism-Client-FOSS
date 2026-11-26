@@ -52,16 +52,16 @@ public final class bJ {
       bJ.Inner_StreamUtil mode = bJ.Inner_StreamUtil.init(action.payloadEncodingMode, channel);
       List<bJ.Inner_CachePool> fields = init_List(action.payloadFields);
       if (fields.isEmpty() && action.payloadData != null && !action.payloadData.isBlank()) {
-         fields = List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.tick, action.payloadData, true));
-         mode = bJ.Inner_StreamUtil.load;
+         fields = List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.HEX_BYTES, action.payloadData, true));
+         mode = bJ.Inner_StreamUtil.MANUAL_HEX;
       }
 
       if (fields.isEmpty()) {
          if (AutismPayloadSupport.init_Z(channel)) {
-            fields = List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.clear, AutismPayloadSupport.init_Str(), true));
-            mode = bJ.Inner_StreamUtil.write;
+            fields = List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.MINECRAFT_STRING, AutismPayloadSupport.init_Str(), true));
+            mode = bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF;
          } else {
-            fields = List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.set, "", true));
+            fields = List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.RAW_UTF8_STRING, "", true));
          }
       }
 
@@ -71,50 +71,50 @@ public final class bJ {
    public static bJ.Inner_JsonUtil init_bJ_JsonUtil() {
       return new bJ.Inner_JsonUtil(
          "minecraft:brand",
-         bJ.Inner_ConfigStore.init,
-         bJ.Inner_TaskQueue.init,
-         bJ.Inner_StreamUtil.write,
-         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.clear, AutismPayloadSupport.init_Str(), true))
+         bJ.Inner_ConfigStore.C2S,
+         bJ.Inner_TaskQueue.PLAY,
+         bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF,
+         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.MINECRAFT_STRING, AutismPayloadSupport.init_Str(), true))
       );
    }
 
    public static bJ.Inner_JsonUtil load() {
       return new bJ.Inner_JsonUtil(
          "testmod:ping",
-         bJ.Inner_ConfigStore.init,
-         bJ.Inner_TaskQueue.init,
-         bJ.Inner_StreamUtil.init_bJ_StreamUtil,
-         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.set, "hello-from-client", true))
+         bJ.Inner_ConfigStore.C2S,
+         bJ.Inner_TaskQueue.PLAY,
+         bJ.Inner_StreamUtil.RAW_UTF8,
+         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.RAW_UTF8_STRING, "hello-from-client", true))
       );
    }
 
    public static bJ.Inner_JsonUtil init_bJ_JsonUtil(String brand) {
       return new bJ.Inner_JsonUtil(
          "minecraft:brand",
-         bJ.Inner_ConfigStore.init,
-         bJ.Inner_TaskQueue.init,
-         bJ.Inner_StreamUtil.write,
-         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.clear, brand != null && !brand.isBlank() ? brand : AutismPayloadSupport.init_Str(), true))
+         bJ.Inner_ConfigStore.C2S,
+         bJ.Inner_TaskQueue.PLAY,
+         bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF,
+         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.MINECRAFT_STRING, brand != null && !brand.isBlank() ? brand : AutismPayloadSupport.init_Str(), true))
       );
    }
 
    public static bJ.Inner_JsonUtil read() {
       return new bJ.Inner_JsonUtil(
          "bungeecord:main",
-         bJ.Inner_ConfigStore.init,
-         bJ.Inner_TaskQueue.init,
-         bJ.Inner_StreamUtil.read,
-         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.push, "GetServer", true))
+         bJ.Inner_ConfigStore.C2S,
+         bJ.Inner_TaskQueue.PLAY,
+         bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT,
+         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.JAVA_WRITE_UTF, "GetServer", true))
       );
    }
 
    public static bJ.Inner_JsonUtil write() {
       return new bJ.Inner_JsonUtil(
          "bungeecord:main",
-         bJ.Inner_ConfigStore.init,
-         bJ.Inner_TaskQueue.init,
-         bJ.Inner_StreamUtil.read,
-         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.push, "PlayerCount", true), new bJ.Inner_CachePool(bJ.Inner_BufferHelper.push, "ALL", true))
+         bJ.Inner_ConfigStore.C2S,
+         bJ.Inner_TaskQueue.PLAY,
+         bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT,
+         List.of(new bJ.Inner_CachePool(bJ.Inner_BufferHelper.JAVA_WRITE_UTF, "PlayerCount", true), new bJ.Inner_CachePool(bJ.Inner_BufferHelper.JAVA_WRITE_UTF, "ALL", true))
       );
    }
 
@@ -182,11 +182,11 @@ public final class bJ {
    }
 
    public static String init_Str(String current) {
-      return bJ.Inner_ConfigStore.init(current) == bJ.Inner_ConfigStore.init ? bJ.Inner_ConfigStore.load.name() : bJ.Inner_ConfigStore.init.name();
+      return bJ.Inner_ConfigStore.init(current) == bJ.Inner_ConfigStore.C2S ? bJ.Inner_ConfigStore.S2C.name() : bJ.Inner_ConfigStore.C2S.name();
    }
 
    public static String load(String current) {
-      return bJ.Inner_TaskQueue.init(current) == bJ.Inner_TaskQueue.init ? bJ.Inner_TaskQueue.load.name() : bJ.Inner_TaskQueue.init.name();
+      return bJ.Inner_TaskQueue.init(current) == bJ.Inner_TaskQueue.PLAY ? bJ.Inner_TaskQueue.CONFIGURATION.name() : bJ.Inner_TaskQueue.PLAY.name();
    }
 
    public static bJ.Inner_NetHelper init_bJ_NetHelper(byte[] bytes) {
@@ -213,11 +213,11 @@ public final class bJ {
    private static void init(
       String channel, bJ.Inner_ConfigStore direction, bJ.Inner_TaskQueue phase, bJ.Inner_StreamUtil mode, List<String> warnings, List<String> errors
    ) {
-      if (direction == bJ.Inner_ConfigStore.load) {
+      if (direction == bJ.Inner_ConfigStore.S2C) {
          warnings.add("S2C is inspect/replay metadata only. Sending from macros is serverbound C2S.");
       }
 
-      if (phase == bJ.Inner_TaskQueue.load) {
+      if (phase == bJ.Inner_TaskQueue.CONFIGURATION) {
          warnings.add("Configuration payloads usually cannot be replayed during Play.");
       }
 
@@ -231,11 +231,11 @@ public final class bJ {
          warnings.add("Use a namespaced channel like namespace:path.");
       }
 
-      if (AutismPayloadSupport.init_Z(channel) && mode != bJ.Inner_StreamUtil.write) {
+      if (AutismPayloadSupport.init_Z(channel) && mode != bJ.Inner_StreamUtil.MINECRAFT_BYTEBUF) {
          warnings.add("minecraft:brand normally expects a Minecraft String.");
       }
 
-      if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip()) && mode != bJ.Inner_StreamUtil.read) {
+      if ("bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip()) && mode != bJ.Inner_StreamUtil.JAVA_DATA_OUTPUT) {
          warnings.add("bungeecord:main normally uses Java DataOutput/writeUTF fields.");
       }
    }
@@ -243,80 +243,80 @@ public final class bJ {
    private static void init(ByteArrayOutputStream out, bJ.Inner_CachePool field, bJ.Inner_StreamUtil mode, List<String> warnings) throws Exception {
       String value = field.load();
       switch (field.init_bJ_BufferHelper()) {
-         case init_bJ_BufferHelper:
+         case BYTE:
             out.write((byte)init(value, -128L, 127L));
             break;
-         case load_bJ_BufferHelper:
+         case UNSIGNED_BYTE:
             out.write((byte)init(value, 0L, 255L));
             break;
-         case read:
+         case BOOLEAN:
             out.write(Boolean.parseBoolean(value.strip()) ? 1 : 0);
             break;
-         case write:
+         case SHORT:
             init_V_ByteArrayOutputStr_S(out, (short)init(value, -32768L, 32767L));
             break;
-         case update:
+         case UNSIGNED_SHORT:
             init_V_ByteArrayOutputStr_S(out, (short)init(value, 0L, 65535L));
             break;
-         case sync:
+         case CHAR:
             init_V_ByteArrayOutputStr_S(out, (short)init_I(value));
             break;
-         case flush:
+         case INT:
             init_V_ByteArrayOutputStr_I(out, (int)init(value, -2147483648L, 2147483647L));
             break;
-         case close:
+         case LONG:
             init_V_ByteArrayOutputStr_J(out, init(value, -9223372036854775808L, 9223372036854775807L));
             break;
-         case open:
+         case FLOAT:
             init_V_ByteArrayOutputStr_I(out, Float.floatToIntBits(Float.parseFloat(value.strip())));
             break;
-         case poll:
+         case DOUBLE:
             init_V_ByteArrayOutputStr_J(out, Double.doubleToLongBits(Double.parseDouble(value.strip())));
             break;
-         case push:
+         case JAVA_WRITE_UTF:
             DataOutputStream dos = new DataOutputStream(out);
             dos.writeUTF(read(value));
             dos.flush();
             break;
-         case pop:
-         case tick:
+         case RAW_BYTES:
+         case HEX_BYTES:
             out.write(init_BArr(value));
             break;
-         case run:
+         case BYTE_ARRAY:
             write(out, value);
             break;
-         case get:
-         case set:
+         case STRING_BYTES:
+         case RAW_UTF8_STRING:
             out.write(read(value).getBytes(StandardCharsets.UTF_8));
             break;
-         case put:
-         case next:
+         case VAR_INT:
+         case ENUM_VAR_INT:
             load_V_ByteArrayOutputStr_I(out, (int)init(value, -2147483648L, 2147483647L));
             break;
-         case add:
+         case VAR_LONG:
             load_V_ByteArrayOutputStr_J(out, init(value, -9223372036854775808L, 9223372036854775807L));
             break;
-         case clear:
-         case reset:
+         case MINECRAFT_STRING:
+         case IDENTIFIER:
             out.write(AutismPayloadSupport.load_BArr(read(value)));
             break;
-         case start:
+         case UUID_FIELD:
             init_V_ByteArrayOutputStr_UUID(out, UUID.fromString(value.strip()));
             break;
-         case stop:
+         case BLOCK_POS:
             init_V_ByteArrayOutputStr_J(out, init_J(value));
             break;
-         case prev:
+         case OPTIONAL_VALUE:
             init(out, value, mode, warnings);
             break;
-         case valid:
+         case NBT:
             init_V_ByteArrayOutputStr_Str(out, value);
             break;
-         case size:
+         case ITEM_STACK:
             read(out, value);
             break;
-         case data:
-         case value:
+         case TEXT_COMPONENT:
+         case JSON_STRING:
             load_V_ByteArrayOutputStr_Str(out, value);
       }
    }
@@ -548,7 +548,7 @@ public final class bJ {
          out.write(1);
          String body = text;
          int split = text.indexOf(58);
-         bJ.Inner_BufferHelper nestedType = bJ.Inner_BufferHelper.clear;
+         bJ.Inner_BufferHelper nestedType = bJ.Inner_BufferHelper.MINECRAFT_STRING;
          if (split > 0) {
             nestedType = bJ.Inner_BufferHelper.init(text.substring(0, split));
             body = text.substring(split + 1).strip();
@@ -654,34 +654,34 @@ public final class bJ {
    }
 
    public enum Inner_BufferHelper {
-      init_bJ_BufferHelper("writeByte", "0"),
-      load_bJ_BufferHelper("writeUnsignedByte", "0"),
-      read("writeBoolean", "true"),
-      write("writeShort", "0"),
-      update("writeUnsignedShort", "0"),
-      sync("writeChar", "A"),
-      flush("writeInt", "0"),
-      close("writeLong", "0"),
-      open("writeFloat", "0.0"),
-      poll("writeDouble", "0.0"),
-      push("writeUTF", "GetServer"),
-      pop("writeBytes", ""),
-      tick("writeBytesHex", ""),
-      run("writeByteArray", "raw:"),
-      get("writeStringBytes", "hello-from-client"),
-      set("writeStringBytes", "hello-from-client"),
-      put("writeVarInt", "0"),
-      add("writeVarLong", "0"),
-      clear("writeMcString", AutismPayloadSupport.init_Str()),
-      reset("writeIdentifier", "minecraft:brand"),
-      start("writeUUID", "00000000-0000-0000-0000-000000000000"),
-      stop("writeBlockPos", "0,64,0"),
-      next("writeEnumVarInt", "0"),
-      prev("writeOptional", "false"),
-      valid("writeNbt", "{}"),
-      size("writeItemStack", "{\"id\":\"minecraft:stone\",\"count\":1}"),
-      data("writeComponent", "{\"text\":\"hello\"}"),
-      value("writeComponent", "{\"text\":\"hello\"}");
+      BYTE("writeByte", "0"),
+      UNSIGNED_BYTE("writeUnsignedByte", "0"),
+      BOOLEAN("writeBoolean", "true"),
+      SHORT("writeShort", "0"),
+      UNSIGNED_SHORT("writeUnsignedShort", "0"),
+      CHAR("writeChar", "A"),
+      INT("writeInt", "0"),
+      LONG("writeLong", "0"),
+      FLOAT("writeFloat", "0.0"),
+      DOUBLE("writeDouble", "0.0"),
+      JAVA_WRITE_UTF("writeUTF", "GetServer"),
+      RAW_BYTES("writeBytes", ""),
+      HEX_BYTES("writeBytesHex", ""),
+      BYTE_ARRAY("writeByteArray", "raw:"),
+      STRING_BYTES("writeStringBytes", "hello-from-client"),
+      RAW_UTF8_STRING("writeStringBytes", "hello-from-client"),
+      VAR_INT("writeVarInt", "0"),
+      VAR_LONG("writeVarLong", "0"),
+      MINECRAFT_STRING("writeMcString", AutismPayloadSupport.init_Str()),
+      IDENTIFIER("writeIdentifier", "minecraft:brand"),
+      UUID_FIELD("writeUUID", "00000000-0000-0000-0000-000000000000"),
+      BLOCK_POS("writeBlockPos", "0,64,0"),
+      ENUM_VAR_INT("writeEnumVarInt", "0"),
+      OPTIONAL_VALUE("writeOptional", "false"),
+      NBT("writeNbt", "{}"),
+      ITEM_STACK("writeItemStack", "{\"id\":\"minecraft:stone\",\"count\":1}"),
+      TEXT_COMPONENT("writeComponent", "{\"text\":\"hello\"}"),
+      JSON_STRING("writeComponent", "{\"text\":\"hello\"}");
 
       private final String init_Str;
       private final String load_Str;
@@ -728,16 +728,16 @@ public final class bJ {
                }
             }
 
-            return set;
+            return RAW_UTF8_STRING;
          } else {
-            return set;
+            return RAW_UTF8_STRING;
          }
       }
    }
 
    public record Inner_CachePool(bJ.Inner_BufferHelper init_bJ_BufferHelper, String init_Str, boolean init_Z) {
       public Inner_CachePool {
-         init_bJ_BufferHelper = init_bJ_BufferHelper == null ? bJ.Inner_BufferHelper.set : init_bJ_BufferHelper;
+         init_bJ_BufferHelper = init_bJ_BufferHelper == null ? bJ.Inner_BufferHelper.RAW_UTF8_STRING : init_bJ_BufferHelper;
          init_Str = init_Str == null ? "" : init_Str;
       }
 
@@ -751,14 +751,14 @@ public final class bJ {
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load;
+      C2S,
+      S2C;
 
       public static bJ.Inner_ConfigStore init(String value) {
          if (value == null) {
-            return init;
+            return C2S;
          } else {
-            return "S2C".equalsIgnoreCase(value.strip()) ? load : init;
+            return "S2C".equalsIgnoreCase(value.strip()) ? S2C : C2S;
          }
       }
    }
@@ -789,8 +789,8 @@ public final class bJ {
    ) {
       public Inner_JsonUtil {
          init_Str = init_Str != null && !init_Str.isBlank() ? init_Str.strip() : "minecraft:brand";
-         init_bJ_ConfigStore = init_bJ_ConfigStore == null ? bJ.Inner_ConfigStore.init : init_bJ_ConfigStore;
-         init_bJ_TaskQueue = init_bJ_TaskQueue == null ? bJ.Inner_TaskQueue.init : init_bJ_TaskQueue;
+         init_bJ_ConfigStore = init_bJ_ConfigStore == null ? bJ.Inner_ConfigStore.C2S : init_bJ_ConfigStore;
+         init_bJ_TaskQueue = init_bJ_TaskQueue == null ? bJ.Inner_TaskQueue.PLAY : init_bJ_TaskQueue;
          init_bJ_StreamUtil = init_bJ_StreamUtil == null ? bJ.Inner_StreamUtil.init("", init_Str) : init_bJ_StreamUtil;
          init_List = init_List == null ? List.of() : List.copyOf(init_List);
       }
@@ -831,12 +831,12 @@ public final class bJ {
    }
 
    public enum Inner_StreamUtil {
-      init_bJ_StreamUtil("Raw UTF-8"),
-      load("Manual Hex"),
-      read("Java DataOutput"),
-      write("Minecraft ByteBuf"),
-      update("JSON/Text"),
-      sync("Advanced Mixed");
+      RAW_UTF8("Raw UTF-8"),
+      MANUAL_HEX("Manual Hex"),
+      JAVA_DATA_OUTPUT("Java DataOutput"),
+      MINECRAFT_BYTEBUF("Minecraft ByteBuf"),
+      JSON_TEXT("JSON/Text"),
+      ADVANCED_MIXED("Advanced Mixed");
 
       private final String init_Str;
 
@@ -860,24 +860,24 @@ public final class bJ {
          }
 
          if (AutismPayloadSupport.init_Z(channel)) {
-            return write;
+            return MINECRAFT_BYTEBUF;
          } else {
-            return "bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip()) ? read : sync;
+            return "bungeecord:main".equalsIgnoreCase(channel == null ? "" : channel.strip()) ? JAVA_DATA_OUTPUT : ADVANCED_MIXED;
          }
       }
    }
 
    public enum Inner_TaskQueue {
-      init,
-      load;
+      PLAY,
+      CONFIGURATION;
 
       public static bJ.Inner_TaskQueue init(String value) {
          if (value == null) {
-            return init;
+            return PLAY;
          }
 
          String normalized = value.strip().toUpperCase(Locale.ROOT);
-         return normalized.contains("CONFIG") ? load : init;
+         return normalized.contains("CONFIG") ? CONFIGURATION : PLAY;
       }
    }
 }

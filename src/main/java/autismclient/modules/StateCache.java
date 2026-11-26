@@ -30,7 +30,7 @@ public final class StateCache extends Module {
 
    public StateCache() {
       super("anti-knockback", "AntiKnockback", ae.init_ae, "Jump reset and briefly counter enemy knockback");
-      this.add(new EnumSetting<>("mode", "Mode", StateCache.Inner_DataUtil.init, StateCache.Inner_DataUtil.values(), Enum::name));
+      this.add(new EnumSetting<>("mode", "Mode", StateCache.Inner_DataUtil.JumpReset, StateCache.Inner_DataUtil.values(), Enum::name));
       this.add(
          new IntSetting("chance", "Chance", 100, 0, 100, 1)
             .description("Jump reset activation chance")
@@ -216,7 +216,7 @@ public final class StateCache extends Module {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load;
+      JumpReset,
+      CounterMovement;
    }
 }

@@ -24,7 +24,7 @@ public final class RingBuffer {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, -10000, -10000);
          autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
          int radius = init(bounds);
-         int fill = danger ? ct.init_I_I_ct_DataUtil(-868936937, ct.Inner_DataUtil.flush) : -1156179423;
+         int fill = danger ? ct.init_I_I_ct_DataUtil(-868936937, ct.Inner_DataUtil.DANGER) : -1156179423;
          autismclient.gui.f.PacketUtil.load(graphics, bounds, radius, fill, danger ? colors.data : colors.set);
          float hoverT = autismclient.gui.f.DataUtil.init(autismclient.gui.f.DataUtil.init(bounds), hovered && active);
          if (hoverT > 0.001F) {

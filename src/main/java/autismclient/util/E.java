@@ -30,26 +30,26 @@ public final class E {
    }
 
    public static E init_E_BlockPos(BlockPos pos) {
-      return pos == null ? null : new E(E.Inner_DataUtil.init, pos, "", InteractionHand.MAIN_HAND, null, null, false);
+      return pos == null ? null : new E(E.Inner_DataUtil.BLOCK, pos, "", InteractionHand.MAIN_HAND, null, null, false);
    }
 
    public static E init(BlockHitResult hitResult, InteractionHand hand) {
       return hitResult != null && hitResult.getBlockPos() != null
-         ? new E(E.Inner_DataUtil.init, hitResult.getBlockPos(), "", hand, hitResult.getLocation(), hitResult.getDirection(), hitResult.isInside())
+         ? new E(E.Inner_DataUtil.BLOCK, hitResult.getBlockPos(), "", hand, hitResult.getLocation(), hitResult.getDirection(), hitResult.isInside())
          : null;
    }
 
    public static E init(Entity entity, InteractionHand hand) {
-      return entity == null ? null : new E(E.Inner_DataUtil.load, null, init_Str_Entity(entity), hand, null, null, false);
+      return entity == null ? null : new E(E.Inner_DataUtil.ENTITY_INTERACT, null, init_Str_Entity(entity), hand, null, null, false);
    }
 
    public static E init(Entity entity, InteractionHand hand, Vec3 hitPos) {
-      return entity == null ? null : new E(E.Inner_DataUtil.read, null, init_Str_Entity(entity), hand, hitPos, null, false);
+      return entity == null ? null : new E(E.Inner_DataUtil.ENTITY_INTERACT_AT, null, init_Str_Entity(entity), hand, hitPos, null, false);
    }
 
    public static E init_E_Str(String entityRef) {
       return entityRef != null && !entityRef.isBlank()
-         ? new E(E.Inner_DataUtil.load, null, entityRef.trim(), InteractionHand.MAIN_HAND, null, null, false)
+         ? new E(E.Inner_DataUtil.ENTITY_INTERACT, null, entityRef.trim(), InteractionHand.MAIN_HAND, null, null, false)
          : null;
    }
 
@@ -77,7 +77,7 @@ public final class E {
    }
 
    public boolean init_Z() {
-      return this.init_E_DataUtil == E.Inner_DataUtil.init;
+      return this.init_E_DataUtil == E.Inner_DataUtil.BLOCK;
    }
 
    public boolean init_Z_Minecraft(Minecraft mc) {
@@ -89,11 +89,11 @@ public final class E {
          return false;
       }
 
-      if (this.init_E_DataUtil != E.Inner_DataUtil.init) {
+      if (this.init_E_DataUtil != E.Inner_DataUtil.BLOCK) {
          Entity entity = this.load_Entity(mc);
          if (entity == null) {
             return false;
-         } else if (this.init_E_DataUtil == E.Inner_DataUtil.read && this.init_Vec3 != null) {
+         } else if (this.init_E_DataUtil == E.Inner_DataUtil.ENTITY_INTERACT_AT && this.init_Vec3 != null) {
             mc.getConnection().send(new ServerboundInteractPacket(entity.getId(), this.init_InteractionHand, this.init_Vec3, mc.player.isShiftKeyDown()));
             return true;
          } else {
@@ -122,7 +122,7 @@ public final class E {
    public boolean load_Z(Minecraft mc) {
       if (mc == null || mc.player == null) {
          return false;
-      } else if (this.init_E_DataUtil != E.Inner_DataUtil.init) {
+      } else if (this.init_E_DataUtil != E.Inner_DataUtil.BLOCK) {
          Entity entity = this.load_Entity(mc);
          return init(mc, entity);
       } else {
@@ -131,7 +131,7 @@ public final class E {
    }
 
    public Entity init_Entity_Minecraft(Minecraft mc) {
-      return this.init_E_DataUtil == E.Inner_DataUtil.init ? null : this.load_Entity(mc);
+      return this.init_E_DataUtil == E.Inner_DataUtil.BLOCK ? null : this.load_Entity(mc);
    }
 
    private BlockHitResult init_BlockHitResult_Minecraft(Minecraft mc) {
@@ -223,8 +223,8 @@ public final class E {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      BLOCK,
+      ENTITY_INTERACT,
+      ENTITY_INTERACT_AT;
    }
 }

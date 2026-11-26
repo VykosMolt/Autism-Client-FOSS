@@ -150,7 +150,7 @@ public final class aO {
    }
 
    private static int init_I() {
-      return ct.init_I_I_ct_DataUtil(-9448565, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-9448565, ct.Inner_DataUtil.ACCENT);
    }
 
    private static void init(Font textRenderer, List<MacroExecutor.Inner_UiHelper> runs, int rowsPerRun, int panelWidth, long now) {

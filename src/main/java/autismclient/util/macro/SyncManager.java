@@ -120,7 +120,7 @@ public class SyncManager implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.get;
+      return StreamGate.CRAFT;
    }
 
    @Override

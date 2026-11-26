@@ -277,7 +277,7 @@ public final class TableIndex extends Module {
       for (EquipmentSlot slot : init_EquipmentSlotArr) {
          autismclient.util.TaskTimer.Inner_DataUtil candidate = best.get(slot);
          if (candidate != null
-            && candidate.init_TaskTimer_StreamUt() != autismclient.util.TaskTimer.Inner_StreamUtil.read
+            && candidate.init_TaskTimer_StreamUt() != autismclient.util.TaskTimer.Inner_StreamUtil.ARMOR
             && (candidate.init_I() < 0 || !autismclient.util.ah.init(candidate.init_I(), this.id()))) {
             ItemStack worn = MC.player.getItemBySlot(slot);
             if (worn.isEmpty() || !worn.is(Items.ELYTRA) && !autismclient.util.TaskTimer.load_Z(worn)) {
@@ -314,7 +314,7 @@ public final class TableIndex extends Module {
    private boolean init(EquipmentSlot slot, autismclient.util.TaskTimer.Inner_DataUtil candidate, ItemStack worn) {
       boolean occupied = !worn.isEmpty();
       int armorMenuSlot = init_Map.get(slot);
-      boolean hotbarFast = candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.init && this.bool("hotbar");
+      boolean hotbarFast = candidate.init_TaskTimer_StreamUt() == autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR && this.bool("hotbar");
       if (!occupied) {
          return hotbarFast ? this.init(armorMenuSlot, candidate.init_I(), ContainerInput.SWAP) : this.init(this.init(candidate), 0, ContainerInput.QUICK_MOVE);
       } else if (hotbarFast && this.bool("can-swap-armor")) {
@@ -434,14 +434,14 @@ public final class TableIndex extends Module {
    private autismclient.util.TaskTimer.Inner_DataUtil init_TaskTimer_DataUtil() {
       ItemStack worn = MC.player.getItemBySlot(EquipmentSlot.CHEST);
       if (worn.is(Items.ELYTRA)) {
-         return new autismclient.util.TaskTimer.Inner_DataUtil(worn, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.read, -1);
+         return new autismclient.util.TaskTimer.Inner_DataUtil(worn, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.ARMOR, -1);
       }
 
       for (int inv = 0; inv < 36; inv++) {
          ItemStack stack = MC.player.getInventory().getItem(inv);
          if (stack.is(Items.ELYTRA)) {
             return new autismclient.util.TaskTimer.Inner_DataUtil(
-               stack, EquipmentSlot.CHEST, inv < 9 ? autismclient.util.TaskTimer.Inner_StreamUtil.init : autismclient.util.TaskTimer.Inner_StreamUtil.load, inv
+               stack, EquipmentSlot.CHEST, inv < 9 ? autismclient.util.TaskTimer.Inner_StreamUtil.HOTBAR : autismclient.util.TaskTimer.Inner_StreamUtil.INVENTORY, inv
             );
          }
       }
@@ -449,7 +449,7 @@ public final class TableIndex extends Module {
       if (!autismclient.util.ah.load_Z(this.id())) {
          ItemStack offhand = MC.player.getItemBySlot(EquipmentSlot.OFFHAND);
          if (offhand.is(Items.ELYTRA)) {
-            return new autismclient.util.TaskTimer.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.load, 40);
+            return new autismclient.util.TaskTimer.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.TaskTimer.Inner_StreamUtil.INVENTORY, 40);
          }
       }
 

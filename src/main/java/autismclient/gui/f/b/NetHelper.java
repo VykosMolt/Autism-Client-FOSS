@@ -50,7 +50,7 @@ public final class NetHelper {
    private int prev;
    private int valid;
    private int size;
-   private NetHelper.Inner_DataUtil init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.init;
+   private NetHelper.Inner_DataUtil init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.NONE;
 
    public NetHelper(autismclient.gui.f.NetHelper anchor, int initialArgb, int defaultArgb, int screenWidth, int screenHeight, Consumer<Integer> onSave) {
       this.init_Consumer = onSave;
@@ -173,27 +173,27 @@ public final class NetHelper {
          if (this.load_Z) {
             this.reset = this.init_I_I_NetHelper(mouseX, hex);
             this.start = this.reset;
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.flush;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.HEX;
             return true;
          }
 
          if (this.load_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.load;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.SV;
             this.init_V_I_I(mouseX, mouseY);
          } else if (this.read_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.read;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.HUE;
             this.init_V_I(mouseY);
          } else if (this.write_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.write;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.RED;
             this.init_V_I(mouseX, this.write_NetHelper(), 0);
          } else if (this.update_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.update;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.GREEN;
             this.init_V_I(mouseX, this.update_NetHelper(), 1);
          } else if (this.sync_NetHelper().init_Z(mouseX, mouseY)) {
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.sync;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.BLUE;
             this.init_V_I(mouseX, this.sync_NetHelper(), 2);
          } else {
-            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.init;
+            this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.NONE;
          }
 
          return true;
@@ -202,7 +202,7 @@ public final class NetHelper {
 
    public boolean load(int mouseX, int mouseY, int button) {
       if (button == 0) {
-         this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.init;
+         this.init_NetHelper_DataUtil = NetHelper.Inner_DataUtil.NONE;
       }
 
       return this.init_Z;
@@ -211,22 +211,22 @@ public final class NetHelper {
    public boolean init_Z_I(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
       if (this.init_Z && button == 0) {
          switch (this.init_NetHelper_DataUtil) {
-            case load:
+            case SV:
                this.init_V_I_I(mouseX, mouseY);
                break;
-            case read:
+            case HUE:
                this.init_V_I(mouseY);
                break;
-            case write:
+            case RED:
                this.init_V_I(mouseX, this.write_NetHelper(), 0);
                break;
-            case update:
+            case GREEN:
                this.init_V_I(mouseX, this.update_NetHelper(), 1);
                break;
-            case sync:
+            case BLUE:
                this.init_V_I(mouseX, this.sync_NetHelper(), 2);
                break;
-            case flush:
+            case HEX:
                this.reset = this.init_I_I_NetHelper(mouseX, this.flush_NetHelper());
          }
 
@@ -687,13 +687,13 @@ public final class NetHelper {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      NONE,
+      SV,
+      HUE,
+      RED,
+      GREEN,
+      BLUE,
+      HEX;
    }
 
    private static final class Inner_StreamUtil extends AbstractTexture {

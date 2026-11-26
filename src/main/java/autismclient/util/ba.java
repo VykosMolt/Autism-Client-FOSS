@@ -18,7 +18,7 @@ public final class ba {
    }
 
    public static void init_V_ce_DataUtil_ce_DataUtil(ce.Inner_DataUtil current, ce.Inner_DataUtil target) {
-      init_V_ba_StreamUtil_4(ba.Inner_StreamUtil.init, current, target);
+      init_V_ba_StreamUtil_4(ba.Inner_StreamUtil.GENERIC, current, target);
    }
 
    public static void init_V_ba_StreamUtil_4(ba.Inner_StreamUtil source, ce.Inner_DataUtil current, ce.Inner_DataUtil target) {
@@ -30,7 +30,7 @@ public final class ba {
    }
 
    public static void init_V_F_F(float yawDelta, float pitchDelta) {
-      init_V_ba_StreamUtil_2(ba.Inner_StreamUtil.init, yawDelta, pitchDelta);
+      init_V_ba_StreamUtil_2(ba.Inner_StreamUtil.GENERIC, yawDelta, pitchDelta);
    }
 
    public static void init_V_ba_StreamUtil_2(ba.Inner_StreamUtil source, float yawDelta, float pitchDelta) {
@@ -73,16 +73,16 @@ public final class ba {
    }
 
    public static void init_V_D_D(double deltaX, double deltaY) {
-      init_V_ba_StreamUtil(ba.Inner_StreamUtil.init, deltaX, deltaY);
+      init_V_ba_StreamUtil(ba.Inner_StreamUtil.GENERIC, deltaX, deltaY);
    }
 
    public static void init_V_ba_StreamUtil(ba.Inner_StreamUtil source, double deltaX, double deltaY) {
       if (!read()) {
          init_V(source);
       } else if (Double.isFinite(deltaX) && Double.isFinite(deltaY)) {
-         if (source == ba.Inner_StreamUtil.load) {
+         if (source == ba.Inner_StreamUtil.AIM_ASSIST) {
             init_dk.init_V_D(deltaX, deltaY, 0.05);
-         } else if (source != ba.Inner_StreamUtil.write && source != ba.Inner_StreamUtil.read) {
+         } else if (source != ba.Inner_StreamUtil.SCAFFOLD_TELLY && source != ba.Inner_StreamUtil.AUTO_FISH) {
             if (!(Math.abs(deltaX) < 1.0E-7) || !(Math.abs(deltaY) < 1.0E-7)) {
                init_dh(source).init(deltaX, deltaY);
             }
@@ -112,7 +112,7 @@ public final class ba {
       long y = 0L;
 
       for (Entry<ba.Inner_StreamUtil, dh> entry : init_EnumMap.entrySet()) {
-         if (entry.getKey() != ba.Inner_StreamUtil.load && entry.getKey() != ba.Inner_StreamUtil.write) {
+         if (entry.getKey() != ba.Inner_StreamUtil.AIM_ASSIST && entry.getKey() != ba.Inner_StreamUtil.SCAFFOLD_TELLY) {
             dh accumulator = entry.getValue();
             dh.Inner_DataUtil counts = accumulator.init_dh_DataUtil();
             x += counts.init();
@@ -123,7 +123,7 @@ public final class ba {
       dh.Inner_DataUtil aim = init_dk.init_dh_DataUtil_D(elapsedSeconds);
       x += aim.init();
       y += aim.load();
-      dh.Inner_DataUtil telly = init_dh(ba.Inner_StreamUtil.write).init_dh_DataUtil();
+      dh.Inner_DataUtil telly = init_dh(ba.Inner_StreamUtil.SCAFFOLD_TELLY).init_dh_DataUtil();
       x += telly.init();
       y += telly.load();
       return new ba.Inner_DataUtil(x, y);
@@ -147,14 +147,14 @@ public final class ba {
    }
 
    public static void init_V(ba.Inner_StreamUtil source) {
-      if (source == ba.Inner_StreamUtil.read) {
+      if (source == ba.Inner_StreamUtil.AUTO_FISH) {
          init_Z = false;
       }
 
-      if (source == ba.Inner_StreamUtil.load) {
+      if (source == ba.Inner_StreamUtil.AIM_ASSIST) {
          init_dk.init_V();
          init_dh(source).init_V();
-      } else if (source == ba.Inner_StreamUtil.write) {
+      } else if (source == ba.Inner_StreamUtil.SCAFFOLD_TELLY) {
          init_dh(source).init_V();
       } else {
          init_dh(source).init_V();
@@ -205,19 +205,19 @@ public final class ba {
    }
 
    private static dh init_dh(ba.Inner_StreamUtil source) {
-      return init_EnumMap.get(source == null ? ba.Inner_StreamUtil.init : source);
+      return init_EnumMap.get(source == null ? ba.Inner_StreamUtil.GENERIC : source);
    }
 
    private static dh.Inner_DataUtil init_dh_DataUtil_ba_StreamUtil_D(ba.Inner_StreamUtil source, double elapsedSeconds) {
-      if (source == ba.Inner_StreamUtil.load) {
+      if (source == ba.Inner_StreamUtil.AIM_ASSIST) {
          return init_dk.init_dh_DataUtil_D(elapsedSeconds);
       } else {
-         return source == ba.Inner_StreamUtil.write ? init_dh(source).init_dh_DataUtil() : init_dh(source).init_dh_DataUtil();
+         return source == ba.Inner_StreamUtil.SCAFFOLD_TELLY ? init_dh(source).init_dh_DataUtil() : init_dh(source).init_dh_DataUtil();
       }
    }
 
    private static void load(ba.Inner_StreamUtil retained) {
-      if (retained != ba.Inner_StreamUtil.read) {
+      if (retained != ba.Inner_StreamUtil.AUTO_FISH) {
          init_Z = false;
       }
 
@@ -227,7 +227,7 @@ public final class ba {
          }
       }
 
-      if (retained != ba.Inner_StreamUtil.load) {
+      if (retained != ba.Inner_StreamUtil.AIM_ASSIST) {
          init_dk.init_V();
       }
    }
@@ -249,9 +249,9 @@ public final class ba {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      GENERIC,
+      AIM_ASSIST,
+      AUTO_FISH,
+      SCAFFOLD_TELLY;
    }
 }

@@ -38,19 +38,19 @@ public class p {
    }
 
    public static int init() {
-      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int load() {
-      return ct.init_I_I_ct_DataUtil(1722959944, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(1722959944, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int read() {
-      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int write() {
-      return ct.init_I_I_ct_DataUtil(-7522248, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-7522248, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int update() {
@@ -82,11 +82,11 @@ public class p {
    }
 
    public static int pop() {
-      return ct.init_I_I_ct_DataUtil(1715151911, ct.Inner_DataUtil.load);
+      return ct.init_I_I_ct_DataUtil(1715151911, ct.Inner_DataUtil.OUTLINE);
    }
 
    public static int tick() {
-      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil.load);
+      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY);
    }
 
    public static int run() {
@@ -102,11 +102,11 @@ public class p {
    }
 
    public static int put() {
-      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int add() {
-      return ct.init_I_I_ct_DataUtil(-6388344, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-6388344, ct.Inner_DataUtil.TEXT);
    }
 
    public static int clear() {
@@ -114,7 +114,7 @@ public class p {
    }
 
    public static int reset() {
-      return ct.init_I_I_ct_DataUtil(-3361096, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-3361096, ct.Inner_DataUtil.TEXT);
    }
 
    public static int start() {
@@ -130,23 +130,23 @@ public class p {
    }
 
    public static int prev() {
-      return ct.init_I_I_ct_DataUtil(-1938838, ct.Inner_DataUtil.flush);
+      return ct.init_I_I_ct_DataUtil(-1938838, ct.Inner_DataUtil.DANGER);
    }
 
    public static int valid() {
-      return ct.init_I_I_ct_DataUtil(-1938838, ct.Inner_DataUtil.flush);
+      return ct.init_I_I_ct_DataUtil(-1938838, ct.Inner_DataUtil.DANGER);
    }
 
    public static int size() {
-      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil.update);
+      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS);
    }
 
    public static int data() {
-      return ct.init_I_I_ct_DataUtil(-11018872, ct.Inner_DataUtil.sync);
+      return ct.init_I_I_ct_DataUtil(-11018872, ct.Inner_DataUtil.SUCCESS);
    }
 
    public static int value() {
-      return ct.init_I_I_ct_DataUtil(-11018872, ct.Inner_DataUtil.sync);
+      return ct.init_I_I_ct_DataUtil(-11018872, ct.Inner_DataUtil.SUCCESS);
    }
 
    public static int cache() {
@@ -202,15 +202,15 @@ public class p {
    }
 
    public static int block() {
-      return ct.init_I_I_ct_DataUtil(-10035062, ct.Inner_DataUtil.write);
+      return ct.init_I_I_ct_DataUtil(-10035062, ct.Inner_DataUtil.TOGGLE);
    }
 
    public static int chunk() {
-      return ct.init_I_I_ct_DataUtil(-12531347, ct.Inner_DataUtil.write);
+      return ct.init_I_I_ct_DataUtil(-12531347, ct.Inner_DataUtil.TOGGLE);
    }
 
    public static int table() {
-      return ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-2828, ct.Inner_DataUtil.TEXT);
    }
 
    public static int init(boolean c2s, int rowIndex, boolean hovered) {
@@ -256,23 +256,23 @@ public class p {
    }
 
    public static int scan() {
-      return ct.init_I_I_ct_DataUtil(-791058, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-791058, ct.Inner_DataUtil.TEXT);
    }
 
    public static int parse() {
-      return ct.init_I_I_ct_DataUtil(-3361096, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-3361096, ct.Inner_DataUtil.TEXT);
    }
 
    public static int bind() {
-      return ct.init_I_I_ct_DataUtil(-6388344, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-6388344, ct.Inner_DataUtil.TEXT);
    }
 
    public static int a() {
-      return ct.init_I_I_ct_DataUtil(-6388344, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-6388344, ct.Inner_DataUtil.TEXT);
    }
 
    public static int b() {
-      return ct.init_I_I_ct_DataUtil(-791058, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-791058, ct.Inner_DataUtil.TEXT);
    }
 
    public static int c() {
@@ -304,11 +304,11 @@ public class p {
    }
 
    public static int j() {
-      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-5093304, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int k() {
-      return ct.init_I_I_ct_DataUtil(-7522248, ct.Inner_DataUtil.init);
+      return ct.init_I_I_ct_DataUtil(-7522248, ct.Inner_DataUtil.ACCENT);
    }
 
    public static int l() {

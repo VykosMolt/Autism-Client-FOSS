@@ -13,7 +13,7 @@ public class TextFormat implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.fill;
+      return StreamGate.DESYNC;
    }
 
    @Override

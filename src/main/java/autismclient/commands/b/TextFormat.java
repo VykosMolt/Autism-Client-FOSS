@@ -74,16 +74,16 @@ public class TextFormat extends Command {
       String spec = String.join("_", words);
       if (words.isEmpty()) {
          return amount > 0
-            ? new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.read, amount, "")
-            : new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.write, -1, "");
+            ? new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.ITEM, amount, "")
+            : new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.UNKNOWN, -1, "");
       } else if (init.contains(spec)) {
-         return new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.init, -1, spec);
+         return new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.FULL, -1, spec);
       } else if (load.contains(spec)) {
          return amount > 0
-            ? new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.read, amount, "")
-            : new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.load, -1, spec);
+            ? new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.ITEM, amount, "")
+            : new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.HAND, -1, spec);
       } else {
-         return new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.read, amount, spec);
+         return new TextFormat.Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2.ITEM, amount, spec);
       }
    }
 
@@ -91,13 +91,13 @@ public class TextFormat extends Command {
       TextFormat.Inner_DataUtil request = init_TextFormat_DataUti(line);
       int var10000;
       switch (request.init_TextFormat_DataUti()) {
-         case init:
+         case FULL:
             var10000 = load();
             break;
-         case load:
+         case HAND:
             var10000 = init_I_3();
             break;
-         case read:
+         case ITEM:
             var10000 = request.init_Str().isEmpty() ? init(request.init_I()) : init(request.init_Str(), request.init_I());
             break;
          default:
@@ -337,10 +337,10 @@ public class TextFormat extends Command {
 
    record Inner_DataUtil(TextFormat.Inner_DataUtil.Inner_DataUtil_2 init_TextFormat_DataUti, int init_I, String init_Str) {
       enum Inner_DataUtil_2 {
-         init,
-         load,
-         read,
-         write;
+         FULL,
+         HAND,
+         ITEM,
+         UNKNOWN;
       }
    }
 }

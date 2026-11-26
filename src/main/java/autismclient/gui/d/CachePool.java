@@ -70,7 +70,7 @@ public final class CachePool extends KeyHolder {
             autismclient.gui.f.b.ByteReader.init(
                   this.write_I_3(), this.pop(), this.read_I_3(), ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                )
-               .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+               .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
          );
       autismclient.b.DataUtil.StreamUtil selected = this.init_DataUtil_StreamUti();
       int gap = 2;
@@ -91,13 +91,13 @@ public final class CachePool extends KeyHolder {
          this.init_List
             .add(
                autismclient.gui.f.b.ByteReader.init(x, y, copyIdW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
             );
          x += copyIdW + gap;
          this.init_List
             .add(
                autismclient.gui.f.b.ByteReader.init(x, y, copyReportW, ctl, Component.literal("Copy Report"), b -> this.update_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
             );
          x += copyReportW + gap;
          toggle = autismclient.gui.f.b.ByteReader.init(x, y, toggleW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
@@ -105,7 +105,7 @@ public final class CachePool extends KeyHolder {
          this.init_List
             .add(
                autismclient.gui.f.b.ByteReader.init(x, y, modsFolderW, ctl, Component.literal("Mods Folder"), b -> this.flush_V_2())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY)
             );
       } else {
          int halfW = (areaW - gap) / 2;
@@ -116,7 +116,7 @@ public final class CachePool extends KeyHolder {
          this.init_List
             .add(
                autismclient.gui.f.b.ByteReader.init(btnLeft, row1Y, row1Fits ? copyIdW : halfW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
             );
          this.init_List
             .add(
@@ -128,7 +128,7 @@ public final class CachePool extends KeyHolder {
                      Component.literal("Copy Report"),
                      b -> this.update_V_3()
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
             );
          toggle = autismclient.gui.f.b.ByteReader.init(btnLeft, row2Y, row2Fits ? toggleW : halfW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
          this.init_List
@@ -141,12 +141,12 @@ public final class CachePool extends KeyHolder {
                      Component.literal("Mods Folder"),
                      b -> this.flush_V_2()
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.write)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY)
             );
       }
 
       toggle.init_ByteReader_ByteReader_StreamU(
-         disabledRestart ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.read : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.load
+         disabledRestart ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
       );
       toggle.init_Z = selected != null;
       this.init_List.add(toggle);
@@ -558,7 +558,7 @@ public final class CachePool extends KeyHolder {
       int disabled = 0;
 
       for (autismclient.b.DataUtil.StreamUtil report : this.load_List) {
-         if (report.init_DataUtil_DataUtil() == autismclient.b.DataUtil.Inner_DataUtil.init_DataUtil_DataUtil) {
+         if (report.init_DataUtil_DataUtil() == autismclient.b.DataUtil.Inner_DataUtil.LOADED) {
             loaded++;
          }
 
@@ -566,7 +566,7 @@ public final class CachePool extends KeyHolder {
             issues++;
          }
 
-         if (autismclient.b.DataUtil.read(report.init_Str()) || report.init_DataUtil_DataUtil() == autismclient.b.DataUtil.Inner_DataUtil.load) {
+         if (autismclient.b.DataUtil.read(report.init_Str()) || report.init_DataUtil_DataUtil() == autismclient.b.DataUtil.Inner_DataUtil.DISABLED) {
             disabled++;
          }
       }
@@ -579,7 +579,7 @@ public final class CachePool extends KeyHolder {
          return "";
       } else {
          return autismclient.b.DataUtil.read(report.init_Str())
-               && report.init_DataUtil_DataUtil() == autismclient.b.DataUtil.Inner_DataUtil.init_DataUtil_DataUtil
+               && report.init_DataUtil_DataUtil() == autismclient.b.DataUtil.Inner_DataUtil.LOADED
             ? "Disables"
             : report.init_DataUtil_DataUtil().init_Str();
       }
@@ -591,7 +591,7 @@ public final class CachePool extends KeyHolder {
       } else if (report.init_DataUtil_DataUtil().init_Z()) {
          return ValueSink.poll;
       } else {
-         return !autismclient.b.DataUtil.read(report.init_Str()) && report.init_DataUtil_DataUtil() != autismclient.b.DataUtil.Inner_DataUtil.load
+         return !autismclient.b.DataUtil.read(report.init_Str()) && report.init_DataUtil_DataUtil() != autismclient.b.DataUtil.Inner_DataUtil.DISABLED
             ? ValueSink.open
             : -14249;
       }

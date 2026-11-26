@@ -1395,7 +1395,7 @@ public final class f {
                this.init_cM = new cM(autismclient.util.am.init_am().init_am_Random(this.init_Random), this.init_Random);
             }
 
-            autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.read);
+            autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AUTO_FISH);
             this.init_cM
                .init_V_F(
                   MC.player.getYRot(),
@@ -1428,7 +1428,7 @@ public final class f {
             if (step.init_Z()) {
                this.init_V_Z_9(false);
             } else {
-               autismclient.util.ba.init_V_ba_StreamUtil_3(autismclient.util.ba.Inner_StreamUtil.read, step.init_J(), step.load());
+               autismclient.util.ba.init_V_ba_StreamUtil_3(autismclient.util.ba.Inner_StreamUtil.AUTO_FISH, step.init_J(), step.load());
             }
          }
       }
@@ -1440,7 +1440,7 @@ public final class f {
             this.init_cM.init_V();
          }
 
-         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.read);
+         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AUTO_FISH);
          if (newAnchor) {
             this.write_Z = false;
             this.read_I = 0;
@@ -1644,16 +1644,16 @@ public final class f {
       private void push() {
          if (!this.bool("stop-macro-enabled") && this.value("stop-macro").trim().isEmpty()) {
             if (Boolean.parseBoolean(this.value("stop-inv-slots"))) {
-               autismclient.util.aM macro = cL.init(cL.Inner_DataUtil.init);
+               autismclient.util.aM macro = cL.init(cL.Inner_DataUtil.FREE_SLOTS);
                if (macro != null) {
-                  this.init(macro, cL.Inner_DataUtil.init);
+                  this.init(macro, cL.Inner_DataUtil.FREE_SLOTS);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.init_Str);
                }
             } else if (Boolean.parseBoolean(this.value("stop-out-of-rods"))) {
-               autismclient.util.aM macro = cL.init(cL.Inner_DataUtil.load);
+               autismclient.util.aM macro = cL.init(cL.Inner_DataUtil.DURABILITY);
                if (macro != null) {
-                  this.init(macro, cL.Inner_DataUtil.load);
+                  this.init(macro, cL.Inner_DataUtil.DURABILITY);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.init_Str);
                }
@@ -1663,29 +1663,29 @@ public final class f {
 
       private void init(autismclient.util.aM macro, cL.Inner_DataUtil preset) {
          if (macro != null && macro.init_List != null && !macro.init_List.isEmpty() && preset != null) {
-            if (preset == cL.Inner_DataUtil.init && macro.init_List.get(0) instanceof autismclient.util.macro.aH wait) {
+            if (preset == cL.Inner_DataUtil.FREE_SLOTS && macro.init_List.get(0) instanceof autismclient.util.macro.aH wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
-               boolean changed = wait.countMode != autismclient.util.macro.aH.Inner_StreamUtil.init
-                  || wait.comparison != autismclient.util.macro.aH.Inner_DataUtil.load
+               boolean changed = wait.countMode != autismclient.util.macro.aH.Inner_StreamUtil.FREE_SLOTS
+                  || wait.comparison != autismclient.util.macro.aH.Inner_DataUtil.AT_MOST
                   || wait.slots != slots;
-               wait.countMode = autismclient.util.macro.aH.Inner_StreamUtil.init;
-               wait.comparison = autismclient.util.macro.aH.Inner_DataUtil.load;
+               wait.countMode = autismclient.util.macro.aH.Inner_StreamUtil.FREE_SLOTS;
+               wait.comparison = autismclient.util.macro.aH.Inner_DataUtil.AT_MOST;
                wait.slots = slots;
                if (changed) {
                   autismclient.util.aN.init_aN().read_V();
                }
-            } else if (preset == cL.Inner_DataUtil.load && macro.init_List.get(0) instanceof autismclient.util.macro.ar wait) {
+            } else if (preset == cL.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.ar wait) {
                int value = Math.max(1, this.integer("min-durability"));
-               boolean changed = wait.targetMode != autismclient.util.macro.ar.Inner_CachePool.load
+               boolean changed = wait.targetMode != autismclient.util.macro.ar.Inner_CachePool.ITEM
                   || !"minecraft:fishing_rod".equals(wait.itemName)
-                  || wait.measurement != autismclient.util.macro.ar.Inner_StreamUtil.init
-                  || wait.comparison != autismclient.util.macro.ar.Inner_DataUtil.load
+                  || wait.measurement != autismclient.util.macro.ar.Inner_StreamUtil.REMAINING
+                  || wait.comparison != autismclient.util.macro.ar.Inner_DataUtil.AT_MOST
                   || wait.value != value
                   || !wait.useNext;
-               wait.targetMode = autismclient.util.macro.ar.Inner_CachePool.load;
+               wait.targetMode = autismclient.util.macro.ar.Inner_CachePool.ITEM;
                wait.itemName = "minecraft:fishing_rod";
-               wait.measurement = autismclient.util.macro.ar.Inner_StreamUtil.init;
-               wait.comparison = autismclient.util.macro.ar.Inner_DataUtil.load;
+               wait.measurement = autismclient.util.macro.ar.Inner_StreamUtil.REMAINING;
+               wait.comparison = autismclient.util.macro.ar.Inner_DataUtil.AT_MOST;
                wait.value = value;
                wait.useNext = true;
                if (changed) {
@@ -1747,11 +1747,11 @@ public final class f {
             }
 
             f.Inner_BufferHelper.Inner_StreamUtil trigger = f.Inner_BufferHelper.Inner_StreamUtil.init(this.choice("stop-macro-trigger"));
-            boolean injectStop = trigger != f.Inner_BufferHelper.Inner_StreamUtil.load;
+            boolean injectStop = trigger != f.Inner_BufferHelper.Inner_StreamUtil.RUN_STEPS_ONLY;
             boolean skipImmediateDuplicateDisable = injectStop
                && conditionIndex + 1 < runtime.init_List.size()
                && cL.load(runtime.init_List.get(conditionIndex + 1));
-            boolean injectResume = trigger == f.Inner_BufferHelper.Inner_StreamUtil.read
+            boolean injectResume = trigger == f.Inner_BufferHelper.Inner_StreamUtil.STOP_RUN_RESUME
                && !this.init(runtime.init_List, conditionIndex, skipImmediateDuplicateDisable);
             ArrayList<MacroAction> rebuilt = new ArrayList<>();
 
@@ -1877,7 +1877,7 @@ public final class f {
          @Override
          public CompoundTag toTag() {
             CompoundTag tag = new CompoundTag();
-            tag.putString("type", autismclient.util.macro.StreamGate.entry.name());
+            tag.putString("type", autismclient.util.macro.StreamGate.TOGGLE_MODULE.name());
             return tag;
          }
 
@@ -1887,7 +1887,7 @@ public final class f {
 
          @Override
          public autismclient.util.macro.StreamGate getType() {
-            return autismclient.util.macro.StreamGate.entry;
+            return autismclient.util.macro.StreamGate.TOGGLE_MODULE;
          }
 
          @Override
@@ -1902,16 +1902,16 @@ public final class f {
       }
 
       private enum Inner_StreamUtil {
-         init,
-         load,
-         read;
+         STOP_AUTO_FISH,
+         RUN_STEPS_ONLY,
+         STOP_RUN_RESUME;
 
          static f.Inner_BufferHelper.Inner_StreamUtil init(String value) {
             String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
             if ("run steps only".equals(normalized)) {
-               return load;
+               return RUN_STEPS_ONLY;
             } else {
-               return "stop, run, resume".equals(normalized) ? read : init;
+               return "stop, run, resume".equals(normalized) ? STOP_RUN_RESUME : STOP_AUTO_FISH;
             }
          }
       }
@@ -7235,7 +7235,7 @@ public final class f {
                      this.close_I = target.getId();
                      this.open_I = -2147483648;
                      this.poll = 0;
-                     autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.load);
+                     autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
                   }
 
                   String axis = this.init_Str_14();
@@ -7246,12 +7246,12 @@ public final class f {
                      if (init_Z_Module_2(this)) {
                         this.init_V_LivingEntity(target, eyes, point, current, axis, safe);
                      } else if (safe) {
-                        autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.load);
+                        autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
                      } else {
                         ce.Inner_DataUtil applied = new ce.Inner_DataUtil(
                            "Vertical".equals(axis) ? current.init() : wanted.init(), "Horizontal".equals(axis) ? current.load() : wanted.load()
                         );
-                        autismclient.util.ba.init_V_ba_StreamUtil_4(autismclient.util.ba.Inner_StreamUtil.load, current, applied);
+                        autismclient.util.ba.init_V_ba_StreamUtil_4(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST, current, applied);
                      }
                   }
                }
@@ -7325,7 +7325,7 @@ public final class f {
             double emitYaw = ce.init(out.init(), current.init());
             double emitPitch = out.load() - current.load();
             if (Math.abs(emitYaw) > 1.0E-6 || Math.abs(emitPitch) > 1.0E-6) {
-               autismclient.util.ba.init_V_ba_StreamUtil_2(autismclient.util.ba.Inner_StreamUtil.load, (float)emitYaw, (float)emitPitch);
+               autismclient.util.ba.init_V_ba_StreamUtil_2(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
                this.sync_D = emitYaw;
                this.flush_D = emitPitch;
                this.init(hand, target, out);
@@ -7336,7 +7336,7 @@ public final class f {
          this.sync_D = 0.0;
          this.flush_D = 0.0;
          this.init(hand, target, current);
-         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.load);
+         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
       }
 
       static double[] init_DArr_D(double yaw, double pitch, double ownYaw, double ownPitch, double horizontal, double vertical) {
@@ -7432,7 +7432,7 @@ public final class f {
          this.close_I = -2147483648;
          this.open_I = -2147483648;
          this.poll = 0;
-         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.load);
+         autismclient.util.ba.init_V(autismclient.util.ba.Inner_StreamUtil.AIM_ASSIST);
       }
 
       private LivingEntity init_LivingEntity_4() {
@@ -8534,7 +8534,7 @@ public final class f {
       public void onEnable() {
          autismclient.util.V.Inner_DataUtil m = this.init_V_DataUtil();
          autismclient.util.V.init(m, this.bool("fake-y"));
-         if (m == autismclient.util.V.Inner_DataUtil.sync) {
+         if (m == autismclient.util.V.Inner_DataUtil.CUSTOM) {
             this.init_V_48();
          }
       }
@@ -8549,7 +8549,7 @@ public final class f {
          autismclient.util.V.Inner_DataUtil m = this.init_V_DataUtil();
          autismclient.util.V.init(m);
          autismclient.util.V.init(this.bool("fake-y"));
-         if (m == autismclient.util.V.Inner_DataUtil.sync) {
+         if (m == autismclient.util.V.Inner_DataUtil.CUSTOM) {
             this.init_V_48();
          }
       }
@@ -8571,22 +8571,22 @@ public final class f {
          autismclient.util.V.Inner_DataUtil var10000;
          switch (this.choice("mode")) {
             case "Scaled":
-               var10000 = autismclient.util.V.Inner_DataUtil.load;
+               var10000 = autismclient.util.V.Inner_DataUtil.SCALED;
                break;
             case "Rotated":
-               var10000 = autismclient.util.V.Inner_DataUtil.read;
+               var10000 = autismclient.util.V.Inner_DataUtil.ROTATED;
                break;
             case "Scrambled":
-               var10000 = autismclient.util.V.Inner_DataUtil.write;
+               var10000 = autismclient.util.V.Inner_DataUtil.SCRAMBLED;
                break;
             case "Frozen":
-               var10000 = autismclient.util.V.Inner_DataUtil.update;
+               var10000 = autismclient.util.V.Inner_DataUtil.FROZEN;
                break;
             case "Custom":
-               var10000 = autismclient.util.V.Inner_DataUtil.sync;
+               var10000 = autismclient.util.V.Inner_DataUtil.CUSTOM;
                break;
             default:
-               var10000 = autismclient.util.V.Inner_DataUtil.init;
+               var10000 = autismclient.util.V.Inner_DataUtil.OFFSET;
          }
 
          return var10000;

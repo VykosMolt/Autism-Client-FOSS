@@ -39,7 +39,7 @@ public final class au extends Module {
             .description("Background color and opacity for every nametag row")
       );
       this.add(
-         new EnumSetting<>("font", "Font", au.Inner_DataUtil.init, au.Inner_DataUtil.values())
+         new EnumSetting<>("font", "Font", au.Inner_DataUtil.ONEST, au.Inner_DataUtil.values())
             .group("Display")
             .description("Onest or the vanilla Minecraft font")
       );
@@ -77,7 +77,7 @@ public final class au extends Module {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      ONEST,
+      VANILLA;
    }
 }

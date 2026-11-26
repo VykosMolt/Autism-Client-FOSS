@@ -1180,7 +1180,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
          return false;
       }
 
-      autismclient.util.aD.init(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.ap.Inner_StreamUtil.open);
+      autismclient.util.aD.init(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.ap.Inner_StreamUtil.BED_SHELL);
       return true;
    }
 
@@ -1341,7 +1341,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
          if (!cell.equals(skip) && rank <= bestRank && !this.init_Z_BlockPos_2(cell, placed, playerBox, delta)) {
             ListPool.Inner_DataUtil stall = this.update_Map.get(cell);
             if (stall != null && stall.load > 0 && stall.init_List.contains(option.init_U_BufferHelper())) {
-               init_V_StringBuilder(trace, option.init_Direction(), autismclient.util.U.Inner_JsonUtil.flush);
+               init_V_StringBuilder(trace, option.init_Direction(), autismclient.util.U.Inner_JsonUtil.BANNED);
                this.next = index + 1 == size ? 0 : index + 1;
             } else {
                ListPool.Inner_StreamUtil plan;
@@ -1411,12 +1411,12 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
       this.read_Z = false;
       autismclient.util.U.Inner_DataUtil aim = autismclient.util.U.init(option, request.init_U_StateCache_BlockPos(option.init_BlockPos()), refusal);
       if (aim != null
-         || refusal[0] != autismclient.util.U.Inner_JsonUtil.load
-            && refusal[0] != autismclient.util.U.Inner_JsonUtil.read
-            && refusal[0] != autismclient.util.U.Inner_JsonUtil.write) {
+         || refusal[0] != autismclient.util.U.Inner_JsonUtil.NOT_A_SUPPORT
+            && refusal[0] != autismclient.util.U.Inner_JsonUtil.SELF_OCCLUDED
+            && refusal[0] != autismclient.util.U.Inner_JsonUtil.BEHIND_PLANE) {
          autismclient.util.U.Inner_CachePool candidate = this.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
          if (candidate == null) {
-            this.read_Z = refusal[0] == autismclient.util.U.Inner_JsonUtil.push;
+            this.read_Z = refusal[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET;
             return null;
          } else {
             return new ListPool.Inner_StreamUtil(option.init_BlockPos(), candidate.init_U_TaskQueue().init_U_BufferHelper(), candidate);
@@ -1438,7 +1438,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
 
       autismclient.util.U.Inner_JsonUtil[] refusal = outcome == null ? new autismclient.util.U.Inner_JsonUtil[1] : outcome;
       autismclient.util.U.Inner_CachePool found = aim == null ? null : autismclient.util.U.init_U_CachePool_U_TaskQueue(option, aim, request, refusal);
-      if (found == null && refusal[0] != autismclient.util.U.Inner_JsonUtil.push) {
+      if (found == null && refusal[0] != autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
          List<Vec3> points;
          if (request.init_U_StreamUtil() == this.init_U_StreamUtil) {
             ArrayList<Vec3> samples = new ArrayList<>();
@@ -1459,7 +1459,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
             points = this.sync_Map.get(option);
             if (points == null) {
                if (this.prev >= 4) {
-                  refusal[0] = autismclient.util.U.Inner_JsonUtil.push;
+                  refusal[0] = autismclient.util.U.Inner_JsonUtil.NO_BUDGET;
                   return null;
                }
 
@@ -1486,7 +1486,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
                         this.flush_Map.put(option, index);
                      }
 
-                     refusal[0] = autismclient.util.U.Inner_JsonUtil.push;
+                     refusal[0] = autismclient.util.U.Inner_JsonUtil.NO_BUDGET;
                      return null;
                   }
 
@@ -1517,9 +1517,9 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
                                  emitted,
                                  request.init_Vec3().distanceTo(hit.getLocation()),
                                  request.init_ce_DataUtil() == null ? 0.0F : ce.init_F(request.init_ce_DataUtil(), emitted),
-                                 autismclient.util.U.Inner_UiHelper.write
+                                 autismclient.util.U.Inner_UiHelper.ESCAPE
                               );
-                              refusal[0] = autismclient.util.U.Inner_JsonUtil.init_U_JsonUtil;
+                              refusal[0] = autismclient.util.U.Inner_JsonUtil.NONE;
                               return new autismclient.util.U.Inner_CachePool(
                                  actual, landed, hit, !hit.getBlockPos().equals(option.load_BlockPos()), landed.init_F()
                               );
@@ -1531,7 +1531,7 @@ public final class ListPool extends Module implements cn.Inner_DataUtil {
             }
          }
 
-         refusal[0] = autismclient.util.U.Inner_JsonUtil.open;
+         refusal[0] = autismclient.util.U.Inner_JsonUtil.RAY_MISSED;
          return null;
       } else {
          return found;

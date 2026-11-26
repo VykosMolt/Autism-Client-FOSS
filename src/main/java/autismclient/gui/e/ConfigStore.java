@@ -3,9 +3,9 @@ package autismclient.gui.e;
 import net.minecraft.resources.Identifier;
 
 public enum ConfigStore {
-   init_ConfigStore("onest_regular", 8.5F),
-   load("onest_medium", 8.5F),
-   read("onest_bold", 10.0F);
+   BODY("onest_regular", 8.5F),
+   LABEL("onest_medium", 8.5F),
+   TITLE("onest_bold", 10.0F);
 
    private final String init_Str;
    private final float init_F;
@@ -37,14 +37,14 @@ public enum ConfigStore {
          }
       }
 
-      return font == null && this != init_ConfigStore ? init_ConfigStore.init_StreamUtil() : font;
+      return font == null && this != BODY ? BODY.init_StreamUtil() : font;
    }
 
    public static ConfigStore init(Identifier fontId) {
       if (autismclient.gui.f.a.DataUtil.read.equals(fontId)) {
-         return read;
+         return TITLE;
       } else {
-         return autismclient.gui.f.a.DataUtil.load.equals(fontId) ? load : init_ConfigStore;
+         return autismclient.gui.f.a.DataUtil.load.equals(fontId) ? LABEL : BODY;
       }
    }
 

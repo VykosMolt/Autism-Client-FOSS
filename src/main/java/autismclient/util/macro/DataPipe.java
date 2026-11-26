@@ -16,17 +16,17 @@ public final class DataPipe {
       if (action instanceof NetHelper || action instanceof K || action instanceof ao || action instanceof v || action instanceof PathHelper) {
          resources.addAll(
             EnumSet.of(
-               DataPipe.Inner_DataUtil.read,
-               DataPipe.Inner_DataUtil.write,
-               DataPipe.Inner_DataUtil.init,
-               DataPipe.Inner_DataUtil.load,
-               DataPipe.Inner_DataUtil.close
+               DataPipe.Inner_DataUtil.INPUT,
+               DataPipe.Inner_DataUtil.ROTATION,
+               DataPipe.Inner_DataUtil.INVENTORY,
+               DataPipe.Inner_DataUtil.GUI,
+               DataPipe.Inner_DataUtil.WORLD_ACTION
             )
          );
       }
 
       if (action instanceof ap || action instanceof TokenStore || action instanceof w) {
-         resources.addAll(EnumSet.of(DataPipe.Inner_DataUtil.read, DataPipe.Inner_DataUtil.update, DataPipe.Inner_DataUtil.sync));
+         resources.addAll(EnumSet.of(DataPipe.Inner_DataUtil.INPUT, DataPipe.Inner_DataUtil.NAVIGATION, DataPipe.Inner_DataUtil.NETWORK));
       }
 
       if (action instanceof NetHelper
@@ -39,13 +39,13 @@ public final class DataPipe {
          || action instanceof aQ
          || action instanceof ai
          || action instanceof V) {
-         resources.add(DataPipe.Inner_DataUtil.init);
-         resources.add(DataPipe.Inner_DataUtil.load);
+         resources.add(DataPipe.Inner_DataUtil.INVENTORY);
+         resources.add(DataPipe.Inner_DataUtil.GUI);
       }
 
       if (action instanceof ar durability && durability.useNext) {
-         resources.add(DataPipe.Inner_DataUtil.init);
-         resources.add(DataPipe.Inner_DataUtil.load);
+         resources.add(DataPipe.Inner_DataUtil.INVENTORY);
+         resources.add(DataPipe.Inner_DataUtil.GUI);
       }
 
       if (action instanceof v
@@ -56,50 +56,50 @@ public final class DataPipe {
          || action instanceof TextFormat
          || action instanceof u
          || action instanceof UiHelper) {
-         resources.add(DataPipe.Inner_DataUtil.load);
-         resources.add(DataPipe.Inner_DataUtil.sync);
+         resources.add(DataPipe.Inner_DataUtil.GUI);
+         resources.add(DataPipe.Inner_DataUtil.NETWORK);
       }
 
       if (action instanceof Y || action instanceof x || action instanceof z || action instanceof H || action instanceof G || action instanceof W) {
-         resources.add(DataPipe.Inner_DataUtil.sync);
+         resources.add(DataPipe.Inner_DataUtil.NETWORK);
       }
 
       if (action instanceof FileCache) {
-         resources.add(DataPipe.Inner_DataUtil.sync);
-         resources.add(DataPipe.Inner_DataUtil.flush);
+         resources.add(DataPipe.Inner_DataUtil.NETWORK);
+         resources.add(DataPipe.Inner_DataUtil.PACKET_DELAY);
       }
 
       if (action instanceof an) {
-         resources.add(DataPipe.Inner_DataUtil.read);
-         resources.add(DataPipe.Inner_DataUtil.sync);
+         resources.add(DataPipe.Inner_DataUtil.INPUT);
+         resources.add(DataPipe.Inner_DataUtil.NETWORK);
       }
 
       if (action instanceof s || action instanceof ad || action instanceof ae || action instanceof NodeWalker) {
-         resources.add(DataPipe.Inner_DataUtil.read);
+         resources.add(DataPipe.Inner_DataUtil.INPUT);
       }
 
       if (action instanceof S || action instanceof ValueSink) {
-         resources.add(DataPipe.Inner_DataUtil.write);
+         resources.add(DataPipe.Inner_DataUtil.ROTATION);
       }
 
       if (action instanceof CharEncoder || action instanceof q || action instanceof MethodUtil || action instanceof CachePool) {
-         resources.add(DataPipe.Inner_DataUtil.update);
-         resources.add(DataPipe.Inner_DataUtil.read);
-         resources.add(DataPipe.Inner_DataUtil.write);
-         resources.add(DataPipe.Inner_DataUtil.sync);
+         resources.add(DataPipe.Inner_DataUtil.NAVIGATION);
+         resources.add(DataPipe.Inner_DataUtil.INPUT);
+         resources.add(DataPipe.Inner_DataUtil.ROTATION);
+         resources.add(DataPipe.Inner_DataUtil.NETWORK);
       }
 
       if (action instanceof ak) {
-         resources.add(DataPipe.Inner_DataUtil.close);
+         resources.add(DataPipe.Inner_DataUtil.WORLD_ACTION);
       }
 
       if (action instanceof aq) {
-         resources.add(DataPipe.Inner_DataUtil.init);
-         resources.add(DataPipe.Inner_DataUtil.load);
+         resources.add(DataPipe.Inner_DataUtil.INVENTORY);
+         resources.add(DataPipe.Inner_DataUtil.GUI);
       }
 
       if (action instanceof aO wait && wait.holdEmerald) {
-         resources.add(DataPipe.Inner_DataUtil.init);
+         resources.add(DataPipe.Inner_DataUtil.INVENTORY);
       }
 
       return resources;
@@ -121,13 +121,13 @@ public final class DataPipe {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      INVENTORY,
+      GUI,
+      INPUT,
+      ROTATION,
+      NAVIGATION,
+      NETWORK,
+      PACKET_DELAY,
+      WORLD_ACTION;
    }
 }

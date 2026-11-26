@@ -447,13 +447,13 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
                      this.pool = 0;
                      String var10001;
                      switch (target.init_aa_DataUtil()) {
-                        case init:
+                        case HARVEST:
                            var10001 = "Harvest";
                            break;
-                        case read:
+                        case BONEMEAL:
                            var10001 = "Bonemeal";
                            break;
-                        case update:
+                        case TILL:
                            var10001 = "Till";
                            break;
                         default:
@@ -700,23 +700,23 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
                   && !this.init_Z_I(cx, cy, cz, tick)
                   && !this.load(cx, cy, cz, tick)
                   && this.init_Z_BlockPos_MutableBl_2(cursor, cx, cy, cz, block)) {
-                  this.init(autismclient.util.aa.Inner_DataUtil.init, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+                  this.init(autismclient.util.aa.Inner_DataUtil.HARVEST, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
                } else if (bonemealOffer
                   && !this.init_Z_I(cx, cy, cz, tick)
                   && !this.load(cx, cy, cz, tick)
                   && this.init_Z_BlockPos_BlockState_2(cursor.set(cx, cy, cz), state)) {
-                  this.init(autismclient.util.aa.Inner_DataUtil.read, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+                  this.init(autismclient.util.aa.Inner_DataUtil.BONEMEAL, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
                }
             } else if ((wantReplant || wantPlant) && state.canBeReplaced()) {
                if (!this.init_Z_I(cx, cy, cz, tick) && !this.load(cx, cy, cz, tick)) {
                   BlockState below = MC.level.getBlockState(cursor.set(cx, cy - 1, cz));
                   if (wantReplant && this.init(cx, cy, cz, below, crops, tick) != null) {
-                     this.init(autismclient.util.aa.Inner_DataUtil.load, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+                     this.init(autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
                   }
 
                   if (wantPlant && this.init_RingBuffer_CachePo_I(cx, cy, cz, below, crops) != null) {
                      this.init(
-                        autismclient.util.aa.Inner_DataUtil.write, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances
+                        autismclient.util.aa.Inner_DataUtil.REPLANT, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances
                      );
                   }
                }
@@ -726,7 +726,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
                && (block == Blocks.ROOTED_DIRT || MC.level.getBlockState(cursor.set(cx, cy + 1, cz)).isAir())
                && !this.init_Z_I(cx, cy, cz, tick)
                && !this.load(cx, cy, cz, tick)) {
-               this.init(autismclient.util.aa.Inner_DataUtil.update, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
+               this.init(autismclient.util.aa.Inner_DataUtil.TILL, cx, cy, cz, distanceSqr, sweep, eye, candidateCells, candidateKeys, candidateDistances);
             }
          }
       }
@@ -788,7 +788,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       this.write_BlockPos = chosen.init_BlockPos();
       this.init_aa_DataUtil = chosen.init_aa_DataUtil();
       this.state = -2147483648;
-      if (chosen.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.init) {
+      if (chosen.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.HARVEST) {
          RingBuffer.Inner_BufferHelper solved = this.init_RingBuffer_BufferH_BlockPos(chosen.init_BlockPos());
          if (solved != null) {
             chosen = solved;
@@ -809,7 +809,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
          }
       }
 
-      boolean urgent = target.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.load
+      boolean urgent = target.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT
          && this.bool("movement")
          && this.init_Z_BlockPos_Vec3(target.init_BlockPos(), eye);
       this.load_Z |= urgent;
@@ -835,7 +835,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       BlockPos pos, autismclient.util.aa.Inner_DataUtil kind, Set<Block> crops, int hoeSlot, int tick
    ) {
       switch (kind) {
-         case init:
+         case HARVEST:
             BlockState state = MC.level.getBlockState(pos);
             if (crops.contains(state.getBlock()) && this.init_Z_BlockState_3(state)) {
                if (autismclient.util.Y.load(state.getBlock()) && !MC.level.getBlockState(pos.below()).is(state.getBlock())) {
@@ -846,20 +846,20 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
             }
 
             return null;
-         case read:
+         case BONEMEAL:
             if (!this.bool("bonemeal")) {
                return null;
             }
 
             return this.init_Z_BlockPos_3(pos) ? this.load_RingBuffer_BufferH(pos) : null;
-         case update:
+         case TILL:
             return this.load_Z(pos) ? this.init_RingBuffer_BufferH_BlockPos_I(pos, hoeSlot) : null;
-         case load:
-         case write:
-            if (kind == autismclient.util.aa.Inner_DataUtil.load ? this.bool("replant") : this.bool("plant")) {
+         case REPLANT_RECENT:
+         case REPLANT:
+            if (kind == autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT ? this.bool("replant") : this.bool("plant")) {
                return !MC.level.getBlockState(pos).canBeReplaced()
                   ? null
-                  : this.init_RingBuffer_BufferH_BlockPos(pos, kind == autismclient.util.aa.Inner_DataUtil.load, tick);
+                  : this.init_RingBuffer_BufferH_BlockPos(pos, kind == autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT, tick);
             } else {
                return null;
             }
@@ -1037,7 +1037,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       float yaw = (float)(Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
       float pitch = (float)(-Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz))));
       double key = Math.hypot(ce.init(sweep.init(), yaw), pitch - sweep.load());
-      if (kind == autismclient.util.aa.Inner_DataUtil.load && this.bool("movement") && this.init_Z_BlockPos_Vec3(new BlockPos(x, y, z), eye)) {
+      if (kind == autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT && this.bool("movement") && this.init_Z_BlockPos_Vec3(new BlockPos(x, y, z), eye)) {
          key -= 360.0;
       }
 
@@ -1211,7 +1211,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       ce.Inner_DataUtil rotation = this.load_ce_DataUtil(cell);
       return rotation == null
          ? null
-         : new RingBuffer.Inner_BufferHelper(autismclient.util.aa.Inner_DataUtil.init, cell, MC.level.getBlockState(cell).getBlock(), null, slot, rotation);
+         : new RingBuffer.Inner_BufferHelper(autismclient.util.aa.Inner_DataUtil.HARVEST, cell, MC.level.getBlockState(cell).getBlock(), null, slot, rotation);
    }
 
    private boolean init_Z_ce_DataUtil_Vec3(ce.Inner_DataUtil goal, Vec3 eye) {
@@ -1238,7 +1238,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       }
 
       ItemStack stack = choice.init_I() >= 0 ? MC.player.getInventory().getItem(choice.init_I()) : MC.player.getOffhandItem();
-      autismclient.util.aa.Inner_DataUtil kind = recent ? autismclient.util.aa.Inner_DataUtil.load : autismclient.util.aa.Inner_DataUtil.write;
+      autismclient.util.aa.Inner_DataUtil kind = recent ? autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT : autismclient.util.aa.Inner_DataUtil.REPLANT;
       Vec3 eye = MC.player.getEyePosition();
       ce.Inner_DataUtil rotation;
       if (this.sync_BlockPos != null && this.sync_BlockPos.equals(cell) && this.read_aa_DataUtil == kind && this.init_Vec3.distanceTo(eye) <= 1.0) {
@@ -1263,7 +1263,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       }
 
       ce.Inner_DataUtil rotation = this.read_ce_DataUtil(cell);
-      return rotation == null ? null : new RingBuffer.Inner_BufferHelper(autismclient.util.aa.Inner_DataUtil.update, cell, null, hoe, hoeSlot, rotation);
+      return rotation == null ? null : new RingBuffer.Inner_BufferHelper(autismclient.util.aa.Inner_DataUtil.TILL, cell, null, hoe, hoeSlot, rotation);
    }
 
    private RingBuffer.Inner_BufferHelper load_RingBuffer_BufferH(BlockPos cell) {
@@ -1276,7 +1276,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       return rotation == null
          ? null
          : new RingBuffer.Inner_BufferHelper(
-            autismclient.util.aa.Inner_DataUtil.read, cell, MC.level.getBlockState(cell).getBlock(), Items.BONE_MEAL, slot, rotation
+            autismclient.util.aa.Inner_DataUtil.BONEMEAL, cell, MC.level.getBlockState(cell).getBlock(), Items.BONE_MEAL, slot, rotation
          );
    }
 
@@ -1742,7 +1742,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       }
 
       ce.Inner_DataUtil wireRotation = new ce.Inner_DataUtil(wire.read(), wire.write());
-      if (target.init_aa_DataUtil() != autismclient.util.aa.Inner_DataUtil.init && !init_Z_F_2(wireRotation.load())) {
+      if (target.init_aa_DataUtil() != autismclient.util.aa.Inner_DataUtil.HARVEST && !init_Z_F_2(wireRotation.load())) {
          return null;
       }
 
@@ -1758,17 +1758,17 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
 
       ce.Inner_DataUtil var10000;
       switch (target.init_aa_DataUtil()) {
-         case init:
+         case HARVEST:
             var10000 = this.init_ce_DataUtil_RingBuffer_BufferH(target, ray, wireRotation, tick);
             break;
-         case read:
+         case BONEMEAL:
             var10000 = this.write(target, ray, wireRotation, tick);
             break;
-         case update:
+         case TILL:
             var10000 = this.read(target, ray, wireRotation, tick);
             break;
-         case load:
-         case write:
+         case REPLANT_RECENT:
+         case REPLANT:
             var10000 = this.load(target, ray, wireRotation, tick);
             break;
          default:
@@ -2236,7 +2236,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
 
    private boolean init_Z_RingBuffer_BufferH(RingBuffer.Inner_BufferHelper target, BlockPos cell, BlockState state, int tick) {
       int limit = 40;
-      if (target.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.init) {
+      if (target.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.HARVEST) {
          float progress = state.getDestroyProgress(MC.player, MC.level, cell);
          if (progress > 0.0F && Float.isFinite(progress)) {
             limit += (int)Math.min(1200.0, Math.ceil(1.0 / progress));
@@ -2551,7 +2551,7 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
    }
 
    private BlockPos init_BlockPos_RingBuffer_BufferH(RingBuffer.Inner_BufferHelper target, Vec3 eye, double reachSqr, int tick) {
-      if (target.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.init && this.state == tick && this.load_BlockPos != null) {
+      if (target.init_aa_DataUtil() == autismclient.util.aa.Inner_DataUtil.HARVEST && this.state == tick && this.load_BlockPos != null) {
          return init_D_Vec3(eye, this.load_BlockPos.getX(), this.load_BlockPos.getY(), this.load_BlockPos.getZ()) > reachSqr
                && !bA.write(this.load_BlockPos)
                && this.init_aa_DataUtil_BlockPos_I(this.load_BlockPos, tick) != null
@@ -2815,20 +2815,20 @@ public final class RingBuffer extends Module implements cn.Inner_DataUtil {
       Block block = state.getBlock();
       if (crops.contains(block)) {
          if (this.init_Z_BlockState_3(state) && this.init_Z_BlockPos_MutableBl_2(cursor, cx, cy, cz, block)) {
-            return autismclient.util.aa.Inner_DataUtil.init;
+            return autismclient.util.aa.Inner_DataUtil.HARVEST;
          } else {
-            return wantBonemeal && this.init_Z_BlockPos_BlockState_2(cursor.set(cx, cy, cz), state) ? autismclient.util.aa.Inner_DataUtil.read : null;
+            return wantBonemeal && this.init_Z_BlockPos_BlockState_2(cursor.set(cx, cy, cz), state) ? autismclient.util.aa.Inner_DataUtil.BONEMEAL : null;
          }
       } else if ((wantReplant || wantPlant) && state.canBeReplaced()) {
          BlockState below = MC.level.getBlockState(cursor.set(cx, cy - 1, cz));
          if (wantReplant && this.init(cx, cy, cz, below, crops, tick) != null) {
-            return autismclient.util.aa.Inner_DataUtil.load;
+            return autismclient.util.aa.Inner_DataUtil.REPLANT_RECENT;
          } else {
-            return wantPlant && this.init_RingBuffer_CachePo_I(cx, cy, cz, below, crops) != null ? autismclient.util.aa.Inner_DataUtil.write : null;
+            return wantPlant && this.init_RingBuffer_CachePo_I(cx, cy, cz, below, crops) != null ? autismclient.util.aa.Inner_DataUtil.REPLANT : null;
          }
       } else {
          return wantTill && init_Set.contains(block) && (block == Blocks.ROOTED_DIRT || MC.level.getBlockState(cursor.set(cx, cy + 1, cz)).isAir())
-            ? autismclient.util.aa.Inner_DataUtil.update
+            ? autismclient.util.aa.Inner_DataUtil.TILL
             : null;
       }
    }

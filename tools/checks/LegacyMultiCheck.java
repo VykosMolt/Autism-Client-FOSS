@@ -11,7 +11,7 @@ import net.minecraft.nbt.StringTag;
 public final class LegacyMultiCheck {
    public static void main(String[] args) throws ReflectiveOperationException {
       CompoundTag legacy = new CompoundTag();
-      legacy.putString("type", StreamGate.f_W_StreamGate.name());
+      legacy.putString("type", StreamGate.MULTI.name());
       ListTag accounts = new ListTag();
       accounts.add(StringTag.valueOf("legacy-account"));
       legacy.put("accounts", accounts);

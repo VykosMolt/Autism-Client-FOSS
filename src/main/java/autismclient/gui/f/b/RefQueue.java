@@ -247,14 +247,14 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
       this.read_V();
       if (button != 0) {
          if (!this.init_Z) {
-            return autismclient.gui.f.EventBus.init;
+            return autismclient.gui.f.EventBus.IGNORED;
          }
 
          if (!this.init_NetHelper.init_Z(mouseX, mouseY) && !this.load_NetHelper.init_Z(mouseX, mouseY)) {
             this.load_V_2();
          }
 
-         return autismclient.gui.f.EventBus.load;
+         return autismclient.gui.f.EventBus.HANDLED;
       } else if (this.init_Z) {
          if (this.load_NetHelper.init_Z(mouseX, mouseY)) {
             if (this.init_UtilCore_DataUtil != null && this.init_UtilCore_DataUtil.init_NetHelper().init_Z(mouseX, mouseY)) {
@@ -263,7 +263,7 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
                   : this.init_UtilCore_DataUtil.load().sync() / 2;
                this.load_Z = true;
                this.init(mouseY);
-               return autismclient.gui.f.EventBus.load;
+               return autismclient.gui.f.EventBus.HANDLED;
             }
 
             int index = this.load_I + Math.max(0, (mouseY - this.load_NetHelper.write() - 1) / Math.max(1, this.read_I()));
@@ -273,19 +273,19 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
             }
 
             this.load_V_2();
-            return autismclient.gui.f.EventBus.load;
+            return autismclient.gui.f.EventBus.HANDLED;
          } else if (this.init_NetHelper.init_Z(mouseX, mouseY)) {
             this.load_V_2();
-            return autismclient.gui.f.EventBus.load;
+            return autismclient.gui.f.EventBus.HANDLED;
          } else {
             this.load_V_2();
-            return autismclient.gui.f.EventBus.load;
+            return autismclient.gui.f.EventBus.HANDLED;
          }
       } else if (this.init_NetHelper.init_Z(mouseX, mouseY)) {
          this.init_V_2();
-         return autismclient.gui.f.EventBus.load;
+         return autismclient.gui.f.EventBus.HANDLED;
       } else {
-         return autismclient.gui.f.EventBus.init;
+         return autismclient.gui.f.EventBus.IGNORED;
       }
    }
 
@@ -293,11 +293,11 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
    public autismclient.gui.f.EventBus load(int mouseX, int mouseY, int button) {
       this.read_V();
       if (!this.load_Z) {
-         return this.init_Z ? autismclient.gui.f.EventBus.load : autismclient.gui.f.EventBus.init;
+         return this.init_Z ? autismclient.gui.f.EventBus.HANDLED : autismclient.gui.f.EventBus.IGNORED;
       }
 
       this.load_Z = false;
-      return autismclient.gui.f.EventBus.load;
+      return autismclient.gui.f.EventBus.HANDLED;
    }
 
    @Override
@@ -305,9 +305,9 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
       this.read_V();
       if (this.load_Z && button == 0) {
          this.init(mouseY);
-         return autismclient.gui.f.EventBus.load;
+         return autismclient.gui.f.EventBus.HANDLED;
       } else {
-         return this.init_Z ? autismclient.gui.f.EventBus.load : autismclient.gui.f.EventBus.init;
+         return this.init_Z ? autismclient.gui.f.EventBus.HANDLED : autismclient.gui.f.EventBus.IGNORED;
       }
    }
 
@@ -315,7 +315,7 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
    public autismclient.gui.f.EventBus init_EventBus_I(int mouseX, int mouseY, double amount) {
       this.read_V();
       if (!this.init_Z) {
-         return autismclient.gui.f.EventBus.init;
+         return autismclient.gui.f.EventBus.IGNORED;
       }
 
       if (this.load_NetHelper.init_Z(mouseX, mouseY)) {
@@ -323,7 +323,7 @@ public final class RefQueue implements autismclient.gui.f.StateCache {
          this.load_I = init_I_I(this.load_I + direction, 0, this.write_I());
       }
 
-      return autismclient.gui.f.EventBus.load;
+      return autismclient.gui.f.EventBus.HANDLED;
    }
 
    private int init_I(autismclient.gui.f.SyncManager context) {

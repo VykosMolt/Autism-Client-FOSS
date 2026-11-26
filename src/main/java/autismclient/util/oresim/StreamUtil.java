@@ -74,17 +74,17 @@ public final class StreamUtil {
 
    public static StreamUtil.Inner_BufferHelper init_StreamUtil_BufferH() {
       if (write_Z) {
-         return StreamUtil.Inner_BufferHelper.flush;
+         return StreamUtil.Inner_BufferHelper.ERROR;
       } else if (update_Z) {
-         return StreamUtil.Inner_BufferHelper.sync;
+         return StreamUtil.Inner_BufferHelper.UNSUPPORTED_DIMENSION;
       } else if (sync_Z) {
-         return StreamUtil.Inner_BufferHelper.update;
+         return StreamUtil.Inner_BufferHelper.UNVERIFIED_WORLDGEN;
       } else if (init_StreamUtil_StreamU == null) {
-         return StreamUtil.Inner_BufferHelper.init;
+         return StreamUtil.Inner_BufferHelper.IDLE;
       } else if (!init_Z && init_ConfigStore != null) {
-         return load_Z ? StreamUtil.Inner_BufferHelper.read : StreamUtil.Inner_BufferHelper.write;
+         return load_Z ? StreamUtil.Inner_BufferHelper.GENERATING : StreamUtil.Inner_BufferHelper.READY;
       } else {
-         return StreamUtil.Inner_BufferHelper.load;
+         return StreamUtil.Inner_BufferHelper.LOADING_CONTEXT;
       }
    }
 
@@ -887,13 +887,13 @@ public final class StreamUtil {
    }
 
    public enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      IDLE,
+      LOADING_CONTEXT,
+      GENERATING,
+      READY,
+      UNVERIFIED_WORLDGEN,
+      UNSUPPORTED_DIMENSION,
+      ERROR;
    }
 
    @FunctionalInterface

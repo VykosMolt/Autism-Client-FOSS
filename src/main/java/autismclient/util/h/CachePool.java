@@ -26,8 +26,8 @@ public final class CachePool {
    private Object init_Obj;
    private Object load_Obj;
    private Object read_Obj;
-   private CachePool.Inner_StreamUtil init_CachePool_StreamUt = CachePool.Inner_StreamUtil.init;
-   private CachePool.Inner_CachePool init_CachePool_CachePoo = CachePool.Inner_CachePool.init;
+   private CachePool.Inner_StreamUtil init_CachePool_StreamUt = CachePool.Inner_StreamUtil.SELECT;
+   private CachePool.Inner_CachePool init_CachePool_CachePoo = CachePool.Inner_CachePool.RUNNING;
    private int sync;
    private int flush;
    private int close;
@@ -58,7 +58,7 @@ public final class CachePool {
    }
 
    public boolean load_Z() {
-      return this.init_CachePool_CachePoo != CachePool.Inner_CachePool.init;
+      return this.init_CachePool_CachePoo != CachePool.Inner_CachePool.RUNNING;
    }
 
    public CachePool.Inner_CachePool init_CachePool_CachePoo() {
@@ -79,7 +79,7 @@ public final class CachePool {
 
    public boolean read_Z() {
       if (init_CachePool != null && init_CachePool != this) {
-         this.init(CachePool.Inner_CachePool.read, "Another trade is running");
+         this.init(CachePool.Inner_CachePool.BUSY, "Another trade is running");
          return false;
       } else {
          init_CachePool = this;
@@ -195,7 +195,7 @@ public final class CachePool {
                   }
                }
             )
-            : this.init(CachePool.Inner_CachePool.write, "Open a villager trade screen");
+            : this.init(CachePool.Inner_CachePool.NO_MENU, "Open a villager trade screen");
       }
    }
 
@@ -205,12 +205,12 @@ public final class CachePool {
       }
 
       if (init_CachePool != null && init_CachePool != this) {
-         return this.init(CachePool.Inner_CachePool.read, "Another trade is running");
+         return this.init(CachePool.Inner_CachePool.BUSY, "Another trade is running");
       }
 
       if (this.init_Obj == null) {
          if (!current.init_ItemStack().isEmpty()) {
-            return this.init(CachePool.Inner_CachePool.poll, "Empty the cursor first");
+            return this.init(CachePool.Inner_CachePool.CURSOR_BUSY, "Empty the cursor first");
          }
 
          this.init_CachePool_DataUtil = current;
@@ -222,15 +222,15 @@ public final class CachePool {
 
       if (this.init_Obj == current.init_Obj() && this.load_Obj == current.load_Obj() && this.read_Obj == current.read()) {
          this.init_CachePool_DataUtil = current;
-         if (this.init_CachePool_StreamUt != CachePool.Inner_StreamUtil.read && this.init_CachePool_StreamUt != CachePool.Inner_StreamUtil.update) {
-            if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.sync) {
+         if (this.init_CachePool_StreamUt != CachePool.Inner_StreamUtil.TAKE && this.init_CachePool_StreamUt != CachePool.Inner_StreamUtil.STORED) {
+            if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.DELAY) {
                if (++this.sync >= this.load_I) {
-                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.init;
+                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.SELECT;
                   this.sync = 0;
                }
 
                return this.init_CachePool_CachePoo;
-            } else if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.init) {
+            } else if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.SELECT) {
                if (this.init_CachePool_DataUtil.init_List().isEmpty() && ++this.sync < this.read_I) {
                   return this.init_CachePool_CachePoo;
                }
@@ -260,33 +260,33 @@ public final class CachePool {
                if (this.open < 0) {
                   return this.init(
                      !match
-                        ? CachePool.Inner_CachePool.update
-                        : (!stock ? CachePool.Inner_CachePool.sync : (!budgetOk ? CachePool.Inner_CachePool.open : CachePool.Inner_CachePool.flush)),
+                        ? CachePool.Inner_CachePool.NO_MATCH
+                        : (!stock ? CachePool.Inner_CachePool.OUT_OF_STOCK : (!budgetOk ? CachePool.Inner_CachePool.BUDGET : CachePool.Inner_CachePool.MISSING_INPUTS)),
                      !match ? "No matching offer" : (!stock ? "Waiting for restock" : (!budgetOk ? "Emerald limit reached" : "Missing payment items"))
                   );
                }
 
                if (!this.init_CachePool_DataUtil.init_ItemStack().isEmpty()) {
-                  return this.init(CachePool.Inner_CachePool.poll, "Cursor changed");
+                  return this.init(CachePool.Inner_CachePool.CURSOR_BUSY, "Cursor changed");
                }
 
                this.init_CachePool_DataUtil.init_V(this.open);
-               this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.load;
+               this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.FILL;
                this.sync = 0;
                this.init_Str = "Filling offer " + (this.open + 1);
                return this.init_CachePool_CachePoo;
-            } else if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.load) {
+            } else if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.FILL) {
                if (this.open >= this.init_CachePool_DataUtil.init_List().size()) {
-                  return this.init(CachePool.Inner_CachePool.update, "Offers changed");
+                  return this.init(CachePool.Inner_CachePool.NO_MATCH, "Offers changed");
                }
 
                MerchantOffer offer = this.init_CachePool_DataUtil.init_List().get(this.open);
                if (!this.init_StreamUtil.init_Z_MerchantOffer_I(offer, this.open) || offer.isOutOfStock()) {
-                  return this.init(CachePool.Inner_CachePool.update, "Offer changed");
+                  return this.init(CachePool.Inner_CachePool.NO_MATCH, "Offer changed");
                }
 
                if (!this.init_CachePool_DataUtil.init_ItemStack().isEmpty()) {
-                  return this.init(CachePool.Inner_CachePool.poll, "Cursor changed");
+                  return this.init(CachePool.Inner_CachePool.CURSOR_BUSY, "Cursor changed");
                }
 
                ItemStack output = this.init_CachePool_DataUtil.init_ItemStack(2);
@@ -295,40 +295,40 @@ public final class CachePool {
                   this.init_ItemStack = output.copy();
                   this.poll = StreamUtil.init(offer);
                   if (!StreamUtil.init(this.poll, this.close, this.write, this.read_I(), this.update)) {
-                     return this.init(CachePool.Inner_CachePool.open, "Emerald limit reached");
+                     return this.init(CachePool.Inner_CachePool.BUDGET, "Emerald limit reached");
                   }
 
                   if (this.load(this.init_ItemStack) < this.init_ItemStack.getCount()) {
-                     return this.init(CachePool.Inner_CachePool.close, "Inventory full");
+                     return this.init(CachePool.Inner_CachePool.INVENTORY_FULL, "Inventory full");
                   }
 
                   this.init_MerchantOffer = offer;
                   this.set = offer.getUses();
                   this.init_V_I(2);
-                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.read;
+                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.TAKE;
                   this.init_Str = "Confirming purchase";
                   return this.init_CachePool_CachePoo;
                } else {
-                  return ++this.sync >= this.read_I ? this.init(CachePool.Inner_CachePool.flush, "Payment was not filled") : this.init_CachePool_CachePoo;
+                  return ++this.sync >= this.read_I ? this.init(CachePool.Inner_CachePool.MISSING_INPUTS, "Payment was not filled") : this.init_CachePool_CachePoo;
                }
             } else {
-               if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.write) {
+               if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.STORE) {
                   ItemStack cursor = this.init_CachePool_DataUtil.init_ItemStack();
                   if (cursor.isEmpty() || !ItemStack.isSameItemSameComponents(cursor, this.init_ItemStack)) {
-                     return this.init(CachePool.Inner_CachePool.pop, "Cursor changed during trade");
+                     return this.init(CachePool.Inner_CachePool.UNCERTAIN, "Cursor changed during trade");
                   }
 
                   this.init_ItemStack = cursor.copy();
                   int slot = this.read(this.init_ItemStack);
                   if (slot < 0) {
-                     return this.init(CachePool.Inner_CachePool.close, "Inventory full; result is on cursor");
+                     return this.init(CachePool.Inner_CachePool.INVENTORY_FULL, "Inventory full; result is on cursor");
                   }
 
                   int room = this.init(slot, this.init_ItemStack);
                   this.push = Math.max(0, this.init_ItemStack.getCount() - room);
                   this.run = this.init_I_ItemStack(this.init_ItemStack);
                   this.init_V_I(slot);
-                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.update;
+                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.STORED;
                   this.init_Str = "Storing purchase";
                }
 
@@ -336,9 +336,9 @@ public final class CachePool {
             }
          } else {
             if (this.pop > this.tick) {
-               if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.read) {
+               if (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.TAKE) {
                   if (!ItemStack.matches(this.load_ItemStack, this.init_ItemStack)) {
-                     return this.init(CachePool.Inner_CachePool.push, "Purchase was not confirmed");
+                     return this.init(CachePool.Inner_CachePool.REJECTED, "Purchase was not confirmed");
                   }
 
                   this.flush++;
@@ -347,35 +347,35 @@ public final class CachePool {
                      this.init_MerchantOffer.increaseUses();
                   }
 
-                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.write;
+                  this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.STORE;
                } else {
                   boolean cursorMatches = this.push == 0
                      ? this.load_ItemStack.isEmpty()
                      : ItemStack.isSameItemSameComponents(this.load_ItemStack, this.init_ItemStack) && this.load_ItemStack.getCount() == this.push;
                   if (!cursorMatches || this.get != this.run + this.init_ItemStack.getCount() - this.push) {
-                     return this.init(CachePool.Inner_CachePool.pop, "Inventory transfer was not confirmed");
+                     return this.init(CachePool.Inner_CachePool.UNCERTAIN, "Inventory transfer was not confirmed");
                   }
 
                   if (this.push == 0) {
                      if (this.flush >= this.init_I) {
-                        return this.init(CachePool.Inner_CachePool.load, "Completed " + this.flush + " trades");
+                        return this.init(CachePool.Inner_CachePool.COMPLETE, "Completed " + this.flush + " trades");
                      }
 
-                     this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.sync;
+                     this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.DELAY;
                   } else {
-                     this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.write;
+                     this.init_CachePool_StreamUt = CachePool.Inner_StreamUtil.STORE;
                   }
                }
 
                this.sync = 0;
             } else if (++this.sync >= this.read_I) {
-               return this.init(CachePool.Inner_CachePool.pop, "Server confirmation timed out; purchase not repeated");
+               return this.init(CachePool.Inner_CachePool.UNCERTAIN, "Server confirmation timed out; purchase not repeated");
             }
 
             return this.init_CachePool_CachePoo;
          }
       } else {
-         return this.init(CachePool.Inner_CachePool.tick, "Trade screen changed");
+         return this.init(CachePool.Inner_CachePool.CANCELLED, "Trade screen changed");
       }
    }
 
@@ -469,14 +469,14 @@ public final class CachePool {
       if (this.init_CachePool_DataUtil != null
          && (
             !this.init_CachePool_DataUtil.init_ItemStack().isEmpty()
-               || (!this.load_Z() || this.init_CachePool_CachePoo == CachePool.Inner_CachePool.pop)
-                  && (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.read || this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.update)
+               || (!this.load_Z() || this.init_CachePool_CachePoo == CachePool.Inner_CachePool.UNCERTAIN)
+                  && (this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.TAKE || this.init_CachePool_StreamUt == CachePool.Inner_StreamUtil.STORED)
          )) {
          this.init_CachePool_DataUtil.init_V();
       }
 
       if (!this.load_Z()) {
-         this.init(CachePool.Inner_CachePool.tick, "Trade cancelled");
+         this.init(CachePool.Inner_CachePool.CANCELLED, "Trade cancelled");
       }
 
       if (init_CachePool == this) {
@@ -495,19 +495,19 @@ public final class CachePool {
    }
 
    public enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick;
+      RUNNING,
+      COMPLETE,
+      BUSY,
+      NO_MENU,
+      NO_MATCH,
+      OUT_OF_STOCK,
+      MISSING_INPUTS,
+      INVENTORY_FULL,
+      BUDGET,
+      CURSOR_BUSY,
+      REJECTED,
+      UNCERTAIN,
+      CANCELLED;
    }
 
    interface Inner_DataUtil {
@@ -537,11 +537,11 @@ public final class CachePool {
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      SELECT,
+      FILL,
+      TAKE,
+      STORE,
+      STORED,
+      DELAY;
    }
 }

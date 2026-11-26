@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 public class aA implements MacroAction {
    public String macroName = "";
    public int step = 1;
-   public aA.Inner_DataUtil mode = aA.Inner_DataUtil.load;
+   public aA.Inner_DataUtil mode = aA.Inner_DataUtil.COMPLETED_STEP;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
    private boolean init = true;
@@ -34,9 +34,9 @@ public class aA implements MacroAction {
       this.step = Math.max(1, tag.getIntOr("step", 1));
 
       try {
-         this.mode = aA.Inner_DataUtil.valueOf(tag.getStringOr("mode", aA.Inner_DataUtil.load.name()));
+         this.mode = aA.Inner_DataUtil.valueOf(tag.getStringOr("mode", aA.Inner_DataUtil.COMPLETED_STEP.name()));
       } catch (Exception ignored) {
-         this.mode = aA.Inner_DataUtil.load;
+         this.mode = aA.Inner_DataUtil.COMPLETED_STEP;
       }
 
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
@@ -46,13 +46,13 @@ public class aA implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_k_StreamGate;
+      return StreamGate.WAIT_MACRO_STEP;
    }
 
    @Override
    public String getDisplayName() {
       String name = this.macroName != null && !this.macroName.isBlank() ? this.macroName : "macro";
-      return this.mode == aA.Inner_DataUtil.read ? "Wait: " + name + " finished" : "Wait: " + name + " step " + this.step;
+      return this.mode == aA.Inner_DataUtil.FINISHED ? "Wait: " + name + " finished" : "Wait: " + name + " step " + this.step;
    }
 
    @Override
@@ -71,8 +71,8 @@ public class aA implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      STARTED_STEP,
+      COMPLETED_STEP,
+      FINISHED;
    }
 }

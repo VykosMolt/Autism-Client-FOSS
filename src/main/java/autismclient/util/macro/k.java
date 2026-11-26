@@ -104,7 +104,7 @@ public final class k {
             var10000 = actual.init();
             break;
          case "FAILED":
-            var10000 = actual == k.Inner_ConfigStore.sync || actual == k.Inner_ConfigStore.close || actual == k.Inner_ConfigStore.open;
+            var10000 = actual == k.Inner_ConfigStore.FAILED || actual == k.Inner_ConfigStore.TIMED_OUT || actual == k.Inner_ConfigStore.UNCERTAIN;
             break;
          default:
             var10000 = actual.name().equals(state);
@@ -129,23 +129,23 @@ public final class k {
 
    public record Inner_CachePool(k.Inner_ConfigStore init_k_ConfigStore, String init_Str, String load) {
       public boolean init_Z() {
-         return this.init_k_ConfigStore == k.Inner_ConfigStore.update;
+         return this.init_k_ConfigStore == k.Inner_ConfigStore.SUCCEEDED;
       }
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open;
+      IDLE,
+      WAITING,
+      RUNNING,
+      PAUSED,
+      SUCCEEDED,
+      FAILED,
+      CANCELLED,
+      TIMED_OUT,
+      UNCERTAIN;
 
       public boolean init() {
-         return this.ordinal() >= update.ordinal();
+         return this.ordinal() >= SUCCEEDED.ordinal();
       }
    }
 
@@ -166,7 +166,7 @@ public final class k {
       private final long init_J = init_AtomicLong.incrementAndGet();
       private final String init_Str;
       private final AtomicReference<k.Inner_CachePool> init_AtomicReference = new AtomicReference<>(
-         new k.Inner_CachePool(k.Inner_ConfigStore.load, "Waiting", "{}")
+         new k.Inner_CachePool(k.Inner_ConfigStore.WAITING, "Waiting", "{}")
       );
       private final CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
       private final CompletableFuture<k.Inner_CachePool> load = new CompletableFuture<>();
@@ -233,7 +233,7 @@ public final class k {
          if (state != null && !this.load.isDone()) {
             k.Inner_CachePool next = new k.Inner_CachePool(state, message == null ? "" : message, data == null ? "{}" : data);
             this.init_AtomicReference.set(next);
-            if (state == k.Inner_ConfigStore.read || state.init()) {
+            if (state == k.Inner_ConfigStore.RUNNING || state.init()) {
                this.init_CompletableFuture.complete(null);
             }
 

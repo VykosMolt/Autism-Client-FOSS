@@ -219,22 +219,22 @@ public final class aY {
       Vec3 normal = surface.load_Vec3();
       int var10000;
       switch (path.init_aS_StreamUtil()) {
-         case flush:
+         case SPLASH:
             var10000 = surface.load_Z() ? 15 : 14;
             break;
-         case close:
+         case LINGERING:
             var10000 = surface.load_Z() ? (surface.init_D() >= 4.0 ? 15 : 16) : 14;
             break;
-         case write:
+         case PEARL:
             var10000 = 17;
             break;
-         case poll:
+         case FISHING:
             var10000 = surface.init_Z() ? 18 : 14;
             break;
-         case push:
+         case WIND:
             var10000 = 19;
             break;
-         case pop:
+         case FIRE:
             var10000 = 20;
             break;
          default:
@@ -242,7 +242,7 @@ public final class aY {
       }
 
       int style = var10000;
-      int opacity = surface.load_Z() ? 240 : (path.init_aS_StreamUtil() == aS.Inner_StreamUtil.write ? 225 : 230);
+      int opacity = surface.load_Z() ? 240 : (path.init_aS_StreamUtil() == aS.Inner_StreamUtil.PEARL ? 225 : 230);
       if (!path.load_Z()) {
          opacity = (int)(opacity * 0.86);
       }
@@ -267,11 +267,11 @@ public final class aY {
    }
 
    private static boolean init(aS.Inner_StreamUtil item) {
-      return item == aS.Inner_StreamUtil.init_aS_StreamUtil
-         || item == aS.Inner_StreamUtil.load_aS_StreamUtil
-         || item == aS.Inner_StreamUtil.read
-         || item == aS.Inner_StreamUtil.update
-         || item == aS.Inner_StreamUtil.sync;
+      return item == aS.Inner_StreamUtil.BOW
+         || item == aS.Inner_StreamUtil.CROSSBOW
+         || item == aS.Inner_StreamUtil.TRIDENT
+         || item == aS.Inner_StreamUtil.SNOWBALL
+         || item == aS.Inner_StreamUtil.EGG;
    }
 
    private static AABB init(Entity entity, Vec3 camera, float partial, double margin) {

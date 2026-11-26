@@ -141,7 +141,7 @@ public class SyncManager extends KeyHolder {
             autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
             boolean overBar = metrics.init(mx, my);
             autismclient.gui.f.b.PoolEntry.init(graphics, metrics, overBar, this.init_Z);
-            this.load_List.add(new SyncManager.Inner_DataUtil(SyncManager.Inner_StreamUtil.load, innerX + innerW - 6, innerY, 6, innerH));
+            this.load_List.add(new SyncManager.Inner_DataUtil(SyncManager.Inner_StreamUtil.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -155,7 +155,7 @@ public class SyncManager extends KeyHolder {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
-      this.load_List.add(new SyncManager.Inner_DataUtil(SyncManager.Inner_StreamUtil.init, close.read(), close.write(), close.update(), close.sync()));
+      this.load_List.add(new SyncManager.Inner_DataUtil(SyncManager.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync()));
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int w, int h, int color) {
@@ -185,12 +185,12 @@ public class SyncManager extends KeyHolder {
 
       for (SyncManager.Inner_DataUtil hit : this.load_List) {
          if (hit.init(mx, my)) {
-            if (hit.init_SyncManager_Stream == SyncManager.Inner_StreamUtil.init && Compat263.mouseEventGlfwButton(event) == 0) {
+            if (hit.init_SyncManager_Stream == SyncManager.Inner_StreamUtil.CLOSE && Compat263.mouseEventGlfwButton(event) == 0) {
                this.onClose();
                return true;
             }
 
-            if (hit.init_SyncManager_Stream == SyncManager.Inner_StreamUtil.load && Compat263.mouseEventGlfwButton(event) == 0) {
+            if (hit.init_SyncManager_Stream == SyncManager.Inner_StreamUtil.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
                autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
                if (metrics.load(mx, my)) {
                   this.init_Z = true;
@@ -277,7 +277,7 @@ public class SyncManager extends KeyHolder {
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load;
+      CLOSE,
+      SCROLLBAR;
    }
 }

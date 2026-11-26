@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 
 public class as implements MacroAction {
-   public as.Inner_DataUtil condition = as.Inner_DataUtil.init;
+   public as.Inner_DataUtil condition = as.Inner_DataUtil.LOOKING_AT;
    public String entityId = "";
    public double range = 5.0;
    public boolean containerEntitiesOnly = false;
@@ -19,7 +19,7 @@ public class as implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_G_StreamGate;
+      return StreamGate.WAIT_ENTITY_TARGET;
    }
 
    public boolean init(Minecraft mc) {
@@ -32,11 +32,11 @@ public class as implements MacroAction {
          String expectedEntity = entityResolution.init_Str();
          boolean var10000;
          switch (this.condition) {
-            case init:
+            case LOOKING_AT:
                var10000 = this.init(mc.crosshairPickEntity, expectedEntity);
                break;
-            case load:
-            case write:
+            case WITHIN_REACH:
+            case NEARBY:
                boolean found = false;
 
                for (Entity entity : mc.level.entitiesForRendering()) {
@@ -48,7 +48,7 @@ public class as implements MacroAction {
 
                var10000 = found;
                break;
-            case read:
+            case MOUNTED_IN:
                var10000 = this.init(mc.player.getVehicle(), expectedEntity);
                break;
             default:
@@ -93,7 +93,7 @@ public class as implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = i.init(as.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), as.Inner_DataUtil.init);
+      this.condition = i.init(as.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), as.Inner_DataUtil.LOOKING_AT);
       this.entityId = tag.getStringOr("entityId", "");
       this.range = tag.getDoubleOr("range", 5.0);
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);
@@ -112,9 +112,9 @@ public class as implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      LOOKING_AT,
+      WITHIN_REACH,
+      MOUNTED_IN,
+      NEARBY;
    }
 }

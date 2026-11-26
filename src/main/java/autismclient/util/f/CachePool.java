@@ -31,7 +31,7 @@ public final class CachePool {
    public CachePool(BufferHelper host) {
       this.init_DataUtil_DataUtil = DataUtil.Inner_DataUtil.init_DataUtil_DataUtil;
       this.init_StreamUtil = StreamUtil.load_StreamUtil();
-      this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.init;
+      this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.IDLE;
       this.close = -9223372036854775808L;
       this.init_Str = "";
       this.load_Str = "";
@@ -51,7 +51,7 @@ public final class CachePool {
 
    public void init(String line) {
       DataUtil.Inner_DataUtil detection = DataUtil.init(line);
-      if (detection.init_DataUtil_StreamUti() != DataUtil.Inner_StreamUtil.init) {
+      if (detection.init_DataUtil_StreamUti() != DataUtil.Inner_StreamUtil.NONE) {
          this.init_DataUtil_DataUtil = detection;
       }
    }
@@ -62,7 +62,7 @@ public final class CachePool {
 
    public boolean init_Z() {
       CachePool.Inner_DataUtil current = this.init_CachePool_DataUtil;
-      return current == CachePool.Inner_DataUtil.update || current == CachePool.Inner_DataUtil.sync;
+      return current == CachePool.Inner_DataUtil.DONE || current == CachePool.Inner_DataUtil.GAVE_UP;
    }
 
    public int init_I() {
@@ -71,9 +71,9 @@ public final class CachePool {
 
    public void load(long now) {
       this.init_V();
-      if (this.init_CachePool_DataUtil != CachePool.Inner_DataUtil.init && !this.init_Z()) {
+      if (this.init_CachePool_DataUtil != CachePool.Inner_DataUtil.IDLE && !this.init_Z()) {
          if (now - this.load_J >= this.init_StreamUtil.init_J()) {
-            this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.sync;
+            this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.GAVE_UP;
          } else if (!this.init_Z(now)) {
             this.read(now);
          }
@@ -97,7 +97,7 @@ public final class CachePool {
          this.close = -9223372036854775808L;
          this.init_Str = "";
          this.load_Str = "";
-         this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.load;
+         this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.WATCHING;
       }
    }
 
@@ -162,7 +162,7 @@ public final class CachePool {
 
       this.close = snapshot.generation();
       if (hasText) {
-         this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.write;
+         this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.LOGGING_IN;
          this.sync = now + this.init_StreamUtil.read();
       }
 
@@ -179,7 +179,7 @@ public final class CachePool {
 
          if (now - this.read_J >= this.init_StreamUtil.load_J()) {
             DataUtil.Inner_DataUtil detection = this.init_DataUtil_DataUtil;
-            if (detection.init_DataUtil_StreamUti() != DataUtil.Inner_StreamUtil.init) {
+            if (detection.init_DataUtil_StreamUti() != DataUtil.Inner_StreamUtil.NONE) {
                if (now >= this.write) {
                   if (this.init_I >= this.init_StreamUtil.init_I()) {
                      this.load();
@@ -195,14 +195,14 @@ public final class CachePool {
                         } else {
                            this.init_I++;
                            this.write = now + this.init_StreamUtil.read();
-                           if (detection.init_DataUtil_StreamUti() == DataUtil.Inner_StreamUtil.load) {
+                           if (detection.init_DataUtil_StreamUti() == DataUtil.Inner_StreamUtil.REGISTER) {
                               this.init_Str = detection.init_Str();
-                              this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.read;
+                              this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.REGISTERING;
                               this.init_Z = true;
                               this.flush = now + this.init_StreamUtil.update();
                            } else {
                               this.load_Str = detection.init_Str();
-                              this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.write;
+                              this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.LOGGING_IN;
                               this.init_Z = false;
                               this.sync = now + this.init_StreamUtil.read();
                            }
@@ -212,8 +212,8 @@ public final class CachePool {
                }
             } else if (this.init_Z && now >= this.flush) {
                this.write(now);
-            } else if (this.init_CachePool_DataUtil == CachePool.Inner_DataUtil.write && this.sync != 0L && now >= this.sync) {
-               this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.update;
+            } else if (this.init_CachePool_DataUtil == CachePool.Inner_DataUtil.LOGGING_IN && this.sync != 0L && now >= this.sync) {
+               this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.DONE;
             }
          }
       }
@@ -233,7 +233,7 @@ public final class CachePool {
             } else {
                this.init_I++;
                this.write = now + this.init_StreamUtil.read();
-               this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.write;
+               this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.LOGGING_IN;
                this.sync = now + this.init_StreamUtil.read();
             }
          }
@@ -246,7 +246,7 @@ public final class CachePool {
          this.init_BufferHelper.init_V("Auto login failed after " + this.init_StreamUtil.init_I() + " attempts - check the password.");
       }
 
-      this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.sync;
+      this.init_CachePool_DataUtil = CachePool.Inner_DataUtil.GAVE_UP;
    }
 
    private void load(String context) {
@@ -257,11 +257,11 @@ public final class CachePool {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      IDLE,
+      WATCHING,
+      REGISTERING,
+      LOGGING_IN,
+      DONE,
+      GAVE_UP;
    }
 }

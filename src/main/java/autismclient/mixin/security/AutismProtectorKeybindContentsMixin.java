@@ -58,7 +58,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements NetHelper {
    @WrapOperation(method = "getNestedComponent", at = @At(value = "INVOKE", target = "Ljava/util/function/Supplier;get()Ljava/lang/Object;"))
    private Object autism$tagResolvedKeybind(Supplier<?> supplier, Operation<Object> original) {
       if (this.autism$fromPacket
-         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.init)
+         && (this.autism$packetOrigin == null || this.autism$packetOrigin.init_BufferHelper_Cache() == BufferHelper.Inner_CachePool.VANILLA)
          && !MethodUtil.init_Z(this.name)) {
          Component replacement = Component.translatable(this.name);
          StreamUtil.init(replacement, this.autism$packetOrigin);

@@ -8,7 +8,7 @@ public class au implements MacroAction, aP {
    public String pattern = "";
    public String patternJson = "";
    public boolean useRegex = false;
-   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.init;
+   public UtilCore.Inner_DataUtil matchMode = UtilCore.Inner_DataUtil.MATCH;
    public String saveAs = "";
    public int fuzzyPercent = 100;
    public boolean serverMessageOnly = false;
@@ -70,9 +70,9 @@ public class au implements MacroAction, aP {
       this.matchMode = i.init(
          UtilCore.Inner_DataUtil.class,
          tag.getStringOr("matchMode", this.useRegex ? "REGEX" : "MATCH"),
-         this.useRegex ? UtilCore.Inner_DataUtil.read : UtilCore.Inner_DataUtil.init
+         this.useRegex ? UtilCore.Inner_DataUtil.REGEX : UtilCore.Inner_DataUtil.MATCH
       );
-      this.useRegex = this.matchMode == UtilCore.Inner_DataUtil.read;
+      this.useRegex = this.matchMode == UtilCore.Inner_DataUtil.REGEX;
       this.saveAs = tag.getStringOr("saveAs", "");
       if (tag.contains("fuzzyPercent")) {
          this.fuzzyPercent = init_I_I_8(tag.getIntOr("fuzzyPercent", 100));
@@ -100,13 +100,13 @@ public class au implements MacroAction, aP {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.block;
+      return StreamGate.WAIT_CHAT;
    }
 
    @Override
    public String getDisplayName() {
       String desc = this.pattern.isEmpty() ? "Any Chat" : this.pattern;
-      if (this.init_UtilCore_DataUtil() == UtilCore.Inner_DataUtil.init) {
+      if (this.init_UtilCore_DataUtil() == UtilCore.Inner_DataUtil.MATCH) {
          desc = desc + " (~" + init_I_I_8(this.fuzzyPercent) + "%)";
       } else {
          desc = desc + " [" + this.init_UtilCore_DataUtil().name().toLowerCase(Locale.ROOT) + "]";
@@ -172,9 +172,9 @@ public class au implements MacroAction, aP {
 
    public UtilCore.Inner_DataUtil init_UtilCore_DataUtil() {
       if (this.matchMode == null) {
-         return this.useRegex ? UtilCore.Inner_DataUtil.read : UtilCore.Inner_DataUtil.init;
+         return this.useRegex ? UtilCore.Inner_DataUtil.REGEX : UtilCore.Inner_DataUtil.MATCH;
       } else {
-         return this.useRegex && this.matchMode == UtilCore.Inner_DataUtil.init ? UtilCore.Inner_DataUtil.read : this.matchMode;
+         return this.useRegex && this.matchMode == UtilCore.Inner_DataUtil.MATCH ? UtilCore.Inner_DataUtil.REGEX : this.matchMode;
       }
    }
 }

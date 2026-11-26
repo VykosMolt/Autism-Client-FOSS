@@ -177,10 +177,10 @@ public final class RenderState<T> {
             }
 
             int labelMaxWidth = Math.max(20, availableWidth - reservedWidth);
-            String trimmedLabel = cs.init(textRenderer, label, labelMaxWidth, cs.Inner_DataUtil.read);
+            String trimmedLabel = cs.init(textRenderer, label, labelMaxWidth, cs.Inner_DataUtil.BODY);
             cs.init(ctx, textRenderer, trimmedLabel, textColor, textX, textY, false);
             if (badge != null && !badge.isEmpty()) {
-               int labelWidth = cs.init(textRenderer, trimmedLabel, cs.Inner_DataUtil.read);
+               int labelWidth = cs.init(textRenderer, trimmedLabel, cs.Inner_DataUtil.BODY);
                int badgeX = textX + labelWidth + 4;
                int badgeColor = this.read_Function != null ? this.read_Function.apply(item) : -22016;
                cs.init(ctx, textRenderer, badge, badgeColor, badgeX, textY, false);

@@ -19,8 +19,8 @@ public final class ca {
          String host = destHost == null ? "" : destHost.trim();
          if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !init(proxy)) {
             int timeout = Math.max(1, timeoutMs);
-            bZ primary = proxy.init_bZ == bZ.init ? bZ.init : bZ.load;
-            bZ secondary = primary == bZ.init ? bZ.load : bZ.init;
+            bZ primary = proxy.init_bZ == bZ.Socks4 ? bZ.Socks4 : bZ.Socks5;
+            bZ secondary = primary == bZ.Socks4 ? bZ.Socks5 : bZ.Socks4;
             ca.Inner_DataUtil first = init(proxy, primary, host, destPort, timeout);
             if (first.init_Z()) {
                return first;
@@ -29,17 +29,17 @@ public final class ca {
                if (second.init_Z()) {
                   return second;
                } else {
-                  return (first.init_ca_StreamUtil() == ca.Inner_StreamUtil.write || first.init_ca_StreamUtil() == ca.Inner_StreamUtil.read)
-                        && second.init_ca_StreamUtil() == ca.Inner_StreamUtil.load
+                  return (first.init_ca_StreamUtil() == ca.Inner_StreamUtil.REFUSED || first.init_ca_StreamUtil() == ca.Inner_StreamUtil.TIMEOUT)
+                        && second.init_ca_StreamUtil() == ca.Inner_StreamUtil.OFFLINE
                      ? first
                      : second;
                }
             }
          } else {
-            return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.init);
+            return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.INVALID);
          }
       } else {
-         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.init);
+         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.INVALID);
       }
    }
 
@@ -61,19 +61,19 @@ public final class ca {
          socket.connect(new InetSocketAddress(proxy.read, proxy.init_I), timeout);
          OutputStream out = socket.getOutputStream();
          InputStream in = socket.getInputStream();
-         ca.Inner_StreamUtil state = type == bZ.init ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
-         if (state != ca.Inner_StreamUtil.update) {
+         ca.Inner_StreamUtil state = type == bZ.Socks4 ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
+         if (state != ca.Inner_StreamUtil.VERIFIED) {
             return ca.Inner_DataUtil.init(state);
          }
 
          long latency = Math.max(0L, (System.nanoTime() - started) / 1000000L);
-         return new ca.Inner_DataUtil(true, latency, type, ca.Inner_StreamUtil.update);
+         return new ca.Inner_DataUtil(true, latency, type, ca.Inner_StreamUtil.VERIFIED);
       } catch (SocketTimeoutException ignored) {
-         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.read);
+         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.TIMEOUT);
       } catch (ConnectException ignored) {
-         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.write);
+         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.REFUSED);
       } catch (IOException | RuntimeException ignored) {
-         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.load);
+         return ca.Inner_DataUtil.init(ca.Inner_StreamUtil.OFFLINE);
       }
    }
 
@@ -90,20 +90,20 @@ public final class ca {
       if (method.length >= 2 && method[0] == 5) {
          int chosen = method[1] & 255;
          if (chosen == 255) {
-            return ca.Inner_StreamUtil.write;
+            return ca.Inner_StreamUtil.REFUSED;
          }
 
          if (chosen == 2) {
             if (!hasAuth) {
-               return ca.Inner_StreamUtil.load;
+               return ca.Inner_StreamUtil.OFFLINE;
             }
 
             ca.Inner_StreamUtil authenticated = init(out, in, proxy);
-            if (authenticated != ca.Inner_StreamUtil.update) {
+            if (authenticated != ca.Inner_StreamUtil.VERIFIED) {
                return authenticated;
             }
          } else if (chosen != 0) {
-            return ca.Inner_StreamUtil.load;
+            return ca.Inner_StreamUtil.OFFLINE;
          }
 
          byte[] domain = host.getBytes(StandardCharsets.UTF_8);
@@ -139,15 +139,15 @@ public final class ca {
 
             int addressLength = var10000;
             if (addressLength >= 0 && init(in, addressLength + 2).length >= addressLength + 2) {
-               return reply[1] == 0 ? ca.Inner_StreamUtil.update : ca.Inner_StreamUtil.write;
+               return reply[1] == 0 ? ca.Inner_StreamUtil.VERIFIED : ca.Inner_StreamUtil.REFUSED;
             } else {
-               return ca.Inner_StreamUtil.load;
+               return ca.Inner_StreamUtil.OFFLINE;
             }
          } else {
-            return ca.Inner_StreamUtil.load;
+            return ca.Inner_StreamUtil.OFFLINE;
          }
       } else {
-         return ca.Inner_StreamUtil.load;
+         return ca.Inner_StreamUtil.OFFLINE;
       }
    }
 
@@ -164,9 +164,9 @@ public final class ca {
       out.flush();
       byte[] reply = init(in, 2);
       if (reply.length >= 2 && reply[0] == 1) {
-         return reply[1] == 0 ? ca.Inner_StreamUtil.update : ca.Inner_StreamUtil.write;
+         return reply[1] == 0 ? ca.Inner_StreamUtil.VERIFIED : ca.Inner_StreamUtil.REFUSED;
       } else {
-         return ca.Inner_StreamUtil.load;
+         return ca.Inner_StreamUtil.OFFLINE;
       }
    }
 
@@ -195,9 +195,9 @@ public final class ca {
       out.flush();
       byte[] reply = init(in, 8);
       if (reply.length >= 8 && reply[0] == 0) {
-         return reply[1] == 90 ? ca.Inner_StreamUtil.update : ca.Inner_StreamUtil.write;
+         return reply[1] == 90 ? ca.Inner_StreamUtil.VERIFIED : ca.Inner_StreamUtil.REFUSED;
       } else {
-         return ca.Inner_StreamUtil.load;
+         return ca.Inner_StreamUtil.OFFLINE;
       }
    }
 
@@ -235,7 +235,7 @@ public final class ca {
 
    public record Inner_DataUtil(boolean init_Z, long init_J, bZ init_bZ, ca.Inner_StreamUtil init_ca_StreamUtil) {
       public Inner_DataUtil(boolean ok, long latencyMs, bZ workingType) {
-         this(ok, latencyMs, workingType, ok ? ca.Inner_StreamUtil.update : ca.Inner_StreamUtil.load);
+         this(ok, latencyMs, workingType, ok ? ca.Inner_StreamUtil.VERIFIED : ca.Inner_StreamUtil.OFFLINE);
       }
 
       public Inner_DataUtil(boolean ok, long latencyMs) {
@@ -248,10 +248,10 @@ public final class ca {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      INVALID,
+      OFFLINE,
+      TIMEOUT,
+      REFUSED,
+      VERIFIED;
    }
 }

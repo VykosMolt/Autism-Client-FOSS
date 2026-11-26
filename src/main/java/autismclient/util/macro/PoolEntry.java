@@ -12,7 +12,7 @@ public class PoolEntry implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_J_StreamGate;
+      return StreamGate.FINALLY;
    }
 
    @Override

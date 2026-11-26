@@ -172,7 +172,7 @@ public final class MacroActionRegistry {
       if (schema != null) {
          for (FieldDef field : schema.fields()) {
             String key = field.key();
-            if (field.type() == CachePool.close) {
+            if (field.type() == CachePool.BLOCK_POS) {
                for (String axisKey : field.xyzKeys()) {
                   if (axisKey != null && !axisKey.isEmpty() && !tag.contains(axisKey)) {
                      return "schema field '" + axisKey + "' is not written by toTag()/save()";

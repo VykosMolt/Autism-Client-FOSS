@@ -78,8 +78,8 @@ public final class NetHelper extends KeyHolder {
 
    public NetHelper(Screen parent, n module, m start) {
       super(Component.literal("Crosshair Editor"));
-      this.init_NetHelper_ConfigSt = NetHelper.Inner_ConfigStore.init_NetHelper_ConfigSt;
-      this.load_NetHelper_ConfigSt = NetHelper.Inner_ConfigStore.init_NetHelper_ConfigSt;
+      this.init_NetHelper_ConfigSt = NetHelper.Inner_ConfigStore.PEN;
+      this.load_NetHelper_ConfigSt = NetHelper.Inner_ConfigStore.PEN;
       this.poll = 1;
       this.write_Z = true;
       this.push = 16777215;
@@ -131,7 +131,7 @@ public final class NetHelper extends KeyHolder {
             .add(
                new NetHelper.Inner_DataUtil(
                   autismclient.gui.f.NetHelper.init(cx, rowY, chipW, ctl),
-                  NetHelper.Inner_StreamUtil.init,
+                  NetHelper.Inner_StreamUtil.CHIP,
                   Integer.toString(option),
                   this.open == option,
                   null,
@@ -166,7 +166,7 @@ public final class NetHelper extends KeyHolder {
             .add(
                new NetHelper.Inner_DataUtil(
                   autismclient.gui.f.NetHelper.init(tx + i % 2 * (half + gap), ty + i / 2 * (ctl + gap), half, ctl),
-                  NetHelper.Inner_StreamUtil.init,
+                  NetHelper.Inner_StreamUtil.CHIP,
                   option.init_Str,
                   this.init_NetHelper_ConfigSt == option,
                   null,
@@ -181,7 +181,7 @@ public final class NetHelper extends KeyHolder {
          .add(
             new NetHelper.Inner_DataUtil(
                autismclient.gui.f.NetHelper.init(tx + half + gap, ty + tools.length / 2 * (ctl + gap), half, ctl),
-               NetHelper.Inner_StreamUtil.init,
+               NetHelper.Inner_StreamUtil.CHIP,
                "Filled",
                this.read_Z,
                null,
@@ -202,7 +202,7 @@ public final class NetHelper extends KeyHolder {
             .add(
                new NetHelper.Inner_DataUtil(
                   autismclient.gui.f.NetHelper.init(tx + (b - 1) * (brushW + gap), ty, brushW, ctl),
-                  NetHelper.Inner_StreamUtil.init,
+                  NetHelper.Inner_StreamUtil.CHIP,
                   Integer.toString(b),
                   this.poll == b,
                   null,
@@ -217,7 +217,7 @@ public final class NetHelper extends KeyHolder {
       this.clear = ty;
       ty += rowText;
       p.Inner_NetHelper[] presets = new p.Inner_NetHelper[]{
-         p.Inner_NetHelper.init_p_NetHelper, p.Inner_NetHelper.load, p.Inner_NetHelper.read, p.Inner_NetHelper.write
+         p.Inner_NetHelper.CROSS, p.Inner_NetHelper.TACTICAL, p.Inner_NetHelper.CIRCLE, p.Inner_NetHelper.CHEVRON
       };
 
       for (int i = 0; i < presets.length; i++) {
@@ -226,7 +226,7 @@ public final class NetHelper extends KeyHolder {
             .add(
                new NetHelper.Inner_DataUtil(
                   autismclient.gui.f.NetHelper.init(tx + i % 2 * (half + gap), ty + i / 2 * (ctl + gap), half, ctl),
-                  NetHelper.Inner_StreamUtil.load,
+                  NetHelper.Inner_StreamUtil.BUTTON,
                   preset.init_Str,
                   false,
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -248,7 +248,7 @@ public final class NetHelper extends KeyHolder {
       this.init_NetHelper = autismclient.gui.f.NetHelper.init(sx + 4, iy, 40, 16);
       this.init_List
          .add(
-            new NetHelper.Inner_DataUtil(this.init_NetHelper, NetHelper.Inner_StreamUtil.read, "", false, null, this.read_I_9(), "Pick any color", this::update)
+            new NetHelper.Inner_DataUtil(this.init_NetHelper, NetHelper.Inner_StreamUtil.SWATCH, "", false, null, this.read_I_9(), "Pick any color", this::update)
          );
       iy += 20;
 
@@ -260,7 +260,7 @@ public final class NetHelper extends KeyHolder {
             .add(
                new NetHelper.Inner_DataUtil(
                   autismclient.gui.f.NetHelper.init(sx + 4 + col * (swatch + gap), iy + row * (swatch + gap), swatch, swatch),
-                  NetHelper.Inner_StreamUtil.read,
+                  NetHelper.Inner_StreamUtil.SWATCH,
                   "",
                   this.push == color,
                   null,
@@ -296,7 +296,7 @@ public final class NetHelper extends KeyHolder {
          .add(
             new NetHelper.Inner_DataUtil(
                autismclient.gui.f.NetHelper.init(x + w - 6 - doneW, bottomY, doneW, ctl),
-               NetHelper.Inner_StreamUtil.load,
+               NetHelper.Inner_StreamUtil.BUTTON,
                "Done",
                false,
                autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
@@ -309,7 +309,7 @@ public final class NetHelper extends KeyHolder {
          .add(
             new NetHelper.Inner_DataUtil(
                autismclient.gui.f.NetHelper.init(x + w - 6 - doneW - gap - cancelW, bottomY, cancelW, ctl),
-               NetHelper.Inner_StreamUtil.load,
+               NetHelper.Inner_StreamUtil.BUTTON,
                "Cancel",
                false,
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
@@ -326,7 +326,7 @@ public final class NetHelper extends KeyHolder {
       int w = this.init_I_Str_13(label) + 12;
       this.init_List
          .add(
-            new NetHelper.Inner_DataUtil(autismclient.gui.f.NetHelper.init(x, y, w, h), NetHelper.Inner_StreamUtil.init, label, selected, null, 0, tip, action)
+            new NetHelper.Inner_DataUtil(autismclient.gui.f.NetHelper.init(x, y, w, h), NetHelper.Inner_StreamUtil.CHIP, label, selected, null, 0, tip, action)
          );
       return x + w + 2;
    }
@@ -336,7 +336,7 @@ public final class NetHelper extends KeyHolder {
       this.init_List
          .add(
             new NetHelper.Inner_DataUtil(
-               autismclient.gui.f.NetHelper.init(right - w, y, w, h), NetHelper.Inner_StreamUtil.load, label, false, tone, 0, tip, action
+               autismclient.gui.f.NetHelper.init(right - w, y, w, h), NetHelper.Inner_StreamUtil.BUTTON, label, false, tone, 0, tip, action
             )
          );
       return right - w - 2;
@@ -394,13 +394,13 @@ public final class NetHelper extends KeyHolder {
             }
 
             switch (control.init_NetHelper_StreamUt()) {
-               case init:
+               case CHIP:
                   autismclient.gui.f.b.ConfigStore.init(context, control.init_NetHelper(), control.init_Str(), control.init_Z(), over);
                   break;
-               case load:
+               case BUTTON:
                   autismclient.gui.f.b.CachePool.init(context, control.init_NetHelper(), control.init_Str(), control.init_CachePool_DataUtil(), over, false);
                   break;
-               case read:
+               case SWATCH:
                   this.init(context, control.init_NetHelper(), control.init_I(), control.init_Z(), over);
             }
          }
@@ -497,16 +497,16 @@ public final class NetHelper extends KeyHolder {
          this.stop = Math.min(this.open - 1, (mx - canvas.read()) / cell);
          this.next = Math.min(this.open - 1, (my - canvas.write()) / cell);
          if (this.tick < 0) {
-            int mark = this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.load_NetHelper_ConfigSt
+            int mark = this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.ERASER
                ? 1728007501
                : (
-                  this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.flush
-                        && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.read_NetHelper_ConfigSt
+                  this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.PICKER
+                        && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.FILL
                      ? this.read_I_9() & 16777215 | -1728053248
                      : 1728053247
                );
-            int span = this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.init_NetHelper_ConfigSt
-                  && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.load_NetHelper_ConfigSt
+            int span = this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.PEN
+                  && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.ERASER
                   && !this.init_NetHelper_ConfigSt.init()
                ? 1
                : this.poll;
@@ -544,7 +544,7 @@ public final class NetHelper extends KeyHolder {
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box) {
       q.Inner_DataUtil look = this.init_n.init_q_DataUtil_m(this.init_m());
       q.Inner_DataUtil shown = new q.Inner_DataUtil(
-         p.Inner_NetHelper.update,
+         p.Inner_NetHelper.CUSTOM,
          look.init_D(),
          look.load_D(),
          look.read_D(),
@@ -649,7 +649,7 @@ public final class NetHelper extends KeyHolder {
          } else {
             int cx = Math.min(this.open - 1, (mx - canvas.read()) / layout.load_I());
             int cy = Math.min(this.open - 1, (my - canvas.write()) / layout.load_I());
-            if (button != 2 && (button != 0 || !event.hasAltDown() && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.flush)) {
+            if (button != 2 && (button != 0 || !event.hasAltDown() && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.PICKER)) {
                if (button == 0 || button == 1) {
                   this.init(button, cx, cy, event.hasShiftDown());
                }
@@ -800,7 +800,7 @@ public final class NetHelper extends KeyHolder {
    }
 
    private void init_V_NetHelper_ConfigSt(NetHelper.Inner_ConfigStore option) {
-      if (option == NetHelper.Inner_ConfigStore.flush && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.flush) {
+      if (option == NetHelper.Inner_ConfigStore.PICKER && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.PICKER) {
          this.load_NetHelper_ConfigSt = this.init_NetHelper_ConfigSt;
       }
 
@@ -817,12 +817,12 @@ public final class NetHelper extends KeyHolder {
    }
 
    private void write_V_8() {
-      if (this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.flush) {
-         this.init_NetHelper_ConfigSt = this.load_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.load_NetHelper_ConfigSt
-            ? NetHelper.Inner_ConfigStore.init_NetHelper_ConfigSt
+      if (this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.PICKER) {
+         this.init_NetHelper_ConfigSt = this.load_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.ERASER
+            ? NetHelper.Inner_ConfigStore.PEN
             : this.load_NetHelper_ConfigSt;
-      } else if (this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.load_NetHelper_ConfigSt) {
-         this.init_NetHelper_ConfigSt = NetHelper.Inner_ConfigStore.init_NetHelper_ConfigSt;
+      } else if (this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.ERASER) {
+         this.init_NetHelper_ConfigSt = NetHelper.Inner_ConfigStore.PEN;
       }
    }
 
@@ -852,14 +852,14 @@ public final class NetHelper extends KeyHolder {
       this.get = this.put = y;
       int paint = this.write_I_8();
       switch (this.init_NetHelper_ConfigSt) {
-         case read_NetHelper_ConfigSt:
+         case FILL:
             for (int[] seed : this.init_List(x, y)) {
                this.read(seed[0], seed[1], paint);
             }
             break;
-         case write:
-         case update:
-         case sync:
+         case LINE:
+         case BOX:
+         case CIRCLE:
             this.load(x, y, shift);
             break;
          default:
@@ -872,16 +872,16 @@ public final class NetHelper extends KeyHolder {
    private void init(int x, int y, boolean shift) {
       if (x != this.set || y != this.put || this.init_NetHelper_ConfigSt.init()) {
          switch (this.init_NetHelper_ConfigSt) {
-            case init_NetHelper_ConfigSt:
-            case load_NetHelper_ConfigSt:
+            case PEN:
+            case ERASER:
                this.read(this.set, this.put, x, y, this.write_I_8());
                break;
-            case read_NetHelper_ConfigSt:
+            case FILL:
             default:
                return;
-            case write:
-            case update:
-            case sync:
+            case LINE:
+            case BOX:
+            case CIRCLE:
                this.load_IArr = (int[])this.read_IArr.clone();
                this.load(x, y, shift);
          }
@@ -912,7 +912,7 @@ public final class NetHelper extends KeyHolder {
    }
 
    private int write_I_8() {
-      return this.tick != 1 && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.load_NetHelper_ConfigSt ? this.read_I_9() : 0;
+      return this.tick != 1 && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.ERASER ? this.read_I_9() : 0;
    }
 
    private void load(int x, int y, boolean shift) {
@@ -920,7 +920,7 @@ public final class NetHelper extends KeyHolder {
       int dx = x - this.run;
       int dy = y - this.get;
       switch (this.init_NetHelper_ConfigSt) {
-         case write:
+         case LINE:
             if (shift) {
                if (Math.abs(dx) > 2 * Math.abs(dy)) {
                   dy = 0;
@@ -935,8 +935,8 @@ public final class NetHelper extends KeyHolder {
 
             this.read(this.run, this.get, this.init_I_I_9(this.run + dx), this.init_I_I_9(this.get + dy), paint);
             break;
-         case update:
-         case sync:
+         case BOX:
+         case CIRCLE:
             if (shift) {
                int d = Math.max(Math.abs(dx), Math.abs(dy));
                dx = (dx < 0 ? -1 : 1) * d;
@@ -947,7 +947,7 @@ public final class NetHelper extends KeyHolder {
             int x1 = Math.max(this.run, this.init_I_I_9(this.run + dx));
             int y0 = Math.min(this.get, this.init_I_I_9(this.get + dy));
             int y1 = Math.max(this.get, this.init_I_I_9(this.get + dy));
-            if (this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.update) {
+            if (this.init_NetHelper_ConfigSt == NetHelper.Inner_ConfigStore.BOX) {
                this.init(x0, y0, x1, y1, paint);
             } else {
                this.load(x0, y0, x1, y1, paint);
@@ -1027,8 +1027,8 @@ public final class NetHelper extends KeyHolder {
 
    private void init_V(int x, int y, int paint) {
       int span = !this.init_NetHelper_ConfigSt.init()
-            && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.init_NetHelper_ConfigSt
-            && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.load_NetHelper_ConfigSt
+            && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.PEN
+            && this.init_NetHelper_ConfigSt != NetHelper.Inner_ConfigStore.ERASER
          ? 1
          : this.poll;
       int from = -(span - 1) / 2;
@@ -1219,13 +1219,13 @@ public final class NetHelper extends KeyHolder {
    }
 
    private enum Inner_ConfigStore {
-      init_NetHelper_ConfigSt("Pen", "Draw pixels (B)", "Left draws, right erases", 66),
-      load_NetHelper_ConfigSt("Eraser", "Erase pixels (E)", "Click or drag to erase", 69),
-      read_NetHelper_ConfigSt("Fill", "Fill an area (F)", "Fills touching same color", 70),
-      write("Line", "Straight line (L)", "Drag, Shift snaps angles", 76),
-      update("Box", "Rectangle (R)", "Drag, Shift makes squares", 82),
-      sync("Circle", "Circle (C)", "Drag, Shift makes circles", 67),
-      flush("Picker", "Copy a color (I)", "Click a pixel to copy", 73);
+      PEN("Pen", "Draw pixels (B)", "Left draws, right erases", 66),
+      ERASER("Eraser", "Erase pixels (E)", "Click or drag to erase", 69),
+      FILL("Fill", "Fill an area (F)", "Fills touching same color", 70),
+      LINE("Line", "Straight line (L)", "Drag, Shift snaps angles", 76),
+      BOX("Box", "Rectangle (R)", "Drag, Shift makes squares", 82),
+      CIRCLE("Circle", "Circle (C)", "Drag, Shift makes circles", 67),
+      PICKER("Picker", "Copy a color (I)", "Click a pixel to copy", 73);
 
       final String init_Str;
       final String load_Str;
@@ -1240,7 +1240,7 @@ public final class NetHelper extends KeyHolder {
       }
 
       boolean init() {
-         return this == write || this == update || this == sync;
+         return this == LINE || this == BOX || this == CIRCLE;
       }
    }
 
@@ -1257,8 +1257,8 @@ public final class NetHelper extends KeyHolder {
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      CHIP,
+      BUTTON,
+      SWATCH;
    }
 }

@@ -1501,7 +1501,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
                return new t.Inner_NetHelper(chosen, hand, range, candidate, entry.init_U_StateCache(), chosenDamage);
             }
 
-            if (refusal[0] == autismclient.util.U.Inner_JsonUtil.push) {
+            if (refusal[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
                this.size = index;
                return null;
             }
@@ -1951,7 +1951,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
             return new t.Inner_TaskQueue(cell, resolved, range, candidate, accepted.get(i).init_S_BufferHelper().load(), slot);
          }
 
-         if (refusal[0] == autismclient.util.U.Inner_JsonUtil.push) {
+         if (refusal[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
             return null;
          }
 
@@ -2333,7 +2333,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
             return new t.Inner_TaskQueue(cell.init_BlockPos(), resolved, range, candidate, cell.init_D(), slot);
          }
 
-         if (refusal[0] == autismclient.util.U.Inner_JsonUtil.push) {
+         if (refusal[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
             return null;
          }
 
@@ -2566,7 +2566,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
       autismclient.util.U.Inner_JsonUtil[] refusal = new autismclient.util.U.Inner_JsonUtil[1];
       autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init(request, refusal);
       if (candidate == null) {
-         if (refusal[0] != autismclient.util.U.Inner_JsonUtil.push) {
+         if (refusal[0] != autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
             this.load_BlockPos = null;
          }
 
@@ -2640,7 +2640,7 @@ public final class t extends Module implements cn.Inner_DataUtil {
                return new t.Inner_NetHelper(support, hand, range, candidate, request, damage);
             }
 
-            if (refusal[0] == autismclient.util.U.Inner_JsonUtil.push) {
+            if (refusal[0] == autismclient.util.U.Inner_JsonUtil.NO_BUDGET) {
                this.init_HashUtil.init(option);
                return null;
             }

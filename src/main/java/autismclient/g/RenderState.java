@@ -541,7 +541,7 @@ public class RenderState extends HttpURLConnection {
                   throw new IOException("Invalid connection proxy credentials");
                }
 
-               if (frozen.init_bZ() == bZ.init) {
+               if (frozen.init_bZ() == bZ.Socks4) {
                   byte[] address = target.init_List().getFirst().getAddress();
                   if (address.length != 4) {
                      throw new IOException("SOCKS4 resource packs require an IPv4 target");

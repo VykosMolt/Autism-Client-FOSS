@@ -77,7 +77,7 @@ public class NodeWalker extends KeyHolder {
    private int run;
 
    private static int read_I_10() {
-      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.read);
+      return ct.init_I_I_ct_DataUtil(-4743522, ct.Inner_DataUtil.TEXT);
    }
 
    public NodeWalker(Screen parent, Module module, Setting<?, ?> option) {
@@ -169,7 +169,7 @@ public class NodeWalker extends KeyHolder {
          }
 
          if (rowY + rowH > y && rowY < y + h) {
-            this.init(graphics, entry, x, rowY, w, NodeWalker.Inner_CachePool.init, entry.init_Str, mx, my, false);
+            this.init(graphics, entry, x, rowY, w, NodeWalker.Inner_CachePool.ADD, entry.init_Str, mx, my, false);
          }
 
          rowY += rowH;
@@ -191,7 +191,7 @@ public class NodeWalker extends KeyHolder {
             NodeWalker.Inner_ConfigStore row = rows.get(i);
             int rowY = y - this.push + i * rowH;
             if (rowY + rowH > y && rowY < y + h) {
-               this.init(graphics, row.init_NodeWalker_DataUti(), x, rowY, w, NodeWalker.Inner_CachePool.load, row.init_Str, mx, my, row.init_Z);
+               this.init(graphics, row.init_NodeWalker_DataUti(), x, rowY, w, NodeWalker.Inner_CachePool.REMOVE, row.init_Str, mx, my, row.init_Z);
             }
          }
       }
@@ -230,7 +230,7 @@ public class NodeWalker extends KeyHolder {
       int actionY = y + (rowH - 1 - actionW) / 2;
       int textMax = actionX - 4 - textX;
       int textY = this.init_I_I_I_6(y, rowH - 1);
-      this.load(graphics, label, textX, textY, invalid ? ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.flush) : -791321, textMax);
+      this.load(graphics, label, textX, textY, invalid ? ct.init_I_I_ct_DataUtil(-50373, ct.Inner_DataUtil.DANGER) : -791321, textMax);
       if (!id.equals(label)) {
          int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
@@ -240,7 +240,7 @@ public class NodeWalker extends KeyHolder {
          }
       }
 
-      if (type == NodeWalker.Inner_CachePool.init) {
+      if (type == NodeWalker.Inner_CachePool.ADD) {
          autismclient.gui.f.b.FileCache.init(graphics, actionX, actionY, actionW, actionW, "+", over, false);
       } else {
          autismclient.gui.f.b.FileCache.load(graphics, actionX, actionY, actionW, actionW, over);
@@ -267,7 +267,7 @@ public class NodeWalker extends KeyHolder {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
-      this.load_List.add(new NodeWalker.Inner_StreamUtil(NodeWalker.Inner_CachePool.read, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.load_List.add(new NodeWalker.Inner_StreamUtil(NodeWalker.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -301,16 +301,16 @@ public class NodeWalker extends KeyHolder {
       for (int i = this.load_List.size() - 1; i >= 0; i--) {
          NodeWalker.Inner_StreamUtil hit = this.load_List.get(i);
          if (hit.init(mx, my)
-            && (hit.init_NodeWalker_CachePo != NodeWalker.Inner_CachePool.init || this.init_Z_I_I_2(mx, my))
-            && (hit.init_NodeWalker_CachePo != NodeWalker.Inner_CachePool.load || this.load(mx, my))) {
+            && (hit.init_NodeWalker_CachePo != NodeWalker.Inner_CachePool.ADD || this.init_Z_I_I_2(mx, my))
+            && (hit.init_NodeWalker_CachePo != NodeWalker.Inner_CachePool.REMOVE || this.load(mx, my))) {
             switch (hit.init_NodeWalker_CachePo) {
-               case init:
+               case ADD:
                   this.init_V_Str_6(hit.init_Str);
                   break;
-               case load:
+               case REMOVE:
                   this.load_V_2(hit.init_Str);
                   break;
-               case read:
+               case CLOSE:
                   this.onClose();
             }
 
@@ -1162,9 +1162,9 @@ public class NodeWalker extends KeyHolder {
    }
 
    private enum Inner_CachePool {
-      init,
-      load,
-      read;
+      ADD,
+      REMOVE,
+      CLOSE;
    }
 
    private record Inner_ConfigStore(String init_Str, NodeWalker.Inner_DataUtil init_NodeWalker_DataUti, boolean init_Z) {

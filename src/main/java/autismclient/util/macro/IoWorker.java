@@ -7,16 +7,16 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.GameType;
 
 public class IoWorker implements MacroAction {
-   public IoWorker.Inner_StreamUtil mode = IoWorker.Inner_StreamUtil.update;
-   public IoWorker.Inner_DataUtil method = IoWorker.Inner_DataUtil.load;
+   public IoWorker.Inner_StreamUtil mode = IoWorker.Inner_StreamUtil.RESET;
+   public IoWorker.Inner_DataUtil method = IoWorker.Inner_DataUtil.FAKE;
    private boolean init = true;
 
    @Override
    public void execute(Minecraft mc) {
       autismclient.util.W.Inner_DataUtil result;
-      if (this.mode == IoWorker.Inner_StreamUtil.update) {
+      if (this.mode == IoWorker.Inner_StreamUtil.RESET) {
          result = autismclient.util.W.init_W_DataUtil();
-      } else if (this.method == IoWorker.Inner_DataUtil.init) {
+      } else if (this.method == IoWorker.Inner_DataUtil.REAL) {
          result = autismclient.util.ae.init(init_GameType(this.mode));
       } else {
          result = autismclient.util.W.init_W_DataUtil(init_GameType(this.mode));
@@ -41,14 +41,14 @@ public class IoWorker implements MacroAction {
          try {
             this.mode = IoWorker.Inner_StreamUtil.valueOf(tag.getStringOr("mode", "RESET"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = IoWorker.Inner_StreamUtil.update;
+            this.mode = IoWorker.Inner_StreamUtil.RESET;
          }
       }
 
       try {
          this.method = IoWorker.Inner_DataUtil.valueOf(tag.getStringOr("method", "FAKE"));
       } catch (IllegalArgumentException ignored) {
-         this.method = IoWorker.Inner_DataUtil.load;
+         this.method = IoWorker.Inner_DataUtil.FAKE;
       }
 
       this.init = tag.getBooleanOr("enabled", true);
@@ -56,14 +56,14 @@ public class IoWorker implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_M_StreamGate;
+      return StreamGate.FAKE_GAMEMODE;
    }
 
    @Override
    public String getDisplayName() {
-      return this.mode == IoWorker.Inner_StreamUtil.update
+      return this.mode == IoWorker.Inner_StreamUtil.RESET
          ? "GM: Reset"
-         : "GM: " + init_Str(this.mode) + (this.method == IoWorker.Inner_DataUtil.init ? " (Real)" : " (Fake)");
+         : "GM: " + init_Str(this.mode) + (this.method == IoWorker.Inner_DataUtil.REAL ? " (Real)" : " (Fake)");
    }
 
    @Override
@@ -84,17 +84,17 @@ public class IoWorker implements MacroAction {
    private static GameType init_GameType(IoWorker.Inner_StreamUtil mode) {
       GameType var10000;
       switch (mode) {
-         case init:
-         case update:
+         case SURVIVAL:
+         case RESET:
             var10000 = GameType.SURVIVAL;
             break;
-         case load:
+         case CREATIVE:
             var10000 = GameType.CREATIVE;
             break;
-         case read:
+         case ADVENTURE:
             var10000 = GameType.ADVENTURE;
             break;
-         case write:
+         case SPECTATOR:
             var10000 = GameType.SPECTATOR;
             break;
          default:
@@ -114,15 +114,15 @@ public class IoWorker implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load;
+      REAL,
+      FAKE;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      SURVIVAL,
+      CREATIVE,
+      ADVENTURE,
+      SPECTATOR,
+      RESET;
    }
 }

@@ -21,15 +21,15 @@ public class PacketGateCheck {
       autismclient.modules.aD.init((autismclient.util.AutismConfig)null);
 
       C.load_V();
-      C.load(gate("g", B.Inner_CachePool.init), 0L);
+      C.load(gate("g", B.Inner_CachePool.CANCEL), 0L);
       check(C.init_Z(), "owner-0 gate installed");
-      C.load(gate("g", B.Inner_CachePool.write), 7L);
+      C.load(gate("g", B.Inner_CachePool.DISABLE_GATE), 7L);
       check(!C.init_Z(), "UNBLOCK from a run removes the owner-0 gate with the same id");
 
-      C.load(gate("g", B.Inner_CachePool.init), 0L);
-      C.load(gate("run", B.Inner_CachePool.init), 7L);
+      C.load(gate("g", B.Inner_CachePool.CANCEL), 0L);
+      C.load(gate("run", B.Inner_CachePool.CANCEL), 7L);
       CompatSwingPacket packet = new CompatSwingPacket(InteractionHand.MAIN_HAND);
-      check(C.init(packet, "C2S") == C.Inner_StreamUtil.load, "gates block on the connection they were made on");
+      check(C.init(packet, "C2S") == C.Inner_StreamUtil.CANCEL, "gates block on the connection they were made on");
 
       net.minecraft.SharedConstants.tryDetectVersion();
       net.minecraft.server.Bootstrap.bootStrap();

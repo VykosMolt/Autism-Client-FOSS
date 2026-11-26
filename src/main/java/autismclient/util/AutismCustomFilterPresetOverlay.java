@@ -164,7 +164,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                autismclient.modules.PoolEntry module = autismclient.modules.PoolEntry.init_PoolEntry();
                autismclient.gui.f.b.FileCache.init(context, this.init_Font, "Preset Name", x, y);
                String counts = "C2S " + module.load_Set().size() + " | S2C " + module.read_Set().size();
-               cs.init(context, this.init_Font, counts, cs.Inner_DataUtil.write, x + width - cs.init(this.init_Font, counts, cs.Inner_DataUtil.write), y, false);
+               cs.init(context, this.init_Font, counts, cs.Inner_DataUtil.MUTED, x + width - cs.init(this.init_Font, counts, cs.Inner_DataUtil.MUTED), y, false);
                y += this.put();
                this.init_BitSetUtil.init_TableIndex_F(x, y, width, this.start_I_4());
                this.init_BitSetUtil.init_V_SyncManager(this.init_SyncManager_GuiGraphicsExtract_2(context, mouseX, mouseY, delta));
@@ -181,7 +181,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                   new boolean[]{this.poll_Z_4(), this.push_Z_3(), this.pop_Z_2(), this.tick_Z_2()}
                );
                String resetLabel = "Reset To Default";
-               int resetW = Math.min(width, autismclient.gui.f.RenderState.load(cs.init(this.init_Font, resetLabel, cs.Inner_DataUtil.read)));
+               int resetW = Math.min(width, autismclient.gui.f.RenderState.load(cs.init(this.init_Font, resetLabel, cs.Inner_DataUtil.BODY)));
                y = this.init(context, mouseX, mouseY, x, y, resetW, resetLabel, this::close_V_4, true);
                y += this.reset() - this.clear();
                int listHeight = Math.max(this.load(1), this.poll - (y - this.close_I) - this.put() - this.get_I_4());
@@ -230,7 +230,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                         this.stop(),
                         false,
                         false,
-                        autismclient.gui.f.b.FileCache.Inner_DataUtil.read
+                        autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING
                      );
                   } else if (row.load) {
                      autismclient.gui.f.b.FileCache.init(
@@ -243,7 +243,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
                         this.stop(),
                         false,
                         false,
-                        autismclient.gui.f.b.FileCache.Inner_DataUtil.init
+                        autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
                      );
                   } else if (row.init_bT_DataUtil != null) {
                      boolean selected = row.init_bT_DataUtil.init_Str().equals(this.init_Str_2);
@@ -258,14 +258,14 @@ public class AutismCustomFilterPresetOverlay extends bj {
                         this.stop(),
                         hovered,
                         selected,
-                        row.init_bT_DataUtil.load_Z() ? autismclient.gui.f.b.FileCache.Inner_DataUtil.read : autismclient.gui.f.b.FileCache.Inner_DataUtil.init
+                        row.init_bT_DataUtil.load_Z() ? autismclient.gui.f.b.FileCache.Inner_DataUtil.WARNING : autismclient.gui.f.b.FileCache.Inner_DataUtil.NORMAL
                      );
                      int textColor = selected ? p.table() : (row.init_bT_DataUtil.load_Z() ? -4729601 : p.b());
                      String prefix = row.init_bT_DataUtil.load_Z() ? "[DEV] " : "[USR] ";
-                     String name = cs.init(this.init_Font, prefix + row.init_bT_DataUtil.init_Str(), contentWidth - 70, cs.Inner_DataUtil.read);
+                     String name = cs.init(this.init_Font, prefix + row.init_bT_DataUtil.init_Str(), contentWidth - 70, cs.Inner_DataUtil.BODY);
                      cs.init(context, this.init_Font, name, textColor, x + 5, rowTextY, false);
                      String counts = row.init_bT_DataUtil.init_I() + " / " + row.init_bT_DataUtil.load_I();
-                     int countsWidth = cs.init(this.init_Font, counts, cs.Inner_DataUtil.read);
+                     int countsWidth = cs.init(this.init_Font, counts, cs.Inner_DataUtil.BODY);
                      cs.init(context, this.init_Font, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
                   }
 
@@ -284,10 +284,10 @@ public class AutismCustomFilterPresetOverlay extends bj {
             + "/"
             + Math.max(1, Math.round((float)listLayout.open() / this.next()) + 1)
          : (this.init_Str_2 == null ? "Select a preset row" : "Selected: " + this.init_Str_2);
-      int footerMaxW = Math.max(1, width - cs.init(this.init_Font, headerLabel, cs.Inner_DataUtil.read) - 8);
-      footer = cs.init(this.init_Font, footer, footerMaxW, cs.Inner_DataUtil.write);
-      int footerW = cs.init(this.init_Font, footer, cs.Inner_DataUtil.write);
-      cs.init(context, this.init_Font, footer, cs.Inner_DataUtil.write, x + width - footerW, headerY, false);
+      int footerMaxW = Math.max(1, width - cs.init(this.init_Font, headerLabel, cs.Inner_DataUtil.BODY) - 8);
+      footer = cs.init(this.init_Font, footer, footerMaxW, cs.Inner_DataUtil.MUTED);
+      int footerW = cs.init(this.init_Font, footer, cs.Inner_DataUtil.MUTED);
+      cs.init(context, this.init_Font, footer, cs.Inner_DataUtil.MUTED, x + width - footerW, headerY, false);
       return y + listHeight;
    }
 
@@ -485,7 +485,7 @@ public class AutismCustomFilterPresetOverlay extends bj {
          width,
          this.add_I_4(),
          label,
-         enabled ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.init : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.update,
+         enabled ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
          enabled,
          mouseX,
          mouseY

@@ -14,8 +14,8 @@ import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class DataUtil implements MacroAction {
-   public DataUtil.Inner_DataUtil check = DataUtil.Inner_DataUtil.poll;
-   public DataUtil.Inner_StreamUtil failureBehavior = DataUtil.Inner_StreamUtil.init;
+   public DataUtil.Inner_DataUtil check = DataUtil.Inner_DataUtil.CONNECTION;
+   public DataUtil.Inner_StreamUtil failureBehavior = DataUtil.Inner_StreamUtil.STOP_MACRO;
    public String itemName = "";
    public String guiType = "ANY";
    public String entityId = "";
@@ -37,7 +37,7 @@ public class DataUtil implements MacroAction {
          }
 
          AutismClientMessaging.sendPrefixed("§c" + out);
-         if (this.failureBehavior == DataUtil.Inner_StreamUtil.init) {
+         if (this.failureBehavior == DataUtil.Inner_StreamUtil.STOP_MACRO) {
             MacroExecutor.init_V();
          }
       }
@@ -54,39 +54,39 @@ public class DataUtil implements MacroAction {
       if (itemResolution.init_Z() && entityResolution.init_Z() && guiResolution.init_Z()) {
          boolean var10000;
          switch (this.check) {
-            case init:
+            case HELD_ITEM:
                var10000 = mc.player != null
                   && ArrayUtil.update(itemResolution.init_Str()).init_I_ItemStack_I(mc.player.getMainHandItem(), mc.player.getInventory().getSelectedSlot())
                      >= 0;
                break;
-            case load:
+            case INVENTORY_ITEM:
                var10000 = aK.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update(itemResolution.init_Str()));
                break;
-            case read:
+            case GUI_TYPE:
                var10000 = f.init(mc.gui.screen(), guiResolution.init_Str(), "");
                break;
-            case write:
+            case LOOKING_AT_ENTITY:
                var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.init_Str());
                break;
-            case update:
+            case LOOKING_AT_CONTAINER_ENTITY:
                var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.init_Str()) && this.init(mc.crosshairPickEntity);
                break;
-            case sync:
+            case MOUNTED_ENTITY:
                var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.init_Str());
                break;
-            case flush:
+            case HAS_BUNDLE:
                var10000 = aK.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update("minecraft:bundle"));
                break;
-            case close:
+            case BUNDLE_V2_READY:
                var10000 = this.load(mc);
                break;
-            case open:
+            case HAS_WRITABLE_BOOK:
                var10000 = aK.init_Z_Minecraft_ArrayUtil(mc, ArrayUtil.update("minecraft:writable_book"));
                break;
-            case poll:
+            case CONNECTION:
                var10000 = mc.getConnection() != null;
                break;
-            case push:
+            case LOOKING_AT_BLOCK:
                var10000 = mc.hitResult != null && mc.hitResult.getType() == Type.BLOCK;
                break;
             default:
@@ -141,7 +141,7 @@ public class DataUtil implements MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_y_StreamGate;
+      return StreamGate.ASSERT;
    }
 
    @Override
@@ -159,8 +159,8 @@ public class DataUtil implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.check = i.init(DataUtil.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), DataUtil.Inner_DataUtil.poll);
-      this.failureBehavior = i.init(DataUtil.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), DataUtil.Inner_StreamUtil.init);
+      this.check = i.init(DataUtil.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), DataUtil.Inner_DataUtil.CONNECTION);
+      this.failureBehavior = i.init(DataUtil.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), DataUtil.Inner_StreamUtil.STOP_MACRO);
       this.itemName = tag.getStringOr("itemName", "");
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.entityId = tag.getStringOr("entityId", "");
@@ -178,21 +178,21 @@ public class DataUtil implements MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push;
+      HELD_ITEM,
+      INVENTORY_ITEM,
+      GUI_TYPE,
+      LOOKING_AT_ENTITY,
+      LOOKING_AT_CONTAINER_ENTITY,
+      MOUNTED_ENTITY,
+      HAS_BUNDLE,
+      BUNDLE_V2_READY,
+      HAS_WRITABLE_BOOK,
+      CONNECTION,
+      LOOKING_AT_BLOCK;
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load;
+      STOP_MACRO,
+      WARN_ONLY;
    }
 }

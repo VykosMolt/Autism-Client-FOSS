@@ -246,7 +246,7 @@ public final class SyncManager {
       }
 
       for (SyncManager dropdown : dropdowns) {
-         if (dropdown != null && dropdown.init_RefQueue.load(0, 0, 0) == autismclient.gui.f.EventBus.load) {
+         if (dropdown != null && dropdown.init_RefQueue.load(0, 0, 0) == autismclient.gui.f.EventBus.HANDLED) {
             consumed = true;
          }
       }

@@ -313,8 +313,8 @@ public final class aI extends Module {
    private boolean sync_Z;
    private boolean flush_Z;
    private float count_F = 74.0F;
-   private aI.Inner_ValueSink init_aI_ValueSink = aI.Inner_ValueSink.init;
-   private aI.Inner_NodeWalker init_aI_NodeWalker = aI.Inner_NodeWalker.init;
+   private aI.Inner_ValueSink init_aI_ValueSink = aI.Inner_ValueSink.IDLE;
+   private aI.Inner_NodeWalker init_aI_NodeWalker = aI.Inner_NodeWalker.FORWARD;
    private aI.Inner_CacheEntry init_aI_CacheEntry;
    private boolean close_Z;
    private boolean open_Z;
@@ -330,7 +330,7 @@ public final class aI extends Module {
    private final int[] read_IArr = new int[9];
    private final int[] write_IArr = new int[9];
    private int f_C_I = -1;
-   private aI.Inner_KeyHolder init_aI_KeyHolder = aI.Inner_KeyHolder.init;
+   private aI.Inner_KeyHolder init_aI_KeyHolder = aI.Inner_KeyHolder.RELEASED;
    private boolean push_Z;
    private BlockPos read_BlockPos;
    private boolean pop_Z;
@@ -725,8 +725,8 @@ public final class aI extends Module {
    aI() {
       super("scaffold", "Scaffold", ae.load_ae, "Places blocks beneath you.");
       this.init_aI_b = aI.Inner_b.init_aI_b;
-      this.init_aI_c = aI.Inner_c.init;
-      this.load_aI_c = aI.Inner_c.init;
+      this.init_aI_c = aI.Inner_c.NONE;
+      this.load_aI_c = aI.Inner_c.NONE;
       this.f_P_I = -1;
       this.f_T_I = -2147483648;
       this.f_U_I = -2147483648;
@@ -768,7 +768,7 @@ public final class aI extends Module {
       this.f_aG_I = -1;
       this.f_aI_I = -2147483648;
       this.f_aJ_I = -2147483648;
-      this.init_aI_SyncManager = aI.Inner_SyncManager.init;
+      this.init_aI_SyncManager = aI.Inner_SyncManager.IDLE;
       this.f_aM_I = -1;
       this.write_Str = "--";
       this.flush_ArrayDeque = new ArrayDeque<>();
@@ -957,7 +957,7 @@ public final class aI extends Module {
    public void onGameLeft() {
       this.load_V_Z(false);
       this.d_V();
-      cg.load(cg.Inner_DataUtil.init);
+      cg.load(cg.Inner_DataUtil.SCAFFOLD);
    }
 
    @Override
@@ -1031,7 +1031,7 @@ public final class aI extends Module {
          } else {
             this.poll_V_3();
          }
-      } else if (this.init_aI_SyncManager == aI.Inner_SyncManager.load) {
+      } else if (this.init_aI_SyncManager == aI.Inner_SyncManager.ARMED) {
          this.index_V();
       }
    }
@@ -1629,7 +1629,7 @@ public final class aI extends Module {
                                  this.read_aI_HashUtil = this.init_aI_HashUtil;
                                  this.sync_Vec3 = this.read_Vec3_aI_HashUtil(this.init_aI_HashUtil);
                                  this.f_aJ_I = tick;
-                                 this.init_aI_SyncManager = aI.Inner_SyncManager.load;
+                                 this.init_aI_SyncManager = aI.Inner_SyncManager.ARMED;
                                  this.add_J = load_J_J(this.add_J);
                                  this.put_J = this.add_J;
                                  this.init_InteractionHand = hand;
@@ -1683,17 +1683,17 @@ public final class aI extends Module {
          aI.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
             this.init_aI_SyncManager, age, this.store_Z, this.drain_Z, solid, load_Z_I_I(this.f_aM_I, this.f_aN_I)
          );
-         if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.sync) {
+         if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.FAILED) {
             String reason = "use".equals(decision.init_Str()) ? "use-" + this.write_Str : decision.init_Str();
             this.init_V_Str_3(reason);
          } else {
             this.init_aI_SyncManager = decision.init_aI_SyncManager();
          }
 
-         if (this.init_aI_SyncManager == aI.Inner_SyncManager.update) {
+         if (this.init_aI_SyncManager == aI.Inner_SyncManager.RECONCILING) {
             this.add_Str = "reconcile";
             this.init_V_Str_aI_TableIndex("real-wait", pending);
-         } else if (this.init_aI_SyncManager == aI.Inner_SyncManager.write && solid) {
+         } else if (this.init_aI_SyncManager == aI.Inner_SyncManager.PREDICTED && solid) {
             this.read_Map.remove(cell);
             this.init_V_BlockPos_3(cell, this.read_aI_HashUtil, this.sync_Vec3);
             this.size_BlockPos = cell;
@@ -1709,12 +1709,12 @@ public final class aI extends Module {
             this.add_Str = "ok";
             this.init_V_Str_aI_TableIndex("settle-ok", pending);
             this.run_V();
-         } else if (this.init_aI_SyncManager == aI.Inner_SyncManager.sync) {
+         } else if (this.init_aI_SyncManager == aI.Inner_SyncManager.FAILED) {
             this.add_Str = this.write_Str;
             this.init_V_Str_aI_TableIndex("real-miss", pending);
             this.run_V();
          }
-      } else if (pending == null && this.init_aI_SyncManager != aI.Inner_SyncManager.init) {
+      } else if (pending == null && this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE) {
          this.run_V();
       }
    }
@@ -1732,7 +1732,7 @@ public final class aI extends Module {
          }
       }
 
-      this.init_aI_SyncManager = aI.Inner_SyncManager.sync;
+      this.init_aI_SyncManager = aI.Inner_SyncManager.FAILED;
       this.write_Str = reason == null ? "failed" : reason;
       if (this.load_aI_TableIndex != null && this.read_aI_TableIndex != null && this.load_aI_TableIndex.load().equals(this.read_aI_TableIndex.load())) {
          this.load_aI_TableIndex = null;
@@ -1744,7 +1744,7 @@ public final class aI extends Module {
       this.read_aI_HashUtil = null;
       this.sync_Vec3 = null;
       this.f_aJ_I = -2147483648;
-      this.init_aI_SyncManager = aI.Inner_SyncManager.init;
+      this.init_aI_SyncManager = aI.Inner_SyncManager.IDLE;
       this.put_J = 0L;
       this.init_InteractionHand = null;
       this.chunk_Z = false;
@@ -1792,7 +1792,7 @@ public final class aI extends Module {
          this.f_aN_I = -2147483648;
          this.f_aO_I = -2147483648;
          init_ConcurrentLinkedQu.clear();
-         if (this.read_aI_TableIndex != null || this.init_aI_SyncManager != aI.Inner_SyncManager.init) {
+         if (this.read_aI_TableIndex != null || this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE) {
             this.run_V();
          }
 
@@ -3028,7 +3028,7 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_SyncManager(aI.Inner_SyncManager state) {
-      return state == aI.Inner_SyncManager.load || state == aI.Inner_SyncManager.read || state == aI.Inner_SyncManager.update;
+      return state == aI.Inner_SyncManager.ARMED || state == aI.Inner_SyncManager.SENT || state == aI.Inner_SyncManager.RECONCILING;
    }
 
    static long load_J_J(long previous) {
@@ -3043,41 +3043,41 @@ public final class aI extends Module {
       aI.Inner_SyncManager state, int age, boolean resultSeen, boolean resultConsumed, boolean solid, boolean ackCovered
    ) {
       if (state == null) {
-         state = aI.Inner_SyncManager.init;
+         state = aI.Inner_SyncManager.IDLE;
       }
 
-      if (state == aI.Inner_SyncManager.init || state == aI.Inner_SyncManager.sync) {
+      if (state == aI.Inner_SyncManager.IDLE || state == aI.Inner_SyncManager.FAILED) {
          return new aI.Inner_ConfigStore(state, null);
       }
 
       if (resultSeen && !resultConsumed) {
-         return new aI.Inner_ConfigStore(aI.Inner_SyncManager.sync, "use");
+         return new aI.Inner_ConfigStore(aI.Inner_SyncManager.FAILED, "use");
       }
 
-      if (state == aI.Inner_SyncManager.load) {
-         return age >= 2 ? new aI.Inner_ConfigStore(aI.Inner_SyncManager.sync, "not-sent") : new aI.Inner_ConfigStore(state, null);
+      if (state == aI.Inner_SyncManager.ARMED) {
+         return age >= 2 ? new aI.Inner_ConfigStore(aI.Inner_SyncManager.FAILED, "not-sent") : new aI.Inner_ConfigStore(state, null);
       }
 
       if (resultSeen && resultConsumed && solid) {
-         return new aI.Inner_ConfigStore(aI.Inner_SyncManager.write, null);
+         return new aI.Inner_ConfigStore(aI.Inner_SyncManager.PREDICTED, null);
       }
 
-      if (state == aI.Inner_SyncManager.write && !solid) {
-         state = aI.Inner_SyncManager.update;
-      } else if (state == aI.Inner_SyncManager.read && resultSeen && resultConsumed) {
-         state = aI.Inner_SyncManager.update;
+      if (state == aI.Inner_SyncManager.PREDICTED && !solid) {
+         state = aI.Inner_SyncManager.RECONCILING;
+      } else if (state == aI.Inner_SyncManager.SENT && resultSeen && resultConsumed) {
+         state = aI.Inner_SyncManager.RECONCILING;
       }
 
-      if (state == aI.Inner_SyncManager.update) {
+      if (state == aI.Inner_SyncManager.RECONCILING) {
          if (ackCovered) {
-            return new aI.Inner_ConfigStore(aI.Inner_SyncManager.sync, "ack-air");
+            return new aI.Inner_ConfigStore(aI.Inner_SyncManager.FAILED, "ack-air");
          }
 
          if (age >= 2) {
-            return new aI.Inner_ConfigStore(aI.Inner_SyncManager.sync, "timeout-air");
+            return new aI.Inner_ConfigStore(aI.Inner_SyncManager.FAILED, "timeout-air");
          }
-      } else if (state == aI.Inner_SyncManager.read && age >= 2) {
-         return new aI.Inner_ConfigStore(aI.Inner_SyncManager.sync, "result-timeout");
+      } else if (state == aI.Inner_SyncManager.SENT && age >= 2) {
+         return new aI.Inner_ConfigStore(aI.Inner_SyncManager.FAILED, "result-timeout");
       }
 
       return new aI.Inner_ConfigStore(state, null);
@@ -3092,9 +3092,9 @@ public final class aI extends Module {
 
    static aI.Inner_EventBus init_aI_EventBus_Z(boolean supportSolid, int supportDeficit, boolean riserSolid) {
       if (!supportSolid) {
-         return supportDeficit <= 1 ? aI.Inner_EventBus.load : aI.Inner_EventBus.init;
+         return supportDeficit <= 1 ? aI.Inner_EventBus.SUPPORT : aI.Inner_EventBus.CONNECTOR;
       } else {
-         return riserSolid ? aI.Inner_EventBus.write : aI.Inner_EventBus.read;
+         return riserSolid ? aI.Inner_EventBus.READY : aI.Inner_EventBus.RISER;
       }
    }
 
@@ -4438,7 +4438,7 @@ public final class aI extends Module {
       this.init_aI_PathHelper = null;
       this.f_Y_I = -2147483648;
       this.value_Z = false;
-      this.init_aI_c = aI.Inner_c.init;
+      this.init_aI_c = aI.Inner_c.NONE;
       this.update_Input = null;
       this.node_V();
       if (!this.cache_Z()) {
@@ -4528,7 +4528,7 @@ public final class aI extends Module {
 
          this.pop_Z = this.init_aI_b.init_Z();
          if (this.pop_Z && !player.onGround()) {
-            this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+            this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
          }
 
          if (this.pop_Z && !this.start_Z) {
@@ -4549,7 +4549,7 @@ public final class aI extends Module {
             && !player.onGround()
             && this.init_aI_DataPipe == null
             && !this.stop_Z
-            && (this.init_aI_ValueSink == aI.Inner_ValueSink.update || this.init_aI_ValueSink == aI.Inner_ValueSink.sync)
+            && (this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING)
             && (!this.open_Z(player) || this.load_BlockPos_LocalPlayer(player) == null)) {
             this.init_aI_DataPipe = this.init_aI_DataPipe_LocalPlayer_ItemStack(player, this.init_ItemStack_2());
          }
@@ -4559,7 +4559,7 @@ public final class aI extends Module {
          this.f_v_I = 5;
          if (player.onGround()) {
             this.load_V_LocalPlayer(player);
-         } else if (this.init_aI_ValueSink == aI.Inner_ValueSink.write) {
+         } else if (this.init_aI_ValueSink == aI.Inner_ValueSink.RECOVERING) {
             this.sync_V(player);
             this.read_V_LocalPlayer(player);
          } else {
@@ -4568,7 +4568,7 @@ public final class aI extends Module {
 
          if (!this.cache_Z) {
             this.poll_V(player);
-            if (this.push_Z && player.onGround() && this.init_aI_KeyHolder == aI.Inner_KeyHolder.read && !this.pop_Z && !this.add_Z) {
+            if (this.push_Z && player.onGround() && this.init_aI_KeyHolder == aI.Inner_KeyHolder.HOLD && !this.pop_Z && !this.add_Z) {
                if (++this.f_W_I >= 30) {
                   this.f_W_I = 0;
                   this.f_R_I = 0;
@@ -4583,7 +4583,7 @@ public final class aI extends Module {
             }
 
             if (this.push_Z) {
-               if (this.init_aI_NodeWalker != aI.Inner_NodeWalker.load) {
+               if (this.init_aI_NodeWalker != aI.Inner_NodeWalker.PLACING) {
                   this.init_InteractionHand();
                }
 
@@ -4598,14 +4598,14 @@ public final class aI extends Module {
    private void init_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos under) {
       this.write_BlockPos = null;
       this.reset_Z = false;
-      this.init_aI_NodeWalker = aI.Inner_NodeWalker.init;
+      this.init_aI_NodeWalker = aI.Inner_NodeWalker.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.push_Z = true;
       this.pop_Z = false;
       this.add_Z = false;
-      this.init_aI_ValueSink = aI.Inner_ValueSink.read;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+      this.init_aI_ValueSink = aI.Inner_ValueSink.FORWARD_DWELL;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
       this.sync_Z = false;
       this.f_bG_I = 0;
       if (!autismclient.util.ap.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
@@ -4747,7 +4747,7 @@ public final class aI extends Module {
          if (!this.pop_Z && !this.add_Z) {
             if (under != null && !init_Z_KeyMapping(MC.options.keyShift) && autismclient.util.U.init_Z(MC.level.getBlockState(under), under)) {
                this.flush_V_LocalPlayer_BlockPos(player, under);
-            } else if (this.init_aI_ValueSink == aI.Inner_ValueSink.write) {
+            } else if (this.init_aI_ValueSink == aI.Inner_ValueSink.RECOVERING) {
                this.sync_V_LocalPlayer_BlockPos(player, under != null ? under : this.sync_BlockPos);
             } else {
                if (under != null) {
@@ -4768,9 +4768,9 @@ public final class aI extends Module {
                      this.write_V_LocalPlayer_BlockPos(player, this.sync_BlockPos);
                   } else {
                      if (this.f_H_I > 0
-                        || this.init_aI_ValueSink == aI.Inner_ValueSink.update
-                        || this.init_aI_ValueSink == aI.Inner_ValueSink.sync
-                        || this.init_aI_ValueSink == aI.Inner_ValueSink.flush) {
+                        || this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH
+                        || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING
+                        || this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING) {
                         this.update_V_BlockPos(this.sync_BlockPos);
                      }
 
@@ -4789,7 +4789,7 @@ public final class aI extends Module {
                            if (this.value_Z()) {
                               this.init_V_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
                            } else {
-                              this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+                              this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                            }
                         } else {
                            if (this.start_Z()) {
@@ -4813,9 +4813,9 @@ public final class aI extends Module {
                   }
                } else if (!this.task_Z || !this.init_Z_LocalPlayer_BlockPos(player, under)) {
                   if (this.f_H_I > 0
-                     || this.init_aI_ValueSink == aI.Inner_ValueSink.update
-                     || this.init_aI_ValueSink == aI.Inner_ValueSink.sync
-                     || this.init_aI_ValueSink == aI.Inner_ValueSink.flush) {
+                     || this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH
+                     || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING
+                     || this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING) {
                      boolean interruptedLanding = this.queue_Z || this.next_Z;
                      this.update_V_BlockPos(under);
                      this.close_ce_DataUtil();
@@ -4824,24 +4824,24 @@ public final class aI extends Module {
                         return;
                      }
 
-                     this.init_aI_ValueSink = aI.Inner_ValueSink.load;
+                     this.init_aI_ValueSink = aI.Inner_ValueSink.RUNNING;
                      this.f_K_I = 0;
                   }
 
                   if (this.init_aM != null && this.init_aM.init_Z() && !this.data_Z()) {
                      this.close_ce_DataUtil();
-                     this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+                     this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                      Input carry = this.init_Input_LocalPlayer_BlockPos(player, under);
                      this.update_Input = carry != null
                         ? carry
                         : this.init_Input_LocalPlayer_2(player, under, new Input(false, false, false, false, false, false, false));
-                  } else if (this.init_aI_ValueSink != aI.Inner_ValueSink.read || !this.load_Z_LocalPlayer_BlockPos(player, under)) {
+                  } else if (this.init_aI_ValueSink != aI.Inner_ValueSink.FORWARD_DWELL || !this.load_Z_LocalPlayer_BlockPos(player, under)) {
                      boolean nearEdge = this.read_Z_LocalPlayer_BlockPos(player, under);
                      this.value_Z = !nearEdge && this.init_D_LocalPlayer_BlockPos(player, under) > 4.5;
                      if (this.pop_Z) {
                         this.read_V_LocalPlayer_BlockPos(player, under);
                      } else {
-                        this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+                        this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
                         this.open_V(player, under);
                         this.write_Z = false;
                         InteractionHand hand = this.init_InteractionHand();
@@ -4867,7 +4867,7 @@ public final class aI extends Module {
                                  if (this.f_S_I >= 40) {
                                     this.flush_V_LocalPlayer_BlockPos(player, under);
                                  } else {
-                                    this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+                                    this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                                  }
                               } else {
                                  if (this.start_Z()) {
@@ -4888,7 +4888,7 @@ public final class aI extends Module {
                                  if (init_Z_Z_2(launchCatchable)) {
                                     this.update_V_LocalPlayer_BlockPos(player, under);
                                  } else if (!this.value_Z()) {
-                                    this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+                                    this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                                  } else {
                                     this.init_V_LocalPlayer_aI_DataPipe(player, first);
                                  }
@@ -4898,14 +4898,14 @@ public final class aI extends Module {
                                  this.write_V_LocalPlayer_BlockPos(player, under);
                               }
                            } else {
-                              this.init_aI_KeyHolder = nearEdge ? aI.Inner_KeyHolder.read : aI.Inner_KeyHolder.load;
+                              this.init_aI_KeyHolder = nearEdge ? aI.Inner_KeyHolder.HOLD : aI.Inner_KeyHolder.FORWARD;
                            }
                         } else if (!this.write_Z) {
                            if (nearEdge) {
                               this.write_V_LocalPlayer_BlockPos(player, under);
                            }
                         } else {
-                           this.init_aI_KeyHolder = nearEdge ? aI.Inner_KeyHolder.read : aI.Inner_KeyHolder.load;
+                           this.init_aI_KeyHolder = nearEdge ? aI.Inner_KeyHolder.HOLD : aI.Inner_KeyHolder.FORWARD;
                            if (this.write_Z) {
                               this.f_V();
                            }
@@ -4933,9 +4933,9 @@ public final class aI extends Module {
       }
 
       if (this.f_H_I > 0
-         || this.init_aI_ValueSink == aI.Inner_ValueSink.update
-         || this.init_aI_ValueSink == aI.Inner_ValueSink.sync
-         || this.init_aI_ValueSink == aI.Inner_ValueSink.flush) {
+         || this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH
+         || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING
+         || this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING) {
          this.update_V_BlockPos(under);
       }
 
@@ -4963,8 +4963,8 @@ public final class aI extends Module {
       if (settled && this.f_ab_I <= 0) {
          this.task_Z = false;
          this.data_V();
-         this.init_aI_ValueSink = aI.Inner_ValueSink.read;
-         this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+         this.init_aI_ValueSink = aI.Inner_ValueSink.FORWARD_DWELL;
+         this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
          this.f_M_I = 0;
          this.f_K_I = 0;
          return true;
@@ -4975,7 +4975,7 @@ public final class aI extends Module {
       }
 
       this.scan_V();
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
       Direction overhang = this.init_Direction_LocalPlayer(player);
       this.update_Input = recovery;
       if (!init_Z_BlockPos_4(this.poll_BlockPos, this.push_BlockPos, overhang)) {
@@ -5024,7 +5024,7 @@ public final class aI extends Module {
 
    private void write_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos support) {
       this.scan_V();
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
       this.run_Z = false;
       this.update_Input = support == null
          ? null
@@ -5263,11 +5263,11 @@ public final class aI extends Module {
       } else {
          this.f_K_I = init_I_I_Z(this.f_K_I, true);
          if (!write_Z_I(this.f_K_I)) {
-            this.init_aI_KeyHolder = nearEdge ? aI.Inner_KeyHolder.read : aI.Inner_KeyHolder.load;
+            this.init_aI_KeyHolder = nearEdge ? aI.Inner_KeyHolder.HOLD : aI.Inner_KeyHolder.FORWARD;
             return true;
          } else {
-            this.init_aI_ValueSink = aI.Inner_ValueSink.load;
-            this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+            this.init_aI_ValueSink = aI.Inner_ValueSink.RUNNING;
+            this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
             this.f_K_I = 0;
             return false;
          }
@@ -5275,9 +5275,9 @@ public final class aI extends Module {
    }
 
    private void update_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos support) {
-      if (this.init_aI_ValueSink != aI.Inner_ValueSink.write && player != null && support != null) {
-         this.init_aI_ValueSink = aI.Inner_ValueSink.write;
-         this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+      if (this.init_aI_ValueSink != aI.Inner_ValueSink.RECOVERING && player != null && support != null) {
+         this.init_aI_ValueSink = aI.Inner_ValueSink.RECOVERING;
+         this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
          this.f_M_I = 0;
          this.init_aI_DataPipe = null;
          this.stop_Z = false;
@@ -5297,22 +5297,22 @@ public final class aI extends Module {
          this.load_V_LocalPlayer_BlockPos(player, support);
          if (!this.task_Z || !this.init_Z_LocalPlayer_BlockPos(player, support)) {
             if (this.sync_Z_LocalPlayer_BlockPos(player, support)) {
-               this.init_aI_ValueSink = aI.Inner_ValueSink.load;
+               this.init_aI_ValueSink = aI.Inner_ValueSink.RUNNING;
                this.f_M_I = 0;
                this.flush_V_LocalPlayer_BlockPos(player, support);
             } else {
-               this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+               this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                this.init_Vec3 = this.read_Vec3_BlockPos(support, player.position(), this.flags_F);
                this.f_x_D = init_D_Vec3_F(this.init_Vec3, this.flags_F);
                this.update_Input = this.init_Input_LocalPlayer_2(player, support, init_Input_AABB(player.getBoundingBox(), support, this.flags_F));
                this.f_M_I++;
                if (this.f_M_I >= 60) {
-                  this.init_aI_ValueSink = aI.Inner_ValueSink.load;
+                  this.init_aI_ValueSink = aI.Inner_ValueSink.RUNNING;
                   this.flush_V_LocalPlayer_BlockPos(player, support);
                } else if (this.flush_Z_LocalPlayer_BlockPos(player, support)) {
                   this.update_Input = null;
-                  this.init_aI_ValueSink = aI.Inner_ValueSink.read;
-                  this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+                  this.init_aI_ValueSink = aI.Inner_ValueSink.FORWARD_DWELL;
+                  this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
                   this.init_Vec3 = this.read_Vec3_BlockPos(support, player.position(), this.flags_F);
                   this.f_x_D = init_D_Vec3_F(this.init_Vec3, this.flags_F);
                   this.sync_BlockPos = support.immutable();
@@ -5347,14 +5347,14 @@ public final class aI extends Module {
             this.update_V_BlockPos(support);
          }
 
-         this.init_aI_ValueSink = aI.Inner_ValueSink.load;
-         this.init_aI_NodeWalker = aI.Inner_NodeWalker.load;
+         this.init_aI_ValueSink = aI.Inner_ValueSink.RUNNING;
+         this.init_aI_NodeWalker = aI.Inner_NodeWalker.PLACING;
          if (support == null) {
             support = this.sync_BlockPos;
          }
 
          if (support == null) {
-            this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+            this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
          } else {
             float previousCourse = this.flags_F;
             this.load_V_LocalPlayer_BlockPos(player, support);
@@ -5403,7 +5403,7 @@ public final class aI extends Module {
                   && this.data_Z()
                   && this.init_Z_ItemStack_4(this.init_ItemStack_2())
                   && this.init_Z_AABB(player.getBoundingBox().move(stop), player.getY(), 0.08);
-               this.init_aI_KeyHolder = safe ? aI.Inner_KeyHolder.load : aI.Inner_KeyHolder.read;
+               this.init_aI_KeyHolder = safe ? aI.Inner_KeyHolder.FORWARD : aI.Inner_KeyHolder.HOLD;
                if (!safe) {
                   this.scan_V();
                   this.update_Input = this.init_Input_LocalPlayer(player, support, speed);
@@ -5502,8 +5502,8 @@ public final class aI extends Module {
          this.push_Z = false;
          this.value_Z = false;
          this.run_Z = false;
-         this.init_aI_KeyHolder = aI.Inner_KeyHolder.init;
-         this.init_aI_ValueSink = aI.Inner_ValueSink.load;
+         this.init_aI_KeyHolder = aI.Inner_KeyHolder.RELEASED;
+         this.init_aI_ValueSink = aI.Inner_ValueSink.RUNNING;
          this.scan_V();
          this.mark_V();
          this.data_V();
@@ -5576,7 +5576,7 @@ public final class aI extends Module {
                      || init_Z_KeyMapping(MC.options.keyLeft)
                      || init_Z_KeyMapping(MC.options.keyRight)
                )
-               && this.init_aI_SyncManager == aI.Inner_SyncManager.init
+               && this.init_aI_SyncManager == aI.Inner_SyncManager.IDLE
                && !this.g_Z()
                && !this.sync_Z_LocalPlayer_BlockPos(player, support)
                && this.flush_Z_LocalPlayer_BlockPos(player, support)
@@ -5662,7 +5662,7 @@ public final class aI extends Module {
                   this.write_V_LocalPlayer_BlockPos(player, this.init_BlockPos_LocalPlayer(player));
                } else {
                   this.data_V();
-                  this.init_aI_NodeWalker = this.count_Z() ? aI.Inner_NodeWalker.load : aI.Inner_NodeWalker.init;
+                  this.init_aI_NodeWalker = this.count_Z() ? aI.Inner_NodeWalker.PLACING : aI.Inner_NodeWalker.FORWARD;
                   this.init_aI_CacheEntry = null;
                   this.close_Z = false;
                   this.pop_J++;
@@ -5700,8 +5700,8 @@ public final class aI extends Module {
                   this.f_S_I = 0;
                   this.init_aI_DataPipe = first;
                   this.data_Z = true;
-                  this.init_aI_ValueSink = aI.Inner_ValueSink.update;
-                  this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+                  this.init_aI_ValueSink = aI.Inner_ValueSink.LAUNCH;
+                  this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
                   this.scan_V();
                   this.mark_V();
                   this.state_V();
@@ -5711,7 +5711,7 @@ public final class aI extends Module {
          } else if (footing != null) {
             this.update_V_LocalPlayer_BlockPos(player, footing);
          } else {
-            this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+            this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
          }
       }
    }
@@ -5733,16 +5733,16 @@ public final class aI extends Module {
       if (this.sync_BlockPos == null) {
          this.chunk_V();
       } else {
-         if (this.init_aI_ValueSink == aI.Inner_ValueSink.load || this.init_aI_ValueSink == aI.Inner_ValueSink.read) {
+         if (this.init_aI_ValueSink == aI.Inner_ValueSink.RUNNING || this.init_aI_ValueSink == aI.Inner_ValueSink.FORWARD_DWELL) {
             if (!this.next_Z() && this.init_Z_LocalPlayer_I(player, this.f_L_I)) {
-               this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+               this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
                return;
             }
 
             this.sync_V(player);
          }
 
-         this.init_aI_KeyHolder = !this.pop_Z && !this.add_Z && !this.buffer_Z ? aI.Inner_KeyHolder.load : aI.Inner_KeyHolder.read;
+         this.init_aI_KeyHolder = !this.pop_Z && !this.add_Z && !this.buffer_Z ? aI.Inner_KeyHolder.FORWARD : aI.Inner_KeyHolder.HOLD;
          ItemStack stack = this.init_ItemStack_2();
          if (player.horizontalCollision
             || player.verticalCollision && player.getDeltaMovement().y <= 0.0
@@ -5778,7 +5778,7 @@ public final class aI extends Module {
             this.close_BlockPos = null;
             this.clear_Z = false;
             this.init_aI_DataPipe = null;
-            this.init_aI_ValueSink = aI.Inner_ValueSink.sync;
+            this.init_aI_ValueSink = aI.Inner_ValueSink.AIMING;
             if (this.load_Z_BlockState_BlockPos(MC.level.getBlockState(lowerSupport), lowerSupport)) {
                this.sync_BlockPos = lowerSupport;
             }
@@ -5792,7 +5792,7 @@ public final class aI extends Module {
             boolean landingSecured = this.init_Z_LocalPlayer_I(player, landingBlockY);
             if (!landingSecured && !this.node_Z && this.write_Z_LocalPlayer_I(player, landingBlockY)) {
                this.buffer_Z = true;
-               this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+               this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                landingSecured = this.init_Z_LocalPlayer_I(player, landingBlockY);
             }
 
@@ -5803,14 +5803,14 @@ public final class aI extends Module {
             }
 
             if (!landingSecured && this.start_Z && this.close_Z(player)) {
-               this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+               this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
             }
 
             boolean turnPending = this.start_Z();
             boolean reservePending = turnPending || this.init_aI_b.load();
             boolean turnReserveCovered = !reservePending || landingSecured && this.init_Z_LocalPlayer(player, landingBlockY, init_I_Z_2(turnPending));
             boolean chainCovered = load_Z_Z(landingSecured, reservePending, turnReserveCovered);
-            if (chainCovered && this.init_aI_ValueSink != aI.Inner_ValueSink.flush) {
+            if (chainCovered && this.init_aI_ValueSink != aI.Inner_ValueSink.RETURNING) {
                chainCovered = this.load_Z_LocalPlayer_I(player, landingBlockY);
             }
 
@@ -5839,7 +5839,7 @@ public final class aI extends Module {
                aI.Inner_ValueSink coveredPhase = init_aI_ValueSink_aI_ValueSink(
                   this.init_aI_ValueSink, chainCovered, this.clear_Z && !this.start_Z || this.tick(player)
                );
-               if (coveredPhase == aI.Inner_ValueSink.flush && this.init_aI_ValueSink != aI.Inner_ValueSink.flush) {
+               if (coveredPhase == aI.Inner_ValueSink.RETURNING && this.init_aI_ValueSink != aI.Inner_ValueSink.RETURNING) {
                   this.init_aI_DataPipe = null;
                   this.init_aI_ValueSink = coveredPhase;
                } else {
@@ -5847,12 +5847,12 @@ public final class aI extends Module {
                      this.clear_Z = false;
                      this.init_aI_DataPipe = null;
                      if (chainCovered) {
-                        this.init_aI_ValueSink = aI.Inner_ValueSink.flush;
+                        this.init_aI_ValueSink = aI.Inner_ValueSink.RETURNING;
                         return;
                      }
                   }
 
-                  if (this.init_aI_ValueSink != aI.Inner_ValueSink.flush) {
+                  if (this.init_aI_ValueSink != aI.Inner_ValueSink.RETURNING) {
                      if (this.init_aI_DataPipe == null) {
                         if (chainCovered) {
                            if ((!this.clear_Z || this.start_Z) && !this.tick(player)) {
@@ -5870,7 +5870,7 @@ public final class aI extends Module {
                      }
 
                      if (this.init_aI_DataPipe != null) {
-                        this.init_aI_ValueSink = aI.Inner_ValueSink.sync;
+                        this.init_aI_ValueSink = aI.Inner_ValueSink.AIMING;
                         this.write_Z = false;
                         InteractionHand hand = this.init_InteractionHand();
                         if (hand == null) {
@@ -5887,7 +5887,7 @@ public final class aI extends Module {
                               reservePending = turnPending || this.init_aI_b.load();
                               turnReserveCovered = !reservePending || landingSecured && this.init_Z_LocalPlayer(player, landingBlockY, init_I_Z_2(turnPending));
                               chainCovered = load_Z_Z(landingSecured, reservePending, turnReserveCovered);
-                              if (chainCovered && this.init_aI_ValueSink != aI.Inner_ValueSink.flush) {
+                              if (chainCovered && this.init_aI_ValueSink != aI.Inner_ValueSink.RETURNING) {
                                  chainCovered = this.load_Z_LocalPlayer_I(player, landingBlockY);
                               }
 
@@ -5910,7 +5910,7 @@ public final class aI extends Module {
    }
 
    private void write_V_LocalPlayer(LocalPlayer player) {
-      this.init_aI_KeyHolder = !this.pop_Z && !this.queue_Z && !this.add_Z ? aI.Inner_KeyHolder.load : aI.Inner_KeyHolder.read;
+      this.init_aI_KeyHolder = !this.pop_Z && !this.queue_Z && !this.add_Z ? aI.Inner_KeyHolder.FORWARD : aI.Inner_KeyHolder.HOLD;
       if (!this.start_Z) {
          this.clear_Z = false;
          if (!this.stop_Z && this.init_aI_DataPipe != null && this.init_aI_DataPipe.init_Z()) {
@@ -5920,7 +5920,7 @@ public final class aI extends Module {
 
       int blockY = this.init_I_LocalPlayer(player);
       if (this.init_Z_LocalPlayer_I(player, blockY)) {
-         this.init_aI_ValueSink = aI.Inner_ValueSink.flush;
+         this.init_aI_ValueSink = aI.Inner_ValueSink.RETURNING;
          if (!this.stop_Z) {
             this.init_aI_DataPipe = null;
          }
@@ -6008,7 +6008,7 @@ public final class aI extends Module {
             }
 
             if (best != null) {
-               this.init_aI_ValueSink = aI.Inner_ValueSink.sync;
+               this.init_aI_ValueSink = aI.Inner_ValueSink.AIMING;
                this.init_aI_DataPipe = best;
                return this.init_Z_aI_DataPipe(best, hand, held, null, true);
             }
@@ -6020,7 +6020,7 @@ public final class aI extends Module {
             this.init_aI_DataPipe = this.init_aI_DataPipe_LocalPlayer_ItemStack(player, held);
             boolean pending = this.init_Z_LocalPlayer_ItemStack(player, held);
             if (this.stop_Z) {
-               this.init_aI_ValueSink = aI.Inner_ValueSink.sync;
+               this.init_aI_ValueSink = aI.Inner_ValueSink.AIMING;
             }
 
             return pending;
@@ -6049,7 +6049,7 @@ public final class aI extends Module {
    }
 
    private void sync_V(LocalPlayer player) {
-      this.init_aI_NodeWalker = aI.Inner_NodeWalker.init;
+      this.init_aI_NodeWalker = aI.Inner_NodeWalker.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.pop_J++;
@@ -6067,8 +6067,8 @@ public final class aI extends Module {
       this.f_L_I = this.sync_BlockPos.getY();
       this.f_v_D = this.f_L_I + 1.0;
       this.f_w_D = player.position().dot(this.write_Vec3()) - 1.45;
-      this.init_aI_ValueSink = aI.Inner_ValueSink.update;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+      this.init_aI_ValueSink = aI.Inner_ValueSink.LAUNCH;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
       this.scan_V();
       this.mark_V();
    }
@@ -6115,7 +6115,7 @@ public final class aI extends Module {
       return al.init_Module_Str("scaffold") instanceof aI scaffold
          && scaffold.isEnabled()
          && scaffold.frame_Z()
-         && scaffold.init_aI_SyncManager == aI.Inner_SyncManager.load
+         && scaffold.init_aI_SyncManager == aI.Inner_SyncManager.ARMED
          && scaffold.f_aJ_I == ck.init_ck().state_I();
    }
 
@@ -6147,7 +6147,7 @@ public final class aI extends Module {
             aI.Inner_TableIndex pending = scaffold.read_aI_TableIndex;
             BlockHitResult hit = use.hitResult();
             if (pending != null
-               && scaffold.init_aI_SyncManager == aI.Inner_SyncManager.load
+               && scaffold.init_aI_SyncManager == aI.Inner_SyncManager.ARMED
                && edgeGeneration == scaffold.put_J
                && use.hand() == scaffold.init_InteractionHand
                && init_Z_BlockHitResult(hit, pending, scaffold.chunk_Z)) {
@@ -6189,7 +6189,7 @@ public final class aI extends Module {
       if (this.f_aJ_I == ck.init_ck().state_I()
          && this.read_aI_TableIndex != null
          && this.update_ce_DataUtil != null
-         && this.init_aI_SyncManager == aI.Inner_SyncManager.load) {
+         && this.init_aI_SyncManager == aI.Inner_SyncManager.ARMED) {
          double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
          BlockHitResult ray = init_BlockHitResult_Vec3(MC.player.getEyePosition(), this.update_ce_DataUtil, reach, MC.level, MC.player);
          if (ray != null) {
@@ -6263,7 +6263,7 @@ public final class aI extends Module {
                            if (live != null && !al.init_Z_HitResult(live.init_aI_TableIndex().init_BlockHitResult(), hand, this.id())) {
                               if (this.init_Z_aI_DataPipe(live, hand, held, null)
                                  && this.write_Z_LocalPlayer_BlockPos(MC.player, live.init_aI_TableIndex().load())) {
-                                 this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+                                 this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                               }
 
                               return;
@@ -6272,7 +6272,7 @@ public final class aI extends Module {
                      }
 
                      if (this.init_aI_DataPipe == null
-                        && (this.init_aI_ValueSink == aI.Inner_ValueSink.update || this.init_aI_ValueSink == aI.Inner_ValueSink.sync)
+                        && (this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING)
                         && (!this.open_Z(MC.player) || this.load_BlockPos_LocalPlayer(MC.player) == null)) {
                         this.init_aI_DataPipe = this.init_aI_DataPipe_LocalPlayer_ItemStack(MC.player, held);
                      }
@@ -6398,8 +6398,8 @@ public final class aI extends Module {
          this.init_aI_DataPipe = null;
       }
 
-      this.init_aI_ValueSink = aI.Inner_ValueSink.flush;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+      this.init_aI_ValueSink = aI.Inner_ValueSink.RETURNING;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
       this.write_V_LocalPlayer(player);
    }
 
@@ -6428,13 +6428,13 @@ public final class aI extends Module {
                this.init_V_Str_3("input-not-consumed");
             }
 
-            if (this.init_aI_SyncManager != aI.Inner_SyncManager.init && this.init_aI_SyncManager != aI.Inner_SyncManager.sync) {
+            if (this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE && this.init_aI_SyncManager != aI.Inner_SyncManager.FAILED) {
                boolean supported = this.read_aI_TableIndex != null
                   && this.load_Z_BlockState_BlockPos(MC.level.getBlockState(this.read_aI_TableIndex.load()), this.read_aI_TableIndex.load());
                aI.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
                   this.init_aI_SyncManager, age, this.store_Z, this.drain_Z, supported, load_Z_I_I(this.f_aM_I, this.f_aN_I)
                );
-               if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.sync) {
+               if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.FAILED) {
                   this.init_V_Str_3(decision.init_Str());
                } else {
                   this.init_aI_SyncManager = decision.init_aI_SyncManager();
@@ -6442,8 +6442,8 @@ public final class aI extends Module {
             }
 
             this.pool_V();
-            if (this.init_aI_SyncManager != aI.Inner_SyncManager.init
-               && (this.init_aI_SyncManager == aI.Inner_SyncManager.write || this.init_aI_SyncManager == aI.Inner_SyncManager.sync || age >= 2)) {
+            if (this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE
+               && (this.init_aI_SyncManager == aI.Inner_SyncManager.PREDICTED || this.init_aI_SyncManager == aI.Inner_SyncManager.FAILED || age >= 2)) {
                autismclient.util.as.update_V();
                this.run_V();
             }
@@ -6452,7 +6452,7 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_SyncManager(aI.Inner_SyncManager state, int age, boolean resultSeen, int submitted) {
-      return state == aI.Inner_SyncManager.load && age > 0 && !resultSeen && submitted == 0;
+      return state == aI.Inner_SyncManager.ARMED && age > 0 && !resultSeen && submitted == 0;
    }
 
    static boolean init_Z_Z_2(boolean turnReserve, boolean resultSeen, int submitted) {
@@ -6460,14 +6460,14 @@ public final class aI extends Module {
    }
 
    static aI.Inner_StreamGate init_aI_StreamGate_aI_SyncManager(aI.Inner_SyncManager state, int age, boolean resultSeen, boolean consumed, boolean supported) {
-      if (state != null && state != aI.Inner_SyncManager.init && state != aI.Inner_SyncManager.sync && (!resultSeen || consumed)) {
-         if (resultSeen && consumed && supported && state != aI.Inner_SyncManager.load) {
-            return aI.Inner_StreamGate.load;
+      if (state != null && state != aI.Inner_SyncManager.IDLE && state != aI.Inner_SyncManager.FAILED && (!resultSeen || consumed)) {
+         if (resultSeen && consumed && supported && state != aI.Inner_SyncManager.ARMED) {
+            return aI.Inner_StreamGate.PLACED;
          } else {
-            return age >= 2 ? aI.Inner_StreamGate.read : aI.Inner_StreamGate.init;
+            return age >= 2 ? aI.Inner_StreamGate.FAILED : aI.Inner_StreamGate.WAITING;
          }
       } else {
-         return aI.Inner_StreamGate.read;
+         return aI.Inner_StreamGate.FAILED;
       }
    }
 
@@ -6481,7 +6481,7 @@ public final class aI extends Module {
             this.drain_Z,
             this.load_Z_BlockState_BlockPos(MC.level.getBlockState(this.open_BlockPos), this.open_BlockPos)
          );
-         if (status != aI.Inner_StreamGate.init) {
+         if (status != aI.Inner_StreamGate.WAITING) {
             this.stop_Z = false;
             BlockPos placed = this.open_BlockPos;
             this.open_BlockPos = null;
@@ -6489,7 +6489,7 @@ public final class aI extends Module {
             this.pool_Z = false;
             boolean imperfection = this.poll_Z;
             this.poll_Z = false;
-            if (status == aI.Inner_StreamGate.read) {
+            if (status == aI.Inner_StreamGate.FAILED) {
                if (!imperfection && init_Z_Z_2(turnReserve, this.store_Z, this.f_aK_I)) {
                   this.f_J_I++;
                }
@@ -6535,11 +6535,11 @@ public final class aI extends Module {
       this.write_BlockPos = null;
       this.init_aM_DataUtil = null;
       this.flags_V();
-      this.init_aI_NodeWalker = aI.Inner_NodeWalker.init;
+      this.init_aI_NodeWalker = aI.Inner_NodeWalker.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
-      this.init_aI_ValueSink = aI.Inner_ValueSink.read;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+      this.init_aI_ValueSink = aI.Inner_ValueSink.FORWARD_DWELL;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
       this.mark_V();
       this.f_H_I = 0;
       this.buffer_Z = false;
@@ -6818,20 +6818,20 @@ public final class aI extends Module {
    private boolean init_Z_aI_DataPipe(aI.Inner_DataPipe live, InteractionHand hand, ItemStack held, BlockPos queuedCell, boolean lastChance) {
       this.close_Z = false;
       if (!MC.player.onGround() && !this.next_Z()) {
-         if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.read && !lastChance) {
+         if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.RETURNED && !lastChance) {
             return false;
          }
 
-         if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.init && !this.pop(MC.player)) {
+         if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.FORWARD && !this.pop(MC.player)) {
             return false;
          }
       }
 
-      if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.read && (lastChance || this.next_Z())) {
-         this.init_aI_NodeWalker = aI.Inner_NodeWalker.load;
+      if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.RETURNED && (lastChance || this.next_Z())) {
+         this.init_aI_NodeWalker = aI.Inner_NodeWalker.PLACING;
          this.init_aI_CacheEntry = null;
          this.close_Z = false;
-         this.init_aI_ValueSink = aI.Inner_ValueSink.sync;
+         this.init_aI_ValueSink = aI.Inner_ValueSink.AIMING;
       }
 
       BlockState supportState = MC.level.getBlockState(live.init_aI_TableIndex().init_BlockPos());
@@ -6868,7 +6868,7 @@ public final class aI extends Module {
             }
 
             if (!MC.player.onGround()) {
-               this.init_aI_NodeWalker = aI.Inner_NodeWalker.load;
+               this.init_aI_NodeWalker = aI.Inner_NodeWalker.PLACING;
             }
 
             queue_V();
@@ -6970,7 +6970,7 @@ public final class aI extends Module {
       this.read_aI_HashUtil = this.init_aI_HashUtil;
       this.sync_Vec3 = null;
       this.f_aJ_I = tick;
-      this.init_aI_SyncManager = aI.Inner_SyncManager.load;
+      this.init_aI_SyncManager = aI.Inner_SyncManager.ARMED;
       this.add_J = load_J_J(this.add_J);
       this.put_J = this.add_J;
       this.init_InteractionHand = hand;
@@ -7002,14 +7002,14 @@ public final class aI extends Module {
    }
 
    private void index_V() {
-      if (this.init_aI_SyncManager != aI.Inner_SyncManager.init || this.read_aI_TableIndex != null) {
+      if (this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE || this.read_aI_TableIndex != null) {
          autismclient.util.as.update_V();
          this.run_V();
       }
    }
 
    private void count_V() {
-      if (this.f_aJ_I == ck.init_ck().state_I() && this.read_aI_TableIndex != null && this.init_aI_SyncManager == aI.Inner_SyncManager.load) {
+      if (this.f_aJ_I == ck.init_ck().state_I() && this.read_aI_TableIndex != null && this.init_aI_SyncManager == aI.Inner_SyncManager.ARMED) {
          if (this.flush(this.read_aI_TableIndex)) {
             MC.hitResult = this.read_aI_TableIndex.init_BlockHitResult();
          } else {
@@ -7835,10 +7835,10 @@ public final class aI extends Module {
          return this.write_Vec3().scale(-1.0);
       }
 
-      Vec3 forward = this.init_aI_KeyHolder != aI.Inner_KeyHolder.read && !this.pop_Z ? this.write_Vec3() : Vec3.ZERO;
-      double side = this.init_aI_KeyHolder == aI.Inner_KeyHolder.load
+      Vec3 forward = this.init_aI_KeyHolder != aI.Inner_KeyHolder.HOLD && !this.pop_Z ? this.write_Vec3() : Vec3.ZERO;
+      double side = this.init_aI_KeyHolder == aI.Inner_KeyHolder.FORWARD
          ? 0.0
-         : (this.init_aI_c == aI.Inner_c.load ? 1.0 : (this.init_aI_c == aI.Inner_c.read ? -1.0 : 0.0));
+         : (this.init_aI_c == aI.Inner_c.LEFT ? 1.0 : (this.init_aI_c == aI.Inner_c.RIGHT ? -1.0 : 0.0));
       Vec3 input = forward.add(this.update_Vec3().scale(side));
       return input.normalize().scale(MC.player != null && MC.player.isCrouching() ? 0.3 : 1.0);
    }
@@ -8243,7 +8243,7 @@ public final class aI extends Module {
             return false;
          }
 
-         this.init_aI_KeyHolder = aI.Inner_KeyHolder.load;
+         this.init_aI_KeyHolder = aI.Inner_KeyHolder.FORWARD;
          this.update_Input = null;
          this.run_Z = false;
          return true;
@@ -8356,23 +8356,23 @@ public final class aI extends Module {
          && !this.start_Z()
          && !this.init_aI_b.load()
          && (
-            this.init_aI_ValueSink == aI.Inner_ValueSink.update
-               || this.init_aI_ValueSink == aI.Inner_ValueSink.sync
-               || this.init_aI_ValueSink == aI.Inner_ValueSink.flush
+            this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH
+               || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING
+               || this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING
          )) {
          BlockPos root = this.write_BlockPos();
          if (root != null) {
             if (this.f_A_I == 2 && (this.open_Z || this.poll_Z) && this.init_aN.init_Z()) {
                this.node_Z = true;
                this.buffer_Z = true;
-               this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+               this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
             } else {
-               boolean returning = this.init_aI_ValueSink == aI.Inner_ValueSink.flush || this.init_aI_NodeWalker == aI.Inner_NodeWalker.read;
+               boolean returning = this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING || this.init_aI_NodeWalker == aI.Inner_NodeWalker.RETURNED;
                if (returning && this.flush_I() > 1) {
                   this.node_Z = true;
                   this.f_X_I = 0;
                   this.buffer_Z = true;
-                  this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+                  this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                } else {
                   int turn = returning ? 0 : this.init_aM().write(this.init_RangeSetting.get());
                   int optional = this.sync_I() / 2;
@@ -8382,7 +8382,7 @@ public final class aI extends Module {
                         returning && this.init_aM().init_Z()
                            ? this.init_aM().init_I()
                            : (
-                              this.init_aI_NodeWalker == aI.Inner_NodeWalker.init
+                              this.init_aI_NodeWalker == aI.Inner_NodeWalker.FORWARD
                                  ? this.init_aM().read(this.init_RangeSetting.get())
                                  : this.init_aM().init(this.init_RangeSetting.get(), this.poll_ce_DataUtil(), this.update_ce_DataUtil(), ce.init())
                            )
@@ -8445,7 +8445,7 @@ public final class aI extends Module {
                   this.f_Y_I = ck.init_ck().state_I();
                   this.init_aI_PathHelper = push;
                   this.buffer_Z = !push.init_Z();
-                  this.init_aI_KeyHolder = push.init_Z() ? aI.Inner_KeyHolder.load : aI.Inner_KeyHolder.read;
+                  this.init_aI_KeyHolder = push.init_Z() ? aI.Inner_KeyHolder.FORWARD : aI.Inner_KeyHolder.HOLD;
                   if (!push.init_Z()) {
                      aI.Inner_PathHelper coast = init(
                         player.position(),
@@ -8755,14 +8755,14 @@ public final class aI extends Module {
 
       if (this.write_BlockPos != null && this.clear_Z && !this.start_Z) {
          this.buffer_Z = this.f_H_I >= this.f_E_I;
-         this.init_aI_KeyHolder = this.buffer_Z ? aI.Inner_KeyHolder.read : aI.Inner_KeyHolder.load;
+         this.init_aI_KeyHolder = this.buffer_Z ? aI.Inner_KeyHolder.HOLD : aI.Inner_KeyHolder.FORWARD;
          this.node_Z = true;
          this.f_X_I = Math.max(0, this.f_E_I - this.f_H_I);
          return false;
       }
 
       this.buffer_Z = true;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
       Vec3 forward = this.write_Vec3();
       Vec3 velocity = player.getDeltaMovement();
       if (velocity.dot(forward) <= 0.0196) {
@@ -8838,10 +8838,10 @@ public final class aI extends Module {
    }
 
    static aI.Inner_ValueSink init_aI_ValueSink_aI_ValueSink(aI.Inner_ValueSink current, boolean chainCovered, boolean risePending) {
-      if (current == aI.Inner_ValueSink.flush) {
-         return aI.Inner_ValueSink.flush;
+      if (current == aI.Inner_ValueSink.RETURNING) {
+         return aI.Inner_ValueSink.RETURNING;
       } else {
-         return chainCovered && !risePending ? aI.Inner_ValueSink.flush : current;
+         return chainCovered && !risePending ? aI.Inner_ValueSink.RETURNING : current;
       }
    }
 
@@ -9172,7 +9172,7 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_ValueSink(aI.Inner_ValueSink phase) {
-      return phase != null && phase != aI.Inner_ValueSink.init;
+      return phase != null && phase != aI.Inner_ValueSink.IDLE;
    }
 
    private Vec3 write_Vec3() {
@@ -9250,7 +9250,7 @@ public final class aI extends Module {
       }
 
       aI.Inner_UtilCore goal = this.init_aI_UtilCore_LocalPlayer(player);
-      if (goal.init_aI_a() == aI.Inner_a.write) {
+      if (goal.init_aI_a() == aI.Inner_a.RETURN) {
          return this.close_ce_DataUtil();
       }
 
@@ -9260,11 +9260,11 @@ public final class aI extends Module {
          return this.load_ce_DataUtil_ce_DataUtil(goal.init_ce_DataUtil());
       }
 
-      if (goal.init_aI_a() == aI.Inner_a.read) {
+      if (goal.init_aI_a() == aI.Inner_a.HOLD) {
          return this.flush_ce_DataUtil();
       }
 
-      if (goal.init_aI_a() == aI.Inner_a.init && !player.onGround()) {
+      if (goal.init_aI_a() == aI.Inner_a.FORWARD && !player.onGround()) {
          return this.close_ce_DataUtil();
       }
 
@@ -9273,7 +9273,7 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_a(aI.Inner_a intent) {
-      return intent == aI.Inner_a.load;
+      return intent == aI.Inner_a.PLACEMENT;
    }
 
    private boolean prev_Z() {
@@ -9331,31 +9331,31 @@ public final class aI extends Module {
             aI.Inner_DataPipe catchTarget = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
             return new aI.Inner_UtilCore(
                catchTarget != null ? catchTarget.init_aI_TableIndex().init_ce_DataUtil() : this.poll_ce_DataUtil(),
-               catchTarget != null ? aI.Inner_a.load : aI.Inner_a.read
+               catchTarget != null ? aI.Inner_a.PLACEMENT : aI.Inner_a.HOLD
             );
          }
 
-         if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.read) {
+         if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.HOLD) {
             boolean turnReserveTarget = this.init_aI_DataPipe != null
                && this.push_BlockPos != null
                && this.push_BlockPos.equals(this.init_aI_DataPipe.init_aI_TableIndex().load());
             aI.Inner_DataPipe heldTarget = !read_Z_Z_Z(this.pop_Z, this.add_Z) && !turnReserveTarget ? null : this.init_aI_DataPipe;
             if (heldTarget != null) {
-               return new aI.Inner_UtilCore(this.init_ce_DataUtil_LocalPlayer_aI_DataPipe(player, heldTarget), aI.Inner_a.load);
+               return new aI.Inner_UtilCore(this.init_ce_DataUtil_LocalPlayer_aI_DataPipe(player, heldTarget), aI.Inner_a.PLACEMENT);
             }
          }
 
-         return new aI.Inner_UtilCore(this.valid_Z && !this.init_aM().init_Z() ? this.sync_ce_DataUtil() : this.update_ce_DataUtil(), aI.Inner_a.init);
+         return new aI.Inner_UtilCore(this.valid_Z && !this.init_aM().init_Z() ? this.sync_ce_DataUtil() : this.update_ce_DataUtil(), aI.Inner_a.FORWARD);
       } else {
-         if (this.init_aI_ValueSink == aI.Inner_ValueSink.flush || this.add_Z) {
+         if (this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING || this.add_Z) {
             return new aI.Inner_UtilCore(this.update_ce_DataUtil(), init_aI_a_aI_ValueSink(this.init_aI_ValueSink, false, this.add_Z, this.init_aI_NodeWalker));
          }
 
-         if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.read) {
-            return new aI.Inner_UtilCore(this.update_ce_DataUtil(), aI.Inner_a.init);
+         if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.RETURNED) {
+            return new aI.Inner_UtilCore(this.update_ce_DataUtil(), aI.Inner_a.FORWARD);
          }
 
-         boolean aimingPhase = !this.add_Z && (this.init_aI_ValueSink == aI.Inner_ValueSink.update || this.init_aI_ValueSink == aI.Inner_ValueSink.sync);
+         boolean aimingPhase = !this.add_Z && (this.init_aI_ValueSink == aI.Inner_ValueSink.LAUNCH || this.init_aI_ValueSink == aI.Inner_ValueSink.AIMING);
          if (aimingPhase && this.clear_Z && !this.start_Z && (this.init_aI_CacheEntry == null || !this.init_aI_CacheEntry.init_aI_DataPipe().init_Z())) {
             aI.Inner_DataPipe rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(player, this.init_ItemStack_2());
             aI.Inner_UtilCore preview = rise == null ? null : this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, rise);
@@ -9374,16 +9374,16 @@ public final class aI extends Module {
                   this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(),
                   wire.load()
                )) {
-               return new aI.Inner_UtilCore(wire.load(), aI.Inner_a.read);
+               return new aI.Inner_UtilCore(wire.load(), aI.Inner_a.HOLD);
             }
          }
 
          aI.Inner_DataPipe optional = aimingPhase && this.open_Z ? this.init_aI_DataPipe_LocalPlayer(player) : null;
-         boolean windowDue = this.init_aI_NodeWalker == aI.Inner_NodeWalker.load || this.read_Z_LocalPlayer_I(player, this.sync_I());
+         boolean windowDue = this.init_aI_NodeWalker == aI.Inner_NodeWalker.PLACING || this.read_Z_LocalPlayer_I(player, this.sync_I());
          if (aimingPhase && windowDue && optional != null) {
             if (!this.init_Z_LocalPlayer_2(player, optional.init_aI_TableIndex().init_BlockPos(), true, false)) {
                this.buffer_Z = true;
-               this.init_aI_KeyHolder = aI.Inner_KeyHolder.read;
+               this.init_aI_KeyHolder = aI.Inner_KeyHolder.HOLD;
                optional = this.init_aI_DataPipe_LocalPlayer(player);
             }
 
@@ -9401,7 +9401,7 @@ public final class aI extends Module {
          }
 
          aI.Inner_a gap = init_aI_a_aI_ValueSink(this.init_aI_ValueSink, false, this.add_Z, this.init_aI_NodeWalker);
-         return new aI.Inner_UtilCore(gap == aI.Inner_a.read && this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.update_ce_DataUtil(), gap);
+         return new aI.Inner_UtilCore(gap == aI.Inner_a.HOLD && this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.update_ce_DataUtil(), gap);
       }
    }
 
@@ -9439,7 +9439,7 @@ public final class aI extends Module {
                this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(),
                wire.load()
             )) {
-            return new aI.Inner_UtilCore(wire.load(), aI.Inner_a.read);
+            return new aI.Inner_UtilCore(wire.load(), aI.Inner_a.HOLD);
          }
       }
 
@@ -9458,19 +9458,19 @@ public final class aI extends Module {
       }
 
       return this.data_Z()
-         ? new aI.Inner_UtilCore(this.write_ce_DataUtil, aI.Inner_a.read)
-         : new aI.Inner_UtilCore(new ce.Inner_DataUtil(this.flags_F + 180.0F, 82.0F), aI.Inner_a.load);
+         ? new aI.Inner_UtilCore(this.write_ce_DataUtil, aI.Inner_a.HOLD)
+         : new aI.Inner_UtilCore(new ce.Inner_DataUtil(this.flags_F + 180.0F, 82.0F), aI.Inner_a.PLACEMENT);
    }
 
    static aI.Inner_a init_aI_a_aI_ValueSink(aI.Inner_ValueSink phase, boolean placementGoal, boolean finishing, aI.Inner_NodeWalker lookPhase) {
-      if (finishing || phase == aI.Inner_ValueSink.flush) {
-         return aI.Inner_a.write;
-      } else if (lookPhase == aI.Inner_NodeWalker.read) {
-         return aI.Inner_a.init;
+      if (finishing || phase == aI.Inner_ValueSink.RETURNING) {
+         return aI.Inner_a.RETURN;
+      } else if (lookPhase == aI.Inner_NodeWalker.RETURNED) {
+         return aI.Inner_a.FORWARD;
       } else if (placementGoal) {
-         return aI.Inner_a.load;
+         return aI.Inner_a.PLACEMENT;
       } else {
-         return lookPhase == aI.Inner_NodeWalker.load ? aI.Inner_a.read : aI.Inner_a.init;
+         return lookPhase == aI.Inner_NodeWalker.PLACING ? aI.Inner_a.HOLD : aI.Inner_a.FORWARD;
       }
    }
 
@@ -9554,7 +9554,7 @@ public final class aI extends Module {
    }
 
    private boolean write_Z_LocalPlayer_I(LocalPlayer player, int blockY) {
-      if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.load && !this.start_Z) {
+      if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.FORWARD && !this.start_Z) {
          BlockPos root = this.write_BlockPos();
          if (root == null) {
             return true;
@@ -9574,11 +9574,11 @@ public final class aI extends Module {
             }
          }
 
-         int turnTicks = this.init_aI_NodeWalker == aI.Inner_NodeWalker.init
+         int turnTicks = this.init_aI_NodeWalker == aI.Inner_NodeWalker.FORWARD
             ? this.init_aM().load(this.init_RangeSetting.get())
-            : (this.init_aI_NodeWalker == aI.Inner_NodeWalker.load ? this.init_aM().write(this.init_RangeSetting.get()) : 0);
+            : (this.init_aI_NodeWalker == aI.Inner_NodeWalker.PLACING ? this.init_aM().write(this.init_RangeSetting.get()) : 0);
          int remaining = init_I_Vec3(player.position(), player.getDeltaMovement(), feetY);
-         int needed = init_I_I_3(missing, this.init_aI_NodeWalker == aI.Inner_NodeWalker.init, turnTicks, this.update_I(), !this.count_Z());
+         int needed = init_I_I_3(missing, this.init_aI_NodeWalker == aI.Inner_NodeWalker.FORWARD, turnTicks, this.update_I(), !this.count_Z());
          return missing > 0 && remaining <= needed + this.sync_I();
       } else {
          return false;
@@ -9600,7 +9600,7 @@ public final class aI extends Module {
    }
 
    private aI.Inner_UtilCore init_aI_UtilCore_LocalPlayer_aI_DataPipe(LocalPlayer player, aI.Inner_DataPipe placement) {
-      if (!this.run_Z && this.init_aI_NodeWalker != aI.Inner_NodeWalker.read) {
+      if (!this.run_Z && this.init_aI_NodeWalker != aI.Inner_NodeWalker.RETURNED) {
          Vec3 motion = player.getDeltaMovement().add(this.read_Vec3().scale(this.count_Z() && player.onGround() && this.read_BlockPos != null ? 0.0 : 0.0196));
          Vec3 moved = this.init_Vec3_LocalPlayer(player, player.getBoundingBox(), motion);
          Vec3 eye = player.getEyePosition().add(moved);
@@ -9643,8 +9643,8 @@ public final class aI extends Module {
          if (quantized == null) {
             this.init_aI_CacheEntry = null;
             this.close_Z = false;
-            this.init_aI_NodeWalker = aI.Inner_NodeWalker.load;
-            return new aI.Inner_UtilCore(future.init_aI_TableIndex().init_ce_DataUtil(), aI.Inner_a.load);
+            this.init_aI_NodeWalker = aI.Inner_NodeWalker.PLACING;
+            return new aI.Inner_UtilCore(future.init_aI_TableIndex().init_ce_DataUtil(), aI.Inner_a.PLACEMENT);
          }
 
          if (!this.count_Z()
@@ -9654,7 +9654,7 @@ public final class aI extends Module {
             && !this.pop_Z
             && !this.init_aI_b.load()
             && !this.start_Z()
-            && this.init_aI_KeyHolder == aI.Inner_KeyHolder.load
+            && this.init_aI_KeyHolder == aI.Inner_KeyHolder.FORWARD
             && !this.entry_Z
             && quantized.init_Direction().getAxis().isHorizontal()) {
             boolean stable = init_Z_F(
@@ -9675,13 +9675,13 @@ public final class aI extends Module {
             if (!stable) {
                this.init_aI_CacheEntry = null;
                this.close_Z = false;
-               return new aI.Inner_UtilCore(this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.poll_ce_DataUtil(), aI.Inner_a.read);
+               return new aI.Inner_UtilCore(this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.poll_ce_DataUtil(), aI.Inner_a.HOLD);
             }
          }
 
          this.init_aI_CacheEntry = new aI.Inner_CacheEntry(new aI.Inner_DataPipe(quantized, placement.init_Z()), ck.init_ck().state_I());
-         this.init_aI_NodeWalker = aI.Inner_NodeWalker.load;
-         return new aI.Inner_UtilCore(quantized.init_ce_DataUtil(), aI.Inner_a.load);
+         this.init_aI_NodeWalker = aI.Inner_NodeWalker.PLACING;
+         return new aI.Inner_UtilCore(quantized.init_ce_DataUtil(), aI.Inner_a.PLACEMENT);
       } else {
          return null;
       }
@@ -9831,8 +9831,8 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_ValueSink(aI.Inner_ValueSink phase, aI.Inner_NodeWalker look, int remaining, int turning) {
-      return (phase == aI.Inner_ValueSink.update || phase == aI.Inner_ValueSink.sync)
-         && look != aI.Inner_NodeWalker.read
+      return (phase == aI.Inner_ValueSink.LAUNCH || phase == aI.Inner_ValueSink.AIMING)
+         && look != aI.Inner_NodeWalker.RETURNED
          && remaining >= Math.max(0, turning) + 2;
    }
 
@@ -9870,7 +9870,7 @@ public final class aI extends Module {
          && !this.start_Z()
          && player != null
          && !player.onGround()
-         && this.init_aI_NodeWalker != aI.Inner_NodeWalker.read
+         && this.init_aI_NodeWalker != aI.Inner_NodeWalker.RETURNED
          && init_I_Vec3(player.position(), player.getDeltaMovement(), this.f_L_I + 1.0) >= this.init_aN.init_I() * 2;
    }
 
@@ -10131,7 +10131,7 @@ public final class aI extends Module {
          && support != null
          && support.getY() >= this.f_L_I
          && support.getY() <= this.f_L_I + 1
-         && this.init_aI_NodeWalker != aI.Inner_NodeWalker.read
+         && this.init_aI_NodeWalker != aI.Inner_NodeWalker.RETURNED
          && !(player.getDeltaMovement().dot(this.write_Vec3()) <= 1.0E-4)) {
          BlockPos extra = support.above();
          BlockState state = MC.level.getBlockState(support);
@@ -10200,7 +10200,7 @@ public final class aI extends Module {
       int turning = !preparing
          ? 0
          : (
-            this.init_aI_NodeWalker == aI.Inner_NodeWalker.load
+            this.init_aI_NodeWalker == aI.Inner_NodeWalker.PLACING
                ? this.init_aM().write(this.init_RangeSetting.get())
                : this.init_aM().load(this.init_RangeSetting.get())
          );
@@ -10373,7 +10373,7 @@ public final class aI extends Module {
    }
 
    private void poll_V(LocalPlayer player) {
-      if (this.push_Z && player != null && !player.onGround() && this.init_aI_ValueSink == aI.Inner_ValueSink.flush && (!this.size_Z || !this.prev_Z())) {
+      if (this.push_Z && player != null && !player.onGround() && this.init_aI_ValueSink == aI.Inner_ValueSink.RETURNING && (!this.size_Z || !this.prev_Z())) {
          if (read_Z_Z(this.prev_Z(), this.f_U_I == ck.init_ck().state_I(), this.size_Z)) {
             this.f_T_I = -2147483648;
          }
@@ -10401,8 +10401,8 @@ public final class aI extends Module {
          return this.flush_ce_DataUtil();
       }
 
-      if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.load) {
-         this.init_aI_NodeWalker = aI.Inner_NodeWalker.read;
+      if (this.init_aI_NodeWalker == aI.Inner_NodeWalker.PLACING) {
+         this.init_aI_NodeWalker = aI.Inner_NodeWalker.RETURNED;
       }
 
       this.init_aI_CacheEntry = null;
@@ -10484,7 +10484,7 @@ public final class aI extends Module {
       this.index_F = 0.0F / 0.0F;
       this.f_x_I = -2147483648;
       this.flags_V();
-      this.init_aI_NodeWalker = aI.Inner_NodeWalker.init;
+      this.init_aI_NodeWalker = aI.Inner_NodeWalker.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.cache_Z = false;
@@ -10495,8 +10495,8 @@ public final class aI extends Module {
       this.parse_V();
       this.index_V();
       this.update_Input = null;
-      this.init_aI_ValueSink = aI.Inner_ValueSink.init;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.init;
+      this.init_aI_ValueSink = aI.Inner_ValueSink.IDLE;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.RELEASED;
       this.push_Z = false;
       this.pop_Z = false;
       this.init_aI_b = aI.Inner_b.init_aI_b;
@@ -10555,7 +10555,7 @@ public final class aI extends Module {
       this.index_F = 0.0F / 0.0F;
       this.f_x_I = -2147483648;
       this.flags_V();
-      this.init_aI_NodeWalker = aI.Inner_NodeWalker.init;
+      this.init_aI_NodeWalker = aI.Inner_NodeWalker.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.cache_Z = false;
@@ -10566,8 +10566,8 @@ public final class aI extends Module {
       this.parse_V();
       this.index_V();
       this.update_Input = null;
-      this.init_aI_ValueSink = aI.Inner_ValueSink.init;
-      this.init_aI_KeyHolder = aI.Inner_KeyHolder.init;
+      this.init_aI_ValueSink = aI.Inner_ValueSink.IDLE;
+      this.init_aI_KeyHolder = aI.Inner_KeyHolder.RELEASED;
       this.push_Z = false;
       this.pop_Z = false;
       this.run_Z = false;
@@ -10825,7 +10825,7 @@ public final class aI extends Module {
             } else if (!this.level_Z() && !init_Z_aI_RenderState_ch_CachePool(queued, written.init_ch_CachePool())) {
                this.init_V_Str_3("wire-rotation");
             } else {
-               this.init_aI_SyncManager = aI.Inner_SyncManager.read;
+               this.init_aI_SyncManager = aI.Inner_SyncManager.SENT;
                this.write_Str = "sent";
                this.fill_Z = true;
                if (actualClick != null) {
@@ -10861,7 +10861,7 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_SyncManager_I(aI.Inner_SyncManager state, int writeCount) {
-      return state == aI.Inner_SyncManager.load && writeCount == 1;
+      return state == aI.Inner_SyncManager.ARMED && writeCount == 1;
    }
 
    static boolean init_Z_aI_RenderState(aI.Inner_RenderState queued, boolean duplicateSubmitted, aI.Inner_SyncManager state, int writeCount) {
@@ -10886,7 +10886,7 @@ public final class aI extends Module {
 
    private void init_V_J(long generation, InteractionHand hand, BlockHitResult hit, InteractionResult result) {
       aI.Inner_TableIndex pending = this.read_aI_TableIndex;
-      if (this.init_aI_SyncManager != aI.Inner_SyncManager.init
+      if (this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE
          && init_Z_J(generation, this.put_J, hand, this.init_InteractionHand, this.store_Z, hit, pending, this.chunk_Z)) {
          this.store_Z = true;
          this.drain_Z = result != null && result.consumesAction();
@@ -10935,7 +10935,7 @@ public final class aI extends Module {
 
    private void drain_V() {
       aI.Inner_TableIndex pending = this.read_aI_TableIndex;
-      if (pending != null && this.store_Z && this.init_aI_SyncManager == aI.Inner_SyncManager.read && MC.level != null) {
+      if (pending != null && this.store_Z && this.init_aI_SyncManager == aI.Inner_SyncManager.SENT && MC.level != null) {
          BlockPos cell = pending.load();
          int age = Math.max(0, ck.init_ck().state_I() - this.f_aJ_I);
          aI.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
@@ -10948,7 +10948,7 @@ public final class aI extends Module {
                : this.init_Z_BlockState_BlockPos(MC.level.getBlockState(cell), cell),
             load_Z_I_I(this.f_aM_I, this.f_aN_I)
          );
-         if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.sync) {
+         if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.FAILED) {
             this.init_V_Str_3("use".equals(decision.init_Str()) ? "use-" + this.write_Str : decision.init_Str());
          } else {
             this.init_aI_SyncManager = decision.init_aI_SyncManager();
@@ -10973,7 +10973,7 @@ public final class aI extends Module {
                boolean solid = scaffold.level_Z()
                   ? scaffold.load_Z_BlockState_BlockPos(MC.level.getBlockState(active.load()), active.load())
                   : scaffold.open(active.load());
-               if (scaffold.init_aI_SyncManager == aI.Inner_SyncManager.sync) {
+               if (scaffold.init_aI_SyncManager == aI.Inner_SyncManager.FAILED) {
                   return;
                }
 
@@ -10981,7 +10981,7 @@ public final class aI extends Module {
                aI.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
                   scaffold.init_aI_SyncManager, age, scaffold.store_Z, scaffold.drain_Z, solid, true
                );
-               if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.sync) {
+               if (decision.init_aI_SyncManager() == aI.Inner_SyncManager.FAILED) {
                   scaffold.init_V_Str_3(decision.init_Str());
                } else {
                   scaffold.init_aI_SyncManager = decision.init_aI_SyncManager();
@@ -11224,7 +11224,7 @@ public final class aI extends Module {
                Input result = scaffold.push_Z ? scaffold.poll(authored) : scaffold.flush(authored);
                if (scaffold.push_Z) {
                   int inputTick = ck.init_ck().state_I();
-                  if (scaffold.count_Z() || scaffold.f_Z_I == inputTick || init_Z_Z_Input(scaffold.init_aI_KeyHolder == aI.Inner_KeyHolder.load, result)) {
+                  if (scaffold.count_Z() || scaffold.f_Z_I == inputTick || init_Z_Z_Input(scaffold.init_aI_KeyHolder == aI.Inner_KeyHolder.FORWARD, result)) {
                      scaffold.f_aP_I = inputTick;
                   } else if (scaffold.f_aP_I == inputTick) {
                      scaffold.f_aP_I = -2147483648;
@@ -11288,7 +11288,7 @@ public final class aI extends Module {
 
                boolean carryArc = scaffold.entry_Z();
                boolean atEdge = scaffold.j() && !carryArc;
-               boolean fallAhead = scaffold.init_aI_CachePool() == aI.Inner_CachePool.load && !carryArc;
+               boolean fallAhead = scaffold.init_aI_CachePool() == aI.Inner_CachePool.IMMINENT && !carryArc;
                boolean clickArmed = scaffold.state_Z();
                boolean clickLands = (atEdge || fallAhead) && clickArmed;
                boolean edgeDanger = atEdge && !clickLands;
@@ -11457,7 +11457,7 @@ public final class aI extends Module {
       this.table_V();
       this.drain_V();
       boolean ready = this.f_aJ_I == ck.init_ck().state_I()
-         && this.init_aI_SyncManager == aI.Inner_SyncManager.write
+         && this.init_aI_SyncManager == aI.Inner_SyncManager.PREDICTED
          && !this.table_Z
          && this.read_aI_TableIndex != null
          && this.open(this.read_aI_TableIndex.load());
@@ -11628,7 +11628,7 @@ public final class aI extends Module {
    }
 
    static boolean init_Z_aI_SyncManager(aI.Inner_SyncManager state, aI.Inner_TableIndex pending, BlockPos support) {
-      return pending == null || support == null || !pending.load().equals(support) || state == aI.Inner_SyncManager.write;
+      return pending == null || support == null || !pending.load().equals(support) || state == aI.Inner_SyncManager.PREDICTED;
    }
 
    private void fill_V() {
@@ -12119,7 +12119,7 @@ public final class aI extends Module {
    }
 
    private Input sync(Input original) {
-      if (this.push_Z && this.init_aI_KeyHolder != aI.Inner_KeyHolder.init) {
+      if (this.push_Z && this.init_aI_KeyHolder != aI.Inner_KeyHolder.RELEASED) {
          Input authored = this.init_Input();
          if (this.f_Z_I == ck.init_ck().state_I()) {
             authored = new Input(authored.forward(), authored.backward(), authored.left(), authored.right(), authored.jump(), authored.shift(), false);
@@ -12142,7 +12142,7 @@ public final class aI extends Module {
          return new Input(false, true, false, false, false, false, false);
       }
 
-      if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.read) {
+      if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.HOLD) {
          if (this.update_Input != null) {
             Input recovery = this.update_Input;
             this.update_Input = null;
@@ -12164,7 +12164,7 @@ public final class aI extends Module {
          }
 
          aI.Inner_c strafe = this.init_aI_c;
-         return new Input(false, false, strafe == aI.Inner_c.load, strafe == aI.Inner_c.read, this.run_Z, false, false);
+         return new Input(false, false, strafe == aI.Inner_c.LEFT, strafe == aI.Inner_c.RIGHT, this.run_Z, false, false);
       } else {
          return MC.player != null && MC.player.onGround() && load_Z_aI_ValueSink(this.init_aI_ValueSink)
             ? init_Input_Z_Z(this.run_Z, false)
@@ -12190,8 +12190,8 @@ public final class aI extends Module {
    }
 
    static Input init_Input_aI_c(aI.Inner_c strafe, boolean jump, boolean sneak) {
-      aI.Inner_c safe = strafe == null ? aI.Inner_c.init : strafe;
-      return new Input(true, false, safe == aI.Inner_c.load, safe == aI.Inner_c.read, jump, sneak, true);
+      aI.Inner_c safe = strafe == null ? aI.Inner_c.NONE : strafe;
+      return new Input(true, false, safe == aI.Inner_c.LEFT, safe == aI.Inner_c.RIGHT, jump, sneak, true);
    }
 
    static aI.Inner_TokenStore init_aI_TokenStore_I(
@@ -12199,45 +12199,45 @@ public final class aI extends Module {
    ) {
       int cooled = Math.max(0, cooldown - 1);
       int used = Math.max(0, pulsesUsed);
-      aI.Inner_c previous = lastPulse == null ? aI.Inner_c.init : lastPulse;
+      aI.Inner_c previous = lastPulse == null ? aI.Inner_c.NONE : lastPulse;
       if (Double.isFinite(laneError) && Double.isFinite(lateralVelocity)) {
          double predictedError = init_D_D_3(laneError, lateralVelocity, ticksUntilLanding);
          double projectedDistance = Math.abs(predictedError);
          if (projectedDistance <= 0.1 && Math.abs(laneError) <= 0.16) {
-            previous = aI.Inner_c.init;
+            previous = aI.Inner_c.NONE;
          }
 
          if (!(projectedDistance <= 0.16) && cooldown <= 0) {
             double desired = Mth.clamp(laneError * 0.18, -0.055, 0.055);
             aI.Inner_c requested = init_aI_c_D_D(lateralVelocity, desired);
-            if (requested == aI.Inner_c.init) {
-               return new aI.Inner_TokenStore(aI.Inner_c.init, cooled, previous, used);
+            if (requested == aI.Inner_c.NONE) {
+               return new aI.Inner_TokenStore(aI.Inner_c.NONE, cooled, previous, used);
             }
 
-            boolean reversing = previous != aI.Inner_c.init && requested != previous;
+            boolean reversing = previous != aI.Inner_c.NONE && requested != previous;
             if (reversing && projectedDistance < 0.48) {
-               return new aI.Inner_TokenStore(aI.Inner_c.init, cooled, previous, used);
+               return new aI.Inner_TokenStore(aI.Inner_c.NONE, cooled, previous, used);
             }
 
             int pulseLimit = projectedDistance >= 0.48 ? 3 : 2;
             return used >= pulseLimit
-               ? new aI.Inner_TokenStore(aI.Inner_c.init, cooled, previous, used)
+               ? new aI.Inner_TokenStore(aI.Inner_c.NONE, cooled, previous, used)
                : new aI.Inner_TokenStore(requested, 2, requested, used + 1);
          } else {
-            return new aI.Inner_TokenStore(aI.Inner_c.init, cooled, previous, used);
+            return new aI.Inner_TokenStore(aI.Inner_c.NONE, cooled, previous, used);
          }
       } else {
-         return new aI.Inner_TokenStore(aI.Inner_c.init, cooled, previous, used);
+         return new aI.Inner_TokenStore(aI.Inner_c.NONE, cooled, previous, used);
       }
    }
 
    static aI.Inner_c init_aI_c_D_D(double lateralVelocity, double desiredVelocity) {
       if (!Double.isFinite(lateralVelocity) || !Double.isFinite(desiredVelocity)) {
-         return aI.Inner_c.init;
+         return aI.Inner_c.NONE;
       } else if (lateralVelocity < desiredVelocity - 0.026) {
-         return aI.Inner_c.load;
+         return aI.Inner_c.LEFT;
       } else {
-         return lateralVelocity > desiredVelocity + 0.026 ? aI.Inner_c.read : aI.Inner_c.init;
+         return lateralVelocity > desiredVelocity + 0.026 ? aI.Inner_c.RIGHT : aI.Inner_c.NONE;
       }
    }
 
@@ -12269,8 +12269,8 @@ public final class aI extends Module {
    }
 
    private void mark_V() {
-      this.init_aI_c = aI.Inner_c.init;
-      this.load_aI_c = aI.Inner_c.init;
+      this.init_aI_c = aI.Inner_c.NONE;
+      this.load_aI_c = aI.Inner_c.NONE;
       this.f_N_I = 0;
       this.f_O_I = 0;
       this.f_P_I = -1;
@@ -12298,11 +12298,11 @@ public final class aI extends Module {
    }
 
    static boolean load_Z_aI_ValueSink(aI.Inner_ValueSink phase) {
-      return phase == aI.Inner_ValueSink.load;
+      return phase == aI.Inner_ValueSink.RUNNING;
    }
 
    private void open_V(LocalPlayer player, BlockPos support) {
-      if (player != null && support != null && player.onGround() && this.init_aI_ValueSink == aI.Inner_ValueSink.load) {
+      if (player != null && support != null && player.onGround() && this.init_aI_ValueSink == aI.Inner_ValueSink.RUNNING) {
          Vec3 left = this.update_Vec3();
          double error = this.f_x_D - init_D_Vec3_F(player.position(), this.flags_F);
          double lateralVelocity = player.getDeltaMovement().dot(left);
@@ -13363,7 +13363,7 @@ public final class aI extends Module {
          && scaffold.isEnabled()
          && scaffold.pool_Z()
          && scaffold.push_Z
-         && scaffold.init_aI_KeyHolder != aI.Inner_KeyHolder.init;
+         && scaffold.init_aI_KeyHolder != aI.Inner_KeyHolder.RELEASED;
    }
 
    private void init_V_F(float courseYaw) {
@@ -13402,7 +13402,7 @@ public final class aI extends Module {
          if (MC.player != null
             && !MC.player.onGround()
             && this.sync_BlockPos != null
-            && (easing || this.init_aI_KeyHolder == aI.Inner_KeyHolder.load && input.forward() && !input.backward())) {
+            && (easing || this.init_aI_KeyHolder == aI.Inner_KeyHolder.FORWARD && input.forward() && !input.backward())) {
             double error = this.f_x_D - init_D_Vec3_F(MC.player.position(), this.flags_F);
             double velocity = MC.player.getDeltaMovement().dot(this.update_Vec3());
             float controlCourse = easing ? this.flags_F + 180.0F : this.flags_F;
@@ -13436,7 +13436,7 @@ public final class aI extends Module {
             return init_Input_I_Input(this.f_P_I, input);
          } else {
             float courseYaw = this.valid_Z ? Mth.wrapDegrees(this.flags_F + this.block_F) : this.flags_F;
-            if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.read && MC.player != null && MC.player.onGround()) {
+            if (this.init_aI_KeyHolder == aI.Inner_KeyHolder.HOLD && MC.player != null && MC.player.onGround()) {
                this.parse_V();
                this.state_V();
                this.f_aQ_I = 0;
@@ -14204,13 +14204,13 @@ public final class aI extends Module {
          BlockPos riser = landing.above();
          boolean riserSolid = !MC.level.isOutsideBuildHeight(riser) && this.open(riser);
          aI.Inner_EventBus need = init_aI_EventBus_Z(supportSolid, deficit, riserSolid);
-         if (need == aI.Inner_EventBus.write || MC.level.isOutsideBuildHeight(riser)) {
+         if (need == aI.Inner_EventBus.READY || MC.level.isOutsideBuildHeight(riser)) {
             this.add_BlockPos = null;
             this.update_Str = "ready";
             return null;
          }
 
-         if (need == aI.Inner_EventBus.read) {
+         if (need == aI.Inner_EventBus.RISER) {
             this.add_BlockPos = null;
             if (!this.d_Z()) {
                this.clear_BlockPos = null;
@@ -14226,7 +14226,7 @@ public final class aI extends Module {
 
             this.update_Str = rise == null ? "riser-wait" : "riser";
             return rise;
-         } else if (need == aI.Inner_EventBus.load) {
+         } else if (need == aI.Inner_EventBus.SUPPORT) {
             this.add_BlockPos = null;
             aI.Inner_TableIndex step = this.init_aI_TableIndex_BlockPos(landing, predicted, stack, lane);
             if (step != null) {
@@ -16235,7 +16235,7 @@ public final class aI extends Module {
       int selected = MC.player.getInventory().getSelectedSlot();
       int remaining = this.index_Z() ? this.read_I_I(selected) : main.getCount();
       int freshSlot = -1;
-      if (this.index_Z() && this.init_aI_NodeWalker != aI.Inner_NodeWalker.load && remaining < 8) {
+      if (this.index_Z() && this.init_aI_NodeWalker != aI.Inner_NodeWalker.PLACING && remaining < 8) {
          for (int candidate = 0; candidate < 9; candidate++) {
             if (candidate != selected && !autismclient.util.ah.init(candidate, this.id())) {
                ItemStack stack = MC.player.getInventory().getItem(candidate);
@@ -17387,7 +17387,7 @@ public final class aI extends Module {
 
    private aI.Inner_CachePool init_aI_CachePool() {
       if (MC.player.onGround() && !this.init_Z_D_Vec3(0.35, MC.player.position())) {
-         return aI.Inner_CachePool.init;
+         return aI.Inner_CachePool.NONE;
       }
 
       Vec3 position = MC.player.position();
@@ -17408,20 +17408,20 @@ public final class aI extends Module {
          y += vy;
          z += vz;
          if (this.init_Z_D(x, y, z, 2)) {
-            return aI.Inner_CachePool.init;
+            return aI.Inner_CachePool.NONE;
          }
 
          double drop = startY - y;
          if (drop > 2.0) {
-            return aI.Inner_CachePool.load;
+            return aI.Inner_CachePool.IMMINENT;
          }
 
          if (drop > 0.6 && tick < 4) {
-            return aI.Inner_CachePool.load;
+            return aI.Inner_CachePool.IMMINENT;
          }
       }
 
-      return aI.Inner_CachePool.init;
+      return aI.Inner_CachePool.NONE;
    }
 
    private boolean init_Z_D(double x, double y, double z, int blocks) {
@@ -17942,7 +17942,7 @@ public final class aI extends Module {
          this.flush_ArrayDeque.clear();
       }
 
-      if (this.init_aI_SyncManager != aI.Inner_SyncManager.init) {
+      if (this.init_aI_SyncManager != aI.Inner_SyncManager.IDLE) {
          this.init_V_Str_3("position-correction");
       }
 
@@ -17994,7 +17994,7 @@ public final class aI extends Module {
       this.read_aI_HashUtil = null;
       this.sync_Vec3 = null;
       this.f_aJ_I = -2147483648;
-      this.init_aI_SyncManager = aI.Inner_SyncManager.init;
+      this.init_aI_SyncManager = aI.Inner_SyncManager.IDLE;
       this.put_J = 0L;
       this.init_InteractionHand = null;
       this.chunk_Z = false;
@@ -18218,8 +18218,8 @@ public final class aI extends Module {
    }
 
    private enum Inner_CachePool {
-      init,
-      load;
+      NONE,
+      IMMINENT;
    }
 
    record Inner_CharEncoder(BlockPos init_BlockPos, Direction init_Direction) {
@@ -18349,10 +18349,10 @@ public final class aI extends Module {
    }
 
    enum Inner_EventBus {
-      init,
-      load,
-      read,
-      write;
+      CONNECTOR,
+      SUPPORT,
+      RISER,
+      READY;
    }
 
    record Inner_FieldCache(Vec3 init_Vec3, boolean init_Z) {
@@ -18402,9 +18402,9 @@ public final class aI extends Module {
    }
 
    private enum Inner_KeyHolder {
-      init,
-      load,
-      read;
+      RELEASED,
+      FORWARD,
+      HOLD;
    }
 
    record Inner_ListPool(BlockPos init_BlockPos, int init_I) {
@@ -18446,9 +18446,9 @@ public final class aI extends Module {
    }
 
    enum Inner_NodeWalker {
-      init,
-      load,
-      read;
+      FORWARD,
+      PLACING,
+      RETURNED;
    }
 
    private record Inner_PacketUtil(Vec3 init, Vec3 load) {
@@ -18526,21 +18526,21 @@ public final class aI extends Module {
    }
 
    enum Inner_StreamGate {
-      init,
-      load,
-      read;
+      WAITING,
+      PLACED,
+      FAILED;
    }
 
    private record Inner_StreamUtil(aI.Inner_DataUtil init_aI_DataUtil, Vec3 init_Vec3, Direction init_Direction) {
    }
 
    enum Inner_SyncManager {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      IDLE,
+      ARMED,
+      SENT,
+      PREDICTED,
+      RECONCILING,
+      FAILED;
    }
 
    record Inner_TableIndex(
@@ -18567,20 +18567,20 @@ public final class aI extends Module {
    }
 
    enum Inner_ValueSink {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      IDLE,
+      RUNNING,
+      FORWARD_DWELL,
+      RECOVERING,
+      LAUNCH,
+      AIMING,
+      RETURNING;
    }
 
    enum Inner_a {
-      init,
-      load,
-      read,
-      write;
+      FORWARD,
+      PLACEMENT,
+      HOLD,
+      RETURN;
    }
 
    record Inner_b(boolean init_Z, boolean load) {
@@ -18588,8 +18588,8 @@ public final class aI extends Module {
    }
 
    enum Inner_c {
-      init,
-      load,
-      read;
+      NONE,
+      LEFT,
+      RIGHT;
    }
 }

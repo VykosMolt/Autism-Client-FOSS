@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 public class aK implements CacheEntry, MacroAction {
-   public aK.Inner_DataUtil condition = aK.Inner_DataUtil.init;
+   public aK.Inner_DataUtil condition = aK.Inner_DataUtil.ITEM_EXISTS;
    public String itemName = "";
    public int count = 1;
    public int slot = 0;
@@ -22,7 +22,7 @@ public class aK implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.f_D_StreamGate;
+      return StreamGate.WAIT_INVENTORY_PREDICATE;
    }
 
    public boolean init(Minecraft mc) {
@@ -36,46 +36,46 @@ public class aK implements CacheEntry, MacroAction {
          this.init_V_Minecraft_ArrayUtil(mc, target);
          boolean var10000;
          switch (this.condition) {
-            case init:
+            case ITEM_EXISTS:
                var10000 = init_Z_Minecraft_ArrayUtil(mc, target);
                break;
-            case load:
+            case COUNT_AT_LEAST:
                var10000 = init_I_Minecraft_ArrayUtil(mc, target) >= Math.max(1, this.count);
                break;
-            case read:
+            case COUNT_CHANGED:
                var10000 = init_I_Minecraft_ArrayUtil(mc, target) != this.init_I;
                break;
-            case write:
+            case COUNT_INCREASED:
                var10000 = init_I_Minecraft_ArrayUtil(mc, target) > this.init_I;
                break;
-            case update:
+            case COUNT_DECREASED:
                var10000 = init_I_Minecraft_ArrayUtil(mc, target) < this.init_I;
                break;
-            case sync:
+            case SLOT_EMPTY:
                var10000 = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
                break;
-            case flush:
+            case SLOT_FILLED:
                var10000 = !init_ItemStack_Minecraft_I(mc, this.slot).isEmpty();
                break;
-            case close:
+            case SLOT_CHANGED:
                var10000 = init_ItemStack_Minecraft_I(mc, this.slot).isEmpty() != this.load;
                break;
-            case open:
+            case INVENTORY_FULL:
                var10000 = load(mc);
                break;
-            case poll:
+            case INVENTORY_EMPTY:
                var10000 = read(mc);
                break;
-            case push:
+            case CURSOR_MATCHES:
                var10000 = target.init_I_ItemStack_I(mc.player.containerMenu.getCarried(), -1) >= 0;
                break;
-            case pop:
+            case CURSOR_EMPTY:
                var10000 = mc.player.containerMenu.getCarried().isEmpty();
                break;
-            case tick:
+            case CURSOR_FILLED:
                var10000 = !mc.player.containerMenu.getCarried().isEmpty();
                break;
-            case run:
+            case SELECTED_SLOT:
                var10000 = mc.player.getInventory().getSelectedSlot() == Math.max(0, Math.min(8, this.slot));
                break;
             default:
@@ -166,7 +166,7 @@ public class aK implements CacheEntry, MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = i.init(aK.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), aK.Inner_DataUtil.init);
+      this.condition = i.init(aK.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), aK.Inner_DataUtil.ITEM_EXISTS);
       this.itemName = tag.getStringOr("itemName", "");
       this.count = tag.getIntOr("count", 1);
       this.slot = tag.getIntOr("slot", 0);
@@ -196,19 +196,19 @@ public class aK implements CacheEntry, MacroAction {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run;
+      ITEM_EXISTS,
+      COUNT_AT_LEAST,
+      COUNT_CHANGED,
+      COUNT_INCREASED,
+      COUNT_DECREASED,
+      SLOT_EMPTY,
+      SLOT_FILLED,
+      SLOT_CHANGED,
+      INVENTORY_FULL,
+      INVENTORY_EMPTY,
+      CURSOR_MATCHES,
+      CURSOR_EMPTY,
+      CURSOR_FILLED,
+      SELECTED_SLOT;
    }
 }

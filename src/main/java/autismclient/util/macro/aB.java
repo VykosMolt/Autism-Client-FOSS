@@ -151,7 +151,7 @@ public class aB implements CacheEntry, MacroAction {
 
    @Override
    public StreamGate getType() {
-      return StreamGate.write;
+      return StreamGate.WAIT_PACKET;
    }
 
    @Override

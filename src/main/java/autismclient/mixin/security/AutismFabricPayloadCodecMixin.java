@@ -28,7 +28,7 @@ public class AutismFabricPayloadCodecMixin {
       if (this.flow == PacketFlow.CLIENTBOUND && TokenStore.init_Z()) {
          BufferHelper.Inner_StreamUtil context = TokenStore.init_BufferHelper_Strea();
          if ((context == null || context.init_Connection().getReceiving() == PacketFlow.CLIENTBOUND)
-            && (context == null || context.init_BufferHelper_Cache() != BufferHelper.Inner_CachePool.load || !BufferHelper.init_Z(context))) {
+            && (context == null || context.init_BufferHelper_Cache() != BufferHelper.Inner_CachePool.MODDED || !BufferHelper.init_Z(context))) {
             cir.setReturnValue(null);
          }
       }

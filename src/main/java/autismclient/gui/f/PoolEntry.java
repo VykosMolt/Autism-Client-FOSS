@@ -13,7 +13,7 @@ public final class PoolEntry {
    private static final int init_I = 2048;
    private static final int load_I = 9;
    private static final int read_I = 1;
-   private static final autismclient.gui.e.ConfigStore init_ConfigStore = autismclient.gui.e.ConfigStore.init_ConfigStore;
+   private static final autismclient.gui.e.ConfigStore init_ConfigStore = autismclient.gui.e.ConfigStore.BODY;
    private final Font init_Font;
    private int write = -1;
    private final Map<String, Integer> init_Map = new LinkedHashMap<String, Integer>(256, 0.75F, true) {
