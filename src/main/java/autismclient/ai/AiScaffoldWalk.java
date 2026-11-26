@@ -153,7 +153,7 @@ final class AiScaffoldWalk {
             }
 
             AiScaffoldWalk.Inner_StreamUtil init_bN_StreamUtil() {
-               return mc.player.getFoodData().getFoodLevel() <= 6 ? AiScaffoldWalk.Inner_StreamUtil.init : plan.mode();
+               return mc.player.getFoodData().getFoodLevel() <= 6 ? AiScaffoldWalk.Inner_StreamUtil.WALK : plan.mode();
             }
 
             void init(String reason) {
@@ -270,7 +270,7 @@ final class AiScaffoldWalk {
                   this.init_NetHelper = new autismclient.ai.engine.AiBridgeDriver(
                      cells,
                      autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(
-                        this.init_bN_StreamUtil() == AiScaffoldWalk.Inner_StreamUtil.read, cells, mc.player, this.init_I_27()
+                        this.init_bN_StreamUtil() == AiScaffoldWalk.Inner_StreamUtil.TELLY, cells, mc.player, this.init_I_27()
                      ),
                      this.init_DataUtil
                   );
@@ -305,13 +305,13 @@ final class AiScaffoldWalk {
                            this.poll++;
                            this.read_Z = true;
                         });
-                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.write) {
+                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
                            return this.init(AiOperation.Status.FAILED, "Scaffold bridge needs footing at the support's top level");
-                        } else if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.read) {
+                        } else if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL) {
                            return this.init(AiOperation.Status.FAILED, "Fell off the scaffold");
                         } else {
                            String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
-                           if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.load) {
+                           if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
                               this.read_BlockPos = mc.player.blockPosition();
                               this.init_NetHelper = null;
                               return AiGameOperations.init_AiOperation_Result(
@@ -488,13 +488,13 @@ final class AiScaffoldWalk {
          AiScaffoldWalk.Inner_StreamUtil var10000;
          switch (AiJson.init_Str_JsonObject(args, "mode", "walk").toLowerCase(Locale.ROOT)) {
             case "walk":
-               var10000 = AiScaffoldWalk.Inner_StreamUtil.init;
+               var10000 = AiScaffoldWalk.Inner_StreamUtil.WALK;
                break;
             case "sprint":
-               var10000 = AiScaffoldWalk.Inner_StreamUtil.load;
+               var10000 = AiScaffoldWalk.Inner_StreamUtil.SPRINT;
                break;
             case "telly":
-               var10000 = AiScaffoldWalk.Inner_StreamUtil.read;
+               var10000 = AiScaffoldWalk.Inner_StreamUtil.TELLY;
                break;
             default:
                throw new IllegalArgumentException("mode must be walk, sprint or telly");
@@ -523,8 +523,8 @@ final class AiScaffoldWalk {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      WALK,
+      SPRINT,
+      TELLY;
    }
 }

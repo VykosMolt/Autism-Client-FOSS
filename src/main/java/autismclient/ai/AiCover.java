@@ -79,7 +79,7 @@ final class AiCover {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
             }
 
             @Override
@@ -311,7 +311,7 @@ final class AiCover {
                               false,
                               false,
                               20,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                               false,
                               2.0,
                               new autismclient.ai.engine.CoverGoal(stances),
@@ -408,12 +408,12 @@ final class AiCover {
             AiOperation.Result init_AiOperation_Result_37() {
                this.init_V_29();
                autismclient.ai.engine.AiPlacer.Inner_DataUtil s = this.init_DataPipe.init_DataPipe_DataUtil();
-               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
+               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
                   return this.init("Putting a block between the " + this.init_Str + " and me");
                }
 
                this.init_Z = false;
-               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                   this.write_I++;
                   AutismClientAddon.LOG
                      .info("[AI] cover: shield block at {} against the {}", this.init_DataPipe.init_BlockPos().toShortString(), this.init_Str);

@@ -84,7 +84,7 @@ final class AiProcedures {
             AiMemoryStore.Memory record = this.init_cc
                .init_AiMemoryStore()
                .init(
-                  AiMemoryStore.Inner_DataUtil.read,
+                  AiMemoryStore.Inner_DataUtil.PROCEDURE,
                   this.init_cc.poll_Str(),
                   name,
                   first,
@@ -239,7 +239,7 @@ final class AiProcedures {
          .init_AiMemoryStore()
          .init_List()
          .stream()
-         .filter(m -> m.id().equals(id) && m.scope().equals(this.init_cc.poll_Str()) && m.kind() == AiMemoryStore.Inner_DataUtil.read)
+         .filter(m -> m.id().equals(id) && m.scope().equals(this.init_cc.poll_Str()) && m.kind() == AiMemoryStore.Inner_DataUtil.PROCEDURE)
          .findFirst()
          .orElseThrow(() -> new IllegalArgumentException("No reusable procedure in this world scope"));
    }

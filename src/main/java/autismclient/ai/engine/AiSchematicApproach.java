@@ -106,7 +106,7 @@ public final class AiSchematicApproach implements AiOperation {
                this.init_AiOperation.cancel();
             }
 
-            return AiOperation.Result.failed(AiFailure.prev, "Construction planning reached its ten-second limit", "{}");
+            return AiOperation.Result.failed(AiFailure.TIMEOUT, "Construction planning reached its ten-second limit", "{}");
          } else {
             if (System.nanoTime() >= this.init_J) {
                return this.load(AiOperation.Status.TIMED_OUT, "Placement approach deadline");
@@ -170,7 +170,7 @@ public final class AiSchematicApproach implements AiOperation {
                         edits,
                         edits,
                         seconds,
-                        AiPathfinder.Inner_IoWorker.init,
+                        AiPathfinder.Inner_IoWorker.FASTEST,
                         true,
                         2.0,
                         edits ? goal : goal.init_u(),
@@ -186,10 +186,10 @@ public final class AiSchematicApproach implements AiOperation {
 
                if (this.init_AiOperation == null) {
                   if (!this.init_b_DataUtil.read_Z && this.init_b_DataUtil.read_List.isEmpty() && this.init_b_DataUtil.write_List.isEmpty()) {
-                     return AiOperation.Result.failed(AiFailure.write, "No proved workstation for the ready batch", "{}");
+                     return AiOperation.Result.failed(AiFailure.PLACEMENT_IMPOSSIBLE, "No proved workstation for the ready batch", "{}");
                   }
 
-                  return AiOperation.Result.failed(AiFailure.prev, "Batch planning needs refreshed views before committing a route", "{}");
+                  return AiOperation.Result.failed(AiFailure.TIMEOUT, "Batch planning needs refreshed views before committing a route", "{}");
                }
             }
 
@@ -206,7 +206,7 @@ public final class AiSchematicApproach implements AiOperation {
                this.init_AiOperation.cancel();
                this.init_AiOperation = null;
                this.init_b_DataUtil.update();
-               return AiOperation.Result.failed(AiFailure.prev, "Batch planning route needs another workstation: " + r.message(), r.dataJson());
+               return AiOperation.Result.failed(AiFailure.TIMEOUT, "Batch planning route needs another workstation: " + r.message(), r.dataJson());
             } else {
                return r;
             }

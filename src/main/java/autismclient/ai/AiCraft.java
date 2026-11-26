@@ -223,7 +223,7 @@ final class AiCraft {
 
                            if (result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL) {
                               AiOperation.Result rejection = AiOperation.Result.failed(
-                                 AiFailure.put,
+                                 AiFailure.INVENTORY_FULL,
                                  result.init_Str,
                                  AiJson.init_JsonObject_ObjArr(
                                        "recipe",
@@ -466,13 +466,13 @@ final class AiCraft {
                   }
 
                   AiStationPlacer.Inner_DataUtil status = this.init_cn.init_cn_DataUtil();
-                  if (status == AiStationPlacer.Inner_DataUtil.load) {
+                  if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                      this.init_cn = null;
                      this.read_Z = true;
                      this.update = this.init(this.read_J);
                      AutismClientAddon.LOG.info("[AI] craft {}: crafting table placed in {} ms", outputId, this.update);
                      return this.init("Crafting table placed");
-                  } else if (status == AiStationPlacer.Inner_DataUtil.read) {
+                  } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
                      String why = this.init_cn.load_Str();
                      this.init_cn = null;
                      return this.init(AiOperation.Status.FAILED, "Could not place a crafting table: " + why);
@@ -790,11 +790,11 @@ final class AiCraft {
                }
 
                AiStationPlacer.Inner_DataUtil status = this.init_cn.init_cn_DataUtil();
-               if (status == AiStationPlacer.Inner_DataUtil.load) {
+               if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                   this.init_BlockPos = this.init_cn.init_BlockPos();
                   this.init_Z = false;
                   return this.init("Stonecutter placed");
-               } else if (status == AiStationPlacer.Inner_DataUtil.read) {
+               } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
                   this.init_Z = false;
                   return this.init(AiOperation.Status.FAILED, "Could not place a stonecutter: " + this.init_cn.load_Str());
                } else {

@@ -460,11 +460,11 @@ final class AiSmelt {
                      }
 
                      AiStationPlacer.Inner_DataUtil status = this.init_cn.init_cn_DataUtil();
-                     if (status == AiStationPlacer.Inner_DataUtil.load) {
+                     if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                         this.load_BlockPos = this.init_cn.init_BlockPos();
                         this.read_Z = false;
                         return this.init(resolved.stationId() + " placed");
-                     } else if (status == AiStationPlacer.Inner_DataUtil.read) {
+                     } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
                         this.read_Z = false;
                         return this.init(AiOperation.Status.FAILED, "Could not place a " + resolved.stationId() + ": " + this.init_cn.load_Str());
                      } else {
@@ -752,13 +752,13 @@ final class AiSmelt {
 
             this.init_AiOperation.cancel();
             if (got.status() != AiOperation.Status.SUCCEEDED) {
-               return AiOperation.Result.failed(AiFailure.pop, "No spare fuel to smelt with, and fetching some failed: " + got.message(), got.dataJson());
+               return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, "No spare fuel to smelt with, and fetching some failed: " + got.message(), got.dataJson());
             }
 
             try {
                this.load = AiSmelt.init(retry, workPlan);
             } catch (IllegalArgumentException e) {
-               return AiOperation.Result.failed(AiFailure.pop, e.getMessage(), "{}");
+               return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, e.getMessage(), "{}");
             }
 
             return new AiOperation.Result(AiOperation.Status.RUNNING, "Fuel in hand; smelting", "{}", List.of());

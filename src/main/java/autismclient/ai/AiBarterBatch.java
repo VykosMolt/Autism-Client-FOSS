@@ -173,13 +173,13 @@ final class AiBarterBatch {
                         boolean admired = this.init_Piglin.isAlive() && this.init_Piglin.getOffhandItem().is(Items.GOLD_INGOT);
                         AiBarterBatch.Inner_StreamUtil outcome = this.init_JsonUtil_DataUtil
                            .init(AiCraft.init_I("minecraft:gold_ingot"), admired, AiServerEvidence.init_J(), this.load_I);
-                        if (outcome != AiBarterBatch.Inner_StreamUtil.load) {
-                           if (outcome == AiBarterBatch.Inner_StreamUtil.read) {
+                        if (outcome != AiBarterBatch.Inner_StreamUtil.ACCEPTED) {
+                           if (outcome == AiBarterBatch.Inner_StreamUtil.AMBIGUOUS) {
                               this.read_I = this.read_I + this.init_JsonUtil_DataUtil.init_I();
                               return this.init(AiOperation.Status.UNCERTAIN, "Gold changed by more than one ingot during a single adult interaction");
                            }
 
-                           if (outcome == AiBarterBatch.Inner_StreamUtil.write) {
+                           if (outcome == AiBarterBatch.Inner_StreamUtil.UNACKNOWLEDGED) {
                               return this.init(
                                  AiOperation.Status.UNCERTAIN, "Adult interaction was not acknowledged; reobserve gold and offhand before spending again"
                               );
@@ -616,15 +616,15 @@ final class AiBarterBatch {
          int consumed = this.init_I - gold;
          this.read = Math.max(0, consumed);
          if (consumed <= 0 || !admiring && revision <= this.init_J) {
-            return tick - this.load > 60 ? AiBarterBatch.Inner_StreamUtil.write : AiBarterBatch.Inner_StreamUtil.init;
+            return tick - this.load > 60 ? AiBarterBatch.Inner_StreamUtil.UNACKNOWLEDGED : AiBarterBatch.Inner_StreamUtil.WAITING;
          }
 
          if (consumed != 1) {
-            return AiBarterBatch.Inner_StreamUtil.read;
+            return AiBarterBatch.Inner_StreamUtil.AMBIGUOUS;
          }
 
          this.init_Z = false;
-         return AiBarterBatch.Inner_StreamUtil.load;
+         return AiBarterBatch.Inner_StreamUtil.ACCEPTED;
       }
 
       boolean init_Z() {
@@ -637,9 +637,9 @@ final class AiBarterBatch {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      WAITING,
+      ACCEPTED,
+      AMBIGUOUS,
+      UNACKNOWLEDGED;
    }
 }

@@ -77,12 +77,12 @@ final class AiFurnaceReturn implements AiOperation {
          @Override
          public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
             return Set.of(
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.push,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.start,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.put,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.add,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.clear,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.reset
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.DIG_DOWN_1,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SPRINT_JUMP
             );
          }
       };
@@ -135,7 +135,7 @@ final class AiFurnaceReturn implements AiOperation {
             this.init_Z,
             this.init_Z,
             this.init_Z ? 25 : 12,
-            autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+            autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
             true,
             2.0,
             init(interaction, this.init_BlockPos, this.load_BlockPos, this.init_Z),

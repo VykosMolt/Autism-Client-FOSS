@@ -654,7 +654,7 @@ final class AiSchematicActions {
                   false,
                   false,
                   30,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                   true,
                   2.0,
                   AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -1035,7 +1035,7 @@ final class AiSchematicActions {
 
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String name = entry.getKey();
-         if (AiBuilder.init_TableIndex_TaskQue(live.getBlock(), name) == AiBuilder.Inner_TaskQueue.poll) {
+         if (AiBuilder.init_TableIndex_TaskQue(live.getBlock(), name) == AiBuilder.Inner_TaskQueue.POST_INTERACT) {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(name);
             if (property != null) {
                String actual = String.valueOf(live.getValue(property));
@@ -1415,7 +1415,7 @@ final class AiSchematicActions {
                                     false,
                                     false,
                                     15,
-                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                                     true,
                                     2.0,
                                     AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -1600,7 +1600,7 @@ final class AiSchematicActions {
          autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
       );
       final Supplier<AiOperation> climb = () -> AiGoto.init(
-         support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true, 2.0, goal
+         support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true, 2.0, goal
       );
       return new AiOperation() {
          AiOperation init_AiOperation;
@@ -1638,13 +1638,13 @@ final class AiSchematicActions {
 
                if (this.read) {
                   switch (this.init_DataPipe.init_DataPipe_DataUtil()) {
-                     case init:
+                     case WORKING:
                         return this.init("Placing the reachable temporary support without climbing onto it");
-                     case load:
+                     case PLACED:
                         Block live = mc.level.getBlockState(support).getBlock();
                         AiSchematicActions.init(support, live, AiSchematicActions.init_Z_Z(this.init_DataPipe.init_Z(), live, this.load_J, AiServerEvidence.init_J_BlockPos(support)));
                         return this.init(AiOperation.Status.SUCCEEDED, "Reachable temporary support verified");
-                     case read:
+                     case FAILED:
                         this.update = this.init_DataPipe.init_Z();
                         this.init_DataPipe.init_V();
                         this.read = false;

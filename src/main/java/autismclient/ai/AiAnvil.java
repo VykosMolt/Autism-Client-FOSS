@@ -67,7 +67,7 @@ final class AiAnvil {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Anvil deadline reached");
                   } else if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiFailure.start, AiGuard.init_Str_Str("anvil work", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
+                     return this.init(AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("anvil work", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
                   } else if (!(this.init_Minecraft.player.containerMenu instanceof AnvilMenu menu)) {
                      AiOperation.Result open = this.init_AiOperation_Result_3();
                      return open != null ? open : this.init("Opening the anvil");
@@ -76,7 +76,7 @@ final class AiAnvil {
                         for (int slot = 0; slot <= 2; slot++) {
                            if (!menu.getSlot(slot).getItem().isEmpty()) {
                               return this.init(
-                                 AiFailure.data,
+                                 AiFailure.IMPOSSIBLE_STATE,
                                  "The anvil is in use: slot "
                                     + slot
                                     + " holds "
@@ -134,7 +134,7 @@ final class AiAnvil {
                         String failure = AiAnvil.init(out.isEmpty(), cost, this.init_Minecraft.player.experienceLevel);
                         if (failure != null) {
                            this.close = cost;
-                           AiFailure var10001 = AiFailure.data;
+                           AiFailure var10001 = AiFailure.IMPOSSIBLE_STATE;
                            String var10002;
                            switch (failure) {
                               case "too_expensive":
@@ -180,7 +180,7 @@ final class AiAnvil {
                      missing.addProperty(rightId, 1);
                   }
 
-                  return missing.size() > 0 ? this.init(AiFailure.pop, "Missing anvil materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
+                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing anvil materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
                } else {
                   return null;
                }
@@ -248,7 +248,7 @@ final class AiAnvil {
                      if (AiGameState.init_I_Str("minecraft:anvil") <= 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:anvil", 1);
-                        return this.init(AiFailure.set, "No anvil in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
+                        return this.init(AiFailure.MISSING_STATION, "No anvil in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
                      }
 
                      BlockPos spot = AiCraft.init_BlockPos();
@@ -262,13 +262,13 @@ final class AiAnvil {
                   }
 
                   autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Anvil placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.read_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.read_I <= 100) {
                      return this.init("Placing an anvil");
                   }
 
@@ -437,7 +437,7 @@ final class AiAnvil {
    }
 
    enum Inner_DataUtil {
-      init,
-      load;
+      REPAIR,
+      COMBINE;
    }
 }

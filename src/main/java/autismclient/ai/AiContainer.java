@@ -128,7 +128,7 @@ final class AiContainer {
             boolean write_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.read_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.NORMAL);
             }
 
             @Override
@@ -216,7 +216,7 @@ final class AiContainer {
                               return this.init("Waiting for the server to apply the transfer");
                            }
                         } else {
-                           if (action == AiContainer.Inner_DataUtil.init) {
+                           if (action == AiContainer.Inner_DataUtil.INSPECT) {
                               return this.init(AiOperation.Status.SUCCEEDED, "Container contents read");
                            }
 
@@ -247,7 +247,7 @@ final class AiContainer {
                               this.init_ItemStack = mc.player.containerMenu.slots.get(next.slot()).getItem().copy();
                               if (next.count() < this.init_ItemStack.getCount()) {
                                  this.init_I = next.count();
-                                 int target = AiGameState.init_I_Str(next.item()) + (action == AiContainer.Inner_DataUtil.write ? -this.init_I : this.init_I);
+                                 int target = AiGameState.init_I_Str(next.item()) + (action == AiContainer.Inner_DataUtil.DEPOSIT ? -this.init_I : this.init_I);
                                  this.load_AiOperation = new AiInventoryController(
                                     AiJson.init_JsonObject_ObjArr(
                                        "item", next.item(), "count", target, "containerId", this.load_I, "timeoutSeconds", timeoutSeconds
@@ -349,7 +349,7 @@ final class AiContainer {
 
             AiContainer.Inner_StreamUtil init_a_StreamUtil() {
                AbstractContainerMenu menu = mc.player.containerMenu;
-               boolean depositing = action == AiContainer.Inner_DataUtil.write;
+               boolean depositing = action == AiContainer.Inner_DataUtil.DEPOSIT;
                int from = depositing ? this.read_I : 0;
                int to = depositing ? menu.slots.size() : this.read_I;
 
@@ -357,7 +357,7 @@ final class AiContainer {
                   ItemStack stack = menu.slots.get(index).getItem();
                   if (!stack.isEmpty() && !this.init_Z(stack) && !this.init_Set.contains(index)) {
                      AiContainer.Inner_CachePool request = this.init_a_CachePool(stack);
-                     if (request != null || action != AiContainer.Inner_DataUtil.read && requests.isEmpty()) {
+                     if (request != null || action != AiContainer.Inner_DataUtil.WITHDRAW && requests.isEmpty()) {
                         int requestIndex = request == null ? -1 : requests.indexOf(request);
                         int count = request == null ? stack.getCount() : Math.min(stack.getCount(), this.init(requestIndex));
                         if (depositing) {
@@ -423,7 +423,7 @@ final class AiContainer {
                   return "Nothing matched; the container is unchanged";
                }
 
-               StringBuilder text = new StringBuilder(action == AiContainer.Inner_DataUtil.write ? "Deposited " : "Took ");
+               StringBuilder text = new StringBuilder(action == AiContainer.Inner_DataUtil.DEPOSIT ? "Deposited " : "Took ");
                boolean first = true;
 
                for (Entry<String, Integer> entry : this.init_Map.entrySet()) {
@@ -577,7 +577,7 @@ final class AiContainer {
          }
       }
 
-      if (requests.isEmpty() && action == AiContainer.Inner_DataUtil.read) {
+      if (requests.isEmpty() && action == AiContainer.Inner_DataUtil.WITHDRAW) {
          throw new IllegalArgumentException("withdraw needs an items list; use action loot to take everything");
       } else {
          return List.copyOf(requests);
@@ -599,10 +599,10 @@ final class AiContainer {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      INSPECT,
+      LOOT,
+      WITHDRAW,
+      DEPOSIT;
    }
 
    record Inner_StreamUtil(int slot, String item, int count, int request) {

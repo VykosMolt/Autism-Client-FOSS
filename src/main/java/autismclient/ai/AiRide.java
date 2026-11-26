@@ -41,7 +41,7 @@ final class AiRide {
          final BlockPos destination = hasTarget
             ? new BlockPos(AiJson.init_I_JsonObject(args, "x", 0), AiJson.init_I_JsonObject(args, "y", 64), AiJson.init_I_JsonObject(args, "z", 0))
             : null;
-         if (action == AiRide.Inner_DataUtil.load && destination == null) {
+         if (action == AiRide.Inner_DataUtil.TRAVEL && destination == null) {
             throw new IllegalArgumentException("travel needs x and z (y is optional for a boat)");
          } else {
             return new AiOperation() {
@@ -62,7 +62,7 @@ final class AiRide {
                         return this.init(AiOperation.Status.TIMED_OUT, "Ride deadline reached");
                      }
 
-                     if (action == AiRide.Inner_DataUtil.read) {
+                     if (action == AiRide.Inner_DataUtil.DISMOUNT) {
                         if (mc.player.getVehicle() == null) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Not riding anything");
                         }
@@ -77,7 +77,7 @@ final class AiRide {
                         mc.player.stopRiding();
                         return mc.player.getVehicle() == null ? this.init(AiOperation.Status.SUCCEEDED, "Dismounted") : this.init("Dismounting");
                      } else {
-                        if (action == AiRide.Inner_DataUtil.load) {
+                        if (action == AiRide.Inner_DataUtil.TRAVEL) {
                            return this.load();
                         }
 
@@ -199,7 +199,7 @@ final class AiRide {
                      );
                   }
 
-                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
                   this.init_DataUtil.init_V_Vec3(new Vec3(target.x, riding.getEyeY(), target.z));
                   this.init_DataUtil.load_V();
                   mc.options.keyUp.setDown(true);
@@ -380,8 +380,8 @@ final class AiRide {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      MOUNT,
+      TRAVEL,
+      DISMOUNT;
    }
 }

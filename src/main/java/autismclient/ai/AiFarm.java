@@ -114,14 +114,14 @@ final class AiFarm {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          AiFarm.Inner_DataUtil action = init_B_DataUtil(AiJson.init_Str_JsonObject(args, "action", "harvest"));
-         if (action == AiFarm.Inner_DataUtil.init) {
+         if (action == AiFarm.Inner_DataUtil.HARVEST) {
             String spec = AiJson.init_Str_JsonObject(args, "crop", AiJson.init_Str_JsonObject(args, "item", "minecraft:wheat"));
             String crop = init_Str(spec);
             return init_Set.contains(crop) ? load(args, crop, init_Map.get(crop)) : init(args, crop, init_Map.get(crop));
-         } else if (action == AiFarm.Inner_DataUtil.read) {
+         } else if (action == AiFarm.Inner_DataUtil.PLANT) {
             String crop = init_Str(AiJson.init_Str_JsonObject(args, "crop", AiJson.init_Str_JsonObject(args, "item", "minecraft:wheat")));
             return AiFarmPlant.init(args, crop, load(crop));
-         } else if (action == AiFarm.Inner_DataUtil.write) {
+         } else if (action == AiFarm.Inner_DataUtil.BUILD) {
             String crop = init_Str(AiJson.init_Str_JsonObject(args, "crop", AiJson.init_Str_JsonObject(args, "item", "minecraft:wheat")));
             return AiFarmBuild.init(args, crop, load(crop));
          } else {
@@ -146,11 +146,11 @@ final class AiFarm {
 
    static AiFarm.Inner_StreamUtil init(Block block) {
       if (block == Blocks.SWEET_BERRY_BUSH) {
-         return AiFarm.Inner_StreamUtil.read;
+         return AiFarm.Inner_StreamUtil.INTERACT;
       } else if (autismclient.util.FarmCropCatalog.load(block)) {
-         return AiFarm.Inner_StreamUtil.write;
+         return AiFarm.Inner_StreamUtil.COLUMN;
       } else {
-         return autismclient.util.FarmCropCatalog.read(block) ? AiFarm.Inner_StreamUtil.load : AiFarm.Inner_StreamUtil.init;
+         return autismclient.util.FarmCropCatalog.read(block) ? AiFarm.Inner_StreamUtil.BREAK_ONLY : AiFarm.Inner_StreamUtil.BREAK_REPLANT;
       }
    }
 
@@ -321,8 +321,8 @@ final class AiFarm {
                   }
 
                   boolean owesReplant = this.init_B_CachePool != null
-                        && (this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.init || this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.load)
-                     || this.init_ArrayDeque.stream().anyMatch(w -> w.kind() == AiFarm.Inner_BufferHelper.load);
+                        && (this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.HARVEST || this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.REPLANT)
+                     || this.init_ArrayDeque.stream().anyMatch(w -> w.kind() == AiFarm.Inner_BufferHelper.REPLANT);
                   if (count < this.read_I || owesReplant) {
                      this.start = 0;
                      this.reset = 0;
@@ -351,8 +351,8 @@ final class AiFarm {
                            return this.load("no reachable approach");
                         }
 
-                        if (this.init_B_CachePool != null && this.init_B_CachePool.kind() != AiFarm.Inner_BufferHelper.write) {
-                           BlockPos cell = this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.load
+                        if (this.init_B_CachePool != null && this.init_B_CachePool.kind() != AiFarm.Inner_BufferHelper.DROP) {
+                           BlockPos cell = this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.REPLANT
                               ? this.init_B_CachePool.base()
                               : this.init_B_CachePool.cell();
                            if (!this.load(cell) || !this.load(this.init_B_CachePool)) {
@@ -370,7 +370,7 @@ final class AiFarm {
                            AiOperation.Result r = this.load_AiOperation.tick();
                            if (!r.terminal()) {
                               if (this.init_B_CachePool == null
-                                 || this.init_B_CachePool.kind() != AiFarm.Inner_BufferHelper.load
+                                 || this.init_B_CachePool.kind() != AiFarm.Inner_BufferHelper.REPLANT
                                  || !(this.load_AiOperation instanceof AiActedOperation actedOp)
                                  || !actedOp.init()) {
                                  return this.read(this.init_Str());
@@ -393,7 +393,7 @@ final class AiFarm {
                         }
 
                         if (this.init_B_CachePool == null || !this.init_Z(this.init_B_CachePool)) {
-                           if (this.init_B_CachePool != null && this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.write) {
+                           if (this.init_B_CachePool != null && this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.DROP) {
                               this.init_V(this.init_B_CachePool);
                            }
 
@@ -504,7 +504,7 @@ final class AiFarm {
                            if (state.is(crop)) {
                               BlockPos cell = new BlockPos(x, y, z);
                               if (!this.init_Set.contains(cell.asLong()) && !this.init_Z(cell)) {
-                                 if (kind == AiFarm.Inner_StreamUtil.write) {
+                                 if (kind == AiFarm.Inner_StreamUtil.COLUMN) {
                                     BlockPos segment = AiFarm.init(pos -> this.init_Minecraft.level.getBlockState(pos), cell);
                                     if (segment != null && !this.init_Set.contains(segment.asLong()) && !this.init_Z(segment)) {
                                        this.init_List
@@ -568,20 +568,20 @@ final class AiFarm {
 
             boolean init_Z(AiFarm.Inner_CachePool w) {
                switch (w.kind()) {
-                  case init:
+                  case HARVEST:
                      if (!AiTerrain.init(this.init_Minecraft.level, w.cell())) {
                         return false;
                      }
 
                      BlockState state = this.init_Minecraft.level.getBlockState(w.cell());
-                     return kind == AiFarm.Inner_StreamUtil.write ? state.is(crop) : state.is(crop) && AiFarm.init_Z(state);
-                  case load:
+                     return kind == AiFarm.Inner_StreamUtil.COLUMN ? state.is(crop) : state.is(crop) && AiFarm.init_Z(state);
+                  case REPLANT:
                      return seed != null && this.init_Minecraft.level.getBlockState(w.cell()).isAir();
-                  case read:
+                  case BONEMEAL:
                      return AiTerrain.init(this.init_Minecraft.level, w.cell())
                         && AiFarm.load_Z(this.init_Minecraft.level.getBlockState(w.cell()))
                         && AiGameState.init_I_Str("minecraft:bone_meal") > 0;
-                  case write:
+                  case DROP:
                      return this.init_Minecraft.level.getEntity(w.entityId()) instanceof ItemEntity drop && drop.isAlive();
                   default:
                      return false;
@@ -593,11 +593,11 @@ final class AiFarm {
                boolean enough = AiGameState.init_I_Str(cropItem) >= this.read_I;
                boolean needsSeed = seed != null
                   && AiGameState.init_I_Str(seed) == 0
-                  && this.init_ArrayDeque.stream().anyMatch(wx -> wx.kind() == AiFarm.Inner_BufferHelper.load);
+                  && this.init_ArrayDeque.stream().anyMatch(wx -> wx.kind() == AiFarm.Inner_BufferHelper.REPLANT);
 
                while (queued-- > 0) {
                   AiFarm.Inner_CachePool w = this.init_ArrayDeque.poll();
-                  if (w.kind() == AiFarm.Inner_BufferHelper.load) {
+                  if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                      AiServerEvidence.Inner_DataUtil update = AiServerEvidence.init_ca_DataUtil_BlockPos(w.cell());
                      if (AiReplantEvidence.init(
                            this.init_Minecraft.level.getBlockState(w.cell()),
@@ -607,7 +607,7 @@ final class AiFarm {
                            false,
                            AiGameState.init_I_Str(seed)
                         )
-                        == AiReplantEvidence.Inner_DataUtil.read) {
+                        == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
                         this.prev++;
                         this.load_Map.remove(w.cell().asLong());
                         this.read_Map.remove(w.cell().asLong());
@@ -633,16 +633,16 @@ final class AiFarm {
                      }
                   }
 
-                  if (w.kind() != AiFarm.Inner_BufferHelper.write || enough || needsSeed || this.init_List.isEmpty() && (!this.load_Z || this.load_List.isEmpty())) {
+                  if (w.kind() != AiFarm.Inner_BufferHelper.DROP || enough || needsSeed || this.init_List.isEmpty() && (!this.load_Z || this.load_List.isEmpty())) {
                      if (this.init_Z(w)) {
                         return w;
                      }
 
-                     if (w.kind() == AiFarm.Inner_BufferHelper.load) {
+                     if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                         this.valid++;
                      }
 
-                     if (w.kind() == AiFarm.Inner_BufferHelper.write) {
+                     if (w.kind() == AiFarm.Inner_BufferHelper.DROP) {
                         this.init_V(w);
                      }
                   } else {
@@ -694,8 +694,8 @@ final class AiFarm {
             }
 
             AiOperation.Result init_AiOperation_Result(AiFarm.Inner_CachePool w) {
-               BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.load ? w.base() : w.cell();
-               if (w.kind() == AiFarm.Inner_BufferHelper.write) {
+               BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.REPLANT ? w.base() : w.cell();
+               if (w.kind() == AiFarm.Inner_BufferHelper.DROP) {
                   Entity entity = this.init_Minecraft.level.getEntity(w.entityId());
                   if (!(entity instanceof ItemEntity)) {
                      this.init_V(w);
@@ -715,9 +715,9 @@ final class AiFarm {
                   }
                } else if (this.load(cell) && this.load(w)) {
                   switch (w.kind()) {
-                     case init:
+                     case HARVEST:
                         this.read_Map.put(w.cell().asLong(), AiServerEvidence.init_J_BlockPos(w.cell()));
-                        if (this.read_Z && kind == AiFarm.Inner_StreamUtil.init && seed != null) {
+                        if (this.read_Z && kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null) {
                            BlockState before = this.init_Minecraft.level.getBlockState(w.cell());
                            if (crop == Blocks.COCOA) {
                               Direction facing = AiFarm.init_Direction(before);
@@ -729,7 +729,7 @@ final class AiFarm {
                            }
                         }
 
-                        if (kind == AiFarm.Inner_StreamUtil.read) {
+                        if (kind == AiFarm.Inner_StreamUtil.INTERACT) {
                            this.load_AiOperation = AiGameOperations.init("use", this.init_JsonObject(w.cell()));
                            return this.read("Picking " + w.cell().toShortString());
                         } else {
@@ -743,7 +743,7 @@ final class AiFarm {
                            this.load_AiOperation = null;
                            return this.init(this.init_B_CachePool, first);
                         }
-                     case load:
+                     case REPLANT:
                         int slot = AiItems.read(AiItems.load_af_DataUtil(seed));
                         if (slot < 0) {
                            if (AiGameState.init_I_Str(seed) <= 0) {
@@ -775,7 +775,7 @@ final class AiFarm {
                            this.load_AiOperation = null;
                            return this.init(this.init_B_CachePool, opened);
                         }
-                     case read:
+                     case BONEMEAL:
                         int mealSlot = AiItems.read(AiItems.load_af_DataUtil("minecraft:bone_meal"));
                         if (mealSlot < 0) {
                            return this.read();
@@ -790,7 +790,7 @@ final class AiFarm {
                         return this.read();
                   }
                } else {
-                  if (w.kind() == AiFarm.Inner_BufferHelper.load) {
+                  if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                      return this.init(AiGoto.init_BlockPos(w.cell(), 24), 0.45, 30, "Lining up the replant face");
                   }
 
@@ -888,12 +888,12 @@ final class AiFarm {
                }
 
                switch (w.kind()) {
-                  case init:
+                  case HARVEST:
                      if (r.status() == AiOperation.Status.SUCCEEDED
                         || r.status() == AiOperation.Status.TIMED_OUT && !this.init_Minecraft.level.getBlockState(w.cell()).is(crop)) {
                         this.stop++;
                         this.init_V(w.cell());
-                        if (kind == AiFarm.Inner_StreamUtil.init && seed != null && this.read_BlockPos != null) {
+                        if (kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null && this.read_BlockPos != null) {
                            ClientPacketListener connection = this.init_Minecraft.getConnection();
                            PlayerInfo info = connection == null ? null : connection.getPlayerInfo(this.init_Minecraft.player.getUUID());
                            this.load_Map
@@ -909,14 +909,14 @@ final class AiFarm {
                         this.init_Direction = null;
                         return this.load(r.message());
                      }
-                  case load:
+                  case REPLANT:
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
                         this.next++;
                         return this.read();
                      }
 
                      return this.init_AiOperation_Result(r.message());
-                  case read:
+                  case BONEMEAL:
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
                         this.data++;
                         return this.read();
@@ -952,7 +952,7 @@ final class AiFarm {
                }
 
                if (++this.tick >= 3) {
-                  if (this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.load) {
+                  if (this.init_B_CachePool.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                      this.valid++;
                   }
 
@@ -1021,11 +1021,11 @@ final class AiFarm {
             }
 
             boolean load(AiFarm.Inner_CachePool w) {
-               BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.load ? w.base() : w.cell();
-               if (w.kind() == AiFarm.Inner_BufferHelper.load) {
+               BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.REPLANT ? w.base() : w.cell();
+               if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
                   return autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, w.base(), w.face()) != null;
                } else {
-                  return w.kind() == AiFarm.Inner_BufferHelper.read ? this.init(cell, this.init_D(cell)) : this.read(cell);
+                  return w.kind() == AiFarm.Inner_BufferHelper.BONEMEAL ? this.init(cell, this.init_D(cell)) : this.read(cell);
                }
             }
 
@@ -1057,16 +1057,16 @@ final class AiFarm {
 
                String var10000;
                switch (this.init_B_CachePool.kind()) {
-                  case init:
-                     var10000 = (kind == AiFarm.Inner_StreamUtil.read ? "Picking " : "Breaking ") + this.init_B_CachePool.cell().toShortString();
+                  case HARVEST:
+                     var10000 = (kind == AiFarm.Inner_StreamUtil.INTERACT ? "Picking " : "Breaking ") + this.init_B_CachePool.cell().toShortString();
                      break;
-                  case load:
+                  case REPLANT:
                      var10000 = "Replanting " + this.init_B_CachePool.cell().toShortString();
                      break;
-                  case read:
+                  case BONEMEAL:
                      var10000 = "Feeding " + this.init_B_CachePool.cell().toShortString();
                      break;
-                  case write:
+                  case DROP:
                      var10000 = "Sweeping up the drops";
                      break;
                   default:
@@ -1541,11 +1541,11 @@ final class AiFarm {
    private static AiFarm.Inner_DataUtil init_B_DataUtil(String text) {
       String t = text.trim().toLowerCase(Locale.ROOT);
       if (Set.of("sow", "till").contains(t)) {
-         return AiFarm.Inner_DataUtil.read;
+         return AiFarm.Inner_DataUtil.PLANT;
       }
 
       if (Set.of("create", "make", "start", "farm").contains(t)) {
-         return AiFarm.Inner_DataUtil.write;
+         return AiFarm.Inner_DataUtil.BUILD;
       }
 
       try {
@@ -1572,41 +1572,41 @@ final class AiFarm {
    }
 
    private enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write;
+      HARVEST,
+      REPLANT,
+      BONEMEAL,
+      DROP;
    }
 
    private record Inner_CachePool(AiFarm.Inner_BufferHelper kind, BlockPos cell, BlockPos base, Direction face, int entityId, String item, double distanceSqr) {
       static AiFarm.Inner_CachePool harvest(BlockPos cell, double distanceSqr) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.init, cell, null, null, -1, null, distanceSqr);
+         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.HARVEST, cell, null, null, -1, null, distanceSqr);
       }
 
       static AiFarm.Inner_CachePool replant(BlockPos cell, BlockPos base, Direction face) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.load, cell, base, face, -1, null, 0.0);
+         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.REPLANT, cell, base, face, -1, null, 0.0);
       }
 
       static AiFarm.Inner_CachePool bonemeal(BlockPos cell, double distanceSqr) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.read, cell, null, null, -1, null, distanceSqr);
+         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.BONEMEAL, cell, null, null, -1, null, distanceSqr);
       }
 
       static AiFarm.Inner_CachePool drop(int entityId, String item, BlockPos cell, double distanceSqr) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.write, cell, null, null, entityId, item, distanceSqr);
+         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.DROP, cell, null, null, entityId, item, distanceSqr);
       }
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      HARVEST,
+      BREED,
+      PLANT,
+      BUILD;
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      BREAK_REPLANT,
+      BREAK_ONLY,
+      INTERACT,
+      COLUMN;
    }
 }

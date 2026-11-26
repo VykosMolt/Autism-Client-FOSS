@@ -40,7 +40,7 @@ public final class AiAim {
    private static volatile String init_Str = "";
    private Vec3 init_Vec3;
    private int init_I = -1;
-   private AiAim.Inner_DataUtil init_DataUtil_DataUtil = AiAim.Inner_DataUtil.read_DataUtil_DataUtil;
+   private AiAim.Inner_DataUtil init_DataUtil_DataUtil = AiAim.Inner_DataUtil.NORMAL;
    private int load_I;
    private boolean init_Z;
    static final double init_D = 0.4;
@@ -151,7 +151,7 @@ public final class AiAim {
    static float init_F_F_DataUtil_DataUtil(float remaining, AiAim.Inner_DataUtil speed) {
       if (speed.init_Z) {
          return Math.max(-speed.read_F, Math.min(speed.read_F, remaining));
-      } else if (speed == AiAim.Inner_DataUtil.load_DataUtil_DataUtil) {
+      } else if (speed == AiAim.Inner_DataUtil.FLOW) {
          float abs = Math.abs(remaining);
          return abs <= 12.0F ? remaining : Math.copySign(Math.min(speed.read_F, Math.max(12.0F, abs * 0.65F)), remaining);
       } else {
@@ -526,13 +526,13 @@ public final class AiAim {
    }
 
    public enum Inner_DataUtil {
-      init_DataUtil_DataUtil(28.0F, 28.0F, 22.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      load_DataUtil_DataUtil(54.0F, 54.0F, 38.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      read_DataUtil_DataUtil(45.0F, 45.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      write(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      update(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK),
-      sync(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD, true),
-      flush(72.0F, 72.0F, 100.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK, true);
+      CALM(28.0F, 28.0F, 22.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      FLOW(54.0F, 54.0F, 38.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      NORMAL(45.0F, 45.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      FAST(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
+      FLICK(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK),
+      EXACT(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD, true),
+      TELLY(72.0F, 72.0F, 100.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK, true);
 
       final float init_F;
       final float load_F;

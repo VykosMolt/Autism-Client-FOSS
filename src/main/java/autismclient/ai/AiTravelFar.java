@@ -19,7 +19,7 @@ final class AiTravelFar {
    }
 
    static AiOperation init(BlockPos target, double radius, boolean groundTarget, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
-      return init(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init);
+      return init(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST);
    }
 
    static AiOperation init(

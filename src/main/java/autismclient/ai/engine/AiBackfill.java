@@ -154,16 +154,16 @@ public final class AiBackfill {
          }
 
          switch (this.init_DataPipe.init_DataPipe_DataUtil()) {
-            case load:
+            case PLACED:
                this.init(true);
                break;
-            case read:
+            case FAILED:
                if (init_Z) {
                   AiNavDebug.init("backfill placer-failed cell=" + this.init_BlockPos);
                }
 
                this.init(false);
-            case init:
+            case WORKING:
          }
       }
    }

@@ -1882,7 +1882,7 @@ public record AiJumpManeuver(
       if (Math.abs(Mth.wrapDegrees(var3 - var2)) > 60.0F) {
          for (int var8 = 0; Math.abs(Mth.wrapDegrees(var3 - var7)) > 1.0F && var8 < 8; var8++) {
             float var9 = var6.speed() > 0.03 ? var7 : var3;
-            float var10 = var7 + AiAim.init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(var9 - var7), AiAim.Inner_DataUtil.load_DataUtil_DataUtil);
+            float var10 = var7 + AiAim.init_F_F_DataUtil_DataUtil(Mth.wrapDegrees(var9 - var7), AiAim.Inner_DataUtil.FLOW);
             AiPhysics.Inner_DataUtil var11 = settleInput(var0, var6, var9).withYaw(var10);
             AiPhysics.Inner_StreamUtil var12 = AiPhysics.putAt(var6, var11, var0);
             if (AiPhysics.fill(var0, var6, var12) || AiJumpSolver.putAt(var0, var12) || !var12.onGround() || Math.abs(var12.y() - var1.y()) > 0.02) {

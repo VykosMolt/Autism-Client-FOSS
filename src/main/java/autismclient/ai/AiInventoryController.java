@@ -137,11 +137,11 @@ public final class AiInventoryController implements AiOperation {
 
          if (this.init_b_DataUtil != null) {
             AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.init(menu, System.nanoTime());
-            if (state == AiContainerTransactions.Inner_StreamUtil.init) {
+            if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
                return this.init("Waiting for the server's storage slots and cursor");
             }
 
-            if (state != AiContainerTransactions.Inner_StreamUtil.load) {
+            if (state != AiContainerTransactions.Inner_StreamUtil.CONFIRMED) {
                return this.init_AiOperation_Result_AiOperation_Status_Str_7(
                   AiOperation.Status.UNCERTAIN, "The server did not confirm the storage transfer. Inspect the open storage and cursor before resuming."
                );
@@ -159,17 +159,17 @@ public final class AiInventoryController implements AiOperation {
                AiInventoryController.Inner_StreamUtil transfer = init_ae_StreamUtil_AbstractContainerM(
                   menu, this.init_Minecraft.player.getInventory(), this.init_Minecraft.player, this.flush, this.write_ItemStack
                );
-               if (transfer.state() == AiInventoryController.Inner_DataUtil.load) {
+               if (transfer.state() == AiInventoryController.Inner_DataUtil.SATISFIED) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_7(AiOperation.Status.SUCCEEDED, "Saved storage slot and empty cursor verified");
                }
 
-               if (transfer.state() == AiInventoryController.Inner_DataUtil.read) {
+               if (transfer.state() == AiInventoryController.Inner_DataUtil.CONFLICT) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_7(
                      AiOperation.Status.FAILED, "Saved storage slot has incompatible contents or capacity; existing items retained"
                   );
                }
 
-               if (transfer.state() == AiInventoryController.Inner_DataUtil.write) {
+               if (transfer.state() == AiInventoryController.Inner_DataUtil.MISSING_STOCK) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str_7(
                      AiOperation.Status.FAILED, "Player inventory lacks the saved item's exact components"
                   );
@@ -316,22 +316,22 @@ public final class AiInventoryController implements AiOperation {
             && (current.isEmpty() || ItemStack.isSameItemSameComponents(current, wanted))
             && current.getCount() <= wanted.getCount()) {
             if (current.getCount() == wanted.getCount()) {
-               return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.load, -1, 0);
+               return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.SATISFIED, -1, 0);
             }
 
             for (Slot candidate : menu.slots) {
                ItemStack stack = candidate.getItem();
                if (candidate.container == inventory && !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, wanted) && candidate.mayPickup(player)) {
-                  return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.init, candidate.index, Math.min(wanted.getCount() - current.getCount(), stack.getCount()));
+                  return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.READY, candidate.index, Math.min(wanted.getCount() - current.getCount(), stack.getCount()));
                }
             }
 
-            return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.write, -1, 0);
+            return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.MISSING_STOCK, -1, 0);
          } else {
-            return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.read, -1, 0);
+            return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.CONFLICT, -1, 0);
          }
       } else {
-         return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.read, -1, 0);
+         return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.CONFLICT, -1, 0);
       }
    }
 
@@ -521,10 +521,10 @@ public final class AiInventoryController implements AiOperation {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      READY,
+      SATISFIED,
+      CONFLICT,
+      MISSING_STOCK;
    }
 
    public record Inner_StreamUtil(AiInventoryController.Inner_DataUtil state, int source, int amount) {

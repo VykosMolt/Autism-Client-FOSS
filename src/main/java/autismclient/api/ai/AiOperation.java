@@ -38,7 +38,7 @@ public interface AiOperation {
       }
 
       public static AiOperation.Result timedOut(AiFailure failure, String message, String dataJson) {
-         return new AiOperation.Result(AiOperation.Status.TIMED_OUT, message, dataJson, List.of(), failure == null ? AiFailure.prev : failure);
+         return new AiOperation.Result(AiOperation.Status.TIMED_OUT, message, dataJson, List.of(), failure == null ? AiFailure.TIMEOUT : failure);
       }
 
       public AiFailure failure() {
@@ -49,16 +49,16 @@ public interface AiOperation {
          AiFailure var10000;
          switch (this.status) {
             case FAILED:
-               var10000 = AiFailure.flush;
+               var10000 = AiFailure.EXECUTION_FAILED;
                break;
             case CANCELLED:
-               var10000 = AiFailure.size;
+               var10000 = AiFailure.CANCELLED;
                break;
             case TIMED_OUT:
-               var10000 = AiFailure.prev;
+               var10000 = AiFailure.TIMEOUT;
                break;
             default:
-               var10000 = AiFailure.value;
+               var10000 = AiFailure.UNKNOWN;
          }
 
          return var10000;

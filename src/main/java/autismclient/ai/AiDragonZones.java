@@ -257,7 +257,7 @@ public final class AiDragonZones {
             }
          }
 
-         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true));
+         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true));
       } else {
          return null;
       }

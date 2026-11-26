@@ -107,28 +107,28 @@ final class AiOracle {
       int cap = init_I_I(AiJson.init_I_JsonObject(args, "cap", 8));
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         if (!init_Z() || q.subject() != AiOracle.Inner_SyncManager.update && q.subject() != AiOracle.Inner_SyncManager.flush) {
+         if (!init_Z() || q.subject() != AiOracle.Inner_SyncManager.ORE && q.subject() != AiOracle.Inner_SyncManager.STRUCTURE) {
             AiOperation var10000;
             switch (q.subject()) {
-               case init:
+               case LAVA:
                   var10000 = init("lava", state -> state.getBlock() == Blocks.LAVA && state.getFluidState().isSource(), cap, init_I_JsonObject(args));
                   break;
-               case load:
+               case WATER:
                   var10000 = init("water", state -> state.getBlock() == Blocks.WATER, cap, init_I_JsonObject(args));
                   break;
-               case read:
+               case VILLAGE:
                   var10000 = init_AiOperation_I_I(cap, init_I_JsonObject(args));
                   break;
-               case write:
+               case THREATS:
                   var10000 = init_AiOperation_I(cap);
                   break;
-               case update:
+               case ORE:
                   var10000 = init(q.ore(), cap, AiJson.init_Str_JsonObject(args, "seed", ""));
                   break;
-               case sync:
+               case BLOCK:
                   var10000 = init(q.blockId(), init_Predicate_Str(q.blockId()), cap, init_I_JsonObject(args));
                   break;
-               case flush:
+               case STRUCTURE:
                   var10000 = init(q.structure(), cap, AiJson.init_Str_JsonObject(args, "seed", ""));
                   break;
                default:
@@ -154,30 +154,30 @@ final class AiOracle {
 
       switch (q) {
          case "lava":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.init, null, null, null);
+            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.LAVA, null, null, null);
          case "water":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.load, null, null, null);
+            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.WATER, null, null, null);
          case "village":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.read, null, null, null);
+            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.VILLAGE, null, null, null);
          case "threats":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.write, null, null, null);
+            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.THREATS, null, null, null);
          case "structure":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.flush, null, null, init_aG_StateCache_Str("stronghold"));
+            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.STRUCTURE, null, null, init_aG_StateCache_Str("stronghold"));
          case "ancient_debris":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.update, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.DEBRIS, null, null);
+            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.ORE, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.DEBRIS, null, null);
          default:
             if (q.startsWith("structure:")) {
                return load(q.substring("structure:".length()));
             } else {
                for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
                   if (kind.init_Str.equals(q)) {
-                     return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.update, kind, null, null);
+                     return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.ORE, kind, null, null);
                   }
                }
 
                AiOracle.Inner_StateCache direct = init_aG_StateCache_Str(q);
                if (direct != null) {
-                  return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.flush, null, null, direct);
+                  return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.STRUCTURE, null, null, direct);
                } else {
                   Identifier id = Identifier.tryParse(q);
                   if (id == null) {
@@ -191,7 +191,7 @@ final class AiOracle {
                         "Unknown block \"" + id + "\"; use an existing registry block id (e.g. minecraft:lava, minecraft:stone)"
                      );
                   } else {
-                     return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.sync, null, id.toString(), null);
+                     return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.BLOCK, null, id.toString(), null);
                   }
                }
             }
@@ -203,7 +203,7 @@ final class AiOracle {
       if (spec == null) {
          throw new IllegalArgumentException("Unknown structure \"" + name + "\"; known structures: " + String.join(", ", init_Map.keySet()));
       } else {
-         return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.flush, null, null, spec);
+         return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.STRUCTURE, null, null, spec);
       }
    }
 
@@ -899,7 +899,7 @@ final class AiOracle {
                   } else if (outcome.error() != null) {
                      this.cancel();
                      return AiOperation.Result.failed(
-                        AiFailure.close, outcome.error(), AiJson.init_JsonObject_ObjArr("biome", biomeId, "predicted", true, "observed", false).toString()
+                        AiFailure.UNREACHABLE, outcome.error(), AiJson.init_JsonObject_ObjArr("biome", biomeId, "predicted", true, "observed", false).toString()
                      );
                   } else {
                      AiOracle.Inner_DataUtil hit = outcome.hit();
@@ -1451,13 +1451,13 @@ final class AiOracle {
    }
 
    enum Inner_SyncManager {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      LAVA,
+      WATER,
+      VILLAGE,
+      THREATS,
+      ORE,
+      BLOCK,
+      STRUCTURE;
    }
 
    interface Inner_TaskQueue {

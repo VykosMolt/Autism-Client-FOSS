@@ -81,7 +81,7 @@ final class AiObtain {
             int want = AiJson.init_Z_JsonObject(args, "additional", false)
                ? AiItems.init_I(target) + AiJson.init_I_JsonObject(args, "count", 1)
                : AiJson.init_I_JsonObject(args, "count", 1);
-            boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.update.ordinal();
+            boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal();
             if (equippedObsidian && want >= 1 && want <= 2304 && AiItems.init_I(target) < want) {
                return AiObsidian.load(want, AiJson.init_I_JsonObject(args, "timeoutSeconds", 600));
             }
@@ -223,13 +223,13 @@ final class AiObtain {
                            if (detour != null) {
                               this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("obtain", "station detour for " + spec, detour);
                               return this.init_AiOperation_Result_9(
-                                 this.load_Z && this.init_aE_DataUtil == AiObtain.Inner_DataUtil.write
+                                 this.load_Z && this.init_aE_DataUtil == AiObtain.Inner_DataUtil.SMELT
                                     ? "Smelting needs a furnace; making one first"
                                     : "Craft needs a crafting table; obtaining one first"
                               );
                            }
 
-                           if ((this.init_aE_DataUtil == AiObtain.Inner_DataUtil.sync || this.init_aE_DataUtil == AiObtain.Inner_DataUtil.update)
+                           if ((this.init_aE_DataUtil == AiObtain.Inner_DataUtil.MINE || this.init_aE_DataUtil == AiObtain.Inner_DataUtil.GATHER)
                               && !this.read_Z
                               && AiObtain.init_Str(result.dataJson()) != null) {
                               this.read_Z = true;
@@ -237,7 +237,7 @@ final class AiObtain {
                               return this.init_AiOperation_Result_9("Mining tool broke; re-tooling before one more attempt");
                            }
 
-                           if (this.init_aE_DataUtil == AiObtain.Inner_DataUtil.update && !this.update && AiObtain.init(result)) {
+                           if (this.init_aE_DataUtil == AiObtain.Inner_DataUtil.GATHER && !this.update && AiObtain.init(result)) {
                               String family = this.read_Str_3();
                               if (family != null && !this.write_Z_6()) {
                                  this.update = true;
@@ -259,7 +259,7 @@ final class AiObtain {
                               }
                            }
 
-                           if (this.init_aE_DataUtil == AiObtain.Inner_DataUtil.read && this.load_I < 2 && result.dataJson().contains("\"missing\"")) {
+                           if (this.init_aE_DataUtil == AiObtain.Inner_DataUtil.CRAFT && this.load_I < 2 && result.dataJson().contains("\"missing\"")) {
                               this.load_I++;
                               this.init_aE_DataUtil = null;
                               return this.init_AiOperation_Result_9("Craft still short on materials; fetching the rest");
@@ -316,17 +316,17 @@ final class AiObtain {
                }
 
                AiObtain.Inner_DataUtil init_aE_DataUtil() {
-                  if (!this.init_List.contains(AiObtain.Inner_DataUtil.read) && !this.init_Set_6().isEmpty()) {
+                  if (!this.init_List.contains(AiObtain.Inner_DataUtil.CRAFT) && !this.init_Set_6().isEmpty()) {
                      AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
                      if (this.init_Set_6().stream().anyMatch(item -> {
                         AiCraftPlanner.Inner_CachePool plan = AiCraftPlanner.init(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
                         return plan.complete() && !plan.steps().isEmpty();
                      })) {
-                        return AiObtain.Inner_DataUtil.read;
+                        return AiObtain.Inner_DataUtil.CRAFT;
                      }
                   }
 
-                  if (!this.init_List.contains(AiObtain.Inner_DataUtil.write)
+                  if (!this.init_List.contains(AiObtain.Inner_DataUtil.SMELT)
                      && this.load_Set_4()
                         .stream()
                         .anyMatch(
@@ -337,11 +337,11 @@ final class AiObtain {
                                     >= goal - AiItems.init_I(this.init_af_DataUtil)
                               )
                         )) {
-                     return AiObtain.Inner_DataUtil.write;
+                     return AiObtain.Inner_DataUtil.SMELT;
                   }
 
                   if (allowMining
-                     && !this.init_List.contains(AiObtain.Inner_DataUtil.update)
+                     && !this.init_List.contains(AiObtain.Inner_DataUtil.GATHER)
                      && this.init_af_DataUtil
                         .items()
                         .stream()
@@ -352,18 +352,18 @@ final class AiObtain {
                               && this.init(form.getBlock().defaultBlockState())
                               && AiTerrain.init(mc, List.of(form.getBlock()), 8) <= 64.0
                         )) {
-                     return AiObtain.Inner_DataUtil.update;
+                     return AiObtain.Inner_DataUtil.GATHER;
                   }
 
                   if (!allowCombat
-                     || this.init_List.contains(AiObtain.Inner_DataUtil.close)
+                     || this.init_List.contains(AiObtain.Inner_DataUtil.HUNT)
                      || this.load_List_3().isEmpty()
                      || this.write_Z_6()
                      || this.init(this.load_List_3(), 160.0) == null && !AiObtain.init_Z(this.load_List_3())) {
                      for (AiObtain.Inner_DataUtil strategy : AiObtain.Inner_DataUtil.values()) {
                         if (!this.init_List.contains(strategy)
-                           && (strategy != AiObtain.Inner_DataUtil.close || allowCombat)
-                           && (strategy != AiObtain.Inner_DataUtil.update && strategy != AiObtain.Inner_DataUtil.sync || allowMining)
+                           && (strategy != AiObtain.Inner_DataUtil.HUNT || allowCombat)
+                           && (strategy != AiObtain.Inner_DataUtil.GATHER && strategy != AiObtain.Inner_DataUtil.MINE || allowMining)
                            && this.init_Z(strategy)) {
                            return strategy;
                         }
@@ -371,35 +371,35 @@ final class AiObtain {
 
                      return null;
                   } else {
-                     return AiObtain.Inner_DataUtil.close;
+                     return AiObtain.Inner_DataUtil.HUNT;
                   }
                }
 
                boolean init_Z(AiObtain.Inner_DataUtil strategy) {
                   boolean var10000;
                   switch (strategy) {
-                     case init:
+                     case INVENTORY:
                         var10000 = false;
                         break;
-                     case load:
+                     case TOOL:
                         var10000 = depth < 5 && this.init_Str_11() != null;
                         break;
-                     case read:
+                     case CRAFT:
                         var10000 = !this.init_Set_6().isEmpty();
                         break;
-                     case write:
+                     case SMELT:
                         var10000 = this.load_Z_12();
                         break;
-                     case update:
+                     case GATHER:
                         var10000 = !this.init_List_6().isEmpty() && !this.read_Z_8();
                         break;
-                     case sync:
+                     case MINE:
                         var10000 = this.load_Str_3() != null;
                         break;
-                     case flush:
+                     case PROSPECT:
                         var10000 = AiProspect.init_Z(target) && !AiOracle.init_Z();
                         break;
-                     case close:
+                     case HUNT:
                         var10000 = !this.load_List_3().isEmpty();
                         break;
                      default:
@@ -434,7 +434,7 @@ final class AiObtain {
                   int missing = goal - AiItems.init_I(this.init_af_DataUtil);
                   int legSeconds = Math.max(15, this.init_I_19());
                   switch (strategy) {
-                     case load:
+                     case TOOL:
                         String toolId = this.init_Str_11();
                         if (toolId == null) {
                            return null;
@@ -465,7 +465,7 @@ final class AiObtain {
                            depth + 1,
                            nested
                         );
-                     case read:
+                     case CRAFT:
                         AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
                         Item output = AiObtain.init(this.init_Set_6(), goal, graph, AiObtain::init_D);
                         if (output == null) {
@@ -515,7 +515,7 @@ final class AiObtain {
                            this.load_Str = "craft " + outputId;
                            return AiCraft.init(AiJson.init_JsonObject_ObjArr("item", outputId, "count", goal, "timeoutSeconds", legSeconds));
                         }
-                     case write:
+                     case SMELT:
                         Item outputx = this.load_Set_4()
                            .stream()
                            .filter(this::init_Z)
@@ -666,10 +666,10 @@ final class AiObtain {
                               }
                            }
                         }
-                     case update:
+                     case GATHER:
                         this.load_Str = "gather " + spec;
                         return this.init(legSeconds);
-                     case sync:
+                     case MINE:
                         String mineId = this.load_Str_3();
                         if (mineId == null) {
                            return null;
@@ -677,10 +677,10 @@ final class AiObtain {
 
                         this.load_Str = "mine " + mineId + " below ground for " + spec;
                         return this.init(mineId, missing, legSeconds);
-                     case flush:
+                     case PROSPECT:
                         this.load_Str = "prospect " + spec;
                         return AiProspect.init(AiJson.init_JsonObject_ObjArr("item", spec, "count", goal, "timeoutSeconds", legSeconds));
-                     case close:
+                     case HUNT:
                         List<EntityType<?>> mobs = this.load_List_3();
                         if (mobs.isEmpty()) {
                            return null;
@@ -879,7 +879,7 @@ final class AiObtain {
                }
 
                AiOperation init(AiOperation.Result result) {
-                  if (this.init_aE_DataUtil == AiObtain.Inner_DataUtil.write
+                  if (this.init_aE_DataUtil == AiObtain.Inner_DataUtil.SMELT
                      && !this.load_Z
                      && depth < 5
                      && result.dataJson().contains("\"minecraft:furnace\"")
@@ -911,7 +911,7 @@ final class AiObtain {
                      );
                   }
 
-                  if (this.init_aE_DataUtil != AiObtain.Inner_DataUtil.read || this.init_Z || depth >= 5) {
+                  if (this.init_aE_DataUtil != AiObtain.Inner_DataUtil.CRAFT || this.init_Z || depth >= 5) {
                      return null;
                   }
 
@@ -1178,7 +1178,7 @@ final class AiObtain {
                      return false;
                   }
 
-                  if (this.write_Z || this.init_List.contains(AiObtain.Inner_DataUtil.sync) || this.load_Str_3() == null) {
+                  if (this.write_Z || this.init_List.contains(AiObtain.Inner_DataUtil.MINE) || this.load_Str_3() == null) {
                      return false;
                   }
 
@@ -1573,7 +1573,7 @@ final class AiObtain {
                false,
                false,
                (int)Math.min(60L, left),
-               autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+               autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                true,
                2.0,
                AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
@@ -1964,13 +1964,13 @@ final class AiObtain {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      INVENTORY,
+      TOOL,
+      CRAFT,
+      SMELT,
+      GATHER,
+      MINE,
+      PROSPECT,
+      HUNT;
    }
 }

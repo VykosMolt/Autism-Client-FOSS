@@ -209,17 +209,17 @@ final class AiPrintOp implements AiOperation {
       }
 
       AiMenuClose.Inner_StreamUtil menuClose = AiMenuClose.init_aq_StreamUtil();
-      if (menuClose != AiMenuClose.Inner_StreamUtil.init) {
+      if (menuClose != AiMenuClose.Inner_StreamUtil.READY) {
          this.init_DataUtil.read_V();
-         return menuClose == AiMenuClose.Inner_StreamUtil.read
-            ? this.init(AiOperation.Status.UNCERTAIN, "The server did not reconcile the closed storage menu. Inspect the inventory before resuming.", AiFailure.value)
+         return menuClose == AiMenuClose.Inner_StreamUtil.UNCERTAIN
+            ? this.init(AiOperation.Status.UNCERTAIN, "The server did not reconcile the closed storage menu. Inspect the inventory before resuming.", AiFailure.UNKNOWN)
             : this.init_AiOperation_Result_Str_9("Waiting for the server to close the storage menu");
       }
 
       if (!this.init_DataUtil.read_Z()) {
          this.init_DataUtil.read_V();
          return this.init_DataUtil.init_Str() != null
-            ? this.init(this.init_DataUtil.write_Z() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataUtil.init_Str(), AiFailure.value)
+            ? this.init(this.init_DataUtil.write_Z() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataUtil.init_Str(), AiFailure.UNKNOWN)
             : this.init_AiOperation_Result_Str_9("Waiting for the server to confirm the hand swap");
       }
 
@@ -228,7 +228,7 @@ final class AiPrintOp implements AiOperation {
       try {
          this.init_bj.init_Z_I(16384);
       } catch (IllegalStateException failure) {
-         return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.update);
+         return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.WORLD_UNKNOWN);
       }
 
       if (!this.init_bj.load_Z()) {
@@ -251,7 +251,7 @@ final class AiPrintOp implements AiOperation {
                this.init_DataUtil.load_V();
             }
          } catch (ReflectiveOperationException | RuntimeException failure) {
-            return this.init(AiOperation.Status.FAILED, "Could not apply the schematic's sign text", AiFailure.flush);
+            return this.init(AiOperation.Status.FAILED, "Could not apply the schematic's sign text", AiFailure.EXECUTION_FAILED);
          }
       }
 
@@ -275,7 +275,7 @@ final class AiPrintOp implements AiOperation {
          boolean pending = this.init_Y.read();
          this.init_Y.init_V();
          if (pending) {
-            return this.init(AiOperation.Status.UNCERTAIN, "Game mode changed during an unconfirmed survival action", AiFailure.value);
+            return this.init(AiOperation.Status.UNCERTAIN, "Game mode changed during an unconfirmed survival action", AiFailure.UNKNOWN);
          }
       }
 
@@ -286,7 +286,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       if (this.update_Z || this.sync_Z) {
-         return this.init(AiOperation.Status.UNCERTAIN, "Build maintenance was interrupted before recovery was confirmed", AiFailure.value);
+         return this.init(AiOperation.Status.UNCERTAIN, "Build maintenance was interrupted before recovery was confirmed", AiFailure.UNKNOWN);
       }
 
       if (this.init_AiOperation != null
@@ -349,7 +349,7 @@ final class AiPrintOp implements AiOperation {
                   this.init_BlockPos = this.init_bj.init_BlockPos();
                }
             } catch (IllegalStateException failure) {
-               return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.close);
+               return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.UNREACHABLE);
             }
 
             if (this.init_BlockPos != null) {
@@ -399,7 +399,7 @@ final class AiPrintOp implements AiOperation {
          }
 
          if (this.init_UiHelper.init_Item() == Items.AIR && this.init_UiHelper.close_Z()) {
-            return this.init(AiOperation.Status.FAILED, "Free one inventory or offhand slot so the builder can use an empty hand", AiFailure.put);
+            return this.init(AiOperation.Status.FAILED, "Free one inventory or offhand slot so the builder can use an empty hand", AiFailure.INVENTORY_FULL);
          }
 
          if (!this.init_DataUtil.update_Z() && this.init_UiHelper.load_Item() != null) {
@@ -422,7 +422,7 @@ final class AiPrintOp implements AiOperation {
 
             AiOperation.Result var10000;
             switch (this.init_UiHelper.init_UiHelper_J()) {
-               case update:
+               case DONE:
                   if (this.init_ArrayDeque.isEmpty()) {
                      var10000 = this.init_AiOperation_Result_AiOperation_Status_Str_8(
                         AiOperation.Status.SUCCEEDED,
@@ -440,7 +440,7 @@ final class AiPrintOp implements AiOperation {
                      var10000 = this.init_AiOperation_Result_Str_9("Loading saved construction blocks before final cleanup");
                   }
                   break;
-               case sync:
+               case FAILED:
                   var10000 = this.init_AiOperation_Result_AiOperation_Status_Str_8(
                      this.init_UiHelper.update_Z() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED,
                      "Build stopped: " + this.init_UiHelper.write_Str()
@@ -453,7 +453,7 @@ final class AiPrintOp implements AiOperation {
             return var10000;
          } else {
             if (!this.init_TableIndex_ConfigS.shulkerStock()) {
-               return this.init(AiOperation.Status.FAILED, "Missing material: " + init_Str_Item(this.init_bj.init_Item()), AiFailure.pop);
+               return this.init(AiOperation.Status.FAILED, "Missing material: " + init_Str_Item(this.init_bj.init_Item()), AiFailure.MISSING_MATERIALS);
             }
 
             this.init_Item = this.init_bj.init_Item();
@@ -494,13 +494,13 @@ final class AiPrintOp implements AiOperation {
       } else {
          String var10000;
          switch (this.init_UiHelper.init_UiHelper_J()) {
-            case load:
+            case FLUIDS:
                var10000 = "Placing fluids";
                break;
-            case read:
+            case TEARDOWN:
                var10000 = "Removing supports";
                break;
-            case write:
+            case VERIFY:
                var10000 = "Verifying build";
                break;
             default:
@@ -520,7 +520,7 @@ final class AiPrintOp implements AiOperation {
       this.read_Z = true;
       autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
       if (controls == null) {
-         return this.init(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.close);
+         return this.init(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.UNREACHABLE);
       }
 
       this.init_DataUtil.init_V_SyncManager(controls);
@@ -542,7 +542,7 @@ final class AiPrintOp implements AiOperation {
          && AiCarriedShulker.init_BlockPos_Minecraft_Set(this.init_Minecraft, this.init_Set_7()) != null;
       autismclient.ai.print.PrintControls controls = portableHere ? this.init_UiHelper.init_SyncManager() : this.init_UiHelper.load_SyncManager();
       if (controls == null) {
-         return this.init(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.close);
+         return this.init(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.UNREACHABLE);
       }
 
       this.init_DataUtil.init_V_SyncManager(controls);
@@ -567,7 +567,7 @@ final class AiPrintOp implements AiOperation {
                "No usable carried or nearby shulker could supply "
                   + init_Str_Item(this.init_Item)
                   + ". Keep an inventory slot free for the withdrawn material and leave room to recover the box.",
-               AiFailure.pop
+               AiFailure.MISSING_MATERIALS
             );
          }
 
@@ -609,7 +609,7 @@ final class AiPrintOp implements AiOperation {
          this.init_DataUtil.init_V();
          autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
          if (controls == null) {
-            return this.init(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.close);
+            return this.init(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.UNREACHABLE);
          } else {
             this.init_DataUtil.init_V_SyncManager(controls);
             if (!this.init_UiHelper.close_Z()) {
@@ -676,7 +676,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_8(AiOperation.Status status, String message) {
-      return this.init(status, message, status == AiOperation.Status.CANCELLED ? AiFailure.size : AiFailure.value);
+      return this.init(status, message, status == AiOperation.Status.CANCELLED ? AiFailure.CANCELLED : AiFailure.UNKNOWN);
    }
 
    private AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
@@ -786,7 +786,7 @@ final class AiPrintOp implements AiOperation {
          }
 
          if (this.init_BlockPos != null) {
-            if (!this.load_Z && result.status() == AiOperation.Status.FAILED && result.failure() == AiFailure.close) {
+            if (!this.load_Z && result.status() == AiOperation.Status.FAILED && result.failure() == AiFailure.UNREACHABLE) {
                this.load_Z = true;
                this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), true));
                return this.init_AiOperation_Result_Str_9("Finding supported access to terrain at " + this.init_BlockPos.toShortString());
@@ -888,7 +888,7 @@ final class AiPrintOp implements AiOperation {
                         : (
                            this.init_Item == null && this.init_ItemStack.isEmpty()
                               ? (
-                                 this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.read
+                                 this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.TEARDOWN
                                     ? "drain"
                                     : this.init_UiHelper.init_UiHelper_J().name().toLowerCase(Locale.ROOT)
                               )
@@ -929,7 +929,7 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("machineOutcomesUnverified", this.init_UiHelper.reset_I());
       o.addProperty(
          "machineComplete",
-         this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.update
+         this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.DONE
             && this.init_UiHelper.set_I() == 0
             && this.init_UiHelper.put_I() == 0
             && this.init_UiHelper.reset_I() == 0
@@ -967,7 +967,7 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("terrainCleared", this.init_bj.load_I);
       o.addProperty("soilCollected", this.init_I_28());
       o.addProperty("soilBroken", this.update_I);
-      o.addProperty("interactionAwaitingAck", this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.load);
+      o.addProperty("interactionAwaitingAck", this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING);
       o.addProperty(
          "recoveryRequired",
          AiMenuClose.load()
@@ -975,7 +975,7 @@ final class AiPrintOp implements AiOperation {
             || this.sync_Z
             || this.init_UiHelper.update_Z()
             || this.init_DataUtil.write_Z()
-            || this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.read
+            || this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN
       );
       if (this.init_JsonObject != null) {
          o.add("externalWork", this.init_JsonObject.deepCopy());
@@ -1099,11 +1099,11 @@ final class AiPrintOp implements AiOperation {
       @Override
       public AiOperation.Result tick() {
          if (this.init_Z) {
-            return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Local soil gathering cancelled", "{}", List.of(), AiFailure.size));
+            return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Local soil gathering cancelled", "{}", List.of(), AiFailure.CANCELLED));
          }
 
          if (AiPrintOp.this.init_Minecraft.player == null || AiPrintOp.this.init_Minecraft.level == null || System.nanoTime() > this.init_J) {
-            return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Local soil gathering timed out", "{}", List.of(), AiFailure.prev));
+            return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Local soil gathering timed out", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
          if (AiPrintSupply.load(AiPrintOp.this.init_Minecraft.player.getInventory(), Items.DIRT) >= this.update && !this.init_bb.init_Z(this.init_AiOperation)) {
@@ -1112,11 +1112,11 @@ final class AiPrintOp implements AiOperation {
 
          if (this.init_AiOperation == null) {
             if (this.init_I >= this.init_List.size()) {
-               return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "No reachable local soil remains", "{}", List.of(), AiFailure.load));
+               return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "No reachable local soil remains", "{}", List.of(), AiFailure.NO_REACHABLE_TARGET));
             }
 
             if (!autismclient.ai.engine.AiBlockMine.init(AiPrintOp.this.init_Minecraft.player.getInventory(), new ItemStack(Items.DIRT))) {
-               return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "Make inventory room for local soil", "{}", List.of(), AiFailure.put));
+               return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "Make inventory room for local soil", "{}", List.of(), AiFailure.INVENTORY_FULL));
             }
 
             this.init_BlockPos = this.init_List.get(this.init_I++);

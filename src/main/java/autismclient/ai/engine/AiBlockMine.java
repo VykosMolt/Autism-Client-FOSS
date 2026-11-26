@@ -143,7 +143,7 @@ public final class AiBlockMine {
             }
          }
 
-         return AiFailure.put;
+         return AiFailure.INVENTORY_FULL;
       } else {
          return null;
       }
@@ -1040,11 +1040,11 @@ public final class AiBlockMine {
                            || this.init_Z(drops) && !this.write_Z_3();
                         if (this.update_BlockPos != null) {
                            AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                           if (status == AiPlacer.Inner_DataUtil.init) {
+                           if (status == AiPlacer.Inner_DataUtil.WORKING) {
                               return this.init_AiOperation_Result_6("Blocking the water next to " + this.sync_BlockPos.toShortString());
                            }
 
-                           if (status == AiPlacer.Inner_DataUtil.read) {
+                           if (status == AiPlacer.Inner_DataUtil.FAILED) {
                               this.init(this.sync_BlockPos, "could not block the water beside it (" + this.init_DataPipe.init_Str() + ")");
                            }
 
@@ -1294,7 +1294,7 @@ public final class AiBlockMine {
                                  JsonObject out = this.init_JsonObject_25();
                                  this.flush_V();
                                  return AiOperation.Result.failed(
-                                    AiFailure.load, "No matching observed drops remain nearby (" + this.init_Str_9() + ")", out.toString()
+                                    AiFailure.NO_REACHABLE_TARGET, "No matching observed drops remain nearby (" + this.init_Str_9() + ")", out.toString()
                                  );
                               } else {
                                  if (!explore) {
@@ -1747,7 +1747,7 @@ public final class AiBlockMine {
                   return this.init(AiOperation.Status.CANCELLED, "Cancelled");
                }
 
-               if (r.failure() == AiFailure.tick || r.failure() == AiFailure.get) {
+               if (r.failure() == AiFailure.MISSING_TOOL || r.failure() == AiFailure.TOOL_WORN) {
                   this.flush_V();
                   return r;
                }
@@ -3448,7 +3448,7 @@ public final class AiBlockMine {
 
                this.flush_V();
                return AiOperation.Result.failed(
-                  AiFailure.tick, "No usable harvesting tool for " + mc.level.getBlockState(target).getBlock().getName().getString(), out.toString()
+                  AiFailure.MISSING_TOOL, "No usable harvesting tool for " + mc.level.getBlockState(target).getBlock().getName().getString(), out.toString()
                );
             }
 

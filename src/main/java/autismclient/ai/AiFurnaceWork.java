@@ -581,10 +581,10 @@ final class AiFurnaceWork implements AiOperation {
          @Override
          public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
             return Set.of(
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.start,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.put,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.add,
-               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.clear
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND
             );
          }
       };
@@ -595,7 +595,7 @@ final class AiFurnaceWork implements AiOperation {
          false,
          false,
          20,
-         autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+         autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
          false,
          0.0,
          goal,

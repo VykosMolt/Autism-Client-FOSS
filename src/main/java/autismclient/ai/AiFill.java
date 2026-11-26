@@ -226,7 +226,7 @@ final class AiFill {
          return missing.size() > 0
             ? AiGameOperations.init(
                AiOperation.Status.FAILED,
-               AiFailure.pop,
+               AiFailure.MISSING_MATERIALS,
                "Missing materials: " + missing,
                AiJson.init_JsonObject_ObjArr("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
             )
@@ -327,7 +327,7 @@ final class AiFill {
             if (missing.size() > 0) {
                return AiGameOperations.init(
                   AiOperation.Status.FAILED,
-                  AiFailure.pop,
+                  AiFailure.MISSING_MATERIALS,
                   "Missing materials: " + missing,
                   AiJson.init_JsonObject_ObjArr("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
                );
@@ -753,7 +753,7 @@ final class AiFill {
          return missing.size() > 0
             ? AiGameOperations.init(
                AiOperation.Status.FAILED,
-               AiFailure.pop,
+               AiFailure.MISSING_MATERIALS,
                "Missing materials: " + missing,
                AiJson.init_JsonObject_ObjArr("missing", missing, "replaced", 0, "dug", 0, "failed", new JsonArray())
             )
@@ -805,7 +805,7 @@ final class AiFill {
             if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
                return this.init(
                   AiOperation.Status.FAILED,
-                  AiFailure.start,
+                  AiFailure.LOW_HEALTH,
                   AiGuard.init_Str_Str("replacing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                );
             }

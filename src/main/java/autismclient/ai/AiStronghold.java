@@ -608,7 +608,7 @@ final class AiStronghold {
                               true,
                               true,
                               60,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                               true,
                               2.0,
                               new AiNetherRun.Inner_NetHelper(x, z, 6),
@@ -666,7 +666,7 @@ final class AiStronghold {
                               true,
                               true,
                               60,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                               true,
                               2.0,
                               null,
@@ -685,7 +685,7 @@ final class AiStronghold {
                               true,
                               true,
                               120,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                               true,
                               2.0,
                               null,
@@ -745,7 +745,7 @@ final class AiStronghold {
                                     true,
                                     true,
                                     60,
-                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                     true,
                                     2.0,
                                     new AiNetherRun.Inner_NetHelper(x, z, 6),
@@ -793,8 +793,8 @@ final class AiStronghold {
                                           true,
                                           300,
                                           this.push % 2 == 1
-                                             ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init
-                                             : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                             ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST
+                                             : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                           true,
                                           2.0,
                                           null,
@@ -826,7 +826,7 @@ final class AiStronghold {
                                              true,
                                              true,
                                              60,
-                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                              true,
                                              2.0,
                                              null,
@@ -903,7 +903,7 @@ final class AiStronghold {
                                              true,
                                              true,
                                              60,
-                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                              true,
                                              2.0,
                                              new AiNetherRun.Inner_NetHelper(x, z, 6),
@@ -1105,7 +1105,7 @@ final class AiStronghold {
                      outcome = this.init(candidates.get(i).getUUID());
                   }
 
-                  if (outcome == AiStronghold.Inner_BufferHelper.write) {
+                  if (outcome == AiStronghold.Inner_BufferHelper.AMBIGUOUS) {
                      return this.init(AiOperation.Status.UNCERTAIN, "The Eye throw has ambiguous inventory or entity evidence; reobserve before another throw");
                   }
 
@@ -1120,12 +1120,12 @@ final class AiStronghold {
                               return this.init(AiOperation.Status.UNCERTAIN, "The sent Eye throw lacks a server receipt; reobserve before spending another Eye");
                            }
 
-                           if (outcome == AiStronghold.Inner_BufferHelper.load) {
+                           if (outcome == AiStronghold.Inner_BufferHelper.CONSUMED) {
                               this.flush_I++;
                            }
 
                            return this.init_AiOperation_Result_14(
-                              outcome == AiStronghold.Inner_BufferHelper.load
+                              outcome == AiStronghold.Inner_BufferHelper.CONSUMED
                                  ? "One Eye was consumed, but no usable flight was observed; retry navigation from the receipt"
                                  : "The server acknowledged an unchanged Eye inventory after the use; retry navigation from the receipt"
                            );
@@ -1209,7 +1209,7 @@ final class AiStronghold {
                      identity,
                      this.update_I - 6
                   );
-               return outcome == AiStronghold.Inner_BufferHelper.init && this.init_co_StreamUtil.read_J >= 0L
+               return outcome == AiStronghold.Inner_BufferHelper.WAITING && this.init_co_StreamUtil.read_J >= 0L
                   ? this.init_co_StreamUtil.init(AiServerEvidence.init_OptionalInt_I(container, this.init_co_StreamUtil.read_J, "minecraft:ender_eye"), this.update_I - 6)
                   : outcome;
             }
@@ -1221,7 +1221,7 @@ final class AiStronghold {
                   stopped.message(),
                   stopped.dataJson(),
                   stopped.evidence(),
-                  stopped.status() == AiOperation.Status.UNCERTAIN ? AiFailure.value : AiFailure.init_A
+                  stopped.status() == AiOperation.Status.UNCERTAIN ? AiFailure.UNKNOWN : AiFailure.TARGET_NOT_FOUND
                );
             }
 
@@ -1399,7 +1399,7 @@ final class AiStronghold {
                JsonObject evidence = AiRunResources.init_JsonObject(stopped.dataJson());
                evidence.addProperty("pearlRouteChange", AiRunResources.load_Z() && AiNetherRun.load_Z());
                evidence.addProperty("pearlsNeeded", missing);
-               return new AiOperation.Result(stopped.status(), stopped.message(), evidence.toString(), stopped.evidence(), AiFailure.pop);
+               return new AiOperation.Result(stopped.status(), stopped.message(), evidence.toString(), stopped.evidence(), AiFailure.MISSING_MATERIALS);
             }
 
             AiOperation.Result load(String message) {
@@ -1460,10 +1460,10 @@ final class AiStronghold {
    }
 
    enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write;
+      WAITING,
+      CONSUMED,
+      REJECTED,
+      AMBIGUOUS;
    }
 
    static final class Inner_CachePool {
@@ -1603,7 +1603,7 @@ final class AiStronghold {
 
       AiStronghold.Inner_BufferHelper init(int eyes, long inventory, OptionalInt snapshot, long replies, boolean acknowledged, UUID identity, int elapsedTicks) {
          if (!this.init_Z) {
-            return AiStronghold.Inner_BufferHelper.init;
+            return AiStronghold.Inner_BufferHelper.WAITING;
          }
 
          this.update_I = eyes;
@@ -1625,34 +1625,34 @@ final class AiStronghold {
          }
 
          if (this.write_Z) {
-            return AiStronghold.Inner_BufferHelper.write;
+            return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
          } else if (this.load_Z) {
-            return AiStronghold.Inner_BufferHelper.load;
+            return AiStronghold.Inner_BufferHelper.CONSUMED;
          } else if (this.read_Z) {
-            return AiStronghold.Inner_BufferHelper.read;
+            return AiStronghold.Inner_BufferHelper.REJECTED;
          } else {
             int serverEyes = freshSnapshot ? Math.min(eyes, snapshot.getAsInt()) : eyes;
             if (this.init_I - serverEyes > 1) {
                this.write_Z = true;
-               return AiStronghold.Inner_BufferHelper.write;
+               return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
             } else if (this.init_I > 0
                && this.load_I > 0
                && (eyes == this.init_I - 1 && inventory > this.init_J || freshSnapshot && snapshot.getAsInt() == this.init_I - 1)) {
                this.load_Z = true;
-               return AiStronghold.Inner_BufferHelper.load;
+               return AiStronghold.Inner_BufferHelper.CONSUMED;
             } else {
-               return AiStronghold.Inner_BufferHelper.init;
+               return AiStronghold.Inner_BufferHelper.WAITING;
             }
          }
       }
 
       AiStronghold.Inner_BufferHelper init(OptionalInt snapshotAfterAcknowledgement, int elapsedTicks) {
          if (this.write_Z) {
-            return AiStronghold.Inner_BufferHelper.write;
+            return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
          } else if (this.load_Z) {
-            return AiStronghold.Inner_BufferHelper.load;
+            return AiStronghold.Inner_BufferHelper.CONSUMED;
          } else if (this.read_Z) {
-            return AiStronghold.Inner_BufferHelper.read;
+            return AiStronghold.Inner_BufferHelper.REJECTED;
          } else if (this.init_Z
             && elapsedTicks > 120
             && this.update_Z
@@ -1663,9 +1663,9 @@ final class AiStronghold {
             && this.update_I == this.init_I
             && this.init_UUID == null) {
             this.read_Z = true;
-            return AiStronghold.Inner_BufferHelper.read;
+            return AiStronghold.Inner_BufferHelper.REJECTED;
          } else {
-            return AiStronghold.Inner_BufferHelper.init;
+            return AiStronghold.Inner_BufferHelper.WAITING;
          }
       }
 

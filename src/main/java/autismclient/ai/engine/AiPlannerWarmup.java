@@ -33,9 +33,9 @@ public final class AiPlannerWarmup {
          long var0 = System.nanoTime();
          AiPathfinder.Inner_StateCache var2 = putAt_FileStore_TextStor();
          AiPathfinder.Inner_DataUtil var3 = new AiPathfinder.Inner_DataUtil(
-               false, false, false, true, false, true, AiPathfinder.Inner_IoWorker.init, AiPathfinder.Inner_PoolEntry.value
+               false, false, false, true, false, true, AiPathfinder.Inner_IoWorker.FASTEST, AiPathfinder.Inner_PoolEntry.value
             )
-            .withFallPolicy(AiPathfinder.Inner_NetHelper.read);
+            .withFallPolicy(AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE);
          BlockPos var4 = putAt_BlockPos;
          BlockPos var5 = fill_BlockPos;
 

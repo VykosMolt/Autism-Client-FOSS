@@ -86,85 +86,85 @@ final class AiThreats {
          if (e instanceof LivingEntity rider) {
             AttackRange range = rider.getMainHandItem().get(DataComponents.ATTACK_RANGE);
             if (range != null && range.effectiveMaxRange(rider) > 3.5) {
-               return AiThreats.Inner_DataUtil.stop;
+               return AiThreats.Inner_DataUtil.AVOID;
             }
          }
 
          if (e instanceof Warden || e instanceof Evoker || e instanceof Ravager || e instanceof ElderGuardian) {
-            return AiThreats.Inner_DataUtil.stop;
+            return AiThreats.Inner_DataUtil.AVOID;
          } else if (e instanceof ZombifiedPiglin) {
-            return AiThreats.Inner_DataUtil.tick;
+            return AiThreats.Inner_DataUtil.ZOMBIFIED_PIGLIN;
          } else if (e instanceof Zombie z) {
-            return z.isBaby() ? AiThreats.Inner_DataUtil.load : AiThreats.Inner_DataUtil.init;
+            return z.isBaby() ? AiThreats.Inner_DataUtil.BABY_ZOMBIE : AiThreats.Inner_DataUtil.ZOMBIE;
          } else if (e instanceof WitherSkeleton) {
-            return AiThreats.Inner_DataUtil.poll;
+            return AiThreats.Inner_DataUtil.WITHER_SKELETON;
          } else if (e instanceof AbstractSkeleton s) {
-            return s.getMainHandItem().is(Items.BOW) ? AiThreats.Inner_DataUtil.read : AiThreats.Inner_DataUtil.init;
+            return s.getMainHandItem().is(Items.BOW) ? AiThreats.Inner_DataUtil.SKELETON : AiThreats.Inner_DataUtil.ZOMBIE;
          } else if (e instanceof Creeper) {
-            return AiThreats.Inner_DataUtil.update;
+            return AiThreats.Inner_DataUtil.CREEPER;
          } else if (e instanceof Spider) {
-            return AiThreats.Inner_DataUtil.sync;
+            return AiThreats.Inner_DataUtil.SPIDER;
          } else if (e instanceof Enderman) {
-            return AiThreats.Inner_DataUtil.flush;
+            return AiThreats.Inner_DataUtil.ENDERMAN;
          } else if (e instanceof Blaze) {
-            return AiThreats.Inner_DataUtil.close;
+            return AiThreats.Inner_DataUtil.BLAZE;
          } else if (e instanceof Ghast) {
-            return AiThreats.Inner_DataUtil.open;
+            return AiThreats.Inner_DataUtil.GHAST;
          } else if (e instanceof PiglinBrute) {
-            return AiThreats.Inner_DataUtil.pop;
+            return AiThreats.Inner_DataUtil.BRUTE;
          } else if (e instanceof Piglin p) {
-            return p.getMainHandItem().is(Items.CROSSBOW) ? AiThreats.Inner_DataUtil.write : AiThreats.Inner_DataUtil.push;
+            return p.getMainHandItem().is(Items.CROSSBOW) ? AiThreats.Inner_DataUtil.CROSSBOW : AiThreats.Inner_DataUtil.PIGLIN;
          } else if (e instanceof Hoglin || e instanceof Zoglin) {
-            return AiThreats.Inner_DataUtil.run;
+            return AiThreats.Inner_DataUtil.HOGLIN;
          } else if (e instanceof AbstractCubeMob) {
-            return e instanceof Enemy ? AiThreats.Inner_DataUtil.get : AiThreats.Inner_DataUtil.reset;
+            return e instanceof Enemy ? AiThreats.Inner_DataUtil.CUBE : AiThreats.Inner_DataUtil.NEUTRAL;
          } else if (e instanceof Silverfish || e instanceof Endermite) {
-            return AiThreats.Inner_DataUtil.set;
+            return AiThreats.Inner_DataUtil.SMALL;
          } else if (e instanceof Witch) {
-            return AiThreats.Inner_DataUtil.put;
+            return AiThreats.Inner_DataUtil.WITCH;
          } else if (e instanceof Phantom) {
-            return AiThreats.Inner_DataUtil.add;
+            return AiThreats.Inner_DataUtil.PHANTOM;
          } else if (e instanceof Pillager) {
-            return AiThreats.Inner_DataUtil.write;
+            return AiThreats.Inner_DataUtil.CROSSBOW;
          } else if (e instanceof Enemy) {
-            return AiThreats.Inner_DataUtil.clear;
+            return AiThreats.Inner_DataUtil.OTHER_HOSTILE;
          } else {
-            return e instanceof NeutralMob ? AiThreats.Inner_DataUtil.reset : AiThreats.Inner_DataUtil.start;
+            return e instanceof NeutralMob ? AiThreats.Inner_DataUtil.NEUTRAL : AiThreats.Inner_DataUtil.PASSIVE;
          }
       } else {
-         return AiThreats.Inner_DataUtil.stop;
+         return AiThreats.Inner_DataUtil.AVOID;
       }
    }
 
    static boolean init(AiThreats.Inner_DataUtil p) {
-      return p == AiThreats.Inner_DataUtil.flush
-         || p == AiThreats.Inner_DataUtil.tick
-         || p == AiThreats.Inner_DataUtil.push
-         || p == AiThreats.Inner_DataUtil.reset
-         || p == AiThreats.Inner_DataUtil.start;
+      return p == AiThreats.Inner_DataUtil.ENDERMAN
+         || p == AiThreats.Inner_DataUtil.ZOMBIFIED_PIGLIN
+         || p == AiThreats.Inner_DataUtil.PIGLIN
+         || p == AiThreats.Inner_DataUtil.NEUTRAL
+         || p == AiThreats.Inner_DataUtil.PASSIVE;
    }
 
    static boolean load(AiThreats.Inner_DataUtil p) {
       boolean var10000;
       switch (p) {
-         case init:
-         case load:
-         case sync:
-         case flush:
-         case poll:
-         case push:
-         case pop:
-         case tick:
-         case run:
-         case get:
-         case set:
+         case ZOMBIE:
+         case BABY_ZOMBIE:
+         case SPIDER:
+         case ENDERMAN:
+         case WITHER_SKELETON:
+         case PIGLIN:
+         case BRUTE:
+         case ZOMBIFIED_PIGLIN:
+         case HOGLIN:
+         case CUBE:
+         case SMALL:
             var10000 = true;
             break;
-         case read:
-         case write:
-         case update:
-         case close:
-         case open:
+         case SKELETON:
+         case CROSSBOW:
+         case CREEPER:
+         case BLAZE:
+         case GHAST:
          default:
             var10000 = false;
       }
@@ -397,17 +397,17 @@ final class AiThreats {
          boolean sight = d < 48.0 && mc.player.hasLineOfSight(e);
          boolean var10000;
          switch (p) {
-            case init:
-            case load:
-            case sync:
-            case poll:
+            case ZOMBIE:
+            case BABY_ZOMBIE:
+            case SPIDER:
+            case WITHER_SKELETON:
                var10000 = d < 3.0 && sight || sight && d < 20.0 && (read(e) || init(e, 6));
                break;
-            case read:
-            case write:
+            case SKELETON:
+            case CROSSBOW:
                var10000 = read(e) && sight && d < 24.0;
                break;
-            case update:
+            case CREEPER:
                if (sight && d < 16.0 || e instanceof Creeper c && c.getSwellDir() > 0) {
                   var10000 = true;
                   break;
@@ -415,7 +415,7 @@ final class AiThreats {
 
                var10000 = false;
                break;
-            case flush:
+            case ENDERMAN:
                if (init_Z(e) || e instanceof Enderman m && m.isCreepy() && (init(e, 4) || load(e) || e.distanceToSqr(mc.player) < 6.25)) {
                   var10000 = true;
                   break;
@@ -423,10 +423,10 @@ final class AiThreats {
 
                var10000 = false;
                break;
-            case close:
+            case BLAZE:
                var10000 = sight && (d < 12.0 || e.isOnFire());
                break;
-            case open:
+            case GHAST:
                if (e instanceof Ghast g && g.isCharging() || sight && d < 20.0 && Math.abs(e.getY() - mc.player.getY()) <= 5.0) {
                   var10000 = true;
                   break;
@@ -434,36 +434,36 @@ final class AiThreats {
 
                var10000 = false;
                break;
-            case push:
+            case PIGLIN:
                var10000 = init_Z(mc) ? init_Z(e) : read(e);
                break;
-            case pop:
-            case run:
-               var10000 = read(e) || p == AiThreats.Inner_DataUtil.pop && (d < 8.0 || sight && d < 12.0);
+            case BRUTE:
+            case HOGLIN:
+               var10000 = read(e) || p == AiThreats.Inner_DataUtil.BRUTE && (d < 8.0 || sight && d < 12.0);
                break;
-            case tick:
+            case ZOMBIFIED_PIGLIN:
                var10000 = init_Z(e);
                break;
-            case get:
+            case CUBE:
                var10000 = d < 8.0;
                break;
-            case set:
+            case SMALL:
                var10000 = d < 6.0;
                break;
-            case put:
+            case WITCH:
                var10000 = sight && d < 10.0;
                break;
-            case add:
+            case PHANTOM:
                var10000 = d < 24.0;
                break;
-            case clear:
+            case OTHER_HOSTILE:
                var10000 = d < 4.0 && sight || read(e) && sight && d < 16.0;
                break;
-            case reset:
-            case start:
+            case NEUTRAL:
+            case PASSIVE:
                var10000 = false;
                break;
-            case stop:
+            case AVOID:
                var10000 = sight && d < 20.0 || read(e);
                break;
             default:
@@ -532,27 +532,27 @@ final class AiThreats {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run,
-      get,
-      set,
-      put,
-      add,
-      clear,
-      reset,
-      start,
-      stop;
+      ZOMBIE,
+      BABY_ZOMBIE,
+      SKELETON,
+      CROSSBOW,
+      CREEPER,
+      SPIDER,
+      ENDERMAN,
+      BLAZE,
+      GHAST,
+      WITHER_SKELETON,
+      PIGLIN,
+      BRUTE,
+      ZOMBIFIED_PIGLIN,
+      HOGLIN,
+      CUBE,
+      SMALL,
+      WITCH,
+      PHANTOM,
+      OTHER_HOSTILE,
+      NEUTRAL,
+      PASSIVE,
+      AVOID;
    }
 }

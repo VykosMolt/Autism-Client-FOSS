@@ -44,23 +44,23 @@ final class AiBuildIntent {
 
    static AiBuildSite.Inner_CachePool init_IoWorker_CachePool(AiBuilder.Inner_StreamUtil cell) {
       if (AiBuilder.read_Z(cell)) {
-         return AiBuildSite.Inner_CachePool.sync;
+         return AiBuildSite.Inner_CachePool.DERIVED;
       } else if (AiBuilder.update(cell)) {
-         return AiBuildSite.Inner_CachePool.flush;
+         return AiBuildSite.Inner_CachePool.SKIP;
       } else if (AiBuilder.init_Fluid(cell) != null) {
-         return AiBuildSite.Inner_CachePool.write;
+         return AiBuildSite.Inner_CachePool.FLUID;
       } else if (!init_List(cell).isEmpty()) {
-         return AiBuildSite.Inner_CachePool.flush;
+         return AiBuildSite.Inner_CachePool.SKIP;
       } else if (AiSchematicActions.read_Z(cell) || "upper".equals(cell.properties().get("half")) || "head".equals(cell.properties().get("part"))) {
-         return AiBuildSite.Inner_CachePool.update;
+         return AiBuildSite.Inner_CachePool.PARTNER;
       } else if (AiSchematicActions.init_Z(cell)) {
-         return AiBuildSite.Inner_CachePool.read;
+         return AiBuildSite.Inner_CachePool.SPECIAL;
       } else if (write(cell)) {
-         return AiBuildSite.Inner_CachePool.load;
+         return AiBuildSite.Inner_CachePool.INTERACT;
       } else if (read_Z(cell)) {
-         return AiBuildSite.Inner_CachePool.init;
+         return AiBuildSite.Inner_CachePool.SIMPLE;
       } else {
-         return sync(cell) ? AiBuildSite.Inner_CachePool.load : AiBuildSite.Inner_CachePool.init;
+         return sync(cell) ? AiBuildSite.Inner_CachePool.INTERACT : AiBuildSite.Inner_CachePool.SIMPLE;
       }
    }
 
@@ -69,18 +69,18 @@ final class AiBuildIntent {
    }
 
    static Item init_Item(AiBuilder.Inner_StreamUtil cell, AiBuildSite.Inner_CachePool kind) {
-      if (kind == AiBuildSite.Inner_CachePool.sync || kind == AiBuildSite.Inner_CachePool.flush) {
+      if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
          return Items.AIR;
       }
 
-      if (kind == AiBuildSite.Inner_CachePool.write) {
+      if (kind == AiBuildSite.Inner_CachePool.FLUID) {
          if (AiBuilder.load_Z(cell)) {
             return Items.AIR;
          } else {
             return cell.block().equals("minecraft:lava") ? Items.LAVA_BUCKET : Items.WATER_BUCKET;
          }
       } else {
-         if (kind == AiBuildSite.Inner_CachePool.read) {
+         if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
             for (Item material : AiSchematicActions.read_List(cell)) {
                if (material != Items.AIR) {
                   return material;
@@ -88,7 +88,7 @@ final class AiBuildIntent {
             }
          }
 
-         if (kind == AiBuildSite.Inner_CachePool.update) {
+         if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
             return AiBuilder.init_I(cell) == 0 ? Items.AIR : AiBuilder.init_BlockState(cell).getBlock().asItem();
          } else {
             return AiBuilder.init_BlockState(cell).getBlock().asItem();
@@ -105,14 +105,14 @@ final class AiBuildIntent {
    }
 
    static List<BlockPos> init_List(AiBuilder.Inner_StreamUtil cell, AiBuildSite.Inner_CachePool kind) {
-      if (kind == AiBuildSite.Inner_CachePool.sync || kind == AiBuildSite.Inner_CachePool.flush) {
+      if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
          return List.of();
-      } else if (kind == AiBuildSite.Inner_CachePool.write) {
+      } else if (kind == AiBuildSite.Inner_CachePool.FLUID) {
          return AiBuilder.load_Z(cell) ? List.of() : init_List;
-      } else if (kind == AiBuildSite.Inner_CachePool.update) {
+      } else if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
          Direction provider = init_Direction(cell);
          return provider == null ? List.of() : List.of(init(provider));
-      } else if (kind == AiBuildSite.Inner_CachePool.read) {
+      } else if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
          return List.of();
       } else {
          Block block = init_Block(cell);
@@ -137,7 +137,7 @@ final class AiBuildIntent {
 
    static Float init_Float(AiBuilder.Inner_StreamUtil cell) {
       AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
-      if (kind != AiBuildSite.Inner_CachePool.init && kind != AiBuildSite.Inner_CachePool.load) {
+      if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
       }
 
@@ -152,7 +152,7 @@ final class AiBuildIntent {
 
    static Predicate<Direction> init_Predicate(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
       AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
-      if (kind != AiBuildSite.Inner_CachePool.init && kind != AiBuildSite.Inner_CachePool.load) {
+      if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
          return null;
       } else {
          autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
@@ -168,7 +168,7 @@ final class AiBuildIntent {
 
    static Boolean init_Boolean(AiBuilder.Inner_StreamUtil cell) {
       AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
-      return kind != AiBuildSite.Inner_CachePool.init && kind != AiBuildSite.Inner_CachePool.load ? null : AiBuilder.init_Boolean(cell, init_Block(cell));
+      return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.init_Boolean(cell, init_Block(cell));
    }
 
    static boolean init(AiBuilder.Inner_StreamUtil cell, BlockState live) {
@@ -198,7 +198,7 @@ final class AiBuildIntent {
 
    static boolean init_Z(AiBuilder.Inner_StreamUtil cell) {
       AiBuildSite.Inner_CachePool kind = init_IoWorker_CachePool(cell);
-      return kind == AiBuildSite.Inner_CachePool.init || kind == AiBuildSite.Inner_CachePool.load;
+      return kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT;
    }
 
    static boolean init(BlockPos target, BlockGetter world, Map<Long, AiBuilder.Inner_StreamUtil> wanted) {
@@ -422,7 +422,7 @@ final class AiBuildIntent {
             AiBuilder.Inner_TaskQueue strategy = name.equals("facing")
                ? AiBuilder.init_TableIndex_TaskQue(cell, block)
                : AiBuilder.init_TableIndex_TaskQue(block, name);
-            if ((strategy == AiBuilder.Inner_TaskQueue.poll || strategy == AiBuilder.Inner_TaskQueue.push) && !init(block, name, entry.getValue())) {
+            if ((strategy == AiBuilder.Inner_TaskQueue.POST_INTERACT || strategy == AiBuilder.Inner_TaskQueue.FLUID_INTERACT) && !init(block, name, entry.getValue())) {
                out.add(name);
             }
          }

@@ -10,7 +10,7 @@ final class AiViewState {
    private long update_J;
    private long sync_J;
    private long flush_J;
-   AiService.Inner_FileCache init_cc_FileCache = AiService.Inner_FileCache.init;
+   AiService.Inner_FileCache init_cc_FileCache = AiService.Inner_FileCache.IDLE;
    boolean init_Z;
    String init_Str = "";
    String load_Str = "";
@@ -23,7 +23,7 @@ final class AiViewState {
    List<String> write_List = List.of();
    String sync_Str = "high";
    AiService.Inner_ByteReader init_cc_ByteReader = new AiService.Inner_ByteReader(0L, 0L, 0L, 0L, 0L, 0, 0L);
-   AiService.Inner_BufferHelper init_cc_BufferHelper = AiService.Inner_BufferHelper.init;
+   AiService.Inner_BufferHelper init_cc_BufferHelper = AiService.Inner_BufferHelper.UNKNOWN;
    String flush_Str = "";
    boolean load_Z;
    String close = "Chat mode off";
@@ -89,11 +89,11 @@ final class AiViewState {
    }
 
    boolean init_Z() {
-      return this.init_cc_FileCache == AiService.Inner_FileCache.load || this.init_cc_FileCache == AiService.Inner_FileCache.read && !this.init_Z;
+      return this.init_cc_FileCache == AiService.Inner_FileCache.RUNNING || this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING && !this.init_Z;
    }
 
    boolean load() {
-      return this.init_Z() || this.init_cc_FileCache == AiService.Inner_FileCache.write || this.init_Z || this.load_Z;
+      return this.init_Z() || this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED || this.init_Z || this.load_Z;
    }
 
    AiService.Inner_JsonUtil init_cc_JsonUtil() {

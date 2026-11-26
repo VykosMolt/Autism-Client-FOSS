@@ -140,7 +140,7 @@ final class AiStrongholdSearch {
                   true,
                   false,
                   Math.min(90, Math.max(15, (int)((this.init_J - System.nanoTime()) / 1000000000L))),
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                   true,
                   2.0,
                   null,
@@ -289,7 +289,7 @@ final class AiStrongholdSearch {
    }
 
    static AiOperation.Result init(String message, JsonObject data, boolean pending) {
-      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiOperation.Result.failed(AiFailure.init_A, message, data.toString()));
+      return AiGuardLayer.init_AiOperation_Result_Z_AiOperation_Result(pending, AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, message, data.toString()));
    }
 
    static final class Inner_DataUtil {

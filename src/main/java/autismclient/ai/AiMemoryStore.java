@@ -224,12 +224,12 @@ public final class AiMemoryStore {
 
       if (payload != null && payload.length() <= 256000 && scope != null && scope.length() <= 2048) {
          AiObservation proof = this.read_Map.get(evidenceId);
-         if (kind == AiMemoryStore.Inner_DataUtil.write || proof != null && (scope.equals("user") || scope.equals(proof.scope()))) {
-            if (kind == AiMemoryStore.Inner_DataUtil.init && !"user".equals(proof.source())) {
+         if (kind == AiMemoryStore.Inner_DataUtil.HYPOTHESIS || proof != null && (scope.equals("user") || scope.equals(proof.scope()))) {
+            if (kind == AiMemoryStore.Inner_DataUtil.USER && !"user".equals(proof.source())) {
                throw new IllegalArgumentException("User preferences require a user statement");
             }
 
-            if (kind == AiMemoryStore.Inner_DataUtil.read && !"verified-operation".equals(proof.source())) {
+            if (kind == AiMemoryStore.Inner_DataUtil.PROCEDURE && !"verified-operation".equals(proof.source())) {
                throw new IllegalArgumentException("Procedures require a verified operation");
             }
 
@@ -250,7 +250,7 @@ public final class AiMemoryStore {
                   AiMemoryStore.Memory oldest = this.init_Map
                      .values()
                      .stream()
-                     .filter(r -> r.kind() == AiMemoryStore.Inner_DataUtil.write)
+                     .filter(r -> r.kind() == AiMemoryStore.Inner_DataUtil.HYPOTHESIS)
                      .min(Comparator.comparingLong(AiMemoryStore.Memory::timestamp))
                      .orElse(null);
                   if (oldest == null) {
@@ -302,7 +302,7 @@ public final class AiMemoryStore {
    public List<AiMemoryStore.Memory> init_List_Str_Str(String scope, String query) {
       List<AiMemoryStore.Memory> all = this.init_List;
       List<AiMemoryStore.Memory> users = all.stream()
-         .filter(m -> m.kind() == AiMemoryStore.Inner_DataUtil.init && "user".equals(m.scope()))
+         .filter(m -> m.kind() == AiMemoryStore.Inner_DataUtil.USER && "user".equals(m.scope()))
          .sorted(Comparator.comparingLong(AiMemoryStore.Memory::timestamp).reversed())
          .limit(6L)
          .toList();
@@ -408,10 +408,10 @@ public final class AiMemoryStore {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      USER,
+      WORLD,
+      PROCEDURE,
+      HYPOTHESIS;
    }
 
    public record Memory(

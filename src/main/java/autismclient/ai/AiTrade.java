@@ -75,7 +75,7 @@ final class AiTrade {
          final boolean waitRestock = AiJson.init_Z_JsonObject(args, "waitRestock", false);
          final boolean reroll = AiJson.init_Z_JsonObject(args, "reroll", false);
          final int rerollAttempts = Math.max(1, Math.min(8, AiJson.init_I_JsonObject(args, "rerollAttempts", 3)));
-         if (action == AiTrade.Inner_DataUtil.load && tradeIndex < 0 && wanted.isBlank()) {
+         if (action == AiTrade.Inner_DataUtil.TRADE && tradeIndex < 0 && wanted.isBlank()) {
             throw new IllegalArgumentException("trade needs tradeIndex from an inspect listing, or item to select the offer by its result");
          }
 
@@ -135,7 +135,7 @@ final class AiTrade {
                      return this.init(AiOperation.Status.FAILED, "This trader has no offers");
                   }
 
-                  if (action == AiTrade.Inner_DataUtil.init) {
+                  if (action == AiTrade.Inner_DataUtil.INSPECT) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Read " + menu.getOffers().size() + " offer(s)");
                   }
 
@@ -151,7 +151,7 @@ final class AiTrade {
                      } else {
                         return this.sync > 0
                            ? this.init(AiOperation.Status.SUCCEEDED, "Offer did not restock within the wait cap after " + this.sync + " trade(s)")
-                           : this.init(AiFailure.clear, "Offer did not restock within the wait cap after " + this.sync + " trade(s)");
+                           : this.init(AiFailure.OUT_OF_STOCK, "Offer did not restock within the wait cap after " + this.sync + " trade(s)");
                      }
                   } else {
                      if (this.read_I < 0) {
@@ -174,7 +174,7 @@ final class AiTrade {
                            this.read_I = this.init_I(menu);
                            if (this.read_I < 0) {
                               if (this.poll >= rerollAttempts) {
-                                 return this.init(AiFailure.clear, "No offer on this trader produces " + wanted + " after " + this.poll + " reroll(s)");
+                                 return this.init(AiFailure.OUT_OF_STOCK, "No offer on this trader produces " + wanted + " after " + this.poll + " reroll(s)");
                               }
 
                               return this.init_AiOperation_Result_12("Rerolled offers lack " + wanted + "; rolling again");
@@ -189,7 +189,7 @@ final class AiTrade {
                               return this.init_AiOperation_Result_12("Offer is out of stock; waiting for the trader to restock");
                            }
 
-                           return this.init(AiFailure.clear, "Offer " + this.read_I + " is out of stock until the trader restocks");
+                           return this.init(AiFailure.OUT_OF_STOCK, "Offer " + this.read_I + " is out of stock until the trader restocks");
                         }
 
                         if (!this.init_Z(offer)) {
@@ -210,7 +210,7 @@ final class AiTrade {
                         } else {
                            return this.sync > 0
                               ? this.init(AiOperation.Status.SUCCEEDED, "Offer ran out of stock after " + this.sync + " of " + count + " trade(s)")
-                              : this.init(AiFailure.clear, "Offer ran out of stock after " + this.sync + " of " + count + " trade(s)");
+                              : this.init(AiFailure.OUT_OF_STOCK, "Offer ran out of stock after " + this.sync + " of " + count + " trade(s)");
                         }
                      } else {
                         if (!this.init_Z(offer)) {
@@ -449,7 +449,7 @@ final class AiTrade {
                            return this.init_AiOperation_Result_12("Breaking the job-site block");
                         case read:
                            this.init_RefQueue_DataUtil.init_V();
-                           return this.init(AiFailure.close, "Could not break the job-site block for a reroll");
+                           return this.init(AiFailure.UNREACHABLE, "Could not break the job-site block for a reroll");
                         case load:
                            this.init_RefQueue_DataUtil.init_V();
                            this.push = 2;
@@ -466,7 +466,7 @@ final class AiTrade {
                      }
 
                      if (++this.pop > 60) {
-                        return this.init(AiFailure.add, "Could not collect the broken job-site block");
+                        return this.init(AiFailure.TARGET_GONE, "Could not collect the broken job-site block");
                      }
 
                      ItemEntity drop = this.init_ItemEntity(itemId);
@@ -494,16 +494,16 @@ final class AiTrade {
 
                      if (this.push == 4) {
                         autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                        if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                            this.poll++;
                            this.push = 0;
                            this.pop = 0;
                            this.init_BlockPos = null;
                            return null;
                         } else {
-                           return status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.pop <= 100
+                           return status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.pop <= 100
                               ? this.init_AiOperation_Result_12("Replacing the job-site block")
-                              : this.init(AiFailure.close, "Could not replace the job-site block: " + this.init_DataPipe.init_Str());
+                              : this.init(AiFailure.UNREACHABLE, "Could not replace the job-site block: " + this.init_DataPipe.init_Str());
                         }
                      } else {
                         return null;
@@ -517,12 +517,12 @@ final class AiTrade {
                   }
 
                   if (!AiTrade.init(uses)) {
-                     return this.init(AiFailure.data, "reroll refused: the trader has already been traded with");
+                     return this.init(AiFailure.IMPOSSIBLE_STATE, "reroll refused: the trader has already been traded with");
                   }
 
                   this.init_BlockPos = this.init_BlockPos_11();
                   if (this.init_BlockPos == null) {
-                     return this.init(AiFailure.close, "No job-site block near the trader to break for a reroll");
+                     return this.init(AiFailure.UNREACHABLE, "No job-site block near the trader to break for a reroll");
                   }
 
                   this.init_Item = mc.level.getBlockState(this.init_BlockPos).getBlock().asItem();
@@ -694,7 +694,7 @@ final class AiTrade {
    }
 
    enum Inner_DataUtil {
-      init,
-      load;
+      INSPECT,
+      TRADE;
    }
 }

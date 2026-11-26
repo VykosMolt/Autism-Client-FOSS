@@ -1,13 +1,13 @@
 package autismclient.ai.engine;
 
 public enum AiSurface {
-   init_m(0.6, 1.0, 1.0, 0.0),
-   load_m(0.98, 1.0, 1.0, 0.0),
-   read_m(0.989, 1.0, 1.0, 0.0),
-   write_m(0.8, 1.0, 1.0, 1.0),
-   update(0.6, 0.4, 0.5, 0.0),
-   sync(0.6, 0.4, 1.0, 0.0),
-   flush(0.6, 1.0, 1.0, 0.75);
+   NORMAL(0.6, 1.0, 1.0, 0.0),
+   ICE(0.98, 1.0, 1.0, 0.0),
+   BLUE_ICE(0.989, 1.0, 1.0, 0.0),
+   SLIME(0.8, 1.0, 1.0, 1.0),
+   HONEY(0.6, 0.4, 0.5, 0.0),
+   SOUL_SAND(0.6, 0.4, 1.0, 0.0),
+   BED(0.6, 1.0, 1.0, 0.75);
 
    private static final AiSurface[] init_mArr = values();
    public final double init_D;
@@ -27,34 +27,34 @@ public enum AiSurface {
    }
 
    public static AiSurface init(int id) {
-      return id >= 0 && id < init_mArr.length ? init_mArr[id] : init_m;
+      return id >= 0 && id < init_mArr.length ? init_mArr[id] : NORMAL;
    }
 
    public static AiSurface init(double friction, double speedFactor, double jumpFactor, double bounce) {
       if (bounce >= 0.9) {
-         return write_m;
+         return SLIME;
       } else if (bounce > 0.0) {
-         return flush;
+         return BED;
       } else if (friction >= 0.985) {
-         return read_m;
+         return BLUE_ICE;
       } else if (friction >= 0.9) {
-         return load_m;
+         return ICE;
       } else if (friction >= 0.7) {
-         return write_m;
+         return SLIME;
       } else if (jumpFactor < 0.9) {
-         return update;
+         return HONEY;
       } else {
-         return speedFactor < 0.9 ? sync : init_m;
+         return speedFactor < 0.9 ? SOUL_SAND : NORMAL;
       }
    }
 
    public static AiSurface init(AiPathfinder.Inner_FileCache probe) {
       if (probe == null || !probe.loaded()) {
-         return init_m;
+         return NORMAL;
       } else if (probe.ice()) {
-         return load_m;
+         return ICE;
       } else {
-         return probe.soulSand() ? sync : init_m;
+         return probe.soulSand() ? SOUL_SAND : NORMAL;
       }
    }
 }

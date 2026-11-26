@@ -82,7 +82,7 @@ final class AiPlan {
                         return this.init_AiOperation_Result_20();
                      }
 
-                     this.init_aU_StreamUtil.init_aU_CachePool = AiPlanRunner.Inner_CachePool.load;
+                     this.init_aU_StreamUtil.init_aU_CachePool = AiPlanRunner.Inner_CachePool.RUNNING;
                      this.init_aU_StreamUtil.init_I++;
 
                      try {

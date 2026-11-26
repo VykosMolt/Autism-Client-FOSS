@@ -76,15 +76,15 @@ final class AiPlacementSearch {
          BlockPos pos = candidate.origin().offset(this.load_I, this.read, this.write);
          AiPlacementSearch.Inner_StreamUtil edit = this.init_aQ_ConfigStore.init_aQ_StreamUtil(pos, cell);
          this.init_J++;
-         if (edit == AiPlacementSearch.Inner_StreamUtil.write) {
+         if (edit == AiPlacementSearch.Inner_StreamUtil.UNSAFE) {
             this.init_V();
          } else {
             if (cell != null) {
-               if (edit == AiPlacementSearch.Inner_StreamUtil.init) {
+               if (edit == AiPlacementSearch.Inner_StreamUtil.MATCH) {
                   this.push++;
                } else {
                   this.close++;
-                  if (edit == AiPlacementSearch.Inner_StreamUtil.read) {
+                  if (edit == AiPlacementSearch.Inner_StreamUtil.BREAK) {
                      this.open++;
                   }
 
@@ -92,7 +92,7 @@ final class AiPlacementSearch {
                      this.poll++;
                   }
                }
-            } else if (this.init_Z && edit == AiPlacementSearch.Inner_StreamUtil.read) {
+            } else if (this.init_Z && edit == AiPlacementSearch.Inner_StreamUtil.BREAK) {
                this.open++;
             }
 
@@ -173,9 +173,9 @@ final class AiPlacementSearch {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      MATCH,
+      PLACE,
+      BREAK,
+      UNSAFE;
    }
 }

@@ -255,7 +255,7 @@ public final class AiContainerTransactions {
          }
 
          if (current != this.init_AbstractContainerM) {
-            return this.init(AiContainerTransactions.Inner_StreamUtil.write);
+            return this.init(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN);
          }
 
          if (ItemStack.matches(this.init_ItemStack, this.init_AbstractContainerM.getCarried())
@@ -277,20 +277,20 @@ public final class AiContainerTransactions {
             }
 
             if (confirmed) {
-               return this.init(AiContainerTransactions.Inner_StreamUtil.load);
+               return this.init(AiContainerTransactions.Inner_StreamUtil.CONFIRMED);
             }
 
             if (exchanged && preserved) {
-               return this.init(AiContainerTransactions.Inner_StreamUtil.read);
+               return this.init(AiContainerTransactions.Inner_StreamUtil.SWAPPED_DIFFERENT_STACK);
             }
          }
 
-         return this.load(now) ? this.init(AiContainerTransactions.Inner_StreamUtil.write) : AiContainerTransactions.Inner_StreamUtil.init;
+         return this.load(now) ? this.init(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) : AiContainerTransactions.Inner_StreamUtil.WAITING;
       }
 
       public AiContainerTransactions.Inner_StreamUtil load(AbstractContainerMenu current, long now) {
          AiContainerTransactions.Inner_StreamUtil state = this.init(current, now);
-         if (state == AiContainerTransactions.Inner_StreamUtil.init && this.init_I >= 0 && this.init(now)) {
+         if (state == AiContainerTransactions.Inner_StreamUtil.WAITING && this.init_I >= 0 && this.init(now)) {
             Minecraft mc = Minecraft.getInstance();
             LocalPlayer player = mc.player;
             ClientPacketListener connection = mc.getConnection();
@@ -345,9 +345,9 @@ public final class AiContainerTransactions {
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write;
+      WAITING,
+      CONFIRMED,
+      SWAPPED_DIFFERENT_STACK,
+      UNCERTAIN;
    }
 }

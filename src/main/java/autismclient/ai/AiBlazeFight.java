@@ -324,7 +324,7 @@ final class AiBlazeFight {
          long read_J;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
             if (AiJson.init_Z_JsonObject(args, "useShield", false) && !AiDefense.init_Z(mc)) {
                AiItems.init_Z(AiItems.load_af_DataUtil("minecraft:shield"));
             }
@@ -1018,7 +1018,7 @@ final class AiBlazeFight {
                                        true,
                                        true,
                                        20,
-                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                        true,
                                        2.0,
                                        goal,

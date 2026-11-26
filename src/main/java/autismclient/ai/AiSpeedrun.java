@@ -107,7 +107,7 @@ final class AiSpeedrun {
 
    static Map<String, Integer> init_Map_bx_CachePool(AiProgression.Inner_CachePool pick, int ironPickCount, Map<String, Integer> missing) {
       Map<String, Integer> targets = new LinkedHashMap<>();
-      if (pick.ordinal() < AiProgression.Inner_CachePool.write.ordinal()) {
+      if (pick.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
          targets.put("minecraft:iron_pickaxe", Math.max(0, ironPickCount) + 1);
       }
 
@@ -478,9 +478,9 @@ final class AiSpeedrun {
 
                      if (this.init_AiOperation != null
                         && this.load_AiOperation == null
-                        && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.close
-                        && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.open
-                        && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.poll) {
+                        && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.NETHER
+                        && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.STRONGHOLD
+                        && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.END) {
                         this.load_AiOperation = AiRunDiagnostics.init_AiOperation_Str("survival", "campaign emergency", AiGuardLayer.init_AiOperation_Minecraft(mc));
                         if (this.load_AiOperation != null) {
                            this.tick_Z = this.init_AiOperation.requiresReconciliationAfterEmergency();
@@ -543,7 +543,7 @@ final class AiSpeedrun {
 
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;
-                        if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.update) {
+                        if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.COOK) {
                            this.sync_I = r.status() == AiOperation.Status.SUCCEEDED ? 0 : this.sync_I + 1;
                         }
 
@@ -599,7 +599,7 @@ final class AiSpeedrun {
                         }
 
                         JsonObject legEvidence = AiRunResources.init_JsonObject(r.dataJson());
-                        boolean pearlRouteChange = this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.open
+                        boolean pearlRouteChange = this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.STRONGHOLD
                            && r.status() == AiOperation.Status.FAILED
                            && AiJson.init_Z_JsonObject(legEvidence, "pearlRouteChange", false);
                         if (pearlRouteChange) {
@@ -618,7 +618,7 @@ final class AiSpeedrun {
                            AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: bounded surface pearl search exhausted; Nether recovery for {} total eyes/pearls", this.poll_I);
                         }
 
-                        if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.poll
+                        if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.END
                            && r.status() == AiOperation.Status.SUCCEEDED
                            && !this.run_Z
                            && !this.push_Z
@@ -629,8 +629,8 @@ final class AiSpeedrun {
                         }
 
                         boolean lowHealth = r.status() != AiOperation.Status.SUCCEEDED
-                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.sync
-                           && (r.failure() == AiFailure.start || mc.player.getHealth() <= 6.0F);
+                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.HEAL
+                           && (r.failure() == AiFailure.LOW_HEALTH || mc.player.getHealth() <= 6.0F);
                         if (lowHealth) {
                            this.close_J = 0L;
                         }
@@ -658,7 +658,7 @@ final class AiSpeedrun {
                            return this.init(this.init_cl_BufferHelper, this.init_AiOperation_4(), null);
                         }
 
-                        if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.sync
+                        if (this.init_cl_BufferHelper == AiSpeedrun.Inner_BufferHelper.HEAL
                            && r.status() != AiOperation.Status.SUCCEEDED
                            && r.status() != AiOperation.Status.CANCELLED) {
                            this.run_I++;
@@ -666,9 +666,9 @@ final class AiSpeedrun {
 
                         if (r.status() != AiOperation.Status.SUCCEEDED
                            && !lowHealth
-                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.load
-                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.sync
-                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.update
+                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.FOOD
+                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.HEAL
+                           && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.COOK
                            && !wasPearlLeg
                            && !pearlRouteChange) {
                            this.read_Str = this.init_cl_BufferHelper + ": " + AiSpeedrun.init_Str_Str(r.message());
@@ -711,9 +711,9 @@ final class AiSpeedrun {
             }
 
             boolean init_Z_24() {
-               if (this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.flush
-                  && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.load
-                  && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.update) {
+               if (this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.NETHER_ENTRY
+                  && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.FOOD
+                  && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.COOK) {
                   return false;
                }
 
@@ -743,8 +743,8 @@ final class AiSpeedrun {
             }
 
             boolean load_Z_14() {
-               return this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.sync
-                  && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.load
+               return this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.HEAL
+                  && this.init_cl_BufferHelper != AiSpeedrun.Inner_BufferHelper.FOOD
                   && mc.level.dimension() == Level.OVERWORLD
                   && mc.player.getHealth() < 10.0F
                   && System.nanoTime() > this.close_J
@@ -760,7 +760,7 @@ final class AiSpeedrun {
 
                if (!(mc.player.getHealth() >= 12.0F) && System.nanoTime() >= this.close_J) {
                   if (mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.init(mc.player.getInventory()) >= 0 && this.tick_I++ < 3) {
-                     AiOperation.Result meal = this.init(AiSpeedrun.Inner_BufferHelper.sync, AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 20)), null);
+                     AiOperation.Result meal = this.init(AiSpeedrun.Inner_BufferHelper.HEAL, AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 20)), null);
                      this.pop_Z = true;
                      return meal;
                   } else {
@@ -770,17 +770,17 @@ final class AiSpeedrun {
                         && mc.level.dimension() == Level.OVERWORLD
                         && System.nanoTime() > this.flush_J) {
                         this.flush_J = System.nanoTime() + 180000000000L;
-                        return this.init(AiSpeedrun.Inner_BufferHelper.load, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
+                        return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
                      } else if (this.run_I > 0) {
                         this.close_J = System.nanoTime() + 10000000000L;
-                        AiOperation.Result rest = this.init(AiSpeedrun.Inner_BufferHelper.sync, AiCombat.init(200), null);
+                        AiOperation.Result rest = this.init(AiSpeedrun.Inner_BufferHelper.HEAL, AiCombat.init(200), null);
                         this.pop_Z = true;
                         return rest;
                      } else {
                         this.close_J = System.nanoTime() + 60000000000L;
                         return (mc.player.getFoodData().getFoodLevel() >= 18 || mc.player.getHealth() <= 6.0F) && mc.level.dimension() != Level.END
                            ? this.init(
-                              AiSpeedrun.Inner_BufferHelper.sync,
+                              AiSpeedrun.Inner_BufferHelper.HEAL,
                               AiGuard.init(AiBurrow.init(AiJson.init_JsonObject_ObjArr("healTo", 18, "stay", true, "timeoutSeconds", 180))),
                               null
                            )
@@ -823,7 +823,7 @@ final class AiSpeedrun {
                   true,
                   true,
                   40,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                   true,
                   2.0,
                   new AiNetherRun.Inner_NetHelper(x, z, 3),
@@ -899,7 +899,7 @@ final class AiSpeedrun {
                      this.run_Z = true;
                      AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: stepping clear of the portal to {}", clear.toShortString());
                      return this.init(
-                        this.init_cl_BufferHelper == null ? AiSpeedrun.Inner_BufferHelper.init : this.init_cl_BufferHelper,
+                        this.init_cl_BufferHelper == null ? AiSpeedrun.Inner_BufferHelper.WOOD : this.init_cl_BufferHelper,
                         AiGoto.init_AiOperation_BlockPos(clear, 0.6, true, false, false, 20),
                         null
                      );
@@ -914,7 +914,7 @@ final class AiSpeedrun {
                         AiOperation.Status.UNCERTAIN,
                         "Already in the End, but the required barter and blaze-spawner route cannot be verified for this campaign"
                      )
-                     : this.init(AiSpeedrun.Inner_BufferHelper.poll, AiEndRun.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(3600, this.read_I_6()))), null);
+                     : this.init(AiSpeedrun.Inner_BufferHelper.END, AiEndRun.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(3600, this.read_I_6()))), null);
                }
 
                if (this.flush_Z && AiCraft.init_I("minecraft:ender_eye") + AiCraft.init_I("minecraft:ender_pearl") >= this.poll_I) {
@@ -923,7 +923,7 @@ final class AiSpeedrun {
 
                if (dimension == Level.NETHER) {
                   return this.init(
-                     AiSpeedrun.Inner_BufferHelper.close,
+                     AiSpeedrun.Inner_BufferHelper.NETHER,
                      AiNetherRun.init_AiOperation(
                         AiJson.init_JsonObject_ObjArr(
                            "rods",
@@ -950,12 +950,12 @@ final class AiSpeedrun {
                   if (this.load_I_13() < 10 && night && this.read_I >= 1 && this.write_I < 1 && AiBurrow.init()) {
                      this.write_I++;
                      AiSpeedrun.init_V_Str_ObjArr("[AI] speedrun: home for food at night (day time {}); a hole until dawn", dayTime);
-                     return this.init(AiSpeedrun.Inner_BufferHelper.load, AiBurrow.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 600)), null);
+                     return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiBurrow.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 600)), null);
                   }
 
                   if (this.load_I_13() < 10 && this.read_I < 3) {
                      this.read_I++;
-                     return this.init(AiSpeedrun.Inner_BufferHelper.load, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
+                     return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
                   }
 
                   AiOperation.Result cook = this.read_AiOperation_Result_11();
@@ -966,16 +966,16 @@ final class AiSpeedrun {
                   if (AiRunResources.read() < 32) {
                      return this.flush_I++ >= 4
                         ? this.init(AiOperation.Status.FAILED, "Nether revisit blocked: safe food reserve is still insufficient")
-                        : this.init(AiSpeedrun.Inner_BufferHelper.load, AiSpeedrun.init_AiOperation_I_I(this.load_I_13() + Math.max(4, (32 - AiRunResources.read() + 5) / 6), 240), null);
+                        : this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(this.load_I_13() + Math.max(4, (32 - AiRunResources.read() + 5) / 6), 240), null);
                   }
 
                   if (AiCraft.init_I("minecraft:water_bucket") < 2) {
-                     return this.init(AiSpeedrun.Inner_BufferHelper.read, AiObsidian.init(2, Math.min(180, this.read_I_6())), null);
+                     return this.init(AiSpeedrun.Inner_BufferHelper.KIT, AiObsidian.init(2, Math.min(180, this.read_I_6())), null);
                   }
 
                   if (AiRunResources.update() < 64) {
                      return this.init(
-                        AiSpeedrun.Inner_BufferHelper.read,
+                        AiSpeedrun.Inner_BufferHelper.KIT,
                         AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.read_I_6()))),
                         null
                      );
@@ -984,7 +984,7 @@ final class AiSpeedrun {
                   this.read_I = 0;
                   this.write_I = 0;
                   return this.init(
-                     AiSpeedrun.Inner_BufferHelper.flush,
+                     AiSpeedrun.Inner_BufferHelper.NETHER_ENTRY,
                      AiNetherEntry.init(AiJson.init_JsonObject_ObjArr("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.read_I_6()))),
                      null
                   );
@@ -998,7 +998,7 @@ final class AiSpeedrun {
                         if (!this.init_Z && this.init_I_34() == 0 && AiItems.init_I(AiItems.load_af_DataUtil("log")) < 16) {
                            this.init_Z = true;
                            return this.init(
-                              AiSpeedrun.Inner_BufferHelper.init, AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "log", "count", 16, "timeoutSeconds", 300)), null
+                              AiSpeedrun.Inner_BufferHelper.WOOD, AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "log", "count", 16, "timeoutSeconds", 300)), null
                            );
                         }
 
@@ -1008,7 +1008,7 @@ final class AiSpeedrun {
                            && 4 * AiItems.init_I(AiItems.load_af_DataUtil("log")) + AiItems.init_I(AiItems.load_af_DataUtil("planks")) >= 12) {
                            this.update_Z = true;
                            return this.init(
-                              AiSpeedrun.Inner_BufferHelper.read,
+                              AiSpeedrun.Inner_BufferHelper.KIT,
                               AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "minecraft:wooden_axe", "count", 1, "staged", true, "timeoutSeconds", 60)),
                               null
                            );
@@ -1018,7 +1018,7 @@ final class AiSpeedrun {
                            AiOperation bread = AiSpeedrun.load(Math.max(1, (nutritionGoal - AiRunResources.read() + 4) / 5), Math.min(45, this.read_I_6()));
                            if (bread != null) {
                               this.close_I++;
-                              return this.init(AiSpeedrun.Inner_BufferHelper.update, bread, null);
+                              return this.init(AiSpeedrun.Inner_BufferHelper.COOK, bread, null);
                            }
                         }
 
@@ -1044,7 +1044,7 @@ final class AiSpeedrun {
                               Math.min(600, this.read_I_6())
                            );
                            return this.init(
-                              AiSpeedrun.Inner_BufferHelper.read,
+                              AiSpeedrun.Inner_BufferHelper.KIT,
                               AiProgression.init_AiOperation_JsonObject(
                                  AiJson.init_JsonObject_ObjArr(
                                     "kit",
@@ -1070,7 +1070,7 @@ final class AiSpeedrun {
                            && AiBurrow.init()) {
                            this.close_Z = true;
                            return this.init(
-                              AiSpeedrun.Inner_BufferHelper.load, AiBurrow.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(600, this.read_I_6()))), null
+                              AiSpeedrun.Inner_BufferHelper.FOOD, AiBurrow.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(600, this.read_I_6()))), null
                            );
                         }
 
@@ -1078,7 +1078,7 @@ final class AiSpeedrun {
                            this.load_I++;
                            this.load_Z = true;
                            int foodGoal = this.load_I_13() + Math.max(4, (nutritionGoal - AiRunResources.read() + 5) / 6);
-                           return this.init(AiSpeedrun.Inner_BufferHelper.load, AiSpeedrun.init_AiOperation_I_I(foodGoal, 240), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(foodGoal, 240), null);
                         }
 
                         if (AiRunResources.read() < Math.min(nutritionGoal, 12)) {
@@ -1103,7 +1103,7 @@ final class AiSpeedrun {
                            }
                         });
                         return this.init(
-                           AiSpeedrun.Inner_BufferHelper.read,
+                           AiSpeedrun.Inner_BufferHelper.KIT,
                            AiProgression.init_AiOperation_JsonObject(
                               AiJson.init_JsonObject_ObjArr("kit", kit, "kitPlanks", 8, "timeoutSeconds", this.read_I_6()), main, missing.getOrDefault(main, 1)
                            ),
@@ -1113,12 +1113,12 @@ final class AiSpeedrun {
                         AiOperation carryTable = this.init_cl_DataUtil
                            .init(AiCraft.init_I("minecraft:crafting_table"), this.read_I_6(), seconds -> AiProgression.init(seconds, true));
                         if (carryTable != null) {
-                           return this.init(AiSpeedrun.Inner_BufferHelper.read, carryTable, null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.KIT, carryTable, null);
                         }
 
                         if (this.load_I_13() < (AiSpeedrun.init_Z_Minecraft_I(mc, 8) ? 6 : 2) && System.nanoTime() > this.flush_J) {
                            this.flush_J = System.nanoTime() + 600000000000L;
-                           return this.init(AiSpeedrun.Inner_BufferHelper.load, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(10, 240), null);
                         }
 
                         AiOperation.Result cook = this.read_AiOperation_Result_11();
@@ -1132,20 +1132,20 @@ final class AiSpeedrun {
                            }
 
                            int goal = this.load_I_13() + Math.max(4, (32 - AiRunResources.read() + 5) / 6);
-                           return this.init(AiSpeedrun.Inner_BufferHelper.load, AiSpeedrun.init_AiOperation_I_I(goal, 240), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.FOOD, AiSpeedrun.init_AiOperation_I_I(goal, 240), null);
                         } else if (AiCraft.init_I("minecraft:water_bucket") < 2) {
-                           return this.init(AiSpeedrun.Inner_BufferHelper.read, AiObsidian.init(2, Math.min(180, this.read_I_6())), null);
+                           return this.init(AiSpeedrun.Inner_BufferHelper.KIT, AiObsidian.init(2, Math.min(180, this.read_I_6())), null);
                         } else {
                            return AiRunResources.update() < 64
                               ? this.init(
-                                 AiSpeedrun.Inner_BufferHelper.read,
+                                 AiSpeedrun.Inner_BufferHelper.KIT,
                                  AiObtain.init(
                                     AiJson.init_JsonObject_ObjArr("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.read_I_6()))
                                  ),
                                  null
                               )
                               : this.init(
-                                 AiSpeedrun.Inner_BufferHelper.flush,
+                                 AiSpeedrun.Inner_BufferHelper.NETHER_ENTRY,
                                  AiNetherEntry.init(AiJson.init_JsonObject_ObjArr("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.read_I_6()))),
                                  null
                               );
@@ -1156,11 +1156,11 @@ final class AiSpeedrun {
                         }
 
                         this.read_Z = true;
-                        return this.init(AiSpeedrun.Inner_BufferHelper.write, AiEquip.init(AiJson.init_JsonObject_ObjArr("what", "armor")), null);
+                        return this.init(AiSpeedrun.Inner_BufferHelper.EQUIP, AiEquip.init(AiJson.init_JsonObject_ObjArr("what", "armor")), null);
                      }
                   } else {
                      AiNetherRun.init_V();
-                     return this.init(AiSpeedrun.Inner_BufferHelper.open, AiStronghold.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(5400, this.read_I_6()))), null);
+                     return this.init(AiSpeedrun.Inner_BufferHelper.STRONGHOLD, AiStronghold.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(5400, this.read_I_6()))), null);
                   }
                }
             }
@@ -1175,7 +1175,7 @@ final class AiSpeedrun {
                }
 
                AiOperation cooking = AiForage.init_AiOperation_I(Math.min(600, this.read_I_6()));
-               return cooking == null ? null : this.init(AiSpeedrun.Inner_BufferHelper.update, cooking, null);
+               return cooking == null ? null : this.init(AiSpeedrun.Inner_BufferHelper.COOK, cooking, null);
             }
 
             Map<String, Integer> init_Map_5() {
@@ -1658,7 +1658,7 @@ final class AiSpeedrun {
                         false,
                         false,
                         Math.min(30, this.init_I_35()),
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                         true,
                         2.0,
                         autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stand, 1.0),
@@ -1722,7 +1722,7 @@ final class AiSpeedrun {
                         false,
                         false,
                         Math.min(60, this.init_I_35()),
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                         true,
                         2.0,
                         AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
@@ -1923,16 +1923,16 @@ final class AiSpeedrun {
    }
 
    enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll;
+      WOOD,
+      FOOD,
+      KIT,
+      EQUIP,
+      COOK,
+      HEAL,
+      NETHER_ENTRY,
+      NETHER,
+      STRONGHOLD,
+      END;
    }
 
    static final class Inner_CachePool {

@@ -131,7 +131,7 @@ public final class AiSeek {
             if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z()) {
                return this.init(
                   AiOperation.Status.FAILED,
-                  AiFailure.start,
+                  AiFailure.LOW_HEALTH,
                   AiLowHealth.init("travel", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                );
             }
@@ -140,7 +140,7 @@ public final class AiSeek {
                for (int budget = 0; budget < this.init_I && this.init_BlockPos == null; budget++) {
                   BlockPos column = this.init_d_CachePool.init_BlockPos();
                   if (column == null) {
-                     return this.init(AiOperation.Status.FAILED, AiFailure.close, this.load());
+                     return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.load());
                   }
 
                   this.init_BlockPos = this.init(column);
@@ -174,7 +174,7 @@ public final class AiSeek {
                      return this.init("No way to that column; scanning on");
                   } else {
                      return this.init(
-                        AiOperation.Status.FAILED, AiFailure.close, this.init_BlockPos.toShortString() + " unreachable even with digging (" + r.message() + ")"
+                        AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.init_BlockPos.toShortString() + " unreachable even with digging (" + r.message() + ")"
                      );
                   }
                } else {

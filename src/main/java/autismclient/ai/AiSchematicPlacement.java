@@ -655,22 +655,22 @@ final class AiSchematicPlacement extends AiPlacementSession {
                && AiSchematicPlacement.this.init_ClientLevel.getWorldBorder().isWithinBounds(p)) {
                BlockState live = AiSchematicPlacement.this.init_ClientLevel.getBlockState(p);
                if (cell != null && AiBuilder.update(cell, live)) {
-                  return AiPlacementSearch.Inner_StreamUtil.init;
+                  return AiPlacementSearch.Inner_StreamUtil.MATCH;
                } else if (cell == null && !AiSchematicPlacement.this.sync) {
-                  return AiPlacementSearch.Inner_StreamUtil.init;
+                  return AiPlacementSearch.Inner_StreamUtil.MATCH;
                } else if (live.isAir()) {
-                  return cell == null ? AiPlacementSearch.Inner_StreamUtil.init : AiPlacementSearch.Inner_StreamUtil.load;
+                  return cell == null ? AiPlacementSearch.Inner_StreamUtil.MATCH : AiPlacementSearch.Inner_StreamUtil.PLACE;
                } else {
                   return !live.hasBlockEntity()
                         && !(live.getDestroySpeed(AiSchematicPlacement.this.init_ClientLevel, p) < 0.0F)
                         && live.getFluidState().isEmpty()
                         && AiSchematicActions.init(live)
                         && AiSchematicActions.init(AiSchematicPlacement.this.init_ClientLevel, p)
-                     ? AiPlacementSearch.Inner_StreamUtil.read
-                     : AiPlacementSearch.Inner_StreamUtil.write;
+                     ? AiPlacementSearch.Inner_StreamUtil.BREAK
+                     : AiPlacementSearch.Inner_StreamUtil.UNSAFE;
                }
             } else {
-               return AiPlacementSearch.Inner_StreamUtil.write;
+               return AiPlacementSearch.Inner_StreamUtil.UNSAFE;
             }
          }
 
@@ -703,7 +703,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             AiPlacementSearch.Inner_ConfigStore view = this.init_aQ_ConfigStore();
 
             for (AiBuilder.Inner_StreamUtil cell : this.load_List) {
-               if (view.init_aQ_StreamUtil(this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz()), cell) == AiPlacementSearch.Inner_StreamUtil.write) {
+               if (view.init_aQ_StreamUtil(this.init_BlockPos.offset(cell.dx(), cell.dy(), cell.dz()), cell) == AiPlacementSearch.Inner_StreamUtil.UNSAFE) {
                   return "Placement overlaps protected blocks, fluids or unloaded terrain. Move the preview.";
                }
             }

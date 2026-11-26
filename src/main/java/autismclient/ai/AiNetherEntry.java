@@ -160,36 +160,36 @@ final class AiNetherEntry {
       if (inNether) {
          return null;
       } else if (villageWanted) {
-         return AiNetherEntry.Inner_CachePool.read;
+         return AiNetherEntry.Inner_CachePool.VILLAGE;
       } else if (!openingDone) {
-         return AiNetherEntry.Inner_CachePool.init;
+         return AiNetherEntry.Inner_CachePool.OPENING;
       } else if (foodNeeded) {
-         return AiNetherEntry.Inner_CachePool.load;
+         return AiNetherEntry.Inner_CachePool.FOOD;
       } else if (!ironFireDone) {
-         return AiNetherEntry.Inner_CachePool.write;
+         return AiNetherEntry.Inner_CachePool.IRON_FIRE;
       } else if (portalNearby) {
-         return AiNetherEntry.Inner_CachePool.flush;
+         return AiNetherEntry.Inner_CachePool.ENTER;
       } else {
-         return lavaNearby ? AiNetherEntry.Inner_CachePool.sync : AiNetherEntry.Inner_CachePool.update;
+         return lavaNearby ? AiNetherEntry.Inner_CachePool.PORTAL : AiNetherEntry.Inner_CachePool.LAVA;
       }
    }
 
    static boolean init_Z(AiNetherEntry.Inner_CachePool phase) {
-      return phase != AiNetherEntry.Inner_CachePool.load && phase != AiNetherEntry.Inner_CachePool.read;
+      return phase != AiNetherEntry.Inner_CachePool.FOOD && phase != AiNetherEntry.Inner_CachePool.VILLAGE;
    }
 
    static int init_I(AiNetherEntry.Inner_CachePool phase) {
       byte var10000;
       switch (phase) {
-         case init:
-         case write:
-         case update:
+         case OPENING:
+         case IRON_FIRE:
+         case LAVA:
             var10000 = 3;
             break;
-         case load:
+         case FOOD:
             var10000 = 2;
             break;
-         case read:
+         case VILLAGE:
          default:
             var10000 = 1;
       }
@@ -198,27 +198,27 @@ final class AiNetherEntry {
    }
 
    static boolean init(AiNetherEntry.Inner_CachePool phase, AiFailure failure) {
-      if (failure == AiFailure.pop) {
+      if (failure == AiFailure.MISSING_MATERIALS) {
          return false;
       }
 
-      if (phase == AiNetherEntry.Inner_CachePool.load) {
+      if (phase == AiNetherEntry.Inner_CachePool.FOOD) {
          return true;
       }
 
       boolean var10000;
       switch (failure) {
-         case prev:
-         case init_A:
-         case load:
-         case close:
-         case open:
-         case poll:
-         case sync:
-         case add:
-         case valid:
-         case reset:
-         case size:
+         case TIMEOUT:
+         case TARGET_NOT_FOUND:
+         case NO_REACHABLE_TARGET:
+         case UNREACHABLE:
+         case UNREACHABLE_AIRBORNE:
+         case NO_ROUTE:
+         case STUCK:
+         case TARGET_GONE:
+         case WORLD_CHANGED:
+         case THREAT_INTERRUPT:
+         case CANCELLED:
             var10000 = true;
             break;
          default:
@@ -237,7 +237,7 @@ final class AiNetherEntry {
    }
 
    static AiFailure init(AiOperation.Result r) {
-      return r.status() == AiOperation.Status.TIMED_OUT ? AiFailure.prev : AiFailure.pop;
+      return r.status() == AiOperation.Status.TIMED_OUT ? AiFailure.TIMEOUT : AiFailure.MISSING_MATERIALS;
    }
 
    static BlockPos init(List<BlockPos> sites, int attemptIndex) {
@@ -245,7 +245,7 @@ final class AiNetherEntry {
    }
 
    static boolean init_Z_X_DataUtil(AiGuard.Inner_DataUtil action, boolean hasEdibleFood, boolean containerOpen, boolean screenOpen) {
-      return action == AiGuard.Inner_DataUtil.write && (!hasEdibleFood || containerOpen || screenOpen);
+      return action == AiGuard.Inner_DataUtil.EAT && (!hasEdibleFood || containerOpen || screenOpen);
    }
 
    static int init_I(int seconds) {
@@ -516,7 +516,7 @@ final class AiNetherEntry {
                   }
 
                   if (!mc.player.isAlive() || mc.player.getHealth() <= 0.0F || this.read_J != AiServerEvidence.load_J()) {
-                     return this.init_AiOperation_Result_AiOperation_Status_2(AiOperation.Status.FAILED, AiFailure.start, "Death ended this Nether entry attempt");
+                     return this.init_AiOperation_Result_AiOperation_Status_2(AiOperation.Status.FAILED, AiFailure.LOW_HEALTH, "Death ended this Nether entry attempt");
                   }
 
                   if (mc.level.dimension() != Level.OVERWORLD && !this.init_Z_15()) {
@@ -529,14 +529,14 @@ final class AiNetherEntry {
                   if (System.nanoTime() > this.init_J) {
                      return this.init_AiOperation_Result_AiOperation_Status_2(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
-                        AiFailure.prev,
+                        AiFailure.TIMEOUT,
                         "Nether entry deadline reached"
                            + (this.init_aA_CachePool == null ? " between phases" : " in " + this.init_aA_CachePool.name().toLowerCase(Locale.ROOT))
                      );
                   }
 
                   if (this.init_Z_15()) {
-                     if (this.init_aA_CachePool == AiNetherEntry.Inner_CachePool.flush && this.init_AiOperation != null && "game:dimension".equals(this.load_Str)) {
+                     if (this.init_aA_CachePool == AiNetherEntry.Inner_CachePool.ENTER && this.init_AiOperation != null && "game:dimension".equals(this.load_Str)) {
                         AiOperation.Result arrival = this.poll_AiOperation_Result();
                         if (arrival == null) {
                            return this.write("Verifying Nether arrival");
@@ -555,7 +555,7 @@ final class AiNetherEntry {
                   } else {
                      if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
                         return this.init_AiOperation_Result_AiOperation_Status_2(
-                           AiOperation.Status.FAILED, AiFailure.start, AiGuard.init_Str_Str("nether entry", mc.player.getHealth(), mc.player.getMaxHealth())
+                           AiOperation.Status.FAILED, AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("nether entry", mc.player.getHealth(), mc.player.getMaxHealth())
                         );
                      }
 
@@ -579,7 +579,7 @@ final class AiNetherEntry {
                         AiNetherEntry.Inner_CachePool next = AiNetherEntry.init(
                            false, this.read_Z_6(), this.write_Z_5(), this.sync_Z_4(), this.update_Z_5(), this.open_Z_2(), this.flush_Z_3()
                         );
-                        if ((next == AiNetherEntry.Inner_CachePool.update || next == AiNetherEntry.Inner_CachePool.sync) && !this.flush_Z) {
+                        if ((next == AiNetherEntry.Inner_CachePool.LAVA || next == AiNetherEntry.Inner_CachePool.PORTAL) && !this.flush_Z) {
                            this.write_BlockPos = AiPortalLinks.init(192);
                            if (this.write_BlockPos == null && this.poll_I-- > 0) {
                               return this.write("Checking observed portal history before making another frame");
@@ -588,7 +588,7 @@ final class AiNetherEntry {
                            this.flush_Z = true;
                            if (this.write_BlockPos != null) {
                               this.update_J = System.nanoTime() + 120000000000L;
-                              this.init(AiNetherEntry.Inner_CachePool.update);
+                              this.init(AiNetherEntry.Inner_CachePool.LAVA);
                               this.init_I = this.write_BlockPos.getY() - mc.player.blockPosition().getY() > 16 && !this.read_Z(3) ? 89 : 90;
                               return this.write("Rechecking the remembered portal at " + this.write_BlockPos.toShortString());
                            }
@@ -599,25 +599,25 @@ final class AiNetherEntry {
 
                      AiOperation.Result var6;
                      switch (this.init_aA_CachePool) {
-                        case init:
+                        case OPENING:
                            var6 = this.read_AiOperation_Result_7();
                            break;
-                        case load:
+                        case FOOD:
                            var6 = this.write_AiOperation_Result_4();
                            break;
-                        case read:
+                        case VILLAGE:
                            var6 = this.update_AiOperation_Result_2();
                            break;
-                        case write:
+                        case IRON_FIRE:
                            var6 = this.sync_AiOperation_Result_2();
                            break;
-                        case update:
+                        case LAVA:
                            var6 = this.flush_AiOperation_Result_2();
                            break;
-                        case sync:
+                        case PORTAL:
                            var6 = this.close_AiOperation_Result_2();
                            break;
-                        case flush:
+                        case ENTER:
                            var6 = this.open_AiOperation_Result_2();
                            break;
                         default:
@@ -843,7 +843,7 @@ final class AiNetherEntry {
 
                   if (this.init_I_17() < AiNetherEntry.load()) {
                      return this.init_AiOperation_Result_A(
-                        AiFailure.init_A,
+                        AiFailure.TARGET_NOT_FOUND,
                         "Only " + this.init_I_17() + " log(s) after the wood run (" + r.message() + ")",
                         AiNetherEntry.init("minecraft:oak_log", AiNetherEntry.load() - this.init_I_17())
                      );
@@ -932,7 +932,7 @@ final class AiNetherEntry {
 
                   return this.read_Z_6()
                      ? this.init("succeeded", "opening tools ready")
-                     : this.init_AiOperation_Result_A(AiFailure.pop, "Opening did not produce the tools", AiNetherEntry.init("minecraft:stone_pickaxe", 1));
+                     : this.init_AiOperation_Result_A(AiFailure.MISSING_MATERIALS, "Opening did not produce the tools", AiNetherEntry.init("minecraft:stone_pickaxe", 1));
                }
             }
 
@@ -967,10 +967,10 @@ final class AiNetherEntry {
                   } else if (r.status() == AiOperation.Status.SUCCEEDED) {
                      this.write_Z = true;
                      return this.init("succeeded", "food " + this.update_I + " -> " + this.load_I_10());
-                  } else if (this.close_I < AiNetherEntry.init_I(AiNetherEntry.Inner_CachePool.load) && AiNetherEntry.init(AiNetherEntry.Inner_CachePool.load, r.failure())) {
+                  } else if (this.close_I < AiNetherEntry.init_I(AiNetherEntry.Inner_CachePool.FOOD) && AiNetherEntry.init(AiNetherEntry.Inner_CachePool.FOOD, r.failure())) {
                      this.close_I++;
                      this.init_I = 0;
-                     return this.write("The hunt came up short; hunting again (attempt " + this.close_I + "/" + AiNetherEntry.init_I(AiNetherEntry.Inner_CachePool.load) + ")");
+                     return this.write("The hunt came up short; hunting again (attempt " + this.close_I + "/" + AiNetherEntry.init_I(AiNetherEntry.Inner_CachePool.FOOD) + ")");
                   } else {
                      this.write_Z = true;
                      return this.init("failed", "food " + this.update_I + " -> " + this.load_I_10() + " (" + r.message() + ")");
@@ -1244,7 +1244,7 @@ final class AiNetherEntry {
                   } else {
                      return this.update_Z_5()
                         ? this.init("succeeded", "bucket and flint_and_steel ready")
-                        : this.init_AiOperation_Result_A(AiFailure.pop, "Iron/fire gear incomplete", AiNetherEntry.init("minecraft:flint_and_steel", 1));
+                        : this.init_AiOperation_Result_A(AiFailure.MISSING_MATERIALS, "Iron/fire gear incomplete", AiNetherEntry.init("minecraft:flint_and_steel", 1));
                   }
                } else if (this.init_AiOperation != null || this.init_I("minecraft:flint") <= 0 && this.init_I("minecraft:flint_and_steel") <= 0) {
                   AiOperation.Result r = this.load_AiOperation_Result_Str("minecraft:flint", 1, this.init_I_2(420));
@@ -1335,7 +1335,7 @@ final class AiNetherEntry {
                   }
 
                   if (this.init_I == 0 && AiDimension.init_I() > 0 && this.close_Z_2()) {
-                     this.init(AiNetherEntry.Inner_CachePool.sync);
+                     this.init(AiNetherEntry.Inner_CachePool.PORTAL);
                      return this.load_AiOperation_Result("the frame begun at " + AiDimension.init_BlockPos.toShortString() + " holds " + AiDimension.init_I() + " obsidian");
                   }
 
@@ -1343,7 +1343,7 @@ final class AiNetherEntry {
                      if (this.poll_Z) {
                         this.poll_Z = false;
                         this.init_V_17();
-                        this.init(AiNetherEntry.Inner_CachePool.sync);
+                        this.init(AiNetherEntry.Inner_CachePool.PORTAL);
                         return this.load_AiOperation_Result("no pool in loaded terrain takes a cast");
                      }
 
@@ -1397,7 +1397,7 @@ final class AiNetherEntry {
 
                      if (AiOracle.init_Z()) {
                         if (this.run_I >= 8) {
-                           return this.init_AiOperation_Result_A(AiFailure.init_A, "No open lava after " + this.run_I + " exploration legs", null);
+                           return this.init_AiOperation_Result_A(AiFailure.TARGET_NOT_FOUND, "No open lava after " + this.run_I + " exploration legs", null);
                         }
 
                         this.init_I = 5;
@@ -1405,7 +1405,7 @@ final class AiNetherEntry {
                      } else {
                         if (this.load_Z) {
                            return this.init_AiOperation_Result_A(
-                              AiFailure.init_A, "No lava observed near the predicted ruined portal; explore or re-issue closer to a pool", null
+                              AiFailure.TARGET_NOT_FOUND, "No lava observed near the predicted ruined portal; explore or re-issue closer to a pool", null
                            );
                         }
 
@@ -1424,7 +1424,7 @@ final class AiNetherEntry {
 
                      BlockPos hit = r.status() == AiOperation.Status.SUCCEEDED ? AiNetherEntry.init_BlockPos_Str(r.dataJson(), "positions", 1.7976931348623157E308) : null;
                      if (hit == null) {
-                        return this.init_AiOperation_Result_A(AiFailure.init_A, "No lava in loaded terrain and no ruined portal prediction (" + r.message() + ")", null);
+                        return this.init_AiOperation_Result_A(AiFailure.TARGET_NOT_FOUND, "No lava in loaded terrain and no ruined portal prediction (" + r.message() + ")", null);
                      }
 
                      this.load_Z = true;
@@ -1450,7 +1450,7 @@ final class AiNetherEntry {
                               AiNetherEntry.init_V(this.load_BlockPos);
                            }
 
-                           return this.init_AiOperation_Result_A(AiFailure.close, "No route to " + this.load_BlockPos.toShortString() + " (" + r.message() + ")", null);
+                           return this.init_AiOperation_Result_A(AiFailure.UNREACHABLE, "No route to " + this.load_BlockPos.toShortString() + " (" + r.message() + ")", null);
                         }
 
                         if (!this.close_Z) {
@@ -1460,14 +1460,14 @@ final class AiNetherEntry {
 
                         if (!this.flush_Z_3()) {
                            return this.init_AiOperation_Result_A(
-                              AiFailure.init_A, "Reached " + this.load_BlockPos.toShortString() + " but no lava is observed here", null
+                              AiFailure.TARGET_NOT_FOUND, "Reached " + this.load_BlockPos.toShortString() + " but no lava is observed here", null
                            );
                         }
 
                         this.init_I = 4;
                         if (this.poll_Z) {
                            this.poll_Z = false;
-                           this.init(AiNetherEntry.Inner_CachePool.sync);
+                           this.init(AiNetherEntry.Inner_CachePool.PORTAL);
                            return this.load_AiOperation_Result("no pool in loaded terrain takes a cast");
                         }
                      }
@@ -1487,7 +1487,7 @@ final class AiNetherEntry {
                               true,
                               true,
                               this.load_I(240),
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                               true,
                               2.0,
                               new AiNetherRun.Inner_NetHelper(this.update_BlockPos.getX(), this.update_BlockPos.getZ(), 8)
@@ -1528,7 +1528,7 @@ final class AiNetherEntry {
                   && this.clear == 0
                   && this.init_I("minecraft:water_bucket") == 0
                   && this.init_I("minecraft:bucket") > 0) {
-                  this.init(AiNetherEntry.Inner_CachePool.update);
+                  this.init(AiNetherEntry.Inner_CachePool.LAVA);
                   this.init_I = 30;
                   return this.write("Filling a water bucket before the cast");
                }
@@ -1549,7 +1549,7 @@ final class AiNetherEntry {
                      this.sync_BlockPos = null;
                      return this.set++ < 3
                         ? this.init("failed", "no route to the pool at " + left.toShortString())
-                        : this.load_AiOperation_Result_A(AiFailure.close, "No route to the lava pool at " + left.toShortString() + " (" + r.message() + ")", null);
+                        : this.load_AiOperation_Result_A(AiFailure.UNREACHABLE, "No route to the lava pool at " + left.toShortString() + " (" + r.message() + ")", null);
                   } else {
                      this.init_I = 0;
                      return this.write("At the lava pool");
@@ -1578,7 +1578,7 @@ final class AiNetherEntry {
 
                      if (r.status() != AiOperation.Status.SUCCEEDED && this.init_I(need.getKey()) <= 0) {
                         return this.load_AiOperation_Result_A(
-                           AiFailure.pop, "Cannot supply " + need.getKey() + " for the portal cast (" + r.message() + ")", this.init_JsonObject
+                           AiFailure.MISSING_MATERIALS, "Cannot supply " + need.getKey() + " for the portal cast (" + r.message() + ")", this.init_JsonObject
                         );
                      }
 
@@ -1591,7 +1591,7 @@ final class AiNetherEntry {
                   if (this.sync_I >= 3 && !this.init_Z) {
                      return this.close_Z_2()
                         ? this.load_AiOperation_Result("no cast went in 3 attempts")
-                        : this.load_AiOperation_Result_A(AiFailure.pop, "Portal cast still short of materials after 3 attempts", this.init_JsonObject);
+                        : this.load_AiOperation_Result_A(AiFailure.MISSING_MATERIALS, "Portal cast still short of materials after 3 attempts", this.init_JsonObject);
                   }
 
                   if (this.init_AiOperation == null) {
@@ -1696,7 +1696,7 @@ final class AiNetherEntry {
                   && this.sync_AiOperation == null) {
                   if (!AiRunResources.init_Map().isEmpty() || !AiRunResources.init_Z()) {
                      return this.load_AiOperation_Result_A(
-                        AiFailure.pop,
+                        AiFailure.MISSING_MATERIALS,
                         "Required diamond kit and equipped golden boots are not ready for Nether entry",
                         AiJson.init.toJsonTree(AiRunResources.init_Map()).getAsJsonObject()
                      );
@@ -1705,7 +1705,7 @@ final class AiNetherEntry {
                   if (AiRunResources.read() < 32) {
                      if (++this.tick_I > 8) {
                         return this.load_AiOperation_Result_A(
-                           AiFailure.pop,
+                           AiFailure.MISSING_MATERIALS,
                            "Nether entry needs carried safe food; raw meat and exhausted hunt attempts do not satisfy the gate",
                            AiJson.init_JsonObject_ObjArr("safeNutrition", 32 - AiRunResources.read())
                         );
@@ -1778,7 +1778,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null && this.write_AiOperation == null && AiRunResources.load_Z() && AiRunResources.init("minecraft:water_bucket", 0) < 2) {
                   if (this.push_I >= 4) {
                      return this.load_AiOperation_Result_A(
-                        AiFailure.pop, "Both water buckets must be refilled before entering the Nether", AiJson.init_JsonObject_ObjArr("minecraft:water_bucket", 2)
+                        AiFailure.MISSING_MATERIALS, "Both water buckets must be refilled before entering the Nether", AiJson.init_JsonObject_ObjArr("minecraft:water_bucket", 2)
                      );
                   }
 
@@ -1838,7 +1838,7 @@ final class AiNetherEntry {
                      this.load_Str = "game:goto";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
                      this.init_AiOperation = AiGoto.init(
-                        lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true, 2.0
+                        lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true, 2.0
                      );
                      return this.write("Back to the portal built at " + lit.toShortString());
                   }
@@ -2044,7 +2044,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null) {
                   this.load_Str = "game:goto";
                   this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load);
+                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST);
                }
 
                return this.poll_AiOperation_Result();
@@ -2137,7 +2137,7 @@ final class AiNetherEntry {
             }
 
             boolean read_Z_6() {
-               return AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.read.ordinal();
+               return AiProgression.init_bx_CachePool(mc).ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal();
             }
 
             boolean write_Z_5() {
@@ -2224,13 +2224,13 @@ final class AiNetherEntry {
                      this.sync_I = 0;
                      this.set = 0;
                      AutismClientAddon.LOG.info("[AI] nether entry: no obsidian ({}); looking for a castable pool from the surface", r.message());
-                     this.init(AiNetherEntry.Inner_CachePool.update);
+                     this.init(AiNetherEntry.Inner_CachePool.LAVA);
                      this.init_I = 40;
                      return this.write("No obsidian (" + r.message() + "); up to the surface for a castable pool");
                   }
 
                   if (held < 10) {
-                     return this.load_AiOperation_Result_A(AiFailure.pop, "Obsidian for the frame: " + r.message(), AiNetherEntry.init("minecraft:obsidian", 10 - held));
+                     return this.load_AiOperation_Result_A(AiFailure.MISSING_MATERIALS, "Obsidian for the frame: " + r.message(), AiNetherEntry.init("minecraft:obsidian", 10 - held));
                   }
 
                   this.init_I = 21;
@@ -2253,7 +2253,7 @@ final class AiNetherEntry {
                            true,
                            true,
                            this.read_I(240),
-                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                            true,
                            2.0,
                            AiGoto.read(
@@ -2625,7 +2625,7 @@ final class AiNetherEntry {
 
             void read_V_7() {
                this.init_I = 0;
-               if (this.init_aA_CachePool == AiNetherEntry.Inner_CachePool.init) {
+               if (this.init_aA_CachePool == AiNetherEntry.Inner_CachePool.OPENING) {
                   this.open_I++;
                }
             }
@@ -2854,13 +2854,13 @@ final class AiNetherEntry {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      OPENING,
+      FOOD,
+      VILLAGE,
+      IRON_FIRE,
+      LAVA,
+      PORTAL,
+      ENTER;
    }
 
    static final class Inner_DataUtil {

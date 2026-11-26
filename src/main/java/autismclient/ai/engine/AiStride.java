@@ -382,13 +382,13 @@ final class AiStride {
    ) {
       AiStride.Inner_DataUtil var11 = null;
       double var12 = 1.7976931348623157E308;
-      AiStride.Inner_DataUtil var14 = AiStride.Inner_DataUtil.load;
+      AiStride.Inner_DataUtil var14 = AiStride.Inner_DataUtil.NONE;
       double var15 = 1.7976931348623157E308;
 
       for (AiStride.Inner_DataUtil var20 : AiStride.Inner_DataUtil.values()) {
-         AiPhysics.Inner_DataUtil var21 = var20 == AiStride.Inner_DataUtil.init
+         AiPhysics.Inner_DataUtil var21 = var20 == AiStride.Inner_DataUtil.GO
             ? var1
-            : (var20 == AiStride.Inner_DataUtil.load ? var2 : var3);
+            : (var20 == AiStride.Inner_DataUtil.NONE ? var2 : var3);
          AiStride.Inner_TableCache var22 = putAt(var0, var21, false, var10);
          if (var22.down()) {
             double var23 = Math.hypot(var22.at().x() - var6, var22.at().z() - var8);
@@ -414,9 +414,9 @@ final class AiStride {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      GO,
+      NONE,
+      BRAKE;
    }
 
    record Inner_JsonCache(

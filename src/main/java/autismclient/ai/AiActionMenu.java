@@ -84,12 +84,12 @@ final class AiActionMenu {
    private AiActionMenu.Inner_BufferHelper load_StreamUtil_BufferH;
 
    AiActionMenu(AiService service, AiViewState view, AiAssistantOverlay host, Runnable onRun) {
-      this.init_StreamUtil_DataUti = AiActionMenu.Inner_DataUtil.init_StreamUtil_DataUti;
+      this.init_StreamUtil_DataUti = AiActionMenu.Inner_DataUtil.GET;
       this.write_List = List.of();
       this.init_Str = "";
       this.load_Str = "";
       this.write_I = 3;
-      this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.init;
+      this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.HOME;
       this.read_Map = new LinkedHashMap<>();
       this.write_Map = new LinkedHashMap<>();
       this.update = List.of();
@@ -118,10 +118,10 @@ final class AiActionMenu {
       } else {
          String[] parts = actionName.split(":", 2);
          if (parts[0].equals("FARM") && parts.length > 1 && parts[1].equals("REVIEW") && this.init_E != null && this.init_E.init_Z()) {
-            this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.write;
+            this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.REVIEW;
          } else {
             this.init_V_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil.valueOf(parts[0]));
-            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti && query != null && query.contains(",")) {
+            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && query != null && query.contains(",")) {
                this.update = AiMiningTargets.parse(query).types();
                this.init_BitSetUtil.init_BitSetUtil_Str("");
             } else {
@@ -148,13 +148,13 @@ final class AiActionMenu {
    }
 
    autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
-      return this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load && (Character.isLetterOrDigit(c) || c == ' ' || c == '-')
+      return this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && (Character.isLetterOrDigit(c) || c == ' ' || c == '-')
          ? this.init_BitSetUtil
          : null;
    }
 
    boolean init_Z() {
-      return this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.init;
+      return this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME;
    }
 
    void load_V() {
@@ -168,9 +168,9 @@ final class AiActionMenu {
 
       this.init_bW = null;
       this.init_E = null;
-      if ((this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open || this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close)
-         && this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.init) {
-         this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.load;
+      if ((this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD || this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM)
+         && this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
+         this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.TARGET;
       }
    }
 
@@ -180,13 +180,13 @@ final class AiActionMenu {
          + 3 * AiUiKit.load_I()
          + 10
          + 4
-         + (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti ? AiUiKit.init_I() + 2 : 0);
-      return this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.read && this.init_StreamUtil_DataUti.init_Z
+         + (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE ? AiUiKit.init_I() + 2 : 0);
+      return this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS && this.init_StreamUtil_DataUti.init_Z
          ? Math.max(
             target,
             this.load_I()
                + (
-                  this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+                  this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                      ? Math.min(this.read_I(), AiUiKit.read() * 3 + AiUiKit.init_I() * 6 + 14)
                      : this.read_I()
                )
@@ -199,10 +199,10 @@ final class AiActionMenu {
    }
 
    private int read_I() {
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close && this.write_Z) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
          return AiUiKit.read() * 4 + AiUiKit.init_I() * 2 + 12;
       } else {
-         return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open
+         return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD
             ? AiUiKit.read() * 6 + AiUiKit.init_I() * 4 + 16
             : (
                this.init_StreamUtil_DataUti.init_Z
@@ -210,7 +210,7 @@ final class AiActionMenu {
                      + AiUiKit.init_I() * 3
                      + 6
                      + (
-                        this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+                        this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                            ? AiUiKit.read() + 2 + this.read_Map.size() * (AiUiKit.init_I() + 2)
                            : 0
                      )
@@ -224,20 +224,20 @@ final class AiActionMenu {
       int line = AiUiKit.read();
       int var10000;
       switch (this.init_StreamUtil_BufferH) {
-         case init:
+         case HOME:
             var10000 = line * 2 + 6 + (this.write_List().size() + (width >= 440 ? 2 : 1)) / (width >= 440 ? 3 : 2) * (h + AiUiKit.write() + 4 + 4);
             break;
-         case load:
+         case TARGET:
             var10000 = 0;
             break;
-         case read:
+         case OPTIONS:
             var10000 = this.load_I() + this.read_I();
             break;
-         case write:
+         case REVIEW:
             var10000 = this.load_I()
                + line
                   * (
-                     this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+                     this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                         ? this.read_Map.size() + 3
                         : (this.init_E != null ? 7 : (this.init_bW == null ? 4 : 8 + this.init_bW.init_List().size()))
                   )
@@ -255,7 +255,7 @@ final class AiActionMenu {
    }
 
    void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
-      if (!this.update.isEmpty() && this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load) {
+      if (!this.update.isEmpty() && this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET) {
          List<AiActionMenu.Inner_CachePool> rows = this.read_List();
 
          for (int i = 0; i < rows.size(); i++) {
@@ -273,11 +273,11 @@ final class AiActionMenu {
       if (this.load_StreamUtil_BufferH != null && this.update.isEmpty()) {
          if (this.init_StreamUtil_BufferH == this.load_StreamUtil_BufferH) {
             this.load_StreamUtil_BufferH = null;
-         } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load) {
+         } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET) {
             if (this.init_StreamUtil_CachePo_List(this.read_List()) != null) {
                this.sync_V();
             }
-         } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.read
+         } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS
             && (this.init_bW == null || this.init_bW.load_Z())
             && (this.init_E == null || this.init_E.init_Z())) {
             this.sync_V();
@@ -301,7 +301,7 @@ final class AiActionMenu {
       int line = AiUiKit.read();
       autismclient.gui.f.NetHelper title = autismclient.gui.f.NetHelper.init(area.read(), area.write(), area.update(), line);
       kit.init_V_Str_3(
-         this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.init
+         this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.HOME
             ? "What would you like to do?"
             : this.init_StreamUtil_DataUti.init_Str + " / " + this.init_Str(),
          title,
@@ -310,7 +310,7 @@ final class AiActionMenu {
          kit.init_JsonUtil.prev
       );
       int top = title.load() + 2;
-      if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.init) {
+      if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
          autismclient.gui.f.NetHelper trail = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), line);
          kit.init_V_Str_3("Choose action  /  Choose target  /  Options  /  Review", trail, trail.read(), trail.update(), kit.init_JsonUtil.valid);
          top += line + 2;
@@ -318,16 +318,16 @@ final class AiActionMenu {
 
       autismclient.gui.f.NetHelper footer = autismclient.gui.f.NetHelper.init(area.read(), area.load() - h, area.update(), h);
       autismclient.gui.f.NetHelper note = autismclient.gui.f.NetHelper.init(
-         area.read(), this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.init ? area.load() - line : footer.write() - 2 - line, area.update(), line
+         area.read(), this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.HOME ? area.load() - line : footer.write() - 2 - line, area.update(), line
       );
       autismclient.gui.f.NetHelper body = autismclient.gui.f.NetHelper.init(area.read(), top, area.update(), Math.max(0, note.write() - 2 - top));
       kit.init_V_NetHelper(body);
       switch (this.init_StreamUtil_BufferH) {
-         case init:
+         case HOME:
             this.init_V_cE_NetHelper(kit, body);
             break;
-         case load:
-            int importW = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open ? kit.load(this.init_Z ? "Loading..." : "Import") + 2 : 0;
+         case TARGET:
+            int importW = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? kit.load(this.init_Z ? "Loading..." : "Import") + 2 : 0;
             this.init_BitSetUtil.load_BitSetUtil_Str(this.init_StreamUtil_DataUti.read_Str);
             kit.init_V_BitSetUtil_NetHelper(this.init_BitSetUtil, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
             if (importW > 0) {
@@ -340,7 +340,7 @@ final class AiActionMenu {
             }
 
             int listTop = body.write() + h + 2;
-            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti) {
+            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
                int clearW = kit.load("Clear");
                int selectedW = kit.load(this.read_Z ? "Show all" : "Selected");
                autismclient.gui.f.NetHelper summary = autismclient.gui.f.NetHelper.init(
@@ -371,16 +371,16 @@ final class AiActionMenu {
                listTop += h + 2;
             }
 
-            List<AiActionMenu.Inner_CachePool> rows = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti && this.read_Z
+            List<AiActionMenu.Inner_CachePool> rows = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && this.read_Z
                ? List.copyOf(this.read_Map.values())
                : this.read_List();
             this.write_I = Math.max(1, (body.load() - listTop) / AiUiKit.load_I());
             this.init_V_cE_2(kit, autismclient.gui.f.NetHelper.init(body.read(), listTop, body.update(), Math.max(0, body.load() - listTop)), rows);
             break;
-         case read:
+         case OPTIONS:
             this.load(kit, body);
             break;
-         case write:
+         case REVIEW:
             this.read(kit, body);
       }
 
@@ -391,14 +391,14 @@ final class AiActionMenu {
             !update_Z()
                ? "Join a world to start an action."
                : (
-                  this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load
-                        && this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+                  this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET
+                        && this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                      ? "Click to toggle blocks. Nearest reachable first; amounts apply per block type."
                      : (
-                        this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load && this.init_StreamUtil_CachePo_List(this.write_List) != null
+                        this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && this.init_StreamUtil_CachePo_List(this.write_List) != null
                            ? this.init_StreamUtil_CachePo_List(this.write_List).label()
                            : (
-                              this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.init
+                              this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.HOME
                                  ? "Runs locally. No API needed."
                                  : "Review your choices before starting."
                            )
@@ -407,12 +407,12 @@ final class AiActionMenu {
          );
       kit.init_V_Str_3(noteText, note, note.read(), note.update(), this.read_Str.isEmpty() ? kit.init_JsonUtil.valid : kit.init_JsonUtil.data);
       kit.init_V_NetHelper_Str(note, noteText);
-      if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.init) {
+      if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME) {
          int w = kit.load("Back");
          kit.init_V_NetHelper_2(
             autismclient.gui.f.NetHelper.init(footer.read(), footer.write(), w, h), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::close
          );
-         String label = this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.write ? (this.init_cF.init_Z() ? "Replace task" : "Start") : "Next";
+         String label = this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW ? (this.init_cF.init_Z() ? "Replace task" : "Start") : "Next";
          int nextW = kit.load(label);
          this.init(
             kit,
@@ -420,16 +420,16 @@ final class AiActionMenu {
             label,
             update_Z()
                && (
-                  this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.load
+                  this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.TARGET
                      || (
-                        this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+                        this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                            ? !this.read_Map.isEmpty()
                            : this.init_StreamUtil_CachePo_List(this.write_List) != null
                      )
                )
                && (this.init_bW == null || this.init_bW.load_Z() && !this.init_bW.init_Z_2())
                && (this.init_E == null || this.init_E.init_Z()),
-            this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.write ? this::poll : this::sync_V
+            this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW ? this::poll : this::sync_V
          );
       }
    }
@@ -437,16 +437,16 @@ final class AiActionMenu {
    private String init_Str() {
       String var10000;
       switch (this.init_StreamUtil_BufferH) {
-         case init:
+         case HOME:
             var10000 = "Actions";
             break;
-         case load:
+         case TARGET:
             var10000 = "Choose target";
             break;
-         case read:
-            var10000 = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open ? "Placement" : "Options";
+         case OPTIONS:
+            var10000 = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? "Placement" : "Options";
             break;
-         case write:
+         case REVIEW:
             var10000 = "Review";
             break;
          default:
@@ -525,7 +525,7 @@ final class AiActionMenu {
          kit.init_JsonUtil.prev
       );
       y += line + 2;
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close && this.write_Z) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
          kit.init_V_Str_3("Crop: " + this.read_Str(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.prev);
          int var23 = y + line + 2;
          kit.init_V_NetHelper_2(
@@ -576,7 +576,7 @@ final class AiActionMenu {
             w,
             kit.init_JsonUtil.valid
          );
-      } else if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open && this.init_bW != null) {
+      } else if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD && this.init_bW != null) {
          kit.init_V_Str_3(this.init_bW.write_Str_2(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
          y += line;
          kit.init_V_Str_3(
@@ -646,7 +646,7 @@ final class AiActionMenu {
          kit.init_V_Str_3("Get missing materials before starting this build.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
       } else if (this.init_StreamUtil_DataUti.init_Z) {
          kit.init_V_Str_3(
-            (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti ? "Default per block" : "Amount")
+            (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE ? "Default per block" : "Amount")
                + " (1 to "
                + this.write_I()
                + ")",
@@ -673,21 +673,21 @@ final class AiActionMenu {
          }
 
          y += h + 2;
-         if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.init_StreamUtil_DataUti) {
+         if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GET) {
             kit.init_V_Str_3(
                "Always collect the requested amount in addition to inventory.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid
             );
          } else if (this.read_Z()) {
             kit.init_V_NetHelper_2(
                autismclient.gui.f.NetHelper.init(x, y, w, h),
-               this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.write_StreamUtil_DataUti ? "Craft extra items" : "Smelt extra items",
+               this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.CRAFT ? "Craft extra items" : "Smelt extra items",
                this.load_Z,
                "local-additional",
                () -> this.load_Z = !this.load_Z
             );
          } else {
             kit.init_V_Str_3(
-               this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+               this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                   ? "Each type has its own quota; nearest unfinished type first."
                   : "Uses the selected action's normal quantity rules.",
                autismclient.gui.f.NetHelper.init(x, y, w, line),
@@ -700,7 +700,7 @@ final class AiActionMenu {
          kit.init_V_Str_3(this.init_StreamUtil_DataUti.write_Str, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
       }
 
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          y += line + 2;
          kit.init_V_Str_3("Individual amounts (optional)", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.init_JsonUtil.valid);
          y += line + 2;
@@ -757,14 +757,14 @@ final class AiActionMenu {
          lines = new String[]{
             this.init_StreamUtil_DataUti.init_Str + (this.init_StreamUtil_CachePo == null ? "" : ": " + this.read_Str()),
             quantity,
-            this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+            this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                ? "Per block type; nearest unfinished target first"
                : (this.read_Z() ? (this.write_Z() ? "Quantity adds to the inventory" : "Quantity is the inventory target") : ""),
             this.init_cF.init_Z() ? "Starting replaces the current local task." : "Ready to start."
          };
       }
 
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          ArrayList<String> extended = new ArrayList<>();
          extended.add("Mine amounts");
 
@@ -809,19 +809,19 @@ final class AiActionMenu {
    }
 
    private boolean read_Z() {
-      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.init_StreamUtil_DataUti
-         || this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.write_StreamUtil_DataUti
-         || this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.update_StreamUtil_DataUti;
+      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GET
+         || this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.CRAFT
+         || this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.SMELT;
    }
 
    private String read_Str() {
-      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
          ? this.read_Map.values().stream().map(AiActionMenu.Inner_CachePool::label).collect(Collectors.joining(", "))
          : this.init_StreamUtil_CachePo.label();
    }
 
    private String write_Str() {
-      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti && this.read_Map.size() > 1
+      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && this.read_Map.size() > 1
          ? "16"
          : this.init_StreamUtil_CachePo.fallback();
    }
@@ -845,18 +845,18 @@ final class AiActionMenu {
    }
 
    private List<AiActionMenu.Inner_CachePool> load_List() {
-      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti && this.read_Z
+      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE && this.read_Z
          ? List.copyOf(this.read_Map.values())
          : this.read_List();
    }
 
    private int write_I() {
-      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
          ? 640
          : (
-            this.init_StreamUtil_DataUti != AiActionMenu.Inner_DataUtil.flush
-                  && this.init_StreamUtil_DataUti != AiActionMenu.Inner_DataUtil.read_StreamUtil_DataUti
-               ? (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close ? 128 : 2304)
+            this.init_StreamUtil_DataUti != AiActionMenu.Inner_DataUtil.FIGHT
+                  && this.init_StreamUtil_DataUti != AiActionMenu.Inner_DataUtil.CHOP
+               ? (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM ? 128 : 2304)
                : 64
          );
    }
@@ -894,7 +894,7 @@ final class AiActionMenu {
                   b.update(),
                   b.sync(),
                   kit.init_Z_NetHelper(b),
-                  this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+                  this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                      ? this.read_Map.containsKey(this.init_Str_StreamUtil_CachePo(row))
                      : i == this.read_I,
                   kit.init_JsonUtil.prev,
@@ -915,15 +915,15 @@ final class AiActionMenu {
          return "Join a world first";
       } else if (this.init_Map.get(this.init_StreamUtil_DataUti) == null || this.init_Map.get(this.init_StreamUtil_DataUti).init() == null) {
          return "Loading...";
-      } else if (this.sync_Str().isEmpty() && this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.sync) {
+      } else if (this.sync_Str().isEmpty() && this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GOTO) {
          return "Type x y z";
       } else {
-         return this.sync_Str().isEmpty() && this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open ? "No schematics yet" : "No matches";
+         return this.sync_Str().isEmpty() && this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD ? "No schematics yet" : "No matches";
       }
    }
 
    boolean init_Z_I_Z(int key, boolean typing) {
-      if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.init && this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.write) {
+      if (this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.HOME && this.init_StreamUtil_BufferH != AiActionMenu.Inner_BufferHelper.REVIEW) {
          switch (key) {
             case 257:
             case 335:
@@ -956,12 +956,12 @@ final class AiActionMenu {
    }
 
    boolean load_Z() {
-      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load && !this.init_BitSetUtil.init_Str().isEmpty()) {
+      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET && !this.init_BitSetUtil.init_Str().isEmpty()) {
          this.init_BitSetUtil.init_BitSetUtil_Str("");
          return true;
       }
 
-      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.init) {
+      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.HOME) {
          return false;
       }
 
@@ -990,7 +990,7 @@ final class AiActionMenu {
 
    private void load(int index) {
       this.read_I = index;
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          List<AiActionMenu.Inner_CachePool> rows = this.load_List();
          if (index < 0 || index >= rows.size()) {
             return;
@@ -1043,7 +1043,7 @@ final class AiActionMenu {
          this.init_cE_StreamUtil.load();
       }
 
-      this.init_StreamUtil_BufferH = next.init() ? AiActionMenu.Inner_BufferHelper.load : AiActionMenu.Inner_BufferHelper.write;
+      this.init_StreamUtil_BufferH = next.init() ? AiActionMenu.Inner_BufferHelper.TARGET : AiActionMenu.Inner_BufferHelper.REVIEW;
       this.read_cE_StreamUtil.load();
       if (next.init()) {
          this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
@@ -1057,8 +1057,8 @@ final class AiActionMenu {
       if (!update_Z()) {
          this.read_Str = "Join a world first";
       } else {
-         if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.load) {
-            this.init_StreamUtil_CachePo = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti
+         if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.TARGET) {
+            this.init_StreamUtil_CachePo = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE
                ? this.read_Map.values().stream().findFirst().orElse(null)
                : this.init_StreamUtil_CachePo_List(this.read_List());
             if (this.init_StreamUtil_CachePo == null) {
@@ -1067,7 +1067,7 @@ final class AiActionMenu {
             }
 
             this.load_Obj = Minecraft.getInstance().level;
-            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close) {
+            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM) {
                AiIntents.Inner_BufferHelper farmStep = this.init_ad_BufferHelper_Str_Str(
                   this.init_StreamUtil_CachePo.request().apply(null), this.init_StreamUtil_DataUti.load_Str
                );
@@ -1086,7 +1086,7 @@ final class AiActionMenu {
                this.init_E = null;
             }
 
-            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open) {
+            if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD) {
                AiIntents.Inner_BufferHelper step = this.init_ad_BufferHelper_Str_Str(
                   this.init_StreamUtil_CachePo.request().apply(null), this.init_StreamUtil_DataUti.load_Str
                );
@@ -1103,10 +1103,10 @@ final class AiActionMenu {
                }
             }
 
-            this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.read;
-         } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.read) {
+            this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.OPTIONS;
+         } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS) {
             try {
-               if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close && this.write_Z && (this.init_E == null || !this.init_E.init_Z())) {
+               if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z && (this.init_E == null || !this.init_E.init_Z())) {
                   this.flush();
                   return;
                }
@@ -1120,7 +1120,7 @@ final class AiActionMenu {
                   }
                }
 
-               this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.write;
+               this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.REVIEW;
             } catch (RuntimeException e) {
                this.read_Str = e.getMessage();
             }
@@ -1173,9 +1173,9 @@ final class AiActionMenu {
       this.read_Str = "";
       this.init_V();
       this.read_cE_StreamUtil.load();
-      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.write) {
-         this.init_StreamUtil_BufferH = this.init_StreamUtil_DataUti.init() ? AiActionMenu.Inner_BufferHelper.read : AiActionMenu.Inner_BufferHelper.init;
-      } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.read) {
+      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW) {
+         this.init_StreamUtil_BufferH = this.init_StreamUtil_DataUti.init() ? AiActionMenu.Inner_BufferHelper.OPTIONS : AiActionMenu.Inner_BufferHelper.HOME;
+      } else if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.OPTIONS) {
          if (this.init_bW != null) {
             this.init_bW.read_V();
          }
@@ -1186,7 +1186,7 @@ final class AiActionMenu {
 
          this.init_bW = null;
          this.init_E = null;
-         this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.load;
+         this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.TARGET;
       } else {
          this.open();
       }
@@ -1203,7 +1203,7 @@ final class AiActionMenu {
 
       this.init_bW = null;
       this.init_E = null;
-      this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.init;
+      this.init_StreamUtil_BufferH = AiActionMenu.Inner_BufferHelper.HOME;
       this.init_StreamUtil_CachePo = null;
       this.load_Obj = null;
       this.read_Str = "";
@@ -1216,7 +1216,7 @@ final class AiActionMenu {
 
    private AiIntents.Inner_BufferHelper init_ad_BufferHelper() {
       Integer amount = this.init_StreamUtil_DataUti.init_Z ? AiLocalRequest.init(this.load_BitSetUtil.init_Str(), this.write_I()) : null;
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.MINE) {
          List<JsonObject> targets = this.read_Map
             .values()
             .stream()
@@ -1249,7 +1249,7 @@ final class AiActionMenu {
       }
 
       JsonObject args = this.init_bW == null ? step.arguments().deepCopy() : this.init_bW.load_JsonObject_2();
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close && this.write_Z) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
          if (this.init_E == null || !this.init_E.init_Z()) {
             throw new IllegalArgumentException("Choose both farm corners first");
          }
@@ -1273,7 +1273,7 @@ final class AiActionMenu {
    }
 
    private void poll() {
-      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.write && update_Z()) {
+      if (this.init_StreamUtil_BufferH == AiActionMenu.Inner_BufferHelper.REVIEW && update_Z()) {
          if (this.load_Obj != null && this.load_Obj != Minecraft.getInstance().level) {
             this.open();
             this.read_Str = "World changed. Choose the action again.";
@@ -1332,7 +1332,7 @@ final class AiActionMenu {
    }
 
    void read_V() {
-      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.close && this.write_Z) {
+      if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.FARM && this.write_Z) {
          this.flush();
       } else if (this.init_bW != null && this.init_bW.load_Z()) {
          aP.init_V_bW_Runnable(this.init_bW, () -> {});
@@ -1356,7 +1356,7 @@ final class AiActionMenu {
    }
 
    private boolean write_Z() {
-      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.init_StreamUtil_DataUti || this.load_Z;
+      return this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GET || this.load_Z;
    }
 
    private void push() {
@@ -1380,8 +1380,8 @@ final class AiActionMenu {
                Throwable cause = error.getCause() == null ? error : error.getCause();
                autismclient.util.bi.write("Import failed: " + cause.getMessage());
             } else if (file != null) {
-               this.init_Map.remove(AiActionMenu.Inner_DataUtil.open);
-               if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.open) {
+               this.init_Map.remove(AiActionMenu.Inner_DataUtil.BUILD);
+               if (this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.BUILD) {
                   this.init_BitSetUtil.init_BitSetUtil_Str(file.name());
                   this.init_AiAssistantOverlay.init(this.init_BitSetUtil);
                }
@@ -1423,7 +1423,7 @@ final class AiActionMenu {
             out.sort(Comparator.comparingInt(row -> init_I_Str_Str(row.label().toLowerCase(Locale.ROOT), q)));
          }
 
-         AiActionMenu.Inner_CachePool place = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.sync
+         AiActionMenu.Inner_CachePool place = this.init_StreamUtil_DataUti == AiActionMenu.Inner_DataUtil.GOTO
             ? this.init_StreamUtil_CachePo_Str(this.init_BitSetUtil.init_Str().trim())
             : null;
          if (place != null) {
@@ -1456,7 +1456,7 @@ final class AiActionMenu {
    private AiActionMenu.Inner_CachePool init_StreamUtil_CachePo_Str(String typed) {
       if (!typed.isEmpty() && !typed.chars().noneMatch(Character::isDigit)) {
          String text = "go to " + typed;
-         return this.init_ad_BufferHelper_Str_Str(text, AiActionMenu.Inner_DataUtil.sync.load_Str) == null
+         return this.init_ad_BufferHelper_Str_Str(text, AiActionMenu.Inner_DataUtil.GOTO.load_Str) == null
             ? null
             : new AiActionMenu.Inner_CachePool("Go to " + typed, "", autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.COMPASS), n -> text, "", 0, "");
       } else {
@@ -1471,10 +1471,10 @@ final class AiActionMenu {
       Object world = mc.getConnection();
       if (v == null || v.init_Obj != world || init_Z_StreamUtil_DataUti(a, v, now)) {
          List<AiActionMenu.Inner_CachePool> previous = v != null && v.init_Obj == world ? v.init() : null;
-         boolean recipes = a == AiActionMenu.Inner_DataUtil.init_StreamUtil_DataUti
-            || a == AiActionMenu.Inner_DataUtil.write_StreamUtil_DataUti
-            || a == AiActionMenu.Inner_DataUtil.update_StreamUtil_DataUti;
-         boolean missing = recipes && (a == AiActionMenu.Inner_DataUtil.update_StreamUtil_DataUti ? AiToolsSuggest.load() : AiToolsSuggest.init()).isEmpty();
+         boolean recipes = a == AiActionMenu.Inner_DataUtil.GET
+            || a == AiActionMenu.Inner_DataUtil.CRAFT
+            || a == AiActionMenu.Inner_DataUtil.SMELT;
+         boolean missing = recipes && (a == AiActionMenu.Inner_DataUtil.SMELT ? AiToolsSuggest.load() : AiToolsSuggest.init()).isEmpty();
          v = new AiActionMenu.Inner_ConfigStore(world, now, this.load(a), previous, missing);
          this.init_Map.put(a, v);
       }
@@ -1487,12 +1487,12 @@ final class AiActionMenu {
    }
 
    private static boolean init_Z_StreamUtil_DataUti(AiActionMenu.Inner_DataUtil a, AiActionMenu.Inner_ConfigStore v, long now) {
-      return v.write != null && now - v.init_J >= 2000L ? a == AiActionMenu.Inner_DataUtil.sync || a == AiActionMenu.Inner_DataUtil.open || v.init_Z : false;
+      return v.write != null && now - v.init_J >= 2000L ? a == AiActionMenu.Inner_DataUtil.GOTO || a == AiActionMenu.Inner_DataUtil.BUILD || v.init_Z : false;
    }
 
    private void init_V_StreamUtil_DataUti_StreamUtil_ConfigS(AiActionMenu.Inner_DataUtil a, AiActionMenu.Inner_ConfigStore v) {
       long until = System.nanoTime() + 3000000L;
-      boolean dedupe = a == AiActionMenu.Inner_DataUtil.init_StreamUtil_DataUti || a == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti;
+      boolean dedupe = a == AiActionMenu.Inner_DataUtil.GET || a == AiActionMenu.Inner_DataUtil.MINE;
 
       while (v.init_I < v.init_List.size()) {
          AiActionMenu.Inner_CachePool row = this.init_StreamUtil_CachePo_StreamUtil_DataUti(a, v.init_List.get(v.init_I++), dedupe ? v.init_Set : null);
@@ -1531,7 +1531,7 @@ final class AiActionMenu {
                form,
                amount > 0 ? Integer.toString(amount) : "Auto",
                c.order(),
-               a == AiActionMenu.Inner_DataUtil.load_StreamUtil_DataUti ? AiJson.init_Str_JsonObject(step.arguments(), "block", "") : ""
+               a == AiActionMenu.Inner_DataUtil.MINE ? AiJson.init_Str_JsonObject(step.arguments(), "block", "") : ""
             );
          }
       }
@@ -1595,8 +1595,8 @@ final class AiActionMenu {
       }
 
       this.init_Obj = level;
-      if (out.remove(AiActionMenu.Inner_DataUtil.open)) {
-         out.add(Math.min(1, out.size()), AiActionMenu.Inner_DataUtil.open);
+      if (out.remove(AiActionMenu.Inner_DataUtil.BUILD)) {
+         out.add(Math.min(1, out.size()), AiActionMenu.Inner_DataUtil.BUILD);
       }
 
       return this.init_List = List.copyOf(out);
@@ -1605,7 +1605,7 @@ final class AiActionMenu {
    private List<AiActionMenu.Inner_StreamUtil> load(AiActionMenu.Inner_DataUtil a) {
       List<AiActionMenu.Inner_StreamUtil> out = new ArrayList<>();
       switch (a) {
-         case init_StreamUtil_DataUti:
+         case GET:
             Set<String> craft = new HashSet<>(AiToolsSuggest.init());
             Set<String> smelt = new HashSet<>(AiToolsSuggest.load());
             Set<String> mined = AiObtain.init();
@@ -1634,7 +1634,7 @@ final class AiActionMenu {
             init_V_List(families);
             out.addAll(families);
             break;
-         case load_StreamUtil_DataUti:
+         case MINE:
             List<AiActionMenu.Inner_StreamUtil> familiesMine = new ArrayList<>();
 
             for (String id : AiToolsSuggest.write()) {
@@ -1650,7 +1650,7 @@ final class AiActionMenu {
             init_V_List(familiesMine);
             out.addAll(familiesMine);
             break;
-         case read_StreamUtil_DataUti:
+         case CHOP:
             out.add(
                new AiActionMenu.Inner_StreamUtil(
                   "Nearest tree",
@@ -1682,7 +1682,7 @@ final class AiActionMenu {
                }
             }
             break;
-         case write_StreamUtil_DataUti:
+         case CRAFT:
             for (String id : AiToolsSuggest.init()) {
                Item item = init_Item_Str(id);
                if (item != null) {
@@ -1690,7 +1690,7 @@ final class AiActionMenu {
                }
             }
             break;
-         case update_StreamUtil_DataUti:
+         case SMELT:
             for (String id : AiToolsSuggest.load()) {
                Item item = init_Item_Str(id);
                if (item != null) {
@@ -1698,7 +1698,7 @@ final class AiActionMenu {
                }
             }
             break;
-         case sync:
+         case GOTO:
             Minecraft mc = Minecraft.getInstance();
 
             for (AutismWaypoints.Waypoint wp : AutismWaypoints.init_AutismWaypoints().init_List_Str(AuditWaypointScope.current(mc))) {
@@ -1716,7 +1716,7 @@ final class AiActionMenu {
                );
             }
             break;
-         case flush:
+         case FIGHT:
             for (String id : AiToolsSuggest.sync()) {
                if (id.equals("hostiles")) {
                   out.add(
@@ -1750,7 +1750,7 @@ final class AiActionMenu {
                }
             }
             break;
-         case close:
+         case FARM:
             for (String option : AiIntents.init_List) {
                String crop = option.toLowerCase(Locale.ROOT);
                String one = AiIntents.sync(crop);
@@ -1775,7 +1775,7 @@ final class AiActionMenu {
                );
             }
             break;
-         case open:
+         case BUILD:
             Path dir = AiSchematic.init();
             if (Files.isDirectory(dir)) {
                try (Stream<Path> files = Files.list(dir)) {
@@ -1896,10 +1896,10 @@ final class AiActionMenu {
    }
 
    enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write;
+      HOME,
+      TARGET,
+      OPTIONS,
+      REVIEW;
    }
 
    private record Inner_CachePool(String label, String search, ItemStack icon, Function<Integer, String> request, String fallback, int order, String mineKey) {
@@ -1932,22 +1932,22 @@ final class AiActionMenu {
    }
 
    enum Inner_DataUtil {
-      init_StreamUtil_DataUti("Get", "game:obtain", true, "Search items", "Obtain any item"),
-      load_StreamUtil_DataUti("Mine", "game:mine", true, "Search blocks", "Mine nearby block types"),
-      read_StreamUtil_DataUti("Chop", "game:chop", true, "Search trees", "Fell trees for logs"),
-      write_StreamUtil_DataUti("Craft", "game:craft", true, "Search recipes", "Craft an item"),
-      update_StreamUtil_DataUti("Smelt", "game:smelt_auto", true, "Search smelt results", "Smelt in a furnace"),
-      sync("Go to", "game:goto", false, "Waypoint or x y z", "Walk to a place"),
-      flush("Fight", "game:fight", true, "Search mobs", "Fight a mob type"),
-      close("Farm", "game:farm", true, "Search crops", "Build or harvest farms"),
-      open("Schematic", "game:build", false, "Search schematics", "Preview and build a schematic"),
-      poll("Eat", "game:eat", "eat", "Eat the best food"),
-      push("Sleep", "game:sleep", "sleep", "Sleep in a bed"),
-      pop("Fish", "game:fish", "fish", "Fish until a catch"),
-      tick("Tidy", "game:tidy", "clean my inventory", "Drop junk, keep valuables"),
-      run("Surface", "game:surface", "surface", "Climb to the surface"),
-      get("Recover", "game:recover", "recover my items", "Pick up death drops"),
-      set("Beat the game", "game:speedrun", "beat the game", "Play until the dragon dies");
+      GET("Get", "game:obtain", true, "Search items", "Obtain any item"),
+      MINE("Mine", "game:mine", true, "Search blocks", "Mine nearby block types"),
+      CHOP("Chop", "game:chop", true, "Search trees", "Fell trees for logs"),
+      CRAFT("Craft", "game:craft", true, "Search recipes", "Craft an item"),
+      SMELT("Smelt", "game:smelt_auto", true, "Search smelt results", "Smelt in a furnace"),
+      GOTO("Go to", "game:goto", false, "Waypoint or x y z", "Walk to a place"),
+      FIGHT("Fight", "game:fight", true, "Search mobs", "Fight a mob type"),
+      FARM("Farm", "game:farm", true, "Search crops", "Build or harvest farms"),
+      BUILD("Schematic", "game:build", false, "Search schematics", "Preview and build a schematic"),
+      EAT("Eat", "game:eat", "eat", "Eat the best food"),
+      SLEEP("Sleep", "game:sleep", "sleep", "Sleep in a bed"),
+      FISH("Fish", "game:fish", "fish", "Fish until a catch"),
+      TIDY("Tidy", "game:tidy", "clean my inventory", "Drop junk, keep valuables"),
+      SURFACE("Surface", "game:surface", "surface", "Climb to the surface"),
+      RECOVER("Recover", "game:recover", "recover my items", "Pick up death drops"),
+      BEAT("Beat the game", "game:speedrun", "beat the game", "Play until the dragon dies");
 
       final String init_Str;
       final String load_Str;

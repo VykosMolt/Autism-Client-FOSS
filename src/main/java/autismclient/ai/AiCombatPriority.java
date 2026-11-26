@@ -33,7 +33,7 @@ final class AiCombatPriority {
    }
 
    static boolean init(AiGuard.Inner_DataUtil action) {
-      return action == AiGuard.Inner_DataUtil.write || action == AiGuard.Inner_DataUtil.update;
+      return action == AiGuard.Inner_DataUtil.EAT || action == AiGuard.Inner_DataUtil.TIDY;
    }
 
    static boolean init(int hostiles, int ranged) {
@@ -43,20 +43,20 @@ final class AiCombatPriority {
    static boolean init(AiThreats.Inner_DataUtil profile) {
       boolean var10000;
       switch (profile) {
-         case init:
-         case load:
-         case read:
-         case write:
-         case update:
-         case close:
-         case poll:
-         case pop:
-         case get:
-         case set:
-         case put:
-         case add:
-         case clear:
-         case stop:
+         case ZOMBIE:
+         case BABY_ZOMBIE:
+         case SKELETON:
+         case CROSSBOW:
+         case CREEPER:
+         case BLAZE:
+         case WITHER_SKELETON:
+         case BRUTE:
+         case CUBE:
+         case SMALL:
+         case WITCH:
+         case PHANTOM:
+         case OTHER_HOSTILE:
+         case AVOID:
             var10000 = true;
             break;
          default:
@@ -67,7 +67,7 @@ final class AiCombatPriority {
    }
 
    static boolean init_Z_X_DataUtil(AiGuard.Inner_DataUtil active, AiGuard.Inner_DataUtil next, int hostiles) {
-      return init(active) && hostiles > 0 || active == AiGuard.Inner_DataUtil.load && next == AiGuard.Inner_DataUtil.read;
+      return init(active) && hostiles > 0 || active == AiGuard.Inner_DataUtil.FIGHT && next == AiGuard.Inner_DataUtil.FLEE;
    }
 
    static float init_F_F(float current, Float preferred, List<Float> shots, double halfCone) {

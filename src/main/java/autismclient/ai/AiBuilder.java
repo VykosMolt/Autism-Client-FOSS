@@ -893,27 +893,27 @@ final class AiBuilder {
 
    static AiBuilder.Inner_TaskQueue init_TableIndex_TaskQue(Block block, String property) {
       if (block instanceof MultifaceBlock && Direction.byName(property) != null) {
-         return AiBuilder.Inner_TaskQueue.poll;
+         return AiBuilder.Inner_TaskQueue.POST_INTERACT;
       }
 
       if (property.equals("rotation") && init(block, 0) != null) {
-         return AiBuilder.Inner_TaskQueue.tick;
+         return AiBuilder.Inner_TaskQueue.PLAYER_ROTATION;
       }
 
       if (property.equals("orientation") && block instanceof CrafterBlock) {
-         return AiBuilder.Inner_TaskQueue.run;
+         return AiBuilder.Inner_TaskQueue.PLAYER_ORIENTATION;
       }
 
       if (property.equals("type") && block instanceof ChestBlock) {
-         return AiBuilder.Inner_TaskQueue.get;
+         return AiBuilder.Inner_TaskQueue.CHEST_PAIR;
       }
 
       if (property.equals("note") && block instanceof NoteBlock) {
-         return AiBuilder.Inner_TaskQueue.poll;
+         return AiBuilder.Inner_TaskQueue.POST_INTERACT;
       }
 
       if (property.equals("facing") && init(block)) {
-         return AiBuilder.Inner_TaskQueue.write;
+         return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
       }
 
       if (!property.equals("facing")
@@ -934,94 +934,94 @@ final class AiBuilder {
                && !(block instanceof SegmentableBlock)) {
             if (!property.equals("axis") || !(block instanceof InfestedRotatedPillarBlock) && !(block instanceof CreakingHeartBlock)) {
                if (property.equals("attachment") && block instanceof BellBlock) {
-                  return AiBuilder.Inner_TaskQueue.write;
+                  return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
                }
 
                if (init_Item(block, property) != null || init_Z(block, property)) {
-                  return AiBuilder.Inner_TaskQueue.poll;
+                  return AiBuilder.Inner_TaskQueue.POST_INTERACT;
                }
 
                if (property.equals("inverted") && block instanceof DaylightDetectorBlock) {
-                  return AiBuilder.Inner_TaskQueue.poll;
+                  return AiBuilder.Inner_TaskQueue.POST_INTERACT;
                }
 
                if (property.equals("waterlogged")
                   && block.defaultBlockState().hasProperty(BlockStateProperties.WATERLOGGED)
                   && block instanceof LiquidBlockContainer) {
-                  return AiBuilder.Inner_TaskQueue.push;
+                  return AiBuilder.Inner_TaskQueue.FLUID_INTERACT;
                }
 
                if (property.equals("face") && block instanceof FaceAttachedHorizontalDirectionalBlock) {
-                  return AiBuilder.Inner_TaskQueue.write;
+                  return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
                }
 
                if (block instanceof DoorBlock && property.equals("hinge")) {
-                  return AiBuilder.Inner_TaskQueue.read;
+                  return AiBuilder.Inner_TaskQueue.CLICK_POSITION;
                }
 
                if (block instanceof LanternBlock && property.equals("hanging")) {
-                  return AiBuilder.Inner_TaskQueue.write;
+                  return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
                }
 
                if (property.equals("axis") && block instanceof RotatedPillarBlock) {
-                  return AiBuilder.Inner_TaskQueue.init;
+                  return AiBuilder.Inner_TaskQueue.FACE_AXIS;
                }
 
                if ((!(block instanceof SlabBlock) || !property.equals("type"))
                   && (!(block instanceof StairBlock) && !(block instanceof TrapDoorBlock) || !property.equals("half"))) {
                   if (property.equals("facing")) {
                      if (block instanceof AnvilBlock) {
-                        return AiBuilder.Inner_TaskQueue.flush;
+                        return AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE;
                      }
 
                      if (block instanceof BarrelBlock || block instanceof DispenserBlock || block instanceof PistonBaseBlock) {
-                        return AiBuilder.Inner_TaskQueue.open;
+                        return AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE;
                      }
 
                      if (block instanceof ObserverBlock) {
-                        return AiBuilder.Inner_TaskQueue.close;
+                        return AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION;
                      }
 
                      if (block instanceof HopperBlock || block instanceof ShulkerBoxBlock) {
-                        return AiBuilder.Inner_TaskQueue.write;
+                        return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
                      }
 
                      if (write(block) || block instanceof FaceAttachedHorizontalDirectionalBlock) {
-                        return AiBuilder.Inner_TaskQueue.write;
+                        return AiBuilder.Inner_TaskQueue.FACE_DERIVED;
                      }
 
                      if (block instanceof StairBlock || block instanceof BedBlock || block instanceof DoorBlock || block instanceof FenceGateBlock) {
-                        return AiBuilder.Inner_TaskQueue.update;
+                        return AiBuilder.Inner_TaskQueue.PLAYER_FACING;
                      }
 
                      if (block instanceof TrapDoorBlock
                         || block instanceof HorizontalDirectionalBlock
                         || block instanceof AbstractFurnaceBlock
                         || block instanceof AbstractChestBlock) {
-                        return AiBuilder.Inner_TaskQueue.sync;
+                        return AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE;
                      }
                   }
 
                   if (property.equals("open") && (block instanceof DoorBlock || block instanceof TrapDoorBlock || block instanceof FenceGateBlock)) {
-                     return load(block) ? AiBuilder.Inner_TaskQueue.pop : AiBuilder.Inner_TaskQueue.poll;
+                     return load(block) ? AiBuilder.Inner_TaskQueue.POWER_STATE : AiBuilder.Inner_TaskQueue.POST_INTERACT;
                   } else if (property.equals("powered") && block instanceof LeverBlock) {
-                     return AiBuilder.Inner_TaskQueue.poll;
+                     return AiBuilder.Inner_TaskQueue.POST_INTERACT;
                   } else {
                      return property.equals("delay") && block instanceof RepeaterBlock || property.equals("mode") && block instanceof ComparatorBlock
-                        ? AiBuilder.Inner_TaskQueue.poll
-                        : AiBuilder.Inner_TaskQueue.set;
+                        ? AiBuilder.Inner_TaskQueue.POST_INTERACT
+                        : AiBuilder.Inner_TaskQueue.UNSUPPORTED;
                   }
                } else {
-                  return AiBuilder.Inner_TaskQueue.load;
+                  return AiBuilder.Inner_TaskQueue.CLICK_HEIGHT;
                }
             } else {
-               return AiBuilder.Inner_TaskQueue.init;
+               return AiBuilder.Inner_TaskQueue.FACE_AXIS;
             }
          } else {
-            return AiBuilder.Inner_TaskQueue.sync;
+            return AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE;
          }
       } else {
-         return AiBuilder.Inner_TaskQueue.update;
+         return AiBuilder.Inner_TaskQueue.PLAYER_FACING;
       }
    }
 
@@ -1058,8 +1058,8 @@ final class AiBuilder {
 
    static AiBuilder.Inner_TaskQueue init_TableIndex_TaskQue(AiBuilder.Inner_StreamUtil cell, Block block) {
       AiBuilder.Inner_TaskQueue strategy = init_TableIndex_TaskQue(block, "facing");
-      return strategy == AiBuilder.Inner_TaskQueue.write && block instanceof FaceAttachedHorizontalDirectionalBlock && !init(block, cell)
-         ? AiBuilder.Inner_TaskQueue.update
+      return strategy == AiBuilder.Inner_TaskQueue.FACE_DERIVED && block instanceof FaceAttachedHorizontalDirectionalBlock && !init(block, cell)
+         ? AiBuilder.Inner_TaskQueue.PLAYER_FACING
          : strategy;
    }
 
@@ -1087,7 +1087,7 @@ final class AiBuilder {
          String key = entry.getKey();
          if (!read(block, key)) {
             AiBuilder.Inner_TaskQueue strategy = key.equals("facing") ? init_TableIndex_TaskQue(cell, block) : init_TableIndex_TaskQue(block, key);
-            if (strategy == AiBuilder.Inner_TaskQueue.set
+            if (strategy == AiBuilder.Inner_TaskQueue.UNSUPPORTED
                && (!(block instanceof LeavesBlock) || !key.equals("persistent") || !entry.getValue().equals("true"))) {
                Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)block.getStateDefinition().getProperty(key);
                if (property == null || !String.valueOf(block.defaultBlockState().getValue(property)).equalsIgnoreCase(entry.getValue())) {
@@ -1159,7 +1159,7 @@ final class AiBuilder {
       boolean pairing = block instanceof ChestBlock && init_Z_TableIndex_StreamU(cell, pos, world);
       if (pairing) {
          clickFace = init_Direction(cell).getOpposite();
-         strategy = AiBuilder.Inner_TaskQueue.set;
+         strategy = AiBuilder.Inner_TaskQueue.UNSUPPORTED;
       } else if (block instanceof ChestBlock) {
          BlockState below = world.getBlockState(pos.below());
          if (!below.getCollisionShape(world, pos.below()).isEmpty()) {
@@ -1167,29 +1167,29 @@ final class AiBuilder {
          }
       }
 
-      if (strategy == AiBuilder.Inner_TaskQueue.update
-         || strategy == AiBuilder.Inner_TaskQueue.sync
-         || strategy == AiBuilder.Inner_TaskQueue.flush
-         || strategy == AiBuilder.Inner_TaskQueue.close
-         || strategy == AiBuilder.Inner_TaskQueue.open) {
+      if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING
+         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE
+         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE
+         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION
+         || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE) {
          look = Direction.byName(cell.properties().getOrDefault("facing", "north"));
-         if (look != null && strategy == AiBuilder.Inner_TaskQueue.flush) {
+         if (look != null && strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE) {
             look = look.getCounterClockWise();
-         } else if (look != null && strategy != AiBuilder.Inner_TaskQueue.update && strategy != AiBuilder.Inner_TaskQueue.close) {
+         } else if (look != null && strategy != AiBuilder.Inner_TaskQueue.PLAYER_FACING && strategy != AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION) {
             look = look.getOpposite();
          }
       }
 
-      boolean fullDirection = strategy == AiBuilder.Inner_TaskQueue.open || strategy == AiBuilder.Inner_TaskQueue.close;
+      boolean fullDirection = strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION;
       String rotation = cell.properties().get("rotation");
-      if (rotation != null && init_TableIndex_TaskQue(block, "rotation") == AiBuilder.Inner_TaskQueue.tick) {
+      if (rotation != null && init_TableIndex_TaskQue(block, "rotation") == AiBuilder.Inner_TaskQueue.PLAYER_ROTATION) {
          yaw = init(block, Integer.parseInt(rotation));
          tolerance = 8.0;
          look = Direction.fromYRot(yaw.floatValue());
       }
 
       String orientation = cell.properties().get("orientation");
-      if (orientation != null && init_TableIndex_TaskQue(block, "orientation") == AiBuilder.Inner_TaskQueue.run) {
+      if (orientation != null && init_TableIndex_TaskQue(block, "orientation") == AiBuilder.Inner_TaskQueue.PLAYER_ORIENTATION) {
          String[] parts = orientation.split("_");
          Direction front = Direction.byName(parts[0]);
          Direction top = parts.length > 1 ? Direction.byName(parts[1]) : null;
@@ -1281,12 +1281,12 @@ final class AiBuilder {
       }
 
       String type = cell.properties().get("type");
-      if (type != null && !init_Z(cell) && init_TableIndex_TaskQue(target, "type") == AiBuilder.Inner_TaskQueue.load) {
+      if (type != null && !init_Z(cell) && init_TableIndex_TaskQue(target, "type") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT) {
          return type.equalsIgnoreCase("top");
       }
 
       String half = cell.properties().get("half");
-      return half != null && init_TableIndex_TaskQue(target, "half") == AiBuilder.Inner_TaskQueue.load ? half.equalsIgnoreCase("top") : null;
+      return half != null && init_TableIndex_TaskQue(target, "half") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT ? half.equalsIgnoreCase("top") : null;
    }
 
    static boolean init(Boolean requestedHigh, Direction face) {
@@ -1668,7 +1668,7 @@ final class AiBuilder {
    }
 
    static boolean flush(AiBuilder.Inner_StreamUtil cell, BlockState live) {
-      if (init_TableIndex_TaskQue(live.getBlock(), "waterlogged") == AiBuilder.Inner_TaskQueue.push
+      if (init_TableIndex_TaskQue(live.getBlock(), "waterlogged") == AiBuilder.Inner_TaskQueue.FLUID_INTERACT
          && cell.properties().containsKey("waterlogged")
          && !String.valueOf(live.getValue(BlockStateProperties.WATERLOGGED)).equals(cell.properties().get("waterlogged"))) {
          LinkedHashMap<String, String> properties = new LinkedHashMap<>(cell.properties());
@@ -2123,7 +2123,7 @@ final class AiBuilder {
             List<Item> candidates = pooled.get(entry.getKey());
             plans.add(
                new AiCellMaterials.Inner_CachePool(
-                  AiCellMaterials.Inner_DataUtil.init, entry.getKey(), candidates.getFirst(), entry.getValue(), AiCellMaterials.Inner_BufferHelper.init
+                  AiCellMaterials.Inner_DataUtil.PLACE, entry.getKey(), candidates.getFirst(), entry.getValue(), AiCellMaterials.Inner_BufferHelper.CONSUME
                )
             );
             Set<String> specs = alternatives.computeIfAbsent(entry.getKey(), k -> new TreeSet<>());
@@ -2179,7 +2179,7 @@ final class AiBuilder {
 
       AiSchematicReadiness.Inner_StreamUtil first = issues.getFirst();
       AiBuilder.Inner_StreamUtil cell = first.cell();
-      boolean contextOnly = audit.issues().stream().allMatch(issue -> issue.kind() == AiSchematicReadiness.Inner_CachePool.write);
+      boolean contextOnly = audit.issues().stream().allMatch(issue -> issue.kind() == AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT);
       String message = (contextOnly ? "Cannot build here: " : "Cannot build this schematic as saved: ")
          + "schematic readiness audit found "
          + audit.issueCount()
@@ -2196,7 +2196,7 @@ final class AiBuilder {
          + cell.dz()
          + ": "
          + first.detail();
-      AiFailure code = contextOnly ? AiFailure.write : AiFailure.data;
+      AiFailure code = contextOnly ? AiFailure.PLACEMENT_IMPOSSIBLE : AiFailure.IMPOSSIBLE_STATE;
       return AiGameOperations.init(
          AiOperation.Status.FAILED,
          code,
@@ -2267,7 +2267,7 @@ final class AiBuilder {
       Map<String, Set<String>> alternatives
    ) {
       for (AiCellMaterials.Inner_CachePool requirement : plans) {
-         if (requirement.action() == AiCellMaterials.Inner_DataUtil.init || requirement.action() == AiCellMaterials.Inner_DataUtil.load) {
+         if (requirement.action() == AiCellMaterials.Inner_DataUtil.PLACE || requirement.action() == AiCellMaterials.Inner_DataUtil.ADD) {
             for (String candidateId : substitutes.getOrDefault(cell.block(), List.of())) {
                Item alternative = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(candidateId)).map(Block::asItem).orElse(Items.AIR);
                if (alternative != Items.AIR) {
@@ -2711,7 +2711,7 @@ final class AiBuilder {
          if (schematic && missing.size() > 0 && (!power.shulkerStock() || !init_Z(blueprint))) {
             return AiGameOperations.init(
                AiOperation.Status.FAILED,
-               AiFailure.pop,
+               AiFailure.MISSING_MATERIALS,
                "Missing materials for the schematic; "
                   + (power.shulkerStock() ? "no nearby external shulker stock" : "shulker stock is disabled")
                   + ": "
@@ -2727,7 +2727,7 @@ final class AiBuilder {
                ? init(args, missing)
                : AiGameOperations.init(
                   AiOperation.Status.FAILED,
-                  AiFailure.pop,
+                  AiFailure.MISSING_MATERIALS,
                   "Missing materials: " + missing,
                   AiJson.init_JsonObject_ObjArr("missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray())
                );
@@ -2870,7 +2870,7 @@ final class AiBuilder {
                try {
                   this.init_AiOperation = AiBuilder.init_AiOperation(again);
                } catch (IllegalArgumentException e) {
-                  return AiOperation.Result.failed(AiFailure.flush, e.getMessage(), "{}");
+                  return AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, e.getMessage(), "{}");
                }
 
                this.init_Z = true;
@@ -2882,7 +2882,7 @@ final class AiBuilder {
             JsonObject data = AiJson.init_JsonObject_ObjArr(
                "missing", missing, "placed", 0, "skipped", 0, "failed", new JsonArray(), "crafted", this.init_JsonArray
             );
-            return AiOperation.Result.failed(AiFailure.pop, "Missing materials: " + missing + " (could not craft " + item + ": " + reason + ")", data.toString());
+            return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, "Missing materials: " + missing + " (could not craft " + item + ": " + reason + ")", data.toString());
          }
 
          AiOperation.Result init(AiOperation.Result r) {
@@ -3797,7 +3797,7 @@ final class AiBuilder {
                                     return this.init_AiOperation_Result_5("Building a schematic step before temporary access");
                                  }
 
-                                 if (schematic && r.failure() != AiFailure.write && this.load(this.init_List.get(this.data))) {
+                                 if (schematic && r.failure() != AiFailure.PLACEMENT_IMPOSSIBLE && this.load(this.init_List.get(this.data))) {
                                     return this.init_AiOperation_Result_5("Preparing access to the unreachable construction layer");
                                  }
 
@@ -3805,7 +3805,7 @@ final class AiBuilder {
                                     return this.init_AiOperation_Result_5("Constructing a stance aligned with the requested placement");
                                  }
 
-                                 if (schematic && r.failure() == AiFailure.write && this.write(this.init_List.get(this.data), this.load_BlockPos())) {
+                                 if (schematic && r.failure() == AiFailure.PLACEMENT_IMPOSSIBLE && this.write(this.init_List.get(this.data), this.load_BlockPos())) {
                                     return this.init_AiOperation_Result_5("Building an accessible support instead of repeating the failed approach");
                                  }
 
@@ -3855,7 +3855,7 @@ final class AiBuilder {
                               true,
                               false,
                               20,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                               true,
                               2.0,
                               AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -4092,7 +4092,7 @@ final class AiBuilder {
                                        if (property != null
                                           && !String.valueOf(live.getValue(property)).equals(entry.getValue())
                                           && !AiBuilder.read(live.getBlock(), entry.getKey())
-                                          && AiBuilder.init_TableIndex_TaskQue(live.getBlock(), entry.getKey()) != AiBuilder.Inner_TaskQueue.poll) {
+                                          && AiBuilder.init_TableIndex_TaskQue(live.getBlock(), entry.getKey()) != AiBuilder.Inner_TaskQueue.POST_INTERACT) {
                                           toggleOnly = false;
                                        }
                                     }
@@ -4315,7 +4315,7 @@ final class AiBuilder {
                                                 }
 
                                                 for (Entry<String, String> entry : cell.properties().entrySet()) {
-                                                   if (AiBuilder.init_TableIndex_TaskQue(target, entry.getKey()) == AiBuilder.Inner_TaskQueue.set
+                                                   if (AiBuilder.init_TableIndex_TaskQue(target, entry.getKey()) == AiBuilder.Inner_TaskQueue.UNSUPPORTED
                                                       && (
                                                          !(target instanceof LeavesBlock)
                                                             || !entry.getKey().equals("persistent")
@@ -4452,7 +4452,7 @@ final class AiBuilder {
                                                       if (!Float.isNaN(this.init_F)) {
                                                          for (Entry<String, String> entry : cell.properties().entrySet()) {
                                                             AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
-                                                            if (strategy == AiBuilder.Inner_TaskQueue.update || strategy == AiBuilder.Inner_TaskQueue.sync) {
+                                                            if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE) {
                                                                this.init(cell, pos, entry, "player facing could not be aligned with the support ray");
                                                             }
                                                          }
@@ -4490,13 +4490,13 @@ final class AiBuilder {
                                                    if (predicted != null) {
                                                       for (Entry<String, String> entry : cell.properties().entrySet()) {
                                                          AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(target, entry.getKey());
-                                                         if (strategy != AiBuilder.Inner_TaskQueue.set
-                                                            && strategy != AiBuilder.Inner_TaskQueue.poll
-                                                            && strategy != AiBuilder.Inner_TaskQueue.push
+                                                         if (strategy != AiBuilder.Inner_TaskQueue.UNSUPPORTED
+                                                            && strategy != AiBuilder.Inner_TaskQueue.POST_INTERACT
+                                                            && strategy != AiBuilder.Inner_TaskQueue.FLUID_INTERACT
                                                             && !AiBuilder.read(target, entry.getKey())
                                                             && (!AiBuilder.init_Z(cell) || upgrade || !entry.getKey().equals("type"))
                                                             && (
-                                                               strategy != AiBuilder.Inner_TaskQueue.get
+                                                               strategy != AiBuilder.Inner_TaskQueue.CHEST_PAIR
                                                                   || !AiBuilder.init_Z(cell, predicted)
                                                                   || AiBuilder.init_Z_TableIndex_StreamU(cell, pos, mc.level)
                                                             )) {
@@ -5187,7 +5187,7 @@ final class AiBuilder {
 
                   if (schematic
                      && !this.retryingDetached
-                     && r.failure() == AiFailure.close
+                     && r.failure() == AiFailure.UNREACHABLE
                      && this.write_BlockPos.getY() > mc.player.getEyeY() + 1.0
                      && this.detachedSupports != null
                      && this.detachedSupports.remove(this.write_BlockPos.asLong())) {
@@ -5358,7 +5358,7 @@ final class AiBuilder {
                            true,
                            false,
                            30,
-                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                            true,
                            2.0,
                            AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -5392,7 +5392,7 @@ final class AiBuilder {
                         false,
                         false,
                         20,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                         true,
                         2.0,
                         AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -6302,7 +6302,7 @@ final class AiBuilder {
                   true,
                   false,
                   30,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                   true,
                   2.0,
                   AiGoto.read(outside, keep)
@@ -6418,11 +6418,11 @@ final class AiBuilder {
                Direction look = this.init_Direction(cell.properties().getOrDefault("facing", ""));
                AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(block, "facing");
                if (look != null) {
-                  if (strategy == AiBuilder.Inner_TaskQueue.sync) {
+                  if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE) {
                      look = look.getOpposite();
-                  } else if (strategy == AiBuilder.Inner_TaskQueue.flush) {
+                  } else if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE) {
                      look = look.getCounterClockWise();
-                  } else if (strategy == AiBuilder.Inner_TaskQueue.write) {
+                  } else if (strategy == AiBuilder.Inner_TaskQueue.FACE_DERIVED) {
                      look = look.getOpposite();
                   }
 
@@ -6572,7 +6572,7 @@ final class AiBuilder {
                      true,
                      true,
                      60,
-                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                      true,
                      2.0,
                      AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -6734,12 +6734,12 @@ final class AiBuilder {
 
                Boolean high = null;
                String type = cell.properties().get("type");
-               if (type != null && AiBuilder.init_TableIndex_TaskQue(target, "type") == AiBuilder.Inner_TaskQueue.load) {
+               if (type != null && AiBuilder.init_TableIndex_TaskQue(target, "type") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT) {
                   high = !AiBuilder.init_Z(cell) && type.equalsIgnoreCase("top");
                }
 
                String half = cell.properties().get("half");
-               if (half != null && AiBuilder.init_TableIndex_TaskQue(target, "half") == AiBuilder.Inner_TaskQueue.load) {
+               if (half != null && AiBuilder.init_TableIndex_TaskQue(target, "half") == AiBuilder.Inner_TaskQueue.CLICK_HEIGHT) {
                   high = half.equalsIgnoreCase("top");
                }
 
@@ -6758,24 +6758,24 @@ final class AiBuilder {
 
                if (facingProp != null && !pairing) {
                   AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(cell, target);
-                  if (strategy == AiBuilder.Inner_TaskQueue.write
+                  if (strategy == AiBuilder.Inner_TaskQueue.FACE_DERIVED
                      && !AiBuilder.init(target, cell)
                      && !(target instanceof HopperBlock)
                      && !AiBuilder.init(target)) {
-                     strategy = AiBuilder.Inner_TaskQueue.update;
+                     strategy = AiBuilder.Inner_TaskQueue.PLAYER_FACING;
                   }
 
-                  if (strategy == AiBuilder.Inner_TaskQueue.update
-                     || strategy == AiBuilder.Inner_TaskQueue.sync
-                     || strategy == AiBuilder.Inner_TaskQueue.flush
-                     || strategy == AiBuilder.Inner_TaskQueue.close
-                     || strategy == AiBuilder.Inner_TaskQueue.open) {
+                  if (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING
+                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_OPPOSITE
+                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE
+                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION
+                     || strategy == AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION_OPPOSITE) {
                      Direction wanted = Direction.byName(facingProp.toLowerCase(Locale.ROOT));
                      if (wanted == null) {
                         this.init(cell, pos, Map.entry("facing", facingProp), "not a horizontal direction");
                      } else if (wanted.getAxis().isHorizontal()) {
-                        this.init_F = (strategy != AiBuilder.Inner_TaskQueue.update && strategy != AiBuilder.Inner_TaskQueue.close
-                              ? (strategy == AiBuilder.Inner_TaskQueue.flush ? wanted.getCounterClockWise() : wanted.getOpposite())
+                        this.init_F = (strategy != AiBuilder.Inner_TaskQueue.PLAYER_FACING && strategy != AiBuilder.Inner_TaskQueue.PLAYER_DIRECTION
+                              ? (strategy == AiBuilder.Inner_TaskQueue.PLAYER_FACING_CLOCKWISE ? wanted.getCounterClockWise() : wanted.getOpposite())
                               : wanted)
                            .toYRot();
                      }
@@ -6892,7 +6892,7 @@ final class AiBuilder {
                   }
 
                   Entry<String, String> entry = (Entry<String, String>)mismatch.next();
-                  if (AiBuilder.init_TableIndex_TaskQue(this.init_Block, entry.getKey()) == AiBuilder.Inner_TaskQueue.poll) {
+                  if (AiBuilder.init_TableIndex_TaskQue(this.init_Block, entry.getKey()) == AiBuilder.Inner_TaskQueue.POST_INTERACT) {
                      open = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(entry.getKey());
                      if (open != null && !String.valueOf(live.getValue(open)).equalsIgnoreCase(entry.getValue())) {
                         cycling = !entry.getKey().equals("open") && !entry.getKey().equals("powered");
@@ -7176,7 +7176,7 @@ final class AiBuilder {
                         autismclient.util.villager.BlockChangeAckTracker.init_Z(mc.level, this.init_TableIndex_StateCa.init_I()),
                         mc.player.tickCount
                      );
-                  if (outcome == AiBuilder.Inner_StateCache.Inner_DataUtil.read) {
+                  if (outcome == AiBuilder.Inner_StateCache.Inner_DataUtil.CONFIRMED) {
                      if (this.write_Set.add(pos.asLong())) {
                         this.state++;
                         this.close_I++;
@@ -7185,7 +7185,7 @@ final class AiBuilder {
                      AiScaffold.init_V(pos);
                      this.load_TableIndex_StreamU = null;
                      this.init_Map.remove(pos.asLong());
-                  } else if (outcome == AiBuilder.Inner_StateCache.Inner_DataUtil.write) {
+                  } else if (outcome == AiBuilder.Inner_StateCache.Inner_DataUtil.RETRY) {
                      this.load_TableIndex_StreamU = null;
                      this.poll_I++;
                      this.init_V_TableIndex_StreamU_BlockPos(cell, pos);
@@ -7282,7 +7282,7 @@ final class AiBuilder {
                                  false,
                                  false,
                                  10,
-                                 autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                                 autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                                  true,
                                  2.0,
                                  AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
@@ -8612,31 +8612,31 @@ final class AiBuilder {
 
       AiBuilder.Inner_StateCache.Inner_DataUtil init(long currentRevision, boolean satisfied, boolean acknowledged, int nowTick) {
          if (this.init_BlockPos == null) {
-            return AiBuilder.Inner_StateCache.Inner_DataUtil.init;
+            return AiBuilder.Inner_StateCache.Inner_DataUtil.IDLE;
          }
 
          if (satisfied) {
             if (currentRevision <= this.init_J) {
-               return AiBuilder.Inner_StateCache.Inner_DataUtil.load;
+               return AiBuilder.Inner_StateCache.Inner_DataUtil.WAITING;
             }
 
             this.init_BlockPos = null;
-            return AiBuilder.Inner_StateCache.Inner_DataUtil.read;
+            return AiBuilder.Inner_StateCache.Inner_DataUtil.CONFIRMED;
          } else {
             if (nowTick - this.load < 4 || currentRevision <= this.init_J && !acknowledged) {
-               return AiBuilder.Inner_StateCache.Inner_DataUtil.load;
+               return AiBuilder.Inner_StateCache.Inner_DataUtil.WAITING;
             }
 
             this.init_BlockPos = null;
-            return AiBuilder.Inner_StateCache.Inner_DataUtil.write;
+            return AiBuilder.Inner_StateCache.Inner_DataUtil.RETRY;
          }
       }
 
       enum Inner_DataUtil {
-         init,
-         load,
-         read,
-         write;
+         IDLE,
+         WAITING,
+         CONFIRMED,
+         RETRY;
       }
    }
 
@@ -8757,21 +8757,21 @@ final class AiBuilder {
    }
 
    enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run,
-      get,
-      set;
+      FACE_AXIS,
+      CLICK_HEIGHT,
+      CLICK_POSITION,
+      FACE_DERIVED,
+      PLAYER_FACING,
+      PLAYER_FACING_OPPOSITE,
+      PLAYER_FACING_CLOCKWISE,
+      PLAYER_DIRECTION,
+      PLAYER_DIRECTION_OPPOSITE,
+      POST_INTERACT,
+      FLUID_INTERACT,
+      POWER_STATE,
+      PLAYER_ROTATION,
+      PLAYER_ORIENTATION,
+      CHEST_PAIR,
+      UNSUPPORTED;
    }
 }

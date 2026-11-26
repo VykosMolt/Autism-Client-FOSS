@@ -77,7 +77,7 @@ final class AiOreRoute {
          return new AiOperation() {
             final long init_J = System.nanoTime() + Math.max(30, seconds) * 1000000000L;
             final Direction init_Direction = Direction.fromYRot(mc.player.getYRot());
-            AiOreRoute.Inner_DataUtil init_aH_DataUtil = !nearOnly && AiOreRoute.init(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.Inner_DataUtil.load : AiOreRoute.Inner_DataUtil.init;
+            AiOreRoute.Inner_DataUtil init_aH_DataUtil = !nearOnly && AiOreRoute.init(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.Inner_DataUtil.DESCEND : AiOreRoute.Inner_DataUtil.NEAR;
             AiOperation init_AiOperation;
             int init_I;
             int load;
@@ -107,7 +107,7 @@ final class AiOreRoute {
                         return this.init(AiOperation.Status.CANCELLED, "Cancelled");
                      }
 
-                     if (r.failure() == AiFailure.tick || r.failure() == AiFailure.get) {
+                     if (r.failure() == AiFailure.MISSING_TOOL || r.failure() == AiFailure.TOOL_WORN) {
                         this.cancel();
                         return r;
                      }
@@ -143,9 +143,9 @@ final class AiOreRoute {
                int missingBlocks = Math.max(1, blocks - Math.max(0, AiCraft.init_I(drop) - (targetHeld - blocks)));
                int legSeconds = (int)Math.max(20L, Math.min(300L, (this.init_J - System.nanoTime()) / 1000000000L));
                switch (this.init_aH_DataUtil) {
-                  case init:
-                  case read:
-                  case update:
+                  case NEAR:
+                  case DEEP:
+                  case MINE_BRANCH:
                      this.init_AiOperation = autismclient.ai.engine.AiMine.init(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
@@ -153,13 +153,13 @@ final class AiOreRoute {
                            "count",
                            missingBlocks,
                            "radius",
-                           this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.update ? 32 : 48,
+                           this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.MINE_BRANCH ? 32 : 48,
                            "timeoutSeconds",
                            Math.min(120, legSeconds)
                         )
                      );
-                     return this.init("Mining " + family + (this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.init ? " nearby" : " at y " + mc.player.getBlockY()));
-                  case load: {
+                     return this.init("Mining " + family + (this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.NEAR ? " nearby" : " at y " + mc.player.getBlockY()));
+                  case DESCEND: {
                      this.read = mc.player.getBlockY();
                      Direction d = AiOreRoute.init(this.init_Direction, this.load);
                      this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
@@ -169,7 +169,7 @@ final class AiOreRoute {
                      );
                      return this.init("Digging down " + d.getName() + " to y " + bestY + " for " + family);
                   }
-                  case write: {
+                  case BRANCH: {
                      Direction d = AiOreRoute.init(this.init_Direction, this.init_I);
                      this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
                         AiJson.init_JsonObject_ObjArr("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
@@ -183,31 +183,31 @@ final class AiOreRoute {
 
             AiOperation.Result init(AiOperation.Result r) {
                switch (this.init_aH_DataUtil) {
-                  case init:
+                  case NEAR:
                      if (nearOnly) {
                         return this.init(AiOperation.Status.FAILED, "No " + family + " in loaded terrain nearby (" + r.message() + ")");
                      }
 
-                     this.init_aH_DataUtil = AiOreRoute.init(mc.player.getBlockY(), bestY) ? AiOreRoute.Inner_DataUtil.load : AiOreRoute.Inner_DataUtil.read;
+                     this.init_aH_DataUtil = AiOreRoute.init(mc.player.getBlockY(), bestY) ? AiOreRoute.Inner_DataUtil.DESCEND : AiOreRoute.Inner_DataUtil.DEEP;
                      break;
-                  case load:
+                  case DESCEND:
                      boolean arrived = !AiOreRoute.init(mc.player.getBlockY(), bestY);
                      boolean progressed = this.read - mc.player.getBlockY() >= 6;
                      if (!arrived && (!progressed || ++this.load < 4)) {
                         if (!progressed && ++this.load >= 4) {
-                           this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.read;
+                           this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.DEEP;
                         }
                      } else {
-                        this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.read;
+                        this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.DEEP;
                      }
                      break;
-                  case read:
-                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.write;
+                  case DEEP:
+                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.BRANCH;
                      break;
-                  case write:
-                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.update;
+                  case BRANCH:
+                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.MINE_BRANCH;
                      break;
-                  case update:
+                  case MINE_BRANCH:
                      if (++this.init_I >= 8) {
                         return this.init(
                            AiOperation.Status.FAILED,
@@ -215,7 +215,7 @@ final class AiOreRoute {
                         );
                      }
 
-                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.write;
+                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.BRANCH;
                }
 
                return this.init("Next: " + this.init_aH_DataUtil.name().toLowerCase(Locale.ROOT).replace('_', ' '));
@@ -289,10 +289,10 @@ final class AiOreRoute {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update;
+      NEAR,
+      DESCEND,
+      DEEP,
+      BRANCH,
+      MINE_BRANCH;
    }
 }

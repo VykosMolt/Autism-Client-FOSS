@@ -16,6 +16,8 @@ import javax.tools.*;
  *   - Enum constant renames (E): decl, MemberSelect, Identifier (incl. switch cases & static imports)
  *   - Top-level class renames & cross-package moves (C): package decl, decl, constructors, imports,
  *     all type/expr/FQN refs, same-package split import synthesis, file move & empty dir cleanup
+ *   - Nested member class renames (N): decl, constructors (incl. compact record ctors), imports,
+ *     all type/expr refs, multi-level $ disambig.tsv sync (no file moves; local $N classes rejected)
  * Never reads or modifies untouched integrity/attestation files; never renames symbols declared in autismclient/api/.
  * Synchronizes mappings/disambig.tsv atomically so ReverseRemapJar preserves 100% runtime ABI.
  */
@@ -141,15 +143,35 @@ public final class AstBatchRenamer {
                 }
                 case "C" -> {
                     ClassRename cr = new ClassRename(p[1], p[2], p[3]);
+                    if (cr.curClass.contains("$") || cr.newClass.contains("$")) {
+                        throw new IllegalArgumentException("Use tag N for nested class renames, got C: " + cr);
+                    }
                     if (isFrozenInternal(cr.curClass)) throw new IllegalStateException("Refused frozen class: " + cr.curClass);
                     if (isFrozenInternal(cr.newClass)) throw new IllegalStateException("Refused frozen target class: " + cr.newClass);
                     classRenames.put(cr.curClass, cr);
                 }
+                case "N" -> {
+                    ClassRename nr = new ClassRename(p[1], p[2], p[3]);
+                    if (!nr.curClass.contains("$") || !nr.newClass.contains("$")) {
+                        throw new IllegalArgumentException("Tag N requires nested class internal name with '$': " + nr);
+                    }
+                    if (nr.curClass.matches(".*\\$\\d+.*") || nr.newClass.matches(".*\\$\\d+.*")) {
+                        throw new IllegalStateException("Refused local class rename ($N): " + nr);
+                    }
+                    if (!outerOwner(nr.curClass).equals(outerOwner(nr.newClass))) {
+                        throw new IllegalStateException("Nested class rename cannot change enclosing owner: " + nr);
+                    }
+                    if (isFrozenInternal(nr.curClass)) throw new IllegalStateException("Refused frozen nested class: " + nr.curClass);
+                    if (isFrozenInternal(nr.newClass)) throw new IllegalStateException("Refused frozen target nested class: " + nr.newClass);
+                    classRenames.put(nr.curClass, nr);
+                }
                 default -> throw new IllegalArgumentException("Unknown plan tag: " + p[0]);
             }
         }
-        System.out.printf("Loaded plan: %d enum constant renames, %d class renames/moves (%s)%n",
-            enumRenames.size(), classRenames.size(), apply ? "APPLY" : "DRY-RUN");
+        long topCount = classRenames.values().stream().filter(cr -> !cr.curClass.contains("$")).count();
+        long nestedCount = classRenames.size() - topCount;
+        System.out.printf("Loaded plan: %d enum constant renames, %d top-level class renames/moves, %d nested class renames (%s)%n",
+            enumRenames.size(), topCount, nestedCount, apply ? "APPLY" : "DRY-RUN");
 
         // 1b. Classify whole-package moves vs partial-package moves (using filenames only; never reads excluded files!)
         Path srcRoot = repo.resolve("src/main/java");
@@ -161,6 +183,7 @@ public final class AstBatchRenamer {
             if (!newClassTargets.add(cr.newClass)) {
                 throw new IllegalStateException("Duplicate target class in plan: " + cr.newClass);
             }
+            if (cr.curClass.contains("$")) continue;
             if (!cr.curClass.equals(cr.newClass) && Files.exists(srcRoot.resolve(cr.newClass + ".java")) && !classRenames.containsKey(cr.newClass)) {
                 throw new IllegalStateException("Target file already exists and is not moving: " + cr.newClass);
             }
@@ -318,6 +341,7 @@ public final class AstBatchRenamer {
         List<Map.Entry<Path, Path>> stagedMoves = new ArrayList<>();
         int stageIdx = 0;
         for (ClassRename cr : classRenames.values()) {
+            if (cr.curClass.contains("$")) continue;
             Path oldPath = srcRoot.resolve(cr.curClass + ".java");
             Path newPath = srcRoot.resolve(cr.newClass + ".java");
             if (oldPath.equals(newPath)) continue;
@@ -446,19 +470,27 @@ public final class AstBatchRenamer {
                                 }
                                 ExpressionTree expr = ms.getExpression();
                                 while (expr instanceof MemberSelectTree ems) {
-                                    ClassRename cr = classRenames.get(ems.toString().replace('.', '/'));
+                                    ClassRename cr = lookupClassByDotted(ems.toString(), classRenames);
                                     if (cr != null) {
                                         addClassMoveOrRenameImportEdits(cu, sp, content, ems, cr, "static-import-pkg", "static-import-class", edits);
-                                        break;
                                     }
                                     expr = ems.getExpression();
                                 }
                             } else if ("*".equals(right)) {
-                                // import pkg.OldClass.*; OR import oldPkg.*;
+                                // import pkg.OldClass.*; OR import pkg.Outer.OldInner.*; OR import oldPkg.*;
                                 String leftInt = left.replace('.', '/');
-                                ClassRename cr = classRenames.get(leftInt);
+                                ClassRename cr = lookupClassByDotted(left, classRenames);
                                 if (cr != null && ms.getExpression() instanceof MemberSelectTree lhsMs) {
                                     addClassMoveOrRenameImportEdits(cu, sp, content, lhsMs, cr, "import-wildcard-class-pkg", "import-wildcard-class", edits);
+                                    // Also check any enclosing outer classes in the chain
+                                    ExpressionTree expr = lhsMs.getExpression();
+                                    while (expr instanceof MemberSelectTree ems) {
+                                        ClassRename ocr = lookupClassByDotted(ems.toString(), classRenames);
+                                        if (ocr != null) {
+                                            addClassMoveOrRenameImportEdits(cu, sp, content, ems, ocr, "import-outer-pkg", "import-outer-class", edits);
+                                        }
+                                        expr = ems.getExpression();
+                                    }
                                 } else if (wholeMovedPkgs.containsKey(leftInt)) {
                                     String targetPkg = wholeMovedPkgs.get(leftInt);
                                     replaceExprExact(cu, sp, content, ms.getExpression(), left, targetPkg.replace('/', '.'), "import-wildcard-pkg", edits);
@@ -475,35 +507,35 @@ public final class AstBatchRenamer {
                                     // Could be import pkg.OldClass.Inner.*;
                                     ExpressionTree expr = ms.getExpression();
                                     while (expr instanceof MemberSelectTree ems) {
-                                        ClassRename ocr = classRenames.get(ems.toString().replace('.', '/'));
+                                        ClassRename ocr = lookupClassByDotted(ems.toString(), classRenames);
                                         if (ocr != null) {
                                             addClassMoveOrRenameImportEdits(cu, sp, content, ems, ocr, "import-outer-pkg", "import-outer-class", edits);
-                                            break;
                                         }
                                         expr = ems.getExpression();
                                     }
                                     existingImports.add(full);
                                 }
                             } else {
-                                // import pkg.OldClass; or import pkg.OldClass.Inner;
-                                ClassRename directCr = classRenames.get(full.replace('.', '/'));
+                                // import pkg.OldClass; or import pkg.OldClass.OldInner; or import pkg.OldClass.OldInner.Sub;
+                                ClassRename directCr = lookupClassByDotted(full, classRenames);
+                                boolean rewritten = false;
                                 if (directCr != null) {
                                     addClassMoveOrRenameImportEdits(cu, sp, content, ms, directCr, "import-pkg", "import-class", edits);
-                                    existingImports.add(directCr.newClass.replace('/', '.'));
-                                } else {
-                                    boolean rewritten = false;
-                                    ExpressionTree expr = ms.getExpression();
-                                    while (expr instanceof MemberSelectTree ems) {
-                                        ClassRename ocr = classRenames.get(ems.toString().replace('.', '/'));
-                                        if (ocr != null) {
-                                            addClassMoveOrRenameImportEdits(cu, sp, content, ems, ocr, "import-outer-pkg", "import-outer-class", edits);
-                                            rewritten = true;
-                                            break;
-                                        }
-                                        expr = ems.getExpression();
+                                    if (!directCr.curClass.contains("$")) {
+                                        existingImports.add(directCr.newClass.replace('/', '.'));
                                     }
-                                    if (!rewritten) existingImports.add(full);
+                                    rewritten = true;
                                 }
+                                ExpressionTree expr = ms.getExpression();
+                                while (expr instanceof MemberSelectTree ems) {
+                                    ClassRename ocr = lookupClassByDotted(ems.toString(), classRenames);
+                                    if (ocr != null) {
+                                        addClassMoveOrRenameImportEdits(cu, sp, content, ems, ocr, "import-outer-pkg", "import-outer-class", edits);
+                                        rewritten = true;
+                                    }
+                                    expr = ems.getExpression();
+                                }
+                                if (!rewritten) existingImports.add(full);
                             }
                         }
                     }
@@ -561,9 +593,11 @@ public final class AstBatchRenamer {
                                         int s = (int) sp.getStartPosition(cu, node);
                                         int e = (int) sp.getEndPosition(cu, node);
                                         if (s >= 0 && e > s) {
+                                            int brace = content.indexOf('{', s);
                                             int paren = content.indexOf('(', s);
-                                            if (paren > s && paren <= e) {
-                                                int tokStart = findLastIdentToken(content, s, paren, oldSimple);
+                                            int limit = (paren > s && (brace < 0 || paren < brace)) ? paren : brace;
+                                            if (limit > s && limit <= e) {
+                                                int tokStart = findLastIdentToken(content, s, limit, oldSimple);
                                                 if (tokStart >= 0) {
                                                     edits.add(new TextEdit(tokStart, tokStart + oldSimple.length(), oldSimple, newSimple, "ctor-decl"));
                                                 }
@@ -617,12 +651,14 @@ public final class AstBatchRenamer {
                             String internal = toInternalName(te, elements);
                             ClassRename cr = classRenames.get(internal);
                             if (cr != null) {
-                                Element exprEl = trees.getElement(new TreePath(getCurrentPath(), node.getExpression()));
-                                if (exprEl instanceof PackageElement && !parentPkg(cr.curClass).equals(parentPkg(cr.newClass))) {
-                                    replaceExprExact(cu, sp, content, node.getExpression(),
-                                        parentPkg(cr.curClass).replace('/', '.'),
-                                        parentPkg(cr.newClass).replace('/', '.'),
-                                        "fqn-pkg", edits);
+                                if (!cr.curClass.contains("$")) {
+                                    Element exprEl = trees.getElement(new TreePath(getCurrentPath(), node.getExpression()));
+                                    if (exprEl instanceof PackageElement && !parentPkg(cr.curClass).equals(parentPkg(cr.newClass))) {
+                                        replaceExprExact(cu, sp, content, node.getExpression(),
+                                            parentPkg(cr.curClass).replace('/', '.'),
+                                            parentPkg(cr.newClass).replace('/', '.'),
+                                            "fqn-pkg", edits);
+                                    }
                                 }
                                 if (!simpleName(cr.curClass).equals(simpleName(cr.newClass))) {
                                     addMemberSelectEdit(cu, sp, content, node, simpleName(cr.curClass), simpleName(cr.newClass), "class-select", edits);
@@ -730,14 +766,31 @@ public final class AstBatchRenamer {
         CompilationUnitTree cu, SourcePositions sp, String content,
         MemberSelectTree ms, ClassRename cr, String pkgKind, String clsKind, List<TextEdit> edits
     ) {
-        String oldPkg = parentPkg(cr.curClass);
-        String newPkg = parentPkg(cr.newClass);
-        if (!oldPkg.equals(newPkg)) {
-            replaceExprExact(cu, sp, content, ms.getExpression(), oldPkg.replace('/', '.'), newPkg.replace('/', '.'), pkgKind, edits);
+        if (!cr.curClass.contains("$")) {
+            String oldPkg = parentPkg(cr.curClass);
+            String newPkg = parentPkg(cr.newClass);
+            if (!oldPkg.equals(newPkg)) {
+                replaceExprExact(cu, sp, content, ms.getExpression(), oldPkg.replace('/', '.'), newPkg.replace('/', '.'), pkgKind, edits);
+            }
         }
         if (!simpleName(cr.curClass).equals(simpleName(cr.newClass))) {
             addMemberSelectEdit(cu, sp, content, ms, simpleName(cr.curClass), simpleName(cr.newClass), clsKind, edits);
         }
+    }
+
+    private static ClassRename lookupClassByDotted(String dotted, Map<String, ClassRename> classRenames) {
+        String candidate = dotted.replace('.', '/');
+        ClassRename hit = classRenames.get(candidate);
+        if (hit != null) return hit;
+        String cur = candidate;
+        for (int i = 0; i < 4; i++) {
+            int slash = cur.lastIndexOf('/');
+            if (slash < 0) break;
+            cur = cur.substring(0, slash) + "$" + cur.substring(slash + 1);
+            hit = classRenames.get(cur);
+            if (hit != null) return hit;
+        }
+        return null;
     }
 
     private static EnumRename findEnumImport(String leftDotted, String right, Map<String, EnumRename> enumRenames) {
@@ -792,8 +845,13 @@ public final class AstBatchRenamer {
     }
 
     private static String simpleName(String internal) {
-        int i = internal.lastIndexOf('/');
+        int i = Math.max(internal.lastIndexOf('/'), internal.lastIndexOf('$'));
         return i >= 0 ? internal.substring(i + 1) : internal;
+    }
+
+    private static String outerOwner(String internal) {
+        int i = internal.lastIndexOf('$');
+        return i >= 0 ? internal.substring(0, i) : "";
     }
 
     private static String parentPkg(String internal) {
@@ -803,15 +861,24 @@ public final class AstBatchRenamer {
 
     private static String remapClassPrefix(String internal, Map<String, ClassRename> classRenames) {
         if (classRenames.isEmpty()) return internal;
-        ClassRename exact = classRenames.get(internal);
-        if (exact != null) return exact.newClass;
-        int dollar = internal.indexOf('$');
-        if (dollar > 0) {
-            String outer = internal.substring(0, dollar);
-            ClassRename outerCr = classRenames.get(outer);
-            if (outerCr != null) return outerCr.newClass + internal.substring(dollar);
+        if (!internal.contains("$")) {
+            ClassRename exact = classRenames.get(internal);
+            return exact != null ? exact.newClass : internal;
         }
-        return internal;
+        String[] parts = internal.split("\\$", -1);
+        StringBuilder oldPrefix = new StringBuilder(parts[0]);
+        ClassRename topCr = classRenames.get(parts[0]);
+        StringBuilder newOut = new StringBuilder(topCr != null ? topCr.newClass : parts[0]);
+        for (int i = 1; i < parts.length; i++) {
+            oldPrefix.append('$').append(parts[i]);
+            ClassRename nestedCr = classRenames.get(oldPrefix.toString());
+            if (nestedCr != null) {
+                newOut.append('$').append(simpleName(nestedCr.newClass));
+            } else {
+                newOut.append('$').append(parts[i]);
+            }
+        }
+        return newOut.toString();
     }
 
     private static String remapDescriptor(String desc, Map<String, ClassRename> classRenames) {
@@ -887,7 +954,7 @@ public final class AstBatchRenamer {
         // Add new C rows for renamed classes that weren't previously in disambig.tsv
         for (ClassRename cr : classRenames.values()) {
             if (!seenClassOrig.contains(cr.origClass)) {
-                out.add("C\t" + cr.origClass + "\t" + cr.newClass);
+                out.add("C\t" + cr.origClass + "\t" + remapClassPrefix(cr.curClass, classRenames));
             }
         }
 

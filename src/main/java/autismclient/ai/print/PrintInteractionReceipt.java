@@ -27,17 +27,17 @@ final class PrintInteractionReceipt {
 
    PrintEnv.Inner_StreamUtil init(Object currentWorld, Object currentPlayer, boolean acknowledged, long now) {
       if (this.init_Z) {
-         return PrintEnv.Inner_StreamUtil.read;
+         return PrintEnv.Inner_StreamUtil.UNCERTAIN;
       } else if (this.init_I < 0) {
-         return PrintEnv.Inner_StreamUtil.init;
+         return PrintEnv.Inner_StreamUtil.NONE;
       } else if (this.init_Obj != currentWorld || this.load_Obj != currentPlayer) {
-         return PrintEnv.Inner_StreamUtil.read;
+         return PrintEnv.Inner_StreamUtil.UNCERTAIN;
       } else if (acknowledged) {
          this.init_I = -1;
          this.init_Obj = this.load_Obj = null;
-         return PrintEnv.Inner_StreamUtil.init;
+         return PrintEnv.Inner_StreamUtil.NONE;
       } else {
-         return now - this.load_J >= 10000000000L ? PrintEnv.Inner_StreamUtil.read : PrintEnv.Inner_StreamUtil.load;
+         return now - this.load_J >= 10000000000L ? PrintEnv.Inner_StreamUtil.UNCERTAIN : PrintEnv.Inner_StreamUtil.PENDING;
       }
    }
 }

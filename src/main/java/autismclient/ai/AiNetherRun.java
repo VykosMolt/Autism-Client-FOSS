@@ -463,7 +463,7 @@ final class AiNetherRun {
                            return this.init(AiOperation.Status.UNCERTAIN, "Unexpected destination after Nether expedition");
                         }
 
-                        if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.write
+                        if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.RETURN
                            && this.init_AiOperation != null
                            && (this.load_Str.equals("through the portal") || this.load_Str.startsWith("build a portal home"))) {
                            AiOperation.Result arrival = this.init_AiOperation.tick();
@@ -499,7 +499,7 @@ final class AiNetherRun {
                            autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(5000000000L);
                         }
 
-                        if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.load
+                        if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.RODS
                            && this.init_AiOperation != null
                            && AiNetherRun.init(this.load_Str)
                            && !this.init_Y.init_Z()
@@ -1000,7 +1000,7 @@ final class AiNetherRun {
                               true,
                               false,
                               20,
-                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                               true,
                               2.0,
                               null,
@@ -1059,7 +1059,7 @@ final class AiNetherRun {
                   }
 
                   if (this.init_I_18() < this.size || AiRunResources.load_Z() && this.write_BlockPos == null) {
-                     this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.init;
+                     this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.FORTRESS;
                      if (this.load_BlockPos == null || System.nanoTime() > this.read_J) {
                         this.read_J = System.nanoTime() + 2000000000L;
                         List<BlockPos> found = AiWorldScan.init_List_Str_I("minecraft:blaze", 12);
@@ -1094,7 +1094,7 @@ final class AiNetherRun {
                         }
 
                         if (this.init_I_18() < this.size) {
-                           this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.load;
+                           this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.RODS;
                            Entity blaze = this.load(24);
                            Entity inView = this.read(24);
                            if (inView != null) {
@@ -1200,7 +1200,7 @@ final class AiNetherRun {
                                        true,
                                        true,
                                        60,
-                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                        true,
                                        2.0,
                                        null,
@@ -1308,7 +1308,7 @@ final class AiNetherRun {
                                           true,
                                           true,
                                           60,
-                                          autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                                          autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                                           true,
                                           2.0,
                                           null,
@@ -1359,7 +1359,7 @@ final class AiNetherRun {
                      }
                   } else {
                      if (this.load_I_11() < pearls && optionalPearls) {
-                        this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.read;
+                        this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.PEARLS;
                         if (AiCraft.init_I("minecraft:gold_block") > 0 && this.sync_I < 3) {
                            this.sync_I++;
                            return this.init(
@@ -1575,7 +1575,7 @@ final class AiNetherRun {
                      );
                }
 
-               this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.write;
+               this.init_aB_TaskQueue = AiNetherRun.Inner_TaskQueue.RETURN;
                BlockPos nearby = AiNetherRun.init(mc, mc.player.blockPosition(), 8);
                BlockPos loadedPortal = nearby != null
                   ? nearby
@@ -1601,7 +1601,7 @@ final class AiNetherRun {
                         unknown.message(),
                         unknown.dataJson(),
                         unknown.evidence(),
-                        unknown.status() == AiOperation.Status.FAILED ? AiFailure.init_A : unknown.failure()
+                        unknown.status() == AiOperation.Status.FAILED ? AiFailure.TARGET_NOT_FOUND : unknown.failure()
                      );
                   }
 
@@ -1851,7 +1851,7 @@ final class AiNetherRun {
             }
 
             autismclient.ai.engine.AiPathfinder.Inner_IoWorker init_ClassCache_IoWorke() {
-               return this.put_I > 0 ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load;
+               return this.put_I > 0 ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST;
             }
 
             AiOperation init(final int enderman, final AiOperation fight) {
@@ -2656,7 +2656,7 @@ final class AiNetherRun {
                boolean gone = targetGone.getAsBoolean();
                if (gone && !this.read) {
                   refused.run();
-                  return this.init(AiOperation.Result.failed(AiFailure.init_A, "Gold target already disappeared; trying another", "{}"));
+                  return this.init(AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, "Gold target already disappeared; trying another", "{}"));
                }
 
                if (gone) {
@@ -2669,7 +2669,7 @@ final class AiNetherRun {
                } else if (this.init_Z && revision.getAsLong() > this.init_J) {
                   this.init_Z = false;
                   refused.run();
-                  return this.init(AiOperation.Result.failed(AiFailure.init_A, "Server restored the gold target; trying another", "{}"));
+                  return this.init(AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, "Server restored the gold target; trying another", "{}"));
                }
 
                if (this.init_Z) {
@@ -2680,7 +2680,7 @@ final class AiNetherRun {
 
                if (watched.getAsBoolean()) {
                   refused.run();
-                  return this.init(AiOperation.Result.failed(AiFailure.init_A, "A piglin sees this mining stance; trying another gold target", "{}"));
+                  return this.init(AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, "A piglin sees this mining stance; trying another gold target", "{}"));
                }
 
                this.init_J = revision.getAsLong();
@@ -2802,7 +2802,7 @@ final class AiNetherRun {
    }
 
    static boolean init_Z_Z_A(boolean fightSucceeded, AiFailure failure) {
-      return fightSucceeded && failure == AiFailure.load;
+      return fightSucceeded && failure == AiFailure.NO_REACHABLE_TARGET;
    }
 
    static boolean init_Z_Str_D(String item, double radius) {
@@ -3000,9 +3000,9 @@ final class AiNetherRun {
    }
 
    enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write;
+      FORTRESS,
+      RODS,
+      PEARLS,
+      RETURN;
    }
 }

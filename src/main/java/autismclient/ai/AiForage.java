@@ -240,7 +240,7 @@ final class AiForage {
 
          BlockPos source = best;
          return AiNetherRun.init_AiOperation_AiOperation_Supplier(
-            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true),
+            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true),
             () -> AiBucket.init(AiJson.init_JsonObject_ObjArr("action", "fill", "fluid", "water", "timeoutSeconds", 10))
          );
       } else {

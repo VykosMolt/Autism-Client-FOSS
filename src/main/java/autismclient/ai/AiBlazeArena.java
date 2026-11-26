@@ -230,7 +230,7 @@ final class AiBlazeArena implements AiOperation {
                   false,
                   false,
                   3,
-                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                   false,
                   0.0,
                   null,
@@ -293,8 +293,8 @@ final class AiBlazeArena implements AiOperation {
             }
 
             autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-            if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
-               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+            if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
+               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                   this.update++;
                } else {
                   this.sync++;
@@ -308,7 +308,7 @@ final class AiBlazeArena implements AiOperation {
                         "result",
                         status,
                         "reason",
-                        status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read ? this.init_DataPipe.init_Str() : "server block change confirmed",
+                        status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED ? this.init_DataPipe.init_Str() : "server block change confirmed",
                         "body",
                         this.init_Minecraft.player.position().toString(),
                         "eyeY",

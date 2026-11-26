@@ -87,7 +87,7 @@ final class AiSurvival {
 
       AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
       Entity threat = init_Entity(mc);
-      if (threat != null && AiThreats.init_cv_DataUtil(threat) == AiThreats.Inner_DataUtil.stop) {
+      if (threat != null && AiThreats.init_cv_DataUtil(threat) == AiThreats.Inner_DataUtil.AVOID) {
          return load(AiJson.init_JsonObject_ObjArr("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
 
@@ -547,7 +547,7 @@ final class AiSurvival {
                            shaft,
                            false,
                            Math.min(shaft ? 5 : 3, remaining),
-                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                            shaft,
                            2.0,
                            AiSurvival.init(this.init_Minecraft.player.blockPosition(), target)

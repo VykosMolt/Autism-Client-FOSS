@@ -364,13 +364,13 @@ public final class AiExcavate {
          if (!this.update_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
             if (this.init_Minecraft.level != this.init_Obj) {
                this.cancel();
-               return AiOperation.Result.failed(AiFailure.valid, "World changed during excavation", this.load_JsonObject_2().toString());
+               return AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "World changed during excavation", this.load_JsonObject_2().toString());
             }
 
             if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z()) {
                this.cancel();
                return AiOperation.Result.failed(
-                  AiFailure.start,
+                  AiFailure.LOW_HEALTH,
                   AiLowHealth.init("excavation", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()),
                   this.load_JsonObject_2().toString()
                );
@@ -418,7 +418,7 @@ public final class AiExcavate {
                this.init_AiOperation.cancel();
                this.init_AiOperation = null;
                if (result.status() != AiOperation.Status.SUCCEEDED) {
-                  if (result.failure() == AiFailure.get) {
+                  if (result.failure() == AiFailure.TOOL_WORN) {
                      JsonObject failureData = this.load_JsonObject_2();
                      failureData.addProperty("reason", "TOOL_WORN");
                      Item needed = AiItems.init_Item(this.init_BlockState(this.load_BlockPos));
@@ -433,7 +433,7 @@ public final class AiExcavate {
                      this.init_ByteReader_StreamU.init(this.load_BlockPos);
                   } else {
                      if (this.init_ByteReader_ConfigS != null) {
-                        return this.init("Could not break a staircase cell", AiFailure.load);
+                        return this.init("Could not break a staircase cell", AiFailure.NO_REACHABLE_TARGET);
                      }
 
                      this.init(this.load_BlockPos, "break_failed");
@@ -485,7 +485,7 @@ public final class AiExcavate {
                   } else if (!this.init_BlockState(cell).isAir()) {
                      if (AiExcavate.init((x, y, z) -> this.init_ClassCache_FileCac(new BlockPos(x, y, z)).lava(), cell.getX(), cell.getY(), cell.getZ())) {
                         if (this.init_ByteReader_ConfigS != null) {
-                           return this.init("Lava beside the staircase", AiFailure.push);
+                           return this.init("Lava beside the staircase", AiFailure.LAVA_DETECTED);
                         }
 
                         this.sync++;
@@ -499,7 +499,7 @@ public final class AiExcavate {
                               cellState.requiresCorrectToolForDrops(), AiPathfinder.Inner_StreamUtil.init_Z_Minecraft(this.init_Minecraft, cellState, 36)
                            )) {
                            if (this.init_ByteReader_ConfigS != null) {
-                              return this.init("A block requires a harvesting tool that is not carried", AiFailure.read);
+                              return this.init("A block requires a harvesting tool that is not carried", AiFailure.UNBREAKABLE_OBSTACLE);
                            }
 
                            this.init(cell, "no_tool");
@@ -510,14 +510,14 @@ public final class AiExcavate {
                            }
 
                            if (this.init_ByteReader_ConfigS != null) {
-                              return this.init("No floor under the staircase", AiFailure.load);
+                              return this.init("No floor under the staircase", AiFailure.NO_REACHABLE_TARGET);
                            }
 
                            this.init(cell, "footing");
                         }
                      } else {
                         if (this.init_ByteReader_ConfigS != null) {
-                           return this.init("An undiggable or fluid cell blocks the staircase", AiFailure.read);
+                           return this.init("An undiggable or fluid cell blocks the staircase", AiFailure.UNBREAKABLE_OBSTACLE);
                         }
 
                         this.init(cell, "unbreakable");
@@ -549,7 +549,7 @@ public final class AiExcavate {
                }
 
                this.cancel();
-               return AiOperation.Result.failed(AiFailure.load, "Excavation incomplete; some cells could not be cleared", this.load_JsonObject_2().toString());
+               return AiOperation.Result.failed(AiFailure.NO_REACHABLE_TARGET, "Excavation incomplete; some cells could not be cleared", this.load_JsonObject_2().toString());
             }
          } else {
             return this.init(AiOperation.Status.CANCELLED, this.init_Str + " cancelled");

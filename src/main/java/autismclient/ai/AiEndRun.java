@@ -147,7 +147,7 @@ final class AiEndRun {
          }
       }
 
-      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true));
+      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true));
    }
 
    static AiOperation init(final Minecraft mc, final BlockPos portal) {
@@ -351,13 +351,13 @@ final class AiEndRun {
                               this.read_J = 0L;
                            }
 
-                           if (this.load_Str.startsWith("fight the dragon") && r.failure() == AiFailure.start) {
+                           if (this.load_Str.startsWith("fight the dragon") && r.failure() == AiFailure.LOW_HEALTH) {
                               this.init_F = Math.min(20.0F, mc.player.getMaxHealth()) - 0.01F;
                            }
 
                            if (this.load_Str.startsWith("fight the dragon")
                               && r.status() != AiOperation.Status.SUCCEEDED
-                              && r.failure() != AiFailure.start
+                              && r.failure() != AiFailure.LOW_HEALTH
                               && ++this.read_I >= 3
                               && !this.load_Z) {
                               return this.init(AiOperation.Status.FAILED, "The dragon fight failed " + this.read_I + " times: " + AiSpeedrun.init_Str_Str(r.message()));
@@ -420,7 +420,7 @@ final class AiEndRun {
                   this.write_J = System.nanoTime() + 3000000000L;
                   return this.init(
                      "to the heal spot at " + this.read_BlockPos.toShortString(),
-                     AiGuard.init(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load, true))
+                     AiGuard.init(AiGoto.init(this.read_BlockPos, 0.6, true, true, true, 40, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST, true))
                   );
                } else if (mc.player.getFoodData().getFoodLevel() < 20 && AiSurvival.init(mc.player.getInventory()) >= 0) {
                   return this.init("eat before the fight", AiSurvival.init(AiJson.init_JsonObject_ObjArr("food", 20, "timeoutSeconds", 20)));
@@ -532,7 +532,7 @@ final class AiEndRun {
                         true,
                         true,
                         120,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                         true,
                         2.0,
                         null,
@@ -573,7 +573,7 @@ final class AiEndRun {
                         true,
                         true,
                         300,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST,
                         true,
                         2.0,
                         new AiNetherRun.Inner_NetHelper(fx, fz, 24),

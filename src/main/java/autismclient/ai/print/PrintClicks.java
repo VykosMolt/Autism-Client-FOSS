@@ -90,7 +90,7 @@ final class PrintClicks {
          BlockState state = view.getBlockState(hit.getBlockPos());
          boolean waterloggable = state.getBlock() instanceof LiquidBlockContainer && init(target) == Items.WATER_BUCKET;
          BlockPos destination = waterloggable ? hit.getBlockPos() : hit.getBlockPos().relative(hit.getDirection());
-         return destination.equals(target.pos()) && (mode != PrintClicks.Inner_CachePool.write || waterloggable);
+         return destination.equals(target.pos()) && (mode != PrintClicks.Inner_CachePool.WATERLOG || waterloggable);
       } else {
          return false;
       }
@@ -307,7 +307,7 @@ final class PrintClicks {
 
             return predicted != null && init(view, rules, target, predicted, shape) && !init_Z_ArrayUtil_5(view, predicted, target.pos(), body)
                ? new PrintClicks.Inner_StreamUtil(
-                  target, PrintClicks.Inner_CachePool.init, item, hit.getBlockPos(), hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, predicted
+                  target, PrintClicks.Inner_CachePool.PLACE, item, hit.getBlockPos(), hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, predicted
                )
                : null;
          } else {
@@ -391,7 +391,7 @@ final class PrintClicks {
       @Nullable BlockPos requiredSupport
    ) {
       PrintClicks.Inner_StreamUtil click = init(view, env, rules, target, item, mode, feet, crouch, false, budget, reach, constraint, requiredSupport, false);
-      if (click != null && mode == PrintClicks.Inner_CachePool.init && !view.init_Z()) {
+      if (click != null && mode == PrintClicks.Inner_CachePool.PLACE && !view.init_Z()) {
          BlockState placed = env.init(item, click.result(), click.yaw(), click.pitch(), click.crouch(), target.pos());
          if (placed != null && init_Z_ArrayUtil_3(view, rules, target, placed) && placed != click.predicted()) {
             boolean compact = click.eye().y - feet.y < 1.61;
@@ -444,32 +444,32 @@ final class PrintClicks {
          return null;
       }
 
-      if (mode != PrintClicks.Inner_CachePool.load && mode != PrintClicks.Inner_CachePool.write && mode != PrintClicks.Inner_CachePool.update) {
+      if (mode != PrintClicks.Inner_CachePool.INTERACT && mode != PrintClicks.Inner_CachePool.WATERLOG && mode != PrintClicks.Inner_CachePool.DIG) {
          BlockState here = view.getBlockState(cell);
          if (here == PrintView.init_BlockState) {
             return null;
          }
 
-         if (mode == PrintClicks.Inner_CachePool.init && !load(here)) {
+         if (mode == PrintClicks.Inner_CachePool.PLACE && !load(here)) {
             return null;
          }
 
-         if (mode != PrintClicks.Inner_CachePool.read || here.isAir() || here.canBeReplaced() && !here.getFluidState().isSource()) {
-            Direction requiredLook = mode == PrintClicks.Inner_CachePool.init ? init_Direction(target.wanted()) : null;
-            RailShape railShape = mode == PrintClicks.Inner_CachePool.init ? init_RailShape(view, target) : null;
-            int passes = mode == PrintClicks.Inner_CachePool.init && init(target, constraint) ? 2 : 1;
+         if (mode != PrintClicks.Inner_CachePool.POUR || here.isAir() || here.canBeReplaced() && !here.getFluidState().isSource()) {
+            Direction requiredLook = mode == PrintClicks.Inner_CachePool.PLACE ? init_Direction(target.wanted()) : null;
+            RailShape railShape = mode == PrintClicks.Inner_CachePool.PLACE ? init_RailShape(view, target) : null;
+            int passes = mode == PrintClicks.Inner_CachePool.PLACE && init(target, constraint) ? 2 : 1;
 
             for (int pass = 0; pass < passes; pass++) {
                for (Direction d : Direction.values()) {
                   BlockPos support = cell.relative(d);
                   if (requiredSupport == null || support.equals(requiredSupport)) {
                      Direction face = d.getOpposite();
-                     if (mode != PrintClicks.Inner_CachePool.init || init(target.wanted(), face, exact ? null : constraint)) {
+                     if (mode != PrintClicks.Inner_CachePool.PLACE || init(target.wanted(), face, exact ? null : constraint)) {
                         BlockState supportState = view.getBlockState(support);
                         if (read(supportState)
                            && (crouch || !init_Z(supportState))
                            && (
-                              mode != PrintClicks.Inner_CachePool.read
+                              mode != PrintClicks.Inner_CachePool.POUR
                                  || !(supportState.getBlock() instanceof LiquidBlockContainer)
                                  || item != Items.WATER_BUCKET
                            )) {
@@ -482,7 +482,7 @@ final class PrintClicks {
                                  if (face.getAxisDirection() == AxisDirection.POSITIVE ? !(eyeSide <= 0.001) : !(eyeSide >= -0.001)) {
                                     for (Vec3 point : init_List_AABB(b, face, plane, pass > 0)) {
                                        if (!(eye.distanceToSqr(point) > init(reach))
-                                          && (mode != PrintClicks.Inner_CachePool.init || exact || init(constraint, face, eye, point, support))) {
+                                          && (mode != PrintClicks.Inner_CachePool.PLACE || exact || init(constraint, face, eye, point, support))) {
                                           float yaw = 0.0F;
                                           float pitch = 0.0F;
                                           if (requiredLook != null || railShape != null) {
@@ -523,7 +523,7 @@ final class PrintClicks {
                                              }
 
                                              BlockState predicted = null;
-                                             if (mode != PrintClicks.Inner_CachePool.init) {
+                                             if (mode != PrintClicks.Inner_CachePool.PLACE) {
                                                 return new PrintClicks.Inner_StreamUtil(
                                                    target, mode, item, support, face, hit, eye, feet, crouch, yaw, pitch, predicted
                                                 );
@@ -561,7 +561,7 @@ final class PrintClicks {
             return null;
          }
       } else {
-         return mode == PrintClicks.Inner_CachePool.load && !init(view, target, body)
+         return mode == PrintClicks.Inner_CachePool.INTERACT && !init(view, target, body)
             ? null
             : init(view, env, rules, target, item, mode, eye, feet, crouch, exact, budget, reach);
       }
@@ -738,11 +738,11 @@ final class PrintClicks {
       @Nullable BlockPos support
    ) {
       PrintClicks.Inner_StreamUtil click = init(
-         view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.init, feet, true, exact, budget, reach, constraint, support
+         view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.PLACE, feet, true, exact, budget, reach, constraint, support
       );
       return click != null
          ? click
-         : init(view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.init, feet, false, exact, budget, reach, constraint, support);
+         : init(view, env, rules, target, target.item(), PrintClicks.Inner_CachePool.PLACE, feet, false, exact, budget, reach, constraint, support);
    }
 
    static @Nullable Direction init(BlockState live, BlockState wanted) {
@@ -787,11 +787,11 @@ final class PrintClicks {
    ) {
       BlockPos cell = target.pos();
       BlockState state = view.getBlockState(cell);
-      if (mode == PrintClicks.Inner_CachePool.write && !(state.getBlock() instanceof LiquidBlockContainer)) {
+      if (mode == PrintClicks.Inner_CachePool.WATERLOG && !(state.getBlock() instanceof LiquidBlockContainer)) {
          return null;
       }
 
-      if (mode == PrintClicks.Inner_CachePool.load && item instanceof MinecartItem) {
+      if (mode == PrintClicks.Inner_CachePool.INTERACT && item instanceof MinecartItem) {
          if (!(state.getBlock() instanceof BaseRailBlock rail)) {
             return null;
          }
@@ -809,15 +809,15 @@ final class PrintClicks {
          return null;
       }
 
-      Direction merge = mode == PrintClicks.Inner_CachePool.load && item == state.getBlock().asItem() ? init(state, target.wanted()) : null;
-      Set<Direction> pulse = mode == PrintClicks.Inner_CachePool.load && PrintCore.init_Z_ListPool_Item(target, item)
+      Direction merge = mode == PrintClicks.Inner_CachePool.INTERACT && item == state.getBlock().asItem() ? init(state, target.wanted()) : null;
+      Set<Direction> pulse = mode == PrintClicks.Inner_CachePool.INTERACT && PrintCore.init_Z_ListPool_Item(target, item)
          ? PrintCore.init_Set_ArrayUtil_BlockPos(view, cell)
          : null;
       if (pulse != null && pulse.isEmpty()) {
          return null;
       }
 
-      Direction only = mode == PrintClicks.Inner_CachePool.load ? view.init_Direction_BlockPos(cell) : null;
+      Direction only = mode == PrintClicks.Inner_CachePool.INTERACT ? view.init_Direction_BlockPos(cell) : null;
 
       for (AABB box : outline) {
          AABB b = box.move(cell);
@@ -839,7 +839,7 @@ final class PrintClicks {
                         if (hit != null && hit.getBlockPos().equals(cell) && hit.getDirection() == face) {
                            float yaw = PrintGeometry.init(eye, point);
                            float pitch = PrintGeometry.load(eye, point);
-                           if (mode != PrintClicks.Inner_CachePool.load || !(state.getBlock() instanceof MultifaceBlock)) {
+                           if (mode != PrintClicks.Inner_CachePool.INTERACT || !(state.getBlock() instanceof MultifaceBlock)) {
                               return new PrintClicks.Inner_StreamUtil(target, mode, item, cell, hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, null);
                            }
 
@@ -1328,11 +1328,11 @@ final class PrintClicks {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update;
+      PLACE,
+      INTERACT,
+      POUR,
+      WATERLOG,
+      DIG;
    }
 
    static final class Inner_DataUtil {

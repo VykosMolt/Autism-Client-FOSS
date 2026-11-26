@@ -103,10 +103,10 @@ final class PrintAccess {
       if (!this.flush_Z && this.init_LongArrayList == null) {
          long key = cell.asLong();
          int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(key);
-         if (this.init_UiHelper.init_UiHelper_J != PrintCore.J.load
+         if (this.init_UiHelper.init_UiHelper_J != PrintCore.J.FLUIDS
             || i < 0
-            || this.init_UiHelper.init_ListPoolArr[i].kind() != PrintTarget.Inner_DataUtil.read
-               && this.init_UiHelper.init_ListPoolArr[i].kind() != PrintTarget.Inner_DataUtil.write) {
+            || this.init_UiHelper.init_ListPoolArr[i].kind() != PrintTarget.Inner_DataUtil.FLUID
+               && this.init_UiHelper.init_ListPoolArr[i].kind() != PrintTarget.Inner_DataUtil.FLOW) {
             if (!this.init_Long2BooleanOpenHa.containsKey(key)) {
                this.init_Long2BooleanOpenHa.put(key, this.init_UiHelper.read_Z_BlockPos_BlockPos(cell, null));
             }
@@ -450,7 +450,7 @@ final class PrintAccess {
             if (Math.abs(tx - x) <= 4 && Math.abs(tz - z) <= 4 && ty - y <= 4 && y - ty <= 5 && (tx != x || tz != z || ty != y && ty != y + 1)) {
                BlockPos p = BlockPos.of(t);
                if (this.init_ArrayUtil.getBlockState(p).canBeReplaced()) {
-                  PrintTarget probe = new PrintTarget(-1, p, this.init_BlockState, PrintTarget.Inner_DataUtil.init, this.init_Item, null);
+                  PrintTarget probe = new PrintTarget(-1, p, this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null);
 
                   for (Vec3 feet : points) {
                      PrintClicks.Inner_StreamUtil click = PrintClicks.init(
@@ -459,7 +459,7 @@ final class PrintAccess {
                         this.init_UiHelper.init_PathHelper,
                         probe,
                         this.init_Item,
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         feet,
                         true,
                         false,
@@ -518,7 +518,7 @@ final class PrintAccess {
             && this.load_LongOpenHashSet.contains(floor)
             && !this.init_UiHelper.init_Long2ObjectOpenHas.containsKey(BlockPos.asLong(x, y - 2, z))
             && n.via != null
-            && n.via.kind == PrintAccess.Inner_StreamUtil.init
+            && n.via.kind == PrintAccess.Inner_StreamUtil.WALK
             && !this.init_UiHelper.sync_Z_J(floor)
             && this.init_UiHelper.update_Z_BlockPos(under)
             && this.init_UiHelper.write_Z_BlockPos_BlockPos(under, under)) {
@@ -547,7 +547,7 @@ final class PrintAccess {
                BlockPos p = BlockPos.of(t);
                if (!this.init_ArrayUtil.getBlockState(p).isAir()
                   && (n.temps <= 0 || t != this.update_J || this.init_UiHelper.init_Z_BlockPos_3(BlockPos.of(n.key), p, Blocks.AIR.defaultBlockState(), true))) {
-                  PrintTarget probe = new PrintTarget(-1, p, this.init_ArrayUtil.getBlockState(p), PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+                  PrintTarget probe = new PrintTarget(-1, p, this.init_ArrayUtil.getBlockState(p), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
                   PrintClicks.Inner_StreamUtil click = this.init_UiHelper.init_ConfigStore_Stream_J(n.key, n.feet, probe, budget, n.key == this.write_J);
                   if (click != null && this.init_UiHelper.write_Z_BlockPos_BlockPos(BlockPos.of(n.key), p)) {
                      this.load_ConfigStore_Stream = click;
@@ -732,7 +732,7 @@ final class PrintAccess {
       LongArrayList assumed = new LongArrayList();
 
       for (PrintAccess.Inner_NetHelper s : steps) {
-         if (s.kind == PrintAccess.Inner_StreamUtil.load || s.kind == PrintAccess.Inner_StreamUtil.read) {
+         if (s.kind == PrintAccess.Inner_StreamUtil.PILLAR || s.kind == PrintAccess.Inner_StreamUtil.BRIDGE) {
             int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(s.block);
             if (s.own && i >= 0) {
                this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(s.block), this.init_UiHelper.init_ListPoolArr[i].wanted());
@@ -741,10 +741,10 @@ final class PrintAccess {
             }
 
             assumed.add(s.block);
-         } else if (s.kind == PrintAccess.Inner_StreamUtil.write || s.kind == PrintAccess.Inner_StreamUtil.sync) {
+         } else if (s.kind == PrintAccess.Inner_StreamUtil.DIG || s.kind == PrintAccess.Inner_StreamUtil.BREAK) {
             this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(s.block), Blocks.AIR.defaultBlockState());
             assumed.add(s.block);
-         } else if (s.kind == PrintAccess.Inner_StreamUtil.update) {
+         } else if (s.kind == PrintAccess.Inner_StreamUtil.TUNNEL) {
             long head = BlockPos.offset(s.block, Direction.UP);
             this.init_ArrayUtil.init_V_BlockPos_BlockState(BlockPos.of(s.block), Blocks.AIR.defaultBlockState());
             assumed.add(s.block);
@@ -767,7 +767,7 @@ final class PrintAccess {
       if (!this.flush_Z
          && (
             this.init_LongArrayList != null
-               || this.init_UiHelper.init_UiHelper_J == PrintCore.J.read
+               || this.init_UiHelper.init_UiHelper_J == PrintCore.J.TEARDOWN
                || this.init_UiHelper.tick_Z_BlockPos(BlockPos.of(n.key))
                || this.init_UiHelper.push_Z() && this.init_UiHelper.tick_Z_BlockPos(BlockPos.of(this.write_J))
          )) {
@@ -791,7 +791,7 @@ final class PrintAccess {
       boolean drops = n.feet < startFeet - 0.5;
 
       for (PrintAccess.Inner_CachePool at = n; !drops && at != null && at.parent != null; at = at.parent) {
-         if (at.via != null && at.via.kind == PrintAccess.Inner_StreamUtil.init && at.feet < at.parent.feet - 0.6 - 1.0E-6) {
+         if (at.via != null && at.via.kind == PrintAccess.Inner_StreamUtil.WALK && at.feet < at.parent.feet - 0.6 - 1.0E-6) {
             drops = true;
          }
       }
@@ -835,14 +835,14 @@ final class PrintAccess {
             int fx = BlockPos.getX(from.key);
             int fy = BlockPos.getY(from.key);
             int fz = BlockPos.getZ(from.key);
-            if (s.kind == PrintAccess.Inner_StreamUtil.init) {
+            if (s.kind == PrintAccess.Inner_StreamUtil.WALK) {
                int tx = BlockPos.getX(at.key);
                int tz = BlockPos.getZ(at.key);
                if (Double.isNaN(PrintNav.init_D_ArrayUtil(this.init_ArrayUtil, tx, tz, at.feet, fx, fz, from.feet, tx != fx && tz != fz))) {
                   return false;
                }
             } else {
-               if (s.kind != PrintAccess.Inner_StreamUtil.load || s.own || assumed.isEmpty() || assumed.getLong(assumed.size() - 1) != s.block) {
+               if (s.kind != PrintAccess.Inner_StreamUtil.PILLAR || s.own || assumed.isEmpty() || assumed.getLong(assumed.size() - 1) != s.block) {
                   return false;
                }
 
@@ -866,7 +866,7 @@ final class PrintAccess {
       int k = 0;
 
       for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null && k < 64; k++) {
-         if ((at.via.kind == PrintAccess.Inner_StreamUtil.load || at.via.kind == PrintAccess.Inner_StreamUtil.read) && at.via.block == floor) {
+         if ((at.via.kind == PrintAccess.Inner_StreamUtil.PILLAR || at.via.kind == PrintAccess.Inner_StreamUtil.BRIDGE) && at.via.block == floor) {
             return false;
          }
 
@@ -881,7 +881,7 @@ final class PrintAccess {
 
       for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null && k < 64; k++) {
          PrintAccess.Inner_NetHelper s = at.via;
-         if ((s.kind == PrintAccess.Inner_StreamUtil.load || s.kind == PrintAccess.Inner_StreamUtil.read) && !s.own) {
+         if ((s.kind == PrintAccess.Inner_StreamUtil.PILLAR || s.kind == PrintAccess.Inner_StreamUtil.BRIDGE) && !s.own) {
             long b = s.block;
             if (BlockPos.getX(b) == cell.getX() && BlockPos.getZ(b) == cell.getZ() && BlockPos.getY(b) < cell.getY() && BlockPos.getY(b) >= cell.getY() - 3) {
                return true;
@@ -961,7 +961,7 @@ final class PrintAccess {
             List<Vec3> points = PrintClicks.init_List_ArrayUtil(
                this.init_ArrayUtil, n.key, n.feet, PrintClicks.init(tg, this.init_UiHelper.init_u_DataUtil_I(g))
             );
-            boolean pour = tg.kind() == PrintTarget.Inner_DataUtil.read;
+            boolean pour = tg.kind() == PrintTarget.Inner_DataUtil.FLUID;
             boolean waterlog = !pour && this.init_UiHelper.init_BArr[g] == 2;
             if (!pour && !waterlog || this.init_UiHelper.init_Z_J_ListPool(n.key, tg)) {
                for (Vec3 feet : points) {
@@ -984,7 +984,7 @@ final class PrintAccess {
                         this.init_UiHelper.init_PathHelper,
                         tg,
                         PrintClicks.init(tg),
-                        waterlog ? PrintClicks.Inner_CachePool.write : PrintClicks.Inner_CachePool.read,
+                        waterlog ? PrintClicks.Inner_CachePool.WATERLOG : PrintClicks.Inner_CachePool.POUR,
                         feet,
                         !waterlog,
                         false,
@@ -1019,7 +1019,7 @@ final class PrintAccess {
       for (Direction d : Direction.values()) {
          BlockPos sn = p.relative(d);
          if (this.init_UiHelper.init_Z_BlockPos_BlockPos(sn, p)) {
-            PrintTarget probe = new PrintTarget(-1, sn, tempState, PrintTarget.Inner_DataUtil.init, temp, null);
+            PrintTarget probe = new PrintTarget(-1, sn, tempState, PrintTarget.Inner_DataUtil.PLACE, temp, null);
 
             for (Vec3 feet : points) {
                if (PrintClicks.init(
@@ -1028,7 +1028,7 @@ final class PrintAccess {
                      this.init_UiHelper.init_PathHelper,
                      probe,
                      temp,
-                     PrintClicks.Inner_CachePool.init,
+                     PrintClicks.Inner_CachePool.PLACE,
                      feet,
                      true,
                      false,
@@ -1141,7 +1141,7 @@ final class PrintAccess {
                                  h2,
                                  n.g + step,
                                  new PrintAccess.Inner_NetHelper(
-                                    PrintAccess.Inner_StreamUtil.init, n.key, BlockPos.asLong(nx, ny, nz), h2, -9223372036854775808L, false, null
+                                    PrintAccess.Inner_StreamUtil.WALK, n.key, BlockPos.asLong(nx, ny, nz), h2, -9223372036854775808L, false, null
                                  ),
                                  n,
                                  n.temps
@@ -1191,7 +1191,7 @@ final class PrintAccess {
                      py + 1,
                      n.g + 12.0 + (temp ? this.push_D + bury : 0.0),
                      new PrintAccess.Inner_NetHelper(
-                        PrintAccess.Inner_StreamUtil.load, n.key, BlockPos.asLong(x, py + 1, z), py + 1, feetCell.asLong(), own, Direction.UP
+                        PrintAccess.Inner_StreamUtil.PILLAR, n.key, BlockPos.asLong(x, py + 1, z), py + 1, feetCell.asLong(), own, Direction.UP
                      ),
                      n,
                      n.temps + (temp ? 1 : 0)
@@ -1239,7 +1239,7 @@ final class PrintAccess {
                                           stand.getY(),
                                           n.g + 16.0 + (temp ? this.push_D + bury : 0.0),
                                           new PrintAccess.Inner_NetHelper(
-                                             PrintAccess.Inner_StreamUtil.read, n.key, stand.asLong(), stand.getY(), cell.asLong(), own, d
+                                             PrintAccess.Inner_StreamUtil.BRIDGE, n.key, stand.asLong(), stand.getY(), cell.asLong(), own, d
                                           ),
                                           n,
                                           n.temps + (temp ? 1 : 0)
@@ -1273,14 +1273,14 @@ final class PrintAccess {
                      && this.init_Z_BlockPos_BlockState(cell, tempState)) {
                      double off = 0.75;
                      Vec3 lean = new Vec3(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off);
-                     PrintTarget probe = new PrintTarget(-1, cell, tempState, PrintTarget.Inner_DataUtil.init, tempState.getBlock().asItem(), null);
+                     PrintTarget probe = new PrintTarget(-1, cell, tempState, PrintTarget.Inner_DataUtil.PLACE, tempState.getBlock().asItem(), null);
                      if (PrintClicks.init(
                            this.init_ArrayUtil,
                            this.init_UiHelper.init_EventBus,
                            this.init_UiHelper.init_PathHelper,
                            probe,
                            probe.item(),
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            lean,
                            true,
                            false,
@@ -1293,7 +1293,7 @@ final class PrintAccess {
                               stand.asLong(),
                               stand.getY(),
                               n.g + 16.0 + 1.5 + this.push_D,
-                              new PrintAccess.Inner_NetHelper(PrintAccess.Inner_StreamUtil.read, n.key, stand.asLong(), stand.getY(), cell.asLong(), false, d),
+                              new PrintAccess.Inner_NetHelper(PrintAccess.Inner_StreamUtil.BRIDGE, n.key, stand.asLong(), stand.getY(), cell.asLong(), false, d),
                               n,
                               n.temps + 1
                            ),
@@ -1326,7 +1326,7 @@ final class PrintAccess {
                                  to,
                                  landing,
                                  n.g + 15.0 + 1.5 * Math.max(0.0, h - landing - 1.0),
-                                 new PrintAccess.Inner_NetHelper(PrintAccess.Inner_StreamUtil.write, n.key, to, landing, under, false, Direction.DOWN),
+                                 new PrintAccess.Inner_NetHelper(PrintAccess.Inner_StreamUtil.DIG, n.key, to, landing, under, false, Direction.DOWN),
                                  n,
                                  n.temps
                               ),
@@ -1387,7 +1387,7 @@ final class PrintAccess {
                               f.asLong(),
                               h2,
                               n.g + step + 200.0 * ((fs ? 1 : 0) + (hs ? 1 : 0)),
-                              new PrintAccess.Inner_NetHelper(PrintAccess.Inner_StreamUtil.update, n.key, f.asLong(), h2, f.asLong(), false, d),
+                              new PrintAccess.Inner_NetHelper(PrintAccess.Inner_StreamUtil.TUNNEL, n.key, f.asLong(), h2, f.asLong(), false, d),
                               n,
                               n.temps
                            ),
@@ -1424,7 +1424,7 @@ final class PrintAccess {
                            h2,
                            n.g + 200.0 + 1.5 * (h - h2),
                            new PrintAccess.Inner_NetHelper(
-                              PrintAccess.Inner_StreamUtil.sync, n.key, BlockPos.asLong(x, yy, z), h2, under.asLong(), false, Direction.DOWN
+                              PrintAccess.Inner_StreamUtil.BREAK, n.key, BlockPos.asLong(x, yy, z), h2, under.asLong(), false, Direction.DOWN
                            ),
                            n,
                            n.temps
@@ -1452,7 +1452,7 @@ final class PrintAccess {
       int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(head.asLong());
       if (i >= 0
          && this.init_UiHelper.sync_Z_BlockPos(head)
-         && this.init_UiHelper.init_ListPoolArr[i].kind() == PrintTarget.Inner_DataUtil.init
+         && this.init_UiHelper.init_ListPoolArr[i].kind() == PrintTarget.Inner_DataUtil.PLACE
          && !this.init_UiHelper.init_ListPoolArr[i].wanted().getCollisionShape(this.init_ArrayUtil, head).isEmpty()) {
          int top = this.init_UiHelper.prev_I();
 
@@ -1496,7 +1496,7 @@ final class PrintAccess {
             int i = this.init_UiHelper.init_Long2IntOpenHashMa.get(above.asLong());
             if (i >= 0
                && this.init_UiHelper.sync_Z_BlockPos(above)
-               && this.init_UiHelper.init_ListPoolArr[i].kind() == PrintTarget.Inner_DataUtil.init
+               && this.init_UiHelper.init_ListPoolArr[i].kind() == PrintTarget.Inner_DataUtil.PLACE
                && !this.init_UiHelper.init_ListPoolArr[i].wanted().getCollisionShape(this.init_ArrayUtil, above).isEmpty()) {
                floorAbove = k >= 4;
                break;
@@ -1529,7 +1529,7 @@ final class PrintAccess {
 
       for (int g : goals) {
          PrintTarget t = core.init_ListPoolArr[g];
-         if (t.kind() == PrintTarget.Inner_DataUtil.init && !t.wanted().getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty()) {
+         if (t.kind() == PrintTarget.Inner_DataUtil.PLACE && !t.wanted().getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty()) {
             y = Math.min(y, t.pos().getY());
          }
       }
@@ -1585,7 +1585,7 @@ final class PrintAccess {
       int k = 0;
 
       for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null && k < 64; k++) {
-         if ((at.via.kind == PrintAccess.Inner_StreamUtil.load || at.via.kind == PrintAccess.Inner_StreamUtil.read)
+         if ((at.via.kind == PrintAccess.Inner_StreamUtil.PILLAR || at.via.kind == PrintAccess.Inner_StreamUtil.BRIDGE)
             && !at.via.own
             && at.via.block == cell.asLong()) {
             return true;
@@ -1636,7 +1636,7 @@ final class PrintAccess {
             this.flush_Z
                || node.parent == null
                || node.via == null
-               || node.via.kind != PrintAccess.Inner_StreamUtil.init
+               || node.via.kind != PrintAccess.Inner_StreamUtil.WALK
                || !this.init_UiHelper.init_Z_J(node.parent.key, node.parent.feet, node.key, node.feet)
          )
          && !this.init_UiHelper.update_LongOpenHashSet.contains(node.key)) {
@@ -1673,7 +1673,7 @@ final class PrintAccess {
       );
       private PrintAccess.Inner_CachePool init_StreamUtil_CachePo;
       private PrintAccess.Inner_ConfigStore.Inner_StreamUtil init_StreamUtil_ConfigS_2;
-      private PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.init;
+      private PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
       private PrintAccess.Inner_BufferHelper init_StreamUtil_BufferH;
       private PrintAccess.Inner_BufferHelper load_StreamUtil_BufferH;
       private long sync;
@@ -1737,7 +1737,7 @@ final class PrintAccess {
          PrintNav.Inner_TaskQueue reach = PrintAccess.this.init_UiHelper.init_TokenStore_TaskQue;
          if (reach != null && n.temps == 0 && reach.init_Z(n.key) && !(Math.abs(reach.load(n.key) - n.feet) > 1.0E-6)) {
             for (PrintAccess.Inner_CachePool at = n; at != null && at.via != null; at = at.parent) {
-               if (at.via.kind != PrintAccess.Inner_StreamUtil.init || at.via.block != -9223372036854775808L) {
+               if (at.via.kind != PrintAccess.Inner_StreamUtil.WALK || at.via.block != -9223372036854775808L) {
                   return false;
                }
             }
@@ -1802,16 +1802,16 @@ final class PrintAccess {
       }
 
       PrintAccess.Inner_TaskQueue init(long allowanceWork) {
-         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
             return this.init_StreamUtil_TaskQue;
          }
 
          if (PrintAccess.this.init_ArrayUtil.read_J() != this.update) {
-            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
          if (this.init_UiHelper_b != null && !this.init_UiHelper_b.init()) {
-            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
          long started = this.init_LongSupplier.getAsLong();
@@ -1829,13 +1829,13 @@ final class PrintAccess {
                      && (this.init_PriorityQueue.isEmpty() || (Double)this.init_PriorityQueue.peek()[0] >= this.load_StreamUtil_BufferH.cost())) {
                      if (this.load_StreamUtil_ConfigS != null && !this.load_StreamUtil_ConfigS.init_Z()
                         || this.init_StreamUtil_ConfigS != null && !this.init_StreamUtil_ConfigS.init()) {
-                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                      }
 
                      this.init_StreamUtil_BufferH = this.load_StreamUtil_BufferH;
                      this.init_J = this.sync;
                      this.init_Z = true;
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   while (!this.init_PriorityQueue.isEmpty()) {
@@ -1849,18 +1849,18 @@ final class PrintAccess {
                   if (this.init_StreamUtil_CachePo == null) {
                      if (this.load_StreamUtil_BufferH == null) {
                         PrintAccess.this.init_Str = "exhausted after " + this.load_J + " nodes";
-                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                      }
 
                      if (this.load_StreamUtil_ConfigS != null && !this.load_StreamUtil_ConfigS.init_Z()
                         || this.init_StreamUtil_ConfigS != null && !this.init_StreamUtil_ConfigS.init()) {
-                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                      }
 
                      this.init_StreamUtil_BufferH = this.load_StreamUtil_BufferH;
                      this.init_J = this.sync;
                      this.init_Z = true;
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   this.init_StreamUtil_ConfigS_2 = new PrintAccess.Inner_ConfigStore.Inner_StreamUtil(this.init_StreamUtil_CachePo);
@@ -1891,14 +1891,14 @@ final class PrintAccess {
                }
 
                worked = true;
-               if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+               if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
                   return this.init_StreamUtil_TaskQue;
                }
 
                boolean safe = PrintAccess.this.flush_Z;
                if (this.init_StreamUtil_ConfigS_2.load_I >= 0 && !PrintAccess.this.flush_Z) {
                   if (!this.init_StreamUtil_ConfigS_2.init_Z()) {
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
 
                   if (this.init_StreamUtil_ConfigS_3 == null) {
@@ -1914,15 +1914,15 @@ final class PrintAccess {
                      .init(Math.max(1L, allowanceWork - (this.init_LongSupplier.getAsLong() - started)));
                   this.init_JArr[4] = this.init_JArr[4] + (PrintAccess.this.init_ArrayUtil.sync() - w1);
                   PrintAccess.this.init_UiHelper.pop_JArr[4] = PrintAccess.this.init_UiHelper.pop_JArr[4] + (PrintAccess.this.init_ArrayUtil.sync() - w1);
-                  if (proof == PrintAccess.Inner_TaskQueue.init) {
+                  if (proof == PrintAccess.Inner_TaskQueue.SEARCHING) {
                      return this.init_StreamUtil_TaskQue;
                   }
 
-                  if (proof == PrintAccess.Inner_TaskQueue.write) {
+                  if (proof == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                      return this.init_StreamUtil_TaskQue = proof;
                   }
 
-                  safe = proof == PrintAccess.Inner_TaskQueue.load;
+                  safe = proof == PrintAccess.Inner_TaskQueue.FOUND;
                }
 
                if (this.init_StreamUtil_ConfigS_2.load_I >= 0 && safe) {
@@ -1936,7 +1936,7 @@ final class PrintAccess {
                      this.init_StreamUtil_BufferH = candidate;
                      this.init_ConfigStore_Stream = this.init_StreamUtil_ConfigS_2.init_ConfigStore_Stream;
                      this.init_J = this.init_StreamUtil_CachePo.key;
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   candidate = new PrintAccess.Inner_BufferHelper(
@@ -2049,7 +2049,7 @@ final class PrintAccess {
                      height,
                      this.load_StreamUtil_CachePo.g + cost,
                      new PrintAccess.Inner_NetHelper(
-                        PrintAccess.Inner_StreamUtil.init, this.load_StreamUtil_CachePo.key, to, height, -9223372036854775808L, false, null
+                        PrintAccess.Inner_StreamUtil.WALK, this.load_StreamUtil_CachePo.key, to, height, -9223372036854775808L, false, null
                      ),
                      this.load_StreamUtil_CachePo,
                      0
@@ -2176,22 +2176,22 @@ final class PrintAccess {
          final PrintCore.b init_UiHelper_b = PrintAccess.this.init_UiHelper.new b();
          PrintCore.e init_UiHelper_e;
          int init_I;
-         PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.init;
+         PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
 
          Inner_CachePool(PrintAccess.Inner_ConfigStore.Inner_DataUtil kind, long stance, BlockPos changed, BlockState placed) {
             this.init_StreamUtil_ConfigS = kind;
             this.init_J = stance;
             this.init_BlockPos = changed;
             this.init_BlockState = placed;
-            this.init_I = kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.load ? 2 : (kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.read ? 1 : 0);
+            this.init_I = kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.GENERAL ? 2 : (kind == PrintAccess.Inner_ConfigStore.Inner_DataUtil.DESCENT_AFTER ? 1 : 0);
          }
 
          PrintAccess.Inner_TaskQueue init() {
             if (!this.init_UiHelper_b.init()) {
-               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
             }
 
-            if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+            if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
                return this.init_StreamUtil_TaskQue;
             }
 
@@ -2206,16 +2206,16 @@ final class PrintAccess {
             }
 
             PrintAccess.Inner_TaskQueue result = this.init_UiHelper_e.init(1L);
-            if (result != PrintAccess.Inner_TaskQueue.init && result != PrintAccess.Inner_TaskQueue.write) {
+            if (result != PrintAccess.Inner_TaskQueue.SEARCHING && result != PrintAccess.Inner_TaskQueue.INVALIDATED) {
                if ((this.init_I & 1) == 1) {
                   return this.init_StreamUtil_TaskQue = result;
                }
 
-               if (this.init_I == 2 && result == PrintAccess.Inner_TaskQueue.read) {
-                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+               if (this.init_I == 2 && result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
+                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                }
 
-               this.init_I = this.init_I == 0 ? (result == PrintAccess.Inner_TaskQueue.load ? 1 : 2) : 3;
+               this.init_I = this.init_I == 0 ? (result == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 2) : 3;
                this.init_UiHelper_e = null;
                return this.init_StreamUtil_TaskQue;
             } else {
@@ -2252,7 +2252,7 @@ final class PrintAccess {
             LongArrayList path = this.init_Z ? null : PrintAccess.this.init_LongArrayList_StreamUtil_CachePo(this.init_StreamUtil_CachePo);
 
             try {
-               if (this.init_StreamUtil_ConfigS_2 != null && this.init_StreamUtil_ConfigS_2.init() != PrintAccess.Inner_TaskQueue.load) {
+               if (this.init_StreamUtil_ConfigS_2 != null && this.init_StreamUtil_ConfigS_2.init() != PrintAccess.Inner_TaskQueue.FOUND) {
                   return false;
                } else if (this.init_UiHelper_b != null && !this.init_UiHelper_b.init()) {
                   return false;
@@ -2281,9 +2281,9 @@ final class PrintAccess {
       }
 
       private enum Inner_DataUtil {
-         init,
-         load,
-         read;
+         REMOVAL,
+         GENERAL,
+         DESCENT_AFTER;
       }
 
       private final class Inner_StreamUtil {
@@ -2427,10 +2427,10 @@ final class PrintAccess {
                   PrintTarget target = PrintAccess.this.init_UiHelper.init_ListPoolArr[g];
                   if (this.init_StreamUtil_ConfigS_2 != null) {
                      PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS_2.init();
-                     if (result == PrintAccess.Inner_TaskQueue.write) {
+                     if (result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         Inner_ConfigStore.this.init_StreamUtil_TaskQue = result;
-                     } else if (result != PrintAccess.Inner_TaskQueue.init) {
-                        if (result == PrintAccess.Inner_TaskQueue.load) {
+                     } else if (result != PrintAccess.Inner_TaskQueue.SEARCHING) {
+                        if (result == PrintAccess.Inner_TaskQueue.FOUND) {
                            this.load_StreamUtil_ConfigS = this.init_StreamUtil_ConfigS_2;
                            this.load_I = g;
                         } else {
@@ -2444,7 +2444,7 @@ final class PrintAccess {
                   } else if (this.init_StreamUtil_ConfigS != null) {
                      this.init_StreamUtil_ConfigS.init(allowance);
                      if (this.init_StreamUtil_ConfigS.read) {
-                        Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                        Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                      } else if (this.init_StreamUtil_ConfigS.init_Z) {
                         if (!this.init_StreamUtil_ConfigS.load) {
                            this.load_I = g;
@@ -2461,7 +2461,7 @@ final class PrintAccess {
                         }
                      }
                   } else {
-                     boolean pour = target.kind() == PrintTarget.Inner_DataUtil.read;
+                     boolean pour = target.kind() == PrintTarget.Inner_DataUtil.FLUID;
                      boolean waterlog = !pour
                         && PrintAccess.this.init_UiHelper.init_BArr[g] == 2
                         && PrintAccess.this.init_UiHelper
@@ -2565,7 +2565,7 @@ final class PrintAccess {
                                     PrintAccess.this.init_UiHelper.init_PathHelper,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.init,
+                                    PrintClicks.Inner_CachePool.PLACE,
                                     position,
                                     true,
                                     exact,
@@ -2589,7 +2589,7 @@ final class PrintAccess {
                                     PrintAccess.this.init_UiHelper.init_PathHelper,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.init,
+                                    PrintClicks.Inner_CachePool.PLACE,
                                     position,
                                     false,
                                     exact,
@@ -2610,7 +2610,7 @@ final class PrintAccess {
                               PrintAccess.this.init_UiHelper.init_PathHelper,
                               target,
                               PrintClicks.init(target),
-                              waterlog ? PrintClicks.Inner_CachePool.write : PrintClicks.Inner_CachePool.read,
+                              waterlog ? PrintClicks.Inner_CachePool.WATERLOG : PrintClicks.Inner_CachePool.POUR,
                               position,
                               !waterlog,
                               false,
@@ -2619,11 +2619,11 @@ final class PrintAccess {
                            );
                            if (this.init_ConfigStore_Stream != null
                               && !PrintAccess.this.init_UiHelper.push_Z_BlockPos(BlockPos.of(this.init_StreamUtil_CachePo.key))) {
-                              if (target.kind() != PrintTarget.Inner_DataUtil.read) {
+                              if (target.kind() != PrintTarget.Inner_DataUtil.FLUID) {
                                  this.load_I = g;
                               } else {
                                  this.init_StreamUtil_ConfigS_2 = Inner_ConfigStore.this.new Inner_CachePool(
-                                    PrintAccess.Inner_ConfigStore.Inner_DataUtil.load,
+                                    PrintAccess.Inner_ConfigStore.Inner_DataUtil.GENERAL,
                                     this.init_StreamUtil_CachePo.key,
                                     target.pos(),
                                     target.wanted().getFluidState().createLegacyBlock()
@@ -2644,7 +2644,7 @@ final class PrintAccess {
                            }
 
                            this.init_StreamUtil_ConfigS_3.init(allowance);
-                           if (Inner_ConfigStore.this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init || !this.init_StreamUtil_ConfigS_3.init_Z) {
+                           if (Inner_ConfigStore.this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING || !this.init_StreamUtil_ConfigS_3.init_Z) {
                               return;
                            }
 
@@ -2701,12 +2701,12 @@ final class PrintAccess {
 
             void init(long allowance) {
                if (!this.init_UiHelper_b.init()) {
-                  Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                  Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                } else {
                   if (this.init_StreamUtil_ConfigS != null) {
                      this.init_StreamUtil_ConfigS.init(allowance);
                      if (this.init_StreamUtil_ConfigS.read) {
-                        Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                        Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                         return;
                      }
 
@@ -2759,14 +2759,14 @@ final class PrintAccess {
                      }
 
                      Vec3 feet = this.init_List.get(this.load_I++);
-                     PrintTarget probe = new PrintTarget(-1, this.init_BlockPos, this.init_BlockState, PrintTarget.Inner_DataUtil.init, this.init_Item, null);
+                     PrintTarget probe = new PrintTarget(-1, this.init_BlockPos, this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null);
                      if (PrintClicks.init(
                            PrintAccess.this.init_ArrayUtil,
                            PrintAccess.this.init_UiHelper.init_EventBus,
                            PrintAccess.this.init_UiHelper.init_PathHelper,
                            probe,
                            this.init_Item,
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            feet,
                            true,
                            false,
@@ -2798,7 +2798,7 @@ final class PrintAccess {
                            PrintCore.D prior = this.init_IdentityHashMap.get(predicted);
                            if (prior != null) {
                               if (!prior.init()) {
-                                 Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                                 Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                               }
 
                               return;
@@ -2818,7 +2818,7 @@ final class PrintAccess {
                   }
 
                   if (!this.init_UiHelper_b.init_ArrayUtil_StreamUt.init_Z()) {
-                     Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                     Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
                }
             }
@@ -2846,13 +2846,13 @@ final class PrintAccess {
                      && PrintAccess.this.load_LongOpenHashSet.contains(floor)
                      && !PrintAccess.this.init_UiHelper.init_Long2ObjectOpenHas.containsKey(BlockPos.asLong(x, y - 2, z))
                      && Inner_StreamUtil.this.init_StreamUtil_CachePo.via != null
-                     && Inner_StreamUtil.this.init_StreamUtil_CachePo.via.kind == PrintAccess.Inner_StreamUtil.init
+                     && Inner_StreamUtil.this.init_StreamUtil_CachePo.via.kind == PrintAccess.Inner_StreamUtil.WALK
                      && !PrintAccess.this.init_UiHelper.sync_Z_J(floor)
                      && PrintAccess.this.init_UiHelper.update_Z_BlockPos(BlockPos.of(floor))) {
                      this.init_J = floor;
                      this.load_Z = true;
                      this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_CachePool(
-                        PrintAccess.Inner_ConfigStore.Inner_DataUtil.init, floor, BlockPos.of(floor), Blocks.AIR.defaultBlockState()
+                        PrintAccess.Inner_ConfigStore.Inner_DataUtil.REMOVAL, floor, BlockPos.of(floor), Blocks.AIR.defaultBlockState()
                      );
                      return;
                   }
@@ -2865,10 +2865,10 @@ final class PrintAccess {
 
                if (this.load_Z) {
                   PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS.init();
-                  if (result != PrintAccess.Inner_TaskQueue.init) {
-                     if (result == PrintAccess.Inner_TaskQueue.write) {
+                  if (result != PrintAccess.Inner_TaskQueue.SEARCHING) {
+                     if (result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         Inner_ConfigStore.this.init_StreamUtil_TaskQue = result;
-                     } else if (result == PrintAccess.Inner_TaskQueue.load) {
+                     } else if (result == PrintAccess.Inner_TaskQueue.FOUND) {
                         this.init(this.init_StreamUtil_ConfigS, true);
                      } else {
                         this.load_Z = false;
@@ -2893,18 +2893,18 @@ final class PrintAccess {
             private void load() {
                if (this.init_StreamUtil_ConfigS != null) {
                   PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS.init();
-                  if (result == PrintAccess.Inner_TaskQueue.init) {
+                  if (result == PrintAccess.Inner_TaskQueue.SEARCHING) {
                      return;
                   }
 
-                  if (result == PrintAccess.Inner_TaskQueue.write) {
+                  if (result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                      Inner_ConfigStore.this.init_StreamUtil_TaskQue = result;
                      return;
                   }
 
                   PrintAccess.Inner_ConfigStore.Inner_CachePool completed = this.init_StreamUtil_ConfigS;
                   this.init_StreamUtil_ConfigS = null;
-                  if (result == PrintAccess.Inner_TaskQueue.read) {
+                  if (result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                      this.init_J = -9223372036854775808L;
                      this.init_ConfigStore_Stream = null;
                      return;
@@ -2952,7 +2952,7 @@ final class PrintAccess {
                   if (Inner_StreamUtil.this.init_StreamUtil_CachePo.temps > 0 && candidate == PrintAccess.this.update_J) {
                      this.load_I = 1;
                      this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_CachePool(
-                        PrintAccess.Inner_ConfigStore.Inner_DataUtil.read,
+                        PrintAccess.Inner_ConfigStore.Inner_DataUtil.DESCENT_AFTER,
                         Inner_StreamUtil.this.init_StreamUtil_CachePo.key,
                         pos,
                         Blocks.AIR.defaultBlockState()
@@ -2965,7 +2965,7 @@ final class PrintAccess {
 
                BlockPos pos = BlockPos.of(this.init_J);
                BlockState targetState = PrintAccess.this.init_ArrayUtil.getBlockState(pos);
-               PrintTarget probe = new PrintTarget(-1, pos, targetState, PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+               PrintTarget probe = new PrintTarget(-1, pos, targetState, PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
                this.init_ConfigStore_Stream = PrintAccess.this.init_UiHelper
                   .init_ConfigStore_Stream_J(
                      Inner_StreamUtil.this.init_StreamUtil_CachePo.key,
@@ -2979,7 +2979,7 @@ final class PrintAccess {
                } else {
                   this.load_I = 3;
                   this.init_StreamUtil_ConfigS = Inner_ConfigStore.this.new Inner_CachePool(
-                     PrintAccess.Inner_ConfigStore.Inner_DataUtil.init, Inner_StreamUtil.this.init_StreamUtil_CachePo.key, pos, Blocks.AIR.defaultBlockState()
+                     PrintAccess.Inner_ConfigStore.Inner_DataUtil.REMOVAL, Inner_StreamUtil.this.init_StreamUtil_CachePo.key, pos, Blocks.AIR.defaultBlockState()
                   );
                }
             }
@@ -3005,7 +3005,7 @@ final class PrintAccess {
                if (Inner_StreamUtil.this.init_StreamUtil_ConfigS != null) {
                   Inner_StreamUtil.this.init_StreamUtil_ConfigS.init(allowance);
                   if (Inner_StreamUtil.this.init_StreamUtil_ConfigS.read) {
-                     Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                     Inner_ConfigStore.this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                   } else if (Inner_StreamUtil.this.init_StreamUtil_ConfigS.init_Z) {
                      if (!Inner_StreamUtil.this.init_StreamUtil_ConfigS.load) {
                         PrintAccess.this.read_J = this.init_J;
@@ -3048,7 +3048,7 @@ final class PrintAccess {
                      }
 
                      this.init_ListPool = new PrintTarget(
-                        -1, BlockPos.of(this.init_J), PrintAccess.this.init_BlockState, PrintTarget.Inner_DataUtil.init, PrintAccess.this.init_Item, null
+                        -1, BlockPos.of(this.init_J), PrintAccess.this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, PrintAccess.this.init_Item, null
                      );
                   }
 
@@ -3063,7 +3063,7 @@ final class PrintAccess {
                         PrintAccess.this.init_UiHelper.init_PathHelper,
                         this.init_ListPool,
                         PrintAccess.this.init_Item,
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         this.init_List.get(this.load++),
                         true,
                         false,
@@ -3095,13 +3095,13 @@ final class PrintAccess {
          Inner_TaskQueue(PrintAccess.Inner_CachePool node) {
             this.init_StreamUtil_CachePo = node;
             this.init_Z = PrintAccess.this.init_LongArrayList != null
-               || PrintAccess.this.init_UiHelper.init_UiHelper_J == PrintCore.J.read
+               || PrintAccess.this.init_UiHelper.init_UiHelper_J == PrintCore.J.TEARDOWN
                || PrintAccess.this.init_UiHelper.tick_Z_BlockPos(BlockPos.of(node.key))
                || PrintAccess.this.init_UiHelper.push_Z() && PrintAccess.this.init_UiHelper.tick_Z_BlockPos(BlockPos.of(PrintAccess.this.write_J));
             boolean lowered = node.feet < Inner_ConfigStore.this.init_D - 0.5;
 
             for (PrintAccess.Inner_CachePool at = node; !lowered && at != null && at.parent != null; at = at.parent) {
-               if (at.via != null && at.via.kind == PrintAccess.Inner_StreamUtil.init && at.feet < at.parent.feet - 0.6 - 1.0E-6) {
+               if (at.via != null && at.via.kind == PrintAccess.Inner_StreamUtil.WALK && at.feet < at.parent.feet - 0.6 - 1.0E-6) {
                   lowered = true;
                }
             }
@@ -3130,7 +3130,7 @@ final class PrintAccess {
 
          PrintAccess.Inner_TaskQueue init(long allowance) {
             if (!this.init_Z()) {
-               return PrintAccess.Inner_TaskQueue.write;
+               return PrintAccess.Inner_TaskQueue.INVALIDATED;
             }
 
             long started = PrintAccess.this.init_ArrayUtil.sync();
@@ -3148,16 +3148,16 @@ final class PrintAccess {
                      }
 
                      PrintAccess.Inner_TaskQueue result = Inner_ConfigStore.this.init_UiHelper_e.init(left);
-                     if (result == PrintAccess.Inner_TaskQueue.init || result == PrintAccess.Inner_TaskQueue.write) {
+                     if (result == PrintAccess.Inner_TaskQueue.SEARCHING || result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         return result;
                      }
 
-                     this.init_I = result == PrintAccess.Inner_TaskQueue.load ? 1 : 3;
+                     this.init_I = result == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 3;
                   }
                } else if (this.init_I != 1 && this.init_I != 4) {
                   if (this.init_I != 2 && this.init_I != 5) {
                      if (!this.load_Z) {
-                        return PrintAccess.Inner_TaskQueue.load;
+                        return PrintAccess.Inner_TaskQueue.FOUND;
                      }
 
                      if (Inner_ConfigStore.this.load_UiHelper_e == null) {
@@ -3167,23 +3167,23 @@ final class PrintAccess {
                      }
 
                      PrintAccess.Inner_TaskQueue result = Inner_ConfigStore.this.load_UiHelper_e.init(left);
-                     if (result == PrintAccess.Inner_TaskQueue.init || result == PrintAccess.Inner_TaskQueue.write) {
+                     if (result == PrintAccess.Inner_TaskQueue.SEARCHING || result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         return result;
                      }
 
-                     if (result == PrintAccess.Inner_TaskQueue.read) {
-                        return PrintAccess.Inner_TaskQueue.load;
+                     if (result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
+                        return PrintAccess.Inner_TaskQueue.FOUND;
                      }
 
                      this.init_I = 4;
                   } else {
                      PrintAccess.Inner_TaskQueue result = this.init(this.init_I == 2, left);
-                     if (result != PrintAccess.Inner_TaskQueue.load) {
+                     if (result != PrintAccess.Inner_TaskQueue.FOUND) {
                         return result;
                      }
 
                      if (this.init_I == 5) {
-                        return PrintAccess.Inner_TaskQueue.load;
+                        return PrintAccess.Inner_TaskQueue.FOUND;
                      }
 
                      this.init_I = 3;
@@ -3194,7 +3194,7 @@ final class PrintAccess {
                   }
 
                   if (!Inner_ConfigStore.this.init_UiHelper_b.init()) {
-                     return PrintAccess.Inner_TaskQueue.write;
+                     return PrintAccess.Inner_TaskQueue.INVALIDATED;
                   }
 
                   if (this.init_Boolean != null) {
@@ -3202,7 +3202,7 @@ final class PrintAccess {
                         this.init_I = this.init_Boolean ? 3 : 2;
                      } else {
                         if (this.init_Boolean) {
-                           return PrintAccess.Inner_TaskQueue.load;
+                           return PrintAccess.Inner_TaskQueue.FOUND;
                         }
 
                         this.init_I = 5;
@@ -3211,7 +3211,7 @@ final class PrintAccess {
                }
             } while (PrintAccess.this.init_ArrayUtil.sync() - started < allowance);
 
-            return PrintAccess.Inner_TaskQueue.init;
+            return PrintAccess.Inner_TaskQueue.SEARCHING;
          }
 
          private PrintAccess.Inner_TaskQueue init(boolean down, long allowance) {
@@ -3254,8 +3254,8 @@ final class PrintAccess {
                   int fx = BlockPos.getX(from.key);
                   int fy = BlockPos.getY(from.key);
                   int fz = BlockPos.getZ(from.key);
-                  if (step.kind != PrintAccess.Inner_StreamUtil.init) {
-                     if (step.kind != PrintAccess.Inner_StreamUtil.load || step.own || assumed.isEmpty() || assumed.getLong(assumed.size() - 1) != step.block) {
+                  if (step.kind != PrintAccess.Inner_StreamUtil.WALK) {
+                     if (step.kind != PrintAccess.Inner_StreamUtil.PILLAR || step.own || assumed.isEmpty() || assumed.getLong(assumed.size() - 1) != step.block) {
                         this.init_Boolean = false;
                         return;
                      }
@@ -3364,18 +3364,18 @@ final class PrintAccess {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      WALK,
+      PILLAR,
+      BRIDGE,
+      DIG,
+      TUNNEL,
+      BREAK;
    }
 
    enum Inner_TaskQueue {
-      init,
-      load,
-      read,
-      write;
+      SEARCHING,
+      FOUND,
+      EXHAUSTED,
+      INVALIDATED;
    }
 }

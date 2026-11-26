@@ -198,13 +198,13 @@ final class AiSleep {
 
             AiOperation.Result init_AiOperation_Result_31() {
                autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                   this.init_Z = false;
                   this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                   return this.init("Bed placed");
                }
 
-               if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 120) {
+               if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 120) {
                   return this.init("Placing a bed");
                }
 

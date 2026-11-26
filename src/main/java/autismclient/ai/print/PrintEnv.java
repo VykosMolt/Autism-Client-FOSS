@@ -28,7 +28,7 @@ public interface PrintEnv {
    }
 
    default PrintEnv.Inner_StreamUtil init_EventBus_StreamUti() {
-      return PrintEnv.Inner_StreamUtil.init;
+      return PrintEnv.Inner_StreamUtil.NONE;
    }
 
    default List<PrintRailVehicle.Inner_DataUtil> load_List(BlockPos rail) {
@@ -191,8 +191,8 @@ public interface PrintEnv {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      NONE,
+      PENDING,
+      UNCERTAIN;
    }
 }

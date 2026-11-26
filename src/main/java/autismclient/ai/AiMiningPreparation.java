@@ -646,7 +646,7 @@ public final class AiMiningPreparation {
 
             if (this.init_I == 0 && !local.getAsBoolean()) {
                AiOperation.Result refused = AiOperation.Result.failed(
-                  AiFailure.close, "Optional wood stock is no longer nearby", this.init_AiOperation_Result == null ? "{}" : this.init_AiOperation_Result.dataJson()
+                  AiFailure.UNREACHABLE, "Optional wood stock is no longer nearby", this.init_AiOperation_Result == null ? "{}" : this.init_AiOperation_Result.dataJson()
                );
                refused = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.init_AiOperation, refused);
                this.init_AiOperation = null;

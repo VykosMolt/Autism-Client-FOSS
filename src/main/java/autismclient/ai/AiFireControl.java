@@ -36,7 +36,7 @@ final class AiFireControl {
 
    AiFireControl(boolean bodyOnly) {
       this.init_Z = bodyOnly;
-      this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+      this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
    }
 
    int init_I() {
@@ -141,7 +141,7 @@ final class AiFireControl {
                         false,
                         false,
                         5,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                         false,
                         0.0,
                         null,

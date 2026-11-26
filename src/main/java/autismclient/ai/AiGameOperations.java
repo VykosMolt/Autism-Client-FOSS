@@ -101,7 +101,7 @@ final class AiGameOperations {
                      return AiGameOperations.init_AiOperation_Result(AiOperation.Status.TIMED_OUT, "No spot for " + id + " before the timeout", new JsonObject());
                   } else {
                      AiStationPlacer.Inner_DataUtil status = placer.init_cn_DataUtil();
-                     if (status == AiStationPlacer.Inner_DataUtil.load) {
+                     if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                         BlockPos at = placer.init_BlockPos();
                         return AiGameOperations.init_AiOperation_Result(
                            AiOperation.Status.SUCCEEDED,
@@ -109,7 +109,7 @@ final class AiGameOperations {
                            AiJson.init_JsonObject_ObjArr("item", id, "x", at.getX(), "y", at.getY(), "z", at.getZ())
                         );
                      } else {
-                        return status == AiStationPlacer.Inner_DataUtil.read
+                        return status == AiStationPlacer.Inner_DataUtil.FAILED
                            ? AiGameOperations.init_AiOperation_Result(AiOperation.Status.FAILED, "Could not place " + id + ": " + placer.load_Str(), new JsonObject())
                            : AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, placer.init_Str(), new JsonObject());
                      }
@@ -372,7 +372,7 @@ final class AiGameOperations {
                      if (kind.equals("place")) {
                         this.init_Block = this.init_Minecraft.player.getMainHandItem().getItem() instanceof BlockItem blockItem ? blockItem.getBlock() : null;
                         if (this.init_Block == null) {
-                           return AiOperation.Result.failed(AiFailure.pop, "Placement requires a block item in the selected hand", "{}");
+                           return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, "Placement requires a block item in the selected hand", "{}");
                         }
 
                         this.load_BlockPos = this.init_BlockPos.relative(hit.getDirection());

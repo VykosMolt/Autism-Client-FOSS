@@ -337,7 +337,7 @@ public final class AiCommand extends Command {
    }
 
    private static boolean init_Z_cc(AiService service) {
-      return service.init_cc_FileCache() == AiService.Inner_FileCache.load || service.init_cc_FileCache() == AiService.Inner_FileCache.read;
+      return service.init_cc_FileCache() == AiService.Inner_FileCache.RUNNING || service.init_cc_FileCache() == AiService.Inner_FileCache.PLANNING;
    }
 
    private static String init_Str_2() {

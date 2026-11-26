@@ -96,7 +96,7 @@ public final class AiParkourFallWarning {
          float var8 = 0.0F;
 
          for (AiPathfinder.UiHelper var10 : var1) {
-            if (var10.type() != AiPathfinder.Inner_SyncManager.get) {
+            if (var10.type() != AiPathfinder.Inner_SyncManager.CLIMB_1) {
                BlockState var11 = var0.level.getBlockState(var10.to().below());
                BlockState var12 = var0.level.getBlockState(var10.to());
                boolean var13 = var12.is(BlockTags.CLIMBABLE)

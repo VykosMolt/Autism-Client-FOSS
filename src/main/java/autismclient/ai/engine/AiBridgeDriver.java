@@ -69,13 +69,13 @@ public final class AiBridgeDriver {
          for (int i = 0; i <= lane.length(); i++) {
             BlockPos head = new BlockPos(lane.cellX(i), lane.floorY() + 3, lane.cellZ(i));
             if (level == null || !level.getBlockState(head).getCollisionShape(level, head).isEmpty()) {
-               return AiBridger.Inner_ConfigStore.load;
+               return AiBridger.Inner_ConfigStore.LEGIT;
             }
          }
 
-         return AiBridger.Inner_ConfigStore.init;
+         return AiBridger.Inner_ConfigStore.TELLY;
       } else {
-         return AiBridger.Inner_ConfigStore.load;
+         return AiBridger.Inner_ConfigStore.LEGIT;
       }
    }
 
@@ -93,16 +93,16 @@ public final class AiBridgeDriver {
          BlockPos footing = new BlockPos(lane.cellX(0), lane.floorY(), lane.cellZ(0));
          BlockState state = this.init_Minecraft.level.getBlockState(footing);
          if (!Block.isShapeFullBlock(state.getCollisionShape(this.init_Minecraft.level, footing))) {
-            return AiBridgeDriver.Inner_DataUtil.write;
+            return AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING;
          }
       }
 
       if (player.onGround() && player.getY() < lane.floorY() + 1 - 0.01) {
-         return AiBridgeDriver.Inner_DataUtil.write;
+         return AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING;
       }
 
       if (player.getY() < lane.floorY() + 0.4) {
-         return AiBridgeDriver.Inner_DataUtil.read;
+         return AiBridgeDriver.Inner_DataUtil.FELL;
       }
 
       if (this.init_BitSetUtil == null || this.init_BitSetUtil.init_ClientLevel() != this.init_Minecraft.level) {
@@ -125,10 +125,10 @@ public final class AiBridgeDriver {
             slot >= 0
          );
       if (cmd.done()) {
-         return AiBridgeDriver.Inner_DataUtil.load;
+         return AiBridgeDriver.Inner_DataUtil.DONE;
       }
 
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.flush);
+      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.TELLY);
       this.init_DataUtil.init_V_ce_DataUtil(new RotationMath.Inner_DataUtil(cmd.yaw(), cmd.pitch()));
       boolean failedPlace = false;
       if (cmd.place() > 0 && slot >= 0) {
@@ -181,7 +181,7 @@ public final class AiBridgeDriver {
          );
       }
 
-      return AiBridgeDriver.Inner_DataUtil.init;
+      return AiBridgeDriver.Inner_DataUtil.RUNNING;
    }
 
    private boolean init_Z_LocalPlayer(LocalPlayer player, BlockPos cell, int slot, IntConsumer select) {
@@ -222,9 +222,9 @@ public final class AiBridgeDriver {
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      RUNNING,
+      DONE,
+      FELL,
+      INVALID_FOOTING;
    }
 }

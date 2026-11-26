@@ -45,11 +45,11 @@ public final class AiPlacer {
 
    public AiPlacer() {
       this.init_U_JsonUtil = BlockPlacementPlanner.Inner_JsonUtil.NONE;
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.read_DataUtil_DataUtil);
+      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.NORMAL);
    }
 
    public AiPlacer init_DataPipe() {
-      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.write);
+      this.init_DataUtil.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.FAST);
       return this;
    }
 
@@ -121,11 +121,11 @@ public final class AiPlacer {
 
       if (this.init_b_DataUtil != null) {
          AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.load(mc.player.containerMenu, System.nanoTime());
-         if (state == AiContainerTransactions.Inner_StreamUtil.init) {
-            return AiPlacer.Inner_DataUtil.init;
+         if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
+            return AiPlacer.Inner_DataUtil.WORKING;
          }
 
-         if (state == AiContainerTransactions.Inner_StreamUtil.write) {
+         if (state == AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) {
             return this.init("The server did not confirm the portable container swap");
          }
 
@@ -135,7 +135,7 @@ public final class AiPlacer {
          }
 
          InventorySlotHelper.init_V(mc, this.flush);
-         return AiPlacer.Inner_DataUtil.init;
+         return AiPlacer.Inner_DataUtil.WORKING;
       } else {
          if (!AutismLiteVariant.enabled()) {
             AiVisualization.init(this, this.init_BlockPos, this.init_Block.defaultBlockState());
@@ -165,7 +165,7 @@ public final class AiPlacer {
 
             if (!this.init_ItemStack.isEmpty()) {
                if (this.init_Z) {
-                  return AiPlacer.Inner_DataUtil.init;
+                  return AiPlacer.Inner_DataUtil.WORKING;
                }
 
                if (!mc.player.containerMenu.getCarried().isEmpty()) {
@@ -193,12 +193,12 @@ public final class AiPlacer {
                      return this.init("Could not start the portable container swap");
                   }
 
-                  return AiPlacer.Inner_DataUtil.init;
+                  return AiPlacer.Inner_DataUtil.WORKING;
                }
 
                if (mc.player.getInventory().getSelectedSlot() != slot) {
                   InventorySlotHelper.init_V(mc, slot);
-                  return AiPlacer.Inner_DataUtil.init;
+                  return AiPlacer.Inner_DataUtil.WORKING;
                }
             } else {
                AiItems.Inner_DataUtil held = AiItems.init_af_DataUtil(BuiltInRegistries.ITEM.getKey(this.init_Item).toString());
@@ -212,7 +212,7 @@ public final class AiPlacer {
                if (this.init_U_CachePool == null) {
                   return ++this.sync >= 12 && !this.init_Z
                      ? this.init("No reachable support face for " + this.init_BlockPos.toShortString() + " (" + this.init_U_JsonUtil + ")")
-                     : AiPlacer.Inner_DataUtil.init;
+                     : AiPlacer.Inner_DataUtil.WORKING;
                }
 
                this.sync = 0;
@@ -221,7 +221,7 @@ public final class AiPlacer {
             this.init_DataUtil.init_V_Vec3(this.init_U_CachePool.init_U_DataUtil().init_Vec3());
             this.init_DataUtil.load_V();
             if (!AiAim.init_Z_BlockPos(this.init_U_CachePool.init_BlockHitResult().getBlockPos())) {
-               return AiPlacer.Inner_DataUtil.init;
+               return AiPlacer.Inner_DataUtil.WORKING;
             }
 
             BlockHitResult ray = AiAim.init_BlockHitResult();
@@ -234,21 +234,21 @@ public final class AiPlacer {
             Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
             this.init_Z = true;
             this.init_U_CachePool = null;
-            return AiPlacer.Inner_DataUtil.init;
+            return AiPlacer.Inner_DataUtil.WORKING;
          } else {
             if (!this.init_ItemStack.isEmpty() && !this.init_Z) {
                return this.init("Another block occupied the portable container's cell");
             }
 
             if (++this.open < 2 || this.init_Z && AiServerEvidence.init_J_BlockPos(this.init_BlockPos) <= this.init_J) {
-               return ++this.close > 80 ? this.init("Placement was not confirmed by the server") : AiPlacer.Inner_DataUtil.init;
+               return ++this.close > 80 ? this.init("Placement was not confirmed by the server") : AiPlacer.Inner_DataUtil.WORKING;
             }
 
             if (this.init_Z && !this.init_Block.defaultBlockState().hasBlockEntity() && this.init_Block != Blocks.CRAFTING_TABLE) {
                AiEditLedger.write_V(this.init_BlockPos);
             }
 
-            return AiPlacer.Inner_DataUtil.load;
+            return AiPlacer.Inner_DataUtil.PLACED;
          }
       }
    }
@@ -317,12 +317,12 @@ public final class AiPlacer {
 
    private AiPlacer.Inner_DataUtil init(String reason) {
       this.init_Str = reason;
-      return AiPlacer.Inner_DataUtil.read;
+      return AiPlacer.Inner_DataUtil.FAILED;
    }
 
    public enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      WORKING,
+      PLACED,
+      FAILED;
    }
 }

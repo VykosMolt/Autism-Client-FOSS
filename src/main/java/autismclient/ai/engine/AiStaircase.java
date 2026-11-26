@@ -727,7 +727,7 @@ public final class AiStaircase {
 
       @Override
       public Set<AiPathfinder.Inner_SyncManager> init_Set() {
-         return EnumSet.of(AiPathfinder.Inner_SyncManager.tick);
+         return EnumSet.of(AiPathfinder.Inner_SyncManager.PILLAR);
       }
 
       @Override
@@ -778,7 +778,7 @@ public final class AiStaircase {
 
       @Override
       public Set<AiPathfinder.Inner_SyncManager> init_Set() {
-         return EnumSet.of(AiPathfinder.Inner_SyncManager.push, AiPathfinder.Inner_SyncManager.tick);
+         return EnumSet.of(AiPathfinder.Inner_SyncManager.DIG_DOWN_1, AiPathfinder.Inner_SyncManager.PILLAR);
       }
 
       @Override

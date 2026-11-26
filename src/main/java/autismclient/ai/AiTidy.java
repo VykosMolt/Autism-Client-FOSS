@@ -155,7 +155,7 @@ final class AiTidy {
             }
          }
 
-         return action == AiTidy.Inner_DataUtil.init
+         return action == AiTidy.Inner_DataUtil.INSPECT
             ? AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Ranked " + AiItems.init_I() + " free slot(s) and the current inventory", init(mc, keep, wantFree))
             : new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -300,7 +300,7 @@ final class AiTidy {
                AiOperation.Result load(String message) {
                   JsonObject receipt = this.init();
                   this.cancel();
-                  return AiOperation.Result.failed(AiFailure.put, message, receipt.toString());
+                  return AiOperation.Result.failed(AiFailure.INVENTORY_FULL, message, receipt.toString());
                }
 
                @Override
@@ -611,8 +611,8 @@ final class AiTidy {
    }
 
    enum Inner_DataUtil {
-      init,
-      load;
+      INSPECT,
+      DROP;
    }
 
    record Inner_StreamUtil(int slot, String item, int count, int rank) {

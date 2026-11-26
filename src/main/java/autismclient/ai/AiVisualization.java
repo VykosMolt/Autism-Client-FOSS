@@ -315,11 +315,11 @@ public final class AiVisualization {
    }
 
    private static boolean isAirMove(autismclient.ai.engine.AiPathfinder.Inner_SyncManager type) {
-      return type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.start
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.reset
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.put
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.add
-         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.clear
+      return type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SPRINT_JUMP
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_2
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.JUMP_GAP_3
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND
          || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.LADDER_JUMP
          || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SLIME_BOUNCE;
    }

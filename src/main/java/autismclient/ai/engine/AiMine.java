@@ -110,7 +110,7 @@ public final class AiMine {
             boolean read_Z;
             boolean write_Z;
             boolean update_Z;
-            Inner_DataUtil init_TokenStore_1_DataU = Inner_DataUtil.init;
+            Inner_DataUtil init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
             AiOperation init_AiOperation;
             BlockPos load_BlockPos;
             BlockPos read_BlockPos;
@@ -127,13 +127,13 @@ public final class AiMine {
                }
 
                if (this.init_Minecraft.level != this.init_Obj) {
-                  return this.init(AiOperation.Status.FAILED, AiFailure.valid, "World changed during mining");
+                  return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during mining");
                }
 
                if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z()) {
                   return this.init(
                      AiOperation.Status.FAILED,
-                     AiFailure.start,
+                     AiFailure.LOW_HEALTH,
                      AiLowHealth.init("mining", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
                   );
                }
@@ -149,7 +149,7 @@ public final class AiMine {
                this.init_ClassCache_StreamU.init_V_2();
                if ((quota == null ? this.close >= count : quota.init_Z())
                   && this.init_AiOperation == null
-                  && this.init_TokenStore_1_DataU != Inner_DataUtil.read) {
+                  && this.init_TokenStore_1_DataU != Inner_DataUtil.COLLECT) {
                   return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
                }
 
@@ -165,7 +165,7 @@ public final class AiMine {
                      return this.init(AiOperation.Status.CANCELLED, "Mine cancelled");
                   }
 
-                  if (r.failure() == AiFailure.tick || r.failure() == AiFailure.get) {
+                  if (r.failure() == AiFailure.MISSING_TOOL || r.failure() == AiFailure.TOOL_WORN) {
                      JsonObject data = JsonParser.parseString(r.dataJson()).getAsJsonObject();
                      data.addProperty("broken", this.close);
                      if (quota != null) {
@@ -175,7 +175,7 @@ public final class AiMine {
 
                      this.cancel();
                      return new AiOperation.Result(r.status(), r.message(), data.toString(), r.evidence(), r.failure());
-                  } else if (this.init_TokenStore_1_DataU == Inner_DataUtil.read) {
+                  } else if (this.init_TokenStore_1_DataU == Inner_DataUtil.COLLECT) {
                      if (!this.read_List.isEmpty()) {
                         this.read_List.remove(0);
                      }
@@ -184,7 +184,7 @@ public final class AiMine {
                      return this.init_AiOperation_Result_7("Drop collection finished; continuing");
                   } else {
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
-                        this.init_TokenStore_1_DataU = Inner_DataUtil.load;
+                        this.init_TokenStore_1_DataU = Inner_DataUtil.EXTRACT;
                         this.load_V_9();
                         return this.init_AiOperation_Result_7(
                            "Arrived; extracting " + (this.load_BlockPos == null ? "source" : this.load_BlockPos.toShortString())
@@ -192,14 +192,14 @@ public final class AiMine {
                      }
 
                      if (r.message() != null && r.message().contains("Player is wedged in solid blocks")) {
-                        return this.init(AiOperation.Status.FAILED, AiFailure.close, r.message());
+                        return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, r.message());
                      }
 
                      this.init_V_3("travel failed: " + r.message());
                      return this.init_AiOperation_Result_7("Source unreachable; trying another");
                   }
                } else {
-                  if (this.init_TokenStore_1_DataU == Inner_DataUtil.load && this.load_BlockPos != null) {
+                  if (this.init_TokenStore_1_DataU == Inner_DataUtil.EXTRACT && this.load_BlockPos != null) {
                      AiOperation.Result toolFail = this.init_AiOperation_Result_14();
                      if (toolFail != null) {
                         return toolFail;
@@ -208,7 +208,7 @@ public final class AiMine {
                      if (!this.init_RefQueue_DataUtil.init_Z_BlockPos(this.load_BlockPos)) {
                         if (!this.init_Z_6(this.load_BlockPos)) {
                            this.load_BlockPos = null;
-                           this.init_TokenStore_1_DataU = Inner_DataUtil.init;
+                           this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
                            return this.init_AiOperation_Result_7("Source changed; re-evaluating");
                         }
 
@@ -255,7 +255,7 @@ public final class AiMine {
                      }
                   }
 
-                  if (this.init_TokenStore_1_DataU == Inner_DataUtil.read) {
+                  if (this.init_TokenStore_1_DataU == Inner_DataUtil.COLLECT) {
                      if (!this.read_List.isEmpty()) {
                         ItemEntity drop = this.read_List.get(0);
                         if (!drop.isAlive()) {
@@ -305,7 +305,7 @@ public final class AiMine {
 
                      this.poll = 0;
                      this.read_BlockPos = null;
-                     this.init_TokenStore_1_DataU = Inner_DataUtil.init;
+                     this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
                   }
 
                   if (this.load_BlockPos == null) {
@@ -335,7 +335,7 @@ public final class AiMine {
 
                      if (this.load_BlockPos == null) {
                         if (this.load_Z) {
-                           return this.init(AiOperation.Status.TIMED_OUT, AiFailure.prev, "Source route calculation budget exhausted");
+                           return this.init(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Source route calculation budget exhausted");
                         }
 
                         if (!this.read_Z) {
@@ -362,13 +362,13 @@ public final class AiMine {
                               return this.init_AiOperation_Result_7("Re-scanning before declaring no sources");
                            }
 
-                           return this.init(AiOperation.Status.FAILED, AiFailure.init_A, "No matching sources in known terrain (0 of " + count + ")");
+                           return this.init(AiOperation.Status.FAILED, AiFailure.TARGET_NOT_FOUND, "No matching sources in known terrain (0 of " + count + ")");
                         }
 
                         return this.init(AiOperation.Status.FAILED, "No more reachable sources (" + this.close + " of " + count + ")");
                      }
 
-                     this.init_TokenStore_1_DataU = Inner_DataUtil.init;
+                     this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
                   }
 
                   this.init_AiOperation = AiGoto.init_AiOperation(this.load_BlockPos, this.init_I(120));
@@ -602,7 +602,7 @@ public final class AiMine {
 
             void init_V_3(String reason) {
                if (this.load_BlockPos == null) {
-                  this.init_TokenStore_1_DataU = Inner_DataUtil.init;
+                  this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
                } else {
                   int strikes = this.init_Map.merge(this.load_BlockPos.asLong(), 1, Integer::sum);
                   AutismClientAddon.LOG.info("[AI] mine {}: target {} failed ({}/{}): {}", blockArg, this.load_BlockPos.toShortString(), strikes, 2, reason);
@@ -624,7 +624,7 @@ public final class AiMine {
                   }
 
                   this.load_BlockPos = null;
-                  this.init_TokenStore_1_DataU = Inner_DataUtil.init;
+                  this.init_TokenStore_1_DataU = Inner_DataUtil.TRAVEL;
                }
             }
 
@@ -632,7 +632,7 @@ public final class AiMine {
                this.read_BlockPos = brokenCell.immutable();
                this.poll = 0;
                this.load_V_3(brokenCell);
-               this.init_TokenStore_1_DataU = Inner_DataUtil.read;
+               this.init_TokenStore_1_DataU = Inner_DataUtil.COLLECT;
             }
 
             void load_V_3(BlockPos near) {
@@ -763,7 +763,7 @@ public final class AiMine {
                   data.add("missing", missing);
                   this.cancel();
                   return new AiOperation.Result(
-                     AiOperation.Status.FAILED, "TOOL_WORN: no suitable tool above the durability floor for " + blockArg, data.toString(), List.of(), AiFailure.get
+                     AiOperation.Status.FAILED, "TOOL_WORN: no suitable tool above the durability floor for " + blockArg, data.toString(), List.of(), AiFailure.TOOL_WORN
                   );
                }
             }
@@ -854,8 +854,8 @@ public final class AiMine {
                return this.init(
                   status,
                   status == AiOperation.Status.FAILED
-                     ? AiFailure.load
-                     : (status == AiOperation.Status.TIMED_OUT ? AiFailure.prev : (status == AiOperation.Status.CANCELLED ? AiFailure.size : null)),
+                     ? AiFailure.NO_REACHABLE_TARGET
+                     : (status == AiOperation.Status.TIMED_OUT ? AiFailure.TIMEOUT : (status == AiOperation.Status.CANCELLED ? AiFailure.CANCELLED : null)),
                   message
                );
             }
@@ -904,9 +904,9 @@ public final class AiMine {
             }
 
             enum Inner_DataUtil {
-               init,
-               load,
-               read;
+               TRAVEL,
+               EXTRACT,
+               COLLECT;
             }
          };
       } else {

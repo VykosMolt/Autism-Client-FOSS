@@ -73,7 +73,7 @@ final class AiSettingsView {
    private long read_J;
    private long write_J;
    private String write_Str = "";
-   private final EnumSet<AiSettingsView.Inner_CachePool> init_EnumSet = EnumSet.of(AiSettingsView.Inner_CachePool.update, AiSettingsView.Inner_CachePool.sync);
+   private final EnumSet<AiSettingsView.Inner_CachePool> init_EnumSet = EnumSet.of(AiSettingsView.Inner_CachePool.LIMITS, AiSettingsView.Inner_CachePool.ADVANCED);
    private final Map<String, AiSettingsView.Inner_StreamUtil> init_Map = new HashMap<>();
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(false);
    private AiSettings.Provider init_AiSettings_Provide = AiSettings.Provider.OPENAI;
@@ -136,7 +136,7 @@ final class AiSettingsView {
 
    void init_V() {
       this.init_EnumSet.addAll(EnumSet.allOf(AiSettingsView.Inner_CachePool.class));
-      this.init_EnumSet.remove(AiSettingsView.Inner_CachePool.read);
+      this.init_EnumSet.remove(AiSettingsView.Inner_CachePool.VISUALS);
       this.init_cE_StreamUtil.load();
    }
 
@@ -563,8 +563,8 @@ final class AiSettingsView {
       int start = y;
       AiSettings live = this.init_cF.init_AiSettings;
       boolean hasKey = this.init_cc.init_Z_AiSettings_Provide(this.init_AiSettings_Provide);
-      y = this.init(kit, AiSettingsView.Inner_CachePool.init_cf_CachePool, x, y, w);
-      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.init_cf_CachePool)) {
+      y = this.init(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
+      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER)) {
          autismclient.gui.f.NetHelper field = this.init(kit, "Provider", x, y, w, labelW);
          this.init_SyncManager.init_SyncManager_I(field.read(), field.write(), field.update(), field.sync());
          if (kit.load_Z(field)) {
@@ -585,7 +585,7 @@ final class AiSettingsView {
          }
       }
 
-      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.init_cf_CachePool) && !this.read_Z) {
+      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.PROVIDER) && !this.read_Z) {
          this.init_BitSetUtil.load_BitSetUtil_Str(hasKey ? "Key saved - type to replace" : "Paste your API key");
          kit.init_V_BitSetUtil_NetHelper(this.init_BitSetUtil, this.init(kit, "API key", x, y, w, labelW));
          y += ctrl + 2;
@@ -621,8 +621,8 @@ final class AiSettingsView {
          y += 2;
       }
 
-      y = this.init(kit, AiSettingsView.Inner_CachePool.load, x, y, w);
-      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.load)) {
+      y = this.init(kit, AiSettingsView.Inner_CachePool.BEHAVIOR, x, y, w);
+      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.BEHAVIOR)) {
          for (AiSettingsView.Inner_DataUtil flag : init_List) {
             if (!this.read_Z || !init_Set.contains(flag.key())) {
                y = this.init_I_cE(kit, flag, live, x, y, w, now);
@@ -631,8 +631,8 @@ final class AiSettingsView {
       }
 
       y += 2;
-      y = this.init(kit, AiSettingsView.Inner_CachePool.read, x, y, w);
-      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.read)) {
+      y = this.init(kit, AiSettingsView.Inner_CachePool.VISUALS, x, y, w);
+      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.VISUALS)) {
          for (AiSettingsView.Inner_DataUtil flag : read_List) {
             y = this.init_I_cE(kit, flag, live, x, y, w, now);
          }
@@ -683,8 +683,8 @@ final class AiSettingsView {
       }
 
       y += 2;
-      y = this.init(kit, AiSettingsView.Inner_CachePool.write, x, y, w);
-      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.write)) {
+      y = this.init(kit, AiSettingsView.Inner_CachePool.MOVEMENT, x, y, w);
+      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.MOVEMENT)) {
          for (AiSettingsView.Inner_DataUtil flag : load_List) {
             y = this.init_I_cE(kit, flag, live, x, y, w, now);
          }
@@ -695,8 +695,8 @@ final class AiSettingsView {
 
       y += 2;
       if (!this.read_Z) {
-         y = this.init(kit, AiSettingsView.Inner_CachePool.update, x, y, w);
-         if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.update)) {
+         y = this.init(kit, AiSettingsView.Inner_CachePool.LIMITS, x, y, w);
+         if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.LIMITS)) {
             y = this.init_I_cE_2(kit, "Context", this.write_BitSetUtil, x, y, w, labelW);
             y = this.init_I_cE_2(kit, "Output", this.update_BitSetUtil, x, y, w, labelW);
             y = this.init_I_cE_2(kit, "Requests", this.sync_BitSetUtil, x, y, w, labelW);
@@ -707,8 +707,8 @@ final class AiSettingsView {
          y += 2;
       }
 
-      y = this.init(kit, AiSettingsView.Inner_CachePool.sync, x, y, w);
-      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.sync)) {
+      y = this.init(kit, AiSettingsView.Inner_CachePool.ADVANCED, x, y, w);
+      if (!this.init_EnumSet.contains(AiSettingsView.Inner_CachePool.ADVANCED)) {
          if (!this.read_Z) {
             this.read_BitSetUtil.load_BitSetUtil_Str(this.init_AiSettings_Provide.endpoint);
             kit.init_V_BitSetUtil_NetHelper(this.read_BitSetUtil, this.init(kit, "Endpoint", x, y, w, labelW));
@@ -865,16 +865,16 @@ final class AiSettingsView {
       } else {
          String var10000;
          switch (this.init_cF.init_cc_BufferHelper) {
-            case read:
+            case OK:
                var10000 = "Connected";
                break;
-            case write:
+            case FAILED:
                var10000 = "Failed: " + this.init_cF.flush_Str;
                break;
-            case load:
+            case TESTING:
                var10000 = "Testing...";
                break;
-            case init:
+            case UNKNOWN:
                var10000 = this.init_cF.read_Z ? "Not tested" : "No API key";
                break;
             default:
@@ -884,16 +884,16 @@ final class AiSettingsView {
          text = var10000;
          int var16;
          switch (this.init_cF.init_cc_BufferHelper) {
-            case read:
+            case OK:
                var16 = kit.init_JsonUtil.stop;
                break;
-            case write:
+            case FAILED:
                var16 = kit.init_JsonUtil.data;
                break;
-            case load:
+            case TESTING:
                var16 = kit.init_JsonUtil.valid;
                break;
-            case init:
+            case UNKNOWN:
                var16 = this.init_cF.read_Z ? kit.init_JsonUtil.valid : -14249;
                break;
             default:
@@ -1058,12 +1058,12 @@ final class AiSettingsView {
    }
 
    private enum Inner_CachePool {
-      init_cf_CachePool("Provider"),
-      load("Behavior"),
-      read("World visualization"),
-      write("Movement"),
-      update("Limits"),
-      sync("Advanced");
+      PROVIDER("Provider"),
+      BEHAVIOR("Behavior"),
+      VISUALS("World visualization"),
+      MOVEMENT("Movement"),
+      LIMITS("Limits"),
+      ADVANCED("Advanced");
 
       final String init_Str;
 

@@ -47,11 +47,11 @@ final class AiBurrow {
 
    static AiBurrow.Inner_StreamUtil init(boolean loaded, boolean fluid, boolean unbreakable, boolean open, boolean safeFloorBelow) {
       if (!loaded || fluid || unbreakable) {
-         return AiBurrow.Inner_StreamUtil.read;
+         return AiBurrow.Inner_StreamUtil.STOP;
       } else if (open) {
-         return safeFloorBelow ? AiBurrow.Inner_StreamUtil.load : AiBurrow.Inner_StreamUtil.read;
+         return safeFloorBelow ? AiBurrow.Inner_StreamUtil.OPEN : AiBurrow.Inner_StreamUtil.STOP;
       } else {
-         return AiBurrow.Inner_StreamUtil.init;
+         return AiBurrow.Inner_StreamUtil.DIG;
       }
    }
 
@@ -243,7 +243,7 @@ final class AiBurrow {
             final BlockPos init_BlockPos = mc.player.blockPosition().immutable();
             final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
             final autismclient.ai.engine.AiRestock init_UtilCore = new autismclient.ai.engine.AiRestock(mc);
-            AiBurrow.Inner_DataUtil init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.init;
+            AiBurrow.Inner_DataUtil init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.SHAFT;
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
             BlockPos load_BlockPos = this.init_BlockPos;
@@ -290,7 +290,7 @@ final class AiBurrow {
                   float previousHealth = this.init_F;
                   boolean hurt = health < previousHealth - 0.01F;
                   this.init_F = health;
-                  if (this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.init
+                  if (this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.SHAFT
                      && this.init_AiOperation == null
                      && AiBurrow.init(
                         healTo,
@@ -302,12 +302,12 @@ final class AiBurrow {
                      this.update_BlockPos = feet.immutable();
                      this.write_BlockPos = AiBurrow.init_BlockPos(this.update_BlockPos);
                      this.load_Z = this.read_Z(this.update_BlockPos);
-                     this.init_RingBuffer_DataUti = this.load_Z ? AiBurrow.Inner_DataUtil.sync : AiBurrow.Inner_DataUtil.read;
+                     this.init_RingBuffer_DataUti = this.load_Z ? AiBurrow.Inner_DataUtil.WAIT : AiBurrow.Inner_DataUtil.CAP;
                   }
 
-                  boolean exiting = this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.flush
-                     || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.close;
-                  if (!exiting && this.init_RingBuffer_DataUti != AiBurrow.Inner_DataUtil.write && mc.player.isInWater()) {
+                  boolean exiting = this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.EXIT_DIG
+                     || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
+                  if (!exiting && this.init_RingBuffer_DataUti != AiBurrow.Inner_DataUtil.TOWER && mc.player.isInWater()) {
                      this.flush_Z = this.flush_Z | this.requiresReconciliationAfterEmergency();
                      if (this.init_AiOperation != null) {
                         this.init_AiOperation.cancel();
@@ -322,23 +322,23 @@ final class AiBurrow {
                      this.init_DataPipe.init_V();
                      this.init_Z = false;
                      this.write_Z = true;
-                     this.init_RingBuffer_DataUti = this.load_Z ? AiBurrow.Inner_DataUtil.flush : AiBurrow.Inner_DataUtil.close;
+                     this.init_RingBuffer_DataUti = this.load_Z ? AiBurrow.Inner_DataUtil.EXIT_DIG : AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
                      return this.init("Water in the burrow; climbing out");
                   } else {
-                     boolean building = this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.init
-                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.load
-                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.read
-                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.write
-                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.update;
+                     boolean building = this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.SHAFT
+                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.RELOCATE
+                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.CAP
+                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.TOWER
+                        || this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.ROOF;
                      boolean residualBurn = hurt
                         && AiBurrow.init(
                            healTo > 0.0F,
-                           this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.sync,
+                           this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.WAIT,
                            mc.player.isOnFire(),
                            AiServerEvidence.init_Z_UUID(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
                            autismclient.ai.engine.AiMotionSafety.fill_Z(),
-                           this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.sync && this.init_Z_6(),
-                           this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.sync && this.update_Z(this.update_BlockPos),
+                           this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.WAIT && this.init_Z_6(),
+                           this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.WAIT && this.update_Z(this.update_BlockPos),
                            mc.player.isInLava() || AiEndRun.init_Z(mc)
                         );
                      if (hurt && !exiting && (!(healTo > 0.0F) || !building) && !residualBurn) {
@@ -347,22 +347,22 @@ final class AiBurrow {
                         );
                      }
 
-                     if (this.init_RingBuffer_DataUti != AiBurrow.Inner_DataUtil.sync || this.init_Z_6() && !this.update_Z(this.update_BlockPos)) {
-                        if (this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.read && !this.load_Z && this.init(feet, 1.0)) {
+                     if (this.init_RingBuffer_DataUti != AiBurrow.Inner_DataUtil.WAIT || this.init_Z_6() && !this.update_Z(this.update_BlockPos)) {
+                        if (this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.CAP && !this.load_Z && this.init(feet, 1.0)) {
                            return this.init(AiOperation.Status.FAILED, "burrow compromised (a hostile in the shaft before the cap)");
                         }
 
-                        if (System.nanoTime() > this.init_J && !exiting && this.init_RingBuffer_DataUti != AiBurrow.Inner_DataUtil.sync) {
+                        if (System.nanoTime() > this.init_J && !exiting && this.init_RingBuffer_DataUti != AiBurrow.Inner_DataUtil.WAIT) {
                            return this.init(AiOperation.Status.TIMED_OUT, "Burrow deadline reached before cover");
                         }
 
                         if (this.init_UtilCore.init_Z()) {
                            autismclient.ai.engine.AiRestock.Inner_BufferHelper status = this.init_UtilCore.load_UtilCore_BufferHel();
-                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.write) {
+                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.FAILED) {
                               return this.init(AiOperation.Status.FAILED, "Construction stock swap was not confirmed");
                            }
 
-                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.read) {
+                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.SUCCEEDED) {
                               this.init_UtilCore.init_V();
                            }
 
@@ -370,26 +370,26 @@ final class AiBurrow {
                         } else {
                            AiOperation.Result var10000;
                            switch (this.init_RingBuffer_DataUti) {
-                              case init:
+                              case SHAFT:
                                  var10000 = this.init_AiOperation_Result(feet);
                                  break;
-                              case load:
+                              case RELOCATE:
                                  var10000 = this.init_AiOperation_Result_7();
                                  break;
-                              case read:
-                              case update:
+                              case CAP:
+                              case ROOF:
                                  var10000 = this.load_AiOperation_Result(feet);
                                  break;
-                              case write:
+                              case TOWER:
                                  var10000 = this.read_AiOperation_Result(feet);
                                  break;
-                              case sync:
+                              case WAIT:
                                  var10000 = this.write_AiOperation_Result(feet);
                                  break;
-                              case flush:
+                              case EXIT_DIG:
                                  var10000 = this.update_AiOperation_Result(feet);
                                  break;
-                              case close:
+                              case EXIT_TRAVEL:
                                  var10000 = this.load_AiOperation_Result_6();
                                  break;
                               default:
@@ -410,7 +410,7 @@ final class AiBurrow {
             AiOperation.Result init_AiOperation_Result(BlockPos feet) {
                int descended = this.load_BlockPos.getY() - feet.getY();
                if (descended >= 3) {
-                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.read;
+                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.CAP;
                   return this.init("In the shaft; capping");
                }
 
@@ -432,10 +432,10 @@ final class AiBurrow {
                      : this.init("Digging the shaft");
                } else {
                   switch (this.init_RingBuffer_StreamU(feet.below())) {
-                     case init:
+                     case DIG:
                         this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(feet.below(), 20);
                         return this.init("Digging the shaft");
-                     case load:
+                     case OPEN:
                         if (++this.load_I > 40) {
                            return this.init(feet, descended, "the shaft would not swallow the player");
                         }
@@ -454,7 +454,7 @@ final class AiBurrow {
                   if (nearby != null) {
                      this.load_BlockPos = nearby;
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(nearby, 0.2, false, false, false, 10);
-                     this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.load;
+                     this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.RELOCATE;
                      return this.init(why + "; moving a few steps to a safe shaft");
                   }
                }
@@ -462,10 +462,10 @@ final class AiBurrow {
                if (descended < 2 && !towerOk) {
                   return this.init(AiOperation.Status.FAILED, why + "; no cover here");
                } else if (descended < 2) {
-                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.write;
+                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.TOWER;
                   return this.init(why + "; towering instead");
                } else {
-                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.read;
+                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.CAP;
                   return this.init(why + "; capping the shallow cover");
                }
             }
@@ -487,7 +487,7 @@ final class AiBurrow {
                   return this.init(r.status(), "Nearby shelter could not be reached: " + r.message());
                }
 
-               this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.init;
+               this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.SHAFT;
                return this.init("On safe ground; digging the shelter");
             }
 
@@ -561,7 +561,7 @@ final class AiBurrow {
 
                         this.write_BlockPos = AiBurrow.init_BlockPos(this.update_BlockPos);
                         this.load_Z = true;
-                        this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.sync;
+                        this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.WAIT;
                         return this.init("Shelter sealed; waiting safely until dawn");
                      }
 
@@ -595,13 +595,13 @@ final class AiBurrow {
                   }
 
                   autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
                      return this.init("Closing shelter walls and roof");
                   } else {
                      boolean pending = this.init_DataPipe.load_Z();
                      this.init_DataPipe.init_V();
                      this.init_Z = false;
-                     if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                     if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                         this.flush_Z |= pending;
                         return this.init(AiOperation.Status.FAILED, "Shelter placement failed: " + this.init_DataPipe.init_Str());
                      } else {
@@ -656,7 +656,7 @@ final class AiBurrow {
                   return this.init(AiOperation.Status.FAILED, "Could not tower up (" + r.message() + ")");
                }
 
-               this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.update;
+               this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.ROOF;
                return this.init("Tower up; roofing");
             }
 
@@ -713,8 +713,8 @@ final class AiBurrow {
                      }
 
                      this.init_RingBuffer_DataUti = this.read_BlockPos == null && !this.load_Z
-                        ? AiBurrow.Inner_DataUtil.close
-                        : AiBurrow.Inner_DataUtil.flush;
+                        ? AiBurrow.Inner_DataUtil.EXIT_TRAVEL
+                        : AiBurrow.Inner_DataUtil.EXIT_DIG;
                      return this.init("No mob in sight; leaving cover");
                   } else {
                      if (healTo > 0.0F && this.load_Z_3()) {
@@ -727,8 +727,8 @@ final class AiBurrow {
                         }
 
                         this.init_RingBuffer_DataUti = this.read_BlockPos == null && !this.load_Z
-                           ? AiBurrow.Inner_DataUtil.close
-                           : AiBurrow.Inner_DataUtil.flush;
+                           ? AiBurrow.Inner_DataUtil.EXIT_TRAVEL
+                           : AiBurrow.Inner_DataUtil.EXIT_DIG;
                         return this.init("Healed to " + (int)mc.player.getHealth() + "; leaving cover");
                      } else {
                         if (!AiBurrow.init_Z_F_J(healTo, AiSleep.init_J()) && System.nanoTime() <= this.init_J) {
@@ -740,8 +740,8 @@ final class AiBurrow {
                         }
 
                         this.init_RingBuffer_DataUti = this.read_BlockPos == null && !this.load_Z
-                           ? AiBurrow.Inner_DataUtil.close
-                           : AiBurrow.Inner_DataUtil.flush;
+                           ? AiBurrow.Inner_DataUtil.EXIT_TRAVEL
+                           : AiBurrow.Inner_DataUtil.EXIT_DIG;
                         return this.init(healTo > 0.0F ? "Shelter healing budget ended; leaving cover" : "Dawn; leaving cover");
                      }
                   }
@@ -770,7 +770,7 @@ final class AiBurrow {
                      return this.init(r.status(), "Could not open the shelter cap: " + r.message());
                   }
 
-                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.close;
+                  this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
                   return this.init("Cap open; climbing out");
                } else {
                   if (AiBurrow.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.engine.AiMotionSafety.fill_Z())) {
@@ -930,7 +930,7 @@ final class AiBurrow {
                   },
                   pos -> {
                      for (int down = 1; down <= 3; down++) {
-                        if (!this.init_Z_3(pos.below(down)) || this.init_RingBuffer_StreamU(pos.below(down)) != AiBurrow.Inner_StreamUtil.init) {
+                        if (!this.init_Z_3(pos.below(down)) || this.init_RingBuffer_StreamU(pos.below(down)) != AiBurrow.Inner_StreamUtil.DIG) {
                            return false;
                         }
                      }
@@ -943,7 +943,7 @@ final class AiBurrow {
 
             AiBurrow.Inner_StreamUtil init_RingBuffer_StreamU(BlockPos pos) {
                if (!AiTerrain.init(mc.level, pos)) {
-                  return AiBurrow.Inner_StreamUtil.read;
+                  return AiBurrow.Inner_StreamUtil.STOP;
                }
 
                BlockState state = mc.level.getBlockState(pos);
@@ -962,11 +962,11 @@ final class AiBurrow {
                for (Direction side : Plane.HORIZONTAL) {
                   BlockPos wall = pos.relative(side);
                   if (!this.init_Z_3(wall)) {
-                     return AiBurrow.Inner_StreamUtil.read;
+                     return AiBurrow.Inner_StreamUtil.STOP;
                   }
                }
 
-               return open && healTo > 0.0F ? AiBurrow.Inner_StreamUtil.read : AiBurrow.init(true, fluid, unbreakable, open, safeFloor);
+               return open && healTo > 0.0F ? AiBurrow.Inner_StreamUtil.STOP : AiBurrow.init(true, fluid, unbreakable, open, safeFloor);
             }
 
             boolean load_Z_3() {
@@ -1194,19 +1194,19 @@ final class AiBurrow {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      SHAFT,
+      RELOCATE,
+      CAP,
+      TOWER,
+      ROOF,
+      WAIT,
+      EXIT_DIG,
+      EXIT_TRAVEL;
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      DIG,
+      OPEN,
+      STOP;
    }
 }

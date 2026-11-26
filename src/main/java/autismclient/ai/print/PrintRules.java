@@ -70,7 +70,7 @@ public interface PrintRules {
    }
 
    default PrintRules.Inner_StreamUtil init_PathHelper_StreamU(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      return new PrintRules.Inner_StreamUtil(this.init_Map(world, source, targets), PrintRules.Inner_DataUtil.load);
+      return new PrintRules.Inner_StreamUtil(this.init_Map(world, source, targets), PrintRules.Inner_DataUtil.NO_PATH);
    }
 
    default PrintRules.Inner_StreamUtil init_PathHelper_StreamU_BlockGetter(
@@ -87,7 +87,7 @@ public interface PrintRules {
       HashMap<BlockPos, PrintRules.Inner_DataUtil> result = new HashMap<>();
 
       for (BlockPos at : targets) {
-         result.put(at, PrintRules.Inner_DataUtil.read);
+         result.put(at, PrintRules.Inner_DataUtil.UNKNOWN);
       }
 
       return result;
@@ -99,9 +99,9 @@ public interface PrintRules {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      REACHES,
+      NO_PATH,
+      UNKNOWN;
    }
 
    record Inner_StreamUtil(Map<BlockPos, PrintRules.Inner_DataUtil> reached, PrintRules.Inner_DataUtil unseen) {

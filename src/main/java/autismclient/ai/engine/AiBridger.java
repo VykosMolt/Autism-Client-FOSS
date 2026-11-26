@@ -123,7 +123,7 @@ public final class AiBridger {
             return this.putAt(var1, var2, var3, var4, var5, var6);
          }
 
-         if (this.putAt_TextStore_BitCore == AiBridger.Inner_ConfigStore.init) {
+         if (this.putAt_TextStore_BitCore == AiBridger.Inner_ConfigStore.TELLY) {
             AiBridger.Inner_DataUtil var10 = var2.stepToward(var9, 25.0F);
             if (putAt_Z_F_F(var2.yaw(), var9)) {
                if (this.putAt_Z_TokenCore_TableCac(var1, var10, var5)) {
@@ -239,7 +239,7 @@ public final class AiBridger {
       float var7 = this.putAt_TextStore_JsonCach.yaw();
       if (!this.fill_Z) {
          int var8 = this.putAt_Z_TokenCore_TableCac(var1, var3, var4, var5, var6) ? var6 : -1;
-         if (var8 >= 0 || this.putAt_TextStore_BitCore != AiBridger.Inner_ConfigStore.init || !this.fill(var1, var2, var5)) {
+         if (var8 >= 0 || this.putAt_TextStore_BitCore != AiBridger.Inner_ConfigStore.TELLY || !this.fill(var1, var2, var5)) {
             float[] var13 = this.putAt(var1, var2, var4, var5, var8 < 0 ? var6 : var6 + 1, 0.0 / 0.0, true);
             AiBridger.Inner_DataUtil var10 = var2.stepToward(var13[0], var13[1]);
             int[] var11 = this.putAt_IArr_F(var10.yaw(), var1, var7);
@@ -628,8 +628,8 @@ public final class AiBridger {
    }
 
    public enum Inner_ConfigStore {
-      init,
-      load;
+      TELLY,
+      LEGIT;
    }
 
    public record Inner_DataUtil(float yaw, float pitch) {

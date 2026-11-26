@@ -150,7 +150,7 @@ final class AiBuildSite {
                   AutismClientAddon.LOG.warn("[AI] build site could not classify {}, treating it as SKIP", cell, unknown);
                }
 
-               kind = AiBuildSite.Inner_CachePool.flush;
+               kind = AiBuildSite.Inner_CachePool.SKIP;
                item = Items.AIR;
                dependencies = 0;
             }
@@ -166,8 +166,8 @@ final class AiBuildSite {
             this.init_BitSet.set(i);
          }
 
-         boolean placeable = this.init_BArr[i] != (byte)AiBuildSite.Inner_CachePool.sync.ordinal()
-            && this.init_BArr[i] != (byte)AiBuildSite.Inner_CachePool.flush.ordinal();
+         boolean placeable = this.init_BArr[i] != (byte)AiBuildSite.Inner_CachePool.DERIVED.ordinal()
+            && this.init_BArr[i] != (byte)AiBuildSite.Inner_CachePool.SKIP.ordinal();
          if (placeable) {
             this.write_BitSet.set(i);
             this.put++;
@@ -370,7 +370,7 @@ final class AiBuildSite {
 
    boolean write_Z_I(int index) {
       AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(index);
-      return kind != AiBuildSite.Inner_CachePool.sync && kind != AiBuildSite.Inner_CachePool.flush && !this.flush_BitSet.get(index);
+      return kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP && !this.flush_BitSet.get(index);
    }
 
    boolean update_Z(int index) {
@@ -723,7 +723,7 @@ final class AiBuildSite {
          if (this.write_BitSet.get(index) && this.write_Z_I(index)) {
             int mask = this.load_BArr[index] & 255;
             if (mask != 0) {
-               boolean fluid = this.init_IoWorker_CachePool_I(index) == AiBuildSite.Inner_CachePool.write;
+               boolean fluid = this.init_IoWorker_CachePool_I(index) == AiBuildSite.Inner_CachePool.FLUID;
                BlockPos base = this.init_BlockPos_I(index);
 
                for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
@@ -1074,12 +1074,12 @@ final class AiBuildSite {
       for (int rankx = 0; rankx < this.pop; rankx++) {
          int index = base[rankx];
          AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(index);
-         if (kind == AiBuildSite.Inner_CachePool.update) {
+         if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
             int found = this.init_I_I(index, this.load_BArr[index] & 255, baseRank, 2147483647);
             if (found >= 0) {
                provider[index] = found;
             }
-         } else if (kind == AiBuildSite.Inner_CachePool.init || kind == AiBuildSite.Inner_CachePool.load) {
+         } else if (kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT) {
             int found = this.init_I_I_IArr(index, baseRank);
             if (found >= 0) {
                provider[index] = found;
@@ -1195,7 +1195,7 @@ final class AiBuildSite {
             int found = this.init_I_J(base.relative(init_DirectionArr[ordinal]).asLong());
             if (found >= 0 && found != index) {
                AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(found);
-               if (kind != AiBuildSite.Inner_CachePool.write && kind != AiBuildSite.Inner_CachePool.sync && kind != AiBuildSite.Inner_CachePool.flush && found != ignore
+               if (kind != AiBuildSite.Inner_CachePool.FLUID && kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP && found != ignore
                   )
                 {
                   int rank = baseRank[found];
@@ -1228,7 +1228,7 @@ final class AiBuildSite {
                int found = this.init_I_J(base.relative(direction).asLong());
                if (found >= 0 && found != index) {
                   AiBuildSite.Inner_CachePool kind = this.init_IoWorker_CachePool_I(found);
-                  if (kind != AiBuildSite.Inner_CachePool.write && kind != AiBuildSite.Inner_CachePool.sync && kind != AiBuildSite.Inner_CachePool.flush) {
+                  if (kind != AiBuildSite.Inner_CachePool.FLUID && kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP) {
                      int rank = baseRank[found];
                      if (rank < bestRank) {
                         best = found;
@@ -1287,7 +1287,7 @@ final class AiBuildSite {
          return false;
       }
 
-      if (this.init_IoWorker_CachePool_I(dependent) == AiBuildSite.Inner_CachePool.update) {
+      if (this.init_IoWorker_CachePool_I(dependent) == AiBuildSite.Inner_CachePool.PARTNER) {
          int mask = this.load_BArr[dependent] & 255;
          BlockPos base = this.init_BlockPos_I(dependent);
 
@@ -1306,19 +1306,19 @@ final class AiBuildSite {
    private static int open_I_I(int kindOrdinal) {
       byte var10000;
       switch (init_IoWorker_CachePoolArr[kindOrdinal]) {
-         case init:
-         case load:
-         case update:
+         case SIMPLE:
+         case INTERACT:
+         case PARTNER:
             var10000 = 0;
             break;
-         case read:
+         case SPECIAL:
             var10000 = 1;
             break;
-         case write:
+         case FLUID:
             var10000 = 2;
             break;
-         case sync:
-         case flush:
+         case DERIVED:
+         case SKIP:
             var10000 = 3;
             break;
          default:
@@ -1494,7 +1494,7 @@ final class AiBuildSite {
          int mask = this.load_BArr[index] & 255;
          if (mask != 0 && level != null) {
             BlockPos base = this.init_BlockPos_I(index);
-            boolean fluid = this.init_IoWorker_CachePool_I(index) == AiBuildSite.Inner_CachePool.write;
+            boolean fluid = this.init_IoWorker_CachePool_I(index) == AiBuildSite.Inner_CachePool.FLUID;
 
             for (int ordinal = 0; ordinal < init_DirectionArr.length; ordinal++) {
                if ((mask & 1 << ordinal) != 0) {
@@ -1502,9 +1502,9 @@ final class AiBuildSite {
                   int other = this.init_I_J(at.asLong());
                   if (other >= 0) {
                      AiBuildSite.Inner_CachePool otherKind = this.init_IoWorker_CachePool_I(other);
-                     if (otherKind != AiBuildSite.Inner_CachePool.write
-                        && otherKind != AiBuildSite.Inner_CachePool.sync
-                        && otherKind != AiBuildSite.Inner_CachePool.flush
+                     if (otherKind != AiBuildSite.Inner_CachePool.FLUID
+                        && otherKind != AiBuildSite.Inner_CachePool.DERIVED
+                        && otherKind != AiBuildSite.Inner_CachePool.SKIP
                         && !this.update_BitSet.get(other)) {
                         return false;
                      }
@@ -1679,13 +1679,13 @@ final class AiBuildSite {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      SIMPLE,
+      INTERACT,
+      SPECIAL,
+      FLUID,
+      PARTNER,
+      DERIVED,
+      SKIP;
    }
 
    private final class Inner_ConfigStore extends AbstractSet<Long> {

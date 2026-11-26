@@ -40,19 +40,19 @@ public final class AiPaceScript {
    private static final ConcurrentHashMap<Long, Double> putAt_ConcurrentHashMap = new ConcurrentHashMap<>();
    static final double chunkAt_D = 4.0;
    static final Set<AiPathfinder.Inner_SyncManager> putAt_Set = EnumSet.of(
-      AiPathfinder.Inner_SyncManager.start,
-      AiPathfinder.Inner_SyncManager.reset,
-      AiPathfinder.Inner_SyncManager.put,
-      AiPathfinder.Inner_SyncManager.add,
-      AiPathfinder.Inner_SyncManager.clear,
+      AiPathfinder.Inner_SyncManager.JUMP,
+      AiPathfinder.Inner_SyncManager.SPRINT_JUMP,
+      AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
+      AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
+      AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND,
       AiPathfinder.Inner_SyncManager.LADDER_JUMP
    );
    static final Set<AiPathfinder.Inner_SyncManager> fill_Set = EnumSet.of(
-      AiPathfinder.Inner_SyncManager.init,
-      AiPathfinder.Inner_SyncManager.load,
-      AiPathfinder.Inner_SyncManager.read,
-      AiPathfinder.Inner_SyncManager.write,
-      AiPathfinder.Inner_SyncManager.reset
+      AiPathfinder.Inner_SyncManager.WALK,
+      AiPathfinder.Inner_SyncManager.WALK_DIAGONAL,
+      AiPathfinder.Inner_SyncManager.SPRINT,
+      AiPathfinder.Inner_SyncManager.SPRINT_DIAGONAL,
+      AiPathfinder.Inner_SyncManager.SPRINT_JUMP
    );
    private static final int value_I = 0;
    private static final int prevEx_I = 1;
@@ -319,7 +319,7 @@ public final class AiPaceScript {
    }
 
    public static Supplier<AiPhysics.Inner_CachePool> putAt_Supplier_FileStore_TextStor_2(AiPathfinder.Inner_StateCache var0, double var1, boolean var3) {
-      return putAt_Supplier_FileStore_TextStor(var0, var1, var3 ? AiPathfinder.Inner_NetHelper.read : AiPathfinder.Inner_NetHelper.load);
+      return putAt_Supplier_FileStore_TextStor(var0, var1, var3 ? AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE : AiPathfinder.Inner_NetHelper.PARKOUR_SAFE);
    }
 
    public static Supplier<AiPhysics.Inner_CachePool> putAt_Supplier_FileStore_TextStor(
@@ -747,9 +747,9 @@ public final class AiPaceScript {
    public static AiPaceScript.Inner_TokenCodec putAt_TextPool_TokenCode_FileStore_TextStor(
       AiPathfinder.Inner_StateCache var0, AiPhysics.Inner_StreamUtil var1, List<BlockPos> var2, double var3, double var5, boolean var7, BooleanSupplier var8
    ) {
-      AiPathfinder.Inner_NetHelper var9 = var7 ? AiPathfinder.Inner_NetHelper.read : AiPathfinder.Inner_NetHelper.load;
+      AiPathfinder.Inner_NetHelper var9 = var7 ? AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE : AiPathfinder.Inner_NetHelper.PARKOUR_SAFE;
       AiPathfinder.Inner_DataUtil var10 = new AiPathfinder.Inner_DataUtil(
-            false, false, false, true, false, true, AiPathfinder.Inner_IoWorker.init, AiPathfinder.Inner_PoolEntry.value
+            false, false, false, true, false, true, AiPathfinder.Inner_IoWorker.FASTEST, AiPathfinder.Inner_PoolEntry.value
          )
          .withFallPolicy(var9);
       AiPathfinder.Inner_RenderState.Inner_CachePool var11 = new AiPathfinder.Inner_RenderState.Inner_CachePool(var0, 50000, var5);

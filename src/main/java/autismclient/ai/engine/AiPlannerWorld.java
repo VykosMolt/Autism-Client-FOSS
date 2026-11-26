@@ -728,7 +728,7 @@ final class AiPlannerWorld implements AiPhysics.Inner_CachePool {
             return 1;
          }
 
-         if (var4.type() == AiPathfinder.Inner_SyncManager.set
+         if (var4.type() == AiPathfinder.Inner_SyncManager.DOOR
             && var1 == var4.to().getX()
             && var3 == var4.to().getZ()
             && var2 >= var4.to().getY()

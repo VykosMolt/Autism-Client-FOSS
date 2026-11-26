@@ -60,7 +60,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    private ItemStack init_ItemStack = ItemStack.EMPTY;
    private final ArrayList<ItemStack> init_ArrayList = new ArrayList<>();
    private final HashSet<List<Integer>> init_HashSet = new HashSet<>();
-   private autismclient.ai.print.PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init;
+   private autismclient.ai.print.PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti = autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING;
    private String init_Str = "Waiting for saved container contents";
    private long init_J;
    private long load_J;
@@ -183,15 +183,15 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean load_Z() {
-      return this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update && this.open && this.pop();
+      return this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED && this.open && this.pop();
    }
 
    @Override
    public boolean read_Z() {
-      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update && this.b_() && this.pop()) {
+      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED && this.b_() && this.pop()) {
          this.write_V_2();
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Rechecking native container capacity after a machine update"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Rechecking native container capacity after a machine update"
          );
          return true;
       } else {
@@ -225,13 +225,13 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean update_Z() {
-      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update
+      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED
          && this.close
          && this.init_BlockState.is(Blocks.CHEST)
          && !this.load_Map.values().stream().noneMatch(count -> count > 0)) {
          this.write_V_2();
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Rechecking the collector after removing construction access"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Rechecking the collector after removing construction access"
          );
          return true;
       } else {
@@ -349,7 +349,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                this.update_I = this.init_Map.size();
                this.init_List = List.of("The passive collector kept changing after construction; its final contents remain unverified");
                this.update_V();
-               this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.sync, this.init_List.getFirst());
+               this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED, this.init_List.getFirst());
                return false;
             } else {
                this.init_Str = "Waiting for the passive hopper collector to finish delivering construction drops";
@@ -392,8 +392,8 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    @Override
    public boolean sync() {
       if ((
-            this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.load
-               || this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init
+            this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY
+               || this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING
          )
          && this.pop()
          && this.tick()) {
@@ -430,25 +430,25 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public autismclient.ai.print.PrintMachineJob.Inner_DataUtil prepare() {
-      if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.load
-         && this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init) {
+      if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY
+         && this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING) {
          return this.init_BitSetUtil_DataUti;
       }
 
       if (AiMenuClose.load()) {
          return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Waiting for the previous storage menu to close on the server"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Waiting for the previous storage menu to close on the server"
          );
       }
 
       if (!this.pop()) {
          return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "World or player changed before filling saved contents"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "World or player changed before filling saved contents"
          );
       }
 
       if (!this.init_DataUtil.load_Z(this.init_BlockPos)) {
-         return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Waiting for the saved container chunk");
+         return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Waiting for the saved container chunk");
       }
 
       if (!this.tick()) {
@@ -459,27 +459,27 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
             return this.init_DataUtil.init_J() - this.read_J >= 100L
                ? this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "The captured hopper is still unlocked at " + this.init_BlockPos.toShortString()
+                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "The captured hopper is still unlocked at " + this.init_BlockPos.toShortString()
                )
                : this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Waiting for the captured hopper to lock at " + this.init_BlockPos.toShortString()
+                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Waiting for the captured hopper to lock at " + this.init_BlockPos.toShortString()
                );
          } else {
             return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "The saved container changed at " + this.init_BlockPos.toShortString()
+               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "The saved container changed at " + this.init_BlockPos.toShortString()
             );
          }
       } else {
          this.read_J = -9223372036854775808L;
          if (!autismclient.ai.print.PrintContainerAccess.init(this.init_Minecraft.level, this.init_BlockPos)) {
             return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "The saved shulker lid is obstructed at " + this.init_BlockPos.toShortString()
+               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "The saved shulker lid is obstructed at " + this.init_BlockPos.toShortString()
             );
          }
 
          if (!this.write_Z && this.init_DataUtil.init_Z_BlockPos_Map(this.init_BlockPos, this.init_Map)) {
             return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Waiting for the qualification inventory supply receipt"
+               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Waiting for the qualification inventory supply receipt"
             );
          }
 
@@ -525,21 +525,21 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                               heldx -> deficits.stream().anyMatch(required -> ItemStack.isSameItemSameComponents(required, heldx))
                            )) {
                         return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                           autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Preparing exact creative stock for saved contents"
+                           autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Preparing exact creative stock for saved contents"
                         );
                      }
 
                      return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "Free inventory space for the saved container materials"
+                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "Free inventory space for the saved container materials"
                      );
                   }
                }
             }
 
-            return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.load, "The saved container is ready");
+            return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY, "The saved container is ready");
          } else {
             return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Waiting for the player inventory and empty cursor"
+               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Waiting for the player inventory and empty cursor"
             );
          }
       }
@@ -547,12 +547,12 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public boolean beginDispatch() {
-      if (this.prepare() == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.load && !this.init_DataUtil.load_Z()) {
+      if (this.prepare() == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY && !this.init_DataUtil.load_Z()) {
          this.init_J = System.nanoTime();
          this.load_J = AiServerEvidence.init_J();
          this.sync_Z = this.init_DataUtil.update_Z();
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.read, "Waiting for the container menu and its server contents"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SENT, "Waiting for the container menu and its server contents"
          );
          return true;
       } else {
@@ -562,7 +562,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public autismclient.ai.print.PrintMachineJob.Inner_DataUtil poll_BitSetUtil_DataUti() {
-      if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.read) {
+      if (this.init_BitSetUtil_DataUti != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SENT) {
          return this.init_BitSetUtil_DataUti;
       }
 
@@ -574,7 +574,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                }
 
                return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "The saved container menu did not open"
+                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "The saved container menu did not open"
                );
             }
 
@@ -582,7 +582,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                || screen.getMenu() != this.init_Minecraft.player.containerMenu
                || (this.init_bM_DataUtil = AiSavedContents.init(this.init_BlockState, screen.getMenu())) == null) {
                return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "A different screen opened during the saved contents action"
+                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "A different screen opened during the saved contents action"
                );
             }
 
@@ -629,7 +629,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   || !this.init_AbstractContainerM.getSlot(this.init_I).getItem().isEmpty()
                   || !this.init_AbstractContainerM.getCarried().isEmpty()) {
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "The recovered scaffold material needs inventory reconciliation"
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "The recovered scaffold material needs inventory reconciliation"
                   );
                }
 
@@ -648,14 +648,14 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   }
 
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "The container menu did not provide its initial server snapshot"
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "The container menu did not provide its initial server snapshot"
                   );
                }
 
                if (this.init_CompletableFuture != null
                   && (this.init_CompletableFuture.isCompletedExceptionally() || !Boolean.TRUE.equals(this.init_CompletableFuture.getNow(false)))) {
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "The native menu is attached to a different container"
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "The native menu is attached to a different container"
                   );
                }
 
@@ -666,7 +666,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   boolean empty = this.load_List.stream().allMatch(ItemStack::isEmpty) && this.init_AbstractContainerM.getCarried().isEmpty();
                   this.update_V();
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     empty ? autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update : autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush,
+                     empty ? autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED : autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT,
                      empty ? "Fresh native hopper is empty" : "Existing clock contents require observation; no items changed"
                   );
                }
@@ -674,7 +674,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                if (this.update_Z && (this.load_List.stream().anyMatch(stack -> !stack.isEmpty()) || !this.init_AbstractContainerM.getCarried().isEmpty())) {
                   this.update_V();
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "Clock preload no longer empty; no saved stock transferred"
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "Clock preload no longer empty; no saved stock transferred"
                   );
                }
 
@@ -698,7 +698,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                               String blocked = this.init_Supplier.get();
                               if (blocked != null && !blocked.isBlank()) {
                                  this.update_V();
-                                 return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, blocked);
+                                 return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, blocked);
                               }
 
                               this.init_I = index;
@@ -709,7 +709,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                               );
                               this.flush = true;
                               return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                                 autismclient.ai.print.PrintMachineJob.Inner_DataUtil.read, "Returning recovered scaffold material to the player inventory"
+                                 autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SENT, "Returning recovered scaffold material to the player inventory"
                               );
                            }
                         }
@@ -720,7 +720,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                if (plan.conflict() != null) {
                   this.update_V();
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, plan.conflict() + " at " + this.init_BlockPos.toShortString()
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, plan.conflict() + " at " + this.init_BlockPos.toShortString()
                   );
                }
 
@@ -735,7 +735,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                            this.update_V();
                            this.write_V_2();
                            return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                              autismclient.ai.print.PrintMachineJob.Inner_DataUtil.write, "Fetching exact saved contents from a carried shulker"
+                              autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY, "Fetching exact saved contents from a carried shulker"
                            );
                         }
                      }
@@ -745,14 +745,14 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   if (!this.init_Z) {
                      this.update_V();
                      return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "Player inventory lacks saved contents. " + String.join("; ", this.init_List)
+                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "Player inventory lacks saved contents. " + String.join("; ", this.init_List)
                      );
                   }
 
                   this.update_I = plan.unfilledSlots();
                   this.update_V();
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.sync,
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED,
                      "Skipped " + this.update_I + " unfilled saved slots at " + this.init_BlockPos.toShortString() + ". " + String.join("; ", this.init_List)
                   );
                }
@@ -766,14 +766,14 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   if (this.init_StateCache != null && !this.init_StateCache.load(this.init_BlockPos)) {
                      this.update_V();
                      return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, "The saved inventory cannot hold its stock until its hopper outlets are settled"
+                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, "The saved inventory cannot hold its stock until its hopper outlets are settled"
                      );
                   }
 
                   if (this.load_Z && this.init_DataUtil.init_BlockState_BlockPos(this.init_BlockPos).getValue(BlockStateProperties.ENABLED)) {
                      this.update_V();
                      return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush,
+                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT,
                         "The captured hopper is unlocked before filling at " + this.init_BlockPos.toShortString()
                      );
                   }
@@ -781,7 +781,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   String blocked = this.init_Supplier.get();
                   if (blocked != null && !blocked.isBlank()) {
                      this.update_V();
-                     return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush, blocked);
+                     return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT, blocked);
                   }
 
                   this.flush = true;
@@ -799,7 +799,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
                this.load_Str = this.init_ae.init_Str_13();
                if (progress.status() != AiOperation.Status.SUCCEEDED) {
-                  return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, this.init_Str);
+                  return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, this.init_Str);
                }
 
                this.init_ae = null;
@@ -825,14 +825,14 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      }
 
                      return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "Container contents changed before final slot verification"
+                        autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "Container contents changed before final slot verification"
                      );
                   }
                }
 
                if (!this.init_AbstractContainerM.getCarried().isEmpty()) {
                   return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "Saved contents transfer left an item on the cursor"
+                     autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "Saved contents transfer left an item on the cursor"
                   );
                }
 
@@ -850,7 +850,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      if (!this.init_Map.containsKey(raw) && !this.init_AbstractContainerM.getSlot(this.init_bM_DataUtil.offset() + raw).getItem().isEmpty()) {
                         this.init_List = List.of("Additional items remain in fresh collector slot " + raw + ". Saved slots are verified");
                         this.update_V();
-                        return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.sync, this.init_List.getFirst());
+                        return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED, this.init_List.getFirst());
                      }
                   }
                }
@@ -863,17 +863,17 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   });
                this.update_V();
                return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update, "Saved container slots and empty cursor verified"
+                  autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED, "Saved container slots and empty cursor verified"
                );
             }
          } else {
             return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "The claimed container menu changed during transfer"
+               autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "The claimed container menu changed during transfer"
             );
          }
       } else {
          return this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close,
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN,
             "Container, world, or game mode changed during saved contents at " + this.init_BlockPos.toShortString()
          );
       }
@@ -886,21 +886,21 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
    @Override
    public void load_V() {
-      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.write) {
+      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
          this.init_ItemStack = ItemStack.EMPTY;
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Rechecking saved contents after recovering the stock box"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Rechecking saved contents after recovering the stock box"
          );
       }
    }
 
    @Override
    public void read_V() {
-      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.write) {
+      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
          this.init_ArrayList.add(this.init_ItemStack.copyWithCount(1));
          this.init_ItemStack = ItemStack.EMPTY;
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init, "Rechecking saved contents before skipping unavailable stock"
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING, "Rechecking saved contents before skipping unavailable stock"
          );
       }
    }
@@ -937,9 +937,9 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
          this.init_ae.cancel();
       }
 
-      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.read) {
+      if (this.init_BitSetUtil_DataUti == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SENT) {
          this.init_BitSetUtil_DataUti_BitSetUtil_DataUti_Str(
-            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close, "Saved contents action interrupted at " + this.init_BlockPos.toShortString()
+            autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN, "Saved contents action interrupted at " + this.init_BlockPos.toShortString()
          );
       }
    }

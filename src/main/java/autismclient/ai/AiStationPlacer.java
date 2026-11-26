@@ -41,14 +41,14 @@ final class AiStationPlacer {
 
    AiStationPlacer.Inner_DataUtil init_cn_DataUtil() {
       if (this.load_BlockPos != null) {
-         return AiStationPlacer.Inner_DataUtil.load;
+         return AiStationPlacer.Inner_DataUtil.PLACED;
       }
 
       if (this.load_AiOperation != null) {
          AiOperation.Result r = this.load_AiOperation.tick();
          if (!r.terminal()) {
             this.read_Str = "Making room for the " + this.init_Str + ": " + r.message();
-            return AiStationPlacer.Inner_DataUtil.init;
+            return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
          this.load_AiOperation.cancel();
@@ -61,7 +61,7 @@ final class AiStationPlacer {
          AiOperation.Result r = this.init_AiOperation.tick();
          if (!r.terminal()) {
             this.read_Str = "Moving to open ground for the " + this.init_Str + ": " + r.message();
-            return AiStationPlacer.Inner_DataUtil.init;
+            return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
          this.init_AiOperation.cancel();
@@ -71,7 +71,7 @@ final class AiStationPlacer {
 
       if (!this.init_Z) {
          if (this.init_List == null && !this.load_Z && AiCraft.read() && this.read()) {
-            return AiStationPlacer.Inner_DataUtil.init;
+            return AiStationPlacer.Inner_DataUtil.WORKING;
          }
 
          if (this.init_List == null) {
@@ -94,7 +94,7 @@ final class AiStationPlacer {
 
             if (allOurs && this.write()) {
                this.init_List = null;
-               return AiStationPlacer.Inner_DataUtil.init;
+               return AiStationPlacer.Inner_DataUtil.WORKING;
             }
          }
 
@@ -104,22 +104,22 @@ final class AiStationPlacer {
                && mc.level != null
                && init(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
                && this.write()) {
-               return AiStationPlacer.Inner_DataUtil.init;
+               return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
             if (this.read()) {
-               return AiStationPlacer.Inner_DataUtil.init;
+               return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
             if (this.write()) {
-               return AiStationPlacer.Inner_DataUtil.init;
+               return AiStationPlacer.Inner_DataUtil.WORKING;
             }
 
             if (this.load_Str.isEmpty()) {
                this.load_Str = "no free supported spot within two blocks";
             }
 
-            return AiStationPlacer.Inner_DataUtil.read;
+            return AiStationPlacer.Inner_DataUtil.FAILED;
          }
 
          this.init_DataPipe.init_V_BlockPos_Item(this.init_List.get(this.load_I), this.init_Item);
@@ -128,16 +128,16 @@ final class AiStationPlacer {
       }
 
       autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-      if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+      if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
          this.init_Z = false;
          this.load_BlockPos = this.init_DataPipe.init_BlockPos();
-         return AiStationPlacer.Inner_DataUtil.load;
-      } else if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.read_I <= 60) {
+         return AiStationPlacer.Inner_DataUtil.PLACED;
+      } else if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.read_I <= 60) {
          this.read_Str = "Placing a " + this.init_Str;
-         return AiStationPlacer.Inner_DataUtil.init;
+         return AiStationPlacer.Inner_DataUtil.WORKING;
       } else {
          this.init_Z = false;
-         this.load_Str = status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
+         this.load_Str = status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
             ? this.init_DataPipe.init_Str()
             : "not placed within 60 ticks: " + this.init_DataPipe.load_Str();
          this.init_DataPipe.init_V();
@@ -145,7 +145,7 @@ final class AiStationPlacer {
             .info("[AI] {} spot {} unusable after {} ticks: {}", this.init_Str, this.init_List.get(this.load_I).toShortString(), this.read_I, this.load_Str);
          this.load_I++;
          this.read_Str = this.init_Str + " spot unusable (" + this.load_Str + "); trying the next spot";
-         return AiStationPlacer.Inner_DataUtil.init;
+         return AiStationPlacer.Inner_DataUtil.WORKING;
       }
    }
 
@@ -352,8 +352,8 @@ final class AiStationPlacer {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      WORKING,
+      PLACED,
+      FAILED;
    }
 }

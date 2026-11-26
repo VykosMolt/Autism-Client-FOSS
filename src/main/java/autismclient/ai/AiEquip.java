@@ -116,7 +116,7 @@ final class AiEquip {
                            if (source < 0) {
                               this.load_Z = true;
                               return AiOperation.Result.failed(
-                                 AiFailure.pop,
+                                 AiFailure.MISSING_MATERIALS,
                                  "No " + what + " in inventory",
                                  AiJson.init_JsonObject_ObjArr("what", what, "matches", AiJson.init.toJsonTree(target.itemIds())).toString()
                               );
@@ -132,7 +132,7 @@ final class AiEquip {
                            if (!this.init_Z) {
                               this.load_Z = true;
                               return AiOperation.Result.failed(
-                                 AiFailure.data,
+                                 AiFailure.IMPOSSIBLE_STATE,
                                  "Could not move " + what + " to the offhand (the cursor must be empty)",
                                  AiJson.init_JsonObject_ObjArr("what", what).toString()
                               );
@@ -365,7 +365,7 @@ final class AiEquip {
                            this.init_Str
                         );
                         this.cancel();
-                        return AiOperation.Result.failed(AiFailure.pop, "prefer '" + preferSpec + "' matches no armor piece, carried or worn", data.toString());
+                        return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, "prefer '" + preferSpec + "' matches no armor piece, carried or worn", data.toString());
                      }
                   }
 
@@ -378,7 +378,7 @@ final class AiEquip {
                      );
                   }
 
-                  if (move.kind() == AiEquip.Inner_DataUtil.load && mc.player.getInventory().getFreeSlot() < 0) {
+                  if (move.kind() == AiEquip.Inner_DataUtil.CLEAR_WORN && mc.player.getInventory().getFreeSlot() < 0) {
                      return this.init(AiOperation.Status.FAILED, "No free inventory slot to swap out the worn " + AiEquip.init(mc.player.getItemBySlot(move.slot())));
                   }
 
@@ -415,17 +415,17 @@ final class AiEquip {
                      if (wornStack.isEmpty()) {
                         return candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap
                            ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.init, AiEquip.init(candidate.init_ItemStack())
+                              slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.init_ItemStack())
                            )
                            : new AiEquip.Inner_StreamUtil(
-                              slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.init, AiEquip.init(candidate.init_ItemStack())
+                              slot, this.init(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.init_ItemStack())
                            );
                      } else {
                         return candidate.init_TaskTimer_StreamUt() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
                            ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.init, AiEquip.init(candidate.init_ItemStack())
+                              slot, armorMenuSlot, candidate.init_I(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.init(candidate.init_ItemStack())
                            )
-                           : new AiEquip.Inner_StreamUtil(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.load, AiEquip.init(wornStack));
+                           : new AiEquip.Inner_StreamUtil(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.CLEAR_WORN, AiEquip.init(wornStack));
                      }
                   }
                }
@@ -625,8 +625,8 @@ final class AiEquip {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load;
+      MOVE_IN,
+      CLEAR_WORN;
    }
 
    private record Inner_StreamUtil(EquipmentSlot slot, int menuSlot, int button, ContainerInput input, AiEquip.Inner_DataUtil kind, String description) {

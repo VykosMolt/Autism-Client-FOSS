@@ -263,13 +263,13 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
       if (var2 >= this.fill && var2 <= this.readEx) {
          BlockState var4 = this.putAt_BlockState(var1, var2, var3);
          if (var4 == null) {
-            return AiSurface.init_m.init();
+            return AiSurface.NORMAL.init();
          }
 
          AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
-         return var5 == null ? AiSurface.init_m.init() : var5.surface();
+         return var5 == null ? AiSurface.NORMAL.init() : var5.surface();
       } else {
-         return AiSurface.init_m.init();
+         return AiSurface.NORMAL.init();
       }
    }
 
@@ -519,7 +519,7 @@ public final class AiLiveGrid implements AiPathfinder.Inner_StateCache {
       try {
          if (var0.isAir()) {
             return new AiLiveGrid.Inner_StreamUtil(
-               AiPathfinder.Inner_FileCache.air(), (short)0, (short)0, AiSurface.init_m.init(), 0.0F, false, false, false, false, false, false
+               AiPathfinder.Inner_FileCache.air(), (short)0, (short)0, AiSurface.NORMAL.init(), 0.0F, false, false, false, false, false, false
             );
          }
 

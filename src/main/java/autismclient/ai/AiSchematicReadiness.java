@@ -50,23 +50,23 @@ final class AiSchematicReadiness {
          String block = cell.block().startsWith("minecraft:") ? cell.block().substring("minecraft:".length()) : cell.block();
          String var10000;
          switch (first.kind()) {
-            case init:
-            case load:
+            case UNSUPPORTED_STATE:
+            case NO_ACTION_PLAN:
                var10000 = first.detail();
                break;
-            case read:
+            case CONFLICTING_PAIR:
                var10000 = "its other half is a different saved block";
                break;
-            case write:
+            case MISSING_CONTEXT:
                var10000 = "it needs blocks outside the schematic";
                break;
-            case update:
+            case NO_SUPPORT:
                var10000 = first.detail().replace(" in the finished schematic, which cannot hold it; vanilla breaks it off", "") + ", which cannot hold it";
                break;
-            case sync:
+            case FALLS:
                var10000 = "nothing holds it up, so it falls";
                break;
-            case flush:
+            case NO_SOURCE:
                var10000 = "flowing with no source, so it drains";
                break;
             default:
@@ -74,7 +74,7 @@ final class AiSchematicReadiness {
          }
 
          String why = var10000;
-         return first.kind() != AiSchematicReadiness.Inner_CachePool.init && first.kind() != AiSchematicReadiness.Inner_CachePool.load
+         return first.kind() != AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE && first.kind() != AiSchematicReadiness.Inner_CachePool.NO_ACTION_PLAN
             ? "Cannot build as saved: "
                + report.issueCount()
                + (report.issueCount() == 1L ? " block" : " blocks")
@@ -204,7 +204,7 @@ final class AiSchematicReadiness {
                if (issues.size() < exampleLimit) {
                   issues.add(
                      new AiSchematicReadiness.Inner_StreamUtil(
-                        partner == null ? AiSchematicReadiness.Inner_CachePool.write : AiSchematicReadiness.Inner_CachePool.read,
+                        partner == null ? AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT : AiSchematicReadiness.Inner_CachePool.CONFLICTING_PAIR,
                         cell,
                         "requires its native paired half at "
                            + at.toShortString()
@@ -322,12 +322,12 @@ final class AiSchematicReadiness {
                   BlockState below = finished.apply(pos.below());
                   if (FallingBlock.isFree(below)) {
                      problem = new AiSchematicReadiness.Inner_ConfigStore(
-                        AiSchematicReadiness.Inner_CachePool.sync, "rests on " + BuiltInRegistries.BLOCK.getKey(below.getBlock()) + " in the finished schematic, so it falls"
+                        AiSchematicReadiness.Inner_CachePool.FALLS, "rests on " + BuiltInRegistries.BLOCK.getKey(below.getBlock()) + " in the finished schematic, so it falls"
                      );
                   }
                } else if (!state.canSurvive(reader, pos)) {
                   problem = new AiSchematicReadiness.Inner_ConfigStore(
-                     AiSchematicReadiness.Inner_CachePool.update, init(state, pos, origin, finished) + " in the finished schematic, which cannot hold it; vanilla breaks it off"
+                     AiSchematicReadiness.Inner_CachePool.NO_SUPPORT, init(state, pos, origin, finished) + " in the finished schematic, which cannot hold it; vanilla breaks it off"
                   );
                }
             } catch (AiSchematicReadiness.Inner_JsonUtil inconclusive) {
@@ -441,9 +441,9 @@ final class AiSchematicReadiness {
                   issues.add(
                      edge
                         ? new AiSchematicReadiness.Inner_StreamUtil(
-                           AiSchematicReadiness.Inner_CachePool.write, cell, body + " fed from outside the schematic, where the site has none; vanilla drains it"
+                           AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT, cell, body + " fed from outside the schematic, where the site has none; vanilla drains it"
                         )
-                        : new AiSchematicReadiness.Inner_StreamUtil(AiSchematicReadiness.Inner_CachePool.flush, cell, body + " with no source in the schematic; vanilla drains it")
+                        : new AiSchematicReadiness.Inner_StreamUtil(AiSchematicReadiness.Inner_CachePool.NO_SOURCE, cell, body + " with no source in the schematic; vanilla drains it")
                   );
                }
             }
@@ -721,11 +721,11 @@ final class AiSchematicReadiness {
       ArrayList<AiSchematicReadiness.Inner_ConfigStore> problems = new ArrayList<>();
 
       for (String gap : AiBuilder.init_List(cell)) {
-         problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.init, gap));
+         problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE, gap));
       }
 
       if (!init_Z(cell) && AiSchematicActions.load_List(cell).isEmpty()) {
-         problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.load, "required work has no placement, material, or verified interaction action"));
+         problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.NO_ACTION_PLAN, "required work has no placement, material, or verified interaction action"));
       }
 
       return List.copyOf(problems);
@@ -742,13 +742,13 @@ final class AiSchematicReadiness {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      UNSUPPORTED_STATE,
+      NO_ACTION_PLAN,
+      CONFLICTING_PAIR,
+      MISSING_CONTEXT,
+      NO_SUPPORT,
+      FALLS,
+      NO_SOURCE;
    }
 
    private record Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool kind, String detail) {

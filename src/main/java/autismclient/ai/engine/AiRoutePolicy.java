@@ -125,7 +125,7 @@ public final class AiRoutePolicy {
    }
 
    static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1, boolean var2) {
-      if (var2 && var0.type() == AiPathfinder.Inner_SyncManager.run) {
+      if (var2 && var0.type() == AiPathfinder.Inner_SyncManager.BRIDGE_CELL) {
          AiPathfinder.Inner_FileCache var3 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to().below());
          AiPathfinder.Inner_FileCache var4 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to());
          AiPathfinder.Inner_FileCache var5 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to().above());
@@ -149,30 +149,30 @@ public final class AiRoutePolicy {
    private static boolean value(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1) {
       boolean var10000;
       switch (var0.type()) {
-         case init:
-         case load:
-         case read:
-         case write:
+         case WALK:
+         case WALK_DIAGONAL:
+         case SPRINT:
+         case SPRINT_DIAGONAL:
             var10000 = putAt_Z_BlockPos_Function(var0.to(), var1);
             break;
-         case update:
+         case STEP_UP_1:
             var10000 = (
                   !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).passable()
                      || ((AiPathfinder.Inner_FileCache)var1.apply(var0.from())).water() && ((AiPathfinder.Inner_FileCache)var1.apply(var0.to())).water()
                )
                && putAt_Z_BlockPos_Function(var0.to(), var1);
             break;
-         case reset:
+         case SPRINT_JUMP:
             var10000 = AiPathfinder.Inner_RenderState.prevEx(var1, var0.from(), var0.to());
             break;
-         case sync:
+         case JUMP_UP_1:
             var10000 = !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).passable()
                && putAt_Z_BlockPos_Function(var0.to(), var1)
                && (!((AiPathfinder.Inner_FileCache)var1.apply(var0.from().below())).farmland() || ((AiPathfinder.Inner_FileCache)var1.apply(var0.from())).water());
             break;
-         case flush:
-         case close:
-         case open:
+         case DESCEND_1:
+         case DESCEND_2:
+         case DESCEND_3:
             var10000 = putAt_Z_BlockPos_Function(var0.to(), var1)
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).farmland()
                && (
@@ -186,7 +186,7 @@ public final class AiRoutePolicy {
                      )
                );
             break;
-         case get:
+         case CLIMB_1:
             if (var0.to().getY() > var0.from().getY()) {
                AiPathfinder.Inner_FileCache var13 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to());
                var10000 = (var13.passable() || var13.climbable())
@@ -202,7 +202,7 @@ public final class AiRoutePolicy {
                   || putAt_Z_BlockPos_Function(var0.to(), var1);
             }
             break;
-         case poll:
+         case DESCEND_SOFT:
             AiPathfinder.Inner_FileCache var12 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to());
             var10000 = var12.passable()
                && !var12.lava()
@@ -211,7 +211,7 @@ public final class AiRoutePolicy {
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).farmland()
                && Math.min(var12.fallMult10(), ((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).fallMult10()) <= 2;
             break;
-         case push:
+         case DIG_DOWN_1:
             BlockPos var11 = var0.cellsToBreak().get(0);
             AiPathfinder.Inner_FileCache var17 = (AiPathfinder.Inner_FileCache)var1.apply(var11);
             AiPathfinder.Inner_FileCache var21 = (AiPathfinder.Inner_FileCache)var1.apply(var11.below());
@@ -226,9 +226,9 @@ public final class AiRoutePolicy {
                && var21.top16() <= 16
                && (!var23.water() || !var25.water());
             break;
-         case pop:
-         case stop:
-         case next:
+         case DIG_TUNNEL:
+         case DIG_ASCEND:
+         case DIG_DESCEND:
             AiPathfinder.Inner_FileCache var10 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to().below());
             boolean var16 = !var10.passable() && !var10.hazardFloor() && !var10.lava();
 
@@ -241,7 +241,7 @@ public final class AiRoutePolicy {
 
             var10000 = var16;
             break;
-         case tick:
+         case PILLAR:
             AiPathfinder.Inner_FileCache var9 = (AiPathfinder.Inner_FileCache)var1.apply(var0.from().below());
             boolean var15 = (!var9.farmland() && var9.top16() >= 16 || var0.repairFarmland() && var9.farmland() && var9.top16() == 15 || var9.soulSand())
                && !var9.door();
@@ -258,7 +258,7 @@ public final class AiRoutePolicy {
 
             var10000 = var15;
             break;
-         case run:
+         case BRIDGE_CELL:
             AiPathfinder.Inner_FileCache var8 = (AiPathfinder.Inner_FileCache)var1.apply(var0.cellsToPlace().get(0));
             var10000 = var8.passable()
                && !var8.water()
@@ -267,7 +267,7 @@ public final class AiRoutePolicy {
                && ((AiPathfinder.Inner_FileCache)var1.apply(var0.to().above())).passable()
                && AiPathfinder.Inner_RenderState.flowState(var1, var0.cellsToPlace().get(0)) >= 0;
             break;
-         case set:
+         case DOOR:
             AiPathfinder.Inner_FileCache var7 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to());
             AiPathfinder.Inner_FileCache var14 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to().above());
             AiPathfinder.Inner_FileCache var18 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to().below());
@@ -282,15 +282,15 @@ public final class AiRoutePolicy {
                && !var18.hazardFloor()
                && !var18.lava();
             break;
-         case put:
-         case add:
-         case clear:
+         case JUMP_GAP_2:
+         case JUMP_GAP_3:
+         case PARKOUR_ASCEND:
             int var2 = Integer.signum(var0.to().getX() - var0.from().getX());
             int var3 = Integer.signum(var0.to().getZ() - var0.from().getZ());
             int var4 = Math.max(Math.abs(var0.to().getX() - var0.from().getX()), Math.abs(var0.to().getZ() - var0.from().getZ())) - 1;
-            var10000 = AiPathfinder.Inner_RenderState.putAt_Z_Function(var1, var0.from(), var2, var3, var4, var0.type() == AiPathfinder.Inner_SyncManager.clear);
+            var10000 = AiPathfinder.Inner_RenderState.putAt_Z_Function(var1, var0.from(), var2, var3, var4, var0.type() == AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND);
             break;
-         case start:
+         case JUMP:
             var10000 = (putAt_Z_BlockPos_Function(var0.to(), var1) || AiPathfinder.Inner_RenderState.putAt_Z_Function_2(var1, var0.to(), var0.jump()))
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).farmland()
                && AiPathfinder.Inner_RenderState.fill((AiPathfinder.Inner_FileCache)var1.apply(var0.from()), (AiPathfinder.Inner_FileCache)var1.apply(var0.from().below()));
@@ -324,9 +324,9 @@ public final class AiRoutePolicy {
    private static boolean prevEx(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1) {
       boolean var10000;
       switch (var0.type()) {
-         case close:
-         case open:
-         case poll:
+         case DESCEND_2:
+         case DESCEND_3:
+         case DESCEND_SOFT:
             for (int var7 = var0.to().getY() - 1; var7 <= var0.from().getY() + 1; var7++) {
                if (((AiPathfinder.Inner_FileCache)var1.apply(new BlockPos(var0.to().getX(), var7, var0.to().getZ()))).cached()) {
                   return false;
@@ -335,30 +335,30 @@ public final class AiRoutePolicy {
 
             var10000 = true;
             break;
-         case get:
-         case set:
+         case CLIMB_1:
+         case DOOR:
          default:
             var10000 = true;
             break;
-         case push:
+         case DIG_DOWN_1:
             var10000 = putAt_Z_List_Function(var0.cellsToBreak(), var1) && !((AiPathfinder.Inner_FileCache)var1.apply(var0.cellsToBreak().get(0).below())).cached();
             break;
-         case pop:
-         case stop:
-         case next:
+         case DIG_TUNNEL:
+         case DIG_ASCEND:
+         case DIG_DESCEND:
             var10000 = putAt_Z_List_Function(var0.cellsToBreak(), var1) && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).cached();
             break;
-         case tick:
+         case PILLAR:
             var10000 = putAt_Z_List_Function(var0.cellsToPlace(), var1)
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.from().above(2))).cached()
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.from().above(3))).cached();
             break;
-         case run:
+         case BRIDGE_CELL:
             var10000 = putAt_Z_List_Function(var0.cellsToPlace(), var1) && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to())).cached();
             break;
-         case put:
-         case add:
-         case clear:
+         case JUMP_GAP_2:
+         case JUMP_GAP_3:
+         case PARKOUR_ASCEND:
             if (!((AiPathfinder.Inner_FileCache)var1.apply(var0.from())).cached()
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to())).cached()
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).cached()) {
@@ -378,7 +378,7 @@ public final class AiRoutePolicy {
                var10000 = false;
             }
             break;
-         case start:
+         case JUMP:
             var10000 = !((AiPathfinder.Inner_FileCache)var1.apply(var0.from())).cached()
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to())).cached()
                && !((AiPathfinder.Inner_FileCache)var1.apply(var0.to().below())).cached();
@@ -469,36 +469,36 @@ public final class AiRoutePolicy {
    }
 
    static boolean putAt(AiPathfinder.Inner_SyncManager var0) {
-      return var0 == AiPathfinder.Inner_SyncManager.add || var0 == AiPathfinder.Inner_SyncManager.clear;
+      return var0 == AiPathfinder.Inner_SyncManager.JUMP_GAP_3 || var0 == AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND;
    }
 
    static boolean fill(AiPathfinder.Inner_SyncManager var0) {
-      return var0 == AiPathfinder.Inner_SyncManager.put
-         || var0 == AiPathfinder.Inner_SyncManager.add
-         || var0 == AiPathfinder.Inner_SyncManager.clear
-         || var0 == AiPathfinder.Inner_SyncManager.start;
+      return var0 == AiPathfinder.Inner_SyncManager.JUMP_GAP_2
+         || var0 == AiPathfinder.Inner_SyncManager.JUMP_GAP_3
+         || var0 == AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND
+         || var0 == AiPathfinder.Inner_SyncManager.JUMP;
    }
 
    static boolean readEx(AiPathfinder.Inner_SyncManager var0) {
-      return var0 == AiPathfinder.Inner_SyncManager.push
-         || var0 == AiPathfinder.Inner_SyncManager.pop
-         || var0 == AiPathfinder.Inner_SyncManager.stop
-         || var0 == AiPathfinder.Inner_SyncManager.next
-         || var0 == AiPathfinder.Inner_SyncManager.tick;
+      return var0 == AiPathfinder.Inner_SyncManager.DIG_DOWN_1
+         || var0 == AiPathfinder.Inner_SyncManager.DIG_TUNNEL
+         || var0 == AiPathfinder.Inner_SyncManager.DIG_ASCEND
+         || var0 == AiPathfinder.Inner_SyncManager.DIG_DESCEND
+         || var0 == AiPathfinder.Inner_SyncManager.PILLAR;
    }
 
    static boolean putAt_Z(AiPathfinder.UiHelper var0) {
       if (var0.to().getY() == var0.from().getY() && var0.cellsToBreak().isEmpty() && var0.cellsToPlace().isEmpty()) {
          boolean var10000;
          switch (var0.type()) {
-            case init:
-            case load:
-            case read:
-            case write:
-            case reset:
+            case WALK:
+            case WALK_DIAGONAL:
+            case SPRINT:
+            case SPRINT_DIAGONAL:
+            case SPRINT_JUMP:
                var10000 = true;
                break;
-            case update:
+            case STEP_UP_1:
             default:
                var10000 = false;
          }
@@ -512,32 +512,32 @@ public final class AiRoutePolicy {
    static boolean putAt_Z_FileStore_SyncPool_Z(AiPathfinder.Inner_SyncManager var0, boolean var1) {
       boolean var10000;
       switch (var0) {
-         case read:
-         case write:
-         case reset:
-         case flush:
-         case put:
-         case start:
+         case SPRINT:
+         case SPRINT_DIAGONAL:
+         case SPRINT_JUMP:
+         case DESCEND_1:
+         case JUMP_GAP_2:
+         case JUMP:
             var10000 = var1;
             break;
-         case update:
-         case sync:
-         case close:
-         case open:
-         case get:
-         case poll:
-         case push:
-         case pop:
-         case stop:
-         case next:
-         case tick:
-         case run:
-         case set:
+         case STEP_UP_1:
+         case JUMP_UP_1:
+         case DESCEND_2:
+         case DESCEND_3:
+         case CLIMB_1:
+         case DESCEND_SOFT:
+         case DIG_DOWN_1:
+         case DIG_TUNNEL:
+         case DIG_ASCEND:
+         case DIG_DESCEND:
+         case PILLAR:
+         case BRIDGE_CELL:
+         case DOOR:
          default:
             var10000 = false;
             break;
-         case add:
-         case clear:
+         case JUMP_GAP_3:
+         case PARKOUR_ASCEND:
             var10000 = true;
       }
 
@@ -551,8 +551,8 @@ public final class AiRoutePolicy {
 
       boolean var10000;
       switch (var0) {
-         case tick:
-         case run:
+         case PILLAR:
+         case BRIDGE_CELL:
             var10000 = !var2;
             break;
          default:
@@ -692,7 +692,7 @@ public final class AiRoutePolicy {
 
       for (int var4 = var1 + 1; var4 < Math.min(var0.size(), var1 + 5); var4++) {
          AiPathfinder.UiHelper var5 = (AiPathfinder.UiHelper)var0.get(var4);
-         if (var5.type() == AiPathfinder.Inner_SyncManager.sync || var5.type() == AiPathfinder.Inner_SyncManager.update) {
+         if (var5.type() == AiPathfinder.Inner_SyncManager.JUMP_UP_1 || var5.type() == AiPathfinder.Inner_SyncManager.STEP_UP_1) {
             return Math.max(var2, var5.to().getY());
          }
 
@@ -707,10 +707,10 @@ public final class AiRoutePolicy {
    static boolean readEx(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1) {
       if (var0.to().getY() < var0.from().getY()
          && (
-            var0.type() == AiPathfinder.Inner_SyncManager.flush
-               || var0.type() == AiPathfinder.Inner_SyncManager.close
-               || var0.type() == AiPathfinder.Inner_SyncManager.open
-               || var0.type() == AiPathfinder.Inner_SyncManager.next
+            var0.type() == AiPathfinder.Inner_SyncManager.DESCEND_1
+               || var0.type() == AiPathfinder.Inner_SyncManager.DESCEND_2
+               || var0.type() == AiPathfinder.Inner_SyncManager.DESCEND_3
+               || var0.type() == AiPathfinder.Inner_SyncManager.DIG_DESCEND
          )) {
          BlockPos var2 = var0.to().offset(Integer.signum(var0.to().getX() - var0.from().getX()), 0, Integer.signum(var0.to().getZ() - var0.from().getZ()));
          AiPathfinder.Inner_FileCache var3 = (AiPathfinder.Inner_FileCache)var1.apply(var2);

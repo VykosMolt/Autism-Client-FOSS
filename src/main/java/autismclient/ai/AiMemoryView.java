@@ -252,16 +252,16 @@ final class AiMemoryView {
    private static String init_Str_AiMemoryStore_Data(AiMemoryStore.Inner_DataUtil kind) {
       String var10000;
       switch (kind) {
-         case init:
+         case USER:
             var10000 = "USER";
             break;
-         case load:
+         case WORLD:
             var10000 = "WORLD";
             break;
-         case read:
+         case PROCEDURE:
             var10000 = "PROC";
             break;
-         case write:
+         case HYPOTHESIS:
             var10000 = "HYP";
             break;
          default:
@@ -274,16 +274,16 @@ final class AiMemoryView {
    private static int init_I_cE_AiMemoryStore_Data(AiUiKit kit, AiMemoryStore.Inner_DataUtil kind) {
       int var10000;
       switch (kind) {
-         case init:
+         case USER:
             var10000 = -10497050;
             break;
-         case load:
+         case WORLD:
             var10000 = kit.init_JsonUtil.stop;
             break;
-         case read:
+         case PROCEDURE:
             var10000 = kit.init_JsonUtil.clear;
             break;
-         case write:
+         case HYPOTHESIS:
             var10000 = -14249;
             break;
          default:

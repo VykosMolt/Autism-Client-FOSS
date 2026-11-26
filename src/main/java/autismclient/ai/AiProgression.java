@@ -52,23 +52,23 @@ import net.minecraft.world.phys.Vec3;
 final class AiProgression {
    static final Map<String, AiProgression.Inner_StreamUtil> init_Map = Map.of(
       "minecraft:raw_iron",
-      new AiProgression.Inner_StreamUtil("iron_ore", "minecraft:raw_iron", 16, AiProgression.Inner_CachePool.read, 1),
+      new AiProgression.Inner_StreamUtil("iron_ore", "minecraft:raw_iron", 16, AiProgression.Inner_CachePool.STONE, 1),
       "minecraft:diamond",
-      new AiProgression.Inner_StreamUtil("diamond_ore", "minecraft:diamond", -58, AiProgression.Inner_CachePool.write, 1),
+      new AiProgression.Inner_StreamUtil("diamond_ore", "minecraft:diamond", -58, AiProgression.Inner_CachePool.IRON, 1),
       "minecraft:coal",
-      new AiProgression.Inner_StreamUtil("coal_ore", "minecraft:coal", 48, AiProgression.Inner_CachePool.load, 1),
+      new AiProgression.Inner_StreamUtil("coal_ore", "minecraft:coal", 48, AiProgression.Inner_CachePool.WOOD, 1),
       "minecraft:raw_gold",
-      new AiProgression.Inner_StreamUtil("gold_ore", "minecraft:raw_gold", -16, AiProgression.Inner_CachePool.write, 1),
+      new AiProgression.Inner_StreamUtil("gold_ore", "minecraft:raw_gold", -16, AiProgression.Inner_CachePool.IRON, 1),
       "minecraft:redstone",
-      new AiProgression.Inner_StreamUtil("redstone_ore", "minecraft:redstone", -58, AiProgression.Inner_CachePool.write, 4),
+      new AiProgression.Inner_StreamUtil("redstone_ore", "minecraft:redstone", -58, AiProgression.Inner_CachePool.IRON, 4),
       "minecraft:lapis_lazuli",
-      new AiProgression.Inner_StreamUtil("lapis_ore", "minecraft:lapis_lazuli", 0, AiProgression.Inner_CachePool.read, 4),
+      new AiProgression.Inner_StreamUtil("lapis_ore", "minecraft:lapis_lazuli", 0, AiProgression.Inner_CachePool.STONE, 4),
       "minecraft:raw_copper",
-      new AiProgression.Inner_StreamUtil("copper_ore", "minecraft:raw_copper", 48, AiProgression.Inner_CachePool.read, 2),
+      new AiProgression.Inner_StreamUtil("copper_ore", "minecraft:raw_copper", 48, AiProgression.Inner_CachePool.STONE, 2),
       "minecraft:ancient_debris",
-      new AiProgression.Inner_StreamUtil("ancient_debris", "minecraft:ancient_debris", 15, AiProgression.Inner_CachePool.update, 1, true),
+      new AiProgression.Inner_StreamUtil("ancient_debris", "minecraft:ancient_debris", 15, AiProgression.Inner_CachePool.DIAMOND, 1, true),
       "minecraft:obsidian",
-      new AiProgression.Inner_StreamUtil("obsidian", "minecraft:obsidian", -54, AiProgression.Inner_CachePool.update, 1)
+      new AiProgression.Inner_StreamUtil("obsidian", "minecraft:obsidian", -54, AiProgression.Inner_CachePool.DIAMOND, 1)
    );
    static final Map<String, String> load_Map = Map.of(
       "minecraft:iron_ingot",
@@ -143,7 +143,7 @@ final class AiProgression {
          ore = init_Map.get(load_Map.get(material));
       }
 
-      return ore == null ? AiProgression.Inner_CachePool.init : ore.pick();
+      return ore == null ? AiProgression.Inner_CachePool.NONE : ore.pick();
    }
 
    static boolean init(String target, String oreDrop) {
@@ -153,20 +153,20 @@ final class AiProgression {
    static String init(AiProgression.Inner_CachePool tier) {
       String var10000;
       switch (tier) {
-         case init:
-         case load:
+         case NONE:
+         case WOOD:
             var10000 = "minecraft:wooden_pickaxe";
             break;
-         case read:
+         case STONE:
             var10000 = "minecraft:stone_pickaxe";
             break;
-         case write:
+         case IRON:
             var10000 = "minecraft:iron_pickaxe";
             break;
-         case update:
+         case DIAMOND:
             var10000 = "minecraft:diamond_pickaxe";
             break;
-         case sync:
+         case NETHERITE:
             var10000 = "minecraft:netherite_pickaxe";
             break;
          default:
@@ -181,29 +181,29 @@ final class AiProgression {
       switch (itemId) {
          case "minecraft:wooden_pickaxe":
          case "minecraft:golden_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.load;
+            var10000 = AiProgression.Inner_CachePool.WOOD;
             break;
          case "minecraft:stone_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.read;
+            var10000 = AiProgression.Inner_CachePool.STONE;
             break;
          case "minecraft:iron_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.write;
+            var10000 = AiProgression.Inner_CachePool.IRON;
             break;
          case "minecraft:diamond_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.update;
+            var10000 = AiProgression.Inner_CachePool.DIAMOND;
             break;
          case "minecraft:netherite_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.sync;
+            var10000 = AiProgression.Inner_CachePool.NETHERITE;
             break;
          default:
-            var10000 = AiProgression.Inner_CachePool.init;
+            var10000 = AiProgression.Inner_CachePool.NONE;
       }
 
       return var10000;
    }
 
    static String init(AiProgression.Inner_CachePool have, AiProgression.Inner_CachePool needed) {
-      return have.ordinal() >= needed.ordinal() ? null : init(AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.load.ordinal(), have.ordinal() + 1)]);
+      return have.ordinal() >= needed.ordinal() ? null : init(AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.WOOD.ordinal(), have.ordinal() + 1)]);
    }
 
    static int init(AiProgression.Inner_StreamUtil ore, int drops) {
@@ -211,7 +211,7 @@ final class AiProgression {
    }
 
    static boolean init_Z(String itemId, int goal) {
-      if (init_List.contains(itemId) && load_bx_CachePool(itemId).ordinal() >= AiProgression.Inner_CachePool.write.ordinal()) {
+      if (init_List.contains(itemId) && load_bx_CachePool(itemId).ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
          return true;
       }
 
@@ -221,7 +221,7 @@ final class AiProgression {
 
       try {
          for (String material : init_Map(itemId, goal).keySet()) {
-            if (init_bx_CachePool(material).ordinal() >= AiProgression.Inner_CachePool.read.ordinal()) {
+            if (init_bx_CachePool(material).ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
                return true;
             }
          }
@@ -385,14 +385,14 @@ final class AiProgression {
    }
 
    static AiProgression.Inner_CachePool init_bx_CachePool(Minecraft mc) {
-      AiProgression.Inner_CachePool best = AiProgression.Inner_CachePool.init;
+      AiProgression.Inner_CachePool best = AiProgression.Inner_CachePool.NONE;
       Inventory inventory = mc.player.getInventory();
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (!stack.isEmpty()) {
             AiProgression.Inner_CachePool tier = load_bx_CachePool(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-            if (tier != AiProgression.Inner_CachePool.init
+            if (tier != AiProgression.Inner_CachePool.NONE
                && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 3)
                && tier.ordinal() > best.ordinal()) {
                best = tier;
@@ -464,27 +464,27 @@ final class AiProgression {
       AiProgression.Inner_DataUtil kit
    ) {
       int tables = tableHeld ? 0 : 1;
-      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.load.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.read.ordinal()) {
+      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.WOOD.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
          tables++;
       }
 
-      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.read.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.write.ordinal()) {
+      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.STONE.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
          tables++;
       }
 
-      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.write.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.update.ordinal()) {
+      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()) {
          tables++;
       }
 
       int planks = 4 * tables + kit.planks();
-      if (have.ordinal() < AiProgression.Inner_CachePool.load.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.load.ordinal()) {
+      if (have.ordinal() < AiProgression.Inner_CachePool.WOOD.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.WOOD.ordinal()) {
          planks += 3;
       }
 
-      int sticks = kit.sticks() + (!weapon && last.ordinal() >= AiProgression.Inner_CachePool.read.ordinal() ? 2 : 0);
+      int sticks = kit.sticks() + (!weapon && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal() ? 2 : 0);
 
       for (AiProgression.Inner_CachePool t : new AiProgression.Inner_CachePool[]{
-         AiProgression.Inner_CachePool.load, AiProgression.Inner_CachePool.read, AiProgression.Inner_CachePool.write, AiProgression.Inner_CachePool.update
+         AiProgression.Inner_CachePool.WOOD, AiProgression.Inner_CachePool.STONE, AiProgression.Inner_CachePool.IRON, AiProgression.Inner_CachePool.DIAMOND
       }) {
          if (t.ordinal() > have.ordinal() && t.ordinal() <= last.ordinal()) {
             sticks += 2;
@@ -501,7 +501,7 @@ final class AiProgression {
    }
 
    static int init(AiProgression.Inner_CachePool have, int remaining) {
-      return have == AiProgression.Inner_CachePool.load ? Math.min(3, remaining) : remaining;
+      return have == AiProgression.Inner_CachePool.WOOD ? Math.min(3, remaining) : remaining;
    }
 
    static boolean init_Z_Z(boolean carryOneTable, int wood, int futureWood) {
@@ -658,7 +658,7 @@ final class AiProgression {
 
          AiProgression.Inner_CachePool init_bx_CachePool() {
             AiProgression.Inner_CachePool have = AiProgression.init_bx_CachePool(mc);
-            AiProgression.Inner_CachePool worn = AiProgression.Inner_CachePool.init;
+            AiProgression.Inner_CachePool worn = AiProgression.Inner_CachePool.NONE;
             Inventory inventory = mc.player.getInventory();
 
             for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
@@ -677,13 +677,13 @@ final class AiProgression {
 
             boolean var10000;
             switch (worn) {
-               case load:
+               case WOOD:
                   var10000 = AiProgression.init() >= 3;
                   break;
-               case read:
+               case STONE:
                   var10000 = AiCraft.init_I("minecraft:iron_ingot") >= 3 || this.init_BlockPos != null;
                   break;
-               case write:
+               case IRON:
                   var10000 = AiCraft.init_I("minecraft:diamond") >= 3;
                   break;
                default:
@@ -698,16 +698,16 @@ final class AiProgression {
             AiProgression.Inner_CachePool have = this.init_bx_CachePool();
             AiProgression.Inner_CachePool last = this.load_bx_CachePool();
             int need = 0;
-            if (have.ordinal() < AiProgression.Inner_CachePool.read.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.read.ordinal()) {
+            if (have.ordinal() < AiProgression.Inner_CachePool.STONE.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
                need += 3;
             }
 
-            if (!AiProgression.init_Z(mc) && last.ordinal() >= AiProgression.Inner_CachePool.read.ordinal()) {
+            if (!AiProgression.init_Z(mc) && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
                need += 3;
             }
 
-            if (have.ordinal() < AiProgression.Inner_CachePool.write.ordinal()
-               && last.ordinal() >= AiProgression.Inner_CachePool.write.ordinal()
+            if (have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()
+               && last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()
                && AiCraft.init_I("minecraft:furnace") == 0
                && this.read_Z_9()) {
                need += 8;
@@ -816,8 +816,8 @@ final class AiProgression {
 
                autismclient.ai.engine.AiRestock.init(this.sync_I);
                autismclient.ai.engine.AiRestock.load(this.flush_I);
-               boolean preservingIron = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.update.ordinal()
-                  && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.write;
+               boolean preservingIron = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
+                  && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.IRON;
                autismclient.ai.engine.AiRestock.read(preservingIron ? 48 : 0);
                if (System.nanoTime() > this.init_J) {
                   return this.init(
@@ -962,7 +962,7 @@ final class AiProgression {
                            return this.init(AiOperation.Status.CANCELLED, "Cancelled during " + this.update_Str);
                         }
 
-                        if (!this.write_Str.startsWith("ore:") || r.failure() != AiFailure.tick && r.failure() != AiFailure.get) {
+                        if (!this.write_Str.startsWith("ore:") || r.failure() != AiFailure.MISSING_TOOL && r.failure() != AiFailure.TOOL_WORN) {
                            if (this.write_Str.equals("prework")) {
                               if (r.status() != AiOperation.Status.SUCCEEDED && this.read_BlockPos != null) {
                                  this.init_Set.add(this.read_BlockPos.asLong());
@@ -1072,14 +1072,14 @@ final class AiProgression {
             }
 
             AiProgression.Inner_CachePool have = this.init_bx_CachePool();
-            if (have.ordinal() >= AiProgression.Inner_CachePool.read.ordinal()
+            if (have.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()
                && !AiProgression.init_Z(mc)
-               && (AiProgression.init() >= 3 || have.ordinal() > AiProgression.Inner_CachePool.read.ordinal())
+               && (AiProgression.init() >= 3 || have.ordinal() > AiProgression.Inner_CachePool.STONE.ordinal())
                && this.init_Map.getOrDefault("axe", 0) == 0) {
                return this.init("axe", "make a stone axe for mobs and crafting tables", this.init_AiOperation("minecraft:stone_axe", 1));
             }
 
-            if (have.ordinal() >= AiProgression.Inner_CachePool.write.ordinal() && kit.containsKey("minecraft:shield")) {
+            if (have.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && kit.containsKey("minecraft:shield")) {
                if (AiCraft.init_I("minecraft:shield") == 0 && AiCraft.init_I("minecraft:iron_ingot") >= 1 && this.init_Map.getOrDefault("shield-early", 0) == 0) {
                   return this.init("shield-early", "make the kit's shield now", this.init_AiOperation("minecraft:shield", 1));
                }
@@ -1102,7 +1102,7 @@ final class AiProgression {
             }
 
             int waterWanted = Math.min(2, kit.getOrDefault("minecraft:bucket", 0));
-            if (have.ordinal() >= AiProgression.Inner_CachePool.write.ordinal()
+            if (have.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()
                && waterWanted > 0
                && !this.write_Z
                && AiCraft.init_I("minecraft:water_bucket") < waterWanted
@@ -1112,9 +1112,9 @@ final class AiProgression {
                return this.init("water-early", "fill the water buckets close by before going deep", AiObsidian.init(waterWanted, 90));
             }
 
-            if (have.ordinal() >= AiProgression.Inner_CachePool.read.ordinal()
-               && have.ordinal() < AiProgression.Inner_CachePool.write.ordinal()
-               && this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.write.ordinal()
+            if (have.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()
+               && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()
+               && this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()
                && this.read_Z_9()
                && AiCraft.init_I("minecraft:furnace") == 0
                && AiProgression.init() >= 8
@@ -1133,8 +1133,8 @@ final class AiProgression {
 
             Map<String, Integer> needs = this.init_Map_4();
             AiProgression.Inner_CachePool needed = AiProgression.init_List.contains(itemId)
-               ? AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.init.ordinal(), AiProgression.load_bx_CachePool(itemId).ordinal() - 1)]
-               : AiProgression.Inner_CachePool.init;
+               ? AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.NONE.ordinal(), AiProgression.load_bx_CachePool(itemId).ordinal() - 1)]
+               : AiProgression.Inner_CachePool.NONE;
 
             for (String material : needs.keySet()) {
                if (AiProgression.init_bx_CachePool(material).ordinal() > needed.ordinal()) {
@@ -1144,7 +1144,7 @@ final class AiProgression {
 
             String pick = AiProgression.init(have, needed);
             int woodNeed = this.init(needed, AiCraft.init_I("minecraft:crafting_table") > 0);
-            if (this.load_Z && !this.init_Z && have.ordinal() <= AiProgression.Inner_CachePool.read.ordinal() && AiProgression.load() < woodNeed) {
+            if (this.load_Z && !this.init_Z && have.ordinal() <= AiProgression.Inner_CachePool.STONE.ordinal() && AiProgression.load() < woodNeed) {
                this.init_Z = true;
                AutismClientAddon.LOG
                   .info(
@@ -1157,7 +1157,7 @@ final class AiProgression {
             }
 
             if (pick != null
-               && have.ordinal() <= AiProgression.Inner_CachePool.read.ordinal()
+               && have.ordinal() <= AiProgression.Inner_CachePool.STONE.ordinal()
                && AiProgression.load() < woodNeed
                && this.init_Map.getOrDefault("stock-wood", 0) == 0
                && !this.load_Z) {
@@ -1174,7 +1174,7 @@ final class AiProgression {
             int stoneBatch = AiProgression.init(have, this.init_I_29());
             if (this.init_Z
                && pick != null
-               && (have == AiProgression.Inner_CachePool.load || have == AiProgression.Inner_CachePool.read)
+               && (have == AiProgression.Inner_CachePool.WOOD || have == AiProgression.Inner_CachePool.STONE)
                && AiProgression.init() < stoneBatch
                && AiCraft.init_I("minecraft:crafting_table") == 0) {
                BlockPos table = this.init(Blocks.CRAFTING_TABLE, 6);
@@ -1184,7 +1184,7 @@ final class AiProgression {
             }
 
             String stoneKey = "stock-stone:" + have;
-            if ((have == AiProgression.Inner_CachePool.load || have == AiProgression.Inner_CachePool.read) && AiProgression.init() < stoneBatch && this.init_Map.getOrDefault(stoneKey, 0) == 0) {
+            if ((have == AiProgression.Inner_CachePool.WOOD || have == AiProgression.Inner_CachePool.STONE) && AiProgression.init() < stoneBatch && this.init_Map.getOrDefault(stoneKey, 0) == 0) {
                int seconds = Math.min(240, this.load_I_12());
                Supplier<AiOperation> gather = () -> autismclient.ai.engine.AiBlockMine.init_AiOperation(
                   AiJson.init_JsonObject_ObjArr(
@@ -1203,7 +1203,7 @@ final class AiProgression {
                AiOperation stairs = this.init(seconds, stoneBatch);
                return this.init(
                   stoneKey,
-                  have == AiProgression.Inner_CachePool.load ? "dig stone for a faster pickaxe" : "dig stone for the axe and furnace",
+                  have == AiProgression.Inner_CachePool.WOOD ? "dig stone for a faster pickaxe" : "dig stone for the axe and furnace",
                   stairs == null ? gather.get() : this.init(stairs, () -> AiProgression.init() >= stoneBatch, gather)
                );
             }
@@ -1248,7 +1248,7 @@ final class AiProgression {
                }
             } else {
                Map<String, Integer> pickNeeds = AiProgression.init_Map(pick, 1);
-               return !pickNeeds.isEmpty() && AiProgression.load_bx_CachePool(pick).ordinal() > AiProgression.Inner_CachePool.read.ordinal()
+               return !pickNeeds.isEmpty() && AiProgression.load_bx_CachePool(pick).ordinal() > AiProgression.Inner_CachePool.STONE.ordinal()
                   ? this.init(this.init(pick, pickNeeds), "for a " + AiProgression.init_Str(pick))
                   : this.init("pick:" + pick, "make a " + AiProgression.init_Str(pick), this.init_AiOperation(pick, AiCraft.init_I(pick) + 1));
             }
@@ -1256,10 +1256,10 @@ final class AiProgression {
 
          AiProgression.Inner_CachePool load_bx_CachePool() {
             if (AiProgression.init_List.contains(itemId)) {
-               return AiProgression.load_bx_CachePool(itemId) == AiProgression.Inner_CachePool.sync ? AiProgression.Inner_CachePool.update : AiProgression.load_bx_CachePool(itemId);
+               return AiProgression.load_bx_CachePool(itemId) == AiProgression.Inner_CachePool.NETHERITE ? AiProgression.Inner_CachePool.DIAMOND : AiProgression.load_bx_CachePool(itemId);
             }
 
-            AiProgression.Inner_CachePool needed = AiProgression.Inner_CachePool.init;
+            AiProgression.Inner_CachePool needed = AiProgression.Inner_CachePool.NONE;
 
             for (String material : this.init_Map_4().keySet()) {
                if (AiProgression.init_bx_CachePool(material).ordinal() > needed.ordinal()) {
@@ -1278,12 +1278,12 @@ final class AiProgression {
             AiProgression.Inner_CachePool have = this.init_bx_CachePool();
             AiProgression.Inner_CachePool last = AiProgression.init_List.contains(itemId) ? this.load_bx_CachePool() : neededTier;
             int smelts = 0;
-            if (last.ordinal() >= AiProgression.Inner_CachePool.write.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.write.ordinal()) {
+            if (last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
                smelts += Math.max(0, (this.sync_Z_5() ? 6 : 3) - AiCraft.init_I("minecraft:iron_ingot"));
             }
 
             Map<String, Integer> pending = new LinkedHashMap<>(this.init_Map_4());
-            if (last.ordinal() >= AiProgression.Inner_CachePool.write.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.write.ordinal()) {
+            if (last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
                AiProgression.init_Map("minecraft:iron_pickaxe", 1)
                   .forEach((id, n) -> pending.merge(id, n, itemId.equals("minecraft:iron_pickaxe") ? Math::max : Integer::sum));
             }
@@ -1473,8 +1473,8 @@ final class AiProgression {
             }
 
             if (material.equals("minecraft:iron_ingot")
-               && this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.update.ordinal()
-               && AiProgression.init_bx_CachePool(mc).ordinal() < AiProgression.Inner_CachePool.update.ordinal()
+               && this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
+               && AiProgression.init_bx_CachePool(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()
                && AiCraft.init_I("minecraft:diamond") < 3) {
                return AiProgression.init_Map.get("minecraft:diamond");
             }
@@ -1551,8 +1551,8 @@ final class AiProgression {
                }
             }
 
-            if (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.update.ordinal()
-               && AiProgression.init_bx_CachePool(mc).ordinal() < AiProgression.Inner_CachePool.update.ordinal()) {
+            if (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
+               && AiProgression.init_bx_CachePool(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()) {
                resources.merge("minecraft:diamond", 3, Math::max);
             }
 
@@ -1654,7 +1654,7 @@ final class AiProgression {
 
          AiOperation init(int seconds, int stockGoal) {
             BlockPos feet = mc.player.blockPosition();
-            AiProgression.Inner_StreamUtil next = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.write.ordinal() ? AiProgression.init_Map.get("minecraft:raw_iron") : null;
+            AiProgression.Inner_StreamUtil next = this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() ? AiProgression.init_Map.get("minecraft:raw_iron") : null;
             Predicate<BlockState> ore = next == null ? state -> false : autismclient.ai.engine.AiStaircase.init(next.family());
             BlockPos target = next == null ? null : this.load_Map.get(next.family());
             if (target != null && (!ore.test(mc.level.getBlockState(target)) || !this.init_Z_BlockPos_6(target))) {
@@ -1763,7 +1763,7 @@ final class AiProgression {
                return null;
             }
 
-            boolean toTheIron = this.init_bx_CachePool() != AiProgression.Inner_CachePool.load
+            boolean toTheIron = this.init_bx_CachePool() != AiProgression.Inner_CachePool.WOOD
                && toOre
                && !steps.isEmpty()
                && steps.size() <= Math.min(24, Math.max(0, enough) + 5)
@@ -2147,7 +2147,7 @@ final class AiProgression {
             this.sync_I = this.init(this.load_bx_CachePool(), AiCraft.init_I("minecraft:crafting_table") > 0);
             autismclient.ai.engine.AiRestock.init(this.sync_I);
             this.flush_I = this.init_I_29()
-               + (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.update.ordinal() && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.write ? 3 : 0);
+               + (this.load_bx_CachePool().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal() && AiProgression.init_bx_CachePool(mc) == AiProgression.Inner_CachePool.IRON ? 3 : 0);
             autismclient.ai.engine.AiRestock.load(this.flush_I);
             this.init_AiOperation = AiRunDiagnostics.init_AiOperation_Str("progression", key + ": " + label, op);
             this.write_Str = key;
@@ -2262,7 +2262,7 @@ final class AiProgression {
                }
 
                this.poll_Z = AiGuard.read_Z;
-               this.open_Z = !this.poll_Z && AiGuard.init_X_StreamUtil(this.init_X_CachePool, vitals).action() == AiGuard.Inner_DataUtil.load;
+               this.open_Z = !this.poll_Z && AiGuard.init_X_StreamUtil(this.init_X_CachePool, vitals).action() == AiGuard.Inner_DataUtil.FIGHT;
                this.sync_Str = AiGuard.init_Str(this.init_X_CachePool, vitals);
                AutismClientAddon.LOG.info("[AI] ladder for {}: guard steps in ({}, health {})", itemId, this.sync_Str, (int)vitals.health());
                if (this.init_AiOperation != null) {
@@ -2697,12 +2697,12 @@ final class AiProgression {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      NONE,
+      WOOD,
+      STONE,
+      IRON,
+      DIAMOND,
+      NETHERITE;
    }
 
    record Inner_DataUtil(int planks, int sticks) {

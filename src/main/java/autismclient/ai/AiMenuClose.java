@@ -75,18 +75,18 @@ public final class AiMenuClose {
    public static AiMenuClose.Inner_StreamUtil init_aq_StreamUtil() {
       AiMenuClose.Inner_DataUtil receipt = init;
       if (receipt == null) {
-         return AiMenuClose.Inner_StreamUtil.init;
+         return AiMenuClose.Inner_StreamUtil.READY;
       }
 
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer player = mc.player;
       AiMenuClose.Inner_StreamUtil state = receipt.init(player, mc.level, player != null && player.containerMenu == player.inventoryMenu, System.nanoTime());
-      if (state == AiMenuClose.Inner_StreamUtil.init) {
+      if (state == AiMenuClose.Inner_StreamUtil.READY) {
          init = null;
          return state;
       }
 
-      if (state == AiMenuClose.Inner_StreamUtil.load && player != null && mc.getConnection() != null) {
+      if (state == AiMenuClose.Inner_StreamUtil.WAITING && player != null && mc.getConnection() != null) {
          if (receipt.init_Z && receipt.load_Packet == null && player.inventoryMenu.getCarried().isEmpty()) {
             ServerboundContainerClickPacket packet = new ServerboundContainerClickPacket(
                0, AiContainerTransactions.init(player.inventoryMenu.getStateId()), (short)36, (byte)0, ContainerInput.SWAP, new Int2ObjectOpenHashMap<>(), HashedStack.EMPTY
@@ -95,7 +95,7 @@ public final class AiMenuClose {
             mc.getConnection().send(packet);
          }
 
-         return AiMenuClose.Inner_StreamUtil.load;
+         return AiMenuClose.Inner_StreamUtil.WAITING;
       } else {
          return state;
       }
@@ -143,20 +143,20 @@ public final class AiMenuClose {
 
       AiMenuClose.Inner_StreamUtil init(Object player, Object world, boolean inventoryMenu, long now) {
          if (player != this.init_Obj || world != this.load_Obj || !inventoryMenu) {
-            return this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.read;
+            return this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.UNCERTAIN;
          } else if (this.read) {
-            return this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.init;
+            return this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.READY;
          } else if (this.init_aq_StreamUtil != null) {
             return this.init_aq_StreamUtil;
          } else {
-            return now - this.init_J >= 10000000000L ? (this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.read) : AiMenuClose.Inner_StreamUtil.load;
+            return now - this.init_J >= 10000000000L ? (this.init_aq_StreamUtil = AiMenuClose.Inner_StreamUtil.UNCERTAIN) : AiMenuClose.Inner_StreamUtil.WAITING;
          }
       }
    }
 
    public enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      READY,
+      WAITING,
+      UNCERTAIN;
    }
 }

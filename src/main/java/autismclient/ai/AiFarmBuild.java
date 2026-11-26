@@ -413,7 +413,7 @@ final class AiFarmBuild {
          final BlockPos init_BlockPos = this.init_C_DataUtil == null ? autismclient.ai.engine.AiStance.init(mc) : this.init_C_DataUtil.origin();
          boolean load_Z;
          boolean read_Z;
-         AiFarmBuild.Inner_CachePool init_D_CachePool = AiFarmBuild.Inner_CachePool.init;
+         AiFarmBuild.Inner_CachePool init_D_CachePool = AiFarmBuild.Inner_CachePool.SEEDS;
          AiOperation init_AiOperation;
          AiFarmBuild.Inner_ConfigStore init_D_ConfigStore;
          String load_Str;
@@ -482,58 +482,58 @@ final class AiFarmBuild {
 
                   AiOperation.Result var10000;
                   switch (this.init_D_CachePool) {
-                     case init:
+                     case SEEDS:
                         var10000 = this.init_AiOperation_Result_4();
                         break;
-                     case load:
+                     case HOE:
                         var10000 = this.load_AiOperation_Result_3();
                         break;
-                     case read:
+                     case SITE:
                         var10000 = this.read_AiOperation_Result_2();
                         break;
-                     case write:
+                     case WOOD:
                         var10000 = this.write_AiOperation_Result();
                         break;
-                     case update:
+                     case DIRT:
                         var10000 = this.update();
                         break;
-                     case sync:
+                     case BUCKETS:
                         var10000 = this.sync();
                         break;
-                     case flush:
+                     case CLEAR:
                         var10000 = this.flush();
                         break;
-                     case close:
+                     case FOUNDATION:
                         var10000 = this.close();
                         break;
-                     case open:
+                     case POOL_FILL:
                         var10000 = this.open();
                         break;
-                     case poll:
+                     case POOL_DIG:
                         var10000 = this.poll();
                         break;
-                     case push:
+                     case POOL_POUR:
                         var10000 = this.push();
                         break;
-                     case pop:
+                     case POOL_SETTLE:
                         var10000 = this.pop();
                         break;
-                     case tick:
+                     case CENTER_FILL:
                         var10000 = this.run();
                         break;
-                     case run:
+                     case CENTER_DIG:
                         var10000 = this.get();
                         break;
-                     case get:
+                     case CENTER_POUR:
                         var10000 = this.set();
                         break;
-                     case set:
+                     case CENTER_COVER:
                         var10000 = this.put();
                         break;
-                     case put:
+                     case FIELD:
                         var10000 = this.add();
                         break;
-                     case add:
+                     case VERIFY:
                         var10000 = this.clear();
                         break;
                      default:
@@ -575,7 +575,7 @@ final class AiFarmBuild {
             }
 
             switch (this.init_D_CachePool) {
-               case init:
+               case SEEDS:
                   if (AiGameState.init_I_Str(seedItem) <= 0) {
                      if (AiFarmBuild.init_Set.contains(seedItem) && !this.read_Z) {
                         this.read_Z = true;
@@ -613,51 +613,51 @@ final class AiFarmBuild {
                      return this.init(AiOperation.Status.FAILED, "No " + seedItem + " to plant: " + r.message());
                   }
 
-                  this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.read : AiFarmBuild.Inner_CachePool.load;
+                  this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.SITE : AiFarmBuild.Inner_CachePool.HOE;
                   break;
-               case load:
+               case HOE:
                   if (!AiFarmPlant.init(mc)) {
                      return this.init(AiOperation.Status.FAILED, "No hoe to till with: " + r.message());
                   }
 
-                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.read;
+                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.SITE;
                   break;
-               case read:
+               case SITE:
                   if (!ok) {
                      this.init_V("walk home: " + r.message());
                   }
                   break;
-               case write:
+               case WOOD:
                   if (!ok) {
                      return this.init(r.status(), "Could not get the slabs or the hoe: " + r.message());
                   }
 
                   return this.init_AiOperation_Result_3("Fence materials ready");
-               case update:
+               case DIRT:
                   if (!ok && AiCraft.init_I(AiFarmArea.load(this.init_Str)) < this.init_I_2()) {
                      return this.init(r.status(), "Could not get " + AiFarmArea.load(this.init_Str) + " to level the field: " + r.message());
                   }
 
-                  this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.close : AiFarmBuild.Inner_CachePool.sync;
+                  this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.FOUNDATION : AiFarmBuild.Inner_CachePool.BUCKETS;
                   break;
-               case sync:
+               case BUCKETS:
                   if (!ok) {
                      return this.init(r.status(), "Could not get water for the field: " + r.message());
                   }
 
                   return this.init_AiOperation_Result_3("Water ready");
-               case flush:
+               case CLEAR:
                   if (!ok) {
                      this.init_V("left " + this.init_List.get(this.init_I).toShortString() + ": " + r.message());
                   }
 
                   this.init_I++;
                   break;
-               case close:
-               case put:
+               case FOUNDATION:
+               case FIELD:
                   if (!ok) {
                      String missing = AiFarmBuild.load(r.message());
-                     if (missing == null && this.init_D_CachePool == AiFarmBuild.Inner_CachePool.put && r.dataJson().contains("Missing hoe") && this.sync_I++ < 3) {
+                     if (missing == null && this.init_D_CachePool == AiFarmBuild.Inner_CachePool.FIELD && r.dataJson().contains("Missing hoe") && this.sync_I++ < 3) {
                         return this.init_AiOperation_Result_3("The hoe wore out; making another");
                      }
 
@@ -668,65 +668,65 @@ final class AiFarmBuild {
                         return this.init_AiOperation_Result_3("Getting more " + missing);
                      }
 
-                     if (this.init_D_CachePool == AiFarmBuild.Inner_CachePool.put && this.load_Z_2()) {
-                        this.init_D_CachePool = AiFarmBuild.Inner_CachePool.add;
+                     if (this.init_D_CachePool == AiFarmBuild.Inner_CachePool.FIELD && this.load_Z_2()) {
+                        this.init_D_CachePool = AiFarmBuild.Inner_CachePool.VERIFY;
                         return this.init_AiOperation_Result_3("Field done");
                      }
 
-                     return this.init(r.status(), (this.init_D_CachePool == AiFarmBuild.Inner_CachePool.put ? "The field" : "The foundation") + " failed: " + r.message());
+                     return this.init(r.status(), (this.init_D_CachePool == AiFarmBuild.Inner_CachePool.FIELD ? "The field" : "The foundation") + " failed: " + r.message());
                   }
 
-                  this.init_D_CachePool = this.init_D_CachePool == AiFarmBuild.Inner_CachePool.close
-                     ? (this.init_Z ? AiFarmBuild.Inner_CachePool.put : (this.init_D_ConfigStore.pool() ? AiFarmBuild.Inner_CachePool.open : AiFarmBuild.Inner_CachePool.tick))
-                     : AiFarmBuild.Inner_CachePool.add;
+                  this.init_D_CachePool = this.init_D_CachePool == AiFarmBuild.Inner_CachePool.FOUNDATION
+                     ? (this.init_Z ? AiFarmBuild.Inner_CachePool.FIELD : (this.init_D_ConfigStore.pool() ? AiFarmBuild.Inner_CachePool.POOL_FILL : AiFarmBuild.Inner_CachePool.CENTER_FILL))
+                     : AiFarmBuild.Inner_CachePool.VERIFY;
                   break;
-               case open:
+               case POOL_FILL:
                   if (!ok) {
                      return this.init(r.status(), "Could not fill buckets for the pool: " + r.message());
                   }
                   break;
-               case poll:
+               case POOL_DIG:
                   if (!ok && !this.load(this.init_D_ConfigStore.poolCells().get(this.read_I))) {
                      return this.init(r.status(), "Could not dig the pool: " + r.message());
                   }
 
                   this.read_I++;
                   break;
-               case push:
+               case POOL_POUR:
                   if (!ok && !AiFarmBuild.init(mc.level.getBlockState(this.init_D_ConfigStore.poolPours().get(this.read_I)))) {
                      return this.init(r.status(), "Could not pour the pool: " + r.message());
                   }
 
                   this.read_I++;
-               case pop:
+               case POOL_SETTLE:
                default:
                   break;
-               case tick:
+               case CENTER_FILL:
                   if (!ok) {
                      return this.init(r.status(), "Could not fill a bucket for the field: " + r.message());
                   }
                   break;
-               case run:
+               case CENTER_DIG:
                   if (!ok && !this.load(this.init_D_ConfigStore.waterCells().get(this.load_I))) {
                      return this.init(r.status(), "Could not open the water hole: " + r.message());
                   }
 
-                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.get;
+                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_POUR;
                   break;
-               case get:
+               case CENTER_POUR:
                   if (!ok && !this.read(this.init_D_ConfigStore.waterCells().get(this.load_I))) {
                      return this.init(r.status(), "Could not pour the field's water: " + r.message());
                   }
 
-                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.set;
+                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_COVER;
                   break;
-               case set:
+               case CENTER_COVER:
                   if (!ok && !this.write(this.init_D_ConfigStore.waterCells().get(this.load_I))) {
                      this.init_V("water left uncovered: " + r.message());
                   }
 
                   this.load_I++;
-                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.tick;
+                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_FILL;
             }
 
             return this.init_AiOperation_Result_3(r.message());
@@ -740,7 +740,7 @@ final class AiFarmBuild {
             }
 
             if (held >= want) {
-               this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.read : AiFarmBuild.Inner_CachePool.load;
+               this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.SITE : AiFarmBuild.Inner_CachePool.HOE;
                return this.init_AiOperation_Result_3("Holding " + held + " " + seedItem);
             } else {
                this.init_AiOperation = this.init(seedItem, want, held > 0 ? 180 : 600);
@@ -750,7 +750,7 @@ final class AiFarmBuild {
 
          AiOperation.Result load_AiOperation_Result_3() {
             if (AiFarmPlant.init(mc)) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.read;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.SITE;
                return this.init_AiOperation_Result_3("Hoe in the bag");
             } else {
                this.init_AiOperation = this.init("minecraft:wooden_hoe", 1, 600);
@@ -821,7 +821,7 @@ final class AiFarmBuild {
                   + this.read_Str
             );
             this.load_Str = this.init_Z ? "oak" : AiFarmBuild.init(this.load_Map(), this.load_Str());
-            this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.update : AiFarmBuild.Inner_CachePool.write;
+            this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.DIRT : AiFarmBuild.Inner_CachePool.WOOD;
             return this.init_AiOperation_Result_3("Field site chosen at " + this.init_D_ConfigStore.origin().toShortString());
          }
 
@@ -835,7 +835,7 @@ final class AiFarmBuild {
                this.init_AiOperation = this.init(this.init_Str_3(), AiCraft.init_I(this.init_Str_3()) + 1, 600);
                return this.init_AiOperation_Result_3("Making another hoe: " + this.read_I() + " uses for " + this.load_I() + " plots");
             } else {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.update;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.DIRT;
                return this.init_AiOperation_Result_3("Slabs and hoes in the bag");
             }
          }
@@ -844,7 +844,7 @@ final class AiFarmBuild {
             int need = this.init_I_2();
             String base = AiFarmArea.load(this.init_Str);
             if (AiCraft.init_I(base) >= need) {
-               this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.close : AiFarmBuild.Inner_CachePool.sync;
+               this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.FOUNDATION : AiFarmBuild.Inner_CachePool.BUCKETS;
                return this.init_AiOperation_Result_3(base + " in the bag");
             } else if (this.init_Z) {
                this.init_AiOperation = this.init(base, AiCraft.init_I(base) + need, 900);
@@ -877,7 +877,7 @@ final class AiFarmBuild {
             int water = AiCraft.init_I("minecraft:water_bucket");
             int empty = AiCraft.init_I("minecraft:bucket");
             if (!this.init_D_ConfigStore.pool() && water >= need) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.flush;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CLEAR;
                return this.init_AiOperation_Result_3("Water in the bag");
             } else {
                int buckets = this.init_D_ConfigStore.pool() ? 2 : 1;
@@ -885,7 +885,7 @@ final class AiFarmBuild {
                   this.init_AiOperation = this.init("minecraft:bucket", empty + buckets - water - empty, 1800);
                   return this.init_AiOperation_Result_3("Making " + (buckets - water - empty) + " bucket(s)");
                } else {
-                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.flush;
+                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CLEAR;
                   return this.init_AiOperation_Result_3("Buckets ready");
                }
             }
@@ -907,7 +907,7 @@ final class AiFarmBuild {
                this.init_I++;
             }
 
-            this.init_D_CachePool = AiFarmBuild.Inner_CachePool.close;
+            this.init_D_CachePool = AiFarmBuild.Inner_CachePool.FOUNDATION;
             return this.init_AiOperation_Result_3("Site cleared");
          }
 
@@ -940,7 +940,7 @@ final class AiFarmBuild {
          AiOperation.Result close() {
             List<AiBuilder.Inner_StreamUtil> cells = this.init_List_2();
             if (cells.isEmpty()) {
-               this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.put : (this.init_D_ConfigStore.pool() ? AiFarmBuild.Inner_CachePool.open : AiFarmBuild.Inner_CachePool.tick);
+               this.init_D_CachePool = this.init_Z ? AiFarmBuild.Inner_CachePool.FIELD : (this.init_D_ConfigStore.pool() ? AiFarmBuild.Inner_CachePool.POOL_FILL : AiFarmBuild.Inner_CachePool.CENTER_FILL);
                return this.init_AiOperation_Result_3("Ground already level");
             } else {
                this.init_AiOperation = AiBuilder.init(new AiBuilder.Inner_DataUtil(BlockPos.ZERO, cells), 900);
@@ -1058,7 +1058,7 @@ final class AiFarmBuild {
                this.init_AiOperation = this.init(sources);
                return this.init_AiOperation_Result_3("Filling a bucket for the infinite pool");
             } else {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.poll;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.POOL_DIG;
                this.read_I = 0;
                return this.init_AiOperation_Result_3("Two bucketfuls for the pool");
             }
@@ -1073,7 +1073,7 @@ final class AiFarmBuild {
                }
             }
 
-            this.init_D_CachePool = AiFarmBuild.Inner_CachePool.push;
+            this.init_D_CachePool = AiFarmBuild.Inner_CachePool.POOL_POUR;
             this.read_I = 0;
             return this.init_AiOperation_Result_3("Pool dug");
          }
@@ -1101,14 +1101,14 @@ final class AiFarmBuild {
                }
             }
 
-            this.init_D_CachePool = AiFarmBuild.Inner_CachePool.pop;
+            this.init_D_CachePool = AiFarmBuild.Inner_CachePool.POOL_SETTLE;
             this.write_I = 0;
             return this.init_AiOperation_Result_3("Pool poured");
          }
 
          AiOperation.Result pop() {
             if (this.init_Z_2()) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.tick;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_FILL;
                return this.init_AiOperation_Result_3("The pool is an infinite source");
             } else {
                return ++this.write_I > 60
@@ -1135,17 +1135,17 @@ final class AiFarmBuild {
             }
 
             if (this.load_I >= centers.size()) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.put;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.FIELD;
                return this.init_AiOperation_Result_3("Every source in place");
             }
 
             if (this.read(centers.get(this.load_I))) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.set;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_COVER;
                return this.init_AiOperation_Result_3("Covering the source");
             }
 
             if (AiCraft.init_I("minecraft:water_bucket") > 0) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.run;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_DIG;
                return this.init_AiOperation_Result_3("Water in hand");
             }
 
@@ -1173,7 +1173,7 @@ final class AiFarmBuild {
                }
 
                this.read_J = 0L;
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.get;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_POUR;
                return this.init_AiOperation_Result_3("Water hole open");
             } else {
                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(c, 30, false, this.init_Set(c));
@@ -1184,7 +1184,7 @@ final class AiFarmBuild {
          AiOperation.Result set() {
             BlockPos c = this.init_D_ConfigStore.waterCells().get(this.load_I);
             if (this.read(c)) {
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.set;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_COVER;
                return this.init_AiOperation_Result_3("Source in place");
             }
 
@@ -1207,14 +1207,14 @@ final class AiFarmBuild {
             BlockPos c = this.init_D_ConfigStore.waterCells().get(this.load_I);
             if (this.write(c)) {
                this.load_I++;
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.tick;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_FILL;
                return this.init_AiOperation_Result_3("Source covered");
             } else {
                String slab = this.read_Str();
                if (slab == null) {
                   this.init_V("no slab to cover the water at " + c.toShortString());
                   this.load_I++;
-                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.tick;
+                  this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CENTER_FILL;
                   return this.init_AiOperation_Result_3("No slab");
                } else {
                   this.init_AiOperation = AiBuilder.init(
@@ -1238,7 +1238,7 @@ final class AiFarmBuild {
                this.update_Z = false;
                this.init_List.clear();
                this.init_I = 0;
-               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.flush;
+               this.init_D_CachePool = AiFarmBuild.Inner_CachePool.CLEAR;
                return this.init_AiOperation_Result_3("Checking the site after the refill");
             } else {
                List<BlockPos> plots = new ArrayList<>(this.init_D_ConfigStore.interior());
@@ -1740,24 +1740,24 @@ final class AiFarmBuild {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run,
-      get,
-      set,
-      put,
-      add;
+      SEEDS,
+      HOE,
+      SITE,
+      WOOD,
+      DIRT,
+      BUCKETS,
+      CLEAR,
+      FOUNDATION,
+      POOL_FILL,
+      POOL_DIG,
+      POOL_POUR,
+      POOL_SETTLE,
+      CENTER_FILL,
+      CENTER_DIG,
+      CENTER_POUR,
+      CENTER_COVER,
+      FIELD,
+      VERIFY;
    }
 
    record Inner_ConfigStore(BlockPos origin, AiFarmBuild.Inner_StreamUtil layout, Direction gateSide, boolean pool, double cost) {

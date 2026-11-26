@@ -293,12 +293,12 @@ final class AiParallelSmelt implements AiOperation {
    private AiOperation.Result init_AiOperation_Result_19() {
       if (this.init_cn != null) {
          AiStationPlacer.Inner_DataUtil state = this.init_cn.init_cn_DataUtil();
-         if (state == AiStationPlacer.Inner_DataUtil.load) {
+         if (state == AiStationPlacer.Inner_DataUtil.PLACED) {
             this.init_List.add(this.init_cn.init_BlockPos());
             this.init_cn = null;
             this.update_I++;
          } else {
-            if (state != AiStationPlacer.Inner_DataUtil.read) {
+            if (state != AiStationPlacer.Inner_DataUtil.FAILED) {
                return this.init_AiOperation_Result_Str_8(this.init_cn.init_Str());
             }
 

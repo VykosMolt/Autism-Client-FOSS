@@ -257,7 +257,7 @@ final class AiChatView {
       );
       int right = activity.init();
       if (this.init_cF.load()
-         || (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.close || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.flush)
+         || (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.FAILED || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED)
             && !this.init_cF.write_Str.isBlank()) {
          int stopW = kit.load("Stop");
          right -= stopW;
@@ -272,9 +272,9 @@ final class AiChatView {
                this.init_cc.write_V();
                this.init_cF.init_V();
             });
-         } else if (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.write
-            || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.close
-            || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.flush) {
+         } else if (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.PAUSED
+            || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.FAILED
+            || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED) {
             int resumeW = kit.load("Resume");
             right -= resumeW + 2;
             kit.init_V_NetHelper_2(
@@ -343,9 +343,9 @@ final class AiChatView {
                autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(v.read(), top + block.top(), contentW, block.bottom() - block.top());
                AiService.Inner_JsonUtil message = block.message();
                Runnable toggle = null;
-               if (block.kind() == AiTranscriptLayout.Inner_CachePool.init) {
+               if (block.kind() == AiTranscriptLayout.Inner_CachePool.USER) {
                   PacketUtil.load(kit.init_GuiGraphicsExtract, bounds, 3, colors.open);
-               } else if (block.kind() == AiTranscriptLayout.Inner_CachePool.flush && !message.detail().isBlank()) {
+               } else if (block.kind() == AiTranscriptLayout.Inner_CachePool.TOOL && !message.detail().isBlank()) {
                   boolean expanded = block.expanded();
                   toggle = () -> this.init_V_cc_JsonUtil_Z(message, expanded);
                   autismclient.gui.f.NetHelper head = autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), m.tool());
@@ -368,29 +368,29 @@ final class AiChatView {
                int x = v.read() + line.x();
                int y = top + line.y();
                switch (line.kind()) {
-                  case init:
+                  case USER:
                      if (i == 0 || lines.get(i - 1).message() != line.message()) {
                         kit.init_V_Str("You", v.read() + 4, y, -10497050);
                      }
 
                      kit.init_V_Str(line.text(), x, y, colors.prev);
                      break;
-                  case load:
+                  case ASSISTANT:
                      this.init_V_cE_2(kit, line, v.read(), x, y, contentW);
                      break;
-                  case read:
+                  case SYSTEM:
                      kit.init_V_Str(line.text(), x, y, colors.valid);
                      break;
-                  case write:
+                  case ERROR:
                      kit.init_V_Str(line.text(), x, y, colors.data);
                      break;
-                  case update:
+                  case SUCCESS:
                      kit.init_V_Str(line.text(), x, y, colors.stop);
                      break;
-                  case sync:
+                  case WARNING:
                      kit.init_V_Str(line.text(), x, y, -14249);
                      break;
-                  case flush:
+                  case TOOL:
                      autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(v.read(), y, contentW, line.height());
                      if (!line.message().detail().isBlank()) {
                         PacketUtil.init(
@@ -409,11 +409,11 @@ final class AiChatView {
                         kit.init_V_Str_3(line.secondary(), row, nameX + nameW + 6, room - nameW - 6, this.init_I_cE_cc_JsonUtil(kit, line.message()));
                      }
                      break;
-                  case close:
+                  case TOOL_DETAIL:
                      PacketUtil.load(kit.init_GuiGraphicsExtract, x - 5, y, line.height(), colors.put);
                      kit.init_V_Str(line.text(), x, y, colors.valid);
                      break;
-                  case open:
+                  case MORE:
                      kit.init_V_Str(line.text(), x, y, colors.size);
                }
             }
@@ -466,36 +466,36 @@ final class AiChatView {
          boolean first = (line.flags() & 1) != 0;
          boolean last = (line.flags() & 2) != 0;
          switch (line.deco()) {
-            case flush:
+            case RULE:
                PacketUtil.init_V_GuiGraphicsExtract_2(kit.init_GuiGraphicsExtract, left, y + h / 2, contentW, colors.put);
                return;
-            case update:
+            case CODE:
                int top = y - (first ? 3 : 0);
                int bottom = y + h + (last ? 3 : 0);
                PacketUtil.init(kit.init_GuiGraphicsExtract, autismclient.gui.f.NetHelper.init(left, top, contentW, bottom - top), colors.open);
                break;
-            case sync:
+            case QUOTE:
                PacketUtil.load(kit.init_GuiGraphicsExtract, left + 2, y, h, colors.get);
                break;
-            case read:
+            case BULLET:
                if (first) {
                   kit.init_V_I(x - 5, y + h / 2, 1.5F, colors.valid);
                }
                break;
-            case write:
+            case NUMBERED:
                if (!line.marker().isEmpty()) {
                   kit.init_V_Str(line.marker(), x - kit.init_I_Str(line.marker()) - 4, y, colors.valid);
                }
          }
 
-         int textY = line.deco() == AiTranscriptLayout.Inner_StreamUtil.load ? y + 1 : y;
-         int base = line.deco() == AiTranscriptLayout.Inner_StreamUtil.sync ? colors.valid : colors.prev;
+         int textY = line.deco() == AiTranscriptLayout.Inner_StreamUtil.HEADING ? y + 1 : y;
+         int base = line.deco() == AiTranscriptLayout.Inner_StreamUtil.QUOTE ? colors.valid : colors.prev;
          float cx = x;
 
          for (AiTranscriptLayout.Inner_JsonUtil span : line.spans()) {
             int style = span.style();
             int color = base;
-            if ((style & 4) != 0 && line.deco() != AiTranscriptLayout.Inner_StreamUtil.update) {
+            if ((style & 4) != 0 && line.deco() != AiTranscriptLayout.Inner_StreamUtil.CODE) {
                PacketUtil.load(kit.init_GuiGraphicsExtract, autismclient.gui.f.NetHelper.init(Math.round(cx) - 1, y, span.width() + 2, h), 2, colors.add);
                color = -10497050;
             } else if ((style & 8) != 0) {
@@ -751,8 +751,8 @@ final class AiChatView {
       int fieldX = c.read() + attachW + 2;
       boolean canResume = !this.init_cF.init_Z
          && (
-            this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.write
-               || (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.flush || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.close)
+            this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.PAUSED
+               || (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.FAILED)
                   && !this.init_cF.write_Str.isBlank()
          );
       if (this.init_cF.load()) {
@@ -963,7 +963,7 @@ final class AiChatView {
          x += kit.init_I_Str(this.read_Z() ? "Plan" : "Act") + 10 + 8;
       }
 
-      if (this.init_cF.load_Z && this.init_cF.init_cc_FileCache != AiService.Inner_FileCache.open && limit - x > 40) {
+      if (this.init_cF.load_Z && this.init_cF.init_cc_FileCache != AiService.Inner_FileCache.CHATTING && limit - x > 40) {
          kit.init_V_Str_3("Chat", s, x, limit - x, -10497050);
          x += kit.init_I_Str("Chat") + 8;
       }
@@ -1012,31 +1012,31 @@ final class AiChatView {
 
       String var10000;
       switch (this.init_cF.init_cc_FileCache) {
-         case init:
+         case IDLE:
             var10000 = "Ready";
             break;
-         case load:
+         case RUNNING:
             var10000 = "Working";
             break;
-         case read:
+         case PLANNING:
             var10000 = "Planning";
             break;
-         case write:
+         case PAUSED:
             var10000 = "Paused";
             break;
-         case update:
+         case COMPLETED:
             var10000 = "Done";
             break;
-         case sync:
+         case ANSWERED:
             var10000 = "Answered";
             break;
-         case flush:
+         case BLOCKED:
             var10000 = "Blocked";
             break;
-         case close:
+         case FAILED:
             var10000 = "Failed";
             break;
-         case open:
+         case CHATTING:
             var10000 = "Chatting";
             break;
          default:

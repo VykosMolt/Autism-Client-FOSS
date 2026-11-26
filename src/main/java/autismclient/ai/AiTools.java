@@ -3038,11 +3038,11 @@ final class AiTools {
                throw new IllegalArgumentException("Unknown memory kind " + kindText + "; valid kinds: USER, WORLD, PROCEDURE, HYPOTHESIS");
             }
 
-            if (kind == AiMemoryStore.Inner_DataUtil.read) {
+            if (kind == AiMemoryStore.Inner_DataUtil.PROCEDURE) {
                throw new IllegalArgumentException("Use procedure_save with successful operation evidence IDs to save executable procedures");
             }
 
-            String memoryScope = kind == AiMemoryStore.Inner_DataUtil.init ? "user" : this.init_cc.poll_Str();
+            String memoryScope = kind == AiMemoryStore.Inner_DataUtil.USER ? "user" : this.init_cc.poll_Str();
             String text = AiJson.init_Str_JsonObject(args, "text", "");
             String payload = AiJson.init_Str_JsonObject(args, "payload", "");
             String evidence = AiJson.init_Str_JsonObject(args, "evidenceId", "");
@@ -3051,9 +3051,9 @@ final class AiTools {
             try {
                memory = this.init_cc.init_AiMemoryStore().init(kind, memoryScope, text, evidence, this.init_cc.init_AiCatalog_Snapshot().revision(), payload);
             } catch (IllegalArgumentException e) {
-               String fallback = !this.init_cc.init_Z() && kind != AiMemoryStore.Inner_DataUtil.write
+               String fallback = !this.init_cc.init_Z() && kind != AiMemoryStore.Inner_DataUtil.HYPOTHESIS
                   ? (
-                     kind == AiMemoryStore.Inner_DataUtil.init
+                     kind == AiMemoryStore.Inner_DataUtil.USER
                         ? this.init_cc.push_Str()
                         : (this.init_cc.init_AiObservation() == null ? null : this.init_cc.init_AiObservation().id())
                   )
@@ -3286,7 +3286,7 @@ final class AiTools {
                String tool = AiCollect.init(state);
                return AiGameOperations.init(
                   AiOperation.Status.FAILED,
-                  AiFailure.tick,
+                  AiFailure.MISSING_TOOL,
                   id + " drops nothing without " + tool + " or better; get one first (game:obtain " + tool + ")",
                   AiJson.init_JsonObject_ObjArr("missing", AiCollect.init(tool))
                );

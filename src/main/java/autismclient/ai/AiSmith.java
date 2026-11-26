@@ -93,7 +93,7 @@ final class AiSmith {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Smithing deadline reached");
                   } else if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiFailure.start, AiGuard.init_Str_Str("smithing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
+                     return this.init(AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("smithing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
                   } else if (!(this.init_Minecraft.player.containerMenu instanceof SmithingMenu menu)) {
                      AiOperation.Result open = this.init_AiOperation_Result_33();
                      return open != null ? open : this.init("Opening the smithing table");
@@ -102,7 +102,7 @@ final class AiSmith {
                         for (int slot = 0; slot <= 3; slot++) {
                            if (!menu.getSlot(slot).getItem().isEmpty()) {
                               return this.init(
-                                 AiFailure.data,
+                                 AiFailure.IMPOSSIBLE_STATE,
                                  "The smithing table is in use: slot "
                                     + slot
                                     + " holds "
@@ -159,7 +159,7 @@ final class AiSmith {
                         ItemStack out = menu.getSlot(3).getItem();
                         if (out.isEmpty()) {
                            return ++this.update > 40
-                              ? this.init(AiFailure.data, "The combination produced no result; check the inputs")
+                              ? this.init(AiFailure.IMPOSSIBLE_STATE, "The combination produced no result; check the inputs")
                               : this.init("Waiting for the result");
                         }
 
@@ -190,7 +190,7 @@ final class AiSmith {
                      missing.addProperty(additionId, 1);
                   }
 
-                  return missing.size() > 0 ? this.init(AiFailure.pop, "Missing smithing materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
+                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing smithing materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
                } else {
                   return null;
                }
@@ -258,7 +258,7 @@ final class AiSmith {
                      if (AiGameState.init_I_Str("minecraft:smithing_table") <= 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:smithing_table", 1);
-                        return this.init(AiFailure.set, "No smithing table in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
+                        return this.init(AiFailure.MISSING_STATION, "No smithing table in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
                      }
 
                      BlockPos spot = AiCraft.init_BlockPos();
@@ -273,13 +273,13 @@ final class AiSmith {
                   }
 
                   autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Smithing table placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 100) {
                      return this.init("Placing a smithing table");
                   }
 
@@ -437,7 +437,7 @@ final class AiSmith {
    }
 
    static String init(AiSmith.Inner_DataUtil mode, String templateId, String baseId, String additionId) {
-      if (mode == AiSmith.Inner_DataUtil.init) {
+      if (mode == AiSmith.Inner_DataUtil.UPGRADE) {
          if (!templateId.equals("minecraft:netherite_upgrade_smithing_template")) {
             return "upgrade needs minecraft:netherite_upgrade_smithing_template as the template";
          } else if (!additionId.equals("minecraft:netherite_ingot")) {
@@ -460,7 +460,7 @@ final class AiSmith {
    }
 
    enum Inner_DataUtil {
-      init,
-      load;
+      UPGRADE,
+      TRIM;
    }
 }

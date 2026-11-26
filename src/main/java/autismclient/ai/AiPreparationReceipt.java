@@ -67,11 +67,11 @@ final class AiPreparationReceipt {
             }
 
             if (!valid.getAsBoolean()) {
-               return this.init(AiOperation.Result.failed(AiFailure.valid, "Station recovery context changed before supported handoff", "{}"));
+               return this.init(AiOperation.Result.failed(AiFailure.WORLD_CHANGED, "Station recovery context changed before supported handoff", "{}"));
             }
 
             if (now.getAsLong() > deadline) {
-               return this.init(AiOperation.Result.timedOut(AiFailure.prev, "Station pickup did not reach a supported handoff before the deadline", "{}"));
+               return this.init(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Station pickup did not reach a supported handoff before the deadline", "{}"));
             }
 
             if (this.init_AiOperation_Result == null) {

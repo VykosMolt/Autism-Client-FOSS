@@ -90,25 +90,25 @@ final class AiPortalCast {
 
    static AiPortalCast.Inner_ConfigStore init_aX_ConfigStore(ClientLevel level, BlockPos pos) {
       if (!AiTerrain.init(level, pos)) {
-         return AiPortalCast.Inner_ConfigStore.update;
+         return AiPortalCast.Inner_ConfigStore.SOLID;
       }
 
       BlockState state = level.getBlockState(pos);
       if (state.is(Blocks.OBSIDIAN)) {
-         return AiPortalCast.Inner_ConfigStore.write;
+         return AiPortalCast.Inner_ConfigStore.OBSIDIAN;
       }
 
       FluidState fluid = state.getFluidState();
       if (!fluid.isEmpty()) {
          if (!fluid.isSource()) {
-            return AiPortalCast.Inner_ConfigStore.update;
+            return AiPortalCast.Inner_ConfigStore.SOLID;
          } else if (fluid.is(FluidTags.LAVA)) {
-            return AiPortalCast.Inner_ConfigStore.read;
+            return AiPortalCast.Inner_ConfigStore.LAVA;
          } else {
-            return fluid.is(FluidTags.WATER) ? AiPortalCast.Inner_ConfigStore.load : AiPortalCast.Inner_ConfigStore.update;
+            return fluid.is(FluidTags.WATER) ? AiPortalCast.Inner_ConfigStore.WATER : AiPortalCast.Inner_ConfigStore.SOLID;
          }
       } else {
-         return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.Inner_ConfigStore.update : AiPortalCast.Inner_ConfigStore.init;
+         return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.Inner_ConfigStore.SOLID : AiPortalCast.Inner_ConfigStore.AIR;
       }
    }
 
@@ -157,7 +157,7 @@ final class AiPortalCast {
                         boolean ok = true;
 
                         for (BlockPos cell : need) {
-                           if (init_aX_ConfigStore(level, cell) == AiPortalCast.Inner_ConfigStore.update) {
+                           if (init_aX_ConfigStore(level, cell) == AiPortalCast.Inner_ConfigStore.SOLID) {
                               if (!read(level, cell)) {
                                  ok = false;
                                  break;
@@ -171,7 +171,7 @@ final class AiPortalCast {
                            continue;
                         }
 
-                        AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.init : init_aX_ConfigStore(level, pos);
+                        AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.AIR : init_aX_ConfigStore(level, pos);
                         plan = init(init_List(origin, axis), axis, reserved, after);
                         if (plan.blocked() != null) {
                            continue;
@@ -245,21 +245,21 @@ final class AiPortalCast {
 
       for (BlockPos cell : cells) {
          AiPortalCast.Inner_ConfigStore kind = lookup.at(cell);
-         if (kind == AiPortalCast.Inner_ConfigStore.write) {
-            steps.add(new AiPortalCast.Inner_BufferHelper(cell.immutable(), AiPortalCast.Inner_DataUtil.init, null, List.of(), null));
+         if (kind == AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
+            steps.add(new AiPortalCast.Inner_BufferHelper(cell.immutable(), AiPortalCast.Inner_DataUtil.SKIP, null, List.of(), null));
          } else {
-            if (kind != AiPortalCast.Inner_ConfigStore.read && kind != AiPortalCast.Inner_ConfigStore.init && kind != AiPortalCast.Inner_ConfigStore.load) {
+            if (kind != AiPortalCast.Inner_ConfigStore.LAVA && kind != AiPortalCast.Inner_ConfigStore.AIR && kind != AiPortalCast.Inner_ConfigStore.WATER) {
                return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "frame cell " + cell.toShortString() + " is occupied", lavaNeeded, moldBlocks);
             }
 
-            AiPortalCast.Inner_DataUtil action = kind == AiPortalCast.Inner_ConfigStore.read ? AiPortalCast.Inner_DataUtil.load : AiPortalCast.Inner_DataUtil.read;
-            if (action == AiPortalCast.Inner_DataUtil.read) {
+            AiPortalCast.Inner_DataUtil action = kind == AiPortalCast.Inner_ConfigStore.LAVA ? AiPortalCast.Inner_DataUtil.WATER_OVER_LAVA : AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER;
+            if (action == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER) {
                lavaNeeded++;
             }
 
             BlockPos waterCell = cell.above();
             AiPortalCast.Inner_ConfigStore above = lookup.at(waterCell);
-            if (above != AiPortalCast.Inner_ConfigStore.init && above != AiPortalCast.Inner_ConfigStore.load) {
+            if (above != AiPortalCast.Inner_ConfigStore.AIR && above != AiPortalCast.Inner_ConfigStore.WATER) {
                return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "no room to pour above frame cell " + cell.toShortString(), lavaNeeded, moldBlocks);
             }
 
@@ -284,7 +284,7 @@ final class AiPortalCast {
          BlockPos n = waterCell.relative(side);
          if (!reserved.contains(n)) {
             AiPortalCast.Inner_ConfigStore kind = lookup.at(n);
-            if (kind == AiPortalCast.Inner_ConfigStore.read || kind == AiPortalCast.Inner_ConfigStore.init && lookup.at(n.below()) == AiPortalCast.Inner_ConfigStore.read) {
+            if (kind == AiPortalCast.Inner_ConfigStore.LAVA || kind == AiPortalCast.Inner_ConfigStore.AIR && lookup.at(n.below()) == AiPortalCast.Inner_ConfigStore.LAVA) {
                dams.add(n.immutable());
             }
          }
@@ -295,7 +295,7 @@ final class AiPortalCast {
 
    static AiPortalCast.Inner_SyncManager init(BlockPos pourCell, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup, List<BlockPos> dams) {
       AiPortalCast.Inner_ConfigStore below = lookup.at(pourCell.below());
-      if (below != AiPortalCast.Inner_ConfigStore.update && below != AiPortalCast.Inner_ConfigStore.write) {
+      if (below != AiPortalCast.Inner_ConfigStore.SOLID && below != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
          for (BlockPos dam : dams) {
             for (Direction side : Plane.HORIZONTAL) {
                if (pourCell.relative(side).equals(dam)) {
@@ -306,7 +306,7 @@ final class AiPortalCast {
 
          for (Direction side : init(axis)) {
             BlockPos n = pourCell.relative(side);
-            if (!reserved.contains(n) && lookup.at(n) == AiPortalCast.Inner_ConfigStore.init && lookup.at(n.below()) != AiPortalCast.Inner_ConfigStore.read) {
+            if (!reserved.contains(n) && lookup.at(n) == AiPortalCast.Inner_ConfigStore.AIR && lookup.at(n.below()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                return new AiPortalCast.Inner_SyncManager(n.immutable(), side.getOpposite(), n.immutable());
             }
          }
@@ -461,8 +461,8 @@ final class AiPortalCast {
                final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
                final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard().withoutCombat();
                final AiPortalCast.Inner_TaskQueue init_aX_TaskQueue = this::init_aX_ConfigStore;
-               AiPortalCast.Inner_NetHelper init_aX_NetHelper = AiPortalCast.Inner_NetHelper.init;
-               AiPortalCast.Inner_CachePool init_aX_CachePool = AiPortalCast.Inner_CachePool.init;
+               AiPortalCast.Inner_NetHelper init_aX_NetHelper = AiPortalCast.Inner_NetHelper.PREFLIGHT;
+               AiPortalCast.Inner_CachePool init_aX_CachePool = AiPortalCast.Inner_CachePool.STANCE;
                final ArrayDeque<BlockPos> init_ArrayDeque = new ArrayDeque<>();
                final Set<BlockPos> init_Set = new HashSet<>();
                boolean init_Z;
@@ -535,7 +535,7 @@ final class AiPortalCast {
                         if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
                            this.cancel();
                            return AiOperation.Result.failed(
-                              AiFailure.start,
+                              AiFailure.LOW_HEALTH,
                               AiGuard.init_Str_Str("portal casting", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()),
                               this.init_JsonObject_36().toString()
                            );
@@ -558,25 +558,25 @@ final class AiPortalCast {
 
                         AiOperation.Result var10000;
                         switch (this.init_aX_NetHelper) {
-                           case init:
+                           case PREFLIGHT:
                               var10000 = this.init_AiOperation_Result_21();
                               break;
-                           case load:
+                           case LOCATE:
                               var10000 = this.load_AiOperation_Result_13();
                               break;
-                           case read:
+                           case SITE:
                               var10000 = this.read();
                               break;
-                           case write:
+                           case EXCAVATE:
                               var10000 = this.pop();
                               break;
-                           case update:
+                           case WATER:
                               var10000 = this.write();
                               break;
-                           case sync:
+                           case CAST:
                               var10000 = this.update();
                               break;
-                           case flush:
+                           case LIGHT:
                               var10000 = this.sync();
                               break;
                            default:
@@ -601,10 +601,10 @@ final class AiPortalCast {
                   this.read_Z = this.write_I > 0;
                   JsonObject missing = AiPortalCast.init(this.write_I, this.update_I, this.sync_I, this.flush, this.close, this.open, this.poll, 1, 16);
                   if (!missing.keySet().isEmpty()) {
-                     return this.init(AiFailure.pop, "Portal cast is missing materials: " + missing, missing);
+                     return this.init(AiFailure.MISSING_MATERIALS, "Portal cast is missing materials: " + missing, missing);
                   }
 
-                  this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.load;
+                  this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.LOCATE;
                   return this.load("Materials ready; locating the lava pool");
                }
 
@@ -619,7 +619,7 @@ final class AiPortalCast {
 
                      if (this.init_BlockPos == null) {
                         return this.init(
-                           AiFailure.init_A,
+                           AiFailure.TARGET_NOT_FOUND,
                            explicit != null
                               ? "No lava source near " + explicit.toShortString()
                               : "No lava source within 24 blocks; pass x,y,z of a pool (game:oracle query 'lava' finds one)",
@@ -635,7 +635,7 @@ final class AiPortalCast {
                      }
                   }
 
-                  this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.read;
+                  this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.SITE;
                   return this.load("At the pool; planning the cast");
                }
 
@@ -684,14 +684,14 @@ final class AiPortalCast {
                         this.init_ArrayDeque.addAll(digs);
                         AutismClientAddon.LOG
                            .info("[AI] portal cast: clearing {} blocks over the pool at {} for the frame", digs.size(), this.init_BlockPos.toShortString());
-                        this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.write;
+                        this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.EXCAVATE;
                         return this.load("Clearing " + digs.size() + " blocks for the frame");
                      }
                   }
 
                   if (bestPlan == null) {
                      return this.init(
-                        AiFailure.load,
+                        AiFailure.NO_REACHABLE_TARGET,
                         "No castable 4x5 frame site at this lava pool (frame cells blocked, or too few lava sources); try another pool or game:dimension build:true",
                         null
                      );
@@ -714,16 +714,16 @@ final class AiPortalCast {
                      Math.max(16, this.init_aX_StreamUtil.moldBlocks() + 2)
                   );
                   if (!missing.keySet().isEmpty()) {
-                     return this.init(AiFailure.pop, "Portal cast at " + this.load_BlockPos.toShortString() + " is missing materials: " + missing, missing);
+                     return this.init(AiFailure.MISSING_MATERIALS, "Portal cast at " + this.load_BlockPos.toShortString() + " is missing materials: " + missing, missing);
                   }
 
-                  this.init_aX_NetHelper = this.read_Z ? AiPortalCast.Inner_NetHelper.sync : AiPortalCast.Inner_NetHelper.update;
+                  this.init_aX_NetHelper = this.read_Z ? AiPortalCast.Inner_NetHelper.CAST : AiPortalCast.Inner_NetHelper.WATER;
                   return this.load("Cast site at " + this.load_BlockPos.toShortString() + " along " + this.init_Direction.name().toLowerCase(Locale.ROOT));
                }
 
                AiOperation.Result write() {
                   if (AiGameState.init_I_Str("minecraft:water_bucket") > 0) {
-                     this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.sync;
+                     this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.CAST;
                      return this.load("Water ready");
                   }
 
@@ -731,7 +731,7 @@ final class AiPortalCast {
                      BlockPos open = this.init(this.init_Minecraft.player.blockPosition(), 32, 8, false, true);
                      BlockPos source = open != null ? open : this.init(this.init_Minecraft.player.blockPosition(), 32, 8, false);
                      if (source == null) {
-                        return this.init(AiFailure.pop, "No water source within 32 blocks to fill the bucket", this.init_JsonObject_2("minecraft:water_bucket"));
+                        return this.init(AiFailure.MISSING_MATERIALS, "No water source within 32 blocks to fill the bucket", this.init_JsonObject_2("minecraft:water_bucket"));
                      }
 
                      if (this.init_Minecraft.player.blockPosition().distSqr(source) > 9.0) {
@@ -749,7 +749,7 @@ final class AiPortalCast {
                      return filled;
                   }
 
-                  this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.sync;
+                  this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.CAST;
                   return this.load("Water bucket filled");
                }
 
@@ -757,11 +757,11 @@ final class AiPortalCast {
                   if (this.push >= this.init_aX_StreamUtil.steps().size()) {
                      for (BlockPos cell : this.read_Set) {
                         if (!this.init_Minecraft.level.getBlockState(cell).is(Blocks.OBSIDIAN)) {
-                           return this.init(AiFailure.data, "Frame cell " + cell.toShortString() + " is not obsidian after the cast", null);
+                           return this.init(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + cell.toShortString() + " is not obsidian after the cast", null);
                         }
                      }
 
-                     this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.flush;
+                     this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.LIGHT;
                      return this.load("Frame complete; lighting the portal");
                   } else {
                      AiPortalCast.Inner_BufferHelper step = this.init_aX_StreamUtil.steps().get(this.push);
@@ -771,31 +771,31 @@ final class AiPortalCast {
                      }
 
                      if (this.init_aX_RenderState.init()
-                        && this.init_aX_CachePool != AiPortalCast.Inner_CachePool.sync
+                        && this.init_aX_CachePool != AiPortalCast.Inner_CachePool.SCOOP
                         && this.init_Minecraft.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN)
                         && AiServerEvidence.init_J_BlockPos(step.cell()) > this.load_J) {
-                        this.init_aX_CachePool = AiPortalCast.Inner_CachePool.sync;
+                        this.init_aX_CachePool = AiPortalCast.Inner_CachePool.SCOOP;
                         this.pop = 0;
                      }
 
                      AiOperation.Result var10000;
                      switch (this.init_aX_CachePool) {
-                        case init:
+                        case STANCE:
                            var10000 = this.init(step);
                            break;
-                        case load:
+                        case MOLDS:
                            var10000 = this.load(step);
                            break;
-                        case read:
+                        case LAVA_REFILL:
                            var10000 = this.read(step);
                            break;
-                        case write:
+                        case LAVA_POUR:
                            var10000 = this.write(step);
                            break;
-                        case update:
+                        case WATER_POUR:
                            var10000 = this.update(step);
                            break;
-                        case sync:
+                        case SCOOP:
                            var10000 = this.sync(step);
                            break;
                         default:
@@ -808,9 +808,9 @@ final class AiPortalCast {
 
                AiOperation.Result init(AiPortalCast.Inner_BufferHelper step) {
                   this.load_J = AiServerEvidence.init_J_BlockPos(step.cell());
-                  if (step.action() == AiPortalCast.Inner_DataUtil.load && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.read) {
+                  if (step.action() == AiPortalCast.Inner_DataUtil.WATER_OVER_LAVA && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                      return ++this.pop > 140
-                        ? this.init(AiFailure.data, "Frame cell " + step.cell().toShortString() + " no longer holds a lava source", null)
+                        ? this.init(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + step.cell().toShortString() + " no longer holds a lava source", null)
                         : this.load("Waiting for the lava at " + step.cell().toShortString() + " to settle");
                   }
 
@@ -829,10 +829,10 @@ final class AiPortalCast {
                   }
 
                   this.init_aX_SyncManager = null;
-                  if (step.action() == AiPortalCast.Inner_DataUtil.read && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.read) {
+                  if (step.action() == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
                      this.init_aX_SyncManager = this.init_aX_SyncManager(step.cell());
                      if (this.init_aX_SyncManager == null) {
-                        return this.init(AiFailure.write, "No face to pour lava against at " + step.cell().toShortString(), null);
+                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava against at " + step.cell().toShortString(), null);
                      }
 
                      if (this.init_aX_SyncManager.mold() != null && !queue.contains(this.init_aX_SyncManager.mold())) {
@@ -850,7 +850,7 @@ final class AiPortalCast {
                      }
                   }
 
-                  this.init_aX_CachePool = AiPortalCast.Inner_CachePool.load;
+                  this.init_aX_CachePool = AiPortalCast.Inner_CachePool.MOLDS;
                   return this.load("Casting frame cell " + step.cell().toShortString() + " (" + step.action().name().toLowerCase(Locale.ROOT) + ")");
                }
 
@@ -878,7 +878,7 @@ final class AiPortalCast {
                         && !this.load_List.contains(side)
                         && !side.equals(feet)
                         && !side.equals(feet.above())
-                        && this.init_aX_ConfigStore(side) == AiPortalCast.Inner_ConfigStore.init
+                        && this.init_aX_ConfigStore(side) == AiPortalCast.Inner_ConfigStore.AIR
                         && this.init_Z_7(side)) {
                         double distance = this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(side));
                         if (distance < bestDistance) {
@@ -906,10 +906,10 @@ final class AiPortalCast {
                   while (this.set < this.load_List.size()) {
                      BlockPos mold = this.load_List.get(this.set);
                      AiPortalCast.Inner_ConfigStore there = this.init_aX_ConfigStore(mold);
-                     if (there != AiPortalCast.Inner_ConfigStore.update && there != AiPortalCast.Inner_ConfigStore.write) {
+                     if (there != AiPortalCast.Inner_ConfigStore.SOLID && there != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
                         Item item = this.init_Item(AiPortalCast.init_List);
                         if (item == null) {
-                           return this.init(AiFailure.pop, "Out of throwaway blocks for the mold at " + mold.toShortString(), this.init_JsonObject_2("minecraft:dirt"));
+                           return this.init(AiFailure.MISSING_MATERIALS, "Out of throwaway blocks for the mold at " + mold.toShortString(), this.init_JsonObject_2("minecraft:dirt"));
                         }
 
                         if (!mold.equals(this.init_DataPipe.init_BlockPos()) && !this.init_Z_7(mold)) {
@@ -928,8 +928,8 @@ final class AiPortalCast {
                         }
 
                         autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
-                           if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read) {
+                        if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
+                           if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED) {
                               if (!this.init_Set.contains(mold)) {
                                  this.init_Set.add(mold);
                                  this.init_DataPipe.init_V();
@@ -939,7 +939,7 @@ final class AiPortalCast {
                               }
 
                               return this.init(
-                                 AiFailure.write, "Could not place the mold block at " + mold.toShortString() + ": " + this.init_DataPipe.init_Str(), null
+                                 AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the mold block at " + mold.toShortString() + ": " + this.init_DataPipe.init_Str(), null
                               );
                            }
 
@@ -952,9 +952,9 @@ final class AiPortalCast {
                      }
                   }
 
-                  this.init_aX_CachePool = step.action() == AiPortalCast.Inner_DataUtil.read && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.read
-                     ? AiPortalCast.Inner_CachePool.read
-                     : AiPortalCast.Inner_CachePool.update;
+                  this.init_aX_CachePool = step.action() == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER && this.init_aX_ConfigStore(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA
+                     ? AiPortalCast.Inner_CachePool.LAVA_REFILL
+                     : AiPortalCast.Inner_CachePool.WATER_POUR;
                   this.pop = 0;
                   this.write_Z = false;
                   return this.load("Molds placed");
@@ -962,7 +962,7 @@ final class AiPortalCast {
 
                AiOperation.Result read(AiPortalCast.Inner_BufferHelper step) {
                   if (AiGameState.init_I_Str("minecraft:lava_bucket") > 0) {
-                     this.init_aX_CachePool = AiPortalCast.Inner_CachePool.write;
+                     this.init_aX_CachePool = AiPortalCast.Inner_CachePool.LAVA_POUR;
                      this.pop = 0;
                      this.write_Z = false;
                      return this.load("Lava ready");
@@ -972,14 +972,14 @@ final class AiPortalCast {
                      List<BlockPos> sources = new ArrayList<>();
 
                      for (BlockPos source : this.init_List) {
-                        if (this.init_aX_ConfigStore(source) == AiPortalCast.Inner_ConfigStore.read) {
+                        if (this.init_aX_ConfigStore(source) == AiPortalCast.Inner_ConfigStore.LAVA) {
                            sources.add(source);
                         }
                      }
 
                      BlockPos refill = AiPortalCast.init(sources, this.load_Set, this.init_Minecraft.player.blockPosition());
                      if (refill == null) {
-                        return this.init(AiFailure.pop, "The lava pool ran out of usable source cells", this.init_JsonObject_2("minecraft:lava_bucket"));
+                        return this.init(AiFailure.MISSING_MATERIALS, "The lava pool ran out of usable source cells", this.init_JsonObject_2("minecraft:lava_bucket"));
                      }
 
                      if (this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(refill)) > 12.0) {
@@ -997,15 +997,15 @@ final class AiPortalCast {
                      return filled;
                   }
 
-                  this.init_aX_CachePool = AiPortalCast.Inner_CachePool.write;
+                  this.init_aX_CachePool = AiPortalCast.Inner_CachePool.LAVA_POUR;
                   this.pop = 0;
                   this.write_Z = false;
                   return this.load("Lava bucket filled");
                }
 
                AiOperation.Result write(AiPortalCast.Inner_BufferHelper step) {
-                  if (this.init_aX_ConfigStore(step.cell()) == AiPortalCast.Inner_ConfigStore.read) {
-                     this.init_aX_CachePool = AiPortalCast.Inner_CachePool.update;
+                  if (this.init_aX_ConfigStore(step.cell()) == AiPortalCast.Inner_ConfigStore.LAVA) {
+                     this.init_aX_CachePool = AiPortalCast.Inner_CachePool.WATER_POUR;
                      this.pop = 0;
                      this.write_Z = false;
                      this.get++;
@@ -1015,11 +1015,11 @@ final class AiPortalCast {
                   if (AiGameState.init_I_Str("minecraft:lava_bucket") <= 0) {
                      if (++this.pop > 40) {
                         if (++this.tick >= 2) {
-                           return this.init(AiFailure.write, "Lava did not stay in frame cell " + step.cell().toShortString(), null);
+                           return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Lava did not stay in frame cell " + step.cell().toShortString(), null);
                         }
 
                         this.pop = 0;
-                        this.init_aX_CachePool = AiPortalCast.Inner_CachePool.read;
+                        this.init_aX_CachePool = AiPortalCast.Inner_CachePool.LAVA_REFILL;
                      }
 
                      return this.load("Confirming the lava pour at " + step.cell().toShortString());
@@ -1032,9 +1032,9 @@ final class AiPortalCast {
                      }
 
                      if (++this.pop > 60 * (this.tick + 1)) {
-                        return this.init(AiFailure.write, "Could not aim at the lava pour face for " + step.cell().toShortString(), null);
+                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the lava pour face for " + step.cell().toShortString(), null);
                      } else if (AiItems.read(AiItems.load_af_DataUtil("minecraft:lava_bucket")) < 0) {
-                        this.init_aX_CachePool = AiPortalCast.Inner_CachePool.read;
+                        this.init_aX_CachePool = AiPortalCast.Inner_CachePool.LAVA_REFILL;
                         return this.load("Refilling the lava bucket");
                      } else if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
                         this.init_Minecraft.player.closeContainer();
@@ -1048,7 +1048,7 @@ final class AiPortalCast {
 
                AiOperation.Result update(AiPortalCast.Inner_BufferHelper step) {
                   if (this.init_Minecraft.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && AiServerEvidence.init_J_BlockPos(step.cell()) > this.load_J) {
-                     this.init_aX_CachePool = AiPortalCast.Inner_CachePool.sync;
+                     this.init_aX_CachePool = AiPortalCast.Inner_CachePool.SCOOP;
                      this.pop = 0;
                      return this.load("Obsidian confirmed at " + step.cell().toShortString());
                   }
@@ -1068,7 +1068,7 @@ final class AiPortalCast {
 
                      if (++this.pop > 60) {
                         if (++this.tick >= 2) {
-                           return this.init(AiFailure.write, "Could not aim at the pour face above " + step.cell().toShortString(), null);
+                           return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the pour face above " + step.cell().toShortString(), null);
                         }
 
                         this.pop = 0;
@@ -1076,7 +1076,7 @@ final class AiPortalCast {
                      }
 
                      if (AiItems.read(AiItems.load_af_DataUtil("minecraft:water_bucket")) < 0) {
-                        return this.init(AiFailure.pop, "Lost the water bucket mid-cast", this.init_JsonObject_2("minecraft:water_bucket"));
+                        return this.init(AiFailure.MISSING_MATERIALS, "Lost the water bucket mid-cast", this.init_JsonObject_2("minecraft:water_bucket"));
                      }
 
                      if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
@@ -1095,7 +1095,7 @@ final class AiPortalCast {
                   } else {
                      return ++this.pop > 140
                         ? this.init(
-                           AiFailure.write,
+                           AiFailure.PLACEMENT_IMPOSSIBLE,
                            "Water did not convert frame cell "
                               + step.cell().toShortString()
                               + " (now "
@@ -1129,7 +1129,7 @@ final class AiPortalCast {
                      return scooped.status() == AiOperation.Status.UNCERTAIN
                         ? this.init(AiOperation.Status.UNCERTAIN, "The poured water refill is unconfirmed: " + scooped.message())
                         : this.init(
-                           AiFailure.pop,
+                           AiFailure.MISSING_MATERIALS,
                            "The pour's water was lost at "
                               + step.waterCell().toShortString()
                               + "; refill a water bucket and re-run (finished cells are skipped)",
@@ -1163,7 +1163,7 @@ final class AiPortalCast {
                         }
 
                         return this.init(
-                           AiFailure.data,
+                           AiFailure.IMPOSSIBLE_STATE,
                            "The portal interior at " + interior.toShortString() + " is blocked by " + BuiltInRegistries.BLOCK.getKey(state.getBlock()),
                            null
                         );
@@ -1174,7 +1174,7 @@ final class AiPortalCast {
                      this.load_V_11();
                      String picked = AiPortalCast.init(this.close, this.open, this.update_I > 0 || this.sync_I > 0, this.poll);
                      if (picked == null) {
-                        return this.init(AiFailure.pop, "Nothing to light the portal with", this.init_JsonObject_2("minecraft:flint_and_steel"));
+                        return this.init(AiFailure.MISSING_MATERIALS, "Nothing to light the portal with", this.init_JsonObject_2("minecraft:flint_and_steel"));
                      }
 
                      this.load_Str = picked;
@@ -1229,32 +1229,32 @@ final class AiPortalCast {
                      }
 
                      autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
-                     if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                     if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                         this.clear = 1;
                         return this.load("Doorway wood placed");
                      } else {
-                        return placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
-                           ? this.init(AiFailure.write, "Could not place the doorway wood: " + this.init_DataPipe.init_Str(), null)
+                        return placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
+                           ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the doorway wood: " + this.init_DataPipe.init_Str(), null)
                            : this.load("Placing the doorway wood");
                      }
                   } else if (this.clear == 1) {
-                     if (this.init_aX_ConfigStore(side) == AiPortalCast.Inner_ConfigStore.read) {
+                     if (this.init_aX_ConfigStore(side) == AiPortalCast.Inner_ConfigStore.LAVA) {
                         this.clear = 3;
                         return this.load("Lava already beside the doorway");
                      }
 
                      this.load_aX_SyncManager = this.init_aX_SyncManager(side);
                      if (this.load_aX_SyncManager == null) {
-                        return this.init(AiFailure.write, "No face to pour lava beside the doorway", null);
+                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava beside the doorway", null);
                      }
 
                      BlockPos mold = this.load_aX_SyncManager.mold();
                      if (mold != null
-                        && this.init_aX_ConfigStore(mold) != AiPortalCast.Inner_ConfigStore.update
-                        && this.init_aX_ConfigStore(mold) != AiPortalCast.Inner_ConfigStore.write) {
+                        && this.init_aX_ConfigStore(mold) != AiPortalCast.Inner_ConfigStore.SOLID
+                        && this.init_aX_ConfigStore(mold) != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
                         Item moldItem = this.init_Item(AiPortalCast.init_List);
                         if (moldItem == null) {
-                           return this.init(AiFailure.pop, "No throwaway block for the fire-spread mold", this.init_JsonObject_2("minecraft:dirt"));
+                           return this.init(AiFailure.MISSING_MATERIALS, "No throwaway block for the fire-spread mold", this.init_JsonObject_2("minecraft:dirt"));
                         }
 
                         if (!mold.equals(this.init_DataPipe.init_BlockPos())) {
@@ -1262,14 +1262,14 @@ final class AiPortalCast {
                         }
 
                         autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                        if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                            this.clear = 2;
                            this.pop = 0;
                            this.write_Z = false;
                            return this.load("Fire-spread mold placed");
                         } else {
-                           return placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
-                              ? this.init(AiFailure.write, "Could not place the fire-spread mold: " + this.init_DataPipe.init_Str(), null)
+                           return placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
+                              ? this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not place the fire-spread mold: " + this.init_DataPipe.init_Str(), null)
                               : this.load("Placing the fire-spread mold");
                         }
                      } else {
@@ -1283,7 +1283,7 @@ final class AiPortalCast {
                         return this.load("Waiting for the doorway wood to catch fire");
                      }
 
-                     if (this.init_aX_ConfigStore(side) == AiPortalCast.Inner_ConfigStore.read) {
+                     if (this.init_aX_ConfigStore(side) == AiPortalCast.Inner_ConfigStore.LAVA) {
                         this.write_Z = false;
                         this.clear = 3;
                         return this.load("Lava beside the doorway; waiting for the wood to catch");
@@ -1297,12 +1297,12 @@ final class AiPortalCast {
                      }
 
                      if (++this.pop > 120) {
-                        return this.init(AiFailure.write, "Could not pour lava beside the doorway", null);
+                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not pour lava beside the doorway", null);
                      }
 
                      if (AiGameState.init_I_Str("minecraft:lava_bucket") > 0) {
                         if (AiItems.read(AiItems.load_af_DataUtil("minecraft:lava_bucket")) < 0) {
-                           return this.init(AiFailure.pop, "Lost the lava bucket for the fire spread", this.init_JsonObject_2("minecraft:lava_bucket"));
+                           return this.init(AiFailure.MISSING_MATERIALS, "Lost the lava bucket for the fire spread", this.init_JsonObject_2("minecraft:lava_bucket"));
                         } else if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
                            this.init_Minecraft.player.closeContainer();
                            return this.load("Closing a screen before pouring");
@@ -1315,14 +1315,14 @@ final class AiPortalCast {
                            List<BlockPos> sources = new ArrayList<>();
 
                            for (BlockPos pool : this.init_List) {
-                              if (this.init_aX_ConfigStore(pool) == AiPortalCast.Inner_ConfigStore.read) {
+                              if (this.init_aX_ConfigStore(pool) == AiPortalCast.Inner_ConfigStore.LAVA) {
                                  sources.add(pool);
                               }
                            }
 
                            BlockPos refill = AiPortalCast.init(sources, this.load_Set, this.init_Minecraft.player.blockPosition());
                            if (refill == null) {
-                              return this.init(AiFailure.pop, "No lava left for the fire spread", this.init_JsonObject_2("minecraft:lava_bucket"));
+                              return this.init(AiFailure.MISSING_MATERIALS, "No lava left for the fire spread", this.init_JsonObject_2("minecraft:lava_bucket"));
                            }
 
                            this.load_AiOperation = this.init("lava", refill, 20);
@@ -1342,7 +1342,7 @@ final class AiPortalCast {
 
                AiOperation.Result init(AiPortalCast.Inner_SyncManager face, boolean lava) {
                   if (face == null) {
-                     return this.init(AiFailure.write, "The planned pour face is unavailable", null);
+                     return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The planned pour face is unavailable", null);
                   }
 
                   if (autismclient.ai.engine.AiMotionSafety.fill_Z()
@@ -1352,7 +1352,7 @@ final class AiPortalCast {
                   }
 
                   if (this.update_Set.contains(face)) {
-                     return this.init(AiFailure.write, "The required pour face is still hidden after approaching " + face.support().toShortString(), null);
+                     return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The required pour face is still hidden after approaching " + face.support().toShortString(), null);
                   }
 
                   long now = System.nanoTime();
@@ -1363,7 +1363,7 @@ final class AiPortalCast {
 
                   int seconds = AiPortalCast.init(this.read_J, now);
                   if (seconds <= 0) {
-                     return this.init(AiFailure.prev, "No time remains to reach the required pour face", null);
+                     return this.init(AiFailure.TIMEOUT, "No time remains to reach the required pour face", null);
                   }
 
                   AiOperation child = AiGoto.init(
@@ -1373,7 +1373,7 @@ final class AiPortalCast {
                      true,
                      false,
                      seconds,
-                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                      true,
                      2.0,
                      AiPortalCast.init(
@@ -1424,7 +1424,7 @@ final class AiPortalCast {
                         }
 
                         if (!AiPortalCast.init(this.init_Minecraft.player.blockPosition(), pourCell)) {
-                           return this.init(AiFailure.write, "Refusing a lava pour into or beside the player's own cells at " + pourCell.toShortString(), null);
+                           return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "Refusing a lava pour into or beside the player's own cells at " + pourCell.toShortString(), null);
                         }
                      }
 
@@ -1453,7 +1453,7 @@ final class AiPortalCast {
                AiOperation.Result flush(AiPortalCast.Inner_BufferHelper step) {
                   for (BlockPos zone : AiPortalCast.init_List(step.waterCell())) {
                      if (!this.read_Set.contains(zone) && !this.write_Set.contains(zone) && this.init_Minecraft.level.getBlockState(zone).is(Blocks.OBSIDIAN)) {
-                        return this.init(AiFailure.write, "The pour spread: obsidian formed outside the frame at " + zone.toShortString(), null);
+                        return this.init(AiFailure.PLACEMENT_IMPOSSIBLE, "The pour spread: obsidian formed outside the frame at " + zone.toShortString(), null);
                      }
                   }
 
@@ -1462,7 +1462,7 @@ final class AiPortalCast {
 
                AiPortalCast.Inner_SyncManager init_aX_SyncManager(BlockPos cell) {
                   AiPortalCast.Inner_ConfigStore below = this.init_aX_ConfigStore(cell.below());
-                  return below != AiPortalCast.Inner_ConfigStore.update && below != AiPortalCast.Inner_ConfigStore.write
+                  return below != AiPortalCast.Inner_ConfigStore.SOLID && below != AiPortalCast.Inner_ConfigStore.OBSIDIAN
                      ? AiPortalCast.init(cell, this.init_Direction, this.load_Set, this.init_aX_TaskQueue, List.of())
                      : new AiPortalCast.Inner_SyncManager(cell.below().immutable(), Direction.UP, null);
                }
@@ -1570,7 +1570,7 @@ final class AiPortalCast {
                void init_V_20() {
                   this.run++;
                   this.push++;
-                  this.init_aX_CachePool = AiPortalCast.Inner_CachePool.init;
+                  this.init_aX_CachePool = AiPortalCast.Inner_CachePool.STANCE;
                   this.pop = 0;
                   this.tick = 0;
                   this.load_List = List.of();
@@ -1695,7 +1695,7 @@ final class AiPortalCast {
                               boolean ok = true;
 
                               for (BlockPos cell : need) {
-                                 if (this.init_aX_ConfigStore(cell) == AiPortalCast.Inner_ConfigStore.update) {
+                                 if (this.init_aX_ConfigStore(cell) == AiPortalCast.Inner_ConfigStore.SOLID) {
                                     if (!this.load(cell)) {
                                        ok = false;
                                        break;
@@ -1707,7 +1707,7 @@ final class AiPortalCast {
 
                               if (ok && !digs.isEmpty() && digs.size() <= 30) {
                                  Set<BlockPos> dug = new HashSet<>(digs);
-                                 AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.init : this.init_aX_ConfigStore(pos);
+                                 AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.AIR : this.init_aX_ConfigStore(pos);
                                  Set<BlockPos> reserved = AiPortalCast.init_Set(origin, axis);
                                  AiPortalCast.Inner_StreamUtil plan = AiPortalCast.init(AiPortalCast.init_List(origin, axis), axis, reserved, after);
                                  if (plan.blocked() == null) {
@@ -1812,7 +1812,7 @@ final class AiPortalCast {
                      true,
                      false,
                      seconds,
-                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                      true,
                      2.0,
                      AiGoto.read(autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, radius), keep)
@@ -1829,16 +1829,16 @@ final class AiPortalCast {
                      this.init_AiOperation.cancel();
                      this.init_AiOperation = null;
                      if (r.status() != AiOperation.Status.SUCCEEDED && ++this.read_I > 3) {
-                        return this.init(AiFailure.load, "Could not clear the frame site: " + r.message(), null);
+                        return this.init(AiFailure.NO_REACHABLE_TARGET, "Could not clear the frame site: " + r.message(), null);
                      }
                   }
 
-                  while (!this.init_ArrayDeque.isEmpty() && this.init_aX_ConfigStore(this.init_ArrayDeque.peek()) != AiPortalCast.Inner_ConfigStore.update) {
+                  while (!this.init_ArrayDeque.isEmpty() && this.init_aX_ConfigStore(this.init_ArrayDeque.peek()) != AiPortalCast.Inner_ConfigStore.SOLID) {
                      this.init_ArrayDeque.poll();
                   }
 
                   if (this.init_ArrayDeque.isEmpty()) {
-                     this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.read;
+                     this.init_aX_NetHelper = AiPortalCast.Inner_NetHelper.SITE;
                      return this.load("Frame site cleared; planning the cast");
                   } else {
                      BlockPos cell = this.init_ArrayDeque.poll();
@@ -1849,25 +1849,25 @@ final class AiPortalCast {
 
                AiPortalCast.Inner_ConfigStore init_aX_ConfigStore(BlockPos pos) {
                   if (!AiTerrain.init(this.init_Minecraft.level, pos)) {
-                     return AiPortalCast.Inner_ConfigStore.update;
+                     return AiPortalCast.Inner_ConfigStore.SOLID;
                   }
 
                   BlockState state = this.init_Minecraft.level.getBlockState(pos);
                   if (state.is(Blocks.OBSIDIAN)) {
-                     return AiPortalCast.Inner_ConfigStore.write;
+                     return AiPortalCast.Inner_ConfigStore.OBSIDIAN;
                   }
 
                   FluidState fluid = state.getFluidState();
                   if (!fluid.isEmpty()) {
                      if (!fluid.isSource()) {
-                        return AiPortalCast.Inner_ConfigStore.update;
+                        return AiPortalCast.Inner_ConfigStore.SOLID;
                      } else if (fluid.is(FluidTags.LAVA)) {
-                        return AiPortalCast.Inner_ConfigStore.read;
+                        return AiPortalCast.Inner_ConfigStore.LAVA;
                      } else {
-                        return fluid.is(FluidTags.WATER) ? AiPortalCast.Inner_ConfigStore.load : AiPortalCast.Inner_ConfigStore.update;
+                        return fluid.is(FluidTags.WATER) ? AiPortalCast.Inner_ConfigStore.WATER : AiPortalCast.Inner_ConfigStore.SOLID;
                      }
                   } else {
-                     return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.Inner_ConfigStore.update : AiPortalCast.Inner_ConfigStore.init;
+                     return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.Inner_ConfigStore.SOLID : AiPortalCast.Inner_ConfigStore.AIR;
                   }
                }
 
@@ -2055,26 +2055,26 @@ final class AiPortalCast {
    }
 
    private enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      STANCE,
+      MOLDS,
+      LAVA_REFILL,
+      LAVA_POUR,
+      WATER_POUR,
+      SCOOP;
    }
 
    enum Inner_ConfigStore {
-      init,
-      load,
-      read,
-      write,
-      update;
+      AIR,
+      WATER,
+      LAVA,
+      OBSIDIAN,
+      SOLID;
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      SKIP,
+      WATER_OVER_LAVA,
+      LAVA_THEN_WATER;
    }
 
    static final class Inner_JsonUtil {
@@ -2122,13 +2122,13 @@ final class AiPortalCast {
    }
 
    enum Inner_NetHelper {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      PREFLIGHT,
+      LOCATE,
+      SITE,
+      EXCAVATE,
+      WATER,
+      CAST,
+      LIGHT;
    }
 
    static final class Inner_RenderState {
@@ -2183,7 +2183,7 @@ final class AiPortalCast {
          }
 
          if (this.init_LongSupplier.getAsLong() >= this.init_J) {
-            return this.init(AiOperation.Result.timedOut(AiFailure.prev, "Pour face approach exceeded its bounded deadline", "{}"));
+            return this.init(AiOperation.Result.timedOut(AiFailure.TIMEOUT, "Pour face approach exceeded its bounded deadline", "{}"));
          }
 
          AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);

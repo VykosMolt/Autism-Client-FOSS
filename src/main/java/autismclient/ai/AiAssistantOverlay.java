@@ -29,7 +29,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       .load_BitSetUtil_Str("Chat title");
    private final List<autismclient.gui.ui.widgets.TextInputWidget> init_List;
    private final autismclient.util.OverlayContextMenu<String> init_F_2;
-   private AiAssistantOverlay.Inner_DataUtil init_AiAssistantOverlay = AiAssistantOverlay.Inner_DataUtil.init;
+   private AiAssistantOverlay.Inner_DataUtil init_AiAssistantOverlay = AiAssistantOverlay.Inner_DataUtil.CHAT;
    private boolean write_Z;
    private boolean update_Z;
    private boolean sync_Z;
@@ -76,7 +76,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    @Override
    public int load_I() {
-      return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init && this.init_TaskTimer != null
+      return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT && this.init_TaskTimer != null
          ? Math.max(180, 22 + AiUiKit.init_I() + 4 + 1 + this.init_TaskTimer.init_I())
          : 180;
    }
@@ -111,7 +111,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    @Override
    public boolean init_Z_D_D(double x, double y) {
       return super.init_Z_D_D(x, y)
-         || this.init_Z && !this.load_Z && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.init_Z_D_D(x, y);
+         || this.init_Z && !this.load_Z && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_D(x, y);
    }
 
    @Override
@@ -128,11 +128,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    void load_V() {
-      this.init(AiAssistantOverlay.Inner_DataUtil.load);
+      this.init(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
    }
 
    void read_V() {
-      this.init(AiAssistantOverlay.Inner_DataUtil.read);
+      this.init(AiAssistantOverlay.Inner_DataUtil.MEMORY);
    }
 
    void write_V() {
@@ -199,19 +199,19 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init_TaskTimer.init_V_Z("attachments".equals(name));
       switch (name == null ? "" : name) {
          case "settings":
-            this.init(AiAssistantOverlay.Inner_DataUtil.load);
+            this.init(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
             break;
          case "memory":
-            this.init(AiAssistantOverlay.Inner_DataUtil.read);
+            this.init(AiAssistantOverlay.Inner_DataUtil.MEMORY);
             break;
          case "sessions":
-            this.init(AiAssistantOverlay.Inner_DataUtil.init);
+            this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
             if (!this.init_ce.init_Z) {
                this.init_ce.init_V();
             }
             break;
          default:
-            this.init(AiAssistantOverlay.Inner_DataUtil.init);
+            this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
             this.init_ce.load();
       }
 
@@ -228,15 +228,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.init_cf.read_Z();
          this.init_cf.load_V();
          this.init_F_2.init_V();
-         if (next == AiAssistantOverlay.Inner_DataUtil.load) {
+         if (next == AiAssistantOverlay.Inner_DataUtil.SETTINGS) {
             this.init_cf.init_V_AiSettings(this.init_cc.init_AiSettings());
          }
 
-         if (next == AiAssistantOverlay.Inner_DataUtil.read) {
+         if (next == AiAssistantOverlay.Inner_DataUtil.MEMORY) {
             this.init_ap.init_V();
          }
 
-         if (next != AiAssistantOverlay.Inner_DataUtil.init) {
+         if (next != AiAssistantOverlay.Inner_DataUtil.CHAT) {
             this.init_ce.load();
          }
 
@@ -246,8 +246,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    private void put() {
-      if (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.init) {
-         this.init(AiAssistantOverlay.Inner_DataUtil.init);
+      if (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.CHAT) {
+         this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
       }
 
       this.init_ce.init_V();
@@ -281,7 +281,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (this.init_Z || this.a__Z()) {
          this.read_I = this.init_I_I_I(this.read_I, this.init_I());
          this.write = this.load_I_I_I(this.write, this.load_I());
-         if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init) {
+         if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT) {
             int body = this.init_TaskTimer.init_I_I(this.read_I - 8);
             if (body > 0) {
                this.write = Math.min(this.write, Math.max(this.load_I(), 22 + AiUiKit.init_I() + 4 + 1 + body));
@@ -299,7 +299,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this.init_cF.init(now, this.init_ce.init_Z);
             this.load_V_I_I(mx, my);
             boolean blocked = this.init_F_2.init(mx, my)
-               || this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.init_Z_D_D(mx, my);
+               || this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_D(mx, my);
             this.init_cE.init_V_GuiGraphicsExtract(graphics, mx, my, blocked, delta);
             autismclient.gui.f.NetHelper content = autismclient.gui.f.NetHelper.init(
                this.init_I_2 + 4, this.load_I + 14 + 4, this.read_I - 8, this.write - 14 - 8
@@ -312,23 +312,23 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             );
             this.init(toolbar);
             switch (this.init_AiAssistantOverlay) {
-               case init:
+               case CHAT:
                   this.init_TaskTimer.init_V_cE_2(this.init_cE, area, now);
                   this.init_ce.init(this.init_cE, this.init_TaskTimer.init_NetHelper(), now);
                   break;
-               case load:
+               case SETTINGS:
                   this.init_cf.init_V_cE(this.init_cE, area, now);
                   break;
-               case read:
+               case MEMORY:
                   this.init_ap.init_V_cE(this.init_cE, area, now);
             }
 
-            if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load) {
+            if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS) {
                this.init_cf.init_V_cE(this.init_cE);
             }
 
             this.init_F_2.init(graphics, mx, my);
-            if (!this.init_F_2.init_Z() && (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.load || !this.init_cf.init_Z())) {
+            if (!this.init_F_2.init_Z() && (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.SETTINGS || !this.init_cf.init_Z())) {
                this.init_cE.load_V();
             }
          }
@@ -351,7 +351,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          );
       x += h + 2 + 2;
       right -= h;
-      boolean inChat = this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init;
+      boolean inChat = this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT;
       this.init_cE
          .init(
             autismclient.gui.f.NetHelper.init(right, bar.write(), h, h),
@@ -359,7 +359,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             !inChat,
             false,
             inChat ? "Settings" : "Back to chat (Esc)",
-            () -> this.init(inChat ? AiAssistantOverlay.Inner_DataUtil.load : AiAssistantOverlay.Inner_DataUtil.init)
+            () -> this.init(inChat ? AiAssistantOverlay.Inner_DataUtil.SETTINGS : AiAssistantOverlay.Inner_DataUtil.CHAT)
          );
       right -= h + 2;
       this.init_cE
@@ -399,7 +399,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (!inChat) {
          this.init_cE
             .init_V_Str_3(
-               this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load ? "Settings" : "Memory",
+               this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS ? "Settings" : "Memory",
                title,
                title.read() + 4,
                title.update() - 8,
@@ -454,9 +454,9 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
          if (!this.load_Z && this.init_cE.init_Z()) {
             this.flush_Z = true;
-            if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.init_Z_D_2(x, y, button)) {
+            if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D_2(x, y, button)) {
                return true;
-            } else if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init
+            } else if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT
                && this.init_ce.init_Z
                && !this.init_ce.init_Z_D_D(x, y)
                && this.init_TaskTimer.init_NetHelper().init_Z((int)x, (int)y)) {
@@ -483,7 +483,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
 
       boolean used = this.init_cE.load_Z();
-      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.load_Z()) {
+      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.load_Z()) {
          used = true;
       }
 
@@ -507,7 +507,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       }
 
-      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.load(x, y, button)) {
+      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.load(x, y, button)) {
          return true;
       }
 
@@ -527,7 +527,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       }
 
-      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.init_Z_D(x, y, amount)) {
+      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_D(x, y, amount)) {
          return true;
       }
 
@@ -547,19 +547,19 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
       if (key == 258
          && (mods & 1) != 0
-         && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init
+         && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT
          && !this.init_F_2.init_Z()
          && !this.init_cF.init_AiSettings.builtIn) {
          this.init_TaskTimer.init_V();
          return true;
       }
 
-      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.load && this.init_cf.init_Z_I(key)) {
+      if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.init_cf.init_Z_I(key)) {
          return true;
       }
 
       autismclient.gui.ui.widgets.TextInputWidget focused = this.init_BitSetUtil();
-      return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init
+      return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT
             && !this.init_ce.init_Z
             && !this.init_F_2.init_Z()
             && this.init_TaskTimer.init_Z_I_BitSetUtil(key, focused)
@@ -579,15 +579,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       } else if (this.init_ce.init_Z() || this.init_ap.init_Z()) {
          return true;
-      } else if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init && !this.init_ce.init_Z && this.init_TaskTimer.load_Z()) {
+      } else if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT && !this.init_ce.init_Z && this.init_TaskTimer.load_Z()) {
          return true;
       } else {
          autismclient.gui.ui.widgets.TextInputWidget focused = this.init_BitSetUtil();
          if (focused != null) {
             focused.init_V_Z(false);
             return true;
-         } else if (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.init) {
-            this.init(AiAssistantOverlay.Inner_DataUtil.init);
+         } else if (this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.CHAT) {
+            this.init(AiAssistantOverlay.Inner_DataUtil.CHAT);
             return true;
          } else if (this.init_ce.init_Z) {
             this.init_ce.load();
@@ -605,7 +605,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
 
       autismclient.gui.ui.widgets.TextInputWidget focused = this.init_BitSetUtil();
-      if (focused == null && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init && !this.init_ce.init_Z && !this.init_F_2.init_Z()) {
+      if (focused == null && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.CHAT && !this.init_ce.init_Z && !this.init_F_2.init_Z()) {
          autismclient.gui.ui.widgets.TextInputWidget target = this.init_TaskTimer.init_BitSetUtil_C(c);
          if (target != null) {
             this.init(target);
@@ -629,7 +629,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private boolean push_Z() {
       return this.flush_Z
             && (
-               this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.init
+               this.init_AiAssistantOverlay != AiAssistantOverlay.Inner_DataUtil.CHAT
                   || this.init_ce.init_Z
                   || this.init_cf.write_Z()
                   || this.init_F_2.init_Z()
@@ -655,8 +655,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      CHAT,
+      SETTINGS,
+      MEMORY;
    }
 }

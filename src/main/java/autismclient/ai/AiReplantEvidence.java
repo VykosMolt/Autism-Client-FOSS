@@ -22,16 +22,16 @@ final class AiReplantEvidence {
 
    static AiReplantEvidence.Inner_DataUtil init(BlockState current, AiServerEvidence.Inner_DataUtil update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {
       if (current.is(crop) && update != null && update.revision() > brokenRevision && update.state().is(crop) && !AiFarm.init_Z(update.state())) {
-         return ownReplantClick ? AiReplantEvidence.Inner_DataUtil.load : AiReplantEvidence.Inner_DataUtil.read;
+         return ownReplantClick ? AiReplantEvidence.Inner_DataUtil.LOCAL : AiReplantEvidence.Inner_DataUtil.EXTERNAL;
       } else {
-         return current.isAir() && seedsHeld <= 0 && !ownReplantClick ? AiReplantEvidence.Inner_DataUtil.write : AiReplantEvidence.Inner_DataUtil.init;
+         return current.isAir() && seedsHeld <= 0 && !ownReplantClick ? AiReplantEvidence.Inner_DataUtil.MISSING : AiReplantEvidence.Inner_DataUtil.PENDING;
       }
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      PENDING,
+      LOCAL,
+      EXTERNAL,
+      MISSING;
    }
 }

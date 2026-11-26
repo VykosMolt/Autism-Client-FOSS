@@ -239,7 +239,7 @@ final class AiCombat {
          boolean init_Z;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
          }
 
          @Override
@@ -344,16 +344,16 @@ final class AiCombat {
    static Comparator<AiCombat.Inner_StreamUtil> init(AiCombat.Inner_CachePool priority) {
       Comparator var10000;
       switch (priority) {
-         case init:
+         case NEAREST:
             var10000 = Comparator.<AiCombat.Inner_StreamUtil>comparingDouble(c -> c.distanceSqr() - (c.hurtPlayer() ? 64 : 0));
             break;
-         case load:
+         case WEAKEST:
             var10000 = Comparator.comparingDouble(AiCombat.Inner_StreamUtil::health).thenComparingDouble(AiCombat.Inner_StreamUtil::distanceSqr);
             break;
-         case read:
+         case STRONGEST:
             var10000 = Comparator.<AiCombat.Inner_StreamUtil>comparingDouble(c -> -c.maxHealth()).thenComparingDouble(AiCombat.Inner_StreamUtil::distanceSqr);
             break;
-         case write:
+         case ATTACKER:
             var10000 = Comparator.<AiCombat.Inner_StreamUtil, Boolean>comparing(c -> !c.attacking())
                .thenComparingDouble(AiCombat.Inner_StreamUtil::distanceSqr);
             break;
@@ -371,14 +371,14 @@ final class AiCombat {
    static AiCombat.Inner_DataUtil init(boolean targetOnGround, double horizontal, double verticalGap, double reach) {
       if (!targetOnGround && !(verticalGap <= 1.0)) {
          if (Math.hypot(horizontal, verticalGap) <= reach * 0.92) {
-            return AiCombat.Inner_DataUtil.init;
+            return AiCombat.Inner_DataUtil.GROUND;
          } else if (init_I_D_D(verticalGap, reach) < 0) {
-            return AiCombat.Inner_DataUtil.write;
+            return AiCombat.Inner_DataUtil.UNREACHABLE;
          } else {
-            return horizontal <= 1.4 ? AiCombat.Inner_DataUtil.read : AiCombat.Inner_DataUtil.load;
+            return horizontal <= 1.4 ? AiCombat.Inner_DataUtil.PILLAR : AiCombat.Inner_DataUtil.APPROACH_UNDER;
          }
       } else {
-         return AiCombat.Inner_DataUtil.init;
+         return AiCombat.Inner_DataUtil.GROUND;
       }
    }
 
@@ -626,7 +626,7 @@ final class AiCombat {
             final Map<UUID, Long> init_Map;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
                this.init_DataUtil.init_V_Z(silentAim);
                this.load_F = this.init_F;
                if (useShield && !AiDefense.init_Z(mc)) {
@@ -767,7 +767,7 @@ final class AiCombat {
                      } else {
                         this.read_Str = AiCombat.init(this.sync_Z);
                         return this.init(
-                           AiFailure.start,
+                           AiFailure.LOW_HEALTH,
                            "Disengaged at " + (int)mc.player.getHealth() + " health (retreat threshold " + (int)retreatHealth + "); heal before re-engaging"
                         );
                      }
@@ -856,7 +856,7 @@ final class AiCombat {
                               return this.init(AiOperation.Status.SUCCEEDED, "Threats cleared after " + this.load_I + " verified kill(s)");
                            }
 
-                           return this.init(AiFailure.add, "No matching live target within " + (int)radius + " blocks");
+                           return this.init(AiFailure.TARGET_GONE, "No matching live target within " + (int)radius + " blocks");
                         }
                      }
 
@@ -937,7 +937,7 @@ final class AiCombat {
                            this.open_I = 0;
                            Vec3 hitPoint = autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity);
                            if (!this.open_Z && !hold && !autismclient.ai.engine.AiAim.init_Z_Entity_Vec3(this.init_Entity, hitPoint)) {
-                              return !approach ? this.init(AiFailure.close, "Target's attack ray is obstructed and approach is disabled") : this.init(distance, true);
+                              return !approach ? this.init(AiFailure.UNREACHABLE, "Target's attack ray is obstructed and approach is disabled") : this.init(distance, true);
                            }
 
                            this.flush();
@@ -1059,7 +1059,7 @@ final class AiCombat {
                            return this.load(shooter != null ? "Shield up against a blaze" : "Holding the pillar top");
                         } else if (!approach) {
                            this.close();
-                           return this.init(AiFailure.close, "Target is out of reach and approach is disabled");
+                           return this.init(AiFailure.UNREACHABLE, "Target is out of reach and approach is disabled");
                         } else if (!AiThreats.init_Z()
                            && AiThreats.load(AiThreats.init_cv_DataUtil(this.init_Entity))
                            && distance < 7.0
@@ -1096,7 +1096,7 @@ final class AiCombat {
                Entity volley = shield ? AiThreats.init(mc, 12) : null;
                if (volley == null || volley == this.init_Entity && ready && AiThreats.init_I(mc, volley) > 11) {
                   if (!AiThreats.init_Z() && !this.open_Z && !hold && AiThreats.load(profile)) {
-                     double knock = profile == AiThreats.Inner_DataUtil.run ? 6.0 : 2.5;
+                     double knock = profile == AiThreats.Inner_DataUtil.HOGLIN ? 6.0 : 2.5;
                      if (this.init(mc.player.getX(), mc.player.getZ(), knock)) {
                         int side = this.init_I_D(knock);
                         if (side != 0) {
@@ -1409,9 +1409,9 @@ final class AiCombat {
                   || this.init_Entity instanceof Vex
                   || this.init_Entity.isNoGravity();
                AiCombat.Inner_DataUtil plan = goalCell != this.init_Entity.blockPosition() || !AiThreats.init_Z() && !flier
-                  ? AiCombat.Inner_DataUtil.init
+                  ? AiCombat.Inner_DataUtil.GROUND
                   : AiCombat.init(this.init_Entity.onGround(), horizontal, this.init_Entity.getY() - mc.player.getY(), reach);
-               if (plan == AiCombat.Inner_DataUtil.write) {
+               if (plan == AiCombat.Inner_DataUtil.UNREACHABLE) {
                   if (!AiThreats.init_Z() && this.init_Entity instanceof Blaze) {
                      this.flush();
                      this.init_V_13();
@@ -1430,7 +1430,7 @@ final class AiCombat {
                      return this.init_AiOperation_Result_Str_5("hovering above the 3-block pillar cap");
                   }
                } else {
-                  if (plan != AiCombat.Inner_DataUtil.init) {
+                  if (plan != AiCombat.Inner_DataUtil.GROUND) {
                      return this.init(plan, distance, reach);
                   }
 
@@ -1441,7 +1441,7 @@ final class AiCombat {
                   if (this.init_AiOperation == null) {
                      this.close_Z = obstructed;
                      this.init_AiOperation = AiGoto.init(
-                        goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load
+                        goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST
                      );
                      this.flush_Z = false;
                   }
@@ -1551,7 +1551,7 @@ final class AiCombat {
                      return this.init_AiOperation_Result_Str_5("no standable, lava-free ground under the target");
                   }
 
-                  if (plan == AiCombat.Inner_DataUtil.read) {
+                  if (plan == AiCombat.Inner_DataUtil.PILLAR) {
                      int needed = AiCombat.init_I_D_D(this.init_Entity.getY() - mc.player.getY(), reach);
                      if (needed < 0 || this.tick + needed > 3) {
                         return this.init_AiOperation_Result_Str_5("the target out-climbs the 3-block pillar cap");
@@ -1689,7 +1689,7 @@ final class AiCombat {
 
                this.load_Str = "unreachable_airborne";
                return this.init(
-                  AiFailure.open, "Target is airborne out of melee reach (" + why + "); use a bow, carry construction blocks, or fight it where it must descend"
+                  AiFailure.UNREACHABLE_AIRBORNE, "Target is airborne out of melee reach (" + why + "); use a bow, carry construction blocks, or fight it where it must descend"
                );
             }
 
@@ -1993,7 +1993,7 @@ final class AiCombat {
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof Mob mob && mob.isAlive() && entity instanceof Enemy && !(mob.distanceToSqr(mc.player) > 36.0)) {
                      AiThreats.Inner_DataUtil profile = AiThreats.init_cv_DataUtil(entity);
-                     if ((AiThreats.load(profile) || profile == AiThreats.Inner_DataUtil.close) && AiThreats.init_Z(mc, entity) && mc.player.hasLineOfSight(entity)) {
+                     if ((AiThreats.load(profile) || profile == AiThreats.Inner_DataUtil.BLAZE) && AiThreats.init_Z(mc, entity) && mc.player.hasLineOfSight(entity)) {
                         double gap = AiThreats.init(mob, mc.player.getBoundingBox());
                         if (gap < bestGap) {
                            bestGap = gap;
@@ -2043,7 +2043,7 @@ final class AiCombat {
                      : entity instanceof Enemy
                         && (
                            AiThreats.init_Z()
-                              || AiThreats.init_cv_DataUtil(entity) != AiThreats.Inner_DataUtil.stop && (!AiThreats.init(AiThreats.init_cv_DataUtil(entity)) || AiThreats.init_Z(mc, entity))
+                              || AiThreats.init_cv_DataUtil(entity) != AiThreats.Inner_DataUtil.AVOID && (!AiThreats.init(AiThreats.init_cv_DataUtil(entity)) || AiThreats.init_Z(mc, entity))
                         );
                } else {
                   return false;
@@ -2158,7 +2158,7 @@ final class AiCombat {
                         this.update_AiOperation = null;
                      }
 
-                     return this.init(AiFailure.add, "A creeper at the pillar; leaving the perch to the guard");
+                     return this.init(AiFailure.TARGET_GONE, "A creeper at the pillar; leaving the perch to the guard");
                   }
                }
 
@@ -2167,7 +2167,7 @@ final class AiCombat {
                      this.close();
                      mc.options.keyShift.setDown(false);
                      if (++this.clear > 2) {
-                        return this.init(AiFailure.close, "Knocked off the perch three times");
+                        return this.init(AiFailure.UNREACHABLE, "Knocked off the perch three times");
                      }
 
                      this.open_Z = false;
@@ -2238,7 +2238,7 @@ final class AiCombat {
                      for (int h = 2; h <= perch - up + 1; h++) {
                         BlockPos over = mc.player.blockPosition().above(h);
                         if (!mc.level.getBlockState(over).getCollisionShape(mc.level, over).isEmpty()) {
-                           return this.init(AiFailure.close, "No head room for a pillar here");
+                           return this.init(AiFailure.UNREACHABLE, "No head room for a pillar here");
                         }
                      }
 
@@ -2257,7 +2257,7 @@ final class AiCombat {
                         this.reset = 0;
                         return this.load("On the pillar");
                      } else {
-                        return this.init(AiFailure.close, "Could not pillar up out of reach: " + r.message());
+                        return this.init(AiFailure.UNREACHABLE, "Could not pillar up out of reach: " + r.message());
                      }
                   }
                }
@@ -2295,7 +2295,7 @@ final class AiCombat {
                }
 
                if (perch == 0 && !AiGuard.write_Z()) {
-                  return this.init(AiFailure.close, "Holding ground is unsafe here");
+                  return this.init(AiFailure.UNREACHABLE, "Holding ground is unsafe here");
                }
 
                Entity shooter = AiShield.init_Entity(mc, AiDefense.init_D(mc) * 0.92);
@@ -2513,12 +2513,12 @@ final class AiCombat {
                   }
 
                   autismclient.ai.engine.AiPlacer.Inner_DataUtil s = this.init_DataPipe_2.init_DataPipe_DataUtil();
-                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
+                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING) {
                      return this.load("Shielding the pillar from the " + BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath());
                   }
 
                   this.pop_Z = false;
-                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                      this.prev++;
                      this.reset = 0;
                      this.init_Vec3 = null;
@@ -2724,10 +2724,10 @@ final class AiCombat {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write;
+      NEAREST,
+      WEAKEST,
+      STRONGEST,
+      ATTACKER;
 
       static AiCombat.Inner_CachePool init(String text) {
          try {
@@ -2739,10 +2739,10 @@ final class AiCombat {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      GROUND,
+      APPROACH_UNDER,
+      PILLAR,
+      UNREACHABLE;
    }
 
    record Inner_StreamUtil(double distanceSqr, float health, float maxHealth, boolean attacking, boolean hurtPlayer) {

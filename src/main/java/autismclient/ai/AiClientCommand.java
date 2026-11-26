@@ -45,7 +45,7 @@ final class AiClientCommand {
          case EXECUTED:
             String refusal = init(raw, "error");
             if (refusal != null) {
-               var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.flush, "Client command " + typed + " refused: " + refusal, data);
+               var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " refused: " + refusal, data);
             } else {
                String said = raw.isEmpty()
                   ? "Client command " + typed + " executed" + (dispatch.init_Str().isEmpty() ? "" : " (" + dispatch.init_Str() + ")")
@@ -57,19 +57,19 @@ final class AiClientCommand {
          case UNKNOWN_COMMAND:
             var10000 = AiGameOperations.init(
                AiOperation.Status.FAILED,
-               AiFailure.flush,
+               AiFailure.EXECUTION_FAILED,
                "Client command " + typed + " did not parse: " + dispatch.init_Str() + ". Accepted forms: " + String.join(" | ", forms),
                data
             );
             break;
          case BLOCKED:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.data, dispatch.init_Str(), data);
+            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.IMPOSSIBLE_STATE, dispatch.init_Str(), data);
             break;
          case ERROR:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.flush, "Client command " + typed + " threw: " + dispatch.init_Str(), data);
+            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Client command " + typed + " threw: " + dispatch.init_Str(), data);
             break;
          case EMPTY:
-            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.flush, "Empty command line", data);
+            var10000 = AiGameOperations.init(AiOperation.Status.FAILED, AiFailure.EXECUTION_FAILED, "Empty command line", data);
             break;
          default:
             throw new MatchException(null, null);

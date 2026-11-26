@@ -177,7 +177,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       this.getTo = -2147483648;
       this.task = -1;
       this.initEx = -1;
-      this.putAt_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.init;
+      this.putAt_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.STANDARD;
       this.flushOf_Z = true;
       this.stateOf_Z = true;
       this.nextBy_Z = true;
@@ -212,27 +212,27 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          if (!var4.water() && !var5.water()) {
             boolean var10000;
             switch (var0.type()) {
-               case init:
-               case load:
-               case read:
-               case write:
-               case reset:
-               case update:
-               case sync:
-               case start:
-               case put:
-               case add:
-               case clear:
+               case WALK:
+               case WALK_DIAGONAL:
+               case SPRINT:
+               case SPRINT_DIAGONAL:
+               case SPRINT_JUMP:
+               case STEP_UP_1:
+               case JUMP_UP_1:
+               case JUMP:
+               case JUMP_GAP_2:
+               case JUMP_GAP_3:
+               case PARKOUR_ASCEND:
                case SLIME_BOUNCE:
                case LADDER_JUMP:
-               case get:
-               case flush:
-               case close:
-               case open:
-               case poll:
+               case CLIMB_1:
+               case DESCEND_1:
+               case DESCEND_2:
+               case DESCEND_3:
+               case DESCEND_SOFT:
                   var10000 = true;
                   break;
-               case set:
+               case DOOR:
                   var10000 = !var2.test(var0.to()) && !var3.test(var0.to());
                   break;
                default:
@@ -864,7 +864,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                   }
                }
 
-               if (this.putAt_FileStore_PacketHe.type() != AiPathfinder.Inner_SyncManager.run || this.putAt_TokenCodec == null && !this.pollOf_Z()) {
+               if (this.putAt_FileStore_PacketHe.type() != AiPathfinder.Inner_SyncManager.BRIDGE_CELL || this.putAt_TokenCodec == null && !this.pollOf_Z()) {
                   if (!this.fill_Z(this.putAt_FileStore_PacketHe)) {
                      int var8 = AiRoutePolicy.putAt_I_List(this.putAt_List, this.pollAt_I, 5, this.putAt_Function(), this.dataEx_Z);
                      if (var8 < 0 && this.tick_Z() && !this.readEx(this.putAt_FileStore_PacketHe)) {
@@ -890,7 +890,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                      }
 
                      if (this.frameOf_Z && var1.onGround() && !this.value(this.putAt_FileStore_PacketHe)) {
-                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.write);
+                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.FAST);
                         if (!this.putAt_FileStore_PacketHe.cellsToBreak().isEmpty() && this.putAt_Z_LocalPlayer(var1, this.putAt_FileStore_PacketHe, false)) {
                            return;
                         }
@@ -899,11 +899,11 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                         return;
                      }
 
-                     boolean var4 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.poll
+                     boolean var4 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.DESCEND_SOFT
                         && !var1.onGround()
                         && !var1.isInWater()
                         && !var1.onClimbable();
-                     boolean var5 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.run
+                     boolean var5 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.BRIDGE_CELL
                         && !this.value_Z
                         && (this.prevEx_Z || this.putAt_BlockPos != null)
                         && this.pollOf_I < AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks()) + 60;
@@ -919,14 +919,14 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                      AiFallGuard.init(
                         this.putAt_FileStore_PacketHe.type(),
                         this.putAt_TokenCodec == null
-                           || this.putAt_TokenCodec.init_JsonUtil().putAt_TextStore_BitCore() == AiBridger.Inner_ConfigStore.init,
+                           || this.putAt_TokenCodec.init_JsonUtil().putAt_TextStore_BitCore() == AiBridger.Inner_ConfigStore.TELLY,
                         false
                      );
                      this.flushOf_V();
                      return;
                   }
 
-                  if (this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.set
+                  if (this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.DOOR
                      && !this.putAt_Z_FileStore_PacketHe(this.putAt_FileStore_PacketHe)) {
                      if (++this.pollOf_I > AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
                         this.putAt_V_Str("over its time budget" + this.putAt_Str_FileStore_PacketHe(this.putAt_FileStore_PacketHe));
@@ -1407,7 +1407,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
    }
 
    private BlockPos putAt_BlockPos_I(int var1) {
-      if (var1 < this.putAt_List.size() && this.putAt_List.get(var1).type() == AiPathfinder.Inner_SyncManager.set) {
+      if (var1 < this.putAt_List.size() && this.putAt_List.get(var1).type() == AiPathfinder.Inner_SyncManager.DOOR) {
          BlockPos var2 = this.putAt_List.get(var1).to();
          if (this.putAt_Z_BlockPos(var2)) {
             return var2;
@@ -1445,14 +1445,14 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       this.value_FileStore_PacketHe = null;
       this.prevEx_FileStore_PacketHe = null;
       this.nextBy_I = 0;
-      if (var1.type() != AiPathfinder.Inner_SyncManager.push) {
+      if (var1.type() != AiPathfinder.Inner_SyncManager.DIG_DOWN_1) {
          this.state_Z = false;
       }
 
       this.putAt_CacheHelper.init_V_DataUtil_DataUtil(
-            var1.type() != AiPathfinder.Inner_SyncManager.tick && var1.type() != AiPathfinder.Inner_SyncManager.run
-               ? AiAim.Inner_DataUtil.write
-               : AiAim.Inner_DataUtil.sync
+            var1.type() != AiPathfinder.Inner_SyncManager.PILLAR && var1.type() != AiPathfinder.Inner_SyncManager.BRIDGE_CELL
+               ? AiAim.Inner_DataUtil.FAST
+               : AiAim.Inner_DataUtil.EXACT
          );
       if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var1, this.fill_FileStore_PacketHe) && this.putAt_ValueSink_CacheHel.putAt(var1, System.nanoTime())) {
          this.syncAt_Z = true;
@@ -1472,12 +1472,12 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
    private void putAt_V_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       switch (var2.type()) {
-         case get:
+         case CLIMB_1:
             this.tick(var1, var2);
             break;
-         case flush:
-         case close:
-         case open:
+         case DESCEND_1:
+         case DESCEND_2:
+         case DESCEND_3:
          default:
             if (!var2.cellsToBreak().isEmpty() && this.putAt_Z_LocalPlayer(var1, var2, true)) {
                return;
@@ -1488,32 +1488,32 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
                var1, var2, this.stateOf_Z && AiRoutePolicy.putAt_Z_FileStore_SyncPool_Z(var2.type(), this.prev(var1)) && !var1.isInWater(), var3, null
             );
             break;
-         case poll:
+         case DESCEND_SOFT:
             if (this.putAt_FileStore_BitCache_BlockPos(var2.to()).water()) {
                this.closeOf(var1, var2);
             } else {
                this.putAt_V_LocalPlayer_2(var1, var2, false, false, null);
             }
             break;
-         case set:
+         case DOOR:
             this.state(var1, var2);
             break;
-         case push:
+         case DIG_DOWN_1:
             this.fill(var1, var2);
             break;
-         case pop:
+         case DIG_TUNNEL:
             this.readEx(var1, var2);
             break;
-         case next:
+         case DIG_DESCEND:
             this.value(var1, var2);
             break;
-         case stop:
+         case DIG_ASCEND:
             this.prevEx(var1, var2);
             break;
-         case tick:
+         case PILLAR:
             this.prev(var1, var2);
             break;
-         case run:
+         case BRIDGE_CELL:
             this.chunkAt(var1, var2);
       }
    }
@@ -1645,7 +1645,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
       for (int var4 = this.pollAt_I; var4 < this.putAt_List.size(); var4++) {
          AiPathfinder.UiHelper var5 = this.putAt_List.get(var4);
-         if (var5.type() != AiPathfinder.Inner_SyncManager.push || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
+         if (var5.type() != AiPathfinder.Inner_SyncManager.DIG_DOWN_1 || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
             break;
          }
 
@@ -1772,7 +1772,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             Vec3 var8 = var1.getEyePosition();
             double var9 = var1.blockInteractionRange();
             AiDigLine.Inner_CachePool var11 = this.putAt_EventBus_JsonCache();
-            Vec3 var12 = var3 && var2.type() == AiPathfinder.Inner_SyncManager.stop ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
+            Vec3 var12 = var3 && var2.type() == AiPathfinder.Inner_SyncManager.DIG_ASCEND ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
             this.putAt_EventBus_CacheHelp = this.putAt_EventBus_CacheHelp_FileStore_PacketHe(var2, var5, var12, var1, var11, var9);
             BlockPos var13 = this.putAt_EventBus_CacheHelp == null ? null : AiDigLine.init(this.putAt_EventBus_CacheHelp, var8, var5, var11, var9);
             if (var13 != null) {
@@ -1949,7 +1949,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
       if (var2 >= 0 && var2 + 1 < this.putAt_List.size()) {
          AiPathfinder.UiHelper var7 = this.putAt_List.get(var2 + 1);
-         if (var7.type() != AiPathfinder.Inner_SyncManager.pop && var7.type() != AiPathfinder.Inner_SyncManager.stop && var7.type() != AiPathfinder.Inner_SyncManager.next) {
+         if (var7.type() != AiPathfinder.Inner_SyncManager.DIG_TUNNEL && var7.type() != AiPathfinder.Inner_SyncManager.DIG_ASCEND && var7.type() != AiPathfinder.Inner_SyncManager.DIG_DESCEND) {
             return List.of();
          }
 
@@ -2211,7 +2211,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       int var5;
       for (var5 = this.pollAt_I; var5 + 1 < this.putAt_List.size(); var5++) {
          AiPathfinder.UiHelper var6 = this.putAt_List.get(var5 + 1);
-         if (var6.type() != AiPathfinder.Inner_SyncManager.run
+         if (var6.type() != AiPathfinder.Inner_SyncManager.BRIDGE_CELL
             || !var6.from().equals(this.putAt_List.get(var5).to())
             || var6.to().getX() - var6.from().getX() != var3
             || var6.to().getZ() - var6.from().getZ() != var4
@@ -2233,7 +2233,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
       AiBridger.Inner_ConfigStore var10 = AiBridgeDriver.init_JsonUtil_ConfigSto_Z(!this.dataEx_Z, var9, var1, this.pollOf_I());
       boolean var11 = var5 + 1 < this.putAt_List.size() && putAt_Z_FileStore_PacketHe(this.putAt_List.get(var5 + 1), var3, var4);
       if (var9.length() <= 2) {
-         var10 = AiBridger.Inner_ConfigStore.load;
+         var10 = AiBridger.Inner_ConfigStore.LEGIT;
       }
 
       this.putAt_TokenCodec = new AiBridgeDriver(var9, var10, this.putAt_CacheHelper, var11);
@@ -2326,12 +2326,12 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             AiRoutePolicy.putAt_V_BlockPos_Block(var3x, var5x);
             AiEditLedger.write_V(var3x);
          });
-         if (var4 == AiBridgeDriver.Inner_DataUtil.write) {
+         if (var4 == AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
             this.putAt_V_Str("bridge footing below the planned support level");
             return true;
          }
 
-         if (var4 == AiBridgeDriver.Inner_DataUtil.read) {
+         if (var4 == AiBridgeDriver.Inner_DataUtil.FELL) {
             this.putAt_V_Str("fell off the bridge");
             return true;
          }
@@ -2347,7 +2347,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          }
 
          this.putAt_FileStore_PacketHe = this.putAt_List.get(this.pollAt_I);
-         if (var4 != AiBridgeDriver.Inner_DataUtil.load) {
+         if (var4 != AiBridgeDriver.Inner_DataUtil.DONE) {
             return true;
          }
 
@@ -2771,26 +2771,26 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             var1.to().getY()
          )) {
          return false;
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.set) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DOOR) {
          int var6 = Integer.signum(var1.to().getX() - var1.from().getX());
          int var4 = Integer.signum(var1.to().getZ() - var1.from().getZ());
          return !this.putAt_Z_BlockPos(var1.to())
             && AiRoutePolicy.putAt(this.putAt_List_BlockPos(var1.to()), Vec3.atLowerCornerOf(var1.to()), var2.getBoundingBox(), var6, var4, 0.05);
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.get) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.CLIMB_1) {
          boolean var5 = var1.to().getY() > var1.from().getY();
          return (var5 ? var2.getY() >= var1.to().getY() + 0.1 : var2.getY() < var1.to().getY() + 0.9 && var2.getY() > var1.to().getY() - 0.5)
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4
             && (var2.isInWater() || var2.onClimbable() || var2.onGround());
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.push) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DIG_DOWN_1) {
          return !this.putAt_FileStore_BitCache_BlockPos(var1.cellsToBreak().get(0)).passable()
             ? false
             : var2.getY() < var1.from().getY() - 0.5 && (var2.onGround() || var2.isInWater() || var2.onClimbable());
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.next) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DIG_DESCEND) {
          return AiRoutePolicy.putAt_Z_FileStore_PacketHe(
             var1, var2.blockPosition().getX(), var2.blockPosition().getZ(), var2.getY(), var2.onGround() || var2.isInWater() || var2.onClimbable()
          );
-      } else if (var1.type() == AiPathfinder.Inner_SyncManager.poll) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.DESCEND_SOFT) {
          return AiRoutePolicy.putAt_Z_D(var2.getY(), var1.to().getY(), var2.onGround(), var2.isInWater(), var2.onClimbable())
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4;
@@ -2803,7 +2803,7 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
          return true;
       } else if (var2.blockPosition().getX() == var1.to().getX() && var2.blockPosition().getZ() == var1.to().getZ()) {
          double var3 = AiPathfinder.Inner_RenderState.putAt(var1.to().getY(), this.putAt_FileStore_BitCache_BlockPos(var1.to().below()));
-         return var1.type() != AiPathfinder.Inner_SyncManager.tick && var1.type() != AiPathfinder.Inner_SyncManager.stop
+         return var1.type() != AiPathfinder.Inner_SyncManager.PILLAR && var1.type() != AiPathfinder.Inner_SyncManager.DIG_ASCEND
             ? Math.abs(var2.getY() - var3) <= 0.6 && (var2.onGround() || var2.isInWater() || var2.onClimbable())
             : var2.onGround() && Math.abs(var2.getY() - var3) <= 0.55;
       } else {
@@ -2861,11 +2861,11 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
             return AiWrExecutor.Inner_CacheHelper.readEx;
          }
 
-         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.write);
+         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.FAST);
          RotationMath.Inner_DataUtil var7 = var6.init_U_DataUtil().init_ce_DataUtil();
          Vec3 var8 = this.putAt_Minecraft.player.getEyePosition();
          Vec3 var9 = var6.init_U_DataUtil().init_Vec3();
-         boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.tick;
+         boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.PILLAR;
          if (var10 && var7 != null && var9 != null && Math.hypot(var9.x - var8.x, var9.z - var8.z) < 0.4) {
             this.putAt_CacheHelper.init_V_Vec3(var9);
          } else if (var7 != null) {
@@ -3134,11 +3134,11 @@ public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
 
    private void store_V() {
       switch (this.putAt_SyncCore.load_UtilCore_BufferHel()) {
-         case read:
+         case SUCCEEDED:
             this.poolEx++;
             this.putAt_SyncCore.init_V();
             break;
-         case write:
+         case FAILED:
             this.pollAt_Z = true;
             this.putAt_SyncCore.init_V();
       }

@@ -259,7 +259,7 @@ final class AiDimension {
                         true,
                         true,
                         seconds,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                         true,
                         2.0,
                         AiGoto.read(autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(targetCell, radius), keep)
@@ -286,7 +286,7 @@ final class AiDimension {
                         return this.init(AiOperation.Status.UNCERTAIN, "Portal work has pending changes that need observation");
                      }
 
-                     if (action == AiDimension.Inner_DataUtil.load) {
+                     if (action == AiDimension.Inner_DataUtil.FIND) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Read portals in loaded terrain");
                      }
 
@@ -641,7 +641,7 @@ final class AiDimension {
                            }
 
                            autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init(placed);
-                           if ((status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read || this.load_I + 1 > 120) && this.load_Set.add(cell)) {
+                           if ((status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED || this.load_I + 1 > 120) && this.load_Set.add(cell)) {
                               this.load_V_14();
                               this.load_I = 0;
                               this.read_AiOperation = AiGoto.init(
@@ -650,8 +650,8 @@ final class AiDimension {
                               return this.init("Moving to reach the frame's corner " + cell.toShortString());
                            }
 
-                           if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load
-                              || status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
+                           if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED
+                              || status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
                               || ++this.load_I > 120) {
                               this.load_V_14();
                               this.init_I++;
@@ -685,8 +685,8 @@ final class AiDimension {
                               }
 
                               autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init(placed);
-                              if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load
-                                 || status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
+                              if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED
+                                 || status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
                                  || ++this.load_I > 120) {
                                  this.load_V_14();
                                  this.sync_BlockPos = null;
@@ -719,14 +719,14 @@ final class AiDimension {
                         }
 
                         autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init(placed);
-                        if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                        if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                            this.load_V_14();
                            this.init_I++;
                            this.load_I = 0;
                            return this.init("Frame " + this.init_I + "/" + this.init_List.size());
                         }
 
-                        if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 120) {
+                        if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 120) {
                            return this.init("Placing frame block " + (this.init_I + 1) + "/" + this.init_List.size());
                         }
 
@@ -949,11 +949,11 @@ final class AiDimension {
 
                autismclient.ai.engine.AiPlacer.Inner_DataUtil init(AiOperation.Result result) {
                   return result.status() == AiOperation.Status.RUNNING
-                     ? autismclient.ai.engine.AiPlacer.Inner_DataUtil.init
+                     ? autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING
                      : (
                         result.status() == AiOperation.Status.SUCCEEDED
-                           ? autismclient.ai.engine.AiPlacer.Inner_DataUtil.load
-                           : autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
+                           ? autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED
+                           : autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED
                      );
                }
 
@@ -1485,7 +1485,7 @@ final class AiDimension {
                      out.add("lightingReceipt", receipt);
                   }
 
-                  if (action == AiDimension.Inner_DataUtil.load) {
+                  if (action == AiDimension.Inner_DataUtil.FIND) {
                      out.add("portalsNearby", this.init_JsonArray_3());
                   }
 
@@ -1718,10 +1718,10 @@ final class AiDimension {
          this.load_Z = true;
          autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_Supplier.get();
          return new AiOperation.Result(
-            status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init
+            status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.WORKING
                ? AiOperation.Status.RUNNING
-               : (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED),
-            status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read ? this.read.get() : "Portal frame placement",
+               : (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED),
+            status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED ? this.read.get() : "Portal frame placement",
             AiJson.init_JsonObject_ObjArr("placementReceipt", this.load_Supplier.get()).toString(),
             List.of()
          );
@@ -1808,8 +1808,8 @@ final class AiDimension {
    }
 
    enum Inner_DataUtil {
-      init,
-      load;
+      ENTER,
+      FIND;
    }
 
    static final class Inner_StreamUtil {
@@ -1902,7 +1902,7 @@ final class AiDimension {
             result.message(),
             result.dataJson(),
             actual == null ? boundary.evidence() : actual.evidence(),
-            actual != null && actual.failure() != AiFailure.value ? actual.failure() : boundary.failure()
+            actual != null && actual.failure() != AiFailure.UNKNOWN ? actual.failure() : boundary.failure()
          );
       }
    }

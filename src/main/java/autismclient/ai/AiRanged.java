@@ -65,7 +65,7 @@ final class AiRanged {
             boolean load_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 

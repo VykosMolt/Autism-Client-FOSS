@@ -376,7 +376,7 @@ final class AiObsidian {
          final Set<BlockPos> init_Set = new HashSet<>();
          final List<BlockPos> init_List = new ArrayList<>();
          final Set<BlockPos> load_Set = new HashSet<>();
-         AiObsidian.Inner_DataUtil init_aD_DataUtil = AiObsidian.Inner_DataUtil.init;
+         AiObsidian.Inner_DataUtil init_aD_DataUtil = AiObsidian.Inner_DataUtil.WATER;
          AiOperation init_AiOperation;
          BlockPos init_BlockPos;
          BlockPos load_BlockPos;
@@ -395,13 +395,13 @@ final class AiObsidian {
 
          @Override
          public boolean canInterruptNow() {
-            return !this.load_Z && this.init_aD_DataUtil != AiObsidian.Inner_DataUtil.run && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+            return !this.load_Z && this.init_aD_DataUtil != AiObsidian.Inner_DataUtil.VERIFY && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
             return this.init_DataPipe.load_Z()
-               || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.run
+               || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.VERIFY
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
          }
 
@@ -426,12 +426,12 @@ final class AiObsidian {
                   this.init_AiOperation = null;
                   this.init_V_19();
                   if (result.status() != AiOperation.Status.SUCCEEDED) {
-                     if (this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.read
-                        || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.write
-                        || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.update) {
+                     if (this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.GO_SOURCE
+                        || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.REFILL
+                        || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.FILL_LAVA) {
                         this.init_Set.add(this.init_BlockPos);
                         if (this.init_Set.size() < 6) {
-                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.load;
+                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.SOURCE;
                            return AiObsidian.init_AiOperation_Result_Str("Trying another reachable lava source");
                         }
                      }
@@ -439,74 +439,74 @@ final class AiObsidian {
                      return this.init(result.status(), result.message());
                   }
 
-                  if (this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.read || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.write) {
+                  if (this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.GO_SOURCE || this.init_aD_DataUtil == AiObsidian.Inner_DataUtil.REFILL) {
                      this.init_BlockPos = AiObsidian.init(result, this.init_BlockPos);
                   }
 
                   AiObsidian.Inner_DataUtil var10001;
                   switch (this.init_aD_DataUtil) {
-                     case init:
-                        var10001 = AiObsidian.Inner_DataUtil.load;
+                     case WATER:
+                        var10001 = AiObsidian.Inner_DataUtil.SOURCE;
                         break;
-                     case load:
-                     case flush:
-                     case close:
-                     case poll:
-                     case run:
+                     case SOURCE:
+                     case SITE:
+                     case EXCAVATE:
+                     case WALLS:
+                     case VERIFY:
                      default:
                         var10001 = this.init_aD_DataUtil;
                         break;
-                     case read:
+                     case GO_SOURCE:
                         if (this.load_BlockPos == null) {
-                           var10001 = AiObsidian.Inner_DataUtil.flush;
+                           var10001 = AiObsidian.Inner_DataUtil.SITE;
                         } else {
                            if (!this.load_Z_11() && !this.init_Z_17()) {
-                              var10001 = AiObsidian.Inner_DataUtil.push;
+                              var10001 = AiObsidian.Inner_DataUtil.WORK;
                               break;
                            }
 
-                           var10001 = AiObsidian.Inner_DataUtil.update;
+                           var10001 = AiObsidian.Inner_DataUtil.FILL_LAVA;
                         }
                         break;
-                     case write:
-                        var10001 = AiObsidian.Inner_DataUtil.update;
+                     case REFILL:
+                        var10001 = AiObsidian.Inner_DataUtil.FILL_LAVA;
                         break;
-                     case update:
-                        var10001 = AiObsidian.Inner_DataUtil.sync;
+                     case FILL_LAVA:
+                        var10001 = AiObsidian.Inner_DataUtil.RETURN;
                         break;
-                     case sync:
-                        var10001 = AiObsidian.Inner_DataUtil.tick;
+                     case RETURN:
+                        var10001 = AiObsidian.Inner_DataUtil.POUR_LAVA;
                         break;
-                     case open:
-                        var10001 = AiObsidian.Inner_DataUtil.poll;
+                     case WALL_APPROACH:
+                        var10001 = AiObsidian.Inner_DataUtil.WALLS;
                         break;
-                     case push:
-                        var10001 = this.init_I < AiObsidian.init_List_BlockPos(this.load_BlockPos).size() ? AiObsidian.Inner_DataUtil.poll : AiObsidian.Inner_DataUtil.pop;
+                     case WORK:
+                        var10001 = this.init_I < AiObsidian.init_List_BlockPos(this.load_BlockPos).size() ? AiObsidian.Inner_DataUtil.WALLS : AiObsidian.Inner_DataUtil.POUR_WATER;
                         break;
-                     case pop:
-                        var10001 = AiObsidian.Inner_DataUtil.write;
+                     case POUR_WATER:
+                        var10001 = AiObsidian.Inner_DataUtil.REFILL;
                         break;
-                     case tick:
-                        var10001 = AiObsidian.Inner_DataUtil.run;
+                     case POUR_LAVA:
+                        var10001 = AiObsidian.Inner_DataUtil.VERIFY;
                         break;
-                     case get:
-                        var10001 = AiObsidian.Inner_DataUtil.add;
+                     case SCOOP:
+                        var10001 = AiObsidian.Inner_DataUtil.CLEAN;
                         break;
-                     case set:
+                     case BREAK:
                         if (this.update_I + this.read_I < held && this.init_Z_17()) {
-                           var10001 = AiObsidian.Inner_DataUtil.load;
+                           var10001 = AiObsidian.Inner_DataUtil.SOURCE;
                            break;
                         }
 
-                        var10001 = AiObsidian.Inner_DataUtil.put;
+                        var10001 = AiObsidian.Inner_DataUtil.PICKUP;
                         break;
-                     case put:
+                     case PICKUP:
                         var10001 = AiCraft.init_I("minecraft:obsidian") >= held
-                           ? (this.init_Z_17() ? AiObsidian.Inner_DataUtil.get : AiObsidian.Inner_DataUtil.add)
-                           : (this.init_Z_17() ? AiObsidian.Inner_DataUtil.load : AiObsidian.Inner_DataUtil.init);
+                           ? (this.init_Z_17() ? AiObsidian.Inner_DataUtil.SCOOP : AiObsidian.Inner_DataUtil.CLEAN)
+                           : (this.init_Z_17() ? AiObsidian.Inner_DataUtil.SOURCE : AiObsidian.Inner_DataUtil.WATER);
                         break;
-                     case add:
-                        var10001 = AiObsidian.Inner_DataUtil.add;
+                     case CLEAN:
+                        var10001 = AiObsidian.Inner_DataUtil.CLEAN;
                   }
 
                   this.init_aD_DataUtil = var10001;
@@ -514,10 +514,10 @@ final class AiObsidian {
                }
 
                switch (this.init_aD_DataUtil) {
-                  case init:
+                  case WATER:
                      this.init_AiOperation = AiObsidian.init_AiOperation_I(AiObsidian.init_I_J(this.init_J));
                      break;
-                  case load:
+                  case SOURCE:
                      List<BlockPos> exposed = AiTerrain.init(this.init_Minecraft, Blocks.LAVA, 96, 72)
                         .stream()
                         .filter(p -> !this.init_Set.contains(p))
@@ -537,28 +537,28 @@ final class AiObsidian {
                         return this.init(AiOperation.Status.FAILED, "No exposed lava source in loaded terrain for contained obsidian casting");
                      }
 
-                     this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.read;
+                     this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.GO_SOURCE;
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(
                         this.init_BlockPos, Math.min(60, AiObsidian.init_I_J(this.init_J)), this.init_Set_5(), true, this.load_Set_3()
                      );
                      break;
-                  case read:
+                  case GO_SOURCE:
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(
                         this.init_BlockPos, Math.min(60, AiObsidian.init_I_J(this.init_J)), this.init_Set_5(), true, this.load_Set_3()
                      );
                      break;
-                  case write:
+                  case REFILL:
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(
                         this.init_BlockPos, Math.min(60, AiObsidian.init_I_J(this.init_J)), this.init_Set_5(), true, this.load_Set_3()
                      );
                      break;
-                  case update:
+                  case FILL_LAVA:
                      this.init_AiOperation = this.init("fill", "lava", this.init_BlockPos);
                      break;
-                  case sync:
+                  case RETURN:
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.read_BlockPos, 0.25, 30, this.init_Set_5(), this.load_Set_3());
                      break;
-                  case flush:
+                  case SITE:
                      if (!this.init_Minecraft.player.onGround()) {
                         if (++this.load_I > 40) {
                            return this.init(AiOperation.Status.FAILED, "Lava-shore stance did not settle");
@@ -590,22 +590,22 @@ final class AiObsidian {
                                  return this.init(AiOperation.Status.FAILED, "No solid-bottomed casting pocket reachable from the checked lava shores");
                               }
 
-                              this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.load;
+                              this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.SOURCE;
                               break;
                            }
 
-                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.close;
+                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.EXCAVATE;
                         } else {
-                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.poll;
+                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WALLS;
                         }
 
                         this.read_BlockPos = this.load_BlockPos.south().above();
                      }
                      break;
-                  case close:
+                  case EXCAVATE:
                      List<BlockPos> cells = AiObsidian.load(this.load_BlockPos);
                      if (this.sync == cells.size()) {
-                        this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.poll;
+                        this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WALLS;
                      } else {
                         BlockPos cell = cells.get(this.sync);
                         if (this.init_Minecraft.level.getBlockState(cell).isAir()) {
@@ -626,17 +626,17 @@ final class AiObsidian {
                            this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 10, false, protect, false);
                         }
                      }
-                  case open:
+                  case WALL_APPROACH:
                   default:
                      break;
-                  case poll:
+                  case WALLS:
                      if (this.init_I > 0 && !this.write_Z) {
                         this.write_Z = true;
-                        this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.push;
+                        this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WORK;
                      } else {
                         List<BlockPos> pollCells = AiObsidian.init_List_BlockPos(this.load_BlockPos);
                         if (this.init_I == pollCells.size()) {
-                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.push;
+                           this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WORK;
                         } else {
                            BlockPos cell = pollCells.get(this.init_I);
                            if (!this.load_Z && this.init(cell)) {
@@ -645,7 +645,7 @@ final class AiObsidian {
                               if (!this.load_Z) {
                                  Item item = AiCraft.init_I("minecraft:cobblestone") > 0 ? Items.COBBLESTONE : Items.DIRT;
                                  if (!autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(cell, item) && this.load_Set.add(cell)) {
-                                    this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.open;
+                                    this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.WALL_APPROACH;
                                     this.init_AiOperation = AiGoto.init(
                                        cell, item, Math.min(30, AiObsidian.init_I_J(this.init_J)), null, false, this.init_Set_5(), this.load_Set_3()
                                     );
@@ -657,9 +657,9 @@ final class AiObsidian {
                               }
 
                               switch (this.init_DataPipe.init_DataPipe_DataUtil()) {
-                                 case init:
+                                 case WORKING:
                                     return AiObsidian.init_AiOperation_Result_Str("Sealing the casting mold");
-                                 case read:
+                                 case FAILED:
                                     String why = this.init_DataPipe.init_Str();
                                     this.init_DataPipe.init_V();
                                     this.load_Z = false;
@@ -670,12 +670,12 @@ final class AiObsidian {
                                        this.init_I = 0;
                                        this.write_Z = false;
                                        this.sync = 0;
-                                       this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.load;
+                                       this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.SOURCE;
                                        return AiObsidian.init_AiOperation_Result_Str("Mold wall would not seal (" + why + "); another lava shore");
                                     }
 
                                     return this.init(AiOperation.Status.FAILED, "Could not seal the casting mold: " + why);
-                                 case load:
+                                 case PLACED:
                                     this.init_List.add(cell);
                                     this.init_I++;
                                     this.init_DataPipe.init_V();
@@ -685,10 +685,10 @@ final class AiObsidian {
                         }
                      }
                      break;
-                  case push:
+                  case WORK:
                      this.init_AiOperation = AiGoto.init_AiOperation_BlockPos(this.read_BlockPos, 0.25, 30, this.init_Set_5(), this.load_Set_3());
                      break;
-                  case pop:
+                  case POUR_WATER:
                      if (!this.write()) {
                         return this.init(AiOperation.Status.FAILED, "Casting walls or floor changed at " + this.load_BlockPos.toShortString());
                      }
@@ -701,7 +701,7 @@ final class AiObsidian {
                         this.init_AiOperation = this.init("empty", "water", this.load_BlockPos.north());
                      }
                      break;
-                  case tick:
+                  case POUR_LAVA:
                      if (!this.write()) {
                         return this.init(AiOperation.Status.FAILED, "Refusing a lava pour without a sealed mold at " + this.load_BlockPos.toShortString());
                      }
@@ -726,23 +726,23 @@ final class AiObsidian {
                         this.init_AiOperation = this.init("empty", "lava", this.load_BlockPos);
                      }
                      break;
-                  case run:
+                  case VERIFY:
                      if (this.init_Minecraft.level.getBlockState(this.load_BlockPos).is(Blocks.OBSIDIAN)) {
                         this.read_I++;
-                        this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.set;
+                        this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.BREAK;
                      } else if (++this.load_I > 80) {
                         return this.init(AiOperation.Status.FAILED, "The contained lava did not become obsidian");
                      }
                      break;
-                  case get:
+                  case SCOOP:
                      this.init_AiOperation = this.init("fill", "water", this.load_BlockPos.north());
                      break;
-                  case set:
+                  case BREAK:
                      this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
                         this.load_BlockPos, 30, true, Set.of(), false, Set.of(this.load_BlockPos, this.load_BlockPos.north())
                      );
                      break;
-                  case put:
+                  case PICKUP:
                      this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
@@ -761,7 +761,7 @@ final class AiObsidian {
                         this.init_Set_5()
                      );
                      break;
-                  case add:
+                  case CLEAN:
                      if (this.init_List.isEmpty()) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + AiCraft.init_I("minecraft:obsidian") + " obsidian safely");
                      }
@@ -1087,24 +1087,24 @@ final class AiObsidian {
    }
 
    private enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open,
-      poll,
-      push,
-      pop,
-      tick,
-      run,
-      get,
-      set,
-      put,
-      add;
+      WATER,
+      SOURCE,
+      GO_SOURCE,
+      REFILL,
+      FILL_LAVA,
+      RETURN,
+      SITE,
+      EXCAVATE,
+      WALL_APPROACH,
+      WALLS,
+      WORK,
+      POUR_WATER,
+      POUR_LAVA,
+      VERIFY,
+      SCOOP,
+      BREAK,
+      PICKUP,
+      CLEAN;
    }
 
    record Inner_StreamUtil(int emptyTarget, int craft, int iron) {

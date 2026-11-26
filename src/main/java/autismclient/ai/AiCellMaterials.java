@@ -41,7 +41,7 @@ final class AiCellMaterials {
             ArrayList<AiCellMaterials.Inner_CachePool> out = new ArrayList<>();
             String id = cell.block();
             if (id.equals("minecraft:grass_block")) {
-               init(out, AiCellMaterials.Inner_DataUtil.init, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.init);
+               init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                return List.copyOf(out);
             }
 
@@ -50,10 +50,10 @@ final class AiCellMaterials {
                   if (!AiBuilder.load_Z(cell)) {
                      init(
                         out,
-                        AiCellMaterials.Inner_DataUtil.read,
+                        AiCellMaterials.Inner_DataUtil.POUR,
                         id.equals("minecraft:lava") ? Items.LAVA_BUCKET : Items.WATER_BUCKET,
                         1,
-                        AiCellMaterials.Inner_BufferHelper.load
+                        AiCellMaterials.Inner_BufferHelper.REUSE
                      );
                   }
 
@@ -63,7 +63,7 @@ final class AiCellMaterials {
                   int wanted = Integer.parseInt(cell.properties().get("level"));
                   int current = present ? live.getValue(ComposterBlock.LEVEL) : 0;
                   if (!present || current > wanted && current < 8) {
-                     init(out, AiCellMaterials.Inner_DataUtil.init, Items.COMPOSTER, 1, AiCellMaterials.Inner_BufferHelper.init);
+                     init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.COMPOSTER, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                   }
 
                   if (current > wanted) {
@@ -71,7 +71,7 @@ final class AiCellMaterials {
                   }
 
                   int feeds = Math.max(0, (wanted == 8 ? 7 : wanted) - current);
-                  init(out, AiCellMaterials.Inner_DataUtil.sync, Items.PUMPKIN_PIE, feeds, AiCellMaterials.Inner_BufferHelper.init);
+                  init(out, AiCellMaterials.Inner_DataUtil.COMPOST, Items.PUMPKIN_PIE, feeds, AiCellMaterials.Inner_BufferHelper.CONSUME);
                   return List.copyOf(out);
                } else {
                   if (AiSchematicActions.write(cell)) {
@@ -81,11 +81,11 @@ final class AiCellMaterials {
 
                   if (id.startsWith("minecraft:potted_")) {
                      if (live == null || !live.is(Blocks.FLOWER_POT)) {
-                        init(out, AiCellMaterials.Inner_DataUtil.init, Items.FLOWER_POT, 1, AiCellMaterials.Inner_BufferHelper.init);
+                        init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.FLOWER_POT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                      }
 
                      Item plant = AiSchematicActions.init(AiBuilder.init_BlockState(cell).getBlock());
-                     init(out, AiCellMaterials.Inner_DataUtil.close, plant, 1, AiCellMaterials.Inner_BufferHelper.init);
+                     init(out, AiCellMaterials.Inner_DataUtil.PLANT, plant, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                      return List.copyOf(out);
                   } else {
                      Block block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(id));
@@ -134,7 +134,7 @@ final class AiCellMaterials {
                      } else {
                         replacing = !same || !existingDoubleSlab && init(cell, live, block);
                         if (replacing) {
-                           init(out, AiCellMaterials.Inner_DataUtil.init, item, 1, AiCellMaterials.Inner_BufferHelper.init);
+                           init(out, AiCellMaterials.Inner_DataUtil.PLACE, item, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                         }
                      }
 
@@ -147,7 +147,7 @@ final class AiCellMaterials {
                         && "true".equals(cell.properties().get("lit"))
                         && !"true".equals(cell.properties().get("powered"))
                         && (!same || !live.getValue(CopperBulbBlock.LIT))) {
-                        init(out, AiCellMaterials.Inner_DataUtil.open, Items.REDSTONE_BLOCK, 1, AiCellMaterials.Inner_BufferHelper.load);
+                        init(out, AiCellMaterials.Inner_DataUtil.INTERACT, Items.REDSTONE_BLOCK, 1, AiCellMaterials.Inner_BufferHelper.REUSE);
                      }
 
                      return List.copyOf(out);
@@ -155,19 +155,19 @@ final class AiCellMaterials {
                }
             } else {
                if (!init(id, live)) {
-                  init(out, AiCellMaterials.Inner_DataUtil.init, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.init);
+                  init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                }
 
                boolean farmland = id.equals("minecraft:farmland");
                init(
                   out,
-                  AiCellMaterials.Inner_DataUtil.update,
+                  AiCellMaterials.Inner_DataUtil.CONVERT,
                   farmland ? "hoe" : "shovel",
                   farmland ? Items.WOODEN_HOE : Items.WOODEN_SHOVEL,
-                  AiCellMaterials.Inner_BufferHelper.load
+                  AiCellMaterials.Inner_BufferHelper.REUSE
                );
                if (waterAbove) {
-                  init(out, AiCellMaterials.Inner_DataUtil.write, Items.BUCKET, 1, AiCellMaterials.Inner_BufferHelper.load);
+                  init(out, AiCellMaterials.Inner_DataUtil.DRAIN, Items.BUCKET, 1, AiCellMaterials.Inner_BufferHelper.REUSE);
                }
 
                return List.copyOf(out);
@@ -198,7 +198,7 @@ final class AiCellMaterials {
                out.addAll(init(cell, live, world.getFluidState(target.above()).is(FluidTags.WATER)));
                BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, target, world, sourceCells);
                if (foundation != null && foundations.add(foundation)) {
-                  init(out, AiCellMaterials.Inner_DataUtil.init, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.init);
+                  init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                }
             }
          }
@@ -215,7 +215,7 @@ final class AiCellMaterials {
          AiCellMaterials.Inner_CachePool previous = combined.get(key);
          if (previous == null) {
             combined.put(key, requirement);
-         } else if (requirement.use() == AiCellMaterials.Inner_BufferHelper.init) {
+         } else if (requirement.use() == AiCellMaterials.Inner_BufferHelper.CONSUME) {
             combined.put(
                key,
                new AiCellMaterials.Inner_CachePool(previous.action(), previous.itemSpec(), previous.item(), previous.count() + requirement.count(), previous.use())
@@ -239,7 +239,7 @@ final class AiCellMaterials {
    private static void init(AiBuilder.Inner_StreamUtil cell, BlockState live, List<AiCellMaterials.Inner_CachePool> out) {
       boolean present = live != null && live.getBlock() instanceof AbstractCauldronBlock;
       if (!present) {
-         init(out, AiCellMaterials.Inner_DataUtil.init, Items.CAULDRON, 1, AiCellMaterials.Inner_BufferHelper.init);
+         init(out, AiCellMaterials.Inner_DataUtil.PLACE, Items.CAULDRON, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
       }
 
       Block wantedBlock = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()));
@@ -248,28 +248,28 @@ final class AiCellMaterials {
       int wanted = !water && !powderSnow ? 3 : Integer.parseInt(cell.properties().getOrDefault("level", "3"));
       boolean wrongContents = present && !live.is(Blocks.CAULDRON) && live.getBlock() != wantedBlock;
       if (wrongContents) {
-         init(out, AiCellMaterials.Inner_DataUtil.write, Items.BUCKET, 1, AiCellMaterials.Inner_BufferHelper.load);
+         init(out, AiCellMaterials.Inner_DataUtil.DRAIN, Items.BUCKET, 1, AiCellMaterials.Inner_BufferHelper.REUSE);
       }
 
       boolean partialFill = AiSchematicActions.init_Z(cell, live);
       boolean fill = !present || live.is(Blocks.CAULDRON) || wrongContents || partialFill;
       if (fill) {
-         init(out, AiCellMaterials.Inner_DataUtil.flush, AiSchematicActions.init_Item(cell), 1, AiCellMaterials.Inner_BufferHelper.init);
+         init(out, AiCellMaterials.Inner_DataUtil.FILL, AiSchematicActions.init_Item(cell), 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
       }
 
       if (!water) {
          if (powderSnow && !partialFill && present && live.getBlock() == wantedBlock && live.getValue(LayeredCauldronBlock.LEVEL) != wanted) {
-            init(out, AiCellMaterials.Inner_DataUtil.update, Items.CAULDRON, 1, AiCellMaterials.Inner_BufferHelper.load);
+            init(out, AiCellMaterials.Inner_DataUtil.CONVERT, Items.CAULDRON, 1, AiCellMaterials.Inner_BufferHelper.REUSE);
          }
       } else if (present && live.getBlock() == wantedBlock) {
          int current = live.getValue(LayeredCauldronBlock.LEVEL);
          if (current > wanted) {
-            init(out, AiCellMaterials.Inner_DataUtil.write, Items.GLASS_BOTTLE, current - wanted, AiCellMaterials.Inner_BufferHelper.init);
+            init(out, AiCellMaterials.Inner_DataUtil.DRAIN, Items.GLASS_BOTTLE, current - wanted, AiCellMaterials.Inner_BufferHelper.CONSUME);
          } else if (current < wanted) {
-            init(out, AiCellMaterials.Inner_DataUtil.write, Items.GLASS_BOTTLE, 3 - wanted, AiCellMaterials.Inner_BufferHelper.init);
+            init(out, AiCellMaterials.Inner_DataUtil.DRAIN, Items.GLASS_BOTTLE, 3 - wanted, AiCellMaterials.Inner_BufferHelper.CONSUME);
          }
       } else if (fill) {
-         init(out, AiCellMaterials.Inner_DataUtil.write, Items.GLASS_BOTTLE, Math.max(0, 3 - wanted), AiCellMaterials.Inner_BufferHelper.init);
+         init(out, AiCellMaterials.Inner_DataUtil.DRAIN, Items.GLASS_BOTTLE, Math.max(0, 3 - wanted), AiCellMaterials.Inner_BufferHelper.CONSUME);
       }
    }
 
@@ -280,7 +280,7 @@ final class AiCellMaterials {
             Property<? extends Comparable<?>> property = (Property<? extends Comparable<?>>)live.getBlock().getStateDefinition().getProperty(key);
             if (property != null && !AiBuilder.init(block, key, String.valueOf(live.getValue(property)), entry.getValue())) {
                AiBuilder.Inner_TaskQueue strategy = AiBuilder.init_TableIndex_TaskQue(block, key);
-               if (strategy != AiBuilder.Inner_TaskQueue.poll && strategy != AiBuilder.Inner_TaskQueue.push) {
+               if (strategy != AiBuilder.Inner_TaskQueue.POST_INTERACT && strategy != AiBuilder.Inner_TaskQueue.FLUID_INTERACT) {
                   return true;
                }
             }
@@ -302,20 +302,20 @@ final class AiCellMaterials {
                if (!AiBuilder.init(block, entry.getKey(), actual, requested)) {
                   if (needed == Items.GLOWSTONE) {
                      int remaining = Math.max(0, Integer.parseInt(requested) - Integer.parseInt(actual));
-                     init(out, AiCellMaterials.Inner_DataUtil.open, needed, remaining, AiCellMaterials.Inner_BufferHelper.init);
+                     init(out, AiCellMaterials.Inner_DataUtil.INTERACT, needed, remaining, AiCellMaterials.Inner_BufferHelper.CONSUME);
                   } else if (needed == Items.ENDER_EYE) {
                      if (Boolean.parseBoolean(requested) && !Boolean.parseBoolean(actual)) {
-                        init(out, AiCellMaterials.Inner_DataUtil.open, needed, 1, AiCellMaterials.Inner_BufferHelper.init);
+                        init(out, AiCellMaterials.Inner_DataUtil.INTERACT, needed, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
                      }
                   } else if (needed == Items.DIAMOND_SHOVEL) {
-                     init(out, AiCellMaterials.Inner_DataUtil.open, "shovel", needed, AiCellMaterials.Inner_BufferHelper.load);
+                     init(out, AiCellMaterials.Inner_DataUtil.INTERACT, "shovel", needed, AiCellMaterials.Inner_BufferHelper.REUSE);
                   } else {
                      init(
                         out,
-                        AiCellMaterials.Inner_DataUtil.open,
+                        AiCellMaterials.Inner_DataUtil.INTERACT,
                         needed,
                         1,
-                        needed == Items.FLINT_AND_STEEL ? AiCellMaterials.Inner_BufferHelper.load : AiCellMaterials.Inner_BufferHelper.init
+                        needed == Items.FLINT_AND_STEEL ? AiCellMaterials.Inner_BufferHelper.REUSE : AiCellMaterials.Inner_BufferHelper.CONSUME
                      );
                   }
                }
@@ -331,10 +331,10 @@ final class AiCellMaterials {
          if (wanted != current) {
             init(
                out,
-               wanted ? AiCellMaterials.Inner_DataUtil.read : AiCellMaterials.Inner_DataUtil.write,
+               wanted ? AiCellMaterials.Inner_DataUtil.POUR : AiCellMaterials.Inner_DataUtil.DRAIN,
                wanted ? Items.WATER_BUCKET : Items.BUCKET,
                1,
-               AiCellMaterials.Inner_BufferHelper.load
+               AiCellMaterials.Inner_BufferHelper.REUSE
             );
          }
       }
@@ -354,10 +354,10 @@ final class AiCellMaterials {
    private static void init(List<AiCellMaterials.Inner_CachePool> out, Item item, boolean existing, int remaining) {
       if (remaining != 0) {
          if (existing) {
-            init(out, AiCellMaterials.Inner_DataUtil.load, item, remaining, AiCellMaterials.Inner_BufferHelper.init);
+            init(out, AiCellMaterials.Inner_DataUtil.ADD, item, remaining, AiCellMaterials.Inner_BufferHelper.CONSUME);
          } else {
-            init(out, AiCellMaterials.Inner_DataUtil.init, item, 1, AiCellMaterials.Inner_BufferHelper.init);
-            init(out, AiCellMaterials.Inner_DataUtil.load, item, remaining - 1, AiCellMaterials.Inner_BufferHelper.init);
+            init(out, AiCellMaterials.Inner_DataUtil.PLACE, item, 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
+            init(out, AiCellMaterials.Inner_DataUtil.ADD, item, remaining - 1, AiCellMaterials.Inner_BufferHelper.CONSUME);
          }
       }
    }
@@ -381,8 +381,8 @@ final class AiCellMaterials {
    }
 
    enum Inner_BufferHelper {
-      init,
-      load;
+      CONSUME,
+      REUSE;
    }
 
    record Inner_CachePool(AiCellMaterials.Inner_DataUtil action, String itemSpec, Item item, int count, AiCellMaterials.Inner_BufferHelper use) {
@@ -394,15 +394,15 @@ final class AiCellMaterials {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open;
+      PLACE,
+      ADD,
+      POUR,
+      DRAIN,
+      CONVERT,
+      COMPOST,
+      FILL,
+      PLANT,
+      INTERACT;
    }
 
    private record Inner_StreamUtil(String itemSpec, AiCellMaterials.Inner_BufferHelper use) {

@@ -92,15 +92,15 @@ public final class AiBreakBlock {
          @Override
          public AiOperation.Result tick() {
             if (this.init_Z || this.init_Minecraft.player == null || this.init_Minecraft.level == null) {
-               return this.init(AiOperation.Status.CANCELLED, AiFailure.size, "Break cancelled");
+               return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Break cancelled");
             }
 
             if (this.init_Minecraft.level != this.init_Obj) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.valid, "World changed during break");
+               return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during break");
             }
 
             if (System.nanoTime() >= this.init_J) {
-               return this.init(AiOperation.Status.TIMED_OUT, AiFailure.prev, "Break deadline reached");
+               return this.init(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Break deadline reached");
             }
 
             if (this.init_AiOperation != null) {
@@ -116,15 +116,15 @@ public final class AiBreakBlock {
             }
 
             if (this.init_Minecraft.level.getBlockState(target).getDestroySpeed(this.init_Minecraft.level, target) < 0.0F) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.read, "Target is unbreakable");
+               return this.init(AiOperation.Status.FAILED, AiFailure.UNBREAKABLE_OBSTACLE, "Target is unbreakable");
             }
 
             if (requireDrops && MiningCost.load(this.init_Minecraft, this.init_Minecraft.level.getBlockState(target), true) < 0) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.get, "No suitable harvesting tool above the durability floor");
+               return this.init(AiOperation.Status.FAILED, AiFailure.TOOL_WORN, "No suitable harvesting tool above the durability floor");
             }
 
             if (requireDrops && AiBreakBlock.init(this.init_Minecraft.level, target)) {
-               return this.init(AiOperation.Status.FAILED, AiFailure.push, "Its drop would fall into lava below it");
+               return this.init(AiOperation.Status.FAILED, AiFailure.LAVA_DETECTED, "Its drop would fall into lava below it");
             }
 
             if (!this.init_RefQueue_DataUtil.init_Z_BlockPos(target) && AiBlockInteraction.load(this.init_Minecraft, target, null) == null) {
@@ -170,12 +170,12 @@ public final class AiBreakBlock {
                this.init_ConfigStore_DataUt.init(AiOperation.Status.FAILED, wasDigging, this.init_RefQueue_DataUtil.init_Z_BlockPos(target));
                if (this.init_ConfigStore_DataUt.init) {
                   return this.init(
-                     AiOperation.Status.FAILED, AiFailure.close, "Break stopped before its removal was observed: " + this.init_RefQueue_DataUtil.init_Str()
+                     AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Break stopped before its removal was observed: " + this.init_RefQueue_DataUtil.init_Str()
                   );
                }
 
                if (++this.load_I >= 2) {
-                  return this.init(AiOperation.Status.FAILED, AiFailure.close, "Target could not be broken: " + this.init_RefQueue_DataUtil.init_Str());
+                  return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, "Target could not be broken: " + this.init_RefQueue_DataUtil.init_Str());
                }
             }
 

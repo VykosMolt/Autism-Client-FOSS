@@ -47,10 +47,10 @@ final class AiCrystals {
    }
 
    static boolean init(AiCrystals.Inner_StreamUtil phase, boolean towerRoute) {
-      return phase == AiCrystals.Inner_StreamUtil.update
-         || phase == AiCrystals.Inner_StreamUtil.sync
-         || phase == AiCrystals.Inner_StreamUtil.flush
-         || towerRoute && (phase == AiCrystals.Inner_StreamUtil.write || phase == AiCrystals.Inner_StreamUtil.read);
+      return phase == AiCrystals.Inner_StreamUtil.PILLAR
+         || phase == AiCrystals.Inner_StreamUtil.OPEN_CAGE
+         || phase == AiCrystals.Inner_StreamUtil.DESCEND
+         || towerRoute && (phase == AiCrystals.Inner_StreamUtil.MELEE || phase == AiCrystals.Inner_StreamUtil.SHOOT);
    }
 
    static boolean init(double damage, double health, boolean lethal, boolean voidFall) {
@@ -177,7 +177,7 @@ final class AiCrystals {
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
             AiCrystals.Inner_DataUtil init_h_DataUtil;
-            AiCrystals.Inner_StreamUtil init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+            AiCrystals.Inner_StreamUtil init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
             String init_Str = "";
             String load_Str = "";
             String read_Str;
@@ -205,7 +205,7 @@ final class AiCrystals {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -215,14 +215,14 @@ final class AiCrystals {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
-                        AiFailure.prev,
+                        AiFailure.TIMEOUT,
                         "Crystal clearing deadline reached with " + this.init_I + " cleared"
                      );
                   }
 
                   if (!AiThreats.init_Z()
                      && this.init_Z_26()
-                     && this.init_h_StreamUtil != AiCrystals.Inner_StreamUtil.flush
+                     && this.init_h_StreamUtil != AiCrystals.Inner_StreamUtil.DESCEND
                      && this.init_h_DataUtil != null
                      && mc.player.getHealth() < 10.0F) {
                      this.init_V_30();
@@ -231,7 +231,7 @@ final class AiCrystals {
 
                   if (!this.init_Z_26()) {
                      if (mc.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                        return this.init(AiFailure.start, AiGuard.init_Str_Str("crystal clearing", mc.player.getHealth(), mc.player.getMaxHealth()));
+                        return this.init(AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("crystal clearing", mc.player.getHealth(), mc.player.getMaxHealth()));
                      }
 
                      AiOperation.Result guarded = this.init_AiOperation_Result_40();
@@ -245,9 +245,9 @@ final class AiCrystals {
                      && this.init_h_DataUtil != null
                      && mc.player.getY() > this.flush + 4
                      && (
-                        this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.update
-                           || this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.sync
-                           || this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.write
+                        this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.PILLAR
+                           || this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.OPEN_CAGE
+                           || this.init_h_StreamUtil == AiCrystals.Inner_StreamUtil.MELEE
                      )
                      && this.init(14.0, 40)) {
                      this.init_V_30();
@@ -257,25 +257,25 @@ final class AiCrystals {
 
                   AiOperation.Result var10000;
                   switch (this.init_h_StreamUtil) {
-                     case init:
+                     case SELECT:
                         var10000 = this.load_AiOperation_Result_17();
                         break;
-                     case load:
+                     case APPROACH:
                         var10000 = this.read_AiOperation_Result_12();
                         break;
-                     case read:
+                     case SHOOT:
                         var10000 = this.write_AiOperation_Result_7();
                         break;
-                     case write:
+                     case MELEE:
                         var10000 = this.update();
                         break;
-                     case update:
+                     case PILLAR:
                         var10000 = this.sync();
                         break;
-                     case sync:
+                     case OPEN_CAGE:
                         var10000 = this.flush();
                         break;
-                     case flush:
+                     case DESCEND:
                         var10000 = this.close();
                         break;
                      default:
@@ -284,7 +284,7 @@ final class AiCrystals {
 
                   return var10000;
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, AiFailure.size, "Crystal clearing cancelled");
+                  return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Crystal clearing cancelled");
                }
             }
 
@@ -399,16 +399,16 @@ final class AiCrystals {
                         this.open = Math.max(this.open, shortage);
                         return this.init(next, "cage", "no_blocks");
                      } else {
-                        this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.update;
+                        this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.PILLAR;
                         return this.load("Pillaring up beside the cage at " + next.x() + " " + next.y() + " " + next.z());
                      }
                   } else {
                      this.init_Str = chosen;
                      if ("melee".equals(chosen)) {
-                        this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.write;
+                        this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.MELEE;
                         return this.load("Punching the adjacent crystal");
                      } else {
-                        this.init_h_StreamUtil = this.read(entity) ? AiCrystals.Inner_StreamUtil.load : AiCrystals.Inner_StreamUtil.read;
+                        this.init_h_StreamUtil = this.read(entity) ? AiCrystals.Inner_StreamUtil.APPROACH : AiCrystals.Inner_StreamUtil.SHOOT;
                         return this.load("Shooting crystal #" + next.entityId());
                      }
                   }
@@ -417,7 +417,7 @@ final class AiCrystals {
 
             AiOperation.Result read_AiOperation_Result_12() {
                if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Re-selecting");
                }
 
@@ -429,13 +429,13 @@ final class AiCrystals {
                if (this.init_AiOperation == null) {
                   BlockPos stand = this.init_BlockPos_Entity_2(entity);
                   if (stand == null) {
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.read;
+                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
                      return this.load("No firing cell in loaded terrain; shooting from here");
                   }
 
                   this.init_BlockPos = stand;
                   this.init_AiOperation = AiGoto.init(
-                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
+                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
                   );
                }
 
@@ -445,7 +445,7 @@ final class AiCrystals {
                } else {
                   this.init_V_30();
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.read;
+                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
                      return this.load("In position; solving the arc");
                   } else {
                      return this.load(this.init_h_DataUtil, "shoot", "unreachable");
@@ -455,7 +455,7 @@ final class AiCrystals {
 
             AiOperation.Result write_AiOperation_Result_7() {
                if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Re-selecting");
                }
 
@@ -488,7 +488,7 @@ final class AiCrystals {
                      if (this.init_Entity_h_DataUtil(this.init_h_DataUtil) == null) {
                         return this.poll();
                      } else if (r.status() == AiOperation.Status.CANCELLED) {
-                        return this.init(AiOperation.Status.CANCELLED, AiFailure.size, "Crystal clearing cancelled");
+                        return this.init(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Crystal clearing cancelled");
                      } else if (r.status() == AiOperation.Status.SUCCEEDED || r.status() == AiOperation.Status.UNCERTAIN) {
                         this.read_Z = true;
                         this.update_I = 0;
@@ -506,7 +506,7 @@ final class AiCrystals {
 
             AiOperation.Result update() {
                if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Re-selecting");
                }
 
@@ -529,7 +529,7 @@ final class AiCrystals {
                      return this.load(this.init_h_DataUtil, this.init_Str, "unreachable");
                   } else if (this.write_Z_8()) {
                      this.init_Str = "shoot";
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.load;
+                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.APPROACH;
                      return this.load("No longer adjacent; switching to the bow");
                   } else {
                      return this.init(this.init_h_DataUtil, "melee", "no_ranged");
@@ -540,7 +540,7 @@ final class AiCrystals {
                   }
 
                   this.init_Str = this.load_Z ? "cage_shoot" : "shoot";
-                  this.init_h_StreamUtil = this.load_Z ? AiCrystals.Inner_StreamUtil.read : AiCrystals.Inner_StreamUtil.load;
+                  this.init_h_StreamUtil = this.load_Z ? AiCrystals.Inner_StreamUtil.SHOOT : AiCrystals.Inner_StreamUtil.APPROACH;
                   return this.load("Blast would be lethal point-blank; switching to the bow");
                } else {
                   this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_Entity(entity));
@@ -560,7 +560,7 @@ final class AiCrystals {
 
             AiOperation.Result sync() {
                if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Re-selecting");
                }
 
@@ -574,7 +574,7 @@ final class AiCrystals {
                   this.init_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 3, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 3);
                   this.load_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 2, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 2);
                   this.init_AiOperation = AiGoto.init(
-                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
+                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.FASTEST, true
                   );
                }
 
@@ -584,7 +584,7 @@ final class AiCrystals {
                } else {
                   this.init_V_30();
                   if (r.status() == AiOperation.Status.SUCCEEDED) {
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.sync;
+                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.OPEN_CAGE;
                      return this.load("Beside the cage; opening the bars");
                   } else {
                      return ++this.poll >= 2
@@ -596,7 +596,7 @@ final class AiCrystals {
 
             AiOperation.Result flush() {
                if (this.init_h_DataUtil == null) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Re-selecting");
                }
 
@@ -694,7 +694,7 @@ final class AiCrystals {
 
                   if (this.load(entity) && this.read_Z_11()) {
                      this.init_Str = "cage_melee";
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.write;
+                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.MELEE;
                      return this.load("Cover set; striking the crystal over it");
                   }
                }
@@ -702,14 +702,14 @@ final class AiCrystals {
                if (!this.read_Z_11() || !AiThreats.init_Z() && this.load_Z && !this.load(entity)) {
                   if (AiThreats.init_Z() && this.write_Z_8()) {
                      this.init_Str = "cage_shoot";
-                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.read;
+                     this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SHOOT;
                      return this.load("Blast lethal point-blank; shooting through the opening");
                   } else {
                      return this.init(this.init_h_DataUtil, "lethal_blast");
                   }
                } else {
                   this.init_Str = "cage_melee";
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.write;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.MELEE;
                   return this.load("Bars open; punching the crystal");
                }
             }
@@ -790,7 +790,7 @@ final class AiCrystals {
                      : this.init(AiOperation.Status.UNCERTAIN, r.failure(), "Tower descent failed before safe ground: " + r.message());
                } else {
                   return this.init(
-                     AiOperation.Status.UNCERTAIN, AiFailure.next, "Clutch unavailable and the remaining tower cannot be dug down; safe ground is not reached"
+                     AiOperation.Status.UNCERTAIN, AiFailure.ENVIRONMENTAL_HAZARD, "Clutch unavailable and the remaining tower cannot be dug down; safe ground is not reached"
                   );
                }
             }
@@ -803,7 +803,7 @@ final class AiCrystals {
                this.init_V_30();
                this.init_h_DataUtil = null;
                this.read_Z = false;
-               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                return this.load("Back on the ground");
             }
 
@@ -819,12 +819,12 @@ final class AiCrystals {
                this.init_I++;
                AiRunTrace.init_V_Str_Str("crystal", (this.init_Str.isEmpty() ? "shoot" : this.init_Str) + " #" + t.entityId());
                if (this.load_Z && !this.load_Z_15()) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.flush;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
                   return this.load("Crystal cleared; getting down");
                } else {
                   this.init_h_DataUtil = null;
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Crystal cleared (" + this.init_I + ")");
                }
             }
@@ -835,12 +835,12 @@ final class AiCrystals {
                this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "cleared"));
                this.init_I++;
                if (!this.load_Z_15()) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.flush;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
                   return this.load("Crystal gone; getting down");
                } else {
                   this.init_h_DataUtil = null;
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Crystal gone; re-selecting");
                }
             }
@@ -851,7 +851,7 @@ final class AiCrystals {
                this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "skipped:" + reason));
                this.init_h_CachePool.init(reason);
                this.init_h_DataUtil = null;
-               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                return this.load("Crystal #" + t.entityId() + " skipped: " + reason);
             }
 
@@ -864,7 +864,7 @@ final class AiCrystals {
                      )
                   );
                this.init_h_CachePool.init(reason);
-               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.flush;
+               this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
                this.close = 0;
                return this.load("Crystal #" + t.entityId() + " skipped: " + reason + "; getting down");
             }
@@ -874,12 +874,12 @@ final class AiCrystals {
                this.init_Set.add(t.entityId());
                this.init_JsonArray.add(AiJson.init_JsonObject_ObjArr("id", t.entityId(), "caged", t.caged(), "method", planned, "result", "failed:" + reason));
                if (this.load_Z && mc.player.blockPosition().getY() > this.flush + 1) {
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.flush;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.DESCEND;
                   this.close = 0;
                   return this.load("Crystal #" + t.entityId() + " failed: " + reason + "; getting down");
                } else {
                   this.init_h_DataUtil = null;
-                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.init;
+                  this.init_h_StreamUtil = AiCrystals.Inner_StreamUtil.SELECT;
                   return this.load("Crystal #" + t.entityId() + " failed: " + reason);
                }
             }
@@ -889,12 +889,12 @@ final class AiCrystals {
                if (this.init_h_CachePool.init > 0) {
                   this.read_Str = "NO_RANGED";
                   this.init_JsonObject = AiCrystals.init();
-                  return this.init(AiFailure.run, "No ranged weapon or arrows for the remaining uncaged crystals" + suffix);
+                  return this.init(AiFailure.NO_RANGED, "No ranged weapon or arrows for the remaining uncaged crystals" + suffix);
                } else if (this.init_h_CachePool.load > 0) {
                   this.init_JsonObject = AiJson.init_JsonObject_ObjArr("minecraft:dirt", Math.max(1, this.open));
-                  return this.init(AiFailure.pop, "No throwaway construction blocks for pillaring to the caged crystals" + suffix);
+                  return this.init(AiFailure.MISSING_MATERIALS, "No throwaway construction blocks for pillaring to the caged crystals" + suffix);
                } else {
-                  return this.init(AiFailure.flush, this.init_h_CachePool.init(this.init_I));
+                  return this.init(AiFailure.EXECUTION_FAILED, this.init_h_CachePool.init(this.init_I));
                }
             }
 
@@ -1259,12 +1259,12 @@ final class AiCrystals {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush;
+      SELECT,
+      APPROACH,
+      SHOOT,
+      MELEE,
+      PILLAR,
+      OPEN_CAGE,
+      DESCEND;
    }
 }

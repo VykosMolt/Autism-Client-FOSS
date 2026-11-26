@@ -24,7 +24,7 @@ final class AiGuardLayer {
    private boolean sync;
    private boolean flush;
    private boolean close;
-   private AiGuard.Inner_DataUtil init_X_DataUtil = AiGuard.Inner_DataUtil.init;
+   private AiGuard.Inner_DataUtil init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
    private Object init_Obj;
    private Object load_Obj;
    private final Vec3[] init_Vec3Arr = new Vec3[10];
@@ -253,17 +253,17 @@ final class AiGuardLayer {
             AiGuard.Inner_BufferHelper live = AiGuard.init_X_BufferHelper();
             AiGuard.Inner_DataUtil next = AiGuard.init_X_StreamUtil(this.init_X_CachePool_Minecraft(zoneClient), live).action();
             if (AiCombatPriority.init_Z_X_DataUtil(this.init_X_DataUtil, next, live.hostilesNear())
-               || this.init_X_DataUtil == AiGuard.Inner_DataUtil.write && AiSurvival.init_Entity(zoneClient) != null) {
+               || this.init_X_DataUtil == AiGuard.Inner_DataUtil.EAT && AiSurvival.init_Entity(zoneClient) != null) {
                AiRunTrace.init_V_Str_JsonObject(
                   "survival_reprioritize",
                   AiJson.init_JsonObject_ObjArr(
                      "owner", this.init_Str, "from", this.init_X_DataUtil.name(), "to", next.name(), "health", live.health(), "hostiles", live.hostilesNear()
                   )
                );
-               interruptedMeal = this.init_X_DataUtil == AiGuard.Inner_DataUtil.write && AiSurvival.init_Entity(zoneClient) != null;
+               interruptedMeal = this.init_X_DataUtil == AiGuard.Inner_DataUtil.EAT && AiSurvival.init_Entity(zoneClient) != null;
                this.init_AiOperation.cancel();
                this.init_AiOperation = null;
-               this.init_X_DataUtil = AiGuard.Inner_DataUtil.init;
+               this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
                this.init_Z = this.load_Z = false;
             }
          }
@@ -315,7 +315,7 @@ final class AiGuardLayer {
 
                Minecraft mc = Minecraft.getInstance();
                AiGuard.Inner_CachePool policy = this.init_X_CachePool_Minecraft(mc);
-               boolean unsafeMeal = interruptedMeal || AiGuard.init_X_StreamUtil(policy, vitals).action() == AiGuard.Inner_DataUtil.write && AiSurvival.init_Entity(mc) != null;
+               boolean unsafeMeal = interruptedMeal || AiGuard.init_X_StreamUtil(policy, vitals).action() == AiGuard.Inner_DataUtil.EAT && AiSurvival.init_Entity(mc) != null;
                AiOperation action = unsafeMeal
                   ? AiSurvival.init_AiOperation_Minecraft(mc, policy, remainingSeconds.getAsInt())
                   : AiGuard.init_AiOperation_X_CachePool(policy, vitals, remainingSeconds.getAsInt());
@@ -323,13 +323,13 @@ final class AiGuardLayer {
                   return null;
                }
 
-               this.init_X_DataUtil = unsafeMeal ? AiGuard.Inner_DataUtil.load : AiGuard.init_X_StreamUtil(policy, vitals).action();
+               this.init_X_DataUtil = unsafeMeal ? AiGuard.Inner_DataUtil.FIGHT : AiGuard.init_X_StreamUtil(policy, vitals).action();
                this.load_Z = AiGuard.read_Z;
                if (this.load_Z) {
-                  this.init_X_DataUtil = AiGuard.Inner_DataUtil.read;
+                  this.init_X_DataUtil = AiGuard.Inner_DataUtil.FLEE;
                }
 
-               this.init_Z = !this.load_Z && this.init_X_DataUtil == AiGuard.Inner_DataUtil.load;
+               this.init_Z = !this.load_Z && this.init_X_DataUtil == AiGuard.Inner_DataUtil.FIGHT;
                this.load_Str = unsafeMeal ? "nearby enemy prevents a safe meal" : AiGuard.init_Str(policy, vitals);
                AiSpeedrun.init_V_Str_ObjArr("[AI] {}: guard steps in ({}, health {})", this.init_Str, this.load_Str, (int)vitals.health());
                if (leg != null) {
@@ -387,7 +387,7 @@ final class AiGuardLayer {
          this.init_K = null;
       }
 
-      this.init_X_DataUtil = AiGuard.Inner_DataUtil.init;
+      this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
       this.write = this.update = this.sync = this.flush = false;
    }
 
@@ -399,7 +399,7 @@ final class AiGuardLayer {
 
       this.init_AiOperation.cancel();
       this.init_AiOperation = null;
-      this.init_X_DataUtil = AiGuard.Inner_DataUtil.init;
+      this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
       if (!this.close && r.status() != AiOperation.Status.UNCERTAIN) {
          if (this.write && "standing in fire".equals(this.load_Str) && r.status() != AiOperation.Status.SUCCEEDED) {
             this.init_J = System.nanoTime();
@@ -453,7 +453,7 @@ final class AiGuardLayer {
          this.load_AiOperation = null;
       }
 
-      this.init_X_DataUtil = AiGuard.Inner_DataUtil.init;
+      this.init_X_DataUtil = AiGuard.Inner_DataUtil.NONE;
       this.init_Z = this.load_Z = this.read = this.write = this.update = this.sync = this.flush = this.close = false;
       this.load_Str = "";
       this.init_J = 0L;

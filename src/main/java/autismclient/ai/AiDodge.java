@@ -94,7 +94,7 @@ final class AiDodge {
             float read_F;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
                this.update = -1;
                this.close = -100;
                this.read_Set = new HashSet<>();

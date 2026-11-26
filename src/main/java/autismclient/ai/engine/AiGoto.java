@@ -193,7 +193,7 @@ public final class AiGoto {
    public static AiGoto.Inner_CachePool putAt_HashEntry_TaskStat_BlockPos(
       BlockPos var0, AiPathfinder.Inner_JsonUtil var1, int var2, AiGoto.Inner_BufferHelper var3
    ) {
-      return putAt(var0, 0.6, true, true, true, var2, AiPathfinder.Inner_IoWorker.load, true, 2.0, var1, var3, true);
+      return putAt(var0, 0.6, true, true, true, var2, AiPathfinder.Inner_IoWorker.SAFEST, true, 2.0, var1, var3, true);
    }
 
    public static void putAt_V_HashEntry_TaskStat(AiGoto.Inner_CachePool var0, Function<Predicate<AABB>, Vec3> var1, Runnable var2) {
@@ -203,7 +203,7 @@ public final class AiGoto {
    }
 
    public static AiGoto.Inner_CachePool putAt_HashEntry_TaskStat_BlockPos(BlockPos var0, AiPathfinder.Inner_JsonUtil var1, int var2) {
-      return putAt(var0, 0.6, true, true, true, var2, AiPathfinder.Inner_IoWorker.load, true, 2.0, var1, AiGoto.Inner_BufferHelper.DEFAULT, true);
+      return putAt(var0, 0.6, true, true, true, var2, AiPathfinder.Inner_IoWorker.SAFEST, true, 2.0, var1, AiGoto.Inner_BufferHelper.DEFAULT, true);
    }
 
    static boolean putAt(Entity var0) {
@@ -491,7 +491,7 @@ public final class AiGoto {
    public static AiOperation putAt_AiOperation_BlockPos(BlockPos var0, double var1, boolean var3, boolean var4, boolean var5, int var6) {
       Minecraft var7 = Minecraft.getInstance();
       boolean var8 = var7.level == null || var7.level.dimension() == Level.OVERWORLD;
-      return putAt(var0, var1, var3, var4, var5, var6, var8 ? AiPathfinder.Inner_IoWorker.init : AiPathfinder.Inner_IoWorker.load);
+      return putAt(var0, var1, var3, var4, var5, var6, var8 ? AiPathfinder.Inner_IoWorker.FASTEST : AiPathfinder.Inner_IoWorker.SAFEST);
    }
 
    public static AiOperation putAt_AiOperation(BlockPos var0, int var1) {
@@ -525,7 +525,7 @@ public final class AiGoto {
          var5.level.getFluidState(var0).is(FluidTags.WATER)
       );
       AiPathfinder.Inner_JsonUtil var7 = putAt(var2.isEmpty() ? var6 : readEx(var6, var2), var4);
-      return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.Inner_IoWorker.load, true, 2.0, var3 ? putAt(var7) : var7);
+      return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.Inner_IoWorker.SAFEST, true, 2.0, var3 ? putAt(var7) : var7);
    }
 
    public static AiOperation putAt_AiOperation_BlockPos(BlockPos var0, double var1, int var3, Set<Long> var4) {
@@ -540,7 +540,7 @@ public final class AiGoto {
          true,
          true,
          var3,
-         AiPathfinder.Inner_IoWorker.load,
+         AiPathfinder.Inner_IoWorker.SAFEST,
          true,
          2.0,
          putAt(putAt(readEx(AiPathfinder.Inner_JsonUtil.putAt_FileStore_TokenCod_BlockPos_D(var0, var1), var4), var5))
@@ -686,7 +686,7 @@ public final class AiGoto {
          @Override
          public Set<AiPathfinder.Inner_SyncManager> putAt_Set() {
             var var1 = EnumSet.of(
-               AiPathfinder.Inner_SyncManager.start, AiPathfinder.Inner_SyncManager.put, AiPathfinder.Inner_SyncManager.add, AiPathfinder.Inner_SyncManager.clear
+               AiPathfinder.Inner_SyncManager.JUMP, AiPathfinder.Inner_SyncManager.JUMP_GAP_2, AiPathfinder.Inner_SyncManager.JUMP_GAP_3, AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND
             );
             var1.addAll(var0.putAt_Set());
             return Set.copyOf(var1);
@@ -703,7 +703,7 @@ public final class AiGoto {
       AiGoto.Inner_StreamUtil var3 = new AiGoto.Inner_StreamUtil(
          var0, var2.player.blockInteractionRange() - 0.35, var2.player.getEyeHeight(), null, ConcurrentHashMap.newKeySet(), true
       );
-      return putAt((BlockPos)var0.getFirst(), 0.6, true, true, true, var1, AiPathfinder.Inner_IoWorker.load, true, 2.0, var3);
+      return putAt((BlockPos)var0.getFirst(), 0.6, true, true, true, var1, AiPathfinder.Inner_IoWorker.SAFEST, true, 2.0, var3);
    }
 
    public static AiOperation fill(BlockPos var0, int var1, Set<Long> var2, boolean var3) {
@@ -723,7 +723,7 @@ public final class AiGoto {
          var3,
          var3,
          var1,
-         AiPathfinder.Inner_IoWorker.init,
+         AiPathfinder.Inner_IoWorker.FASTEST,
          true,
          2.0,
          readEx(new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var5), AiBlockInteraction.init(var7).y - var7.player.getY(), var4), var2)
@@ -743,7 +743,7 @@ public final class AiGoto {
       AiPathfinder.Inner_JsonUtil var8 = readEx(
          new InteractionGoal(var0, Math.max(1.5, var7.player.blockInteractionRange() - var4), AiBlockInteraction.init(var7).y - var7.player.getY()).init_q(), var2
       );
-      return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.Inner_IoWorker.init, true, 2.0, var6 ? fill(var8) : var8);
+      return putAt(var0, 0.6, true, var3, var3, var1, AiPathfinder.Inner_IoWorker.FASTEST, true, 2.0, var6 ? fill(var8) : var8);
    }
 
    static AiPathfinder.Inner_JsonUtil fill(final AiPathfinder.Inner_JsonUtil var0) {
@@ -830,7 +830,7 @@ public final class AiGoto {
    public static AiOperation putAt(BlockPos var0, Item var1, int var2, AABB var3, boolean var4, Set<Long> var5, Set<Long> var6) {
       Minecraft var7 = Minecraft.getInstance();
       AiPathfinder.Inner_JsonUtil var8 = readEx(new PlacementGoal(var0, var1, var7.player.blockInteractionRange() - 0.25, var7.player.getEyeHeight(), var3), var5);
-      return putAt(var0, 0.6, false, !var4, !var4, var2, AiPathfinder.Inner_IoWorker.init, true, 2.0, fill(var8, var6));
+      return putAt(var0, 0.6, false, !var4, !var4, var2, AiPathfinder.Inner_IoWorker.FASTEST, true, 2.0, fill(var8, var6));
    }
 
    static AiPathfinder.Inner_JsonUtil fill(final AiPathfinder.Inner_JsonUtil var0, final Set<Long> var1) {
@@ -925,7 +925,7 @@ public final class AiGoto {
          !var4,
          !var4,
          var2,
-         AiPathfinder.Inner_IoWorker.init,
+         AiPathfinder.Inner_IoWorker.FASTEST,
          true,
          2.0,
          readEx(new PlacementGoal(var0, var1, var6.player.blockInteractionRange() - 0.25, var6.player.getEyeHeight(), var3), var5)
@@ -941,7 +941,7 @@ public final class AiGoto {
          true,
          true,
          var2,
-         AiPathfinder.Inner_IoWorker.init,
+         AiPathfinder.Inner_IoWorker.FASTEST,
          true,
          2.0,
          new PlacementGoal(var0, var1, var4.player.blockInteractionRange() - 0.25, var4.player.getEyeHeight(), var3)
@@ -1247,8 +1247,8 @@ public final class AiGoto {
 
             {
                this.fill_FileStore_RingUtil = var16
-                  ? AiPathfinder.Inner_NetHelper.read
-                  : (var15 ? AiPathfinder.Inner_NetHelper.load : AiPathfinder.Inner_NetHelper.init);
+                  ? AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE
+                  : (var15 ? AiPathfinder.Inner_NetHelper.PARKOUR_SAFE : AiPathfinder.Inner_NetHelper.STANDARD);
                if (!AutismLiteVariant.enabled()) {
                   AiWalkingWork.putAt(this, this.putAt_RingCache);
                }
@@ -1284,7 +1284,7 @@ public final class AiGoto {
                AiFallGuard.init_V();
                if (!this.flushOf_Z && this.putAt_Minecraft.player != null && this.putAt_Minecraft.level != null) {
                   if (this.putAt_Minecraft.level != this.putAt_Obj) {
-                     return this.putAt(autismclient.ai.AiFailure.valid, "World changed during travel");
+                     return this.putAt(autismclient.ai.AiFailure.WORLD_CHANGED, "World changed during travel");
                   }
 
                   if (!AutismLiteVariant.enabled()) {
@@ -1303,7 +1303,7 @@ public final class AiGoto {
 
                   if (this.putAt_Minecraft.player.getHealth() <= 4.0F && !AiLowHealth.init_Z() && !var15) {
                      return this.putAt(
-                        autismclient.ai.AiFailure.start,
+                        autismclient.ai.AiFailure.LOW_HEALTH,
                         AiLowHealth.init("travel", this.putAt_Minecraft.player.getHealth(), this.putAt_Minecraft.player.getMaxHealth())
                      );
                   }
@@ -1315,24 +1315,24 @@ public final class AiGoto {
                   if (this.state_BlockPos != null) {
                      AiPlacer.Inner_DataUtil var14x = this.flushOf_I < 60
                         ? this.putAt_FilePool.init_DataPipe_DataUtil()
-                        : AiPlacer.Inner_DataUtil.read;
+                        : AiPlacer.Inner_DataUtil.FAILED;
                      this.flushOf_I++;
-                     if (var14x == AiPlacer.Inner_DataUtil.init) {
+                     if (var14x == AiPlacer.Inner_DataUtil.WORKING) {
                         return this.fill("Blocking the water at " + this.state_BlockPos.toShortString());
                      }
 
                      BlockPos var15x = this.putAt_Minecraft.player.blockPosition();
                      boolean var16x = !this.putAt_Minecraft.level.getFluidState(var15x).isEmpty()
                         || !this.putAt_Minecraft.level.getFluidState(var15x.above()).isEmpty();
-                     if (var14x == AiPlacer.Inner_DataUtil.load && var16x && this.flushOf_I < 80) {
+                     if (var14x == AiPlacer.Inner_DataUtil.PLACED && var16x && this.flushOf_I < 80) {
                         return this.fill("Waiting for the water to drain");
                      }
 
                      AutismClientAddon.LOG.info(
                            "[AI] travel: water at {} {} ({})",
                            this.state_BlockPos.toShortString(),
-                           var14x == AiPlacer.Inner_DataUtil.load ? "blocked" : "not blocked",
-                           var14x == AiPlacer.Inner_DataUtil.load ? "replanning" : this.putAt_FilePool.init_Str()
+                           var14x == AiPlacer.Inner_DataUtil.PLACED ? "blocked" : "not blocked",
+                           var14x == AiPlacer.Inner_DataUtil.PLACED ? "replanning" : this.putAt_FilePool.init_Str()
                         );
                      this.state_BlockPos = null;
                      this.putAt_FileStore_TaskStat.putAt(this.putAt_RingCache.putAt_BlockPos());
@@ -1367,7 +1367,7 @@ public final class AiGoto {
                            AutismClientAddon.LOG.info("[AI] {}", AiTerrainDump.init(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition(), null, 6, 4));
                         }
 
-                        return this.putAt(autismclient.ai.AiFailure.close, "No progress toward the target in 30 s");
+                        return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, "No progress toward the target in 30 s");
                      } else if (this.readEx_Z) {
                         if (this.putAt_RingCache.putAt_Z() && !this.putAt_RingCache.pollAt_Z()) {
                            this.putAt_RingCache.fill_RingCache_TableCac();
@@ -1453,7 +1453,7 @@ public final class AiGoto {
                            }
 
                            if (var3 && !var4 && this.state_Z_4()) {
-                              return this.putAt(autismclient.ai.AiFailure.tick, "No harvesting tool for the blocks enclosing the current stance");
+                              return this.putAt(autismclient.ai.AiFailure.MISSING_TOOL, "No harvesting tool for the blocks enclosing the current stance");
                            }
 
                            if (var18 != null) {
@@ -1510,7 +1510,7 @@ public final class AiGoto {
                            }
 
                            if (this.putAt_FileStore_TaskStat.putAt_Str() != null) {
-                              return this.putAt(autismclient.ai.AiFailure.value, this.putAt_FileStore_TaskStat.putAt_Str());
+                              return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.putAt_FileStore_TaskStat.putAt_Str());
                            }
 
                            if (var10 == AiWrExecutor.Inner_TableCache.putAt_RingCache_TableCac) {
@@ -1565,7 +1565,7 @@ public final class AiGoto {
 
                                  if (AiGoto.putAt(var11x)) {
                                     return this.putAt(
-                                       autismclient.ai.AiFailure.prev,
+                                       autismclient.ai.AiFailure.TIMEOUT,
                                        var14
                                           ? "Route search reached its memory limit before it could prove a route"
                                           : "Route search budget exhausted before a route could be proved"
@@ -1586,7 +1586,7 @@ public final class AiGoto {
                               } else {
                                  if (!AutismLiteVariant.enabled() && this.pollOf_Z) {
                                     if (!var11x.reachesGoal()) {
-                                       return this.putAt(autismclient.ai.AiFailure.close, "No complete route proved through loaded terrain");
+                                       return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, "No complete route proved through loaded terrain");
                                     }
 
                                     this.putAt_FileStore_StreamSt = var11x;
@@ -1660,7 +1660,7 @@ public final class AiGoto {
                                  }
 
                                  if (AiGoto.putAt(var20x)) {
-                                    return this.putAt(autismclient.ai.AiFailure.prev, "Route search budget exhausted before a route could be proved");
+                                    return this.putAt(autismclient.ai.AiFailure.TIMEOUT, "Route search budget exhausted before a route could be proved");
                                  }
 
                                  return this.prev_AiOperation_Result_7();
@@ -1800,7 +1800,7 @@ public final class AiGoto {
 
                   this.readEx_FileStore_TaskStat.putAt(this.putAt_RingCache);
                   if (this.readEx_FileStore_TaskStat.putAt_Str() != null) {
-                     return this.putAt(autismclient.ai.AiFailure.value, this.readEx_FileStore_TaskStat.putAt_Str());
+                     return this.putAt(autismclient.ai.AiFailure.UNKNOWN, this.readEx_FileStore_TaskStat.putAt_Str());
                   }
 
                   AiPathfinder.Inner_PacketUtil var10 = this.readEx_FileStore_TaskStat.putAt_FileStore_StreamSt();
@@ -1856,7 +1856,7 @@ public final class AiGoto {
                      }
 
                      if (var11x) {
-                        return this.putAt(autismclient.ai.AiFailure.close, "Load the remaining checkpoints before approving a route with fall damage");
+                        return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, "Load the remaining checkpoints before approving a route with fall damage");
                      }
 
                      ArrayList var22x = new ArrayList();
@@ -1874,13 +1874,13 @@ public final class AiGoto {
                      int var12x = this.readEx_I;
                      this.value_V_9();
                      Arrays.fill(var18.putAt_HashEntry_TableCacArr, var17, this.flowState, null);
-                     if (this.fill_FileStore_RingUtil == AiPathfinder.Inner_NetHelper.load && !var10.exhausted()) {
-                        this.fill_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.read;
+                     if (this.fill_FileStore_RingUtil == AiPathfinder.Inner_NetHelper.PARKOUR_SAFE && !var10.exhausted()) {
+                        this.fill_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE;
                         this.closeOf_Z = true;
                         return this.fill("Planning route for a possible fall damage warning");
                      } else {
                         return this.putAt(
-                           var10.exhausted() ? autismclient.ai.AiFailure.prev : autismclient.ai.AiFailure.close,
+                           var10.exhausted() ? autismclient.ai.AiFailure.TIMEOUT : autismclient.ai.AiFailure.UNREACHABLE,
                            "No proved route to checkpoint " + (var12x + 1) + "/" + this.flowState + " at " + var18.putAt_List.get(var12x).toShortString()
                         );
                      }
@@ -2264,7 +2264,7 @@ public final class AiGoto {
                } else {
                   return !var3
                      ? this.putAt(
-                        autismclient.ai.AiFailure.close,
+                        autismclient.ai.AiFailure.UNREACHABLE,
                         "Player is wedged in solid blocks at "
                            + this.putAt_RingCache.putAt_BlockPos().toShortString()
                            + " (the feet or head cell is inside solid terrain); retry with allowDig:true so the route can dig out"
@@ -2306,7 +2306,7 @@ public final class AiGoto {
 
             AiOperation.Result putAt(BlockPos var1, String var2) {
                if (this.putAt_RingCache.putAt_Str().equals("dig failed: no tool that gets its drops")) {
-                  return this.putAt(autismclient.ai.AiFailure.tick, "No usable harvesting tool for a block on the route");
+                  return this.putAt(autismclient.ai.AiFailure.MISSING_TOOL, "No usable harvesting tool for a block on the route");
                }
 
                if (this.value_Z_11()) {
@@ -2372,7 +2372,7 @@ public final class AiGoto {
                   if (this.putAt_RingCache.readEx_Z() && var4x != null) {
                      this.putAt_RingCache.prevEx_V();
                      if (++this.pollOf_I >= 3) {
-                        return this.putAt(autismclient.ai.AiFailure.close, var2 + "; went round in circles " + this.pollOf_I + " times");
+                        return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var2 + "; went round in circles " + this.pollOf_I + " times");
                      }
 
                      this.putAt_FileStore_TaskStat.putAt_V_BlockPos_BlockPos(var4x.to(), this.putAt_RingCache.putAt_BlockPos());
@@ -2394,7 +2394,7 @@ public final class AiGoto {
                         if (var4x.type() == this.putAt_FileStore_SyncPool && var4x.to().equals(this.prev_BlockPos)) {
                            this.chunkAt_BlockPos = var4x.to();
                            AiPathfinder.fill(var4x, 120000000000L);
-                           return this.putAt(autismclient.ai.AiFailure.close, var2 + "; " + var4x.type() + " stalled again with its type excluded");
+                           return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var2 + "; " + var4x.type() + " stalled again with its type excluded");
                         }
 
                         this.putAt_FileStore_SyncPool = var4x.type();
@@ -2406,14 +2406,14 @@ public final class AiGoto {
                      this.prev_I++;
                      AiPathfinder.Inner_HashUtil var6x = AiPathfinder.putAt_FileStore_HashEntr_I_I(this.prevEx_I, this.prev_I);
                      if (var13 && var2.startsWith("No route toward the target") && this.prev_I >= 2) {
-                        var6x = AiPathfinder.Inner_HashUtil.read;
+                        var6x = AiPathfinder.Inner_HashUtil.FAILED;
                      }
 
-                     if (var6x == AiPathfinder.Inner_HashUtil.read) {
-                        return this.putAt(autismclient.ai.AiFailure.close, var2 + "; no reachable route after repeated replans");
+                     if (var6x == AiPathfinder.Inner_HashUtil.FAILED) {
+                        return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var2 + "; no reachable route after repeated replans");
                      }
 
-                     if (var6x == AiPathfinder.Inner_HashUtil.load && var1 != null) {
+                     if (var6x == AiPathfinder.Inner_HashUtil.BLACKLIST_AND_REPLAN && var1 != null) {
                         this.putAt_FileStore_TaskStat.putAt_V_BlockPos_BlockPos(var1, this.putAt_RingCache.putAt_BlockPos());
                      }
 
@@ -2446,7 +2446,7 @@ public final class AiGoto {
                   return this.fill(var2 + "; replanning from " + var3x.toShortString());
                } else {
                   this.chunkAt_BlockPos = var1.to();
-                  return this.putAt(autismclient.ai.AiFailure.close, var2 + "; repeatedly stalled near " + var3x.toShortString());
+                  return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var2 + "; repeatedly stalled near " + var3x.toShortString());
                }
             }
 
@@ -2826,9 +2826,9 @@ public final class AiGoto {
             }
 
             AiOperation.Result prev_AiOperation_Result_7() {
-               if (this.fill_FileStore_RingUtil == AiPathfinder.Inner_NetHelper.load) {
+               if (this.fill_FileStore_RingUtil == AiPathfinder.Inner_NetHelper.PARKOUR_SAFE) {
                   this.pollOf_Z = true;
-                  this.fill_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.read;
+                  this.fill_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.PARKOUR_NO_DAMAGE;
                   this.value_BlockPos = null;
                   if (var18 != null) {
                      this.value_V_9();
@@ -2873,7 +2873,7 @@ public final class AiGoto {
                      AiPathfinder.Inner_DataUtil var5x = this.putAt_FileStore_CacheHel().withDig();
                      if (this.putAt(this.putAt_RingCache.putAt_BlockPos(), 3)) {
                         var var3x = new HashSet<>(var5x.disabledTypes());
-                        var3x.add(AiPathfinder.Inner_SyncManager.tick);
+                        var3x.add(AiPathfinder.Inner_SyncManager.PILLAR);
                         var5x = var5x.withDisabledTypes(var3x);
                      }
 
@@ -2888,7 +2888,7 @@ public final class AiGoto {
                      }
 
                      AutismClientAddon.LOG.info("[AI] travel {}: {} at {}", var13 ? "job" : "goto", var1x, this.putAt_RingCache.putAt_BlockPos().toShortString());
-                     return this.putAt(autismclient.ai.AiFailure.close, var1x);
+                     return this.putAt(autismclient.ai.AiFailure.UNREACHABLE, var1x);
                   }
                }
             }
@@ -2926,15 +2926,15 @@ public final class AiGoto {
                boolean var6x = this.putAt_Minecraft.player.mayBuild();
                var var7x = new HashSet<>(this.fill_Set);
                if (!var12.bunnyhop()) {
-                  var7x.add(AiPathfinder.Inner_SyncManager.reset);
+                  var7x.add(AiPathfinder.Inner_SyncManager.SPRINT_JUMP);
                }
 
                if (!var12.allowClimb()) {
-                  var7x.add(AiPathfinder.Inner_SyncManager.get);
+                  var7x.add(AiPathfinder.Inner_SyncManager.CLIMB_1);
                }
 
                if (!var12.allowDoors()) {
-                  var7x.add(AiPathfinder.Inner_SyncManager.set);
+                  var7x.add(AiPathfinder.Inner_SyncManager.DOOR);
                }
 
                if (this.putAt_FileStore_TokenCod != null) {
@@ -2948,7 +2948,7 @@ public final class AiGoto {
                      var1x && !var5x,
                      this.prevEx_Z_9(),
                      !var5x,
-                     var5x ? AiPathfinder.Inner_IoWorker.load : var7,
+                     var5x ? AiPathfinder.Inner_IoWorker.SAFEST : var7,
                      this.putAt_FileStore_TaskStor(),
                      var9x,
                      var10,
@@ -3044,7 +3044,7 @@ public final class AiGoto {
                   $outerCost = autismclient.ai.AiDragonZones.init_ClassCache_PoolEnt(this.putAt_Minecraft);
                }
 
-               if (var7 != AiPathfinder.Inner_IoWorker.load) {
+               if (var7 != AiPathfinder.Inner_IoWorker.SAFEST) {
                   return $outerCost == AiPathfinder.Inner_PoolEntry.value ? AiPathfinder.Inner_PoolEntry.value : new AiPathfinder.Inner_PoolEntry() {
                      @Override
                      public double surcharge(int var1x, int var2, int var3x) {
@@ -3494,7 +3494,7 @@ public final class AiGoto {
                boolean var6x = this.nextBy_Z && var1x.onClimbable() && var4x < 0.03;
                double var7x = this.dataEx_Z ? 0.0025 : 0.03;
                if ((!var1x.onGround() || !(var2 < var7x)) && !var6x && ++this.state_I <= (this.dataEx_Z ? 48 : 24)) {
-                  this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.read_DataUtil_DataUtil);
+                  this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.NORMAL);
                   if (var4x >= var7x) {
                      this.putAt_CacheHelper.init_V_ce_DataUtil(
                            new RotationMath.Inner_DataUtil(AiPhysics.putAt_F_D(var1x.getX(), var1x.getZ(), this.putAt_Vec3.x, this.putAt_Vec3.z), 0.0F)
@@ -4074,7 +4074,7 @@ public final class AiGoto {
                ArrayList var10 = new ArrayList(var8.size() + 1);
                var10.add(
                   new AiPathfinder.UiHelper(
-                     var6 ? AiPathfinder.Inner_SyncManager.read : AiPathfinder.Inner_SyncManager.init,
+                     var6 ? AiPathfinder.Inner_SyncManager.SPRINT : AiPathfinder.Inner_SyncManager.WALK,
                      var2,
                      var7.from(),
                      List.of(),

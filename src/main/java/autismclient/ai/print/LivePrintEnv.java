@@ -99,7 +99,7 @@ public final class LivePrintEnv implements PrintEnv {
    @Override
    public PrintEnv.Inner_StreamUtil init_EventBus_StreamUti() {
       return AiMenuClose.load()
-         ? PrintEnv.Inner_StreamUtil.load
+         ? PrintEnv.Inner_StreamUtil.PENDING
          : this.init_TableIndex
             .init(
                this.init_Minecraft.level,
@@ -402,17 +402,17 @@ public final class LivePrintEnv implements PrintEnv {
       LocalPlayer p = this.init_LocalPlayer();
       AiContainerTransactions.Inner_StreamUtil state = this.init_b_DataUtil.load(p == null ? null : p.containerMenu, this.load_J());
       switch (state) {
-         case init:
+         case WAITING:
             return false;
-         case write:
+         case UNCERTAIN:
             this.load_Str = "The server did not confirm the builder's hand swap. Check the inventory and cursor before resuming.";
             return false;
-         case load:
-         case read:
+         case CONFIRMED:
+         case SWAPPED_DIFFERENT_STACK:
             this.init_RenderState.init(this.write_I, this.update_I);
             p.getInventory().setSelectedSlot(this.update_I);
             this.init_b_DataUtil = null;
-            this.sync = state == AiContainerTransactions.Inner_StreamUtil.load ? 0 : this.sync + 1;
+            this.sync = state == AiContainerTransactions.Inner_StreamUtil.CONFIRMED ? 0 : this.sync + 1;
             if (this.sync >= 3) {
                this.load_Str = "The server repeatedly changed the requested hand stack. Check the inventory before resuming.";
                return false;

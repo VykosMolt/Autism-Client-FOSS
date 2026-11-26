@@ -98,7 +98,7 @@ final class AiProspect {
             AiOperation read;
             String init_Str = "";
             int init_I;
-            Inner_DataUtil init_bz_1_DataUtil = Inner_DataUtil.init;
+            Inner_DataUtil init_bz_1_DataUtil = Inner_DataUtil.LOCATE;
             BlockPos init_BlockPos;
             String load_Str = "";
             boolean init_Z;
@@ -148,7 +148,7 @@ final class AiProspect {
                         return this.init(AiOperation.Status.FAILED, "No predicted " + kind + " within " + maxDistance + " blocks of the player");
                      }
 
-                     this.init_bz_1_DataUtil = Inner_DataUtil.load;
+                     this.init_bz_1_DataUtil = Inner_DataUtil.TRAVEL;
                      return this.init("Located " + this.init_List.size() + " predicted " + kind + " site(s)");
                   } else if (this.load_AiOperation != null) {
                      AiOperation.Result result = this.load_AiOperation.tick();
@@ -179,26 +179,26 @@ final class AiProspect {
                         return this.init(AiOperation.Status.SUCCEEDED, "Obtained " + goal + " " + spec);
                      }
 
-                     if (this.init_bz_1_DataUtil == Inner_DataUtil.load) {
+                     if (this.init_bz_1_DataUtil == Inner_DataUtil.TRAVEL) {
                         if (result.status() != AiOperation.Status.SUCCEEDED) {
                            this.load_Str = "travel: " + result.message();
                            this.init_BlockPos = null;
-                           this.init_bz_1_DataUtil = Inner_DataUtil.load;
+                           this.init_bz_1_DataUtil = Inner_DataUtil.TRAVEL;
                            return this.init("Site unreachable; trying the next prediction");
                         } else {
-                           this.init_bz_1_DataUtil = Inner_DataUtil.read;
+                           this.init_bz_1_DataUtil = Inner_DataUtil.EXTRACT;
                            return this.init("Arrived; extracting " + kind);
                         }
                      } else {
                         this.load_Str = "extract: " + result.message();
                         this.init_BlockPos = null;
-                        this.init_bz_1_DataUtil = Inner_DataUtil.load;
+                        this.init_bz_1_DataUtil = Inner_DataUtil.TRAVEL;
                         return this.init("Site exhausted; trying the next prediction");
                      }
-                  } else if (this.init_bz_1_DataUtil == Inner_DataUtil.init) {
+                  } else if (this.init_bz_1_DataUtil == Inner_DataUtil.LOCATE) {
                      this.init_AiOperation = AiOracle.init_AiOperation_JsonObject(AiJson.init_JsonObject_ObjArr("query", kind, "cap", 16));
                      return this.init("Predicting " + kind + " positions from the world seed");
-                  } else if (this.init_bz_1_DataUtil == Inner_DataUtil.read) {
+                  } else if (this.init_bz_1_DataUtil == Inner_DataUtil.EXTRACT) {
                      this.load_AiOperation = autismclient.ai.engine.AiMine.init(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
@@ -219,7 +219,7 @@ final class AiProspect {
                         this.load_AiOperation = AiGoto.init_AiOperation_BlockPos(this.init_BlockPos, 3.5, true, true, true, Math.min(240, this.init_I_30()));
                         return this.init("Travelling to predicted " + kind + " at " + this.init_BlockPos.toShortString());
                      } else if (this.init_List.isEmpty()) {
-                        this.init_bz_1_DataUtil = Inner_DataUtil.init;
+                        this.init_bz_1_DataUtil = Inner_DataUtil.LOCATE;
                         return this.init("Re-predicting from the new position");
                      } else {
                         return this.init(
@@ -404,9 +404,9 @@ final class AiProspect {
             }
 
             enum Inner_DataUtil {
-               init,
-               load,
-               read;
+               LOCATE,
+               TRAVEL,
+               EXTRACT;
             }
          };
       } else {

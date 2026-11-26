@@ -66,7 +66,7 @@ public final class AiRestock {
    private final AiRestock.Inner_StreamUtil init_UtilCore_StreamUti;
    private final LongSupplier init_LongSupplier;
    private final LongSupplier load_LongSupplier;
-   private AiRestock.Inner_BufferHelper init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.init;
+   private AiRestock.Inner_BufferHelper init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.IDLE;
    private String init_Str;
    private int flush_I = -1;
    private int close = -1;
@@ -326,11 +326,11 @@ public final class AiRestock {
    }
 
    public boolean init_Z() {
-      return this.init_UtilCore_BufferHel == AiRestock.Inner_BufferHelper.load;
+      return this.init_UtilCore_BufferHel == AiRestock.Inner_BufferHelper.RUNNING;
    }
 
    public boolean load_Z() {
-      return this.init_UtilCore_BufferHel != AiRestock.Inner_BufferHelper.read
+      return this.init_UtilCore_BufferHel != AiRestock.Inner_BufferHelper.SUCCEEDED
          && this.sync_J >= 0L
          && (!this.init_UtilCore_StreamUti.init(this.close, this.init_Str) || this.init_LongSupplier.getAsLong() <= this.sync_J);
    }
@@ -346,11 +346,11 @@ public final class AiRestock {
       this.open = 0;
       this.poll = 0;
       this.sync_J = -1L;
-      this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.load;
+      this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.RUNNING;
    }
 
    public void init_V() {
-      this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.init;
+      this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.IDLE;
       this.init_Str = null;
       this.flush_I = -1;
       this.close = -1;
@@ -358,13 +358,13 @@ public final class AiRestock {
    }
 
    public AiRestock.Inner_BufferHelper load_UtilCore_BufferHel() {
-      if (this.init_UtilCore_BufferHel != AiRestock.Inner_BufferHelper.load) {
+      if (this.init_UtilCore_BufferHel != AiRestock.Inner_BufferHelper.RUNNING) {
          return this.init_UtilCore_BufferHel;
       }
 
       if (this.sync_J < 0L) {
          if (this.open >= 2) {
-            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.write;
+            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.FAILED;
             return this.init_UtilCore_BufferHel;
          } else if (this.load_LongSupplier.getAsLong() < this.flush_J) {
             return this.init_UtilCore_BufferHel;
@@ -387,12 +387,12 @@ public final class AiRestock {
       } else {
          if (this.init_UtilCore_StreamUti.init(this.close, this.init_Str) && this.init_LongSupplier.getAsLong() > this.sync_J) {
             this.push++;
-            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.read;
+            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.SUCCEEDED;
             return this.init_UtilCore_BufferHel;
          }
 
          if (++this.poll > 40) {
-            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.write;
+            this.init_UtilCore_BufferHel = AiRestock.Inner_BufferHelper.FAILED;
          }
 
          return this.init_UtilCore_BufferHel;
@@ -453,10 +453,10 @@ public final class AiRestock {
    }
 
    public enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write;
+      IDLE,
+      RUNNING,
+      SUCCEEDED,
+      FAILED;
    }
 
    public record Inner_CachePool(String itemId, int count, boolean falling, boolean fullBlock, boolean blockEntity) {

@@ -54,7 +54,7 @@ final class AiPrintPreparation implements AiOperation {
    private final long read_J = System.nanoTime();
    private final AiPrintPreparation.Inner_SyncManager init_bg_SyncManager = new AiPrintPreparation.Inner_SyncManager();
    private Future<?> init_Future;
-   private AiPrintPreparation.Inner_BufferHelper init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.init;
+   private AiPrintPreparation.Inner_BufferHelper init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.DECODE;
    private AiPrintPreparation.Inner_DataUtil init_bg_DataUtil;
    private AiPrintPreparation.Inner_ConfigStore init_bg_ConfigStore;
    private AiPrintPreparation.Inner_StreamUtil init_bg_StreamUtil;
@@ -191,19 +191,19 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       if (this.write_Z) {
-         return this.init(AiOperation.Status.CANCELLED, "Build cancelled", AiFailure.size);
+         return this.init(AiOperation.Status.CANCELLED, "Build cancelled", AiFailure.CANCELLED);
       }
 
       if (!this.init_bg_TaskQueue.matches(this.init_Minecraft.level, this.init_Minecraft.player)) {
-         return this.init(AiOperation.Status.CANCELLED, "World or player changed", AiFailure.size);
+         return this.init(AiOperation.Status.CANCELLED, "World or player changed", AiFailure.CANCELLED);
       }
 
       if (!this.init_Minecraft.player.isAlive()) {
-         return this.init(AiOperation.Status.FAILED, "The player died", AiFailure.flush);
+         return this.init(AiOperation.Status.FAILED, "The player died", AiFailure.EXECUTION_FAILED);
       }
 
       if (this.load_J != 0L && System.nanoTime() >= this.load_J) {
-         return this.init(AiOperation.Status.TIMED_OUT, "Requested build deadline reached", AiFailure.prev);
+         return this.init(AiOperation.Status.TIMED_OUT, "Requested build deadline reached", AiFailure.TIMEOUT);
       }
 
       if (this.init_AiOperation != null) {
@@ -218,7 +218,7 @@ final class AiPrintPreparation implements AiOperation {
          try {
             label216: {
                switch (this.init_bg_BufferHelper) {
-                  case init:
+                  case DECODE:
                      if (!this.init_Future.isDone()) {
                         return this.init_AiOperation_Result_Str_10("Reading schematic");
                      }
@@ -229,9 +229,9 @@ final class AiPrintPreparation implements AiOperation {
                      this.read_I = this.init_bg_DataUtil.blueprint().cells().size();
                      this.update = this.write_J + this.init_bg_DataUtil.leafNeighbors().size() + this.read_I + 2L;
                      this.init_bg_StreamUtil = new AiPrintPreparation.Inner_StreamUtil(this.init_bg_DataUtil.leafNeighbors());
-                     this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.load;
+                     this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.LEAVES;
                      break;
-                  case load:
+                  case LEAVES:
                      int before = this.init_bg_StreamUtil.init_I;
                      this.init_bg_StreamUtil
                         .init(
@@ -244,10 +244,10 @@ final class AiPrintPreparation implements AiOperation {
                         Map<Long, BlockState> snapshot = this.init_bg_StreamUtil.init_Map();
                         AiPrintPreparation.Inner_DataUtil input = this.init_bg_DataUtil;
                         this.init_Future = this.init_bg_SyncManager.init(() -> this.init(input, snapshot));
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.read;
+                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.NORMALIZE;
                      }
                      break;
-                  case read:
+                  case NORMALIZE:
                      if (!this.init_Future.isDone()) {
                         return this.init_AiOperation_Result_Str_10("Preparing schematic rules and targets");
                      }
@@ -282,15 +282,15 @@ final class AiPrintPreparation implements AiOperation {
 
                      if (this.read_I == 0) {
                         this.flush = System.nanoTime();
-                        return this.init(AiOperation.Status.FAILED, "No cells in the selected schematic can be placed at this site", AiFailure.write);
+                        return this.init(AiOperation.Status.FAILED, "No cells in the selected schematic can be placed at this site", AiFailure.PLACEMENT_IMPOSSIBLE);
                      }
 
                      this.init_bg_CachePool = new AiPrintPreparation.Inner_CachePool(this.init_bg_ConfigStore.stockPlan(), this.init_bg_ConfigStore.source().keys());
-                     this.init_bg_BufferHelper = this.init_Z_22() ? AiPrintPreparation.Inner_BufferHelper.sync : AiPrintPreparation.Inner_BufferHelper.write;
+                     this.init_bg_BufferHelper = this.init_Z_22() ? AiPrintPreparation.Inner_BufferHelper.HANDOFF : AiPrintPreparation.Inner_BufferHelper.MATERIALS;
                      break;
-                  case write:
+                  case MATERIALS:
                      if (this.init_Z_22()) {
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.sync;
+                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                      } else {
                         int beforeWrite = this.init_bg_CachePool.init_I;
                         this.init_bg_CachePool.init(4096, System.nanoTime() + 2000000L, this.init_Minecraft.level);
@@ -299,7 +299,7 @@ final class AiPrintPreparation implements AiOperation {
                            this.init_JsonObject = this.init_JsonObject_43();
                            this.read_Z = true;
                            if (this.init_JsonObject.isEmpty()) {
-                              this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.sync;
+                              this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                            } else {
                               if (!this.init_bg_ConfigStore.power().shulkerStock()) {
                                  return this.load();
@@ -309,34 +309,34 @@ final class AiPrintPreparation implements AiOperation {
                                  this.init_BlockPos, this.init_bg_ConfigStore.blueprint().origin(), this.init_bg_ConfigStore.source()
                               );
                               this.update = Math.max(this.update, this.write_J + this.init_bg_NetHelper.init_J() + 1L);
-                              this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.update;
+                              this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.STOCK;
                            }
                         }
                      }
                      break;
-                  case update:
+                  case STOCK:
                      if (this.init_Z_22()) {
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.sync;
+                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                      } else {
                         long beforeUpdate = this.init_bg_NetHelper.init_J;
                         this.init_bg_NetHelper
                            .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.init(this.init_Minecraft.level, pos), this.init_Minecraft.level::getBlockState);
                         this.write_J = this.write_J + (this.init_bg_NetHelper.init_J - beforeUpdate);
                         if (this.init_bg_NetHelper.init_Z) {
-                           this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.sync;
+                           this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                         } else if (this.init_bg_NetHelper.init_Z()) {
                            this.init_JsonObject = this.init_JsonObject_43();
                            if (!this.init_JsonObject.isEmpty()) {
                               return this.load();
                            }
 
-                           this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.sync;
+                           this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
                         }
                      }
                      break;
-                  case sync:
+                  case HANDOFF:
                      if (!this.init_Z_22() && !this.read_Z) {
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.write;
+                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.MATERIALS;
                      } else {
                         if (this.init_Z_22() || this.init_bg_NetHelper != null && this.init_bg_NetHelper.init_Z) {
                            break label216;
@@ -355,28 +355,28 @@ final class AiPrintPreparation implements AiOperation {
                            this.init_BlockPos, this.init_bg_ConfigStore.blueprint().origin(), this.init_bg_ConfigStore.source()
                         );
                         this.update = Math.max(this.update, this.write_J + this.init_bg_NetHelper.init_J() + 1L);
-                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.update;
+                        this.init_bg_BufferHelper = AiPrintPreparation.Inner_BufferHelper.STOCK;
                      }
                }
 
                String var10001;
                switch (this.init_bg_BufferHelper) {
-                  case init:
+                  case DECODE:
                      var10001 = "Reading schematic";
                      break;
-                  case load:
+                  case LEAVES:
                      var10001 = "Checking outside schematic context";
                      break;
-                  case read:
+                  case NORMALIZE:
                      var10001 = "Preparing schematic rules and targets";
                      break;
-                  case write:
+                  case MATERIALS:
                      var10001 = "Checking schematic materials";
                      break;
-                  case update:
+                  case STOCK:
                      var10001 = "Looking for external shulker stock";
                      break;
-                  case sync:
+                  case HANDOFF:
                      var10001 = "Schematic prepared";
                      break;
                   default:
@@ -428,14 +428,14 @@ final class AiPrintPreparation implements AiOperation {
                   : "Starting construction. Skipping " + this.write_I + (this.write_I == 1 ? " cell" : " cells") + " that cannot be placed as saved."
             );
          } catch (InterruptedException failure) {
-            return this.init(AiOperation.Status.CANCELLED, "Schematic preparation interrupted", AiFailure.size);
+            return this.init(AiOperation.Status.CANCELLED, "Schematic preparation interrupted", AiFailure.CANCELLED);
          } catch (CancellationException failure) {
-            return this.init(AiOperation.Status.CANCELLED, "Schematic preparation cancelled", AiFailure.size);
+            return this.init(AiOperation.Status.CANCELLED, "Schematic preparation cancelled", AiFailure.CANCELLED);
          } catch (ExecutionException failure) {
             Throwable cause = failure.getCause();
-            return this.init(AiOperation.Status.FAILED, "Could not prepare schematic: " + cause.getMessage(), AiFailure.flush);
+            return this.init(AiOperation.Status.FAILED, "Could not prepare schematic: " + cause.getMessage(), AiFailure.EXECUTION_FAILED);
          } catch (RuntimeException failure) {
-            return this.init(AiOperation.Status.FAILED, "Could not prepare schematic: " + failure.getMessage(), AiFailure.flush);
+            return this.init(AiOperation.Status.FAILED, "Could not prepare schematic: " + failure.getMessage(), AiFailure.EXECUTION_FAILED);
          }
       }
    }
@@ -456,7 +456,7 @@ final class AiPrintPreparation implements AiOperation {
       this.init_bg_SyncManager.close();
       this.flush = System.nanoTime();
       this.init_AiOperation_Result = AiOperation.Result.failed(
-         AiFailure.pop,
+         AiFailure.MISSING_MATERIALS,
          "Missing materials for the schematic; "
             + (
                this.init_bg_ConfigStore.power().shulkerStock()
@@ -530,12 +530,12 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    private enum Inner_BufferHelper {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      DECODE,
+      LEAVES,
+      NORMALIZE,
+      MATERIALS,
+      STOCK,
+      HANDOFF;
    }
 
    static final class Inner_CachePool {
@@ -571,7 +571,7 @@ final class AiPrintPreparation implements AiOperation {
                   BlockPos foundation = AiSchematicActions.init_BlockPos_TableIndex_StreamU_2(cell, at, world, this.init_Set);
                   if (foundation != null && this.load.add(foundation)) {
                      this.init(
-                        new AiCellMaterials.Inner_CachePool(AiCellMaterials.Inner_DataUtil.init, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.init)
+                        new AiCellMaterials.Inner_CachePool(AiCellMaterials.Inner_DataUtil.PLACE, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME)
                      );
                   }
                }
@@ -584,7 +584,7 @@ final class AiPrintPreparation implements AiOperation {
          AiCellMaterials.Inner_CachePool previous = this.init_Map.get(key);
          if (previous == null) {
             this.init_Map.put(key, requirement);
-         } else if (requirement.use() == AiCellMaterials.Inner_BufferHelper.init) {
+         } else if (requirement.use() == AiCellMaterials.Inner_BufferHelper.CONSUME) {
             this.init_Map
                .put(
                   key,

@@ -309,11 +309,11 @@ final class AiPrintSupply {
                return new AiPrintSupply.Inner_NetHelper(
                   approach,
                   () -> !AiTerrain.init(this.init_Minecraft.level, source)
-                     ? AiPrintSupply.Inner_StreamUtil.init
+                     ? AiPrintSupply.Inner_StreamUtil.UNKNOWN
                      : (
                         this.init_Minecraft.level.getBlockState(source).getBlock() instanceof ShulkerBoxBlock
-                           ? AiPrintSupply.Inner_StreamUtil.load
-                           : AiPrintSupply.Inner_StreamUtil.read
+                           ? AiPrintSupply.Inner_StreamUtil.SHULKER
+                           : AiPrintSupply.Inner_StreamUtil.REPLACED
                      ),
                   () -> AiContainer.init(
                      AiJson.init_JsonObject_ObjArr(
@@ -511,7 +511,7 @@ final class AiPrintSupply {
                if (live == null || !AiBuilder.update(cell, live)) {
                   for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, false)) {
                      if (requirement.item() == this.init_Item) {
-                        if (requirement.use() == AiCellMaterials.Inner_BufferHelper.load) {
+                        if (requirement.use() == AiCellMaterials.Inner_BufferHelper.REUSE) {
                            this.read = Math.max(this.read, requirement.count());
                         } else {
                            this.load_I = Math.min(576, this.load_I + requirement.count());
@@ -1094,11 +1094,11 @@ final class AiPrintSupply {
          }
 
          if (System.nanoTime() >= this.init_J) {
-            return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Stock navigation/withdrawal deadline reached", "{}", List.of(), AiFailure.prev));
+            return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Stock navigation/withdrawal deadline reached", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
-         if (this.init_Supplier.get() == AiPrintSupply.Inner_StreamUtil.read) {
-            return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.pop));
+         if (this.init_Supplier.get() == AiPrintSupply.Inner_StreamUtil.REPLACED) {
+            return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
          if (this.init_AiOperation != null) {
@@ -1122,12 +1122,12 @@ final class AiPrintSupply {
          }
 
          AiPrintSupply.Inner_StreamUtil observed = this.init_Supplier.get();
-         if (observed == AiPrintSupply.Inner_StreamUtil.init) {
+         if (observed == AiPrintSupply.Inner_StreamUtil.UNKNOWN) {
             return new AiOperation.Result(AiOperation.Status.RUNNING, "Waiting for the remembered stock chunk", "{}", List.of());
          }
 
-         if (observed == AiPrintSupply.Inner_StreamUtil.read) {
-            return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.pop));
+         if (observed == AiPrintSupply.Inner_StreamUtil.REPLACED) {
+            return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
          if (this.load_AiOperation == null) {
@@ -1180,9 +1180,9 @@ final class AiPrintSupply {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      UNKNOWN,
+      SHULKER,
+      REPLACED;
    }
 
    static final class Inner_TaskQueue {

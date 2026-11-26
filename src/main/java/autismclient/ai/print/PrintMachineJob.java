@@ -66,7 +66,7 @@ public interface PrintMachineJob {
    }
 
    default PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti() {
-      return PrintMachineJob.Inner_DataUtil.update;
+      return PrintMachineJob.Inner_DataUtil.SUCCEEDED;
    }
 
    default int load_I() {
@@ -140,13 +140,13 @@ public interface PrintMachineJob {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      PREPARING,
+      READY,
+      SENT,
+      NEEDS_SUPPLY,
+      SUCCEEDED,
+      SKIPPED,
+      CONFLICT,
+      UNCERTAIN;
    }
 }

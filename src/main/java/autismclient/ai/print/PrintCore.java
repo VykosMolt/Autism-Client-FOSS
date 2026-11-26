@@ -206,7 +206,7 @@ public final class PrintCore {
    int close_I;
    final Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
    final Long2ObjectOpenHashMap<long[]> load_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
-   PrintCore.J init_UiHelper_J = PrintCore.J.init;
+   PrintCore.J init_UiHelper_J = PrintCore.J.BUILD;
    PrintCore.Inner_NetHelper init_UiHelper_NetHelper;
    String init_Str;
    String load_Str = "Starting";
@@ -816,13 +816,13 @@ public final class PrintCore {
    }
 
    private void init_V_J(long key) {
-      if (this.init_UiHelper_J != PrintCore.J.read && !this.init_Long2BooleanOpenHa.containsKey(key)) {
+      if (this.init_UiHelper_J != PrintCore.J.TEARDOWN && !this.init_Long2BooleanOpenHa.containsKey(key)) {
          this.init_Long2BooleanOpenHa.put(key, false);
       }
    }
 
    private void init_V_J(long target, int from, int reached) {
-      if (this.init_UiHelper_J == PrintCore.J.read
+      if (this.init_UiHelper_J == PrintCore.J.TEARDOWN
          && this.init_Long2ObjectOpenHas.containsKey(target)
          && this.init_Long2BooleanOpenHa.containsKey(target)
          && !this.init_Long2BooleanOpenHa.get(target)) {
@@ -1347,7 +1347,7 @@ public final class PrintCore {
          out.add(this.init_Item);
       }
 
-      if (this.init_UiHelper_J == PrintCore.J.write && !this.init_Long2ObjectLinkedO.isEmpty()) {
+      if (this.init_UiHelper_J == PrintCore.J.VERIFY && !this.init_Long2ObjectLinkedO.isEmpty()) {
          Item item = this.init_Long2ObjectLinkedO.get(this.init_Long2ObjectLinkedO.firstLongKey()).item();
          if (item != Items.AIR && out.size() < max) {
             out.add(item);
@@ -1368,7 +1368,7 @@ public final class PrintCore {
    }
 
    boolean load_Z_I(int i) {
-      return this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write;
+      return this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW;
    }
 
    void init_V_I(int i) {
@@ -1391,9 +1391,9 @@ public final class PrintCore {
                this.init_V_I_I(i, before);
             }
          } else if ((before != 5 || !this.init_Z_I_BlockState(i, live)) && this.init_BArr[i] != 1) {
-            if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.load) {
+            if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PARTNER) {
                this.init_V_I_B(i, (byte)4);
-            } else if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read && this.init_PathHelper.load_Z_ListPool_BlockState(t, live)) {
+            } else if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && this.init_PathHelper.load_Z_ListPool_BlockState(t, live)) {
                this.init_V_I_B(i, (byte)2);
                if (before != 2 && before != 3) {
                   this.init_V_I_I(i, before);
@@ -1417,7 +1417,7 @@ public final class PrintCore {
 
       for (int i = 0; i < this.init_ListPoolArr.length; i++) {
          PrintTarget t = this.init_ListPoolArr[i];
-         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init && t.wanted().getBlock() instanceof BaseRailBlock rail) {
+         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && t.wanted().getBlock() instanceof BaseRailBlock rail) {
             RailShape shape = t.wanted().getValue(rail.getShapeProperty());
             Direction var10000;
             switch (shape) {
@@ -1608,8 +1608,8 @@ public final class PrintCore {
    }
 
    public void init_V_BlockPos(BlockPos position) {
-      if (this.init_UiHelper_J == PrintCore.J.update && !this.init_EventBus.load_Z(position)) {
-         this.init_UiHelper_J = PrintCore.J.write;
+      if (this.init_UiHelper_J == PrintCore.J.DONE && !this.init_EventBus.load_Z(position)) {
+         this.init_UiHelper_J = PrintCore.J.VERIFY;
          this.init_UiHelper_NetHelper = new PrintCore.T(new autismclient.ai.print.PrintChunkWork.Inner_StreamUtil(PrintChunkWork.init_J_BlockPos(position)));
          this.load_Str = "Loading saved construction for cleanup";
       }
@@ -1637,8 +1637,8 @@ public final class PrintCore {
                this.init_UiHelper_NetHelper = null;
             }
 
-            if (this.init_UiHelper_J == PrintCore.J.update) {
-               this.init_UiHelper_J = PrintCore.J.write;
+            if (this.init_UiHelper_J == PrintCore.J.DONE) {
+               this.init_UiHelper_J = PrintCore.J.VERIFY;
                this.init_UiHelper_NetHelper = null;
             }
          }
@@ -1855,7 +1855,7 @@ public final class PrintCore {
       PrintMachineJob pending = this.load_BitSetUtil != null ? this.load_BitSetUtil : (this.read_Z() ? this.write_BitSetUtil : null);
       if (pending != null) {
          pending.cancel();
-         this.data_Z = this.data_Z | (pending.poll_BitSetUtil_DataUti() == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close || pending.close());
+         this.data_Z = this.data_Z | (pending.poll_BitSetUtil_DataUti() == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN || pending.close());
          this.load_BitSetUtil = null;
          this.init_BitSetUtil = null;
       }
@@ -1875,7 +1875,7 @@ public final class PrintCore {
          } else if (!this.init_Long2ObjectLinkedO.containsKey(owner.position().asLong())) {
             return null;
          } else {
-            return this.init_UiHelper_J == PrintCore.J.write && !owner.init_BitSetUtil().position().equals(at) ? null : owner;
+            return this.init_UiHelper_J == PrintCore.J.VERIFY && !owner.init_BitSetUtil().position().equals(at) ? null : owner;
          }
       } else {
          return null;
@@ -1996,11 +1996,11 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_Str(String reason) {
-      if (this.update_BitSetUtil != null && this.init_UiHelper_J == PrintCore.J.init && this.load_BitSetUtil == null && !this.data_Z) {
+      if (this.update_BitSetUtil != null && this.init_UiHelper_J == PrintCore.J.BUILD && this.load_BitSetUtil == null && !this.data_Z) {
          this.load_V_Str(reason);
          return new PrintCore.aK(1);
       } else {
-         this.init_UiHelper_J = PrintCore.J.sync;
+         this.init_UiHelper_J = PrintCore.J.FAILED;
          this.init_Str = this.load_Str = reason;
          return null;
       }
@@ -2008,8 +2008,8 @@ public final class PrintCore {
 
    public boolean sync_Z() {
       autismclient.ai.print.PrintEnv.Inner_StreamUtil interaction = this.init_EventBus.init_EventBus_StreamUti();
-      return interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.load
-         || interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.read
+      return interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING
+         || interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN
          || this.load_BitSetUtil != null
          || !this.init_IntOpenHashSet.isEmpty()
          || !this.load_Long2ObjectOpenHas.isEmpty()
@@ -2170,20 +2170,20 @@ public final class PrintCore {
 
             this.load_Str = "Returning to ground for supplies";
             long started = System.nanoTime();
-            PrintAccess.Inner_TaskQueue state = this.poll_Z() ? PrintAccess.Inner_TaskQueue.init : this.init_StreamUtil_ConfigS.init(this.write_J());
+            PrintAccess.Inner_TaskQueue state = this.poll_Z() ? PrintAccess.Inner_TaskQueue.SEARCHING : this.init_StreamUtil_ConfigS.init(this.write_J());
             long spent = System.nanoTime() - started;
             this.init_J += spent;
             this.pop_J += spent;
             this.read_J = Math.max(this.read_J, spent);
-            if (state == PrintAccess.Inner_TaskQueue.write) {
+            if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                this.init_StreamUtil_ConfigS = null;
                this.f_m_J = -9223372036854775808L;
             } else {
-               if (state == PrintAccess.Inner_TaskQueue.read) {
+               if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                   return null;
                }
 
-               if (state == PrintAccess.Inner_TaskQueue.load) {
+               if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                   PrintAccess.Inner_BufferHelper plan = this.init_StreamUtil_ConfigS.init_StreamUtil_BufferH();
                   this.init_StreamUtil_ConfigS = null;
                   this.init_UiHelper_TaskQueue = new PrintCore.Inner_TaskQueue(plan, null);
@@ -2357,7 +2357,7 @@ public final class PrintCore {
    public PrintControls read_SyncManager() {
       long started = System.nanoTime();
       long initialWork = this.init_ArrayUtil.sync();
-      if (this.init_UiHelper_J != PrintCore.J.read && this.f_M_I >= 0) {
+      if (this.init_UiHelper_J != PrintCore.J.TEARDOWN && this.f_M_I >= 0) {
          this.put_LongOpenHashSet.clear();
          this.f_M_I = -1;
       }
@@ -2456,13 +2456,13 @@ public final class PrintCore {
       }
 
       autismclient.ai.print.PrintEnv.Inner_StreamUtil interaction = this.init_EventBus.init_EventBus_StreamUti();
-      if (interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.load) {
+      if (interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING) {
          this.load_Str = "Waiting for the native block interaction acknowledgement";
          return this.flush_SyncManager();
       }
 
-      if (interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.read) {
-         this.init_UiHelper_J = PrintCore.J.sync;
+      if (interaction == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN) {
+         this.init_UiHelper_J = PrintCore.J.FAILED;
          this.init_Str = "Native block interaction was not acknowledged; observe its result before retrying";
          this.load_Str = this.init_Str;
          return this.flush_SyncManager();
@@ -2471,13 +2471,13 @@ public final class PrintCore {
       this.write_V();
       if (this.load_BitSetUtil != null) {
          autismclient.ai.print.PrintMachineJob.Inner_DataUtil result = this.load_BitSetUtil.poll_BitSetUtil_DataUti();
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.read) {
+         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SENT) {
             this.load_Str = this.load_BitSetUtil.detail();
             return this.flush_SyncManager();
          }
 
          if ((this.load_BitSetUtil instanceof PrintClockSequence || this.load_BitSetUtil.c_())
-            && (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init || result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.load)) {
+            && (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING || result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY)) {
             this.load_Str = this.load_BitSetUtil.detail();
             this.load_BitSetUtil = null;
             this.init_BitSetUtil = null;
@@ -2485,7 +2485,7 @@ public final class PrintCore {
             return this.flush_SyncManager();
          }
 
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.write) {
+         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
             this.read_BitSetUtil = this.load_BitSetUtil;
             this.load_BitSetUtil = null;
             this.init_UiHelper_NetHelper = null;
@@ -2493,14 +2493,14 @@ public final class PrintCore {
             return this.flush_SyncManager();
          }
 
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.sync) {
+         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED) {
             this.read_V_BitSetUtil(this.load_BitSetUtil);
             this.load_BitSetUtil = null;
             return this.flush_SyncManager();
          }
 
-         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush
-            && (this.load_BitSetUtil == this.update_BitSetUtil && this.init_UiHelper_J == PrintCore.J.init || this.load_BitSetUtil.b_())) {
+         if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT
+            && (this.load_BitSetUtil == this.update_BitSetUtil && this.init_UiHelper_J == PrintCore.J.BUILD || this.load_BitSetUtil.b_())) {
             PrintMachineJob disturbed = this.load_BitSetUtil;
             if (this.read_ArrayList.size() < 16) {
                this.read_ArrayList.add(disturbed.position().toShortString() + ": " + disturbed.detail());
@@ -2515,8 +2515,8 @@ public final class PrintCore {
             return this.flush_SyncManager();
          }
 
-         if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update) {
-            this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close;
+         if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
+            this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
             this.init_UiHelper_NetHelper_Str(this.load_BitSetUtil.detail());
             this.load_BitSetUtil = null;
             return this.flush_SyncManager();
@@ -2572,9 +2572,9 @@ public final class PrintCore {
                }
             }
 
-            boolean landingForMachine = this.init_UiHelper_J == PrintCore.J.write && this.init_BitSetUtil_I(this.f_ar_I) != null;
-            if (this.init_UiHelper_J != PrintCore.J.update && !landingForMachine) {
-               this.init_UiHelper_J = PrintCore.J.init;
+            boolean landingForMachine = this.init_UiHelper_J == PrintCore.J.VERIFY && this.init_BitSetUtil_I(this.f_ar_I) != null;
+            if (this.init_UiHelper_J != PrintCore.J.DONE && !landingForMachine) {
+               this.init_UiHelper_J = PrintCore.J.BUILD;
             }
 
             this.reset_J = this.f_H_J = this.init_EventBus.init_J();
@@ -2596,7 +2596,7 @@ public final class PrintCore {
             return this.write_SyncManager();
          }
 
-         if (this.init_UiHelper_J == PrintCore.J.update || this.init_UiHelper_J == PrintCore.J.sync) {
+         if (this.init_UiHelper_J == PrintCore.J.DONE || this.init_UiHelper_J == PrintCore.J.FAILED) {
             return PrintControls.init_SyncManager();
          }
 
@@ -2691,7 +2691,7 @@ public final class PrintCore {
             return this.write_SyncManager();
          }
 
-         if (this.init_EventBus.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.load) {
+         if (this.init_EventBus.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING) {
             return this.flush_SyncManager();
          }
 
@@ -3084,14 +3084,14 @@ public final class PrintCore {
          }
 
          this.init_EventBus.init_V_BlockPos(BlockPos.of(key));
-         if (this.init_UiHelper_J == PrintCore.J.read && this.put_LongOpenHashSet.remove(key)) {
+         if (this.init_UiHelper_J == PrintCore.J.TEARDOWN && this.put_LongOpenHashSet.remove(key)) {
             this.bind_J++;
          }
 
          if (this.init_Long2BooleanOpenHa.containsKey(key) && !this.init_Long2BooleanOpenHa.get(key)) {
             this.init_Long2BooleanOpenHa.put(key, true);
             this.write_Long2IntOpenHashMa.remove(key);
-            if (this.init_UiHelper_J == PrintCore.J.read) {
+            if (this.init_UiHelper_J == PrintCore.J.TEARDOWN) {
                this.f_L_I++;
             }
          }
@@ -3113,7 +3113,7 @@ public final class PrintCore {
          this.sync_LongOpenHashSet.clear();
          this.load_LongOpenHashSet.clear();
          this.init_I_J(key);
-         if (this.init_UiHelper_J == PrintCore.J.read) {
+         if (this.init_UiHelper_J == PrintCore.J.TEARDOWN) {
             this.reset_J = this.init_EventBus.init_J();
          }
       }
@@ -3139,7 +3139,7 @@ public final class PrintCore {
                pending.remove();
                this.write_IntOpenHashSet.remove(i);
                this.init_V_I_I(i, 1);
-            } else if (this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+            } else if (this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                && this.init_PathHelper.load_Z_ListPool_BlockState(this.init_ListPoolArr[i], live)) {
                if (!this.write_IntOpenHashSet.contains(i) || now - this.init_JArr[i] > 12L) {
                   if (this.write_IntOpenHashSet.contains(i)) {
@@ -3248,7 +3248,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper load_UiHelper_NetHelper() {
-      if (this.init_UiHelper_J != PrintCore.J.read && this.init_UiHelper_J != PrintCore.J.write) {
+      if (this.init_UiHelper_J != PrintCore.J.TEARDOWN && this.init_UiHelper_J != PrintCore.J.VERIFY) {
          return null;
       }
 
@@ -3305,29 +3305,29 @@ public final class PrintCore {
          return recovery;
       }
 
-      if (this.init_UiHelper_J != PrintCore.J.write && !this.init_CachePool.init_Z()) {
+      if (this.init_UiHelper_J != PrintCore.J.VERIFY && !this.init_CachePool.init_Z()) {
          PrintCore.Inner_NetHelper travel = this.init_UiHelper_NetHelper_Z(false);
          if (travel != null) {
             return travel;
          }
       }
 
-      if (this.init_EventBus.flush() && this.init_UiHelper_J != PrintCore.J.write) {
+      if (this.init_EventBus.flush() && this.init_UiHelper_J != PrintCore.J.VERIFY) {
          return this.get_UiHelper_NetHelper();
       }
 
       PrintCore.Inner_NetHelper var10000;
       switch (this.init_UiHelper_J) {
-         case init:
+         case BUILD:
             var10000 = this.write_UiHelper_NetHelper();
             break;
-         case load:
+         case FLUIDS:
             var10000 = this.open_UiHelper_NetHelper();
             break;
-         case read:
+         case TEARDOWN:
             var10000 = this.poll_UiHelper_NetHelper();
             break;
-         case write:
+         case VERIFY:
             var10000 = this.push_UiHelper_NetHelper();
             break;
          default:
@@ -3347,9 +3347,9 @@ public final class PrintCore {
       }
 
       PrintTarget t = this.init_ListPoolArr[i];
-      return t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-         && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write
-         && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.load
+      return t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+         && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
+         && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PARTNER
          && !this.set(i);
    }
 
@@ -3362,14 +3362,14 @@ public final class PrintCore {
       if (!load_Z
          || this.read_Z
          || this.init_BArr[i] != 0 && this.init_BArr[i] != 2
-         || this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init) {
+         || this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
          return false;
       } else if (init_Z_BlockState(this.init_ListPoolArr[i].wanted())) {
          return !this.put(i);
       } else if (this.init_BArr[i] == 0 && load_Z_BlockState(this.init_ListPoolArr[i].wanted())) {
          int below = this.init_Long2IntOpenHashMa.get(this.init_ListPoolArr[i].pos().below().asLong());
          return below >= 0
-            && this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+            && this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
             && init_Z_BlockState(this.init_ListPoolArr[below].wanted())
             && (this.init_BArr[below] == 0 || this.init_BArr[below] == 2)
             && !this.put(below);
@@ -3468,10 +3468,10 @@ public final class PrintCore {
          return false;
       }
 
-      if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read && t.wanted().getFluidState().isSource()) {
+      if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && t.wanted().getFluidState().isSource()) {
          int below = this.init_Long2IntOpenHashMa.get(t.pos().below().asLong());
          if (below >= 0
-            && this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+            && this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
             && this.init_ListPoolArr[below].wanted().getFluidState().isSource()
             && this.init_ListPoolArr[below].wanted().getFluidState().getType().isSame(t.wanted().getFluidState().getType())
             && this.init_BArr[below] != 3
@@ -3484,12 +3484,12 @@ public final class PrintCore {
          for (int bi = this.load_I_I(i);
             bi >= 0
                && (
-                  this.init_ListPoolArr[bi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-                     || this.init_ListPoolArr[bi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+                  this.init_ListPoolArr[bi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+                     || this.init_ListPoolArr[bi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                );
             bi = this.load_I_I(bi)
          ) {
-            if (this.init_ListPoolArr[bi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read && this.init_BArr[bi] != 3) {
+            if (this.init_ListPoolArr[bi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && this.init_BArr[bi] != 3) {
                return false;
             }
          }
@@ -3625,8 +3625,8 @@ public final class PrintCore {
       int below = this.init_Long2IntOpenHashMa.get(target.pos().below().asLong());
       return below >= 0
          && (
-            this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-               || this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+            this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+               || this.init_ListPoolArr[below].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
          );
    }
 
@@ -3970,7 +3970,7 @@ public final class PrintCore {
                   .init_PathHelper_StreamU(planned, this.init_ListPoolArr[source].pos(), receivers);
 
                for (BlockPos at : receivers) {
-                  if (trace.reached().getOrDefault(at, trace.unseen()) != autismclient.ai.print.PrintRules.Inner_DataUtil.load) {
+                  if (trace.reached().getOrDefault(at, trace.unseen()) != autismclient.ai.print.PrintRules.Inner_DataUtil.NO_PATH) {
                      return;
                   }
                }
@@ -4209,7 +4209,7 @@ public final class PrintCore {
             if (observer || write_Z_BlockState(part.wanted())) {
                autismclient.ai.print.PrintRules.Inner_StreamUtil trace = configurationTargets.isEmpty()
                   ? new autismclient.ai.print.PrintRules.Inner_StreamUtil(
-                     this.init_PathHelper.init_Map(planned, part.pos(), actuators), autismclient.ai.print.PrintRules.Inner_DataUtil.load
+                     this.init_PathHelper.init_Map(planned, part.pos(), actuators), autismclient.ai.print.PrintRules.Inner_DataUtil.NO_PATH
                   )
                   : this.init_PathHelper.init_PathHelper_StreamU_BlockGetter(planned, part.pos(), actuators, configurationTargets);
 
@@ -4217,19 +4217,19 @@ public final class PrintCore {
                   autismclient.ai.print.PrintRules.Inner_DataUtil effect = trace.reached().getOrDefault(at, trace.unseen());
                   int i = this.init_Long2IntOpenHashMa.get(at.asLong());
                   if (i != source
-                     && effect != autismclient.ai.print.PrintRules.Inner_DataUtil.load
+                     && effect != autismclient.ai.print.PrintRules.Inner_DataUtil.NO_PATH
                      && (inputs[source] == null || !inputs[source].contains(i) || !this.update_Z_I_I(source, i))) {
                      if (this.init_ListPoolArr[i].wanted().getBlock() instanceof NoteBlock) {
                         this.init_V_IntArrayListArr(inputs, source, this.init_ListPoolArr[i].pos());
                      } else if (observer) {
                         this.init_V_IntArrayListArr(observers, i, part.pos());
                      } else if (!this.sync_Z_I_I(source, i)) {
-                        IntArrayList[] before = effect == autismclient.ai.print.PrintRules.Inner_DataUtil.read ? unresolved : preds;
+                        IntArrayList[] before = effect == autismclient.ai.print.PrintRules.Inner_DataUtil.UNKNOWN ? unresolved : preds;
                         this.init_V_IntArrayListArr(before, i, part.pos());
 
                         for (BlockPos input : this.init_PathHelper.init_Set_BlockGetter_BlockPos(planned, part.pos())) {
                            int j = this.init_Long2IntOpenHashMa.get(input.asLong());
-                           if (j >= 0 && this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+                           if (j >= 0 && this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
                               this.init_V_IntArrayListArr(inputs, i, input);
                            }
                         }
@@ -4517,7 +4517,7 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper update_UiHelper_NetHelper() {
-      if (this.init_UiHelper_J != PrintCore.J.init || this.load_BitSetUtil != null || this.read_BitSetUtil != null || this.init_Long2ObjectLinkedO.isEmpty()) {
+      if (this.init_UiHelper_J != PrintCore.J.BUILD || this.load_BitSetUtil != null || this.read_BitSetUtil != null || this.init_Long2ObjectLinkedO.isEmpty()) {
          return null;
       }
 
@@ -4585,7 +4585,7 @@ public final class PrintCore {
             return slope;
          }
 
-         this.init_UiHelper_J = PrintCore.J.load;
+         this.init_UiHelper_J = PrintCore.J.FLUIDS;
          this.f_H_J = this.init_EventBus.init_J();
          this.load_Str = "Pouring fluids";
          return this.open_UiHelper_NetHelper();
@@ -4641,7 +4641,7 @@ public final class PrintCore {
                      && (init_Z_Block(this.init_ListPoolArr[i].wanted().getBlock()) || read_Z_BlockState(this.init_ListPoolArr[i].wanted()))
                      && !this.init_PathHelper.init_Z_ListPool_SignalGetter(this.init_ListPoolArr[i], this.init_ArrayUtil)) {
                      this.init_V_Str("construction cleanup: temporary conductors may hold " + this.init_ListPoolArr[i].pos().toShortString());
-                     this.init_UiHelper_J = PrintCore.J.read;
+                     this.init_UiHelper_J = PrintCore.J.TEARDOWN;
                      return this.poll_UiHelper_NetHelper();
                   }
                }
@@ -4847,14 +4847,14 @@ public final class PrintCore {
          this.load_ZArr[f] = this.write_IArr[f] > 0;
       } else if (before == 0 != (after == 0)) {
          PrintTarget t = this.init_ListPoolArr[i];
-         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-            || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
-            || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.load) {
+         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+            || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
+            || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PARTNER) {
             return;
          }
 
          TreeMap<Integer, Integer> heights = load_Z
-               && t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+               && t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                && init_Z_BlockState(t.wanted())
                && !this.put(i)
             ? this.read_TreeMap
@@ -5068,7 +5068,7 @@ public final class PrintCore {
          if (this.init_BArr[i] == 0
             && this.get(i)
             && this.read_Z_I(i)
-            && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+            && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
             && this.init_ListPoolArr[i].pos().getY() == lowest
             && this.init_ListPoolArr[i].pos().getY() + 2 <= feetY
             && this.init_EventBus.load_Z(this.init_ListPoolArr[i].pos())
@@ -5106,7 +5106,7 @@ public final class PrintCore {
    }
 
    private boolean next(int i) {
-      if (close_Z && this.init_UiHelper_J == PrintCore.J.init) {
+      if (close_Z && this.init_UiHelper_J == PrintCore.J.BUILD) {
          int times = this.init_Int2IntOpenHashMap.addTo(i, 1) + 1;
          long idle = this.init_EventBus.init_J() - this.reset_J;
          return times >= 3 && idle >= 250L || idle >= 500L;
@@ -5341,13 +5341,13 @@ public final class PrintCore {
       }
 
       this.reset_I++;
-      boolean flightBuildStall = this.init_UiHelper_J == PrintCore.J.read && this.init_EventBus.flush() && this.put_Z();
-      if (this.init_UiHelper_J != PrintCore.J.read || flightBuildStall) {
+      boolean flightBuildStall = this.init_UiHelper_J == PrintCore.J.TEARDOWN && this.init_EventBus.flush() && this.put_Z();
+      if (this.init_UiHelper_J != PrintCore.J.TEARDOWN || flightBuildStall) {
          this.f_M_J = -1L;
       }
 
-      if (close_Z && this.init_UiHelper_J == PrintCore.J.read && !flightBuildStall && this.load_J_J(this.init_EventBus.init_J()) >= 500L) {
-         this.init_UiHelper_J = PrintCore.J.sync;
+      if (close_Z && this.init_UiHelper_J == PrintCore.J.TEARDOWN && !flightBuildStall && this.load_J_J(this.init_EventBus.init_J()) >= 500L) {
+         this.init_UiHelper_J = PrintCore.J.FAILED;
          this.init_Str = this.init_Long2ObjectOpenHas.size()
             + " temporary blocks out of reach"
             + (this.queue_I > 0 ? ", " + this.queue_I + " cells could not be placed" : "");
@@ -5356,7 +5356,7 @@ public final class PrintCore {
          return null;
       }
 
-      if (close_Z && (this.init_UiHelper_J == PrintCore.J.init || flightBuildStall) && this.init_EventBus.init_J() - this.reset_J >= 250L) {
+      if (close_Z && (this.init_UiHelper_J == PrintCore.J.BUILD || flightBuildStall) && this.init_EventBus.init_J() - this.reset_J >= 250L) {
          int low = 2147483647;
 
          for (int i = 0; i < this.init_ListPoolArr.length; i++) {
@@ -5381,7 +5381,7 @@ public final class PrintCore {
          }
       }
 
-      if (this.init_UiHelper_J == PrintCore.J.init && !this.update_Z) {
+      if (this.init_UiHelper_J == PrintCore.J.BUILD && !this.update_Z) {
          this.update_Z = true;
          this.read_IntOpenHashSet.clear();
          this.load_Int2IntOpenHashMap.clear();
@@ -5489,13 +5489,13 @@ public final class PrintCore {
       }
 
       BlockPos c = this.init_ListPoolArr[r].pos();
-      boolean dry = this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read;
+      boolean dry = this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID;
       long h = this.init_J_TokenStore_TaskQue(reach, c, 1L, dry);
 
       for (Direction d : Direction.values()) {
          BlockPos neighbor = c.relative(d);
          int ni = this.init_Long2IntOpenHashMa.get(neighbor.asLong());
-         boolean neighborDry = ni >= 0 && this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read;
+         boolean neighborDry = ni >= 0 && this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID;
          h = h * -7046029254386353131L + this.init_J_TokenStore_TaskQue(reach, neighbor, 7 + d.ordinal(), neighborDry);
       }
 
@@ -5810,7 +5810,7 @@ public final class PrintCore {
                   boolean floor = d == Direction.DOWN && !w.getCollisionShape(this.init_ArrayUtil, n).isEmpty();
                   if ((
                         floor
-                           || this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                           || this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                               && !w.getShape(this.init_ArrayUtil, n).isEmpty()
                               && !(w.getBlock() instanceof FallingBlock)
                               && !PrintView.init_Z_BlockState(w)
@@ -5846,7 +5846,7 @@ public final class PrintCore {
          BlockPos n = c.relative(d);
          if (n.asLong() != blocked) {
             int ni = this.init_Long2IntOpenHashMa.get(n.asLong());
-            if (ni >= 0 && this.init_BArr[ni] == 0 && this.get(ni) && this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init) {
+            if (ni >= 0 && this.init_BArr[ni] == 0 && this.get(ni) && this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
                BlockState w = this.init_ListPoolArr[ni].wanted();
                if (this.init_ArrayUtil.getBlockState(n).canBeReplaced()
                   && w.isCollisionShapeFullBlock(this.init_ArrayUtil, n)
@@ -6007,7 +6007,7 @@ public final class PrintCore {
 
       BlockState w = this.init_ListPoolArr[i].wanted();
       boolean ordinary = !w.getBlock().hasDynamicShape()
-         && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+         && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
          && !update_Z_BlockState(w)
          && !w.hasBlockEntity()
          && !init_Z_Block(w.getBlock())
@@ -6039,7 +6039,7 @@ public final class PrintCore {
 
    private boolean value(int i) {
       return this.data(i)
-         || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init && sync_Z_BlockState(this.init_ListPoolArr[i].wanted());
+         || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && sync_Z_BlockState(this.init_ListPoolArr[i].wanted());
    }
 
    private PrintCore.aM write_UiHelper_aM_I_J(int r, long blocked) {
@@ -6079,7 +6079,7 @@ public final class PrintCore {
             if (support.asLong() != blocked
                && i >= 0
                && this.init_BArr[i] == 0
-               && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+               && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                && this.init_ArrayUtil.getBlockState(support).canBeReplaced()) {
                BlockState state = this.init_ListPoolArr[i].wanted();
                if (!state.canBeReplaced()
@@ -6176,7 +6176,7 @@ public final class PrintCore {
                      && i >= 0
                      && i != r
                      && this.init_BArr[i] == 0
-                     && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init) {
+                     && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
                      BlockState state = this.init_ListPoolArr[i].wanted();
                      if (!PrintView.init_Z_BlockState(state)
                         && !(state.getBlock() instanceof FallingBlock)
@@ -6221,7 +6221,7 @@ public final class PrintCore {
                   }
 
                   boolean recovery = this.read_Z_BlockPos_BlockPos(n, c);
-                  PrintTarget probe = new PrintTarget(-1, n, tempState, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, temp, null);
+                  PrintTarget probe = new PrintTarget(-1, n, tempState, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, temp, null);
                   PrintCore.aM shared = this.init_UiHelper_aM_I_3(r, probe, recovery);
                   if (shared != null) {
                      return shared;
@@ -6642,7 +6642,7 @@ public final class PrintCore {
             && this.init_EventBus.load_Z(this.init_ListPoolArr[r].pos())
          ? true
          : r != self
-            && (this.get(r) || this.set(r) || this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read)
+            && (this.get(r) || this.set(r) || this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID)
             && (
                this.init_BArr[r] == 0
                   || this.init_BArr[r] == 2
@@ -6694,11 +6694,11 @@ public final class PrintCore {
       }
 
       long l0 = this.init_ArrayUtil.sync();
-      boolean leaking = this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+      boolean leaking = this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
          && this.init_BlockPos_BlockPos_Fluid(this.init_ListPoolArr[r].pos(), this.init_ListPoolArr[r].wanted().getFluidState().getType()) != null;
       long l1 = this.init_ArrayUtil.sync();
       this.poll_JArr[0] = this.poll_JArr[0] + (l1 - l0);
-      if (put_Z && this.start_Z && this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+      if (put_Z && this.start_Z && this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
          this.init_V_Str(
             "debug kill "
                + pos.toShortString()
@@ -6720,7 +6720,7 @@ public final class PrintCore {
 
       try {
          boolean k = this.init_Z_BlockPos_4(pos, state, r, b);
-         if (put_Z && this.start_Z && this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+         if (put_Z && this.start_Z && this.init_ListPoolArr[r].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
             this.init_V_Str("debug kill result " + k);
          }
 
@@ -7103,7 +7103,7 @@ public final class PrintCore {
 
    private void init_V_I_BitSetUtil(int cell, PrintMachineJob job) {
       long key = job.position().asLong();
-      if (this.init_UiHelper_J == PrintCore.J.init && job.needsAccess() && !this.init_LongOpenHashSet.contains(key)) {
+      if (this.init_UiHelper_J == PrintCore.J.BUILD && job.needsAccess() && !this.init_LongOpenHashSet.contains(key)) {
          if (job.sync()) {
             this.load_IntLinkedOpenHashS.add(cell);
          } else if (!this.init_Long2LongOpenHashM.containsKey(key)) {
@@ -7396,7 +7396,7 @@ public final class PrintCore {
                   this.init_PathHelper,
                   target,
                   Items.AIR,
-                  PrintClicks.Inner_CachePool.load,
+                  PrintClicks.Inner_CachePool.INTERACT,
                   point,
                   crouch,
                   false,
@@ -7491,7 +7491,7 @@ public final class PrintCore {
                   this.init_PathHelper,
                   t,
                   t.item(),
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   feet,
                   false,
                   true,
@@ -7583,7 +7583,7 @@ public final class PrintCore {
                   this.init_PathHelper,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   body.position(),
                   true,
                   true,
@@ -7632,7 +7632,7 @@ public final class PrintCore {
                   this.init_PathHelper,
                   t,
                   t.item(),
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   bodyPos,
                   false,
                   true,
@@ -7732,7 +7732,7 @@ public final class PrintCore {
                         this.init_PathHelper,
                         t,
                         item,
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         feet,
                         true,
                         true,
@@ -7876,7 +7876,7 @@ public final class PrintCore {
       for (int i : cells) {
          PrintTarget target = this.init_ListPoolArr[i];
          BlockState state = target.wanted();
-         if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+         if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
             && !update_Z_BlockState(state)
             && !init_Z_Block(state.getBlock())
             && !state.hasBlockEntity()
@@ -7898,7 +7898,7 @@ public final class PrintCore {
                   this.init_PathHelper,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   feet,
                   true,
                   true,
@@ -7943,7 +7943,7 @@ public final class PrintCore {
                      && !this.close_LongOpenHashSet.contains(init_J_I_J(i, batch.init_J))) {
                      PrintTarget target = this.init_ListPoolArr[i];
                      BlockState state = target.wanted();
-                     if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                     if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                         && !update_Z_BlockState(state)
                         && !init_Z_Block(state.getBlock())
                         && !state.hasBlockEntity()
@@ -7987,7 +7987,7 @@ public final class PrintCore {
                   this.init_PathHelper,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   feet,
                   true,
                   true,
@@ -8054,7 +8054,7 @@ public final class PrintCore {
                      this.init_PathHelper,
                      t,
                      t.item(),
-                     PrintClicks.Inner_CachePool.init,
+                     PrintClicks.Inner_CachePool.PLACE,
                      standAt,
                      true,
                      true,
@@ -8156,7 +8156,7 @@ public final class PrintCore {
          this.f_E_J = this.init_EventBus.init_J();
       }
 
-      if ((this.init_UiHelper_J == PrintCore.J.read || this.push_Z())
+      if ((this.init_UiHelper_J == PrintCore.J.TEARDOWN || this.push_Z())
          && this.tick_Z_BlockPos(BlockPos.of(reach.init_J))
          && this.init_Z_J(reach.init_J, true, checks)
          && !this.init_Z_TokenStore_TaskQue(reach, key, true, checks)) {
@@ -8386,7 +8386,7 @@ public final class PrintCore {
                                                    this.init_PathHelper,
                                                    this.init_ListPoolArr[g],
                                                    this.init_ListPoolArr[g].item(),
-                                                   PrintClicks.Inner_CachePool.init,
+                                                   PrintClicks.Inner_CachePool.PLACE,
                                                    feet,
                                                    true,
                                                    false,
@@ -8411,7 +8411,7 @@ public final class PrintCore {
                                                       this.init_PathHelper,
                                                       this.init_ListPoolArr[g],
                                                       this.init_ListPoolArr[g].item(),
-                                                      PrintClicks.Inner_CachePool.init,
+                                                      PrintClicks.Inner_CachePool.PLACE,
                                                       feet,
                                                       true,
                                                       true,
@@ -8522,7 +8522,7 @@ public final class PrintCore {
                            this.init_PathHelper,
                            this.init_ListPoolArr[i],
                            this.init_ListPoolArr[i].item(),
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            feet,
                            true,
                            false,
@@ -8686,7 +8686,7 @@ public final class PrintCore {
          }
 
          PrintTarget t = this.init_ListPoolArr[i];
-         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
             && this.init_EventBus.init_Z_BlockState_BlockPos(t.wanted(), t.pos())
             && !this.init_Z_I_D(i, -1.0 / 0.0)
             && (this.block_Z || this.init_UiHelper_aM_I_2(i, -9223372036854775808L, true) == null || this.update_Int2IntOpenHashMap.addTo(i, 1) >= 3)) {
@@ -8726,13 +8726,13 @@ public final class PrintCore {
                         int ni = this.init_Long2IntOpenHashMa.get(n.asLong());
                         boolean freeCell = ni < 0
                            || this.init_ListPoolArr[ni].fluid()
-                           || this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write;
+                           || this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW;
                         boolean permanent = pass == 0;
                         if ((
                               permanent
                                  ? !freeCell
                                     && this.init_BArr[ni] == 0
-                                    && this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                                    && this.init_ListPoolArr[ni].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                                     && !this.init_ListPoolArr[ni].fluid()
                                     && this.init_ListPoolArr[ni].item() instanceof BlockItem
                                     && !(this.init_ListPoolArr[ni].wanted().getBlock() instanceof FallingBlock)
@@ -8818,7 +8818,7 @@ public final class PrintCore {
                               if (cellStance != -9223372036854775808L) {
                                  PrintTarget probe = permanent
                                     ? this.init_ListPoolArr[ni]
-                                    : new PrintTarget(-1, n, tempState, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, temp, null);
+                                    : new PrintTarget(-1, n, tempState, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, temp, null);
                                  Item supportItem = permanent ? probe.item() : temp;
 
                                  for (long key : this.init_LongArrayList_TokenStore_TaskQue(reach, n, true)) {
@@ -8831,7 +8831,7 @@ public final class PrintCore {
                                              this.init_PathHelper,
                                              probe,
                                              supportItem,
-                                             PrintClicks.Inner_CachePool.init,
+                                             PrintClicks.Inner_CachePool.PLACE,
                                              feet,
                                              true,
                                              permanent,
@@ -8946,7 +8946,7 @@ public final class PrintCore {
       PrintNav.Inner_TaskQueue reach, int i, Item temp, BlockState tempState, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
    ) {
       PrintTarget t = this.init_ListPoolArr[i];
-      if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init && this.init_EventBus.init_Z_BlockState_BlockPos(t.wanted(), t.pos())) {
+      if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && this.init_EventBus.init_Z_BlockState_BlockPos(t.wanted(), t.pos())) {
          for (Direction d : Direction.values()) {
             BlockPos n = t.pos().relative(d);
             if (this.put(n)) {
@@ -9032,7 +9032,7 @@ public final class PrintCore {
 
                   if (targetPurpose != null) {
                      BlockPos first = path.get(0);
-                     PrintTarget probe = new PrintTarget(-1, first, tempState, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, temp, null);
+                     PrintTarget probe = new PrintTarget(-1, first, tempState, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, temp, null);
 
                      for (long key : this.init_LongArrayList_TokenStore_TaskQue(reach, first, true)) {
                         for (Vec3 feet : PrintClicks.init(this.init_ArrayUtil, key, reach.load(key))) {
@@ -9042,7 +9042,7 @@ public final class PrintCore {
                               this.init_PathHelper,
                               probe,
                               temp,
-                              PrintClicks.Inner_CachePool.init,
+                              PrintClicks.Inner_CachePool.PLACE,
                               feet,
                               true,
                               false,
@@ -9103,7 +9103,7 @@ public final class PrintCore {
    private boolean put(BlockPos c) {
       if (this.init_ArrayUtil.getBlockState(c).isAir() && !this.read_LongOpenHashSet.contains(c.asLong()) && this.read_Z_BlockPos(c)) {
          int ci = this.init_Long2IntOpenHashMa.get(c.asLong());
-         return ci < 0 || this.init_ListPoolArr[ci].fluid() || this.init_ListPoolArr[ci].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write;
+         return ci < 0 || this.init_ListPoolArr[ci].fluid() || this.init_ListPoolArr[ci].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW;
       } else {
          return false;
       }
@@ -9130,7 +9130,7 @@ public final class PrintCore {
             if (this.get(qi)
                && !this.sync_Z_I(qi)
                && !this.read_IntOpenHashSet.contains(qi)
-               && this.init_ListPoolArr[qi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init) {
+               && this.init_ListPoolArr[qi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
                return q.getY() == lowest
                   && !this.poll_Z_BlockPos(q)
                   && this.init_EventBus.init_Z_BlockState_BlockPos(this.init_ListPoolArr[qi].wanted(), q)
@@ -9169,7 +9169,7 @@ public final class PrintCore {
 
    boolean load_Z_BlockPos_BlockPos(BlockPos support, BlockPos owner) {
       int i = this.init_Long2IntOpenHashMa.get(owner.asLong());
-      if (i >= 0 && this.init_BArr[i] == 0 && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init) {
+      if (i >= 0 && this.init_BArr[i] == 0 && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
          BlockState wanted = this.init_ListPoolArr[i].wanted();
          BooleanProperty open = BlockStateProperties.OPEN;
          if (wanted.hasProperty(open) && wanted.getValue(open) && this.init_EventBus.init_Z_BlockState_BlockPos(wanted, owner)) {
@@ -9178,7 +9178,7 @@ public final class PrintCore {
                return false;
             }
 
-            PrintTarget probe = new PrintTarget(-1, support, temporary, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+            PrintTarget probe = new PrintTarget(-1, support, temporary, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
             autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);
             this.init_ArrayUtil.load(support, temporary);
 
@@ -9218,7 +9218,7 @@ public final class PrintCore {
                                              this.init_PathHelper,
                                              probe,
                                              Items.AIR,
-                                             PrintClicks.Inner_CachePool.update,
+                                             PrintClicks.Inner_CachePool.DIG,
                                              feet,
                                              place.crouch(),
                                              false,
@@ -9325,7 +9325,7 @@ public final class PrintCore {
             boolean stray = t.wanted().isAir();
             if (!stray
                && (
-                  t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                  t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                      || this.init_BArr[i] != 3
                      || t.item() == null
                      || t.item() == Items.AIR
@@ -9448,12 +9448,12 @@ public final class PrintCore {
          && !open.getValue(BlockStateProperties.WATERLOGGED)
          && this.poll(door.pos(), support)) {
          PrintTarget closed = new PrintTarget(
-            -1, door.pos(), open.setValue(BlockStateProperties.OPEN, false), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null
+            -1, door.pos(), open.setValue(BlockStateProperties.OPEN, false), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
          );
          boolean firstOpen = this.init_BArr[owner] == 2 && this.init_ArrayUtil.getBlockState(door.pos()) == closed.wanted();
          if (firstOpen || this.init_BArr[owner] == 3 && this.init_ArrayUtil.getBlockState(door.pos()) == open) {
             BlockState state = this.init_Long2ObjectOpenHas.get(support.asLong());
-            PrintTarget probe = new PrintTarget(-1, support, state, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+            PrintTarget probe = new PrintTarget(-1, support, state, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
             PrintCore.t search = new PrintCore.t(this.init_ArrayUtil.read_J(), reach.init_J);
             return search.equals(this.pop_Long2ObjectOpenHas.get(support.asLong())) ? null : new PrintCore.ad(reach, owner, closed, probe, search, firstOpen);
          } else {
@@ -9491,7 +9491,7 @@ public final class PrintCore {
                      this.init_PathHelper,
                      closed,
                      Items.AIR,
-                     PrintClicks.Inner_CachePool.load,
+                     PrintClicks.Inner_CachePool.INTERACT,
                      point,
                      false,
                      true,
@@ -9510,7 +9510,7 @@ public final class PrintCore {
                      this.init_PathHelper,
                      support,
                      Items.AIR,
-                     PrintClicks.Inner_CachePool.update,
+                     PrintClicks.Inner_CachePool.DIG,
                      point,
                      true,
                      true,
@@ -9531,7 +9531,7 @@ public final class PrintCore {
                         this.init_PathHelper,
                         open,
                         Items.AIR,
-                        PrintClicks.Inner_CachePool.load,
+                        PrintClicks.Inner_CachePool.INTERACT,
                         point,
                         false,
                         true,
@@ -9630,7 +9630,7 @@ public final class PrintCore {
          return null;
       }
 
-      PrintTarget probe = new PrintTarget(-1, p, this.init_ArrayUtil.getBlockState(p), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+      PrintTarget probe = new PrintTarget(-1, p, this.init_ArrayUtil.getBlockState(p), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
       autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(6000);
       LongArrayList candidates = new LongArrayList();
 
@@ -9691,7 +9691,7 @@ public final class PrintCore {
                         this.init_PathHelper,
                         t,
                         t.item(),
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         feet,
                         true,
                         false,
@@ -9733,7 +9733,7 @@ public final class PrintCore {
    private PrintCore.Inner_NetHelper load_UiHelper_NetHelper_TokenStore_TaskQue_IntArrayList(PrintNav.Inner_TaskQueue reach, IntArrayList frontier) {
       for (int i : frontier) {
          PrintTarget t = this.init_ListPoolArr[i];
-         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init && !this.tick_LongOpenHashSet.contains(t.pos().asLong())) {
+         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && !this.tick_LongOpenHashSet.contains(t.pos().asLong())) {
             BlockState here = this.init_ArrayUtil.getBlockState(t.pos());
             if (!here.isAir()
                && here != PrintView.init_BlockState
@@ -10014,7 +10014,7 @@ public final class PrintCore {
       if (m.equals(filled)) {
          end = this.init_ListPoolArr[this.init_Long2IntOpenHashMa.get(filled.asLong())].wanted();
       } else if (mi >= 0) {
-         if (this.init_ListPoolArr[mi].fluid() || this.init_ListPoolArr[mi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+         if (this.init_ListPoolArr[mi].fluid() || this.init_ListPoolArr[mi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
             return true;
          }
 
@@ -10037,7 +10037,7 @@ public final class PrintCore {
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_J_BlockPos(long station, BlockPos target) {
       ArrayDeque<Supplier<PrintCore.Inner_NetHelper>> parts = new ArrayDeque<>();
       parts.add(
-         () -> this.init_UiHelper_J == PrintCore.J.read
+         () -> this.init_UiHelper_J == PrintCore.J.TEARDOWN
                && this.init_Long2ObjectOpenHas.containsKey(target.asLong())
                && this.update_Z_BlockPos(target)
                && PrintNav.init(this.init_ArrayUtil, this.init_Vec3()).asLong() == station
@@ -10197,7 +10197,7 @@ public final class PrintCore {
       }
 
       PrintTarget t = this.init_ListPoolArr[i];
-      boolean ok = t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+      boolean ok = t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
          && t.wanted().isCollisionShapeFullBlock(this.init_ArrayUtil, t.pos())
          && this.init_PathHelper.init_PathHelper_CachePo_ListPool_BlockState(t, t.wanted()) == null
          && AiPrintRules.init_Z(t)
@@ -10358,7 +10358,7 @@ public final class PrintCore {
          if (this.init_BArr[i] != 3
             && this.init_BArr[i] != 5
             && (
-               t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+               t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                   || this.init_BArr[i] == 2 && this.init_PathHelper.write_Z_ListPool_BlockState(t, this.init_ArrayUtil.getBlockState(t.pos()))
             )) {
             any = true;
@@ -10382,7 +10382,7 @@ public final class PrintCore {
       }
 
       if (!any) {
-         this.init_UiHelper_J = PrintCore.J.read;
+         this.init_UiHelper_J = PrintCore.J.TEARDOWN;
          this.load_Str = "Removing temporary blocks";
          return this.poll_UiHelper_NetHelper();
       }
@@ -10395,13 +10395,13 @@ public final class PrintCore {
          PrintTarget t = this.init_ListPoolArr[i];
          if (this.init_EventBus.load_Z(t.pos()) && this.init_BArr[i] != 3 && this.init_BArr[i] != 5) {
             PrintClicks.Inner_CachePool mode;
-            if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+            if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
                boolean lava = t.wanted().getFluidState().getType().isSame(Fluids.LAVA);
                if (lava && holdLava) {
                   continue;
                }
 
-               mode = PrintClicks.Inner_CachePool.read;
+               mode = PrintClicks.Inner_CachePool.POUR;
                PrintCore.Inner_NetHelper preparation = this.init_UiHelper_NetHelper_TokenStore_TaskQue_I(reach, i);
                if (preparation == this.write_UiHelper_NetHelper) {
                   continue;
@@ -10459,7 +10459,7 @@ public final class PrintCore {
                   continue;
                }
 
-               mode = PrintClicks.Inner_CachePool.write;
+               mode = PrintClicks.Inner_CachePool.WATERLOG;
                this.init_V_BlockPos_Fluid(t.pos(), t.wanted().getFluidState().getType());
                PrintCore.Inner_NetHelper shaping = this.sync_UiHelper_NetHelper_TokenStore_TaskQue(reach);
                if (shaping == this.write_UiHelper_NetHelper) {
@@ -10495,7 +10495,7 @@ public final class PrintCore {
                            bucket,
                            mode,
                            feet,
-                           mode != PrintClicks.Inner_CachePool.write,
+                           mode != PrintClicks.Inner_CachePool.WATERLOG,
                            false,
                            budget,
                            4.1000000000000005
@@ -10538,7 +10538,7 @@ public final class PrintCore {
       IntArrayList goals = new IntArrayList();
 
       for (int i : this.init_IArr()) {
-         if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+         if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
             && this.init_BArr[i] == 0
             && !this.sync_Z_I(i)
             && !this.init_Long2ObjectOpenHas.containsKey(this.init_ListPoolArr[i].pos().asLong())
@@ -10579,7 +10579,7 @@ public final class PrintCore {
             int n = 0;
 
             for (int i : this.init_IArr()) {
-               if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read && this.init_BArr[i] == 0) {
+               if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && this.init_BArr[i] == 0) {
                   this.load_V_I_Str(i, "fluids stuck: " + this.read_Str);
                   n++;
                } else if (this.init_BArr[i] == 2
@@ -10602,7 +10602,7 @@ public final class PrintCore {
 
    LongArrayList init_LongArrayList_I(int cell) {
       LongArrayList blocks = new LongArrayList();
-      if (this.init_BArr[cell] == 0 && this.init_ListPoolArr[cell].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+      if (this.init_BArr[cell] == 0 && this.init_ListPoolArr[cell].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
          BlockPos source = this.init_ListPoolArr[cell].pos();
          this.init_V_LongArrayList_BlockPos(blocks, source);
          PrintCore.aB shape = this.init_UiHelper_aB_I(cell);
@@ -10708,7 +10708,7 @@ public final class PrintCore {
          boolean sourceCell = at.equals(source)
             || this.init_ArrayUtil.getBlockState(at).getFluidState().isSource()
             || ti >= 0
-               && this.init_ListPoolArr[ti].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+               && this.init_ListPoolArr[ti].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                && this.init_ListPoolArr[ti].wanted().getFluidState().getType().isSame(fluid);
          if (sourceCell) {
             left = reach;
@@ -10832,7 +10832,7 @@ public final class PrintCore {
             return null;
          }
 
-         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+         if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
             return null;
          }
       }
@@ -10936,7 +10936,7 @@ public final class PrintCore {
                         this.init_PathHelper,
                         target,
                         PrintClicks.init(target),
-                        PrintClicks.Inner_CachePool.write,
+                        PrintClicks.Inner_CachePool.WATERLOG,
                         point,
                         false,
                         false,
@@ -10962,7 +10962,7 @@ public final class PrintCore {
                               }
 
                               this.init_V_Str("waterlog: completing nearby " + target.pos().toShortString());
-                              PrintCore.Inner_NetHelper pour = new PrintCore.aj(i, PrintClicks.Inner_CachePool.write, key, point);
+                              PrintCore.Inner_NetHelper pour = new PrintCore.aj(i, PrintClicks.Inner_CachePool.WATERLOG, key, point);
                               return key == reach.init_J ? pour : new PrintCore.aL(reach.init_List(key), reach, pour);
                            }
                         }
@@ -10989,7 +10989,7 @@ public final class PrintCore {
       for (int i : this.load_IArr()) {
          if (this.init_BArr[i] != 3 && this.init_BArr[i] != 5) {
             PrintTarget t = this.init_ListPoolArr[i];
-            if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read && t.wanted().getFluidState().getType().isSame(Fluids.WATER)) {
+            if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && t.wanted().getFluidState().getType().isSame(Fluids.WATER)) {
                return true;
             }
          }
@@ -11003,7 +11003,7 @@ public final class PrintCore {
          IntArrayList cells = new IntArrayList();
 
          for (int i = 0; i < this.init_ListPoolArr.length; i++) {
-            if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read || sync_Z_ListPool(this.init_ListPoolArr[i])) {
+            if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID || sync_Z_ListPool(this.init_ListPoolArr[i])) {
                cells.add(i);
             }
          }
@@ -11017,7 +11017,7 @@ public final class PrintCore {
    private int[] load_IArr() {
       if (this.run_IArr == null) {
          this.run_IArr = Arrays.stream(this.read_IArr())
-            .filter(i -> this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read)
+            .filter(i -> this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID)
             .toArray();
       }
 
@@ -11066,7 +11066,7 @@ public final class PrintCore {
          if (this.init_ArrayUtil.getBlockState(p).isAir()) {
             this.init_ArrayUtil.init_V_BlockPos_BlockState(p, water);
             assumed.add(p);
-         } else if (p.equals(t.pos()) && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+         } else if (p.equals(t.pos()) && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
             this.init_ArrayUtil.init_V_BlockPos_BlockState(p, t.wanted());
             assumed.add(p);
          }
@@ -11104,7 +11104,7 @@ public final class PrintCore {
                if (dx != 0 || dz != 0) {
                   int i = this.init_Long2IntOpenHashMa.get(BlockPos.asLong(p.getX() + dx, p.getY() + dy, p.getZ() + dz));
                   if (i >= 0
-                     && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+                     && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                      && this.init_BArr[i] != 3
                      && this.init_BArr[i] != 5
                      && this.init_BlockPos_BlockPos_Fluid(this.init_ListPoolArr[i].pos(), this.init_ListPoolArr[i].wanted().getFluidState().getType()) == null) {
@@ -11124,7 +11124,7 @@ public final class PrintCore {
       }
 
       PrintTarget t = this.init_ListPoolArr[i];
-      return (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write)
+      return (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID || t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW)
          && this.init_BArr[i] != 3
          && this.init_BArr[i] != 1;
    }
@@ -11179,7 +11179,7 @@ public final class PrintCore {
                   && (!servedOnly || this.read_Long2IntOpenHashMa.containsKey(cellKey) && this.init_BArr[this.read_Long2IntOpenHashMa.get(cellKey)] == 3)
                   && !this.read_LongOpenHashSet.contains(cellKey)
                   && this.reset(p)) {
-                  PrintTarget probe = new PrintTarget(-1, p, state, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, temp, null);
+                  PrintTarget probe = new PrintTarget(-1, p, state, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, temp, null);
 
                   for (int dx = -4; dx <= 4; dx++) {
                      for (int dz = -4; dz <= 4; dz++) {
@@ -11195,7 +11195,7 @@ public final class PrintCore {
                                        this.init_PathHelper,
                                        probe,
                                        temp,
-                                       PrintClicks.Inner_CachePool.init,
+                                       PrintClicks.Inner_CachePool.PLACE,
                                        feet,
                                        true,
                                        false,
@@ -11248,7 +11248,7 @@ public final class PrintCore {
 
          if (helper == null) {
             this.valid_Z = true;
-            this.init_UiHelper_J = PrintCore.J.write;
+            this.init_UiHelper_J = PrintCore.J.VERIFY;
             this.load_Str = "Using existing construction access for saved machine work";
             return this.push_UiHelper_NetHelper();
          }
@@ -11324,7 +11324,7 @@ public final class PrintCore {
             this.init_V_Str("pit: nothing fills " + BlockPos.of(lowestPit).toShortString() + (plan == null ? " (" + access.init_Str + ")" : ""));
          }
 
-         this.init_UiHelper_J = PrintCore.J.write;
+         this.init_UiHelper_J = PrintCore.J.VERIFY;
          this.load_Str = "Checking";
          return this.push_UiHelper_NetHelper();
       } else {
@@ -11672,7 +11672,7 @@ public final class PrintCore {
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_TokenStore_TaskQue_2(
       PrintNav.Inner_TaskQueue reach, List<Long> order, autismclient.ai.print.PrintClicks.Inner_DataUtil budget, double minimumFeet
    ) {
-      if (this.init_UiHelper_J == PrintCore.J.read) {
+      if (this.init_UiHelper_J == PrintCore.J.TEARDOWN) {
          if (order.isEmpty()) {
             return null;
          }
@@ -11684,7 +11684,7 @@ public final class PrintCore {
          for (long key : order) {
             if (!this.sync_Z_J(key)) {
                BlockPos p = BlockPos.of(key);
-               PrintTarget probe = new PrintTarget(-1, p, this.init_ArrayUtil.getBlockState(p), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+               PrintTarget probe = new PrintTarget(-1, p, this.init_ArrayUtil.getBlockState(p), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
                long top = BlockPos.asLong(p.getX(), p.getY() + 1, p.getZ());
                if (minimumFeet == -1.0 / 0.0
                   && reach.init_Z(top)
@@ -11756,7 +11756,7 @@ public final class PrintCore {
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_TokenStore_TaskQue_2(
       PrintNav.Inner_TaskQueue reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Inner_StreamUtil click
    ) {
-      if (this.init_UiHelper_J != PrintCore.J.read) {
+      if (this.init_UiHelper_J != PrintCore.J.TEARDOWN) {
          if (this.init_Z_TokenStore_TaskQue_J(reach, station) && this.write_Z_BlockPos_BlockPos(under ? position : BlockPos.of(station), position)) {
             PrintCore.Inner_NetHelper dig = under
                ? new PrintCore.StreamGate(position, true)
@@ -11822,7 +11822,7 @@ public final class PrintCore {
             return false;
          }
 
-         this.init_UiHelper_J = PrintCore.J.init;
+         this.init_UiHelper_J = PrintCore.J.BUILD;
          this.open_V();
          this.reset_J = this.f_H_J = this.init_EventBus.init_J();
          this.load_Str = "Retrying " + reopened + " cells before removing access";
@@ -11857,7 +11857,7 @@ public final class PrintCore {
 
       if (this.init_EventBus.flush() && this.pop_Z()) {
          PrintCore.Inner_NetHelper slope = this.init_UiHelper_NetHelper();
-         if (slope != null || this.init_UiHelper_J == PrintCore.J.sync) {
+         if (slope != null || this.init_UiHelper_J == PrintCore.J.FAILED) {
             return slope;
          }
       }
@@ -11869,19 +11869,19 @@ public final class PrintCore {
          }
 
          autismclient.ai.print.PrintChunkWork.Inner_DataUtil audit = this.init_CachePool.init_CachePool_DataUtil_IntConsumer_I(this::read_V_I, 512);
-         if (audit.missing() > 0 && this.init_UiHelper_J == PrintCore.J.write) {
+         if (audit.missing() > 0 && this.init_UiHelper_J == PrintCore.J.VERIFY) {
             PrintCore.aJ repair = new PrintCore.aJ(
                this.init_ArrayUtil.read_J(), this.scan_J, this.f_J_I, this.push_I, this.pop_I, this.open_I, audit.missing(), audit.failed()
             );
             if (audit.failed() > 0 && repair.equals(this.init_UiHelper_aJ)) {
-               this.init_UiHelper_J = PrintCore.J.sync;
+               this.init_UiHelper_J = PrintCore.J.FAILED;
                this.init_Str = audit.failed() + " cells could not be placed; " + audit.missing() + " remaining cells did not become buildable after repair";
                this.load_Str = this.init_Str;
                return null;
             } else {
                this.init_UiHelper_aJ = repair;
                this.valid_Z = false;
-               this.init_UiHelper_J = PrintCore.J.init;
+               this.init_UiHelper_J = PrintCore.J.BUILD;
                this.read_Z = true;
                this.open_V();
                this.reset_J = this.f_H_J = this.init_EventBus.init_J();
@@ -11890,7 +11890,7 @@ public final class PrintCore {
             }
          } else {
             if (audit.failed() > 0) {
-               this.init_UiHelper_J = PrintCore.J.sync;
+               this.init_UiHelper_J = PrintCore.J.FAILED;
                this.init_Str = audit.failed() + " cells could not be placed";
                return null;
             }
@@ -11901,7 +11901,7 @@ public final class PrintCore {
             }
 
             if (audit.flowing() > 0) {
-               this.init_UiHelper_J = PrintCore.J.sync;
+               this.init_UiHelper_J = PrintCore.J.FAILED;
                this.init_Str = audit.flowing() + " flowing cells did not reach their required fluid after settling";
                this.load_Str = this.init_Str;
                return null;
@@ -11927,7 +11927,7 @@ public final class PrintCore {
                }
 
                if (!this.run_LongOpenHashSet.isEmpty()) {
-                  this.init_UiHelper_J = PrintCore.J.sync;
+                  this.init_UiHelper_J = PrintCore.J.FAILED;
                   this.init_Str = this.run_LongOpenHashSet.size() + " excavated terrain cells could not be refilled";
                   this.load_Str = this.init_Str;
                   return null;
@@ -11941,7 +11941,7 @@ public final class PrintCore {
 
                if (!this.close_Long2ObjectOpenHas.isEmpty()) {
                   PrintCore.Inner_NetHelper check = this.pop_UiHelper_NetHelper();
-                  if (check != null || this.init_UiHelper_J == PrintCore.J.sync) {
+                  if (check != null || this.init_UiHelper_J == PrintCore.J.FAILED) {
                      return check;
                   }
                }
@@ -11953,10 +11953,10 @@ public final class PrintCore {
                      return new PrintCore.T(new autismclient.ai.print.PrintChunkWork.Inner_StreamUtil(PrintChunkWork.init_J_BlockPos(missing)));
                   } else {
                      autismclient.ai.print.PrintMachineJob.Inner_DataUtil result = clock.init_BitSetUtil_DataUti();
-                     if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init) {
+                     if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING) {
                         return new PrintCore.aK(1);
-                     } else if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update) {
-                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close;
+                     } else if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
+                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
                         return this.init_UiHelper_NetHelper_Str(clock.detail());
                      } else {
                         this.f_S_I++;
@@ -11970,11 +11970,11 @@ public final class PrintCore {
                      return new PrintCore.T(new autismclient.ai.print.PrintChunkWork.Inner_StreamUtil(PrintChunkWork.init_J_BlockPos(missing)));
                   } else {
                      autismclient.ai.print.PrintMachineJob.Inner_DataUtil result = vehicle.init_BitSetUtil_DataUti();
-                     if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.init) {
+                     if (result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.PREPARING) {
                         this.load_Str = vehicle.detail();
                         return new PrintCore.aK(1);
-                     } else if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update) {
-                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close;
+                     } else if (result != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
+                        this.data_Z = this.data_Z | result == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
                         return this.init_UiHelper_NetHelper_Str(vehicle.detail());
                      } else {
                         this.f_P_I++;
@@ -12018,7 +12018,7 @@ public final class PrintCore {
                      return new PrintCore.aK(1);
                   }
 
-                  this.init_UiHelper_J = PrintCore.J.update;
+                  this.init_UiHelper_J = PrintCore.J.DONE;
                   this.load_Str = "Done; every chunk observed during final verification";
                   return null;
                }
@@ -12030,7 +12030,7 @@ public final class PrintCore {
             return visit;
          }
 
-         this.init_UiHelper_J = PrintCore.J.read;
+         this.init_UiHelper_J = PrintCore.J.TEARDOWN;
          return this.init_EventBus.flush() ? this.get_UiHelper_NetHelper() : this.poll_UiHelper_NetHelper();
       }
    }
@@ -12108,8 +12108,8 @@ public final class PrintCore {
    }
 
    private boolean init_Z_BitSetUtil(PrintMachineJob job, BlockHitResult hit, PrintControls controls) {
-      boolean early = this.init_UiHelper_J == PrintCore.J.init && job == this.update_BitSetUtil && job.sync();
-      if ((early || this.init_UiHelper_J == PrintCore.J.write && this.f_I_I == 0)
+      boolean early = this.init_UiHelper_J == PrintCore.J.BUILD && job == this.update_BitSetUtil && job.sync();
+      if ((early || this.init_UiHelper_J == PrintCore.J.VERIFY && this.f_I_I == 0)
          && this.load_BitSetUtil == null
          && hit != null
          && this.write_BitSetUtil == job
@@ -12229,7 +12229,7 @@ public final class PrintCore {
          return new PrintCore.aK(1);
       }
 
-      if (this.init_UiHelper_J == PrintCore.J.write && this.start_Z) {
+      if (this.init_UiHelper_J == PrintCore.J.VERIFY && this.start_Z) {
          this.init_V_Str(
             "collector at "
                + job.position().toShortString()
@@ -12245,23 +12245,23 @@ public final class PrintCore {
       }
 
       autismclient.ai.print.PrintMachineJob.Inner_DataUtil state = job.prepare();
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.write) {
+      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
          this.read_BitSetUtil = job;
          this.load_Str = job.detail();
          return new PrintCore.aK(1);
       }
 
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.sync) {
+      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SKIPPED) {
          this.read_V_BitSetUtil(job);
          return new PrintCore.aK(1);
       }
 
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.update) {
+      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
          this.load_V_BitSetUtil(job);
          return new PrintCore.aK(1);
       }
 
-      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush && job instanceof PrintRailVehicle vehicle && !vehicle.init_MethodUtil_StreamU().railPlacement()
+      if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT && job instanceof PrintRailVehicle vehicle && !vehicle.init_MethodUtil_StreamU().railPlacement()
          )
        {
          this.write_BitSetUtil = null;
@@ -12275,7 +12275,7 @@ public final class PrintCore {
 
          this.init_V_Str("Skipped the off-rail minecart at " + job.position().toShortString());
          return new PrintCore.aK(1);
-      } else if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush && job.b_()) {
+      } else if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT && job.b_()) {
          if (this.read_ArrayList.size() < 16) {
             this.read_ArrayList.add(job.position().toShortString() + ": " + job.detail());
          }
@@ -12286,10 +12286,10 @@ public final class PrintCore {
 
          this.read_V_BitSetUtil(job);
          return new PrintCore.aK(1);
-      } else if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.flush || state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close) {
-         this.data_Z = this.data_Z | state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.close;
+      } else if (state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.CONFLICT || state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN) {
+         this.data_Z = this.data_Z | state == autismclient.ai.print.PrintMachineJob.Inner_DataUtil.UNCERTAIN;
          return this.init_UiHelper_NetHelper_Str(job.detail());
-      } else if (state != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.load) {
+      } else if (state != autismclient.ai.print.PrintMachineJob.Inner_DataUtil.READY) {
          this.load_Str = job.detail();
          return new PrintCore.aK(1);
       } else {
@@ -12336,7 +12336,7 @@ public final class PrintCore {
       }
 
       PrintMachineJob job = this.init_BitSetUtil_I(cell);
-      if (job != null && this.init_LongOpenHashSet.contains(job.position().asLong()) && this.init_UiHelper_J == PrintCore.J.write) {
+      if (job != null && this.init_LongOpenHashSet.contains(job.position().asLong()) && this.init_UiHelper_J == PrintCore.J.VERIFY) {
          if (this.read_ArrayList.size() < 16) {
             this.read_ArrayList.add(job.position().toShortString() + ": enclosed by the finished build before its contents could go in");
          }
@@ -12379,7 +12379,7 @@ public final class PrintCore {
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_Z(boolean verification) {
       autismclient.ai.print.PrintChunkWork.Inner_StreamUtil destination = this.init_CachePool.init_CachePool_StreamUt_Vec3_Z(this.init_Vec3(), verification);
-      boolean sourceFirst = destination != null && !verification && (this.init_UiHelper_J == PrintCore.J.init || this.init_UiHelper_J == PrintCore.J.load);
+      boolean sourceFirst = destination != null && !verification && (this.init_UiHelper_J == PrintCore.J.BUILD || this.init_UiHelper_J == PrintCore.J.FLUIDS);
 
       for (LongSet owned : List.of(
          this.init_Long2ObjectOpenHas.keySet(), this.load_Long2ObjectOpenHas.keySet(), verification ? this.get_LongOpenHashSet : new LongOpenHashSet()
@@ -12571,7 +12571,7 @@ public final class PrintCore {
    private int size() {
       if (this.table_Z && this.drain_Z && this.init_EventBus.sync_Z() && this.init_IntArrayList.size() == 1) {
          int cell = this.init_IntArrayList.getInt(0);
-         return this.init_ListPoolArr[cell].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init ? cell : -1;
+         return this.init_ListPoolArr[cell].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE ? cell : -1;
       } else {
          return -1;
       }
@@ -12594,8 +12594,8 @@ public final class PrintCore {
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_I(int cell, PrintCore.i goal, PrintNav.Inner_TaskQueue reach) {
       if (cell < 0) {
          BlockPos position = goal.click.target().pos();
-         if (goal.click.mode() != PrintClicks.Inner_CachePool.update || !this.init_Long2ObjectOpenHas.containsKey(position.asLong())) {
-            return this.load_UiHelper_NetHelper_Z(goal.click.mode() != PrintClicks.Inner_CachePool.update);
+         if (goal.click.mode() != PrintClicks.Inner_CachePool.DIG || !this.init_Long2ObjectOpenHas.containsKey(position.asLong())) {
+            return this.load_UiHelper_NetHelper_Z(goal.click.mode() != PrintClicks.Inner_CachePool.DIG);
          }
 
          if (this.sync_Z_J(position.asLong())) {
@@ -12616,7 +12616,7 @@ public final class PrintCore {
                this.init_PathHelper,
                goal.click.target(),
                Items.AIR,
-               PrintClicks.Inner_CachePool.update,
+               PrintClicks.Inner_CachePool.DIG,
                goal.click.feet(),
                goal.click.crouch(),
                false,
@@ -12667,7 +12667,7 @@ public final class PrintCore {
             this.init_Item_I_ConfigStore_CacheP(cell, mode),
             mode,
             goal.click.feet(),
-            mode == PrintClicks.Inner_CachePool.init || mode == PrintClicks.Inner_CachePool.read,
+            mode == PrintClicks.Inner_CachePool.PLACE || mode == PrintClicks.Inner_CachePool.POUR,
             new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
             4.1000000000000005,
             this.init_u_DataUtil_I(cell),
@@ -12679,8 +12679,8 @@ public final class PrintCore {
          }
 
          PrintCore.Inner_NetHelper work;
-         if (mode != PrintClicks.Inner_CachePool.read && mode != PrintClicks.Inner_CachePool.write) {
-            if (mode == PrintClicks.Inner_CachePool.load) {
+         if (mode != PrintClicks.Inner_CachePool.POUR && mode != PrintClicks.Inner_CachePool.WATERLOG) {
+            if (mode == PrintClicks.Inner_CachePool.INTERACT) {
                PrintMachineJob rail = this.init_BitSetUtil_I(cell);
                PrintRules.Inner_CachePool step = rail == null
                   ? this.init_PathHelper
@@ -12707,7 +12707,7 @@ public final class PrintCore {
                work = new PrintCore.Inner_StateCache(station, click.feet(), click.crouch(), IntArrayList.of(cell));
             }
          } else {
-            if (mode == PrintClicks.Inner_CachePool.read && !this.init_Z_J_ListPool(station, this.init_ListPoolArr[cell])) {
+            if (mode == PrintClicks.Inner_CachePool.POUR && !this.init_Z_J_ListPool(station, this.init_ListPoolArr[cell])) {
                return this.load_UiHelper_NetHelper_Z(true);
             }
 
@@ -12747,7 +12747,7 @@ public final class PrintCore {
    private boolean read_Z_I_BlockState(int cell, BlockState proposed) {
       PrintCore.D proof = this.init_UiHelper_D;
       return cell == this.f_as_I
-         && this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.init
+         && this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.PLACE
          && this.init_EventBus.sync_Z()
          && !this.init_EventBus.flush()
          && this.load_UiHelper_i != null
@@ -12788,7 +12788,7 @@ public final class PrintCore {
    }
 
    private boolean init_Z_ListPool(PrintTarget target, PrintClicks.Inner_CachePool mode, long station, Vec3 point) {
-      return mode != PrintClicks.Inner_CachePool.init
+      return mode != PrintClicks.Inner_CachePool.PLACE
          || target.index() < 0
          || !this.init_Z_I(target.index(), point.y, station)
          || this.init_Z_I_Vec3(target.index(), point);
@@ -12913,33 +12913,33 @@ public final class PrintCore {
 
    private PrintClicks.Inner_CachePool init_ConfigStore_CacheP_I(int i) {
       if (this.init_BitSetUtil_I(i) != null) {
-         return PrintClicks.Inner_CachePool.load;
+         return PrintClicks.Inner_CachePool.INTERACT;
       }
 
-      if (this.init_BArr[i] == 0 && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
-         return PrintClicks.Inner_CachePool.read;
+      if (this.init_BArr[i] == 0 && this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
+         return PrintClicks.Inner_CachePool.POUR;
       }
 
       if (this.init_BArr[i] == 2) {
          BlockState state = this.init_ArrayUtil.getBlockState(this.init_ListPoolArr[i].pos());
          if (this.init_PathHelper.init_PathHelper_CachePo_ListPool_BlockState(this.init_ListPoolArr[i], state) != null) {
-            return PrintClicks.Inner_CachePool.load;
+            return PrintClicks.Inner_CachePool.INTERACT;
          }
 
          if (this.init_PathHelper.write_Z_ListPool_BlockState(this.init_ListPoolArr[i], state)) {
-            return PrintClicks.Inner_CachePool.write;
+            return PrintClicks.Inner_CachePool.WATERLOG;
          }
       }
 
-      return PrintClicks.Inner_CachePool.init;
+      return PrintClicks.Inner_CachePool.PLACE;
    }
 
    private Item init_Item_I_ConfigStore_CacheP(int i, PrintClicks.Inner_CachePool mode) {
-      if (mode == PrintClicks.Inner_CachePool.read || mode == PrintClicks.Inner_CachePool.write) {
+      if (mode == PrintClicks.Inner_CachePool.POUR || mode == PrintClicks.Inner_CachePool.WATERLOG) {
          return PrintClicks.init(this.init_ListPoolArr[i]);
       }
 
-      if (mode == PrintClicks.Inner_CachePool.load) {
+      if (mode == PrintClicks.Inner_CachePool.INTERACT) {
          PrintMachineJob rail = this.init_BitSetUtil_I(i);
          if (rail != null) {
             return rail.item();
@@ -13222,8 +13222,8 @@ public final class PrintCore {
          this.open_IntOpenHashSet.clear();
       }
 
-      if (this.init_UiHelper_J == PrintCore.J.read && this.init_Long2ObjectOpenHas.isEmpty() && this.load_Long2ObjectOpenHas.isEmpty()) {
-         this.init_UiHelper_J = PrintCore.J.write;
+      if (this.init_UiHelper_J == PrintCore.J.TEARDOWN && this.init_Long2ObjectOpenHas.isEmpty() && this.load_Long2ObjectOpenHas.isEmpty()) {
+         this.init_UiHelper_J = PrintCore.J.VERIFY;
          return this.push_UiHelper_NetHelper();
       } else {
          this.init_TokenStore_TaskQue = new PrintNav.Inner_TaskQueue(BlockPos.containing(this.init_Vec3()).asLong());
@@ -13235,14 +13235,14 @@ public final class PrintCore {
 
    private boolean buffer(int i) {
       return this.init_BArr[i] == 0
-         && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.load
-         && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+         && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PARTNER
+         && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
          && (!this.init_UiHelper_ListPool.init_Z(i) || !this.open_IntOpenHashSet.contains(i) && this.node(i))
          && !this.set(i)
          && !this.read_IntOpenHashSet.contains(i)
          && this.read_Z_I(i)
          && (
-            this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+            this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                || (this.init_UiHelper_aB_I(i) == null || this.load_Z_UiHelper_aB(this.init_UiHelper_aB_I(i)))
                   && this.init_BlockPos_BlockPos_Fluid(this.init_ListPoolArr[i].pos(), this.init_ListPoolArr[i].wanted().getFluidState().getType()) == null
          );
@@ -13309,13 +13309,13 @@ public final class PrintCore {
    }
 
    private PrintCore.Inner_NetHelper init_UiHelper_NetHelper_UiHelper_NetHelper(PrintCore.Inner_NetHelper next) {
-      if (next instanceof PrintCore.ValueSink work && work.load_I >= 0 && work.init_UiHelper_i.click.mode() == PrintClicks.Inner_CachePool.init) {
+      if (next instanceof PrintCore.ValueSink work && work.load_I >= 0 && work.init_UiHelper_i.click.mode() == PrintClicks.Inner_CachePool.PLACE) {
          return new PrintCore.Inner_ByteReader(work.load_I, work.init_UiHelper_i, next);
       } else {
          return next instanceof PrintCore.Inner_RefQueue landing
                && landing.init_I >= 0
                && landing.init_UiHelper_i != null
-               && landing.init_UiHelper_i.click.mode() == PrintClicks.Inner_CachePool.init
+               && landing.init_UiHelper_i.click.mode() == PrintClicks.Inner_CachePool.PLACE
             ? new PrintCore.Inner_ByteReader(landing.init_I, landing.init_UiHelper_i, next)
             : next;
       }
@@ -13463,7 +13463,7 @@ public final class PrintCore {
                      this.init_PathHelper,
                      target,
                      target.item(),
-                     PrintClicks.Inner_CachePool.init,
+                     PrintClicks.Inner_CachePool.PLACE,
                      pose,
                      true,
                      false,
@@ -13495,13 +13495,13 @@ public final class PrintCore {
    }
 
    private boolean entry(int cell) {
-      return this.init_ListPoolArr[cell].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init && this.poll_Z_BlockPos(this.init_ListPoolArr[cell].pos())
+      return this.init_ListPoolArr[cell].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && this.poll_Z_BlockPos(this.init_ListPoolArr[cell].pos())
          || this.tick_Z_I(cell);
    }
 
    boolean tick_Z_I(int cell) {
       PrintTarget target = this.init_ListPoolArr[cell];
-      if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init && PrintClicks.init_Direction(target.wanted()) == Direction.UP) {
+      if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && PrintClicks.init_Direction(target.wanted()) == Direction.UP) {
          BlockPos below = target.pos().below();
          return this.init_Long2IntOpenHashMa.get(below.asLong()) < 0 && !this.init_ArrayUtil.init_VoxelShape_BlockPos(below).isEmpty();
       } else {
@@ -13528,7 +13528,7 @@ public final class PrintCore {
             int i = this.init_Long2IntOpenHashMa.get(pos.asLong());
             if (i >= 0
                && (
-                  this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+                  this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                      || !this.init_ListPoolArr[i].wanted().getFluidState().isEmpty()
                )) {
                return false;
@@ -13571,7 +13571,7 @@ public final class PrintCore {
             int neighbor = this.init_Long2IntOpenHashMa.get(position.relative(face).asLong());
             if (neighbor >= 0
                && this.init_BArr[neighbor] == 0
-               && this.init_ListPoolArr[neighbor].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+               && this.init_ListPoolArr[neighbor].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                && this.init_ListPoolArr[neighbor].item() instanceof BlockItem
                && this.read_Z_I(neighbor)) {
                autismclient.ai.engine.PlacementGoal.Inner_DataUtil placement = this.init_u_DataUtil_I(neighbor);
@@ -13603,7 +13603,7 @@ public final class PrintCore {
             int other = this.init_Long2IntOpenHashMa.get(at.asLong());
             return other >= 0
                   && this.init_BArr[other] == 0
-                  && this.init_ListPoolArr[other].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                  && this.init_ListPoolArr[other].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                   && this.init_ListPoolArr[other].item() instanceof BlockItem
                ? this.init_ListPoolArr[other].wanted().getBlock() instanceof HopperBlock
                      && this.init_ListPoolArr[other].wanted().getValue(BlockStateProperties.FACING_HOPPER) == outlet.getOpposite()
@@ -13652,7 +13652,7 @@ public final class PrintCore {
             this.init_PathHelper,
             target,
             target.item(),
-            PrintClicks.Inner_CachePool.init,
+            PrintClicks.Inner_CachePool.PLACE,
             feet,
             true,
             false,
@@ -13768,7 +13768,7 @@ public final class PrintCore {
 
          this.init_Item = item;
          this.load_Item = item;
-         if (!this.load_Z_Item(item) || this.init_UiHelper_J != PrintCore.J.read && this.init_UiHelper_J != PrintCore.J.write) {
+         if (!this.load_Z_Item(item) || this.init_UiHelper_J != PrintCore.J.TEARDOWN && this.init_UiHelper_J != PrintCore.J.VERIFY) {
             this.load_Str = "Awaiting material: " + BuiltInRegistries.ITEM.getKey(item);
             this.init_EventBus.init_V_Item(item);
             if (this.init_EventBus.load_Str() != null) {
@@ -14120,7 +14120,7 @@ public final class PrintCore {
 
    private PrintCore.c init_UiHelper_c_BlockPos(BlockPos here, double height, PrintAccess.Inner_BufferHelper plan, boolean groundOnly) {
       for (PrintAccess.Inner_NetHelper step : plan.steps()) {
-         if (step.kind() != autismclient.ai.print.PrintAccess.Inner_StreamUtil.init && step.kind() != autismclient.ai.print.PrintAccess.Inner_StreamUtil.write) {
+         if (step.kind() != autismclient.ai.print.PrintAccess.Inner_StreamUtil.WALK && step.kind() != autismclient.ai.print.PrintAccess.Inner_StreamUtil.DIG) {
             return null;
          }
       }
@@ -14137,7 +14137,7 @@ public final class PrintCore {
             for (PrintAccess.Inner_NetHelper step : plan.steps()) {
                BlockPos from = BlockPos.of(step.from());
                BlockPos to = BlockPos.of(step.to());
-               if (step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.write) {
+               if (step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.DIG) {
                   BlockPos block = BlockPos.of(step.block());
                   if (!this.init_Long2ObjectOpenHas.containsKey(step.block()) && !this.init_ArrayUtil.load_Z_BlockPos(block) || this.sync_Z_J(step.block())) {
                      return null;
@@ -14153,7 +14153,7 @@ public final class PrintCore {
                   return null;
                }
 
-               if (step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.init
+               if (step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.WALK
                   && Double.isNaN(
                      PrintNav.init_D_ArrayUtil(
                         this.init_ArrayUtil, from.getX(), from.getZ(), feet, to.getX(), to.getZ(), toFeet, from.getX() != to.getX() && from.getZ() != to.getZ()
@@ -14306,8 +14306,8 @@ public final class PrintCore {
          int i = this.init_Long2IntOpenHashMa.get(cell.asLong());
          if (i >= 0
             && (
-               this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-                  || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+               this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+                  || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                   || this.init_ListPoolArr[i].wanted().getFluidState().isSource()
             )) {
             return true;
@@ -14322,7 +14322,7 @@ public final class PrintCore {
       if (this.push_Z_BlockPos(s)) {
          return false;
       } else {
-         return t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read && this.init_Z_BlockPos_3(s, null, null)
+         return t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && this.init_Z_BlockPos_3(s, null, null)
             ? this.init_Z_BlockPos_3(s, t.pos(), t.wanted().getFluidState().createLegacyBlock())
             : true;
       }
@@ -14516,7 +14516,7 @@ public final class PrintCore {
             this.init_PathHelper,
             t,
             step.item(),
-            PrintClicks.Inner_CachePool.load,
+            PrintClicks.Inner_CachePool.INTERACT,
             feet,
             false,
             false,
@@ -14530,7 +14530,7 @@ public final class PrintCore {
             this.init_PathHelper,
             t,
             step.item(),
-            PrintClicks.Inner_CachePool.load,
+            PrintClicks.Inner_CachePool.INTERACT,
             feet,
             true,
             false,
@@ -14692,7 +14692,7 @@ public final class PrintCore {
                   int at = this.init_Long2IntOpenHashMa.get(next.asLong());
                   int below = this.init_Long2IntOpenHashMa.get(next.below().asLong());
                   if (at >= 0) {
-                     if (this.init_ListPoolArr[at].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+                     if (this.init_ListPoolArr[at].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                         || below < 0
                         || !this.init_ListPoolArr[at].wanted().getFluidState().getType().isSame(fluid)
                         || !this.init_ListPoolArr[below].wanted().getFluidState().getType().isSame(fluid)) {
@@ -14763,8 +14763,8 @@ public final class PrintCore {
 
             int i = this.init_Long2IntOpenHashMa.get(next.asLong());
             if (i >= 0
-               && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write
-               && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+               && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
+               && this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                && (
                   this.init_BArr[i] != 3 || !this.init_PathHelper.init_Z_ListPool_BlockState(this.init_ListPoolArr[i], this.init_ArrayUtil.getBlockState(next))
                )) {
@@ -14834,8 +14834,8 @@ public final class PrintCore {
             int i = this.init_Long2IntOpenHashMa.get(target.pos().relative(direction).asLong());
             if (i >= 0
                && (
-                  this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-                     || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+                  this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+                     || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                )
                && !this.init_PathHelper.init_Z_ListPool_BlockState(this.init_ListPoolArr[i], this.init_ArrayUtil.getBlockState(this.init_ListPoolArr[i].pos()))
                )
@@ -14981,8 +14981,8 @@ public final class PrintCore {
             int i = this.init_Long2IntOpenHashMa.get(BlockPos.offset(at, 0, dy, 0));
             if (i >= 0
                && (
-                  this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-                     || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+                  this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+                     || this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                )) {
                return false;
             }
@@ -15020,8 +15020,8 @@ public final class PrintCore {
       int j = this.init_Long2IntOpenHashMa.get(p.asLong());
       return j < 0
          ? !this.init_ArrayUtil.getBlockState(p).getCollisionShape(this.init_ArrayUtil, p).isEmpty()
-         : this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-            && this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+         : this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+            && this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
             && !this.init_ListPoolArr[j].wanted().getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
    }
 
@@ -15033,12 +15033,12 @@ public final class PrintCore {
       this.flush_List = new ArrayList<>();
 
       for (int i = 0; i < this.init_ListPoolArr.length; i++) {
-         if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write && this.write_I_I(i) == 1) {
+         if (this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW && this.write_I_I(i) == 1) {
             BlockPos f = this.init_ListPoolArr[i].pos();
             int above = this.init_Long2IntOpenHashMa.get(f.above().asLong());
             if (above < 0
-               || this.init_ListPoolArr[above].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-                  && this.init_ListPoolArr[above].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+               || this.init_ListPoolArr[above].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+                  && this.init_ListPoolArr[above].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
                boolean fed = false;
                BlockPos falling = null;
 
@@ -15047,13 +15047,13 @@ public final class PrintCore {
                   int j = this.init_Long2IntOpenHashMa.get(m.asLong());
                   if (j >= 0) {
                      BlockState w = this.init_ListPoolArr[j].wanted();
-                     if (this.init_ListPoolArr[j].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+                     if (this.init_ListPoolArr[j].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                         || w.hasProperty(BlockStateProperties.WATERLOGGED) && w.getValue(BlockStateProperties.WATERLOGGED)) {
                         fed = true;
                         break;
                      }
 
-                     if (this.init_ListPoolArr[j].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+                     if (this.init_ListPoolArr[j].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
                         int lm = this.write_I_I(j);
                         boolean floor = this.stop(m.below());
                         if ((lm == 8 || lm == 0) && floor) {
@@ -15373,7 +15373,7 @@ public final class PrintCore {
          if (this.init_BArr[i] != 3
             && this.init_BArr[i] != 5
             && (
-               this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+               this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                   || this.init_BArr[i] == 2
                      && this.init_PathHelper
                         .write_Z_ListPool_BlockState(this.init_ListPoolArr[i], this.init_ArrayUtil.getBlockState(this.init_ListPoolArr[i].pos()))
@@ -15393,7 +15393,7 @@ public final class PrintCore {
       if (!(temp instanceof BlockItem tempBlock)) {
          return null;
       } else {
-         PrintTarget probe = new PrintTarget(-1, p, tempBlock.getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, temp, null);
+         PrintTarget probe = new PrintTarget(-1, p, tempBlock.getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, temp, null);
          autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000);
 
          for (int dx = -4; dx <= 4; dx++) {
@@ -15412,7 +15412,7 @@ public final class PrintCore {
                               this.init_PathHelper,
                               probe,
                               temp,
-                              PrintClicks.Inner_CachePool.init,
+                              PrintClicks.Inner_CachePool.PLACE,
                               feet,
                               true,
                               false,
@@ -15543,7 +15543,7 @@ public final class PrintCore {
 
                if (this.init_UiHelper_aM != null
                   || this.init_PathHelper_CachePo == null
-                     && this.init_ListPool.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+                     && this.init_ListPool.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                      && !PrintClicks.init_Z_ArrayUtil_2(PrintCore.this.init_ArrayUtil, this.init_ListPool, this.init_u_DataUtil, null)) {
                   this.write_Z = true;
                   return;
@@ -15568,7 +15568,7 @@ public final class PrintCore {
                   }
                }
 
-               if (this.init_ListPool.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read || !PrintCore.this.push_Z_BlockPos(BlockPos.of(this.load_J))) {
+               if (this.init_ListPool.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID || !PrintCore.this.push_Z_BlockPos(BlockPos.of(this.load_J))) {
                   this.sync++;
                   if (PrintClicks.init_Z_J(this.load_J, height, this.init_ListPool.pos(), 4.1000000000000005)
                      && (
@@ -15607,14 +15607,14 @@ public final class PrintCore {
                }
 
                if (this.init_Z || !keep.contains(this.init_J)) {
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.init_ListPool.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.init_ListPool.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                      ? PrintClicks.init(
                         PrintCore.this.init_ArrayUtil,
                         PrintCore.this.init_EventBus,
                         PrintCore.this.init_PathHelper,
                         this.init_ListPool,
                         PrintClicks.init(this.init_ListPool),
-                        PrintClicks.Inner_CachePool.read,
+                        PrintClicks.Inner_CachePool.POUR,
                         feet,
                         true,
                         false,
@@ -15643,7 +15643,7 @@ public final class PrintCore {
                               PrintCore.this.init_PathHelper,
                               this.init_ListPool,
                               this.init_PathHelper_CachePo.item(),
-                              PrintClicks.Inner_CachePool.load,
+                              PrintClicks.Inner_CachePool.INTERACT,
                               feet,
                               false,
                               false,
@@ -16447,7 +16447,7 @@ public final class PrintCore {
                                  PrintCore.this.init_PathHelper,
                                  t,
                                  t.item(),
-                                 PrintClicks.Inner_CachePool.init,
+                                 PrintClicks.Inner_CachePool.PLACE,
                                  this.init_Vec3,
                                  true,
                                  true,
@@ -16932,11 +16932,11 @@ public final class PrintCore {
                               -1,
                               this.init_BlockPos,
                               ((BlockItem)material).getBlock().defaultBlockState(),
-                              autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+                              autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
                               material,
                               null
                            );
-                           this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(probe, PrintClicks.Inner_CachePool.init, material, null, true);
+                           this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(probe, PrintClicks.Inner_CachePool.PLACE, material, null, true);
                         }
                      }
                   }
@@ -17152,11 +17152,11 @@ public final class PrintCore {
                         -1,
                         this.init_BlockPos,
                         PrintCore.this.init_ArrayUtil.getBlockState(this.init_BlockPos),
-                        autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+                        autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
                         Items.AIR,
                         null
                      ),
-                     PrintClicks.Inner_CachePool.update,
+                     PrintClicks.Inner_CachePool.DIG,
                      Items.AIR,
                      null,
                      true
@@ -17338,7 +17338,7 @@ public final class PrintCore {
                         PrintCore.this.init_PathHelper,
                         target,
                         target.item(),
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         pose,
                         true,
                         false,
@@ -17567,8 +17567,8 @@ public final class PrintCore {
                Fluid fluid = this.init_BlockState.getFluidState().getType();
                boolean contained = fi >= 0
                   && (
-                     PrintCore.this.init_ListPoolArr[fi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
-                        || PrintCore.this.init_ListPoolArr[fi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write
+                     PrintCore.this.init_ListPoolArr[fi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
+                        || PrintCore.this.init_ListPoolArr[fi].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW
                   )
                   && PrintCore.this.init_ListPoolArr[fi].wanted().getFluidState().getType().isSame(fluid);
                if (contained) {
@@ -17817,7 +17817,7 @@ public final class PrintCore {
                                           PrintCore.this.init_PathHelper,
                                           t,
                                           t.item(),
-                                          PrintClicks.Inner_CachePool.init,
+                                          PrintClicks.Inner_CachePool.PLACE,
                                           this.init_NodeWalker_StreamU.position(),
                                           true,
                                           true,
@@ -17853,7 +17853,7 @@ public final class PrintCore {
                                  BlockState state = target.wanted();
                                  Vec3 feet = this.init_NodeWalker_StreamU.position();
                                  if (this.init_NodeWalker_StreamU.onGround()
-                                    && target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                                    && target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                                     && !PrintCore.update_Z_BlockState(state)
                                     && !PrintCore.init_Z_Block(state.getBlock())
                                     && !state.hasBlockEntity()
@@ -17876,7 +17876,7 @@ public final class PrintCore {
                                           PrintCore.this.init_PathHelper,
                                           target,
                                           target.item(),
-                                          PrintClicks.Inner_CachePool.init,
+                                          PrintClicks.Inner_CachePool.PLACE,
                                           feet,
                                           true,
                                           true,
@@ -17931,7 +17931,7 @@ public final class PrintCore {
                                           PrintCore.this.init_PathHelper,
                                           t,
                                           t.item(),
-                                          PrintClicks.Inner_CachePool.init,
+                                          PrintClicks.Inner_CachePool.PLACE,
                                           this.init_NodeWalker_StreamU.position(),
                                           false,
                                           true,
@@ -18024,16 +18024,16 @@ public final class PrintCore {
                               } else {
                                  long key = this.init_LongArrayList.getLong(this.read_I);
                                  PrintAccess.Inner_TaskQueue state = this.init_UiHelper_RenderSta.init(key).init(left);
-                                 if (state == PrintAccess.Inner_TaskQueue.init) {
+                                 if (state == PrintAccess.Inner_TaskQueue.SEARCHING) {
                                     return;
                                  }
 
-                                 if (state == PrintAccess.Inner_TaskQueue.write) {
+                                 if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                                     this.write_Z = this.read_Z = true;
                                     return;
                                  }
 
-                                 if (state != PrintAccess.Inner_TaskQueue.read) {
+                                 if (state != PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                                     BlockPos source = PrintCore.this.init_BlockPos_TokenStore_TaskQue_List(
                                        this.init_UiHelper_RenderSta.init_TokenStore_TaskQue,
                                        this.init_UiHelper_RenderSta.init_TokenStore_TaskQue.init_List(key)
@@ -18208,7 +18208,7 @@ public final class PrintCore {
                      PrintCore.this.init_PathHelper,
                      target,
                      target.item(),
-                     PrintClicks.Inner_CachePool.init,
+                     PrintClicks.Inner_CachePool.PLACE,
                      feet,
                      true,
                      true,
@@ -18825,7 +18825,7 @@ public final class PrintCore {
          this.init_Item = item;
          this.init_BlockPos = via;
          this.init_Z = rememberFailures;
-         this.load_Z = mode == PrintClicks.Inner_CachePool.init || mode == PrintClicks.Inner_CachePool.read;
+         this.load_Z = mode == PrintClicks.Inner_CachePool.PLACE || mode == PrintClicks.Inner_CachePool.POUR;
       }
 
       void init(long allowance) {
@@ -18833,7 +18833,7 @@ public final class PrintCore {
             long start = PrintCore.this.init_ArrayUtil.sync();
             if (!this.write_Z) {
                this.write_Z = true;
-               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.init
+               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.PLACE
                   && !PrintClicks.init_Z_ArrayUtil_2(
                      PrintCore.this.init_ArrayUtil,
                      this.init_ListPool,
@@ -18844,7 +18844,7 @@ public final class PrintCore {
                   return;
                }
 
-               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.update) {
+               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.DIG) {
                   this.init_ArrayList.addAll(PrintFlightWorkstations.init(this.init_ListPool.pos()));
                } else {
                   for (int x = -3; x <= 3; x++) {
@@ -18934,7 +18934,7 @@ public final class PrintCore {
                      if (PrintCore.this.init_EventBus.poll()
                         && PrintFlight.load(PrintCore.this.init_ArrayUtil, this.init_Vec3)
                         && (
-                           this.init_ConfigStore_CacheP != PrintClicks.Inner_CachePool.read
+                           this.init_ConfigStore_CacheP != PrintClicks.Inner_CachePool.POUR
                               || PrintCore.this.init_Z_Vec3_ListPool(this.init_Vec3, this.init_ListPool)
                         )
                         && (
@@ -18982,7 +18982,7 @@ public final class PrintCore {
                         Vec3 point = this.init_List.get(this.load_I++);
                         if (PrintFlight.load(PrintCore.this.init_ArrayUtil, point)
                            && (
-                              this.init_ConfigStore_CacheP != PrintClicks.Inner_CachePool.read || PrintCore.this.init_Z_Vec3_ListPool(point, this.init_ListPool)
+                              this.init_ConfigStore_CacheP != PrintClicks.Inner_CachePool.POUR || PrintCore.this.init_Z_Vec3_ListPool(point, this.init_ListPool)
                            )) {
                            autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.init(
                               PrintCore.this.init_ArrayUtil,
@@ -19126,7 +19126,7 @@ public final class PrintCore {
             }
 
             if (this.load + 1 == this.init_TextFormat_BufferH.points().size() && PrintFlight.load(PrintCore.this.init_EventBus.init_NodeWalker_StreamU(), next)) {
-               if (this.init_I >= 0 && this.init_UiHelper_i != null && this.init_UiHelper_i.click.mode() == PrintClicks.Inner_CachePool.init) {
+               if (this.init_I >= 0 && this.init_UiHelper_i != null && this.init_UiHelper_i.click.mode() == PrintClicks.Inner_CachePool.PLACE) {
                   if (this.init_UiHelper_D == null || !this.init_UiHelper_D.init()) {
                      this.init_UiHelper_D = PrintCore.this.new D(this.init_BlockPos, this.init_UiHelper_i.click.predicted());
                   }
@@ -19424,7 +19424,7 @@ public final class PrintCore {
                         PrintCore.this.init_PathHelper,
                         PrintCore.this.init_ListPoolArr[i],
                         PrintCore.this.init_ListPoolArr[i].item(),
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         feet,
                         this.init_Z,
                         true,
@@ -19470,7 +19470,7 @@ public final class PrintCore {
                         PrintCore.this.init_PathHelper,
                         t,
                         t.item(),
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         feet,
                         this.init_Z,
                         true,
@@ -19484,7 +19484,7 @@ public final class PrintCore {
                               PrintCore.this.init_PathHelper,
                               t,
                               t.item(),
-                              PrintClicks.Inner_CachePool.init,
+                              PrintClicks.Inner_CachePool.PLACE,
                               this.init_Vec3,
                               this.init_Z,
                               true,
@@ -19509,7 +19509,7 @@ public final class PrintCore {
                                              PrintCore.this.init_PathHelper,
                                              t,
                                              t.item(),
-                                             PrintClicks.Inner_CachePool.init,
+                                             PrintClicks.Inner_CachePool.PLACE,
                                              next.position(),
                                              this.init_Z,
                                              true,
@@ -19801,7 +19801,7 @@ public final class PrintCore {
                      PrintCore.this.init_PathHelper,
                      t,
                      t.item(),
-                     PrintClicks.Inner_CachePool.init,
+                     PrintClicks.Inner_CachePool.PLACE,
                      feet,
                      this.init_Z,
                      true,
@@ -19891,14 +19891,14 @@ public final class PrintCore {
                if (this.init_ConfigStore_Stream == null) {
                   PrintTarget t = own
                      ? PrintCore.this.init_ListPoolArr[ti]
-                     : new PrintTarget(-1, cell, ((BlockItem)item).getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, item, null);
+                     : new PrintTarget(-1, cell, ((BlockItem)item).getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, item, null);
                   this.init_ConfigStore_Stream = PrintClicks.init_ConfigStore_Stream_ArrayUtil(
                      PrintCore.this.init_ArrayUtil,
                      PrintCore.this.init_EventBus,
                      PrintCore.this.init_PathHelper,
                      t,
                      item,
-                     PrintClicks.Inner_CachePool.init,
+                     PrintClicks.Inner_CachePool.PLACE,
                      PrintCore.this.init_Vec3(),
                      true,
                      own,
@@ -20050,7 +20050,7 @@ public final class PrintCore {
 
       @Override
       public PrintControls init_SyncManager() {
-         if (PrintCore.this.init_UiHelper_J == PrintCore.J.read) {
+         if (PrintCore.this.init_UiHelper_J == PrintCore.J.TEARDOWN) {
             PrintCore.this.load_Str = "Climbing to temporary blocks (step "
                + Math.min(this.init_I + 1, this.init_StreamUtil_BufferH.steps().size())
                + " of "
@@ -20099,7 +20099,7 @@ public final class PrintCore {
 
                if (!this.load_Z && next == null && this.init_I > 0 && !stepped) {
                   PrintAccess.Inner_NetHelper s = this.init_StreamUtil_BufferH.steps().get(this.init_I - 1);
-                  if (s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.write || s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.sync) {
+                  if (s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.DIG || s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.BREAK) {
                      PrintCore.this.poll_LongOpenHashSet.add(PrintCore.init_J_I_J((int)(s.block() & 2147483647L), s.from()));
                   }
 
@@ -20147,7 +20147,7 @@ public final class PrintCore {
          if (dx * dx + dz * dz >= 0.6400000000000001) {
             return false;
          } else {
-            return (s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.write || s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.sync)
+            return (s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.DIG || s.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.BREAK)
                   && !b.onGround()
                   && !PrintCore.this.init_EventBus
                      .init_NodeWalker_CachePo()
@@ -20160,7 +20160,7 @@ public final class PrintCore {
       private PrintCore.Inner_NetHelper load() {
          PrintAccess.Inner_NetHelper step = this.init_StreamUtil_BufferH.steps().get(this.init_I);
          switch (step.kind()) {
-            case init:
+            case WALK:
                autismclient.ai.engine.AiPhysics.Inner_StreamUtil b = PrintCore.this.init_EventBus.init_NodeWalker_StreamU();
                if (!b.onGround()
                   && !PrintCore.this.init_EventBus
@@ -20178,7 +20178,7 @@ public final class PrintCore {
 
                while (
                   this.init_I < this.init_StreamUtil_BufferH.steps().size()
-                     && this.init_StreamUtil_BufferH.steps().get(this.init_I).kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.init
+                     && this.init_StreamUtil_BufferH.steps().get(this.init_I).kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.WALK
                ) {
                   PrintAccess.Inner_NetHelper w = this.init_StreamUtil_BufferH.steps().get(this.init_I++);
                   r.load_Long2DoubleOpenHas.put(w.to(), w.toFeet());
@@ -20187,10 +20187,10 @@ public final class PrintCore {
                }
 
                return PrintCore.this.new aL(route, r, null);
-            case load:
+            case PILLAR:
                this.init_I++;
                return PrintCore.this.new K(BlockPos.of(step.block()), 1, this.init_Item(step));
-            case read:
+            case BRIDGE:
                this.init_I++;
                Item material = this.init_Item(step);
                if (step.toFeet() < BlockPos.getY(step.from()) - 0.5) {
@@ -20214,7 +20214,7 @@ public final class PrintCore {
                               -1,
                               previous,
                               PrintCore.this.init_ArrayUtil.getBlockState(previous),
-                              autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+                              autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
                               Items.AIR,
                               null
                            );
@@ -20231,14 +20231,14 @@ public final class PrintCore {
                }
 
                return PrintCore.this.new Inner_SyncManager(step, material);
-            case write:
+            case DIG:
                this.init_I++;
                return PrintCore.this.new StreamGate(BlockPos.of(step.block()), true, step.from());
-            case sync:
+            case BREAK:
                this.init_I++;
                PrintCore.this.load_V_BlockPos(BlockPos.of(step.block()));
                return PrintCore.this.new StreamGate(BlockPos.of(step.block()), true, step.from());
-            case update:
+            case TUNNEL:
                this.init_I++;
                BlockPos feetCell = BlockPos.of(step.block());
                BlockPos head = feetCell.above();
@@ -20556,12 +20556,12 @@ public final class PrintCore {
    }
 
    public enum J {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync;
+      BUILD,
+      FLUIDS,
+      TEARDOWN,
+      VERIFY,
+      DONE,
+      FAILED;
    }
 
    final class K implements PrintCore.Inner_NetHelper {
@@ -20936,7 +20936,7 @@ public final class PrintCore {
 
                      if (PrintCore.this.open(this.init_UiHelper_KeyHolder.pos(), this.init_ListPool.pos())) {
                         this.load_ListPool = new PrintTarget(
-                           -1, this.init_UiHelper_KeyHolder.pos(), this.init_BlockState, PrintTarget.Inner_DataUtil.init, this.init_Item, null
+                           -1, this.init_UiHelper_KeyHolder.pos(), this.init_BlockState, PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null
                         );
                         if (this.init_UiHelper_KeyHolder.pos().equals(this.init_BlockPos)) {
                            this.init_UiHelper_az = PrintCore.this.new az(this.init_I, this.load_ListPool, this.write, true);
@@ -20985,7 +20985,7 @@ public final class PrintCore {
                            try {
                               if (this.init_UiHelper_PathHelpe == null) {
                                  this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(
-                                    this.init_ListPool, PrintClicks.Inner_CachePool.init, this.init_ListPool.item(), this.init_BlockPos, false
+                                    this.init_ListPool, PrintClicks.Inner_CachePool.PLACE, this.init_ListPool.item(), this.init_BlockPos, false
                                  );
                               }
 
@@ -21020,7 +21020,7 @@ public final class PrintCore {
 
                         if (this.load_UiHelper_PathHelpe == null) {
                            this.load_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(
-                              this.load_ListPool, PrintClicks.Inner_CachePool.init, this.init_Item, null, true
+                              this.load_ListPool, PrintClicks.Inner_CachePool.PLACE, this.init_Item, null, true
                            );
                         }
 
@@ -21160,17 +21160,17 @@ public final class PrintCore {
                                  ? 9223372036854775807L
                                  : Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started))
                            );
-                        if (answer == PrintAccess.Inner_TaskQueue.write) {
+                        if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                            this.write_Z = this.read_Z = true;
                            return;
                         }
 
-                        if (answer == PrintAccess.Inner_TaskQueue.init) {
+                        if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                            return;
                         }
 
                         this.init_Z = true;
-                        this.load_Z = answer == PrintAccess.Inner_TaskQueue.load;
+                        this.load_Z = answer == PrintAccess.Inner_TaskQueue.FOUND;
                         if (PrintCore.this.init_ArrayUtil.sync() - started >= allowance) {
                            return;
                         }
@@ -21270,7 +21270,7 @@ public final class PrintCore {
                                     PrintCore.this.init_PathHelper,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.init,
+                                    PrintClicks.Inner_CachePool.PLACE,
                                     this.init_Vec3,
                                     true,
                                     true,
@@ -21352,23 +21352,23 @@ public final class PrintCore {
                                     );
                                  }
 
-                                 boolean proving = this.load_UiHelper_e.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.init;
+                                 boolean proving = this.load_UiHelper_e.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.SEARCHING;
                                  PrintAccess.Inner_TaskQueue answer = this.load_UiHelper_e
                                     .init(
                                        allowance == 9223372036854775807L
                                           ? 9223372036854775807L
                                           : Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started))
                                     );
-                                 if (answer == PrintAccess.Inner_TaskQueue.write) {
+                                 if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                                     this.write_Z = this.read_Z = true;
                                     return;
                                  }
 
-                                 if (answer == PrintAccess.Inner_TaskQueue.init) {
+                                 if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                                     return;
                                  }
 
-                                 if (answer == PrintAccess.Inner_TaskQueue.read) {
+                                 if (answer == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                                     this.close++;
                                     this.read_I = 2;
                                     continue;
@@ -21438,7 +21438,7 @@ public final class PrintCore {
                   PrintCore.this.init_PathHelper,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   feet,
                   true,
                   false,
@@ -21605,7 +21605,7 @@ public final class PrintCore {
                   && this.load_UiHelper_D.init_Z
                   && !this.load_UiHelper_D.load_Z;
                if (!this.load_UiHelper_b.init()
-                  || this.load_Z && (this.read_UiHelper_e == null || this.read_UiHelper_e.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.load)
+                  || this.load_Z && (this.read_UiHelper_e == null || this.read_UiHelper_e.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.FOUND)
                   || !purpose && !ride) {
                   this.write_Z = this.read_Z = true;
                   return;
@@ -21777,16 +21777,16 @@ public final class PrintCore {
                                  }
 
                                  PrintAccess.Inner_TaskQueue exit = this.init_UiHelper_e.init(left);
-                                 if (exit == PrintAccess.Inner_TaskQueue.write) {
+                                 if (exit == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                                     this.load_Z = this.init_Z = true;
                                     return;
                                  }
 
-                                 if (exit == PrintAccess.Inner_TaskQueue.init) {
+                                 if (exit == PrintAccess.Inner_TaskQueue.SEARCHING) {
                                     return;
                                  }
 
-                                 if (exit != PrintAccess.Inner_TaskQueue.load) {
+                                 if (exit != PrintAccess.Inner_TaskQueue.FOUND) {
                                     this.init_UiHelper_P = null;
                                     this.read = 2;
                                     break label945;
@@ -21822,17 +21822,17 @@ public final class PrintCore {
                               this.read = 4;
                            } else if (this.read == 4 || this.read == 6) {
                               PrintAccess.Inner_TaskQueue answer = this.init_UiHelper_as.init(left);
-                              if (answer == PrintAccess.Inner_TaskQueue.write) {
+                              if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                                  this.load_Z = this.init_Z = true;
                                  return;
                               }
 
-                              if (answer == PrintAccess.Inner_TaskQueue.init) {
+                              if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                                  return;
                               }
 
                               this.init_UiHelper_as = null;
-                              if (answer != PrintAccess.Inner_TaskQueue.load) {
+                              if (answer != PrintAccess.Inner_TaskQueue.FOUND) {
                                  if (this.read == 4) {
                                     this.init_UiHelper_P = null;
                                     this.read = 2;
@@ -21852,7 +21852,7 @@ public final class PrintCore {
                                  }
 
                                  this.init_ListPool = new PrintTarget(
-                                    -1, this.init_BlockPos, this.init_BlockState, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, this.init_Item, null
+                                    -1, this.init_BlockPos, this.init_BlockState, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null
                                  );
                                  this.init_LongArrayList = PrintCore.this.init_LongArrayList_TokenStore_TaskQue(
                                     this.init_UiHelper_RenderSta.init_TokenStore_TaskQue, this.init_BlockPos, true
@@ -21899,7 +21899,7 @@ public final class PrintCore {
                                     PrintCore.this.init_PathHelper,
                                     this.init_ListPool,
                                     this.init_Item,
-                                    PrintClicks.Inner_CachePool.init,
+                                    PrintClicks.Inner_CachePool.PLACE,
                                     this.init_Vec3,
                                     true,
                                     false,
@@ -22002,7 +22002,7 @@ public final class PrintCore {
                            PrintCore.this.init_PathHelper,
                            target,
                            target.item(),
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            feet,
                            true,
                            false,
@@ -22187,7 +22187,7 @@ public final class PrintCore {
                            PrintCore.this.init_PathHelper,
                            this.load_ListPool,
                            this.load_ListPool.item(),
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            this.init_Vec3,
                            true,
                            false,
@@ -22234,7 +22234,7 @@ public final class PrintCore {
                                  PrintCore.this.init_PathHelper,
                                  this.load_ListPool,
                                  step.item(),
-                                 PrintClicks.Inner_CachePool.load,
+                                 PrintClicks.Inner_CachePool.INTERACT,
                                  this.init_Vec3,
                                  false,
                                  false,
@@ -22301,7 +22301,7 @@ public final class PrintCore {
                               PrintCore.this.init_PathHelper,
                               this.init_ListPool,
                               Items.AIR,
-                              PrintClicks.Inner_CachePool.update,
+                              PrintClicks.Inner_CachePool.DIG,
                               this.init_Vec3,
                               false,
                               false,
@@ -22404,7 +22404,7 @@ public final class PrintCore {
                   -1,
                   this.init_BlockPos,
                   ((BlockItem)this.init_Item).getBlock().defaultBlockState(),
-                  autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+                  autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
                   this.init_Item,
                   null
                );
@@ -22414,7 +22414,7 @@ public final class PrintCore {
                   PrintCore.this.init_PathHelper,
                   probe,
                   this.init_Item,
-                  PrintClicks.Inner_CachePool.init,
+                  PrintClicks.Inner_CachePool.PLACE,
                   PrintCore.this.init_Vec3(),
                   true,
                   false,
@@ -22594,7 +22594,7 @@ public final class PrintCore {
          if (this.load_StreamUtil_ConfigS == null
             || this.load_I < 3
                && (
-                  this.init_StreamUtil_ConfigS.init_StreamUtil_TaskQue() != PrintAccess.Inner_TaskQueue.read
+                  this.init_StreamUtil_ConfigS.init_StreamUtil_TaskQue() != PrintAccess.Inner_TaskQueue.EXHAUSTED
                      || !this.init_ArrayDeque.isEmpty()
                      || !this.read_Z
                      || PrintCore.clear_Z && !this.init_StreamUtil.init_Z
@@ -22638,9 +22638,9 @@ public final class PrintCore {
                long e0 = this.init_StreamUtil_ConfigS.load_J;
                long p0 = this.init_StreamUtil_ConfigS.read;
                PrintAccess.Inner_TaskQueue state = PrintCore.this.poll_Z()
-                  ? PrintAccess.Inner_TaskQueue.init
+                  ? PrintAccess.Inner_TaskQueue.SEARCHING
                   : this.init_StreamUtil_ConfigS.init(PrintCore.this.write_J());
-               if (state == PrintAccess.Inner_TaskQueue.init && PrintCore.this.init_EventBus.init_J() - this.write_J >= PrintCore.this.init_J_J(this.init_J)) {
+               if (state == PrintAccess.Inner_TaskQueue.SEARCHING && PrintCore.this.init_EventBus.init_J() - this.write_J >= PrintCore.this.init_J_J(this.init_J)) {
                   this.load_Z = true;
                   PrintCore.this.count_J++;
                   PrintCore.this.init_V_Str(
@@ -22652,7 +22652,7 @@ public final class PrintCore {
                         + (PrintCore.this.init_EventBus.init_J() - this.write_J)
                         + " ticks"
                   );
-                  state = PrintAccess.Inner_TaskQueue.read;
+                  state = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                }
 
                long spent = System.nanoTime() - t0;
@@ -22664,12 +22664,12 @@ public final class PrintCore {
                PrintCore.this.push_JArr[3] = PrintCore.this.push_JArr[3] + (PrintCore.this.init_ArrayUtil.sync() - w0);
                this.update_J = this.update_J + (PrintCore.this.init_ArrayUtil.sync() - w0);
                this.sync = this.sync + (PrintCore.this.init_ArrayUtil.sync() - w0);
-               if (state == PrintAccess.Inner_TaskQueue.init
+               if (state == PrintAccess.Inner_TaskQueue.SEARCHING
                   && !this.update_Z
                   && this.init_UiHelper_L == null
                   && this.load_StreamUtil_ConfigS == null
                   && this.update_J >= 6000000L
-                  && (PrintCore.this.init_UiHelper_J == PrintCore.J.init || PrintCore.this.valid_Z)
+                  && (PrintCore.this.init_UiHelper_J == PrintCore.J.BUILD || PrintCore.this.valid_Z)
                   && !PrintCore.this.init_EventBus.flush()
                   && PrintCore.this.init_TokenStore_TaskQue != null
                   && PrintCore.this.init_TokenStore_TaskQue.init_J == this.init_BlockPos.asLong()
@@ -22683,7 +22683,7 @@ public final class PrintCore {
                      highest = Math.max(highest, y);
                   }
 
-                  if (this.init_BlockState != null && PrintCore.this.init_UiHelper_J == PrintCore.J.init && this.init_D - highest >= 6.0) {
+                  if (this.init_BlockState != null && PrintCore.this.init_UiHelper_J == PrintCore.J.BUILD && this.init_D - highest >= 6.0) {
                      this.init_I = PrintCore.this.init_I_IntArrayList(this.init_IntArrayList);
                      PrintAccess focused = new PrintAccess(PrintCore.this, 80.0);
                      if (this.init_I >= 0) {
@@ -22715,27 +22715,27 @@ public final class PrintCore {
                   this.load_I++;
                }
 
-               if (state == PrintAccess.Inner_TaskQueue.init && !this.read_Z && this.update_J > 6000000L) {
+               if (state == PrintAccess.Inner_TaskQueue.SEARCHING && !this.read_Z && this.update_J > 6000000L) {
                   this.init_ArrayDeque.addLast(new PrintCore.Q.Inner_DataUtil(this.init_StreamUtil, this.init_StreamUtil_ConfigS, this.update_J));
                   PrintCore.this.init_V_Str("access: retaining strict frontier while checking a directed construction route");
                   this.init_V();
                   return PrintCore.this.flush_SyncManager();
                }
 
-               if (state == PrintAccess.Inner_TaskQueue.init && !this.init_ArrayDeque.isEmpty() && this.sync >= 6000000L) {
+               if (state == PrintAccess.Inner_TaskQueue.SEARCHING && !this.init_ArrayDeque.isEmpty() && this.sync >= 6000000L) {
                   this.init_ArrayDeque.addLast(new PrintCore.Q.Inner_DataUtil(this.init_StreamUtil, this.init_StreamUtil_ConfigS, this.update_J));
                   this.load();
                   return PrintCore.this.flush_SyncManager();
                }
 
-               if (state != PrintAccess.Inner_TaskQueue.init) {
-                  int outcome = state == PrintAccess.Inner_TaskQueue.load ? 4 : (state == PrintAccess.Inner_TaskQueue.read ? 5 : 6);
+               if (state != PrintAccess.Inner_TaskQueue.SEARCHING) {
+                  int outcome = state == PrintAccess.Inner_TaskQueue.FOUND ? 4 : (state == PrintAccess.Inner_TaskQueue.EXHAUSTED ? 5 : 6);
                   PrintCore.this.push_JArr[outcome]++;
                   PrintCore.this.push_JArr[outcome + 3] = PrintCore.this.push_JArr[outcome + 3] + this.update_J;
                   this.update_J = 0L;
                }
 
-               if (state == PrintAccess.Inner_TaskQueue.write) {
+               if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   PrintCore.this.init_V_Str(
                      "access: search toward "
                         + this.init_IntArrayList.size()
@@ -22748,9 +22748,9 @@ public final class PrintCore {
                   return PrintCore.this.flush_SyncManager();
                }
 
-               if (state == PrintAccess.Inner_TaskQueue.load) {
+               if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                   this.init(this.init_StreamUtil_ConfigS);
-               } else if (state == PrintAccess.Inner_TaskQueue.read) {
+               } else if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                   if (!this.init_ArrayDeque.isEmpty()) {
                      this.load();
                   } else if (!this.read_Z) {
@@ -22808,19 +22808,19 @@ public final class PrintCore {
             this.flush = this.flush + (PrintCore.this.init_ArrayUtil.sync() - w0);
             PrintCore.this.pop_JArr[7] = PrintCore.this.pop_JArr[7] + (PrintCore.this.init_ArrayUtil.sync() - w0);
             this.load_I = 0;
-            if ((this.write_Z || this.init_I >= 0) && state == PrintAccess.Inner_TaskQueue.init && this.flush >= 60000000L) {
+            if ((this.write_Z || this.init_I >= 0) && state == PrintAccess.Inner_TaskQueue.SEARCHING && this.flush >= 60000000L) {
                this.load_StreamUtil_ConfigS = null;
                return PrintCore.this.flush_SyncManager();
-            } else if (state == PrintAccess.Inner_TaskQueue.init) {
+            } else if (state == PrintAccess.Inner_TaskQueue.SEARCHING) {
                return PrintCore.this.flush_SyncManager();
             } else {
-               int outcome = state == PrintAccess.Inner_TaskQueue.load ? 4 : (state == PrintAccess.Inner_TaskQueue.read ? 5 : 6);
+               int outcome = state == PrintAccess.Inner_TaskQueue.FOUND ? 4 : (state == PrintAccess.Inner_TaskQueue.EXHAUSTED ? 5 : 6);
                PrintCore.this.push_JArr[outcome]++;
                PrintCore.this.push_JArr[outcome + 3] = PrintCore.this.push_JArr[outcome + 3] + this.flush;
-               if (state == PrintAccess.Inner_TaskQueue.write) {
+               if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   this.load_StreamUtil_ConfigS = null;
                   return PrintCore.this.flush_SyncManager();
-               } else if (state == PrintAccess.Inner_TaskQueue.load) {
+               } else if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                   PrintCore.this.init_V_Str(
                      this.init_I >= 0
                         ? "access: a validated descent reaches the prerequisite at " + PrintCore.this.init_ListPoolArr[this.init_I].pos().toShortString()
@@ -22850,7 +22850,7 @@ public final class PrintCore {
          PrintCore.Inner_NetHelper work = null;
          autismclient.ai.print.PrintClicks.Inner_StreamUtil click = solved.init_ConfigStore_Stream;
          if (!solved.init_Z && click != null) {
-            if (click.mode() == PrintClicks.Inner_CachePool.load) {
+            if (click.mode() == PrintClicks.Inner_CachePool.INTERACT) {
                PrintMachineJob job = PrintCore.this.init_BitSetUtil_I(plan.goal());
                PrintRules.Inner_CachePool step = job == null
                   ? PrintCore.this.init_PathHelper
@@ -23164,7 +23164,7 @@ public final class PrintCore {
 
                            for (int i : this.init_IntArrayList) {
                               if (PrintCore.this.init_ListPoolArr[i].pos().getY() < low
-                                 && PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                                 && PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                                  && !PrintCore.this.write_Z_I(i)
                                  && PrintCore.this.poll_Z_BlockPos(PrintCore.this.init_ListPoolArr[i].pos())) {
                                  needy.add(i);
@@ -23270,7 +23270,7 @@ public final class PrintCore {
                                     PrintCore.this.init_PathHelper,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.init,
+                                    PrintClicks.Inner_CachePool.PLACE,
                                     this.init_UiHelper_PacketUti.feet(),
                                     this.init_UiHelper_PacketUti.crouch(),
                                     true,
@@ -23902,14 +23902,14 @@ public final class PrintCore {
                         this.load_Vec3 = new Vec3(this.init_BlockPos.getX() + 0.5, this.init_BlockPos.getY() + 1, this.init_BlockPos.getZ() + 0.5);
                         this.init_Direction = Direction.UP;
                      } else {
-                        PrintTarget probe = new PrintTarget(-1, this.init_BlockPos, state, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null);
+                        PrintTarget probe = new PrintTarget(-1, this.init_BlockPos, state, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null);
                         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.init_ConfigStore_Stream_ArrayUtil(
                            PrintCore.this.init_ArrayUtil,
                            PrintCore.this.init_EventBus,
                            PrintCore.this.init_PathHelper,
                            probe,
                            Items.AIR,
-                           PrintClicks.Inner_CachePool.load,
+                           PrintClicks.Inner_CachePool.INTERACT,
                            PrintCore.this.init_Vec3(),
                            PrintCore.this.init_EventBus.init_D() < 1.4,
                            false,
@@ -24354,7 +24354,7 @@ public final class PrintCore {
                }
 
                if (this.load_StreamUtil_ConfigS == null
-                  || ++this.load_I % 4 == 0 && this.init_StreamUtil_ConfigS.init_StreamUtil_TaskQue() != PrintAccess.Inner_TaskQueue.read) {
+                  || ++this.load_I % 4 == 0 && this.init_StreamUtil_ConfigS.init_StreamUtil_TaskQue() != PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                   if (PrintCore.this.poll_Z()) {
                      return PrintCore.this.flush_SyncManager();
                   }
@@ -24373,9 +24373,9 @@ public final class PrintCore {
                   PrintCore.this.init_J += spent;
                   PrintCore.this.pop_J += spent;
                   PrintCore.this.read_J = Math.max(PrintCore.this.read_J, spent);
-                  if (state == PrintAccess.Inner_TaskQueue.write) {
+                  if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                      this.load();
-                  } else if (state == PrintAccess.Inner_TaskQueue.load) {
+                  } else if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                      if (this.read_Z) {
                         PrintCore.this.init_V_Str("teardown: validated upper access before descending");
                      }
@@ -24383,7 +24383,7 @@ public final class PrintCore {
                      this.read();
                   } else if (this.read_Z && PrintCore.this.clear_Z()) {
                      this.update = true;
-                  } else if (state == PrintAccess.Inner_TaskQueue.read) {
+                  } else if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                      if (this.load_StreamUtil_ConfigS != null) {
                         return PrintCore.this.flush_SyncManager();
                      }
@@ -24413,12 +24413,12 @@ public final class PrintCore {
                   PrintCore.this.init_J += spent;
                   PrintCore.this.pop_J += spent;
                   PrintCore.this.read_J = Math.max(PrintCore.this.read_J, spent);
-                  if (state == PrintAccess.Inner_TaskQueue.write) {
+                  if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                      this.update = true;
                      return PrintCore.this.flush_SyncManager();
                   }
 
-                  if (state == PrintAccess.Inner_TaskQueue.load) {
+                  if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                      this.init_StreamUtil = this.load_StreamUtil;
                      this.init_StreamUtil_ConfigS = this.load_StreamUtil_ConfigS;
                      if (this.flush) {
@@ -24426,7 +24426,7 @@ public final class PrintCore {
                      }
 
                      this.read();
-                  } else if (state == PrintAccess.Inner_TaskQueue.read
+                  } else if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED
                      || this.load_Z && (this.write_J >= (this.flush ? 60000000L : 6000000L) || this.read_I >= (this.flush ? 512 : 64))) {
                      this.load_StreamUtil_ConfigS = null;
                   }
@@ -24523,7 +24523,7 @@ public final class PrintCore {
                   return controls;
                }
 
-               if (this.init_UiHelper_W.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.write) {
+               if (this.init_UiHelper_W.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   this.init_Z = true;
                   return PrintCore.this.flush_SyncManager();
                }
@@ -24558,7 +24558,7 @@ public final class PrintCore {
                   -1,
                   this.init_BlockPos,
                   PrintCore.this.init_ArrayUtil.getBlockState(this.init_BlockPos),
-                  autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+                  autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
                   Items.AIR,
                   null
                );
@@ -24861,7 +24861,7 @@ public final class PrintCore {
                )) {
                PrintClicks.Inner_CachePool mode = this.load_I >= 0
                   ? PrintCore.this.init_ConfigStore_CacheP_I(this.load_I)
-                  : (this.init_BlockPos == null ? PrintClicks.Inner_CachePool.init : PrintClicks.Inner_CachePool.update);
+                  : (this.init_BlockPos == null ? PrintClicks.Inner_CachePool.PLACE : PrintClicks.Inner_CachePool.DIG);
                if (this.sync) {
                   BlockState live = PrintCore.this.init_ArrayUtil.getBlockState(this.init_ListPool.pos());
                   if (!PrintCore.this.init_PathHelper.load_Z_ListPool_BlockState(this.init_ListPool, live)) {
@@ -24873,7 +24873,7 @@ public final class PrintCore {
                      return null;
                   }
 
-                  mode = PrintClicks.Inner_CachePool.load;
+                  mode = PrintClicks.Inner_CachePool.INTERACT;
                }
 
                if (this.load_I >= 0 && !PrintCore.this.read_Z_I(this.load_I)) {
@@ -24900,11 +24900,11 @@ public final class PrintCore {
                }
 
                boolean sharedPose = this.init_UiHelper_i.supportOwner >= 0 && this.read_I + 1 == this.init_TextFormat_BufferH.points().size();
-               boolean fractionalPose = mode == PrintClicks.Inner_CachePool.init
+               boolean fractionalPose = mode == PrintClicks.Inner_CachePool.PLACE
                   && this.read_I + 1 == this.init_TextFormat_BufferH.points().size()
                   && this.init_UiHelper_i.click.feet().distanceToSqr(PrintFlight.init(this.init_UiHelper_i.route.goal())) > 1.0E-10;
-               boolean pourPose = mode == PrintClicks.Inner_CachePool.read && this.read_I + 1 == this.init_TextFormat_BufferH.points().size();
-               boolean placePose = mode == PrintClicks.Inner_CachePool.init && this.read_I + 1 == this.init_TextFormat_BufferH.points().size();
+               boolean pourPose = mode == PrintClicks.Inner_CachePool.POUR && this.read_I + 1 == this.init_TextFormat_BufferH.points().size();
+               boolean placePose = mode == PrintClicks.Inner_CachePool.PLACE && this.read_I + 1 == this.init_TextFormat_BufferH.points().size();
                boolean faceWindow = !placePose
                   || PrintClicks.init(
                      PrintCore.this.init_ArrayUtil,
@@ -24929,7 +24929,7 @@ public final class PrintCore {
 
                autismclient.ai.print.PrintClicks.Inner_StreamUtil movingClick = null;
                if (this.load_I >= 0
-                  && mode == PrintClicks.Inner_CachePool.init
+                  && mode == PrintClicks.Inner_CachePool.PLACE
                   && machineJob == null
                   && !sharedPose
                   && !this.sync
@@ -24987,9 +24987,9 @@ public final class PrintCore {
                            || PrintCore.this.init_Z_ListPool_2(this.init_ListPool, this.init_UiHelper_i.click.predicted(), PrintCore.this.init_Vec3())
                      )
                      && (!pourPose || PrintCore.this.init_Z_Vec3_ListPool(PrintCore.this.init_Vec3(), this.init_ListPool))) {
-                  boolean sneak = (mode == PrintClicks.Inner_CachePool.init || mode == PrintClicks.Inner_CachePool.read)
+                  boolean sneak = (mode == PrintClicks.Inner_CachePool.PLACE || mode == PrintClicks.Inner_CachePool.POUR)
                         && (!placingInMotion || PrintClicks.init_Z(PrintCore.this.init_ArrayUtil.getBlockState(movingClick.support())))
-                     || mode == PrintClicks.Inner_CachePool.load && machineJob instanceof PrintItemFrame frame && frame.init_UUID_2() == null;
+                     || mode == PrintClicks.Inner_CachePool.INTERACT && machineJob instanceof PrintItemFrame frame && frame.init_UUID_2() == null;
                   c.sync = sneak;
                   c.update = sneak;
                   if (PrintCore.this.init_EventBus.poll()
@@ -25053,7 +25053,7 @@ public final class PrintCore {
                      if ((
                            placingInMotion
                               || (
-                                 mode == PrintClicks.Inner_CachePool.init
+                                 mode == PrintClicks.Inner_CachePool.PLACE
                                     ? PrintCore.this.init_Z_ListPool(this.init_ListPool, click.yaw(), click.pitch())
                                     : PrintCore.this.init_Z_F(click.yaw(), click.pitch(), false)
                               )
@@ -25065,13 +25065,13 @@ public final class PrintCore {
                            .init_BlockHitResult_Vec3_Vec3(
                               eye, eye.add(PrintGeometry.init_Vec3(PrintCore.this.init_EventBus.write_F(), PrintCore.this.init_EventBus.update_F()).scale(4.5))
                            );
-                        if (mode == PrintClicks.Inner_CachePool.read
-                           || mode == PrintClicks.Inner_CachePool.write
+                        if (mode == PrintClicks.Inner_CachePool.POUR
+                           || mode == PrintClicks.Inner_CachePool.WATERLOG
                            || wire != null
                               && wire.getBlockPos().equals(click.support())
                               && wire.getDirection() == click.face()
                               && !(wire.getLocation().distanceTo(eye) > 4.4)) {
-                           if (mode == PrintClicks.Inner_CachePool.load
+                           if (mode == PrintClicks.Inner_CachePool.INTERACT
                               && this.init_ListPool.wanted().getBlock() instanceof MultifaceBlock
                               && !PrintClicks.init_Z_ArrayUtil(
                                  PrintCore.this.init_ArrayUtil,
@@ -25089,7 +25089,7 @@ public final class PrintCore {
                               return null;
                            }
 
-                           if (mode == PrintClicks.Inner_CachePool.init) {
+                           if (mode == PrintClicks.Inner_CachePool.PLACE) {
                               BlockState actual = PrintCore.this.init_EventBus
                                  .init(
                                     item, wire, PrintCore.this.init_EventBus.write_F(), PrintCore.this.init_EventBus.update_F(), sneak, this.init_ListPool.pos()
@@ -25202,7 +25202,7 @@ public final class PrintCore {
                                           PrintCore.this.init_PathHelper,
                                           this.init_ListPool,
                                           step.item(),
-                                          PrintClicks.Inner_CachePool.load,
+                                          PrintClicks.Inner_CachePool.INTERACT,
                                           PrintCore.this.init_Vec3(),
                                           false,
                                           false,
@@ -25244,7 +25244,7 @@ public final class PrintCore {
                            }
 
                            if (this.load_I >= 0
-                              && mode == PrintClicks.Inner_CachePool.load
+                              && mode == PrintClicks.Inner_CachePool.INTERACT
                               && machineJob == null
                               && PrintCore.init_Z_ListPool_Item(this.init_ListPool, item)) {
                               BlockPos pulse = this.init_ListPool.pos().relative(wire.getDirection());
@@ -25268,20 +25268,20 @@ public final class PrintCore {
                                  return c;
                               }
                            } else {
-                              if (mode != PrintClicks.Inner_CachePool.read && mode != PrintClicks.Inner_CachePool.write) {
-                                 if (mode == PrintClicks.Inner_CachePool.update) {
+                              if (mode != PrintClicks.Inner_CachePool.POUR && mode != PrintClicks.Inner_CachePool.WATERLOG) {
+                                 if (mode == PrintClicks.Inner_CachePool.DIG) {
                                     c.init_BlockPos = this.init_BlockPos;
                                     c.init_Direction = click.face();
                                  } else {
                                     c.init_BlockHitResult = wire;
-                                    c.open = mode == PrintClicks.Inner_CachePool.load;
+                                    c.open = mode == PrintClicks.Inner_CachePool.INTERACT;
                                  }
                               } else {
                                  if (!PrintClicks.init_Z_ArrayUtil(PrintCore.this.init_ArrayUtil, PrintCore.this.init_EventBus, this.init_ListPool, mode)) {
                                     return c;
                                  }
 
-                                 if (mode == PrintClicks.Inner_CachePool.read
+                                 if (mode == PrintClicks.Inner_CachePool.POUR
                                     && (
                                        !PrintCore.this.init_Z_Vec3_ListPool(PrintCore.this.init_Vec3(), this.init_UiHelper_i.click.target())
                                           || PrintCore.this.init_UiHelper_aB_I(this.load_I) != null
@@ -25337,7 +25337,7 @@ public final class PrintCore {
                                  }
                               }
 
-                              if (mode != PrintClicks.Inner_CachePool.update || !this.write_Z) {
+                              if (mode != PrintClicks.Inner_CachePool.DIG || !this.write_Z) {
                                  PrintCore.this.open_I++;
                               }
 
@@ -25349,22 +25349,22 @@ public final class PrintCore {
                                  PrintCore.this.put_I++;
                               }
 
-                              if (mode == PrintClicks.Inner_CachePool.update) {
+                              if (mode == PrintClicks.Inner_CachePool.DIG) {
                                  this.write_Z = true;
                               }
 
-                              this.sync = this.update && mode == PrintClicks.Inner_CachePool.init;
-                              this.init_Z = !this.sync && (mode != PrintClicks.Inner_CachePool.update || PrintCore.this.init_EventBus.update_Z());
+                              this.sync = this.update && mode == PrintClicks.Inner_CachePool.PLACE;
+                              this.init_Z = !this.sync && (mode != PrintClicks.Inner_CachePool.DIG || PrintCore.this.init_EventBus.update_Z());
                               if (this.init_Z
                                  && this.load_I >= 0
-                                 && mode == PrintClicks.Inner_CachePool.init
+                                 && mode == PrintClicks.Inner_CachePool.PLACE
                                  && machineJob == null
                                  && this.init_UiHelper_i.supportOwner < 0) {
                                  this.load(c, click.predicted());
                               }
 
                               if (c.init_BlockHitResult != null
-                                 && mode == PrintClicks.Inner_CachePool.init
+                                 && mode == PrintClicks.Inner_CachePool.PLACE
                                  && this.load_I >= 0
                                  && PrintCore.this.data(this.load_I)) {
                                  this.init(c, click.predicted());
@@ -25408,7 +25408,7 @@ public final class PrintCore {
                      this.init_UiHelper_ArrayUtil = null;
                      return c;
                   } else {
-                     if (this.load_I >= 0 && machineJob == null && mode == PrintClicks.Inner_CachePool.init) {
+                     if (this.load_I >= 0 && machineJob == null && mode == PrintClicks.Inner_CachePool.PLACE) {
                         if (PrintCore.this.init_EventBus.update_Z() || PrintCore.this.load_I_Item(this.init_ListPool.item()) > 0) {
                            PrintCore.this.init_Z_Item_SyncManager(this.init_ListPool.item(), c);
                         }
@@ -25602,7 +25602,7 @@ public final class PrintCore {
                            PrintCore.this.init_PathHelper,
                            PrintCore.this.init_ListPoolArr[i],
                            PrintCore.this.init_ListPoolArr[i].item(),
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            origin,
                            true,
                            false,
@@ -25697,7 +25697,7 @@ public final class PrintCore {
                      && PrintCore.this.buffer(next)
                      && PrintCore.this.value(next)
                      && PrintCore.this.stop(next)
-                     && PrintCore.this.init_ConfigStore_CacheP_I(next) == PrintClicks.Inner_CachePool.init) {
+                     && PrintCore.this.init_ConfigStore_CacheP_I(next) == PrintClicks.Inner_CachePool.PLACE) {
                      PrintTarget candidate = PrintCore.this.init_ListPoolArr[next];
                      if (!(candidate.pos().distToCenterSqr(eye) > 36.0)) {
                         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = next == aligned
@@ -25725,7 +25725,7 @@ public final class PrintCore {
                               PrintCore.this.init_PathHelper,
                               candidate,
                               candidate.item(),
-                              PrintClicks.Inner_CachePool.init,
+                              PrintClicks.Inner_CachePool.PLACE,
                               origin,
                               true,
                               false,
@@ -25811,7 +25811,7 @@ public final class PrintCore {
       final PrintCore.as init_UiHelper_as;
       final PrintCore.aq init_UiHelper_aq;
       boolean load;
-      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.init;
+      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
       PrintCore.Inner_NetHelper init_UiHelper_NetHelper;
 
       W(PrintNav.Inner_TaskQueue reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
@@ -25849,7 +25849,7 @@ public final class PrintCore {
       public PrintControls init_SyncManager() {
          PrintCore.this.load_Str = "Checking the cleanup descent at " + this.init_BlockPos.toShortString();
          if (!this.init_UiHelper_RenderSta.init_Z()) {
-            this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
             this.load = true;
             return PrintCore.this.flush_SyncManager();
          }
@@ -25861,17 +25861,17 @@ public final class PrintCore {
          long allowance = PrintCore.this.write_J();
          long started = PrintCore.this.init_ArrayUtil.sync();
          this.init_StreamUtil_TaskQue = this.init_UiHelper_as.init(allowance);
-         if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.load && PrintCore.this.init_ArrayUtil.sync() - started < allowance) {
+         if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.FOUND && PrintCore.this.init_ArrayUtil.sync() - started < allowance) {
             this.init_StreamUtil_TaskQue = this.init_UiHelper_aq.init(Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started)));
-         } else if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.load) {
+         } else if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.FOUND) {
             return PrintCore.this.flush_SyncManager();
          }
 
-         if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.init) {
+         if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.SEARCHING) {
             return PrintCore.this.flush_SyncManager();
          }
 
-         if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.read) {
+         if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
             PrintCore.this.init_V_TokenStore_TaskQue(this.init_TokenStore_TaskQue);
             if (PrintCore.this.f_ao_I >= 512) {
                PrintCore.this.tick_Long2ObjectOpenHas.clear();
@@ -25881,7 +25881,7 @@ public final class PrintCore {
             if (PrintCore.this.tick_Long2ObjectOpenHas.computeIfAbsent(this.init_BlockPos.asLong(), ignored -> new LongOpenHashSet()).add(this.init_J)) {
                PrintCore.this.f_ao_I++;
             }
-         } else if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.load) {
+         } else if (this.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.FOUND) {
             PrintCore.Inner_NetHelper dig = PrintCore.this.new Inner_TableIndex(
                this.init_UiHelper_RenderSta.init_UiHelper_b,
                this.init_Z
@@ -25993,9 +25993,9 @@ public final class PrintCore {
 
                   Item item = PrintCore.this.init_ListPoolArr[this.init_I].item();
                   PrintTarget probe = new PrintTarget(
-                     -1, helper, ((BlockItem)item).getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, item, null
+                     -1, helper, ((BlockItem)item).getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, item, null
                   );
-                  this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(probe, PrintClicks.Inner_CachePool.init, item, null, true);
+                  this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(probe, PrintClicks.Inner_CachePool.PLACE, item, null, true);
                }
 
                if (!PrintCore.this.poll_Z()) {
@@ -26163,11 +26163,11 @@ public final class PrintCore {
                                     -1,
                                     position,
                                     PrintCore.this.init_ArrayUtil.getBlockState(position),
-                                    autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+                                    autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
                                     Items.AIR,
                                     null
                                  ),
-                                 PrintClicks.Inner_CachePool.update,
+                                 PrintClicks.Inner_CachePool.DIG,
                                  Items.AIR,
                                  null,
                                  true
@@ -26232,9 +26232,9 @@ public final class PrintCore {
                         if (this.init_UiHelper_PathHelpe == null) {
                            this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(
                               new PrintTarget(
-                                 -1, at, PrintCore.this.init_ArrayUtil.getBlockState(at), autismclient.ai.print.PrintTarget.Inner_DataUtil.init, Items.AIR, null
+                                 -1, at, PrintCore.this.init_ArrayUtil.getBlockState(at), autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
                               ),
-                              PrintClicks.Inner_CachePool.update,
+                              PrintClicks.Inner_CachePool.DIG,
                               Items.AIR,
                               null,
                               true
@@ -26360,7 +26360,7 @@ public final class PrintCore {
                         && PrintCore.this.buffer(i)
                         && PrintCore.this.data(i)
                         && PrintCore.this.stop(i)
-                        && PrintCore.this.init_ConfigStore_CacheP_I(i) == PrintClicks.Inner_CachePool.init
+                        && PrintCore.this.init_ConfigStore_CacheP_I(i) == PrintClicks.Inner_CachePool.PLACE
                         && !(PrintCore.this.init_ListPoolArr[i].pos().distToCenterSqr(this.init_Vec3.add(0.0, 1.62, 0.0)) > 36.0)) {
                         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.init(
                            PrintCore.this.init_ArrayUtil,
@@ -26368,7 +26368,7 @@ public final class PrintCore {
                            PrintCore.this.init_PathHelper,
                            PrintCore.this.init_ListPoolArr[i],
                            PrintCore.this.init_ListPoolArr[i].item(),
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            this.init_Vec3,
                            true,
                            false,
@@ -26452,7 +26452,7 @@ public final class PrintCore {
                         this.init_UiHelper_ClassCach = null;
                      } else if (this.load_I < this.init_List.size() && this.read_I > 0) {
                         int i = this.init_List.get(this.load_I);
-                        if (PrintCore.this.init_ConfigStore_CacheP_I(i) != PrintClicks.Inner_CachePool.init) {
+                        if (PrintCore.this.init_ConfigStore_CacheP_I(i) != PrintClicks.Inner_CachePool.PLACE) {
                            this.load_I++;
                         } else {
                            if (this.init_UiHelper_KeyHolder == null) {
@@ -26532,7 +26532,7 @@ public final class PrintCore {
                      }
 
                      if (!PrintCore.this.init_Long2ObjectOpenHas.isEmpty()) {
-                        PrintCore.this.init_UiHelper_J = PrintCore.J.read;
+                        PrintCore.this.init_UiHelper_J = PrintCore.J.TEARDOWN;
                         this.load_List = new ArrayList<>(PrintCore.this.init_Long2ObjectOpenHas.keySet());
                         this.load_List.sort(Comparator.comparingDouble(k -> BlockPos.of(k).distToCenterSqr(this.init_Vec3)));
                      }
@@ -26542,7 +26542,7 @@ public final class PrintCore {
                   } else {
                      if (this.init_I != 6) {
                         if (PrintCore.this.queue_I > 0 && this.init_List.isEmpty() && PrintCore.this.init_Long2ObjectOpenHas.isEmpty()) {
-                           PrintCore.this.init_UiHelper_J = PrintCore.J.write;
+                           PrintCore.this.init_UiHelper_J = PrintCore.J.VERIFY;
                            return this.init(PrintCore.this.push_UiHelper_NetHelper());
                         }
 
@@ -26556,7 +26556,7 @@ public final class PrintCore {
                      }
 
                      if (!this.load_Z && PrintCore.this.init_Long2ObjectOpenHas.isEmpty()) {
-                        PrintCore.this.init_UiHelper_J = PrintCore.J.write;
+                        PrintCore.this.init_UiHelper_J = PrintCore.J.VERIFY;
                         return this.init(PrintCore.this.push_UiHelper_NetHelper());
                      }
 
@@ -26711,10 +26711,10 @@ public final class PrintCore {
                   PrintCore.this.pop_J = PrintCore.this.pop_J + (System.nanoTime() - timed);
                }
 
-               if (this.load() && state != PrintAccess.Inner_TaskQueue.write) {
+               if (this.load() && state != PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   this.init_J = this.init_J + (PrintCore.this.init_ArrayUtil.sync() - started);
                   this.load_J = this.load_J + (PrintCore.this.init_ArrayUtil.sync() - started);
-                  if (state == PrintAccess.Inner_TaskQueue.init
+                  if (state == PrintAccess.Inner_TaskQueue.SEARCHING
                      && this.load_J >= 180000000L << Math.min(4, PrintCore.this.close_Long2IntOpenHashMa.get(this.load_BlockPos.asLong()))) {
                      int attempt = PrintCore.this.close_Long2IntOpenHashMa.addTo(this.load_BlockPos.asLong(), 1) + 1;
                      if (PrintCore.this.read_LinkedHashMap.size() >= 16) {
@@ -26734,8 +26734,8 @@ public final class PrintCore {
                            + ")"
                      );
                      this.load_Z = true;
-                  } else if (state != PrintAccess.Inner_TaskQueue.init) {
-                     if (state == PrintAccess.Inner_TaskQueue.read) {
+                  } else if (state != PrintAccess.Inner_TaskQueue.SEARCHING) {
+                     if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                         if (!this.init_ArrayDeque.isEmpty()) {
                            this.init_V_7();
                            return;
@@ -26942,16 +26942,16 @@ public final class PrintCore {
                                  ? 9223372036854775807L
                                  : Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - start))
                            );
-                        if (state == PrintAccess.Inner_TaskQueue.init) {
+                        if (state == PrintAccess.Inner_TaskQueue.SEARCHING) {
                            return;
                         }
 
-                        if (state == PrintAccess.Inner_TaskQueue.write) {
+                        if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                            this.read_Z = this.load_Z = true;
                            return;
                         }
 
-                        if (state == PrintAccess.Inner_TaskQueue.load) {
+                        if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                            long key = this.init_LongArrayList.getLong(this.load_I);
                            PrintCore.this.sync_Int2ObjectOpenHash.remove(this.init_I);
                            this.init_UiHelper_PacketUti = new PrintCore.Inner_PacketUtil(
@@ -27022,7 +27022,7 @@ public final class PrintCore {
                               PrintCore.this.init_PathHelper,
                               t,
                               t.item(),
-                              PrintClicks.Inner_CachePool.init,
+                              PrintClicks.Inner_CachePool.PLACE,
                               this.init_Vec3,
                               false,
                               true,
@@ -27168,7 +27168,7 @@ public final class PrintCore {
                      BlockPos p = t.pos();
                      PrintCore.this.load_Set.add(t.item());
                      PrintCore.this.init_Object2IntOpenHash.addTo(t.item(), 1);
-                     if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+                     if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
                         PrintCore.this.f_I_I++;
                      }
 
@@ -27178,7 +27178,7 @@ public final class PrintCore {
                         .computeIfAbsent(key, k -> new autismclient.ai.print.PrintChunkWork.Inner_StreamUtil(k));
                      chunk.init_IntArrayList.add(t.index());
                      chunk.init_I++;
-                     if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.load) {
+                     if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW && t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PARTNER) {
                         chunk.load++;
                      }
 
@@ -27191,7 +27191,7 @@ public final class PrintCore {
                         this.update_IntArrayList.add(t.index());
                      }
 
-                     if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read || PrintCore.sync_Z_ListPool(t)) {
+                     if (t.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID || PrintCore.sync_Z_ListPool(t)) {
                         this.write_IntArrayList.add(t.index());
                      }
 
@@ -27293,12 +27293,12 @@ public final class PrintCore {
                case 6:
                   if (this.init_Z()) {
                      int i = this.init_IntArrayList.getInt(this.write_I++);
-                     if (PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read
+                     if (PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID
                         || PrintCore.sync_Z_ListPool(PrintCore.this.init_ListPoolArr[i])) {
                         this.read_IntArrayList.add(i);
                      }
 
-                     if (PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+                     if (PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
                         this.load_IntArrayList.add(i);
                      }
                   } else {
@@ -27496,7 +27496,7 @@ public final class PrintCore {
          this.init_BlockState = state;
          this.init_ConfigStore_DataUt = budget;
          PrintTarget t = PrintCore.this.init_ListPoolArr[owner];
-         this.init_Z = t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+         this.init_Z = t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
             || !PrintCore.this.init_EventBus.init_Z_BlockState_BlockPos(t.wanted(), t.pos());
       }
 
@@ -27607,16 +27607,16 @@ public final class PrintCore {
                                  this.load_I = 3;
                               } else {
                                  PrintAccess.Inner_TaskQueue answer = this.init_UiHelper_as.init(left);
-                                 if (answer == PrintAccess.Inner_TaskQueue.init) {
+                                 if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                                     return;
                                  }
 
-                                 if (answer == PrintAccess.Inner_TaskQueue.write) {
+                                 if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                                     this.load_Z = this.init_Z = true;
                                     return;
                                  }
 
-                                 if (answer != PrintAccess.Inner_TaskQueue.load) {
+                                 if (answer != PrintAccess.Inner_TaskQueue.FOUND) {
                                     this.init_UiHelper_as = null;
                                     this.load_UiHelper_P = null;
                                     this.load_I = 3;
@@ -27640,7 +27640,7 @@ public final class PrintCore {
                                     PrintCore.this.init_PathHelper,
                                     this.init_ListPool,
                                     this.init_Item,
-                                    PrintClicks.Inner_CachePool.init,
+                                    PrintClicks.Inner_CachePool.PLACE,
                                     this.init_Vec3,
                                     true,
                                     false,
@@ -27744,7 +27744,7 @@ public final class PrintCore {
                            if (this.load_I == 3) {
                               this.load_BlockPos = this.init_List.getFirst();
                               this.init_ListPool = new PrintTarget(
-                                 -1, this.load_BlockPos, this.init_BlockState, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, this.init_Item, null
+                                 -1, this.load_BlockPos, this.init_BlockState, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null
                               );
                               this.init_LongArrayList = PrintCore.this.init_LongArrayList_TokenStore_TaskQue(
                                  this.init_UiHelper_RenderSta.init_TokenStore_TaskQue, this.load_BlockPos, true
@@ -28022,7 +28022,7 @@ public final class PrintCore {
 
                               this.sync_I = this.load_IntArrayList.getInt(this.init_I);
                               PrintTarget t = PrintCore.this.init_ListPoolArr[this.sync_I];
-                              if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                              if (t.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                                  || !PrintCore.this.init_EventBus.init_Z_BlockState_BlockPos(t.wanted(), t.pos())
                                  || PrintCore.this.init_Z_I_D(this.sync_I, -1.0 / 0.0)) {
                                  this.init_I++;
@@ -28145,7 +28145,7 @@ public final class PrintCore {
                                     }
 
                                     this.init_UiHelper_as = null;
-                                    if (answer == PrintAccess.Inner_TaskQueue.load) {
+                                    if (answer == PrintAccess.Inner_TaskQueue.FOUND) {
                                        this.load_I = 7;
                                     } else {
                                        this.write_Z = true;
@@ -28205,7 +28205,7 @@ public final class PrintCore {
                               this.init_ListPool = this.update_Z
                                  ? PrintCore.this.init_ListPoolArr[this.flush_I]
                                  : new PrintTarget(
-                                    -1, this.init_BlockPos, this.init_BlockState, autismclient.ai.print.PrintTarget.Inner_DataUtil.init, this.init_Item, null
+                                    -1, this.init_BlockPos, this.init_BlockState, autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE, this.init_Item, null
                                  );
                               this.load_Item = this.update_Z ? this.init_ListPool.item() : this.init_Item;
                               this.init_LongArrayList = PrintCore.this.init_LongArrayList_TokenStore_TaskQue(
@@ -28307,7 +28307,7 @@ public final class PrintCore {
                            }
 
                            this.init_UiHelper_as = null;
-                           if (answer == PrintAccess.Inner_TaskQueue.load) {
+                           if (answer == PrintAccess.Inner_TaskQueue.FOUND) {
                               this.load_I = 8;
                            } else {
                               this.write_Z = true;
@@ -28348,7 +28348,7 @@ public final class PrintCore {
                                  PrintCore.this.init_PathHelper,
                                  this.init_ListPool,
                                  this.load_Item,
-                                 PrintClicks.Inner_CachePool.init,
+                                 PrintClicks.Inner_CachePool.PLACE,
                                  this.init_Vec3,
                                  true,
                                  this.update_Z,
@@ -28385,11 +28385,11 @@ public final class PrintCore {
       }
 
       boolean init(PrintAccess.Inner_TaskQueue answer) {
-         if (answer == PrintAccess.Inner_TaskQueue.write) {
+         if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
             this.flush_Z = this.sync_Z = true;
          }
 
-         return answer == PrintAccess.Inner_TaskQueue.init || answer == PrintAccess.Inner_TaskQueue.write;
+         return answer == PrintAccess.Inner_TaskQueue.SEARCHING || answer == PrintAccess.Inner_TaskQueue.INVALIDATED;
       }
 
       private void init(IdentityHashMap<BlockState, PrintCore.D> refusals, PrintCore.P purpose) {
@@ -28430,12 +28430,12 @@ public final class PrintCore {
             this.flush_I = PrintCore.this.init_Long2IntOpenHashMa.get(this.init_BlockPos.asLong());
             boolean free = this.flush_I < 0
                || PrintCore.this.init_ListPoolArr[this.flush_I].fluid()
-               || PrintCore.this.init_ListPoolArr[this.flush_I].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.write;
+               || PrintCore.this.init_ListPoolArr[this.flush_I].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW;
             this.update_Z = this.read_I == 0;
             if (this.update_Z) {
                if (free
                   || PrintCore.this.init_BArr[this.flush_I] != 0
-                  || PrintCore.this.init_ListPoolArr[this.flush_I].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                  || PrintCore.this.init_ListPoolArr[this.flush_I].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                   || PrintCore.this.init_ListPoolArr[this.flush_I].fluid()
                   || !(PrintCore.this.init_ListPoolArr[this.flush_I].item() instanceof BlockItem)
                   || PrintCore.this.init_ListPoolArr[this.flush_I].wanted().getBlock() instanceof FallingBlock
@@ -28644,16 +28644,16 @@ public final class PrintCore {
                      }
                   } else if (this.init_I == 4 || this.init_I == 7) {
                      PrintAccess.Inner_TaskQueue answer = this.init_UiHelper_e.init(left);
-                     if (answer == PrintAccess.Inner_TaskQueue.init) {
+                     if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                         return;
                      }
 
-                     if (answer == PrintAccess.Inner_TaskQueue.write) {
+                     if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         this.read_Z = this.load_Z = true;
                         return;
                      }
 
-                     if (answer == PrintAccess.Inner_TaskQueue.load) {
+                     if (answer == PrintAccess.Inner_TaskQueue.FOUND) {
                         this.init_UiHelper_e = PrintCore.this.new e(
                            this.init_UiHelper_b, this.init_BlockPos.asLong(), this.init_I == 4, this.load_BlockPos, this.init_BlockState
                         );
@@ -28663,16 +28663,16 @@ public final class PrintCore {
                      }
                   } else if (this.init_I == 5 || this.init_I == 8) {
                      PrintAccess.Inner_TaskQueue answer = this.init_UiHelper_e.init(left);
-                     if (answer == PrintAccess.Inner_TaskQueue.init) {
+                     if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                         return;
                      }
 
-                     if (answer == PrintAccess.Inner_TaskQueue.write) {
+                     if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         this.read_Z = this.load_Z = true;
                         return;
                      }
 
-                     if (answer == PrintAccess.Inner_TaskQueue.read) {
+                     if (answer == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                         this.init(true);
                         return;
                      }
@@ -29078,7 +29078,7 @@ public final class PrintCore {
                      );
                   }
 
-                  if (PrintCore.this.init_UiHelper_J != PrintCore.J.read) {
+                  if (PrintCore.this.init_UiHelper_J != PrintCore.J.TEARDOWN) {
                      PrintCore.this.load_Str = "Walking (" + (this.init_List.size() - this.init_I) + " steps)";
                   }
 
@@ -29133,7 +29133,7 @@ public final class PrintCore {
                   if (i < 0
                      || core.init_BArr[i] != 0
                      || core.init_ListPoolArr[i].wanted() != expected
-                     || core.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                     || core.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                      || !actual.canBeReplaced() && !core.init_Long2ObjectOpenHas.containsKey(key)
                      || expected.getBlock() instanceof FallingBlock
                      || PrintView.init_Z_BlockState(expected)
@@ -29201,7 +29201,7 @@ public final class PrintCore {
                   if (i >= 0
                      && core.init_BArr[i] == 0
                      && core.init_ListPoolArr[i].wanted() == expected
-                     && core.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                     && core.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                      && (actual.canBeReplaced() || core.init_Long2ObjectOpenHas.containsKey(entry.getLongKey()))
                      && !(expected.getBlock() instanceof FallingBlock)
                      && !PrintView.init_Z_BlockState(expected)
@@ -29339,16 +29339,16 @@ public final class PrintCore {
                                  ? 9223372036854775807L
                                  : Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started))
                            );
-                        if (state == PrintAccess.Inner_TaskQueue.init) {
+                        if (state == PrintAccess.Inner_TaskQueue.SEARCHING) {
                            return;
                         }
 
-                        if (state == PrintAccess.Inner_TaskQueue.write) {
+                        if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                            this.read_Z = this.load_Z = true;
                            return;
                         }
 
-                        if (state == PrintAccess.Inner_TaskQueue.load) {
+                        if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                            PrintCore.this.init_V_Str("interact: walking to " + BlockPos.of(this.init_J).toShortString() + " for " + target.pos().toShortString());
                            PrintCore.this.flush_LongOpenHashSet.add(PrintCore.init_J_I_J(this.init_I, this.init_J));
                            this.init_UiHelper_NetHelper = PrintCore.this.new aL(
@@ -29391,7 +29391,7 @@ public final class PrintCore {
                                  PrintCore.this.init_PathHelper,
                                  target,
                                  this.init_Item,
-                                 PrintClicks.Inner_CachePool.load,
+                                 PrintClicks.Inner_CachePool.INTERACT,
                                  workFeet,
                                  false,
                                  false,
@@ -29449,16 +29449,16 @@ public final class PrintCore {
          PrintCore.this.load_Str = "Planning fluid access (" + this.init_StreamUtil_ConfigS.load_J + " stances searched)";
          long t0 = System.nanoTime();
          PrintAccess.Inner_TaskQueue state = PrintCore.this.poll_Z()
-            ? PrintAccess.Inner_TaskQueue.init
+            ? PrintAccess.Inner_TaskQueue.SEARCHING
             : this.init_StreamUtil_ConfigS.init(PrintCore.this.write_J());
          long spent = System.nanoTime() - t0;
          PrintCore.this.init_J += spent;
          PrintCore.this.pop_J += spent;
          PrintCore.this.read_J = Math.max(PrintCore.this.read_J, spent);
-         if (state == PrintAccess.Inner_TaskQueue.write) {
+         if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
             PrintCore.this.cache_LongOpenHashSet.remove(this.init_BlockPos.asLong());
             this.init_Z = true;
-         } else if (state == PrintAccess.Inner_TaskQueue.load) {
+         } else if (state == PrintAccess.Inner_TaskQueue.FOUND) {
             PrintAccess.Inner_BufferHelper plan = this.init_StreamUtil_ConfigS.init_StreamUtil_BufferH();
             autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.init_StreamUtil_ConfigS.init_ConfigStore_Stream;
             if (click == null) {
@@ -29476,7 +29476,7 @@ public final class PrintCore {
                   + PrintCore.this.init_ListPoolArr[plan.goal()].pos().toShortString()
             );
             this.init_Z = true;
-         } else if (state == PrintAccess.Inner_TaskQueue.read) {
+         } else if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
             PrintCore.this.init_V_Str("fluids: native access graph exhausted toward " + this.init_IntArrayList.size() + " sources");
             this.init_Z = true;
          }
@@ -29528,7 +29528,7 @@ public final class PrintCore {
 
             PrintAccess.Inner_TaskQueue state;
             try (Inner_StreamUtil_2 geometry = this.init_UiHelper_b.init_ArrayUtil_StreamUt.init_ArrayUtil_StreamUt()) {
-               state = PrintCore.this.poll_Z() ? PrintAccess.Inner_TaskQueue.init : this.init_StreamUtil_ConfigS.init(PrintCore.this.write_J());
+               state = PrintCore.this.poll_Z() ? PrintAccess.Inner_TaskQueue.SEARCHING : this.init_StreamUtil_ConfigS.init(PrintCore.this.write_J());
             } finally {
                PrintCore.this.init_UiHelper_b = previousPolicy;
                long elapsed = System.nanoTime() - began;
@@ -29536,9 +29536,9 @@ public final class PrintCore {
                PrintCore.this.pop_J += elapsed;
             }
 
-            if (!this.init_UiHelper_b.init() || state == PrintAccess.Inner_TaskQueue.write) {
+            if (!this.init_UiHelper_b.init() || state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                this.init_Z = true;
-            } else if (state == PrintAccess.Inner_TaskQueue.read) {
+            } else if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                PrintCore.this.open_Int2ObjectOpenHash.put(this.init_I, new PrintCore.r(this.init_J, this.init_D, this.init_LongArrayList, this.init_UiHelper_b));
                PrintCore.this.init_V_Str(
                   "fluids: native preparation graph exhausted toward "
@@ -29547,7 +29547,7 @@ public final class PrintCore {
                      + PrintCore.this.init_ListPoolArr[this.init_I].pos().toShortString()
                );
                this.init_Z = true;
-            } else if (state == PrintAccess.Inner_TaskQueue.load) {
+            } else if (state == PrintAccess.Inner_TaskQueue.FOUND) {
                autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.init_StreamUtil_ConfigS.init_ConfigStore_Stream;
                if (click == null) {
                   throw new IllegalStateException("Fluid preparation access has no native dig");
@@ -29845,11 +29845,11 @@ public final class PrintCore {
                }
 
                PrintAccess.Inner_TaskQueue answer = PrintCore.this.poll_Z()
-                  ? PrintAccess.Inner_TaskQueue.init
+                  ? PrintAccess.Inner_TaskQueue.SEARCHING
                   : this.init_StreamUtil_ConfigS.init(PrintCore.this.write_J());
-               if (answer == PrintAccess.Inner_TaskQueue.write) {
+               if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   this.init_Z = true;
-               } else if (answer == PrintAccess.Inner_TaskQueue.read) {
+               } else if (answer == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                   if (this.init_I >= 0) {
                      BlockPos helper = PrintCore.this.write_Int2ObjectOpenHash.get(this.init_I);
                      this.init_UiHelper_NetHelper = PrintCore.this.init_UiHelper_NetHelper_BlockPos_2(
@@ -29865,7 +29865,7 @@ public final class PrintCore {
                   }
 
                   this.init_Z = true;
-               } else if (answer == PrintAccess.Inner_TaskQueue.load) {
+               } else if (answer == PrintAccess.Inner_TaskQueue.FOUND) {
                   autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.init_StreamUtil_ConfigS.init_ConfigStore_Stream;
                   if (click == null) {
                      throw new IllegalStateException("Rail access has no native placement");
@@ -29991,11 +29991,11 @@ public final class PrintCore {
                      }
 
                      PrintAccess.Inner_TaskQueue result = this.init_UiHelper_as.init(Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started)));
-                     if (result == PrintAccess.Inner_TaskQueue.init) {
+                     if (result == PrintAccess.Inner_TaskQueue.SEARCHING) {
                         return;
                      }
 
-                     if (result != PrintAccess.Inner_TaskQueue.load) {
+                     if (result != PrintAccess.Inner_TaskQueue.FOUND) {
                         PrintCore.this.init_V_Str("creative: landed station safety refused " + BlockPos.of(this.init_UiHelper_i.ground.stance));
                         this.init(PrintCore.this.load_UiHelper_NetHelper_Z(true));
                         return;
@@ -30075,7 +30075,7 @@ public final class PrintCore {
       ag(int cell) {
          this.init_I = cell;
          this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(
-            PrintCore.this.init_ListPoolArr[cell], PrintClicks.Inner_CachePool.load, PrintCore.this.init_BitSetUtil_I(cell).item(), null, true
+            PrintCore.this.init_ListPoolArr[cell], PrintClicks.Inner_CachePool.INTERACT, PrintCore.this.init_BitSetUtil_I(cell).item(), null, true
          );
       }
 
@@ -30338,7 +30338,7 @@ public final class PrintCore {
                                        PrintCore.this.init_PathHelper,
                                        target,
                                        PrintClicks.init(target),
-                                       PrintClicks.Inner_CachePool.read,
+                                       PrintClicks.Inner_CachePool.POUR,
                                        this.load_Vec3,
                                        true,
                                        false,
@@ -30366,7 +30366,7 @@ public final class PrintCore {
                            return;
                         }
 
-                        if (result == PrintAccess.Inner_TaskQueue.read) {
+                        if (result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                            this.init_V_8();
                         } else {
                            this.init_UiHelper_e = this.init_Long2ObjectOpenHas
@@ -30379,7 +30379,7 @@ public final class PrintCore {
                            return;
                         }
 
-                        if (result == PrintAccess.Inner_TaskQueue.load) {
+                        if (result == PrintAccess.Inner_TaskQueue.FOUND) {
                            this.load_UiHelper_e = PrintCore.this.new e(
                               this.init_UiHelper_b, this.init_J, false, target.pos(), target.wanted().getFluidState().createLegacyBlock()
                            );
@@ -30393,7 +30393,7 @@ public final class PrintCore {
                            return;
                         }
 
-                        if (result == PrintAccess.Inner_TaskQueue.read) {
+                        if (result == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                            this.init_V_8();
                         } else {
                            this.load_I = 5;
@@ -30421,7 +30421,7 @@ public final class PrintCore {
                      } else {
                         label678:
                         if (this.load_I == 6) {
-                           if (PrintCore.this.init_UiHelper_J == PrintCore.J.init) {
+                           if (PrintCore.this.init_UiHelper_J == PrintCore.J.BUILD) {
                               if (this.init_UiHelper_al == null) {
                                  this.init_UiHelper_al = PrintCore.this.new al(this.init_TokenStore_TaskQue, target);
                               }
@@ -30453,7 +30453,7 @@ public final class PrintCore {
                               }
 
                               PrintCore.this.init_V_Str("pour: " + target.pos().toShortString() + " is held in");
-                              PrintCore.Inner_NetHelper pour = PrintCore.this.new aj(i, PrintClicks.Inner_CachePool.read, this.init_J, this.load_Vec3);
+                              PrintCore.Inner_NetHelper pour = PrintCore.this.new aj(i, PrintClicks.Inner_CachePool.POUR, this.init_J, this.load_Vec3);
                               if (this.init_Fluid != null) {
                                  PrintCore.this.f_D_I++;
                                  PrintCore.this.init_V_Str("pour: chained into the flowing pool");
@@ -30498,11 +30498,11 @@ public final class PrintCore {
       }
 
       private boolean init(PrintAccess.Inner_TaskQueue result) {
-         if (result == PrintAccess.Inner_TaskQueue.write) {
+         if (result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
             this.load_Z = true;
          }
 
-         return result == PrintAccess.Inner_TaskQueue.init || result == PrintAccess.Inner_TaskQueue.write;
+         return result == PrintAccess.Inner_TaskQueue.SEARCHING || result == PrintAccess.Inner_TaskQueue.INVALIDATED;
       }
 
       private void init(PrintCore.Inner_NetHelper chosen) {
@@ -30573,18 +30573,18 @@ public final class PrintCore {
          PrintCore.this.load_Str = "Planning fluid shaping access (" + this.init_StreamUtil_ConfigS.load_J + " stances searched)";
          long started = System.nanoTime();
          PrintAccess.Inner_TaskQueue state = PrintCore.this.poll_Z()
-            ? PrintAccess.Inner_TaskQueue.init
+            ? PrintAccess.Inner_TaskQueue.SEARCHING
             : this.init_StreamUtil_ConfigS.init(PrintCore.this.write_J());
          long spent = System.nanoTime() - started;
          PrintCore.this.init_J += spent;
          PrintCore.this.pop_J += spent;
          PrintCore.this.read_J = Math.max(PrintCore.this.read_J, spent);
-         if (state == PrintAccess.Inner_TaskQueue.write) {
+         if (state == PrintAccess.Inner_TaskQueue.INVALIDATED) {
             this.init_Z = true;
-         } else if (state == PrintAccess.Inner_TaskQueue.read) {
+         } else if (state == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
             PrintCore.this.clear_Long2ObjectOpenHas.put(this.init_BlockPos.asLong(), new long[]{this.load, this.init_J});
             this.init_Z = true;
-         } else if (state == PrintAccess.Inner_TaskQueue.load) {
+         } else if (state == PrintAccess.Inner_TaskQueue.FOUND) {
             autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.init_StreamUtil_ConfigS.init_ConfigStore_Stream;
             if (click == null) {
                throw new IllegalStateException("Flow-shaping access has no native placement");
@@ -30689,7 +30689,7 @@ public final class PrintCore {
                }
             }
 
-            boolean standing = this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.write;
+            boolean standing = this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.WATERLOG;
             if (standing && !PrintCore.this.init_Z_NodeWalker_StreamU(b)) {
                return c;
             }
@@ -30744,7 +30744,7 @@ public final class PrintCore {
                   return c;
                }
             } else {
-               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.read
+               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.POUR
                   && PrintCore.this.init_BlockPos_BlockPos_Fluid(t.pos(), t.wanted().getFluidState().getType()) != null) {
                   this.init_Z = true;
                   return null;
@@ -30755,7 +30755,7 @@ public final class PrintCore {
                PrintCore.this.load_V_I(this.init_I);
                PrintCore.this.f_ac_J = PrintCore.this.init_EventBus.init_J();
                PrintCore.this.init_BlockPos = t.pos();
-               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.write) {
+               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.WATERLOG) {
                   PrintCore.this.close_LongOpenHashSet.add(PrintCore.init_J_I_J(this.init_I, this.init_J));
                   PrintCore.this.write_IntOpenHashSet.add(this.init_I);
                }
@@ -30823,7 +30823,7 @@ public final class PrintCore {
                      BlockPos pos = BlockPos.of(key);
                      if (PrintCore.this.init_ArrayUtil.getBlockState(pos).isAir()) {
                         this.init_Long2ObjectOpenHas.put(key, water);
-                     } else if (pos.equals(this.init_ListPool.pos()) && this.init_ListPool.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.read) {
+                     } else if (pos.equals(this.init_ListPool.pos()) && this.init_ListPool.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID) {
                         this.init_Long2ObjectOpenHas.put(key, this.init_ListPool.wanted());
                      }
                   }
@@ -31130,7 +31130,7 @@ public final class PrintCore {
                if (this.load_Iterator.hasNext()) {
                   BlockPos at = this.load_Iterator.next();
                   int j = PrintCore.this.init_Long2IntOpenHashMa.get(at.asLong());
-                  if (j >= 0 && PrintCore.this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.write) {
+                  if (j >= 0 && PrintCore.this.init_ListPoolArr[j].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
                      this.init(this.read_IntArrayListArr, this.sync, j);
                   }
                } else {
@@ -31145,7 +31145,7 @@ public final class PrintCore {
                   this.sync = PrintCore.this.init_Long2IntOpenHashMa.get(at.asLong());
                   if (this.sync >= 0
                      && this.sync != this.update_I
-                     && effect != autismclient.ai.print.PrintRules.Inner_DataUtil.load
+                     && effect != autismclient.ai.print.PrintRules.Inner_DataUtil.NO_PATH
                      && (
                         this.read_IntArrayListArr[this.update_I] == null
                            || !this.read_IntArrayListArr[this.update_I].contains(this.sync)
@@ -31157,7 +31157,7 @@ public final class PrintCore {
                         this.init(this.write_IntArrayListArr, this.sync, this.update_I);
                      } else if (!PrintCore.this.sync_Z_I_I(this.update_I, this.sync)) {
                         this.init(
-                           effect == autismclient.ai.print.PrintRules.Inner_DataUtil.read ? this.load_IntArrayListArr : this.init_IntArrayListArr,
+                           effect == autismclient.ai.print.PrintRules.Inner_DataUtil.UNKNOWN ? this.load_IntArrayListArr : this.init_IntArrayListArr,
                            this.sync,
                            this.update_I
                         );
@@ -31183,7 +31183,7 @@ public final class PrintCore {
                      ? PrintCore.this.init_PathHelper.init_PathHelper_StreamU(this.init_BlockGetter, part.pos(), this.init_HashSet)
                      : PrintCore.this.init_PathHelper
                         .init_PathHelper_StreamU_BlockGetter(this.init_BlockGetter, part.pos(), this.init_HashSet, this.load_HashSet);
-                  this.init_Iterator = (this.init_PathHelper_StreamU.unseen() == autismclient.ai.print.PrintRules.Inner_DataUtil.load
+                  this.init_Iterator = (this.init_PathHelper_StreamU.unseen() == autismclient.ai.print.PrintRules.Inner_DataUtil.NO_PATH
                         ? this.init_PathHelper_StreamU.reached().keySet()
                         : this.init_HashSet)
                      .iterator();
@@ -31355,7 +31355,7 @@ public final class PrintCore {
       final Long2ObjectOpenHashMap<PrintCore.e> load_Long2ObjectOpenHas;
       PrintCore.e init_UiHelper_e;
       int init_I;
-      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.init;
+      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
 
       aq(PrintCore.b policy, BlockPos stance, BlockPos removed) {
          this(policy, stance, removed, new Long2ObjectOpenHashMap<>(), new Long2ObjectOpenHashMap<>());
@@ -31377,10 +31377,10 @@ public final class PrintCore {
 
       PrintAccess.Inner_TaskQueue init(long allowance) {
          if (!this.init_UiHelper_b.init()) {
-            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
-         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
             return this.init_StreamUtil_TaskQue;
          }
 
@@ -31395,10 +31395,10 @@ public final class PrintCore {
                } else {
                   long before = (this.init_BlockPos.equals(this.load_BlockPos) ? this.init_BlockPos.above() : this.init_BlockPos).asLong();
                   PrintCore.e upperBound = this.load_Long2ObjectOpenHas.get(before);
-                  if (this.init_I == 0 && upperBound != null && upperBound.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.read) {
+                  if (this.init_I == 0 && upperBound != null && upperBound.init_StreamUtil_TaskQue == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                      upperBound.load_Z = true;
                      upperBound.init();
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                   }
 
                   Long2ObjectOpenHashMap<PrintCore.e> starts = this.init_I == 0 ? this.init_Long2ObjectOpenHas : this.load_Long2ObjectOpenHas;
@@ -31410,13 +31410,13 @@ public final class PrintCore {
             }
 
             PrintAccess.Inner_TaskQueue result = this.init_UiHelper_e.init(Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started)));
-            if (result != PrintAccess.Inner_TaskQueue.init && result != PrintAccess.Inner_TaskQueue.write) {
+            if (result != PrintAccess.Inner_TaskQueue.SEARCHING && result != PrintAccess.Inner_TaskQueue.INVALIDATED) {
                if (this.init_I != 1 && this.init_I != 3) {
-                  if (result == PrintAccess.Inner_TaskQueue.load) {
+                  if (result == PrintAccess.Inner_TaskQueue.FOUND) {
                      this.init_I++;
                   } else {
                      if (this.init_I != 0) {
-                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                      }
 
                      this.init_I = 2;
@@ -31471,17 +31471,17 @@ public final class PrintCore {
 
                long left = allowance == 9223372036854775807L ? 9223372036854775807L : Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started));
                PrintAccess.Inner_TaskQueue answer = this.init_UiHelper_e.init(left);
-               if (answer == PrintAccess.Inner_TaskQueue.init) {
+               if (answer == PrintAccess.Inner_TaskQueue.SEARCHING) {
                   return;
                }
 
-               if (answer == PrintAccess.Inner_TaskQueue.write) {
+               if (answer == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   this.read = this.init_Z = true;
                   return;
                }
 
                if ((this.init_I & 1) == 0) {
-                  if (answer == PrintAccess.Inner_TaskQueue.load) {
+                  if (answer == PrintAccess.Inner_TaskQueue.FOUND) {
                      this.init_UiHelper_e = PrintCore.this.new e(
                         this.init_UiHelper_b, this.init_BlockPos.above().asLong(), ground, this.init_BlockPos, this.init_BlockState
                      );
@@ -31496,7 +31496,7 @@ public final class PrintCore {
                      this.init_UiHelper_e = null;
                   }
                } else {
-                  if (answer == PrintAccess.Inner_TaskQueue.read) {
+                  if (answer == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
                      this.init_Str = ground ? "way down" : "way out";
                      this.load = this.init_Z = true;
                      return;
@@ -31529,7 +31529,7 @@ public final class PrintCore {
       final Long2ObjectOpenHashMap<PrintCore.e> load;
       PrintNav.Inner_NetHelper init_TokenStore_NetHelp;
       int init_I;
-      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.init;
+      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
 
       as(PrintNav.Inner_TaskQueue reach, long key, PrintCore.b policy, Long2ObjectOpenHashMap<PrintCore.e> exits, Long2ObjectOpenHashMap<PrintCore.e> descents) {
          this.init_TokenStore_TaskQue = reach;
@@ -31547,15 +31547,15 @@ public final class PrintCore {
 
       PrintAccess.Inner_TaskQueue init(long allowance) {
          if (!this.init_UiHelper_b.init()) {
-            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
-         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
             return this.init_StreamUtil_TaskQue;
          }
 
          if (this.init_J == this.init_TokenStore_TaskQue.init_J) {
-            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
          }
 
          long started = PrintCore.this.init_ArrayUtil.sync();
@@ -31566,16 +31566,16 @@ public final class PrintCore {
                if (this.init_I == 2) {
                   if (this.init_TokenStore_TaskQue.load(this.init_J) >= PrintCore.this.init_EventBus.init_NodeWalker_StreamU().y() - 0.5
                      && !PrintCore.this.read_Z_TokenStore_TaskQue_J(this.init_TokenStore_TaskQue, this.init_J)) {
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   PrintAccess.Inner_TaskQueue origin = this.init(this.init_TokenStore_TaskQue.init_J, false, left);
-                  if (origin == PrintAccess.Inner_TaskQueue.init || origin == PrintAccess.Inner_TaskQueue.write) {
+                  if (origin == PrintAccess.Inner_TaskQueue.SEARCHING || origin == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                      return this.init_StreamUtil_TaskQue = origin;
                   }
 
-                  if (origin == PrintAccess.Inner_TaskQueue.read) {
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+                  if (origin == PrintAccess.Inner_TaskQueue.EXHAUSTED) {
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   this.init_I = 3;
@@ -31598,7 +31598,7 @@ public final class PrintCore {
                      }
 
                      if (!this.init_UiHelper_b.init_ArrayUtil_StreamUt.init_Z()) {
-                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+                        return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
                      }
 
                      if (!this.init_TokenStore_NetHelp.init_Z) {
@@ -31611,31 +31611,31 @@ public final class PrintCore {
                      PrintAccess.Inner_TaskQueue result = this.init(
                         this.init_J, this.init_I == 1, Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started))
                      );
-                     if (result == PrintAccess.Inner_TaskQueue.init || result == PrintAccess.Inner_TaskQueue.write) {
+                     if (result == PrintAccess.Inner_TaskQueue.SEARCHING || result == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                         return this.init_StreamUtil_TaskQue = result;
                      }
 
-                     safe = result == PrintAccess.Inner_TaskQueue.load;
+                     safe = result == PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   if (!safe) {
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                   }
 
                   if (this.init_I != 1) {
-                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+                     return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
                   }
 
                   this.init_I = 2;
                }
-            } else if ((PrintCore.this.init_UiHelper_J == PrintCore.J.read || PrintCore.this.push_Z())
+            } else if ((PrintCore.this.init_UiHelper_J == PrintCore.J.TEARDOWN || PrintCore.this.push_Z())
                && PrintCore.this.tick_Z_BlockPos(BlockPos.of(this.init_TokenStore_TaskQue.init_J))) {
                PrintAccess.Inner_TaskQueue origin = this.init(this.init_TokenStore_TaskQue.init_J, true, left);
-               if (origin == PrintAccess.Inner_TaskQueue.init || origin == PrintAccess.Inner_TaskQueue.write) {
+               if (origin == PrintAccess.Inner_TaskQueue.SEARCHING || origin == PrintAccess.Inner_TaskQueue.INVALIDATED) {
                   return this.init_StreamUtil_TaskQue = origin;
                }
 
-               this.init_I = origin == PrintAccess.Inner_TaskQueue.load ? 1 : 2;
+               this.init_I = origin == PrintAccess.Inner_TaskQueue.FOUND ? 1 : 2;
             } else {
                this.init_I = 2;
             }
@@ -31674,7 +31674,7 @@ public final class PrintCore {
             -1,
             pos,
             PrintCore.this.init_ArrayUtil.getBlockState(pos),
-            autismclient.ai.print.PrintTarget.Inner_DataUtil.init,
+            autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE,
             PrintCore.this.init_ArrayUtil.getBlockState(pos).getBlock().asItem(),
             null
          );
@@ -31738,8 +31738,8 @@ public final class PrintCore {
                      int candidate = PrintCore.this.init_Long2IntOpenHashMa.get(this.init_ListPool.pos().relative(Direction.values()[this.init_I++]).asLong());
                      if (candidate >= 0
                         && PrintCore.this.init_BArr[candidate] == 0
-                        && PrintCore.this.init_ListPoolArr[candidate].kind() == PrintTarget.Inner_DataUtil.init
-                        && PrintCore.this.init_ConfigStore_CacheP_I(candidate) == PrintClicks.Inner_CachePool.init
+                        && PrintCore.this.init_ListPoolArr[candidate].kind() == PrintTarget.Inner_DataUtil.PLACE
+                        && PrintCore.this.init_ConfigStore_CacheP_I(candidate) == PrintClicks.Inner_CachePool.PLACE
                         && !PrintCore.this.set(candidate)
                         && !PrintCore.this.read_IntOpenHashSet.contains(candidate)
                         && !PrintCore.this.init_UiHelper_ListPool.init_Z(candidate)
@@ -31747,7 +31747,7 @@ public final class PrintCore {
                         this.load_I = candidate;
                         this.init_UiHelper_PathHelpe = PrintCore.this.new Inner_PathHelper(
                            PrintCore.this.init_ListPoolArr[this.load_I],
-                           PrintClicks.Inner_CachePool.init,
+                           PrintClicks.Inner_CachePool.PLACE,
                            PrintCore.this.init_ListPoolArr[this.load_I].item(),
                            this.init_ListPool.pos(),
                            true
@@ -32203,12 +32203,12 @@ public final class PrintCore {
                   }
 
                   LinkedHashSet<Vec3> alternatives = new LinkedHashSet<>(
-                     PrintFlightWorkstations.init(PrintCore.this.init_ArrayUtil, this.init_ListPool, PrintClicks.Inner_CachePool.init, this.read_J)
+                     PrintFlightWorkstations.init(PrintCore.this.init_ArrayUtil, this.init_ListPool, PrintClicks.Inner_CachePool.PLACE, this.read_J)
                   );
                   PrintCore.this.init_ArrayUtil.load(this.init_ListPool.pos(), this.init_ListPool.wanted());
 
                   try {
-                     alternatives.addAll(PrintFlightWorkstations.init(PrintCore.this.init_ArrayUtil, this.load_ListPool, PrintClicks.Inner_CachePool.init, this.read_J));
+                     alternatives.addAll(PrintFlightWorkstations.init(PrintCore.this.init_ArrayUtil, this.load_ListPool, PrintClicks.Inner_CachePool.PLACE, this.read_J));
                   } finally {
                      PrintCore.this.init_ArrayUtil.init_V_BlockPos(this.init_ListPool.pos());
                   }
@@ -32229,7 +32229,7 @@ public final class PrintCore {
                         PrintCore.this.init_PathHelper,
                         this.init_ListPool,
                         this.init_ListPool.item(),
-                        PrintClicks.Inner_CachePool.init,
+                        PrintClicks.Inner_CachePool.PLACE,
                         point,
                         true,
                         false,
@@ -32448,7 +32448,7 @@ public final class PrintCore {
 
             while (this.init_I < this.init_StreamUtil_BufferH.steps().size() && filtered++ < 1024) {
                autismclient.ai.print.PrintAccess.Inner_StreamUtil kind = this.init_StreamUtil_BufferH.steps().get(this.init_I++).kind();
-               if (kind != autismclient.ai.print.PrintAccess.Inner_StreamUtil.init && kind != autismclient.ai.print.PrintAccess.Inner_StreamUtil.write) {
+               if (kind != autismclient.ai.print.PrintAccess.Inner_StreamUtil.WALK && kind != autismclient.ai.print.PrintAccess.Inner_StreamUtil.DIG) {
                   this.read = true;
                   return;
                }
@@ -32499,7 +32499,7 @@ public final class PrintCore {
                      PrintAccess.Inner_NetHelper step = this.init_StreamUtil_BufferH.steps().get(this.load_I++);
                      BlockPos from = BlockPos.of(step.from());
                      BlockPos to = BlockPos.of(step.to());
-                     if (step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.write) {
+                     if (step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.DIG) {
                         BlockPos block = BlockPos.of(step.block());
                         if (!PrintCore.this.init_Long2ObjectOpenHas.containsKey(step.block()) && !PrintCore.this.init_ArrayUtil.load_Z_BlockPos(block)
                            || PrintCore.this.sync_Z_J(step.block())) {
@@ -32515,7 +32515,7 @@ public final class PrintCore {
                      double toFeet = PrintCore.this.init_ArrayUtil.init_D_I_2(to.getX(), to.getY(), to.getZ());
                      if (Double.isNaN(toFeet)
                         || Math.abs(toFeet - step.toFeet()) > 0.001
-                        || step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.init
+                        || step.kind() == autismclient.ai.print.PrintAccess.Inner_StreamUtil.WALK
                            && Double.isNaN(
                               PrintNav.init_D_ArrayUtil(
                                  PrintCore.this.init_ArrayUtil,
@@ -32589,7 +32589,7 @@ public final class PrintCore {
       PrintAccess.Inner_ConfigStore init_StreamUtil_ConfigS;
       autismclient.ai.print.PrintAccess.Inner_DataUtil init_StreamUtil_DataUti;
       PrintCore.d init_UiHelper_d;
-      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.init;
+      PrintAccess.Inner_TaskQueue init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.SEARCHING;
       double init_D;
       BlockPos read;
 
@@ -32613,10 +32613,10 @@ public final class PrintCore {
 
       PrintAccess.Inner_TaskQueue init(long allowance) {
          if (!this.init_UiHelper_b.init()) {
-            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
-         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+         if (this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
             this.init();
             return this.init_StreamUtil_TaskQue;
          }
@@ -32641,7 +32641,7 @@ public final class PrintCore {
          }
 
          if (!this.init_UiHelper_b.init()) {
-            this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+            this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
          }
 
          this.init();
@@ -32649,7 +32649,7 @@ public final class PrintCore {
       }
 
       void init() {
-         if (this.load_Z && this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.init) {
+         if (this.load_Z && this.init_StreamUtil_TaskQue != PrintAccess.Inner_TaskQueue.SEARCHING) {
             this.init_StreamUtil = null;
             this.init_StreamUtil_ConfigS = null;
             this.init_StreamUtil_DataUti = null;
@@ -32661,7 +32661,7 @@ public final class PrintCore {
          if (this.init_StreamUtil == null) {
             this.read = PrintCore.this.init_BlockPos_BlockPos(this.init_BlockPos, this.load_BlockPos, this.init_BlockState);
             if (this.read == null) {
-               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
             }
 
             this.init_D = PrintCore.this.init_ArrayUtil.init_D_I_2(this.read.getX(), this.read.getY(), this.read.getZ());
@@ -32670,18 +32670,18 @@ public final class PrintCore {
                if (Math.abs(body.x() - (this.read.getX() + 0.5)) > 1.0
                   || Math.abs(body.z() - (this.read.getZ() + 0.5)) > 1.0
                   || Math.abs(body.y() - this.read.getY()) > 1.0) {
-                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                }
 
                this.init_D = body.y();
                if (!PrintCore.this.init_ArrayUtil.init_Z_AABB(PrintGeometry.init(this.read.getX() + 0.5, this.init_D, this.read.getZ() + 0.5, false))) {
-                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.read;
+                  return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.EXHAUSTED;
                }
             }
 
             if (PrintCore.this.init_UiHelper_c_J(this.read.asLong(), this.init_D, this.init_Z, this.init_I) != null
                || !this.init_Z && PrintCore.this.init_Z_BlockPos_D(this.read, this.init_D)) {
-               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
             }
 
             this.init_StreamUtil = new PrintAccess(PrintCore.this, 80.0);
@@ -32694,11 +32694,11 @@ public final class PrintCore {
 
          if (this.init_StreamUtil_DataUti == null) {
             PrintAccess.Inner_TaskQueue result = this.init_StreamUtil_ConfigS.init(Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started)));
-            if (result == PrintAccess.Inner_TaskQueue.init) {
+            if (result == PrintAccess.Inner_TaskQueue.SEARCHING) {
                return this.init_StreamUtil_TaskQue;
             }
 
-            if (result != PrintAccess.Inner_TaskQueue.load) {
+            if (result != PrintAccess.Inner_TaskQueue.FOUND) {
                return this.init_StreamUtil_TaskQue = result;
             }
 
@@ -32719,7 +32719,7 @@ public final class PrintCore {
             }
 
             if (!this.init_StreamUtil_DataUti.load) {
-               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.write;
+               return this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.INVALIDATED;
             }
 
             if (PrintCore.this.init_ArrayUtil.sync() - started >= allowance) {
@@ -32734,7 +32734,7 @@ public final class PrintCore {
          this.init_UiHelper_d.init(Math.max(1L, allowance - (PrintCore.this.init_ArrayUtil.sync() - started)));
          if (this.init_UiHelper_d.read) {
             PrintCore.this.init_V_J_2(this.read.asLong(), this.init_Z, this.init_UiHelper_d.init_UiHelper_c);
-            this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.load;
+            this.init_StreamUtil_TaskQue = PrintAccess.Inner_TaskQueue.FOUND;
          }
 
          return this.init_StreamUtil_TaskQue;
@@ -33292,7 +33292,7 @@ public final class PrintCore {
                               continue;
                            }
                         } else if (!PrintFlight.load(PrintCore.this.init_ArrayUtil, click.feet())
-                           || click.mode() == PrintClicks.Inner_CachePool.read && !PrintCore.this.init_Z_Vec3_ListPool(click.feet(), click.target())) {
+                           || click.mode() == PrintClicks.Inner_CachePool.POUR && !PrintCore.this.init_Z_Vec3_ListPool(click.feet(), click.target())) {
                            this.init(false);
                            continue;
                         }
@@ -33487,7 +33487,7 @@ public final class PrintCore {
             if (this.load_I < PrintCore.this.init_ListPoolArr.length) {
                int i = this.load_I++;
                PrintCore.this.read_IArr[i] = -1;
-               this.init_ZArr[i] = PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+               this.init_ZArr[i] = PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                   && PrintCore.this.init_ListPoolArr[i].wanted().isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
                   && !PrintCore.update_Z_BlockState(PrintCore.this.init_ListPoolArr[i].wanted())
                   && !PrintCore.this.init_Z_I(i)
@@ -33664,7 +33664,7 @@ public final class PrintCore {
                      PrintCore.this.init_PathHelper,
                      target,
                      Items.AIR,
-                     PrintClicks.Inner_CachePool.load,
+                     PrintClicks.Inner_CachePool.INTERACT,
                      PrintCore.this.init_Vec3(),
                      false,
                      true,
@@ -33777,7 +33777,7 @@ public final class PrintCore {
                         PrintCore.this.init_PathHelper,
                         target,
                         Items.AIR,
-                        PrintClicks.Inner_CachePool.load,
+                        PrintClicks.Inner_CachePool.INTERACT,
                         next.position(),
                         false,
                         true,
@@ -33860,7 +33860,7 @@ public final class PrintCore {
                   if (candidate.asLong() == this.init_J
                      || i < 0
                      || PrintCore.this.init_BArr[i] != 0
-                     || PrintCore.this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                     || PrintCore.this.init_ListPoolArr[i].kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                      || !PrintCore.this.init_ArrayUtil.getBlockState(candidate).canBeReplaced()) {
                      this.load_I++;
                      continue;
@@ -34003,7 +34003,7 @@ public final class PrintCore {
                         PrintCore.this.tick_Z_I(i)
                            || this.init_Z
                               && (this.init_IntSet == null || this.init_IntSet.contains(i))
-                              && PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.init
+                              && PrintCore.this.init_ListPoolArr[i].kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE
                               && PrintCore.this.poll_Z_BlockPos(PrintCore.this.init_ListPoolArr[i].pos())
                      )
                      && (
@@ -34072,7 +34072,7 @@ public final class PrintCore {
          this.init_Item = item;
          this.init_BlockPos = via;
          this.init_Vec3 = origin;
-         if (target.index() < 0 && mode != PrintClicks.Inner_CachePool.update) {
+         if (target.index() < 0 && mode != PrintClicks.Inner_CachePool.DIG) {
             this.read_Z = true;
          }
       }
@@ -34082,7 +34082,7 @@ public final class PrintCore {
             long start = PrintCore.this.init_ArrayUtil.sync();
             if (!this.init_Z) {
                this.init_Z = true;
-               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.init
+               if (this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.PLACE
                   && !PrintClicks.init_Z_ArrayUtil_2(
                      PrintCore.this.init_ArrayUtil,
                      this.init_ListPool,
@@ -34266,8 +34266,8 @@ public final class PrintCore {
                                  this.init_Item,
                                  this.init_ConfigStore_CacheP,
                                  point,
-                                 this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.init
-                                    || this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.read,
+                                 this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.PLACE
+                                    || this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.POUR,
                                  this.init_ConfigStore_DataUt,
                                  4.1000000000000005,
                                  this.init_ListPool.index() < 0 ? null : PrintCore.this.init_u_DataUtil_I(this.init_ListPool.index()),
@@ -34333,8 +34333,8 @@ public final class PrintCore {
                               this.init_Item,
                               this.init_ConfigStore_CacheP,
                               new Vec3(this.load_BlockPos.getX() + 0.5, this.init_D, this.load_BlockPos.getZ() + 0.5),
-                              this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.init
-                                 || this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.read,
+                              this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.PLACE
+                                 || this.init_ConfigStore_CacheP == PrintClicks.Inner_CachePool.POUR,
                               this.init_ConfigStore_DataUt,
                               4.1000000000000005,
                               this.init_ListPool.index() < 0 ? null : PrintCore.this.init_u_DataUtil_I(this.init_ListPool.index()),

@@ -282,7 +282,7 @@ final class PrintCleanupAccess {
                      }
 
                      PrintTarget target = new PrintTarget(
-                        -1, pos, PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil.getBlockState(pos), PrintTarget.Inner_DataUtil.init, Items.AIR, null
+                        -1, pos, PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
                      );
                      if (PrintClicks.init(
                            PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil,
@@ -290,7 +290,7 @@ final class PrintCleanupAccess {
                            PrintCleanupAccess.this.init_UiHelper.init_PathHelper,
                            target,
                            Items.DIAMOND_PICKAXE,
-                           PrintClicks.Inner_CachePool.update,
+                           PrintClicks.Inner_CachePool.DIG,
                            this.init_BufferHelper_DataU.point,
                            false,
                            false,
@@ -724,7 +724,7 @@ final class PrintCleanupAccess {
          this.init_J = key;
          BlockPos pos = BlockPos.of(key);
          this.init_ListPool = new PrintTarget(
-            -1, pos, PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil.getBlockState(pos), PrintTarget.Inner_DataUtil.init, Items.AIR, null
+            -1, pos, PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
          );
          this.init_ArrayList.addAll(PrintFlightWorkstations.init(pos));
          this.init_ArrayList.sort(Comparator.<Long>comparingDouble(k -> BlockPos.of(k).distToCenterSqr(Vec3.atCenterOf(pos))).thenComparingLong(k -> k));
@@ -808,7 +808,7 @@ final class PrintCleanupAccess {
                      this.load_Z = true;
                   }
 
-                  this.init_List = PrintFlightWorkstations.init(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_ListPool, PrintClicks.Inner_CachePool.update, at);
+                  this.init_List = PrintFlightWorkstations.init(PrintCleanupAccess.this.init_UiHelper.init_ArrayUtil, this.init_ListPool, PrintClicks.Inner_CachePool.DIG, at);
                   this.load_I = 0;
                   continue;
                }
@@ -825,7 +825,7 @@ final class PrintCleanupAccess {
                   PrintCleanupAccess.this.init_UiHelper.init_PathHelper,
                   this.init_ListPool,
                   Items.DIAMOND_PICKAXE,
-                  PrintClicks.Inner_CachePool.update,
+                  PrintClicks.Inner_CachePool.DIG,
                   this.init_Vec3,
                   false,
                   false,

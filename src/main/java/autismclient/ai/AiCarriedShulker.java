@@ -63,7 +63,7 @@ final class AiCarriedShulker implements AiOperation {
    private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
    private final AiPreparationReceipt init_bb = new AiPreparationReceipt();
    private final long init_J = System.nanoTime() + 120000000000L;
-   private AiCarriedShulker.Inner_StreamUtil init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.load;
+   private AiCarriedShulker.Inner_StreamUtil init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.PLACE;
    private BlockPos init_BlockPos;
    private BlockState init_BlockState;
    private BlockState load_BlockState;
@@ -562,7 +562,7 @@ final class AiCarriedShulker implements AiOperation {
    static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos_BlockPos(final BlockPos box, BlockPos target) {
       final autismclient.ai.engine.AiPathfinder.Inner_JsonUtil near = autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
       final Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> walks = Set.copyOf(
-         EnumSet.complementOf(EnumSet.of(autismclient.ai.engine.AiPathfinder.Inner_SyncManager.init, autismclient.ai.engine.AiPathfinder.Inner_SyncManager.load))
+         EnumSet.complementOf(EnumSet.of(autismclient.ai.engine.AiPathfinder.Inner_SyncManager.WALK, autismclient.ai.engine.AiPathfinder.Inner_SyncManager.WALK_DIAGONAL))
       );
       return new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
          @Override
@@ -656,15 +656,15 @@ final class AiCarriedShulker implements AiOperation {
          return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.TIMED_OUT, "Portable stock recovery deadline reached");
       }
 
-      if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.init
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.load
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.flush
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.close
+      if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.APPROACH
+         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PLACE
+         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL
+         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PICKUP
          || this.init_Z()
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.sync
+         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.BREAK
             && this.init_AiOperation != null
             && this.init_Minecraft.level.getBlockState(this.init_BlockPos).isAir()) {
-         if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.init) {
+         if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.APPROACH) {
             AiOperation.Result result = this.init_bb.init_AiOperation_Result(this.init_AiOperation);
             if (!result.terminal()) {
                return this.init_AiOperation_Result_Str("Moving to a safe existing shulker recovery area");
@@ -676,22 +676,22 @@ final class AiCarriedShulker implements AiOperation {
                return this.init_AiOperation_Result_AiOperation_Status_Str(result.status(), "Could not reach a safe shulker recovery area");
             }
 
-            this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.load;
+            this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.PLACE;
             return this.init_AiOperation_Result_Str("Rechecking the shulker recovery area after arrival");
          } else {
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.load) {
+            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PLACE) {
                return this.init_AiOperation_Result_2();
             }
 
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.read) {
+            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.OPEN) {
                return this.load_AiOperation_Result_2();
             }
 
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.write) {
+            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.WITHDRAW) {
                return this.read_AiOperation_Result();
             }
 
-            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.update) {
+            if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CLOSE) {
                if (this.init_Minecraft.player.containerMenu != this.init_Minecraft.player.inventoryMenu) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str(AiOperation.Status.UNCERTAIN, "Another menu opened during shulker recovery");
                }
@@ -711,9 +711,9 @@ final class AiCarriedShulker implements AiOperation {
                this.load_J = AiServerEvidence.init_J();
                this.read_J = AiServerEvidence.init_J_BlockPos(this.init_BlockPos);
                this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 25, true, this.init_Set, false);
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.sync;
+               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.BREAK;
                return this.init_AiOperation_Result_Str("Recovering the owned stock shulker");
-            } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.sync) {
+            } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.BREAK) {
                if (this.init_Z() && !this.read_Z()) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str(
                      AiOperation.Status.UNCERTAIN, "Stock recovery is no longer safe; further breaking stopped"
@@ -734,25 +734,25 @@ final class AiCarriedShulker implements AiOperation {
                }
 
                this.init_BitSetUtil_DataUti = new AiCarriedShulker.Inner_DataUtil(this.read_J, System.nanoTime());
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.flush;
+               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL;
                return this.init_AiOperation_Result_Str("Waiting for the server to confirm the stock shulker removal");
-            } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.flush) {
+            } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL) {
                AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 observed = this.init_BitSetUtil_DataUti
                   .init(AiTerrain.init(this.init_Minecraft.level, this.init_BlockPos), AiServerEvidence.init_ca_DataUtil_BlockPos(this.init_BlockPos), System.nanoTime());
-               if (observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.init) {
+               if (observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
                   return this.init_AiOperation_Result_Str("Waiting for the server to confirm the stock shulker removal");
                }
 
-               if (observed != AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.load) {
+               if (observed != AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED) {
                   return this.init_AiOperation_Result_AiOperation_Status_Str(
                      AiOperation.Status.UNCERTAIN,
-                     observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.read
+                     observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED
                         ? "The server did not confirm an empty stock shulker cell; inspect the placed box"
                         : "The stock shulker removal confirmation did not arrive"
                   );
                }
 
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.close;
+               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.PICKUP;
                return this.init_AiOperation_Result_Str("Locating the observed stock shulker drop");
             } else {
                if (!init(
@@ -840,7 +840,7 @@ final class AiCarriedShulker implements AiOperation {
                      false,
                      false,
                      25,
-                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                      false,
                      2.0,
                      init_ClassCache_JsonUti_BlockPos_BlockPos(this.init_BlockPos, target),
@@ -890,13 +890,13 @@ final class AiCarriedShulker implements AiOperation {
                         false,
                         false,
                         25,
-                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.SAFEST,
                         false,
                         2.0,
                         AiGoto.read(autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stance, 0.6), this.init_Set),
                         new AiGoto.Inner_BufferHelper(false, false, 0, true, false, false)
                      );
-                     this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.init;
+                     this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.APPROACH;
                      return this.init_AiOperation_Result_Str("Moving to an existing flat area before placing the stock shulker");
                   }
                }
@@ -937,11 +937,11 @@ final class AiCarriedShulker implements AiOperation {
             && this.init_Z_BlockPos(this.init_BlockPos)) {
          autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
          this.init_Z = this.init_Z | this.init_DataPipe.init_Z();
-         if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read) {
+         if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED) {
             return this.init_AiOperation_Result_AiOperation_Status_Str(
                this.init_Z ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataPipe.init_Str()
             );
-         } else if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+         } else if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
             return this.init_AiOperation_Result_Str("Placing the selected stock shulker");
          } else {
             this.init_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos);
@@ -966,7 +966,7 @@ final class AiCarriedShulker implements AiOperation {
                   ),
                   this.init_Set
                );
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.read;
+               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.OPEN;
                return this.init_AiOperation_Result_Str("Opening the placed stock shulker");
             } else {
                return this.init_AiOperation_Result_AiOperation_Status_Str(
@@ -1094,7 +1094,7 @@ final class AiCarriedShulker implements AiOperation {
                      destinations
                   )
                   : new AiInventoryController(this.init_ShulkerBoxMenu.containerId, this.load_ItemStack, inventoryTarget, sources, destinations);
-               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.write;
+               this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.WITHDRAW;
                return this.init_AiOperation_Result_Str("Withdrawing building material from the carried shulker");
             } else {
                return this.write();
@@ -1150,7 +1150,7 @@ final class AiCarriedShulker implements AiOperation {
          );
       }
 
-      this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.update;
+      this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.CLOSE;
       return this.init_AiOperation_Result_Str("Closing the stock shulker before recovery");
    }
 
@@ -1265,7 +1265,7 @@ final class AiCarriedShulker implements AiOperation {
    @Override
    public boolean requiresReconciliationAfterEmergency() {
       return this.init_Z && !this.load_Z
-         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.load && this.init_DataPipe.load_Z()
+         || this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.PLACE && this.init_DataPipe.load_Z()
          || this.init_bb.init_Z(this.init_AiOperation);
    }
 
@@ -1291,28 +1291,28 @@ final class AiCarriedShulker implements AiOperation {
 
       AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 init(boolean loaded, AiServerEvidence.Inner_DataUtil update, long now) {
          if (loaded && update != null && update.revision() > this.init) {
-            return update.state().isAir() ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.load : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.read;
+            return update.state().isAir() ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED;
          } else {
-            return now >= this.load ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.write : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.init;
+            return now >= this.load ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.TIMED_OUT : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING;
          }
       }
 
       enum Inner_DataUtil_2 {
-         init,
-         load,
-         read,
-         write;
+         WAITING,
+         CONFIRMED,
+         REJECTED,
+         TIMED_OUT;
       }
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close;
+      APPROACH,
+      PLACE,
+      OPEN,
+      WITHDRAW,
+      CLOSE,
+      BREAK,
+      CONFIRM_REMOVAL,
+      PICKUP;
    }
 }

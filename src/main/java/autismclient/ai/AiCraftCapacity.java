@@ -103,7 +103,7 @@ final class AiCraftCapacity {
             }
 
             if (freeSlots.getAsInt() < 2) {
-               return this.init(AiOperation.Result.failed(AiFailure.put, "Acknowledged cleanup left insufficient room for the craft", "{}"));
+               return this.init(AiOperation.Result.failed(AiFailure.INVENTORY_FULL, "Acknowledged cleanup left insufficient room for the craft", "{}"));
             }
 
             this.init_Z = true;

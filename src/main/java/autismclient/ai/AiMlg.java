@@ -156,7 +156,7 @@ final class AiMlg {
             final UUID init_UUID = this.init_Minecraft.player.getUUID();
             final int init_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
             final int load_I = AiMlg.init();
-            Inner_DataUtil init_au_1_DataUtil = Inner_DataUtil.init;
+            Inner_DataUtil init_au_1_DataUtil = Inner_DataUtil.GRACE;
             boolean init_Z;
             boolean load_Z;
             boolean read_Z;
@@ -202,16 +202,16 @@ final class AiMlg {
                   ClientLevel level = this.init_Minecraft.level;
                   AiOperation.Result var10000;
                   switch (this.init_au_1_DataUtil) {
-                     case init:
+                     case GRACE:
                         var10000 = this.init(player);
                         break;
-                     case load:
+                     case FALLING:
                         var10000 = this.init_AiOperation_Result(player, level);
                         break;
-                     case read:
+                     case SETTLE:
                         var10000 = this.load(player, level);
                         break;
-                     case write:
+                     case COLLECT:
                         var10000 = this.read(player, level);
                         break;
                      default:
@@ -231,7 +231,7 @@ final class AiMlg {
                } else {
                   boolean airborne = !player.onGround() || player.fallDistance > 0.5 || player.getDeltaMovement().y < -0.08;
                   if (airborne) {
-                     this.init_au_1_DataUtil = Inner_DataUtil.load;
+                     this.init_au_1_DataUtil = Inner_DataUtil.FALLING;
                      return this.init("Fall detected; tracking the landing");
                   } else {
                      return ++this.read_I > 20 ? this.init(AiOperation.Status.FAILED, "No fall in progress") : this.init("Waiting for the fall to begin");
@@ -243,7 +243,7 @@ final class AiMlg {
                this.init_D = Math.max(this.init_D, player.fallDistance);
                this.init_F = player.getHealth();
                if (this.init_Z(player, level)) {
-                  this.init_au_1_DataUtil = Inner_DataUtil.read;
+                  this.init_au_1_DataUtil = Inner_DataUtil.SETTLE;
                   this.write_I = 0;
                   this.load_F = player.getHealth();
                   this.read_BlockPos = player.blockPosition();
@@ -397,7 +397,7 @@ final class AiMlg {
                if (!(this.write_F <= 0.5F) || !this.load_Z && !softActual && !"redirect".equals(this.init_Str)) {
                   if ("water".equals(this.init_Str) && this.load_Z && collect && player.isAlive()) {
                      this.update_Z = true;
-                     this.init_au_1_DataUtil = Inner_DataUtil.write;
+                     this.init_au_1_DataUtil = Inner_DataUtil.COLLECT;
                      return this.init("Clutch landed late; collecting the water");
                   } else {
                      return !this.load_Z && !"redirect".equals(this.init_Str)
@@ -408,7 +408,7 @@ final class AiMlg {
                         );
                   }
                } else if ("water".equals(this.init_Str) && this.load_Z && collect) {
-                  this.init_au_1_DataUtil = Inner_DataUtil.write;
+                  this.init_au_1_DataUtil = Inner_DataUtil.COLLECT;
                   return this.init("Clutch landed; collecting the water");
                } else {
                   return this.init(AiOperation.Status.SUCCEEDED, this.init_Str_14());
@@ -549,10 +549,10 @@ final class AiMlg {
             }
 
             enum Inner_DataUtil {
-               init,
-               load,
-               read,
-               write;
+               GRACE,
+               FALLING,
+               SETTLE,
+               COLLECT;
             }
          };
       } else {

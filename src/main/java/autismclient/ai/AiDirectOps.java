@@ -203,11 +203,11 @@ public final class AiDirectOps {
    public static void init(autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job) {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
       if (a != null && a.init_k_StreamUtil == job) {
-         init(a, AiFailure.size, "Cancelled by its owner");
+         init(a, AiFailure.CANCELLED, "Cancelled by its owner");
       } else {
          for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
             if (waiter.init_k_StreamUtil == job) {
-               init(waiter, AiFailure.size, "Cancelled by its owner");
+               init(waiter, AiFailure.CANCELLED, "Cancelled by its owner");
             }
          }
       }
@@ -271,13 +271,13 @@ public final class AiDirectOps {
       AiDirectOps.Inner_DataUtil a = init_o_DataUtil;
 
       for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(init_List)) {
-         init(waiter, AiFailure.size, "Macro tool stopped");
+         init(waiter, AiFailure.CANCELLED, "Macro tool stopped");
       }
 
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
       } else {
-         init(a, AiFailure.size, "Tool operation stopped" + (reason != null && !reason.isBlank() ? ": " + reason : ""));
+         init(a, AiFailure.CANCELLED, "Tool operation stopped" + (reason != null && !reason.isBlank() ? ": " + reason : ""));
          AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " stopped" + (reason != null && !reason.isBlank() ? ": " + reason : "."));
       }
    }
@@ -341,7 +341,7 @@ public final class AiDirectOps {
       } else if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
          if (a.init_Obj != null && mc.level != a.init_Obj) {
             if (!init_Z(a.init_Str)) {
-               init(a, AiFailure.valid, "World or session changed");
+               init(a, AiFailure.WORLD_CHANGED, "World or session changed");
                AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " cancelled [WORLD_CHANGED]: world or session changed.");
                return;
             }
@@ -350,7 +350,7 @@ public final class AiDirectOps {
          }
 
          if (mc.player != null && !mc.player.isAlive()) {
-            init(a, AiFailure.size, "Player died");
+            init(a, AiFailure.CANCELLED, "Player died");
             AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " cancelled: player died.");
          } else if (CompatGLFW.glfwGetKey(mc.getWindow().handle(), a.init_I) == 1) {
             init_V("emergency key");
@@ -368,7 +368,7 @@ public final class AiDirectOps {
             if (mc.player != null && mc.player.isAlive() && a.init_List.contains("INPUT") && a.init_List.contains("ROTATION")) {
                String hazard = AiHazardEscape.init(mc);
                if (hazard != null && !a.load_Str.equals("environment") && !a.init_Str.equals("game:escape_hazard") && !AiGuard.init_Z()) {
-                  init(a, AiHazardEscape.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25)), "environment", AiFailure.next, hazard);
+                  init(a, AiHazardEscape.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 25)), "environment", AiFailure.ENVIRONMENTAL_HAZARD, hazard);
                }
 
                if (hazard == null
@@ -380,11 +380,11 @@ public final class AiDirectOps {
                         a,
                         AiDodge.init(AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
-                        AiFailure.reset,
+                        AiFailure.THREAT_INTERRUPT,
                         "incoming projectile while eating"
                      );
                   } else if (a.load_AiOperation.canInterruptNow() && (AiGuard.init_X_BufferHelper().hostilesNear() > 0 || AiSurvival.init_Entity(mc) != null)) {
-                     init(a, AiSurvival.init_AiOperation(mc), "combat", AiFailure.reset, "approaching enemy interrupted eating");
+                     init(a, AiSurvival.init_AiOperation(mc), "combat", AiFailure.THREAT_INTERRUPT, "approaching enemy interrupted eating");
                   }
                }
 
@@ -394,7 +394,7 @@ public final class AiDirectOps {
                   && mc.player.isInWall()
                   && AiService.init_Z_Z(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
                   AiOperation.Result interrupted = AiService.init_AiOperation_Result_AiOperation(
-                     a.init_AiOperation, AiFailure.next, "Suffocating inside a block; observe the obstruction before restarting"
+                     a.init_AiOperation, AiFailure.ENVIRONMENTAL_HAZARD, "Suffocating inside a block; observe the obstruction before restarting"
                   );
                   a.init_AiOperation.cancel();
                   init(a, interrupted);
@@ -412,7 +412,7 @@ public final class AiDirectOps {
                         a,
                         AiDodge.init(AiJson.init_JsonObject_ObjArr("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
-                        AiFailure.reset,
+                        AiFailure.THREAT_INTERRUPT,
                         "incoming projectile"
                      );
                   } else if (a.init_AiOperation.canInterruptNow()) {
@@ -428,12 +428,12 @@ public final class AiDirectOps {
                               a,
                               defense,
                               "combat",
-                              AiFailure.reset,
+                              AiFailure.THREAT_INTERRUPT,
                               a.init_Str.equals("game:eat") ? "nearby enemy prevents a safe meal" : AiGuard.init_Str(AiGuard.Inner_CachePool.standard(), vitals)
                            );
                         }
                      } else if (!a.init_Str.equals("game:eat") && vitals.food() <= 6 && vitals.hasFood() && vitals.hostilesNear() == 0) {
-                        init(a, AiSurvival.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 15)), "food", AiFailure.stop, "critical hunger");
+                        init(a, AiSurvival.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 15)), "food", AiFailure.HUNGER, "critical hunger");
                      }
                   }
                }
@@ -469,9 +469,9 @@ public final class AiDirectOps {
                }
             } catch (Throwable t) {
                init_V(a);
-               init_AiOperation_Result = AiOperation.Result.failed(AiFailure.flush, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
+               init_AiOperation_Result = AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage(), "{}");
                init(a, true, init_AiOperation_Result);
-               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "FAILED", "failure", AiFailure.value.name()));
+               AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "FAILED", "failure", AiFailure.UNKNOWN.name()));
                AutismClientMessaging.sendPrefixed(
                   "§c" + a.init_Str + " failed [UNKNOWN]: " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage())
                );
@@ -602,7 +602,7 @@ public final class AiDirectOps {
                AutismClientMessaging.sendPrefixed("§e" + a.init_Str + " cancelled: " + result.message());
                break;
             case TIMED_OUT:
-               AiFailure failure = result.failure() == AiFailure.value ? AiFailure.prev : result.failure();
+               AiFailure failure = result.failure() == AiFailure.UNKNOWN ? AiFailure.TIMEOUT : result.failure();
                AiEventLog.init_x().init("op_failed", AiJson.init_JsonObject_ObjArr("id", a.init_Str, "status", "TIMED_OUT", "failure", failure.name()));
                AutismClientMessaging.sendPrefixed(init(a.init_Str, "timed out", failure, result.message(), verbosity));
                break;

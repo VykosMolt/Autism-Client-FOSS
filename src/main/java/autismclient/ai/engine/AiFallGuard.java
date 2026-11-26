@@ -18,16 +18,16 @@ public final class AiFallGuard {
    private static final int init_I = 3;
    private static final double init_D = 3.0;
    private static final Set<AiPathfinder.Inner_SyncManager> init_Set = EnumSet.of(
-      AiPathfinder.Inner_SyncManager.start,
-      AiPathfinder.Inner_SyncManager.put,
-      AiPathfinder.Inner_SyncManager.add,
-      AiPathfinder.Inner_SyncManager.clear,
-      AiPathfinder.Inner_SyncManager.reset,
-      AiPathfinder.Inner_SyncManager.flush,
-      AiPathfinder.Inner_SyncManager.close,
-      AiPathfinder.Inner_SyncManager.open,
-      AiPathfinder.Inner_SyncManager.poll,
-      AiPathfinder.Inner_SyncManager.next
+      AiPathfinder.Inner_SyncManager.JUMP,
+      AiPathfinder.Inner_SyncManager.JUMP_GAP_2,
+      AiPathfinder.Inner_SyncManager.JUMP_GAP_3,
+      AiPathfinder.Inner_SyncManager.PARKOUR_ASCEND,
+      AiPathfinder.Inner_SyncManager.SPRINT_JUMP,
+      AiPathfinder.Inner_SyncManager.DESCEND_1,
+      AiPathfinder.Inner_SyncManager.DESCEND_2,
+      AiPathfinder.Inner_SyncManager.DESCEND_3,
+      AiPathfinder.Inner_SyncManager.DESCEND_SOFT,
+      AiPathfinder.Inner_SyncManager.DIG_DESCEND
    );
    private static volatile long init_J;
    private static volatile AiPathfinder.Inner_SyncManager init_ClassCache_SyncMan;
@@ -52,7 +52,7 @@ public final class AiFallGuard {
 
    static void init(AiPathfinder.Inner_SyncManager type, boolean tellyBridge, boolean provedRunUp) {
       init_ClassCache_SyncMan = type;
-      init_Z = provedRunUp || init_Set.contains(type) || type == AiPathfinder.Inner_SyncManager.run && tellyBridge;
+      init_Z = provedRunUp || init_Set.contains(type) || type == AiPathfinder.Inner_SyncManager.BRIDGE_CELL && tellyBridge;
       LocalPlayer player = Minecraft.getInstance().player;
       load_I = player == null ? -1073741824 : player.tickCount;
       init_J = System.nanoTime();

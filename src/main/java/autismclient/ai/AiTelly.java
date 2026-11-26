@@ -130,7 +130,7 @@ final class AiTelly {
                );
                return new autismclient.ai.engine.AiBridgeDriver(
                   lane,
-                  autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(plan.mode() == AiTelly.Inner_StreamUtil.read, lane, mc.player, AiTelly.init_I(mc)),
+                  autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(plan.mode() == AiTelly.Inner_StreamUtil.TELLY, lane, mc.player, AiTelly.init_I(mc)),
                   this.init_DataUtil
                );
             }
@@ -210,14 +210,14 @@ final class AiTelly {
                      }
 
                      autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, this.init_List::add);
-                     if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.write) {
+                     if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
                         return this.init(AiOperation.Status.FAILED, "Bridge needs footing at the support's top level");
                      }
 
-                     if (step != autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.read
+                     if (step != autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL
                         && !AiTelly.init_Z_D_D(mc.player.getY(), this.init_NetHelper.init_JsonUtil_CachePool().floorY() + 1)) {
                         String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
-                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.load) {
+                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
                            this.init_NetHelper = null;
                            return AiGameOperations.init_AiOperation_Result(
                               AiOperation.Status.RUNNING, "Lane done", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size(), "mode", style)
@@ -315,13 +315,13 @@ final class AiTelly {
          AiTelly.Inner_StreamUtil var10000;
          switch (AiJson.init_Str_JsonObject(args, "mode", "telly").toLowerCase(Locale.ROOT)) {
             case "walk":
-               var10000 = AiTelly.Inner_StreamUtil.init;
+               var10000 = AiTelly.Inner_StreamUtil.WALK;
                break;
             case "sprint":
-               var10000 = AiTelly.Inner_StreamUtil.load;
+               var10000 = AiTelly.Inner_StreamUtil.SPRINT;
                break;
             case "telly":
-               var10000 = AiTelly.Inner_StreamUtil.read;
+               var10000 = AiTelly.Inner_StreamUtil.TELLY;
                break;
             default:
                throw new IllegalArgumentException("mode must be walk, sprint or telly");
@@ -352,8 +352,8 @@ final class AiTelly {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      WALK,
+      SPRINT,
+      TELLY;
    }
 }

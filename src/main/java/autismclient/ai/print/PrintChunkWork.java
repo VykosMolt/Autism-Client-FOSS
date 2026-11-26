@@ -47,11 +47,11 @@ final class PrintChunkWork {
 
    private boolean init_Z_I_B(int i, byte state) {
       PrintTarget.Inner_DataUtil kind = this.init_UiHelper.init_ListPoolArr[i].kind();
-      return (state == 0 || state == 2 || state == 1) && kind != PrintTarget.Inner_DataUtil.write && kind != PrintTarget.Inner_DataUtil.load;
+      return (state == 0 || state == 2 || state == 1) && kind != PrintTarget.Inner_DataUtil.FLOW && kind != PrintTarget.Inner_DataUtil.PARTNER;
    }
 
    void init(int i, byte before, byte after) {
-      if (this.init_UiHelper.init_UiHelper_J != PrintCore.J.write) {
+      if (this.init_UiHelper.init_UiHelper_J != PrintCore.J.VERIFY) {
          this.init_V();
       }
 
@@ -165,7 +165,7 @@ final class PrintChunkWork {
 
                this.init_I++;
                if (this.init_UiHelper.init_BArr[i] != 3) {
-                  if (this.init_UiHelper.init_ListPoolArr[i].kind() == PrintTarget.Inner_DataUtil.write) {
+                  if (this.init_UiHelper.init_ListPoolArr[i].kind() == PrintTarget.Inner_DataUtil.FLOW) {
                      chunk.sync++;
                   } else if (this.init_UiHelper.init_BArr[i] == 5) {
                      chunk.update++;

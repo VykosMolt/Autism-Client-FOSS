@@ -162,12 +162,12 @@ public final class AiBlockDigger {
          && this.putAt_Minecraft.level.getChunkSource().getChunk(var1.getX() >> 4, var1.getZ() >> 4, ChunkStatus.FULL, false) != null) {
          if (this.putAt_SyncCore.init_Z()) {
             AiRestock.Inner_BufferHelper var4 = this.putAt_SyncCore.load_UtilCore_BufferHel();
-            if (var4 == AiRestock.Inner_BufferHelper.write) {
+            if (var4 == AiRestock.Inner_BufferHelper.FAILED) {
                this.putAt_V();
                return this.putAt_JsonCache_CacheHel_Str("tool swap failed");
             }
 
-            if (var4 != AiRestock.Inner_BufferHelper.read) {
+            if (var4 != AiRestock.Inner_BufferHelper.SUCCEEDED) {
                return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
             }
 

@@ -29,9 +29,9 @@ public final class PrintClockSequence implements PrintMachineJob {
    private final Object init_Obj;
    private final PrintClockSpec init_NetHelper;
    private final PrintClockSequence.Inner_DataUtil init_TaskQueue_DataUtil;
-   private PrintClockSequence.Inner_StreamUtil init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.init;
+   private PrintClockSequence.Inner_StreamUtil init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.INSPECT_FIRST;
    private PrintMachineJob init_BitSetUtil;
-   private PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+   private PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
    private boolean init_Z;
    private boolean load_Z;
    private boolean read_Z;
@@ -62,7 +62,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    public boolean flush() {
-      return this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.close && this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.init;
+      return this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.AUDIT && this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.PREPARING;
    }
 
    public BlockPos init_BlockPos_2() {
@@ -134,17 +134,17 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public int skippedSlots() {
-      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.sync ? this.init_NetHelper.savedSlots() : 0;
+      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SKIPPED ? this.init_NetHelper.savedSlots() : 0;
    }
 
    @Override
    public List<String> skippedReasons() {
-      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.sync ? List.of(this.init_Str) : List.of();
+      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SKIPPED ? List.of(this.init_Str) : List.of();
    }
 
    @Override
    public int read_I() {
-      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.update ? this.init_NetHelper.quantity() : 0;
+      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SUCCEEDED ? this.init_NetHelper.quantity() : 0;
    }
 
    @Override
@@ -173,7 +173,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public PrintMachineJob.Inner_DataUtil prepare() {
-      if (this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.read || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.write || this.poll_Z()) {
+      if (this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SENT || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY || this.poll_Z()) {
          return this.init_BitSetUtil_DataUti;
       } else if (!this.open()) {
          return this.init("Clock world changed before the next native action");
@@ -181,15 +181,15 @@ public final class PrintClockSequence implements PrintMachineJob {
          String changed = this.load_Str();
          if (changed != null) {
             return this.init(changed);
-         } else if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.read) {
+         } else if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.STOCK) {
             return this.read_BitSetUtil_DataUti();
-         } else if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.close) {
+         } else if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.AUDIT) {
             return this.write_BitSetUtil_DataUti();
          } else {
             PrintMachineJob.Inner_DataUtil result = this.init_BitSetUtil.prepare();
-            if (result == PrintMachineJob.Inner_DataUtil.update) {
+            if (result == PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
                return this.load_BitSetUtil_DataUti_2();
-            } else if (result != PrintMachineJob.Inner_DataUtil.flush && result != PrintMachineJob.Inner_DataUtil.close) {
+            } else if (result != PrintMachineJob.Inner_DataUtil.CONFLICT && result != PrintMachineJob.Inner_DataUtil.UNCERTAIN) {
                this.init_Str = this.init_BitSetUtil.detail();
                return this.init_BitSetUtil_DataUti = result;
             } else {
@@ -201,22 +201,22 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public boolean beginDispatch() {
-      if (this.prepare() != PrintMachineJob.Inner_DataUtil.load
+      if (this.prepare() != PrintMachineJob.Inner_DataUtil.READY
          || this.init_BitSetUtil == null
          || this.init_NetHelper.sweptVolume().intersects(this.init_EventBus.init_AABB())
          || this.init_NetHelper.sweptVolume().intersects(this.init_EventBus.init_NodeWalker_StreamU().box(this.init_EventBus.load_Z()))) {
          return false;
       }
 
-      if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.write
+      if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.HOLD
          && this.init_TaskQueue_DataUtil.init_I(this.init_NetHelper.material()) < this.init_NetHelper.quantity()) {
-         this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.read;
+         this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.STOCK;
          this.init_BitSetUtil = null;
-         this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+         this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
          return false;
       }
 
-      if ((this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.sync || this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.update)
+      if ((this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.FILL || this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND)
          && !this.init_NetHelper.holding(this.init_EventBus::init_BlockState_BlockPos)) {
          this.init("The protected holding phase changed before clock preload");
          return false;
@@ -226,18 +226,18 @@ public final class PrintClockSequence implements PrintMachineJob {
          return false;
       }
 
-      if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.write) {
+      if (this.init_TaskQueue_StreamUt == PrintClockSequence.Inner_StreamUtil.HOLD) {
          this.init_Z = true;
          this.load_J = this.init_EventBus.init_J();
       }
 
-      this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.read;
+      this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.SENT;
       return true;
    }
 
    @Override
    public PrintMachineJob.Inner_DataUtil poll_BitSetUtil_DataUti() {
-      if (this.init_BitSetUtil_DataUti != PrintMachineJob.Inner_DataUtil.read) {
+      if (this.init_BitSetUtil_DataUti != PrintMachineJob.Inner_DataUtil.SENT) {
          return this.init_BitSetUtil_DataUti;
       } else if (!this.open()) {
          return this.init("Clock world changed with a native action outstanding");
@@ -248,10 +248,10 @@ public final class PrintClockSequence implements PrintMachineJob {
          } else {
             PrintMachineJob.Inner_DataUtil result = this.init_BitSetUtil.poll_BitSetUtil_DataUti();
             this.init_Str = this.init_BitSetUtil.detail();
-            if (result == PrintMachineJob.Inner_DataUtil.read) {
+            if (result == PrintMachineJob.Inner_DataUtil.SENT) {
                return this.init_BitSetUtil_DataUti;
             } else {
-               return result == PrintMachineJob.Inner_DataUtil.update
+               return result == PrintMachineJob.Inner_DataUtil.SUCCEEDED
                   ? this.load_BitSetUtil_DataUti_2()
                   : this.init("Clock action did not complete: " + this.init_BitSetUtil.detail());
             }
@@ -265,30 +265,30 @@ public final class PrintClockSequence implements PrintMachineJob {
       }
 
       this.init_BitSetUtil = null;
-      this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+      this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
       switch (this.init_TaskQueue_StreamUt) {
-         case init:
-            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.load;
+         case INSPECT_FIRST:
+            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.INSPECT_SECOND;
             this.init_BitSetUtil = this.init_TaskQueue_DataUtil
                .init(this.init_NetHelper.other(), this.init_NetHelper.source().get(this.init_NetHelper.other()));
             break;
-         case load:
-            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.read;
+         case INSPECT_SECOND:
+            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.STOCK;
             break;
-         case read:
+         case STOCK:
          default:
             return this.init("Unexpected clock action boundary");
-         case write:
+         case HOLD:
             if (!this.init_NetHelper.holding(this.init_EventBus::init_BlockState_BlockPos)) {
                return this.init("Native lever receipt did not establish the protected clock phase");
             }
 
-            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.update;
+            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND;
             this.init_BitSetUtil = this.init_TaskQueue_DataUtil
                .init(this.init_NetHelper.other(), this.init_NetHelper.source().get(this.init_NetHelper.other()));
             break;
-         case update:
-            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.sync;
+         case INSPECT_HELD_SECOND:
+            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.FILL;
             this.init_BitSetUtil = this.init_TaskQueue_DataUtil
                .init(this.init_NetHelper.preload(), this.init_NetHelper.source().get(this.init_NetHelper.preload()), this.init_NetHelper.preloadSlots());
             this.init_BitSetUtil
@@ -305,14 +305,14 @@ public final class PrintClockSequence implements PrintMachineJob {
                   }
                );
             break;
-         case sync:
+         case FILL:
             this.read_Z = true;
-            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.flush;
+            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.RESTORE;
             this.init_BitSetUtil = this.init_TaskQueue_DataUtil.init(false);
             break;
-         case flush:
+         case RESTORE:
             this.load_Z = true;
-            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.close;
+            this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.AUDIT;
             this.init_J = this.init_EventBus.init_J();
             this.load_I = -1;
             this.init_I = 0;
@@ -325,15 +325,15 @@ public final class PrintClockSequence implements PrintMachineJob {
    private PrintMachineJob.Inner_DataUtil read_BitSetUtil_DataUti() {
       if (this.init_EventBus.init_Z_BlockPos_Map(this.init_NetHelper.preload(), this.init_NetHelper.preloadSlots())) {
          this.init_Str = "Waiting for the qualification inventory supply receipt";
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
       }
 
       int available = this.init_TaskQueue_DataUtil.init_I(this.init_NetHelper.material());
       int missing = this.init_NetHelper.quantity() - available;
       if (missing <= 0) {
-         this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.write;
+         this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.HOLD;
          this.init_BitSetUtil = this.init_TaskQueue_DataUtil.init(true);
-         this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+         this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
          return this.prepare();
       }
 
@@ -344,14 +344,14 @@ public final class PrintClockSequence implements PrintMachineJob {
                .init_Z(this.init_NetHelper.material().copyWithCount(Math.min(missing, this.init_NetHelper.material().getMaxStackSize())))) {
             this.write_I = available;
             this.init_Str = "Preparing the complete exact clock stock";
-            return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+            return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
          } else {
             return this.init("Free inventory space for exact clock stock");
          }
       } else if (!this.write_Z && this.init_TaskQueue_DataUtil.load(this.init_NetHelper.material())) {
          this.init_ItemStack = this.init_NetHelper.material().copyWithCount(Math.min(missing, this.init_NetHelper.material().getMaxStackSize()));
          this.init_Str = "Fetching exact clock stock before touching its control";
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.write;
+         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY;
       } else {
          this.init_Str = "Clock not started: missing "
             + missing
@@ -359,7 +359,7 @@ public final class PrintClockSequence implements PrintMachineJob {
             + this.init_NetHelper.quantity()
             + " exact "
             + BuiltInRegistries.ITEM.getKey(this.init_NetHelper.material().getItem());
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.sync;
+         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.SKIPPED;
       }
    }
 
@@ -370,14 +370,14 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public void load_V() {
-      if (this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.write) {
+      if (this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
          this.write_V();
       }
    }
 
    @Override
    public void read_V() {
-      if (this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.write) {
+      if (this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.NEEDS_SUPPLY) {
          this.write_Z = true;
          this.write_V();
       }
@@ -385,9 +385,9 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    private void write_V() {
       this.init_ItemStack = ItemStack.EMPTY;
-      this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.init;
+      this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.INSPECT_FIRST;
       this.init_BitSetUtil = this.init_TaskQueue_DataUtil.init(this.init_NetHelper.preload(), this.init_NetHelper.source().get(this.init_NetHelper.preload()));
-      this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+      this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
    }
 
    private PrintMachineJob.Inner_DataUtil write_BitSetUtil_DataUti() {
@@ -409,9 +409,9 @@ public final class PrintClockSequence implements PrintMachineJob {
       }
 
       if (this.init_I >= 5) {
-         this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.open;
+         this.init_TaskQueue_StreamUt = PrintClockSequence.Inner_StreamUtil.COMPLETE;
          this.init_Str = "Exact pooled clock stock loaded, source control restored, two native cycles observed";
-         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.update;
+         return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.SUCCEEDED;
       }
 
       if (this.init_EventBus.init_J() - this.init_J > this.init_NetHelper.quantity() * 32L + 200L) {
@@ -423,12 +423,12 @@ public final class PrintClockSequence implements PrintMachineJob {
          + "/5; "
          + this.init_NetHelper.quantity()
          + " exact items were acknowledged before release";
-      return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.init;
+      return this.init_BitSetUtil_DataUti = PrintMachineJob.Inner_DataUtil.PREPARING;
    }
 
    @Override
    public PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti() {
-      if (this.init_BitSetUtil_DataUti != PrintMachineJob.Inner_DataUtil.update) {
+      if (this.init_BitSetUtil_DataUti != PrintMachineJob.Inner_DataUtil.SUCCEEDED) {
          return this.init_BitSetUtil_DataUti;
       }
 
@@ -443,14 +443,14 @@ public final class PrintClockSequence implements PrintMachineJob {
 
       if (this.init_NetHelper.phase(this.init_EventBus::init_BlockState_BlockPos) >= 0) {
          this.read_J = -9223372036854775808L;
-         return PrintMachineJob.Inner_DataUtil.update;
+         return PrintMachineJob.Inner_DataUtil.SUCCEEDED;
       }
 
       if (this.read_J == -9223372036854775808L) {
          this.read_J = this.init_EventBus.init_J();
       }
 
-      return this.init_EventBus.init_J() - this.read_J > 20L ? this.init("Clock phase became invalid during final audit") : PrintMachineJob.Inner_DataUtil.init;
+      return this.init_EventBus.init_J() - this.read_J > 20L ? this.init("Clock phase became invalid during final audit") : PrintMachineJob.Inner_DataUtil.PREPARING;
    }
 
    private String load_Str() {
@@ -474,7 +474,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
          if ((
                !this.init_Z
-                  || this.init_TaskQueue_StreamUt != PrintClockSequence.Inner_StreamUtil.write
+                  || this.init_TaskQueue_StreamUt != PrintClockSequence.Inner_StreamUtil.HOLD
                   || this.init_EventBus.init_J() - this.load_J > 20L
                   || !at.equals(this.init_NetHelper.secondPayload())
                   || !actual.isAir()
@@ -487,7 +487,7 @@ public final class PrintClockSequence implements PrintMachineJob {
             if ((
                   !this.init_Z
                      || !at.equals(this.init_NetHelper.lever())
-                     || this.init_TaskQueue_StreamUt != PrintClockSequence.Inner_StreamUtil.write && this.init_TaskQueue_StreamUt != PrintClockSequence.Inner_StreamUtil.flush
+                     || this.init_TaskQueue_StreamUt != PrintClockSequence.Inner_StreamUtil.HOLD && this.init_TaskQueue_StreamUt != PrintClockSequence.Inner_StreamUtil.RESTORE
                      || actual != entry.getValue()
                )
                && !this.init_NetHelper.allows(at, actual, this.init_Z && !this.load_Z, this.init_Z)) {
@@ -504,17 +504,17 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    private boolean poll_Z() {
-      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.update
-         || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.sync
-         || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.flush
-         || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.close;
+      return this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SUCCEEDED
+         || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SKIPPED
+         || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.CONFLICT
+         || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.UNCERTAIN;
    }
 
    private PrintMachineJob.Inner_DataUtil init(String message) {
       this.init_Str = message;
-      return this.init_BitSetUtil_DataUti = !this.init_Z && this.init_BitSetUtil_DataUti != PrintMachineJob.Inner_DataUtil.read
-         ? PrintMachineJob.Inner_DataUtil.flush
-         : PrintMachineJob.Inner_DataUtil.close;
+      return this.init_BitSetUtil_DataUti = !this.init_Z && this.init_BitSetUtil_DataUti != PrintMachineJob.Inner_DataUtil.SENT
+         ? PrintMachineJob.Inner_DataUtil.CONFLICT
+         : PrintMachineJob.Inner_DataUtil.UNCERTAIN;
    }
 
    @Override
@@ -525,7 +525,7 @@ public final class PrintClockSequence implements PrintMachineJob {
             this.init_BitSetUtil.cancel();
          }
 
-         if (this.init_Z && !this.load_Z || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.read) {
+         if (this.init_Z && !this.load_Z || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.SENT) {
             this.init("Clock startup interrupted; inspect the retained control and hopper receipts before restarting");
          }
       }
@@ -533,7 +533,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    @Override
    public boolean close() {
-      return this.init_Z && !this.load_Z || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.close;
+      return this.init_Z && !this.load_Z || this.init_BitSetUtil_DataUti == PrintMachineJob.Inner_DataUtil.UNCERTAIN;
    }
 
    @Override
@@ -591,14 +591,14 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    enum Inner_StreamUtil {
-      init,
-      load,
-      read,
-      write,
-      update,
-      sync,
-      flush,
-      close,
-      open;
+      INSPECT_FIRST,
+      INSPECT_SECOND,
+      STOCK,
+      HOLD,
+      INSPECT_HELD_SECOND,
+      FILL,
+      RESTORE,
+      AUDIT,
+      COMPLETE;
    }
 }

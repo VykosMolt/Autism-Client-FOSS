@@ -93,7 +93,7 @@ final class AiBrew {
                   if (System.nanoTime() > this.init_J) {
                      return this.init(AiOperation.Status.TIMED_OUT, "Brewing deadline reached");
                   } else if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.close()) {
-                     return this.init(AiFailure.start, AiGuard.init_Str_Str("brewing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
+                     return this.init(AiFailure.LOW_HEALTH, AiGuard.init_Str_Str("brewing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth()));
                   } else if (!(this.init_Minecraft.player.containerMenu instanceof BrewingStandMenu menu)) {
                      AiOperation.Result open = this.load_AiOperation_Result_4();
                      return open != null ? open : this.init("Opening the brewing stand");
@@ -102,7 +102,7 @@ final class AiBrew {
                         for (int slot = 0; slot <= 4; slot++) {
                            if (!menu.getSlot(slot).getItem().isEmpty()) {
                               return this.init(
-                                 AiFailure.data,
+                                 AiFailure.IMPOSSIBLE_STATE,
                                  "The brewing stand is in use: slot "
                                     + slot
                                     + " holds "
@@ -152,7 +152,7 @@ final class AiBrew {
                               this.write_I = 0;
                            } else if (++this.write_I > 120) {
                               return this.init(
-                                 AiFailure.data,
+                                 AiFailure.IMPOSSIBLE_STATE,
                                  "Nothing brewable: " + ingredientId + " does not apply to the input bottles",
                                  AiJson.init_JsonObject_ObjArr("reason", "no_progress")
                               );
@@ -251,7 +251,7 @@ final class AiBrew {
                if (++this.sync_I > 20) {
                   JsonObject missing = new JsonObject();
                   missing.addProperty(itemId, amount);
-                  return this.init(AiFailure.pop, "Could not move " + itemId + " into the stand", AiJson.init_JsonObject_ObjArr("missing", missing));
+                  return this.init(AiFailure.MISSING_MATERIALS, "Could not move " + itemId + " into the stand", AiJson.init_JsonObject_ObjArr("missing", missing));
                } else {
                   return this.init(stage);
                }
@@ -280,7 +280,7 @@ final class AiBrew {
                      }
                   }
 
-                  return missing.size() > 0 ? this.init(AiFailure.pop, "Missing brewing materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
+                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing brewing materials", AiJson.init_JsonObject_ObjArr("missing", missing)) : null;
                } else {
                   return null;
                }
@@ -364,7 +364,7 @@ final class AiBrew {
                      if (AiGameState.init_I_Str("minecraft:brewing_stand") <= 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:brewing_stand", 1);
-                        return this.init(AiFailure.set, "No brewing stand in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
+                        return this.init(AiFailure.MISSING_STATION, "No brewing stand in reach or in the bag", AiJson.init_JsonObject_ObjArr("missing", missing));
                      }
 
                      BlockPos spot = AiCraft.init_BlockPos();
@@ -379,13 +379,13 @@ final class AiBrew {
                   }
 
                   autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.PLACED) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Brewing stand placed");
                   }
 
-                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.FAILED && ++this.load_I <= 100) {
                      return this.init("Placing a brewing stand");
                   }
 

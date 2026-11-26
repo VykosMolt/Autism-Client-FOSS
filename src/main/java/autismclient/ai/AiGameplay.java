@@ -539,7 +539,7 @@ final class AiGameplay {
                      this.init_bb.init_V(this.init_AiOperation);
                      if (AiGameplay.init_I(ids) >= target && !this.init_bb.init_Z(this.init_AiOperation)) {
                         return this.init(AiGameOperations.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
-                     } else if (r.failure() == AiFailure.put && !this.init_bb.init_Z(this.init_AiOperation) && !this.read && !this.write) {
+                     } else if (r.failure() == AiFailure.INVENTORY_FULL && !this.init_bb.init_Z(this.init_AiOperation) && !this.read && !this.write) {
                         this.write = true;
                         this.init_AiOperation = null;
                         this.load = false;
@@ -1321,11 +1321,11 @@ final class AiGameplay {
 
          this.init_bb.init_V(this.init_AiOperation);
          if (!this.init_bb.init_Z(this.init_AiOperation)
-            && (result.status() == AiOperation.Status.SUCCEEDED || result.failure() == AiFailure.put)
+            && (result.status() == AiOperation.Status.SUCCEEDED || result.failure() == AiFailure.INVENTORY_FULL)
             && this.init_BooleanSupplier.getAsBoolean()) {
             result = new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Inventory can accept the pickup", result.dataJson(), result.evidence());
          } else if (!this.init_bb.init_Z(this.init_AiOperation) && result.status() == AiOperation.Status.SUCCEEDED) {
-            result = AiOperation.Result.failed(AiFailure.put, "Pickup room was refilled before preparation completed", result.dataJson());
+            result = AiOperation.Result.failed(AiFailure.INVENTORY_FULL, "Pickup room was refilled before preparation completed", result.dataJson());
          }
 
          return this.init(result);

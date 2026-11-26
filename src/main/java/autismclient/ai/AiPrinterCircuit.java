@@ -62,12 +62,12 @@ final class AiPrinterCircuit {
    }
 
    static boolean init_Z(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
-      return init_bl_ConfigStore(world, source, target, quasi) == AiPrinterCircuit.Inner_ConfigStore.init;
+      return init_bl_ConfigStore(world, source, target, quasi) == AiPrinterCircuit.Inner_ConfigStore.REACHES;
    }
 
    static AiPrinterCircuit.Inner_ConfigStore init(BlockGetter world, BlockPos source, BlockPos target, boolean quasi, int budget) {
       return source.equals(target)
-         ? AiPrinterCircuit.Inner_ConfigStore.load
+         ? AiPrinterCircuit.Inner_ConfigStore.NO_PATH
          : new AiPrinterCircuit.Inner_TaskQueue(world, source.immutable(), target.immutable(), quasi, Math.max(0, budget)).init();
    }
 
@@ -80,7 +80,7 @@ final class AiPrinterCircuit {
       HashMap<BlockPos, AiPrinterCircuit.Inner_ConfigStore> result = new HashMap<>();
 
       for (BlockPos at : targets) {
-         result.put(at.immutable(), source.equals(at) ? AiPrinterCircuit.Inner_ConfigStore.load : trace.reached().getOrDefault(at, trace.unseen()));
+         result.put(at.immutable(), source.equals(at) ? AiPrinterCircuit.Inner_ConfigStore.NO_PATH : trace.reached().getOrDefault(at, trace.unseen()));
       }
 
       return Map.copyOf(result);
@@ -104,7 +104,7 @@ final class AiPrinterCircuit {
       search.write = unfinishedWire;
       search.init();
       search.read_Map.remove(source);
-      return new AiPrinterCircuit.Inner_JsonUtil(Map.copyOf(search.read_Map), search.read_Z ? AiPrinterCircuit.Inner_ConfigStore.read : AiPrinterCircuit.Inner_ConfigStore.load);
+      return new AiPrinterCircuit.Inner_JsonUtil(Map.copyOf(search.read_Map), search.read_Z ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.NO_PATH);
    }
 
    private static AiPrinterCircuit.Inner_NetHelper init(AiPrinterCircuit.Inner_NetHelper a, AiPrinterCircuit.Inner_NetHelper b) {
@@ -140,9 +140,9 @@ final class AiPrinterCircuit {
    }
 
    enum Inner_ConfigStore {
-      init,
-      load,
-      read;
+      REACHES,
+      NO_PATH,
+      UNKNOWN;
    }
 
    private record Inner_DataUtil(BlockPos at, AiPrinterCircuit.Inner_StreamUtil kind, boolean wireFed, boolean unknown) {
@@ -158,9 +158,9 @@ final class AiPrinterCircuit {
    }
 
    private enum Inner_StreamUtil {
-      init,
-      load,
-      read;
+      OUTPUT,
+      CONDUCTOR,
+      RAIL;
    }
 
    private static final class Inner_TaskQueue {
@@ -221,7 +221,7 @@ final class AiPrinterCircuit {
          AiPrinterCircuit.Inner_NetHelper initial = state.getBlock() instanceof DiodeBlock ? this.init_bl_NetHelper(this.init_BlockPos) : AiPrinterCircuit.Inner_NetHelper.VARIABLE;
          this.init(
             this.init_BlockPos,
-            state.getBlock() instanceof PoweredRailBlock ? AiPrinterCircuit.Inner_StreamUtil.read : AiPrinterCircuit.Inner_StreamUtil.init,
+            state.getBlock() instanceof PoweredRailBlock ? AiPrinterCircuit.Inner_StreamUtil.RAIL : AiPrinterCircuit.Inner_StreamUtil.OUTPUT,
             state.getBlock() instanceof PoweredRailBlock ? 9 : initial.high,
             false,
             initial.unknown
@@ -233,21 +233,21 @@ final class AiPrinterCircuit {
             if (this.init_Map.getOrDefault(key, 0) < n.strength) {
                if (++this.load_I > this.init_I) {
                   this.read_Z = true;
-                  return AiPrinterCircuit.Inner_ConfigStore.read;
+                  return AiPrinterCircuit.Inner_ConfigStore.UNKNOWN;
                }
 
                this.init_Map.put(key, n.strength);
                state = this.init_BlockGetter.getBlockState(n.at);
-               boolean wire = n.kind == AiPrinterCircuit.Inner_StreamUtil.init && state.getBlock() instanceof RedstoneWireBlock;
-               boolean comparator = n.kind == AiPrinterCircuit.Inner_StreamUtil.init && state.getBlock() instanceof ComparatorBlock;
+               boolean wire = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && state.getBlock() instanceof RedstoneWireBlock;
+               boolean comparator = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && state.getBlock() instanceof ComparatorBlock;
                BlockState signal = AiPrinterCircuit.init(state, n.strength);
 
                for (Direction query : Direction.values()) {
                   BlockPos next = n.at.relative(query.getOpposite());
-                  int weak = n.kind == AiPrinterCircuit.Inner_StreamUtil.load
+                  int weak = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR
                      ? n.strength
                      : (comparator ? (state.getValue(ComparatorBlock.FACING) == query ? n.strength : 0) : signal.getSignal(this.init_BlockGetter, n.at, query));
-                  int direct = n.kind == AiPrinterCircuit.Inner_StreamUtil.load ? 0 : (comparator ? weak : signal.getDirectSignal(this.init_BlockGetter, n.at, query));
+                  int direct = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR ? 0 : (comparator ? weak : signal.getDirectSignal(this.init_BlockGetter, n.at, query));
                   boolean possibleConnection = this.write && wire && query.getAxis().isHorizontal() && weak == 0;
                   AiPrinterCircuit.Inner_CachePool output = n;
                   if (possibleConnection) {
@@ -257,10 +257,10 @@ final class AiPrinterCircuit {
                   }
 
                   boolean wireInput = this.init_Z(next);
-                  boolean canFeed = !wireInput || !wire && (n.kind != AiPrinterCircuit.Inner_StreamUtil.load || !n.wireFed);
+                  boolean canFeed = !wireInput || !wire && (n.kind != AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR || !n.wireFed);
                   if (weak > 0 && canFeed && this.init_Z(next, query, output.unknown)) {
                      if (!output.unknown) {
-                        return AiPrinterCircuit.Inner_ConfigStore.init;
+                        return AiPrinterCircuit.Inner_ConfigStore.REACHES;
                      }
 
                      this.load_Z = true;
@@ -268,7 +268,7 @@ final class AiPrinterCircuit {
 
                   this.init(output, next, query, weak, direct);
                   if (direct > 0 && this.init_BlockGetter.getBlockState(next).isRedstoneConductor(this.init_BlockGetter, next)) {
-                     this.init(next, AiPrinterCircuit.Inner_StreamUtil.load, direct, wire, output.unknown);
+                     this.init(next, AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR, direct, wire, output.unknown);
                   }
                }
 
@@ -285,24 +285,24 @@ final class AiPrinterCircuit {
                               }
                            } else if (receiver.equals(this.load_BlockPos)) {
                               if (!n.unknown) {
-                                 return AiPrinterCircuit.Inner_ConfigStore.init;
+                                 return AiPrinterCircuit.Inner_ConfigStore.REACHES;
                               }
 
                               this.load_Z = true;
                            }
 
-                           this.init(receiver, AiPrinterCircuit.Inner_StreamUtil.init, n.strength - 1, false, n.unknown);
+                           this.init(receiver, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, n.strength - 1, false, n.unknown);
                         }
                      }
                   }
                }
 
-               if (n.kind == AiPrinterCircuit.Inner_StreamUtil.read && n.strength > 1) {
+               if (n.kind == AiPrinterCircuit.Inner_StreamUtil.RAIL && n.strength > 1) {
                   for (Direction side : Plane.HORIZONTAL) {
                      for (int dy = -1; dy <= 1; dy++) {
                         BlockPos receiver = n.at.relative(side).offset(0, dy, 0);
                         if (this.init(receiver, n.at)) {
-                           this.init(receiver, AiPrinterCircuit.Inner_StreamUtil.read, n.strength - 1, false, n.unknown);
+                           this.init(receiver, AiPrinterCircuit.Inner_StreamUtil.RAIL, n.strength - 1, false, n.unknown);
                         }
                      }
                   }
@@ -310,7 +310,7 @@ final class AiPrinterCircuit {
             }
          }
 
-         return this.load_Z ? AiPrinterCircuit.Inner_ConfigStore.read : AiPrinterCircuit.Inner_ConfigStore.load;
+         return this.load_Z ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.NO_PATH;
       }
 
       void init(BlockPos at, AiPrinterCircuit.Inner_StreamUtil kind, int strength, boolean wireFed, boolean unknown) {
@@ -423,8 +423,8 @@ final class AiPrinterCircuit {
 
       private void init(BlockPos at, boolean unknown) {
          if (!at.equals(this.init_BlockPos)) {
-            AiPrinterCircuit.Inner_ConfigStore result = unknown ? AiPrinterCircuit.Inner_ConfigStore.read : AiPrinterCircuit.Inner_ConfigStore.init;
-            if (this.read_Map.get(at) != AiPrinterCircuit.Inner_ConfigStore.init) {
+            AiPrinterCircuit.Inner_ConfigStore result = unknown ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.REACHES;
+            if (this.read_Map.get(at) != AiPrinterCircuit.Inner_ConfigStore.REACHES) {
                this.read_Map.put(at.immutable(), result);
             }
          }
@@ -450,27 +450,27 @@ final class AiPrinterCircuit {
          BlockState state = this.init_BlockGetter.getBlockState(at);
          Block block = state.getBlock();
          if (block instanceof ObserverBlock) {
-            if ((n.kind == AiPrinterCircuit.Inner_StreamUtil.init || n.kind == AiPrinterCircuit.Inner_StreamUtil.read) && at.relative(state.getValue(ObserverBlock.FACING)).equals(n.at)) {
-               this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, 15, false, n.unknown);
+            if ((n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT || n.kind == AiPrinterCircuit.Inner_StreamUtil.RAIL) && at.relative(state.getValue(ObserverBlock.FACING)).equals(n.at)) {
+               this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
             }
          } else if (block instanceof PoweredRailBlock) {
             if (weak > 0) {
-               this.init(at, AiPrinterCircuit.Inner_StreamUtil.read, 9, false, n.unknown);
+               this.init(at, AiPrinterCircuit.Inner_StreamUtil.RAIL, 9, false, n.unknown);
             }
          } else if (block instanceof RedstoneTorchBlock) {
             BlockPos support = block instanceof RedstoneWallTorchBlock ? at.relative(state.getValue(RedstoneWallTorchBlock.FACING).getOpposite()) : at.below();
             if (weak > 0 && support.equals(n.at)) {
-               this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, 15, false, n.unknown);
+               this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
             }
          } else if (block instanceof RedstoneWireBlock) {
             if (weak > 0
                && !(this.init_BlockGetter.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock)
-               && (n.kind != AiPrinterCircuit.Inner_StreamUtil.load || !n.wireFed)) {
-               this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, weak, false, n.unknown);
+               && (n.kind != AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR || !n.wireFed)) {
+               this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, weak, false, n.unknown);
             }
          } else if (block instanceof DiodeBlock) {
             Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-            boolean rawDust = n.kind == AiPrinterCircuit.Inner_StreamUtil.init && this.init_BlockGetter.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock;
+            boolean rawDust = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && this.init_BlockGetter.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock;
             if (input == facing) {
                int strength = Math.max(weak, rawDust ? n.strength : 0);
                if (strength <= 0) {
@@ -481,7 +481,7 @@ final class AiPrinterCircuit {
                   AiPrinterCircuit.Inner_NetHelper side = this.load(at, state);
                   BlockState emitter = this.init_BlockGetter.getBlockState(n.at);
                   boolean analog = emitter.hasAnalogOutputSignal();
-                  if (n.kind == AiPrinterCircuit.Inner_StreamUtil.load) {
+                  if (n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR) {
                      BlockPos beyond = n.at.relative(facing);
                      BlockState farther = this.init_BlockGetter.getBlockState(beyond);
                      analog |= farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.init_BlockGetter, beyond);
@@ -489,15 +489,15 @@ final class AiPrinterCircuit {
 
                   int rear = analog ? 15 : strength;
                   int output = state.getValue(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT ? Math.max(0, rear - side.low) : (rear < side.low ? 0 : rear);
-                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, output, false, n.unknown || analog || side.unknown && output > 0);
+                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, output, false, n.unknown || analog || side.unknown && output > 0);
                } else {
-                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, 15, false, n.unknown);
+                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
                }
             } else if (input.getAxis().isHorizontal() && input.getAxis() != facing.getAxis()) {
                BlockState emitter = this.init_BlockGetter.getBlockState(n.at);
-               boolean diode = n.kind == AiPrinterCircuit.Inner_StreamUtil.init && emitter.getBlock() instanceof DiodeBlock;
+               boolean diode = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && emitter.getBlock() instanceof DiodeBlock;
                int control = block instanceof ComparatorBlock
-                  ? (rawDust || emitter.is(Blocks.REDSTONE_BLOCK) ? n.strength : (n.kind == AiPrinterCircuit.Inner_StreamUtil.init && emitter.isSignalSource() ? direct : 0))
+                  ? (rawDust || emitter.is(Blocks.REDSTONE_BLOCK) ? n.strength : (n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && emitter.isSignalSource() ? direct : 0))
                   : (diode ? direct : 0);
                if (control <= 0) {
                   return;
@@ -518,9 +518,9 @@ final class AiPrinterCircuit {
                      }
                   }
 
-                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, output, false, n.unknown || rear.unknown || other.unknown);
+                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, output, false, n.unknown || rear.unknown || other.unknown);
                } else if (rear.high > 0 || state.getValue(BlockStateProperties.POWERED)) {
-                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.init, 15, false, n.unknown || rear.unknown && !state.getValue(BlockStateProperties.POWERED));
+                  this.init(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown || rear.unknown && !state.getValue(BlockStateProperties.POWERED));
                }
             }
          }

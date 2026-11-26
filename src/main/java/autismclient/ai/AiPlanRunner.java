@@ -90,12 +90,12 @@ final class AiPlanRunner {
       }
 
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.init) {
+         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.PENDING) {
             for (String need : progress.init_aU_BufferHelper.needs()) {
                AiPlanRunner.Inner_StreamUtil dependency = byId.get(need);
                if (dependency != null
-                  && (dependency.init_aU_CachePool == AiPlanRunner.Inner_CachePool.write || dependency.init_aU_CachePool == AiPlanRunner.Inner_CachePool.update)) {
-                  progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.update;
+                  && (dependency.init_aU_CachePool == AiPlanRunner.Inner_CachePool.FAILED || dependency.init_aU_CachePool == AiPlanRunner.Inner_CachePool.SKIPPED)) {
+                  progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.SKIPPED;
                   progress.init_Str = "skipped: step '" + need + "' it depends on did not complete";
                   break;
                }
@@ -104,12 +104,12 @@ final class AiPlanRunner {
       }
 
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.init) {
+         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.PENDING) {
             boolean blocked = false;
 
             for (String need : progress.init_aU_BufferHelper.needs()) {
                AiPlanRunner.Inner_StreamUtil dependency = byId.get(need);
-               if (dependency != null && dependency.init_aU_CachePool != AiPlanRunner.Inner_CachePool.read) {
+               if (dependency != null && dependency.init_aU_CachePool != AiPlanRunner.Inner_CachePool.DONE) {
                   blocked = true;
                }
             }
@@ -125,7 +125,7 @@ final class AiPlanRunner {
 
    static boolean init_Z(List<AiPlanRunner.Inner_StreamUtil> plan) {
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.init || progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.load) {
+         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.PENDING || progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.RUNNING) {
             return false;
          }
       }
@@ -136,21 +136,21 @@ final class AiPlanRunner {
    static boolean init(AiPlanRunner.Inner_StreamUtil progress, boolean succeeded, String message, AiPlanRunner.Inner_DataUtil policy) {
       progress.init_Str = message;
       if (succeeded) {
-         progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.read;
+         progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.DONE;
          return false;
-      } else if (policy == AiPlanRunner.Inner_DataUtil.read && progress.init_I < 2) {
-         progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.init;
+      } else if (policy == AiPlanRunner.Inner_DataUtil.RETRY && progress.init_I < 2) {
+         progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.PENDING;
          return false;
       } else {
-         progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.write;
-         return policy == AiPlanRunner.Inner_DataUtil.init;
+         progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.FAILED;
+         return policy == AiPlanRunner.Inner_DataUtil.STOP;
       }
    }
 
    static boolean init(AiPlanRunner.Inner_StreamUtil progress, String message, AiPlanRunner.Inner_DataUtil policy) {
       progress.init_Str = message;
-      progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.write;
-      return policy == AiPlanRunner.Inner_DataUtil.init;
+      progress.init_aU_CachePool = AiPlanRunner.Inner_CachePool.FAILED;
+      return policy == AiPlanRunner.Inner_DataUtil.STOP;
    }
 
    static Map<String, Integer> init_Map(List<AiPlanRunner.Inner_StreamUtil> plan) {
@@ -179,7 +179,7 @@ final class AiPlanRunner {
       Set<String> ids = new LinkedHashSet<>();
 
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.init || progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.update) {
+         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.PENDING || progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.SKIPPED) {
             ids.add(progress.init_aU_BufferHelper.id());
          }
       }
@@ -191,7 +191,7 @@ final class AiPlanRunner {
       Set<String> ids = new HashSet<>();
 
       for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.read) {
+         if (progress.init_aU_CachePool == AiPlanRunner.Inner_CachePool.DONE) {
             ids.add(progress.init_aU_BufferHelper.id());
          }
       }
@@ -206,22 +206,22 @@ final class AiPlanRunner {
    }
 
    enum Inner_CachePool {
-      init,
-      load,
-      read,
-      write,
-      update;
+      PENDING,
+      RUNNING,
+      DONE,
+      FAILED,
+      SKIPPED;
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read;
+      STOP,
+      CONTINUE,
+      RETRY;
    }
 
    static final class Inner_StreamUtil {
       final AiPlanRunner.Inner_BufferHelper init_aU_BufferHelper;
-      AiPlanRunner.Inner_CachePool init_aU_CachePool = AiPlanRunner.Inner_CachePool.init;
+      AiPlanRunner.Inner_CachePool init_aU_CachePool = AiPlanRunner.Inner_CachePool.PENDING;
       String init_Str = "";
       int init_I;
 

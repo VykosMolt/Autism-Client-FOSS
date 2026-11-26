@@ -48,7 +48,7 @@ final class AiFollow {
             boolean init_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -70,7 +70,7 @@ final class AiFollow {
                      if (this.init_Entity == null) {
                         return this.init(
                            AiOperation.Status.FAILED,
-                           AiFailure.add,
+                           AiFailure.TARGET_GONE,
                            this.init_Vec3 != null
                               ? "Follow target lost; last observed at " + BlockPos.containing(this.init_Vec3).toShortString()
                               : "No matching entity observed"

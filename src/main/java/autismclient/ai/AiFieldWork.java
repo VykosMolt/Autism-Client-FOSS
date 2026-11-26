@@ -52,13 +52,13 @@ final class AiFieldWork {
    static AiFieldWork.Inner_DataUtil init(BlockState ground, BlockState above, Block crop, boolean seeds) {
       boolean open = above.isAir();
       if (above.is(crop)) {
-         return AiFieldWork.Inner_DataUtil.read;
+         return AiFieldWork.Inner_DataUtil.DONE;
       } else if (autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, ground)) {
-         return !open ? AiFieldWork.Inner_DataUtil.write : (seeds ? AiFieldWork.Inner_DataUtil.load : AiFieldWork.Inner_DataUtil.read);
+         return !open ? AiFieldWork.Inner_DataUtil.BLOCKED : (seeds ? AiFieldWork.Inner_DataUtil.SOW : AiFieldWork.Inner_DataUtil.DONE);
       } else if (crop != Blocks.NETHER_WART && (ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.DIRT) || ground.is(Blocks.DIRT_PATH))) {
-         return open ? AiFieldWork.Inner_DataUtil.init : AiFieldWork.Inner_DataUtil.write;
+         return open ? AiFieldWork.Inner_DataUtil.TILL : AiFieldWork.Inner_DataUtil.BLOCKED;
       } else {
-         return AiFieldWork.Inner_DataUtil.write;
+         return AiFieldWork.Inner_DataUtil.BLOCKED;
       }
    }
 
@@ -165,7 +165,7 @@ final class AiFieldWork {
          final Set<Long> load_Set;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.CALM);
             this.init_Map = new HashMap<>();
             this.load_Map = new HashMap<>();
             this.load_I = mc.player.getInventory().getSelectedSlot();
@@ -503,13 +503,13 @@ final class AiFieldWork {
                   ownClick,
                   AiGameState.init_I_Str(seedItem)
                );
-               if (state == AiReplantEvidence.Inner_DataUtil.load || state == AiReplantEvidence.Inner_DataUtil.read) {
+               if (state == AiReplantEvidence.Inner_DataUtil.LOCAL || state == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
                   iterator.remove();
                   this.init_Set.remove(key);
                   this.init_Map.remove(key);
                   this.load_Map.remove(key);
                   this.read_Map.remove(key);
-                  if (state == AiReplantEvidence.Inner_DataUtil.load) {
+                  if (state == AiReplantEvidence.Inner_DataUtil.LOCAL) {
                      this.push++;
                   } else {
                      this.poll++;
@@ -752,7 +752,7 @@ final class AiFieldWork {
                this.init_Set.add(p.asLong());
             }
 
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.FAST);
             this.init_I = 1;
             this.open = -1;
             this.load_Set = new HashSet<>();
@@ -819,7 +819,7 @@ final class AiFieldWork {
 
                for (BlockPos p : plots) {
                   AiFieldWork.Inner_DataUtil need = AiFieldWork.init(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
-                  if (need != AiFieldWork.Inner_DataUtil.read && need != AiFieldWork.Inner_DataUtil.write) {
+                  if (need != AiFieldWork.Inner_DataUtil.DONE && need != AiFieldWork.Inner_DataUtil.BLOCKED) {
                      pending++;
                      double along = (p.getX() + 0.5 - mc.player.getX()) * heading.x + (p.getZ() + 0.5 - mc.player.getZ()) * heading.z;
                      if (along < 0.6) {
@@ -884,7 +884,7 @@ final class AiFieldWork {
 
                         for (BlockPos p : plots) {
                            AiFieldWork.Inner_DataUtil need = AiFieldWork.init(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
-                           if (need != AiFieldWork.Inner_DataUtil.read && need != AiFieldWork.Inner_DataUtil.write && listed++ < 6) {
+                           if (need != AiFieldWork.Inner_DataUtil.DONE && need != AiFieldWork.Inner_DataUtil.BLOCKED && listed++ < 6) {
                               left.append(' ')
                                  .append(p.toShortString())
                                  .append(' ')
@@ -929,7 +929,7 @@ final class AiFieldWork {
 
             for (BlockPos p : plots) {
                AiFieldWork.Inner_DataUtil need = AiFieldWork.init(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
-               if (need != AiFieldWork.Inner_DataUtil.read && need != AiFieldWork.Inner_DataUtil.write) {
+               if (need != AiFieldWork.Inner_DataUtil.DONE && need != AiFieldWork.Inner_DataUtil.BLOCKED) {
                   double d = p.distToCenterSqr(mc.player.position());
                   if (d < bestDistance) {
                      bestDistance = d;
@@ -1134,9 +1134,9 @@ final class AiFieldWork {
    }
 
    enum Inner_DataUtil {
-      init,
-      load,
-      read,
-      write;
+      TILL,
+      SOW,
+      DONE,
+      BLOCKED;
    }
 }
