@@ -176,17 +176,11 @@ public final class K extends Module {
    }
 
    private void init_V_8() {
-      String selected = autismclient.util.ar.init(this.text("cape-image").trim());
-      if (selected != null) {
-         this.setValue("cape-image", selected);
-      }
+      autismclient.util.ar.pickImage(this.text("cape-image").trim(), selected -> this.setValue("cape-image", selected));
    }
 
    private void load() {
-      String selected = autismclient.util.ar.init(this.text("shield-image").trim());
-      if (selected != null) {
-         this.setValue("shield-image", selected);
-      }
+      autismclient.util.ar.pickImage(this.text("shield-image").trim(), selected -> this.setValue("shield-image", selected));
    }
 
    private void read() {

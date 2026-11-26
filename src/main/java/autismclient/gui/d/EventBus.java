@@ -649,11 +649,12 @@ public class EventBus extends Screen {
             .setScreen(new TextFormat(this, al.init_Str_Str_Str(this.init_Str, row.init_Str), valuex -> al.init_V_Str(this.init_Str, row.init_Str, valuex)));
       } else if (row.init_EventBus_CachePool == EventBus.Inner_CachePool.sync) {
          this.write_V();
-         String picked = ar.init(al.init_Str_Str_Str(this.init_Str, row.init_Str));
-         if (picked != null) {
-            al.init_V_Str(this.init_Str, row.init_Str, picked);
-            al.init_V_Str(this.init_Str, "gif-natural", "true");
-         }
+         String elementId = this.init_Str;
+         String settingId = row.init_Str;
+         ar.pickImage(al.init_Str_Str_Str(elementId, settingId), picked -> {
+            al.init_V_Str(elementId, settingId, picked);
+            al.init_V_Str(elementId, "gif-natural", "true");
+         });
       }
    }
 
