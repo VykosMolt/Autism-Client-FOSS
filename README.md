@@ -37,6 +37,7 @@ SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh
 
 Architecture notes, ABI guardrails, package maps, and deobfuscation progress live under `docs/`:
 
+- [Engineering & Verification Workflow](GEMINI.md)
 - [Architecture & Build Overview](docs/ARCHITECTURE.md)
 - [ABI Boundaries & Silent-Breakage Hazards](docs/ABI_AND_HAZARDS.md)
 - [59-Package Directory](docs/PACKAGES.md)

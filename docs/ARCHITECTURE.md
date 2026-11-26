@@ -52,10 +52,10 @@ AUTISM_TOOL_ENV_PREPARED=1 SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh
    - Sub-layers: `174` core MC hook mixins (+ `AutismMixinPlugin`), `accessor.*` (`36`), `security.*` (`34` anti-fingerprint mixins), `lithium.*` (`2`), `indigo.*` (`1`), `via.*` (`3`), `guardian.*` (`1`), plus duck interfaces in `autismclient.c` (`DisconnectedScreenDuck`, `ExternalButtonScreenDuck`).
 3. **Module System (`autismclient.modules`, `autismclient.aggressivepvp`)**
    - `Module` base class & settings schema (`autismclient.api.module.*`).
-   - `62` top-level `*Module` subclasses (`KillAuraModule`, `ClutchModule`, `AnchorAuraModule`, `TriggerBotModule`, etc.) + `Module` + `AiCheckpointHud` + ABI-pinned inner module container `modules/f.java` + ESP/render state snapshots (`modules/am.java`) + `aggressivepvp/*` (`18` files).
+   - `62` top-level `*Module` subclasses (`KillAuraModule`, `ClutchModule`, `AnchorAuraModule`, `TriggerBotModule`, etc.) + `Module` + `AiCheckpointHud` + `80` named helpers (`ModuleRuntimeManager`, `BlinkPacketManager`, `AntiBotTracker`, `FreecamController`, `NoRenderState`, `NameTagsRenderer`, `ClutchFallPhysics`, `ClutchBlockPlanner`, etc.) + `6` ABI-pinned classes (`f`, `as`, `aD`, `ae`, `am`, `ar`) + `aggressivepvp/*` (`18` files).
 4. **Macro Engine & Editor (`autismclient.util.macro`, `autismclient.gui.macro.editor`)**
-   - `MacroExecutor` runs sequences of `MacroAction` / `ContextMacroAction` implementations (`103` `StreamGate` enum constants, `102` concrete `*Action.java` subclasses + `MacroAction.java` + `MacroCondition.java` + ABI-pinned `ak.java` + addon actions via `MacroActionRegistry`).
-   - Serialized as NBT (`util/AutismMacro.java`), dynamically bound via reflection on public `MacroAction` fields (`util/macro/d.java`), edited in `AutismMacroEditorOverlay` + `ActionEditorOverlay` (`ActionFieldSchema` in `gui/macro/editor/ActionFieldRegistry.java`).
+   - `MacroExecutor` runs sequences of `MacroAction` / `ContextMacroAction` implementations (`103` `MacroActionType` enum constants, `102` concrete `*Action.java` subclasses + `MacroAction.java` + `MacroCondition.java` + `32` named runtime/variable/routing helpers + ABI-pinned `ak.java` + addon actions via `MacroActionRegistry`).
+   - Serialized as NBT (`util/AutismMacro.java`), dynamically bound via reflection on public `MacroAction` fields (`DynamicBindingManager`), edited in `AutismMacroEditorOverlay` + `ActionEditorOverlay` (`ActionFieldSchema` in `gui/macro/editor/ActionFieldRegistry.java`).
 5. **Commands (`autismclient.commands`, `commands.a`, `commands.b`)**
    - Brigadier-based client command dispatcher (`CommandManager`, `CommandSuggestions`, `RegistrySuggestions`), `8` custom `*ArgumentType`s (`commands.a`), and `39` built-in `*Command` classes + `SlotClickCommandHelper` (`commands.b`).
 6. **UI, Overlays & Rendering (`autismclient.gui.*`, `autismclient.render`, `util/Autism*Overlay`)**
@@ -81,8 +81,11 @@ All source renames are executed mechanically via JDK 25's compiler AST (`com.sun
   - **Phase 2 (`df79bd7`):** `222` Rosetta Stone non-AI classes renamed in place (`40` in `commands/b`, `62` in `modules`, `103` in `util/macro`, `17` in `gui/d`), 100% aligned with `source-contracts.json` (`4,074/4,074` classes + `94/94` resources semantically bytecode-identical).
   - **Phase 3A (`24eb317`):** `60` self-contained non-AI subsystem classes renamed in place (`c/`, `commands/`, `commands/a/`, `compat/`, `compat/a/`, `util/oresim/`, `util/j/a/`, `util/a..f/`, `util/h/`, `util/i/`, `util/mm*`, plus `AutismMacro` and `ActionFieldRegistry`), alongside 6 newly confirmed ABI pins in `AstBatchRenamer.FROZEN_SYMBOL_EXACT`.
   - **Phase 3B (`d81bac9`):** All `33/33` AutismProtector classes in `autismclient/g/` renamed in place (`4,074/4,074` classes + `94/94` resources semantically bytecode-identical vs pre-Phase-3 baseline `c19e1c4`).
+  - **Phase 5A (`5fc7d1d`):** All `32` non-pinned helper classes in `autismclient/util/macro/` renamed in place (`MacroActionType`, `MacroWaitRegistry`, `DynamicBindingManager`, `MacroTemplateResolver`, `PacketGateManager`, `PingSpoofScheduler`, `TpRoutePlanner`, etc.), leaving only ABI-pinned `ak.java`.
+  - **Phase 5B (`8526c70`):** All `80` non-pinned helper classes in `autismclient/modules/` renamed in place (`ModuleRuntimeManager`, `BlinkPacketManager`, `AntiBotTracker`, `FreecamController`, `NoRenderState`, `ClutchFallPhysics`, `ClutchBlockPlanner`, `NameTagsRenderer`, etc.), plus `4` newly confirmed ABI pins (`aD`, `ae`, `am`, `ar`); cumulative `4,074/4,074` classes + `94/94` resources semantically bytecode-identical vs pre-Phase-5 baseline `f1348f0`.
 
 ## Related Docs
+- [Engineering & Verification Workflow](../GEMINI.md)
 - [ABI & Silent-Breakage Hazards](./ABI_AND_HAZARDS.md)
 - [59-Package Directory](./PACKAGES.md)
 - [Deobfuscation Ledger](./DEOBFUSCATION_LEDGER.tsv)

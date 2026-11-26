@@ -1,23 +1,24 @@
 # Macro Engine & Editor (`autismclient.util.macro`, `autismclient.gui.macro.editor`)
 
-AUTISM Client's macro system spans `138` files (`44,808` LOC) in `autismclient.util.macro` plus `11` files (`19,672` LOC) in `autismclient.gui.macro.editor*`, `AutismMacroEditorOverlay`, and `util/AutismMacro.java`. Phase 2 renamed all `102` non-frozen concrete `*Action` subclasses and `MacroCondition` (`33/138` helper/ABI-pinned files remain obfuscated), and Phase 3A renamed `AutismMacro` and `gui/macro/editor/ActionFieldRegistry` to exact `source-contracts.json` names.
+AUTISM Client's macro system spans `138` files (`44,808` LOC) in `autismclient.util.macro` plus `11` files (`19,672` LOC) in `autismclient.gui.macro.editor*`, `AutismMacroEditorOverlay`, and `util/AutismMacro.java`. Phase 2 renamed all `102` non-frozen concrete `*Action` subclasses and `MacroCondition`, Phase 3A renamed `AutismMacro` and `ActionFieldRegistry`, and Phase 5A renamed all `32` non-pinned macro helpers (`1/138` obfuscated remaining — only compile-time ABI-pinned `ak.java`).
 
 ## Architecture & Hazards
-- **Execution Engine:** `MacroExecutor` (`11,435` LOC) manages macro runs, variable scopes, packet gates, wait conditions, labels/branches, and client-thread callbacks.
+- **Execution Engine:** `MacroExecutor` (`11,435` LOC) manages macro runs, variable scopes (`MacroVariableStore`, `MacroVariableContext`, `MacroVarValue`, `MacroTemplateResolver`), packet gates (`PacketGateManager`), ping spoof scheduling (`PingSpoofScheduler`), FPS overrides (`MacroFpsOverrideManager`), server tick phase tracking (`ServerTickPhaseTracker`), wait conditions (`MacroWaitRegistry`), resource locking (`MacroResourceClassifier`, `MacroResourceLock`, `RaceEligibilityChecker`), aim overrides (`MacroAimController`), and AI tool bridges (`MacroToolBridge`).
 - **Action Contracts:**
   - `MacroAction` (`55` LOC) — standard built-in action interface (`execute(Minecraft)`, `toTag()`, `fromTag()`, `getType()`, `sanitizeForSharing()`).
   - `ContextMacroAction` (`autismclient.api.macro`) — context-driven async action interface implemented by `TradeAction`, `VillagerDupeAction`, and `WaitVillagerItemAction` (plus external addon actions via `MacroActionRegistry`).
-- **Type Enum (`StreamGate`):** `103` enum constants (all restored to true runtime names in Phase 1). `StreamGate.WAIT_ITEM` is a legacy alias deserialized into `WaitForSlotChangeAction` (`util/AutismMacro.java`). `StreamGate.MULTI` deserializes into inert `MultiAction` so legacy Multi blocks stay readable without executing (`LegacyMultiCheck`). Unknown addon type IDs fall back to `MissingAddonAction` (`util/AutismMacro.java`).
+  - **Capability Interfaces & Helpers:** `CaptureOutputAction`, `PacketOrderAware` (`PacketOrderMode`), `AimTargetAction`, `GuiWaitAware`, plus `InteractTimingMode`, `MacroItemTarget`, `CandidatePoolSelector`, `CustomMenuActionPlanner`, `GuiScreenMatcher`, `PatternCaptureMatcher`, `TpRoutePlanner`, `ClipCollisionHelper`, `MacroStepColorHelper`, `MacroNbtCodecHelper`, `ListenDuringPreviousSerializer`.
+- **Type Enum (`MacroActionType`):** `103` enum constants (all restored to true runtime names in Phase 1). `MacroActionType.WAIT_ITEM` is a legacy alias deserialized into `WaitForSlotChangeAction` (`util/AutismMacro.java`). `MacroActionType.MULTI` deserializes into inert `MultiAction` so legacy Multi blocks stay readable without executing (`LegacyMultiCheck`). Unknown addon type IDs fall back to `MissingAddonAction` (`util/AutismMacro.java`).
 - **Condition Tree (`MacroCondition`):** `839` LOC boolean expression tree (`GROUP` ALL/ANY + `LEAF` predicates for items, slots, durability, GUI, entities, health, variables, and AI tools), used by `IfAction`, `FlowAction`, and `BranchAction`.
 - **Mandatory Locks (see [ABI_AND_HAZARDS.md](../ABI_AND_HAZARDS.md)):**
-  - **Reflection Lock (H5):** `MacroAction` reflects `"listenDuringPreviousAction"`, and `util/macro/d.java` reflects `action.getClass().getField(binding.getKey())` matching `ActionFieldSchema` keys in `gui/macro/editor/ActionFieldRegistry.java`. **Never rename public fields on any `MacroAction` subclass.**
+  - **Reflection Lock (H5):** `MacroAction` reflects `"listenDuringPreviousAction"`, and `DynamicBindingManager` reflects `action.getClass().getField(binding.getKey())` matching `ActionFieldSchema` keys in `gui/macro/editor/ActionFieldRegistry.java`. **Never rename public fields on any `MacroAction` subclass.**
   - **ABI Pin (H1):** `util/macro/ak.java` (`TOGGLE_MODULE`) and its inner enum `ak$Inner_StreamUtil` are directly referenced by untouched `modules/al.java` and remain compile-time frozen.
   - **Sharing Sanitization:** Actions with local scripts or paths (`PayloadAction`, `NbtBookAction`, `MissingAddonAction`) strip executable/path fields in `sanitizeForSharing()`.
 
 ## Built-In Macro Actions (`102` Renamed `*Action` Classes + `ak`)
 
 ### Control Flow, Timing & Meta (`18`)
-| Class | `StreamGate` | Role |
+| Class | `MacroActionType` | Role |
 |---|---|---|
 | `AssertAction` | `ASSERT` | Assert inventory/GUI/entity/connection state |
 | `BranchAction` | `BRANCH` | Conditional branch |
@@ -39,7 +40,7 @@ AUTISM Client's macro system spans `138` files (`44,808` LOC) in `autismclient.u
 | `TickSyncAction` | `TICK_SYNC` | Synchronize to client tick boundary |
 
 ### Inventory, Containers & Items (`17`)
-| Class | `StreamGate` | Role |
+| Class | `MacroActionType` | Role |
 |---|---|---|
 | `CloseGuiAction` | `CLOSE_GUI` | Close current container screen |
 | `ContainerClickSequenceAction` | `CONTAINER_CLICK_SEQUENCE` | Execute a sequence of container slot clicks |
@@ -60,7 +61,7 @@ AUTISM Client's macro system spans `138` files (`44,808` LOC) in `autismclient.u
 | `UseItemPhaseAction` | `USE_ITEM_PHASE` | Phased / held item use |
 
 ### Movement, World & Interaction (`19`)
-| Class | `StreamGate` | Role |
+| Class | `MacroActionType` | Role |
 |---|---|---|
 | `BreakAction` | `BREAK` | Break target block |
 | `ClickAction` | `CLICK` | Simulate attack/use click |
@@ -83,7 +84,7 @@ AUTISM Client's macro system spans `138` files (`44,808` LOC) in `autismclient.u
 | `VillagerDupeAction` *(Context)* | `VILLAGER_DUPE` | Shear raised trade items off villagers in reach |
 
 ### Packets, Network, Client & Dupes (`25`)
-| Class | `StreamGate` | Role |
+| Class | `MacroActionType` | Role |
 |---|---|---|
 | `BundleDupeV2Action` | `BUNDLE_DUPE_V2` | Bundle dupe packet sequence |
 | `DelayPacketsAction` | `DELAY_PACKETS` | Buffer/delay outbound packets |

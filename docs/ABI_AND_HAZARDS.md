@@ -57,21 +57,21 @@ There are **zero** `@SerializedName` annotations in the codebase. Every field on
 - `autismclient.util.AutismPacketPreset` (used by `util/bT.java`)
 - `autismclient.util.AutismProfile` (used by `util/bV.java`)
 - `autismclient.util.oresim.AutismOreSimSeedStore`
-- `autismclient.modules.aO`
+- `autismclient.modules.ScaffoldFailureRecorder` (formerly `aO`)
 - `autismclient.ai.{AiSettings, AiToolSettings, AiMemoryStore.Memory, AiRegions.Region}` (AI deferred)
 
 ## 5. `Enum.name()` & `Enum.valueOf()` Serialization
 - `mappings/enum-names.tsv` stores the exact original runtime `Enum.name()` strings (`2,190` constants across `413` enums).
 - Renaming an enum constant in source is **only** permitted when renaming it to its exact string in `mappings/enum-names.tsv` AND syncing its `F` row in `mappings/disambig.tsv`.
-- `StreamGate.MULTI` and inert `util/macro/MultiAction.java` remain intact for readable legacy Multi blocks (`tools/checks/LegacyMultiCheck.java`).
+- `MacroActionType.MULTI` and inert `util/macro/MultiAction.java` remain intact for readable legacy Multi blocks (`tools/checks/LegacyMultiCheck.java`).
 
 ## 6. Java `record` Component Names
 - `mappings/record-names.tsv` (`1,124` entries) is validated strictly by `ReverseRemapJar.restoreRecordNames` (throws `IllegalStateException` on component count mismatch).
-- Never alter record component order/count during pure deobfuscation; sync `mappings/disambig.tsv` + `mappings/record-names.tsv` whenever renaming a record class or component.
+- Never alter record component order/count during pure deobfuscation; `record-names.tsv` is keyed by `origName`, so in-place record class renames only update `mappings/disambig.tsv` (update `record-names.tsv` only if component names themselves change).
 
 ## 7. Internal Reflection Lock (`MacroAction` Public Fields)
 - `autismclient.util.macro.MacroAction` reflects `"listenDuringPreviousAction"`.
-- `autismclient.util.macro.d` reflects `action.getClass().getField(binding.getKey())` for dynamic macro variable bindings, matching `ActionFieldSchema` keys in `gui/macro/editor/ActionFieldRegistry.java`.
+- `autismclient.util.macro.DynamicBindingManager` reflects `action.getClass().getField(binding.getKey())` for dynamic macro variable bindings, matching `ActionFieldSchema` keys in `gui/macro/editor/ActionFieldRegistry.java`.
 - **Rule:** Never rename public fields on any `MacroAction` subclass (they are already readable schema keys).
 
 ## 8. String-Referenced Metadata & Checks
@@ -83,9 +83,11 @@ Keep these files in lockstep with any class/package rename:
 - `src/main/resources/assets/autismclient/ai/source-contracts.json`
 - `tools/checks/*Check.java` (44 test files — many use package-private access!)
 
-## 9. Mandatory Verification Gate After Every Batch
-Every deobfuscation batch MUST pass all 4 gates before proceeding:
-1. `./gradle.sh clean assemble` (0 errors; verifies untouched `.java` files compile cleanly and `ReverseRemapJar` succeeds)
-2. `bash tools/checks/run.sh` (all 44 regression checks PASS)
-3. `SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh` (all 3 Mixin audit profiles PASS)
-4. Packaged-JAR ASM link audit (`BROKEN_REFS=0`) + bytecode equivalence check (`VerifyBytecodeEquiv`) + `git status` check (`0` frozen files touched)
+## 9. Mandatory Verification Chain & Adversarial Convergence Gate
+See [GEMINI.md](../GEMINI.md) (Sections 3–4) for the authoritative workflow. Every deobfuscation batch MUST pass all 5 gates and independent adversarial review before pushing:
+1. **Clean Build & Tool Env:** `./gradle.sh --offline clean assemble prepareToolEnv` (`0` errors; verifies untouched `.java` files compile cleanly and `ReverseRemapJar` succeeds)
+2. **Bytecode & Resource Equivalence:** `VerifyBytecodeEquiv` vs pre-wave baseline JAR (`DIFFS=0`, `RES_DIFFS=0`, `ONLY_BASE=0`, `ONLY_CAND=0`, expected `EXCLUDED_IDENTICAL`)
+3. **Regression Checks:** `AUTISM_TOOL_ENV_PREPARED=1 bash tools/checks/run.sh` (`44/44 PASS`)
+4. **MC 26.3 Mixin Audit:** `AUTISM_TOOL_ENV_PREPARED=1 SKIP_JAR_CHECK=1 bash tools/verify-26.3.sh` (`3/3` profiles PASS)
+5. **Mapping, Ledger, Link & Boundary Integrity:** `mappings/disambig.tsv` + `docs/DEOBFUSCATION_LEDGER.tsv` validation, packaged-JAR/class ASM link audit (`BROKEN_REFS=0`), and `git diff --name-only` check (`0` excluded/frozen paths touched)
+6. **Independent Adversarial Review to Convergence:** Fresh read-only reviewer inspecting all commits until convergence with `0 CRITICAL`, `0 HIGH`, and `0 MEDIUM` issues.

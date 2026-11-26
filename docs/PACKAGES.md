@@ -1,6 +1,6 @@
 # 59-Package Directory (AUTISM Client 5.8-26.3)
 
-Counts reflect the post-Phase-3B working tree and exclude hard-frozen integrity paths (`e/`, `sys/`, `obf/`, and the 5 untouched individual integrity files).
+Counts reflect the post-Phase-5B working tree and exclude hard-frozen integrity paths (`e/`, `sys/`, `obf/`, and the 5 untouched individual integrity files).
 
 ## Frozen / Stable Packages
 | Package | Files | LOC | Status | Description |
@@ -19,7 +19,7 @@ Counts reflect the post-Phase-3B working tree and exclude hard-frozen integrity 
 | `autismclient.compat263` | 7 | 1,405 | MC 26.3 compatibility shims |
 | `autismclient.render` | 1 | 273 | `AutismRenderTypes` |
 
-## Non-AI Deobfuscation Target Packages (Post-Phase-3B)
+## Non-AI Deobfuscation Target Packages (Post-Phase-5B)
 | Current Package | Files (Obf/Tot) | LOC | Role | Planned Target Package |
 |---|---:|---:|---|---|
 | `autismclient.c` | **0 / 2** | 16 | **Phase 3A complete:** `DisconnectedScreenDuck`, `ExternalButtonScreenDuck` | `autismclient.mixin.duck` |
@@ -30,8 +30,8 @@ Counts reflect the post-Phase-3B working tree and exclude hard-frozen integrity 
 | `autismclient.compat` | **0 / 2** | 491 | **Phase 3A complete:** `AutismModMenuIntegration`, `AutismSettingsScreen` | `autismclient.compat` |
 | `autismclient.compat.a` | **0 / 1** | 370 | **Phase 3A complete:** `ViaFabricPlusBridge` | `autismclient.compat.via` |
 | `autismclient.g` | **0 / 33** | 8,651 | **Phase 3B complete:** All 33 **AutismProtector** anti-fingerprint / pack / proxy / compat classes | `autismclient.protector` |
-| `autismclient.modules` | 86 / 150 | 93,930 | **Phase 2:** `62` `*Module` subclasses + `Module` + `AiCheckpointHud`; remaining `86` helpers + ABI-pinned `f`/`as` | `autismclient.modules` |
-| `autismclient.util.macro` | 33 / 138 | 44,808 | **Phase 2:** `102` concrete `*Action`s + `MacroAction` + `MacroCondition` + `MacroExecutor`; remaining `33` helpers + ABI-pinned `ak` | `autismclient.util.macro` |
+| `autismclient.modules` | **6 / 150** | 93,930 | **Phase 2 + 5B complete:** `62` `*Module`s + `Module` + `AiCheckpointHud` + `80` helpers renamed; only `6` **ABI-pinned** classes remain (`f`, `as`, `aD`, `ae`, `am`, `ar`) | `autismclient.modules` |
+| `autismclient.util.macro` | **1 / 138** | 44,808 | **Phase 2 + 5A complete:** `102` `*Action`s + `MacroAction` + `MacroCondition` + `MacroExecutor` + `32` helpers renamed; only **ABI-pinned** `ak` remains | `autismclient.util.macro` |
 | `autismclient.gui.macro.editor` | 3 / 8 | 19,378 | **Phase 3A:** `ActionFieldRegistry` + `ActionEditorOverlay`, `ActionFieldSchema`, `FieldDef`, `RaceStepSelectorOverlay`; `3` helpers remain | `autismclient.gui.macro.editor` |
 | `autismclient.gui.macro.editor.a` | 3 / 3 | 294 | Macro live-capture UI helpers | `autismclient.gui.macro.editor.capture` |
 | `autismclient.gui` | 3 / 3 | 508 | Theme-applying overlay, custom inventory screen, custom loading overlay | `autismclient.gui` |
@@ -51,7 +51,7 @@ Counts reflect the post-Phase-3B working tree and exclude hard-frozen integrity 
 | `autismclient.util.h` | **0 / 4** | 781 | **Phase 3A complete:** Villager trade engine (`VillagerTradeSession`, `TradeOfferFilter`, `MerchantInteractHelper`, `BlockChangeAckTracker`) | `autismclient.util.villager` |
 | `autismclient.util.i` | **0 / 1** | 1,060 | **Phase 3A complete:** `VillagerDupeDriver` | `autismclient.util.villagerdupe` |
 | `autismclient.util.mm` + `.a` | 5 / 7 | 1,962 | **Phase 3A:** `LocalPrefsStore`, `WindowsDpapiBridge`; remaining `5` (`IoWorker`, `StateCache`, `a/CachePool`, `a/DataUtil`, `a/StreamUtil`) are **ABI-pinned/frozen** | `autismclient.util.storage` |
-| `autismclient.util` | 221 / 256 | 116,228 | **Phase 3A:** `AutismMacro`; overlays, config, waypoints, packet logger/inspector, aim/input/inventory/perf utils | `autismclient.util` |
+| `autismclient.util` | 222 / 256 | 116,228 | **Phase 3A:** `AutismMacro`; overlays, config, waypoints, packet logger/inspector, aim/input/inventory/perf utils | `autismclient.util` |
 
 ## Deferred AI Packages (Untouched For Now)
 | Current Package | Files (Obf/Tot) | LOC | Original Name in `source-contracts.json` |

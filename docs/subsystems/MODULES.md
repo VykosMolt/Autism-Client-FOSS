@@ -1,15 +1,16 @@
 # Modules Subsystem (`autismclient.modules`, `autismclient.aggressivepvp`)
 
-AUTISM Client's module system comprises `150` non-excluded files (`93,930` LOC) in `autismclient.modules` plus `18` unobfuscated files (`4,720` LOC) in `autismclient.aggressivepvp`. Phase 2 renamed all `62` non-frozen top-level `*Module` subclasses to exact `source-contracts.json` names (`86/150` helper/ABI-pinned files remain obfuscated for Phases 3–4).
+AUTISM Client's module system comprises `150` non-excluded files (`93,930` LOC) in `autismclient.modules` plus `18` unobfuscated files (`4,720` LOC) in `autismclient.aggressivepvp`. Phase 2 renamed all `62` non-frozen top-level `*Module` subclasses to exact `source-contracts.json` names, and Phase 5B renamed all `80` non-pinned helper classes (`6/150` obfuscated remaining — all `6` are compile-time ABI-pinned by untouched `modules/al.java`).
 
 ## Architecture & ABI Boundaries
-- **Base Class:** `autismclient.modules.Module` (`760` LOC) implements setting storage, enable/disable hooks, `preMovementTick`, `onInputFrame`, and persistence integration with `AutismConfig`.
-- **Categories (`autismclient.modules.ae`):** `Combat` (`ae.init_ae`), `Movement` (`ae.load_ae`), `Player` (`ae.read`), `Misc` (`ae.write`), `Render` (`ae.update`), `Dupes` (`ae.sync`), plus dynamic addon categories via `ae.init(addonId, label)`.
+- **Base Class:** `autismclient.modules.Module` (`760` LOC) implements setting storage, enable/disable hooks (`ScopedToggleOverride`), `preMovementTick`, `onInputFrame`, and persistence integration with `AutismConfig`.
+- **Categories (`autismclient.modules.ae`, ABI-pinned):** `Combat` (`ae.init_ae`), `Movement` (`ae.load_ae`), `Player` (`ae.read`), `Misc` (`ae.write`), `Render` (`ae.update`), `Dupes` (`ae.sync`), plus dynamic addon categories via `ae.init(addonId, label)`.
 - **Compile-Time ABI Pins (see [ABI_AND_HAZARDS.md](../ABI_AND_HAZARDS.md)):**
   - `modules/al.java` — hard-frozen untouched registry/bootstrap class.
   - `modules/f.java` (`8,595` LOC) — compile-time ABI-pinned container holding `36` built-in inner `Module` subclasses referenced by `modules/al.java`.
   - `modules/as.java` (`845` LOC, `NameCensor` / `name-censor`) — compile-time ABI-pinned class referenced by `modules/al.java`.
-  - `modules/aO.java` — Gson-serialized DTO fields locked (0 `@SerializedName` annotations).
+  - `modules/aD.java` (`206` LOC, panic/hide controller), `modules/ae.java` (`88` LOC, categories), `modules/am.java` (`1,560` LOC, render/ESP state snapshots), `modules/ar.java` (`2,130` LOC, world ESP renderer) — compile-time ABI-pinned classes referenced by `modules/al.java`.
+  - `modules/ScaffoldFailureRecorder.java` (formerly `aO.java`) — Gson-serialized record fields locked (0 `@SerializedName` annotations).
 - **Aggressive PvP (`autismclient.aggressivepvp`):** `18` readable classes implementing alternate Aggressive `CrystalAura` and `AutoTotem` controllers (`Versions`, `ActionWindow`, `LookMath`, `MoveFix`), wired into `CrystalAuraModule`, `AutoTotemModule`, and `AggressiveConnectionMixin` (verified by 7 `Aggressive*Check` tests).
 
 ## Top-Level `*Module` Subclasses (`62` Phase 2 Renamed + `1` ABI-Pinned `as`)
@@ -108,4 +109,4 @@ AUTISM Client's module system comprises `150` non-excluded files (`93,930` LOC) 
 - **Render (`12`):** `BetterTooltips` (`Inner_NetHelper`), `BlockESP` (`Inner_JsonUtil`), `ESP` (`Inner_SyncManager`), `FakeCoords` (`Inner_UiHelper`), `FrameESP` (`Inner_TextFormat`), `Freecam` (`Inner_ByteReader`), `Fullbright` (`Inner_PacketUtil`), `ItemESP` (`Inner_RingBuffer`), `SpawnerESP` (`Inner_RefQueue`), `StorageESP` (`Inner_ArrayUtil`), `Tracers` (`Inner_ClassCache`), `Xray` (`Inner_KeyHolder`).
 - **Misc (`7`):** `AdminTools` (`Inner_DataUtil`), `AutoReconnect` (`Inner_ConfigStore`), `BookBot` (`Inner_StateCache`), `HUD` (`Inner_IoWorker`), `PacketCanceller` (`Inner_FieldCache`), `PanicMode` (`Inner_HashUtil`), `Spam` (`Inner_TaskTimer`).
 
-*(Also in `autismclient.modules`: `AiCheckpointHud` [`39` LOC], plus `84` obfuscated helper classes such as `am` [render/ESP snapshots] and `l` [shield/hit-window math] scheduled for Phases 3–4.)*
+*(Also in `autismclient.modules`: `AiCheckpointHud` [`39` LOC], `80` Phase 5B named helper classes covering runtime orchestration [`ModuleRuntimeManager`], combat/movement physics [`AntiBotTracker`, `BlinkPacketManager`, `ClutchFallPhysics`, `ClutchBlockPlanner`, `ShieldHitWindowHelper`, `KnockbackThrowPlanner`, `TerrainDropGrid`, `WTapController`], Danger/Trajectories [`IncomingProjectileScanner`, `ProjectileBallistics`, `TrajectoryWorldRenderer`, `PearlLandingEvaluator`], Bed/ESP/Crosshair rendering [`BedCoverPathSolver`, `BedMiningEstimator`, `EspChunkWorker`, `EspVoxelMeshBuilder`, `NameTagsRenderer`, `CrosshairRenderer`, `FreecamController`, `NoRenderState`, `ViewmodelState`], plus the `4` ABI-pinned shared helpers `aD`, `ae`, `am`, and `ar`.)*
