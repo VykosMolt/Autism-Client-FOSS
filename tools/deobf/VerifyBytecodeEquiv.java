@@ -18,6 +18,8 @@ import org.objectweb.asm.util.TraceMethodVisitor;
  *    InnerClasses, NestHost, NestMembers, PermittedSubclasses, visible/invisible/type/parameter annotations,
  *    annotation defaults, record components, fields, methods, exceptions, and bytecode instructions
  *  - Strict 1-to-1 bijection validation for javac synthetic $SwitchMap$ field renames (never masks swapped tables)
+ *  - Strict 1-to-1 per-class bijection validation for javac private synthetic lambda$<enclosing>$N method renames
+ *    (derived strictly from enclosing-method invokedynamic BSM handle order; never masks swapped or changed lambdas)
  */
 public final class VerifyBytecodeEquiv {
     private static final Set<String> EXCLUDED_EXACT = Set.of(
@@ -28,6 +30,7 @@ public final class VerifyBytecodeEquiv {
         "autismclient/gui/d/JsonUtil"
     );
     private static final Pattern SWITCHMAP_REF = Pattern.compile("\\.\\$SwitchMap\\$[A-Za-z0-9_$]+");
+    private static final Pattern LAMBDA_REF = Pattern.compile("\\blambda\\$[A-Za-z0-9_$]+\\$\\d+\\b");
 
     private static boolean isExcluded(String name) {
         String base = name.contains("$") ? name.substring(0, name.indexOf('$')) : name;
@@ -139,7 +142,7 @@ public final class VerifyBytecodeEquiv {
         }
     }
 
-    static String fingerprintClass(byte[] raw, Map<String, String> switchMapMap) {
+    static String fingerprintClass(byte[] raw, Map<String, String> switchMapMap, Map<String, String> lambdaMap) {
         ClassNode cn = new ClassNode();
         new ClassReader(raw).accept(cn, ClassReader.SKIP_DEBUG);
         StringBuilder sb = new StringBuilder();
@@ -185,9 +188,11 @@ public final class VerifyBytecodeEquiv {
             appendTypeAnns(sb, "FTAI:", f.invisibleTypeAnnotations);
         }
         List<MethodNode> methods = new ArrayList<>(cn.methods);
-        methods.sort(Comparator.comparing((MethodNode m) -> m.name).thenComparing(m -> m.desc));
+        methods.sort(Comparator.comparing((MethodNode m) -> isPrivateSyntheticLambda(m) ? mapLambdaName(m.name, lambdaMap) : m.name).thenComparing(m -> m.desc));
+        String ownerDot = cn.name + ".";
         for (MethodNode m : methods) {
-            sb.append("M:").append(m.access).append('|').append(m.name).append('|').append(m.desc)
+            String canonMethodName = isPrivateSyntheticLambda(m) ? mapLambdaName(m.name, lambdaMap) : m.name;
+            sb.append("M:").append(m.access).append('|').append(canonMethodName).append('|').append(m.desc)
               .append('|').append(m.signature).append('|').append(m.exceptions).append('\n');
             if (m.annotationDefault != null) {
                 sb.append("MAD:").append(formatAnnValue(m.annotationDefault)).append('\n');
@@ -216,10 +221,116 @@ public final class VerifyBytecodeEquiv {
                     mat.appendTail(out);
                     tr = out.toString();
                 }
+                if (!lambdaMap.isEmpty() && tr.contains(ownerDot + "lambda$")) {
+                    Matcher mat = LAMBDA_REF.matcher(tr);
+                    StringBuilder out = new StringBuilder();
+                    while (mat.find()) {
+                        String tok = mat.group();
+                        int start = mat.start();
+                        if (start >= ownerDot.length() && tr.regionMatches(start - ownerDot.length(), ownerDot, 0, ownerDot.length())) {
+                            mat.appendReplacement(out, Matcher.quoteReplacement(mapLambdaName(tok, lambdaMap)));
+                        } else {
+                            mat.appendReplacement(out, Matcher.quoteReplacement(tok));
+                        }
+                    }
+                    mat.appendTail(out);
+                    tr = out.toString();
+                }
                 sb.append("  ").append(tr).append('\n');
             }
         }
         return sb.toString();
+    }
+
+    private static String mapLambdaName(String methodName, Map<String, String> lambdaMap) {
+        if (lambdaMap.isEmpty() || !methodName.startsWith("lambda$")) return methodName;
+        return lambdaMap.getOrDefault(methodName, methodName);
+    }
+
+    private static boolean isPrivateSyntheticLambda(MethodNode m) {
+        return m.name.startsWith("lambda$")
+            && (m.access & Opcodes.ACC_PRIVATE) != 0
+            && (m.access & Opcodes.ACC_SYNTHETIC) != 0;
+    }
+
+    private static List<String> collectOwnLambdaRefs(String owner, MethodNode m) {
+        List<String> refs = new ArrayList<>();
+        for (AbstractInsnNode insn : m.instructions) {
+            if (insn instanceof InvokeDynamicInsnNode indy && indy.bsmArgs != null) {
+                for (Object arg : indy.bsmArgs) {
+                    if (arg instanceof Handle h && owner.equals(h.getOwner()) && h.getName().startsWith("lambda$")) {
+                        refs.add(h.getName() + "\t" + h.getDesc());
+                    }
+                }
+            } else if (insn instanceof MethodInsnNode mi && owner.equals(mi.owner) && mi.name.startsWith("lambda$")) {
+                refs.add(mi.name + "\t" + mi.desc);
+            }
+        }
+        return refs;
+    }
+
+    /**
+     * Build a verified 1-to-1 per-class bijection of javac private synthetic lambda$<enclosing>$N method names
+     * (cand -> base) derived strictly from enclosing-method invokedynamic/callsite instruction order.
+     * Fails closed (returns empty map) if counts, descriptors, or injectivity diverge.
+     */
+    private static Map<String, String> buildLambdaBijection(byte[] rawBase, byte[] rawCand) {
+        ClassNode c1 = new ClassNode();
+        ClassNode c2 = new ClassNode();
+        new ClassReader(rawBase).accept(c1, ClassReader.SKIP_DEBUG);
+        new ClassReader(rawCand).accept(c2, ClassReader.SKIP_DEBUG);
+        if (!c1.name.equals(c2.name)) return Map.of();
+
+        Map<String, MethodNode> baseLambdas = new HashMap<>();
+        Map<String, MethodNode> candLambdas = new HashMap<>();
+        Map<String, MethodNode> baseRegular = new HashMap<>();
+        Map<String, MethodNode> candRegular = new HashMap<>();
+        for (MethodNode m : c1.methods) {
+            if (isPrivateSyntheticLambda(m)) baseLambdas.put(m.name + "\t" + m.desc, m);
+            else baseRegular.put(m.name + "\t" + m.desc, m);
+        }
+        for (MethodNode m : c2.methods) {
+            if (isPrivateSyntheticLambda(m)) candLambdas.put(m.name + "\t" + m.desc, m);
+            else candRegular.put(m.name + "\t" + m.desc, m);
+        }
+        if (baseLambdas.isEmpty() && candLambdas.isEmpty()) return Map.of();
+        if (baseLambdas.keySet().equals(candLambdas.keySet())) return Map.of();
+        if (baseLambdas.size() != candLambdas.size()) return Map.of();
+
+        Map<String, String> candToBaseName = new HashMap<>();
+        Map<String, String> baseToCandName = new HashMap<>();
+        Set<String> visitedPairs = new HashSet<>();
+        Deque<MethodNode[]> queue = new ArrayDeque<>();
+        for (var e : baseRegular.entrySet()) {
+            MethodNode m2 = candRegular.get(e.getKey());
+            if (m2 != null) queue.add(new MethodNode[]{e.getValue(), m2});
+        }
+        while (!queue.isEmpty()) {
+            MethodNode[] pair = queue.poll();
+            List<String> r1 = collectOwnLambdaRefs(c1.name, pair[0]);
+            List<String> r2 = collectOwnLambdaRefs(c2.name, pair[1]);
+            if (r1.size() != r2.size()) return Map.of();
+            for (int i = 0; i < r1.size(); i++) {
+                String k1 = r1.get(i);
+                String k2 = r2.get(i);
+                MethodNode lm1 = baseLambdas.get(k1);
+                MethodNode lm2 = candLambdas.get(k2);
+                if (lm1 == null || lm2 == null || !lm1.desc.equals(lm2.desc)) return Map.of();
+                String prevBase = candToBaseName.putIfAbsent(lm2.name, lm1.name);
+                if (prevBase != null && !prevBase.equals(lm1.name)) return Map.of();
+                String prevCand = baseToCandName.putIfAbsent(lm1.name, lm2.name);
+                if (prevCand != null && !prevCand.equals(lm2.name)) return Map.of();
+                if (visitedPairs.add(k1 + "=>" + k2)) {
+                    queue.add(new MethodNode[]{lm1, lm2});
+                }
+            }
+        }
+        if (candToBaseName.size() != candLambdas.size()) return Map.of();
+        Map<String, String> renamedOnly = new HashMap<>();
+        for (var e : candToBaseName.entrySet()) {
+            if (!e.getKey().equals(e.getValue())) renamedOnly.put(e.getKey(), e.getValue());
+        }
+        return renamedOnly;
     }
 
     private static String mapSwitchMap(String fieldName, Map<String, String> switchMapMap) {
@@ -315,6 +426,7 @@ public final class VerifyBytecodeEquiv {
         List<String> diffs = new ArrayList<>();
         int exact = 0;
         int excludedIdentical = 0;
+        int lambdaBijections = 0;
         for (String name : base.keySet()) {
             byte[] b2 = cand.get(name);
             if (b2 == null) continue;
@@ -324,8 +436,14 @@ public final class VerifyBytecodeEquiv {
                 else diffs.add("EXCLUDED_CHANGED: " + name);
                 continue;
             }
-            if (Arrays.equals(b1, b2) || fingerprintClass(b1, Map.of()).equals(fingerprintClass(b2, switchMapBijection))) {
+            if (Arrays.equals(b1, b2)) {
                 exact++;
+                continue;
+            }
+            Map<String, String> lambdaMap = buildLambdaBijection(b1, b2);
+            if (fingerprintClass(b1, Map.of(), Map.of()).equals(fingerprintClass(b2, switchMapBijection, lambdaMap))) {
+                exact++;
+                lambdaBijections += lambdaMap.size();
             } else {
                 diffs.add("BYTECODE_DIFF: " + name);
             }
@@ -340,8 +458,8 @@ public final class VerifyBytecodeEquiv {
             }
         }
         System.out.printf(
-            "BASE_CLASSES=%d CAND_CLASSES=%d ONLY_BASE=%d ONLY_CAND=%d EQUIV=%d EXCLUDED_IDENTICAL=%d SWITCHMAP_BIJECTIONS=%d RES_DIFFS=%d DIFFS=%d%n",
-            base.size(), cand.size(), onlyBase.size(), onlyCand.size(), exact, excludedIdentical, switchMapBijection.size(), resDiffs, diffs.size()
+            "BASE_CLASSES=%d CAND_CLASSES=%d ONLY_BASE=%d ONLY_CAND=%d EQUIV=%d EXCLUDED_IDENTICAL=%d SWITCHMAP_BIJECTIONS=%d LAMBDA_BIJECTIONS=%d RES_DIFFS=%d DIFFS=%d%n",
+            base.size(), cand.size(), onlyBase.size(), onlyCand.size(), exact, excludedIdentical, switchMapBijection.size(), lambdaBijections, resDiffs, diffs.size()
         );
         onlyBase.stream().limit(20).forEach(s -> System.out.println("  ONLY_BASE: " + s));
         onlyCand.stream().limit(20).forEach(s -> System.out.println("  ONLY_CAND: " + s));
