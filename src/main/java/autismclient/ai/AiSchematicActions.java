@@ -1,7 +1,7 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
-import autismclient.ai.a.AiScaffold;
+import autismclient.ai.engine.AiGoto;
+import autismclient.ai.engine.AiScaffold;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.lang.reflect.InvocationTargetException;
@@ -184,8 +184,8 @@ final class AiSchematicActions {
          BlockPos pos = new BlockPos(bottom.getX(), y, bottom.getZ());
          BlockState state = world.getBlockState(pos);
          if (!state.getFluidState().isEmpty()
-            || autismclient.ai.a.AiPathfinder.Inner_StreamUtil.load(state)
-            || autismclient.ai.a.AiPathfinder.Inner_StreamUtil.read(state)
+            || autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.load(state)
+            || autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state)
             || y >= bottom.getY() && (state.hasBlockEntity() || state.getDestroySpeed(world, pos) < 0.0F)) {
             return false;
          }
@@ -260,8 +260,8 @@ final class AiSchematicActions {
                   }
                }
 
-               autismclient.ai.a.AiMotionSafety.putAt_V();
-               if (!autismclient.ai.a.AiMotionSafety.fill_Z()) {
+               autismclient.ai.engine.AiMotionSafety.putAt_V();
+               if (!autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Landing inside the access shaft", "{}", List.of());
                }
 
@@ -282,8 +282,8 @@ final class AiSchematicActions {
                      || floor.getY() >= top.getY()
                      || protectedCells.contains(floor.asLong())) {
                      return this.init(AiOperation.Status.FAILED, "The shaft descent would leave its temporary access column");
-                  } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.a.AiMotionSafety.putAt(floor)) {
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(floor, 10, true, digProtected, false);
+                  } else if (AiSchematicActions.init(mc.level, bottom, floor.getY()) && autismclient.ai.engine.AiMotionSafety.putAt(floor)) {
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(floor, 10, true, digProtected, false);
                      return new AiOperation.Result(AiOperation.Status.RUNNING, "Opening the next floor of the access shaft", "{}", List.of());
                   } else {
                      return this.init(AiOperation.Status.FAILED, "The access shaft has no safe landing after its floor is removed");
@@ -315,7 +315,7 @@ final class AiSchematicActions {
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation == null ? autismclient.ai.a.AiMotionSafety.fill_Z() : this.init_AiOperation.canInterruptNow();
+            return this.init_AiOperation == null ? autismclient.ai.engine.AiMotionSafety.fill_Z() : this.init_AiOperation.canInterruptNow();
          }
 
          @Override
@@ -325,12 +325,12 @@ final class AiSchematicActions {
                this.init_AiOperation.cancel();
             }
 
-            autismclient.ai.a.AiMotionSafety.putAt_V();
+            autismclient.ai.engine.AiMotionSafety.putAt_V();
          }
       };
    }
 
-   static AiOperation init(final AiBuilder.Inner_StreamUtil cell, final BlockPos target, final autismclient.ai.a.PlacementGoal.Inner_DataUtil constraint) {
+   static AiOperation init(final AiBuilder.Inner_StreamUtil cell, final BlockPos target, final autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player.onGround()
          && !(Math.abs(mc.player.getY() - target.getY() - 1.0) > 1.0E-5)
@@ -342,7 +342,7 @@ final class AiSchematicActions {
             Direction face = Direction.getNearest(dx, 0, dz, Direction.NORTH);
             if (constraint.acceptsFace(face) && constraint.acceptsRay(-dx * 0.2, -1.5, -dz * 0.2)) {
                final Vec3 edge = Vec3.atBottomCenterOf(floor.above()).add(dx * 0.7, 0.0, dz * 0.7);
-               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
+               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
                   return null;
                }
 
@@ -355,21 +355,21 @@ final class AiSchematicActions {
                }
 
                return new AiOperation() {
-                  final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+                  final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                   int init_I;
 
                   @Override
                   public AiOperation.Result tick() {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      mc.player.setSprinting(false);
                      mc.options.keyShift.setDown(true);
                      if (mc.player.onGround() && ++this.init_I <= 60) {
-                        if (autismclient.ai.a.PlacementGoal.init(mc, target, AiBuilder.init_BlockState(cell).getBlock().asItem(), constraint, 72) != null) {
+                        if (autismclient.ai.engine.PlacementGoal.init(mc, target, AiBuilder.init_BlockState(cell).getBlock().asItem(), constraint, 72) != null) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Support side exposed");
                         }
 
                         Vec3 remaining = edge.subtract(mc.player.position());
-                        if (!autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
+                        if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), edge)) {
                            return this.init(AiOperation.Status.FAILED, "Support-edge alignment would touch lava");
                         }
 
@@ -393,13 +393,13 @@ final class AiSchematicActions {
                   }
 
                   AiOperation.Result init(AiOperation.Status status, String message) {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      return new AiOperation.Result(status, message, "{}", List.of());
                   }
 
                   @Override
                   public void cancel() {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                   }
                };
             } else {
@@ -487,7 +487,7 @@ final class AiSchematicActions {
          ? AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Existing access stairs verified", new JsonObject())
          : new AiOperation() {
             AiOperation init_AiOperation;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             int init_I = 1;
             int load_I;
             int read;
@@ -553,7 +553,7 @@ final class AiSchematicActions {
                               return this.init("Exposing the next step's support face");
                            }
 
-                           autismclient.ai.a.AiMotionSafety.putAt_V();
+                           autismclient.ai.engine.AiMotionSafety.putAt_V();
                            mc.options.keyShift.setDown(true);
                            this.load_I = 2;
                            this.read = 0;
@@ -606,7 +606,7 @@ final class AiSchematicActions {
                               return this.init("Leaning out for the stair landing");
                            }
 
-                           autismclient.ai.a.AiMotionSafety.putAt_V();
+                           autismclient.ai.engine.AiMotionSafety.putAt_V();
                            mc.options.keyShift.setDown(true);
                            this.load_Z = true;
                            this.init_AiOperation = this.load(landing, keep);
@@ -654,11 +654,11 @@ final class AiSchematicActions {
                   false,
                   false,
                   30,
-                  autismclient.ai.a.AiPathfinder.Inner_IoWorker.init,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
                   true,
                   2.0,
                   AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                     autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
+                     autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(feet, 0.25), keep, blueprint.origin().getY()
                   )
                );
             }
@@ -692,14 +692,14 @@ final class AiSchematicActions {
             }
 
             boolean init(Vec3 point, boolean sneak) {
-               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), point)) {
+               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(mc.player.position(), point)) {
                   this.init_Str = "Access alignment would touch lava";
                   return false;
                } else {
                   double dx = point.x - mc.player.getX();
                   double dz = point.z - mc.player.getZ();
                   if (dx * dx + dz * dz < (sneak ? 1.0E-4 : 0.01)) {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      return true;
                   } else if (++this.read > 90) {
                      this.init_Str = "Access alignment could not reach " + point + " from " + mc.player.position();
@@ -736,7 +736,7 @@ final class AiSchematicActions {
                   this.init_AiOperation.cancel();
                }
 
-               autismclient.ai.a.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.putAt_V();
             }
          };
    }
@@ -875,7 +875,7 @@ final class AiSchematicActions {
          return true;
       } else {
          return !s.isAir() && s.getFluidState().isEmpty() && !s.hasBlockEntity()
-            ? autismclient.ai.a.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(s.getBlock().asItem()).toString()) >= 0
+            ? autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(s.getBlock().asItem()).toString()) >= 0
             : false;
       }
    }
@@ -1108,7 +1108,7 @@ final class AiSchematicActions {
                }
 
                if (AiBuilder.flush(cell, live)) {
-                  BlockHitResult hit = autismclient.ai.a.AiBlockInteraction.init(mc, target);
+                  BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(mc, target);
                   if (hit != null && !(mc.player.getEyePosition().distanceToSqr(hit.getLocation()) > 16.0)) {
                      this.init_AiOperation = AiBucket.init(
                         AiJson.init_JsonObject_ObjArr(
@@ -1261,7 +1261,7 @@ final class AiSchematicActions {
                      BlockPos foot = target.relative(facing.getOpposite());
                      if (!live.canBeReplaced()) {
                         if ((!live.hasBlockEntity() || live.getBlock() instanceof BedBlock) && live.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(target, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the bed's head cell");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "The bed's head cell is occupied by protected contents");
@@ -1277,7 +1277,7 @@ final class AiSchematicActions {
                            );
                            return this.init_AiOperation_Result_11("Placing the bed's foot, which makes its head");
                         } else if ((!footState.hasBlockEntity() || footState.getBlock() instanceof BedBlock) && footState.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(foot, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(foot, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the bed's foot cell");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "The bed's foot cell is occupied by protected contents");
@@ -1293,7 +1293,7 @@ final class AiSchematicActions {
                      if (level > wanted) {
                         this.init_AiOperation = level == 8
                            ? this.init(target, "minecraft:dirt", false)
-                           : autismclient.ai.a.AiBreakBlock.init(target, 30, true, protectedCells);
+                           : autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
                         return this.init_AiOperation_Result_11("Emptying the overfilled composter");
                      } else if (level == 7 && wanted == 8) {
                         this.init_I--;
@@ -1306,7 +1306,7 @@ final class AiSchematicActions {
                      this.init_AiOperation = this.init(target, "minecraft:composter");
                      return this.init_AiOperation_Result_11("Placing the composter");
                   } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(target, 30, true, protectedCells);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
                      return this.init_AiOperation_Result_11("Clearing the composter cell");
                   } else {
                      return this.init(AiOperation.Status.FAILED, "The composter cell is occupied by protected contents");
@@ -1326,11 +1326,11 @@ final class AiSchematicActions {
                               );
                               return this.init_AiOperation_Result_11("Restoring the paired door's open state");
                            } else {
-                              this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(root, 30, true, protectedCells);
+                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(root, 30, true, protectedCells);
                               return this.init_AiOperation_Result_11("Recovering the conflicting paired block");
                            }
                         } else if (!lower.canBeReplaced()) {
-                           this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(root, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(root, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the missing lower half");
                         } else if (mc.level.getBlockState(root.below()).isAir()) {
                            this.init_AiOperation = this.init(root.below(), "minecraft:dirt");
@@ -1345,7 +1345,7 @@ final class AiSchematicActions {
                            return this.init_AiOperation_Result_11("Placing the lower half to create the requested upper half");
                         }
                      } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                        this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(target, 30, true, protectedCells);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
                         return this.init_AiOperation_Result_11("Clearing the occupied upper half");
                      } else {
                         return this.init(AiOperation.Status.FAILED, "The upper half is occupied by protected contents");
@@ -1371,7 +1371,7 @@ final class AiSchematicActions {
                            return this.init(AiOperation.Status.FAILED, "The water cell is occupied by protected contents");
                         }
 
-                        this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(target, 30, false, protectedCells);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, false, protectedCells);
                         return this.init_AiOperation_Result_11("Clearing the block where the water goes");
                      }
                   } else if (id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path")) {
@@ -1389,7 +1389,7 @@ final class AiSchematicActions {
                            BlockPos above = target.above();
                            BlockState cover = mc.level.getBlockState(above);
                            if (cover.isAir()) {
-                              BlockHitResult top = autismclient.ai.a.AiBlockInteraction.init(mc, target, Direction.UP);
+                              BlockHitResult top = autismclient.ai.engine.AiBlockInteraction.init(mc, target, Direction.UP);
                               if ((top == null || mc.player.getEyePosition().distanceTo(top.getLocation()) > mc.player.blockInteractionRange() - 0.3)
                                  && this.read++ < 3) {
                                  this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_3(target, 30, protectedCells, true, Direction.UP, 1.25);
@@ -1415,11 +1415,11 @@ final class AiSchematicActions {
                                     false,
                                     false,
                                     15,
-                                    autismclient.ai.a.AiPathfinder.Inner_IoWorker.init,
+                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
                                     true,
                                     2.0,
                                     AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-                                       autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
+                                       autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(above, 0.45),
                                        protectedCells,
                                        target.getY()
                                     )
@@ -1427,7 +1427,7 @@ final class AiSchematicActions {
                                  return this.init_AiOperation_Result_11("Approaching the water above the soil");
                               }
                            } else if (!cover.hasBlockEntity() && cover.getFluidState().isEmpty() && !protectedCells.contains(above.asLong())) {
-                              this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(above, 10, true, protectedCells, false);
+                              this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(above, 10, true, protectedCells, false);
                               return this.init_AiOperation_Result_11("Clearing the temporary obstruction above the soil");
                            } else {
                               return this.init(
@@ -1439,7 +1439,7 @@ final class AiSchematicActions {
                               );
                            }
                         } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                           this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(target, 30, true, protectedCells);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
                            return this.init_AiOperation_Result_11("Clearing the non-soil block before planting");
                         } else {
                            return this.init(AiOperation.Status.FAILED, "The soil cell is occupied by protected contents");
@@ -1493,7 +1493,7 @@ final class AiSchematicActions {
                   this.init_AiOperation = this.init(target, "minecraft:cauldron");
                   return this.init_AiOperation_Result_11("Placing the cauldron");
                } else if (!live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                  this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(target, 30, true, protectedCells);
+                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(target, 30, true, protectedCells);
                   return this.init_AiOperation_Result_11("Clearing the cauldron cell");
                } else {
                   return this.init(AiOperation.Status.FAILED, "The cauldron cell is occupied by protected contents");
@@ -1596,16 +1596,16 @@ final class AiSchematicActions {
 
    static AiOperation init_AiOperation_BlockPos(final BlockPos support, final BlockPos target, final Set<Long> protectedCells, int minimumDigY) {
       final Minecraft mc = Minecraft.getInstance();
-      autismclient.ai.a.AiPathfinder.Inner_JsonUtil goal = AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
-         autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
+      autismclient.ai.engine.AiPathfinder.Inner_JsonUtil goal = AiGoto.init_ClassCache_JsonUti_ClassCache_JsonUti(
+         autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(support.above(), 0.6), protectedCells, minimumDigY
       );
       final Supplier<AiOperation> climb = () -> AiGoto.init(
-         support.above(), 0.6, true, true, true, 120, autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true, 2.0, goal
+         support.above(), 0.6, true, true, true, 120, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true, 2.0, goal
       );
       return new AiOperation() {
          AiOperation init_AiOperation;
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-         final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
          final long init_J = System.nanoTime() + 120000000000L;
          int init_I;
          boolean init_Z;
@@ -1627,7 +1627,7 @@ final class AiSchematicActions {
                   if (!mc.player.getBoundingBox().intersects(new AABB(support))
                      && mc.level.getBlockState(support).canBeReplaced()
                      && mc.level.getBlockState(support).getFluidState().isEmpty()
-                     && autismclient.ai.a.PlacementGoal.init(mc, support, Items.DIRT, null, 72) != null) {
+                     && autismclient.ai.engine.PlacementGoal.init(mc, support, Items.DIRT, null, 72) != null) {
                      this.load_J = AiServerEvidence.init_J_BlockPos(support);
                      this.init_DataPipe.init_V_BlockPos_Item(support, Items.DIRT);
                      this.read = true;

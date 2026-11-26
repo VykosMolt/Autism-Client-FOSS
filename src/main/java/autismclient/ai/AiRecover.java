@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

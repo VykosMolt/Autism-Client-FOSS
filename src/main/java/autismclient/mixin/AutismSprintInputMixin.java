@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.a.AiMotionSafety;
+import autismclient.ai.engine.AiMotionSafety;
 import autismclient.modules.ScaffoldModule;
 import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.WTappingModule;

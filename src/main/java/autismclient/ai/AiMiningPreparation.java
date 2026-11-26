@@ -127,11 +127,11 @@ public final class AiMiningPreparation {
 
             for (Block block : blocksToMine) {
                BlockState candidate = block.defaultBlockState();
-               int toolSlot = autismclient.ai.a.MiningCost.init_I_Minecraft_2(mc, candidate, true, (s, tool) -> AiItems.init(mc, s, tool, wanted));
+               int toolSlot = autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, candidate, true, (s, tool) -> AiItems.init(mc, s, tool, wanted));
                if (toolSlot >= 0) {
                   ItemStack tool = mc.player.getInventory().getItem(toolSlot);
                   if (!(tool.getDestroySpeed(candidate) <= 1.0F) && BuiltInRegistries.ITEM.getKey(tool.getItem()).getPath().endsWith("_pickaxe")) {
-                     double cost = autismclient.ai.a.MiningCost.init_D_Minecraft(mc, tool, candidate, block.defaultDestroyTime());
+                     double cost = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, tool, candidate, block.defaultDestroyTime());
                      if (cost > slowest) {
                         slowest = cost;
                         state = candidate;
@@ -164,7 +164,7 @@ public final class AiMiningPreparation {
                }
 
                float hardness = state.getBlock().defaultDestroyTime();
-               double before = autismclient.ai.a.MiningCost.init_D_Minecraft(mc, current, state, hardness);
+               double before = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, current, state, hardness);
                AiCraftPlanner.Inner_StreamUtil graph = AiCraft.init_g_StreamUtil();
                Item chosen = null;
                AiCraftPlanner.Inner_CachePool chosenPlan = null;
@@ -188,7 +188,7 @@ public final class AiMiningPreparation {
                for (Item tool : List.of(Items.STONE_PICKAXE, Items.IRON_PICKAXE, Items.DIAMOND_PICKAXE)) {
                   ItemStack upgraded = new ItemStack(tool);
                   if (upgraded.isCorrectToolForDrops(state) && AiItems.init(mc, state, upgraded, wanted)) {
-                     double after = autismclient.ai.a.MiningCost.init_D_Minecraft(mc, upgraded, state, hardness);
+                     double after = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, upgraded, state, hardness);
                      if (!(after >= before)) {
                         String toolId = BuiltInRegistries.ITEM.getKey(tool).toString();
                         AiCraftPlanner.Inner_CachePool plan = null;
@@ -212,9 +212,9 @@ public final class AiMiningPreparation {
                            double woodTicks = 0.0;
                            if (logs > 0) {
                               BlockState logState = mc.level.getBlockState(wood);
-                              int woodSlot = autismclient.ai.a.MiningCost.load(mc, logState, true);
+                              int woodSlot = autismclient.ai.engine.MiningCost.load(mc, logState, true);
                               woodTicks = logs
-                                    * autismclient.ai.a.MiningCost.init_D_Minecraft(
+                                    * autismclient.ai.engine.MiningCost.init_D_Minecraft(
                                        mc,
                                        woodSlot < 0 ? ItemStack.EMPTY : mc.player.getInventory().getItem(woodSlot),
                                        logState,
@@ -292,12 +292,12 @@ public final class AiMiningPreparation {
                      }
 
                      if (this.init_I == 0 && logs > 0) {
-                        this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+                        this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                            AiJson.init_JsonObject_ObjArr(
                               "block",
                               logId,
                               "drops",
-                              autismclient.ai.a.AiBlockMine.init(List.of(logId)),
+                              autismclient.ai.engine.AiBlockMine.init(List.of(logId)),
                               "held",
                               AiCraft.init_I(logId) + logs,
                               "toolPrepared",
@@ -312,12 +312,12 @@ public final class AiMiningPreparation {
                         );
                         this.init_I = 1;
                      } else if (this.init_I < 2 && cobble > 0) {
-                        this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+                        this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                            AiJson.init_JsonObject_ObjArr(
                               "blocks",
-                              autismclient.ai.a.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
+                              autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
                               "drops",
-                              autismclient.ai.a.AiBlockMine.init(List.of("minecraft:cobblestone")),
+                              autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:cobblestone")),
                               "held",
                               AiCraft.init_I("minecraft:cobblestone") + cobble,
                               "toolPrepared",
@@ -338,7 +338,7 @@ public final class AiMiningPreparation {
                         this.init_I = 3;
                      } else {
                         resume.addProperty("timeoutSeconds", seconds);
-                        this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(resume);
+                        this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(resume);
                         this.init_I = 4;
                      }
 
@@ -457,7 +457,7 @@ public final class AiMiningPreparation {
          double before = 1.0 / 0.0;
          double after = 0.0;
          ItemStack axe = new ItemStack(Items.WOODEN_AXE);
-         autismclient.ai.a.MiningCost.Inner_DataUtil factors = autismclient.ai.a.MiningCost.Inner_DataUtil.of(mc);
+         autismclient.ai.engine.MiningCost.Inner_DataUtil factors = autismclient.ai.engine.MiningCost.Inner_DataUtil.of(mc);
 
          for (Block block : blocks) {
             BlockState state = block.defaultBlockState();
@@ -466,11 +466,11 @@ public final class AiMiningPreparation {
                   goalLogs.add(BuiltInRegistries.ITEM.getKey(block.asItem()).toString());
                }
 
-               int slot = autismclient.ai.a.MiningCost.init_I_Minecraft_2(mc, state, true, (s, tool) -> AiItems.init(mc, s, tool, wanted));
+               int slot = autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (s, tool) -> AiItems.init(mc, s, tool, wanted));
                ItemStack current = slot < 0 ? ItemStack.EMPTY : mc.player.getInventory().getItem(slot);
                if (!(current.getDestroySpeed(state) > 1.0F) && AiItems.init(mc, state, axe, wanted)) {
-                  before = Math.min(before, autismclient.ai.a.MiningCost.init_D_Minecraft(mc, current, state, block.defaultDestroyTime(), factors));
-                  after = Math.max(after, autismclient.ai.a.MiningCost.init_D_Minecraft(mc, axe, state, block.defaultDestroyTime(), factors));
+                  before = Math.min(before, autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, current, state, block.defaultDestroyTime(), factors));
+                  after = Math.max(after, autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, axe, state, block.defaultDestroyTime(), factors));
                   continue;
                }
 
@@ -494,7 +494,7 @@ public final class AiMiningPreparation {
                && mc.level.getBlockState(at).is(BlockTags.LOGS)
                && !(at.distSqr(origin) > 36.0)
                && init(mc, at, origin.getY())
-               && init(origin, at, true, autismclient.ai.a.AiBlockInteraction.init(mc, at) != null, init(mc, at))) {
+               && init(origin, at, true, autismclient.ai.engine.AiBlockInteraction.init(mc, at) != null, init(mc, at))) {
                String log = BuiltInRegistries.ITEM.getKey(mc.level.getBlockState(at).getBlock().asItem()).toString();
                if (goalLogs.contains(log)) {
                   local.computeIfAbsent(log, ignored -> new ArrayList<>()).add(at.immutable());
@@ -514,7 +514,7 @@ public final class AiMiningPreparation {
 
          for (Entry<String, List<BlockPos>> entry : local.entrySet()) {
             BlockState state = mc.level.getBlockState(entry.getValue().getFirst());
-            double logTicks = autismclient.ai.a.MiningCost.init_D_Minecraft(mc, ItemStack.EMPTY, state, state.getBlock().defaultDestroyTime(), factors);
+            double logTicks = autismclient.ai.engine.MiningCost.init_D_Minecraft(mc, ItemStack.EMPTY, state, state.getBlock().defaultDestroyTime(), factors);
             double walk = Math.sqrt(entry.getValue().stream().mapToDouble(at -> at.distSqr(origin)).max().orElse(0.0)) * 8.0;
             AiMiningPreparation.Inner_DataUtil candidate = init(
                graph,
@@ -550,12 +550,12 @@ public final class AiMiningPreparation {
          IntSupplier seconds = () -> (int)Math.max(1L, (deadline - System.nanoTime()) / 1000000000L);
          AiOperation gather = extra == 0
             ? null
-            : autismclient.ai.a.AiBlockMine.init_AiOperation(
+            : autismclient.ai.engine.AiBlockMine.init_AiOperation(
                AiJson.init_JsonObject_ObjArr(
                   "block",
                   log,
                   "drops",
-                  autismclient.ai.a.AiBlockMine.init(List.of(log)),
+                  autismclient.ai.engine.AiBlockMine.init(List.of(log)),
                   "held",
                   AiCraft.init_I(log) + extra,
                   "toolPrepared",
@@ -577,7 +577,7 @@ public final class AiMiningPreparation {
                   "item", "minecraft:wooden_axe", "count", AiCraft.init_I("minecraft:wooden_axe") + 1, "timeoutSeconds", Math.min(20, seconds.getAsInt())
                )
             ),
-            () -> autismclient.ai.a.AiBlockMine.init_AiOperation(init(resume, seconds.getAsInt())),
+            () -> autismclient.ai.engine.AiBlockMine.init_AiOperation(init(resume, seconds.getAsInt())),
             () -> mc.player.blockPosition().distSqr(origin) <= 36.0,
             () -> mc.level == world && mc.player == player && mc.getConnection() == connection,
             deadline

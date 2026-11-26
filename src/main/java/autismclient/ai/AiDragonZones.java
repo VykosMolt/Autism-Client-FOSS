@@ -1,7 +1,7 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
-import autismclient.ai.a.AiFallGuard;
+import autismclient.ai.engine.AiGoto;
+import autismclient.ai.engine.AiFallGuard;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -156,7 +156,7 @@ public final class AiDragonZones {
          final double ux = len < 0.001 ? 1.0 : dx / len;
          final double uz = len < 0.001 ? 0.0 : dz / len;
          return new AiOperation() {
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             AiOperation init_AiOperation = AiMlg.init_AiOperation_JsonObject(AiJson.init_JsonObject_ObjArr("method", "auto", "collect", true, "timeoutSeconds", 15));
             int init_I;
             boolean init_Z;
@@ -206,7 +206,7 @@ public final class AiDragonZones {
       }
    }
 
-   public static autismclient.ai.a.AiPathfinder.Inner_PoolEntry init_ClassCache_PoolEnt(Minecraft mc) {
+   public static autismclient.ai.engine.AiPathfinder.Inner_PoolEntry init_ClassCache_PoolEnt(Minecraft mc) {
       AiDragonZones.Inner_DataUtil zones = init_r_DataUtil(mc);
       List<double[]> clouds = new ArrayList<>(AiDragon.init_List(mc));
       double[] breath = init_DArr(mc);
@@ -214,7 +214,7 @@ public final class AiDragonZones {
          clouds.add(breath);
       }
 
-      return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.a.AiPathfinder.Inner_PoolEntry.write : (x, y, z) -> {
+      return zones.isEmpty() && clouds.isEmpty() ? autismclient.ai.engine.AiPathfinder.Inner_PoolEntry.write : (x, y, z) -> {
          if (zones.hits(init_AABB_I(x, y, z), 1.0)) {
             return 400.0;
          }
@@ -257,7 +257,7 @@ public final class AiDragonZones {
             }
          }
 
-         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true));
+         return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, false, false, false, 6, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true));
       } else {
          return null;
       }

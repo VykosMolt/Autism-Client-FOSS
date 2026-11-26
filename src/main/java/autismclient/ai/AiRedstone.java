@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -55,7 +55,7 @@ final class AiRedstone {
             final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.init_I_JsonObject(args, "timeoutSeconds", 60)));
             return new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-               final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+               final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                BlockState init_BlockState;
                AiOperation init_AiOperation;
                int init_I;
@@ -89,7 +89,7 @@ final class AiRedstone {
                      }
 
                      if (!this.init_Z) {
-                        BlockHitResult interactionHit = autismclient.ai.a.AiBlockInteraction.init(mc, pos);
+                        BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, pos);
                         if (interactionHit == null) {
                            if (!navigate) {
                               return this.init(AiOperation.Status.FAILED, "Component is out of reach and navigate is disabled");
@@ -121,11 +121,11 @@ final class AiRedstone {
                               return this.init(AiOperation.Status.FAILED, "Could not aim at " + pos.toShortString());
                            }
 
-                           if (!autismclient.ai.a.AiAim.init_Z_BlockPos(pos)) {
+                           if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(pos)) {
                               return this.init("Turning toward the component");
                            }
 
-                           BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                           BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                            if (hit == null) {
                               return this.init("Turning toward the component");
                            }

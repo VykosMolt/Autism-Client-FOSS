@@ -68,7 +68,7 @@ final class AiBucket {
          return new AiOperation() {
             final Object init_Obj = mc.level;
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final int init_I = AiGameState.init_I_Str(resultId);
             BlockPos init_BlockPos;
             int load_I;
@@ -409,14 +409,14 @@ final class AiBucket {
    static BlockHitResult init(Minecraft mc, BlockPos target, boolean waterlog, boolean water) {
       if (mc.player != null && mc.level != null) {
          if (waterlog) {
-            return autismclient.ai.a.AiBlockInteraction.init(mc, target);
+            return autismclient.ai.engine.AiBlockInteraction.init(mc, target);
          }
 
          BlockHitResult best = null;
 
          for (Direction face : Direction.values()) {
             if (!water || !init(mc.level.getBlockState(target.relative(face.getOpposite())))) {
-               BlockHitResult hit = autismclient.ai.a.AiBlockInteraction.init(mc, target.relative(face.getOpposite()), face);
+               BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(mc, target.relative(face.getOpposite()), face);
                if (init(AiBucket.Inner_DataUtil.load, hit, target)
                   && (
                      best == null || mc.player.getEyePosition().distanceToSqr(hit.getLocation()) < mc.player.getEyePosition().distanceToSqr(best.getLocation())

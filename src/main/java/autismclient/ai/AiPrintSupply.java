@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import java.lang.reflect.Field;
@@ -149,13 +149,13 @@ final class AiPrintSupply {
 
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
-         if (autismclient.ai.b.PrintCore.init_Z_ItemStack_Item(stack, item)) {
+         if (autismclient.ai.print.PrintCore.init_Z_ItemStack_Item(stack, item)) {
             count += stack.getCount();
          }
       }
 
       ItemStack offhand = inventory.getItem(40);
-      return autismclient.ai.b.PrintCore.init_Z_ItemStack_Item(offhand, item) ? count + offhand.getCount() : count;
+      return autismclient.ai.print.PrintCore.init_Z_ItemStack_Item(offhand, item) ? count + offhand.getCount() : count;
    }
 
    boolean init_Z_Item(Item item) {
@@ -303,7 +303,7 @@ final class AiPrintSupply {
 
                JsonArray items = new JsonArray();
                items.add(AiJson.init_JsonObject_ObjArr("item", BuiltInRegistries.ITEM.getKey(this.init_bj_TaskQueue.init_Item).toString(), "count", need));
-               AiOperation approach = AiTerrain.init(this.init_Minecraft.level, source) && autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, source) != null
+               AiOperation approach = AiTerrain.init(this.init_Minecraft.level, source) && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, source) != null
                   ? null
                   : AiContainer.init(AiGoto.load(source, 60, keep, false));
                return new AiPrintSupply.Inner_NetHelper(

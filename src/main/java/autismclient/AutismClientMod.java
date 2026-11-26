@@ -4,7 +4,7 @@ import autismclient.ai.AiAssistant;
 import autismclient.ai.AiMacroTools;
 import autismclient.ai.SchematicWorkspace;
 import autismclient.ai.AiDirectOps;
-import autismclient.ai.a.AiChunkMemory;
+import autismclient.ai.engine.AiChunkMemory;
 import autismclient.protector.ServerPackSelectionRegistry;
 import autismclient.protector.PackFailureGuard;
 import autismclient.protector.ResourcePackSessionTracker;
@@ -249,7 +249,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            autismclient.ai.a.AiPlannerWarmup.putAt(client);
+            autismclient.ai.engine.AiPlannerWarmup.putAt(client);
          } catch (Throwable t) {
             logTickError("plannerWarmup", t);
          }

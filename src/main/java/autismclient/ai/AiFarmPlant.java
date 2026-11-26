@@ -203,7 +203,7 @@ final class AiFarmPlant {
          }
 
          void init_V_3() {
-            BlockPos feet = autismclient.ai.a.AiStance.init(this.init_Minecraft);
+            BlockPos feet = autismclient.ai.engine.AiStance.init(this.init_Minecraft);
             if (soulSand) {
                this.load_List = this.init(feet);
             } else {

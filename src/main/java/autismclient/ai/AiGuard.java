@@ -158,7 +158,7 @@ final class AiGuard {
 
    static void init_V(int id) {
       if (id >= 0 && load(id)) {
-         autismclient.ai.a.AiSight.init(id);
+         autismclient.ai.engine.AiSight.init(id);
          long now = System.nanoTime();
          load_Map.values().forEach(q -> q.removeIf(t -> now - t > 90000000000L));
          load_Map.values().removeIf(ArrayDeque::isEmpty);
@@ -363,8 +363,8 @@ final class AiGuard {
          ItemStack stack = inventory.getItem(slot);
          if (stack.getItem() instanceof BlockItem block
             && !(block.getBlock() instanceof FallingBlock)
-            && autismclient.ai.a.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0
-            && autismclient.ai.a.AiRestock.init(stack, inventory)) {
+            && autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()) >= 0
+            && autismclient.ai.engine.AiRestock.init(stack, inventory)) {
             n += stack.getCount();
          }
       }
@@ -441,7 +441,7 @@ final class AiGuard {
                if (entity instanceof Mob mob
                   && mob.isAggressive()
                   && mob.isAlive()
-                  && autismclient.ai.a.AiSight.init(mob)
+                  && autismclient.ai.engine.AiSight.init(mob)
                   && mob.distanceToSqr(mc.player) < 256.0
                   && load(mc, mob)) {
                   write_J = now;
@@ -451,7 +451,7 @@ final class AiGuard {
                if (entity instanceof Monster mob
                   && mob.isAggressive()
                   && mob.isAlive()
-                  && !autismclient.ai.a.AiSight.init(mob)
+                  && !autismclient.ai.engine.AiSight.init(mob)
                   && !(mob instanceof Creeper)
                   && mob.distanceToSqr(mc.player) < 25.0
                   && mc.player.hasLineOfSight(mob)) {
@@ -476,7 +476,7 @@ final class AiGuard {
 
          for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity.isAlive() && !(entity instanceof Ghast) && !(entity instanceof EnderDragon)) {
-               if (autismclient.ai.a.AiSight.init(entity)) {
+               if (autismclient.ai.engine.AiSight.init(entity)) {
                   double d2 = entity.distanceToSqr(mc.player);
                   boolean sees = d2 < 256.0 && load(mc, entity);
                   boolean aiming = entity instanceof Mob mob && mob.isAggressive();
@@ -594,7 +594,7 @@ final class AiGuard {
                   return false;
                }
 
-               if (!autismclient.ai.a.AiSight.init(mob) && p != AiThreats.Inner_DataUtil.write) {
+               if (!autismclient.ai.engine.AiSight.init(mob) && p != AiThreats.Inner_DataUtil.write) {
                   if (p == AiThreats.Inner_DataUtil.update) {
                      if (ahead || d < 5.0) {
                         return false;
@@ -623,7 +623,7 @@ final class AiGuard {
    }
 
    private static boolean load(Minecraft mc, Entity shooter) {
-      return autismclient.ai.a.AiSight.init_Z_BlockGetter_3(
+      return autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
          mc.level, shooter.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
       );
    }
@@ -696,7 +696,7 @@ final class AiGuard {
             for (Entity entity : mc.level.entitiesForRendering()) {
                if (entity instanceof Enemy
                   && entity.isAlive()
-                  && !autismclient.ai.a.AiSight.init(entity)
+                  && !autismclient.ai.engine.AiSight.init(entity)
                   && Math.abs(entity.getY() - mc.player.getY()) <= 3.0
                   && entity.distanceToSqr(mc.player) <= 441.0
                   && mc.player.hasLineOfSight(entity)) {
@@ -1146,23 +1146,23 @@ final class AiGuard {
    }
 
    static boolean close() {
-      return autismclient.ai.a.AiLowHealth.init_Z();
+      return autismclient.ai.engine.AiLowHealth.init_Z();
    }
 
    static String init_Str_Str(String activity, float health, float maxHealth) {
-      return autismclient.ai.a.AiLowHealth.init(activity, health, maxHealth);
+      return autismclient.ai.engine.AiLowHealth.init(activity, health, maxHealth);
    }
 
    static AiOperation init(final AiOperation inner) {
       return new AiOperation() {
          @Override
          public AiOperation.Result tick() {
-            autismclient.ai.a.AiLowHealth.init_V();
+            autismclient.ai.engine.AiLowHealth.init_V();
 
             try {
                return inner.tick();
             } finally {
-               autismclient.ai.a.AiLowHealth.load();
+               autismclient.ai.engine.AiLowHealth.load();
             }
          }
 

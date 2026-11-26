@@ -250,7 +250,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       if (mode == null) {
          return choice + ": flight state unavailable.";
       } else {
-         boolean permitted = autismclient.ai.b.PrintFlightPermission.init(assumeFly, mode, mayfly, instabuild);
+         boolean permitted = autismclient.ai.print.PrintFlightPermission.init(assumeFly, mode, mayfly, instabuild);
          if (mode == GameType.CREATIVE) {
             return choice + (permitted ? " / native Creative flight available." : " / no Creative flight; use ground movement.");
          } else if (mode != GameType.SURVIVAL) {

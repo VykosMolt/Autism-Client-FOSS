@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.List;
@@ -38,7 +38,7 @@ final class AiFollow {
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             Entity init_Entity;
             Vec3 init_Vec3;
             AiOperation init_AiOperation;
@@ -48,7 +48,7 @@ final class AiFollow {
             boolean init_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -79,7 +79,7 @@ final class AiFollow {
                   }
 
                   this.init_Vec3 = this.init_Entity.position();
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                   this.init_DataUtil.load_V();
                   if (this.init_Minecraft.player.distanceTo(this.init_Entity) <= distance) {
                      this.init_V_6();

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -41,8 +41,8 @@ final class AiFurnaceWork implements AiOperation {
    private final String init_Str;
    private final int init_I;
    private final AiFurnaceWork.Inner_DataUtil init_Q_DataUtil;
-   private final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-   private final autismclient.ai.a.AiBlockDigger init_RefQueue_DataUtil;
+   private final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+   private final autismclient.ai.engine.AiBlockDigger init_RefQueue_DataUtil;
    private final Set<BlockPos> init_Set = new HashSet<>();
    private Map<BlockPos, BlockPos> init_Map = Map.of();
    private AiOperation init_AiOperation;
@@ -87,7 +87,7 @@ final class AiFurnaceWork implements AiOperation {
                for (Entry<String, Integer> resource : plan.resources().entrySet()) {
                   if (AiGameState.init_I_Str(resource.getKey()) < resource.getValue()
                      && AiItems.load_af_DataUtil(resource.getKey()).items().stream().anyMatch(item -> AiItems.init(item).contains(mc.level.getBlockState(p).getBlock()))
-                     && autismclient.ai.a.MiningCost.load(mc, mc.level.getBlockState(p), true) >= 0) {
+                     && autismclient.ai.engine.MiningCost.load(mc, mc.level.getBlockState(p), true) >= 0) {
                      return true;
                   }
                }
@@ -110,7 +110,7 @@ final class AiFurnaceWork implements AiOperation {
       this.init_Str = input;
       this.init_Q_DataUtil = plan;
       this.init_I = Math.max(0, cookingTicks - 30);
-      this.init_RefQueue_DataUtil = new autismclient.ai.a.AiBlockDigger(
+      this.init_RefQueue_DataUtil = new autismclient.ai.engine.AiBlockDigger(
          this.init_Minecraft,
          slot -> this.init_Minecraft.player.getInventory().setSelectedSlot(slot),
          this.init_DataUtil::init_V_Vec3,
@@ -304,15 +304,15 @@ final class AiFurnaceWork implements AiOperation {
                this.read_I++;
                this.read_BlockPos = null;
                this.init_RefQueue_DataUtil.init_V();
-            } else if (this.update(this.read_BlockPos) && autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, this.read_BlockPos) != null) {
-               autismclient.ai.a.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.read_BlockPos);
+            } else if (this.update(this.read_BlockPos) && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.read_BlockPos) != null) {
+               autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.init_RefQueue_DataUtil__BlockPos(this.read_BlockPos);
                this.init_DataUtil.load_V();
-               if (r == autismclient.ai.a.AiBlockDigger.Inner_DataUtil_2.init) {
+               if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.init) {
                   return this.init_AiOperation_Result_Str_3("Mining needed " + this.init_Str_BlockPos(this.read_BlockPos) + " while the furnace cooks");
                }
 
                this.init_RefQueue_DataUtil.init_V();
-               if (r == autismclient.ai.a.AiBlockDigger.Inner_DataUtil_2.load) {
+               if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.load) {
                   this.read_I++;
                }
 
@@ -544,7 +544,7 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          return this.init_Minecraft.level.getBlockEntity(at) == null
-            && autismclient.ai.a.MiningCost.load(this.init_Minecraft, this.init_Minecraft.level.getBlockState(at), true) >= 0;
+            && autismclient.ai.engine.MiningCost.load(this.init_Minecraft, this.init_Minecraft.level.getBlockState(at), true) >= 0;
       } else {
          return false;
       }
@@ -552,7 +552,7 @@ final class AiFurnaceWork implements AiOperation {
 
    private AiOperation init_AiOperation_BlockPos(final BlockPos to) {
       final Set<BlockPos> permitted = Set.copyOf(this.init_Map.keySet());
-      autismclient.ai.a.AiPathfinder.Inner_JsonUtil goal = new autismclient.ai.a.AiPathfinder.Inner_JsonUtil() {
+      autismclient.ai.engine.AiPathfinder.Inner_JsonUtil goal = new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
          @Override
          public boolean isInGoal(int x, int y, int z) {
             return to.equals(new BlockPos(x, y, z));
@@ -579,12 +579,12 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          @Override
-         public Set<autismclient.ai.a.AiPathfinder.Inner_SyncManager> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
             return Set.of(
-               autismclient.ai.a.AiPathfinder.Inner_SyncManager.start,
-               autismclient.ai.a.AiPathfinder.Inner_SyncManager.put,
-               autismclient.ai.a.AiPathfinder.Inner_SyncManager.add,
-               autismclient.ai.a.AiPathfinder.Inner_SyncManager.clear
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.start,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.put,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.add,
+               autismclient.ai.engine.AiPathfinder.Inner_SyncManager.clear
             );
          }
       };
@@ -595,7 +595,7 @@ final class AiFurnaceWork implements AiOperation {
          false,
          false,
          20,
-         autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+         autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
          false,
          0.0,
          goal,

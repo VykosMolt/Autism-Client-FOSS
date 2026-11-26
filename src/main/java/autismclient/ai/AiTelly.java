@@ -45,7 +45,7 @@ final class AiTelly {
             && !(block.getBlock() instanceof FallingBlock)
             && block.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, mc.player.blockPosition())
             && !block.getBlock().defaultBlockState().hasBlockEntity()
-            && autismclient.ai.a.AiRestock.load(stack, mc.player.getInventory());
+            && autismclient.ai.engine.AiRestock.load(stack, mc.player.getInventory());
          view.add(new AiTelly.Inner_DataUtil(construction, construction ? stack.getCount() : 0));
       }
 
@@ -82,9 +82,9 @@ final class AiTelly {
             final BlockPos init_BlockPos = mc.player.blockPosition();
             final long init_J = System.nanoTime() + plan.timeoutSeconds() * 1000000000L;
             final int read = mc.player.getInventory().getSelectedSlot();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final List<BlockPos> init_List = new ArrayList<>();
-            autismclient.ai.a.AiBridgeDriver init_NetHelper;
+            autismclient.ai.engine.AiBridgeDriver init_NetHelper;
             int write = -1;
             int update = -1;
             int sync;
@@ -92,7 +92,7 @@ final class AiTelly {
             double load_D;
             boolean init_Z;
 
-            autismclient.ai.a.AiBridgeDriver init_NetHelper() {
+            autismclient.ai.engine.AiBridgeDriver init_NetHelper() {
                BlockPos feet = mc.player.blockPosition();
                int dx;
                int dz;
@@ -114,7 +114,7 @@ final class AiTelly {
                      length = Math.abs(az);
                   }
                } else {
-                  int[] d = autismclient.ai.a.AiBridgeDriver.init(plan.yawDegrees());
+                  int[] d = autismclient.ai.engine.AiBridgeDriver.init(plan.yawDegrees());
                   dx = d[0];
                   dz = d[1];
                   length = plan.blocks() - this.init_List.size();
@@ -125,12 +125,12 @@ final class AiTelly {
                   return null;
                }
 
-               autismclient.ai.a.AiBridger.Inner_CachePool lane = new autismclient.ai.a.AiBridger.Inner_CachePool(
+               autismclient.ai.engine.AiBridger.Inner_CachePool lane = new autismclient.ai.engine.AiBridger.Inner_CachePool(
                   feet.getX(), feet.getZ(), feet.getY() - 1, dx, dz, length
                );
-               return new autismclient.ai.a.AiBridgeDriver(
+               return new autismclient.ai.engine.AiBridgeDriver(
                   lane,
-                  autismclient.ai.a.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(plan.mode() == AiTelly.Inner_StreamUtil.read, lane, mc.player, AiTelly.init_I(mc)),
+                  autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(plan.mode() == AiTelly.Inner_StreamUtil.read, lane, mc.player, AiTelly.init_I(mc)),
                   this.init_DataUtil
                );
             }
@@ -154,14 +154,14 @@ final class AiTelly {
                   }
 
                   if (!AiTerrain.init(mc.level, mc.player.blockPosition())) {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      return AiGameOperations.init_AiOperation_Result(
                         AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size())
                      );
                   }
 
                   if (this.update >= 0) {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      if (++this.update < 20) {
                         return AiGameOperations.init_AiOperation_Result(
                            AiOperation.Status.RUNNING, "Verifying the supports", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size())
@@ -194,7 +194,7 @@ final class AiTelly {
 
                      int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), AiTelly.init_List(mc));
                      if (slot < 0 && support != null) {
-                        autismclient.ai.a.AiMotionSafety.putAt_V();
+                        autismclient.ai.engine.AiMotionSafety.putAt_V();
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
@@ -209,15 +209,15 @@ final class AiTelly {
                            );
                      }
 
-                     autismclient.ai.a.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, this.init_List::add);
-                     if (step == autismclient.ai.a.AiBridgeDriver.Inner_DataUtil.write) {
+                     autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, this.init_List::add);
+                     if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.write) {
                         return this.init(AiOperation.Status.FAILED, "Bridge needs footing at the support's top level");
                      }
 
-                     if (step != autismclient.ai.a.AiBridgeDriver.Inner_DataUtil.read
+                     if (step != autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.read
                         && !AiTelly.init_Z_D_D(mc.player.getY(), this.init_NetHelper.init_JsonUtil_CachePool().floorY() + 1)) {
                         String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
-                        if (step == autismclient.ai.a.AiBridgeDriver.Inner_DataUtil.load) {
+                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.load) {
                            this.init_NetHelper = null;
                            return AiGameOperations.init_AiOperation_Result(
                               AiOperation.Status.RUNNING, "Lane done", AiJson.init_JsonObject_ObjArr("placed", this.init_List.size(), "mode", style)
@@ -284,7 +284,7 @@ final class AiTelly {
             public void cancel() {
                if (!this.init_Z) {
                   this.init_Z = true;
-                  autismclient.ai.a.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.putAt_V();
                   this.init_DataUtil.init_V();
                   if (mc.player != null && this.write >= 0 && mc.player.getInventory().getSelectedSlot() == this.write) {
                      mc.player.getInventory().setSelectedSlot(this.read);

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ final class AiBarterBatch {
             final Object init_Obj = mc.level;
             final int init_I = mc.player.getInventory().getSelectedSlot();
             final long init_J = System.nanoTime() + seconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard().withoutFlee().keeping(List.of("minecraft:gold_ingot", "minecraft:ender_pearl")), "barter");
             final Map<UUID, AiBarterBatch.Inner_CachePool> init_Map = new LinkedHashMap<>();
             final Set<UUID> init_Set = new HashSet<>();

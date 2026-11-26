@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -162,8 +162,8 @@ final class AiSpeedrun {
          && (current == null || current.canInterruptNow() && !current.requiresReconciliationAfterEmergency());
    }
 
-   static autismclient.ai.a.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos(BlockPos surface) {
-      return autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(surface, 2.0);
+   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos(BlockPos surface) {
+      return autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(surface, 2.0);
    }
 
    static BlockPos init_BlockPos_BlockPos(BlockPos from, int x, int z, Function<BlockPos, BlockPos> observedSurface) {
@@ -823,7 +823,7 @@ final class AiSpeedrun {
                   true,
                   true,
                   40,
-                  autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                   true,
                   2.0,
                   new AiNetherRun.Inner_NetHelper(x, z, 3),
@@ -1613,7 +1613,7 @@ final class AiSpeedrun {
                      this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
                         "food_trip",
                         "gather observed hay",
-                        autismclient.ai.a.AiBlockMine.init_AiOperation(
+                        autismclient.ai.engine.AiBlockMine.init_AiOperation(
                            AiJson.init_JsonObject_ObjArr(
                               "block",
                               "minecraft:hay_block",
@@ -1658,10 +1658,10 @@ final class AiSpeedrun {
                         false,
                         false,
                         Math.min(30, this.init_I_35()),
-                        autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                         true,
                         2.0,
-                        autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stand, 1.0),
+                        autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stand, 1.0),
                         new AiGoto.Inner_BufferHelper(true, false, 3, true, false, true)
                      )
                   );
@@ -1686,7 +1686,7 @@ final class AiSpeedrun {
                      this.init_Supplier = () -> AiRunDiagnostics.init_AiOperation_Str(
                         "food_trip",
                         "surface for animals",
-                        autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(120, this.init_I_35())))
+                        autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(120, this.init_I_35())))
                      );
                      this.init_AiOperation = this.init_Supplier.get();
                      this.init_Str = "surface";
@@ -1722,7 +1722,7 @@ final class AiSpeedrun {
                         false,
                         false,
                         Math.min(60, this.init_I_35()),
-                        autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                         true,
                         2.0,
                         AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),
@@ -1733,7 +1733,7 @@ final class AiSpeedrun {
                   this.init_AiOperation = this.init_Supplier.get();
                   return this.init("Looking for food animals");
                } else {
-                  return !AiFoodHuntBudget.init(this.canInterruptNow() && autismclient.ai.a.AiMotionSafety.fill_Z(), this.requiresReconciliationAfterEmergency())
+                  return !AiFoodHuntBudget.init(this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.fill_Z(), this.requiresReconciliationAfterEmergency())
                      ? this.init("Waiting for the food trip's safe handoff")
                      : this.init(
                         have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, "No time for another complete hunt; " + have + " food held"

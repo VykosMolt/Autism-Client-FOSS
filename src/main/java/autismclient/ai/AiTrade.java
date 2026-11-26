@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -82,9 +82,9 @@ final class AiTrade {
          final AiItems.Inner_DataUtil wantedTarget = wanted.isBlank() ? null : AiItems.load_af_DataUtil(wanted);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-            final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
-            final autismclient.ai.a.AiBlockDigger init_RefQueue_DataUtil = new autismclient.ai.a.AiBlockDigger(
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
+            final autismclient.ai.engine.AiBlockDigger init_RefQueue_DataUtil = new autismclient.ai.engine.AiBlockDigger(
                mc, this::init, this.init_DataUtil::init_V_Vec3, true, true, this.init_DataUtil::load_V
             );
             AiOperation init_AiOperation;
@@ -304,13 +304,13 @@ final class AiTrade {
                      ? this.init(AiOperation.Status.FAILED, "No route to the trader: " + legResult.message())
                      : this.init_AiOperation_Result_12("Arrived at the trader");
                } else {
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                   this.init_DataUtil.load_V();
                   if (++this.load_I > 80) {
                      return this.init(AiOperation.Status.FAILED, "Could not open the trade screen");
                   }
 
-                  if (!autismclient.ai.a.AiAim.init_Z_Entity(this.init_Entity)) {
+                  if (!autismclient.ai.engine.AiAim.init_Z_Entity(this.init_Entity)) {
                      return this.init_AiOperation_Result_12("Turning toward the trader");
                   }
 
@@ -318,7 +318,7 @@ final class AiTrade {
                      .interact(
                         mc.player,
                         this.init_Entity,
-                        new EntityHitResult(this.init_Entity, autismclient.ai.a.AiAim.init_Vec3_Entity(this.init_Entity)),
+                        new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_Entity)),
                         InteractionHand.MAIN_HAND
                      );
                   return mc.player.containerMenu instanceof MerchantMenu ? null : this.init_AiOperation_Result_12("Opening the trade screen");
@@ -437,7 +437,7 @@ final class AiTrade {
 
                if (this.push != 0) {
                   if (this.push == 1) {
-                     if (this.init_AiOperation == null && autismclient.ai.a.AiBlockInteraction.init(mc, this.init_BlockPos) == null) {
+                     if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.init(mc, this.init_BlockPos) == null) {
                         this.init_AiOperation = AiGoto.init_AiOperation(this.init_BlockPos, Math.min(60, this.init_I_31()));
                         return this.init_AiOperation_Result_12("Approaching the job-site block");
                      }
@@ -493,15 +493,15 @@ final class AiTrade {
                      }
 
                      if (this.push == 4) {
-                        autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                        autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+                        if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                            this.poll++;
                            this.push = 0;
                            this.pop = 0;
                            this.init_BlockPos = null;
                            return null;
                         } else {
-                           return status != autismclient.ai.a.AiPlacer.Inner_DataUtil.read && ++this.pop <= 100
+                           return status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.pop <= 100
                               ? this.init_AiOperation_Result_12("Replacing the job-site block")
                               : this.init(AiFailure.close, "Could not replace the job-site block: " + this.init_DataPipe.init_Str());
                         }

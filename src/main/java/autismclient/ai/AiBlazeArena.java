@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -39,7 +39,7 @@ final class AiBlazeArena implements AiOperation {
    private AiOperation init_AiOperation;
    private AiOperation load_AiOperation;
    private final Set<BlockPos> init_Set = new HashSet<>();
-   private final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer().init_DataPipe();
+   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
    private final AiFireControl init_K = new AiFireControl();
    private final long init_J;
    private int write;
@@ -230,7 +230,7 @@ final class AiBlazeArena implements AiOperation {
                   false,
                   false,
                   3,
-                  autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                   false,
                   0.0,
                   null,
@@ -273,7 +273,7 @@ final class AiBlazeArena implements AiOperation {
                   return this.init(AiOperation.Status.SUCCEEDED, "No expendable nonflammable blocks; use existing fortress cover");
                }
 
-               if (!autismclient.ai.a.AiPlacer.init_Z_BlockPos_Item(cell, material)) {
+               if (!autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(cell, material)) {
                   if (this.write >= this.init_I && this.init_Set.add(cell)) {
                      this.load_AiOperation = AiGoto.init_AiOperation_BlockPos_2(cell, material, 2);
                      return this.init_AiOperation_Result_Str_4("Find a visible support face without more scaffolding");
@@ -292,9 +292,9 @@ final class AiBlazeArena implements AiOperation {
                this.init_Z = true;
             }
 
-            autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-            if (status != autismclient.ai.a.AiPlacer.Inner_DataUtil.init) {
-               if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+            autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+            if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
+               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                   this.update++;
                } else {
                   this.sync++;
@@ -308,7 +308,7 @@ final class AiBlazeArena implements AiOperation {
                         "result",
                         status,
                         "reason",
-                        status == autismclient.ai.a.AiPlacer.Inner_DataUtil.read ? this.init_DataPipe.init_Str() : "server block change confirmed",
+                        status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read ? this.init_DataPipe.init_Str() : "server block change confirmed",
                         "body",
                         this.init_Minecraft.player.position().toString(),
                         "eyeY",

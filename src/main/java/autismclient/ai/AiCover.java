@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonObject;
@@ -54,9 +54,9 @@ final class AiCover {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final Object init_Obj = mc.level;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             int init_I;
-            final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer().init_DataPipe();
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
             final Set<Long> init_Set = new HashSet<>();
             final Set<Integer> load_Set = new HashSet<>();
             AiGoto.Inner_CachePool init_HashUtil_CachePool;
@@ -79,7 +79,7 @@ final class AiCover {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
             }
 
             @Override
@@ -119,7 +119,7 @@ final class AiCover {
                for (Entity shooter : shooters) {
                   double d = shooter.distanceTo(mc.player);
                   if (!(d > 16.5)
-                     && autismclient.ai.a.AiSight.init_Z_BlockGetter_3(mc.level, shooter.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
+                     && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(mc.level, shooter.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
                      this.load_Set.add(shooter.getId());
                      if (shooter instanceof Creeper) {
                         creeperSees = true;
@@ -144,7 +144,7 @@ final class AiCover {
                   }
 
                   if (this.init_HashUtil_CachePool == null
-                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                     || !this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency() && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                      this.write();
                      if (this.init_Z) {
                         this.init_DataPipe.init_V();
@@ -181,7 +181,7 @@ final class AiCover {
                      && this.init_Z_2(shooters)
                      && (
                         this.load_Vec3.distanceTo(eye) < 6.0
-                           || autismclient.ai.a.AiSight.init_Z_BlockGetter_3(mc.level, this.load_Vec3, eye, -9223372036854775808L, -9223372036854775808L)
+                           || autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(mc.level, this.load_Vec3, eye, -9223372036854775808L, -9223372036854775808L)
                      );
                   if (seer != null || !sealOnly && baitExposed) {
                      this.load_I = 0;
@@ -196,7 +196,7 @@ final class AiCover {
                         this.write();
                         Entity mount = seer.getVehicle() instanceof Mob m && m.isAlive() ? m : null;
                         Entity melee = this.init_Entity_7();
-                        Entity strike = mount != null ? mount : (melee != null && !autismclient.ai.a.AiSight.init(melee) ? melee : seer);
+                        Entity strike = mount != null ? mount : (melee != null && !autismclient.ai.engine.AiSight.init(melee) ? melee : seer);
                         this.init_Z(strike);
                         return this.init("Hitting the " + BuiltInRegistries.ENTITY_TYPE.getKey(strike.getType()).getPath());
                      }
@@ -254,7 +254,7 @@ final class AiCover {
                            boolean creeper = !keepAway.isEmpty();
                            List<BlockPos> stances = this.read_I >= 3
                               ? List.of()
-                              : autismclient.ai.a.AiSight.init(
+                              : autismclient.ai.engine.AiSight.init(
                                  mc.level,
                                  feet,
                                  eyes,
@@ -282,7 +282,7 @@ final class AiCover {
                                  !mc.level.getBlockState(nearest).getCollisionShape(mc.level, nearest).isEmpty()
                                     || !mc.level.getBlockState(nearest.above()).getCollisionShape(mc.level, nearest.above()).isEmpty()
                               );
-                           boolean far = wetDig || autismclient.ai.a.AiSight.init(mc.level, feet, nearest) > 3.0;
+                           boolean far = wetDig || autismclient.ai.engine.AiSight.init(mc.level, feet, nearest) > 3.0;
                            if ((far || this.init_Z_25())
                               && keepAway.isEmpty()
                               && this.write_I < 6
@@ -311,10 +311,10 @@ final class AiCover {
                               false,
                               false,
                               20,
-                              autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                               false,
                               2.0,
-                              new autismclient.ai.a.CoverGoal(stances),
+                              new autismclient.ai.engine.CoverGoal(stances),
                               new AiGoto.Inner_BufferHelper(true, true, 3, !mc.player.isInWater(), true, true),
                               false
                            );
@@ -346,7 +346,7 @@ final class AiCover {
                            }
                         }
 
-                        if (autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                        if (autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                            return this.init(AiOperation.Status.SUCCEEDED, "Escape tunnel sealed out of the creeper's sight");
                         }
                      }
@@ -362,7 +362,7 @@ final class AiCover {
                      if (this.init_HashUtil_CachePool != null) {
                         BlockPos feet = mc.player.blockPosition();
                         if (!mc.player.onGround()
-                           || autismclient.ai.a.AiSight.init_Z_BlockGetter(mc.level, this.init_List_2(shooters), feet.getX(), feet.getY(), feet.getZ())) {
+                           || autismclient.ai.engine.AiSight.init_Z_BlockGetter(mc.level, this.init_List_2(shooters), feet.getX(), feet.getY(), feet.getZ())) {
                            AiOperation.Result r = this.init_HashUtil_CachePool.tick();
                            if (r.terminal()) {
                               this.write();
@@ -407,13 +407,13 @@ final class AiCover {
 
             AiOperation.Result init_AiOperation_Result_37() {
                this.init_V_29();
-               autismclient.ai.a.AiPlacer.Inner_DataUtil s = this.init_DataPipe.init_DataPipe_DataUtil();
-               if (s == autismclient.ai.a.AiPlacer.Inner_DataUtil.init) {
+               autismclient.ai.engine.AiPlacer.Inner_DataUtil s = this.init_DataPipe.init_DataPipe_DataUtil();
+               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
                   return this.init("Putting a block between the " + this.init_Str + " and me");
                }
 
                this.init_Z = false;
-               if (s == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+               if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                   this.write_I++;
                   AutismClientAddon.LOG
                      .info("[AI] cover: shield block at {} against the {}", this.init_DataPipe.init_BlockPos().toShortString(), this.init_Str);
@@ -502,7 +502,7 @@ final class AiCover {
                List<Entity> found = new ArrayList<>();
 
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity.isAlive() && (autismclient.ai.a.AiSight.init(entity) || entity instanceof Creeper) && entity.distanceTo(mc.player) <= 20.0) {
+                  if (entity.isAlive() && (autismclient.ai.engine.AiSight.init(entity) || entity instanceof Creeper) && entity.distanceTo(mc.player) <= 20.0) {
                      found.add(entity);
                   }
                }
@@ -554,7 +554,7 @@ final class AiCover {
                   autismclient.util.InventorySlotHelper.init_V(mc, slot);
                }
 
-               this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(mob));
+               this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(mob));
                this.init_DataUtil.load_V();
                boolean onTarget = this.init_DataUtil.load_Z_Entity(mob);
                if (onTarget && mc.player.getAttackStrengthScale(0.0F) >= 0.92F) {
@@ -586,7 +586,7 @@ final class AiCover {
             }
 
             boolean load(Entity mob) {
-               boolean safe = mc.player.onGround() && autismclient.ai.a.AiCombatMotion.init(mc, -1.0, 0.0, 6) != null;
+               boolean safe = mc.player.onGround() && autismclient.ai.engine.AiCombatMotion.init(mc, -1.0, 0.0, 6) != null;
                mc.options.keyUp.setDown(false);
                mc.options.keyDown.setDown(safe);
                mc.options.keyLeft.setDown(false);

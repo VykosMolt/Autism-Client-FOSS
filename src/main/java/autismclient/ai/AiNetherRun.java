@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismBaseSpawnerAccessor;
 import com.google.gson.JsonArray;
@@ -318,7 +318,7 @@ final class AiNetherRun {
                      }
                   }
 
-                  autismclient.ai.a.AiMiningCommitment vein = this.init_aB_StreamUtil.init(block);
+                  autismclient.ai.engine.AiMiningCommitment vein = this.init_aB_StreamUtil.init(block);
                   Predicate<BlockPos> allowed = atxx -> this.init_aB_StreamUtil.init_Z(atxx.asLong(), now);
                   vein.init(observed, allowed);
                   Set<Long> present = new HashSet<>();
@@ -450,7 +450,7 @@ final class AiNetherRun {
                         }
                      }
 
-                     autismclient.ai.a.AiRestock.init(Map.of(Items.OBSIDIAN, 64));
+                     autismclient.ai.engine.AiRestock.init(Map.of(Items.OBSIDIAN, 64));
                      if (System.nanoTime() > this.init_J) {
                         return this.init(
                            this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
@@ -496,7 +496,7 @@ final class AiNetherRun {
                         }
                      } else {
                         if (!AiThreats.init_Z()) {
-                           autismclient.ai.a.AiPathfinder.Inner_CachePool.init_V_J(5000000000L);
+                           autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(5000000000L);
                         }
 
                         if (this.init_aB_TaskQueue == AiNetherRun.Inner_TaskQueue.load
@@ -1000,7 +1000,7 @@ final class AiNetherRun {
                               true,
                               false,
                               20,
-                              autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                               true,
                               2.0,
                               null,
@@ -1200,7 +1200,7 @@ final class AiNetherRun {
                                        true,
                                        true,
                                        60,
-                                       autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                        true,
                                        2.0,
                                        null,
@@ -1308,7 +1308,7 @@ final class AiNetherRun {
                                           true,
                                           true,
                                           60,
-                                          autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                          autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                           true,
                                           2.0,
                                           null,
@@ -1850,8 +1850,8 @@ final class AiNetherRun {
                return this.init_D_BlockPos(target) > 64.0 && this.add < 5;
             }
 
-            autismclient.ai.a.AiPathfinder.Inner_IoWorker init_ClassCache_IoWorke() {
-               return this.put_I > 0 ? autismclient.ai.a.AiPathfinder.Inner_IoWorker.init : autismclient.ai.a.AiPathfinder.Inner_IoWorker.load;
+            autismclient.ai.engine.AiPathfinder.Inner_IoWorker init_ClassCache_IoWorke() {
+               return this.put_I > 0 ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load;
             }
 
             AiOperation init(final int enderman, final AiOperation fight) {
@@ -2949,7 +2949,7 @@ final class AiNetherRun {
    record Inner_DataUtil(int pearls, int gold) {
    }
 
-   record Inner_NetHelper(int x, int z, int radius) implements autismclient.ai.a.AiPathfinder.Inner_JsonUtil {
+   record Inner_NetHelper(int x, int z, int radius) implements autismclient.ai.engine.AiPathfinder.Inner_JsonUtil {
       @Override
       public boolean isInGoal(int px, int py, int pz) {
          return (long)(px - this.x) * (px - this.x) + (long)(pz - this.z) * (pz - this.z) <= (long)this.radius * this.radius;
@@ -2968,10 +2968,10 @@ final class AiNetherRun {
 
    static final class Inner_StreamUtil {
       private final LinkedHashMap<Long, Long> init_LinkedHashMap = new LinkedHashMap<>();
-      final autismclient.ai.a.AiMiningCommitment init_FieldCache = new autismclient.ai.a.AiMiningCommitment();
-      final autismclient.ai.a.AiMiningCommitment load = new autismclient.ai.a.AiMiningCommitment();
+      final autismclient.ai.engine.AiMiningCommitment init_FieldCache = new autismclient.ai.engine.AiMiningCommitment();
+      final autismclient.ai.engine.AiMiningCommitment load = new autismclient.ai.engine.AiMiningCommitment();
 
-      autismclient.ai.a.AiMiningCommitment init(boolean block) {
+      autismclient.ai.engine.AiMiningCommitment init(boolean block) {
          return block ? this.load : this.init_FieldCache;
       }
 

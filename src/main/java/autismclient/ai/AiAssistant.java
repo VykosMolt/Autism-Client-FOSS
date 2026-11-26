@@ -196,6 +196,6 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    @Override
    public boolean load_Z_23() {
-      return autismclient.ai.a.AiSilentAim.init(autismclient.util.SilentRotationManager.init_Z(), true, autismclient.util.SilentMovementCoordinator.init_Z());
+      return autismclient.ai.engine.AiSilentAim.init(autismclient.util.SilentRotationManager.init_Z(), true, autismclient.util.SilentMovementCoordinator.init_Z());
    }
 }

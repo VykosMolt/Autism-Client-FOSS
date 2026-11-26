@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -82,7 +82,7 @@ final class AiCraft {
                final Object load_Obj = mc.getConnection();
                final LocalPlayer init_LocalPlayer = mc.player;
                final long load_J = System.nanoTime();
-               final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+               final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
                final List<JsonObject> init_List = new ArrayList<>();
                long read_J;
                long write_J;
@@ -433,7 +433,7 @@ final class AiCraft {
 
                AiOperation.Result init_AiOperation_Result_38() {
                   BlockPos standing = this.read_I < 2
-                     ? autismclient.ai.a.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE))
+                     ? autismclient.ai.engine.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE))
                      : null;
                   if (standing == null) {
                      return null;
@@ -676,8 +676,8 @@ final class AiCraft {
       final int wanted = step.produced();
       return new AiOperation() {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-         final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
          BlockPos init_BlockPos;
          int init_I;
          int load_I;
@@ -812,11 +812,11 @@ final class AiCraft {
                   return this.init(AiOperation.Status.FAILED, "Could not open the stonecutter");
                }
 
-               if (!autismclient.ai.a.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+               if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
                   return this.init("Turning toward the stonecutter");
                }
 
-               BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+               BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                if (hit == null) {
                   return this.init("Turning toward the stonecutter");
                }
@@ -976,7 +976,7 @@ final class AiCraft {
       } else {
          return mc.player != null
                && mc.level != null
-               && autismclient.ai.a.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE)) != null
+               && autismclient.ai.engine.AiStaircase.init_BlockPos_Level(mc.level, mc.player.blockPosition(), 32, state -> state.is(Blocks.CRAFTING_TABLE)) != null
             ? true
             : AiCraftPlanner.init(init_g_StreamUtil(), "minecraft:crafting_table", 1).complete();
       }
@@ -1147,7 +1147,7 @@ final class AiCraft {
          Vec3 eye = mc.player.getEyePosition();
          Vec3 look = mc.player.getLookAngle();
          out.sort(
-            Comparator.<BlockPos>comparingInt(c -> autismclient.ai.a.AiEditLedger.write_Z(c) ? 1 : 0)
+            Comparator.<BlockPos>comparingInt(c -> autismclient.ai.engine.AiEditLedger.write_Z(c) ? 1 : 0)
                .thenComparingInt(c -> init(mc, eye, c) ? 0 : 1)
                .thenComparingInt(c -> c.getY() < feet.getY() ? 1 : 0)
                .thenComparingDouble(c -> -new Vec3(c.getX() + 0.5, c.getY(), c.getZ() + 0.5).subtract(eye).normalize().dot(look))

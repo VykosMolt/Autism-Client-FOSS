@@ -141,7 +141,7 @@ public final class aP {
       }
    }
 
-   public static autismclient.ai.a.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
+   public static autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
       return init_aP != null && init_aP.init_aR instanceof AiNavigationSelection navigation ? navigation.init_j_StreamUtil() : null;
    }
 

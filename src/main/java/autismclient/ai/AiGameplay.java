@@ -273,7 +273,7 @@ final class AiGameplay {
          if (entity != null && !(entity.distanceToSqr(mc.player) > 16.0)) {
             final int container = mc.player.containerMenu.containerId;
             return new AiOperation() {
-               final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+               final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                int init_I;
                int load_I;
                boolean init_Z;
@@ -298,8 +298,8 @@ final class AiGameplay {
                   }
 
                   if (!this.load_Z) {
-                     AiGameOperations.init(this.init_DataUtil, autismclient.ai.a.AiAim.init_Vec3_Entity(entity));
-                     if (!autismclient.ai.a.AiAim.init_Z_Entity(entity)) {
+                     AiGameOperations.init(this.init_DataUtil, autismclient.ai.engine.AiAim.init_Vec3_Entity(entity));
+                     if (!autismclient.ai.engine.AiAim.init_Z_Entity(entity)) {
                         if (++this.load_I > 40) {
                            return AiGameOperations.init_AiOperation_Result(
                               AiOperation.Status.FAILED, "Could not bring the crosshair onto the entity", AiJson.init_JsonObject_ObjArr("entityId", entity.getId())
@@ -313,7 +313,7 @@ final class AiGameplay {
 
                      mc.gameMode
                         .interact(
-                           mc.player, entity, new EntityHitResult(entity, autismclient.ai.a.AiAim.init_Vec3_Entity(entity)), InteractionHand.MAIN_HAND
+                           mc.player, entity, new EntityHitResult(entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(entity)), InteractionHand.MAIN_HAND
                         );
                      this.load_Z = true;
                   }
@@ -507,12 +507,12 @@ final class AiGameplay {
                }
 
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                      AiJson.init_JsonObject_ObjArr(
                         "blocks",
-                        autismclient.ai.a.AiBlockMine.init(ids),
+                        autismclient.ai.engine.AiBlockMine.init(ids),
                         "drops",
-                        autismclient.ai.a.AiBlockMine.init(ids),
+                        autismclient.ai.engine.AiBlockMine.init(ids),
                         "held",
                         target,
                         "dropsOnly",
@@ -584,7 +584,7 @@ final class AiGameplay {
                }
             }
          };
-         return AiPreparationReceipt.init(collection, autismclient.ai.a.AiMotionSafety::fill_Z, () -> mc.player == player && mc.level == world, deadline);
+         return AiPreparationReceipt.init(collection, autismclient.ai.engine.AiMotionSafety::fill_Z, () -> mc.player == player && mc.level == world, deadline);
       } else {
          throw new IllegalArgumentException("Expected item registry id and count 1..2304");
       }
@@ -600,7 +600,7 @@ final class AiGameplay {
       Object player = mc.player;
       return new AiGameplay.Inner_DataUtil(
          () -> !beforeBreak && !init_Z(ids) || load(ids),
-         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.a.AiMotionSafety.fill_Z() && init_Z(mc),
+         () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.fill_Z() && init_Z(mc),
          () -> AiTidy.init(
             AiJson.init_JsonObject_ObjArr(
                "action",
@@ -610,7 +610,7 @@ final class AiGameplay {
                "maxDrops",
                2,
                "keep",
-               autismclient.ai.a.AiBlockMine.init(ids),
+               autismclient.ai.engine.AiBlockMine.init(ids),
                "timeoutSeconds",
                Math.min(30, Math.max(5, seconds))
             )
@@ -660,7 +660,7 @@ final class AiGameplay {
                && drop.distanceToSqr(mc.player) <= 4096.0
                && ids.contains(BuiltInRegistries.ITEM.getKey(drop.getItem().getItem()).toString())) {
                observed = true;
-               if (!autismclient.ai.a.AiBlockMine.init(mc.player.getInventory(), drop.getItem())) {
+               if (!autismclient.ai.engine.AiBlockMine.init(mc.player.getInventory(), drop.getItem())) {
                   return false;
                }
             }
@@ -672,7 +672,7 @@ final class AiGameplay {
 
          for (String id : ids) {
             for (Item item : AiItems.load_af_DataUtil(id).items()) {
-               if (autismclient.ai.a.AiBlockMine.init(mc.player.getInventory(), item.getDefaultInstance())) {
+               if (autismclient.ai.engine.AiBlockMine.init(mc.player.getInventory(), item.getDefaultInstance())) {
                   return true;
                }
             }
@@ -1046,8 +1046,8 @@ final class AiGameplay {
             final int init_I = radius * 2 + 1;
             final int load_I = 49;
             final int read = this.init_I * this.init_I * 49;
-            final List<autismclient.ai.a.AiChunkMemory.Inner_CachePool> init_List = new ArrayList<>();
-            final List<autismclient.ai.a.AiChunkMemory.Inner_CachePool> load_List = autismclient.ai.a.AiChunkMemory.init_StateCache()
+            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> init_List = new ArrayList<>();
+            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> load_List = autismclient.ai.engine.AiChunkMemory.init_StateCache()
                .init_List_BlockPos(this.init_BlockPos, radius, wanted::contains);
             int write;
             boolean init_Z;
@@ -1070,7 +1070,7 @@ final class AiGameplay {
                         BlockState state = this.init_Minecraft.level.getBlockState(p);
                         double distanceSqr = p.distSqr(this.init_BlockPos);
                         if (target.matches(state) && distanceSqr <= (double)radius * radius && this.init_List.size() < 256) {
-                           this.init_List.add(new autismclient.ai.a.AiChunkMemory.Inner_CachePool(p.immutable(), Math.sqrt(distanceSqr), false));
+                           this.init_List.add(new autismclient.ai.engine.AiChunkMemory.Inner_CachePool(p.immutable(), Math.sqrt(distanceSqr), false));
                         }
                      }
 
@@ -1087,10 +1087,10 @@ final class AiGameplay {
                      .removeIf(hitx -> !AiTerrain.init(this.init_Minecraft.level, hitx.pos()) || !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
                   this.load_List
                      .removeIf(hitx -> AiTerrain.init(this.init_Minecraft.level, hitx.pos()) && !target.matches(this.init_Minecraft.level.getBlockState(hitx.pos())));
-                  List<autismclient.ai.a.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.a.AiChunkMemory.init_List_List(this.init_List, this.load_List, limit);
+                  List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.init_List_List(this.init_List, this.load_List, limit);
                   JsonArray results = new JsonArray();
 
-                  for (autismclient.ai.a.AiChunkMemory.Inner_CachePool hit : merged) {
+                  for (autismclient.ai.engine.AiChunkMemory.Inner_CachePool hit : merged) {
                      results.add(
                         AiJson.init_JsonObject_ObjArr(
                            "x",
@@ -1136,7 +1136,7 @@ final class AiGameplay {
                         "remembered",
                         this.load_List.size(),
                         "terrainRevision",
-                        autismclient.ai.a.AiGridRevisions.init_J(),
+                        autismclient.ai.engine.AiGridRevisions.init_J(),
                         "verticalRange",
                         49,
                         "globalAbsenceProven",

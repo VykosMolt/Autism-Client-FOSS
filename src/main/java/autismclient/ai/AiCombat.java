@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonObject;
@@ -234,12 +234,12 @@ final class AiCombat {
    static AiOperation init(final int ticks) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          int init_I = ticks;
          boolean init_Z;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
          }
 
          @Override
@@ -257,10 +257,10 @@ final class AiCombat {
             AiProjectiles.Inner_StreamUtil coming = hasShield && !AiThreats.init_Z() ? AiCombat.load(mc) : null;
             if (coming != null) {
                this.init_DataUtil
-                  .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, shooter == null ? null : autismclient.ai.a.AiAim.load_Vec3_Entity(shooter)));
+                  .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, shooter == null ? null : autismclient.ai.engine.AiAim.load_Vec3_Entity(shooter)));
                this.init_DataUtil.load_V();
             } else if (shooter != null) {
-               this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(shooter));
+               this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(shooter));
                this.init_DataUtil.load_V();
             }
 
@@ -416,7 +416,7 @@ final class AiCombat {
          VoxelShape shape = mc.level.getBlockState(below).getCollisionShape(mc.level, below);
          if (!shape.isEmpty()) {
             return drop <= 3
-               && autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(
+               && autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(
                   mc.player.position(), new Vec3(step.getX() + 0.5, below.getY() + shape.max(Axis.Y), step.getZ() + 0.5)
                );
          }
@@ -562,7 +562,7 @@ final class AiCombat {
             final Object load_Obj = mc.getConnection();
             final LocalPlayer init_LocalPlayer = mc.player;
             final UUID init_UUID = explicitId >= 0 && mc.level.getEntity(explicitId) != null ? mc.level.getEntity(explicitId).getUUID() : null;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final int init_I = mc.player.getInventory().getSelectedSlot();
             final float init_F = mc.player.getHealth();
             final AiCombatDeaths init_DataPipe = new AiCombatDeaths();
@@ -609,7 +609,7 @@ final class AiCombat {
             int reset;
             boolean poll_Z;
             boolean push_Z;
-            final autismclient.ai.a.AiPlacer init_DataPipe_2 = new autismclient.ai.a.AiPlacer().init_DataPipe();
+            final autismclient.ai.engine.AiPlacer init_DataPipe_2 = new autismclient.ai.engine.AiPlacer().init_DataPipe();
             boolean pop_Z;
             Entity load_Entity;
             int start;
@@ -626,7 +626,7 @@ final class AiCombat {
             final Map<UUID, Long> init_Map;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
                this.init_DataUtil.init_V_Z(silentAim);
                this.load_F = this.init_F;
                if (useShield && !AiDefense.init_Z(mc)) {
@@ -668,8 +668,8 @@ final class AiCombat {
                   if (out != null) {
                      this.flush();
                      this.sync_V();
-                     int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(
-                        mc.player.getYRot(), autismclient.ai.a.AiPhysics.init_F_D(mc.player.getX(), mc.player.getZ(), out.getX() + 0.5, out.getZ() + 0.5)
+                     int[] keys = autismclient.ai.engine.AiMotionSafety.putAt_IArr_F_F(
+                        mc.player.getYRot(), autismclient.ai.engine.AiPhysics.init_F_D(mc.player.getX(), mc.player.getZ(), out.getX() + 0.5, out.getZ() + 0.5)
                      );
                      mc.options.keyUp.setDown(keys[0] > 0);
                      mc.options.keyDown.setDown(keys[0] < 0);
@@ -725,7 +725,7 @@ final class AiCombat {
                      }
                   }
 
-                  if (!AiThreats.init_Z() && this.canInterruptNow() && autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                  if (!AiThreats.init_Z() && this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                      AiProjectiles.Inner_StreamUtil shot = AiCombat.init_by_StreamUtil(mc);
                      if (shot != null && AiCombat.init(shot) <= 8 && (!AiDefense.init(mc, mc.level.getEntity(shot.entityId())) || !AiDefense.init(mc, AiCombat.init(shot)))) {
                         this.flush();
@@ -893,7 +893,7 @@ final class AiCombat {
                         this.flush();
                         this.load_V(this.init_Entity);
                         if (AiThreats.init_Z()) {
-                           this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                           this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                            this.init_DataUtil.load_V();
                         }
 
@@ -907,7 +907,7 @@ final class AiCombat {
                               this.flush();
                               this.init_V_13();
                               this.init_DataUtil
-                                 .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity)));
+                                 .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity)));
                               this.init_DataUtil.load_V();
                               if (!this.update_Z) {
                                  this.update_Z = true;
@@ -935,15 +935,15 @@ final class AiCombat {
 
                         if (!(hitDistance > attackDistance)) {
                            this.open_I = 0;
-                           Vec3 hitPoint = autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity);
-                           if (!this.open_Z && !hold && !autismclient.ai.a.AiAim.init_Z_Entity_Vec3(this.init_Entity, hitPoint)) {
+                           Vec3 hitPoint = autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity);
+                           if (!this.open_Z && !hold && !autismclient.ai.engine.AiAim.init_Z_Entity_Vec3(this.init_Entity, hitPoint)) {
                               return !approach ? this.init(AiFailure.close, "Target's attack ray is obstructed and approach is disabled") : this.init(distance, true);
                            }
 
                            this.flush();
                            this.valid = -1;
                            if (this.open_Z
-                              && !autismclient.ai.a.AiAim.init_Z_Entity_Vec3(this.init_Entity, hitPoint)
+                              && !autismclient.ai.engine.AiAim.init_Z_Entity_Vec3(this.init_Entity, hitPoint)
                               && this.next < 20
                               && mc.player.onGround()) {
                               if (this.init_Vec3 == null || !this.init_Z_Vec3(this.init_Vec3)) {
@@ -982,7 +982,7 @@ final class AiCombat {
 
                               Entity volley = AiDefense.init_Z(mc) ? AiCombat.init_Entity(mc) : null;
                               if (volley != null && volley != this.init_Entity) {
-                                 this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(volley));
+                                 this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(volley));
                                  this.init_DataUtil.load_V();
                                  return this.load("Shield up against a blaze");
                               }
@@ -1042,11 +1042,11 @@ final class AiCombat {
                               this.init_DataUtil
                                  .init_V_Vec3(
                                     AiCombat.init_Vec3_Minecraft_Vec3(
-                                       mc, autismclient.ai.a.AiAim.load_Vec3_Entity(shooter != null ? shooter : this.init_Entity)
+                                       mc, autismclient.ai.engine.AiAim.load_Vec3_Entity(shooter != null ? shooter : this.init_Entity)
                                     )
                                  );
                            } else {
-                              this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(shooter != null ? shooter : this.init_Entity));
+                              this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(shooter != null ? shooter : this.init_Entity));
                            }
 
                            this.init_DataUtil.load_V();
@@ -1067,7 +1067,7 @@ final class AiCombat {
                            && mc.player.hasLineOfSight(this.init_Entity)) {
                            this.flush();
                            this.close();
-                           this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                           this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                            this.init_DataUtil.load_V();
                            return this.load("Letting the " + BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).getPath() + " come");
                         } else if (!AiThreats.init_Z() && types.isEmpty() && explicitId < 0 && this.init_Entity instanceof Enderman && distance > 10.0) {
@@ -1106,7 +1106,7 @@ final class AiCombat {
                            mc.options.keyDown.setDown(false);
                            mc.options.keyRight.setDown(side > 0 && mc.player.onGround());
                            mc.options.keyLeft.setDown(side < 0 && mc.player.onGround());
-                           this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                           this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                            this.init_DataUtil.load_V();
                            boolean up = shield && !ready;
                            if (up != this.update_Z) {
@@ -1241,7 +1241,7 @@ final class AiCombat {
                   }
                } else {
                   this.init_V_13();
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(volley));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(volley));
                   this.init_DataUtil.load_V();
                   if (!this.update_Z) {
                      this.update_Z = true;
@@ -1302,7 +1302,7 @@ final class AiCombat {
                   double x = mc.player.getX() + rx * side * 1.5;
                   double z = mc.player.getZ() + rz * side * 1.5;
                   if (AiCombat.init_Z_Minecraft_BlockPos(mc, BlockPos.containing(x, mc.player.getY(), z))
-                     && (!mc.player.onGround() || autismclient.ai.a.AiCombatMotion.init(mc, 0.0, side > 0 ? -1.0 : 1.0, 6) != null)
+                     && (!mc.player.onGround() || autismclient.ai.engine.AiCombatMotion.init(mc, 0.0, side > 0 ? -1.0 : 1.0, 6) != null)
                      && !this.init(x, z, knock)) {
                      return side;
                   }
@@ -1316,8 +1316,8 @@ final class AiCombat {
                mc.options.keyJump.setDown(false);
                if (radial > 0) {
                   boolean safe = this.read_Z_3()
-                     && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(1.0, 0.0)
-                     && (!mc.player.onGround() || autismclient.ai.a.AiCombatMotion.init(mc, 1.0, 0.0, 6) != null);
+                     && autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(1.0, 0.0)
+                     && (!mc.player.onGround() || autismclient.ai.engine.AiCombatMotion.init(mc, 1.0, 0.0, 6) != null);
                   mc.options.keyUp.setDown(safe);
                   mc.options.keyDown.setDown(false);
                   mc.options.keyLeft.setDown(false);
@@ -1329,8 +1329,8 @@ final class AiCombat {
                   boolean behind = AiCombat.init_Z_Minecraft_BlockPos(
                         mc, BlockPos.containing(mc.player.getX() + Math.sin(radians), mc.player.getY(), mc.player.getZ() - Math.cos(radians))
                      )
-                     && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(-1.0, 0.0);
-                  behind &= !mc.player.onGround() || autismclient.ai.a.AiCombatMotion.init(mc, -1.0, 0.0, 6) != null;
+                     && autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(-1.0, 0.0);
+                  behind &= !mc.player.onGround() || autismclient.ai.engine.AiCombatMotion.init(mc, -1.0, 0.0, 6) != null;
                   if (behind) {
                      mc.options.keyUp.setDown(false);
                      mc.options.keyDown.setDown(true);
@@ -1346,13 +1346,13 @@ final class AiCombat {
             }
 
             void init_V_Entity(Entity from) {
-               float away = autismclient.ai.a.AiPhysics.init_F_D(from.getX(), from.getZ(), mc.player.getX(), mc.player.getZ());
-               int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(mc.player.getYRot(), away);
+               float away = autismclient.ai.engine.AiPhysics.init_F_D(from.getX(), from.getZ(), mc.player.getX(), mc.player.getZ());
+               int[] keys = autismclient.ai.engine.AiMotionSafety.putAt_IArr_F_F(mc.player.getYRot(), away);
                double radians = Math.toRadians(away);
                boolean safe = AiCombat.init_Z_Minecraft_BlockPos(
                      mc, BlockPos.containing(mc.player.getX() - Math.sin(radians), mc.player.getY(), mc.player.getZ() + Math.cos(radians))
                   )
-                  && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1]);
+                  && autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1]);
                mc.options.keySprint.setDown(false);
                mc.options.keyJump.setDown(false);
                mc.options.keyUp.setDown(safe && keys[0] > 0);
@@ -1383,7 +1383,7 @@ final class AiCombat {
                   if (due != null) {
                      this.flush();
                      this.init_V_13();
-                     this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(due));
+                     this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(due));
                      this.init_DataUtil.load_V();
                      if (!this.update_Z) {
                         this.update_Z = true;
@@ -1416,7 +1416,7 @@ final class AiCombat {
                      this.flush();
                      this.init_V_13();
                      Entity due = AiDefense.init_Z(mc) ? AiThreats.init(mc, 12) : null;
-                     this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(due != null ? due : this.init_Entity));
+                     this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(due != null ? due : this.init_Entity));
                      this.init_DataUtil.load_V();
                      boolean up = due != null;
                      if (up != this.update_Z) {
@@ -1441,7 +1441,7 @@ final class AiCombat {
                   if (this.init_AiOperation == null) {
                      this.close_Z = obstructed;
                      this.init_AiOperation = AiGoto.init(
-                        goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.a.AiPathfinder.Inner_IoWorker.load
+                        goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load
                      );
                      this.flush_Z = false;
                   }
@@ -1451,11 +1451,11 @@ final class AiCombat {
                      this.valid = this.init_Entity.getId();
                      this.load_D = distance;
                      this.load_J = now;
-                  } else if (autismclient.ai.a.AiSight.init(this.init_Entity)
+                  } else if (autismclient.ai.engine.AiSight.init(this.init_Entity)
                      && (
                         now - this.load_J > 2500000000L
                            || distance > this.load_D + 2.0
-                              && autismclient.ai.a.AiSight.init_Z_BlockGetter_3(
+                              && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
                                  mc.level, this.init_Entity.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
                               )
                      )) {
@@ -1490,7 +1490,7 @@ final class AiCombat {
                   if (due != null
                      && (due != this.init_Entity || Math.sqrt(this.init_Entity.getBoundingBox().distanceToSqr(mc.player.getEyePosition())) > reach + 1.2)) {
                      this.init_V_13();
-                     this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(due));
+                     this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(due));
                      this.init_DataUtil.load_V();
                      if (!this.update_Z) {
                         this.update_Z = true;
@@ -1511,7 +1511,7 @@ final class AiCombat {
                   this.valid = this.init_Entity.getId();
                   this.load_D = distance;
                   this.load_J = now;
-               } else if (autismclient.ai.a.AiSight.init(this.init_Entity) && now - this.load_J > 2500000000L) {
+               } else if (autismclient.ai.engine.AiSight.init(this.init_Entity) && now - this.load_J > 2500000000L) {
                   Entity dropped = this.init_Entity;
                   this.init_Entity = null;
                   this.close();
@@ -1519,19 +1519,19 @@ final class AiCombat {
                   return this.load("Not closing on the " + BuiltInRegistries.ENTITY_TYPE.getKey(dropped.getType()).getPath());
                }
 
-               this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+               this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                this.init_DataUtil.load_V();
                boolean facing = Math.abs(Mth.wrapDegrees(this.init_F_Entity(this.init_Entity) - mc.player.getYRot())) < 35.0F;
                boolean jump = facing && stepUp && mc.player.onGround();
-               boolean safe = facing && autismclient.ai.a.AiMotionSafety.putAt_Z_D(1.0, 0.0, jump, true);
+               boolean safe = facing && autismclient.ai.engine.AiMotionSafety.putAt_Z_D(1.0, 0.0, jump, true);
                mc.options.keyUp.setDown(safe);
                mc.options.keySprint.setDown(safe);
                mc.options.keyJump.setDown(safe && jump);
                if (facing && !safe) {
                   AiCombat.init_V_Entity_J(this.init_Entity, now + 15000000000L);
                   this.init_Entity = null;
-                  if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(0.0, 0.0)) {
-                     autismclient.ai.a.AiMotionSafety.fill_V();
+                  if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(0.0, 0.0)) {
+                     autismclient.ai.engine.AiMotionSafety.fill_V();
                   }
 
                   return this.load("Leaving a chase whose movement would touch lava");
@@ -1619,7 +1619,7 @@ final class AiCombat {
             boolean init_Z_11() {
                for (int slot = 0; slot < 9; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
-                  if (stack.getItem() instanceof BlockItem && autismclient.ai.a.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+                  if (stack.getItem() instanceof BlockItem && autismclient.ai.engine.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                      return true;
                   }
                }
@@ -1659,7 +1659,7 @@ final class AiCombat {
                   this.flush();
                   this.init_V_13();
                   Entity due = AiDefense.init_Z(mc) ? AiThreats.init(mc, 12) : null;
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(due != null ? due : blaze));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(due != null ? due : blaze));
                   this.init_DataUtil.load_V();
                   boolean up = due != null;
                   if (up != this.update_Z) {
@@ -1717,7 +1717,7 @@ final class AiCombat {
                   this.load_Z = true;
                }
 
-               boolean safe = (this.load_Z ? rightSafe : leftSafe) && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(0.0, this.load_Z ? -1.0 : 1.0);
+               boolean safe = (this.load_Z ? rightSafe : leftSafe) && autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(0.0, this.load_Z ? -1.0 : 1.0);
                mc.options.keyUp.setDown(false);
                mc.options.keyDown.setDown(false);
                mc.options.keyLeft.setDown(safe && !this.load_Z);
@@ -1733,7 +1733,7 @@ final class AiCombat {
                   return false;
                }
 
-               if (autismclient.ai.a.AiCombatMotion.init(mc, 0.0, right ? -1.0 : 1.0, 6) == null) {
+               if (autismclient.ai.engine.AiCombatMotion.init(mc, 0.0, right ? -1.0 : 1.0, 6) == null) {
                   return false;
                }
 
@@ -1765,7 +1765,7 @@ final class AiCombat {
 
                   float yaw = (float)(Math.toDegrees(Math.atan2(away.z, away.x)) - 90.0);
                   mc.player.setYRot(yaw);
-                  if (this.read_Z_3() && autismclient.ai.a.AiMotionSafety.putAt_Z_D(1.0, 0.0, false, mc.player.getFoodData().getFoodLevel() > 6)) {
+                  if (this.read_Z_3() && autismclient.ai.engine.AiMotionSafety.putAt_Z_D(1.0, 0.0, false, mc.player.getFoodData().getFoodLevel() > 6)) {
                      mc.options.keyLeft.setDown(false);
                      mc.options.keyRight.setDown(false);
                      mc.options.keyUp.setDown(true);
@@ -1833,7 +1833,7 @@ final class AiCombat {
                   && !this.sync_Z()
                   && this.write_Z_2()
                   && AiCombat.init_Z_AABB(this.init_Entity.getBoundingBox(), mc.player.getEyePosition(), reach);
-               boolean safe = attempt && autismclient.ai.a.AiMotionSafety.putAt_Z_D(forward, strafe, true, mc.player.isSprinting());
+               boolean safe = attempt && autismclient.ai.engine.AiMotionSafety.putAt_Z_D(forward, strafe, true, mc.player.isSprinting());
                if (attempt && !safe) {
                   this.pop_I++;
                }
@@ -2193,12 +2193,12 @@ final class AiCombat {
                         double dz = cz - mc.player.getZ();
                         if (dx * dx + dz * dz > 0.0144) {
                            this.reset++;
-                           int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(
-                              mc.player.getYRot(), autismclient.ai.a.AiPhysics.init_F_D(mc.player.getX(), mc.player.getZ(), cx, cz)
+                           int[] keys = autismclient.ai.engine.AiMotionSafety.putAt_IArr_F_F(
+                              mc.player.getYRot(), autismclient.ai.engine.AiPhysics.init_F_D(mc.player.getX(), mc.player.getZ(), cx, cz)
                            );
                            mc.options.keyShift.setDown(true);
-                           if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1])) {
-                              autismclient.ai.a.AiMotionSafety.fill_V();
+                           if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1])) {
+                              autismclient.ai.engine.AiMotionSafety.fill_V();
                               this.reset = 40;
                               return this.load("Holding the safe side of the pillar");
                            }
@@ -2415,9 +2415,9 @@ final class AiCombat {
                      for (Entity entity : mc.level.entitiesForRendering()) {
                         if (entity instanceof Enemy
                            && entity.isAlive()
-                           && autismclient.ai.a.AiSight.init(entity)
+                           && autismclient.ai.engine.AiSight.init(entity)
                            && entity.distanceTo(mc.player) <= 16.5
-                           && autismclient.ai.a.AiSight.init_Z_BlockGetter_3(mc.level, entity.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
+                           && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(mc.level, entity.getEyePosition(), eye, -9223372036854775808L, -9223372036854775808L)) {
                            exposure++;
                         }
                      }
@@ -2444,16 +2444,16 @@ final class AiCombat {
                }
 
                Vec3 eye = mc.player.getEyePosition().add(dx, 0.0, dz);
-               return autismclient.ai.a.AiAim.init(this.init_Entity, eye, autismclient.ai.a.AiAim.init_Vec3_Entity_Vec3(this.init_Entity, eye));
+               return autismclient.ai.engine.AiAim.init(this.init_Entity, eye, autismclient.ai.engine.AiAim.init_Vec3_Entity_Vec3(this.init_Entity, eye));
             }
 
             void init(double x, double z) {
-               int[] keys = autismclient.ai.a.AiMotionSafety.putAt_IArr_F_F(
-                  mc.player.getYRot(), autismclient.ai.a.AiPhysics.init_F_D(mc.player.getX(), mc.player.getZ(), x, z)
+               int[] keys = autismclient.ai.engine.AiMotionSafety.putAt_IArr_F_F(
+                  mc.player.getYRot(), autismclient.ai.engine.AiPhysics.init_F_D(mc.player.getX(), mc.player.getZ(), x, z)
                );
                mc.options.keyShift.setDown(true);
-               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1])) {
-                  autismclient.ai.a.AiMotionSafety.fill_V();
+               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(keys[0], -keys[1])) {
+                  autismclient.ai.engine.AiMotionSafety.fill_V();
                } else {
                   mc.options.keyUp.setDown(keys[0] > 0);
                   mc.options.keyDown.setDown(keys[0] < 0);
@@ -2466,7 +2466,7 @@ final class AiCombat {
             AiOperation.Result init_AiOperation_Result_Entity(Entity shooter) {
                if (!this.open_Z) {
                   for (Entity entity : mc.level.entitiesForRendering()) {
-                     if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.a.AiSight.init(entity) && mc.player.distanceTo(entity) <= 3.2) {
+                     if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.init(entity) && mc.player.distanceTo(entity) <= 3.2) {
                         if (this.pop_Z) {
                            this.init_DataPipe_2.init_V();
                            this.pop_Z = false;
@@ -2493,7 +2493,7 @@ final class AiCombat {
                   if (this.open_Z
                      && this.stop < 12
                      && this.init_DataPipe_2.init_BlockPos() != null
-                     && !autismclient.ai.a.AiPlacer.init_Z_BlockPos_Item(this.init_DataPipe_2.init_BlockPos(), AiShield.init(mc))) {
+                     && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(this.init_DataPipe_2.init_BlockPos(), AiShield.init(mc))) {
                      BlockPos cell = this.init_DataPipe_2.init_BlockPos();
                      if (mc.player.onGround()) {
                         Vec3 edge = AiCombat.init_Vec3_BlockPos_Vec3(this.init_BlockPos, Vec3.atCenterOf(cell));
@@ -2512,13 +2512,13 @@ final class AiCombat {
                      mc.options.keyShift.setDown(true);
                   }
 
-                  autismclient.ai.a.AiPlacer.Inner_DataUtil s = this.init_DataPipe_2.init_DataPipe_DataUtil();
-                  if (s == autismclient.ai.a.AiPlacer.Inner_DataUtil.init) {
+                  autismclient.ai.engine.AiPlacer.Inner_DataUtil s = this.init_DataPipe_2.init_DataPipe_DataUtil();
+                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
                      return this.load("Shielding the pillar from the " + BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath());
                   }
 
                   this.pop_Z = false;
-                  if (s == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                  if (s == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                      this.prev++;
                      this.reset = 0;
                      this.init_Vec3 = null;

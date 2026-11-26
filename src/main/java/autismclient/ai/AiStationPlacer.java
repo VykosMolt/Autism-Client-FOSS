@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,7 +20,7 @@ final class AiStationPlacer {
    static final int init_I = 60;
    private final Item init_Item;
    private final String init_Str;
-   private final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
    private List<BlockPos> init_List;
    private int load_I;
    private int read_I;
@@ -77,7 +77,7 @@ final class AiStationPlacer {
          if (this.init_List == null) {
             this.init_List = new ArrayList<>(AiCraft.init_List());
             this.load_I = 0;
-            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.a.AiPlacer.init_Z_BlockPos_Item(spotx, this.init_Item));
+            this.init_List.removeIf(spotx -> !spotx.equals(this.init_BlockPos) && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(spotx, this.init_Item));
             if (this.init_BlockPos != null && this.init_List.remove(this.init_BlockPos)) {
                this.init_List = new ArrayList<>(this.init_List);
                this.init_List.add(0, this.init_BlockPos);
@@ -86,7 +86,7 @@ final class AiStationPlacer {
             boolean allOurs = !this.init_List.isEmpty();
 
             for (BlockPos spot : this.init_List) {
-               if (!autismclient.ai.a.AiEditLedger.write_Z(spot)) {
+               if (!autismclient.ai.engine.AiEditLedger.write_Z(spot)) {
                   allOurs = false;
                   break;
                }
@@ -127,17 +127,17 @@ final class AiStationPlacer {
          this.read_I = 0;
       }
 
-      autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-      if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+      autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+      if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
          this.init_Z = false;
          this.load_BlockPos = this.init_DataPipe.init_BlockPos();
          return AiStationPlacer.Inner_DataUtil.load;
-      } else if (status != autismclient.ai.a.AiPlacer.Inner_DataUtil.read && ++this.read_I <= 60) {
+      } else if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.read_I <= 60) {
          this.read_Str = "Placing a " + this.init_Str;
          return AiStationPlacer.Inner_DataUtil.init;
       } else {
          this.init_Z = false;
-         this.load_Str = status == autismclient.ai.a.AiPlacer.Inner_DataUtil.read
+         this.load_Str = status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
             ? this.init_DataPipe.init_Str()
             : "not placed within 60 ticks: " + this.init_DataPipe.load_Str();
          this.init_DataPipe.init_V();
@@ -216,7 +216,7 @@ final class AiStationPlacer {
 
                if (landing) {
                   AutismClientAddon.LOG.info("[AI] clearing a leaf exit for the {} at {}", this.init_Str, cell.toShortString());
-                  this.load_AiOperation = lowerLeaf && upperLeaf ? init(above, cell) : autismclient.ai.a.AiBreakBlock.init(upperLeaf ? above : cell, 10);
+                  this.load_AiOperation = lowerLeaf && upperLeaf ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.init(upperLeaf ? above : cell, 10);
                   return;
                }
             }
@@ -242,7 +242,7 @@ final class AiStationPlacer {
                boolean clearHead = !mc.level.getBlockState(above).getCollisionShape(mc.level, above).isEmpty();
                if (!clearHead || init(mc, above)) {
                   AutismClientAddon.LOG.info("[AI] no spot for a {} here, digging one out at {}", this.init_Str, cell.toShortString());
-                  this.load_AiOperation = clearHead ? init(above, cell) : autismclient.ai.a.AiBreakBlock.init(cell, 10);
+                  this.load_AiOperation = clearHead ? init(above, cell) : autismclient.ai.engine.AiBreakBlock.init(cell, 10);
                   this.init_BlockPos = cell.immutable();
                   this.read_Str = "Digging out a spot for the " + this.init_Str;
                   return true;
@@ -263,7 +263,7 @@ final class AiStationPlacer {
             return false;
          }
 
-         if (autismclient.ai.a.MiningCost.load(mc, state, false) < 0) {
+         if (autismclient.ai.engine.MiningCost.load(mc, state, false) < 0) {
             return false;
          }
 
@@ -281,7 +281,7 @@ final class AiStationPlacer {
 
    private static AiOperation init(final BlockPos above, final BlockPos cell) {
       return new AiOperation() {
-         AiOperation init_AiOperation = autismclient.ai.a.AiBreakBlock.init(above, 10);
+         AiOperation init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(above, 10);
          boolean init_Z = true;
 
          @Override
@@ -290,7 +290,7 @@ final class AiStationPlacer {
             if (result.terminal() && result.status() == AiOperation.Status.SUCCEEDED && this.init_Z) {
                this.init_AiOperation.cancel();
                this.init_Z = false;
-               this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(cell, 10);
+               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 10);
                return this.init_AiOperation.tick();
             } else {
                return result;

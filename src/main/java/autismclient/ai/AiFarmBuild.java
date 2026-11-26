@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -410,7 +410,7 @@ final class AiFarmBuild {
          final String init_Str = substrate;
          final boolean init_Z = AiFarmArea.init_Z(substrate);
          final AiFarmArea.Inner_DataUtil init_C_DataUtil = selectedArea;
-         final BlockPos init_BlockPos = this.init_C_DataUtil == null ? autismclient.ai.a.AiStance.init(mc) : this.init_C_DataUtil.origin();
+         final BlockPos init_BlockPos = this.init_C_DataUtil == null ? autismclient.ai.engine.AiStance.init(mc) : this.init_C_DataUtil.origin();
          boolean load_Z;
          boolean read_Z;
          AiFarmBuild.Inner_CachePool init_D_CachePool = AiFarmBuild.Inner_CachePool.init;
@@ -850,12 +850,12 @@ final class AiFarmBuild {
                this.init_AiOperation = this.init(base, AiCraft.init_I(base) + need, 900);
                return this.init_AiOperation_Result_3("Getting soul sand for the field");
             } else {
-               this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+               this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                   AiJson.init_JsonObject_ObjArr(
                      "blocks",
-                     autismclient.ai.a.AiBlockMine.init(List.of("minecraft:dirt", "minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:rooted_dirt")),
+                     autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:dirt", "minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:rooted_dirt")),
                      "drops",
-                     autismclient.ai.a.AiBlockMine.init(List.of("minecraft:dirt")),
+                     autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:dirt")),
                      "held",
                      need,
                      "radius",
@@ -900,7 +900,7 @@ final class AiFarmBuild {
                BlockPos p = this.init_List.get(this.init_I);
                BlockState state = mc.level.getBlockState(p);
                if (!state.isAir() && (state.getFluidState().isEmpty() || !state.getCollisionShape(mc.level, p).isEmpty())) {
-                  this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(p, 30, false, this.init_Set());
+                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(p, 30, false, this.init_Set());
                   return this.init_AiOperation_Result_3("Clearing " + BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath() + " at " + p.toShortString());
                }
 
@@ -1068,7 +1068,7 @@ final class AiFarmBuild {
             for (List<BlockPos> cells = this.init_D_ConfigStore.poolCells(); this.read_I < cells.size(); this.read_I++) {
                BlockPos p = cells.get(this.read_I);
                if (!this.load(p)) {
-                  this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(p, 30, false, this.init_Set(p));
+                  this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(p, 30, false, this.init_Set(p));
                   return this.init_AiOperation_Result_3("Digging the pool at " + p.toShortString());
                }
             }
@@ -1176,7 +1176,7 @@ final class AiFarmBuild {
                this.init_D_CachePool = AiFarmBuild.Inner_CachePool.get;
                return this.init_AiOperation_Result_3("Water hole open");
             } else {
-               this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(c, 30, false, this.init_Set(c));
+               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(c, 30, false, this.init_Set(c));
                return this.init_AiOperation_Result_3("Opening the water hole at " + c.toShortString());
             }
          }
@@ -1434,7 +1434,7 @@ final class AiFarmBuild {
                @Override
                public AiOperation.Result tick() {
                   if (this.init_AiOperation == null) {
-                     BlockHitResult floor = autismclient.ai.a.AiBlockInteraction.init(mc, cell.below(), Direction.UP);
+                     BlockHitResult floor = autismclient.ai.engine.AiBlockInteraction.init(mc, cell.below(), Direction.UP);
                      this.init_AiOperation = floor != null
                            && !(mc.player.getEyePosition().distanceTo(floor.getLocation()) > mc.player.blockInteractionRange() - 1.0)
                         ? this.init()

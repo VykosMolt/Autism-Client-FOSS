@@ -98,7 +98,7 @@ public final class AiServerEvidence {
    }
 
    private static void read(int x, int z) {
-      long key = autismclient.ai.a.AiGridRevisions.init_J(x, z);
+      long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
 
       for (LongConsumer observer : List.copyOf(load_List)) {
          observer.accept(key);
@@ -217,7 +217,7 @@ public final class AiServerEvidence {
 
    public static void load(int x, int z) {
       write(x, z);
-      load_Map.put(autismclient.ai.a.AiGridRevisions.init_J(x, z), ++init_J);
+      load_Map.put(autismclient.ai.engine.AiGridRevisions.init_J(x, z), ++init_J);
 
       while (load_Map.size() > 512) {
          load_Map.remove(load_Map.keySet().iterator().next());
@@ -227,7 +227,7 @@ public final class AiServerEvidence {
    }
 
    public static long init_J_BlockPos(BlockPos pos) {
-      return Math.max(init_Map.getOrDefault(pos.asLong(), 0L), load_Map.getOrDefault(autismclient.ai.a.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4), 0L));
+      return Math.max(init_Map.getOrDefault(pos.asLong(), 0L), load_Map.getOrDefault(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4), 0L));
    }
 
    public static long init_J() {

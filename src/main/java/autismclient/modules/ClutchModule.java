@@ -1736,11 +1736,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private ClutchFallPhysics.Inner_ConfigStore init_i_ConfigStore_Z(boolean axis, int mode, boolean start, List<VoxelShape> extra, int placementTick) {
       return ClutchFallPhysics.init(
-         autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(MC.player),
+         autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player),
          MC.options.keyShift.isDown() ? 64 : (!start && this.read_I_9() != this.queue ? 0 : 1),
          MC.player.getYRot(),
          this.init_D_13(),
-         autismclient.ai.a.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
+         autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
          (body, motion, supported) -> this.init_Vec3_AABB(body, motion, axis, mode, supported),
          this::init_i_BufferHelper_AABB,
          extra.stream().flatMap(shape -> shape.toAabbs().stream()).toList(),
@@ -1775,13 +1775,13 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private ClutchFallPhysics.Inner_ConfigStore load_i_ConfigStore() {
       Input input = this.init_Input_2();
-      autismclient.ai.a.AiPhysics.Inner_DataUtil pressed = new autismclient.ai.a.AiPhysics.Inner_DataUtil(
+      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
          (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0), (input.left() ? 1 : 0) - (input.right() ? 1 : 0), false, false, true, SilentMovementCoordinator.init_F(MC.player)
       );
       return ClutchFallPhysics.init_i_ConfigStore_NodeWalker_StreamU(
-         autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(MC.player),
+         autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player),
          pressed,
-         autismclient.ai.a.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
+         autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player),
          this.init_D_13(),
          this::init_i_BufferHelper_AABB
       );
@@ -2634,7 +2634,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean load_Z_Input_2(Input input) {
-      autismclient.ai.a.AiPhysics.Inner_StreamUtil start = autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(MC.player);
+      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start = autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player);
       if (start.jumpDelay() > 1) {
          return false;
       }
@@ -2644,7 +2644,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          sprint = module.init(false, false);
       }
 
-      autismclient.ai.a.AiPhysics.Inner_DataUtil pressed = new autismclient.ai.a.AiPhysics.Inner_DataUtil(
+      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
          (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0),
          (input.left() ? 1 : 0) - (input.right() ? 1 : 0),
          true,
@@ -2652,7 +2652,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          input.shift(),
          SilentMovementCoordinator.init_F(MC.player)
       );
-      autismclient.ai.a.AiPhysics.Inner_CachePool world = autismclient.ai.a.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
+      autismclient.ai.engine.AiPhysics.Inner_CachePool world = autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player);
       boolean unsafe = this.init_Z_NodeWalker_StreamU(start, pressed, world);
       if (!unsafe && !input.shift() && start.pose() != 0) {
          unsafe = this.init_Z_NodeWalker_StreamU(ClutchFallPhysics.init_NodeWalker_StreamU_NodeWalker_StreamU(start), pressed, world);
@@ -2666,9 +2666,9 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean init_Z_NodeWalker_StreamU(
-      autismclient.ai.a.AiPhysics.Inner_StreamUtil start,
-      autismclient.ai.a.AiPhysics.Inner_DataUtil pressed,
-      autismclient.ai.a.AiPhysics.Inner_CachePool world
+      autismclient.ai.engine.AiPhysics.Inner_StreamUtil start,
+      autismclient.ai.engine.AiPhysics.Inner_DataUtil pressed,
+      autismclient.ai.engine.AiPhysics.Inner_CachePool world
    ) {
       ClutchFallPhysics.Inner_ConfigStore intended = ClutchFallPhysics.init(start, pressed, world, this.init_D_13(), null, this::init_i_BufferHelper_AABB);
       if (intended.init_Z() && !intended.init_List().isEmpty()) {

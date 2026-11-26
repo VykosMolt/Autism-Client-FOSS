@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiScaffold;
+import autismclient.ai.engine.AiScaffold;
 import autismclient.api.ai.AiOperation;
 import autismclient.util.BlockBreakSpeedHelper;
 import com.google.gson.JsonArray;
@@ -37,11 +37,11 @@ import net.minecraft.world.level.block.state.BlockState;
 
 final class AiPrintOp implements AiOperation {
    private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final autismclient.ai.b.LivePrintEnv init_DataUtil = new autismclient.ai.b.LivePrintEnv();
+   private final autismclient.ai.print.LivePrintEnv init_DataUtil = new autismclient.ai.print.LivePrintEnv();
    private final ClientLevel init_ClientLevel = this.init_Minecraft.level;
    private final LocalPlayer init_LocalPlayer = this.init_Minecraft.player;
-   private final autismclient.ai.b.PrintCore init_UiHelper;
-   private final List<autismclient.ai.b.PrintTarget> init_List;
+   private final autismclient.ai.print.PrintCore init_UiHelper;
+   private final List<autismclient.ai.print.PrintTarget> init_List;
    private final AiBuilder.Inner_DataUtil init_TableIndex_DataUti;
    private final AiBuilder.Inner_ConfigStore init_TableIndex_ConfigS;
    private final AiPrintSupply init_bj;
@@ -92,7 +92,7 @@ final class AiPrintOp implements AiOperation {
       this(blueprint, timeoutSeconds, power, AiPrintRules.init(blueprint));
    }
 
-   AiPrintOp(AiBuilder.Inner_DataUtil blueprint, int timeoutSeconds, AiBuilder.Inner_ConfigStore power, List<autismclient.ai.b.PrintTarget> preparedTargets) {
+   AiPrintOp(AiBuilder.Inner_DataUtil blueprint, int timeoutSeconds, AiBuilder.Inner_ConfigStore power, List<autismclient.ai.print.PrintTarget> preparedTargets) {
       this(
          blueprint,
          timeoutSeconds,
@@ -106,7 +106,7 @@ final class AiPrintOp implements AiOperation {
       AiBuilder.Inner_DataUtil blueprint,
       int timeoutSeconds,
       AiBuilder.Inner_ConfigStore power,
-      List<autismclient.ai.b.PrintTarget> preparedTargets,
+      List<autismclient.ai.print.PrintTarget> preparedTargets,
       AiSchematicMachinePlan.Inner_StreamUtil actions
    ) {
       this(blueprint, timeoutSeconds, power, preparedTargets, actions, null);
@@ -116,9 +116,9 @@ final class AiPrintOp implements AiOperation {
       AiBuilder.Inner_DataUtil blueprint,
       int timeoutSeconds,
       AiBuilder.Inner_ConfigStore power,
-      List<autismclient.ai.b.PrintTarget> preparedTargets,
+      List<autismclient.ai.print.PrintTarget> preparedTargets,
       AiSchematicMachinePlan.Inner_StreamUtil actions,
-      autismclient.ai.b.PrintCore.ao geometry
+      autismclient.ai.print.PrintCore.ao geometry
    ) {
       AiPrintSupply.init_V_TableIndex_ConfigS(power);
       this.init_TableIndex_DataUti = blueprint;
@@ -127,7 +127,7 @@ final class AiPrintOp implements AiOperation {
       this.init_Z = !power.clearTerrain();
       this.init_List = preparedTargets;
       this.init_DataUtil.init_V_Z(power.assumeFly());
-      this.init_UiHelper = autismclient.ai.b.PrintCore.init_UiHelper_EventBus(this.init_DataUtil, AiPrintRules.init_bi, this.init_List, geometry);
+      this.init_UiHelper = autismclient.ai.print.PrintCore.init_UiHelper_EventBus(this.init_DataUtil, AiPrintRules.init_bi, this.init_List, geometry);
       this.load_a_StreamUtil = AiScaffold.init(AiBuilder.init_Path(blueprint), List.of());
       this.init_ArrayDeque.addAll(this.load_a_StreamUtil.init_List());
       this.init_UiHelper.init_V_List(actions.vehicles());
@@ -138,11 +138,11 @@ final class AiPrintOp implements AiOperation {
          this.init_UiHelper.init_V_BitSetUtil(new AiPrintContainer(this.init_DataUtil, saved));
       }
 
-      for (autismclient.ai.b.PrintSkippedContents unavailable : actions.unavailable()) {
+      for (autismclient.ai.print.PrintSkippedContents unavailable : actions.unavailable()) {
          this.init_UiHelper.init_V_BitSetUtil(unavailable);
       }
 
-      for (autismclient.ai.b.PrintClockSpec clock : actions.clocks()) {
+      for (autismclient.ai.print.PrintClockSpec clock : actions.clocks()) {
          this.init_UiHelper.init_V_BitSetUtil(AiPrintClock.init(this.init_DataUtil, clock));
       }
 
@@ -255,7 +255,7 @@ final class AiPrintOp implements AiOperation {
          }
       }
 
-      autismclient.ai.a.AiRoutePolicy.putAt(this.init_bj.init_Set()::contains);
+      autismclient.ai.engine.AiRoutePolicy.putAt(this.init_bj.init_Set()::contains);
       if (!this.init_DataUtil.update_Z()) {
          AiOperation.Result guarded = this.init_Y
             .init_AiOperation_Result_AiOperation(
@@ -358,7 +358,7 @@ final class AiPrintOp implements AiOperation {
                }
 
                this.load_Z = false;
-               this.init_V_AiOperation(autismclient.ai.a.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), false));
+               this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), false));
                return this.init_AiOperation_Result_Str_9("Clearing terrain from the schematic's air at " + this.init_BlockPos.toShortString());
             }
 
@@ -390,7 +390,7 @@ final class AiPrintOp implements AiOperation {
 
          this.read_J++;
          this.init_DataUtil.init_V();
-         autismclient.ai.b.PrintControls controls = this.init_UiHelper.read_SyncManager();
+         autismclient.ai.print.PrintControls controls = this.init_UiHelper.read_SyncManager();
          ItemStack requestedContents = this.init_UiHelper.init_ItemStack();
          if (!requestedContents.isEmpty()) {
             this.init_ItemStack = requestedContents;
@@ -518,7 +518,7 @@ final class AiPrintOp implements AiOperation {
       this.read_J++;
       this.init_DataUtil.init_V();
       this.read_Z = true;
-      autismclient.ai.b.PrintControls controls = this.init_UiHelper.init_SyncManager();
+      autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
       if (controls == null) {
          return this.init(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.close);
       }
@@ -540,7 +540,7 @@ final class AiPrintOp implements AiOperation {
       boolean portableHere = this.init_UiHelper.close_Z()
          && this.init_bj.read_Z()
          && AiCarriedShulker.init_BlockPos_Minecraft_Set(this.init_Minecraft, this.init_Set_7()) != null;
-      autismclient.ai.b.PrintControls controls = portableHere ? this.init_UiHelper.init_SyncManager() : this.init_UiHelper.load_SyncManager();
+      autismclient.ai.print.PrintControls controls = portableHere ? this.init_UiHelper.init_SyncManager() : this.init_UiHelper.load_SyncManager();
       if (controls == null) {
          return this.init(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.close);
       }
@@ -607,7 +607,7 @@ final class AiPrintOp implements AiOperation {
       } else {
          this.read_J++;
          this.init_DataUtil.init_V();
-         autismclient.ai.b.PrintControls controls = this.init_UiHelper.init_SyncManager();
+         autismclient.ai.print.PrintControls controls = this.init_UiHelper.init_SyncManager();
          if (controls == null) {
             return this.init(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.close);
          } else {
@@ -643,7 +643,7 @@ final class AiPrintOp implements AiOperation {
 
       this.read_J++;
       this.init_DataUtil.init_V();
-      autismclient.ai.b.PrintControls controls = this.init_UiHelper.load_SyncManager();
+      autismclient.ai.print.PrintControls controls = this.init_UiHelper.load_SyncManager();
       if (controls == null) {
          return this.init_AiOperation_Result_Z_Str(false, "No safe stock route for the optional saved contents");
       }
@@ -755,8 +755,8 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result sync_AiOperation_Result_3() {
-      autismclient.ai.a.AiPathfinder.Inner_CachePool.init_V_J(3000000000L);
-      autismclient.ai.a.AiPathfinder.Inner_CachePool.load_V_J(3000000000L);
+      autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(3000000000L);
+      autismclient.ai.engine.AiPathfinder.Inner_CachePool.load_V_J(3000000000L);
       AiOperation.Result result = this.init_AiOperation.tick();
       this.init_JsonObject = AiJson.init_JsonObject_Str(result.dataJson());
       if (!result.terminal()) {
@@ -788,7 +788,7 @@ final class AiPrintOp implements AiOperation {
          if (this.init_BlockPos != null) {
             if (!this.load_Z && result.status() == AiOperation.Status.FAILED && result.failure() == AiFailure.close) {
                this.load_Z = true;
-               this.init_V_AiOperation(autismclient.ai.a.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), true));
+               this.init_V_AiOperation(autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 30, false, this.init_Set_7(), true));
                return this.init_AiOperation_Result_Str_9("Finding supported access to terrain at " + this.init_BlockPos.toShortString());
             } else {
                BlockPos p = this.init_BlockPos;
@@ -888,7 +888,7 @@ final class AiPrintOp implements AiOperation {
                         : (
                            this.init_Item == null && this.init_ItemStack.isEmpty()
                               ? (
-                                 this.init_UiHelper.init_UiHelper_J() == autismclient.ai.b.PrintCore.J.read
+                                 this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.read
                                     ? "drain"
                                     : this.init_UiHelper.init_UiHelper_J().name().toLowerCase(Locale.ROOT)
                               )
@@ -929,7 +929,7 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("machineOutcomesUnverified", this.init_UiHelper.reset_I());
       o.addProperty(
          "machineComplete",
-         this.init_UiHelper.init_UiHelper_J() == autismclient.ai.b.PrintCore.J.update
+         this.init_UiHelper.init_UiHelper_J() == autismclient.ai.print.PrintCore.J.update
             && this.init_UiHelper.set_I() == 0
             && this.init_UiHelper.put_I() == 0
             && this.init_UiHelper.reset_I() == 0
@@ -967,7 +967,7 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("terrainCleared", this.init_bj.load_I);
       o.addProperty("soilCollected", this.init_I_28());
       o.addProperty("soilBroken", this.update_I);
-      o.addProperty("interactionAwaitingAck", this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.b.PrintEnv.Inner_StreamUtil.load);
+      o.addProperty("interactionAwaitingAck", this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.load);
       o.addProperty(
          "recoveryRequired",
          AiMenuClose.load()
@@ -975,7 +975,7 @@ final class AiPrintOp implements AiOperation {
             || this.sync_Z
             || this.init_UiHelper.update_Z()
             || this.init_DataUtil.write_Z()
-            || this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.b.PrintEnv.Inner_StreamUtil.read
+            || this.init_DataUtil.init_EventBus_StreamUti() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.read
       );
       if (this.init_JsonObject != null) {
          o.add("externalWork", this.init_JsonObject.deepCopy());
@@ -1038,9 +1038,9 @@ final class AiPrintOp implements AiOperation {
          this.init_Y.init_V();
          this.sync_Z = this.sync_Z | this.init_Y.read();
          this.read_V_8();
-         autismclient.ai.a.AiPathfinder.Inner_CachePool.init_V_J(0L);
-         autismclient.ai.a.AiPathfinder.Inner_CachePool.load_V_J(0L);
-         autismclient.ai.a.AiRoutePolicy.putAt_V();
+         autismclient.ai.engine.AiPathfinder.Inner_CachePool.init_V_J(0L);
+         autismclient.ai.engine.AiPathfinder.Inner_CachePool.load_V_J(0L);
+         autismclient.ai.engine.AiRoutePolicy.putAt_V();
          AiServerEvidence.load_V_Consumer(this.init_Consumer);
          AiServerEvidence.load_V_LongConsumer(this.init_LongConsumer);
          this.init_DataUtil.read_V();
@@ -1115,14 +1115,14 @@ final class AiPrintOp implements AiOperation {
                return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "No reachable local soil remains", "{}", List.of(), AiFailure.load));
             }
 
-            if (!autismclient.ai.a.AiBlockMine.init(AiPrintOp.this.init_Minecraft.player.getInventory(), new ItemStack(Items.DIRT))) {
+            if (!autismclient.ai.engine.AiBlockMine.init(AiPrintOp.this.init_Minecraft.player.getInventory(), new ItemStack(Items.DIRT))) {
                return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "Make inventory room for local soil", "{}", List.of(), AiFailure.put));
             }
 
             this.init_BlockPos = this.init_List.get(this.init_I++);
             this.read = AiPrintSupply.load(AiPrintOp.this.init_Minecraft.player.getInventory(), Items.DIRT);
             this.write = 0;
-            this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(
+            this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
                this.init_BlockPos,
                30,
                false,

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonObject;
@@ -136,7 +136,7 @@ final class AiFieldWork {
       final int maxZf = maxZ;
       final int yf = field.getFirst().getY() + 1;
       return new AiOperation() {
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final Map<Long, Integer> init_Map;
          final Map<Long, Integer> load_Map;
          boolean init_Z;
@@ -165,7 +165,7 @@ final class AiFieldWork {
          final Set<Long> load_Set;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
             this.init_Map = new HashMap<>();
             this.load_Map = new HashMap<>();
             this.load_I = mc.player.getInventory().getSelectedSlot();
@@ -286,7 +286,7 @@ final class AiFieldWork {
                   this.load_Z = true;
                }
 
-               BlockHitResult currentRay = autismclient.ai.a.AiAim.init_BlockHitResult();
+               BlockHitResult currentRay = autismclient.ai.engine.AiAim.init_BlockHitResult();
 
                for (BlockPos ground : field) {
                   BlockPos at = ground.above();
@@ -317,7 +317,7 @@ final class AiFieldWork {
                         if (AiFieldPlan.init(this.init_Z, this.read_I, onRay)) {
                            BlockHitResult hit = onRay
                               ? currentRay
-                              : (ripeHere ? autismclient.ai.a.AiBlockInteraction.init(mc, at) : autismclient.ai.a.AiBlockInteraction.init(mc, ground, Direction.UP));
+                              : (ripeHere ? autismclient.ai.engine.AiBlockInteraction.init(mc, at) : autismclient.ai.engine.AiBlockInteraction.init(mc, ground, Direction.UP));
                            if (hit != null && !(eye.distanceTo(hit.getLocation()) > reach)) {
                               double score = onRay ? -1.0E9 : along * 4.0 + eye.distanceToSqr(hit.getLocation()) * 0.1;
                               if (score < bestKey) {
@@ -335,7 +335,7 @@ final class AiFieldWork {
                boolean acted = false;
                if (best != null) {
                   AiFieldPlan.Inner_StreamUtil nextGoal = AiFieldPlan.Inner_StreamUtil.of(best, bestBreak ? bestHit.getDirection() : Direction.UP);
-                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.a.AiAim.init_BlockHitResult())) {
+                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.init_BlockHitResult())) {
                      this.init_DataUtil.init_V_Vec3(bestHit.getLocation());
                      this.open++;
                      this.load_Z = false;
@@ -346,7 +346,7 @@ final class AiFieldWork {
 
                this.init_DataUtil.load_V();
                if (best != null) {
-                  BlockHitResult ray = autismclient.ai.a.AiAim.init_BlockHitResult();
+                  BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
                   if (ray != null && ray.getBlockPos().equals(best)) {
                      if (bestBreak) {
                         if (this.read_Z && mc.player.getInventory().getItem(this.load_I).is(this.init_Item)) {
@@ -356,7 +356,7 @@ final class AiFieldWork {
                         long ground = best.below().asLong();
                         long revision = AiServerEvidence.init_J_BlockPos(best);
                         BlockState before = mc.level.getBlockState(best);
-                        if (autismclient.ai.a.AiBlockDigger.init_Z_Minecraft(mc, best, ray.getDirection())
+                        if (autismclient.ai.engine.AiBlockDigger.init_Z_Minecraft(mc, best, ray.getDirection())
                            && AiReplantEvidence.init(before, mc.level.getBlockState(best), crop)) {
                            this.sync++;
                            acted = true;
@@ -722,7 +722,7 @@ final class AiFieldWork {
       final Block crop = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cropBlock));
       final List<Vec3> path = AiFieldPlan.init(plots, 9, mc.player.blockPosition());
       return new AiOperation() {
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final Set<Long> init_Set = new HashSet<>();
          int init_I;
          int load_I;
@@ -752,7 +752,7 @@ final class AiFieldWork {
                this.init_Set.add(p.asLong());
             }
 
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
             this.init_I = 1;
             this.open = -1;
             this.load_Set = new HashSet<>();
@@ -828,7 +828,7 @@ final class AiFieldWork {
 
                      Vec3 top = Vec3.atCenterOf(p).add(0.0, 0.5, 0.0);
                      if (!(eye.distanceToSqr(top) > (reach + 1.0) * (reach + 1.0))) {
-                        BlockHitResult hit = autismclient.ai.a.AiBlockInteraction.init(mc, p, Direction.UP);
+                        BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.init(mc, p, Direction.UP);
                         if (hit != null && !(eye.distanceTo(hit.getLocation()) > reach)) {
                            double key = along * 4.0 + eye.distanceToSqr(hit.getLocation()) * 0.1;
                            if (key < bestKey) {
@@ -848,7 +848,7 @@ final class AiFieldWork {
                boolean clicked = false;
                if (best != null) {
                   AiFieldPlan.Inner_StreamUtil nextGoal = AiFieldPlan.Inner_StreamUtil.of(best, Direction.UP);
-                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.a.AiAim.init_BlockHitResult())) {
+                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.init_BlockHitResult())) {
                      this.init_DataUtil.init_V_Vec3(bestHit.getLocation());
                      this.poll++;
                   }
@@ -858,7 +858,7 @@ final class AiFieldWork {
 
                this.init_DataUtil.load_V();
                if (best != null) {
-                  BlockHitResult ray = autismclient.ai.a.AiAim.init_BlockHitResult();
+                  BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
                   if (ray != null && ray.getBlockPos().equals(best) && ray.getDirection() == Direction.UP) {
                      clicked = this.init(best, ray);
                   }
@@ -891,7 +891,7 @@ final class AiFieldWork {
                                  .append(need)
                                  .append(" (")
                                  .append(mc.level.getBlockState(p).getBlock().getName().getString())
-                                 .append(autismclient.ai.a.AiBlockInteraction.init(mc, p, Direction.UP) == null ? ", top unseen" : "")
+                                 .append(autismclient.ai.engine.AiBlockInteraction.init(mc, p, Direction.UP) == null ? ", top unseen" : "")
                                  .append(')');
                            }
                         }

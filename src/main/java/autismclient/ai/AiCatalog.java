@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiCapabilities;
 import autismclient.api.ai.AiCapabilityDescriptor;
 import autismclient.api.custommenu.CustomMenuAdapterRegistry;
@@ -413,18 +413,18 @@ public final class AiCatalog {
             + AiSourceKnowledge.load(AiRedstone.class)
             + AiSourceKnowledge.load(AiRanged.class)
             + AiSourceKnowledge.load(AiTidy.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiAim.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiPlacer.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiPathfinder.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiWrExecutor.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiPaceScript.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiPacePlayback.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiWallJump.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiLadderJump.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiSlimeBounce.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiAim.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiPlacer.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiPathfinder.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiWrExecutor.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiPaceScript.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiPacePlayback.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiWallJump.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiLadderJump.class)
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiSlimeBounce.class)
             + AiSourceKnowledge.load(AiParkourRoute.class)
             + AiSourceKnowledge.load(AiGoto.class)
-            + AiSourceKnowledge.load(autismclient.ai.a.AiMine.class);
+            + AiSourceKnowledge.load(autismclient.ai.engine.AiMine.class);
       }
 
       init(entries, d, defaults, dependency);

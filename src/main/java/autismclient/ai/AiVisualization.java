@@ -233,11 +233,11 @@ public final class AiVisualization {
          .sum();
    }
 
-   public static void putAt_V_Obj_3(Object owner, List<autismclient.ai.a.AiPathfinder.UiHelper> path, int index, Supplier<BlockState> supportState) {
+   public static void putAt_V_Obj_3(Object owner, List<autismclient.ai.engine.AiPathfinder.UiHelper> path, int index, Supplier<BlockState> supportState) {
       init_V_Obj(owner, path, index, supportState);
    }
 
-   public static void init_V_Obj(Object owner, List<autismclient.ai.a.AiPathfinder.UiHelper> path, int index, Supplier<BlockState> supportState) {
+   public static void init_V_Obj(Object owner, List<autismclient.ai.engine.AiPathfinder.UiHelper> path, int index, Supplier<BlockState> supportState) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null && init_AiSettings.visualizePaths && (l.init_Obj != path || l.init_I != index)) {
          l.init_Obj = path;
@@ -255,7 +255,7 @@ public final class AiVisualization {
          BlockState support = supportState.get();
 
          for (int i = Math.max(0, index); i < end; i++) {
-            autismclient.ai.a.AiPathfinder.UiHelper m = path.get(i);
+            autismclient.ai.engine.AiPathfinder.UiHelper m = path.get(i);
 
             for (BlockPos p : m.cellsToBreak()) {
                if (edits.size() < 64 && AiTerrain.init(mc.level, p)) {
@@ -277,7 +277,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init(Object owner, autismclient.ai.a.AiPaceScript.Inner_IoHelper script, int tickIndex, List<BlockPos> checkpoints, int checkpointIndex) {
+   public static void init(Object owner, autismclient.ai.engine.AiPaceScript.Inner_IoHelper script, int tickIndex, List<BlockPos> checkpoints, int checkpointIndex) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null && script != null && init_AiSettings.visualizePaths) {
          int length = script.flowTemp();
@@ -297,7 +297,7 @@ public final class AiVisualization {
       }
    }
 
-   public static void init(Object owner, autismclient.ai.a.AiPaceScript.Inner_JsonCache preview, List<BlockPos> checkpoints, int checkpointIndex) {
+   public static void init(Object owner, autismclient.ai.engine.AiPaceScript.Inner_JsonCache preview, List<BlockPos> checkpoints, int checkpointIndex) {
       AiVisualization.Inner_CachePool l = init_cG_CachePool(owner);
       if (l != null && preview != null && init_AiSettings.visualizePaths && (l.init_Obj != preview || l.lastCheckpointIndex != checkpointIndex)) {
          l.init_Obj = preview;
@@ -314,18 +314,18 @@ public final class AiVisualization {
       }
    }
 
-   private static boolean isAirMove(autismclient.ai.a.AiPathfinder.Inner_SyncManager type) {
-      return type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.start
-         || type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.reset
-         || type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.put
-         || type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.add
-         || type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.clear
-         || type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.LADDER_JUMP
-         || type == autismclient.ai.a.AiPathfinder.Inner_SyncManager.SLIME_BOUNCE;
+   private static boolean isAirMove(autismclient.ai.engine.AiPathfinder.Inner_SyncManager type) {
+      return type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.start
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.reset
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.put
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.add
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.clear
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.LADDER_JUMP
+         || type == autismclient.ai.engine.AiPathfinder.Inner_SyncManager.SLIME_BOUNCE;
    }
 
    static void buildPathVisuals(
-      List<autismclient.ai.a.AiPathfinder.UiHelper> path, int index, List<AiVisualization.Inner_BufferHelper> segments, List<AiVisualization.Inner_TaskState> markers
+      List<autismclient.ai.engine.AiPathfinder.UiHelper> path, int index, List<AiVisualization.Inner_BufferHelper> segments, List<AiVisualization.Inner_TaskState> markers
    ) {
       if (path != null && !path.isEmpty()) {
          int startIdx = Math.max(0, index);
@@ -336,7 +336,7 @@ public final class AiVisualization {
             points.add(Vec3.atBottomCenterOf(path.get(startIdx).from()).add(0.0, 0.08, 0.0));
 
             for (int i = startIdx; i < endIdx; i++) {
-               autismclient.ai.a.AiPathfinder.UiHelper m = path.get(i);
+               autismclient.ai.engine.AiPathfinder.UiHelper m = path.get(i);
                Vec3 to = Vec3.atBottomCenterOf(m.to()).add(0.0, 0.08, 0.0);
                boolean air = isAirMove(m.type());
                points.add(to);
@@ -357,7 +357,7 @@ public final class AiVisualization {
    }
 
    static void buildPreviewVisuals(
-      autismclient.ai.a.AiPaceScript.Inner_JsonCache preview,
+      autismclient.ai.engine.AiPaceScript.Inner_JsonCache preview,
       List<BlockPos> checkpoints,
       int checkpointIndex,
       List<AiVisualization.Inner_BufferHelper> segments,
@@ -390,7 +390,7 @@ public final class AiVisualization {
    }
 
    static void buildScriptVisuals(
-      autismclient.ai.a.AiPaceScript.Inner_IoHelper script,
+      autismclient.ai.engine.AiPaceScript.Inner_IoHelper script,
       int tickIndex,
       List<BlockPos> checkpoints,
       int checkpointIndex,
@@ -403,14 +403,14 @@ public final class AiVisualization {
          int endIdx = Math.min(total, startIdx + 220);
          ArrayList<Vec3> points = new ArrayList<>(Math.min(220, endIdx - startIdx));
          ArrayList<Boolean> airFlags = new ArrayList<>(Math.min(220, endIdx - startIdx));
-         autismclient.ai.a.AiPhysics.Inner_StreamUtil prev = script.putAt_TokenCore_TableCac_I(startIdx);
+         autismclient.ai.engine.AiPhysics.Inner_StreamUtil prev = script.putAt_TokenCore_TableCac_I(startIdx);
          if (prev != null) {
             points.add(new Vec3(prev.x(), prev.y() + (prev.onGround() ? 0.06 : 0.04), prev.z()));
             int airTicks = prev.onGround() ? 0 : 1;
             int skipped = 0;
 
             for (int i = startIdx + 1; i < endIdx; i++) {
-               autismclient.ai.a.AiPhysics.Inner_StreamUtil cur = script.putAt_TokenCore_TableCac_I(i);
+               autismclient.ai.engine.AiPhysics.Inner_StreamUtil cur = script.putAt_TokenCore_TableCac_I(i);
                if (cur == null) {
                   break;
                }

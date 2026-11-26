@@ -24,7 +24,7 @@ final class AiChop {
    }
 
    static boolean init(String arg, String blockId) {
-      return autismclient.ai.a.AiMine.init(arg, blockId);
+      return autismclient.ai.engine.AiMine.init(arg, blockId);
    }
 
    static List<BlockPos> init(Predicate<BlockPos> matches, BlockPos start, int cap) {
@@ -156,7 +156,7 @@ final class AiChop {
             gather.addProperty("treeLimit", 1);
          }
 
-         return autismclient.ai.a.AiBlockMine.init_AiOperation(gather);
+         return autismclient.ai.engine.AiBlockMine.init_AiOperation(gather);
       } else {
          throw new IllegalArgumentException("Chopping requires a connected living player");
       }

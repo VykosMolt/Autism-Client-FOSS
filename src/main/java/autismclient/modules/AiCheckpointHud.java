@@ -13,7 +13,7 @@ public final class AiCheckpointHud {
    private AiCheckpointHud() {
    }
 
-   public static void render(autismclient.gui.f.SyncManager ui, List<autismclient.ai.a.AiStandingTarget.Inner_StreamUtil> checkpoints) {
+   public static void render(autismclient.gui.f.SyncManager ui, List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints) {
       if (!checkpoints.isEmpty() && WorldProjectionHelper.init(PROJECTION)) {
          Vec3 camera = WorldProjectionHelper.init();
          GuiGraphicsExtractor graphics = ui.init_GuiGraphicsExtract();

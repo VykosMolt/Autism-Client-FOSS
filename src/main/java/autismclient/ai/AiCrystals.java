@@ -1,7 +1,7 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
-import autismclient.ai.a.AiFallGuard;
+import autismclient.ai.engine.AiGoto;
+import autismclient.ai.engine.AiFallGuard;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -169,7 +169,7 @@ final class AiCrystals {
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
             final JsonArray init_JsonArray = new JsonArray();
             final Set<Integer> init_Set = new LinkedHashSet<>();
@@ -205,7 +205,7 @@ final class AiCrystals {
             boolean update_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -435,7 +435,7 @@ final class AiCrystals {
 
                   this.init_BlockPos = stand;
                   this.init_AiOperation = AiGoto.init(
-                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                     stand, 1.5, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                   );
                }
 
@@ -543,7 +543,7 @@ final class AiCrystals {
                   this.init_h_StreamUtil = this.load_Z ? AiCrystals.Inner_StreamUtil.read : AiCrystals.Inner_StreamUtil.load;
                   return this.load("Blast would be lethal point-blank; switching to the bow");
                } else {
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.init_Vec3_Entity(entity));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_Entity(entity));
                   this.init_DataUtil.load_V();
                   if (!this.init_DataUtil.load_Z() && ++this.sync < 25) {
                      return this.load("Aiming at the crystal");
@@ -574,7 +574,7 @@ final class AiCrystals {
                   this.init_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 3, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 3);
                   this.load_BlockPos = new BlockPos(this.init_h_DataUtil.x() + side[0] * 2, this.init_h_DataUtil.y(), this.init_h_DataUtil.z() + side[1] * 2);
                   this.init_AiOperation = AiGoto.init(
-                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                     this.init_BlockPos, 0.7, false, true, true, this.init_I_I_4(120), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                   );
                }
 
@@ -776,7 +776,7 @@ final class AiCrystals {
                String path = BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(below).getBlock()).getPath();
                if (!"obsidian".equals(path) && !"bedrock".equals(path)) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(below, 20);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(below, 20);
                   }
 
                   AiOperation.Result r = this.init_AiOperation.tick();
@@ -1073,7 +1073,7 @@ final class AiCrystals {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty()) {
                      String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                     int rank = autismclient.ai.a.AiRestock.init_I(id);
+                     int rank = autismclient.ai.engine.AiRestock.init_I(id);
                      if (rank >= 0 && rank < bestRank) {
                         bestRank = rank;
                         best = id;
@@ -1089,7 +1089,7 @@ final class AiCrystals {
 
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
-                  if (!stack.isEmpty() && autismclient.ai.a.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+                  if (!stack.isEmpty() && autismclient.ai.engine.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                      total += stack.getCount();
                   }
                }

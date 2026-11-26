@@ -1,0 +1,152 @@
+package autismclient.ai.print;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+
+public interface PrintMachineJob {
+   BlockPos position();
+
+   Item item();
+
+   String description();
+
+   String detail();
+
+   boolean matchesSource(BlockState var1);
+
+   PrintMachineJob.Inner_DataUtil prepare();
+
+   boolean beginDispatch();
+
+   PrintMachineJob.Inner_DataUtil poll_BitSetUtil_DataUti();
+
+   void cancel();
+
+   default boolean c_() {
+      return false;
+   }
+
+   default PrintMachineJob init_BitSetUtil() {
+      return this;
+   }
+
+   default boolean sync() {
+      return false;
+   }
+
+   default boolean needsAccess() {
+      return true;
+   }
+
+   default boolean b_() {
+      return false;
+   }
+
+   default Set<BlockPos> init_Set() {
+      return Set.of(this.position());
+   }
+
+   default Set<BlockPos> load_Set() {
+      return Set.of();
+   }
+
+   default boolean init_Z_BlockPos_BlockState(BlockPos position, BlockState actual) {
+      return false;
+   }
+
+   default boolean init(AABB body) {
+      return true;
+   }
+
+   default PrintMachineJob.Inner_DataUtil init_BitSetUtil_DataUti() {
+      return PrintMachineJob.Inner_DataUtil.update;
+   }
+
+   default int load_I() {
+      return 1;
+   }
+
+   default int read_I() {
+      return 0;
+   }
+
+   default int write_I() {
+      return 0;
+   }
+
+   default boolean close() {
+      return false;
+   }
+
+   default String init_Str() {
+      return "{}";
+   }
+
+   default void init(Supplier<String> guard) {
+   }
+
+   default void init(Map<Item, Integer> removed) {
+   }
+
+   default void init(PrintContainerOrder order) {
+   }
+
+   default boolean load_Z() {
+      return false;
+   }
+
+   default boolean read_Z() {
+      return false;
+   }
+
+   default void init_V() {
+   }
+
+   default boolean write_Z() {
+      return false;
+   }
+
+   default boolean update_Z() {
+      return false;
+   }
+
+   default ItemStack init_ItemStack() {
+      return ItemStack.EMPTY;
+   }
+
+   default void load_V() {
+   }
+
+   default void read_V() {
+   }
+
+   default int init_I() {
+      return 0;
+   }
+
+   default int skippedSlots() {
+      return 0;
+   }
+
+   default List<String> skippedReasons() {
+      return List.of();
+   }
+
+   enum Inner_DataUtil {
+      init,
+      load,
+      read,
+      write,
+      update,
+      sync,
+      flush,
+      close;
+   }
+}

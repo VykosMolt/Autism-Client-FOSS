@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonObject;
@@ -60,7 +60,7 @@ final class AiCarriedShulker implements AiOperation {
    private final ItemStack load_ItemStack;
    private final int read_I;
    private final Set<Long> init_Set;
-   private final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+   private final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
    private final AiPreparationReceipt init_bb = new AiPreparationReceipt();
    private final long init_J = System.nanoTime() + 120000000000L;
    private AiCarriedShulker.Inner_StreamUtil init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.load;
@@ -181,7 +181,7 @@ final class AiCarriedShulker implements AiOperation {
       }
 
       for (ItemStack stored : init_List_ItemStack(box)) {
-         if (autismclient.ai.b.PrintCore.init_Z_ItemStack_Item(stored, wanted) && init(inventory, box, stored.getItem(), 1, true) > 0) {
+         if (autismclient.ai.print.PrintCore.init_Z_ItemStack_Item(stored, wanted) && init(inventory, box, stored.getItem(), 1, true) > 0) {
             return stored.getItem();
          }
       }
@@ -490,7 +490,7 @@ final class AiCarriedShulker implements AiOperation {
          && (!ownedBoxPresent || !body.intersects(new AABB(at).expandTowards(0.0, 0.5, 0.0)))) {
          for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
-               if (level instanceof ClientLevel client && autismclient.ai.a.AiEnvironmentHazards.init(client, at.offset(dx, 0, dz))) {
+               if (level instanceof ClientLevel client && autismclient.ai.engine.AiEnvironmentHazards.init(client, at.offset(dx, 0, dz))) {
                   return false;
                }
 
@@ -530,7 +530,7 @@ final class AiCarriedShulker implements AiOperation {
                   && !floor.hasBlockEntity()
                   && !floor.isSignalSource()
                   && !floor.is(BlockTags.LEAVES)
-                  && !autismclient.ai.a.AiPathfinder.Inner_StreamUtil.read(floor)
+                  && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(floor)
                   && floor.getBlock().getBounceRestitution() == 0.0F
                   && floor.getBlock().getFriction() > 0.0F
                   && floor.getBlock().getFriction() <= 0.6F
@@ -559,12 +559,12 @@ final class AiCarriedShulker implements AiOperation {
       return box.offset(Math.clamp(Mth.floor(drop.x) - box.getX(), -2, 2), 0, Math.clamp(Mth.floor(drop.z) - box.getZ(), -2, 2));
    }
 
-   static autismclient.ai.a.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos_BlockPos(final BlockPos box, BlockPos target) {
-      final autismclient.ai.a.AiPathfinder.Inner_JsonUtil near = autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
-      final Set<autismclient.ai.a.AiPathfinder.Inner_SyncManager> walks = Set.copyOf(
-         EnumSet.complementOf(EnumSet.of(autismclient.ai.a.AiPathfinder.Inner_SyncManager.init, autismclient.ai.a.AiPathfinder.Inner_SyncManager.load))
+   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init_ClassCache_JsonUti_BlockPos_BlockPos(final BlockPos box, BlockPos target) {
+      final autismclient.ai.engine.AiPathfinder.Inner_JsonUtil near = autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
+      final Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> walks = Set.copyOf(
+         EnumSet.complementOf(EnumSet.of(autismclient.ai.engine.AiPathfinder.Inner_SyncManager.init, autismclient.ai.engine.AiPathfinder.Inner_SyncManager.load))
       );
-      return new autismclient.ai.a.AiPathfinder.Inner_JsonUtil() {
+      return new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
          @Override
          public boolean isInGoal(int x, int y, int z) {
             return near.isInGoal(x, y, z);
@@ -581,7 +581,7 @@ final class AiCarriedShulker implements AiOperation {
          }
 
          @Override
-         public Set<autismclient.ai.a.AiPathfinder.Inner_SyncManager> init_Set() {
+         public Set<autismclient.ai.engine.AiPathfinder.Inner_SyncManager> init_Set() {
             return walks;
          }
       };
@@ -710,7 +710,7 @@ final class AiCarriedShulker implements AiOperation {
                this.read_List = init_List_Container(this.init_Minecraft.player.getInventory());
                this.load_J = AiServerEvidence.init_J();
                this.read_J = AiServerEvidence.init_J_BlockPos(this.init_BlockPos);
-               this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(this.init_BlockPos, 25, true, this.init_Set, false);
+               this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.init_BlockPos, 25, true, this.init_Set, false);
                this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.sync;
                return this.init_AiOperation_Result_Str("Recovering the owned stock shulker");
             } else if (this.init_BitSetUtil_StreamU == AiCarriedShulker.Inner_StreamUtil.sync) {
@@ -840,7 +840,7 @@ final class AiCarriedShulker implements AiOperation {
                      false,
                      false,
                      25,
-                     autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                      false,
                      2.0,
                      init_ClassCache_JsonUti_BlockPos_BlockPos(this.init_BlockPos, target),
@@ -890,10 +890,10 @@ final class AiCarriedShulker implements AiOperation {
                         false,
                         false,
                         25,
-                        autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                         false,
                         2.0,
-                        AiGoto.read(autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stance, 0.6), this.init_Set),
+                        AiGoto.read(autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(stance, 0.6), this.init_Set),
                         new AiGoto.Inner_BufferHelper(false, false, 0, true, false, false)
                      );
                      this.init_BitSetUtil_StreamU = AiCarriedShulker.Inner_StreamUtil.init;
@@ -935,13 +935,13 @@ final class AiCarriedShulker implements AiOperation {
                this.init_Set
             )
             && this.init_Z_BlockPos(this.init_BlockPos)) {
-         autismclient.ai.a.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
+         autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
          this.init_Z = this.init_Z | this.init_DataPipe.init_Z();
-         if (placed == autismclient.ai.a.AiPlacer.Inner_DataUtil.read) {
+         if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read) {
             return this.init_AiOperation_Result_AiOperation_Status_Str(
                this.init_Z ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.init_DataPipe.init_Str()
             );
-         } else if (placed != autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+         } else if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
             return this.init_AiOperation_Result_Str("Placing the selected stock shulker");
          } else {
             this.init_BlockState = this.init_Minecraft.level.getBlockState(this.init_BlockPos);
@@ -1189,7 +1189,7 @@ final class AiCarriedShulker implements AiOperation {
             true
          )
          && this.init_Z_BlockPos(this.init_BlockPos)
-         && autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos) != null;
+         && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos) != null;
    }
 
    private List<ItemStack> init_List() {

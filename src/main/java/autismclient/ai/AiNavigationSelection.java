@@ -12,9 +12,9 @@ final class AiNavigationSelection extends AiPlacementSession {
    private final Object init_Obj = this.init_Minecraft.level;
    private final boolean init_Z;
    private final AiToolCallParser.Inner_CachePool options;
-   private final autismclient.ai.a.AiStandingTarget.Inner_DataUtil init_j_DataUtil = new autismclient.ai.a.AiStandingTarget.Inner_DataUtil();
-   private final List<autismclient.ai.a.AiStandingTarget.Inner_StreamUtil> checkpoints = new ArrayList<>();
-   private autismclient.ai.a.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil;
+   private final autismclient.ai.engine.AiStandingTarget.Inner_DataUtil init_j_DataUtil = new autismclient.ai.engine.AiStandingTarget.Inner_DataUtil();
+   private final List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints = new ArrayList<>();
+   private autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil;
 
    AiNavigationSelection(boolean parkour, boolean assumeNoFallDamage) {
       this(parkour, new AiToolCallParser.Inner_CachePool(assumeNoFallDamage, -1));
@@ -25,7 +25,7 @@ final class AiNavigationSelection extends AiPlacementSession {
       this.options = options == null ? new AiToolCallParser.Inner_CachePool(false, -1) : options;
    }
 
-   autismclient.ai.a.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
+   autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
       return this.init_j_StreamUtil;
    }
 
@@ -33,7 +33,7 @@ final class AiNavigationSelection extends AiPlacementSession {
       return this.init_Z;
    }
 
-   List<autismclient.ai.a.AiStandingTarget.Inner_StreamUtil> checkpoints() {
+   List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints() {
       return this.checkpoints;
    }
 

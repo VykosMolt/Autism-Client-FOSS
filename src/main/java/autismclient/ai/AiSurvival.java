@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -111,7 +111,7 @@ final class AiSurvival {
             final Object init_Obj = client.level;
             final Object load_Obj = client.player;
             final Object read_Obj = client.getConnection();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             int init_I = -1;
             int load_I = -1;
             int read_I = -1;
@@ -508,7 +508,7 @@ final class AiSurvival {
                      }
 
                      boolean shaft = false;
-                     if (target == null && autismclient.ai.a.AiMotionSafety.fill_Z() && !this.init_Minecraft.player.isInWater()) {
+                     if (target == null && autismclient.ai.engine.AiMotionSafety.fill_Z() && !this.init_Minecraft.player.isInWater()) {
                         target = AiSurvival.init_BlockPos_BlockPos(
                            this.init_Minecraft.player.blockPosition(),
                            escapeThreats,
@@ -547,7 +547,7 @@ final class AiSurvival {
                            shaft,
                            false,
                            Math.min(shaft ? 5 : 3, remaining),
-                           autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                            shaft,
                            2.0,
                            AiSurvival.init(this.init_Minecraft.player.blockPosition(), target)
@@ -687,9 +687,9 @@ final class AiSurvival {
       return leg % 2 == 0 ? 22.5 : -22.5;
    }
 
-   static autismclient.ai.a.AiPathfinder.Inner_JsonUtil init(final BlockPos start, BlockPos target) {
-      final autismclient.ai.a.AiPathfinder.Inner_JsonUtil near = autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
-      return new autismclient.ai.a.AiPathfinder.Inner_JsonUtil() {
+   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init(final BlockPos start, BlockPos target) {
+      final autismclient.ai.engine.AiPathfinder.Inner_JsonUtil near = autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, 0.6);
+      return new autismclient.ai.engine.AiPathfinder.Inner_JsonUtil() {
          @Override
          public boolean isInGoal(int x, int y, int z) {
             return near.isInGoal(x, y, z);

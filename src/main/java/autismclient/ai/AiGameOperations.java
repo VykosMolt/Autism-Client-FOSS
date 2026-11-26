@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.Arrays;
@@ -174,7 +174,7 @@ final class AiGameOperations {
       }
    }
 
-   static void init(autismclient.ai.a.AiAim aim, Vec3 target) {
+   static void init(autismclient.ai.engine.AiAim aim, Vec3 target) {
       if (Minecraft.getInstance().player != null) {
          aim.init_V_Vec3(target);
          aim.load_V();
@@ -202,7 +202,7 @@ final class AiGameOperations {
    static AiOperation init(final String kind, final JsonObject args, final Set<Long> protectedCells) {
       final BlockPos target = init_BlockPos(args);
       return kind.equals("break")
-         ? autismclient.ai.a.AiBreakBlock.init(
+         ? autismclient.ai.engine.AiBreakBlock.init(
             target, AiJson.init_I_JsonObject(args, "timeoutSeconds", 30), AiJson.init_Z_JsonObject(args, "requireDrops", true), protectedCells
          )
          : new AiActedOperation() {
@@ -231,7 +231,7 @@ final class AiGameOperations {
                }
 
                Direction face = args.has("face") ? Direction.valueOf(AiJson.init_Str_JsonObject(args, "face", "UP").toUpperCase(Locale.ROOT)) : null;
-               if (this.init_AiOperation == null && autismclient.ai.a.AiBlockInteraction.init(mc, target, face) == null) {
+               if (this.init_AiOperation == null && autismclient.ai.engine.AiBlockInteraction.init(mc, target, face) == null) {
                   this.init_AiOperation = AiGoto.init_AiOperation_BlockPos_4(target, 30, protectedCells, true, face);
                }
 
@@ -270,7 +270,7 @@ final class AiGameOperations {
          final Minecraft init_Minecraft = Minecraft.getInstance();
          final BlockPos init_BlockPos = AiGameOperations.init_BlockPos(args);
          final long init_J = System.nanoTime() + 30000000000L;
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          BlockState init_BlockState;
          BlockState load_BlockState;
          net.minecraft.world.level.block.Block init_Block;
@@ -318,7 +318,7 @@ final class AiGameOperations {
                            .add(desiredFace.getStepX() * 0.499, desiredFace.getStepY() * 0.499, desiredFace.getStepZ() * 0.499)
                         : (kind.equals("place") ? Vec3.atCenterOf(this.init_BlockPos).add(0.0, 0.499, 0.0) : Vec3.atCenterOf(this.init_BlockPos))
                   );
-               BlockHitResult reachableHit = autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos);
+               BlockHitResult reachableHit = autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, this.init_BlockPos);
                if (kind.equals("interact") && aimY < 0.0 && desiredFace == null && reachableHit != null) {
                   aimPoint = reachableHit.getLocation();
                }
@@ -334,7 +334,7 @@ final class AiGameOperations {
                if (!this.load_Z
                   && (kind.equals("place") || desiredFace != null)
                   && (hit == null || !hit.getBlockPos().equals(this.init_BlockPos) || desiredFace != null && hit.getDirection() != desiredFace)) {
-                  BlockHitResult solved = autismclient.ai.a.AiBlockInteraction.init(
+                  BlockHitResult solved = autismclient.ai.engine.AiBlockInteraction.init(
                      this.init_Minecraft, this.init_BlockPos, desiredFace == null ? Direction.UP : desiredFace
                   );
                   if (solved == null) {

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -140,7 +140,7 @@ final class AiStrongholdSearch {
                   true,
                   false,
                   Math.min(90, Math.max(15, (int)((this.init_J - System.nanoTime()) / 1000000000L))),
-                  autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                  autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                   true,
                   2.0,
                   null,

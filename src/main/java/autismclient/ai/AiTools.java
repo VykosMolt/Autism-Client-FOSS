@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiCapabilities;
 import autismclient.api.ai.AiCapabilityDescriptor;
 import autismclient.api.ai.AiObservation;
@@ -3282,7 +3282,7 @@ final class AiTools {
             return null;
          } else {
             BlockState state = block.defaultBlockState();
-            if (state.requiresCorrectToolForDrops() && autismclient.ai.a.MiningCost.load(mc, state, true) < 0) {
+            if (state.requiresCorrectToolForDrops() && autismclient.ai.engine.MiningCost.load(mc, state, true) < 0) {
                String tool = AiCollect.init(state);
                return AiGameOperations.init(
                   AiOperation.Status.FAILED,
@@ -3334,10 +3334,10 @@ final class AiTools {
             var10000 = AiFollow.init(args);
             break;
          case "game:surface":
-            var10000 = autismclient.ai.a.AiSeek.init(args);
+            var10000 = autismclient.ai.engine.AiSeek.init(args);
             break;
          case "game:cave":
-            var10000 = autismclient.ai.a.AiSeek.load(args);
+            var10000 = autismclient.ai.engine.AiSeek.load(args);
             break;
          case "game:entities":
             var10000 = AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Entities queried", AiEntityQuery.init(args));
@@ -3356,7 +3356,7 @@ final class AiTools {
                ? gated
                : (
                   !AiJson.init_Z_JsonObject(args, "backfill", false) && !AiOreRoute.init_Z
-                     ? autismclient.ai.a.AiBlockMine.init_AiOperation(
+                     ? autismclient.ai.engine.AiBlockMine.init_AiOperation(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
                            targets.spec(),
@@ -3372,14 +3372,14 @@ final class AiTools {
                            AiJson.init_I_JsonObject(args, "timeoutSeconds", 300)
                         )
                      )
-                     : autismclient.ai.a.AiMine.init(mineArgs)
+                     : autismclient.ai.engine.AiMine.init(mineArgs)
                );
             break;
          case "game:mine_area":
-            var10000 = autismclient.ai.a.AiExcavate.init(args);
+            var10000 = autismclient.ai.engine.AiExcavate.init(args);
             break;
          case "game:dig":
-            var10000 = autismclient.ai.a.AiExcavate.load(args);
+            var10000 = autismclient.ai.engine.AiExcavate.load(args);
             break;
          case "game:harvest_wheat":
             var10000 = AiGameOperations.read(args);

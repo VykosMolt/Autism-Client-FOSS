@@ -79,9 +79,9 @@ final class AiWorldMemory {
                int z = cz + offset[1];
                LevelChunk live = mc.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false);
                if (live != null) {
-                  long key = autismclient.ai.a.AiGridRevisions.init_J(x, z);
+                  long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
                   AiWorldMemory.Inner_DataUtil remembered = init_LinkedHashMap.get(key);
-                  int revision = autismclient.ai.a.AiGridRevisions.init(key);
+                  int revision = autismclient.ai.engine.AiGridRevisions.init(key);
                   if (remembered == null) {
                      init_LinkedHashMap.put(key, new AiWorldMemory.Inner_DataUtil(live, revision));
                   } else if (remembered.init_WeakReference.get() != live || remembered.read != revision || remembered.init_Z && now - remembered.init_J > 600L) {
@@ -107,7 +107,7 @@ final class AiWorldMemory {
                int cz = (int)entry.getKey().longValue();
                LevelChunk live = mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                if (live != null) {
-                  int revision = autismclient.ai.a.AiGridRevisions.init(entry.getKey());
+                  int revision = autismclient.ai.engine.AiGridRevisions.init(entry.getKey());
                   if (chunk.init_WeakReference.get() != live || chunk.read != revision) {
                      chunk.init(live, revision);
                   }
@@ -160,7 +160,7 @@ final class AiWorldMemory {
    static void init(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == init_Obj && mc.getConnection() == load_Obj && AiTerrain.init(mc.level, pos)) {
-         AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.a.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
+         AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
          if (load_Map.remove(pos.asLong()) != null) {
             load_J++;
          }
@@ -214,7 +214,7 @@ final class AiWorldMemory {
                               if (!block.isEmpty() && !category.isEmpty() && block.length() <= 256 && category.length() <= 64) {
                                  long observed = saved.has("observedAtMs") ? saved.get("observedAtMs").getAsLong() : 0L;
                                  if (observed >= 0L && observed <= System.currentTimeMillis()) {
-                                    AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.a.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
+                                    AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(pos.getX() >> 4, pos.getZ() >> 4));
                                     if ((indexed == null || !indexed.init_Map.containsKey(pos.asLong()))
                                        && (!AiTerrain.init(client.level, pos) || block.equals(AiWorldScan.init(client.level.getBlockState(pos))))) {
                                        load_Map.put(pos.asLong(), new AiWorldMemory.Inner_StreamUtil(pos, category, block, -1L, -1L, observed));
@@ -404,7 +404,7 @@ final class AiWorldMemory {
 
          label41:
          for (int[] offset : AiWorldScan.init(radiusChunks)) {
-            AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.a.AiGridRevisions.init_J(cx + offset[0], cz + offset[1]));
+            AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(cx + offset[0], cz + offset[1]));
             if (chunk != null) {
                int found = 0;
                Iterator var12 = chunk.init_Map.values().iterator();
@@ -457,7 +457,7 @@ final class AiWorldMemory {
                available++;
             }
 
-            if (loaded && entry.getValue().init_Z && entry.getValue().read == autismclient.ai.a.AiGridRevisions.init(entry.getKey())) {
+            if (loaded && entry.getValue().init_Z && entry.getValue().read == autismclient.ai.engine.AiGridRevisions.init(entry.getKey())) {
                complete++;
             }
 
@@ -472,7 +472,7 @@ final class AiWorldMemory {
 
          for (AiWorldMemory.Inner_StreamUtil fact : load_Map.values()) {
             if ((requested.isEmpty() || requested.equals(fact.category)) && !(fact.pos.distSqr(origin) > (double)radius * radius)) {
-               AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.a.AiGridRevisions.init_J(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
+               AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.init_J(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
                if ((indexed == null || !indexed.init_Map.containsKey(fact.pos.asLong()))
                   && (!AiTerrain.init(mc.level, fact.pos) || fact.block.equals(AiWorldScan.init(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
@@ -546,7 +546,7 @@ final class AiWorldMemory {
             "indexRevision",
             load_J,
             "terrainRevision",
-            autismclient.ai.a.AiGridRevisions.init_J(),
+            autismclient.ai.engine.AiGridRevisions.init_J(),
             "candidates",
             candidates,
             "entities",
@@ -598,7 +598,7 @@ final class AiWorldMemory {
          "source",
          "client-block-state",
          "revision",
-         live ? autismclient.ai.a.AiGridRevisions.init_J() : fact.revision,
+         live ? autismclient.ai.engine.AiGridRevisions.init_J() : fact.revision,
          "indexedRevision",
          fact.revision,
          "verifyBeforeAction",
@@ -666,7 +666,7 @@ final class AiWorldMemory {
                && AiTerrain.init(mc.level, stand.below())
                && AiTerrain.init(mc.level, stand.above())
                && AiCombat.init_Z_Minecraft_BlockPos(mc, stand)
-               && !autismclient.ai.a.AiEnvironmentHazards.init(mc.level, stand)
+               && !autismclient.ai.engine.AiEnvironmentHazards.init(mc.level, stand)
                && !mc.level.getBlockState(stand.below()).getCollisionShape(mc.level, stand.below()).isEmpty()
                && mc.level.getBlockState(stand).getCollisionShape(mc.level, stand).isEmpty()
                && mc.level.getBlockState(stand.above()).getCollisionShape(mc.level, stand.above()).isEmpty()
@@ -725,7 +725,7 @@ final class AiWorldMemory {
    }
 
    static void load(BlockPos at) {
-      init_Map.put(autismclient.ai.a.AiGridRevisions.init_J(at.getX() >> 4, at.getZ() >> 4), AiThreats.init_J() + 600L);
+      init_Map.put(autismclient.ai.engine.AiGridRevisions.init_J(at.getX() >> 4, at.getZ() >> 4), AiThreats.init_J() + 600L);
       if (init_Map.size() > 256) {
          init_Map.remove(init_Map.keySet().iterator().next());
       }
@@ -753,7 +753,7 @@ final class AiWorldMemory {
                for (Direction direction : Plane.HORIZONTAL) {
                   int x = cx + direction.getStepX();
                   int z = cz + direction.getStepZ();
-                  long key = autismclient.ai.a.AiGridRevisions.init_J(x, z);
+                  long key = autismclient.ai.engine.AiGridRevisions.init_J(x, z);
                   if (init_Map.getOrDefault(key, 0L) <= AiThreats.init_J() && !init_LinkedHashMap.containsKey(key)) {
                      borders.add(new BlockPos((cx << 4) + 8 + direction.getStepX() * 7, mc.player.getBlockY(), (cz << 4) + 8 + direction.getStepZ() * 7));
                   }
@@ -813,7 +813,7 @@ final class AiWorldMemory {
                .put(
                   pos.asLong(),
                   new AiWorldMemory.Inner_StreamUtil(
-                     pos.immutable(), category, AiWorldScan.init(state), AiThreats.init_J(), autismclient.ai.a.AiGridRevisions.init_J(), System.currentTimeMillis()
+                     pos.immutable(), category, AiWorldScan.init(state), AiThreats.init_J(), autismclient.ai.engine.AiGridRevisions.init_J(), System.currentTimeMillis()
                   )
                );
             AiWorldMemory.load_J++;

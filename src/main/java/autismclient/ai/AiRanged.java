@@ -53,7 +53,7 @@ final class AiRanged {
          final boolean silentAim = service != null && service.init_AiSettings().aiSilentAim;
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final int init_I = mc.player.getInventory().getSelectedSlot();
             Entity init_Entity;
             autismclient.util.RotationMath.Inner_DataUtil init_ce_DataUtil;
@@ -65,7 +65,7 @@ final class AiRanged {
             boolean load_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -250,7 +250,7 @@ final class AiRanged {
                }
 
                autismclient.modules.ProjectileBallistics.Inner_DataUtil info = possible.get(0).init_aX_DataUtil();
-               Vec3 point = autismclient.ai.a.AiAim.init_Vec3_Entity(at);
+               Vec3 point = autismclient.ai.engine.AiAim.init_Vec3_Entity(at);
                Vec3 motion = this.init_Vec3(at);
                if (motion.lengthSqr() >= 0.0025000000000000005) {
                   double flight = point.distanceTo(mc.player.getEyePosition()) / 2.9;

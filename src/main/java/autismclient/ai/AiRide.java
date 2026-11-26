@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -46,7 +46,7 @@ final class AiRide {
          } else {
             return new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-               final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+               final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                AiOperation init_AiOperation;
                Entity init_Entity;
                int init_I;
@@ -152,13 +152,13 @@ final class AiRide {
                            this.init_AiOperation = null;
                         }
 
-                        this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                        this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                         this.init_DataUtil.load_V();
                         if (++this.init_I > 80) {
                            return this.init(AiOperation.Status.FAILED, "The vehicle did not accept the player");
                         }
 
-                        if (!autismclient.ai.a.AiAim.init_Z_Entity(this.init_Entity)) {
+                        if (!autismclient.ai.engine.AiAim.init_Z_Entity(this.init_Entity)) {
                            return this.init("Turning toward the vehicle");
                         }
 
@@ -166,7 +166,7 @@ final class AiRide {
                            .interact(
                               mc.player,
                               this.init_Entity,
-                              new EntityHitResult(this.init_Entity, autismclient.ai.a.AiAim.init_Vec3_Entity(this.init_Entity)),
+                              new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_Entity)),
                               InteractionHand.MAIN_HAND
                            );
                         return mc.player.getVehicle() != null
@@ -199,7 +199,7 @@ final class AiRide {
                      );
                   }
 
-                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+                  this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
                   this.init_DataUtil.init_V_Vec3(new Vec3(target.x, riding.getEyeY(), target.z));
                   this.init_DataUtil.load_V();
                   mc.options.keyUp.setDown(true);

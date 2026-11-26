@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import net.minecraft.client.KeyMapping;
@@ -21,7 +21,7 @@ import net.minecraft.world.phys.HitResult.Type;
 
 final class AiFireControl {
    private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+   private final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
    private BlockPos init_BlockPos;
    private long init_J;
    private int init_I;
@@ -36,7 +36,7 @@ final class AiFireControl {
 
    AiFireControl(boolean bodyOnly) {
       this.init_Z = bodyOnly;
-      this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+      this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
    }
 
    int init_I() {
@@ -141,7 +141,7 @@ final class AiFireControl {
                         false,
                         false,
                         5,
-                        autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                        autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                         false,
                         0.0,
                         null,

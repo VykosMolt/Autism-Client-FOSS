@@ -1,8 +1,8 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
-import autismclient.ai.a.AiFallGuard;
+import autismclient.ai.engine.AiGoto;
+import autismclient.ai.engine.AiFallGuard;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonObject;
@@ -80,7 +80,7 @@ final class AiBlazeFight {
       return System.nanoTime() < init_J;
    }
 
-   static autismclient.ai.a.CoverGoal init(
+   static autismclient.ai.engine.CoverGoal init(
       BlockGetter level,
       AABB target,
       Vec3 targetEye,
@@ -115,7 +115,7 @@ final class AiBlazeFight {
                         && level.getFluidState(feet).isEmpty()
                         && level.getFluidState(feet.above()).isEmpty()
                         && level.getFluidState(feet.below()).isEmpty()
-                        && autismclient.ai.a.AiSight.init_Z_BlockGetter_3(level, eye, targetEye, -9223372036854775808L, -9223372036854775808L)) {
+                        && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(level, eye, targetEye, -9223372036854775808L, -9223372036854775808L)) {
                         boolean vertical = target.minY > eye.y && Math.sqrt(target.distanceToSqr(eye.add(0.0, 1.15, 0.0))) > reach;
                         if (!vertical || jump && init(level, feet, loaded)) {
                            stances.add(feet);
@@ -127,7 +127,7 @@ final class AiBlazeFight {
          }
       }
 
-      return new autismclient.ai.a.CoverGoal(stances);
+      return new autismclient.ai.engine.CoverGoal(stances);
    }
 
    static boolean init(AABB target, Vec3 eye, double reach, boolean seen, boolean jump, boolean pillar) {
@@ -264,7 +264,7 @@ final class AiBlazeFight {
          final Object read_Obj = mc.player;
          final long init_J = AiServerEvidence.load_J();
          final long load_J = System.nanoTime() + seconds * 1000000000L;
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final AiFireControl init_K = new AiFireControl();
          final Random init_Random = new Random();
          Entity init_Entity;
@@ -324,7 +324,7 @@ final class AiBlazeFight {
          long read_J;
 
          {
-            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+            this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
             if (AiJson.init_Z_JsonObject(args, "useShield", false) && !AiDefense.init_Z(mc)) {
                AiItems.init_Z(AiItems.load_af_DataUtil("minecraft:shield"));
             }
@@ -486,7 +486,7 @@ final class AiBlazeFight {
                      && this.init_K.load_Z()
                      && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
                      && (this.init_SyncManager == null || this.init_SyncManager.canInterruptNow())
-                     && autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                     && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                      if (this.init_AiOperation == null) {
                         this.update_V();
                         this.write_V_2();
@@ -708,7 +708,7 @@ final class AiBlazeFight {
                                  && AiCombat.init(coming) <= 10;
                               boolean swingFirst = AiBlazeFight.init(blockNow, coming == null ? 2147483647 : AiCombat.init(coming), AiDefense.load(mc));
                               boolean swingSoon = inReach && charge >= 0.85F && swingFirst;
-                              Vec3 look = autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity);
+                              Vec3 look = autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity);
                               if (blockNow && !swingSoon) {
                                  look = AiCombat.init_Vec3_Minecraft_Vec3(mc, look);
                               }
@@ -825,14 +825,14 @@ final class AiBlazeFight {
                                  && !this.init_Z
                                  && !blockNow
                                  && mc.player.onGround()
-                                 && autismclient.ai.a.AiCombatMotion.init(mc, mc.player.getYRot(), 1.0, 0.0, 8, 4, true) != null;
+                                 && autismclient.ai.engine.AiCombatMotion.init(mc, mc.player.getYRot(), 1.0, 0.0, 8, 4, true) != null;
                               if (!sprint && mc.player.isSprinting()) {
                                  mc.player.setSprinting(false);
                               }
 
                               mc.options.keySprint.setDown(sprint);
                               boolean canFinish = this.init_Entity instanceof LivingEntity living && living.getHealth() <= this.init(charge) * 0.95;
-                              boolean canJump = mc.player.onGround() && this.read_Z_2() && autismclient.ai.a.AiCombatMotion.init(mc) && this.load_Z_5();
+                              boolean canJump = mc.player.onGround() && this.read_Z_2() && autismclient.ai.engine.AiCombatMotion.init(mc) && this.load_Z_5();
                               boolean jump = canJump
                                  && !canFinish
                                  && !blockNow
@@ -887,8 +887,8 @@ final class AiBlazeFight {
                                  this.read_V_3();
                               }
 
-                              if (AiBlazeFight.init_Z && autismclient.ai.a.AiNavDebug.init_Z()) {
-                                 autismclient.ai.a.AiNavDebug.init(
+                              if (AiBlazeFight.init_Z && autismclient.ai.engine.AiNavDebug.init_Z()) {
+                                 autismclient.ai.engine.AiNavDebug.init(
                                     String.format(
                                        Locale.ROOT,
                                        "blaze ring t=%d target %d hp %.1f gap %.2f hz %.2f dy %.2f seen %b ground %b charge %.2f keys %d/%d sprint %b jump %b due %b first %b sprintTicks %d knock %b grace %d stuck %d",
@@ -928,8 +928,8 @@ final class AiBlazeFight {
                                     + "m)"
                               );
                            } else {
-                              if (autismclient.ai.a.AiNavDebug.init_Z() && (this.load_AiOperation == null || this.push % 10 == 0)) {
-                                 autismclient.ai.a.AiNavDebug.init(
+                              if (autismclient.ai.engine.AiNavDebug.init_Z() && (this.load_AiOperation == null || this.push % 10 == 0)) {
+                                 autismclient.ai.engine.AiNavDebug.init(
                                     "blaze travel branch t="
                                        + this.push
                                        + " target "
@@ -983,7 +983,7 @@ final class AiBlazeFight {
                                        && this.load_AiOperation.canInterruptNow()
                                        && !this.init_bb.init_Z(this.load_AiOperation)) {
                                     this.update_V();
-                                    autismclient.ai.a.CoverGoal goal = AiBlazeFight.init(
+                                    autismclient.ai.engine.CoverGoal goal = AiBlazeFight.init(
                                        mc.level,
                                        box,
                                        this.init_Entity.getEyePosition(),
@@ -1018,7 +1018,7 @@ final class AiBlazeFight {
                                        true,
                                        true,
                                        20,
-                                       autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                       autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                        true,
                                        2.0,
                                        goal,
@@ -1027,8 +1027,8 @@ final class AiBlazeFight {
                                  }
 
                                  AiOperation.Result r = this.init_bb.init_AiOperation_Result(this.load_AiOperation);
-                                 if (autismclient.ai.a.AiNavDebug.init_Z() && this.push % 20 == 0) {
-                                    autismclient.ai.a.AiNavDebug.init(
+                                 if (autismclient.ai.engine.AiNavDebug.init_Z() && this.push % 20 == 0) {
+                                    autismclient.ai.engine.AiNavDebug.init(
                                        "blaze approach target "
                                           + this.init_Entity.getId()
                                           + " at "
@@ -1091,8 +1091,8 @@ final class AiBlazeFight {
 
                                  return this.init("Closing on the blaze (" + (int)horizontal + "m)");
                               } else {
-                                 if (autismclient.ai.a.AiNavDebug.init_Z() && this.push % 20 == 0) {
-                                    autismclient.ai.a.AiNavDebug.init(
+                                 if (autismclient.ai.engine.AiNavDebug.init_Z() && this.push % 20 == 0) {
+                                    autismclient.ai.engine.AiNavDebug.init(
                                        "blaze approach shield target "
                                           + this.init_Entity.getId()
                                           + " player "
@@ -1105,7 +1105,7 @@ final class AiBlazeFight {
                                  this.update_V();
                                  this.write_V_2();
                                  this.init_DataUtil
-                                    .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity)));
+                                    .init_V_Vec3(AiCombat.init_Vec3_Minecraft_Vec3(mc, autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity)));
                                  this.init_DataUtil.load_V();
                                  if (!this.init_Z) {
                                     this.update_I++;
@@ -1559,7 +1559,7 @@ final class AiBlazeFight {
 
          boolean init_Z_I_I(int forward, int strafe) {
             if (mc.player.onGround()) {
-               AABB end = autismclient.ai.a.AiCombatMotion.init(mc, forward, strafe, 6);
+               AABB end = autismclient.ai.engine.AiCombatMotion.init(mc, forward, strafe, 6);
                if (end == null) {
                   return false;
                }
@@ -1571,7 +1571,7 @@ final class AiBlazeFight {
                AABB core = end.deflate(0.2, 0.0, 0.2);
                return !mc.level.noCollision(new AABB(core.minX, core.minY - 0.55, core.minZ, core.maxX, core.minY - 0.01, core.maxZ));
             } else {
-               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
+               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
                   return false;
                }
 
@@ -1579,11 +1579,11 @@ final class AiBlazeFight {
                   return true;
                }
 
-               if (mc.player.onGround() && !mc.player.isInWater() && autismclient.ai.a.AiCombatMotion.init(mc, forward, strafe, 6) == null) {
+               if (mc.player.onGround() && !mc.player.isInWater() && autismclient.ai.engine.AiCombatMotion.init(mc, forward, strafe, 6) == null) {
                   return false;
                }
 
-               if (!autismclient.ai.a.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
+               if (!autismclient.ai.engine.AiMotionSafety.putAt_Z_D(forward, strafe, false, false)) {
                   return false;
                }
 

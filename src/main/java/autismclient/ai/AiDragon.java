@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonElement;
@@ -214,7 +214,7 @@ final class AiDragon {
          }
       }
 
-      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true));
+      return best == null ? null : AiGuard.init(AiGoto.init(best, 0.35, true, true, false, 6, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true));
    }
 
    static boolean init_Z(double x, double z, List<double[]> clouds) {
@@ -292,7 +292,7 @@ final class AiDragon {
             final Object load_Obj = mc.getConnection();
             final UUID init_UUID = mc.player.getUUID();
             final long load_J = AiServerEvidence.load_J();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiDragon.Inner_StreamUtil init_q_StreamUtil = new AiDragon.Inner_StreamUtil();
             final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard().withoutFlee();
             boolean init_Z;
@@ -371,7 +371,7 @@ final class AiDragon {
             String write_Str = "";
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.init_DataUtil_DataUtil);
                this.init_DataUtil.init_V_Z(silentAim);
             }
 
@@ -611,7 +611,7 @@ final class AiDragon {
                      }
 
                      this.load_V_15();
-                     this.sync_AiOperation = AiGoto.init(best, 0.8, false, false, false, 5, autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true);
+                     this.sync_AiOperation = AiGoto.init(best, 0.8, false, false, false, 5, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true);
                      AiSpeedrun.init_V_Str_ObjArr(
                         "[AI] dragon: charging at the player ({} off its line); stepping to {}", String.format(Locale.ROOT, "%.1f", off), best.toShortString()
                      );
@@ -967,7 +967,7 @@ final class AiDragon {
 
             AiOperation.Result close() {
                if (this.init_AiOperation == null) {
-                  this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+                  this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                      AiJson.init_JsonObject_ObjArr(
                         "block",
                         "minecraft:end_stone",
@@ -1027,7 +1027,7 @@ final class AiDragon {
                         }
 
                         this.init_AiOperation = AiGoto.init(
-                           near, 1.5, false, true, true, this.init(20), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                           near, 1.5, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                         );
                         this.sync_Z = true;
                      }
@@ -1124,7 +1124,7 @@ final class AiDragon {
 
                      if (this.close_BlockPos != null && mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(this.close_BlockPos)) > 0.48999999999999994) {
                         this.init_AiOperation = AiGoto.init(
-                           this.close_BlockPos, 0.3, false, true, true, this.init(15), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                           this.close_BlockPos, 0.3, false, true, true, this.init(15), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                         );
                         this.update_Z = true;
                      } else {
@@ -1287,7 +1287,7 @@ final class AiDragon {
 
                if (this.init_AiOperation == null) {
                   this.init_AiOperation = AiGoto.init(
-                     this.read_BlockPos, 0.8, false, true, true, this.init(30), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                     this.read_BlockPos, 0.8, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                   );
                }
 
@@ -1388,9 +1388,9 @@ final class AiDragon {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty()
-                     && AiRunResources.init(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), 0) > autismclient.ai.a.AiRestock.init(stack.getItem())) {
+                     && AiRunResources.init(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), 0) > autismclient.ai.engine.AiRestock.init(stack.getItem())) {
                      String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                     int rank = autismclient.ai.a.AiRestock.init_I(id);
+                     int rank = autismclient.ai.engine.AiRestock.init_I(id);
                      if (id.equals("minecraft:end_stone") || id.equals("minecraft:obsidian")) {
                         rank = 0;
                      }
@@ -1439,7 +1439,7 @@ final class AiDragon {
                   }
 
                   this.init_AiOperation = AiGoto.init(
-                     support.above(), 0.8, false, true, true, this.init(20), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                     support.above(), 0.8, false, true, true, this.init(20), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                   );
                }
 
@@ -1541,7 +1541,7 @@ final class AiDragon {
                      if (safeBlast) {
                         this.init_DataUtil.init_V_Vec3(Vec3.atCenterOf(this.load_BlockPos));
                         this.init_DataUtil.load_V();
-                        BlockHitResult ray = autismclient.ai.a.AiAim.init_BlockHitResult();
+                        BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
                         if (ray == null || !ray.getBlockPos().equals(head) && !ray.getBlockPos().equals(foot)) {
                            if (++this.start > 40) {
                               this.init_q_1_DataUtil = Inner_DataUtil.flush;
@@ -1668,7 +1668,7 @@ final class AiDragon {
                      BlockPos out = this.init(danger, zones);
                      if (out != null) {
                         this.init_AiOperation = AiGuard.init(
-                           AiGoto.init(out, 0.35, false, false, false, this.init(8), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true)
+                           AiGoto.init(out, 0.35, false, false, false, this.init(8), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true)
                         );
                         this.get = 2;
                      }
@@ -1678,7 +1678,7 @@ final class AiDragon {
                      BlockPos near = this.sync_BlockPos();
                      if (near != null && Math.hypot(mc.player.getX() - (near.getX() + 0.5), mc.player.getZ() - (near.getZ() + 0.5)) > 2.5) {
                         this.init_AiOperation = AiGoto.init(
-                           near, 0.8, false, false, false, this.init(10), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                           near, 0.8, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                         );
                         this.get = 3;
                      }
@@ -1719,7 +1719,7 @@ final class AiDragon {
                      return this.init("No stand reaches the head clear of the wings");
                   }
 
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.init_Vec3_Entity(this.init_EnderDragon.head));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_EnderDragon.head));
                   this.init_V_32();
                   double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)) - 0.1;
                   boolean inReach = this.init_EnderDragon.head.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= reach * reach;
@@ -1729,7 +1729,7 @@ final class AiDragon {
                   if (!there && (!inReach || !mc.player.onGround())) {
                      if (this.init_AiOperation == null) {
                         this.init_AiOperation = AiGoto.init(
-                           this.flush_BlockPos, 0.3, false, false, false, this.init(10), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                           this.flush_BlockPos, 0.3, false, false, false, this.init(10), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                         );
                         this.get = 1;
                      }
@@ -1896,7 +1896,7 @@ final class AiDragon {
                      }
 
                      this.init_AiOperation = AiGoto.init(
-                        support.above(), 1.5, false, true, true, this.init(30), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true
+                        support.above(), 1.5, false, true, true, this.init(30), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true
                      );
                   }
 

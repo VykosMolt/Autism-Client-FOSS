@@ -104,7 +104,7 @@ final class AiCellMaterials {
                      boolean replacing = false;
                      if (block instanceof MultifaceBlock) {
                         BlockState wanted = AiBuilder.init_BlockState(cell);
-                        boolean partial = same && autismclient.ai.b.PrintRules.load_Z_BlockState_BlockState(wanted, live);
+                        boolean partial = same && autismclient.ai.print.PrintRules.load_Z_BlockState_BlockState(wanted, live);
                         int remaining = 0;
 
                         for (Direction side : Direction.values()) {

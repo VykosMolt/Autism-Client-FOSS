@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonObject;
@@ -321,13 +321,13 @@ final class AiPortalCast {
       return List.of(axis.getCounterClockWise(), axis.getClockWise(), axis.getOpposite(), axis);
    }
 
-   static autismclient.ai.a.AiPathfinder.Inner_JsonUtil init(
+   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init(
       AiPortalCast.Inner_SyncManager face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight
    ) {
       return init(face, reserved, molds, supports, reach, eyeHeight, false);
    }
 
-   static autismclient.ai.a.AiPathfinder.Inner_JsonUtil init(
+   static autismclient.ai.engine.AiPathfinder.Inner_JsonUtil init(
       AiPortalCast.Inner_SyncManager face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight, boolean lava
    ) {
       Set<Long> keep = new HashSet<>();
@@ -350,7 +350,7 @@ final class AiPortalCast {
 
       keep.add(face.support().asLong());
       keep.add(face.support().relative(face.face()).asLong());
-      autismclient.ai.a.AiPathfinder.Inner_JsonUtil goal = AiGoto.read(new autismclient.ai.a.InteractionGoal(face.support(), reach, eyeHeight, face.face()), keep);
+      autismclient.ai.engine.AiPathfinder.Inner_JsonUtil goal = AiGoto.read(new autismclient.ai.engine.InteractionGoal(face.support(), reach, eyeHeight, face.face()), keep);
       return lava ? AiGoto.init(goal, init_Set(face.support().relative(face.face()))) : goal;
    }
 
@@ -457,8 +457,8 @@ final class AiPortalCast {
                final UUID init_UUID = this.init_Minecraft.player.getUUID();
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
                final int init_I = this.init_Minecraft.player.getInventory().getSelectedSlot();
-               final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-               final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+               final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+               final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
                final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard().withoutCombat();
                final AiPortalCast.Inner_TaskQueue init_aX_TaskQueue = this::init_aX_ConfigStore;
                AiPortalCast.Inner_NetHelper init_aX_NetHelper = AiPortalCast.Inner_NetHelper.init;
@@ -927,9 +927,9 @@ final class AiPortalCast {
                            this.init_DataPipe.init_V_BlockPos_Item(mold, item);
                         }
 
-                        autismclient.ai.a.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (placed != autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
-                           if (placed == autismclient.ai.a.AiPlacer.Inner_DataUtil.read) {
+                        autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
+                        if (placed != autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
+                           if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read) {
                               if (!this.init_Set.contains(mold)) {
                                  this.init_Set.add(mold);
                                  this.init_DataPipe.init_V();
@@ -1199,13 +1199,13 @@ final class AiPortalCast {
                   }
 
                   BlockPos floor = this.load_BlockPos.below();
-                  this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.init_Vec3_BlockPos_Direction(floor, Direction.UP));
+                  this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.init_Vec3_BlockPos_Direction(floor, Direction.UP));
                   this.init_DataUtil.load_V();
-                  if (!autismclient.ai.a.AiAim.init_Z_BlockPos(floor)) {
+                  if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(floor)) {
                      return this.load("Turning to light the portal");
                   }
 
-                  BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                  BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                   if (hit == null) {
                      return this.load("Turning to light the portal");
                   }
@@ -1228,12 +1228,12 @@ final class AiPortalCast {
                         this.init_DataPipe.init_V_BlockPos_Item(this.load_BlockPos, wood);
                      }
 
-                     autismclient.ai.a.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
-                     if (placed == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                     autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
+                     if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                         this.clear = 1;
                         return this.load("Doorway wood placed");
                      } else {
-                        return placed == autismclient.ai.a.AiPlacer.Inner_DataUtil.read
+                        return placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
                            ? this.init(AiFailure.write, "Could not place the doorway wood: " + this.init_DataPipe.init_Str(), null)
                            : this.load("Placing the doorway wood");
                      }
@@ -1261,14 +1261,14 @@ final class AiPortalCast {
                            this.init_DataPipe.init_V_BlockPos_Item(mold, moldItem);
                         }
 
-                        autismclient.ai.a.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
-                        if (placed == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                        autismclient.ai.engine.AiPlacer.Inner_DataUtil placed = this.init_DataPipe.init_DataPipe_DataUtil();
+                        if (placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                            this.clear = 2;
                            this.pop = 0;
                            this.write_Z = false;
                            return this.load("Fire-spread mold placed");
                         } else {
-                           return placed == autismclient.ai.a.AiPlacer.Inner_DataUtil.read
+                           return placed == autismclient.ai.engine.AiPlacer.Inner_DataUtil.read
                               ? this.init(AiFailure.write, "Could not place the fire-spread mold: " + this.init_DataPipe.init_Str(), null)
                               : this.load("Placing the fire-spread mold");
                         }
@@ -1345,9 +1345,9 @@ final class AiPortalCast {
                      return this.init(AiFailure.write, "The planned pour face is unavailable", null);
                   }
 
-                  if (autismclient.ai.a.AiMotionSafety.fill_Z()
+                  if (autismclient.ai.engine.AiMotionSafety.fill_Z()
                      && (!lava || AiPortalCast.init(this.init_Minecraft.player.blockPosition(), face.support().relative(face.face())))
-                     && autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, face.support(), face.face()) != null) {
+                     && autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, face.support(), face.face()) != null) {
                      return null;
                   }
 
@@ -1373,7 +1373,7 @@ final class AiPortalCast {
                      true,
                      false,
                      seconds,
-                     autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                      true,
                      2.0,
                      AiPortalCast.init(
@@ -1428,13 +1428,13 @@ final class AiPortalCast {
                         }
                      }
 
-                     BlockHitResult visible = autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, face.support(), face.face());
+                     BlockHitResult visible = autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, face.support(), face.face());
                      if (visible == null) {
                         return null;
                      } else {
                         this.init_DataUtil.init_V_Vec3(AiPortalCast.init(this.init_Minecraft.player.getEyePosition(), visible));
                         this.init_DataUtil.load_V();
-                        BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                        BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                         if (hit != null && hit.getBlockPos().equals(face.support()) && hit.getDirection() == face.face()) {
                            this.init_aX_JsonUtil.init(pourCell, bucket, AiGameState.init_I_Str(bucket), AiServerEvidence.init_J(), AiServerEvidence.init_J_BlockPos(pourCell));
                            this.init_Minecraft.gameMode.useItem(this.init_Minecraft.player, InteractionHand.MAIN_HAND);
@@ -1604,7 +1604,7 @@ final class AiPortalCast {
                      if (AiGameState.init_I_Str(id) > 0) {
                         Item item = BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).orElse(null);
                         if (item instanceof BlockItem
-                           && (ids != AiPortalCast.init_List || autismclient.ai.a.AiRestock.init(item.getDefaultInstance(), this.init_Minecraft.player.getInventory()))) {
+                           && (ids != AiPortalCast.init_List || autismclient.ai.engine.AiRestock.init(item.getDefaultInstance(), this.init_Minecraft.player.getInventory()))) {
                            return item;
                         }
                      }
@@ -1812,10 +1812,10 @@ final class AiPortalCast {
                      true,
                      false,
                      seconds,
-                     autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                     autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                      true,
                      2.0,
-                     AiGoto.read(autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, radius), keep)
+                     AiGoto.read(autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(target, radius), keep)
                   );
                }
 
@@ -1842,7 +1842,7 @@ final class AiPortalCast {
                      return this.load("Frame site cleared; planning the cast");
                   } else {
                      BlockPos cell = this.init_ArrayDeque.poll();
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(cell, 20, false);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 20, false);
                      return this.load("Clearing the frame site at " + cell.toShortString());
                   }
                }

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -95,7 +95,7 @@ final class AiBarter {
                final int init_I = AiBarter.init(goldArg, AiGameState.load("minecraft:gold_ingot"));
                final int load_I = AiGameState.init_I_Str("minecraft:ender_pearl");
                final int read_I = mc.player.getInventory().getSelectedSlot();
-               final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+               final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
                final AiGuard.Inner_CachePool init_X_CachePool = AiGuard.Inner_CachePool.standard();
                final Set<Integer> init_Set = new LinkedHashSet<>();
                final Set<Integer> load_Set = new LinkedHashSet<>();
@@ -343,7 +343,7 @@ final class AiBarter {
                            return this.init_AiOperation_Result_Str_2("A piglin is already admiring an ingot");
                         }
 
-                        this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Piglin));
+                        this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Piglin));
                         this.init_DataUtil.load_V();
                         if (!this.init_DataUtil.load_Z() && ++this.write <= 30) {
                            return this.init_AiOperation_Result_Str_2("Turning toward the piglin");

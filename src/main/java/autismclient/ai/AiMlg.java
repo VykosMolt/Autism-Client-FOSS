@@ -541,7 +541,7 @@ final class AiMlg {
             public void cancel() {
                if (!this.init_Z) {
                   this.init_Z = true;
-                  autismclient.ai.a.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.putAt_V();
                   if (this.init_Minecraft.player != null && this.flush >= 0 && this.init_Minecraft.player.getInventory().getSelectedSlot() == this.flush) {
                      this.init_Minecraft.player.getInventory().setSelectedSlot(this.init_I);
                   }

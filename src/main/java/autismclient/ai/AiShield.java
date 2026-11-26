@@ -135,8 +135,8 @@ final class AiShield {
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (stack.getItem() instanceof BlockItem item && !(item.getBlock() instanceof FallingBlock)) {
-            int rank = autismclient.ai.a.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-            if (rank >= 0 && rank < bestRank && autismclient.ai.a.AiRestock.init_Z_ItemStack(stack, inventory, true)) {
+            int rank = autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (rank >= 0 && rank < bestRank && autismclient.ai.engine.AiRestock.init_Z_ItemStack(stack, inventory, true)) {
                best = stack.getItem();
                bestRank = rank;
             }
@@ -148,7 +148,7 @@ final class AiShield {
 
    static boolean init_Z(Minecraft mc, double radius) {
       for (Entity entity : mc.level.entitiesForRendering()) {
-         if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.a.AiSight.init(entity) && entity.distanceTo(mc.player) <= radius) {
+         if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.init(entity) && entity.distanceTo(mc.player) <= radius) {
             return true;
          }
       }
@@ -158,11 +158,11 @@ final class AiShield {
 
    static Entity init_Entity(Minecraft mc, double beyond) {
       for (Entity entity : mc.level.entitiesForRendering()) {
-         if (entity instanceof Mob mob && mob instanceof Enemy && mob.isAlive() && autismclient.ai.a.AiSight.init(mob)) {
+         if (entity instanceof Mob mob && mob instanceof Enemy && mob.isAlive() && autismclient.ai.engine.AiSight.init(mob)) {
             double d = mob.distanceTo(mc.player);
             if (!(d <= beyond)
                && !(d > 16.5)
-               && autismclient.ai.a.AiSight.init_Z_BlockGetter_3(
+               && autismclient.ai.engine.AiSight.init_Z_BlockGetter_3(
                   mc.level, mob.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
                )) {
                return mob;

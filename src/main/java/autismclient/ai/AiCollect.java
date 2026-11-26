@@ -140,12 +140,12 @@ final class AiCollect {
                }
 
                final String missingTool = sources.isEmpty() ? tierGated : null;
-               final AiOperation gather = autismclient.ai.a.AiBlockMine.init_AiOperation(
+               final AiOperation gather = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                   AiJson.init_JsonObject_ObjArr(
                      "blocks",
-                     autismclient.ai.a.AiBlockMine.init(sources.isEmpty() ? List.of(item) : sources),
+                     autismclient.ai.engine.AiBlockMine.init(sources.isEmpty() ? List.of(item) : sources),
                      "drops",
-                     autismclient.ai.a.AiBlockMine.init(List.of(item)),
+                     autismclient.ai.engine.AiBlockMine.init(List.of(item)),
                      "held",
                      target,
                      "radius",

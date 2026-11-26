@@ -1,0 +1,109 @@
+package autismclient.ai.print;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.SignalGetter;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.MultifaceBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Property;
+
+public interface PrintRules {
+   boolean init_Z_ListPool_BlockState(PrintTarget var1, BlockState var2);
+
+   boolean load_Z_ListPool_BlockState(PrintTarget var1, BlockState var2);
+
+   default boolean read_Z_ListPool_BlockState(PrintTarget target, BlockState live) {
+      return false;
+   }
+
+   static boolean load_Z_BlockState_BlockState(BlockState wanted, BlockState live) {
+      if (!live.is(wanted.getBlock())) {
+         return false;
+      }
+
+      for (Direction side : Direction.values()) {
+         if (MultifaceBlock.hasFace(live, side) && !MultifaceBlock.hasFace(wanted, side)) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   PrintRules.Inner_CachePool init_PathHelper_CachePo_ListPool_BlockState(PrintTarget var1, BlockState var2);
+
+   default boolean init_Z_ListPool_SignalGetter(PrintTarget target, SignalGetter world) {
+      return true;
+   }
+
+   static boolean read_Z_BlockState_BlockState(BlockState wanted, BlockState live) {
+      return wanted == live
+         ? true
+         : wanted.is(Blocks.NOTE_BLOCK)
+            && live.is(Blocks.NOTE_BLOCK)
+            && live.setValue(BlockStateProperties.POWERED, wanted.getValue(BlockStateProperties.POWERED)) == wanted;
+   }
+
+   static boolean write_Z_BlockState_BlockState(BlockState wanted, BlockState live) {
+      if (!live.is(wanted.getBlock())) {
+         return false;
+      }
+
+      for (Property<?> property : wanted.getProperties()) {
+         if (!wanted.getValue(property).equals(live.getValue(property))) {
+            String name = property.getName();
+            if (!Set.of("powered", "power", "lit", "extended", "triggered", "locked", "enabled").contains(name)
+               && (!name.equals("open") || !wanted.is(Blocks.IRON_TRAPDOOR) && !wanted.is(Blocks.IRON_DOOR))) {
+               return false;
+            }
+         }
+      }
+
+      return true;
+   }
+
+   default PrintRules.Inner_StreamUtil init_PathHelper_StreamU(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+      return new PrintRules.Inner_StreamUtil(this.init_Map(world, source, targets), PrintRules.Inner_DataUtil.load);
+   }
+
+   default PrintRules.Inner_StreamUtil init_PathHelper_StreamU_BlockGetter(
+      BlockGetter world, BlockPos source, Set<BlockPos> targets, Set<BlockPos> configurationTargets
+   ) {
+      return this.init_PathHelper_StreamU(world, source, targets);
+   }
+
+   default Set<BlockPos> init_Set_BlockGetter_BlockPos(BlockGetter world, BlockPos source) {
+      return Set.of();
+   }
+
+   default Map<BlockPos, PrintRules.Inner_DataUtil> init_Map(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+      HashMap<BlockPos, PrintRules.Inner_DataUtil> result = new HashMap<>();
+
+      for (BlockPos at : targets) {
+         result.put(at, PrintRules.Inner_DataUtil.read);
+      }
+
+      return result;
+   }
+
+   boolean write_Z_ListPool_BlockState(PrintTarget var1, BlockState var2);
+
+   record Inner_CachePool(Item item, String property) {
+   }
+
+   enum Inner_DataUtil {
+      init,
+      load,
+      read;
+   }
+
+   record Inner_StreamUtil(Map<BlockPos, PrintRules.Inner_DataUtil> reached, PrintRules.Inner_DataUtil unseen) {
+   }
+}

@@ -312,7 +312,7 @@ final class AiRunDiagnostics {
       JsonArray slots = new JsonArray();
       JsonArray navigation = new JsonArray();
       this.init_Map.values().forEach(entry -> operations.add(entry.deepCopy()));
-      List<String> nav = autismclient.ai.a.AiNavDebug.init(Math.max(0L, autismclient.ai.a.AiNavDebug.init_J() - 24L));
+      List<String> nav = autismclient.ai.engine.AiNavDebug.init(Math.max(0L, autismclient.ai.engine.AiNavDebug.init_J() - 24L));
       nav.forEach(navigation::add);
       JsonObject out = AiJson.init_JsonObject_ObjArr(
          "observedAtMs",

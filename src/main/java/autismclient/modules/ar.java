@@ -333,7 +333,7 @@ public final class ar {
                      AABB tpClickBox = tpClick != null && tpClick.isEnabled() ? tpClick.init_AABB_2() : null;
                      int tpClickColor = tpClickBox != null ? tpClick.init_I_19() : 0;
                      if (!AutismLiteVariant.enabled()) {
-                        autismclient.ai.a.AiStandingTarget.Inner_StreamUtil destination = autismclient.ai.aP.init_j_StreamUtil();
+                        autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil destination = autismclient.ai.aP.init_j_StreamUtil();
                         if (destination != null) {
                            tpClickBox = destination.box();
                            tpClickColor = destination.color();

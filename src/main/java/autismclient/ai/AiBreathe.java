@@ -38,7 +38,7 @@ public final class AiBreathe {
          double floor = player.getMaxAirSupply() * 0.4;
          Minecraft mc = Minecraft.getInstance();
          if (mc.player == player && mc.level != null) {
-            floor = Math.max(floor, autismclient.ai.a.AiBlockDigger.init_I_Minecraft(mc) + 40);
+            floor = Math.max(floor, autismclient.ai.engine.AiBlockDigger.init_I_Minecraft(mc) + 40);
          }
 
          return player.getAirSupply() < floor;
@@ -52,12 +52,12 @@ public final class AiBreathe {
       if (mc.player != null && mc.level != null) {
          final int seconds = Math.max(5, Math.min(60, AiJson.init_I_JsonObject(args, "timeoutSeconds", 25)));
          if (mc.player.isUnderWater()) {
-            autismclient.ai.a.AiBlockMine.init_V();
+            autismclient.ai.engine.AiBlockMine.init_V();
          }
 
          return new AiOperation() {
             final long init_J = System.nanoTime() + seconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             BlockPos init_BlockPos;
             List<BlockPos> init_List = new ArrayList<>();
             int init_I;
@@ -106,7 +106,7 @@ public final class AiBreathe {
                         AiItems.load(slot);
                      }
 
-                     autismclient.ai.a.AiBlockDigger.init_Z_Minecraft(mc, roof, Direction.DOWN);
+                     autismclient.ai.engine.AiBlockDigger.init_Z_Minecraft(mc, roof, Direction.DOWN);
                      return this.init("Breaking the roof at " + roof.toShortString() + " (air " + player.getAirSupply() + ")");
                   } else {
                      if (this.init_BlockPos == null) {

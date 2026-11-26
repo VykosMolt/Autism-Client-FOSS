@@ -173,7 +173,7 @@ final class AiGuardLayer {
                      && (leg == null || !leg.requiresReconciliationAfterEmergency())
                      && (this.init_AiOperation == null || !this.init_AiOperation.requiresReconciliationAfterEmergency())
                      && zoneClient.player.getHealth() >= 8.0F
-                     && autismclient.ai.a.AiMotionSafety.fill_Z()
+                     && autismclient.ai.engine.AiMotionSafety.fill_Z()
                      && AiEndRun.init_Z(zoneClient)
             )) {
             if (this.init_K == null) {
@@ -249,7 +249,7 @@ final class AiGuardLayer {
             && !this.write
             && this.init_AiOperation.canInterruptNow()
             && !this.init_AiOperation.requiresReconciliationAfterEmergency()
-            && autismclient.ai.a.AiMotionSafety.fill_Z()) {
+            && autismclient.ai.engine.AiMotionSafety.fill_Z()) {
             AiGuard.Inner_BufferHelper live = AiGuard.init_X_BufferHelper();
             AiGuard.Inner_DataUtil next = AiGuard.init_X_StreamUtil(this.init_X_CachePool_Minecraft(zoneClient), live).action();
             if (AiCombatPriority.init_Z_X_DataUtil(this.init_X_DataUtil, next, live.hostilesNear())
@@ -272,7 +272,7 @@ final class AiGuardLayer {
             return this.init_AiOperation_Result();
          }
 
-         if (autismclient.ai.a.AiMotionSafety.fill_Z() && (leg == null || leg.canInterruptNow())) {
+         if (autismclient.ai.engine.AiMotionSafety.fill_Z() && (leg == null || leg.canInterruptNow())) {
             AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
             boolean moving = motion.horizontalDistance() >= 0.12;
             if (!AiThreats.init_Z() && !AiCover.init(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {

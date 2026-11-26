@@ -102,13 +102,13 @@ final class AiDefense {
       return init(mc, target, null);
    }
 
-   static boolean init(Minecraft mc, Entity target, autismclient.ai.a.AiAim aim) {
+   static boolean init(Minecraft mc, Entity target, autismclient.ai.engine.AiAim aim) {
       return mc.player != null
          && target != null
          && target.isAlive()
          && !mc.player.cannotAttackWithItem(mc.player.getMainHandItem(), 0)
          && mc.player.isWithinAttackRange(mc.player.getMainHandItem(), target.getBoundingBox(), 0.0)
-         && (aim == null ? autismclient.ai.a.AiAim.init_Z_Entity(target) : aim.load_Z_Entity(target));
+         && (aim == null ? autismclient.ai.engine.AiAim.init_Z_Entity(target) : aim.load_Z_Entity(target));
    }
 
    static double init_D(Minecraft mc) {

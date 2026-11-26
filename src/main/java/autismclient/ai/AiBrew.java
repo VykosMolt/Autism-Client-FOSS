@@ -65,8 +65,8 @@ final class AiBrew {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-            final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
             final JsonArray init_JsonArray = new JsonArray();
             BlockPos init_BlockPos;
             int init_I;
@@ -378,14 +378,14 @@ final class AiBrew {
                      this.load_I = 0;
                   }
 
-                  autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Brewing stand placed");
                   }
 
-                  if (status != autismclient.ai.a.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 100) {
                      return this.init("Placing a brewing stand");
                   }
 
@@ -403,11 +403,11 @@ final class AiBrew {
                      return this.init(AiOperation.Status.FAILED, "Could not open the brewing stand");
                   }
 
-                  if (!autismclient.ai.a.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+                  if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
                      return this.init("Turning toward the brewing stand");
                   }
 
-                  BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                  BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                   if (hit == null) {
                      return this.init("Turning toward the brewing stand");
                   }

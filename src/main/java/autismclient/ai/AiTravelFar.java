@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -19,7 +19,7 @@ final class AiTravelFar {
    }
 
    static AiOperation init(BlockPos target, double radius, boolean groundTarget, boolean allowDig, boolean allowPillar, boolean allowBridge, int timeoutSeconds) {
-      return init(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.a.AiPathfinder.Inner_IoWorker.init);
+      return init(target, radius, groundTarget, allowDig, allowPillar, allowBridge, timeoutSeconds, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init);
    }
 
    static AiOperation init(
@@ -30,7 +30,7 @@ final class AiTravelFar {
       final boolean allowPillar,
       final boolean allowBridge,
       int timeoutSeconds,
-      final autismclient.ai.a.AiPathfinder.Inner_IoWorker strategy
+      final autismclient.ai.engine.AiPathfinder.Inner_IoWorker strategy
    ) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {

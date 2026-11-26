@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -241,8 +241,8 @@ final class AiBurrow {
             final Object load_Obj = mc.player;
             final Object read_Obj = mc.getConnection();
             final BlockPos init_BlockPos = mc.player.blockPosition().immutable();
-            final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer().init_DataPipe();
-            final autismclient.ai.a.AiRestock init_UtilCore = new autismclient.ai.a.AiRestock(mc);
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer().init_DataPipe();
+            final autismclient.ai.engine.AiRestock init_UtilCore = new autismclient.ai.engine.AiRestock(mc);
             AiBurrow.Inner_DataUtil init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.init;
             AiOperation init_AiOperation;
             AiOperation load_AiOperation;
@@ -294,7 +294,7 @@ final class AiBurrow {
                      && this.init_AiOperation == null
                      && AiBurrow.init(
                         healTo,
-                        autismclient.ai.a.AiMotionSafety.fill_Z(),
+                        autismclient.ai.engine.AiMotionSafety.fill_Z(),
                         AiBurrow.init_Z_BlockPos_Predicate(feet, this::init_Z_3) && this.write_Z(feet),
                         this.update_Z(feet),
                         mc.player.isInWater() || mc.player.isInLava() || AiEndRun.init_Z(mc)
@@ -336,7 +336,7 @@ final class AiBurrow {
                            this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.sync,
                            mc.player.isOnFire(),
                            AiServerEvidence.init_Z_UUID(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
-                           autismclient.ai.a.AiMotionSafety.fill_Z(),
+                           autismclient.ai.engine.AiMotionSafety.fill_Z(),
                            this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.sync && this.init_Z_6(),
                            this.init_RingBuffer_DataUti == AiBurrow.Inner_DataUtil.sync && this.update_Z(this.update_BlockPos),
                            mc.player.isInLava() || AiEndRun.init_Z(mc)
@@ -357,12 +357,12 @@ final class AiBurrow {
                         }
 
                         if (this.init_UtilCore.init_Z()) {
-                           autismclient.ai.a.AiRestock.Inner_BufferHelper status = this.init_UtilCore.load_UtilCore_BufferHel();
-                           if (status == autismclient.ai.a.AiRestock.Inner_BufferHelper.write) {
+                           autismclient.ai.engine.AiRestock.Inner_BufferHelper status = this.init_UtilCore.load_UtilCore_BufferHel();
+                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.write) {
                               return this.init(AiOperation.Status.FAILED, "Construction stock swap was not confirmed");
                            }
 
-                           if (status == autismclient.ai.a.AiRestock.Inner_BufferHelper.read) {
+                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.read) {
                               this.init_UtilCore.init_V();
                            }
 
@@ -433,7 +433,7 @@ final class AiBurrow {
                } else {
                   switch (this.init_RingBuffer_StreamU(feet.below())) {
                      case init:
-                        this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(feet.below(), 20);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(feet.below(), 20);
                         return this.init("Digging the shaft");
                      case load:
                         if (++this.load_I > 40) {
@@ -497,7 +497,7 @@ final class AiBurrow {
                   && this.write_BlockPos.getY() == this.update_BlockPos.getY() + 2
                   && !this.write_BlockPos.equals(AiBurrow.init_BlockPos(this.update_BlockPos))
                   && this.load_Z(this.update_BlockPos);
-               if (!autismclient.ai.a.AiMotionSafety.fill_Z() && !beamInFlight) {
+               if (!autismclient.ai.engine.AiMotionSafety.fill_Z() && !beamInFlight) {
                   return this.init("Settling before closing the shelter");
                }
 
@@ -577,7 +577,7 @@ final class AiBurrow {
                      }
 
                      this.write_BlockPos = this.init_List.get(this.init_I);
-                     autismclient.ai.a.AiEditLedger.init_V(this.write_BlockPos);
+                     autismclient.ai.engine.AiEditLedger.init_V(this.write_BlockPos);
                      this.init_Item = mc.player.getInventory().getItem(slot).getItem();
                      this.init_DataPipe.init_V_BlockPos_Item(this.write_BlockPos, this.init_Item);
                      this.init_Z = true;
@@ -588,20 +588,20 @@ final class AiBurrow {
                      && !this.init_Z_3(this.write_BlockPos)
                      && this.load_Z(this.update_BlockPos)
                      && !this.init_DataPipe.load_Z()
-                     && autismclient.ai.a.AiMotionSafety.fill_Z()
-                     && !autismclient.ai.a.AiPlacer.init_Z_BlockPos_Item(this.write_BlockPos, this.init_Item)) {
+                     && autismclient.ai.engine.AiMotionSafety.fill_Z()
+                     && !autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(this.write_BlockPos, this.init_Item)) {
                      mc.options.keyJump.setDown(true);
                      this.sync_Z = true;
                   }
 
-                  autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.init) {
+                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.init) {
                      return this.init("Closing shelter walls and roof");
                   } else {
                      boolean pending = this.init_DataPipe.load_Z();
                      this.init_DataPipe.init_V();
                      this.init_Z = false;
-                     if (status != autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                     if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                         this.flush_Z |= pending;
                         return this.init(AiOperation.Status.FAILED, "Shelter placement failed: " + this.init_DataPipe.init_Str());
                      } else {
@@ -695,7 +695,7 @@ final class AiBurrow {
                         mc.player.getFoodData().getFoodLevel(),
                         AiSurvival.init(mc.player.getInventory()) >= 0,
                         this.init_Z_6(),
-                        autismclient.ai.a.AiMotionSafety.fill_Z(),
+                        autismclient.ai.engine.AiMotionSafety.fill_Z(),
                         this.canInterruptNow(),
                         this.requiresReconciliationAfterEmergency()
                      )) {
@@ -751,7 +751,7 @@ final class AiBurrow {
             AiOperation.Result update_AiOperation_Result(BlockPos feet) {
                if (this.read_BlockPos == null) {
                   if (this.init_AiOperation == null) {
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(this.write_BlockPos, 20);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.write_BlockPos, 20);
                   }
 
                   boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();
@@ -773,11 +773,11 @@ final class AiBurrow {
                   this.init_RingBuffer_DataUti = AiBurrow.Inner_DataUtil.close;
                   return this.init("Cap open; climbing out");
                } else {
-                  if (AiBurrow.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.a.AiMotionSafety.fill_Z())) {
+                  if (AiBurrow.init(feet.getY(), this.read_BlockPos.getY(), autismclient.ai.engine.AiMotionSafety.fill_Z())) {
                      return this.init(AiOperation.Status.SUCCEEDED, "Down from the tower; the night is over");
                   }
 
-                  if (!autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                  if (!autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                      return this.init("Settling onto the ground while descending the shelter");
                   }
 
@@ -810,7 +810,7 @@ final class AiBurrow {
 
                      this.write_I = 0;
                      if (this.init_AiOperation == null) {
-                        this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(feet.below(), 20);
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(feet.below(), 20);
                      }
 
                      boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();
@@ -846,7 +846,7 @@ final class AiBurrow {
                } else {
                   this.init_AiOperation.cancel();
                   this.init_AiOperation = null;
-                  if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.a.AiMotionSafety.fill_Z()) {
+                  if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.engine.AiMotionSafety.fill_Z()) {
                      return this.init("Settling on the surface before handing back control");
                   } else if (r.status() == AiOperation.Status.SUCCEEDED && this.write_Z) {
                      return this.init(
@@ -991,7 +991,7 @@ final class AiBurrow {
 
             boolean init(ItemStack stack) {
                return stack.getItem() instanceof BlockItem block
-                  && autismclient.ai.a.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
+                  && autismclient.ai.engine.AiRestock.init_Z(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
                   && !(block.getBlock() instanceof FallingBlock)
                   && block.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, mc.player.blockPosition());
             }
@@ -999,7 +999,7 @@ final class AiBurrow {
             int init_I_9() {
                for (int slot = 0; slot < 9; slot++) {
                   ItemStack stack = mc.player.getInventory().getItem(slot);
-                  if (!stack.isEmpty() && this.init(stack) && autismclient.ai.a.AiRestock.init_Z_ItemStack(stack, mc.player.getInventory(), true)) {
+                  if (!stack.isEmpty() && this.init(stack) && autismclient.ai.engine.AiRestock.init_Z_ItemStack(stack, mc.player.getInventory(), true)) {
                      return slot;
                   }
                }
@@ -1022,9 +1022,9 @@ final class AiBurrow {
                int planks = 0;
 
                for (Entry<Item, Integer> entry : counts.entrySet()) {
-                  int spare = Math.max(0, entry.getValue() - autismclient.ai.a.AiRestock.init(entry.getKey()));
+                  int spare = Math.max(0, entry.getValue() - autismclient.ai.engine.AiRestock.init(entry.getKey()));
                   ItemStack stack = entry.getKey().getDefaultInstance();
-                  if (autismclient.ai.a.AiRestock.init(stack)) {
+                  if (autismclient.ai.engine.AiRestock.init(stack)) {
                      stone += spare;
                   } else if (stack.is(ItemTags.PLANKS)) {
                      planks += spare;
@@ -1033,7 +1033,7 @@ final class AiBurrow {
                   }
                }
 
-               return count + Math.max(0, stone - autismclient.ai.a.AiRestock.flush()) + Math.max(0, planks - autismclient.ai.a.AiRestock.sync());
+               return count + Math.max(0, stone - autismclient.ai.engine.AiRestock.flush()) + Math.max(0, planks - autismclient.ai.engine.AiRestock.sync());
             }
 
             boolean read() {
@@ -1043,8 +1043,8 @@ final class AiBurrow {
 
                   for (int slot = 9; slot < 36; slot++) {
                      ItemStack stack = mc.player.getInventory().getItem(slot);
-                     if (!stack.isEmpty() && this.init(stack) && autismclient.ai.a.AiRestock.init_Z_ItemStack(stack, mc.player.getInventory(), true)) {
-                        int candidate = autismclient.ai.a.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+                     if (!stack.isEmpty() && this.init(stack) && autismclient.ai.engine.AiRestock.init_Z_ItemStack(stack, mc.player.getInventory(), true)) {
+                        int candidate = autismclient.ai.engine.AiRestock.init_I(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
                         if (candidate < rank) {
                            source = slot;
                            rank = candidate;
@@ -1143,7 +1143,7 @@ final class AiBurrow {
             @Override
             public boolean canInterruptNow() {
                return !this.flush_Z
-                  && autismclient.ai.a.AiMotionSafety.fill_Z()
+                  && autismclient.ai.engine.AiMotionSafety.fill_Z()
                   && !this.sync_Z
                   && !AiBurrow.init_Z_Z_BooleanSupplier(this.init_Z, this.init_DataPipe::load_Z)
                   && !this.init_UtilCore.load_Z()

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -525,7 +525,7 @@ final class AiNetherEntry {
                      );
                   }
 
-                  autismclient.ai.a.AiRestock.init(Map.of(Items.OBSIDIAN, 64));
+                  autismclient.ai.engine.AiRestock.init(Map.of(Items.OBSIDIAN, 64));
                   if (System.nanoTime() > this.init_J) {
                      return this.init_AiOperation_Result_AiOperation_Status_2(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
@@ -1279,7 +1279,7 @@ final class AiNetherEntry {
                      this.load_Str = "game:surface";
                      this.init(AiNetherEntry.init_JsonObject_Str(this.load_Str, "STARTED", "", null));
                      int seconds = (int)Math.max(1L, (this.update_J - System.nanoTime()) / 1000000000L);
-                     this.init_AiOperation = autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(120, seconds)));
+                     this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(120, seconds)));
                   }
 
                   AiOperation.Result ascent = this.poll_AiOperation_Result();
@@ -1487,7 +1487,7 @@ final class AiNetherEntry {
                               true,
                               true,
                               this.load_I(240),
-                              autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                               true,
                               2.0,
                               new AiNetherRun.Inner_NetHelper(this.update_BlockPos.getX(), this.update_BlockPos.getZ(), 8)
@@ -1838,7 +1838,7 @@ final class AiNetherEntry {
                      this.load_Str = "game:goto";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
                      this.init_AiOperation = AiGoto.init(
-                        lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true, 2.0
+                        lit, 3.0, true, true, true, this.read_I(240), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true, 2.0
                      );
                      return this.write("Back to the portal built at " + lit.toShortString());
                   }
@@ -2044,7 +2044,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null) {
                   this.load_Str = "game:goto";
                   this.init(AiNetherEntry.init_JsonObject_Str("game:goto", "STARTED", "", null));
-                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.a.AiPathfinder.Inner_IoWorker.load);
+                  this.init_AiOperation = AiGoto.init(target, 3.0, true, true, true, this.load_I(cap), autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load);
                }
 
                return this.poll_AiOperation_Result();
@@ -2253,11 +2253,11 @@ final class AiNetherEntry {
                            true,
                            true,
                            this.read_I(240),
-                           autismclient.ai.a.AiPathfinder.Inner_IoWorker.init,
+                           autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init,
                            true,
                            2.0,
                            AiGoto.read(
-                              autismclient.ai.a.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
+                              autismclient.ai.engine.AiPathfinder.Inner_JsonUtil.init_ClassCache_JsonUti_BlockPos_D(begun, 3.0), AiDimension.init_Set(begun, AiDimension.init_Direction)
                            )
                         );
                      }
@@ -2288,7 +2288,7 @@ final class AiNetherEntry {
                      if (this.init_AiOperation == null) {
                         this.load_Str = "game:surface";
                         this.init(AiNetherEntry.init_JsonObject_Str("game:surface", "STARTED", "", null));
-                        this.init_AiOperation = autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.read_I(240)));
+                        this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.read_I(240)));
                      }
 
                      AiOperation.Result r = this.poll_AiOperation_Result();
@@ -2383,7 +2383,7 @@ final class AiNetherEntry {
                   if (this.init_I == 31) {
                      this.load_Str = "game:surface";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:surface", "STARTED", "", null));
-                     this.init_AiOperation = autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.read_I(240)));
+                     this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.read_I(240)));
                   } else {
                      this.load_Str = "game:bucket";
                      this.init(AiNetherEntry.init_JsonObject_Str("game:bucket", "STARTED", "", null));
@@ -2420,7 +2420,7 @@ final class AiNetherEntry {
                if (this.init_AiOperation == null) {
                   this.load_Str = "game:surface";
                   this.init(AiNetherEntry.init_JsonObject_Str("game:surface", "STARTED", "", null));
-                  this.init_AiOperation = autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.read_I(240)));
+                  this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", this.read_I(240)));
                }
 
                AiOperation.Result r = this.poll_AiOperation_Result();

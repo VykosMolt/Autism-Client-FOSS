@@ -183,7 +183,7 @@ final class AiFill {
 
    static boolean init_Z(String from, String blockId) {
       return !from.equalsIgnoreCase("any")
-         ? autismclient.ai.a.AiMine.init(from, blockId)
+         ? autismclient.ai.engine.AiMine.init(from, blockId)
          : !blockId.equals("minecraft:air") && !blockId.equals("minecraft:cave_air") && !blockId.equals("minecraft:void_air");
    }
 
@@ -834,14 +834,14 @@ final class AiFill {
 
                while (this.init_I < this.init_List.size()) {
                   BlockPos cell = this.init_List.get(this.init_I++);
-                  autismclient.ai.a.AiPathfinder.Inner_FileCache probe = autismclient.ai.a.AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(
+                  autismclient.ai.engine.AiPathfinder.Inner_FileCache probe = autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(
                      this.init_Minecraft, this.init_Minecraft.level, cell, new ItemStack[9]
                   );
                   if (!probe.loaded()) {
                      this.init(cell, "WORLD_UNKNOWN");
                   } else if (!this.init_Minecraft.level.getBlockState(cell).isAir()) {
-                     if (!autismclient.ai.a.AiExcavate.init(
-                        (x, y, z) -> autismclient.ai.a.AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(
+                     if (!autismclient.ai.engine.AiExcavate.init(
+                        (x, y, z) -> autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.init_ClassCache_FileCac_Minecraft(
                               this.init_Minecraft, this.init_Minecraft.level, new BlockPos(x, y, z), new ItemStack[9]
                            )
                            .lava(),
@@ -850,7 +850,7 @@ final class AiFill {
                         cell.getZ()
                      )) {
                         this.init_BlockPos = cell;
-                        this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(cell, Math.min(60, this.init_I_5()));
+                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, Math.min(60, this.init_I_5()));
                         return this.init("Approaching replacement cell " + cell.toShortString());
                      }
 

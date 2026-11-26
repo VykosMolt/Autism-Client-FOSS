@@ -55,7 +55,7 @@ final class AiPowderEscape {
    static AiOperation init() {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final long init_J = System.nanoTime() + 10000000000L;
          BlockPos init_BlockPos;
          int init_I;

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiScaffold;
+import autismclient.ai.engine.AiScaffold;
 import autismclient.api.ai.AiCapabilityDescriptor;
 import autismclient.api.ai.AiObservation;
 import autismclient.api.ai.AiOperation;
@@ -1661,7 +1661,7 @@ public final class AiService {
 
             AiServerEvidence.read_V();
             AiChatLedger.init_V();
-            autismclient.ai.a.AiGridRevisions.init_V();
+            autismclient.ai.engine.AiGridRevisions.init_V();
             AiScaffold.init_V();
             this.init_Obj = mc.level;
             this.flush_Str = UUID.randomUUID().toString();
@@ -2001,7 +2001,7 @@ public final class AiService {
                               hostiles++;
                            }
 
-                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.a.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.init_Z(mc, e)) {
+                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.init_Z(mc, e)) {
                               ranged++;
                            }
                         }
@@ -2164,7 +2164,7 @@ public final class AiService {
                               hostiles++;
                            }
 
-                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.a.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.init_Z(mc, e)) {
+                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.init_Z(mc, e)) {
                               ranged++;
                            }
                         }
@@ -2299,7 +2299,7 @@ public final class AiService {
                               AiOperation.Result result = current.operation().tick();
                               this.sync_Str = result.message();
                               this.poll_Str = result.dataJson();
-                              autismclient.ai.a.AiMotionAudit.init(mc, current.id(), result.message());
+                              autismclient.ai.engine.AiMotionAudit.init(mc, current.id(), result.message());
                               if (this.update_I % 20 == 0 && !result.terminal()) {
                                  AiService.Inner_RenderState s = this.init_cc_RenderState();
                                  synchronized (s) {
@@ -2326,7 +2326,7 @@ public final class AiService {
                               }
 
                               if (result.terminal()) {
-                                 autismclient.ai.a.AiMotionAudit.init_V();
+                                 autismclient.ai.engine.AiMotionAudit.init_V();
                                  this.init_cc_SyncManager = null;
                                  this.init_V_cc_SyncManager_Z(current, false);
                                  AiService.Inner_RenderState s = this.init_cc_RenderState();
@@ -2522,7 +2522,7 @@ public final class AiService {
             this.init_V_Str_Str("error", "Operation cleanup: " + e.getMessage());
          } finally {
             if (current.resources().contains("INPUT")) {
-               autismclient.ai.a.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.putAt_V();
                Minecraft mc = Minecraft.getInstance();
                if (mc.options != null) {
                   for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {

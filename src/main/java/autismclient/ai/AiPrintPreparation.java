@@ -123,8 +123,8 @@ final class AiPrintPreparation implements AiOperation {
       AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.init_bX_DataUtil(blueprint, 16, snapshot);
       blueprint = buildable.blueprint();
       AiBuilder.init();
-      List<autismclient.ai.b.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
-      autismclient.ai.b.PrintCore.ao geometry = autismclient.ai.b.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init);
+      List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
+      autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init);
       AiBuilder.init();
       AiBuilder.Inner_DataUtil construction = AiBuilder.load_TableIndex_DataUti(blueprint);
       AiPrintPreparation.Inner_JsonUtil source = AiPrintPreparation.Inner_JsonUtil.of(blueprint);
@@ -613,10 +613,10 @@ final class AiPrintPreparation implements AiOperation {
       AiBuilder.Inner_ConfigStore power,
       AiSchematicReadiness.Inner_TaskQueue audit,
       int skipped,
-      List<autismclient.ai.b.PrintTarget> targets,
+      List<autismclient.ai.print.PrintTarget> targets,
       AiPrintPreparation.Inner_JsonUtil source,
       AiSchematicMachinePlan.Inner_StreamUtil nativeActions,
-      autismclient.ai.b.PrintCore.ao geometry
+      autismclient.ai.print.PrintCore.ao geometry
    ) {
    }
 

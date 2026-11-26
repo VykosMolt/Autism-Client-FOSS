@@ -141,12 +141,12 @@ final class AiBuildIntent {
          return null;
       }
 
-      autismclient.ai.a.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, BlockPos.ZERO);
+      autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, BlockPos.ZERO);
       return constraint == null ? null : constraint.clickYaw();
    }
 
    static double init_D(AiBuilder.Inner_StreamUtil cell) {
-      autismclient.ai.a.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, BlockPos.ZERO);
+      autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, BlockPos.ZERO);
       return constraint == null ? 35.0 : constraint.yawTolerance();
    }
 
@@ -155,7 +155,7 @@ final class AiBuildIntent {
       if (kind != AiBuildSite.Inner_CachePool.init && kind != AiBuildSite.Inner_CachePool.load) {
          return null;
       } else {
-         autismclient.ai.a.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
+         autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
          if (constraint == null) {
             return null;
          } else {
@@ -192,7 +192,7 @@ final class AiBuildIntent {
    }
 
    static Direction init_Direction(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
-      autismclient.ai.a.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
+      autismclient.ai.engine.PlacementGoal.Inner_DataUtil constraint = init_u_DataUtil(cell, target == null ? BlockPos.ZERO : target);
       return constraint == null ? null : constraint.clickFace();
    }
 
@@ -272,7 +272,7 @@ final class AiBuildIntent {
       return List.copyOf(controls);
    }
 
-   static autismclient.ai.a.PlacementGoal.Inner_DataUtil init_u_DataUtil(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
+   static autismclient.ai.engine.PlacementGoal.Inner_DataUtil init_u_DataUtil(AiBuilder.Inner_StreamUtil cell, BlockPos target) {
       try {
          return AiBuilder.init(cell, init_Block(cell), target, init_BlockGetter(cell));
       } catch (RuntimeException e) {

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.util.BlockBreakSpeedHelper;
 import com.google.gson.JsonArray;
@@ -293,7 +293,7 @@ final class AiObtain {
                      this.load_AiOperation.cancel();
                      this.load_AiOperation = null;
                      return this.init_AiOperation_Result_9("Resuming after " + this.init_Str);
-                  } else if (autismclient.ai.a.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
+                  } else if (autismclient.ai.engine.AiMotionSafety.fill_Z() && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())) {
                      AiGuard.Inner_BufferHelper vitals = AiGuard.init_X_BufferHelper();
                      AiOperation action = AiGuard.init_AiOperation_X_CachePool(this.init_X_CachePool, vitals, this.init_I_19());
                      if (action == null) {
@@ -427,7 +427,7 @@ final class AiObtain {
                }
 
                boolean init(BlockState state) {
-                  return autismclient.ai.a.MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.init(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
+                  return autismclient.ai.engine.MiningCost.init_I_Minecraft_2(mc, state, true, (block, tool) -> AiItems.init(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
                }
 
                AiOperation init_AiOperation(AiObtain.Inner_DataUtil strategy) {
@@ -618,7 +618,7 @@ final class AiObtain {
                                           needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 1600 / burnDivisor);
                                        } else {
                                           fuelId = "planks";
-                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 300 / burnDivisor) + autismclient.ai.a.AiRestock.init_I();
+                                          needed = AiParallelSmelt.init_I(missing, furnaceCount, cooking.load_I(), 300 / burnDivisor) + autismclient.ai.engine.AiRestock.init_I();
                                        }
                                     } else {
                                        fuelId = BuiltInRegistries.ITEM.getKey(fuel).toString();
@@ -985,12 +985,12 @@ final class AiObtain {
                   }
 
                   boolean trees = blocks.stream().anyMatch(id -> id.endsWith("_log"));
-                  return autismclient.ai.a.AiBlockMine.init_AiOperation(
+                  return autismclient.ai.engine.AiBlockMine.init_AiOperation(
                      AiJson.init_JsonObject_ObjArr(
                         "blocks",
-                        autismclient.ai.a.AiBlockMine.init(blocks),
+                        autismclient.ai.engine.AiBlockMine.init(blocks),
                         "drops",
-                        autismclient.ai.a.AiBlockMine.init(this.init_af_DataUtil.itemIds()),
+                        autismclient.ai.engine.AiBlockMine.init(this.init_af_DataUtil.itemIds()),
                         "held",
                         goal,
                         "trees",
@@ -1053,7 +1053,7 @@ final class AiObtain {
                               Integer nextY = AiObtain.init(this.init_I, currentY, mc.level.getMinY(), found);
                               if (found) {
                                  this.init_Z = true;
-                                 this.init_AiOperation = autismclient.ai.a.AiMine.init(
+                                 this.init_AiOperation = autismclient.ai.engine.AiMine.init(
                                     AiJson.init_JsonObject_ObjArr("block", blockId, "count", count, "radius", radius, "timeoutSeconds", init_I_19())
                                  );
                                  return AiGameOperations.init_AiOperation_Result(AiOperation.Status.RUNNING, "Mining " + blockId, new JsonObject());
@@ -1554,7 +1554,7 @@ final class AiObtain {
 
             if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.load < 2) {
                this.load++;
-               this.init_AiOperation = autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", (int)Math.min(120L, left)));
+               this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", (int)Math.min(120L, left)));
                return this.init(AiOperation.Status.RUNNING, "Up to open sky to look for " + what);
             }
 
@@ -1573,7 +1573,7 @@ final class AiObtain {
                false,
                false,
                (int)Math.min(60L, left),
-               autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+               autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                true,
                2.0,
                AiSpeedrun.init_ClassCache_JsonUti_BlockPos(surface),

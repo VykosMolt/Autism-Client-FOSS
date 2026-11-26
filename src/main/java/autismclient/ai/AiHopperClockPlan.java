@@ -38,14 +38,14 @@ final class AiHopperClockPlan {
    private AiHopperClockPlan() {
    }
 
-   static List<autismclient.ai.b.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.Inner_DataUtil> contents) {
+   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.Inner_DataUtil> contents) {
       return init(states, contents, at -> true);
    }
 
-   static List<autismclient.ai.b.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.Inner_DataUtil> contents, Predicate<BlockPos> covered) {
+   static List<autismclient.ai.print.PrintClockSpec> init(Map<BlockPos, BlockState> states, List<AiSchematicMachinePlan.Inner_DataUtil> contents, Predicate<BlockPos> covered) {
       HashMap<BlockPos, AiSchematicMachinePlan.Inner_DataUtil> byPosition = new HashMap<>();
       contents.forEach(c -> byPosition.put(c.position(), c));
-      ArrayList<autismclient.ai.b.PrintClockSpec> found = new ArrayList<>();
+      ArrayList<autismclient.ai.print.PrintClockSpec> found = new ArrayList<>();
       HashSet<BlockPos> used = new HashSet<>();
 
       for (AiSchematicMachinePlan.Inner_DataUtil entry : contents) {
@@ -73,7 +73,7 @@ final class AiHopperClockPlan {
                         && total <= 5 * material.getMaxStackSize()
                         && !stacks.stream().anyMatch(s -> !ItemStack.isSameItemSameComponents(material, s))) {
                         for (Direction side : List.of(direction.getClockWise(), direction.getCounterClockWise())) {
-                           autismclient.ai.b.PrintClockSpec spec = init(states, a, b, direction, side, material, total, stacks.size());
+                           autismclient.ai.print.PrintClockSpec spec = init(states, a, b, direction, side, material, total, stacks.size());
                            if (spec != null
                               && spec.source().keySet().stream().allMatch(covered)
                               && found.stream()
@@ -97,7 +97,7 @@ final class AiHopperClockPlan {
       return List.copyOf(found);
    }
 
-   private static autismclient.ai.b.PrintClockSpec init(
+   private static autismclient.ai.print.PrintClockSpec init(
       Map<BlockPos, BlockState> states, BlockPos a, BlockPos b, Direction dir, Direction side, ItemStack material, int total, int slots
    ) {
       AiHopperClockPlan.Inner_DataUtil world = new AiHopperClockPlan.Inner_DataUtil(states);
@@ -206,7 +206,7 @@ final class AiHopperClockPlan {
 
                return world.load.size() > 2048
                   ? null
-                  : new autismclient.ai.b.PrintClockSpec(a, b, pa, pb, first, second, lever, dir, material, total, slots, world.load, outputs);
+                  : new autismclient.ai.print.PrintClockSpec(a, b, pa, pb, first, second, lever, dir, material, total, slots, world.load, outputs);
             } else {
                return null;
             }

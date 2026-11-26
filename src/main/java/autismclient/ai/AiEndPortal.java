@@ -143,7 +143,7 @@ final class AiEndPortal {
    static AiOperation init_AiOperation(final BlockPos frame) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final Object init_Obj = mc.level;
          final AiEndPortal.Inner_DataUtil init_t_DataUtil = new AiEndPortal.Inner_DataUtil();
          int init_I;
@@ -198,7 +198,7 @@ final class AiEndPortal {
                      return this.init(AiOperation.Status.FAILED, "No Eye held for insertion");
                   }
 
-                  BlockHitResult ray = autismclient.ai.a.AiAim.init_BlockHitResult();
+                  BlockHitResult ray = autismclient.ai.engine.AiAim.init_BlockHitResult();
                   if (ray == null || !ray.getBlockPos().equals(frame)) {
                      this.init_BlockHitResult = null;
                      return ++this.load >= 4

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -184,8 +184,8 @@ final class AiSmelt {
                final Object init_Obj = mc.level;
                final Object load_Obj = mc.getConnection();
                final LocalPlayer init_LocalPlayer = mc.player;
-               final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-               final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+               final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+               final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
                final AiGuardLayer init_Y = new AiGuardLayer(AiGuard.Inner_CachePool.standard(), "smelt");
                AiStationPlacer init_cn;
                AiOperation init_AiOperation;
@@ -224,7 +224,7 @@ final class AiSmelt {
                      );
                   }
 
-                  int planks = (int)Math.ceil(heat / (300.0 / divisor)) + autismclient.ai.a.AiRestock.init_I();
+                  int planks = (int)Math.ceil(heat / (300.0 / divisor)) + autismclient.ai.engine.AiRestock.init_I();
                   return AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "planks", "count", planks, "timeoutSeconds", seconds));
                }
 
@@ -471,7 +471,7 @@ final class AiSmelt {
                         return this.init(this.init_cn.init_Str());
                      }
                   } else {
-                     BlockHitResult interactionHit = autismclient.ai.a.AiBlockInteraction.init(mc, this.load_BlockPos);
+                     BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, this.load_BlockPos);
                      if (interactionHit == null) {
                         if (this.init_AiOperation == null) {
                            this.init_AiOperation = AiGoto.init_AiOperation(this.load_BlockPos, Math.min(120, this.init_I_33()));
@@ -528,11 +528,11 @@ final class AiSmelt {
                               );
                            }
                         } else {
-                           if (!autismclient.ai.a.AiAim.init_Z_BlockPos(this.load_BlockPos)) {
+                           if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.load_BlockPos)) {
                               return this.init("Turning toward the " + resolved.stationId());
                            }
 
-                           BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                           BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                            if (hit == null) {
                               return this.init("Turning toward the " + resolved.stationId());
                            }
@@ -725,7 +725,7 @@ final class AiSmelt {
          ? AiObtain.init(AiJson.init_JsonObject_ObjArr("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))
          : AiObtain.init(
             AiJson.init_JsonObject_ObjArr(
-               "item", "planks", "count", (int)Math.ceil(items * 200 / 300.0) + autismclient.ai.a.AiRestock.init_I(), "timeoutSeconds", seconds
+               "item", "planks", "count", (int)Math.ceil(items * 200 / 300.0) + autismclient.ai.engine.AiRestock.init_I(), "timeoutSeconds", seconds
             )
          );
       final JsonObject retry = args.deepCopy();
@@ -916,7 +916,7 @@ final class AiSmelt {
 
       List<Inner_StreamUtil> fuels = new ArrayList<>();
       Inventory inventory = mc.player.getInventory();
-      int spareWood = autismclient.ai.a.AiRestock.init(inventory);
+      int spareWood = autismclient.ai.engine.AiRestock.init(inventory);
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
          ItemStack stack = inventory.getItem(slot);
@@ -979,7 +979,7 @@ final class AiSmelt {
       if (mc.player != null && fuel != null) {
          int count = Math.max(0, AiGameState.init_I_Str(BuiltInRegistries.ITEM.getKey(fuel).toString()) - AiRunResources.load(fuel));
          ItemStack stack = new ItemStack(fuel);
-         int spareWood = autismclient.ai.a.AiRestock.init(mc.player.getInventory());
+         int spareWood = autismclient.ai.engine.AiRestock.init(mc.player.getInventory());
          if (stack.is(ItemTags.PLANKS)) {
             return Math.min(count, spareWood);
          } else if (stack.is(ItemTags.LOGS)) {

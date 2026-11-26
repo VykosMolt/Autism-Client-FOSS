@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismClientLevelPredictionAccessor;
@@ -89,7 +89,7 @@ final class AiStronghold {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final JsonArray init_JsonArray = new JsonArray();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiEyeNavigation init_z = AiStronghold.init(mc);
             final AiStrongholdSearch.Inner_DataUtil init_cp_DataUtil = new AiStrongholdSearch.Inner_DataUtil();
             final String init_Str = AiWorldIdentity.init(mc);
@@ -440,7 +440,7 @@ final class AiStronghold {
                   }
 
                   if (!this.load_Z_2(5)) {
-                     return this.init("up to the surface for travel food", autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
+                     return this.init("up to the surface for travel food", autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
                   }
 
                   long dayTime = mc.level.getOverworldClockTime() % 24000L;
@@ -593,7 +593,7 @@ final class AiStronghold {
                         }
 
                         if (!this.load_Z_2(5)) {
-                           return this.init("up to the surface for the End kit", autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
+                           return this.init("up to the surface for the End kit", autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
                         }
 
                         double a = this.poll++ * 2.399;
@@ -608,7 +608,7 @@ final class AiStronghold {
                               true,
                               true,
                               60,
-                              autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                               true,
                               2.0,
                               new AiNetherRun.Inner_NetHelper(x, z, 6),
@@ -666,7 +666,7 @@ final class AiStronghold {
                               true,
                               true,
                               60,
-                              autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                               true,
                               2.0,
                               null,
@@ -685,7 +685,7 @@ final class AiStronghold {
                               true,
                               true,
                               120,
-                              autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                              autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                               true,
                               2.0,
                               null,
@@ -730,7 +730,7 @@ final class AiStronghold {
                               }
 
                               if (!this.load_Z_2(5)) {
-                                 return this.init("up to the surface for endermen", autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
+                                 return this.init("up to the surface for endermen", autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
                               }
 
                               double a = this.pop++ * 2.399;
@@ -745,7 +745,7 @@ final class AiStronghold {
                                     true,
                                     true,
                                     60,
-                                    autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                    autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                     true,
                                     2.0,
                                     new AiNetherRun.Inner_NetHelper(x, z, 6),
@@ -793,8 +793,8 @@ final class AiStronghold {
                                           true,
                                           300,
                                           this.push % 2 == 1
-                                             ? autismclient.ai.a.AiPathfinder.Inner_IoWorker.init
-                                             : autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                             ? autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init
+                                             : autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                           true,
                                           2.0,
                                           null,
@@ -826,7 +826,7 @@ final class AiStronghold {
                                              true,
                                              true,
                                              60,
-                                             autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                              true,
                                              2.0,
                                              null,
@@ -887,7 +887,7 @@ final class AiStronghold {
                                     if (!this.init_co_CachePool.init(600000000000L)) {
                                        if (!this.load_Z_2(5)) {
                                           return this.init(
-                                             "up to the surface for endermen", autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120))
+                                             "up to the surface for endermen", autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120))
                                           );
                                        }
 
@@ -903,7 +903,7 @@ final class AiStronghold {
                                              true,
                                              true,
                                              60,
-                                             autismclient.ai.a.AiPathfinder.Inner_IoWorker.load,
+                                             autismclient.ai.engine.AiPathfinder.Inner_IoWorker.load,
                                              true,
                                              2.0,
                                              new AiNetherRun.Inner_NetHelper(x, z, 6),
@@ -926,7 +926,7 @@ final class AiStronghold {
                            } else {
                               this.write_Z = false;
                               if (!mc.level.canSeeSky(BlockPos.containing(mc.player.getEyePosition())) && this.reset < 2 && this.init_Z_2(24)) {
-                                 return this.init("up to the sky for a throw", autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
+                                 return this.init("up to the sky for a throw", autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 120)));
                               } else if (this.clear >= 3 && this.load_Vec3 != null) {
                                  this.clear = 0;
                                  Vec3 at = mc.player.position();
@@ -945,7 +945,7 @@ final class AiStronghold {
                         } else {
                            if (!this.init_Z_2(12) && this.start < 3) {
                               this.start++;
-                              return this.init("up to the surface for the walk", autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 180)));
+                              return this.init("up to the surface for the walk", autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", 180)));
                            }
 
                            Vec3 at = mc.player.position();

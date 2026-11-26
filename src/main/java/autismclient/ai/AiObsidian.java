@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -199,7 +199,7 @@ final class AiObsidian {
                         this.load_Z = true;
                         this.init_I = -1;
                         this.init_Str = "surface";
-                        this.init_AiOperation = autismclient.ai.a.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(150, AiObsidian.init_I_J(this.init_J))));
+                        this.init_AiOperation = autismclient.ai.engine.AiSeek.init(AiJson.init_JsonObject_ObjArr("timeoutSeconds", Math.min(150, AiObsidian.init_I_J(this.init_J))));
                         return AiObsidian.init_AiOperation_Result_Str("Up to open sky for water");
                      }
 
@@ -331,7 +331,7 @@ final class AiObsidian {
             }) != 1.7976931348623157E308
             ? new AiOperation() {
                final long init_J = System.nanoTime() + Math.max(10, seconds) * 1000000000L;
-               AiOperation init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+               AiOperation init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                   AiJson.init_JsonObject_ObjArr("block", "obsidian", "held", held, "timeoutSeconds", Math.min(120, seconds))
                );
                boolean init_Z;
@@ -372,7 +372,7 @@ final class AiObsidian {
       return new AiOperation() {
          final Minecraft init_Minecraft = Minecraft.getInstance();
          final long init_J = System.nanoTime() + Math.max(10, seconds) * 1000000000L;
-         final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+         final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
          final Set<BlockPos> init_Set = new HashSet<>();
          final List<BlockPos> init_List = new ArrayList<>();
          final Set<BlockPos> load_Set = new HashSet<>();
@@ -623,7 +623,7 @@ final class AiObsidian {
 
                            protect.add(this.load_BlockPos.below().asLong());
                            protect.add(this.load_BlockPos.north().below().asLong());
-                           this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(cell, 10, false, protect, false);
+                           this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(cell, 10, false, protect, false);
                         }
                      }
                   case open:
@@ -644,7 +644,7 @@ final class AiObsidian {
                            } else {
                               if (!this.load_Z) {
                                  Item item = AiCraft.init_I("minecraft:cobblestone") > 0 ? Items.COBBLESTONE : Items.DIRT;
-                                 if (!autismclient.ai.a.AiPlacer.init_Z_BlockPos_Item(cell, item) && this.load_Set.add(cell)) {
+                                 if (!autismclient.ai.engine.AiPlacer.init_Z_BlockPos_Item(cell, item) && this.load_Set.add(cell)) {
                                     this.init_aD_DataUtil = AiObsidian.Inner_DataUtil.open;
                                     this.init_AiOperation = AiGoto.init(
                                        cell, item, Math.min(30, AiObsidian.init_I_J(this.init_J)), null, false, this.init_Set_5(), this.load_Set_3()
@@ -738,12 +738,12 @@ final class AiObsidian {
                      this.init_AiOperation = this.init("fill", "water", this.load_BlockPos.north());
                      break;
                   case set:
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(
                         this.load_BlockPos, 30, true, Set.of(), false, Set.of(this.load_BlockPos, this.load_BlockPos.north())
                      );
                      break;
                   case put:
-                     this.init_AiOperation = autismclient.ai.a.AiBlockMine.init(
+                     this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
                            "obsidian",
@@ -775,7 +775,7 @@ final class AiObsidian {
                         return AiObsidian.init_AiOperation_Result_Str("Letting the mold's water drain");
                      }
 
-                     this.init_AiOperation = autismclient.ai.a.AiBreakBlock.init(this.init_List.removeFirst(), 10, true, Set.of(), false);
+                     this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.init(this.init_List.removeFirst(), 10, true, Set.of(), false);
                }
 
                if (this.init_AiOperation != null) {
@@ -952,8 +952,8 @@ final class AiObsidian {
                double right = dx * -Math.cos(yaw) + dz * -Math.sin(yaw);
                double f = forward > 0.01 ? 1.0 : (forward < -0.01 ? -1.0 : 0.0);
                double strafe = right > 0.01 ? -1.0 : (right < -0.01 ? 1.0 : 0.0);
-               if (autismclient.ai.a.AiMotionSafety.putAt_Z_Vec3_Vec3(this.init_Minecraft.player.position(), center)
-                  && autismclient.ai.a.AiMotionSafety.putAt_Z_D_D(f, strafe)) {
+               if (autismclient.ai.engine.AiMotionSafety.putAt_Z_Vec3_Vec3(this.init_Minecraft.player.position(), center)
+                  && autismclient.ai.engine.AiMotionSafety.putAt_Z_D_D(f, strafe)) {
                   this.init_Minecraft.options.keyUp.setDown(f > 0.0);
                   this.init_Minecraft.options.keyDown.setDown(f < 0.0);
                   this.init_Minecraft.options.keyRight.setDown(strafe < 0.0);

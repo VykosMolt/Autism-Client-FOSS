@@ -343,12 +343,12 @@ final class AiParallelSmelt implements AiOperation {
       if (easy) {
          if (deficit > 0) {
             this.write_Str = "Mine nearby cobblestone for a faster smelt without spending the requested input";
-            this.init_AiOperation = autismclient.ai.a.AiBlockMine.init_AiOperation(
+            this.init_AiOperation = autismclient.ai.engine.AiBlockMine.init_AiOperation(
                AiJson.init_JsonObject_ObjArr(
                   "blocks",
-                  autismclient.ai.a.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
+                  autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:stone", "minecraft:cobblestone")),
                   "drops",
-                  autismclient.ai.a.AiBlockMine.init(List.of("minecraft:cobblestone")),
+                  autismclient.ai.engine.AiBlockMine.init(List.of("minecraft:cobblestone")),
                   "held",
                   neededCobble,
                   "radius",

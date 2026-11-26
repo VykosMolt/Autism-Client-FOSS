@@ -253,7 +253,7 @@ final class AiBuildSite {
          return false;
       }
 
-      if (autismclient.ai.a.AiPathfinder.Inner_StreamUtil.read(state)) {
+      if (autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state)) {
          return false;
       }
 
@@ -914,7 +914,7 @@ final class AiBuildSite {
          } else if (state.getCollisionShape(level, floorPos).isEmpty()) {
             return false;
          } else {
-            return !state.getFluidState().isEmpty() ? false : !autismclient.ai.a.AiPathfinder.Inner_StreamUtil.read(state);
+            return !state.getFluidState().isEmpty() ? false : !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state);
          }
       } else {
          return this.update_BitSet.get(index) && this.init_BitSet.get(index);
@@ -928,7 +928,7 @@ final class AiBuildSite {
       } else {
          return !state.getFluidState().isEmpty()
             ? false
-            : !autismclient.ai.a.AiPathfinder.Inner_StreamUtil.load(state) && !autismclient.ai.a.AiPathfinder.Inner_StreamUtil.read(state);
+            : !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.load(state) && !autismclient.ai.engine.AiPathfinder.Inner_StreamUtil.read(state);
       }
    }
 

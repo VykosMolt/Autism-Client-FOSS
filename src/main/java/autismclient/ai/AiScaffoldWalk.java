@@ -37,9 +37,9 @@ final class AiScaffoldWalk {
             static final double write_D = 1.0;
             final BlockPos init_BlockPos = mc.player.blockPosition();
             final long init_J = System.nanoTime() + plan.timeoutSeconds() * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final int write_I = AiScaffoldWalk.init(mc.player.getYRot());
-            autismclient.ai.a.AiBridgeDriver init_NetHelper;
+            autismclient.ai.engine.AiBridgeDriver init_NetHelper;
             final int update_I = mc.player.getInventory().getSelectedSlot();
             int sync_I;
             int flush_I = -1;
@@ -99,7 +99,7 @@ final class AiScaffoldWalk {
                      && !(block.getBlock() instanceof FallingBlock)
                      && block.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, mc.player.blockPosition())
                      && !block.getBlock().defaultBlockState().hasBlockEntity()
-                     && autismclient.ai.a.AiRestock.load(stack, mc.player.getInventory());
+                     && autismclient.ai.engine.AiRestock.load(stack, mc.player.getInventory());
                   view.add(new AiTelly.Inner_DataUtil(construction, construction ? stack.getCount() : 0));
                }
 
@@ -146,7 +146,7 @@ final class AiScaffoldWalk {
                float prevPitch = mc.player.getXRot();
                mc.player.setYRot(candidate.init_U_DataUtil().load().init());
                mc.player.setXRot(candidate.init_U_DataUtil().load().load());
-               autismclient.ai.a.AiCameraTurn.putAt(mc.player, prevYaw, prevPitch);
+               autismclient.ai.engine.AiCameraTurn.putAt(mc.player, prevYaw, prevPitch);
                this.write_Z = true;
                mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, candidate.init_BlockHitResult());
                return true;
@@ -180,7 +180,7 @@ final class AiScaffoldWalk {
                   }
 
                   if (!AiTerrain.init(mc.level, mc.player.blockPosition())) {
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      return AiGameOperations.init_AiOperation_Result(
                         AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.init_JsonObject_ObjArr("placed", this.sync_I)
                      );
@@ -263,13 +263,13 @@ final class AiScaffoldWalk {
                   }
 
                   BlockPos feet = mc.player.blockPosition();
-                  int[] d = autismclient.ai.a.AiBridgeDriver.init(plan.follow() ? this.write_I : this.init_bN_DataUtil().direction());
-                  autismclient.ai.a.AiBridger.Inner_CachePool cells = new autismclient.ai.a.AiBridger.Inner_CachePool(
+                  int[] d = autismclient.ai.engine.AiBridgeDriver.init(plan.follow() ? this.write_I : this.init_bN_DataUtil().direction());
+                  autismclient.ai.engine.AiBridger.Inner_CachePool cells = new autismclient.ai.engine.AiBridger.Inner_CachePool(
                      feet.getX(), feet.getZ(), feet.getY() - 1, d[0], d[1], this.init_bN_DataUtil().blocks() - this.poll
                   );
-                  this.init_NetHelper = new autismclient.ai.a.AiBridgeDriver(
+                  this.init_NetHelper = new autismclient.ai.engine.AiBridgeDriver(
                      cells,
-                     autismclient.ai.a.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(
+                     autismclient.ai.engine.AiBridgeDriver.init_JsonUtil_ConfigSto_Z(
                         this.init_bN_StreamUtil() == AiScaffoldWalk.Inner_StreamUtil.read, cells, mc.player, this.init_I_27()
                      ),
                      this.init_DataUtil
@@ -286,7 +286,7 @@ final class AiScaffoldWalk {
                   } else {
                      int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), this.init_List_7());
                      if (slot < 0 && support != null) {
-                        autismclient.ai.a.AiMotionSafety.putAt_V();
+                        autismclient.ai.engine.AiMotionSafety.putAt_V();
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
@@ -300,18 +300,18 @@ final class AiScaffoldWalk {
                               AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.init_JsonObject_ObjArr("placed", this.sync_I)
                            );
                      } else {
-                        autismclient.ai.a.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, cell -> {
+                        autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, cell -> {
                            this.sync_I++;
                            this.poll++;
                            this.read_Z = true;
                         });
-                        if (step == autismclient.ai.a.AiBridgeDriver.Inner_DataUtil.write) {
+                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.write) {
                            return this.init(AiOperation.Status.FAILED, "Scaffold bridge needs footing at the support's top level");
-                        } else if (step == autismclient.ai.a.AiBridgeDriver.Inner_DataUtil.read) {
+                        } else if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.read) {
                            return this.init(AiOperation.Status.FAILED, "Fell off the scaffold");
                         } else {
                            String style = this.init_NetHelper.init_JsonUtil().init_JsonUtil_ConfigSto().name().toLowerCase(Locale.ROOT);
-                           if (step == autismclient.ai.a.AiBridgeDriver.Inner_DataUtil.load) {
+                           if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.load) {
                               this.read_BlockPos = mc.player.blockPosition();
                               this.init_NetHelper = null;
                               return AiGameOperations.init_AiOperation_Result(
@@ -433,7 +433,7 @@ final class AiScaffoldWalk {
             public void cancel() {
                if (!this.update_Z) {
                   this.update_Z = true;
-                  autismclient.ai.a.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.putAt_V();
                   this.init_DataUtil.init_V();
                   if (mc.player != null && this.flush_I >= 0 && mc.player.getInventory().getSelectedSlot() == this.flush_I) {
                      mc.player.getInventory().setSelectedSlot(this.update_I);

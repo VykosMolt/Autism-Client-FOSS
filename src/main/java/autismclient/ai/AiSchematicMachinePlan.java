@@ -255,11 +255,11 @@ public final class AiSchematicMachinePlan {
          return AiSchematicMachinePlan.Inner_StreamUtil.EMPTY;
       }
 
-      ArrayList<autismclient.ai.b.PrintSkippedContents> unavailable = new ArrayList<>();
+      ArrayList<autismclient.ai.print.PrintSkippedContents> unavailable = new ArrayList<>();
       List<AiSchematicMachinePlan.Inner_DataUtil> decoded = this.init(origin, registries, this.load_Map.keySet(), unavailable);
       HashMap<BlockPos, BlockState> source = new HashMap<>();
       this.write.forEach((key, state) -> source.put(origin.offset(BlockPos.of(key)), state));
-      List<autismclient.ai.b.PrintClockSpec> clocks = AiHopperClockPlan.init(
+      List<autismclient.ai.print.PrintClockSpec> clocks = AiHopperClockPlan.init(
          source,
          decoded,
          at -> this.read_Set.contains(SectionPos.asLong(at.getX() - origin.getX() >> 4, at.getY() - origin.getY() >> 4, at.getZ() - origin.getZ() >> 4))
@@ -276,13 +276,13 @@ public final class AiSchematicMachinePlan {
       );
    }
 
-   List<autismclient.ai.b.PrintItemFrame.Inner_StreamUtil> write(BlockPos origin, Provider registries) {
+   List<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> write(BlockPos origin, Provider registries) {
       if (this.load_List.isEmpty()) {
          return List.of();
       }
 
       RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-      ArrayList<autismclient.ai.b.PrintItemFrame.Inner_StreamUtil> out = new ArrayList<>(this.load_List.size());
+      ArrayList<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> out = new ArrayList<>(this.load_List.size());
 
       for (AiSchematic.Inner_StreamUtil frame : this.load_List) {
          ItemStack item = ItemStack.EMPTY;
@@ -297,7 +297,7 @@ public final class AiSchematicMachinePlan {
          }
 
          out.add(
-            new autismclient.ai.b.PrintItemFrame.Inner_StreamUtil(
+            new autismclient.ai.print.PrintItemFrame.Inner_StreamUtil(
                frame.id(), origin.offset(frame.cell()), frame.facing(), item, frame.rotation(), frame.invisible(), frame.fixed(), undecodable
             )
          );
@@ -310,7 +310,7 @@ public final class AiSchematicMachinePlan {
       return this.init(origin, registries, keys, null);
    }
 
-   private List<AiSchematicMachinePlan.Inner_DataUtil> init(BlockPos origin, Provider registries, Set<Long> keys, List<autismclient.ai.b.PrintSkippedContents> unavailable) {
+   private List<AiSchematicMachinePlan.Inner_DataUtil> init(BlockPos origin, Provider registries, Set<Long> keys, List<autismclient.ai.print.PrintSkippedContents> unavailable) {
       if (keys.isEmpty()) {
          return List.of();
       }
@@ -343,7 +343,7 @@ public final class AiSchematicMachinePlan {
 
                BlockPos position = origin.offset(BlockPos.of(key));
                unavailable.add(
-                  new autismclient.ai.b.PrintSkippedContents(
+                  new autismclient.ai.print.PrintSkippedContents(
                      position,
                      this.load_Map.get(key),
                      this.init_Map.get(key).size(),
@@ -368,12 +368,12 @@ public final class AiSchematicMachinePlan {
       return List.copyOf(result);
    }
 
-   List<autismclient.ai.b.PrintRailVehicle.Inner_StreamUtil> init_List(BlockPos origin) {
+   List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> init_List(BlockPos origin) {
       Vec3 offset = Vec3.atLowerCornerOf(origin);
       return this.init_List
          .stream()
          .map(
-            value -> new autismclient.ai.b.PrintRailVehicle.Inner_StreamUtil(value.id(), value.position().add(offset), !this.init_Set.contains(value.rail().asLong()))
+            value -> new autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil(value.id(), value.position().add(offset), !this.init_Set.contains(value.rail().asLong()))
          )
          .toList();
    }
@@ -410,34 +410,34 @@ public final class AiSchematicMachinePlan {
    }
 
    public record Inner_StreamUtil(
-      List<autismclient.ai.b.PrintRailVehicle.Inner_StreamUtil> vehicles,
+      List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
       List<AiSchematicMachinePlan.Inner_DataUtil> containers,
       Map<BlockPos, BlockState> outcomes,
-      List<autismclient.ai.b.PrintSkippedContents> unavailable,
-      List<autismclient.ai.b.PrintClockSpec> clocks,
-      List<autismclient.ai.b.PrintItemFrame.Inner_StreamUtil> frames
+      List<autismclient.ai.print.PrintSkippedContents> unavailable,
+      List<autismclient.ai.print.PrintClockSpec> clocks,
+      List<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> frames
    ) {
       static final AiSchematicMachinePlan.Inner_StreamUtil EMPTY = new AiSchematicMachinePlan.Inner_StreamUtil(List.of(), List.of(), Map.of());
 
       Inner_StreamUtil(
-         List<autismclient.ai.b.PrintRailVehicle.Inner_StreamUtil> vehicles,
+         List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
          List<AiSchematicMachinePlan.Inner_DataUtil> containers,
          Map<BlockPos, BlockState> outcomes,
-         List<autismclient.ai.b.PrintSkippedContents> unavailable,
-         List<autismclient.ai.b.PrintClockSpec> clocks
+         List<autismclient.ai.print.PrintSkippedContents> unavailable,
+         List<autismclient.ai.print.PrintClockSpec> clocks
       ) {
          this(vehicles, containers, outcomes, unavailable, clocks, List.of());
       }
 
-      Inner_StreamUtil(List<autismclient.ai.b.PrintRailVehicle.Inner_StreamUtil> vehicles, List<AiSchematicMachinePlan.Inner_DataUtil> containers, Map<BlockPos, BlockState> outcomes) {
+      Inner_StreamUtil(List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles, List<AiSchematicMachinePlan.Inner_DataUtil> containers, Map<BlockPos, BlockState> outcomes) {
          this(vehicles, containers, outcomes, List.of(), List.of());
       }
 
       Inner_StreamUtil(
-         List<autismclient.ai.b.PrintRailVehicle.Inner_StreamUtil> vehicles,
+         List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
          List<AiSchematicMachinePlan.Inner_DataUtil> containers,
          Map<BlockPos, BlockState> outcomes,
-         List<autismclient.ai.b.PrintSkippedContents> unavailable
+         List<autismclient.ai.print.PrintSkippedContents> unavailable
       ) {
          this(vehicles, containers, outcomes, unavailable, List.of());
       }

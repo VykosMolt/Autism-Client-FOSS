@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -199,7 +199,7 @@ final class AiProspect {
                      this.init_AiOperation = AiOracle.init_AiOperation_JsonObject(AiJson.init_JsonObject_ObjArr("query", kind, "cap", 16));
                      return this.init("Predicting " + kind + " positions from the world seed");
                   } else if (this.init_bz_1_DataUtil == Inner_DataUtil.read) {
-                     this.load_AiOperation = autismclient.ai.a.AiMine.init(
+                     this.load_AiOperation = autismclient.ai.engine.AiMine.init(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
                            AiProspect.init_Str(kind),

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import com.google.gson.JsonObject;
 import java.util.List;
@@ -240,7 +240,7 @@ final class AiForage {
 
          BlockPos source = best;
          return AiNetherRun.init_AiOperation_AiOperation_Supplier(
-            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.a.AiPathfinder.Inner_IoWorker.init, true),
+            AiGoto.init(source.above(), 3.0, false, false, false, 30, autismclient.ai.engine.AiPathfinder.Inner_IoWorker.init, true),
             () -> AiBucket.init(AiJson.init_JsonObject_ObjArr("action", "fill", "fluid", "water", "timeoutSeconds", 10))
          );
       } else {
@@ -271,7 +271,7 @@ final class AiForage {
    static AiOperation init_AiOperation_I(final int enderman, final Predicate<BlockPos> safe, final Runnable refused) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final Object init_Obj = mc.level;
          final Object load_Obj = mc.getConnection();
          final UUID init_UUID = mc.level != null && mc.level.getEntity(enderman) != null ? mc.level.getEntity(enderman).getUUID() : null;

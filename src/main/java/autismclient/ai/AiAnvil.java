@@ -40,8 +40,8 @@ final class AiAnvil {
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-            final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
             final int init_I = this.init_Minecraft.player.experienceLevel;
             BlockPos init_BlockPos;
             int load_I;
@@ -261,14 +261,14 @@ final class AiAnvil {
                      this.read_I = 0;
                   }
 
-                  autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-                  if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+                  autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+                  if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                      this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                      this.init_Z = false;
                      return this.init("Anvil placed");
                   }
 
-                  if (status != autismclient.ai.a.AiPlacer.Inner_DataUtil.read && ++this.read_I <= 100) {
+                  if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.read_I <= 100) {
                      return this.init("Placing an anvil");
                   }
 
@@ -286,11 +286,11 @@ final class AiAnvil {
                      return this.init(AiOperation.Status.FAILED, "Could not open the anvil");
                   }
 
-                  if (!autismclient.ai.a.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+                  if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
                      return this.init("Turning toward the anvil");
                   }
 
-                  BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                  BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                   if (hit == null) {
                      return this.init("Turning toward the anvil");
                   }

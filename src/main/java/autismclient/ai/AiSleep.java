@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonElement;
@@ -39,8 +39,8 @@ final class AiSleep {
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
             final long load_J = AiSleep.init_J();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
-            final autismclient.ai.a.AiPlacer init_DataPipe = new autismclient.ai.a.AiPlacer();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
+            final autismclient.ai.engine.AiPlacer init_DataPipe = new autismclient.ai.engine.AiPlacer();
             AiOperation init_AiOperation;
             BlockPos init_BlockPos;
             int init_I;
@@ -114,7 +114,7 @@ final class AiSleep {
                      }
 
                      if (this.init_BlockPos != null) {
-                        BlockHitResult interactionHit = autismclient.ai.a.AiBlockInteraction.init(mc, this.init_BlockPos);
+                        BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, this.init_BlockPos);
                         if (interactionHit == null) {
                            if (this.init_AiOperation == null) {
                               this.init_AiOperation = AiGoto.init_AiOperation(this.init_BlockPos, Math.min(120, this.init_I_32()));
@@ -151,11 +151,11 @@ final class AiSleep {
                               );
                            }
 
-                           if (!autismclient.ai.a.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
+                           if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(this.init_BlockPos)) {
                               return this.init("Turning toward the bed");
                            }
 
-                           BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                           BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                            if (hit == null) {
                               return this.init("Turning toward the bed");
                            }
@@ -197,14 +197,14 @@ final class AiSleep {
             }
 
             AiOperation.Result init_AiOperation_Result_31() {
-               autismclient.ai.a.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
-               if (status == autismclient.ai.a.AiPlacer.Inner_DataUtil.load) {
+               autismclient.ai.engine.AiPlacer.Inner_DataUtil status = this.init_DataPipe.init_DataPipe_DataUtil();
+               if (status == autismclient.ai.engine.AiPlacer.Inner_DataUtil.load) {
                   this.init_Z = false;
                   this.init_BlockPos = this.init_DataPipe.init_BlockPos();
                   return this.init("Bed placed");
                }
 
-               if (status != autismclient.ai.a.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 120) {
+               if (status != autismclient.ai.engine.AiPlacer.Inner_DataUtil.read && ++this.load_I <= 120) {
                   return this.init("Placing a bed");
                }
 

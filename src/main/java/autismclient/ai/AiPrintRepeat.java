@@ -30,9 +30,9 @@ final class AiPrintRepeat implements AiOperation {
    boolean read_Z;
    final Object init_Obj;
    final Object load_Obj;
-   List<autismclient.ai.b.PrintTarget> init_List;
+   List<autismclient.ai.print.PrintTarget> init_List;
    AiSchematicMachinePlan.Inner_StreamUtil init_bV_StreamUtil;
-   autismclient.ai.b.PrintCore.ao init_UiHelper_ao;
+   autismclient.ai.print.PrintCore.ao init_UiHelper_ao;
    final Provider init_HolderLookup_Provi;
    BlockPos init_BlockPos;
    AiPrintPreparation.Inner_SyncManager init_bg_SyncManager;
@@ -53,10 +53,10 @@ final class AiPrintRepeat implements AiOperation {
       AiBuilder.Inner_ConfigStore power,
       boolean verify,
       int timeoutSeconds,
-      List<autismclient.ai.b.PrintTarget> firstTargets,
+      List<autismclient.ai.print.PrintTarget> firstTargets,
       BlockPos knownStock,
       AiSchematicMachinePlan.Inner_StreamUtil firstActions,
-      autismclient.ai.b.PrintCore.ao firstGeometry
+      autismclient.ai.print.PrintCore.ao firstGeometry
    ) {
       this.init_TableIndex_DataUti = base;
       this.init_TableIndex_ConfigS = power;
@@ -146,7 +146,7 @@ final class AiPrintRepeat implements AiOperation {
                this.init_Future = this.init_bg_SyncManager
                   .init(
                      () -> {
-                        List<autismclient.ai.b.PrintTarget> targets = List.copyOf(AiPrintRules.init(shifted));
+                        List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(shifted));
                         return new AiPrintRepeat.Inner_DataUtil(
                            shifted,
                            AiBuilder.load_TableIndex_DataUti(shifted),
@@ -155,7 +155,7 @@ final class AiPrintRepeat implements AiOperation {
                            this.init_TableIndex_ConfigS
                               .machine()
                               .init_bV_StreamUtil_BlockPos_HolderLookup_Provi(shifted.origin(), this.init_HolderLookup_Provi),
-                           autismclient.ai.b.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init)
+                           autismclient.ai.print.PrintCore.init_UiHelper_ao_List_Runnable(targets, AiBuilder::init)
                         );
                      }
                   );
@@ -410,10 +410,10 @@ final class AiPrintRepeat implements AiOperation {
    private record Inner_DataUtil(
       AiBuilder.Inner_DataUtil blueprint,
       AiBuilder.Inner_DataUtil stockPlan,
-      List<autismclient.ai.b.PrintTarget> targets,
+      List<autismclient.ai.print.PrintTarget> targets,
       AiPrintPreparation.Inner_JsonUtil source,
       AiSchematicMachinePlan.Inner_StreamUtil actions,
-      autismclient.ai.b.PrintCore.ao geometry
+      autismclient.ai.print.PrintCore.ao geometry
    ) {
    }
 }

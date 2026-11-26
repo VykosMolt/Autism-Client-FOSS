@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -246,7 +246,7 @@ final class AiFarm {
             AiOperation load_AiOperation;
             BlockPos read_BlockPos;
             Direction init_Direction;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             BlockPos write_BlockPos;
             double init_D;
             double load_D = -1.0;
@@ -292,7 +292,7 @@ final class AiFarm {
 
                   if (this.init_Minecraft.gui.screen() != null) {
                      autismclient.util.BlockAttackGraceWindow.init();
-                     autismclient.ai.a.AiMotionSafety.putAt_V();
+                     autismclient.ai.engine.AiMotionSafety.putAt_V();
                      this.init_DataUtil.init_V();
                      return this.read("Harvest paused while a screen is open");
                   }
@@ -470,7 +470,7 @@ final class AiFarm {
             }
 
             AiOperation.Result init_AiOperation_Result() {
-               long revision = autismclient.ai.a.AiGridRevisions.init_J();
+               long revision = autismclient.ai.engine.AiGridRevisions.init_J();
                if (this.read_J != revision) {
                   this.init_IdentityHashMap.clear();
                   this.read_J = revision;
@@ -1023,7 +1023,7 @@ final class AiFarm {
             boolean load(AiFarm.Inner_CachePool w) {
                BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.load ? w.base() : w.cell();
                if (w.kind() == AiFarm.Inner_BufferHelper.load) {
-                  return autismclient.ai.a.AiBlockInteraction.init(this.init_Minecraft, w.base(), w.face()) != null;
+                  return autismclient.ai.engine.AiBlockInteraction.init(this.init_Minecraft, w.base(), w.face()) != null;
                } else {
                   return w.kind() == AiFarm.Inner_BufferHelper.read ? this.init(cell, this.init_D(cell)) : this.read(cell);
                }
@@ -1145,7 +1145,7 @@ final class AiFarm {
                   this.write_List.clear();
                   this.update_List.clear();
                   this.write_BlockPos = null;
-                  autismclient.ai.a.AiMotionSafety.putAt_V();
+                  autismclient.ai.engine.AiMotionSafety.putAt_V();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.getInventory().getSelectedSlot() != this.init_I) {
                      autismclient.util.InventorySlotHelper.init_V(this.init_Minecraft, this.init_I);
                   }
@@ -1178,7 +1178,7 @@ final class AiFarm {
       final int timeoutSeconds = Math.max(10, Math.min(900, AiJson.init_I_JsonObject(args, "timeoutSeconds", 180)));
       return new AiOperation() {
          final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-         final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+         final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
          final Set<Integer> init_Set = new LinkedHashSet<>();
          final Set<Integer> load_Set = new LinkedHashSet<>();
          AiOperation init_AiOperation;
@@ -1278,9 +1278,9 @@ final class AiFarm {
                         this.init_AiOperation = null;
                      }
 
-                     this.init_DataUtil.init_V_Vec3(autismclient.ai.a.AiAim.load_Vec3_Entity(this.init_Entity));
+                     this.init_DataUtil.init_V_Vec3(autismclient.ai.engine.AiAim.load_Vec3_Entity(this.init_Entity));
                      this.init_DataUtil.load_V();
-                     if (!autismclient.ai.a.AiAim.init_Z_Entity(this.init_Entity)) {
+                     if (!autismclient.ai.engine.AiAim.init_Z_Entity(this.init_Entity)) {
                         if (++this.load_I > 40) {
                            this.load_Set.add(this.init_Entity.getId());
                            this.init_Entity = null;
@@ -1296,7 +1296,7 @@ final class AiFarm {
                            .interact(
                               mc.player,
                               this.init_Entity,
-                              new EntityHitResult(this.init_Entity, autismclient.ai.a.AiAim.init_Vec3_Entity(this.init_Entity)),
+                              new EntityHitResult(this.init_Entity, autismclient.ai.engine.AiAim.init_Vec3_Entity(this.init_Entity)),
                               InteractionHand.MAIN_HAND
                            );
                         Compat263.swing(mc.player, InteractionHand.MAIN_HAND);

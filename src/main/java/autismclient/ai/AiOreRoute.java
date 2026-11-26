@@ -54,7 +54,7 @@ final class AiOreRoute {
             args.addProperty("focusZ", focus.getZ());
          }
 
-         return autismclient.ai.a.AiBlockMine.init_AiOperation(args);
+         return autismclient.ai.engine.AiBlockMine.init_AiOperation(args);
       } else {
          return init(family, drop, targetHeld, blocks, bestY, seconds, false);
       }
@@ -66,7 +66,7 @@ final class AiOreRoute {
          args.addProperty("exploreY", bestY);
       }
 
-      return autismclient.ai.a.AiBlockMine.init_AiOperation(args);
+      return autismclient.ai.engine.AiBlockMine.init_AiOperation(args);
    }
 
    private static AiOperation init(
@@ -146,7 +146,7 @@ final class AiOreRoute {
                   case init:
                   case read:
                   case update:
-                     this.init_AiOperation = autismclient.ai.a.AiMine.init(
+                     this.init_AiOperation = autismclient.ai.engine.AiMine.init(
                         AiJson.init_JsonObject_ObjArr(
                            "block",
                            family,
@@ -162,7 +162,7 @@ final class AiOreRoute {
                   case load: {
                      this.read = mc.player.getBlockY();
                      Direction d = AiOreRoute.init(this.init_Direction, this.load);
-                     this.init_AiOperation = autismclient.ai.a.AiExcavate.load(
+                     this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
                         AiJson.init_JsonObject_ObjArr(
                            "shape", "staircase", "targetY", bestY, "direction", d.getName(), "timeoutSeconds", Math.max(60, legSeconds * 2)
                         )
@@ -171,7 +171,7 @@ final class AiOreRoute {
                   }
                   case write: {
                      Direction d = AiOreRoute.init(this.init_Direction, this.init_I);
-                     this.init_AiOperation = autismclient.ai.a.AiExcavate.load(
+                     this.init_AiOperation = autismclient.ai.engine.AiExcavate.load(
                         AiJson.init_JsonObject_ObjArr("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
                      );
                      return this.init("Branch tunnel " + (this.init_I + 1) + " " + d.getName() + " looking for " + family);

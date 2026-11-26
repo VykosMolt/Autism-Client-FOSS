@@ -154,7 +154,7 @@ public final class AiDirectOps {
 
          Runnable prepare = () -> {
             if (requiredResources.contains("INPUT")) {
-               autismclient.ai.a.AiMotionSafety.putAt_V();
+               autismclient.ai.engine.AiMotionSafety.putAt_V();
                AiAssistant.init_ConfigStore().pop();
             }
 
@@ -689,7 +689,7 @@ public final class AiDirectOps {
 
    private static void load(AiDirectOps.Inner_DataUtil a) {
       if (a.init_AutoCloseable != null && a.init_List.contains("INPUT")) {
-         autismclient.ai.a.AiMotionSafety.putAt_V();
+         autismclient.ai.engine.AiMotionSafety.putAt_V();
          Minecraft mc = Minecraft.getInstance();
          if (mc.options != null) {
             for (KeyMapping key : List.of(mc.options.keyAttack, mc.options.keyUse)) {

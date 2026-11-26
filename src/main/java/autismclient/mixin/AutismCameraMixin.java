@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.a.AiCameraTurn;
+import autismclient.ai.engine.AiCameraTurn;
 import autismclient.modules.AspectRatioModule;
 import autismclient.modules.FreeLookModule;
 import autismclient.modules.FreecamController;

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.ai.a.AiGoto;
+import autismclient.ai.engine.AiGoto;
 import autismclient.api.ai.AiOperation;
 import autismclient.compat263.Compat263;
 import com.google.gson.JsonArray;
@@ -101,7 +101,7 @@ final class AiContainer {
          final List<AiItems.Inner_DataUtil> keep = init_List(args);
          return new AiOperation() {
             final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final Object init_Obj = mc.level;
             final Object load_Obj = mc.getConnection();
             final Object read_Obj = mc.player;
@@ -128,7 +128,7 @@ final class AiContainer {
             boolean write_Z;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.read_DataUtil_DataUtil);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.read_DataUtil_DataUtil);
             }
 
             @Override
@@ -289,7 +289,7 @@ final class AiContainer {
                }
 
                if (mc.player.containerMenu == mc.player.inventoryMenu || this.load_I >= 0) {
-                  BlockHitResult interactionHit = autismclient.ai.a.AiBlockInteraction.init(mc, pos);
+                  BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.init(mc, pos);
                   if (interactionHit == null) {
                      if (!navigate) {
                         return this.init(AiOperation.Status.FAILED, "Container is out of reach and navigate is disabled");
@@ -308,11 +308,11 @@ final class AiContainer {
                         return this.init(AiOperation.Status.FAILED, "Could not open the container at " + pos.toShortString());
                      }
 
-                     if (!autismclient.ai.a.AiAim.init_Z_BlockPos(pos)) {
+                     if (!autismclient.ai.engine.AiAim.init_Z_BlockPos(pos)) {
                         return this.init("Turning toward the container");
                      }
 
-                     BlockHitResult hit = autismclient.ai.a.AiAim.init_BlockHitResult();
+                     BlockHitResult hit = autismclient.ai.engine.AiAim.init_BlockHitResult();
                      if (hit == null) {
                         return this.init("Turning toward the container");
                      }

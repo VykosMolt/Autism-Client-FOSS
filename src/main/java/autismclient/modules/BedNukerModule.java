@@ -511,8 +511,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
 
    private Vec3 init_Vec3_2() {
       if (!MC.player.isInWater() && !MC.player.isInLava() && !MC.player.getAbilities().flying && !MC.player.isFallFlying()) {
-         autismclient.ai.a.AiPhysics.Inner_StreamUtil state = autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(MC.player);
-         autismclient.ai.a.AiPhysics.Inner_DataUtil input = new autismclient.ai.a.AiPhysics.Inner_DataUtil(
+         autismclient.ai.engine.AiPhysics.Inner_StreamUtil state = autismclient.ai.engine.AiPhysics.Inner_StreamUtil.of(MC.player);
+         autismclient.ai.engine.AiPhysics.Inner_DataUtil input = new autismclient.ai.engine.AiPhysics.Inner_DataUtil(
             (MC.options.keyUp.isDown() ? 1 : 0) - (MC.options.keyDown.isDown() ? 1 : 0),
             (MC.options.keyLeft.isDown() ? 1 : 0) - (MC.options.keyRight.isDown() ? 1 : 0),
             MC.options.keyJump.isDown(),
@@ -521,7 +521,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             SilentMovementCoordinator.init_F(MC.player)
          );
          return BedTargetAimSolver.init(
-            state, input, autismclient.ai.a.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player), MC.player.getEyeHeight()
+            state, input, autismclient.ai.engine.AiPhysics.init_NodeWalker_CachePo_ClientLevel_Entity(MC.level, MC.player), MC.player.getEyeHeight()
          );
       } else {
          return MC.player.getEyePosition();

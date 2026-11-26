@@ -317,7 +317,7 @@ final class AiGhastReflect {
                "range",
                this.init_Minecraft.player.isWithinAttackRange(this.init_Minecraft.player.getMainHandItem(), ball.getBoundingBox(), 0.0),
                "ray",
-               autismclient.ai.a.AiAim.init_Z_Entity(ball),
+               autismclient.ai.engine.AiAim.init_Z_Entity(ball),
                "eye",
                init_JsonObject_Vec3(this.init_Minecraft.player.getEyePosition()),
                "look",
@@ -500,7 +500,7 @@ final class AiGhastReflect {
       if (now != null
          && this.init_Minecraft.player.isWithinAttackRange(this.init_Minecraft.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
          && this.init_Z_Vec3(ball.position(), now, ball)
-         && autismclient.ai.a.AiCombatMotion.init(this.init_Minecraft, 0.0, 0.0, 4) != null
+         && autismclient.ai.engine.AiCombatMotion.init(this.init_Minecraft, 0.0, 0.0, 4) != null
          && this.init_Z_LargeFireball(ball, this.init_Minecraft.player.getBoundingBox(), 0, threats)) {
          return new AiGhastReflect.Inner_StreamUtil(now, 0, 0, 0, init_F_Vec3(now.direction), 0.0);
       }
@@ -535,7 +535,7 @@ final class AiGhastReflect {
       for (int forward = -1; forward <= 1; forward++) {
          for (int strafe = -1; strafe <= 1; strafe++) {
             for (int horizon : new int[]{4, 8, 12}) {
-               List<AABB> trace = autismclient.ai.a.AiCombatMotion.init(this.init_Minecraft, facing, forward, strafe, horizon, 4);
+               List<AABB> trace = autismclient.ai.engine.AiCombatMotion.init(this.init_Minecraft, facing, forward, strafe, horizon, 4);
                if (trace != null && !trace.stream().anyMatch(bodyx -> !this.init_Z_AABB(bodyx))) {
                   for (int tick = 1; tick <= 32 && inbound[tick] != null; tick++) {
                      AABB body = trace.get(Math.min(tick - 1, trace.size() - 1));

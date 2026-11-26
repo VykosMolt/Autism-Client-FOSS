@@ -80,7 +80,7 @@ final class AiDodge {
             int load_I;
             int read_I;
             final long init_J = System.nanoTime();
-            final autismclient.ai.a.AiAim init_DataUtil = new autismclient.ai.a.AiAim();
+            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             int write;
             int update;
             int sync;
@@ -94,7 +94,7 @@ final class AiDodge {
             float read_F;
 
             {
-               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.a.AiAim.Inner_DataUtil.write);
+               this.init_DataUtil.init_V_DataUtil_DataUtil(autismclient.ai.engine.AiAim.Inner_DataUtil.write);
                this.update = -1;
                this.close = -100;
                this.read_Set = new HashSet<>();
@@ -335,7 +335,7 @@ final class AiDodge {
                         double forward = -candidate.x * Math.sin(yaw) + candidate.z * Math.cos(yaw);
                         double strafe = candidate.x * Math.cos(yaw) + candidate.z * Math.sin(yaw);
                         int travelTicks = Math.max(1, Math.min(12, (int)Math.ceil(dominant.secondsToClosest() * 20.0)));
-                        AABB landing = autismclient.ai.a.AiCombatMotion.init(this.init_Minecraft, forward, strafe, travelTicks);
+                        AABB landing = autismclient.ai.engine.AiCombatMotion.init(this.init_Minecraft, forward, strafe, travelTicks);
                         if (landing != null) {
                            Vec3 displacement = landing.getCenter().subtract(this.init_Minecraft.player.getBoundingBox().getCenter());
                            boolean contact = false;
