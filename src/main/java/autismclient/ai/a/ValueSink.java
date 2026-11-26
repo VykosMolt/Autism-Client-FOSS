@@ -1,6 +1,6 @@
 package autismclient.ai.a;
 
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,7 +36,7 @@ public final class ValueSink extends BlockPlaceContext {
                BlockPos support = target.relative(direction);
                BlockState state = states.apply(support);
                if (state.hasBlockEntity()
-                  || U.init_Z(state, support)
+                  || BlockPlacementPlanner.init_Z(state, support)
                   || state.getBlock() instanceof DoorBlock
                   || state.getBlock() instanceof TrapDoorBlock
                   || state.getBlock() instanceof FenceGateBlock) {

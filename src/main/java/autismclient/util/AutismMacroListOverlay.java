@@ -144,14 +144,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void close_V_9() {
-      aE sync = aE.init_aE();
-      this.update_List = this.init_List_List(aN.init_aN().init_List(), sync.read_Map(), sync);
+      LanSyncManager sync = LanSyncManager.init_aE();
+      this.update_List = this.init_List_List(MacroLibraryManager.init_aN().init_List(), sync.read_Map(), sync);
       if (!this.init_LinkedHashSet.isEmpty()) {
          Set<String> visibleKeys = new HashSet<>();
 
          for (AutismMacroListOverlay.Inner_StreamUtil item : this.update_List) {
             if (item.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.init_aM != null) {
-               visibleKeys.add(cZ.init(item.init_aM.init_Str));
+               visibleKeys.add(MacroNameNormalizer.init(item.init_aM.init_Str));
             }
          }
 
@@ -280,7 +280,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int nameWidth = 0;
       int stepsWidth = autismclient.gui.f.b.k.init(this.init_Font, init_Str_I_5(0), font, color);
 
-      for (AutismMacro macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : MacroLibraryManager.init_aN().init_List()) {
          if (!AutoFishMacroPresets.load(macro)) {
             nameWidth = Math.max(nameWidth, autismclient.gui.f.b.k.init(this.init_Font, macro.init_Str, font, color));
             stepsWidth = Math.max(stepsWidth, autismclient.gui.f.b.k.init(this.init_Font, init_Str_I_5(macro.init_List.size()), font, color));
@@ -327,7 +327,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    public void write_V_13() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       shared.reset(this.update_Z);
       shared.set(this.tick_I);
       shared.put(this.run_I);
@@ -337,7 +337,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    public void update_V_11() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       this.b__V();
       this.update_Z = shared.data_Z();
       this.tick_I = shared.add_I();
@@ -495,13 +495,13 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       if ((this.update_Z || this.a__Z()) && init_Minecraft != null && init_Minecraft.font != null) {
-         long remoteRevision = aE.init_aE().init_J();
+         long remoteRevision = LanSyncManager.init_aE().init_J();
          if (remoteRevision != this.load_J) {
             this.load_J = remoteRevision;
             this.clear_Z = true;
          }
 
-         long currentMacroRevision = aN.init_aN().init_J();
+         long currentMacroRevision = MacroLibraryManager.init_aN().init_J();
          int currentMacroCount = this.tick_I_13();
          if (currentMacroRevision != this.update_J) {
             this.clear_Z = true;
@@ -638,7 +638,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                         boolean continues = i + 1 < this.update_List.size()
                            && this.update_List.get(i + 1).init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
                            && this.update_List.get(i + 1).init_aM != null
-                           && cY.load_Str_Str(this.update_List.get(i + 1).init_aM.read).equals(cY.load_Str_Str(item.init_aM.read));
+                           && MacroFolderLayout.load_Str_Str(this.update_List.get(i + 1).init_aM.read).equals(MacroFolderLayout.load_Str_Str(item.init_aM.read));
                         int railTop = rowY
                            - (
                               i > 0 && this.update_List.get(i - 1).init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.FOLDER
@@ -724,7 +724,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    ) {
       boolean localRow = item.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.init_aM != null;
       boolean draggedRow = localRow
-         && (this.run_Z && this.load_Set.contains(cZ.init(item.init_aM.init_Str)) || this.poll_Z && this.load_Z_Str_3(item.init_aM.read));
+         && (this.run_Z && this.load_Set.contains(MacroNameNormalizer.init(item.init_aM.init_Str)) || this.poll_Z && this.load_Z_Str_3(item.init_aM.read));
       if (draggedRow) {
          autismclient.gui.f.TaskQueue.init_V_F(0.35F);
 
@@ -749,7 +749,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       boolean draggedRow
    ) {
       boolean hovered = !this.run_Z && !this.poll_Z && this.init_Z_F(x, y, width, this.get_I_11(), rowContext.init_F(), rowContext.load());
-      boolean selectedRow = localRow && this.init_LinkedHashSet.contains(cZ.init(item.init_aM.init_Str));
+      boolean selectedRow = localRow && this.init_LinkedHashSet.contains(MacroNameNormalizer.init(item.init_aM.init_Str));
       if (selectedRow && !draggedRow) {
          autismclient.gui.f.b.TableIndex.init(
             context, x, y, width, this.get_I_11(), rowContext.init_I_I(ThemePaletteManager.init_I_I_ct_DataUtil(1715082778, ThemePaletteManager.Inner_DataUtil.ACCENT))
@@ -997,9 +997,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          switch (action) {
             case TOGGLE_FOLDER:
                if (item.load == null) {
-                  aN.init_aN().init_V_Str(item.init_Str);
+                  MacroLibraryManager.init_aN().init_V_Str(item.init_Str);
                } else {
-                  String key = item.load + "\u0000" + cY.load_Str_Str(item.init_Str);
+                  String key = item.load + "\u0000" + MacroFolderLayout.load_Str_Str(item.init_Str);
                   if (!this.init_Set.remove(key)) {
                      this.init_Set.add(key);
                   }
@@ -1012,7 +1012,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                this.init_V_Str_7(item.init_Str);
                break;
             case REMOVE_FOLDER:
-               aN.init_aN().load_Z(item.init_Str);
+               MacroLibraryManager.init_aN().load_Z(item.init_Str);
                bi.load("Folder removed; macros kept.");
                this.clear_Z = true;
                break;
@@ -1055,7 +1055,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                break;
             case DELETE:
                if (item.init_aM != null) {
-                  aN.init_aN().read(item.init_aM);
+                  MacroLibraryManager.init_aN().read(item.init_aM);
                }
                break;
             case IMPORT_REMOTE:
@@ -1097,14 +1097,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
    private void init_V_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil item) {
       if (item.load != null && !item.load.isBlank()) {
-         aE sync = aE.init_aE();
+         LanSyncManager sync = LanSyncManager.init_aE();
          Map<String, Map<String, AutismMacro>> allRemote = sync.read_Map();
          Map<String, AutismMacro> remoteMacros = allRemote.get(item.load);
-         AutismMacro source = remoteMacros != null ? remoteMacros.get(cZ.init(item.init_Str)) : null;
+         AutismMacro source = remoteMacros != null ? remoteMacros.get(MacroNameNormalizer.init(item.init_Str)) : null;
          if (source == null) {
             AutismClientMessaging.sendPrefixed("§cRemote macro is no longer available: " + item.init_Str);
          } else {
-            AutismMacro imported = aN.init_aN().init_aM_aM_Str(source, source.init_Str);
+            AutismMacro imported = MacroLibraryManager.init_aN().init_aM_aM_Str(source, source.init_Str);
             if (imported == null) {
                AutismClientMessaging.sendPrefixed("§cFailed to import macro: " + item.init_Str);
             } else {
@@ -1149,7 +1149,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (name.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§cEnter a name for the pasted macro.");
          return true;
-      } else if (aN.init_aN().init_aM_Str(name) != null) {
+      } else if (MacroLibraryManager.init_aN().init_aM_Str(name) != null) {
          AutismClientMessaging.sendPrefixed("§cA macro with that name already exists.");
          return true;
       } else {
@@ -1159,7 +1159,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             return true;
          } else {
             pasted.init_Str = name;
-            aN.init_aN().init_V_aM(pasted);
+            MacroLibraryManager.init_aN().init_V_aM(pasted);
             bi.load("Created macro: " + pasted.init_Str);
             this.init_BitSetUtil.init_BitSetUtil_Str("");
             this.init_V_List_4(List.of(pasted));
@@ -1517,26 +1517,26 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private List<AutismMacroListOverlay.Inner_StreamUtil> init_List_List(
-      List<AutismMacro> localMacros, Map<String, Map<String, AutismMacro>> remoteMacros, aE sync
+      List<AutismMacro> localMacros, Map<String, Map<String, AutismMacro>> remoteMacros, LanSyncManager sync
    ) {
       String filter = this.init_BitSetUtil.init_Str().trim().toLowerCase(Locale.ROOT);
       List<AutismMacroListOverlay.Inner_StreamUtil> items = new ArrayList<>();
 
-      for (cY.Inner_DataUtil row : aN.init_aN().load(filter, true, macro -> !AutoFishMacroPresets.load(macro))) {
+      for (MacroFolderLayout.Inner_DataUtil row : MacroLibraryManager.init_aN().load(filter, true, macro -> !AutoFishMacroPresets.load(macro))) {
          items.add(row.init_Z() ? AutismMacroListOverlay.Inner_StreamUtil.init(row, null) : AutismMacroListOverlay.Inner_StreamUtil.init(row.init_aM()));
       }
 
       if (sync.write_Z()) {
          for (Entry<String, Map<String, AutismMacro>> entry : remoteMacros.entrySet()) {
-            List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !AutoFishMacroPresets.load(m)).filter(m -> aN.init_aN().init_aM_Str(m.init_Str) == null).toList();
-            List<cY.Inner_DataUtil> remoteRows = cY.init(
-               available, List.of(), folder -> this.init_Set.contains(entry.getKey() + "\u0000" + cY.load_Str_Str(folder)), filter, false
+            List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !AutoFishMacroPresets.load(m)).filter(m -> MacroLibraryManager.init_aN().init_aM_Str(m.init_Str) == null).toList();
+            List<MacroFolderLayout.Inner_DataUtil> remoteRows = MacroFolderLayout.init(
+               available, List.of(), folder -> this.init_Set.contains(entry.getKey() + "\u0000" + MacroFolderLayout.load_Str_Str(folder)), filter, false
             );
             if (!remoteRows.isEmpty()) {
                items.add(AutismMacroListOverlay.Inner_StreamUtil.init(entry.getKey(), -12122));
             }
 
-            for (cY.Inner_DataUtil row : remoteRows) {
+            for (MacroFolderLayout.Inner_DataUtil row : remoteRows) {
                items.add(
                   row.init_Z()
                      ? AutismMacroListOverlay.Inner_StreamUtil.init(row, entry.getKey())
@@ -1584,7 +1584,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       );
       this.read_List
          .add(new AutismMacroListOverlay.Inner_DataUtil(x, y, bounds.update(), this.get_I_11(), item, AutismMacroListOverlay.Inner_BufferHelper.TOGGLE_FOLDER));
-      if (this.run_Z && this.get_Z && this.set_Z && item.load == null && cY.load_Str_Str(item.init_Str).equals(cY.load_Str_Str(this.close_Str))) {
+      if (this.run_Z && this.get_Z && this.set_Z && item.load == null && MacroFolderLayout.load_Str_Str(item.init_Str).equals(MacroFolderLayout.load_Str_Str(this.close_Str))) {
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(x, y, bounds.update(), this.get_I_11()),
@@ -1631,7 +1631,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private boolean push_Z_8() {
-      aN manager = aN.init_aN();
+      MacroLibraryManager manager = MacroLibraryManager.init_aN();
       boolean saved = this.init_Str_2 == null
          ? manager.init_Z_Str(this.read_BitSetUtil.init_Str())
          : manager.init_Z_Str_Str(this.init_Str_2, this.read_BitSetUtil.init_Str());
@@ -1649,7 +1649,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (item.init_aM != null) {
          List<String> folders = new ArrayList<>();
          folders.add("");
-         folders.addAll(aN.init_aN().load_List());
+         folders.addAll(MacroLibraryManager.init_aN().load_List());
          List<String> labels = folders.stream().map(f -> f.isEmpty() ? "Unfiled" : "Folder: " + f).toList();
          AutismMacroListOverlay.Inner_DataUtil anchor = this.read_List
             .stream()
@@ -1674,7 +1674,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                choice -> {
                   int index = labels.indexOf(choice);
                   if (index >= 0) {
-                     aN.init_aN().init_Z_aM_Str(item.init_aM, folders.get(index));
+                     MacroLibraryManager.init_aN().init_Z_aM_Str(item.init_aM, folders.get(index));
                   }
 
                   this.clear_Z = true;
@@ -1692,7 +1692,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       } else {
          List<String> folders = new ArrayList<>();
          folders.add("");
-         folders.addAll(aN.init_aN().load_List());
+         folders.addAll(MacroLibraryManager.init_aN().load_List());
          List<String> labels = folders.stream().map(f -> f.isEmpty() ? "Unfiled" : "Folder: " + f).toList();
          int menuWidth = Math.max(
             56,
@@ -1710,7 +1710,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             String folder = macro.read == null ? "" : macro.read;
             if (common == null) {
                common = folder;
-            } else if (!cY.load_Str_Str(common).equals(cY.load_Str_Str(folder))) {
+            } else if (!MacroFolderLayout.load_Str_Str(common).equals(MacroFolderLayout.load_Str_Str(folder))) {
                common = null;
                break;
             }
@@ -1729,14 +1729,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                List<AutismMacro> moving = new ArrayList<>();
 
                for (AutismMacro macro : this.load_List_4()) {
-                  if (!cY.load_Str_Str(macro.read).equals(cY.load_Str_Str(target))) {
+                  if (!MacroFolderLayout.load_Str_Str(macro.read).equals(MacroFolderLayout.load_Str_Str(target))) {
                      moving.add(macro);
                   }
                }
 
                if (moving.isEmpty()) {
                   bi.init("Already in " + (target.isEmpty() ? "Unfiled" : target) + ".", -5195580);
-               } else if (aN.init_aN().init(moving, target, null)) {
+               } else if (MacroLibraryManager.init_aN().init(moving, target, null)) {
                   bi.load("Moved " + load_Str_I_2(moving.size()) + " to " + (target.isEmpty() ? "Unfiled" : target) + ".");
                }
             }
@@ -1748,19 +1748,19 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_aM_2(AutismMacro macro) {
-      return macro != null && this.init_LinkedHashSet.contains(cZ.init(macro.init_Str));
+      return macro != null && this.init_LinkedHashSet.contains(MacroNameNormalizer.init(macro.init_Str));
    }
 
    private void init_V_aM_2(AutismMacro macro) {
       if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
-         this.init_LinkedHashSet.add(cZ.init(macro.init_Str));
+         this.init_LinkedHashSet.add(MacroNameNormalizer.init(macro.init_Str));
       }
    }
 
    private void load_V_aM_2(AutismMacro macro) {
       this.init_LinkedHashSet.clear();
       this.init_V_aM_2(macro);
-      this.load_Str = macro != null && macro.init_Str != null ? cZ.init(macro.init_Str) : null;
+      this.load_Str = macro != null && macro.init_Str != null ? MacroNameNormalizer.init(macro.init_Str) : null;
       this.next_V_4();
    }
 
@@ -1771,13 +1771,13 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.init_V_aM_2(macro);
       }
 
-      this.load_Str = !macros.isEmpty() && macros.get(macros.size() - 1).init_Str != null ? cZ.init(macros.get(macros.size() - 1).init_Str) : null;
+      this.load_Str = !macros.isEmpty() && macros.get(macros.size() - 1).init_Str != null ? MacroNameNormalizer.init(macros.get(macros.size() - 1).init_Str) : null;
       this.next_V_4();
    }
 
    private void read(AutismMacro macro) {
       if (macro != null && macro.init_Str != null && !macro.init_Str.isBlank()) {
-         String key = cZ.init(macro.init_Str);
+         String key = MacroNameNormalizer.init(macro.init_Str);
          if (!this.init_LinkedHashSet.remove(key)) {
             this.init_LinkedHashSet.add(key);
          }
@@ -1789,14 +1789,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
    private void write(AutismMacro macro) {
       if (macro != null && macro.init_Str != null) {
-         String key = cZ.init(macro.init_Str);
+         String key = MacroNameNormalizer.init(macro.init_Str);
          int from = -1;
          int to = -1;
 
          for (int i = 0; i < this.update_List.size(); i++) {
             AutismMacroListOverlay.Inner_StreamUtil item = this.update_List.get(i);
             if (item.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.init_aM != null) {
-               String itemKey = cZ.init(item.init_aM.init_Str);
+               String itemKey = MacroNameNormalizer.init(item.init_aM.init_Str);
                if (itemKey.equals(this.load_Str)) {
                   from = i;
                }
@@ -1847,8 +1847,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          return out;
       }
 
-      for (AutismMacro macro : aN.init_aN().init_List()) {
-         if (macro != null && this.init_LinkedHashSet.contains(cZ.init(macro.init_Str))) {
+      for (AutismMacro macro : MacroLibraryManager.init_aN().init_List()) {
+         if (macro != null && this.init_LinkedHashSet.contains(MacroNameNormalizer.init(macro.init_Str))) {
             out.add(macro);
          }
       }
@@ -1914,7 +1914,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          bi.write("Failed to copy macros.");
          return true;
       } else {
-         int removed = aN.init_aN().init_I_Collection(selected);
+         int removed = MacroLibraryManager.init_aN().init_I_Collection(selected);
          this.reset_V_4();
          bi.init("Cut " + load_Str_I_2(removed) + ". Paste to put them back.");
          return true;
@@ -1929,7 +1929,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       } else {
          List<AutismMacro> selected = this.load_List_4();
          AutismMacro anchor = selected.isEmpty() ? null : selected.get(selected.size() - 1);
-         List<AutismMacro> added = aN.init_aN().init(paste.init_List(), !paste.init_Z(), anchor);
+         List<AutismMacro> added = MacroLibraryManager.init_aN().init(paste.init_List(), !paste.init_Z(), anchor);
          if (added.isEmpty()) {
             bi.write("Failed to paste macros.");
             return true;
@@ -1950,7 +1950,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      List<AutismMacro> copies = aN.init_aN().init_List_Collection(selected);
+      List<AutismMacro> copies = MacroLibraryManager.init_aN().init_List_Collection(selected);
       if (!copies.isEmpty()) {
          this.init_V_List_4(copies);
          this.clear_Z = true;
@@ -1970,7 +1970,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       long now = System.currentTimeMillis();
       if (confirmed || signature.equals(this.read_Str) && now < this.read_J) {
          this.read_Str = null;
-         int removed = aN.init_aN().init_I_Collection(selected);
+         int removed = MacroLibraryManager.init_aN().init_I_Collection(selected);
          this.reset_V_4();
          if (removed > 0) {
             bi.load("Deleted " + load_Str_I_2(removed) + ".");
@@ -2056,7 +2056,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private void init_V_AutismMacroListOve(
       AutismMacroListOverlay.Inner_StreamUtil item, float uiMouseX, float uiMouseY, autismclient.gui.f.b.TextFormat.Inner_DataUtil listLayout, int rowIndex
    ) {
-      this.flush_Str = cZ.init(item.init_aM.init_Str);
+      this.flush_Str = MacroNameNormalizer.init(item.init_aM.init_Str);
       this.tick_Z = this.init_LinkedHashSet.contains(this.flush_Str);
       this.read_D = uiMouseX;
       this.write_D = uiMouseY;
@@ -2065,7 +2065,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
    private void init_V_F_F(float uiMouseX, float uiMouseY) {
       if (!this.run_Z && this.flush_Str != null && (!(Math.abs(uiMouseX - this.read_D) < 3.0) || !(Math.abs(uiMouseY - this.write_D) < 3.0))) {
-         AutismMacro pressed = aN.init_aN().init_aM_Str(this.flush_Str);
+         AutismMacro pressed = MacroLibraryManager.init_aN().init_aM_Str(this.flush_Str);
          if (pressed == null) {
             this.prev_V_4();
          } else {
@@ -2085,7 +2085,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                this.load_Set.clear();
 
                for (AutismMacro macro : dragged) {
-                  this.load_Set.add(cZ.init(macro.init_Str));
+                  this.load_Set.add(MacroNameNormalizer.init(macro.init_Str));
                }
 
                this.next = Math.max(0, dragged.indexOf(pressed));
@@ -2124,14 +2124,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          List<String> foldersAbove = this.load_List;
          this.prev_V_4();
          if (apply && !dragged.isEmpty()) {
-            aN.init_aN().init(dragged, targetFolder, insertBefore, foldersAbove);
+            MacroLibraryManager.init_aN().init(dragged, targetFolder, insertBefore, foldersAbove);
          }
       } else {
          String pressedKey = this.flush_Str;
          boolean wasSelected = this.tick_Z;
          this.prev_V_4();
          if (pressedKey != null) {
-            AutismMacro pressed = aN.init_aN().init_aM_Str(pressedKey);
+            AutismMacro pressed = MacroLibraryManager.init_aN().init_aM_Str(pressedKey);
             if (pressed != null) {
                if (wasSelected && this.init_LinkedHashSet.size() == 1) {
                   this.reset_V_4();
@@ -2233,7 +2233,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
       for (int i = gap; i <= lastLocal; i++) {
          AutismMacroListOverlay.Inner_StreamUtil row = this.update_List.get(i);
-         if (init_Z_AutismMacroListOve(row) && !this.load_Set.contains(cZ.init(row.init_aM.init_Str))) {
+         if (init_Z_AutismMacroListOve(row) && !this.load_Set.contains(MacroNameNormalizer.init(row.init_aM.init_Str))) {
             next = row.init_aM.init_Str;
             break;
          }
@@ -2245,7 +2245,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       for (int i = gap - 1; i >= 0; i--) {
          AutismMacroListOverlay.Inner_StreamUtil row = this.update_List.get(i);
          if (init_Z_AutismMacroListOve(row)) {
-            if (!this.load_Set.contains(cZ.init(row.init_aM.init_Str))) {
+            if (!this.load_Set.contains(MacroNameNormalizer.init(row.init_aM.init_Str))) {
                break;
             }
          } else if (row.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.FOLDER && row.load == null) {
@@ -2256,10 +2256,10 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       this.load_List = List.copyOf(above);
       this.get_Z = true;
       boolean foldersAlreadyThere = true;
-      String first = this.init_List.isEmpty() ? null : cZ.init(this.init_List.get(0).init_Str);
+      String first = this.init_List.isEmpty() ? null : MacroNameNormalizer.init(this.init_List.get(0).init_Str);
 
       for (String folder : above) {
-         if (first == null || !first.equals(aN.init_aN().load_Str(folder))) {
+         if (first == null || !first.equals(MacroLibraryManager.init_aN().load_Str(folder))) {
             foldersAlreadyThere = false;
             break;
          }
@@ -2289,7 +2289,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private String init_Str_I_Str(int from, String folder) {
-      String folderKey = cY.load_Str_Str(folder);
+      String folderKey = MacroFolderLayout.load_Str_Str(folder);
 
       for (int i = Math.max(0, from); i < this.update_List.size(); i++) {
          AutismMacroListOverlay.Inner_StreamUtil candidate = this.update_List.get(i);
@@ -2297,11 +2297,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             return null;
          }
 
-         if (!cY.load_Str_Str(candidate.init_aM.read).equals(folderKey)) {
+         if (!MacroFolderLayout.load_Str_Str(candidate.init_aM.read).equals(folderKey)) {
             return null;
          }
 
-         if (!this.load_Set.contains(cZ.init(candidate.init_aM.init_Str))) {
+         if (!this.load_Set.contains(MacroNameNormalizer.init(candidate.init_aM.init_Str))) {
             return candidate.init_aM.init_Str;
          }
       }
@@ -2310,11 +2310,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Str_Str_2(String folder, String insertBefore) {
-      String folderKey = cY.load_Str_Str(folder);
+      String folderKey = MacroFolderLayout.load_Str_Str(folder);
       List<AutismMacro> run = new ArrayList<>();
 
-      for (AutismMacro macro : aN.init_aN().init_List()) {
-         if (macro != null && cY.load_Str_Str(macro.read).equals(folderKey)) {
+      for (AutismMacro macro : MacroLibraryManager.init_aN().init_List()) {
+         if (macro != null && MacroFolderLayout.load_Str_Str(macro.read).equals(folderKey)) {
             run.add(macro);
          }
       }
@@ -2324,7 +2324,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int count = 0;
 
       for (int i = 0; i < run.size(); i++) {
-         if (this.load_Set.contains(cZ.init(run.get(i).init_Str))) {
+         if (this.load_Set.contains(MacroNameNormalizer.init(run.get(i).init_Str))) {
             if (first < 0) {
                first = i;
             }
@@ -2336,14 +2336,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
       if (count == this.load_Set.size() && last - first + 1 == count) {
          String follower = last + 1 < run.size() ? run.get(last + 1).init_Str : null;
-         return insertBefore == null ? follower == null : follower != null && cZ.init(follower, insertBefore);
+         return insertBefore == null ? follower == null : follower != null && MacroNameNormalizer.init(follower, insertBefore);
       } else {
          return false;
       }
    }
 
    private boolean load_Z_Str_3(String folder) {
-      return this.write_Str != null && folder != null && !folder.isEmpty() && cY.load_Str_Str(folder).equals(cY.load_Str_Str(this.write_Str));
+      return this.write_Str != null && folder != null && !folder.isEmpty() && MacroFolderLayout.load_Str_Str(folder).equals(MacroFolderLayout.load_Str_Str(this.write_Str));
    }
 
    private void size_V_2() {
@@ -2367,10 +2367,10 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       this.size_V_2();
       if (folder != null) {
          if (!dragged) {
-            aN.init_aN().init_V_Str(folder);
+            MacroLibraryManager.init_aN().init_V_Str(folder);
             this.open_Z = false;
             this.clear_Z = true;
-         } else if (apply && aN.init_aN().init(folder, before, anchor)) {
+         } else if (apply && MacroLibraryManager.init_aN().init(folder, before, anchor)) {
             this.clear_Z = true;
          }
       }
@@ -2447,11 +2447,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private int load_I_I_4(int index) {
       AutismMacroListOverlay.Inner_StreamUtil item = this.update_List.get(index);
       if (item.init_AutismMacroListOve != AutismMacroListOverlay.Inner_CachePool.FOLDER && item.init_aM != null) {
-         String key = cY.load_Str_Str(item.init_aM.read);
+         String key = MacroFolderLayout.load_Str_Str(item.init_aM.read);
 
          for (int i = index - 1; i >= 0; i--) {
             AutismMacroListOverlay.Inner_StreamUtil row = this.update_List.get(i);
-            if (row.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.FOLDER && row.load == null && cY.load_Str_Str(row.init_Str).equals(key)) {
+            if (row.init_AutismMacroListOve == AutismMacroListOverlay.Inner_CachePool.FOLDER && row.load == null && MacroFolderLayout.load_Str_Str(row.init_Str).equals(key)) {
                return i;
             }
          }
@@ -2468,14 +2468,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          return header;
       }
 
-      String key = cY.load_Str_Str(head.init_Str);
+      String key = MacroFolderLayout.load_Str_Str(head.init_Str);
       int end = header;
 
       for (int i = header + 1; i < this.update_List.size(); end = i++) {
          AutismMacroListOverlay.Inner_StreamUtil row = this.update_List.get(i);
          if (row.init_AutismMacroListOve != AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
             || row.init_aM == null
-            || !cY.load_Str_Str(row.init_aM.read).equals(key)) {
+            || !MacroFolderLayout.load_Str_Str(row.init_aM.read).equals(key)) {
             break;
          }
       }
@@ -2528,14 +2528,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int tick_I_13() {
-      long revision = aN.init_aN().init_J();
+      long revision = MacroLibraryManager.init_aN().init_J();
       if (revision == this.flush_J) {
          return this.data;
       }
 
       int count = 0;
 
-      for (AutismMacro macro : aN.init_aN().init_List()) {
+      for (AutismMacro macro : MacroLibraryManager.init_aN().init_List()) {
          if (!AutoFishMacroPresets.load(macro)) {
             count++;
          }
@@ -2737,9 +2737,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       private int init_I;
       private AutismMacro init_aM;
       private String load;
-      private cY.Inner_DataUtil init_cY_DataUtil;
+      private MacroFolderLayout.Inner_DataUtil init_cY_DataUtil;
 
-      private static AutismMacroListOverlay.Inner_StreamUtil init(cY.Inner_DataUtil row, String source) {
+      private static AutismMacroListOverlay.Inner_StreamUtil init(MacroFolderLayout.Inner_DataUtil row, String source) {
          AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
          item.init_AutismMacroListOve = AutismMacroListOverlay.Inner_CachePool.FOLDER;
          item.init_Str = row.load_Str();

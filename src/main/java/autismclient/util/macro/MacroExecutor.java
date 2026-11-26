@@ -10,14 +10,14 @@ import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bN;
+import autismclient.util.OnlinePlayerCollector;
 import autismclient.util.CommandTabNameProber;
 import autismclient.util.bi;
-import autismclient.util.bl;
+import autismclient.util.PacedTpJobManager;
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketTypeRegistry;
 import autismclient.util.RotationMath;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -805,7 +805,7 @@ public class MacroExecutor {
    private static void init_V_MacroExecutor_Tabl_2(MacroExecutor.Inner_TableIndex run, int step, int total, String macroName) {
       if (run == null || !run.init_MacroExecutor_Pool.read()) {
          try {
-            autismclient.util.aE sync = autismclient.util.aE.init_aE();
+            autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.init_aE();
             if (sync.write_Z()) {
                sync.init_V_I(step, total, macroName);
             }
@@ -1932,7 +1932,7 @@ public class MacroExecutor {
                                              continue;
                                           }
 
-                                          List<ck.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, tsa.preGenCount);
+                                          List<AutismSessionState.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, tsa.preGenCount);
                                           long targetTick = mc.level.getGameTime() + tsa.tickOffset;
                                           load_V_Str("Tick Sync -> " + targetTick + " (" + preGenerated.size() + " pkts)");
 
@@ -1950,7 +1950,7 @@ public class MacroExecutor {
                                              continue;
                                           }
 
-                                          List<ck.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, rsa.preGenCount);
+                                          List<AutismSessionState.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, rsa.preGenCount);
                                           int baseRevision = mc.player.containerMenu.getStateId();
                                           int targetRevision = baseRevision + rsa.revisionOffset;
                                           load_V_Str("Rev Sync -> " + targetRevision + " (" + preGenerated.size() + " pkts)");
@@ -1974,7 +1974,7 @@ public class MacroExecutor {
                                              continue;
                                           }
 
-                                          List<ck.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, stsa.preGenCount);
+                                          List<AutismSessionState.Inner_CachePool> preGenerated = init_List_aM(macro, i + 1, stsa.preGenCount);
 
                                           for (int sampleWaitMs = 0; close_Z() && !ServerTickPhaseTracker.init_Z() && sampleWaitMs < stsa.maxWaitMs; sampleWaitMs += 50) {
                                              float progress = ServerTickPhaseTracker.init_F();
@@ -3023,19 +3023,19 @@ public class MacroExecutor {
    }
 
    private static void init_V_Minecraft_w(Minecraft mc, PacedTpAction action) {
-      AtomicReference<bl.Inner_StreamUtil> handleRef = new AtomicReference<>();
-      init_V_Minecraft_Runnable(mc, () -> handleRef.set(bl.init(action, "macro")));
-      bl.Inner_StreamUtil handle = handleRef.get();
+      AtomicReference<PacedTpJobManager.Inner_StreamUtil> handleRef = new AtomicReference<>();
+      init_V_Minecraft_Runnable(mc, () -> handleRef.set(PacedTpJobManager.init(action, "macro")));
+      PacedTpJobManager.Inner_StreamUtil handle = handleRef.get();
       if (handle != null) {
          load_V_Str("TP " + action.init());
 
          try {
-            while (close_Z() && bl.init_bl_CachePool(handle.init_J()).init_bl_DataUtil() == bl.Inner_DataUtil.PENDING) {
+            while (close_Z() && PacedTpJobManager.init_bl_CachePool(handle.init_J()).init_bl_DataUtil() == PacedTpJobManager.Inner_DataUtil.PENDING) {
                pop();
             }
          } finally {
-            if (bl.init_bl_CachePool(handle.init_J()).init_bl_DataUtil() == bl.Inner_DataUtil.PENDING) {
-               mc.execute(() -> bl.init(handle.init_J(), "macro stopped"));
+            if (PacedTpJobManager.init_bl_CachePool(handle.init_J()).init_bl_DataUtil() == PacedTpJobManager.Inner_DataUtil.PENDING) {
+               mc.execute(() -> PacedTpJobManager.init(handle.init_J(), "macro stopped"));
             }
          }
       }
@@ -3427,7 +3427,7 @@ public class MacroExecutor {
       if (mc != null && mc.player != null && replacement != null) {
          int slot = replacement.init();
          if (slot >= 0 && slot < 9) {
-            autismclient.util.aw.init_V(mc, slot);
+            autismclient.util.InventorySlotHelper.init_V(mc, slot);
             session.init_I = slot;
             session.load_I = slot;
             return true;
@@ -3435,11 +3435,11 @@ public class MacroExecutor {
 
          if (slot >= 9 && slot < 36) {
             int target = Math.max(0, Math.min(8, session.load_I));
-            if (!autismclient.util.aw.read(mc, slot, target)) {
+            if (!autismclient.util.InventorySlotHelper.read(mc, slot, target)) {
                return false;
             }
 
-            autismclient.util.aw.init_V(mc, target);
+            autismclient.util.InventorySlotHelper.init_V(mc, target);
             session.init_I = target;
             session.load_I = target;
             return true;
@@ -3936,7 +3936,7 @@ public class MacroExecutor {
          if (mc.player.containerMenu != null) {
             for (Slot slot : mc.player.containerMenu.slots) {
                if (slot != null && !slot.getItem().isEmpty()) {
-                  int visible = autismclient.util.aw.init_I(mc, slot.index);
+                  int visible = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
                   if (target.init_I_ItemStack_I(slot.getItem(), visible) >= 0) {
                      return init_l_ItemStack_I(slot.getItem(), visible);
                   }
@@ -4464,7 +4464,7 @@ public class MacroExecutor {
             String end = endEvent.init_Str_2();
             AutismClientMessaging.sendPrefixed("§b" + label + ": " + init_Str_J(deltaNanos) + " (" + start + " -> " + end + ")");
             if (report.stashToSharedState) {
-               ck.init_ck().init_V_ck_ConfigStore(new ck.Inner_ConfigStore(label, deltaMs, start, end, System.currentTimeMillis()));
+               AutismSessionState.init_ck().init_V_ck_ConfigStore(new AutismSessionState.Inner_ConfigStore(label, deltaMs, start, end, System.currentTimeMillis()));
             }
 
             return conditionCount;
@@ -4499,7 +4499,7 @@ public class MacroExecutor {
             String end = endEvent.init_Str_2();
             AutismClientMessaging.sendPrefixed("§b" + label + ": " + init_Str_J(deltaNanos) + " (" + start + " -> " + end + ")");
             if (report.stashToSharedState) {
-               ck.init_ck().init_V_ck_ConfigStore(new ck.Inner_ConfigStore(label, deltaMs, start, end, System.currentTimeMillis()));
+               AutismSessionState.init_ck().init_V_ck_ConfigStore(new AutismSessionState.Inner_ConfigStore(label, deltaMs, start, end, System.currentTimeMillis()));
             }
 
             return conditionCount;
@@ -5587,7 +5587,7 @@ public class MacroExecutor {
                         return;
                      }
 
-                     List<ck.Inner_CachePool> preGenerated = init_List_I_Minecraft(tsa.preGenCount, mc);
+                     List<AutismSessionState.Inner_CachePool> preGenerated = init_List_I_Minecraft(tsa.preGenCount, mc);
                      long targetTick = mc.level.getGameTime() + tsa.tickOffset;
                      load_V_Str("Tick Sync -> " + targetTick + " (" + preGenerated.size() + " pkts)");
 
@@ -5609,7 +5609,7 @@ public class MacroExecutor {
                         return;
                      }
 
-                     List<ck.Inner_CachePool> preGenerated = init_List_I_Minecraft(rsa.preGenCount, mc);
+                     List<AutismSessionState.Inner_CachePool> preGenerated = init_List_I_Minecraft(rsa.preGenCount, mc);
                      int baseRevision = mc.player.containerMenu.getStateId();
                      int targetRevision = baseRevision + rsa.revisionOffset;
                      load_V_Str("Rev Sync -> " + targetRevision + " (" + preGenerated.size() + " pkts)");
@@ -5632,7 +5632,7 @@ public class MacroExecutor {
                         return;
                      }
 
-                     List<ck.Inner_CachePool> preGenerated = init_List_I_Minecraft(stsa.preGenCount, mc);
+                     List<AutismSessionState.Inner_CachePool> preGenerated = init_List_I_Minecraft(stsa.preGenCount, mc);
 
                      for (int sampleWaitMs = 0; close_Z() && !ServerTickPhaseTracker.init_Z() && sampleWaitMs < stsa.maxWaitMs; sampleWaitMs += 50) {
                         float progress = ServerTickPhaseTracker.init_F();
@@ -5773,7 +5773,7 @@ public class MacroExecutor {
       }
    }
 
-   private static List<ck.Inner_CachePool> init_List_I_Minecraft(int count, Minecraft mc) {
+   private static List<AutismSessionState.Inner_CachePool> init_List_I_Minecraft(int count, Minecraft mc) {
       MacroExecutor.Inner_IoWorker context = read_ThreadLocal.get();
       return context != null && context.init_aM() != null ? init_List_aM(context.init_aM(), context.init_I(), count, context.load()) : new ArrayList<>();
    }
@@ -6118,7 +6118,7 @@ public class MacroExecutor {
             List<Integer> slots = load_Obj_Minecraft(mc, () -> action.init_List_Minecraft_3(mc), List.of());
 
             for (int i = 0; i < slots.size() && close_Z(); i++) {
-               autismclient.util.av.init(mc, slots.get(i), 0, ContainerInput.QUICK_MOVE);
+               autismclient.util.ContainerClickExecutor.init(mc, slots.get(i), 0, ContainerInput.QUICK_MOVE);
                if (i + 1 < slots.size()) {
                   load_V_I(delayTicks);
                }
@@ -6236,7 +6236,7 @@ public class MacroExecutor {
    private static void init_V_Minecraft_y(Minecraft mc, PacketBurstAction action) {
       if (action != null && mc != null && mc.getConnection() != null) {
          if (action.flushBefore) {
-            ck.init_ck().init_I_ClientPacketListen(mc.getConnection());
+            AutismSessionState.init_ck().init_I_ClientPacketListen(mc.getConnection());
          }
 
          int total = action.init_I_7();
@@ -6274,13 +6274,13 @@ public class MacroExecutor {
             load_V_Str("XCarry Cursor");
             init_V_Minecraft_Runnable(mc, () -> xsa.execute(mc));
          } else {
-            ck sharedState = ck.init_ck();
+            AutismSessionState sharedState = AutismSessionState.init_ck();
             boolean prevBypass = sharedState.close_Z();
             sharedState.flush(true);
 
             try {
                AtomicReference<AbstractContainerMenu> containerHandlerRef = new AtomicReference<>();
-               AtomicReference<autismclient.util.E> containerTargetRef = new AtomicReference<>();
+               AtomicReference<autismclient.util.InteractionTargetRef> containerTargetRef = new AtomicReference<>();
                AtomicReference<List<Integer>> containerSlotIdsRef = new AtomicReference<>(List.of());
                AtomicBoolean usingContainer = new AtomicBoolean(false);
                init_V_Minecraft_Runnable(mc, () -> {
@@ -6289,7 +6289,7 @@ public class MacroExecutor {
                      if (current != null && current != mc.player.inventoryMenu) {
                         usingContainer.set(true);
                         containerHandlerRef.set(current);
-                        containerTargetRef.set(ck.init_ck().init_E());
+                        containerTargetRef.set(AutismSessionState.init_ck().init_E());
                         containerSlotIdsRef.set(new ArrayList<>(xsa.init_List_AbstractContainerM_InventoryMenu(current, mc.player.inventoryMenu)));
                      }
                   }
@@ -6400,7 +6400,7 @@ public class MacroExecutor {
                init_V_Minecraft_Runnable(mc, () -> {
                   if (mc.player != null) {
                      boolean active = XCarryAction.init_Z_InventoryMenu_3(mc.player.inventoryMenu, xsa.carryCursor, xsa.init_Set());
-                     ck shared = ck.init_ck();
+                     AutismSessionState shared = AutismSessionState.init_ck();
                      if (active) {
                         shared.load(xsa.init_Set(), xsa.carryCursor);
                      }
@@ -6417,7 +6417,7 @@ public class MacroExecutor {
                            mc.player.containerMenu = containerHandler;
                         }
 
-                        autismclient.util.E containerTarget = containerTargetRef.get();
+                        autismclient.util.InteractionTargetRef containerTarget = containerTargetRef.get();
                         if (containerTarget != null) {
                            XCarryAction.init_V_Minecraft_E(mc, containerTarget);
                         }
@@ -6440,13 +6440,13 @@ public class MacroExecutor {
             load_V_Str("XCarry Safe: Cursor");
             init_V_Minecraft_Runnable(mc, () -> xsa.execute(mc));
          } else {
-            ck sharedState = ck.init_ck();
+            AutismSessionState sharedState = AutismSessionState.init_ck();
             boolean prevBypass = sharedState.close_Z();
             sharedState.flush(true);
 
             try {
                AtomicReference<AbstractContainerMenu> containerHandlerRef = new AtomicReference<>();
-               AtomicReference<autismclient.util.E> containerTargetRef = new AtomicReference<>();
+               AtomicReference<autismclient.util.InteractionTargetRef> containerTargetRef = new AtomicReference<>();
                AtomicReference<List<Integer>> containerSlotIdsRef = new AtomicReference<>(List.of());
                AtomicBoolean usingContainer = new AtomicBoolean(false);
                init_V_Minecraft_Runnable(mc, () -> {
@@ -6455,7 +6455,7 @@ public class MacroExecutor {
                      if (current != null && current != mc.player.inventoryMenu) {
                         usingContainer.set(true);
                         containerHandlerRef.set(current);
-                        containerTargetRef.set(ck.init_ck().init_E());
+                        containerTargetRef.set(AutismSessionState.init_ck().init_E());
                         containerSlotIdsRef.set(new ArrayList<>(xsa.init_List_AbstractContainerM_InventoryMenu(current, mc.player.inventoryMenu)));
                      }
                   }
@@ -6522,7 +6522,7 @@ public class MacroExecutor {
                init_V_Minecraft_Runnable(mc, () -> {
                   if (mc.player != null) {
                      boolean active = XCarryAction.init_Z_InventoryMenu_3(mc.player.inventoryMenu, xsa.carryCursor, xsa.init_Set());
-                     ck shared = ck.init_ck();
+                     AutismSessionState shared = AutismSessionState.init_ck();
                      if (active) {
                         shared.load(xsa.init_Set(), xsa.carryCursor);
                      }
@@ -6539,7 +6539,7 @@ public class MacroExecutor {
                            mc.player.containerMenu = containerHandler;
                         }
 
-                        autismclient.util.E containerTarget = containerTargetRef.get();
+                        autismclient.util.InteractionTargetRef containerTarget = containerTargetRef.get();
                         if (containerTarget != null) {
                            XCarryAction.init_V_Minecraft_E(mc, containerTarget);
                         }
@@ -7396,12 +7396,12 @@ public class MacroExecutor {
             autismclient.util.BlockPreviewRenderer.init(target);
 
             try {
-               long lastAttemptTick = ck.init_ck().state_I() - (delayTicks + 1L);
+               long lastAttemptTick = AutismSessionState.init_ck().state_I() - (delayTicks + 1L);
                long lastSneakTick = -9223372036854775808L;
 
                while (close_Z() && flush(action)) {
                   if (action.sneak) {
-                     long sneakTick = ck.init_ck().state_I();
+                     long sneakTick = AutismSessionState.init_ck().state_I();
                      if (sneakTick != lastSneakTick) {
                         lastSneakTick = sneakTick;
                         String sneakMode = action.sneakMode;
@@ -7422,7 +7422,7 @@ public class MacroExecutor {
                   }
 
                   if (!isAir) {
-                     long currentTick = ck.init_ck().state_I();
+                     long currentTick = AutismSessionState.init_ck().state_I();
                      if (currentTick != lastAttemptTick && currentTick - lastAttemptTick >= delayTicks) {
                         lastAttemptTick = currentTick;
                         if (!init_Z_Minecraft_MethodUtil(mc, action)) {
@@ -7506,18 +7506,18 @@ public class MacroExecutor {
 
          for (int slot = 0; slot < 9; slot++) {
             if (mc.player.getInventory().getItem(slot).is(ItemTags.PICKAXES)) {
-               autismclient.util.aw.init_V(mc, slot);
+               autismclient.util.InventorySlotHelper.init_V(mc, slot);
                return true;
             }
          }
 
          for (int slot = 9; slot < 36; slot++) {
             if (mc.player.getInventory().getItem(slot).is(ItemTags.PICKAXES)) {
-               if (!autismclient.util.aw.read(mc, slot, preferred)) {
+               if (!autismclient.util.InventorySlotHelper.read(mc, slot, preferred)) {
                   return false;
                }
 
-               autismclient.util.aw.init_V(mc, preferred);
+               autismclient.util.InventorySlotHelper.init_V(mc, preferred);
                return true;
             }
          }
@@ -7568,7 +7568,7 @@ public class MacroExecutor {
                   return;
                }
 
-               long now = ck.init_ck().state_I();
+               long now = AutismSessionState.init_ck().state_I();
                if (now != lastTick) {
                   lastTick = now;
                   int result;
@@ -7671,7 +7671,7 @@ public class MacroExecutor {
       }
 
       if (action.autoTool) {
-         autismclient.util.ArrayUtil.init(mc, state, action.considerInventory, true);
+         autismclient.util.BlockBreakSpeedHelper.init(mc, state, action.considerInventory, true);
          state = mc.level.getBlockState(pos);
          if (state.isAir()) {
             return new MacroExecutor.Inner_CachePool(1, false, false);
@@ -7718,7 +7718,7 @@ public class MacroExecutor {
             }
 
             if (action.autoTool) {
-               autismclient.util.ArrayUtil.init(mc, state, action.considerInventory, true);
+               autismclient.util.BlockBreakSpeedHelper.init(mc, state, action.considerInventory, true);
                state = mc.level.getBlockState(pos);
             }
 
@@ -8041,9 +8041,9 @@ public class MacroExecutor {
    }
 
    private static void write(int ticks) {
-      long start = ck.init_ck().state_I();
+      long start = AutismSessionState.init_ck().state_I();
 
-      while (close_Z() && ck.init_ck().state_I() - start < ticks) {
+      while (close_Z() && AutismSessionState.init_ck().state_I() - start < ticks) {
          sleep(1L);
       }
    }
@@ -8314,7 +8314,7 @@ public class MacroExecutor {
 
    private static boolean init_Z_Minecraft(Minecraft mc, int slotId, MacroItemTarget target) {
       if (mc.player != null && mc.player.containerMenu != null) {
-         int handlerSlot = autismclient.util.aw.read_I(mc, slotId);
+         int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotId);
          if (handlerSlot >= 0 && handlerSlot < mc.player.containerMenu.slots.size()) {
             Slot slot = mc.player.containerMenu.slots.get(handlerSlot);
             if (slot != null && !slot.getItem().isEmpty()) {
@@ -8337,7 +8337,7 @@ public class MacroExecutor {
 
    private static boolean init_Z_Minecraft_I(Minecraft mc, int slotId) {
       if (mc.player != null && mc.player.containerMenu != null) {
-         int handlerSlot = autismclient.util.aw.read_I(mc, slotId);
+         int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotId);
          if (handlerSlot >= 0 && handlerSlot < mc.player.containerMenu.slots.size()) {
             Slot slot = mc.player.containerMenu.slots.get(handlerSlot);
             return slot != null && !slot.getItem().isEmpty();
@@ -8444,9 +8444,9 @@ public class MacroExecutor {
                      ? "Crafting " + entry.load_Str + " [Max] (" + (index + 1) + "/" + craftAction.entries.size() + ")"
                      : "Crafting " + entry.load_Str + " x" + Math.max(1, entry.read_I) + " (" + (index + 1) + "/" + craftAction.entries.size() + ")"
                );
-               autismclient.util.J.Inner_TaskQueue option = autismclient.util.J.init(mc, entry.init_Str);
+               autismclient.util.AutoCraftingEngine.Inner_TaskQueue option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
                if (option == null) {
-                  option = autismclient.util.J.init(mc, entry.init_I);
+                  option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_I);
                }
 
                if (option == null) {
@@ -8457,14 +8457,14 @@ public class MacroExecutor {
                   return;
                }
 
-               int desiredAmount = autismclient.util.J.init(option, entry.read_I, entry.init_Z);
+               int desiredAmount = autismclient.util.AutoCraftingEngine.init(option, entry.read_I, entry.init_Z);
                if (desiredAmount <= 0) {
                   load_V_Str("No space or materials");
                   AutismClientMessaging.sendPrefixed("§cNo space or materials for " + entry.load_Str + ".");
                   return;
                }
 
-               autismclient.util.J.Inner_CachePool result = autismclient.util.J.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
+               autismclient.util.AutoCraftingEngine.Inner_CachePool result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
                load_V_Str(result.init_Str);
                if (!result.init_Z) {
                   AutismClientMessaging.sendPrefixed("§c" + result.init_Str);
@@ -8881,7 +8881,7 @@ public class MacroExecutor {
       }
 
       if (targets.isEmpty()) {
-         targets.addAll(bN.init(mc, payAction.probeHidden));
+         targets.addAll(OnlinePlayerCollector.init(mc, payAction.probeHidden));
       }
 
       if (!targets.isEmpty() && mc.getConnection() != null) {
@@ -8962,7 +8962,7 @@ public class MacroExecutor {
 
       try {
          Minecraft mcInst = Minecraft.getInstance();
-         autismclient.util.D.init(mcInst == null ? null : mcInst.getConnection());
+         autismclient.util.ContainerCloseGuard.init(mcInst == null ? null : mcInst.getConnection());
       } catch (Throwable var8) {
       }
 
@@ -8998,7 +8998,7 @@ public class MacroExecutor {
       MacroVariableContext.init_V();
 
       try {
-         autismclient.util.aE sync = autismclient.util.aE.init_aE();
+         autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.init_aE();
          if (sync.write_Z()) {
             sync.init_V_I(-1, 0, "");
          }
@@ -10643,7 +10643,7 @@ public class MacroExecutor {
       if (mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("§cNo network connection for burst!");
       } else {
-         List<ck.Inner_CachePool> allQueuedPackets = new ArrayList<>();
+         List<AutismSessionState.Inner_CachePool> allQueuedPackets = new ArrayList<>();
 
          for (SendPacketAction action : batch) {
             int repeats = SendPacketAction.init_I_I_5(action.sendCount);
@@ -10656,7 +10656,7 @@ public class MacroExecutor {
          if (!allQueuedPackets.isEmpty()) {
             List<Packet<?>> regeneratedPackets = new ArrayList<>(allQueuedPackets.size());
 
-            for (ck.Inner_CachePool qp : allQueuedPackets) {
+            for (AutismSessionState.Inner_CachePool qp : allQueuedPackets) {
                Packet<?> resolved = SendPacketAction.init_Packet_ck_CachePool(qp);
                if (resolved != null) {
                   regeneratedPackets.add(resolved);
@@ -10680,14 +10680,14 @@ public class MacroExecutor {
       }
    }
 
-   private static List<ck.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count) {
+   private static List<AutismSessionState.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count) {
       new ArrayList();
       int maxIdx = count < 0 ? macro.init_List.size() : Math.min(startIdx + count, macro.init_List.size());
       return init_List_aM(macro, startIdx, count, maxIdx);
    }
 
-   private static List<ck.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count, int endIdx) {
-      List<ck.Inner_CachePool> result = new ArrayList<>();
+   private static List<AutismSessionState.Inner_CachePool> init_List_aM(autismclient.util.AutismMacro macro, int startIdx, int count, int endIdx) {
+      List<AutismSessionState.Inner_CachePool> result = new ArrayList<>();
       int maxIdx = Math.min(endIdx, count < 0 ? macro.init_List.size() : Math.min(startIdx + count, macro.init_List.size()));
 
       for (int j = startIdx; j < maxIdx; j++) {
@@ -10698,7 +10698,7 @@ public class MacroExecutor {
 
          int repeats = SendPacketAction.init_I_I_5(spa.sendCount);
 
-         for (ck.Inner_CachePool qp : spa.init_List_8()) {
+         for (AutismSessionState.Inner_CachePool qp : spa.init_List_8()) {
             if (qp.init_Packet != null) {
                for (int k = 0; k < repeats; k++) {
                   result.add(qp);
@@ -10710,11 +10710,11 @@ public class MacroExecutor {
       return result;
    }
 
-   private static void load_V_Minecraft_List(Minecraft mc, List<ck.Inner_CachePool> packets) {
+   private static void load_V_Minecraft_List(Minecraft mc, List<AutismSessionState.Inner_CachePool> packets) {
       if (!packets.isEmpty() && mc.getConnection() != null) {
          ClientPacketListener handler = mc.getConnection();
 
-         for (ck.Inner_CachePool qp : packets) {
+         for (AutismSessionState.Inner_CachePool qp : packets) {
             Packet<?> toSend = SendPacketAction.init_Packet_ck_CachePool(qp);
             if (toSend != null) {
                handler.send(toSend);

@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.util.ArrayUtil;
+import autismclient.util.BlockBreakSpeedHelper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -521,7 +521,7 @@ public final class af {
          return -1;
       } else {
          int destination = load();
-         if (!autismclient.util.aw.init(mc, inventory, destination)) {
+         if (!autismclient.util.InventorySlotHelper.init(mc, inventory, destination)) {
             return -1;
          } else {
             return target.matches(mc.player.getInventory().getItem(destination)) ? destination : -1;
@@ -533,7 +533,7 @@ public final class af {
       Minecraft mc = Minecraft.getInstance();
       int slot = load(target);
       if (slot >= 0 && mc.player != null) {
-         autismclient.util.aw.init_V(mc, slot);
+         autismclient.util.InventorySlotHelper.init_V(mc, slot);
          return slot;
       } else {
          return -1;
@@ -551,7 +551,7 @@ public final class af {
       }
 
       int slot = init(target, 36);
-      return slot < 0 ? false : autismclient.util.aw.init_Z(mc, slot);
+      return slot < 0 ? false : autismclient.util.InventorySlotHelper.init_Z(mc, slot);
    }
 
    static int load() {
@@ -594,11 +594,11 @@ public final class af {
    }
 
    public static int init_I(BlockState state) {
-      return ArrayUtil.init(Minecraft.getInstance(), state, 9, false);
+      return BlockBreakSpeedHelper.init(Minecraft.getInstance(), state, 9, false);
    }
 
    public static int init(BlockState state, int limit) {
-      return ArrayUtil.init(Minecraft.getInstance(), state, limit, false);
+      return BlockBreakSpeedHelper.init(Minecraft.getInstance(), state, limit, false);
    }
 
    public static boolean init_Z(BlockState state) {
@@ -690,14 +690,14 @@ public final class af {
       if (mc.player != null && slot >= 0 && slot < 36) {
          if (slot >= 9) {
             int destination = load();
-            if (!autismclient.util.aw.init(mc, slot, destination)) {
+            if (!autismclient.util.InventorySlotHelper.init(mc, slot, destination)) {
                return -1;
             }
 
             slot = destination;
          }
 
-         autismclient.util.aw.init_V(mc, slot);
+         autismclient.util.InventorySlotHelper.init_V(mc, slot);
          return slot;
       } else {
          return -1;
@@ -737,7 +737,7 @@ public final class af {
 
    public static boolean init(Minecraft mc, BlockState state, ItemStack tool, Set<Item> wanted) {
       if (!wanted.isEmpty() && mc.player != null && !mc.player.hasInfiniteMaterials()) {
-         boolean silk = ArrayUtil.init_Z(mc, tool);
+         boolean silk = BlockBreakSpeedHelper.init_Z(mc, tool);
 
          for (Item item : wanted) {
             if (init(item).contains(state.getBlock())) {

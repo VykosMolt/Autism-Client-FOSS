@@ -110,11 +110,11 @@ public interface AutismOverlay {
    }
 
    default void a__V() {
-      ck.init_ck().init_V_Str_cH(this.init_Str(), this.init_cH());
+      AutismSessionState.init_ck().init_V_Str_cH(this.init_Str(), this.init_cH());
    }
 
    default void b__V() {
-      OverlayBounds layout = ck.init_ck().init_cH_Str(this.init_Str());
+      OverlayBounds layout = AutismSessionState.init_ck().init_cH_Str(this.init_Str());
       if (layout != null) {
          this.init_V_cH(layout);
       }

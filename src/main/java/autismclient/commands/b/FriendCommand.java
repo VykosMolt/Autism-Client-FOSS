@@ -4,7 +4,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.modules.TeamsModule;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bO;
+import autismclient.util.TabPlayerListParser;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -57,7 +57,7 @@ public final class FriendCommand extends Command {
    private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (bO.Inner_StreamUtil player : bO.init(Minecraft.getInstance())) {
+      for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(Minecraft.getInstance())) {
          String name = player.init_Str();
          if (name != null && name.toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(name);

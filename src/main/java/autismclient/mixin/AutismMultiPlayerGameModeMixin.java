@@ -11,9 +11,9 @@ import autismclient.modules.al;
 import autismclient.modules.WTappingModule;
 import autismclient.modules.ClutchModule;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.W;
+import autismclient.util.FakeGamemodeManager;
 import autismclient.util.SprintStateTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.CombatAttackDispatcher;
 import autismclient.util.RecentCombatTracker;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -92,7 +92,7 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
    private void autism$routeBlockCapture(LocalPlayer player, InteractionHand hand, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir) {
-      if (hit != null && ck.init_ck().pool() && ck.init_ck().init_Z_BlockPos_Direction(hit.getBlockPos(), hit.getDirection())) {
+      if (hit != null && AutismSessionState.init_ck().pool() && AutismSessionState.init_ck().init_Z_BlockPos_Direction(hit.getBlockPos(), hit.getDirection())) {
          cir.setReturnValue(InteractionResult.SUCCESS);
       }
    }
@@ -147,11 +147,11 @@ public class AutismMultiPlayerGameModeMixin {
 
    @Inject(method = "setLocalMode(Lnet/minecraft/world/level/GameType;)V", at = @At("RETURN"))
    private void autism$trackServerMode(GameType mode, CallbackInfo ci) {
-      W.init_V(mode);
+      FakeGamemodeManager.init_V(mode);
    }
 
    @Inject(method = "setLocalMode(Lnet/minecraft/world/level/GameType;Lnet/minecraft/world/level/GameType;)V", at = @At("RETURN"))
    private void autism$trackServerMode(GameType mode, @Nullable GameType previousMode, CallbackInfo ci) {
-      W.init_V(mode);
+      FakeGamemodeManager.init_V(mode);
    }
 }

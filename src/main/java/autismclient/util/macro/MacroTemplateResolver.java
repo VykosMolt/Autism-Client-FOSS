@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -609,7 +609,7 @@ public final class MacroTemplateResolver {
       }
 
       if ("last_sent".equals(key)) {
-         String sent = ck.init_ck().load_Str();
+         String sent = AutismSessionState.init_ck().load_Str();
          return Optional.of(MacroVarValue.init(MacroVarValue.Inner_DataUtil.TEXT, sent, Map.of("raw", MacroVarValue.init_l_Obj(sent))));
       }
 

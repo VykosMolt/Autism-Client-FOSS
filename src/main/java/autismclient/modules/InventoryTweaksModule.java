@@ -326,7 +326,7 @@ public final class InventoryTweaksModule extends Module {
    }
 
    private List<Slot> init_List_Slot_AbstractContainerM(Slot focusedSlot, AbstractContainerMenu handler) {
-      boolean focusedPlayer = autismclient.util.aw.init_Z(init_Minecraft, focusedSlot);
+      boolean focusedPlayer = autismclient.util.InventorySlotHelper.init_Z(init_Minecraft, focusedSlot);
       List<Slot> slots = new ArrayList<>();
 
       for (Slot slot : handler.slots) {
@@ -475,7 +475,7 @@ public final class InventoryTweaksModule extends Module {
             if (!stack.isEmpty()
                && this.init_Z_ItemStack_Str(stack, "auto-drop-items")
                && (!this.bool("only-full-stacks") || stack.getCount() >= stack.getMaxStackSize())) {
-               autismclient.util.O.load(init_Minecraft, slot, 0);
+               autismclient.util.InventoryDropHelper.load(init_Minecraft, slot, 0);
                return;
             }
          }
@@ -708,14 +708,14 @@ public final class InventoryTweaksModule extends Module {
                      }
 
                      try {
-                        autismclient.util.av.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 1, ContainerInput.THROW);
+                        autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 1, ContainerInput.THROW);
                      } finally {
                         if (this.load_Z) {
                            InventoryTweaksModule.init_Minecraft.player.setYRot(oldYaw);
                         }
                      }
                   } else {
-                     autismclient.util.av.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 0, ContainerInput.QUICK_MOVE);
+                     autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.init_Minecraft, click.init_I(), 0, ContainerInput.QUICK_MOVE);
                   }
 
                   if (this.load_I > 0 || this.read > 0) {
@@ -763,7 +763,7 @@ public final class InventoryTweaksModule extends Module {
          }
 
          InventoryTweaksModule.Inner_CachePool action = this.init_List.get(this.read++);
-         autismclient.util.aw.write(InventoryTweaksModule.init_Minecraft, action.init(), action.load());
+         autismclient.util.InventorySlotHelper.write(InventoryTweaksModule.init_Minecraft, action.init(), action.load());
          this.write = this.load;
          return this.read < this.init_List.size() || this.write > 0;
       }

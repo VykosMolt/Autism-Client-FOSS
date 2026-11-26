@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -43,7 +43,7 @@ public class PacketBurstAction implements MacroAction {
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
          if (this.flushBefore) {
-            ck.init_ck().init_I_ClientPacketListen(mc.getConnection());
+            AutismSessionState.init_ck().init_I_ClientPacketListen(mc.getConnection());
          }
 
          int times = this.init_I_7();

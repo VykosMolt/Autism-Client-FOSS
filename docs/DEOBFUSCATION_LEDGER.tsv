@@ -1928,3 +1928,50 @@ Phase6C	class	autismclient/util/dn	autismclient/util/PipeDelimitedListUtil	autis
 Phase6C	class	autismclient/util/k	autismclient/util/ThemedTextInputBox	autismclient/util/k	applied	Custom themed text-input and chat-box widget with recent-chat history
 Phase6C	class	autismclient/util/p	autismclient/util/UiColorPalette	autismclient/util/p	applied	Central UI color palette constants and color blending/brightening helper
 Phase6C	class	autismclient/util/z	autismclient/util/CommandPrefixHelper	autismclient/util/z	applied	Command prefix resolver, sorted module-name cache, and safe toggle dispatcher
+Phase6D	class	autismclient/util/ArrayUtil	autismclient/util/BlockBreakSpeedHelper	autismclient/util/ArrayUtil	applied	Computes effective block-break speed for ItemStack + BlockState including shears and Efficiency
+Phase6D	class	autismclient/util/CacheEntry	autismclient/util/BlockNbtFormatter	autismclient/util/CacheEntry	applied	Formats block/block-entity CompoundTag and container items into colored inspector lines
+Phase6D	class	autismclient/util/CachePool	autismclient/util/AntiVanishRosterTracker	autismclient/util/CachePool	applied	Tracks TAB roster vs server activity to detect vanished players and unlisted UUIDs
+Phase6D	class	autismclient/util/ConfigStore	autismclient/util/ListCommandPlayerParser	autismclient/util/ConfigStore	applied	Parses vanilla /list (commands.list.players) TranslatableContents into (UUID, name) pairs
+Phase6D	class	autismclient/util/D	autismclient/util/ContainerCloseGuard	autismclient/util/D	applied	Tracks suppressed/deferred ServerboundContainerClosePackets by containerId
+Phase6D	class	autismclient/util/DataUtil	autismclient/util/UnexplainedBlockTracker	autismclient/util/DataUtil	applied	Tracks unexplained world block placement/break bursts and streaks for AntiVanish
+Phase6D	class	autismclient/util/E	autismclient/util/InteractionTargetRef	autismclient/util/E	applied	Captures/serializes block or entity interaction targets for container/macro recording
+Phase6D	class	autismclient/util/I	autismclient/util/CraftingClickPlanner	autismclient/util/I	applied	Package-private 2x2/3x3 crafting-grid click simulator and move planner
+Phase6D	class	autismclient/util/J	autismclient/util/AutoCraftingEngine	autismclient/util/J	applied	Client-side auto-crafting and recipe-book resolution engine (reflects ClientRecipeBook.known)
+Phase6D	class	autismclient/util/K	autismclient/util/ContainerPickUpAllHelper	autismclient/util/K	applied	Executes guarded ContainerInput.PICKUP_ALL stack-gather clicks on client thread
+Phase6D	class	autismclient/util/M	autismclient/util/DisplayItemStackFactory	autismclient/util/M	applied	Builds lightweight display ItemStacks with Holder.direct and ITEM_MODEL/ITEM_NAME
+Phase6D	class	autismclient/util/N	autismclient/util/ContainerClickType	autismclient/util/N	applied	Macro container-click mode enum (PICKUP, QUICK_MOVE, SWAP, CLONE, THROW, etc.)
+Phase6D	class	autismclient/util/O	autismclient/util/InventoryDropHelper	autismclient/util/O	applied	Drops exact item count or full stack from handler or player inventory slots
+Phase6D	class	autismclient/util/StreamGate	autismclient/util/BlockInspectionService	autismclient/util/StreamGate	applied	Client/server block and container NBT inspection service (autism:block_data/v1)
+Phase6D	class	autismclient/util/StreamUtil	autismclient/util/PlayerQuitEventTracker	autismclient/util/StreamUtil	applied	Tracks recent player disconnect chat messages to filter legitimate quits in AntiVanish
+Phase6D	class	autismclient/util/TaskQueue	autismclient/util/NormalizedTextMatcher	autismclient/util/TaskQueue	applied	NFKD Unicode text normalizer and keyword matcher (Contains/Exact/Word)
+Phase6D	class	autismclient/util/U	autismclient/util/BlockPlacementPlanner	autismclient/util/U	applied	Comprehensive block-placement face/support/hit-point raycast planner and collision solver
+Phase6D	class	autismclient/util/W	autismclient/util/FakeGamemodeManager	autismclient/util/W	applied	Client-side fake gamemode override controller for FakeGmCommand and FakeGamemodeAction
+Phase6D	class	autismclient/util/X	autismclient/util/CellRetryLimiter	autismclient/util/X	applied	Per-cell retry counter evicting cells after limit identical-state retries within 20 ticks
+Phase6D	class	autismclient/util/Y	autismclient/util/FarmCropCatalog	autismclient/util/Y	applied	Crop block classification sets and crop-to-seed item mapping for AutoFarm
+Phase6D	class	autismclient/util/Z	autismclient/util/FarmlandTrampleGuard	autismclient/util/Z	applied	Checks whether a jump/fall path between two cells would trample nearby farmland
+Phase6D	class	autismclient/util/aA	autismclient/util/JoinMacroController	autismclient/util/aA	applied	Manages join-macro scheduling, custom-menu join hooks, and {secret.*} substitution
+Phase6D	class	autismclient/util/aE	autismclient/util/LanSyncManager	autismclient/util/aE	applied	Singleton TCP LAN-Sync host/client manager syncing packet queues, macros, and presets
+Phase6D	class	autismclient/util/aK	autismclient/util/RecipeCatalogLoader	autismclient/util/aK	applied	Package-private recipe loader reading crafting/smelting recipes from server or client JAR
+Phase6D	class	autismclient/util/aL	autismclient/util/JoinSecretKeyHelper	autismclient/util/aL	applied	Normalizes secret.<name> keys and generates SecureRandom alphanumeric passwords
+Phase6D	class	autismclient/util/aN	autismclient/util/MacroLibraryManager	autismclient/util/aN	applied	Singleton macro library manager persisting autism_macros.nbt with .tmp/.bak safety
+Phase6D	class	autismclient/util/aa	autismclient/util/FarmActionScheduler	autismclient/util/aa	applied	2-step lookahead cost-minimizing action selector for AutoFarmModule
+Phase6D	class	autismclient/util/ab	autismclient/util/BlockBreakGraceCalc	autismclient/util/ab	applied	Computes latency-scaled block-break/replant grace window in ticks
+Phase6D	class	autismclient/util/ac	autismclient/util/BoundedPositionCache	autismclient/util/ac	applied	Bounded FIFO LinkedHashMap<Long, T> position cache evicting oldest entries at capacity
+Phase6D	class	autismclient/util/ae	autismclient/util/RealGamemodeSender	autismclient/util/ae	applied	Sends real ServerboundChangeGameModePacket and clears active fake gamemode override
+Phase6D	class	autismclient/util/av	autismclient/util/ContainerClickExecutor	autismclient/util/av	applied	Thread-safe client-thread container slot click executor invoking handleContainerInput
+Phase6D	class	autismclient/util/aw	autismclient/util/InventorySlotHelper	autismclient/util/aw	applied	Core hotbar selection and container/inventory slot index mapping and swap helper
+Phase6D	class	autismclient/util/ay	autismclient/util/ItemSnbtCodec	autismclient/util/ay	applied	Encodes/decodes ItemStack to /give commands and SNBT via ItemStack.CODEC and NbtOps
+Phase6D	class	autismclient/util/az	autismclient/util/ItemNbtInspector	autismclient/util/az	applied	Formats ItemStack and all DataComponents into structured nice/raw inspector sections
+Phase6D	class	autismclient/util/bA	autismclient/util/GridWalkNavigator	autismclient/util/bA	applied	A* grid pathfinder and keyboard-driven walk navigator for AutoFarm and Freecam
+Phase6D	class	autismclient/util/bN	autismclient/util/OnlinePlayerCollector	autismclient/util/bN	applied	Collects online player names from tab list and optional CommandTabNameProber probes
+Phase6D	class	autismclient/util/bO	autismclient/util/TabPlayerListParser	autismclient/util/bO	applied	Extracts clean usernames, display names, and team prefixes from PlayerInfo tab entries
+Phase6D	class	autismclient/util/bl	autismclient/util/PacedTpJobManager	autismclient/util/bl	applied	Executes and tracks PacedTpAction jobs with 300s timeout via AsyncJobRegistry
+Phase6D	class	autismclient/util/bz	autismclient/util/PathfindingGeometryHelper	autismclient/util/bz	applied	Package-private Manhattan heuristic, step-height check, and 2D slab AABB intersection helper
+Phase6D	class	autismclient/util/cY	autismclient/util/MacroFolderLayout	autismclient/util/cY	applied	Manages macro library folders, collapsed state, and display ordering in autism_macros.nbt
+Phase6D	class	autismclient/util/cZ	autismclient/util/MacroNameNormalizer	autismclient/util/cZ	applied	Case-insensitive macro/folder name normalizer and rename-equality helper
+Phase6D	class	autismclient/util/cc	autismclient/util/RegistryDisplayNameCache	autismclient/util/cc	applied	Caches localized display names for Minecraft item, block, and entity registry IDs
+Phase6D	class	autismclient/util/cd	autismclient/util/RemoteViewController	autismclient/util/cd	applied	Remote View (/rv) camera controller switching local camera to another loaded player
+Phase6D	class	autismclient/util/ck	autismclient/util/AutismSessionState	autismclient/util/ck	applied	Singleton central AUTISM runtime session state (packet queue, filters, stored GUI, ticks)
+Phase6D	class	autismclient/util/cm	autismclient/util/SignEditScreenAccessor	autismclient/util/cm	applied	Duck interface on sign edit screens exposing sign pos, front-text flag, and lines
+Phase6D	class	autismclient/util/dc	autismclient/util/AsyncJobRegistry	autismclient/util/dc	applied	Generic job-lifecycle state machine (PENDING, terminal retention, timeout expiration)
+Phase6D	class	autismclient/util/di	autismclient/util/RegistryIdValidator	autismclient/util/di	applied	Validates and matches Minecraft block/item/entity Identifier strings against registries

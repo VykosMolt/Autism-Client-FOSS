@@ -123,7 +123,7 @@ final class w {
                            }
 
                            this.init_J = ca.load_J_I(mc.player.inventoryMenu.containerId);
-                           int menuSlot = autismclient.util.aw.load_I(mc, source);
+                           int menuSlot = autismclient.util.InventorySlotHelper.load_I(mc, source);
                            this.init_Z = menuSlot >= 0;
                            if (this.init_Z) {
                               PkgCls_b.init(mc.player.inventoryMenu.containerId, menuSlot, 40, ContainerInput.SWAP);
@@ -235,11 +235,11 @@ final class w {
                      this.init_ItemStack = mc.player.getInventory().getItem(source).copy();
                      this.init_I = source < 9 ? source : af.load();
                      if (source < 9) {
-                        autismclient.util.aw.init_V(mc, this.init_I);
+                        autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
                         return this.init(AiOperation.Status.SUCCEEDED, "Holding " + w.load());
                      }
 
-                     int menuSlot = autismclient.util.aw.load_I(mc, source);
+                     int menuSlot = autismclient.util.InventorySlotHelper.load_I(mc, source);
                      if (menuSlot < 0) {
                         return this.init(AiOperation.Status.FAILED, "Could not resolve the equipment's inventory slot");
                      }
@@ -256,7 +256,7 @@ final class w {
                      return this.init(AiOperation.Status.FAILED, "Server did not apply the expected hotbar swap; no repeat click issued");
                   }
 
-                  autismclient.util.aw.init_V(mc, this.init_I);
+                  autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
                   return this.init(AiOperation.Status.SUCCEEDED, "Holding " + w.load());
                } else {
                   return ++this.load_I > 40
@@ -473,7 +473,7 @@ final class w {
          }
 
          int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
-            return autismclient.util.aw.load_I(mc, candidate.init_I());
+            return autismclient.util.InventorySlotHelper.load_I(mc, candidate.init_I());
          }
 
          AiOperation.Result init(String message) {

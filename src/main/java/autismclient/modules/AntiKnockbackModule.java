@@ -4,7 +4,7 @@ import autismclient.api.module.BoolSetting;
 import autismclient.api.module.EnumSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
@@ -53,7 +53,7 @@ public final class AntiKnockbackModule extends Module {
    }
 
    private int init_I_10() {
-      return ck.init_ck().state_I();
+      return AutismSessionState.init_ck().state_I();
    }
 
    private boolean init_Z_17() {

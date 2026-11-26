@@ -49,9 +49,9 @@ public final class cA {
    );
    private static final List<String> read = List.of("log", "logs", "wood");
    private static final List<String> write = List.of("north", "south", "east", "west");
-   private static List<autismclient.util.J.Inner_EventBus> update;
+   private static List<autismclient.util.AutoCraftingEngine.Inner_EventBus> update;
    private static List<String> sync = List.of();
-   private static List<autismclient.util.J.Inner_StreamUtil> flush;
+   private static List<autismclient.util.AutoCraftingEngine.Inner_StreamUtil> flush;
    private static List<String> close = List.of();
    private static volatile List<String> open;
    private static volatile List<String> poll;
@@ -262,18 +262,18 @@ public final class cA {
 
    static synchronized List<String> init() {
       Minecraft mc = Minecraft.getInstance();
-      List<autismclient.util.J.Inner_EventBus> plans = autismclient.util.J.load_List(mc);
+      List<autismclient.util.AutoCraftingEngine.Inner_EventBus> plans = autismclient.util.AutoCraftingEngine.load_List(mc);
       if (plans == update) {
          return sync;
       }
 
       Set<String> ids = new TreeSet<>();
 
-      for (autismclient.util.J.Inner_EventBus plan : plans) {
+      for (autismclient.util.AutoCraftingEngine.Inner_EventBus plan : plans) {
          ids.add(init(BuiltInRegistries.ITEM.getKey(plan.init_Item())));
       }
 
-      for (autismclient.util.J.Inner_FileCache plan : autismclient.util.J.write(mc)) {
+      for (autismclient.util.AutoCraftingEngine.Inner_FileCache plan : autismclient.util.AutoCraftingEngine.write(mc)) {
          ids.add(init(BuiltInRegistries.ITEM.getKey(plan.init_Item())));
       }
 
@@ -283,14 +283,14 @@ public final class cA {
    }
 
    static synchronized List<String> load() {
-      List<autismclient.util.J.Inner_StreamUtil> plans = autismclient.util.J.read(Minecraft.getInstance());
+      List<autismclient.util.AutoCraftingEngine.Inner_StreamUtil> plans = autismclient.util.AutoCraftingEngine.read(Minecraft.getInstance());
       if (plans == flush) {
          return close;
       }
 
       Set<String> ids = new TreeSet<>();
 
-      for (autismclient.util.J.Inner_StreamUtil plan : plans) {
+      for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : plans) {
          ids.add(init(BuiltInRegistries.ITEM.getKey(plan.init_Item())));
       }
 

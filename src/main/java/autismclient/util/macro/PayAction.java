@@ -211,7 +211,7 @@ public class PayAction implements MacroAction {
          return true;
       }
 
-      autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
+      autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macroName);
       if (macro == null) {
          return true;
       }

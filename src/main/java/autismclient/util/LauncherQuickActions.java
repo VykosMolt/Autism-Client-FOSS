@@ -17,13 +17,13 @@ public final class LauncherQuickActions {
    }
 
    public static void init_V() {
-      boolean newValue = !ck.init_ck().read_Z();
+      boolean newValue = !AutismSessionState.init_ck().read_Z();
       autismclient.modules.ModuleRuntimeManager.init_PoolEntry().init_Z_Z(newValue);
       bi.init("Send Packets " + (newValue ? "on" : "off"), newValue ? -13248397 : -50373);
    }
 
    public static void load_V() {
-      boolean newValue = !ck.init_ck().write_Z();
+      boolean newValue = !AutismSessionState.init_ck().write_Z();
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       int sent = module.init_I_Z(newValue);
       module.init(newValue, sent);
@@ -69,7 +69,7 @@ public final class LauncherQuickActions {
       if (!autismclient.modules.aD.read_Z()) {
          autismclient.modules.ModuleRuntimeManager.init_PoolEntry().push(false);
          if (init_Minecraft.getConnection() != null) {
-            ck.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection());
+            AutismSessionState.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection());
             init_Minecraft.getConnection().getConnection().disconnect(Component.literal("Disconnecting (Autism)"));
          }
       }
@@ -156,7 +156,7 @@ public final class LauncherQuickActions {
          if (init_Minecraft.gui.screen() instanceof AbstractContainerScreen<?> handledScreen) {
             Slot focused = ((AutismHandledScreenAccessor)handledScreen).getFocusedSlot();
             if (focused != null) {
-               slot = Integer.toString(aw.init_I(init_Minecraft, focused.index));
+               slot = Integer.toString(InventorySlotHelper.init_I(init_Minecraft, focused.index));
             }
          }
       }

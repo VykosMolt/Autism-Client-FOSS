@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -39,7 +39,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
          return "Wait Sound: Any" + GuiWaitAware.init_Str_aP(this);
       }
 
-      String first = cc.write(this.soundIds.get(0));
+      String first = RegistryDisplayNameCache.write(this.soundIds.get(0));
       String s = this.soundIds.size() == 1 ? first : first + " (+" + (this.soundIds.size() - 1) + ")";
       return "Wait Sound: " + s + GuiWaitAware.init_Str_aP(this);
    }

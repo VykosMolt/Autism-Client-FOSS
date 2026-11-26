@@ -7,10 +7,10 @@ public final class PlacementTickStamp {
    }
 
    public static void init_V() {
-      init = ck.init_ck().state_I();
+      init = AutismSessionState.init_ck().state_I();
    }
 
    public static boolean init_Z() {
-      return init == ck.init_ck().state_I();
+      return init == AutismSessionState.init_ck().state_I();
    }
 }

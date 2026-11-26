@@ -163,7 +163,7 @@ final class ci {
             final int timeoutSeconds = Math.max(10, Math.min(3600, ag.init_I_JsonObject(args, "timeoutSeconds", 600)));
             final String outputId = BuiltInRegistries.ITEM.getKey(resolved.output()).toString();
             final String statusTitle = "Smelting " + resolved.output().getDefaultInstance().getHoverName().getString();
-            final int cookTicksPerItem = autismclient.util.J.load(mc, resolved.output())
+            final int cookTicksPerItem = autismclient.util.AutoCraftingEngine.load(mc, resolved.output())
                .stream()
                .filter(p -> p.load_Str().equals(resolved.stationId()) && p.init_List().contains(resolved.input()))
                .mapToInt(p -> Math.max(1, p.load_I()))
@@ -800,13 +800,13 @@ final class ci {
    static ci.Inner_CachePool init(Minecraft mc, af.Inner_DataUtil outputTarget, String inputSpec, String fuelSpec, int items) {
       List<String> tried = new ArrayList<>();
 
-      record Inner_DataUtil(Item output, autismclient.util.J.Inner_StreamUtil plan, Item input, int stationTier) {
+      record Inner_DataUtil(Item output, autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan, Item input, int stationTier) {
       }
 
       List<Inner_DataUtil> viable = new ArrayList<>();
 
       for (Item output : outputTarget.items()) {
-         for (autismclient.util.J.Inner_StreamUtil plan : autismclient.util.J.load(mc, output)) {
+         for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
             tried.add(plan.init_Str());
             Item input = init(plan, inputSpec);
             if (input != null) {
@@ -862,13 +862,13 @@ final class ci {
    static boolean init(Minecraft mc, String output, String input) {
       Item wanted = load(output);
       Item source = load(input);
-      return autismclient.util.J.load(mc, wanted)
+      return autismclient.util.AutoCraftingEngine.load(mc, wanted)
          .stream()
          .filter(p -> p.init_List().contains(source))
          .anyMatch(p -> S.init_I_Str(p.load_Str()) > 0 || init_Z(mc, p.load_Str()));
    }
 
-   private static Item init(autismclient.util.J.Inner_StreamUtil plan, String inputSpec) {
+   private static Item init(autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan, String inputSpec) {
       if (!inputSpec.isBlank()) {
          af.Inner_DataUtil requested = af.load_af_DataUtil(inputSpec);
 
@@ -1029,7 +1029,7 @@ final class ci {
    static JsonArray init(Minecraft mc, Item output) {
       JsonArray out = new JsonArray();
 
-      for (autismclient.util.J.Inner_StreamUtil plan : autismclient.util.J.load(mc, output)) {
+      for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
          JsonArray inputs = new JsonArray();
 
          for (Item input : plan.init_List()) {

@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.ModuleRuntimeManager;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -29,7 +29,7 @@ public abstract class AutismArmorSlotMixin {
    private static boolean autism$armorAllowed() {
       ModuleRuntimeManager mod = ModuleRuntimeManager.init_PoolEntry();
       boolean modAllow = mod != null && mod.data();
-      boolean bypass = ck.init_ck().close_Z();
+      boolean bypass = AutismSessionState.init_ck().close_Z();
       return modAllow || bypass;
    }
 }

@@ -15,7 +15,7 @@ import autismclient.util.ScreenMacroStopWidget;
 import autismclient.util.MouseDeltaAccumulator;
 import autismclient.util.MouseMovementRouter;
 import autismclient.util.cf;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.OverlayScreenController;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -113,7 +113,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "handleAccumulatedMovement", at = @At("HEAD"))
    private void autism$clearQueuedMouseInputWhenUnavailable(CallbackInfo ci) {
-      MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, ck.init_ck().state_I());
+      MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, AutismSessionState.init_ck().state_I());
       if (!AutismLiteVariant.enabled() && this.minecraft.gui.screen() == null && (Math.abs(this.accumulatedDX) > 0.5 || Math.abs(this.accumulatedDY) > 0.5)) {
          cc ai = cc.load_cc();
          if (ai != null) {

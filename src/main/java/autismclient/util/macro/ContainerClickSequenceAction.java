@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -40,7 +40,7 @@ public class ContainerClickSequenceAction implements MacroAction {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
          int handlerSlot = this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.CURRENT && this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.PLAYER_INVENTORY
             ? visibleSlot
-            : autismclient.util.aw.load_I(mc, visibleSlot);
+            : autismclient.util.InventorySlotHelper.load_I(mc, visibleSlot);
          if (handlerSlot < 0) {
             return false;
          }
@@ -67,7 +67,7 @@ public class ContainerClickSequenceAction implements MacroAction {
             var10000 = mc.player.containerMenu.containerId;
             break;
          case SAVED_GUI:
-            AbstractContainerMenu saved = ck.init_ck().init_AbstractContainerM();
+            AbstractContainerMenu saved = AutismSessionState.init_ck().init_AbstractContainerM();
             var10000 = saved == null ? this.savedContainerId : saved.containerId;
             break;
          case PLAYER_INVENTORY:

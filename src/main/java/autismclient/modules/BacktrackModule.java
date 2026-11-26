@@ -10,7 +10,7 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.BacktrackPacketQueue;
 import autismclient.util.BacktrackPositionTracker;
 import autismclient.util.BacktrackTrailHistory;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import autismclient.util.ServerRotationTracker;
 import java.util.ArrayDeque;
 import java.util.IdentityHashMap;
@@ -239,7 +239,7 @@ public final class BacktrackModule extends Module {
          && !init_Minecraft.player.isUsingItem()
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && BlinkPacketManager.init_I() == 0;
    }
 

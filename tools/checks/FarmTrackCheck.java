@@ -2,7 +2,7 @@ package autismclient.util;
 
 public class FarmTrackCheck {
    public static void main(String[] args) {
-      ac<String> table = new ac<>(4096);
+      BoundedPositionCache<String> table = new BoundedPositionCache<>(4096);
       for (long i = 0; i < 4097; i++) {
          table.init(i, "cell" + i);
       }

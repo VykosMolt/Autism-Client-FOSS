@@ -6,7 +6,7 @@ import autismclient.modules.Module;
 import autismclient.modules.f;
 import autismclient.util.bi;
 import autismclient.util.cA;
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -356,7 +356,7 @@ public final class ConfigStore extends KeyHolder {
    }
 
    private void init(List<ConfigStore.Inner_StreamUtil> rows, String filter, String id, String label) {
-      String resolved = label != null && !label.isBlank() ? label : cc.update(id);
+      String resolved = label != null && !label.isBlank() ? label : RegistryDisplayNameCache.update(id);
       String searchable = (id + " " + resolved).toLowerCase(Locale.ROOT);
       if (filter.isEmpty() || searchable.contains(filter)) {
          rows.add(new ConfigStore.Inner_StreamUtil(id, resolved));

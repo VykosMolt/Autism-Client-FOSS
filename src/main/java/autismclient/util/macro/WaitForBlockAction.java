@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -38,7 +38,7 @@ public class WaitForBlockAction implements MacroAction {
       } else if (this.blockIds.isEmpty()) {
          blockDesc = "no blocks set";
       } else {
-         blockDesc = cc.load(this.blockIds.get(0));
+         blockDesc = RegistryDisplayNameCache.load(this.blockIds.get(0));
          if (this.blockIds.size() > 1) {
             blockDesc = blockDesc + " (+" + (this.blockIds.size() - 1) + ")";
          }

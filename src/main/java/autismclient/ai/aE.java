@@ -2,7 +2,7 @@ package autismclient.ai;
 
 import autismclient.ai.a.HashUtil;
 import autismclient.api.ai.AiOperation;
-import autismclient.util.ArrayUtil;
+import autismclient.util.BlockBreakSpeedHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -330,7 +330,7 @@ final class aE {
                      && this.load_Set_4()
                         .stream()
                         .anyMatch(
-                           output -> autismclient.util.J.load(mc, output)
+                           output -> autismclient.util.AutoCraftingEngine.load(mc, output)
                               .stream()
                               .anyMatch(
                                  p -> p.init_List().stream().mapToInt(i -> S.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
@@ -521,7 +521,7 @@ final class aE {
                            .filter(this::init_Z)
                            .max(
                               Comparator.comparingInt(
-                                 item -> autismclient.util.J.load(mc, item)
+                                 item -> autismclient.util.AutoCraftingEngine.load(mc, item)
                                     .stream()
                                     .flatMap(p -> p.init_List().stream())
                                     .mapToInt(i -> S.load(BuiltInRegistries.ITEM.getKey(i).toString()))
@@ -561,7 +561,7 @@ final class aE {
                                  nestedSmelt
                               );
                            } else {
-                              autismclient.util.J.Inner_StreamUtil cooking = autismclient.util.J.load(mc, outputx)
+                              autismclient.util.AutoCraftingEngine.Inner_StreamUtil cooking = autismclient.util.AutoCraftingEngine.load(mc, outputx)
                                  .stream()
                                  .filter(p -> p.init_List().stream().anyMatch(i -> S.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString()) > 0))
                                  .min(Comparator.comparingInt(p -> ci.init_Z(mc, p.load_Str()) ? 0 : (S.init_I_Str(p.load_Str()) > 0 ? 1 : 2)))
@@ -652,7 +652,7 @@ final class aE {
                               this.load_Str = "smelt " + outputId;
 
                               try {
-                                 int largestInput = autismclient.util.J.load(mc, outputx)
+                                 int largestInput = autismclient.util.AutoCraftingEngine.load(mc, outputx)
                                     .stream()
                                     .flatMap(p -> p.init_List().stream())
                                     .mapToInt(i -> S.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString()))
@@ -1122,7 +1122,7 @@ final class aE {
 
                   for (Item item : this.init_af_DataUtil.items()) {
                      if (!visiting.contains(BuiltInRegistries.ITEM.getKey(item).toString())) {
-                        boolean known = crafting ? !autismclient.util.J.init(mc, item).isEmpty() : !autismclient.util.J.load(mc, item).isEmpty();
+                        boolean known = crafting ? !autismclient.util.AutoCraftingEngine.init(mc, item).isEmpty() : !autismclient.util.AutoCraftingEngine.load(mc, item).isEmpty();
                         if (known) {
                            out.add(item);
                         }
@@ -1149,7 +1149,7 @@ final class aE {
                   String best = null;
                   int bestCount = -1;
 
-                  for (autismclient.util.J.Inner_StreamUtil plan : autismclient.util.J.load(mc, output)) {
+                  for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, output)) {
                      if (plan.init_List().stream().mapToInt(i -> S.init_I_Str(BuiltInRegistries.ITEM.getKey(i).toString())).sum()
                         >= goal - af.init_I(this.init_af_DataUtil)) {
                         return null;
@@ -1387,7 +1387,7 @@ final class aE {
          if (mc != null && mc.player != null) {
             for (int slot = 0; slot < 36; slot++) {
                ItemStack stack = mc.player.getInventory().getItem(slot);
-               if (stack.isCorrectToolForDrops(block.defaultBlockState()) && af.init(stack, 2) && ArrayUtil.init_Z(mc, stack)) {
+               if (stack.isCorrectToolForDrops(block.defaultBlockState()) && af.init(stack, 2) && BlockBreakSpeedHelper.init_Z(mc, stack)) {
                   return true;
                }
             }
@@ -1831,7 +1831,7 @@ final class aE {
             boolean craftable = !inner.init_List(itemId).isEmpty();
             boolean smeltable = BuiltInRegistries.ITEM
                .getOptional(Identifier.parse(itemId))
-               .map(item -> !autismclient.util.J.load(mc, item).isEmpty())
+               .map(item -> !autismclient.util.AutoCraftingEngine.load(mc, item).isEmpty())
                .orElse(false);
             return aE.init(itemId, mineable, craftable, smeltable);
          }

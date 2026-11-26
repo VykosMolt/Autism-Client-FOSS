@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -41,7 +41,7 @@ public class MineAction implements PacketOrderAware, MacroAction {
          return "Mine: (none)";
       }
 
-      String first = cc.load(this.targetBlocks.get(0));
+      String first = RegistryDisplayNameCache.load(this.targetBlocks.get(0));
       return this.targetBlocks.size() == 1 ? "Mine: " + first : "Mine: " + first + " (+" + (this.targetBlocks.size() - 1) + ")";
    }
 

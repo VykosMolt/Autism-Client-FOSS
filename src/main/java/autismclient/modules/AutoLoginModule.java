@@ -75,7 +75,7 @@ public final class AutoLoginModule extends Module {
          }
 
          try {
-            String shared = autismclient.util.aA.init_Map().get("password");
+            String shared = autismclient.util.JoinMacroController.init_Map().get("password");
             if (shared != null && !shared.isBlank()) {
                return shared;
             }
@@ -105,7 +105,7 @@ public final class AutoLoginModule extends Module {
          CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, submission);
          if (result != null && result.success()) {
             for (Packet<?> packet : result.packets()) {
-               if (!autismclient.util.aA.init(packet)) {
+               if (!autismclient.util.JoinMacroController.init(packet)) {
                   return false;
                }
             }
@@ -137,7 +137,7 @@ public final class AutoLoginModule extends Module {
 
       @Override
       public boolean read() {
-         return autismclient.util.aA.read_Z();
+         return autismclient.util.JoinMacroController.read_Z();
       }
 
       @Override

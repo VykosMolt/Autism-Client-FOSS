@@ -1,7 +1,7 @@
 package autismclient.modules;
 
 import autismclient.AutismClientAddon;
-import autismclient.util.bO;
+import autismclient.util.TabPlayerListParser;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.ArrayList;
@@ -184,7 +184,7 @@ public final class AntiBotTracker {
             return "impossible pitch " + pitch;
          } else {
             GameProfile profile = player.getGameProfile();
-            if (profile != null && bO.load_Z(profile.name())) {
+            if (profile != null && TabPlayerListParser.load_Z(profile.name())) {
                return ArmorFilterMatcher.init_Z_UUID(player.getUUID()) ? "NPC uuid (version 2)" : null;
             } else {
                return "invalid profile name '" + (profile == null ? "<null>" : profile.name()) + "'";

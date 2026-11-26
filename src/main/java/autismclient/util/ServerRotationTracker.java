@@ -39,12 +39,12 @@ public final class ServerRotationTracker {
             init_F = yaw;
          }
 
-         init(movement.getYRot(0.0F), movement.getXRot(0.0F), ck.init_ck().state_I(), position, movement.hasRotation());
+         init(movement.getYRot(0.0F), movement.getXRot(0.0F), AutismSessionState.init_ck().state_I(), position, movement.hasRotation());
       }
    }
 
    static void init_V(float yaw, float pitch) {
-      init_V_F(yaw, pitch, ck.init_ck().state_I());
+      init_V_F(yaw, pitch, AutismSessionState.init_ck().state_I());
    }
 
    static void init_V_F(float yaw, float pitch, int tick) {
@@ -109,7 +109,7 @@ public final class ServerRotationTracker {
          if (thirdPerson && !freecam && !hidden) {
             boolean silentOwner = minecraft.player != null && SilentMovementCoordinator.init_ce_DataUtil(minecraft.player) != null;
             if (silentOwner) {
-               ServerRotationTracker.Inner_DataUtil rotation = init_ch_DataUtil_ch_StreamUtil(init_ch_StreamUtil, partialTick, ck.init_ck().state_I());
+               ServerRotationTracker.Inner_DataUtil rotation = init_ch_DataUtil_ch_StreamUtil(init_ch_StreamUtil, partialTick, AutismSessionState.init_ck().state_I());
                if (rotation != null) {
                   init(livingState, rotation);
                   if (state instanceof AvatarRenderState avatarState) {

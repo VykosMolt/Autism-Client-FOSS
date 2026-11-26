@@ -35,7 +35,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
          && mc.level != null
          && this.blockPos != null
          && !mc.level.isOutsideBuildHeight(this.blockPos)
-         && autismclient.util.E.init_Z(mc, this.blockPos)) {
+         && autismclient.util.InteractionTargetRef.init_Z(mc, this.blockPos)) {
          BlockHitResult hit = init(mc, this.blockPos, this.manualDirection, this.direction);
          if (hit != null) {
             int originalSlot = mc.player.getInventory().getSelectedSlot();
@@ -56,7 +56,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
                }
 
                if (this.silentSwitch && mc.player.getInventory().getSelectedSlot() != originalSlot) {
-                  autismclient.util.aw.init_V(mc, originalSlot);
+                  autismclient.util.InventorySlotHelper.init_V(mc, originalSlot);
                }
             }
          }
@@ -81,7 +81,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
             BlockPos supportPos = targetPos.relative(face.getOpposite());
             if (!mc.level.isOutsideBuildHeight(supportPos)
                && !mc.level.getBlockState(supportPos).isAir()
-               && autismclient.util.E.init_Z(mc, supportPos)
+               && autismclient.util.InteractionTargetRef.init_Z(mc, supportPos)
                && mc.level.getBlockState(targetPos).isAir()) {
                Vec3 hitPos = Vec3.atCenterOf(supportPos).add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);
                return new BlockHitResult(hitPos, face, supportPos, false);
@@ -101,18 +101,18 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    private static void init(Minecraft mc, MacroItemTarget target) {
       if (target != null && (target.init_Z() || target.update())) {
          if (target.update()) {
-            autismclient.util.aw.init(mc, target, mc.player.getInventory().getSelectedSlot());
+            autismclient.util.InventorySlotHelper.init(mc, target, mc.player.getInventory().getSelectedSlot());
          } else {
             int visibleSlot = target.init_I;
             if (visibleSlot >= 0 && visibleSlot <= 8) {
-               autismclient.util.aw.init_V(mc, visibleSlot);
+               autismclient.util.InventorySlotHelper.init_V(mc, visibleSlot);
             } else {
-               int handlerSlot = autismclient.util.aw.read_I(mc, visibleSlot);
+               int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, visibleSlot);
                if (handlerSlot >= 0) {
                   int hotbarSlot = mc.player.getInventory().getSelectedSlot();
-                  int hotbarHandlerSlot = autismclient.util.aw.read_I(mc, hotbarSlot);
+                  int hotbarHandlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, hotbarSlot);
                   if (hotbarHandlerSlot >= 0) {
-                     autismclient.util.aw.write(mc, handlerSlot, hotbarHandlerSlot);
+                     autismclient.util.InventorySlotHelper.write(mc, handlerSlot, hotbarHandlerSlot);
                   }
                }
             }

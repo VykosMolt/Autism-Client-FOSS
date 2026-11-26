@@ -34,17 +34,17 @@ public class CloseGuiAction implements MacroAction {
                matchItem = false;
                if (mc.player.containerMenu != null) {
                   int effectiveSlot = target.init_Z() ? target.init_I : this.targetSlot;
-                  int resolvedTargetSlot = autismclient.util.aw.read_I(mc, effectiveSlot);
+                  int resolvedTargetSlot = autismclient.util.InventorySlotHelper.read_I(mc, effectiveSlot);
                   if (resolvedTargetSlot >= 0 && resolvedTargetSlot < mc.player.containerMenu.slots.size()) {
                      ItemStack stack = mc.player.containerMenu.slots.get(resolvedTargetSlot).getItem();
-                     int visibleSlot = autismclient.util.aw.init_I(mc, resolvedTargetSlot);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, resolvedTargetSlot);
                      if (!stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot)) {
                         matchItem = true;
                      }
                   } else if (effectiveSlot == -1) {
                      for (Slot slot : mc.player.containerMenu.slots) {
                         ItemStack stack = slot.getItem();
-                        int visibleSlot = autismclient.util.aw.init_I(mc, slot.index);
+                        int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
                         if (!stack.isEmpty() && target.init_Z_ItemStack_I(stack, visibleSlot)) {
                            matchItem = true;
                            break;

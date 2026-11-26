@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.api.ai.AiOperation;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -132,12 +132,12 @@ final class bN {
 
             boolean read(BlockPos cell) {
                ItemStack stack = mc.player.getInventory().getItem(mc.player.getInventory().getSelectedSlot());
-               U.Inner_StateCache request = new U.Inner_StateCache(
-                     cell, mc.player.getEyePosition(), Math.max(4.5, mc.player.blockInteractionRange()), U.init(stack, mc.player, InteractionHand.MAIN_HAND)
+               BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+                     cell, mc.player.getEyePosition(), Math.max(4.5, mc.player.blockInteractionRange()), BlockPlacementPlanner.init(stack, mc.player, InteractionHand.MAIN_HAND)
                   )
                   .init_U_StateCache_Z(mc.player.isShiftKeyDown())
-                  .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(6));
-               U.Inner_CachePool candidate = U.init_U_CachePool(request);
+                  .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(6));
+               BlockPlacementPlanner.Inner_CachePool candidate = BlockPlacementPlanner.init_U_CachePool(request);
                if (candidate == null) {
                   return false;
                }

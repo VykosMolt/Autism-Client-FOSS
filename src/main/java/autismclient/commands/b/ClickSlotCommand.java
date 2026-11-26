@@ -3,7 +3,7 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.aw;
+import autismclient.util.InventorySlotHelper;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -33,7 +33,7 @@ public final class ClickSlotCommand extends Command {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
          int visibleSlot = autismclient.commands.a.SlotArgumentType.init(context, "slot");
-         int handlerSlot = aw.load_I(mc, visibleSlot);
+         int handlerSlot = InventorySlotHelper.load_I(mc, visibleSlot);
          return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.a.SlotArgumentType.init_Str_I(visibleSlot));
       } else {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");

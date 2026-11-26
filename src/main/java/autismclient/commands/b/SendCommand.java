@@ -5,7 +5,7 @@ import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.PacketCommandBuilder;
 import autismclient.util.PacketTypeRegistry;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -72,7 +72,7 @@ public class SendCommand extends Command {
             AutismClientMessaging.sendPrefixed("§cNo network connection.");
             return 1;
          } else {
-            ck.init_ck().init_V_ClientPacketListen_Packet(conn, result.init_Packet());
+            AutismSessionState.init_ck().init_V_ClientPacketListen_Packet(conn, result.init_Packet());
             AutismClientMessaging.sendPrefixed("§aSent §f" + name + "§7 (" + result.load_Str() + ")");
             return 1;
          }

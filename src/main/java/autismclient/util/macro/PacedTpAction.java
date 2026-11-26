@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.bl;
+import autismclient.util.PacedTpJobManager;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -18,7 +18,7 @@ public final class PacedTpAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      bl.init(this, "macro");
+      PacedTpJobManager.init(this, "macro");
    }
 
    public String init() {

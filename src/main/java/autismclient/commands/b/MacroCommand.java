@@ -4,7 +4,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismMacro;
-import autismclient.util.aN;
+import autismclient.util.MacroLibraryManager;
 import autismclient.util.macro.MacroExecutor;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -34,7 +34,7 @@ public class MacroCommand extends Command {
                .executes(
                   ctx -> {
                      init();
-                     aN.init_aN().init_V();
+                     MacroLibraryManager.init_aN().init_V();
                      AutismClientMessaging.sendPrefixed("§eStopped all macros.");
                      return 1;
                   }
@@ -84,12 +84,12 @@ public class MacroCommand extends Command {
    }
 
    private static int init(String name, int times, int delayTicks) {
-      AutismMacro macro = aN.init_aN().init_aM_Str(name);
+      AutismMacro macro = MacroLibraryManager.init_aN().init_aM_Str(name);
       if (macro == null) {
          AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
          return 1;
       } else if (times <= 1 && delayTicks <= 0) {
-         aN.init_aN().load_V(name);
+         MacroLibraryManager.init_aN().load_V(name);
          return 1;
       } else {
             ClientPacketListener connection = Minecraft.getInstance().getConnection();
@@ -109,7 +109,7 @@ public class MacroCommand extends Command {
             Thread t = new Thread(() -> {
                try {
                   for (int i = 0; i < totalTimes && flag.get() && Minecraft.getInstance().getConnection() == connection; i++) {
-                     aN.init_aN().load_V(name);
+                     MacroLibraryManager.init_aN().load_V(name);
                      long start = System.nanoTime();
                      long waitTimeoutNanos = 86400000000000L;
 

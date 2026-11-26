@@ -20,14 +20,14 @@ import autismclient.modules.f;
 import autismclient.modules.DangerModule;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.D;
-import autismclient.util.E;
+import autismclient.util.ContainerCloseGuard;
+import autismclient.util.InteractionTargetRef;
 import autismclient.util.QueuedCombatAction;
 import autismclient.util.PacketCaptureState;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
 import autismclient.util.SprintStateTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.BedSleepDesyncHelper;
 import autismclient.util.CommandProbeIdAllocator;
@@ -340,7 +340,7 @@ public abstract class AutismClientConnectionMixin {
                      module.init_V_Packet(packet);
                   }
 
-                  ck shared = ck.init_ck();
+                  AutismSessionState shared = AutismSessionState.init_ck();
                   if (packet instanceof ServerboundUseItemOnPacket pibp
                      && shared.init_Z_BlockPos_Direction(pibp.hitResult().getBlockPos(), pibp.hitResult().getDirection())) {
                      ScaffoldModule.load_V_Packet(packet);
@@ -357,8 +357,8 @@ public abstract class AutismClientConnectionMixin {
                            return;
                         }
 
-                        if (!requiredClose && D.init_Z(closeForHold.getContainerId())) {
-                           D.init(closeForHold.getContainerId(), closeForHold);
+                        if (!requiredClose && ContainerCloseGuard.init_Z(closeForHold.getContainerId())) {
+                           ContainerCloseGuard.init(closeForHold.getContainerId(), closeForHold);
                            ci.cancel();
                            return;
                         }
@@ -372,7 +372,7 @@ public abstract class AutismClientConnectionMixin {
                      if (normalLoggerPath) {
                         if (packet instanceof ServerboundUseItemOnPacket pibp) {
                            shared.init_V_BlockPos(pibp.hitResult().getBlockPos());
-                           shared.init_V_E(E.init(pibp.hitResult(), pibp.hand()));
+                           shared.init_V_E(InteractionTargetRef.init(pibp.hitResult(), pibp.hand()));
                         }
 
                         if (packet instanceof ServerboundInteractPacket entityPacket) {
@@ -380,7 +380,7 @@ public abstract class AutismClientConnectionMixin {
                            if (targeted != null && targeted != Minecraft.getInstance().player) {
                               InteractionHand capturedHand = entityPacket.hand();
                               Vec3 capturedHitPos = entityPacket.location();
-                              shared.init_V_E(capturedHitPos != null ? E.init(targeted, capturedHand, capturedHitPos) : E.init(targeted, capturedHand));
+                              shared.init_V_E(capturedHitPos != null ? InteractionTargetRef.init(targeted, capturedHand, capturedHitPos) : InteractionTargetRef.init(targeted, capturedHand));
                            }
                         }
 
@@ -469,9 +469,9 @@ public abstract class AutismClientConnectionMixin {
                                           }
 
                                           ModuleRuntimeManager captureModule = ModuleRuntimeManager.init_PoolEntry();
-                                          ck.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
-                                             ? ck.Inner_BufferHelper.EXACT
-                                             : ck.Inner_BufferHelper.REGENERATE;
+                                          AutismSessionState.Inner_BufferHelper captureMode = captureModule != null && captureModule.next_Z()
+                                             ? AutismSessionState.Inner_BufferHelper.EXACT
+                                             : AutismSessionState.Inner_BufferHelper.REGENERATE;
                                           shared.init_V_Packet_ck_BufferHelper(packet, captureMode);
                                           ci.cancel();
                                        }
@@ -513,11 +513,11 @@ public abstract class AutismClientConnectionMixin {
    @Unique
    private void autism$trackSentMessage(Packet<?> packet) {
       if (packet instanceof ServerboundChatPacket chat) {
-         ck.init_ck().read_V_Str(chat.message());
+         AutismSessionState.init_ck().read_V_Str(chat.message());
       } else if (packet instanceof ServerboundChatCommandPacket command) {
-         ck.init_ck().read_V_Str("/" + command.command());
+         AutismSessionState.init_ck().read_V_Str("/" + command.command());
       } else if (packet instanceof ServerboundChatCommandSignedPacket signed) {
-         ck.init_ck().read_V_Str("/" + signed.command());
+         AutismSessionState.init_ck().read_V_Str("/" + signed.command());
       }
    }
 
@@ -582,13 +582,13 @@ public abstract class AutismClientConnectionMixin {
                      ci.cancel();
                   } else {
                      if (packet instanceof ClientboundOpenScreenPacket openScreenPacket) {
-                        D.load(openScreenPacket.getContainerId());
+                        ContainerCloseGuard.load(openScreenPacket.getContainerId());
                      }
 
                      if (module.load(packet, payloadLoggedEarly)) {
                         ci.cancel();
                      } else {
-                        ck shared = ck.init_ck();
+                        AutismSessionState shared = AutismSessionState.init_ck();
                         autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "S2C");
                         if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                            ci.cancel();
@@ -680,7 +680,7 @@ public abstract class AutismClientConnectionMixin {
             }
 
             if (!(packet instanceof ServerboundCustomPayloadPacket) && !aD.read_Z()) {
-               ck shared = ck.init_ck();
+               AutismSessionState shared = AutismSessionState.init_ck();
                if (packet instanceof ServerboundContainerClosePacket closeForHold) {
                   boolean requiredClose = !AutismLiteVariant.enabled() && aq.init(closeForHold);
                   if (!requiredClose && shared.queue_Z()) {
@@ -688,8 +688,8 @@ public abstract class AutismClientConnectionMixin {
                      return;
                   }
 
-                  if (!requiredClose && D.init_Z(closeForHold.getContainerId())) {
-                     D.init(closeForHold.getContainerId(), closeForHold);
+                  if (!requiredClose && ContainerCloseGuard.init_Z(closeForHold.getContainerId())) {
+                     ContainerCloseGuard.init(closeForHold.getContainerId(), closeForHold);
                      ci.cancel();
                      return;
                   }
@@ -722,11 +722,11 @@ public abstract class AutismClientConnectionMixin {
    @Unique
    private void autism$clearRuntimeConnectionStateOnDisconnect(Packet<?> packet) {
       if (autism$isDisconnectPacket(packet)) {
-         D.init_V();
+         ContainerCloseGuard.init_V();
          autismclient.util.macro.PacketGateManager.load_V();
          PingSpoofScheduler.write();
          BlinkPacketManager.auditDisconnect();
-         ck s = ck.init_ck();
+         AutismSessionState s = AutismSessionState.init_ck();
          s.init_V_Set_Z(Collections.emptySet(), false);
          s.sync(false);
          s.update(false);
@@ -778,7 +778,7 @@ public abstract class AutismClientConnectionMixin {
    }
 
    @Unique
-   private boolean autism$shouldKeepXCarryOpen(ck shared, ServerboundContainerClosePacket packet) {
+   private boolean autism$shouldKeepXCarryOpen(AutismSessionState shared, ServerboundContainerClosePacket packet) {
       Minecraft client = Minecraft.getInstance();
       if (client != null && client.player != null) {
          ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();

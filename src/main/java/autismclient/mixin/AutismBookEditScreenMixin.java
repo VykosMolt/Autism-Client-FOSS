@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.ScreenOverlayHost;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.DesyncableScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -81,7 +81,7 @@ public abstract class AutismBookEditScreenMixin extends Screen implements Desync
    @Override
    public void autism$closeWithPacket(boolean notify) {
       if (MC.getConnection() != null) {
-         ck.init_ck().data(true);
+         AutismSessionState.init_ck().data(true);
          this.autism$invokeSaveChanges();
       }
 
@@ -113,7 +113,7 @@ public abstract class AutismBookEditScreenMixin extends Screen implements Desync
             AutismClientMessaging.sendPrefixed("Failed to desync: no network.");
          }
       } else {
-         ck.init_ck().data(true);
+         AutismSessionState.init_ck().data(true);
          this.autism$invokeSaveChanges();
          if (notify) {
             AutismClientMessaging.sendPrefixed("Book update packet sent; GUI intentionally stays open.");

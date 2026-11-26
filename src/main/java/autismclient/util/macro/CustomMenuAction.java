@@ -45,7 +45,7 @@ public final class CustomMenuAction implements MacroAction {
             LockSupport.parkNanos(20000000L);
          } else {
             CustomMenuActionPlanner.Inner_DataUtil prepared = CustomMenuActionPlanner.init(this, snapshot, value -> {
-               String withSecrets = autismclient.util.aA.init_Str(value);
+               String withSecrets = autismclient.util.JoinMacroController.init_Str(value);
                if (withSecrets == null) {
                   throw new IllegalStateException("Missing form value");
                } else {
@@ -76,7 +76,7 @@ public final class CustomMenuAction implements MacroAction {
             }
 
             for (Packet<?> packet : result.packets()) {
-               if (!autismclient.util.aA.init(packet)) {
+               if (!autismclient.util.JoinMacroController.init(packet)) {
                   this.init("Connection closed before custom-menu submission");
                   return;
                }

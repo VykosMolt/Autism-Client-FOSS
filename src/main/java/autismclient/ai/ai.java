@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.util.AutismConfig;
-import autismclient.util.cZ;
+import autismclient.util.MacroNameNormalizer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -104,7 +104,7 @@ public final class ai {
    }
 
    public static JsonObject init(JsonObject args) {
-      autismclient.util.aE lan = autismclient.util.aE.init_aE();
+      autismclient.util.LanSyncManager lan = autismclient.util.LanSyncManager.init_aE();
       JsonObject out = new JsonObject();
       out.addProperty("running", lan.init_Z());
       out.addProperty("inSession", lan.write_Z());
@@ -122,8 +122,8 @@ public final class ai {
       String self = lan.load_Str();
       JsonArray clients = new JsonArray();
 
-      for (Entry<String, autismclient.util.aE.Inner_DataUtil> entry : lan.init_Map().entrySet()) {
-         autismclient.util.aE.Inner_DataUtil info = entry.getValue();
+      for (Entry<String, autismclient.util.LanSyncManager.Inner_DataUtil> entry : lan.init_Map().entrySet()) {
+         autismclient.util.LanSyncManager.Inner_DataUtil info = entry.getValue();
          clients.add(
             ag.init_JsonObject_ObjArr(
                "name",
@@ -164,7 +164,7 @@ public final class ai {
    public static JsonObject load(JsonObject args) {
       String action = ag.init_Str_JsonObject(args, "action", "");
       init(action, args);
-      autismclient.util.aE lan = autismclient.util.aE.init_aE();
+      autismclient.util.LanSyncManager lan = autismclient.util.LanSyncManager.init_aE();
       switch (action) {
          case "start":
             if (autismclient.modules.aD.read_Z()) {
@@ -229,7 +229,7 @@ public final class ai {
          case "executeMacroSynchronized":
             load(lan);
             String macro = init(args, "macro");
-            if (autismclient.util.aN.init_aN().init_aM_Str(macro) == null) {
+            if (autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macro) == null) {
                throw new IllegalArgumentException("Unknown macro '" + macro + "'; inspect client:macros for saved names");
             }
 
@@ -259,7 +259,7 @@ public final class ai {
             }
 
             String name = init(args, "name");
-            if (autismclient.util.aN.init_aN().init_aM_Str(name) == null) {
+            if (autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(name) == null) {
                throw new IllegalArgumentException("Unknown macro '" + name + "'; inspect client:macros for saved names");
             }
 
@@ -299,7 +299,7 @@ public final class ai {
             lan.init_V_Str_I(init(args, "peer"), Math.max(0, ag.init_I_JsonObject(args, "offsetMs", 0)));
             break;
          case "setExecutionMethod":
-            lan.init_V_aE_StreamUtil(autismclient.util.aE.Inner_StreamUtil.valueOf(init(args, "method").toUpperCase(Locale.ROOT)));
+            lan.init_V_aE_StreamUtil(autismclient.util.LanSyncManager.Inner_StreamUtil.valueOf(init(args, "method").toUpperCase(Locale.ROOT)));
             break;
          default:
             throw new IllegalArgumentException("Unknown LAN action '" + action + "'");
@@ -317,21 +317,21 @@ public final class ai {
       config.save();
    }
 
-   private static void init(autismclient.util.aE lan) {
+   private static void init(autismclient.util.LanSyncManager lan) {
       if (!lan.init_Z()) {
          throw new IllegalArgumentException("LAN Sync is not running; use action start first");
       }
    }
 
-   private static void load(autismclient.util.aE lan) {
+   private static void load(autismclient.util.LanSyncManager lan) {
       if (!lan.write_Z()) {
          throw new IllegalArgumentException("Not in a LAN Sync session; createSession or joinSession first");
       }
 
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null && mc.getConnection() != null) {
-         autismclient.util.aE.Inner_JsonUtil state = lan.init_aE_JsonUtil();
-         if (state != autismclient.util.aE.Inner_JsonUtil.IDLE && state != autismclient.util.aE.Inner_JsonUtil.DONE) {
+         autismclient.util.LanSyncManager.Inner_JsonUtil state = lan.init_aE_JsonUtil();
+         if (state != autismclient.util.LanSyncManager.Inner_JsonUtil.IDLE && state != autismclient.util.LanSyncManager.Inner_JsonUtil.DONE) {
             throw new IllegalStateException("LAN Sync is busy with another synchronized action (" + state.name() + ")");
          }
       } else {
@@ -339,8 +339,8 @@ public final class ai {
       }
    }
 
-   private static void init(autismclient.util.aE lan, Map<String, String> assignments) {
-      Map<String, autismclient.util.aE.Inner_DataUtil> clients = lan.init_Map();
+   private static void init(autismclient.util.LanSyncManager lan, Map<String, String> assignments) {
+      Map<String, autismclient.util.LanSyncManager.Inner_DataUtil> clients = lan.init_Map();
       StringBuilder problems = new StringBuilder();
 
       for (Entry<String, String> entry : assignments.entrySet()) {
@@ -348,7 +348,7 @@ public final class ai {
          String macro = entry.getValue();
          if (!clients.containsKey(peer)) {
             problems.append(problems.length() == 0 ? "" : "; ").append("unknown peer '").append(peer).append("'");
-         } else if (autismclient.util.aN.init_aN().init_aM_Str(macro) == null && !init(lan, peer, macro)) {
+         } else if (autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macro) == null && !init(lan, peer, macro)) {
             problems.append(problems.length() == 0 ? "" : "; ")
                .append("macro '")
                .append(macro)
@@ -363,11 +363,11 @@ public final class ai {
       }
    }
 
-   private static boolean init(autismclient.util.aE lan, String peer, String macro) {
-      String key = cZ.init(macro);
+   private static boolean init(autismclient.util.LanSyncManager lan, String peer, String macro) {
+      String key = MacroNameNormalizer.init(macro);
 
       for (String remote : lan.load_List(peer)) {
-         if (cZ.init(remote).equals(key)) {
+         if (MacroNameNormalizer.init(remote).equals(key)) {
             return true;
          }
       }

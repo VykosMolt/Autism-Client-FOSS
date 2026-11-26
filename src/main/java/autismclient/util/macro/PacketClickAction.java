@@ -2,7 +2,7 @@ package autismclient.util.macro;
 
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.ContainerClickSnapshot;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.nbt.CompoundTag;
@@ -41,14 +41,14 @@ public class PacketClickAction implements MacroAction {
 
    private void load() {
       if (this.target != null && !this.init) {
-         autismclient.util.D.init_V(this.target.init_I());
+         autismclient.util.ContainerCloseGuard.init_V(this.target.init_I());
          this.init = true;
       }
    }
 
    private void load(ClientPacketListener conn) {
       if (this.init && this.target != null) {
-         autismclient.util.D.init(this.target.init_I(), conn);
+         autismclient.util.ContainerCloseGuard.init(this.target.init_I(), conn);
          this.init = false;
       } else {
          this.init = false;
@@ -57,7 +57,7 @@ public class PacketClickAction implements MacroAction {
 
    private void read() {
       if (this.init && this.target != null) {
-         autismclient.util.D.init(this.target.init_I(), (ClientPacketListener)null);
+         autismclient.util.ContainerCloseGuard.init(this.target.init_I(), (ClientPacketListener)null);
          this.init = false;
       } else {
          this.init = false;
@@ -78,9 +78,9 @@ public class PacketClickAction implements MacroAction {
             for (int i = 0; i < count; i++) {
                ServerboundContainerClickPacket packet = effectiveTarget.init_ServerboundContain();
                if (this.queue) {
-                  ck.init_ck().load_V_Packet(packet);
+                  AutismSessionState.init_ck().load_V_Packet(packet);
                } else {
-                  ck.init_ck().init_V_ClientPacketListen_Packet(mc.getConnection(), packet);
+                  AutismSessionState.init_ck().init_V_ClientPacketListen_Packet(mc.getConnection(), packet);
                }
             }
 

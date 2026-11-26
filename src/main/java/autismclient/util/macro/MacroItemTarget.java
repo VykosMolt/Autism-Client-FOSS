@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
@@ -140,10 +140,10 @@ public final class MacroItemTarget {
             return this.close;
          }
 
-         String registryLabel = cc.init(this.flush);
-         return !cc.init(this.close, this.flush) && !this.close.equalsIgnoreCase(registryLabel) ? this.close : registryLabel;
+         String registryLabel = RegistryDisplayNameCache.init(this.flush);
+         return !RegistryDisplayNameCache.init(this.close, this.flush) && !this.close.equalsIgnoreCase(registryLabel) ? this.close : registryLabel;
       } else {
-         return this.load_Z() ? cc.init(this.flush) : "";
+         return this.load_Z() ? RegistryDisplayNameCache.init(this.flush) : "";
       }
    }
 

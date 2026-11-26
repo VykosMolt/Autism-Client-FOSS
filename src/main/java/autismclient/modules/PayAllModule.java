@@ -5,7 +5,7 @@ import autismclient.api.module.IntSetting;
 import autismclient.api.module.StringListSetting;
 import autismclient.api.module.StringSetting;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bN;
+import autismclient.util.OnlinePlayerCollector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -63,7 +63,7 @@ public final class PayAllModule extends Module {
                   this.init("§7Pay All: scanning players...");
                }
 
-               targets.addAll(bN.init(MC, this.bool("probe"), () -> this.init_Z(generation)));
+               targets.addAll(OnlinePlayerCollector.init(MC, this.bool("probe"), () -> this.init_Z(generation)));
                if (targets.isEmpty()) {
                   this.init("§cPay All: no players listed or visible.");
                   return;

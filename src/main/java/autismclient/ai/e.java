@@ -91,7 +91,7 @@ final class e {
                int init_I;
                int load_I;
                cn init_cn;
-               CompletableFuture<autismclient.util.J.Inner_CachePool> init_CompletableFuture;
+               CompletableFuture<autismclient.util.AutoCraftingEngine.Inner_CachePool> init_CompletableFuture;
                volatile Thread init_Thread;
                AiOperation init_AiOperation;
                AiOperation load_AiOperation;
@@ -182,7 +182,7 @@ final class e {
                               return this.init(this.init_Str);
                            }
 
-                           autismclient.util.J.Inner_CachePool result = this.init_J_CachePool();
+                           autismclient.util.AutoCraftingEngine.Inner_CachePool result = this.init_J_CachePool();
                            if (result == null) {
                               return this.init(AiOperation.Status.UNCERTAIN, "Craft worker result is unknown; reobserve inventory before retrying");
                            }
@@ -221,7 +221,7 @@ final class e {
                               return this.init(AiOperation.Status.UNCERTAIN, result.init_Str);
                            }
 
-                           if (result.init_J_CachePool_DataUt == autismclient.util.J.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL) {
+                           if (result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL) {
                               AiOperation.Result rejection = AiOperation.Result.failed(
                                  A.put,
                                  result.init_Str,
@@ -372,7 +372,7 @@ final class e {
                                  + "/"
                                  + this.init_g_CachePool.steps().size()
                                  + ")";
-                              CompletableFuture<autismclient.util.J.Inner_CachePool> future = new CompletableFuture<>();
+                              CompletableFuture<autismclient.util.AutoCraftingEngine.Inner_CachePool> future = new CompletableFuture<>();
                               this.init_CompletableFuture = future;
                               String recipeKey = step.recipe().key();
                               int produced = step.produced();
@@ -382,11 +382,11 @@ final class e {
 
                                  try {
                                     if (this.init_Z) {
-                                       future.complete(autismclient.util.J.Inner_CachePool.init("Craft cancelled"));
+                                       future.complete(autismclient.util.AutoCraftingEngine.Inner_CachePool.init("Craft cancelled"));
                                        return;
                                     }
 
-                                    future.complete(autismclient.util.J.init(mc, recipeKey, -1, produced, ClassCache::init_V_Runnable));
+                                    future.complete(autismclient.util.AutoCraftingEngine.init(mc, recipeKey, -1, produced, ClassCache::init_V_Runnable));
                                  } catch (Throwable t) {
                                     future.completeExceptionally(t);
                                     return;
@@ -481,7 +481,7 @@ final class e {
                   }
                }
 
-               autismclient.util.J.Inner_CachePool init_J_CachePool() {
+               autismclient.util.AutoCraftingEngine.Inner_CachePool init_J_CachePool() {
                   try {
                      return this.init_CompletableFuture.join();
                   } catch (RuntimeException e) {
@@ -637,7 +637,7 @@ final class e {
                         worker.interrupt();
                      }
 
-                     CompletableFuture<autismclient.util.J.Inner_CachePool> pending = this.init_CompletableFuture;
+                     CompletableFuture<autismclient.util.AutoCraftingEngine.Inner_CachePool> pending = this.init_CompletableFuture;
                      this.init_CompletableFuture = null;
                      if (pending != null && !pending.isDone()) {
                         pending.cancel(true);
@@ -925,10 +925,10 @@ final class e {
       Minecraft mc = Minecraft.getInstance();
       final Map<String, List<g.Inner_BufferHelper>> byOutput = new HashMap<>();
 
-      for (autismclient.util.J.Inner_EventBus plan : autismclient.util.J.load_List(mc)) {
+      for (autismclient.util.AutoCraftingEngine.Inner_EventBus plan : autismclient.util.AutoCraftingEngine.load_List(mc)) {
          List<List<String>> inputs = new ArrayList<>(plan.init_List().size());
 
-         for (autismclient.util.J.Inner_UiHelper ingredient : plan.init_List()) {
+         for (autismclient.util.AutoCraftingEngine.Inner_UiHelper ingredient : plan.init_List()) {
             List<String> accepts = new ArrayList<>(ingredient.init().size());
 
             for (Item item : ingredient.init()) {
@@ -943,7 +943,7 @@ final class e {
             .add(new g.Inner_BufferHelper(plan.init_Str(), outputId, plan.init_I(), plan.init_Z(), inputs));
       }
 
-      for (autismclient.util.J.Inner_FileCache plan : autismclient.util.J.write(mc)) {
+      for (autismclient.util.AutoCraftingEngine.Inner_FileCache plan : autismclient.util.AutoCraftingEngine.write(mc)) {
          List<String> accepts = new ArrayList<>(plan.init_List().size());
 
          for (Item item : plan.init_List()) {
@@ -1177,14 +1177,14 @@ final class e {
 
       Minecraft mc = Minecraft.getInstance();
 
-      for (autismclient.util.J.Inner_TaskQueue option : autismclient.util.J.init_List(mc)) {
+      for (autismclient.util.AutoCraftingEngine.Inner_TaskQueue option : autismclient.util.AutoCraftingEngine.init_List(mc)) {
          if (option.read_Z && target.items().contains(option.init_ItemStack.getItem())) {
             return option.init_ItemStack.getItem();
          }
       }
 
       for (Item item : target.items()) {
-         if (!autismclient.util.J.init(mc, item).isEmpty()) {
+         if (!autismclient.util.AutoCraftingEngine.init(mc, item).isEmpty()) {
             return item;
          }
       }

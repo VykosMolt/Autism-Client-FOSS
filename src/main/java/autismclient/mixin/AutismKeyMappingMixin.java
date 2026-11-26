@@ -9,7 +9,7 @@ import autismclient.modules.AutoArmorModule;
 import autismclient.modules.FreecamController;
 import autismclient.modules.al;
 import autismclient.util.KeyMappingControl;
-import autismclient.util.bA;
+import autismclient.util.GridWalkNavigator;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.platform.InputConstants.Key;
 import com.mojang.blaze3d.platform.InputConstants.Type;
@@ -132,7 +132,7 @@ public abstract class AutismKeyMappingMixin implements KeyMappingControl {
          mc.options.keyShift.setDown(true);
       }
 
-      bA.read();
+      GridWalkNavigator.read();
    }
 
    @Unique

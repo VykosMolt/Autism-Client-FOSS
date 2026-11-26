@@ -9,11 +9,11 @@ import autismclient.gui.f.b.l;
 import autismclient.modules.Module;
 import autismclient.modules.ScaffoldModule;
 import autismclient.modules.StorageEspCatalog;
-import autismclient.util.M;
-import autismclient.util.Y;
+import autismclient.util.DisplayItemStackFactory;
+import autismclient.util.FarmCropCatalog;
 import autismclient.util.cA;
 import autismclient.util.ThemePaletteManager;
-import autismclient.util.di;
+import autismclient.util.RegistryIdValidator;
 import autismclient.util.PipeDelimitedListUtil;
 import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
@@ -424,9 +424,9 @@ public class NodeWalker extends KeyHolder {
       List<String> tokens = PipeDelimitedListUtil.init(this.init_Module.value(this.init_Setting.id()));
       LinkedHashSet<String> valid = this.init_LinkedHashSet_List(tokens);
       List<String> invalid = this.init_List_List_2(tokens);
-      String normalized = di.init(id);
+      String normalized = RegistryIdValidator.init(id);
       valid.remove(normalized);
-      invalid.removeIf(token -> token.equals(id) || di.init(token).equals(normalized));
+      invalid.removeIf(token -> token.equals(id) || RegistryIdValidator.init(token).equals(normalized));
       this.init_V_Set_List(valid, invalid);
       this.read_V_10();
    }
@@ -451,8 +451,8 @@ public class NodeWalker extends KeyHolder {
       LinkedHashSet<String> out = new LinkedHashSet<>();
 
       for (String token : tokens) {
-         String normalized = di.init(token);
-         if (di.init(this.init_Setting.kind(), normalized) && (!this.init_Z_8() || this.init_Map.containsKey(normalized))) {
+         String normalized = RegistryIdValidator.init(token);
+         if (RegistryIdValidator.init(this.init_Setting.kind(), normalized) && (!this.init_Z_8() || this.init_Map.containsKey(normalized))) {
             out.add(normalized);
          }
       }
@@ -462,14 +462,14 @@ public class NodeWalker extends KeyHolder {
 
    private List<String> init_List_List_2(List<String> tokens) {
       if (!this.init_Z_8()) {
-         return di.init(this.init_Setting.kind(), tokens);
+         return RegistryIdValidator.init(this.init_Setting.kind(), tokens);
       }
 
       List<String> invalid = new ArrayList<>();
 
       for (String token : tokens) {
-         String normalized = di.init(token);
-         if (!di.init(this.init_Setting.kind(), normalized) || !this.init_Map.containsKey(normalized)) {
+         String normalized = RegistryIdValidator.init(token);
+         if (!RegistryIdValidator.init(this.init_Setting.kind(), normalized) || !this.init_Map.containsKey(normalized)) {
             invalid.add(token);
          }
       }
@@ -572,7 +572,7 @@ public class NodeWalker extends KeyHolder {
                               this.read(BuiltInRegistries.ITEM.getKey(item)),
                               item.getName(item.getDefaultInstance()).getString(),
                               "",
-                              M.init_ItemStack(item),
+                              DisplayItemStackFactory.init_ItemStack(item),
                               false
                            )
                         );
@@ -598,7 +598,7 @@ public class NodeWalker extends KeyHolder {
                         }
                         break;
                      case CROPS:
-                        if (!Y.init_Z_Block(block)) {
+                        if (!FarmCropCatalog.init_Z_Block(block)) {
                            return;
                         }
                         break;
@@ -606,7 +606,7 @@ public class NodeWalker extends KeyHolder {
                         throw new MatchException(null, null);
                   }
 
-                  out.add(new NodeWalker.Inner_DataUtil(this.read(id), block.getName().getString(), "", M.init(block), false));
+                  out.add(new NodeWalker.Inner_DataUtil(this.read(id), block.getName().getString(), "", DisplayItemStackFactory.init(block), false));
                }
             });
             break;
@@ -665,7 +665,7 @@ public class NodeWalker extends KeyHolder {
       BuiltInRegistries.ITEM.forEach(item -> {
          TypedEntityData<EntityType<?>> data = item.components().get(DataComponents.ENTITY_DATA);
          if (data != null) {
-            out.put(data.type(), M.init_ItemStack(item));
+            out.put(data.type(), DisplayItemStackFactory.init_ItemStack(item));
          }
       });
       return out;
@@ -673,7 +673,7 @@ public class NodeWalker extends KeyHolder {
 
    private ItemStack init_ItemStack_Identifier_Map(Identifier soundId, Map<EntityType<?>, ItemStack> spawnEggs) {
       if (soundId == null) {
-         return M.init_ItemStack(Items.NOTE_BLOCK);
+         return DisplayItemStackFactory.init_ItemStack(Items.NOTE_BLOCK);
       }
 
       String path = soundId.getPath().toLowerCase(Locale.ROOT);
@@ -706,40 +706,40 @@ public class NodeWalker extends KeyHolder {
       }
 
       ItemStack registry = this.load(parts, spawnEggs);
-      return registry.isEmpty() ? M.init_ItemStack(Items.NOTE_BLOCK) : registry;
+      return registry.isEmpty() ? DisplayItemStackFactory.init_ItemStack(Items.NOTE_BLOCK) : registry;
    }
 
    private ItemStack init_ItemStack_Str(String normalizedPath) {
       if (normalizedPath.contains("fishing_bobber")) {
-         return M.init_ItemStack(Items.FISHING_ROD);
+         return DisplayItemStackFactory.init_ItemStack(Items.FISHING_ROD);
       } else if (normalizedPath.contains("lava")) {
-         return M.init_ItemStack(Items.LAVA_BUCKET);
+         return DisplayItemStackFactory.init_ItemStack(Items.LAVA_BUCKET);
       } else if (normalizedPath.contains("water") || normalizedPath.contains("rain") || normalizedPath.contains("bubble")) {
-         return M.init_ItemStack(Items.WATER_BUCKET);
+         return DisplayItemStackFactory.init_ItemStack(Items.WATER_BUCKET);
       } else if (normalizedPath.contains("bucket_empty_lava") || normalizedPath.contains("bucket_fill_lava")) {
-         return M.init_ItemStack(Items.LAVA_BUCKET);
+         return DisplayItemStackFactory.init_ItemStack(Items.LAVA_BUCKET);
       } else if (normalizedPath.contains("bucket_empty") || normalizedPath.contains("bucket_fill")) {
-         return M.init_ItemStack(Items.BUCKET);
+         return DisplayItemStackFactory.init_ItemStack(Items.BUCKET);
       } else if (normalizedPath.contains("firework")) {
-         return M.init_ItemStack(Items.FIREWORK_ROCKET);
+         return DisplayItemStackFactory.init_ItemStack(Items.FIREWORK_ROCKET);
       } else if (normalizedPath.contains("experience_orb")) {
-         return M.init_ItemStack(Items.EXPERIENCE_BOTTLE);
+         return DisplayItemStackFactory.init_ItemStack(Items.EXPERIENCE_BOTTLE);
       } else if (normalizedPath.contains("lightning") || normalizedPath.contains("thunder")) {
-         return M.init_ItemStack(Items.LIGHTNING_ROD.weathering().unaffected());
+         return DisplayItemStackFactory.init_ItemStack(Items.LIGHTNING_ROD.weathering().unaffected());
       } else if (normalizedPath.contains("music_disc_")) {
          return this.load_ItemStack(normalizedPath.substring(normalizedPath.indexOf("music_disc_")));
       } else if (normalizedPath.startsWith("music_") || normalizedPath.startsWith("record_")) {
-         return M.init_ItemStack(Items.JUKEBOX);
+         return DisplayItemStackFactory.init_ItemStack(Items.JUKEBOX);
       } else if (normalizedPath.contains("goat_horn")) {
-         return M.init_ItemStack(Items.GOAT_HORN);
+         return DisplayItemStackFactory.init_ItemStack(Items.GOAT_HORN);
       } else if (normalizedPath.contains("note_block")) {
-         return M.init_ItemStack(Items.NOTE_BLOCK);
+         return DisplayItemStackFactory.init_ItemStack(Items.NOTE_BLOCK);
       } else if (normalizedPath.contains("ui_") || normalizedPath.startsWith("ui")) {
-         return M.init_ItemStack(Items.COMPASS);
+         return DisplayItemStackFactory.init_ItemStack(Items.COMPASS);
       } else if (normalizedPath.contains("ambient_cave")) {
-         return M.init_ItemStack(Items.TORCH);
+         return DisplayItemStackFactory.init_ItemStack(Items.TORCH);
       } else {
-         return normalizedPath.contains("ambient_underwater") ? M.init_ItemStack(Items.WATER_BUCKET) : ItemStack.EMPTY;
+         return normalizedPath.contains("ambient_underwater") ? DisplayItemStackFactory.init_ItemStack(Items.WATER_BUCKET) : ItemStack.EMPTY;
       }
    }
 
@@ -755,17 +755,17 @@ public class NodeWalker extends KeyHolder {
       }
 
       if (this.init_Z_StrArr_Str(parts, "player")) {
-         return M.init_ItemStack(Items.PLAYER_HEAD);
+         return DisplayItemStackFactory.init_ItemStack(Items.PLAYER_HEAD);
       } else if (this.init_Z_StrArr_Str(parts, "arrow")) {
-         return M.init_ItemStack(Items.ARROW);
+         return DisplayItemStackFactory.init_ItemStack(Items.ARROW);
       } else if (this.init_Z_StrArr_Str(parts, "trident")) {
-         return M.init_ItemStack(Items.TRIDENT);
+         return DisplayItemStackFactory.init_ItemStack(Items.TRIDENT);
       } else if (this.init_Z_StrArr_Str(parts, "boat")) {
-         return M.init_ItemStack(Items.OAK_BOAT);
+         return DisplayItemStackFactory.init_ItemStack(Items.OAK_BOAT);
       } else if (this.init_Z_StrArr_Str(parts, "minecart")) {
-         return M.init_ItemStack(Items.MINECART);
+         return DisplayItemStackFactory.init_ItemStack(Items.MINECART);
       } else {
-         return this.init_Z_StrArr_Str(parts, "item") ? M.init_ItemStack(Items.ITEM_FRAME) : ItemStack.EMPTY;
+         return this.init_Z_StrArr_Str(parts, "item") ? DisplayItemStackFactory.init_ItemStack(Items.ITEM_FRAME) : ItemStack.EMPTY;
       }
    }
 
@@ -910,12 +910,12 @@ public class NodeWalker extends KeyHolder {
 
    private ItemStack load_ItemStack(String path) {
       Item item = BuiltInRegistries.ITEM.getOptional(Identifier.withDefaultNamespace(path)).orElse(Items.AIR);
-      return item == Items.AIR ? ItemStack.EMPTY : M.init_ItemStack(item);
+      return item == Items.AIR ? ItemStack.EMPTY : DisplayItemStackFactory.init_ItemStack(item);
    }
 
    private ItemStack read(String path) {
       Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.withDefaultNamespace(path)).orElse(Blocks.AIR);
-      return block != Blocks.AIR && block.asItem() != Items.AIR ? M.init(block) : ItemStack.EMPTY;
+      return block != Blocks.AIR && block.asItem() != Items.AIR ? DisplayItemStackFactory.init(block) : ItemStack.EMPTY;
    }
 
    private NodeWalker.Inner_DataUtil load_NodeWalker_DataUti(String id) {

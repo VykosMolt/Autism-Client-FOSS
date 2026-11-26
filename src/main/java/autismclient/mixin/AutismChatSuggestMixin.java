@@ -5,7 +5,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.CommandManager;
 import autismclient.mixin.accessor.AutismCommandSuggestionsListAccessor;
 import autismclient.modules.al;
-import autismclient.util.aN;
+import autismclient.util.MacroLibraryManager;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestion;
@@ -113,7 +113,7 @@ public abstract class AutismChatSuggestMixin {
          int cursor = Math.max(prefixLen, Math.min(this.input.getCursorPosition(), value.length()));
          int commandRevision = CommandManager.init_I();
          int moduleRevision = al.init_I();
-         long macroRevision = aN.init_aN().init_J();
+         long macroRevision = MacroLibraryManager.init_aN().init_J();
          Minecraft minecraft = Minecraft.getInstance();
          AbstractContainerMenu menu = minecraft.player == null ? null : minecraft.player.containerMenu;
          int menuRevision = menu == null ? -1 : menu.getStateId();

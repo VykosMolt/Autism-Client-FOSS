@@ -435,7 +435,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          topRow += this.h_I() + gap;
       }
 
-      if (!this.set_Z && !this.update_Z && this.init_aM != null && aE.init_aE().write_Z()) {
+      if (!this.set_Z && !this.update_Z && this.init_aM != null && LanSyncManager.init_aE().write_Z()) {
          topRow += this.g_I() + gap;
       }
 
@@ -2596,7 +2596,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void state_V() {
       autismclient.util.macro.DelayPacketsAction action = new autismclient.util.macro.DelayPacketsAction();
-      if (ck.init_ck().reset_Z()) {
+      if (AutismSessionState.init_ck().reset_Z()) {
          action.write();
       } else {
          action.read();
@@ -3711,7 +3711,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_AutismMacroEditorO = context == null ? AutismMacroEditorOverlay.Inner_DataUtil.NORMAL : context;
       this.init_Consumer = onSaveComplete;
       this.write_Z = true;
-      ck.init_ck().init_V_Z(true);
+      AutismSessionState.init_ck().init_V_Z(true);
       ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(this.cache_Z());
       if (macroToEdit == null) {
          this.init_aM = new AutismMacro("");
@@ -3731,7 +3731,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.update_Z = false;
       }
 
-      ck.init_ck().init_V_aM(this.init_aM);
+      AutismSessionState.init_ck().init_V_aM(this.init_aM);
       this.update_J = -1L;
       this.chunk_V();
       this.tick_Z = false;
@@ -3775,18 +3775,18 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (this.tick_Z) {
          if (this.run_Z) {
             String name = this.init_aM == null ? "" : this.init_aM.init_Str;
-            AutismMacro savedMacro = name != null && !name.isBlank() ? aN.init_aN().init_aM_Str(name) : null;
+            AutismMacro savedMacro = name != null && !name.isBlank() ? MacroLibraryManager.init_aN().init_aM_Str(name) : null;
             if (savedMacro == null && this.read_aM != null) {
                savedMacro = this.read_aM;
             }
 
             if (savedMacro != null) {
-               aN.init_aN().init_List().remove(savedMacro);
-               aN.init_aN().load_V();
+               MacroLibraryManager.init_aN().init_List().remove(savedMacro);
+               MacroLibraryManager.init_aN().load_V();
             }
          } else if (this.read_aM != null && this.init_CompoundTag != null) {
             this.read_aM.init_aM_CompoundTag(this.init_CompoundTag);
-            aN.init_aN().load_V();
+            MacroLibraryManager.init_aN().load_V();
          }
 
          this.tick_Z = false;
@@ -3800,14 +3800,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       AutismMacro runningMacro = this.init_aM();
       if (runningMacro == null || !this.tick_Z && this.load_Z_aM(runningMacro)) {
          if (this.init_aM != null && this.init_aM.init_Str != null && !this.init_aM.init_Str.isBlank()) {
-            AutismMacro persisted = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+            AutismMacro persisted = MacroLibraryManager.init_aN().init_aM_Str(this.init_aM.init_Str);
             if (this.tick_Z || persisted == null) {
                MacroExecutor.init_V_Str(this.init_aM.init_Str);
             }
          }
 
          if (this.read_aM != null && this.read_aM.init_Str != null && !this.read_aM.init_Str.isBlank()) {
-            AutismMacro persisted = aN.init_aN().init_aM_Str(this.read_aM.init_Str);
+            AutismMacro persisted = MacroLibraryManager.init_aN().init_aM_Str(this.read_aM.init_Str);
             if (this.tick_Z || persisted == null) {
                MacroExecutor.init_V_Str(this.read_aM.init_Str);
             }
@@ -3819,7 +3819,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private boolean load_Z_aM(AutismMacro candidate) {
       if (candidate != null && candidate.init_Str != null && !candidate.init_Str.isBlank()) {
-         AutismMacro persisted = aN.init_aN().init_aM_Str(candidate.init_Str);
+         AutismMacro persisted = MacroLibraryManager.init_aN().init_aM_Str(candidate.init_Str);
          return persisted == candidate;
       } else {
          return false;
@@ -3836,8 +3836,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.scan_V();
       this.load_aM = this.write_Z ? this.init_aM : null;
       this.write_Z = false;
-      ck.init_ck().init_V_Z(false);
-      ck.init_ck().init_V_aM(null);
+      AutismSessionState.init_ck().init_V_Z(false);
+      AutismSessionState.init_ck().init_V_aM(null);
       this.init_aM = null;
       this.read_aM = null;
       this.update_J = -1L;
@@ -4023,7 +4023,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void sync_V_9() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       this.tick_I = shared.init_I();
       this.run_I = shared.load_I();
    }
@@ -4036,7 +4036,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    @Override
    public void init_V_Z(boolean visible) {
       this.write_Z = visible;
-      ck.init_ck().init_V_Z(visible);
+      AutismSessionState.init_ck().init_V_Z(visible);
       if (visible) {
          this.init_CharEncoder_2.read_CharEncoder(!this.pop_Z);
          OverlayManager.init_bk().update_V(this);
@@ -4203,7 +4203,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void open_V_7() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       shared.init_V_Z(this.write_Z);
       shared.init_V_I(this.tick_I);
       shared.load_V_I(this.run_I);
@@ -4212,7 +4212,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void poll_V_5() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       this.b__V();
       this.write_Z = shared.init_Z();
       this.tick_I = shared.init_I();
@@ -4240,7 +4240,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private boolean init_Z_Str_3(String name) {
       if (name != null && !name.trim().isEmpty()) {
-         return !this.update_Z && name.equals(aN.init_aN().init_aM_Str(name) != null ? name : "") ? true : aN.init_aN().init_aM_Str(name) == null;
+         return !this.update_Z && name.equals(MacroLibraryManager.init_aN().init_aM_Str(name) != null ? name : "") ? true : MacroLibraryManager.init_aN().init_aM_Str(name) == null;
       } else {
          return false;
       }
@@ -4276,11 +4276,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_k.init_V_Str(this.init_aM.init_Str);
       if (!this.update_Z) {
          this.init("Delete", this.tick_I + this.get_I - this.store_I() - deleteTopW, row1Y, deleteTopW, bh, () -> {
-            if (this.value_Z() && this.init_aM != null && this.init_aM.init_Str != null && this.init_aM.init_Str.equalsIgnoreCase(aA.init_Str())) {
-               aA.init_V("");
+            if (this.value_Z() && this.init_aM != null && this.init_aM.init_Str != null && this.init_aM.init_Str.equalsIgnoreCase(JoinMacroController.init_Str())) {
+               JoinMacroController.init_V("");
             }
 
-            aN.init_aN().read(this.init_aM);
+            MacroLibraryManager.init_aN().read(this.init_aM);
             this.update_V_10();
          }, !stepListLocked);
       }
@@ -4304,10 +4304,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          bx += this.f_I() + gap;
       }
 
-      if (!this.set_Z && aE.init_aE().write_Z() && !this.update_Z && this.init_aM != null) {
+      if (!this.set_Z && LanSyncManager.init_aE().write_Z() && !this.update_Z && this.init_aM != null) {
          this.init("LAN", bx, row2Y, this.g_I(), bh, () -> {
             if (this.init_aM != null) {
-               aE.init_aE().load_V(this.init_aM.init_Str);
+               LanSyncManager.init_aE().load_V(this.init_aM.init_Str);
             }
          }, !stepListLocked);
          bx += this.g_I() + gap;
@@ -4529,7 +4529,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private void g_V() {
       boolean hasValidName = this.init_aM.init_Str != null && !this.init_aM.init_Str.trim().isEmpty();
       if (hasValidName) {
-         AutismMacro existingWithName = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+         AutismMacro existingWithName = MacroLibraryManager.init_aN().init_aM_Str(this.init_aM.init_Str);
          boolean isNameConflict = this.update_Z && existingWithName != null;
          if (isNameConflict) {
             AutismClientMessaging.sendPrefixed("Name already exists: " + this.init_aM.init_Str);
@@ -4537,8 +4537,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (this.update_Z) {
-            aN.init_aN().init_V_aM(this.init_aM);
-            this.read_aM = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+            MacroLibraryManager.init_aN().init_V_aM(this.init_aM);
+            this.read_aM = MacroLibraryManager.init_aN().init_aM_Str(this.init_aM.init_Str);
             this.update_Z = false;
             this.tick_Z = true;
             this.run_Z = true;
@@ -4553,12 +4553,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                this.read_aM.read = liveFolder;
             }
 
-            aN.init_aN().load_V();
+            MacroLibraryManager.init_aN().load_V();
             this.tick_Z = true;
             this.run_Z = false;
          }
 
-         AutismMacro savedMacro = aN.init_aN().init_aM_Str(this.init_aM.init_Str);
+         AutismMacro savedMacro = MacroLibraryManager.init_aN().init_aM_Str(this.init_aM.init_Str);
          this.store_V();
          this.update_J = savedMacro != null ? savedMacro.init_J() : this.init_aM.init_J();
          this.chunk_V();
@@ -4757,14 +4757,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             if (trimmedName.isEmpty()) {
                bi.init("Name your macro before saving.", -2075846);
             } else {
-               AutismMacro nameOwner = aN.init_aN().init_aM_Str(trimmedName);
+               AutismMacro nameOwner = MacroLibraryManager.init_aN().init_aM_Str(trimmedName);
                if (nameOwner != null && nameOwner != this.read_aM) {
                   bi.init("A macro named \"" + trimmedName + "\" already exists.", -2075846);
                } else if (this.init_Z_Str_3(this.init_aM.init_Str)) {
                   String previousName = !this.update_Z && this.read_aM != null && this.read_aM.init_Str != null ? this.read_aM.init_Str : "";
                   AutismMacro savedOrUpdated = this.init_aM;
                   if (this.update_Z) {
-                     aN.init_aN().init_V_aM(this.init_aM);
+                     MacroLibraryManager.init_aN().init_V_aM(this.init_aM);
                      savedOrUpdated = this.init_aM;
                   } else {
                      if (this.read_aM != null) {
@@ -4777,12 +4777,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                         savedOrUpdated = this.read_aM;
                      }
 
-                     aN.init_aN().load_V();
+                     MacroLibraryManager.init_aN().load_V();
                   }
 
-                  if (!previousName.isBlank() && cZ.load(previousName, savedOrUpdated.init_Str)) {
-                     if (!cZ.init(previousName, savedOrUpdated.init_Str) && aE.init_aE().write_Z()) {
-                        aE.init_aE().read_V_Str(previousName);
+                  if (!previousName.isBlank() && MacroNameNormalizer.load(previousName, savedOrUpdated.init_Str)) {
+                     if (!MacroNameNormalizer.init(previousName, savedOrUpdated.init_Str) && LanSyncManager.init_aE().write_Z()) {
+                        LanSyncManager.init_aE().read_V_Str(previousName);
                      }
                   }
 

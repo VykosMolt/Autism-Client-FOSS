@@ -66,7 +66,7 @@ public final class AutoFishMacroPresets {
    }
 
    private static AutismMacro init(String preferredName, MacroAction firstCondition) {
-      aN manager = aN.init_aN();
+      MacroLibraryManager manager = MacroLibraryManager.init_aN();
       AutismMacro existing = manager.init_aM_Str(preferredName);
       if (existing != null) {
          boolean changed = false;

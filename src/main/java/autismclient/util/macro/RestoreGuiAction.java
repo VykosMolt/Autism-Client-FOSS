@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
 import autismclient.util.bi;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
@@ -12,7 +12,7 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
 
    @Override
    public void execute(Minecraft mc) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (shared.init_Screen() != null && shared.init_AbstractContainerM() != null) {
          mc.gui.setScreen(shared.init_Screen());
          if (mc.player != null) {

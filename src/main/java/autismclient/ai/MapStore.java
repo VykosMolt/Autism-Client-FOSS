@@ -524,7 +524,7 @@ final class MapStore {
       String action = init(args, "state");
       return init(() -> {
          ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
-         autismclient.util.ck shared = autismclient.util.ck.init_ck();
+         autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
          switch (action) {
             case "state":
                break;
@@ -544,7 +544,7 @@ final class MapStore {
                   throw new IllegalArgumentException("mode must be TICKS or MS");
                }
 
-               shared.init_V_ck_DataUtil(autismclient.util.ck.Inner_DataUtil.valueOf(mode));
+               shared.init_V_ck_DataUtil(autismclient.util.AutismSessionState.Inner_DataUtil.valueOf(mode));
                break;
             default:
                throw new IllegalArgumentException("Unknown action '" + action + "'; use state, send, delay, flush, clear or delayMode");
@@ -554,7 +554,7 @@ final class MapStore {
       });
    }
 
-   private static JsonObject init(ModuleRuntimeManager module, autismclient.util.ck shared) {
+   private static JsonObject init(ModuleRuntimeManager module, autismclient.util.AutismSessionState shared) {
       return ag.init_JsonObject_ObjArr(
          "send",
          shared.read_Z(),
@@ -836,24 +836,24 @@ final class MapStore {
          () -> {
             if (action.equals("set")) {
                if (args.has("enabled")) {
-                  autismclient.util.aA.init(ag.init_Z_JsonObject(args, "enabled", false));
+                  autismclient.util.JoinMacroController.init(ag.init_Z_JsonObject(args, "enabled", false));
                }
 
                if (args.has("macro")) {
                   String name = ag.init_Str_JsonObject(args, "macro", "").trim();
-                  if (!name.isEmpty() && autismclient.util.aN.init_aN().init_aM_Str(name) == null) {
+                  if (!name.isEmpty() && autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(name) == null) {
                      throw new IllegalArgumentException("Unknown macro '" + name + "'");
                   }
 
-                  autismclient.util.aA.init_V(name);
+                  autismclient.util.JoinMacroController.init_V(name);
                }
 
                if (args.has("timing")) {
-                  autismclient.util.aA.init(autismclient.util.aA.Inner_StreamUtil.init(ag.init_Str_JsonObject(args, "timing", "PLAYABLE")));
+                  autismclient.util.JoinMacroController.init(autismclient.util.JoinMacroController.Inner_StreamUtil.init(ag.init_Str_JsonObject(args, "timing", "PLAYABLE")));
                }
 
                if (args.has("keepEnabled")) {
-                  autismclient.util.aA.load(ag.init_Z_JsonObject(args, "keepEnabled", false));
+                  autismclient.util.JoinMacroController.load(ag.init_Z_JsonObject(args, "keepEnabled", false));
                }
             } else if (!action.equals("get")) {
                throw new IllegalArgumentException("Unknown action '" + action + "'; use get or set");
@@ -861,13 +861,13 @@ final class MapStore {
 
             return ag.init_JsonObject_ObjArr(
                "enabled",
-               autismclient.util.aA.load_Z(),
+               autismclient.util.JoinMacroController.load_Z(),
                "macro",
-               autismclient.util.aA.init_Str(),
+               autismclient.util.JoinMacroController.init_Str(),
                "timing",
-               autismclient.util.aA.init_aA_StreamUtil().init_Str(),
+               autismclient.util.JoinMacroController.init_aA_StreamUtil().init_Str(),
                "keepEnabled",
-               autismclient.util.aA.init_Z()
+               autismclient.util.JoinMacroController.init_Z()
             );
          }
       );
@@ -881,7 +881,7 @@ final class MapStore {
             return ag.init_JsonObject_ObjArr("connected", false);
          }
 
-         autismclient.util.ck shared = autismclient.util.ck.init_ck();
+         autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
          ServerData server = mc.getCurrentServer();
          JsonObject out = ag.init_JsonObject_ObjArr("connected", true, "brand", connection.serverBrand() == null ? "" : connection.serverBrand());
          if (server != null) {
@@ -911,7 +911,7 @@ final class MapStore {
    static JsonObject pop(JsonObject args) {
       String action = init(args, "list");
       return init(() -> {
-         autismclient.util.aN m = autismclient.util.aN.init_aN();
+         autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.init_aN();
          switch (action) {
             case "list":
                return init(m);
@@ -958,7 +958,7 @@ final class MapStore {
    static JsonObject tick(JsonObject args) {
       String action = init(args, "running");
       return init(() -> {
-         autismclient.util.aN m = autismclient.util.aN.init_aN();
+         autismclient.util.MacroLibraryManager m = autismclient.util.MacroLibraryManager.init_aN();
          switch (action) {
             case "running":
                return ag.init_JsonObject_ObjArr("running", MacroExecutor.write_Z());
@@ -1007,7 +1007,7 @@ final class MapStore {
       });
    }
 
-   private static autismclient.util.AutismMacro init(autismclient.util.aN m, JsonObject args) {
+   private static autismclient.util.AutismMacro init(autismclient.util.MacroLibraryManager m, JsonObject args) {
       autismclient.util.AutismMacro macro = m.init_aM_Str(load(args, "name"));
       if (macro == null) {
          throw new IllegalArgumentException("Unknown macro; read client:macros first");
@@ -1016,7 +1016,7 @@ final class MapStore {
       }
    }
 
-   private static JsonObject init(autismclient.util.aN m) {
+   private static JsonObject init(autismclient.util.MacroLibraryManager m) {
       Map<String, Integer> counts = new LinkedHashMap<>();
 
       for (String folder : m.load_List()) {

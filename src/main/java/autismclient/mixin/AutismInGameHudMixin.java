@@ -30,7 +30,7 @@ import autismclient.util.OverlayManager;
 import autismclient.util.cA;
 import autismclient.util.PacketQueueHudRenderer;
 import autismclient.util.cf;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.macro.MacroExecutor;
 import java.util.ArrayList;
 import net.minecraft.client.DeltaTracker;
@@ -91,7 +91,7 @@ public abstract class AutismInGameHudMixin {
             }
 
             if (!MC.gui.hud.isHidden() && !aD.init_Z()) {
-               ck shared = ck.init_ck();
+               AutismSessionState shared = AutismSessionState.init_ck();
                Screen screen = MC.gui.screen();
                boolean macroRunning = MacroExecutor.load_Z();
                boolean queueSending = shared.run_Z();
@@ -317,7 +317,7 @@ public abstract class AutismInGameHudMixin {
    }
 
    @Unique
-   private HudBannerSpec captureBannerSpec(ck shared, GuiGraphicsExtractor graphics) {
+   private HudBannerSpec captureBannerSpec(AutismSessionState shared, GuiGraphicsExtractor graphics) {
       boolean blockCap = shared.pool();
       boolean entityCap = shared.frame();
       boolean attackCap = shared.count();
@@ -383,7 +383,7 @@ public abstract class AutismInGameHudMixin {
    }
 
    @Unique
-   private boolean hasAnyCaptureSession(ck shared) {
+   private boolean hasAnyCaptureSession(AutismSessionState shared) {
       if (shared == null) {
          return false;
       } else if (!shared.chunk() && !shared.level() && !shared.count() && !shared.pool() && !shared.frame() && !shared.cache_Z()) {

@@ -6,8 +6,8 @@ import autismclient.ai.cG;
 import autismclient.ai.ca;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.U;
-import autismclient.util.aw;
+import autismclient.util.BlockPlacementPlanner;
+import autismclient.util.InventorySlotHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -34,17 +34,17 @@ public final class DataPipe {
    private ItemStack init_ItemStack = ItemStack.EMPTY;
    private int flush = -1;
    private PkgCls_b.Inner_DataUtil init_b_DataUtil;
-   private U.Inner_CachePool init_U_CachePool;
+   private BlockPlacementPlanner.Inner_CachePool init_U_CachePool;
    private int close;
    private int open;
    private boolean init_Z;
    private long init_J;
    private String init_Str = "";
    static final int load = 1024;
-   private U.Inner_JsonUtil init_U_JsonUtil;
+   private BlockPlacementPlanner.Inner_JsonUtil init_U_JsonUtil;
 
    public DataPipe() {
-      this.init_U_JsonUtil = U.Inner_JsonUtil.NONE;
+      this.init_U_JsonUtil = BlockPlacementPlanner.Inner_JsonUtil.NONE;
       this.init_DataUtil.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.read_DataUtil_DataUtil);
    }
 
@@ -67,7 +67,7 @@ public final class DataPipe {
       this.init_Z = false;
       this.init_J = target == null ? 0L : ca.init_J_BlockPos(target);
       this.init_Str = "";
-      this.init_U_JsonUtil = U.Inner_JsonUtil.NONE;
+      this.init_U_JsonUtil = BlockPlacementPlanner.Inner_JsonUtil.NONE;
       this.init_DataUtil.init_V();
    }
 
@@ -134,7 +134,7 @@ public final class DataPipe {
             return this.init("The server swapped a different portable container stack");
          }
 
-         aw.init_V(mc, this.flush);
+         InventorySlotHelper.init_V(mc, this.flush);
          return DataPipe.Inner_DataUtil.init;
       } else {
          if (!AutismLiteVariant.enabled()) {
@@ -197,7 +197,7 @@ public final class DataPipe {
                }
 
                if (mc.player.getInventory().getSelectedSlot() != slot) {
-                  aw.init_V(mc, slot);
+                  InventorySlotHelper.init_V(mc, slot);
                   return DataPipe.Inner_DataUtil.init;
                }
             } else {
@@ -258,18 +258,18 @@ public final class DataPipe {
       this.init_BlockPos = null;
    }
 
-   private U.Inner_CachePool init(Minecraft mc) {
+   private BlockPlacementPlanner.Inner_CachePool init(Minecraft mc) {
       Vec3 eye = mc.player.getEyePosition();
       double reach = mc.player.blockInteractionRange();
-      U.Inner_StateCache request = new U.Inner_StateCache(
+      BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
             this.init_BlockPos,
             eye,
             reach,
-            U.init(this.init_ItemStack.isEmpty() ? new ItemStack(this.init_Item) : this.init_ItemStack.copy(), mc.player, InteractionHand.MAIN_HAND)
+            BlockPlacementPlanner.init(this.init_ItemStack.isEmpty() ? new ItemStack(this.init_Item) : this.init_ItemStack.copy(), mc.player, InteractionHand.MAIN_HAND)
          )
-         .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(48));
-      U.Inner_JsonUtil[] refusal = new U.Inner_JsonUtil[1];
-      U.Inner_CachePool best = U.init(request, refusal);
+         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(48));
+      BlockPlacementPlanner.Inner_JsonUtil[] refusal = new BlockPlacementPlanner.Inner_JsonUtil[1];
+      BlockPlacementPlanner.Inner_CachePool best = BlockPlacementPlanner.init(request, refusal);
       if (best == null && refusal[0] != null) {
          this.init_U_JsonUtil = refusal[0];
       }
@@ -305,11 +305,11 @@ public final class DataPipe {
    public static boolean init_Z_BlockPos_Item(BlockPos target, Item placeable) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && target != null && placeable instanceof BlockItem) {
-         U.Inner_StateCache request = new U.Inner_StateCache(
-               target, mc.player.getEyePosition(), mc.player.blockInteractionRange(), U.init(new ItemStack(placeable), mc.player, InteractionHand.MAIN_HAND)
+         BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+               target, mc.player.getEyePosition(), mc.player.blockInteractionRange(), BlockPlacementPlanner.init(new ItemStack(placeable), mc.player, InteractionHand.MAIN_HAND)
             )
-            .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(1024));
-         return U.init_U_CachePool(request) != null;
+            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(1024));
+         return BlockPlacementPlanner.init_U_CachePool(request) != null;
       } else {
          return false;
       }

@@ -2,8 +2,8 @@ package autismclient.commands.b;
 
 import autismclient.commands.AutismCommandSource;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.O;
-import autismclient.util.av;
+import autismclient.util.InventoryDropHelper;
+import autismclient.util.ContainerClickExecutor;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -80,14 +80,14 @@ final class SlotClickCommandHelper {
             ItemStack stack = mc.player.containerMenu.slots.get(handlerSlot).getItem();
             if (!stack.isEmpty()) {
                int actual = Math.min(requested, stack.getCount());
-               if (O.init(mc, handlerSlot, actual) > 0) {
+               if (InventoryDropHelper.init(mc, handlerSlot, actual) > 0) {
                   completed = actual;
                }
             }
          } else if (spec.init_CharEncoder_CacheP() == SlotClickCommandHelper.Inner_CachePool.STACK) {
-            completed = O.init(mc, handlerSlot, 0) > 0 ? 1 : 0;
+            completed = InventoryDropHelper.init(mc, handlerSlot, 0) > 0 ? 1 : 0;
          } else {
-            for (int i = 0; i < requested && av.init(mc, handlerSlot, spec.init_I(), spec.init_ContainerInput()); i++) {
+            for (int i = 0; i < requested && ContainerClickExecutor.init(mc, handlerSlot, spec.init_I(), spec.init_ContainerInput()); i++) {
                completed++;
             }
          }

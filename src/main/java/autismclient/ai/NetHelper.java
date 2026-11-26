@@ -766,7 +766,7 @@ final class NetHelper {
                }
 
                int init_I_I(int inventorySlot) {
-                  int handler = autismclient.util.aw.load_I(mc, inventorySlot);
+                  int handler = autismclient.util.InventorySlotHelper.load_I(mc, inventorySlot);
                   if (handler < 0) {
                      throw new IllegalStateException("Inventory slot " + inventorySlot + " has no menu slot");
                   } else {

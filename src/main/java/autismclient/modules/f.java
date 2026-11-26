@@ -33,14 +33,14 @@ import autismclient.util.PacketTypeRegistry;
 import autismclient.util.WindowIconManager;
 import autismclient.util.AutoFishMacroPresets;
 import autismclient.util.HumanizedTurnPlanner;
-import autismclient.util.cc;
-import autismclient.util.cd;
+import autismclient.util.RegistryDisplayNameCache;
+import autismclient.util.RemoteViewController;
 import autismclient.util.RotationMath;
 import autismclient.util.EntityMotionTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.PacketFilterListCodec;
-import autismclient.util.di;
+import autismclient.util.RegistryIdValidator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroAction;
 import autismclient.util.macro.MacroExecutor;
@@ -506,7 +506,7 @@ public final class f {
             }
 
             try {
-               autismclient.util.aw.init_V(MC, slot);
+               autismclient.util.InventorySlotHelper.init_V(MC, slot);
 
                try {
                   Item item = this.init_Item();
@@ -541,7 +541,7 @@ public final class f {
 
                   return true;
                } finally {
-                  autismclient.util.aw.init_V(MC, oldSlot);
+                  autismclient.util.InventorySlotHelper.init_V(MC, oldSlot);
                }
             } finally {
                autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -568,7 +568,7 @@ public final class f {
          }
 
          try {
-            autismclient.util.aw.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.init_V(MC, slot);
 
             try {
                MC.player.setDeltaMovement(preVelocity.x, 0.0, preVelocity.z);
@@ -587,7 +587,7 @@ public final class f {
                return true;
             } finally {
                MC.player.setDeltaMovement(preVelocity);
-               autismclient.util.aw.init_V(MC, oldSlot);
+               autismclient.util.InventorySlotHelper.init_V(MC, oldSlot);
             }
          } finally {
             autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -668,7 +668,7 @@ public final class f {
                   int bucket = this.init_I_Item_2(Items.BUCKET);
                   if (bucket >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                      try {
-                        autismclient.util.aw.init_V(MC, bucket);
+                        autismclient.util.InventorySlotHelper.init_V(MC, bucket);
 
                         try {
                            Vec3 hitVec = Vec3.atCenterOf(this.init_BlockPos);
@@ -686,7 +686,7 @@ public final class f {
                            this.init_BlockPos = null;
                            this.init_I = 0;
                         } finally {
-                           autismclient.util.aw.init_V(MC, oldSlot);
+                           autismclient.util.InventorySlotHelper.init_V(MC, oldSlot);
                         }
                      } finally {
                         autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -1025,7 +1025,7 @@ public final class f {
          if (this.read_Z) {
             if (!this.load_Z_17() || !autismclient.util.MouseMovementRouter.read()) {
                this.init_V_Z_9(false);
-            } else if (autismclient.util.MouseDeltaAccumulator.init(0, ck.init_ck().state_I())) {
+            } else if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.init_ck().state_I())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1) + partialTick);
@@ -1036,7 +1036,7 @@ public final class f {
       @Override
       public void onMouseRotation(double deltaYaw, double deltaPitch) {
          if (this.read_Z) {
-            if (autismclient.util.MouseDeltaAccumulator.init(0, ck.init_ck().state_I())) {
+            if (autismclient.util.MouseDeltaAccumulator.init(0, AutismSessionState.init_ck().state_I())) {
                this.init_V_Z_9(true);
             } else {
                this.init_V_D(Math.max(0, this.load_I - 1));
@@ -1054,7 +1054,7 @@ public final class f {
                }
             }
 
-            this.init_BitSetUtil.init_Z_I_J(this.init_I("catch-delay", "catch-min", "catch-max"), ck.init_ck().state_I());
+            this.init_BitSetUtil.init_Z_I_J(this.init_I("catch-delay", "catch-min", "catch-max"), AutismSessionState.init_ck().state_I());
          }
       }
 
@@ -1519,7 +1519,7 @@ public final class f {
                   }
 
                   try {
-                     autismclient.util.aw.init_V(MC, best.init_I());
+                     autismclient.util.InventorySlotHelper.init_V(MC, best.init_I());
                      this.update_I = 1;
                   } finally {
                      autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -1536,8 +1536,8 @@ public final class f {
                      }
 
                      try {
-                        if (autismclient.util.aw.read(MC, best.init_I(), target)) {
-                           autismclient.util.aw.init_V(MC, target);
+                        if (autismclient.util.InventorySlotHelper.read(MC, best.init_I(), target)) {
+                           autismclient.util.InventorySlotHelper.init_V(MC, target);
                            this.update_I = 1;
                            return f.Inner_BufferHelper.Inner_BufferHelper_2.load();
                         }
@@ -1672,7 +1672,7 @@ public final class f {
                wait.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
                wait.slots = slots;
                if (changed) {
-                  autismclient.util.aN.init_aN().read_V();
+                  autismclient.util.MacroLibraryManager.init_aN().read_V();
                }
             } else if (preset == AutoFishMacroPresets.Inner_DataUtil.DURABILITY && macro.init_List.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
                int value = Math.max(1, this.integer("min-durability"));
@@ -1689,7 +1689,7 @@ public final class f {
                wait.value = value;
                wait.useNext = true;
                if (changed) {
-                  autismclient.util.aN.init_aN().read_V();
+                  autismclient.util.MacroLibraryManager.init_aN().read_V();
                }
             }
          }
@@ -1703,7 +1703,7 @@ public final class f {
             if (macroName.isBlank()) {
                this.load("AutoFish auto stop rule missing.");
             } else {
-               autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
+               autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macroName);
                if (macro == null) {
                   this.load("AutoFish auto stop rule not found: " + macroName);
                } else if (!AutoFishMacroPresets.init(macro)) {
@@ -1728,7 +1728,7 @@ public final class f {
          String macroName = this.value("stop-macro").trim();
          AutoFishMacroPresets.Inner_DataUtil preset = AutoFishMacroPresets.init_cL_DataUtil(macroName);
          if (preset != null) {
-            autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(macroName);
+            autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(macroName);
             if (macro != null) {
                this.init(macro, preset);
             }
@@ -2280,7 +2280,7 @@ public final class f {
             boolean listed = false;
 
             for (String entry : entries) {
-               if (di.init(id, entry)) {
+               if (RegistryIdValidator.init(id, entry)) {
                   listed = true;
                   break;
                }
@@ -3272,11 +3272,11 @@ public final class f {
             }
 
             this.setValue("nbt-command", embeddedCommand);
-            String imported = autismclient.util.ay.write(stack);
+            String imported = autismclient.util.ItemSnbtCodec.write(stack);
             this.setValue("nbt-imported-components", imported);
             this.setValue("nbt-imported-signature", this.read_Str_3());
             this.setValue("nbt-item-components", imported);
-            this.setValue("nbt-item-stack", autismclient.util.az.init_Str_Str(autismclient.util.ay.load(stack)));
+            this.setValue("nbt-item-stack", autismclient.util.ItemNbtInspector.init_Str_Str(autismclient.util.ItemSnbtCodec.load(stack)));
             this.setValue("nbt-item-stack-signature", this.read_Str_3());
             return true;
          } else {
@@ -3327,7 +3327,7 @@ public final class f {
       private ItemStack init_ItemStack(boolean notifyErrors) {
          String rawStack = this.value("nbt-item-stack").trim();
          boolean hasRawBase = !rawStack.isBlank();
-         ItemStack rawBase = hasRawBase ? autismclient.util.ay.init_ItemStack(rawStack) : ItemStack.EMPTY;
+         ItemStack rawBase = hasRawBase ? autismclient.util.ItemSnbtCodec.init_ItemStack(rawStack) : ItemStack.EMPTY;
          if (hasRawBase && rawBase.isEmpty()) {
             if (notifyErrors) {
                AutismClientMessaging.sendPrefixed("Admin Tools: invalid full item SNBT.");
@@ -3357,7 +3357,7 @@ public final class f {
                return ItemStack.EMPTY;
             }
 
-            String validationError = autismclient.util.ay.read(stack);
+            String validationError = autismclient.util.ItemSnbtCodec.read(stack);
             if (!validationError.isBlank()) {
                if (notifyErrors) {
                   AutismClientMessaging.sendPrefixed("Admin Tools: invalid item data: " + validationError);
@@ -3543,8 +3543,8 @@ public final class f {
       }
 
       public boolean init_Z(String rawSnbt) {
-         ItemStack parsed = autismclient.util.ay.init_ItemStack(rawSnbt);
-         return !parsed.isEmpty() && autismclient.util.ay.read(parsed).isBlank() ? this.init(parsed, false) : false;
+         ItemStack parsed = autismclient.util.ItemSnbtCodec.init_ItemStack(rawSnbt);
+         return !parsed.isEmpty() && autismclient.util.ItemSnbtCodec.read(parsed).isBlank() ? this.init(parsed, false) : false;
       }
 
       public void sync_V_9() {
@@ -4321,7 +4321,7 @@ public final class f {
          }
 
          if (stack != null && !stack.isEmpty()) {
-            String validationError = autismclient.util.ay.read(stack);
+            String validationError = autismclient.util.ItemSnbtCodec.read(stack);
             if (!validationError.isBlank()) {
                AutismClientMessaging.sendPrefixed("Admin Tools: invalid item data: " + validationError);
                return false;
@@ -4636,7 +4636,7 @@ public final class f {
             && !MC.player.isSpectator()
             && !aD.read_Z()
             && !FreecamController.init_Z()
-            && !cd.init_Z()
+            && !RemoteViewController.init_Z()
             && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
             && !MacroExecutor.write_Z();
       }
@@ -5315,13 +5315,13 @@ public final class f {
          if (this.init_Z_2(chest)) {
             if (this.bool("anti-break-elytra") && !this.load_Z(chest)) {
                int replacement = this.init_I(true);
-               if (replacement >= 0 && autismclient.util.aw.read(MC, replacement, 38)) {
+               if (replacement >= 0 && autismclient.util.InventorySlotHelper.read(MC, replacement, 38)) {
                   return true;
                }
 
                int emptySlot = this.init_I_27();
                if (emptySlot >= 0) {
-                  autismclient.util.aw.read(MC, 38, emptySlot);
+                  autismclient.util.InventorySlotHelper.read(MC, 38, emptySlot);
                }
 
                return false;
@@ -5330,7 +5330,7 @@ public final class f {
             }
          } else {
             int elytraSlot = this.init_I(this.bool("anti-break-elytra"));
-            return elytraSlot < 0 ? false : autismclient.util.aw.read(MC, elytraSlot, 38) && this.init_Z_2(MC.player.getItemBySlot(EquipmentSlot.CHEST));
+            return elytraSlot < 0 ? false : autismclient.util.InventorySlotHelper.read(MC, elytraSlot, 38) && this.init_Z_2(MC.player.getItemBySlot(EquipmentSlot.CHEST));
          }
       }
 
@@ -5514,7 +5514,7 @@ public final class f {
                String key = "color-" + id;
                boolean fresh = this.value(key) == null;
                if (this.setting(key) == null) {
-                  String label = cc.load(id);
+                  String label = RegistryDisplayNameCache.load(id);
                   this.add(new ColorSetting(key, label.isBlank() ? id : label, BlockEspCatalog.init_I(id)).group("Colors").visibleWhen(() -> BlockEspCatalog.init_Z(this, id)));
                }
 
@@ -5603,7 +5603,7 @@ public final class f {
          for (String id : OreSimEspScanner.init_List(this)) {
             String key = "block-color-" + id;
             if (this.setting(key) == null) {
-               String label = cc.load(id);
+               String label = RegistryDisplayNameCache.load(id);
                this.add(
                   new ColorSetting(key, label.isBlank() ? id : label, -3355444)
                      .group("Colors")
@@ -6584,7 +6584,7 @@ public final class f {
             if (!SpawnerEspCatalog.init(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
-                  String label = cc.read(id);
+                  String label = RegistryDisplayNameCache.read(id);
                   this.add(new ColorSetting(key, label.isBlank() ? id : label, -855688389).group("Colors").visibleWhen(() -> SpawnerEspCatalog.init_Z(this, id)));
                }
             }
@@ -6978,10 +6978,10 @@ public final class f {
             } else {
                int selected = MC.player.getInventory().getSelectedSlot();
                if (slot > 8) {
-                  autismclient.util.aw.read(MC, slot, selected);
+                  autismclient.util.InventorySlotHelper.read(MC, slot, selected);
                   return true;
                } else {
-                  autismclient.util.aw.init_V(MC, slot);
+                  autismclient.util.InventorySlotHelper.init_V(MC, slot);
                   return true;
                }
             }
@@ -7219,7 +7219,7 @@ public final class f {
             && (AutismLiteVariant.enabled() || !ClutchModule.init_Z_49())
             && !autismclient.util.ManualInteractionYield.init()
             && this.init_O.init_Z_ItemStack(MC.player.getMainHandItem())
-            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, ck.init_ck().state_I()))) {
+            && (!this.bool("only-while-moving") || autismclient.util.MouseDeltaAccumulator.init(4, AutismSessionState.init_ck().state_I()))) {
             LivingEntity target = this.init_LivingEntity_4();
             if (target == null) {
                this.init_V_46();
@@ -7282,7 +7282,7 @@ public final class f {
          this.init_q_DataUtil.init_q_DataUtil_Vec3_2(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.init(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.write_Z = true;
          this.init_q_DataUtil.open_D = target instanceof Player && this.init_cj.init_Z_LivingEntity(target)
-            ? this.init_cj.init(eyes, this.init_q_DataUtil.init_D, ck.init_ck().state_I())
+            ? this.init_cj.init(eyes, this.init_q_DataUtil.init_D, AutismSessionState.init_ck().state_I())
             : 0.0;
          if (noCooldown) {
             this.init_q_DataUtil.sync_D = Math.max(2.0, target.hurtTime - 1);
@@ -7393,7 +7393,7 @@ public final class f {
       }
 
       private void init_V_LivingEntity_4(LivingEntity target) {
-         this.init_cj.init(target, ck.init_ck().state_I());
+         this.init_cj.init(target, AutismSessionState.init_ck().state_I());
          if (target.getId() != this.flush_I) {
             this.flush_I = target.getId();
             this.init_Z = false;
@@ -8174,11 +8174,11 @@ public final class f {
             int limit = this.bool("consider-inventory") ? 36 : 9;
             int best = -1;
             if (this.bool("prefer-silk-touch")) {
-               best = autismclient.util.ArrayUtil.init(MC, state, limit, this.bool("ignore-durability"), true);
+               best = autismclient.util.BlockBreakSpeedHelper.init(MC, state, limit, this.bool("ignore-durability"), true);
             }
 
             if (best < 0) {
-               best = autismclient.util.ArrayUtil.init(MC, state, limit, this.bool("ignore-durability"), false);
+               best = autismclient.util.BlockBreakSpeedHelper.init(MC, state, limit, this.bool("ignore-durability"), false);
             }
 
             if (best < 0) {
@@ -8204,7 +8204,7 @@ public final class f {
             }
 
             try {
-               if (!autismclient.util.aw.read(MC, best, selected)) {
+               if (!autismclient.util.InventorySlotHelper.read(MC, best, selected)) {
                   return -1;
                }
             } finally {
@@ -8228,10 +8228,10 @@ public final class f {
 
          ItemStack candidate = MC.player.getInventory().getItem(candidateSlot);
          ItemStack current = MC.player.getInventory().getItem(Math.max(0, Math.min(8, selectedSlot)));
-         float candidateSpeed = autismclient.util.ArrayUtil.init(MC, candidate, state);
-         float currentSpeed = autismclient.util.ArrayUtil.init(MC, current, state);
-         return this.bool("prefer-silk-touch") && candidateSpeed > 1.0F && autismclient.util.ArrayUtil.init_Z(MC, candidate)
-            ? !(currentSpeed > 1.0F) || !autismclient.util.ArrayUtil.init_Z(MC, current)
+         float candidateSpeed = autismclient.util.BlockBreakSpeedHelper.init(MC, candidate, state);
+         float currentSpeed = autismclient.util.BlockBreakSpeedHelper.init(MC, current, state);
+         return this.bool("prefer-silk-touch") && candidateSpeed > 1.0F && autismclient.util.BlockBreakSpeedHelper.init_Z(MC, candidate)
+            ? !(currentSpeed > 1.0F) || !autismclient.util.BlockBreakSpeedHelper.init_Z(MC, current)
             : candidateSpeed > currentSpeed;
       }
 
@@ -8423,7 +8423,7 @@ public final class f {
             if (!FrameEspCatalog.init_Z(id)) {
                String key = "color-" + id;
                if (this.setting(key) == null) {
-                  String label = cc.init(id);
+                  String label = RegistryDisplayNameCache.init(id);
                   this.add(new ColorSetting(key, label.isBlank() ? id : label, FrameEspCatalog.init_I(id)).group("Colors").visibleWhen(() -> FrameEspCatalog.init_Z(this, id)));
                }
             }

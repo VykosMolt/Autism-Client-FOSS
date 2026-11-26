@@ -375,7 +375,7 @@ public class PacketPresetManager {
    }
 
    private AutismPacketPreset init_AutismPacketPreset(String name) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       Set<String> c2s = this.init(shared.load_Set());
       Set<String> s2c = this.init(shared.read_Set());
       return new AutismPacketPreset(name, c2s, s2c);

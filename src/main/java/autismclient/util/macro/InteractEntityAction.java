@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
-import autismclient.util.ck;
+import autismclient.util.RegistryDisplayNameCache;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -34,7 +34,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    @Override
    public AimTargetAction.Inner_DataUtil init_M_DataUtil_Minecraft(Minecraft mc) {
-      autismclient.util.E target = this.init_E();
+      autismclient.util.InteractionTargetRef target = this.init_E();
       if (target == null) {
          return null;
       } else {
@@ -42,14 +42,14 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
    }
 
-   private autismclient.util.E init_E() {
+   private autismclient.util.InteractionTargetRef init_E() {
       if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
-         return ck.init_ck().init_E();
+         return AutismSessionState.init_ck().init_E();
       }
 
       for (String ref : this.entityTargets) {
          if (ref != null && !ref.isBlank()) {
-            autismclient.util.E target = autismclient.util.E.init_E_Str(ref);
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
             if (target != null) {
                return target;
             }
@@ -71,7 +71,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
             for (String ref : this.entityTargets) {
                if (ref != null && !ref.isBlank()) {
-                  autismclient.util.E target = autismclient.util.E.init_E_Str(ref);
+                  autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
                   if (target != null) {
                      if (this.waitForTarget && !target.load_Z(mc)) {
                         return false;
@@ -84,7 +84,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
             return sentAny;
          } else {
-            autismclient.util.E target = ck.init_ck().init_E();
+            autismclient.util.InteractionTargetRef target = AutismSessionState.init_ck().init_E();
             return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
          }
       } else {
@@ -98,7 +98,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
 
       if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
-         autismclient.util.E target = ck.init_ck().init_E();
+         autismclient.util.InteractionTargetRef target = AutismSessionState.init_ck().init_E();
          return target != null && target.load_Z(mc);
       }
 
@@ -106,7 +106,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
       for (String ref : this.entityTargets) {
          if (ref != null && !ref.isBlank()) {
-            autismclient.util.E target = autismclient.util.E.init_E_Str(ref);
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
             if (target == null || !target.load_Z(mc)) {
                return false;
             }
@@ -121,7 +121,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    public void init_V_Minecraft_3(Minecraft mc) {
       if (mc != null && mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
          this.targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
-         String ref = autismclient.util.E.init_Str_Entity(entityHit.getEntity());
+         String ref = autismclient.util.InteractionTargetRef.init_Str_Entity(entityHit.getEntity());
          if (!ref.isBlank() && !this.entityTargets.contains(ref)) {
             this.entityTargets.add(ref);
          }
@@ -134,10 +134,10 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       } else if (ref.startsWith("~")) {
          String[] parts = ref.split("~", 4);
          String name = parts.length >= 4 ? parts[3] : "?";
-         String type = parts.length >= 3 ? cc.read(parts[2]) : "?";
+         String type = parts.length >= 3 ? RegistryDisplayNameCache.read(parts[2]) : "?";
          return name.isBlank() ? type : name + " (" + type + ")";
       } else {
-         return cc.read(ref);
+         return RegistryDisplayNameCache.read(ref);
       }
    }
 

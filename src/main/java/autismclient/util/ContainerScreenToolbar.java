@@ -15,7 +15,7 @@ public final class ContainerScreenToolbar {
          return buttons;
       }
 
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       int baseX = 5;
       int baseY = 5;
       int defaultWidth = 140;

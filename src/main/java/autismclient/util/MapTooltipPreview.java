@@ -70,7 +70,7 @@ public final class MapTooltipPreview {
       Minecraft mc = Minecraft.getInstance();
       if (id != null && mc != null && mc.level != null && autismclient.modules.InventoryTweaksModule.read_Z_7()) {
          MapItemSavedData data = MapItem.getSavedData(id, mc.level);
-         return init_da.init(mc.level, id, data, ck.init_ck().state_I()) ? data : null;
+         return init_da.init(mc.level, id, data, AutismSessionState.init_ck().state_I()) ? data : null;
       } else {
          return null;
       }
@@ -102,7 +102,7 @@ public final class MapTooltipPreview {
          return null;
       }
 
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (id.equals(init_MapId) && tick == read && init_Obj == mc.level && init_MapItemSavedData == data) {
          return data;
       }

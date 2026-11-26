@@ -3,8 +3,8 @@ package autismclient.mixin;
 import autismclient.c.ExternalButtonScreenDuck;
 import autismclient.gui.d.JoinMacroScreen;
 import autismclient.modules.aD;
-import autismclient.util.aA;
-import autismclient.util.aN;
+import autismclient.util.JoinMacroController;
+import autismclient.util.MacroLibraryManager;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -85,17 +85,17 @@ public abstract class AutismSelectWorldScreenMixin extends Screen implements Ext
    public void autism$renderExternalButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float deltaTicks) {
       this.autism$layoutMacroButton();
       if (!aD.init_Z()) {
-         String macroName = aA.init_Str();
+         String macroName = JoinMacroController.init_Str();
          String macroLabel;
          int macroColor;
          if (macroName.isBlank()) {
             macroLabel = "Join Macro: none";
             macroColor = -7370102;
-         } else if (aN.init_aN().init_aM_Str(macroName) == null) {
+         } else if (MacroLibraryManager.init_aN().init_aM_Str(macroName) == null) {
             macroLabel = "Join Macro missing: " + macroName;
             macroColor = -38037;
          } else {
-            macroLabel = "Join Macro: " + macroName + " - " + aA.load_Str();
+            macroLabel = "Join Macro: " + macroName + " - " + JoinMacroController.load_Str();
             macroColor = -10035062;
          }
 

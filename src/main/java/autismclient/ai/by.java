@@ -79,7 +79,7 @@ final class by {
    static List<by.Inner_StreamUtil> init(Minecraft mc) {
       try {
          if (mc.player != null && mc.level != null) {
-            int now = autismclient.util.ck.init_ck().state_I();
+            int now = autismclient.util.AutismSessionState.init_ck().state_I();
             if (init_LocalPlayer == mc.player && init_Obj == mc.level && now - load_I < 1) {
                return init_List;
             }

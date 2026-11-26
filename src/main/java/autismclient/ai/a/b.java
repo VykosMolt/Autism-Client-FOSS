@@ -4,7 +4,7 @@ import autismclient.AutismClientAddon;
 import autismclient.ai.A;
 import autismclient.api.ai.AiOperation;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import autismclient.util.RotationMath;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -693,7 +693,7 @@ public final class b implements AiOperation {
                   probe.init_Vec3.add(0.0, this.init_D, 0.0).distanceToSqr(Vec3.atCenterOf(target.pos()))
                      > Math.pow(this.init_Minecraft.player.blockInteractionRange() + 0.9, 2.0)
                )) {
-               U.Inner_CachePool hit = probe.init_LevelReader == null
+               BlockPlacementPlanner.Inner_CachePool hit = probe.init_LevelReader == null
                   ? u.init(this.init_Minecraft, target.pos(), target.item(), target.constraint(), probe.init_Vec3, 32)
                   : this.init(target, probe.init_Vec3, probe.init_AABB, probe.init_Set, probe.init_LevelReader);
                if (hit != null) {
@@ -1079,7 +1079,7 @@ public final class b implements AiOperation {
          return false;
       }
 
-      private U.Inner_CachePool init(u.Inner_CachePool target, Vec3 position, AABB body, Set<BlockPos> clear, LevelReader view) {
+      private BlockPlacementPlanner.Inner_CachePool init(u.Inner_CachePool target, Vec3 position, AABB body, Set<BlockPos> clear, LevelReader view) {
          u.Inner_DataUtil constraint = target.constraint();
          if (target.requested() != null && !target.requested().canSurvive(view, target.pos())) {
             return null;
@@ -1096,9 +1096,9 @@ public final class b implements AiOperation {
          double height = u.init(this.init_Minecraft, target.pos(), target.item(), constraint, true);
          Vec3 eye = position.add(0.0, height, 0.0);
          double reach = this.init_Minecraft.player.blockInteractionRange() - 0.25;
-         U.Inner_NetHelper placement = (hitx, cell) -> !clear.contains(hitx.getBlockPos())
+         BlockPlacementPlanner.Inner_NetHelper placement = (hitx, cell) -> !clear.contains(hitx.getBlockPos())
             && u.init(this.init_Minecraft, cell, target.item(), constraint, eye, body, hitx);
-         U.Inner_StateCache request = new U.Inner_StateCache(target.pos(), eye, reach, placement).load(true);
+         BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(target.pos(), eye, reach, placement).load(true);
          if (constraint != null) {
             EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);
 
@@ -1114,11 +1114,11 @@ public final class b implements AiOperation {
             }
          }
 
-         ArrayList<U.Inner_TaskQueue> options = new ArrayList<>();
-         U.init(request, options);
+         ArrayList<BlockPlacementPlanner.Inner_TaskQueue> options = new ArrayList<>();
+         BlockPlacementPlanner.init(request, options);
          int rays = 0;
 
-         for (U.Inner_TaskQueue option : options) {
+         for (BlockPlacementPlanner.Inner_TaskQueue option : options) {
             if (!clear.contains(option.load_BlockPos())) {
                AABB rect = constraint != null && constraint.highHalf() != null
                   ? u.init_AABB_AABB(option.init_AABB(), option.init_Direction(), option.load_BlockPos().getY(), constraint.highHalf())
@@ -1128,7 +1128,7 @@ public final class b implements AiOperation {
                }
 
                if (rect != null) {
-                  U.Inner_TaskQueue clipped = new U.Inner_TaskQueue(
+                  BlockPlacementPlanner.Inner_TaskQueue clipped = new BlockPlacementPlanner.Inner_TaskQueue(
                      option.init_BlockPos(),
                      option.load_BlockPos(),
                      option.init_Direction(),
@@ -1140,7 +1140,7 @@ public final class b implements AiOperation {
                      option.init_Z(),
                      option.init_U_BufferHelper()
                   );
-                  U.Inner_DataUtil aim = U.init(clipped, request, null);
+                  BlockPlacementPlanner.Inner_DataUtil aim = BlockPlacementPlanner.init(clipped, request, null);
                   if (aim != null) {
                      Vec3 end = eye.add(Vec3.directionFromRotation(aim.load().load(), aim.load().init()).scale(reach));
                      BlockHitResult hit = view.clip(
@@ -1149,7 +1149,7 @@ public final class b implements AiOperation {
                      if (hit.getType() == Type.BLOCK
                         && placement.lands(hit, target.pos())
                         && placement.init(view.getBlockState(hit.getBlockPos()), hit.getBlockPos(), true)) {
-                        return new U.Inner_CachePool(clipped, aim, hit, false, 0.0);
+                        return new BlockPlacementPlanner.Inner_CachePool(clipped, aim, hit, false, 0.0);
                      }
 
                      if (++rays >= 32) {

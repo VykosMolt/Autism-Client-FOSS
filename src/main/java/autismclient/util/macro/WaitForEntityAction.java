@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -274,10 +274,10 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
          if (e0.startsWith("~")) {
             String[] p = e0.split("~", 4);
             String display = p.length >= 4 ? p[3] : "";
-            String type = p.length >= 3 ? cc.read(p[2]) : "?";
+            String type = p.length >= 3 ? RegistryDisplayNameCache.read(p[2]) : "?";
             first = "SPEC " + (display != null && !display.isBlank() ? display : type);
          } else {
-            first = cc.read(e0);
+            first = RegistryDisplayNameCache.read(e0);
          }
 
          if (this.entityIds.size() > 1) {

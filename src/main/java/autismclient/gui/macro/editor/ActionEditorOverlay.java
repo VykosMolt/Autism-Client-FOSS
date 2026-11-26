@@ -20,15 +20,15 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismPacketSelectorOverlay;
 import autismclient.util.AutismPayloadSupport;
 import autismclient.util.BackgroundTaskExecutor;
-import autismclient.util.D;
-import autismclient.util.J;
-import autismclient.util.N;
+import autismclient.util.ContainerCloseGuard;
+import autismclient.util.AutoCraftingEngine;
+import autismclient.util.ContainerClickType;
 import autismclient.util.AutismMacro;
 import autismclient.util.PayloadEditorModel;
 import autismclient.util.PayloadJsonCodec;
 import autismclient.util.PayloadFieldCodec;
-import autismclient.util.bN;
-import autismclient.util.bO;
+import autismclient.util.OnlinePlayerCollector;
+import autismclient.util.TabPlayerListParser;
 import autismclient.util.bi;
 import autismclient.util.DraggableOverlayWindow;
 import autismclient.util.OverlayManager;
@@ -38,9 +38,9 @@ import autismclient.util.PacketTypeRegistry;
 import autismclient.util.cA;
 import autismclient.util.OverlayBounds;
 import autismclient.util.AutismOverlay;
-import autismclient.util.cY;
-import autismclient.util.cc;
-import autismclient.util.ck;
+import autismclient.util.MacroFolderLayout;
+import autismclient.util.RegistryDisplayNameCache;
+import autismclient.util.AutismSessionState;
 import autismclient.util.ThemePaletteManager;
 import autismclient.util.OverlayScreenController;
 import autismclient.util.ThemedTextInputBox;
@@ -337,9 +337,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<AutismOverlay> poll_List;
    private final f init_f = new f(700L, 140.0F, 180.0F, 4, 4, 18);
    private List<autismclient.util.macro.CraftAction.Inner_DataUtil> push_List;
-   private List<J.Inner_TaskQueue> pop_List;
-   private List<J.Inner_TaskQueue> tick_List;
-   private J.Inner_TaskQueue init_J_TaskQueue;
+   private List<AutoCraftingEngine.Inner_TaskQueue> pop_List;
+   private List<AutoCraftingEngine.Inner_TaskQueue> tick_List;
+   private AutoCraftingEngine.Inner_TaskQueue init_J_TaskQueue;
    private int f_g_I;
    private boolean tick_Z;
    private String update_Str;
@@ -775,8 +775,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ThemedTextInputBox srchF = this.init_k_I(180);
          srchF.init_V_Component(Component.literal("Search recipes..."));
          this.flush_Map.put("_craft_search", srchF);
-         this.pop_List = J.init_List(init_Minecraft);
-         this.tick_List = J.init(this.pop_List, "");
+         this.pop_List = AutoCraftingEngine.init_List(init_Minecraft);
+         this.tick_List = AutoCraftingEngine.init(this.pop_List, "");
       }
 
       if (action instanceof WaitForPacketAction waitForPacketAction) {
@@ -1371,8 +1371,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return "";
       }
 
-      int handlerSlot = autismclient.util.aw.load(init_Minecraft, slot);
-      int visibleSlot = handlerSlot >= 0 ? autismclient.util.aw.init_I(init_Minecraft, handlerSlot) : -1;
+      int handlerSlot = autismclient.util.InventorySlotHelper.load(init_Minecraft, slot);
+      int visibleSlot = handlerSlot >= 0 ? autismclient.util.InventorySlotHelper.init_I(init_Minecraft, handlerSlot) : -1;
       String slotText = visibleSlot >= 0 ? String.valueOf(visibleSlot) : "Handler " + handlerSlot;
       String slotDetail = "Handler " + handlerSlot;
       String itemText = !registryId.isEmpty() ? registryId : (!itemName.isEmpty() ? itemName : "Empty slot");
@@ -1384,7 +1384,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean push_Z_2() {
-      ck state = ck.init_ck();
+      AutismSessionState state = AutismSessionState.init_ck();
       return this.init_StreamUtil.init_Z()
          || this.write_Str != null
          || this.poll_List != null
@@ -1404,7 +1404,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    public boolean init_Z_Slot(Slot slot, String itemName, String registryId, boolean slotMode) {
       this.variableWarningStale = true;
-      int visibleSlot = slot != null ? autismclient.util.aw.init_I(init_Minecraft, slot) : -1;
+      int visibleSlot = slot != null ? autismclient.util.InventorySlotHelper.init_I(init_Minecraft, slot) : -1;
       MacroItemTarget capturedTarget = this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot);
       if (this.init_StreamUtil.init_Z() && (!itemName.isEmpty() || visibleSlot >= 0)) {
          boolean useSlot = slotMode && visibleSlot >= 0;
@@ -2017,7 +2017,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       EventBus itemViewport = this.init_EventBus_Map(this.tick_Map, "_item_entries", x, cy, w, selAreaH, 14, 5);
       itemViewport.init_V(this.init_MapStore.itemNames.size() * 14);
       itemViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
-      N[] ACTIONS = N.values();
+      ContainerClickType[] ACTIONS = ContainerClickType.values();
       int sbGap = 7;
       int delW = 13;
       int itemW = w - sbGap - delW - 2;
@@ -2031,7 +2031,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (iy != -2147483648) {
                String entry = this.init_MapStore.itemNames.get(i);
                int eiActIdx = this.init_MapStore.load_I(i);
-               N eiAct = ACTIONS[eiActIdx];
+               ContainerClickType eiAct = ACTIONS[eiActIdx];
                int eiBtn = this.init_MapStore.read_I(i);
                boolean selected = i == this.f_j_I;
                MacroItemTarget entryTarget = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, i);
@@ -2039,9 +2039,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean rowHovered = mx >= x && mx < x + itemW && my >= iy && my < iy + 13;
                String summaryAct = eiAct.load_Str;
                String var10000;
-               if (eiAct == N.SWAP) {
+               if (eiAct == ContainerClickType.SWAP) {
                   var10000 = "H" + Math.max(1, Math.min(9, eiBtn + 1));
-               } else if (eiAct == N.PICKUP_ALL) {
+               } else if (eiAct == ContainerClickType.PICKUP_ALL) {
                   var10000 = "";
                } else {
                   switch (eiBtn) {
@@ -2159,22 +2159,22 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 4;
       if (this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
          int eiActIdx = this.init_MapStore.load_I(this.f_j_I);
-         N eiAct = ACTIONS[eiActIdx];
+         ContainerClickType eiAct = ACTIONS[eiActIdx];
          int eiBtn = this.init_MapStore.read_I(this.f_j_I);
-         boolean btnActive = eiAct == N.PICKUP || eiAct == N.QUICK_MOVE || eiAct == N.SWAP;
+         boolean btnActive = eiAct == ContainerClickType.PICKUP || eiAct == ContainerClickType.QUICK_MOVE || eiAct == ContainerClickType.SWAP;
          int editIdx = this.f_j_I;
          int editTimesW = 28;
          int editGap = 3;
          List<String> actOptions = new ArrayList<>();
 
-         for (N a : ItemAction.init_List_4()) {
+         for (ContainerClickType a : ItemAction.init_List_4()) {
             actOptions.add(a.load_Str);
          }
 
          String var81;
-         if (eiAct == N.SWAP) {
+         if (eiAct == ContainerClickType.SWAP) {
             var81 = "H" + Math.max(1, Math.min(9, eiBtn + 1));
-         } else if (eiAct == N.PICKUP_ALL) {
+         } else if (eiAct == ContainerClickType.PICKUP_ALL) {
             var81 = "All";
          } else {
             switch (eiBtn) {
@@ -2216,7 +2216,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                editBtnW,
                13,
                btnLbl,
-               eiAct == N.SWAP ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
+               eiAct == ContainerClickType.SWAP ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
                btnActive,
                mx,
                my,
@@ -2331,7 +2331,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.init_MapStore != null && this.f_j_I >= 0 && this.f_j_I < this.init_MapStore.itemNames.size()) {
          MacroItemTarget target = this.init_ArrayUtil_List(this.init_MapStore.itemTargets, this.init_MapStore.itemNames, this.f_j_I);
          return target.update() && !target.init_Z()
-            ? this.init_MapStore.init_N_I(this.f_j_I) != N.PICKUP_ALL
+            ? this.init_MapStore.init_N_I(this.f_j_I) != ContainerClickType.PICKUP_ALL
                || !this.load_Map.getOrDefault("item_useCursorItemForPickupAll", this.init_MapStore.useCursorItemForPickupAll)
             : false;
       } else {
@@ -2662,7 +2662,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 16;
       String query = srchF != null ? srchF.load_Str() : "";
       if (!query.equals(this.update_Str)) {
-         this.tick_List = J.init(this.pop_List != null ? this.pop_List : List.of(), query);
+         this.tick_List = AutoCraftingEngine.init(this.pop_List != null ? this.pop_List : List.of(), query);
          this.update_Str = query;
          this.f_g_I = 0;
          if (this.init_J_TaskQueue != null && (this.tick_List == null || !this.tick_List.contains(this.init_J_TaskQueue))) {
@@ -2670,7 +2670,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      List<J.Inner_TaskQueue> filtered = this.tick_List != null ? this.tick_List : List.of();
+      List<AutoCraftingEngine.Inner_TaskQueue> filtered = this.tick_List != null ? this.tick_List : List.of();
       int recipeListH = 52;
       EventBus recipeViewport = this.init_EventBus_Map(this.close_Map, "_craft_recipe_browser", x, cy, w, recipeListH, 13, 5);
       recipeViewport.init_V(filtered.size() * 13);
@@ -2693,7 +2693,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          for (int i = firstRec; i < filtered.size() && i <= recipeViewport.tick(); i++) {
             int ry = recipeViewport.init_I(i);
             if (ry != -2147483648) {
-               J.Inner_TaskQueue opt = filtered.get(i);
+               AutoCraftingEngine.Inner_TaskQueue opt = filtered.get(i);
                boolean inList = this.push_List
                   .stream()
                   .anyMatch(e -> opt.init_Str != null && opt.init_Str.equals(e.init_Str) || opt.init_I >= 0 && opt.init_I == e.init_I);
@@ -2709,7 +2709,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.f.b.k.init(ctx, this.init_Font, cnt, font, UiColorPalette.bind(), x + recW - this.init_I_Identifier_Str(font, cnt) - 2, ry + 2, false);
                }
 
-               J.Inner_TaskQueue fOpt = opt;
+               AutoCraftingEngine.Inner_TaskQueue fOpt = opt;
                boolean fInList = inList;
                this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, ry, recW, 13, () -> {
                   if (fInList) {
@@ -2734,7 +2734,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void open_V_2() {
-      this.pop_List = J.init_List(init_Minecraft);
+      this.pop_List = AutoCraftingEngine.init_List(init_Minecraft);
       this.update_Str = null;
       this.init_J_TaskQueue = null;
       this.f_g_I = 0;
@@ -3437,7 +3437,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, info, w, font, -1), font, UiColorPalette.bind(), x, y - 10, false);
       int[] topBtns = this.init_IArr_I(x, w, false, "Queue First", "Paste Base64");
       this.init_V_GuiGraphicsExtract(ctx, topBtns[0], topY, topBtns[1], btnH, "Queue First", mx, my, () -> {
-         List<ck.Inner_CachePool> queue = ck.init_ck().load_List();
+         List<AutismSessionState.Inner_CachePool> queue = AutismSessionState.init_ck().load_List();
          if (queue != null && !queue.isEmpty()) {
             this.init_V_ck_CachePool(queue.get(0));
             AutismClientMessaging.sendPrefixed("Loaded first queued packet");
@@ -3446,7 +3446,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       });
       this.init_V_GuiGraphicsExtract(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
-         List<ck.Inner_CachePool> pasted = MacroClipboardCodec.read();
+         List<AutismSessionState.Inner_CachePool> pasted = MacroClipboardCodec.read();
          if (pasted != null && !pasted.isEmpty()) {
             this.init_V_ck_CachePool(pasted.get(0));
             AutismClientMessaging.sendPrefixed("Loaded first pasted packet");
@@ -3736,13 +3736,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void flush(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
-      List<ck.Inner_CachePool> actionPackets = this.read_List();
-      List<ck.Inner_CachePool> queuePackets = ck.init_ck().load_List();
+      List<AutismSessionState.Inner_CachePool> actionPackets = this.read_List();
+      List<AutismSessionState.Inner_CachePool> queuePackets = AutismSessionState.init_ck().load_List();
       if (queuePackets == null) {
          queuePackets = Collections.emptyList();
       }
 
-      List<ck.Inner_CachePool> finalQueuePackets = queuePackets;
+      List<AutismSessionState.Inner_CachePool> finalQueuePackets = queuePackets;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Action Packets (" + actionPackets.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       int apClearW = this.write_I("Clear");
       this.init_ByteReader_GuiGraphicsExtract_2(
@@ -3760,7 +3760,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
       cy += 14;
       cy = this.init_I_GuiGraphicsExtract(ctx, x, cy, w, mx, my, delta, "_send_packet_action", actionPackets, true, packetIndex -> {
-         List<ck.Inner_CachePool> updated = this.read_List();
+         List<AutismSessionState.Inner_CachePool> updated = this.read_List();
          if (packetIndex >= 0 && packetIndex < updated.size()) {
             updated.remove(packetIndex);
             this.write(updated);
@@ -3817,7 +3817,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("Loaded " + finalQueuePackets.size() + " packets from queue");
       });
       this.init_V_GuiGraphicsExtract(ctx, fromBtns[2], cy, fromBtns[3], 13, "Paste Base64", mx, my, () -> {
-         List<ck.Inner_CachePool> pasted = MacroClipboardCodec.read();
+         List<AutismSessionState.Inner_CachePool> pasted = MacroClipboardCodec.read();
          if (pasted != null && !pasted.isEmpty()) {
             this.write(pasted);
             AutismClientMessaging.sendPrefixed("Pasted " + pasted.size() + " packets");
@@ -3839,7 +3839,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 14;
       this.init_I_GuiGraphicsExtract(ctx, x, cy, w, mx, my, delta, "_send_packet_queue", finalQueuePackets, false, packetIndex -> {
          if (packetIndex >= 0 && packetIndex < finalQueuePackets.size()) {
-            List<ck.Inner_CachePool> updated = this.read_List();
+            List<AutismSessionState.Inner_CachePool> updated = this.read_List();
             updated.add(finalQueuePackets.get(packetIndex));
             this.write(updated);
          }
@@ -3855,7 +3855,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int my,
       float delta,
       String listKey,
-      List<ck.Inner_CachePool> packets,
+      List<AutismSessionState.Inner_CachePool> packets,
       boolean removable,
       IntConsumer rowAction
    ) {
@@ -3878,7 +3878,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       for (int i = firstVis; i < packets.size() && i <= packetViewport.tick(); i++) {
          int iy = packetViewport.init_I(i);
          if (iy != -2147483648) {
-            ck.Inner_CachePool qp = packets.get(i);
+            AutismSessionState.Inner_CachePool qp = packets.get(i);
             String pname = qp != null && qp.init_Packet != null ? PacketNameResolver.init_Str_Packet(qp.init_Packet) : "???";
             String rowText = i + 1 + ". " + pname + " d=" + (qp != null ? qp.load_I() : 0);
             boolean hovered = mx >= x && mx < x + textW && my >= iy && my < iy + 13;
@@ -3912,11 +3912,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   mx,
                   my,
                   () -> {
-                     List<ck.Inner_CachePool> updated = this.read_List();
+                     List<AutismSessionState.Inner_CachePool> updated = this.read_List();
                      if (rowIndex >= 0 && rowIndex < updated.size()) {
-                        ck.Inner_CachePool target = updated.get(rowIndex);
+                        AutismSessionState.Inner_CachePool target = updated.get(rowIndex);
                         if (target != null && target.init_Packet != null) {
-                           target.init(target.init_Z() ? ck.Inner_BufferHelper.REGENERATE : ck.Inner_BufferHelper.EXACT);
+                           target.init(target.init_Z() ? AutismSessionState.Inner_BufferHelper.REGENERATE : AutismSessionState.Inner_BufferHelper.EXACT);
                            this.write(updated);
                         }
                      }
@@ -3941,12 +3941,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, autismclient.gui.f.b.k.init(this.init_Font, info, w, font, -1), font, UiColorPalette.bind(), x, y - 10, false);
       int[] topBtns = this.init_IArr_I(x, w, false, "From Queue", "Paste Base64");
       this.init_V_GuiGraphicsExtract(ctx, topBtns[0], topY, topBtns[1], btnH, "From Queue", mx, my, () -> {
-         List<ck.Inner_CachePool> queue = ck.init_ck().load_List();
+         List<AutismSessionState.Inner_CachePool> queue = AutismSessionState.init_ck().load_List();
          this.write(queue);
          AutismClientMessaging.sendPrefixed("Loaded " + this.read_List().size() + " packets from queue");
       });
       this.init_V_GuiGraphicsExtract(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
-         List<ck.Inner_CachePool> pasted = MacroClipboardCodec.read();
+         List<AutismSessionState.Inner_CachePool> pasted = MacroClipboardCodec.read();
          if (pasted != null && !pasted.isEmpty()) {
             this.write(pasted);
             AutismClientMessaging.sendPrefixed("Pasted " + pasted.size() + " packets");
@@ -3964,11 +3964,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ctx, bottomBtns[2], bottomY, bottomBtns[3], btnH, gbreakLbl, ByteReader.Inner_StreamUtil.SECONDARY, !this.close_Z, mx, my, () -> {
             if (!this.close_Z) {
                final int session = this.auditEditSession;
-               ck.init_ck().init_V_Runnable(() -> init_Minecraft.execute(() -> {
+               AutismSessionState.init_ck().init_V_Runnable(() -> init_Minecraft.execute(() -> {
                   if (this.auditEditSession != session || this.init_CompoundTag == null) {
                      return;
                   }
-                  List<ck.Inner_CachePool> captured = ck.init_ck().sync_List();
+                  List<AutismSessionState.Inner_CachePool> captured = AutismSessionState.init_ck().sync_List();
                   this.write(captured);
                   AutismClientMessaging.sendPrefixed(captured.isEmpty() ? "GBreak capture finished with no packet" : "GBreak packet captured");
                }));
@@ -6918,7 +6918,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void sync_V(String fieldKey) {
       if (this.init_MacroAction instanceof PacketClickAction) {
          this.write_Str = fieldKey;
-         D.init(target -> this.init_V_bo_StreamUtil(target));
+         ContainerCloseGuard.init(target -> this.init_V_bo_StreamUtil(target));
          this.index();
       }
    }
@@ -6965,7 +6965,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean pop_Z() {
-      return this.write_Str != null && D.load_Z();
+      return this.write_Str != null && ContainerCloseGuard.load_Z();
    }
 
    public boolean tick_Z() {
@@ -6973,7 +6973,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      D.read();
+      ContainerCloseGuard.read();
       this.write_Str = null;
       this.init_V_Z_Z(false, false);
       return true;
@@ -7309,9 +7309,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_6(GuiGraphicsExtractor ctx, FieldDef field, ThemedTextInputBox backingField, int x, int y, int w, int mx, int my) {
       backingField.read(-10000);
       backingField.write(-10000);
-      List<cY.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.aN.init_aN().init_List_Str(""));
-      if (backingField.load_Str() != null && !backingField.load_Str().isBlank() && autismclient.util.aN.init_aN().init_aM_Str(backingField.load_Str()) == null) {
-         macros.add(0, new cY.Inner_DataUtil("", new AutismMacro(backingField.load_Str()), 0, false));
+      List<MacroFolderLayout.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.MacroLibraryManager.init_aN().init_List_Str(""));
+      if (backingField.load_Str() != null && !backingField.load_Str().isBlank() && autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(backingField.load_Str()) == null) {
+         macros.add(0, new MacroFolderLayout.Inner_DataUtil("", new AutismMacro(backingField.load_Str()), 0, false));
       }
 
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
@@ -7338,7 +7338,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int first = viewport.pop();
 
          for (int i = first; i < macros.size() && i <= viewport.tick(); i++) {
-            cY.Inner_DataUtil folderRow = macros.get(i);
+            MacroFolderLayout.Inner_DataUtil folderRow = macros.get(i);
             String macroName = folderRow.init_Str();
             int iy = viewport.init_I(i);
             if (iy != -2147483648) {
@@ -7353,7 +7353,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.valid_List
                         .add(
                            new ActionEditorOverlay.Inner_StreamUtil(
-                              x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.aN.init_aN().init_V_Str(folderRow.load_Str())
+                              x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.MacroLibraryManager.init_aN().init_V_Str(folderRow.load_Str())
                            )
                         );
                   }
@@ -7861,7 +7861,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          for (int i = firstSel; i < sel.size() && i <= catSelViewport.tick(); i++) {
             int siy = catSelViewport.init_I(i);
             if (siy != -2147483648) {
-               String display = cc.load(sel.get(i));
+               String display = RegistryDisplayNameCache.load(sel.get(i));
                autismclient.gui.macro.editor.a.CachePool.init(
                   ctx,
                   this.init_Font,
@@ -7914,7 +7914,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<String> filtered = autismclient.gui.macro.editor.a.CachePool.load(
          pop_List(),
          this.pop_Map.computeIfAbsent(key + "_catalog", ignored -> new ArrayList<>()),
-         idx -> init_Z_Str_StrArr(filter, idx, clear_Str_Str(idx), cc.load(idx))
+         idx -> init_Z_Str_StrArr(filter, idx, clear_Str_Str(idx), RegistryDisplayNameCache.load(idx))
       );
       int catItemW = w - 5 - 1;
       EventBus catViewport = this.init_EventBus_Map(this.close_Map, key, x, cy, w, 60, 13, 5);
@@ -7927,7 +7927,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int iy = catViewport.init_I(i);
          if (iy != -2147483648) {
             String id = filtered.get(i);
-            String display = cc.load(id);
+            String display = RegistryDisplayNameCache.load(id);
             boolean already = sel.contains(id);
             boolean hov = mx >= x && mx < x + catItemW && my >= iy && my < iy + 13;
             autismclient.gui.macro.editor.a.CachePool.init(
@@ -8176,7 +8176,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.push_V();
       this.sync_Z = this.write_Z;
       this.write_Z = false;
-      ck.init_ck().cache(true);
+      AutismSessionState.init_ck().cache(true);
    }
 
    private void close_V(String key) {
@@ -8216,7 +8216,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void get(boolean cancelGBreak) {
-      ck state = ck.init_ck();
+      AutismSessionState state = AutismSessionState.init_ck();
       state.read_V_Runnable(null);
       state.init_V_Consumer(null);
       state.init_V_BiConsumer(null);
@@ -8231,8 +8231,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_Z_Z(boolean reopenInventory, boolean closeCurrentScreen) {
       this.flags();
       this.get(false);
-      ck.init_ck().state(false);
-      ck.init_ck().cache(false);
+      AutismSessionState.init_ck().state(false);
+      AutismSessionState.init_ck().cache(false);
       this.write_Z = this.sync_Z;
       this.sync_Z = false;
       this.valid_List.clear();
@@ -8284,7 +8284,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.flags();
       this.sync_Z = false;
       this.get(true);
-      ck.init_ck().cache(false);
+      AutismSessionState.init_ck().cache(false);
       this.level();
       if (this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE) {
          autismclient.util.BlockPreviewRenderer.load();
@@ -8317,7 +8317,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_MapStore = null;
       this.init_StreamUtil.init_V();
       if (this.write_Str != null) {
-         D.read();
+         ContainerCloseGuard.read();
          this.write_Str = null;
       }
 
@@ -10457,7 +10457,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             : load_ArrayUtil_ArrayUtil(this.init_ArrayUtil_Slot(slot, itemName, registryId, visibleSlot));
          if (!captured.update()) {
             String mode = this.tick_Str("mode");
-            boolean playerInventorySlot = autismclient.util.aw.init_Z(init_Minecraft, slot);
+            boolean playerInventorySlot = autismclient.util.InventorySlotHelper.init_Z(init_Minecraft, slot);
             if ("LOOT".equals(mode) && playerInventorySlot) {
                return new ActionEditorOverlay.Inner_DataUtil(false, "Loot slot numbers must be chest/GUI slots - pick an item to add it by name", -38037);
             }
@@ -10915,7 +10915,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return false;
    }
 
-   private List<ck.Inner_CachePool> read_List() {
+   private List<AutismSessionState.Inner_CachePool> read_List() {
       if (this.init_CompoundTag == null) {
          return new ArrayList<>();
       }
@@ -10925,11 +10925,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return new ArrayList<>(action.packets);
    }
 
-   private void write(List<ck.Inner_CachePool> packets) {
+   private void write(List<AutismSessionState.Inner_CachePool> packets) {
       if (this.init_CompoundTag != null) {
          ListTag packetList = new ListTag();
          if (packets != null) {
-            for (ck.Inner_CachePool qp : packets) {
+            for (AutismSessionState.Inner_CachePool qp : packets) {
                CompoundTag packetTag = MacroClipboardCodec.init(qp);
                if (packetTag != null) {
                   packetList.add(packetTag);
@@ -10942,14 +10942,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String push_Str() {
-      List<ck.Inner_CachePool> packets = this.read_List();
+      List<AutismSessionState.Inner_CachePool> packets = this.read_List();
       if (packets.isEmpty()) {
          return "Packets: 0";
       }
 
       String autoName = "";
 
-      for (ck.Inner_CachePool qp : packets) {
+      for (AutismSessionState.Inner_CachePool qp : packets) {
          if (qp != null && qp.init_Packet != null) {
             autoName = PacketNameResolver.init_Str_Packet(qp.init_Packet);
             break;
@@ -10963,9 +10963,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_ck_CachePool(ck.Inner_CachePool packet) {
+   private void init_V_ck_CachePool(AutismSessionState.Inner_CachePool packet) {
       if (this.init_CompoundTag != null && packet != null) {
-         List<ck.Inner_CachePool> single = Collections.singletonList(packet);
+         List<AutismSessionState.Inner_CachePool> single = Collections.singletonList(packet);
          String base64 = MacroClipboardCodec.init_Str(single);
          if (base64 != null && !base64.isBlank()) {
             this.init_CompoundTag.putString("packetData", base64);
@@ -10993,7 +10993,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void bind() {
       if (this.put_Z()) {
-         ck state = ck.init_ck();
+         AutismSessionState state = AutismSessionState.init_ck();
          this.init_Screen = init_Minecraft.gui.screen();
          this.index();
          state.read_V_Runnable(() -> {
@@ -11016,7 +11016,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (this.auditEditSession != session || this.init_CompoundTag == null) {
                return;
             }
-            List<ck.Inner_CachePool> captured = ck.init_ck().sync_List();
+            List<AutismSessionState.Inner_CachePool> captured = AutismSessionState.init_ck().sync_List();
             if (!captured.isEmpty()) {
                this.write(Collections.singletonList(captured.get(0)));
                this.init_CompoundTag.putString("customName", "GBreak");
@@ -11045,7 +11045,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.put_Z() && this.init_MacroAction instanceof LookAtBlockAction) {
          Screen previousScreen = init_Minecraft.gui.screen();
          this.index();
-         ck state = ck.init_ck();
+         AutismSessionState state = AutismSessionState.init_ck();
          state.read_V_Runnable(() -> {
             if (previousScreen != null) {
                OverlayScreenController.init_V(init_Minecraft, previousScreen);
@@ -11098,7 +11098,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (vp != null) {
             vp.read_V(-1);
          }
-      }, cc::write, "(any sound - add to filter)");
+      }, RegistryDisplayNameCache::write, "(any sound - add to filter)");
       ThemedTextInputBox search = this.flush_Map.get("soundIds");
       if (search != null) {
          search.read(x);
@@ -11109,14 +11109,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       cy += 18;
       String filter = search != null ? search.load_Str().trim().toLowerCase() : "";
-      List<String> filtered = this.init_List_Str_2("wait_sound_search", open_List(), filter, cc::write);
+      List<String> filtered = this.init_List_Str_2("wait_sound_search", open_List(), filter, RegistryDisplayNameCache::write);
       this.init_V_GuiGraphicsExtract(ctx, x, cy, w, mx, my, "wait_sound_search", filtered, 6, value -> {
          if (selected.contains(value)) {
             selected.remove(value);
          } else {
             selected.add(value);
          }
-      }, selected::contains, cc::write);
+      }, selected::contains, RegistryDisplayNameCache::write);
    }
 
    private void pop(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
@@ -11149,14 +11149,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_V_GuiGraphicsExtract(ctx, modeX + modeW + 2, cy, capW, 13, "CAP", mx, my, this::x);
       cy += 18;
       String filter = search != null ? search.load_Str().trim().toLowerCase() : "";
-      List<String> filtered = this.init_List_Str_2("wait_entity_search", poll_List(), filter, cc::read);
+      List<String> filtered = this.init_List_Str_2("wait_entity_search", poll_List(), filter, RegistryDisplayNameCache::read);
       this.init_V_GuiGraphicsExtract(ctx, x, cy, w, mx, my, "wait_entity_search", filtered, 4, value -> {
          if (selected.contains(value)) {
             selected.remove(value);
          } else {
             selected.add(value);
          }
-      }, selected::contains, cc::read);
+      }, selected::contains, RegistryDisplayNameCache::read);
       cy += 66;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Entities", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 13;
@@ -11336,7 +11336,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_ByteReader_GuiGraphicsExtract(ctx, capBtnX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
          cy += 18;
          String filter = search != null ? search.load_Str().trim().toLowerCase() : "";
-         List<String> filtered = this.init_List_Str_2("store_items_search", push_List(), filter, cc::init);
+         List<String> filtered = this.init_List_Str_2("store_items_search", push_List(), filter, RegistryDisplayNameCache::init);
          this.init_V_GuiGraphicsExtract(ctx, x, cy, w, mx, my, "store_items_search", filtered, 6, value -> {
             if (selected.contains(value)) {
                selected.remove(value);
@@ -11346,7 +11346,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             this.open_Map.put("store_items_selected", -1);
             this.sync_Map.put("targetItems", this.init_List_Str("targetItems"));
-         }, selected::contains, cc::init);
+         }, selected::contains, RegistryDisplayNameCache::init);
          cy += 82;
          cy = this.init_I_GuiGraphicsExtract(
             ctx, x, cy, w, "Pick on an item adds it by name, from any slot on the screen. Ctrl+pick or an empty slot adds that exact slot."
@@ -11839,7 +11839,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          vp.load_V(0);
       }
 
-      for (bO.Inner_StreamUtil player : bO.init(init_Minecraft)) {
+      for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(init_Minecraft)) {
          if (player != null && player.init_Str() != null && !player.init_Str().isBlank() && !this.init_Z_List_Str(this.start_List, player.init_Str())) {
             this.start_List.add(player.init_Str());
             if (player.init_Z()) {
@@ -11852,7 +11852,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       BackgroundTaskExecutor.init_Future_Str_Runnable("pay-scan-probe", () -> {
-         List<String> probed = bN.init(init_Minecraft, true);
+         List<String> probed = OnlinePlayerCollector.init(init_Minecraft, true);
          if (!probed.isEmpty()) {
             init_Minecraft.execute(() -> {
                boolean changed = false;
@@ -12337,14 +12337,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_V_GuiGraphicsExtract(ctx, modeX + modeW + 2, cy, capW, 13, "CAP", mx, my, this::a);
       cy += 18;
       String filter = search != null ? search.load_Str().trim().toLowerCase() : "";
-      List<String> filtered = this.init_List_Str_2("look_at_entity_search", poll_List(), filter, cc::read);
+      List<String> filtered = this.init_List_Str_2("look_at_entity_search", poll_List(), filter, RegistryDisplayNameCache::read);
       this.init_V_GuiGraphicsExtract(ctx, x, cy, w, mx, my, "look_at_entity_search", filtered, 4, value -> {
          if (selected.contains(value)) {
             selected.remove(value);
          } else {
             selected.add(value);
          }
-      }, selected::contains, cc::read);
+      }, selected::contains, RegistryDisplayNameCache::read);
       cy += 66;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Nearby Entities", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 13;
@@ -12716,10 +12716,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<String> write_List() {
       long now = System.currentTimeMillis();
       if (this.value_List == null || now - this.update_J > 500L) {
-         List<bO.Inner_StreamUtil> players = bO.init(init_Minecraft);
+         List<TabPlayerListParser.Inner_StreamUtil> players = TabPlayerListParser.init(init_Minecraft);
          List<String> names = new ArrayList<>(players.size());
 
-         for (bO.Inner_StreamUtil player : players) {
+         for (TabPlayerListParser.Inner_StreamUtil player : players) {
             names.add(player.init_Str());
          }
 
@@ -13898,11 +13898,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void k() {
-      List<ck.Inner_CachePool> queue = ck.init_ck().load_List();
+      List<AutismSessionState.Inner_CachePool> queue = AutismSessionState.init_ck().load_List();
       if (queue != null && !queue.isEmpty()) {
          int before = this.init_List_Z(true).size() + this.init_List_Z(false).size();
 
-         for (ck.Inner_CachePool queuedPacket : queue) {
+         for (AutismSessionState.Inner_CachePool queuedPacket : queue) {
             if (queuedPacket != null && queuedPacket.init_Packet != null) {
                Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)queuedPacket.init_Packet.getClass();
                if (PacketTypeRegistry.load().contains(packetClass)) {
@@ -14605,7 +14605,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.put_Z() && this.init_MacroAction instanceof WaitForEntityAction) {
          Screen previousScreen = init_Minecraft.gui.screen();
          this.index();
-         ck state = ck.init_ck();
+         AutismSessionState state = AutismSessionState.init_ck();
          state.read_V_Runnable(() -> {
             if (previousScreen != null) {
                OverlayScreenController.init_V(init_Minecraft, previousScreen);
@@ -14643,7 +14643,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private static String clear_Str_Str(String value) {
-      return cc.sync(value);
+      return RegistryDisplayNameCache.sync(value);
    }
 
    private String reset_Str(String entry) {
@@ -14652,7 +14652,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       } else if (entry.startsWith("~")) {
          String[] parts = entry.split("~", 4);
          String rawName = parts.length >= 4 ? parts[3] : "";
-         String type = parts.length >= 3 ? cc.read(parts[2]) : "?";
+         String type = parts.length >= 3 ? RegistryDisplayNameCache.read(parts[2]) : "?";
          String uuid = parts.length >= 2 ? parts[1] : "";
          String suffix = uuid.length() >= 4 ? uuid.substring(uuid.length() - 4) : uuid;
          String name = rawName == null ? "" : rawName.trim();
@@ -14660,7 +14660,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ? name + " (" + type + " #" + suffix + ")"
             : type + " #" + suffix;
       } else {
-         return cc.read(entry);
+         return RegistryDisplayNameCache.read(entry);
       }
    }
 
@@ -15082,13 +15082,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void A() {
-      List<ck.Inner_CachePool> queue = ck.init_ck().load_List();
+      List<AutismSessionState.Inner_CachePool> queue = AutismSessionState.init_ck().load_List();
       if (queue != null && !queue.isEmpty()) {
          List<String> targets = this.close_List();
          List<String> merged = this.init_List_List(targets);
          int before = merged.size();
 
-         for (ck.Inner_CachePool queuedPacket : queue) {
+         for (AutismSessionState.Inner_CachePool queuedPacket : queue) {
             String target = this.init_Str_ck_CachePool(queuedPacket);
             if (!target.isEmpty() && !merged.contains(target)) {
                merged.add(target);
@@ -15106,7 +15106,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_ck_CachePool(ck.Inner_CachePool queuedPacket) {
+   private String init_Str_ck_CachePool(AutismSessionState.Inner_CachePool queuedPacket) {
       if (queuedPacket != null && queuedPacket.init_Packet != null) {
          Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)queuedPacket.init_Packet.getClass();
          if (PacketTypeRegistry.load().contains(packetClass)) {
@@ -15813,7 +15813,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return this.init_MapStore != null
          && this.f_j_I >= 0
          && this.f_j_I < this.init_MapStore.itemNames.size()
-         && this.init_MapStore.init_N_I(this.f_j_I) == N.PICKUP_ALL;
+         && this.init_MapStore.init_N_I(this.f_j_I) == ContainerClickType.PICKUP_ALL;
    }
 
    private int next_I() {
@@ -16039,7 +16039,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
-         ck state = ck.init_ck();
+         AutismSessionState state = AutismSessionState.init_ck();
          state.read_V_Runnable(() -> this.init_V_Z_Z(true, false));
          if (field.captureMode() == StreamUtil.BLOCK_ID || field.captureMode() == StreamUtil.BLOCK_CATALOG) {
             state.init_V_Consumer(pos -> {
@@ -16090,7 +16090,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   OverlayScreenController.init_V(init_Minecraft, null);
                }
             });
-            ck state = ck.init_ck();
+            AutismSessionState state = AutismSessionState.init_ck();
             state.state(this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PLACE);
             state.read_V_Runnable(() -> {
                state.state(false);
@@ -16151,7 +16151,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                OverlayScreenController.init_V(init_Minecraft, null);
             }
          });
-         ck state = ck.init_ck();
+         AutismSessionState state = AutismSessionState.init_ck();
          state.read_V_Runnable(() -> this.init_V_Z_Z(true, false));
          state.init_V_BiConsumer((pos, direction) -> {
             this.init_V_Str_BlockPos("blockPos", pos);

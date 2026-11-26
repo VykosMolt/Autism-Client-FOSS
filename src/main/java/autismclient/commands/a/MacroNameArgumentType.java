@@ -2,7 +2,7 @@ package autismclient.commands.a;
 
 import autismclient.commands.AutismCommandSource;
 import autismclient.util.AutismMacro;
-import autismclient.util.aN;
+import autismclient.util.MacroLibraryManager;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -48,7 +48,7 @@ public class MacroNameArgumentType implements ArgumentType<String> {
    }
 
    private static List<MacroNameArgumentType.Inner_DataUtil> init_List() {
-      aN manager = aN.init_aN();
+      MacroLibraryManager manager = MacroLibraryManager.init_aN();
       long revision = manager.init_J();
       List<MacroNameArgumentType.Inner_DataUtil> hit = init_List;
       if (init_J == revision) {

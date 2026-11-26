@@ -13,7 +13,7 @@ public final class GuiDesyncHelper {
 
    public static boolean init(Minecraft mc, boolean notify) {
       if (mc != null && mc.gui.screen() != null && mc.player != null) {
-         ck.init_ck().init_V_Screen_AbstractContainerM(mc.gui.screen(), mc.player.containerMenu);
+         AutismSessionState.init_ck().init_V_Screen_AbstractContainerM(mc.gui.screen(), mc.player.containerMenu);
          if (notify) {
             bi.init(init(), -13248397);
          }
@@ -59,7 +59,7 @@ public final class GuiDesyncHelper {
                   mc.gui.setScreen(null);
                }
             } else if (mc.player != null && mc.player.containerMenu != null && mc.player.containerMenu != mc.player.inventoryMenu) {
-               ck.init_ck().next(true);
+               AutismSessionState.init_ck().next(true);
                mc.player.closeContainer();
                if (notify) {
                   AutismClientMessaging.sendPrefixed("GUI closed without packet.");

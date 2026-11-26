@@ -2,8 +2,8 @@ package autismclient.modules;
 
 import autismclient.ai.cc;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.bA;
-import autismclient.util.cd;
+import autismclient.util.GridWalkNavigator;
+import autismclient.util.RemoteViewController;
 import java.util.Locale;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
@@ -103,8 +103,8 @@ public final class FreecamController {
          Entity startingView = init_Minecraft.getCameraEntity() == null ? init_Minecraft.player : init_Minecraft.getCameraEntity();
          float startingYaw = startingView.getYRot();
          float startingPitch = startingView.getXRot();
-         if (cd.init_Z()) {
-            cd.init(false);
+         if (RemoteViewController.init_Z()) {
+            RemoteViewController.init(false);
          }
 
          load_Z = shouldReloadChunks;
@@ -341,7 +341,7 @@ public final class FreecamController {
          }
 
          if (released) {
-            bA.read();
+            GridWalkNavigator.read();
          }
       }
    }

@@ -2,8 +2,8 @@ package autismclient.modules;
 
 import autismclient.api.module.IntSetting;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cd;
-import autismclient.util.ck;
+import autismclient.util.RemoteViewController;
+import autismclient.util.AutismSessionState;
 import autismclient.util.macro.MacroExecutor;
 import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.registries.Registries;
@@ -81,7 +81,7 @@ public final class TotemHitModule extends Module {
          this.load = best;
          this.init_ItemStack = MC.player.getInventory().getItem(best).copy();
          this.init_I = MC.player.getInventory().getSelectedSlot();
-         this.read = ck.init_ck().state_I();
+         this.read = AutismSessionState.init_ck().state_I();
          this.write = -2147483648;
          this.init_Z = false;
          return true;
@@ -103,7 +103,7 @@ public final class TotemHitModule extends Module {
          && !MC.player.isHandsBusy()
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && !AutoTotemModule.init_Z_6()
          && !AutoArmorModule.init_Z_20()
@@ -115,7 +115,7 @@ public final class TotemHitModule extends Module {
    public void preMovementTick() {
       if (!AutismLiteVariant.enabled() && this.init_LivingEntity != null) {
          if (MC.player != null && MC.level == this.init_Obj) {
-            int tick = ck.init_ck().state_I();
+            int tick = AutismSessionState.init_ck().state_I();
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.write != -2147483648 && selected != this.load) {
                if (!CrystalAuraModule.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected) && !KillAuraModule.load_Z_I_3(selected)) {
@@ -151,7 +151,7 @@ public final class TotemHitModule extends Module {
                            && current.getEntity() == this.init_LivingEntity,
                         () -> {
                            this.init_Z = true;
-                           this.update = ck.init_ck().state_I() + 1 + (this.integer("return-delay") + 49) / 50;
+                           this.update = AutismSessionState.init_ck().state_I() + 1 + (this.integer("return-delay") + 49) / 50;
                         }
                      )) {
                         // Not queued: stop cancelling clicks and return to the totem next tick.
@@ -176,7 +176,7 @@ public final class TotemHitModule extends Module {
    private boolean init(int slot) {
       if (!autismclient.util.InventorySlotArbiter.init(slot, "totem-hit") && autismclient.util.InventorySlotArbiter.write_Z("totem-hit")) {
          try {
-            autismclient.util.aw.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.init_V(MC, slot);
          } finally {
             autismclient.util.InventorySlotArbiter.read_V("totem-hit");
          }

@@ -475,7 +475,7 @@ public class OverlayManager {
          this.load(true);
          this.init_cX = overlay;
          this.read_Z = true;
-         ck.init_ck().init_V_Str(overlay.init_Str());
+         AutismSessionState.init_ck().init_V_Str(overlay.init_Str());
          this.get();
          this.tick();
          this.pop();
@@ -498,12 +498,12 @@ public class OverlayManager {
          this.push();
          this.tick();
       } else {
-         List<String> savedOrder = ck.init_ck().init_List();
+         List<String> savedOrder = AutismSessionState.init_ck().init_List();
          if (savedOrder.isEmpty()) {
             this.push();
             this.tick();
          } else {
-            String focusedId = ck.init_ck().init_Str();
+            String focusedId = AutismSessionState.init_ck().init_Str();
             Map<String, Integer> positions = new HashMap<>();
 
             for (int i = 0; i < savedOrder.size(); i++) {
@@ -525,7 +525,7 @@ public class OverlayManager {
    }
 
    private void push() {
-      String focusedId = ck.init_ck().init_Str();
+      String focusedId = AutismSessionState.init_ck().init_Str();
       if (focusedId.isEmpty()) {
          this.init_cX = null;
       } else {
@@ -551,7 +551,7 @@ public class OverlayManager {
          }
       }
 
-      ck.init_ck().init_V_List(order);
+      AutismSessionState.init_ck().init_V_List(order);
    }
 
    private void tick() {
@@ -662,7 +662,7 @@ public class OverlayManager {
          return null;
       }
 
-      OverlayBounds persisted = ck.init_ck().init_cH_Str(overlay.init_Str());
+      OverlayBounds persisted = AutismSessionState.init_ck().init_cH_Str(overlay.init_Str());
       if (persisted == null) {
          return current;
       }
@@ -938,7 +938,7 @@ public class OverlayManager {
       if (topOverlay == null) {
          this.set();
          this.init_cX = null;
-         ck.init_ck().init_V_Str("");
+         AutismSessionState.init_ck().init_V_Str("");
          this.update_cX = null;
          this.sync_Z = false;
          this.init_cH = null;
@@ -1195,7 +1195,7 @@ public class OverlayManager {
          this.init_ArrayUtil(focusedTextOverlay).read(keyCode, scanCode, modifiers);
          this.open(focusedTextOverlay);
          this.init_cX = focusedTextOverlay;
-         ck.init_ck().init_V_Str(focusedTextOverlay.init_Str());
+         AutismSessionState.init_ck().init_V_Str(focusedTextOverlay.init_Str());
          return true;
       } else {
          AutismOverlay keyboardTarget = this.load_cX();
@@ -1219,7 +1219,7 @@ public class OverlayManager {
             this.init_ArrayUtil(focusedTextOverlay).init(chr, modifiers);
             this.open(focusedTextOverlay);
             this.init_cX = focusedTextOverlay;
-            ck.init_ck().init_V_Str(focusedTextOverlay.init_Str());
+            AutismSessionState.init_ck().init_V_Str(focusedTextOverlay.init_Str());
             return true;
          } else {
             AutismOverlay keyboardTarget = this.load_cX();
@@ -1286,7 +1286,7 @@ public class OverlayManager {
    public void open() {
       this.set();
       this.init_cX = null;
-      ck.init_ck().init_V_Str("");
+      AutismSessionState.init_ck().init_V_Str("");
    }
 
    private autismclient.gui.f.b.ArrayUtil init_ArrayUtil(AutismOverlay overlay) {

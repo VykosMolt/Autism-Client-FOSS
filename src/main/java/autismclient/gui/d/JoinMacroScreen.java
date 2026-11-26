@@ -2,14 +2,14 @@ package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismMacroEditorOverlay;
-import autismclient.util.aA;
+import autismclient.util.JoinMacroController;
 import autismclient.util.AutismMacro;
-import autismclient.util.aN;
+import autismclient.util.MacroLibraryManager;
 import autismclient.util.bi;
 import autismclient.util.OverlayManager;
 import autismclient.util.cA;
 import autismclient.util.AutismOverlay;
-import autismclient.util.cY;
+import autismclient.util.MacroFolderLayout;
 import autismclient.util.ThemePaletteManager;
 import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
@@ -148,8 +148,8 @@ public final class JoinMacroScreen extends KeyHolder {
 
    private void load_V_4() {
       if (this.minecraft != null) {
-         this.minecraft.gui.setScreen(new LoginPasswordScreen(this, aA.init_Map(), updated -> {
-            if (!aA.init(updated)) {
+         this.minecraft.gui.setScreen(new LoginPasswordScreen(this, JoinMacroController.init_Map(), updated -> {
+            if (!JoinMacroController.init(updated)) {
                bi.write("Secure encryption is unavailable; values were not saved.");
             }
          }));
@@ -161,21 +161,21 @@ public final class JoinMacroScreen extends KeyHolder {
       int y = this.add();
       int ctl = this.write_I_2();
       autismclient.gui.f.b.k.init(graphics, this.font, "Execution Method", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.init_I_I_I_2(y, ctl), false);
-      aA.Inner_StreamUtil[] timings = aA.Inner_StreamUtil.values();
+      JoinMacroController.Inner_StreamUtil[] timings = JoinMacroController.Inner_StreamUtil.values();
       List<String> methodOptions = new ArrayList<>();
 
-      for (aA.Inner_StreamUtil t : timings) {
+      for (JoinMacroController.Inner_StreamUtil t : timings) {
          methodOptions.add(t.load());
       }
 
-      int methodSel = aA.init_aA_StreamUtil().ordinal();
+      int methodSel = JoinMacroController.init_aA_StreamUtil().ordinal();
       int dropdownX = x + this.read_I_2() + 8;
       int dropdownW = this.init_I_List(methodOptions);
       this.init_SyncManager = this.init_SyncManager_SyncManager(
-         this.init_SyncManager, dropdownX, y, dropdownW, ctl, methodOptions, methodSel, idx -> aA.init(timings[Math.max(0, Math.min(idx, timings.length - 1))])
+         this.init_SyncManager, dropdownX, y, dropdownW, ctl, methodOptions, methodSel, idx -> JoinMacroController.init(timings[Math.max(0, Math.min(idx, timings.length - 1))])
       );
       this.read_List.add(this.init_SyncManager);
-      boolean keep = aA.init_Z();
+      boolean keep = JoinMacroController.init_Z();
       this.init_V_I(
          dropdownX + dropdownW + 2,
          y,
@@ -184,19 +184,19 @@ public final class JoinMacroScreen extends KeyHolder {
          keep ? "Stays Enabled" : "Clears After",
          keep ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
          true,
-         () -> aA.load(!aA.init_Z())
+         () -> JoinMacroController.load(!JoinMacroController.init_Z())
       );
       int triggerRowY = this.clear();
       autismclient.gui.f.b.k.init(
          graphics, this.font, keep ? "Repeat On" : "Run On", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.init_I_I_I_2(triggerRowY, ctl), false
       );
-      aA.Inner_CachePool[] triggerOpts = this.init_aA_CachePoolArr();
+      JoinMacroController.Inner_CachePool[] triggerOpts = this.init_aA_CachePoolArr();
       List<String> triggerLabels = new ArrayList<>();
       int triggerSel = 0;
 
       for (int i = 0; i < triggerOpts.length; i++) {
          triggerLabels.add(this.init_Str_aA_CachePool(triggerOpts[i]));
-         if (triggerOpts[i] == aA.init_aA_CachePool()) {
+         if (triggerOpts[i] == JoinMacroController.init_aA_CachePool()) {
             triggerSel = i;
          }
       }
@@ -209,7 +209,7 @@ public final class JoinMacroScreen extends KeyHolder {
          ctl,
          triggerLabels,
          triggerSel,
-         idx -> aA.init(triggerOpts[Math.max(0, Math.min(idx, triggerOpts.length - 1))])
+         idx -> JoinMacroController.init(triggerOpts[Math.max(0, Math.min(idx, triggerOpts.length - 1))])
       );
       this.read_List.add(this.load_SyncManager);
    }
@@ -237,14 +237,14 @@ public final class JoinMacroScreen extends KeyHolder {
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int maxWidth) {
       int line = 12;
-      String selected = aA.init_Str();
+      String selected = JoinMacroController.init_Str();
       if (selected.isBlank()) {
          autismclient.gui.f.b.k.init(
             graphics, this.font, "Click a macro to select it.", autismclient.gui.f.a.DataUtil.init, ValueSink.close, x, this.init_I_I_I_2(y, line), false
          );
       } else {
          String selectedLine = "Selected: " + selected;
-         String modeLine = aA.load_Str();
+         String modeLine = JoinMacroController.load_Str();
          if (!this.init_Z_I(maxWidth)) {
             autismclient.gui.f.b.k.init(
                graphics, this.font, selectedLine + "  " + modeLine, autismclient.gui.f.a.DataUtil.init, ValueSink.open, x, this.init_I_I_I_2(y, line), false
@@ -275,12 +275,12 @@ public final class JoinMacroScreen extends KeyHolder {
    }
 
    private boolean init_Z_I(int maxWidth) {
-      String selected = aA.init_Str();
+      String selected = JoinMacroController.init_Str();
       if (selected.isBlank()) {
          return false;
       }
 
-      String combined = "Selected: " + selected + "  " + aA.load_Str();
+      String combined = "Selected: " + selected + "  " + JoinMacroController.load_Str();
       return autismclient.gui.f.b.k.init(this.font, combined, autismclient.gui.f.a.DataUtil.init, 0) > maxWidth;
    }
 
@@ -311,7 +311,7 @@ public final class JoinMacroScreen extends KeyHolder {
             graphics, this.font, "No macros found.", autismclient.gui.f.a.DataUtil.init, ValueSink.close, rowX + 8, this.init_I_I_I_2(this.size(), rowH), false
          );
       } else {
-         String selected = aA.init_Str();
+         String selected = JoinMacroController.init_Str();
          int max = Math.min(this.init_List.size(), this.read_I + visibleRows);
 
          for (int i = this.read_I; i < max; i++) {
@@ -439,13 +439,13 @@ public final class JoinMacroScreen extends KeyHolder {
          if (rowIndex >= 0) {
             JoinMacroScreen.Inner_StreamUtil row = this.init_List.get(rowIndex);
             if (row.init_cY_DataUtil.init_Z()) {
-               aN.init_aN().init_V_Str(row.init_cY_DataUtil.load_Str());
+               MacroLibraryManager.init_aN().init_V_Str(row.init_cY_DataUtil.load_Str());
                this.write_V_2();
                return true;
             }
 
-            String selected = aA.init_Str();
-            aA.init_V(row.init_Str.equalsIgnoreCase(selected) ? "" : row.init_Str);
+            String selected = JoinMacroController.init_Str();
+            JoinMacroController.init_V(row.init_Str.equalsIgnoreCase(selected) ? "" : row.init_Str);
             return true;
          }
       }
@@ -543,7 +543,7 @@ public final class JoinMacroScreen extends KeyHolder {
 
    private void read_V_2() {
       String query = this.init_Str();
-      long revision = aN.init_aN().init_J();
+      long revision = MacroLibraryManager.init_aN().init_J();
       if (this.init_Z || !query.equals(this.init_Str) || revision != this.init_J) {
          this.write_V_2();
       }
@@ -552,11 +552,11 @@ public final class JoinMacroScreen extends KeyHolder {
    private void write_V_2() {
       String query = this.init_Str();
       this.init_Str = query;
-      this.init_J = aN.init_aN().init_J();
+      this.init_J = MacroLibraryManager.init_aN().init_J();
       this.init_Z = false;
       this.init_List.clear();
 
-      for (cY.Inner_DataUtil item : aN.init_aN().init_List_Str(query)) {
+      for (MacroFolderLayout.Inner_DataUtil item : MacroLibraryManager.init_aN().init_List_Str(query)) {
          this.init_List
             .add(
                new JoinMacroScreen.Inner_StreamUtil(item.init_Str(), !item.init_Z() && item.init_aM().init_List != null ? item.init_aM().init_List.size() : 0, item)
@@ -571,8 +571,8 @@ public final class JoinMacroScreen extends KeyHolder {
    }
 
    private AutismMacro init_aM() {
-      String selected = aA.init_Str();
-      return selected.isBlank() ? null : aN.init_aN().init_aM_Str(selected);
+      String selected = JoinMacroController.init_Str();
+      return selected.isBlank() ? null : MacroLibraryManager.init_aN().init_aM_Str(selected);
    }
 
    private void init_V_aM_2(AutismMacro macro) {
@@ -580,7 +580,7 @@ public final class JoinMacroScreen extends KeyHolder {
       OverlayManager.init_bk().init_V_cX_cX_DataUtil(editor, AutismOverlay.Inner_DataUtil.HOST_SCREEN);
       editor.init_V_aM_Consumer_2(macro, saved -> {
          if (saved != null && saved.init_Str != null && !saved.init_Str.isBlank()) {
-            aA.init_V(saved.init_Str);
+            JoinMacroController.init_V(saved.init_Str);
             bi.init("Join macro selected: " + saved.init_Str, -10035062);
          }
       });
@@ -765,28 +765,28 @@ public final class JoinMacroScreen extends KeyHolder {
       this.read_I = Math.max(0, Math.min(maxScrollRows, Math.round((float)scrollPixels / this.sync())));
    }
 
-   private aA.Inner_CachePool[] init_aA_CachePoolArr() {
-      return aA.init_Z()
-         ? new aA.Inner_CachePool[]{
-            aA.Inner_CachePool.ANY,
-            aA.Inner_CachePool.SECOND,
-            aA.Inner_CachePool.THIRD,
-            aA.Inner_CachePool.FOURTH,
-            aA.Inner_CachePool.FIFTH,
-            aA.Inner_CachePool.SIXTH_PLUS
+   private JoinMacroController.Inner_CachePool[] init_aA_CachePoolArr() {
+      return JoinMacroController.init_Z()
+         ? new JoinMacroController.Inner_CachePool[]{
+            JoinMacroController.Inner_CachePool.ANY,
+            JoinMacroController.Inner_CachePool.SECOND,
+            JoinMacroController.Inner_CachePool.THIRD,
+            JoinMacroController.Inner_CachePool.FOURTH,
+            JoinMacroController.Inner_CachePool.FIFTH,
+            JoinMacroController.Inner_CachePool.SIXTH_PLUS
          }
-         : new aA.Inner_CachePool[]{
-            aA.Inner_CachePool.FIRST,
-            aA.Inner_CachePool.SECOND,
-            aA.Inner_CachePool.THIRD,
-            aA.Inner_CachePool.FOURTH,
-            aA.Inner_CachePool.FIFTH,
-            aA.Inner_CachePool.SIXTH_PLUS
+         : new JoinMacroController.Inner_CachePool[]{
+            JoinMacroController.Inner_CachePool.FIRST,
+            JoinMacroController.Inner_CachePool.SECOND,
+            JoinMacroController.Inner_CachePool.THIRD,
+            JoinMacroController.Inner_CachePool.FOURTH,
+            JoinMacroController.Inner_CachePool.FIFTH,
+            JoinMacroController.Inner_CachePool.SIXTH_PLUS
          };
    }
 
-   private String init_Str_aA_CachePool(aA.Inner_CachePool triggerJoin) {
-      return triggerJoin.init_Str_Z(aA.init_Z());
+   private String init_Str_aA_CachePool(JoinMacroController.Inner_CachePool triggerJoin) {
+      return triggerJoin.init_Str_Z(JoinMacroController.init_Z());
    }
 
    private record Inner_DataUtil(
@@ -804,6 +804,6 @@ public final class JoinMacroScreen extends KeyHolder {
       }
    }
 
-   private record Inner_StreamUtil(String init_Str, int init_I, cY.Inner_DataUtil init_cY_DataUtil) {
+   private record Inner_StreamUtil(String init_Str, int init_I, MacroFolderLayout.Inner_DataUtil init_cY_DataUtil) {
    }
 }

@@ -551,7 +551,7 @@ final class d {
             boolean init_Z(Entity mob) {
                int slot = af.read();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
-                  autismclient.util.aw.init_V(mc, slot);
+                  autismclient.util.InventorySlotHelper.init_V(mc, slot);
                }
 
                this.init_DataUtil.init_V_Vec3(autismclient.ai.a.DataUtil.load_Vec3_Entity(mob));

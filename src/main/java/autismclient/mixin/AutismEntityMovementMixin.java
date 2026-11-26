@@ -7,7 +7,7 @@ import autismclient.modules.FreecamController;
 import autismclient.modules.MovementModuleHooks;
 import autismclient.modules.NoPushModule;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
@@ -69,7 +69,7 @@ public class AutismEntityMovementMixin {
          if (FreecamController.init_Z()) {
             FreecamController.load(deltaYaw, deltaPitch);
             ci.cancel();
-         } else if (cd.init_Z()) {
+         } else if (RemoteViewController.init_Z()) {
             ci.cancel();
          } else if (!AutismLiteVariant.enabled()) {
             cc ai = cc.load_cc();

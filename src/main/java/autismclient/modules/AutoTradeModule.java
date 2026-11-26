@@ -802,7 +802,7 @@ public final class AutoTradeModule extends Module {
                   this.open = MC.player.getInventory().getSelectedSlot();
                }
 
-               this.poll = autismclient.util.aw.init(MC, BuiltInRegistries.ITEM.getKey(block.asItem()).toString(), this.open);
+               this.poll = autismclient.util.InventorySlotHelper.init(MC, BuiltInRegistries.ITEM.getKey(block.asItem()).toString(), this.open);
                return this.poll;
             }
          }
@@ -836,13 +836,13 @@ public final class AutoTradeModule extends Module {
          this.open = MC.player.getInventory().getSelectedSlot();
       }
 
-      autismclient.util.aw.init_V(MC, slot);
+      autismclient.util.InventorySlotHelper.init_V(MC, slot);
       this.poll = slot;
    }
 
    private void open() {
       if (MC.player != null && this.open >= 0 && MC.player.getInventory().getSelectedSlot() == this.poll) {
-         autismclient.util.aw.load_V(MC, this.open);
+         autismclient.util.InventorySlotHelper.load_V(MC, this.open);
       }
 
       this.open = this.poll = -1;

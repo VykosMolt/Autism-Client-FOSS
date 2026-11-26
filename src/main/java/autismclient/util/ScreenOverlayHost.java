@@ -89,7 +89,7 @@ public final class ScreenOverlayHost {
    }
 
    private void buildOverlays(Font font) {
-      aE.init_aE().flush(() -> {});
+      LanSyncManager.init_aE().flush(() -> {});
       this.lanSyncOverlay = AutismLANSyncOverlay.init_AutismLANSyncOverl_Font(font);
       this.macroListOverlay = new AutismMacroListOverlay(font);
       this.queueEditorOverlay = new AutismQueueEditorOverlay(font);

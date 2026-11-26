@@ -136,8 +136,8 @@ public final class GhostBlockModule extends Module {
       if (this.isEnabled() && MC != null && MC.player != null && MC.gameMode != null) {
          if (!this.init_Z_9()) {
             this.load_V_6();
-         } else if (!this.load_Z || autismclient.util.W.init_W_StreamUtil().load_GameType() != GameType.CREATIVE) {
-            this.load_Z = autismclient.util.W.init_W_DataUtil(GameType.CREATIVE).init_Z();
+         } else if (!this.load_Z || autismclient.util.FakeGamemodeManager.init_W_StreamUtil().load_GameType() != GameType.CREATIVE) {
+            this.load_Z = autismclient.util.FakeGamemodeManager.init_W_DataUtil(GameType.CREATIVE).init_Z();
          }
       }
    }
@@ -145,7 +145,7 @@ public final class GhostBlockModule extends Module {
    private void load_V_6() {
       if (this.load_Z) {
          this.load_Z = false;
-         autismclient.util.W.init_W_DataUtil();
+         autismclient.util.FakeGamemodeManager.init_W_DataUtil();
       }
    }
 

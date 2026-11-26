@@ -3,7 +3,7 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -24,7 +24,7 @@ public class DelayCommand extends Command {
    }
 
    private static int init(String state) {
-      boolean current = ck.init_ck().write_Z();
+      boolean current = AutismSessionState.init_ck().write_Z();
       if (state != null) {
          String lower = state.toLowerCase();
          if (!lower.equals("on")

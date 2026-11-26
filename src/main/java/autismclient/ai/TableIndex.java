@@ -8,7 +8,7 @@ import autismclient.ai.a.b;
 import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismClientLevelPredictionAccessor;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import autismclient.util.macro.MacroItemTarget;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -3085,7 +3085,7 @@ final class TableIndex {
             final TableIndex.Inner_StateCache init_TableIndex_StateCa = new TableIndex.Inner_StateCache();
             final Map<Long, Integer> init_Map = new HashMap<>();
             final Set<Long> read_Set = new HashSet<>();
-            U.Inner_CachePool init_U_CachePool;
+            BlockPlacementPlanner.Inner_CachePool init_U_CachePool;
             Predicate<AABB> init_Predicate;
             int close_I;
             int open_I;
@@ -3116,7 +3116,7 @@ final class TableIndex {
             long read_J;
             TableIndex.Inner_StreamUtil read_TableIndex_StreamU;
             Vec3 load_Vec3;
-            U.Inner_CachePool load_U_CachePool;
+            BlockPlacementPlanner.Inner_CachePool load_U_CachePool;
             int start_I;
             final JsonArray init_JsonArray = new JsonArray();
             final Set<String> sync_Set = new HashSet<>();
@@ -4279,7 +4279,7 @@ final class TableIndex {
                                                 }
 
                                                 String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
-                                                if (autismclient.util.aw.init(mc, MacroItemTarget.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
+                                                if (autismclient.util.InventorySlotHelper.init(mc, MacroItemTarget.write(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
                                                    if (schematic && ++this.node <= 20) {
                                                       autismclient.ai.a.AiMotionSafety.putAt_V();
                                                       return this.init_AiOperation_Result_5("Awaiting material: selecting " + itemId);
@@ -4339,20 +4339,20 @@ final class TableIndex {
                                                 } else {
                                                    Vec3 eye = mc.player.getEyePosition();
                                                    double reach = mc.player.blockInteractionRange();
-                                                   U.Inner_StateCache request = new U.Inner_StateCache(
-                                                         pos, eye, reach, U.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
+                                                   BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+                                                         pos, eye, reach, BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
                                                       )
                                                       .init_U_StateCache_Z(mc.player.isShiftKeyDown())
                                                       .load(schematic)
-                                                      .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(4));
-                                                   U.Inner_CachePool candidate = this.load_U_CachePool != null
+                                                      .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(4));
+                                                   BlockPlacementPlanner.Inner_CachePool candidate = this.load_U_CachePool != null
                                                       ? this.load_U_CachePool
                                                       : (
                                                          schematic
                                                             ? autismclient.ai.a.u.init(
                                                                mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, target), 72
                                                             )
-                                                            : U.init_U_CachePool(request)
+                                                            : BlockPlacementPlanner.init_U_CachePool(request)
                                                       );
                                                    if (candidate == null) {
                                                       this.init_V_2("no reachable support face");
@@ -4360,16 +4360,16 @@ final class TableIndex {
                                                    }
 
                                                    if (!TableIndex.init(TableIndex.init_Boolean(cell, target), candidate.init_BlockHitResult().getDirection())) {
-                                                      U.Inner_CachePool side = U.init_U_CachePool(
-                                                         new U.Inner_StateCache(
-                                                               pos, eye, reach, U.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
+                                                      BlockPlacementPlanner.Inner_CachePool side = BlockPlacementPlanner.init_U_CachePool(
+                                                         new BlockPlacementPlanner.Inner_StateCache(
+                                                               pos, eye, reach, BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND)
                                                             )
                                                             .init_U_StateCache_Z(mc.player.isShiftKeyDown())
                                                             .load(schematic)
                                                             .init_U_StateCache_EnumSet(
                                                                EnumSet.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)
                                                             )
-                                                            .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(4))
+                                                            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(4))
                                                       );
                                                       if (side != null) {
                                                          candidate = side;
@@ -4377,7 +4377,7 @@ final class TableIndex {
                                                    }
 
                                                    hit = this.init(cell, pos, target, candidate.init_BlockHitResult());
-                                                   if (!U.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
+                                                   if (!BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
                                                       this.init_V_2("shaped click does not land on the target cell");
                                                       return this.init_AiOperation_Result_5("Re-solving the placement click");
                                                    }
@@ -4389,7 +4389,7 @@ final class TableIndex {
                                                    BlockState supportState = mc.level.getBlockState(hit.getBlockPos());
                                                    boolean secondary = placementSneak
                                                       || supportState.hasBlockEntity()
-                                                      || U.init_Z(supportState, hit.getBlockPos())
+                                                      || BlockPlacementPlanner.init_Z(supportState, hit.getBlockPos())
                                                       || target instanceof ChestBlock
                                                       || supportState.getBlock() instanceof DoorBlock
                                                       || supportState.getBlock() instanceof TrapDoorBlock
@@ -6517,7 +6517,7 @@ final class TableIndex {
                               && (!protectedNow.contains(feet.below().asLong()) || !floorShape.isEmpty() && !(Math.abs(floorShape.max(Axis.Y) - 1.0) > 0.001))) {
                               Vec3 position = Vec3.atBottomCenterOf(feet);
                               if (mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(position.subtract(mc.player.position())))) {
-                                 U.Inner_CachePool proved = autismclient.ai.a.u.init(mc, pos, item, constraint, position, 48);
+                                 BlockPlacementPlanner.Inner_CachePool proved = autismclient.ai.a.u.init(mc, pos, item, constraint, position, 48);
                                  if (proved != null
                                     && (
                                        !floorShape.isEmpty()
@@ -7093,14 +7093,14 @@ final class TableIndex {
                   Item item = TableIndex.init_Block(cell).asItem();
                   if (this.init(item) != 0
                      && !autismclient.ai.a.u.init_Z_Minecraft(mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, TableIndex.init_Block(cell)))) {
-                     U.Inner_CachePool candidate = autismclient.ai.a.u.init(
+                     BlockPlacementPlanner.Inner_CachePool candidate = autismclient.ai.a.u.init(
                         mc, pos, item, this.init_u_DataUtil_TableIndex_StreamU_Block(cell, TableIndex.init_Block(cell)), 32
                      );
                      if (candidate == null || this.read(cell, pos)) {
                         return false;
                      }
 
-                     if (autismclient.util.aw.init(
+                     if (autismclient.util.InventorySlotHelper.init(
                            mc, MacroItemTarget.write(BuiltInRegistries.ITEM.getKey(item).toString()), mc.player.getInventory().getSelectedSlot()
                         )
                         < 0) {
@@ -7139,7 +7139,7 @@ final class TableIndex {
                         )) {
                         Item item = TableIndex.init_Block(cell).asItem();
                         if (TableIndex.init_Z_Item(item, mc.player.getMainHandItem(), init_Z_Minecraft_Item(mc, item))
-                           && U.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
+                           && BlockPlacementPlanner.init(new ItemStack(item), mc.player, InteractionHand.MAIN_HAND).lands(hit, pos)) {
                            BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)mc.level).autism$getBlockPredictionHandler();
                            int beforeSequence = prediction.currentSequence();
                            long revision = ca.init_J_BlockPos(pos);
@@ -8172,7 +8172,7 @@ final class TableIndex {
                   this.clear_Z = true;
                   autismclient.ai.a.AiMotionSafety.putAt_V();
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.load_I) {
-                     autismclient.util.aw.init_V(mc, this.load_I);
+                     autismclient.util.InventorySlotHelper.init_V(mc, this.load_I);
                   }
                }
             }

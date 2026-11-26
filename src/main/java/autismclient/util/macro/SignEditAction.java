@@ -1,8 +1,8 @@
 package autismclient.util.macro;
 
 import autismclient.compat263.Compat263;
-import autismclient.util.ck;
-import autismclient.util.cm;
+import autismclient.util.AutismSessionState;
+import autismclient.util.SignEditScreenAccessor;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -48,7 +48,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
                   }
                }
 
-               ck.init_ck().size(true);
+               AutismSessionState.init_ck().size(true);
                mc.getConnection()
                   .send(
                      Compat263.newSignUpdatePacket(
@@ -92,14 +92,14 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       if (this.targetMode == SignEditAction.Inner_StreamUtil.MANUAL_POS) {
          return new BlockPos(this.f_x_I, this.f_y_I, this.f_z_I);
       } else if (this.targetMode == SignEditAction.Inner_StreamUtil.LAST_INTERACTED_BLOCK) {
-         return ck.init_ck().init_BlockPos();
+         return AutismSessionState.init_ck().init_BlockPos();
       } else {
-         return mc.gui.screen() instanceof cm access ? access.autism$getSignPos() : null;
+         return mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$getSignPos() : null;
       }
    }
 
    private boolean init_Z_Minecraft_2(Minecraft mc) {
-      return this.targetMode == SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI && mc.gui.screen() instanceof cm access ? access.autism$isFrontText() : this.frontText;
+      return this.targetMode == SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI && mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$isFrontText() : this.frontText;
    }
 
    @Override

@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.g.ConnectionPrivacyRegistry;
 import autismclient.g.VanillaKnownPacksManager;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientConfigurationPacketListenerImpl;
@@ -35,7 +35,7 @@ public abstract class AutismClientConfigurationNetworkHandlerMixin {
          for (KnownPack knownPack : packet.knownPacks()) {
             if (knownPack != null) {
                if ("core".equals(knownPack.id())) {
-                  ck.init_ck().init_V_Str_Str(serverAddress, knownPack.version());
+                  AutismSessionState.init_ck().init_V_Str_Str(serverAddress, knownPack.version());
                   break;
                }
 
@@ -46,7 +46,7 @@ public abstract class AutismClientConfigurationNetworkHandlerMixin {
          }
 
          if (capturedVersion != null) {
-            ck.init_ck().init_V_Str_Str(serverAddress, capturedVersion);
+            AutismSessionState.init_ck().init_V_Str_Str(serverAddress, capturedVersion);
          }
 
          if (client != null && client.isSameThread()) {

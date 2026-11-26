@@ -4,8 +4,8 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.compat263.Compat263;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.O;
-import autismclient.util.aw;
+import autismclient.util.InventoryDropHelper;
+import autismclient.util.InventorySlotHelper;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -182,10 +182,10 @@ public class DropCommand extends Command {
       for (int inventorySlot = 0; inventorySlot < 36; inventorySlot++) {
          ItemStack stack = mc.player.getInventory().getItem(inventorySlot);
          if (!stack.isEmpty()) {
-            int handlerSlot = aw.load_I(mc, inventorySlot);
+            int handlerSlot = InventorySlotHelper.load_I(mc, inventorySlot);
             if (handlerSlot >= 0) {
                int stackCount = stack.getCount();
-               if (O.init(mc, handlerSlot, 0) > 0) {
+               if (InventoryDropHelper.init(mc, handlerSlot, 0) > 0) {
                   droppedItems += stackCount;
                   droppedStacks++;
                }
@@ -267,8 +267,8 @@ public class DropCommand extends Command {
          ItemStack stack = mc.player.getInventory().getItem(inventorySlot);
          if (!stack.isEmpty() && stack.getItem() == item) {
             int amount = Math.min(remaining, stack.getCount());
-            int handlerSlot = aw.load_I(mc, inventorySlot);
-            if (handlerSlot >= 0 && O.init(mc, handlerSlot, amount) != 0) {
+            int handlerSlot = InventorySlotHelper.load_I(mc, inventorySlot);
+            if (handlerSlot >= 0 && InventoryDropHelper.init(mc, handlerSlot, amount) != 0) {
                dropped += amount;
                remaining -= amount;
             }

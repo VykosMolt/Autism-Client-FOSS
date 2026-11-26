@@ -3,7 +3,7 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import java.util.LinkedHashSet;
@@ -52,7 +52,7 @@ public class XCarryCommand extends Command {
          AbstractContainerMenu container = p.containerMenu;
          int hotbar = p.getInventory().getSelectedSlot();
          int sourceSlotId = 36 + hotbar;
-         ck shared = ck.init_ck();
+         AutismSessionState shared = AutismSessionState.init_ck();
          boolean prevBypass = shared.close_Z();
          shared.flush(true);
 
@@ -110,7 +110,7 @@ public class XCarryCommand extends Command {
       }
    }
 
-   private static LinkedHashSet<Integer> init(ck shared) {
+   private static LinkedHashSet<Integer> init(AutismSessionState shared) {
       LinkedHashSet<Integer> slots = new LinkedHashSet<>();
       if (shared != null && shared.sync_Z()) {
          Set<Integer> existing = shared.init_Set();

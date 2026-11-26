@@ -147,10 +147,10 @@ final class B {
    static B.Inner_StreamUtil init(Block block) {
       if (block == Blocks.SWEET_BERRY_BUSH) {
          return B.Inner_StreamUtil.read;
-      } else if (autismclient.util.Y.load(block)) {
+      } else if (autismclient.util.FarmCropCatalog.load(block)) {
          return B.Inner_StreamUtil.write;
       } else {
-         return autismclient.util.Y.read(block) ? B.Inner_StreamUtil.load : B.Inner_StreamUtil.init;
+         return autismclient.util.FarmCropCatalog.read(block) ? B.Inner_StreamUtil.load : B.Inner_StreamUtil.init;
       }
    }
 
@@ -190,7 +190,7 @@ final class B {
 
    static BlockPos init(Function<BlockPos, BlockState> at, BlockPos pos) {
       BlockState state = at.apply(pos);
-      if (state != null && autismclient.util.Y.load(state.getBlock())) {
+      if (state != null && autismclient.util.FarmCropCatalog.load(state.getBlock())) {
          BlockPos base = pos;
 
          while (at.apply(base.below()) != null && at.apply(base.below()).is(state.getBlock())) {
@@ -897,7 +897,7 @@ final class B {
                            ClientPacketListener connection = this.init_Minecraft.getConnection();
                            PlayerInfo info = connection == null ? null : connection.getPlayerInfo(this.init_Minecraft.player.getUUID());
                            this.load_Map
-                              .put(w.cell().asLong(), this.init_Minecraft.player.tickCount + autismclient.util.ab.init(info == null ? 0 : info.getLatency()));
+                              .put(w.cell().asLong(), this.init_Minecraft.player.tickCount + autismclient.util.BlockBreakGraceCalc.init(info == null ? 0 : info.getLatency()));
                            this.init_ArrayDeque.addFirst(B.Inner_CachePool.replant(w.cell(), this.read_BlockPos, this.init_Direction));
                         }
 
@@ -1013,7 +1013,7 @@ final class B {
 
             boolean load(BlockPos pos) {
                return this.init_Minecraft.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) <= 25.0
-                  && autismclient.util.E.init_Z(this.init_Minecraft, pos);
+                  && autismclient.util.InteractionTargetRef.init_Z(this.init_Minecraft, pos);
             }
 
             boolean read(BlockPos pos) {
@@ -1147,7 +1147,7 @@ final class B {
                   this.write_BlockPos = null;
                   autismclient.ai.a.AiMotionSafety.putAt_V();
                   if (this.init_Minecraft.player != null && this.init_Minecraft.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.aw.init_V(this.init_Minecraft, this.init_I);
+                     autismclient.util.InventorySlotHelper.init_V(this.init_Minecraft, this.init_I);
                   }
                }
             }
@@ -1448,7 +1448,7 @@ final class B {
                BlockPos next = ground.offset(dx, 0, dz);
                if (seen.add(next.asLong())
                   && cu.init(mc.level, next)
-                  && autismclient.util.Y.init_Z_Block_BlockState(crop, mc.level.getBlockState(next))
+                  && autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(next))
                   && (mc.level.getBlockState(next.above()).isAir() || mc.level.getBlockState(next.above()).is(crop))) {
                   queue.add(next);
                }

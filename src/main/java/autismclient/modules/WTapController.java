@@ -4,7 +4,7 @@ import autismclient.api.module.ValueRange;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.LedgeFootingPredictor;
 import autismclient.util.SprintStateTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import java.util.Random;
 import java.util.UUID;
@@ -39,7 +39,7 @@ final class WTapController {
    }
 
    private static int init_I() {
-      return ck.init_ck().state_I();
+      return AutismSessionState.init_ck().state_I();
    }
 
    void init(Player attacker, Entity entity) {

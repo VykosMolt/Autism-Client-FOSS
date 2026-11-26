@@ -23,17 +23,17 @@ import autismclient.modules.al;
 import autismclient.modules.am;
 import autismclient.modules.f;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.D;
+import autismclient.util.ContainerCloseGuard;
 import autismclient.util.ManualInteractionYield;
 import autismclient.util.CombatInteractionController;
-import autismclient.util.StreamGate;
+import autismclient.util.BlockInspectionService;
 import autismclient.util.CustomMainMenuGuard;
 import autismclient.util.SilentMiningCoordinator;
 import autismclient.util.VirtualInputDispatcher;
 import autismclient.util.PayloadStudyTracker;
 import autismclient.util.WindowIconManager;
-import autismclient.util.cd;
-import autismclient.util.ck;
+import autismclient.util.RemoteViewController;
+import autismclient.util.AutismSessionState;
 import autismclient.util.ClientInteractionOverride;
 import autismclient.util.i.VillagerDupeDriver;
 import autismclient.util.macro.MacroExecutor;
@@ -82,7 +82,7 @@ public class AutismMinecraftClientMixin {
    @WrapMethod(method = "pick")
    private void autism$wrapPickForCameraOverrides(float partialTicks, Operation<Void> original) {
       Minecraft self = (Minecraft)(Object)this;
-      Entity restoreRemote = cd.init(self);
+      Entity restoreRemote = RemoteViewController.init(self);
       try {
          Entity fcCam = null;
          double fcX = 0.0;
@@ -141,7 +141,7 @@ public class AutismMinecraftClientMixin {
             }
          }
       } finally {
-         cd.init(self, restoreRemote);
+         RemoteViewController.init(self, restoreRemote);
       }
    }
 
@@ -176,7 +176,7 @@ public class AutismMinecraftClientMixin {
    @Inject(method = "tick", at = @At("HEAD"))
    private void autism$onTickHead(CallbackInfo ci) {
       WindowIconManager.read((Minecraft)(Object)this);
-      ck.init_ck().push_V();
+      AutismSessionState.init_ck().push_V();
       VirtualInputDispatcher.open();
       al.update_V();
       ClientInteractionOverride.init_V();
@@ -197,8 +197,8 @@ public class AutismMinecraftClientMixin {
 
          MacroExecutor.load_V();
          VillagerDupeDriver.init_V_Minecraft((Minecraft)(Object)this);
-         if (D.init_Z()) {
-            D.load_V();
+         if (ContainerCloseGuard.init_Z()) {
+            ContainerCloseGuard.load_V();
          }
 
          autismclient.modules.ModuleRuntimeManager autism = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
@@ -269,15 +269,15 @@ public class AutismMinecraftClientMixin {
             Minecraft client = (Minecraft)(Object)this;
             if (client.hitResult instanceof BlockHitResult && autismclient.util.BlockAttackGraceWindow.init(client)) {
                cir.setReturnValue(false);
-            } else if (cd.init_Z()) {
+            } else if (RemoteViewController.init_Z()) {
                cir.setReturnValue(false);
-            } else if (ck.init_ck().frame()) {
+            } else if (AutismSessionState.init_ck().frame()) {
                cir.setReturnValue(false);
             } else if (al.init_Z_HitResult(client.hitResult)) {
                cir.setReturnValue(false);
             } else if ((AutismLiteVariant.enabled() || !CombatInteractionController.update()) && !ManualInteractionYield.load()) {
-               if (ck.init_ck().count()) {
-                  ck.init_ck().index();
+               if (AutismSessionState.init_ck().count()) {
+                  AutismSessionState.init_ck().index();
                   cir.setReturnValue(false);
                }
             } else {
@@ -293,7 +293,7 @@ public class AutismMinecraftClientMixin {
          ci.cancel();
       } else if (!AutismLiteVariant.enabled() && CombatInteractionController.update()) {
          ci.cancel();
-      } else if (cd.init_Z()) {
+      } else if (RemoteViewController.init_Z()) {
          ci.cancel();
       } else if (autismclient.util.BlockAttackGraceWindow.init((Minecraft)(Object)this)) {
          ci.cancel();
@@ -345,14 +345,14 @@ public class AutismMinecraftClientMixin {
             }
          } else {
             Minecraft client = (Minecraft)(Object)this;
-            if (cd.init_Z()) {
+            if (RemoteViewController.init_Z()) {
                ci.cancel();
             } else if (ManualInteractionYield.load()) {
                ci.cancel();
-            } else if (StreamGate.init_Z(client)) {
+            } else if (BlockInspectionService.init_Z(client)) {
                ci.cancel();
             } else {
-               ck captureState = ck.init_ck();
+               AutismSessionState captureState = AutismSessionState.init_ck();
                if (captureState.frame()) {
                   if (client.hitResult instanceof EntityHitResult entityHit) {
                      captureState.init_Z_Entity(entityHit.getEntity());
@@ -487,7 +487,7 @@ public class AutismMinecraftClientMixin {
                return;
             }
 
-            if (ck.init_ck().flags()) {
+            if (AutismSessionState.init_ck().flags()) {
                ClientInteractionOverride.sync_V();
                VirtualInputDispatcher.poll();
                ci.cancel();
@@ -535,7 +535,7 @@ public class AutismMinecraftClientMixin {
          Minecraft client = (Minecraft)(Object)this;
          if (PayloadStudyTracker.load_Z()) {
             ci.cancel();
-         } else if (ck.init_ck().flags()) {
+         } else if (AutismSessionState.init_ck().flags()) {
             ci.cancel();
          } else {
             ActionEditorOverlay actionEditor = ActionEditorOverlay.load_ActionEditorOverla();

@@ -26,7 +26,7 @@ import autismclient.util.OverlayManager;
 import autismclient.util.cA;
 import autismclient.util.OverlayBounds;
 import autismclient.util.AutismOverlay;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.PacketFilterListCodec;
 import autismclient.util.macro.ak;
 import java.util.LinkedHashSet;
@@ -380,7 +380,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          manager.init_V(this.init_AutismQueueEditorO);
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
-            OverlayBounds filterLayout = ck.init_ck().init_cH_Str("autism-custom-filter");
+            OverlayBounds filterLayout = AutismSessionState.init_ck().init_cH_Str("autism-custom-filter");
             if (filterLayout != null && filterLayout.init_Z) {
                this.ensureCustomFilterOverlay(manager);
             }
@@ -462,7 +462,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          manager.init_V(this.init_AutismQueueEditorO);
          this.init_AutismCustomFilter = this.init(AutismCustomFilterOverlay.class, null);
          if (this.init_AutismCustomFilter == null) {
-            OverlayBounds filterLayout = ck.init_ck().init_cH_Str("autism-custom-filter");
+            OverlayBounds filterLayout = AutismSessionState.init_ck().init_cH_Str("autism-custom-filter");
             if (filterLayout != null && filterLayout.init_Z) {
                this.ensureCustomFilterOverlay(manager);
             }
@@ -779,7 +779,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
             OverlayManager manager = OverlayManager.init_bk();
             manager.init_V(editor);
             manager.init_V_cX_Z(editor, false);
-            if (editor.sync_Z() && ck.init_ck().init_aM() != null) {
+            if (editor.sync_Z() && AutismSessionState.init_ck().init_aM() != null) {
                editor.init_V_Z(true);
                manager.update_V(editor);
             } else {

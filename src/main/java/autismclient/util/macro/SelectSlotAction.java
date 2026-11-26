@@ -30,7 +30,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          if (this.strategy == SelectSlotAction.Inner_DataUtil.EMPTY_SLOT) {
             int empty = this.init_I_Minecraft(mc);
             if (empty >= 0) {
-               autismclient.util.aw.init_V(mc, empty);
+               autismclient.util.InventorySlotHelper.init_V(mc, empty);
                MacroVariableContext.init_V_Str_Obj(this.outputVariable, empty);
                return;
             }
@@ -40,14 +40,14 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
             if (this.strategy != SelectSlotAction.Inner_DataUtil.FIRST_MATCH) {
                int best = this.init_I_Minecraft_List(mc, targets);
                if (best >= 0) {
-                  autismclient.util.aw.init_V(mc, best);
+                  autismclient.util.InventorySlotHelper.init_V(mc, best);
                   MacroVariableContext.init_V_Str_Obj(this.outputVariable, best);
                   return;
                }
             }
 
             for (MacroItemTarget target : targets) {
-               int selectedSlot = autismclient.util.aw.init(mc, target, this.slot);
+               int selectedSlot = autismclient.util.InventorySlotHelper.init(mc, target, this.slot);
                if (selectedSlot >= 0) {
                   MacroVariableContext.init_V_Str_Obj(this.outputVariable, selectedSlot);
                   return;
@@ -56,7 +56,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          }
 
          int actualSlot = Math.max(0, Math.min(8, this.slot));
-         autismclient.util.aw.init_V(mc, actualSlot);
+         autismclient.util.InventorySlotHelper.init_V(mc, actualSlot);
          MacroVariableContext.init_V_Str_Obj(this.outputVariable, actualSlot);
       }
    }

@@ -11,7 +11,7 @@ import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.RotationMath;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -2167,7 +2167,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       if (var3 instanceof BlockHitResult var4 && var3.getType() == Type.BLOCK && var4.getBlockPos().equals(var1.below()) && var4.getDirection() == Direction.UP
          )
        {
-         if (U.init_Z(this.putAt_Minecraft.level.getBlockState(var4.getBlockPos()), var4.getBlockPos())) {
+         if (BlockPlacementPlanner.init_Z(this.putAt_Minecraft.level.getBlockState(var4.getBlockPos()), var4.getBlockPos())) {
             this.putAt_Minecraft.options.keyShift.setDown(true);
             if (!this.putAt_Minecraft.player.isShiftKeyDown() || !this.putAt_Minecraft.player.getLastSentInput().shift()) {
                return AiWrExecutor.Inner_CacheHelper.fill;
@@ -2847,16 +2847,16 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          this.fill(var2);
          ItemStack var3 = this.putAt_Minecraft.player.getInventory().getItem(var2);
          this.putAt_Str = BuiltInRegistries.ITEM.getKey(var3.getItem()).toString();
-         U.Inner_StateCache var4 = new U.Inner_StateCache(
+         BlockPlacementPlanner.Inner_StateCache var4 = new BlockPlacementPlanner.Inner_StateCache(
                var1,
                this.putAt_Minecraft.player.getEyePosition(),
                this.putAt_Minecraft.player.blockInteractionRange(),
-               U.init(var3, this.putAt_Minecraft.player, InteractionHand.MAIN_HAND)
+               BlockPlacementPlanner.init(var3, this.putAt_Minecraft.player, InteractionHand.MAIN_HAND)
             )
             .init_U_StateCache_Z(this.putAt_Minecraft.player.isShiftKeyDown() && this.putAt_Minecraft.player.getLastSentInput().shift())
-            .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(6));
-         U.Inner_JsonUtil[] var5 = new U.Inner_JsonUtil[1];
-         U.Inner_CachePool var6 = U.init(var4, var5);
+            .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(6));
+         BlockPlacementPlanner.Inner_JsonUtil[] var5 = new BlockPlacementPlanner.Inner_JsonUtil[1];
+         BlockPlacementPlanner.Inner_CachePool var6 = BlockPlacementPlanner.init(var4, var5);
          if (var6 == null) {
             return AiWrExecutor.Inner_CacheHelper.readEx;
          }
@@ -3064,7 +3064,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private boolean value(BlockPos var1) {
       if (this.closeOf_Z && this.putAt_SyncCore != null && !this.putAt_SyncCore.init_Z() && !this.pollAt_Z) {
          BlockState var2 = this.putAt_Minecraft.level.getBlockState(var1);
-         int var3 = autismclient.util.ArrayUtil.init(this.putAt_Minecraft, var2, 9, false);
+         int var3 = autismclient.util.BlockBreakSpeedHelper.init(this.putAt_Minecraft, var2, 9, false);
          if (var3 < 0
             || var2.requiresCorrectToolForDrops()
                && ClassCache.Inner_StreamUtil.chunkAt(var2)

@@ -74,10 +74,10 @@ public final class aJ {
                out.addProperty("regenerated", regenerate && wire != packet);
                break;
             case "queue":
-               autismclient.util.ck.init_ck().init_V_Packet_ck_BufferHelper(packet, init(regenerate));
+               autismclient.util.AutismSessionState.init_ck().init_V_Packet_ck_BufferHelper(packet, init(regenerate));
                out.addProperty("queued", true);
                out.addProperty("replayMode", init(regenerate).name());
-               out.addProperty("queueSize", autismclient.util.ck.init_ck().load_List().size());
+               out.addProperty("queueSize", autismclient.util.AutismSessionState.init_ck().load_List().size());
                break;
             case "delay":
                boolean hasMs = args.has("delayMs");
@@ -89,10 +89,10 @@ public final class aJ {
                int delay = ag.init_I_JsonObject(args, hasMs ? "delayMs" : "delayTicks", 0);
                int cap = hasMs ? 300000 : 6000;
                if (delay >= 0 && delay <= cap) {
-                  autismclient.util.ck shared = autismclient.util.ck.init_ck();
-                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.ck.Inner_DataUtil.MS : autismclient.util.ck.Inner_DataUtil.TICKS);
-                  List<autismclient.util.ck.Inner_CachePool> queued = shared.load_List();
-                  queued.add(new autismclient.util.ck.Inner_CachePool(packet, delay, init(regenerate)));
+                  autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
+                  shared.init_V_ck_DataUtil(hasMs ? autismclient.util.AutismSessionState.Inner_DataUtil.MS : autismclient.util.AutismSessionState.Inner_DataUtil.TICKS);
+                  List<autismclient.util.AutismSessionState.Inner_CachePool> queued = shared.load_List();
+                  queued.add(new autismclient.util.AutismSessionState.Inner_CachePool(packet, delay, init(regenerate)));
                   shared.load_V_List(queued);
                   out.addProperty("queued", true);
                   out.addProperty("delay", delay);
@@ -117,7 +117,7 @@ public final class aJ {
 
    public static JsonObject load_JsonObject(JsonObject args) {
       String action = ag.init_Str_JsonObject(args, "action", "list").trim().toLowerCase(Locale.ROOT);
-      autismclient.util.ck shared = autismclient.util.ck.init_ck();
+      autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
       JsonObject var10000;
       switch (action) {
          case "list":
@@ -160,15 +160,15 @@ public final class aJ {
       return var10000;
    }
 
-   private static JsonObject init(autismclient.util.ck shared, JsonObject args) {
-      List<autismclient.util.ck.Inner_CachePool> packets = shared.load_List();
+   private static JsonObject init(autismclient.util.AutismSessionState shared, JsonObject args) {
+      List<autismclient.util.AutismSessionState.Inner_CachePool> packets = shared.load_List();
       int offset = Math.max(0, ag.init_I_JsonObject(args, "offset", 0));
       int limit = Math.max(1, Math.min(ag.init_I_JsonObject(args, "limit", 50), 100));
       JsonArray out = new JsonArray();
       int end = Math.min(packets.size(), offset + limit);
 
       for (int i = offset; i < end; i++) {
-         autismclient.util.ck.Inner_CachePool queued = packets.get(i);
+         autismclient.util.AutismSessionState.Inner_CachePool queued = packets.get(i);
          if (queued != null && queued.init_Packet != null) {
             out.add(
                ag.init_JsonObject_ObjArr(
@@ -252,11 +252,11 @@ public final class aJ {
                   this.init_Z = true;
                   this.init_J = System.nanoTime() + 30000000000L;
                   this.init_JsonObject = aJ.load_JsonObject(args);
-                  return !autismclient.util.ck.init_ck().tick_Z()
+                  return !autismclient.util.AutismSessionState.init_ck().tick_Z()
                      ? R.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Flushed queued packet(s)", this.init_JsonObject)
                      : R.init_AiOperation_Result(AiOperation.Status.RUNNING, "Queue draining", this.init_JsonObject);
                } else {
-                  autismclient.util.ck shared = autismclient.util.ck.init_ck();
+                  autismclient.util.AutismSessionState shared = autismclient.util.AutismSessionState.init_ck();
                   if (!shared.tick_Z() && !shared.open_Z()) {
                      this.init_JsonObject.addProperty("drained", true);
                      return R.init_AiOperation_Result(AiOperation.Status.SUCCEEDED, "Queue drained onto the wire", this.init_JsonObject);
@@ -280,8 +280,8 @@ public final class aJ {
          };
    }
 
-   private static autismclient.util.ck.Inner_BufferHelper init(boolean regenerate) {
-      return regenerate ? autismclient.util.ck.Inner_BufferHelper.REGENERATE : autismclient.util.ck.Inner_BufferHelper.EXACT;
+   private static autismclient.util.AutismSessionState.Inner_BufferHelper init(boolean regenerate) {
+      return regenerate ? autismclient.util.AutismSessionState.Inner_BufferHelper.REGENERATE : autismclient.util.AutismSessionState.Inner_BufferHelper.EXACT;
    }
 
    private static String init(Packet<?> packet) {

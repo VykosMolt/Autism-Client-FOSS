@@ -90,7 +90,7 @@ final class cN {
       JsonArray players = new JsonArray();
 
       try {
-         for (autismclient.util.bO.Inner_StreamUtil player : autismclient.util.bO.init(mc)) {
+         for (autismclient.util.TabPlayerListParser.Inner_StreamUtil player : autismclient.util.TabPlayerListParser.init(mc)) {
             if (players.size() >= 64) {
                break;
             }

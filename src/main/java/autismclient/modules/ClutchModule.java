@@ -10,10 +10,10 @@ import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.mixin.accessor.AutismLocalPlayerAccessor;
 import autismclient.util.AutismConfig;
 import autismclient.util.PerTickPlacementLock;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import autismclient.util.RotationMath;
 import autismclient.util.PlacedBlockTrailRenderer;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -313,7 +313,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private int read_I_9() {
-      return ck.init_ck().state_I();
+      return AutismSessionState.init_ck().state_I();
    }
 
    private boolean init_Z_i_TaskQueue(ClutchFallPhysics.Inner_TaskQueue value) {
@@ -813,7 +813,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          && MC.gui.overlay() == null
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && !BlinkPacketManager.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
@@ -1316,7 +1316,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                                        this.init_j_DataUtil.init_U_CachePool.init_U_TaskQueue().load_BlockPos(),
                                        reach
                                     )) {
-                                    autismclient.util.U.Inner_CachePool carry = this.init_U_CachePool_j_DataUtil(
+                                    autismclient.util.BlockPlacementPlanner.Inner_CachePool carry = this.init_U_CachePool_j_DataUtil(
                                        this.init_j_DataUtil, this.init_j_DataUtil.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil(), previousEye, reach
                                     );
                                     if (carry != null) {
@@ -2197,14 +2197,14 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       ItemStack stack = MC.player.getInventory().getItem(slot);
       int at = route.init_k_JsonUtil().read() ? link.init_I() : this.load_I_k_NetHelper(link);
       double reach = MC.player.blockInteractionRange() - 0.03;
-      autismclient.util.U.Inner_NetHelper placement = autismclient.util.U.init(stack, MC.player, InteractionHand.MAIN_HAND);
+      autismclient.util.BlockPlacementPlanner.Inner_NetHelper placement = autismclient.util.BlockPlacementPlanner.init(stack, MC.player, InteractionHand.MAIN_HAND);
       RotationMath.Inner_DataUtil from = this.init_ce_DataUtil_6();
-      autismclient.util.U.Inner_StreamUtil budget = new autismclient.util.U.Inner_StreamUtil(24);
+      autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(24);
       boolean sneaking = MC.player.isSecondaryUseActive();
       Vec3 eye = this.close_Z ? MC.player.getEyePosition() : route.init(at);
       Vec3 leadEye = !this.close_Z && !route.init_k_JsonUtil().init_Z_2() && !route.init_k_JsonUtil().read() ? route.init(at + 1) : eye;
-      autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool(
-         new autismclient.util.U.Inner_StateCache(link.init_BlockPos(), eye, reach, placement)
+      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+         new autismclient.util.BlockPlacementPlanner.Inner_StateCache(link.init_BlockPos(), eye, reach, placement)
             .init_U_StateCache_ce_DataUtil(from)
             .init_U_StateCache_Vec3(leadEye)
             .init_U_StateCache_EnumSet(EnumSet.of(link.init_Direction()))
@@ -2216,8 +2216,8 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             .init_U_StateCache_U_StreamUtil(budget)
       );
       if (candidate == null) {
-         candidate = autismclient.util.U.init_U_CachePool(
-            new autismclient.util.U.Inner_StateCache(link.init_BlockPos(), eye, reach, placement)
+         candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+            new autismclient.util.BlockPlacementPlanner.Inner_StateCache(link.init_BlockPos(), eye, reach, placement)
                .init_U_StateCache_ce_DataUtil(from)
                .init_U_StateCache_Vec3(leadEye)
                .init_U_StateCache_D(89.5)
@@ -2240,7 +2240,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          link.init_BlockPos(), candidate, link.load_I(), slot, route.init_k_JsonUtil().init_Z_2(), route.init_Z(), nextFace, route.init_k_JsonUtil().read()
       );
       if (nextFace != null && !prepared.read) {
-         autismclient.util.U.Inner_CachePool carried = this.init(
+         autismclient.util.BlockPlacementPlanner.Inner_CachePool carried = this.init(
             prepared, candidate.init_U_DataUtil().init_ce_DataUtil(), eye, route.init(at + 1), null, reach, at
          );
          if (carried != null) {
@@ -2290,7 +2290,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             return this.init_Z_Str_3("Moving body enters placement");
          }
 
-         autismclient.util.U.Inner_CachePool carry = this.init_j_DataUtil.read
+         autismclient.util.BlockPlacementPlanner.Inner_CachePool carry = this.init_j_DataUtil.read
             ? null
             : this.init_U_CachePool_j_DataUtil(this.init_j_DataUtil, rotation, wireEye, reach);
          if (carry != null) {
@@ -2325,7 +2325,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                   && found.getType() == Type.BLOCK
                   && hit.getBlockPos().equals(support)
                   && !(wireEye.distanceTo(hit.getLocation()) > reach)
-                  && !autismclient.util.U.init(MC.level.getBlockState(support), support, MC.player.isSecondaryUseActive())
+                  && !autismclient.util.BlockPlacementPlanner.init(MC.level.getBlockState(support), support, MC.player.isSecondaryUseActive())
             )) {
                return this.init_Z_Str_3("Native face or reach");
             } else {
@@ -2402,7 +2402,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
    }
 
-   private autismclient.util.U.Inner_CachePool init_U_CachePool_j_DataUtil(
+   private autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool_j_DataUtil(
       ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Inner_DataUtil rotation, Vec3 wireEye, double reach
    ) {
       Vec3 eye = MC.player.getEyePosition();
@@ -2423,7 +2423,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       );
    }
 
-   private autismclient.util.U.Inner_CachePool init(
+   private autismclient.util.BlockPlacementPlanner.Inner_CachePool init(
       ClutchModule.Inner_DataUtil candidatePlan, RotationMath.Inner_DataUtil rotation, Vec3 eye, Vec3 next, Vec3 wireEye, double reach, int lead
    ) {
       boolean moving = this.state == 4
@@ -2441,11 +2441,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          return null;
       }
 
-      autismclient.util.U.Inner_TaskQueue option = candidatePlan.init_U_CachePool.init_U_TaskQueue();
+      autismclient.util.BlockPlacementPlanner.Inner_TaskQueue option = candidatePlan.init_U_CachePool.init_U_TaskQueue();
       AABB rect = option.init_AABB();
       double margin = this.state == 4 ? 1.0E-5 : 0.02;
-      autismclient.util.U.Inner_NetHelper placement = autismclient.util.U.init(MC.player.getMainHandItem(), MC.player, InteractionHand.MAIN_HAND);
-      autismclient.util.U.Inner_StreamUtil budget = new autismclient.util.U.Inner_StreamUtil(8);
+      autismclient.util.BlockPlacementPlanner.Inner_NetHelper placement = autismclient.util.BlockPlacementPlanner.init(MC.player.getMainHandItem(), MC.player, InteractionHand.MAIN_HAND);
+      autismclient.util.BlockPlacementPlanner.Inner_StreamUtil budget = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(8);
       List<Vec3> points = new ArrayList<>(ClutchBlockPlanner.init_List_Vec3(eye, next, rect, candidatePlan.init_BlockPos, candidatePlan.init_Direction, margin));
 
       for (double a : ClutchBlockPlanner.init_DArr) {
@@ -2519,17 +2519,17 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                && ClutchBlockPlanner.init_Z_Vec3_2(
                   nextEye, Vec3.directionFromRotation(goal.load(), goal.init()), candidatePlan.init_BlockPos, candidatePlan.init_Direction, reach
                )) {
-               autismclient.util.U.Inner_StateCache request = new autismclient.util.U.Inner_StateCache(candidatePlan.init_BlockPos, clickEye, reach, placement)
+               autismclient.util.BlockPlacementPlanner.Inner_StateCache request = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(candidatePlan.init_BlockPos, clickEye, reach, placement)
                   .init_U_StateCache_ce_DataUtil(rotation)
                   .init_U_StateCache_D(89.5)
                   .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
                   .load(false)
                   .load(margin)
                   .init_U_StateCache_U_StreamUtil(budget);
-               autismclient.util.U.Inner_DataUtil aim = new autismclient.util.U.Inner_DataUtil(
-                  point, goal, goal, clickEye.distanceTo(point), RotationMath.load(rotation, goal), autismclient.util.U.Inner_UiHelper.NEAREST
+               autismclient.util.BlockPlacementPlanner.Inner_DataUtil aim = new autismclient.util.BlockPlacementPlanner.Inner_DataUtil(
+                  point, goal, goal, clickEye.distanceTo(point), RotationMath.load(rotation, goal), autismclient.util.BlockPlacementPlanner.Inner_UiHelper.NEAREST
                );
-               autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool_U_TaskQueue(option, aim, request, null);
+               autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(option, aim, request, null);
                if (candidate != null
                   && (!moving || candidate.init_U_DataUtil().init_ce_DataUtil().equals(goal))
                   && candidate.init_U_TaskQueue().load_BlockPos().equals(option.load_BlockPos())
@@ -3033,7 +3033,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
    private record Inner_DataUtil(
       BlockPos init_BlockPos,
-      autismclient.util.U.Inner_CachePool init_U_CachePool,
+      autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool,
       int init_I,
       int load_I,
       boolean init_Z,
@@ -3239,7 +3239,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
 
          BlockState state = Module.MC.level.getBlockState(this.init_BlockPos_MutableBl);
-         return !state.canBeReplaced() && autismclient.util.U.load(state, this.init_BlockPos_MutableBl.immutable(), sneaking);
+         return !state.canBeReplaced() && autismclient.util.BlockPlacementPlanner.load(state, this.init_BlockPos_MutableBl.immutable(), sneaking);
       }
 
       private boolean read(int x, int y, int z) {

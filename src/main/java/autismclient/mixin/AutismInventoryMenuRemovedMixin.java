@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.modules.ModuleRuntimeManager;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -15,7 +15,7 @@ public abstract class AutismInventoryMenuRemovedMixin {
    @Inject(method = "removed", at = @At("HEAD"), cancellable = true)
    private void autism$skipDrainWhenXCarryForced(Player player, CallbackInfo ci) {
       if (player instanceof LocalPlayer) {
-         ck shared = ck.init_ck();
+         AutismSessionState shared = AutismSessionState.init_ck();
          ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
          boolean passive = module != null && module.get_Z();
          if (passive || shared.sync_Z()) {

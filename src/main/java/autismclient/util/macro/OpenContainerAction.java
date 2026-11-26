@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
-import autismclient.util.cc;
-import autismclient.util.ck;
+import autismclient.util.RegistryDisplayNameCache;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -40,7 +40,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
          return AimTargetAction.Inner_DataUtil.init(this.blockPos);
       } else {
-         autismclient.util.E target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? ck.init_ck().init_E() : this.init_E_2();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.init_ck().init_E() : this.init_E_2();
          if (target == null) {
             return null;
          } else {
@@ -49,10 +49,10 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
    }
 
-   private autismclient.util.E init_E_2() {
+   private autismclient.util.InteractionTargetRef init_E_2() {
       for (String ref : this.init_List_13()) {
          if (ref != null && !ref.isBlank()) {
-            autismclient.util.E target = autismclient.util.E.init_E_Str(ref);
+            autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
             if (target != null) {
                return target;
             }
@@ -75,7 +75,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
             for (String ref : refs) {
                if (ref != null && !ref.isBlank()) {
-                  autismclient.util.E target = autismclient.util.E.init_E_Str(ref);
+                  autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
                   if (target != null) {
                      if (this.waitForTarget && !target.load_Z(mc)) {
                         return false;
@@ -88,7 +88,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
             return sentAny;
          } else {
-            autismclient.util.E target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.E.init_E_BlockPos(this.blockPos) : ck.init_ck().init_E();
+            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.init_ck().init_E();
             return target != null && (!this.waitForTarget || target.load_Z(mc)) && target.init_Z_Minecraft(mc);
          }
       } else {
@@ -107,7 +107,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
          for (String ref : refs) {
             if (ref != null && !ref.isBlank()) {
-               autismclient.util.E target = autismclient.util.E.init_E_Str(ref);
+               autismclient.util.InteractionTargetRef target = autismclient.util.InteractionTargetRef.init_E_Str(ref);
                if (target == null || !target.load_Z(mc)) {
                   return false;
                }
@@ -118,7 +118,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
          return hasTarget;
       } else {
-         autismclient.util.E target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.E.init_E_BlockPos(this.blockPos) : ck.init_ck().init_E();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.init_E_BlockPos(this.blockPos) : AutismSessionState.init_ck().init_E();
          return target != null && target.load_Z(mc);
       }
    }
@@ -127,7 +127,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       if (mc != null) {
          if (mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
             this.targetMode = OpenContainerAction.Inner_DataUtil.ENTITY;
-            this.entityTarget = autismclient.util.E.init_Str_Entity(entityHit.getEntity());
+            this.entityTarget = autismclient.util.InteractionTargetRef.init_Str_Entity(entityHit.getEntity());
             if (!this.entityTarget.isBlank() && !this.entityTargets.contains(this.entityTarget)) {
                this.entityTargets.add(this.entityTarget);
             }
@@ -150,10 +150,10 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       } else if (targetRef.startsWith("~")) {
          String[] parts = targetRef.split("~", 4);
          String name = parts.length >= 4 ? parts[3] : "?";
-         String type = parts.length >= 3 ? cc.read(parts[2]) : "?";
+         String type = parts.length >= 3 ? RegistryDisplayNameCache.read(parts[2]) : "?";
          return name.isBlank() ? type : name + " (" + type + ")";
       } else {
-         return cc.read(targetRef);
+         return RegistryDisplayNameCache.read(targetRef);
       }
    }
 

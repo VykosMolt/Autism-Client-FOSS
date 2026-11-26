@@ -52,9 +52,9 @@ public class CraftAction implements MacroAction {
       } else {
          for (CraftAction.Inner_DataUtil entry : this.entries) {
             if (entry != null && entry.init_Z()) {
-               autismclient.util.J.Inner_TaskQueue option = autismclient.util.J.init(mc, entry.init_Str);
+               autismclient.util.AutoCraftingEngine.Inner_TaskQueue option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_Str);
                if (option == null) {
-                  option = autismclient.util.J.init(mc, entry.init_I);
+                  option = autismclient.util.AutoCraftingEngine.init(mc, entry.init_I);
                }
 
                if (option == null) {
@@ -62,13 +62,13 @@ public class CraftAction implements MacroAction {
                   return;
                }
 
-               int desiredAmount = autismclient.util.J.init(option, entry.read_I, entry.init_Z);
+               int desiredAmount = autismclient.util.AutoCraftingEngine.init(option, entry.read_I, entry.init_Z);
                if (desiredAmount <= 0) {
                   AutismClientMessaging.sendPrefixed("§cNo space or materials for " + entry.load_Str + ".");
                   return;
                }
 
-               autismclient.util.J.Inner_CachePool result = autismclient.util.J.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
+               autismclient.util.AutoCraftingEngine.Inner_CachePool result = autismclient.util.AutoCraftingEngine.init_J_CachePool(mc, entry.init_Str, entry.init_I, desiredAmount);
                if (!result.init_Z) {
                   AutismClientMessaging.sendPrefixed("§c" + result.init_Str);
                   return;
@@ -212,7 +212,7 @@ public class CraftAction implements MacroAction {
          return entry;
       }
 
-      public static CraftAction.Inner_DataUtil init(autismclient.util.J.Inner_TaskQueue option, int amount, boolean useMaxAmount) {
+      public static CraftAction.Inner_DataUtil init(autismclient.util.AutoCraftingEngine.Inner_TaskQueue option, int amount, boolean useMaxAmount) {
          CraftAction.Inner_DataUtil entry = new CraftAction.Inner_DataUtil();
          if (option == null) {
             return entry;

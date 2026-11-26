@@ -85,7 +85,7 @@ public class UseItemPhaseAction implements MacroAction {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          MacroItemTarget target = MacroItemTarget.update(this.itemName);
          if (target.update()) {
-            autismclient.util.aw.init(mc, target, mc.player.getInventory().getSelectedSlot());
+            autismclient.util.InventorySlotHelper.init(mc, target, mc.player.getInventory().getSelectedSlot());
          }
 
          InteractionHand h = this.init_InteractionHand();
@@ -165,9 +165,9 @@ public class UseItemPhaseAction implements MacroAction {
    }
 
    private void init(Minecraft mc, int slot, int button, ContainerInput input) {
-      int handlerSlot = this.useCustomSlotMapping ? autismclient.util.aw.read_I(mc, slot) : slot;
+      int handlerSlot = this.useCustomSlotMapping ? autismclient.util.InventorySlotHelper.read_I(mc, slot) : slot;
       if (handlerSlot >= 0) {
-         autismclient.util.av.init(mc, handlerSlot, button, input);
+         autismclient.util.ContainerClickExecutor.init(mc, handlerSlot, button, input);
       }
    }
 

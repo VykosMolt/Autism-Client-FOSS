@@ -75,7 +75,7 @@ public final class SilentRotationManager {
 
    public static void init_V_Str(String ownerId, int priority, RotationMath.Inner_DataUtil rotation) {
       if (ownerId != null && rotation != null) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (tick != get_I) {
             get_I = tick;
             pop_Str = null;
@@ -106,7 +106,7 @@ public final class SilentRotationManager {
             RotationMath.Inner_DataUtil from = wire.init_Z() ? new RotationMath.Inner_DataUtil(Float.isFinite(yaw) ? yaw : wire.read(), wire.write()) : rotation;
             init_ce_DataUtil = RotationMath.init_ce_DataUtil(rotation, from);
             load_ce_DataUtil = init_ce_DataUtil;
-            set = ck.init_ck().state_I();
+            set = AutismSessionState.init_ck().state_I();
             load_Z = false;
             RotationStreamPlanner.init_V_ap_TaskQueue_3(init_ap_TaskQueue, init_ce_DataUtil, 0.0, 0.0, RotationMath.init());
             return true;
@@ -133,7 +133,7 @@ public final class SilentRotationManager {
 
          init_ce_DataUtil = RotationMath.init_ce_DataUtil(rotation, from);
          load_ce_DataUtil = init_ce_DataUtil;
-         set = ck.init_ck().state_I();
+         set = AutismSessionState.init_ck().state_I();
          load_Z = false;
          RotationStreamPlanner.init_V_ap_TaskQueue_3(
             init_ap_TaskQueue, init_ce_DataUtil, RotationMath.init(init_ce_DataUtil.init(), from.init()), init_ce_DataUtil.load() - from.load(), RotationMath.init()
@@ -146,7 +146,7 @@ public final class SilentRotationManager {
 
    public static void init_V_Str_D(String ownerId, double toleranceDegrees) {
       tick_Str = ownerId;
-      start = ck.init_ck().state_I();
+      start = AutismSessionState.init_ck().state_I();
       init_D = Math.max(0.5, toleranceDegrees);
    }
 
@@ -161,7 +161,7 @@ public final class SilentRotationManager {
    public static void init_V_Str_2(String ownerId, SilentRotationManager.Inner_DataUtil ownerHand, double accelUp) {
       init_aD_DataUtil = ownerHand;
       get_Str = ownerId;
-      prev = ck.init_ck().state_I();
+      prev = AutismSessionState.init_ck().state_I();
       write_D = Math.max(18.0, accelUp);
    }
 
@@ -294,7 +294,7 @@ public final class SilentRotationManager {
 
    public static void init_V_Str_3(String requester, LocalPlayer player, float step) {
       if (player != null && ("danger".equals(requester) || "clutch".equals(requester)) && requester.equals(push_Str) && load_ce_DataUtil != null && put > 0) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (set != tick) {
             init_V();
             if (init_ce_DataUtil == null) {
@@ -328,7 +328,7 @@ public final class SilentRotationManager {
 
    public static void init_V_Str_4(String requester, LocalPlayer player, int ticksLeft) {
       if (player != null && ("danger".equals(requester) || "clutch".equals(requester)) && requester.equals(push_Str) && load_ce_DataUtil != null && put > 0) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (set != tick) {
             init_V();
             if (init_ce_DataUtil == null) {
@@ -380,7 +380,7 @@ public final class SilentRotationManager {
       if (player == null) {
          load_V();
       } else if (push_Str == null || push_Str.equals(ownerId)) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (tick != set) {
             set = tick;
             RotationMath.Inner_DataUtil playerRotation = RotationMath.init(player);

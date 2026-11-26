@@ -30,7 +30,7 @@ public final class BlockPreviewRenderer {
                   String shape = init_Str;
                   int renderColor = init_I;
                   int renderSideColor = load;
-                  ck state = ck.init_ck();
+                  AutismSessionState state = AutismSessionState.init_ck();
                   if (state.table()) {
                      Minecraft mc = Minecraft.getInstance();
                      if (mc != null && mc.level != null && mc.player != null && mc.hitResult instanceof BlockHitResult bhr) {

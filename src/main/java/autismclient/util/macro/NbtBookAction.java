@@ -81,11 +81,11 @@ public class NbtBookAction implements MacroAction {
                }
             }
 
-            autismclient.util.aw.read(mc, bookSlot, targetHotbar);
+            autismclient.util.InventorySlotHelper.read(mc, bookSlot, targetHotbar);
             hotbarSlot = targetHotbar;
          }
 
-         autismclient.util.aw.init_V(mc, hotbarSlot);
+         autismclient.util.InventorySlotHelper.init_V(mc, hotbarSlot);
          int numPages = Math.min(100, Math.max(1, this.pages));
          List<String> pageList = this.init_List_Minecraft_I(mc, numPages);
          if (pageList.isEmpty()) {
@@ -187,7 +187,7 @@ public class NbtBookAction implements MacroAction {
 
          for (int i = 0; i < 36; i++) {
             if (i != keepSlot && !mc.player.getInventory().getItem(i).isEmpty()) {
-               autismclient.util.O.load(mc, i, 0);
+               autismclient.util.InventoryDropHelper.load(mc, i, 0);
             }
          }
       }

@@ -3,7 +3,7 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.aw;
+import autismclient.util.InventorySlotHelper;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -34,7 +34,7 @@ public final class ChangeSlotCommand extends Command {
    private static int init(int oneBasedSlot) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.getConnection() != null) {
-         aw.init_V(mc, oneBasedSlot - 1);
+         InventorySlotHelper.init_V(mc, oneBasedSlot - 1);
          AutismClientMessaging.sendPrefixed("§aSelected hotbar slot §f" + oneBasedSlot + "§a.");
          return 1;
       } else {

@@ -1,7 +1,7 @@
 package autismclient.ai.a;
 
 import autismclient.compat263.Compat263;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
 import java.util.function.Consumer;
@@ -188,11 +188,11 @@ public final class NetHelper {
       BlockHitResult hit = DataUtil.init_BlockHitResult();
       if (hit != null && hit.getBlockPos().relative(hit.getDirection()).equals(cell)) {
          BlockState face = this.init_Minecraft.level.getBlockState(hit.getBlockPos());
-         if (U.init(face, hit.getBlockPos(), true)) {
+         if (BlockPlacementPlanner.init(face, hit.getBlockPos(), true)) {
             return false;
          }
 
-         if (U.init_Z(face, hit.getBlockPos())) {
+         if (BlockPlacementPlanner.init_Z(face, hit.getBlockPos())) {
             this.init_BlockPos = cell;
             this.init_Minecraft.options.keyShift.setDown(true);
             if (!player.isShiftKeyDown() || !player.getLastSentInput().shift()) {

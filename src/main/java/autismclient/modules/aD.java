@@ -6,7 +6,7 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.PayloadSubscriptionManager;
 import autismclient.util.PayloadStudyTracker;
 import autismclient.util.OverlayManager;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
 import java.util.ArrayList;
@@ -121,7 +121,7 @@ public final class aD {
          am.init_V();
          config.save();
          if (config.lanSyncEnabled) {
-            autismclient.util.aE.init_aE().init_V();
+            autismclient.util.LanSyncManager.init_aE().init_V();
          }
 
          al.tick_V();
@@ -163,12 +163,12 @@ public final class aD {
       autismclient.util.PacketCaptureState.update();
       al.tick_V();
       autismclient.util.VirtualInputDispatcher.pop();
-      autismclient.util.aE.init_aE().read_V();
+      autismclient.util.LanSyncManager.init_aE().read_V();
       if (MacroExecutor.write_Z()) {
          MacroExecutor.read_V();
       }
 
-      autismclient.util.D.init_V();
+      autismclient.util.ContainerCloseGuard.init_V();
       autismclient.util.macro.PacketGateManager.load_V();
       BlinkPacketManager.load_V();
       autismclient.util.SilentRotationManager.load_V();
@@ -178,7 +178,7 @@ public final class aD {
          PkgCls_a.init_V_Str("panic mode");
       }
 
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       shared.read_V_Z(true);
       shared.write(false);
       shared.run(false);

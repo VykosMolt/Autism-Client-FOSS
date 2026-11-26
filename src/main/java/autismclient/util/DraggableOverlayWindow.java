@@ -25,7 +25,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
       this.init_Str = overlayId;
       this.read_I = initialWidth;
       this.write = initialHeight;
-      this.read_Z = ck.init_ck().init_Z_Str(this.init_Str());
+      this.read_Z = AutismSessionState.init_ck().init_Z_Str(this.init_Str());
    }
 
    protected boolean d_() {
@@ -44,7 +44,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
 
    protected void pop_V() {
       this.read_Z = !this.read_Z;
-      ck.init_ck().init_V_Str_Z(this.init_Str(), this.read_Z);
+      AutismSessionState.init_ck().init_V_Str_Z(this.init_Str(), this.read_Z);
       OverlayManager.init_bk().load_V(this);
       this.a__V();
    }

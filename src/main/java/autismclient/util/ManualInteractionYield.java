@@ -109,7 +109,7 @@ public final class ManualInteractionYield {
 
    private static void load(Minecraft mc) {
       if (mc != null) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (tick != update) {
             update = tick;
             if (mc.player != null && mc.level != null && mc.options != null && !autismclient.modules.FreecamController.init_Z()) {

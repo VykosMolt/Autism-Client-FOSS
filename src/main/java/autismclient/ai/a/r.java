@@ -20,7 +20,7 @@ public final class r {
    }
 
    public static double init(Minecraft mc, ItemStack stack, BlockState state) {
-      double base = stack.isEmpty() ? 1.0 : autismclient.util.ArrayUtil.init(mc, stack, state);
+      double base = stack.isEmpty() ? 1.0 : autismclient.util.BlockBreakSpeedHelper.init(mc, stack, state);
       LocalPlayer player = mc.player;
       int haste = MobEffectUtil.hasDigSpeed(player) ? MobEffectUtil.getDigSpeedAmplification(player) + 1 : 0;
       int fatigue = player.hasEffect(MobEffects.MINING_FATIGUE) ? player.getEffect(MobEffects.MINING_FATIGUE).getAmplifier() : -1;
@@ -76,7 +76,7 @@ public final class r {
          return 1.0 / 0.0;
       }
 
-      double base = stack != null && !stack.isEmpty() ? autismclient.util.ArrayUtil.init(mc, stack, state) : 1.0;
+      double base = stack != null && !stack.isEmpty() ? autismclient.util.BlockBreakSpeedHelper.init(mc, stack, state) : 1.0;
       return ClassCache.Inner_CachePool.init_D_F(
          hardness,
          init(base, f.haste(), f.fatigue(), f.blockSpeed(), 1.0, true),
@@ -110,7 +110,7 @@ public final class r {
       for (int slot = 0; slot < slots; slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (af.init(stack, 2) && (!needsTool || stack.isCorrectToolForDrops(state)) && accepted.test(state, stack)) {
-            double speed = autismclient.util.ArrayUtil.init(mc, stack, state);
+            double speed = autismclient.util.BlockBreakSpeedHelper.init(mc, stack, state);
             if (speed > bestSpeed || speed == bestSpeed && slot == inventory.getSelectedSlot()) {
                bestSpeed = speed;
                tool = slot;

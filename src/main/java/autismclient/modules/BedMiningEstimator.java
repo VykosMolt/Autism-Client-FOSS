@@ -199,10 +199,10 @@ final class BedMiningEstimator {
 
    private static int init(BlockState state) {
       int selected = init_Minecraft.player.getInventory().getSelectedSlot();
-      int best = autismclient.util.ArrayUtil.init(init_Minecraft, state, 9, true, false);
+      int best = autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, state, 9, true, false);
       if (best >= 0 && !autismclient.util.InventorySlotArbiter.init(best, "bed-nuker")) {
-         return autismclient.util.ArrayUtil.init(init_Minecraft, init_Minecraft.player.getInventory().getItem(best), state)
-               > Math.max(1.0F, autismclient.util.ArrayUtil.init(init_Minecraft, init_Minecraft.player.getMainHandItem(), state))
+         return autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, init_Minecraft.player.getInventory().getItem(best), state)
+               > Math.max(1.0F, autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, init_Minecraft.player.getMainHandItem(), state))
             ? best
             : selected;
       } else {
@@ -215,7 +215,7 @@ final class BedMiningEstimator {
          return state.getDestroySpeed(init_Minecraft.level, pos) < 0.0F ? 1.0 / 0.0 : 1.0;
       }
 
-      double speed = stack.isEmpty() ? 1.0 : autismclient.util.ArrayUtil.init(init_Minecraft, stack, state);
+      double speed = stack.isEmpty() ? 1.0 : autismclient.util.BlockBreakSpeedHelper.init(init_Minecraft, stack, state);
       int haste = MobEffectUtil.hasDigSpeed(init_Minecraft.player) ? MobEffectUtil.getDigSpeedAmplification(init_Minecraft.player) + 1 : 0;
       speed *= 1.0 + 0.2 * haste;
       MobEffectInstance fatigue = init_Minecraft.player.getEffect(MobEffects.MINING_FATIGUE);

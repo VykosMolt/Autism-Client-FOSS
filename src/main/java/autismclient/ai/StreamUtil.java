@@ -1135,7 +1135,7 @@ final class StreamUtil {
       return new StreamUtil.Inner_CachePool(
          "Build " + crop + " farm",
          crop + " farm build",
-         autismclient.util.M.init_ItemStack(icon),
+         autismclient.util.DisplayItemStackFactory.init_ItemStack(icon),
          n -> "build a " + crop + " farm" + (n == null ? "" : " of " + n + " crops"),
          "crop",
          0,
@@ -1458,7 +1458,7 @@ final class StreamUtil {
          String text = "go to " + typed;
          return this.init_ad_BufferHelper_Str_Str(text, StreamUtil.Inner_DataUtil.sync.load_Str) == null
             ? null
-            : new StreamUtil.Inner_CachePool("Go to " + typed, "", autismclient.util.M.init_ItemStack(Items.COMPASS), n -> text, "", 0, "");
+            : new StreamUtil.Inner_CachePool("Go to " + typed, "", autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.COMPASS), n -> text, "", 0, "");
       } else {
          return null;
       }
@@ -1655,7 +1655,7 @@ final class StreamUtil {
                new StreamUtil.Inner_StreamUtil(
                   "Nearest tree",
                   "tree log wood",
-                  autismclient.util.M.init_ItemStack(Items.OAK_SAPLING),
+                  autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.OAK_SAPLING),
                   List.of(n -> "chop " + init_Str_Integer(n) + "logs"),
                   "block",
                   null,
@@ -1670,9 +1670,9 @@ final class StreamUtil {
                   String species = key.getPath().substring(0, key.getPath().length() - 4).replace('_', ' ');
                   out.add(
                      new StreamUtil.Inner_StreamUtil(
-                        autismclient.util.cc.load(key.toString()),
+                        autismclient.util.RegistryDisplayNameCache.load(key.toString()),
                         species + " tree wood",
-                        autismclient.util.M.init(block),
+                        autismclient.util.DisplayItemStackFactory.init(block),
                         List.of(n -> "chop " + init_Str_Integer(n) + species + " logs"),
                         "block",
                         key.toString(),
@@ -1707,7 +1707,7 @@ final class StreamUtil {
                   new StreamUtil.Inner_StreamUtil(
                      name + " (" + wp.x() + " " + wp.y() + " " + wp.z() + ")",
                      name,
-                     autismclient.util.M.init_ItemStack(wp.death() ? Items.RECOVERY_COMPASS : Items.COMPASS),
+                     autismclient.util.DisplayItemStackFactory.init_ItemStack(wp.death() ? Items.RECOVERY_COMPASS : Items.COMPASS),
                      List.of(n -> "go to " + name),
                      null,
                      null,
@@ -1723,7 +1723,7 @@ final class StreamUtil {
                      new StreamUtil.Inner_StreamUtil(
                         "Hostile mobs",
                         "hostiles monsters",
-                        autismclient.util.M.init_ItemStack(Items.ZOMBIE_HEAD),
+                        autismclient.util.DisplayItemStackFactory.init_ItemStack(Items.ZOMBIE_HEAD),
                         List.of(n -> "fight " + init_Str_Integer(n) + "hostiles"),
                         "target",
                         "hostiles",
@@ -1737,7 +1737,7 @@ final class StreamUtil {
                      EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(key).orElse(null);
                      out.add(
                         new StreamUtil.Inner_StreamUtil(
-                           autismclient.util.cc.read(key.toString()),
+                           autismclient.util.RegistryDisplayNameCache.read(key.toString()),
                            words,
                            type == null ? ItemStack.EMPTY : init_ItemStack_EntityType(type),
                            List.of(n -> "fight " + init_Str_Integer(n) + words),
@@ -1756,7 +1756,7 @@ final class StreamUtil {
                String one = ad.sync(crop);
                String id = ad.update(crop);
                Block block = id == null ? null : init_Block_Str(id);
-               ItemStack icon = block == null ? ItemStack.EMPTY : autismclient.util.M.init(block);
+               ItemStack icon = block == null ? ItemStack.EMPTY : autismclient.util.DisplayItemStackFactory.init(block);
                out.add(
                   new StreamUtil.Inner_StreamUtil(
                      "Build " + one + " farm",
@@ -1820,9 +1820,9 @@ final class StreamUtil {
       String path = id.getPath();
       String words = path.replace('_', ' ');
       return new StreamUtil.Inner_StreamUtil(
-         autismclient.util.cc.init(id.toString()),
+         autismclient.util.RegistryDisplayNameCache.init(id.toString()),
          words,
-         autismclient.util.M.init_ItemStack(item),
+         autismclient.util.DisplayItemStackFactory.init_ItemStack(item),
          List.of(n -> verb + " " + init_Str_Integer(n) + words, n -> verb + " " + init_Str_Integer(n) + path),
          key,
          id.toString(),
@@ -1835,9 +1835,9 @@ final class StreamUtil {
       String path = id.getPath();
       String words = path.replace('_', ' ');
       return new StreamUtil.Inner_StreamUtil(
-         autismclient.util.cc.load(id.toString()),
+         autismclient.util.RegistryDisplayNameCache.load(id.toString()),
          words,
-         autismclient.util.M.init(block),
+         autismclient.util.DisplayItemStackFactory.init(block),
          List.of(n -> verb + " " + init_Str_Integer(n) + words, n -> verb + " " + init_Str_Integer(n) + path),
          "block",
          id.toString(),
@@ -1852,7 +1852,7 @@ final class StreamUtil {
       try {
          af.Inner_DataUtil target = af.init_af_DataUtil(family);
          if (!target.items().isEmpty()) {
-            icon = autismclient.util.M.init_ItemStack(target.items().iterator().next());
+            icon = autismclient.util.DisplayItemStackFactory.init_ItemStack(target.items().iterator().next());
          }
       } catch (RuntimeException var6) {
       }
@@ -1885,7 +1885,7 @@ final class StreamUtil {
          for (Item item : BuiltInRegistries.ITEM) {
             TypedEntityData<EntityType<?>> data = item.components().get(DataComponents.ENTITY_DATA);
             if (data != null) {
-               map.putIfAbsent(data.type(), autismclient.util.M.init_ItemStack(item));
+               map.putIfAbsent(data.type(), autismclient.util.DisplayItemStackFactory.init_ItemStack(item));
             }
          }
 

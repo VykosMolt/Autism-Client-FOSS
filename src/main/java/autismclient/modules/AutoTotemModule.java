@@ -9,7 +9,7 @@ import autismclient.mixin.accessor.AutismEntityAccessor;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.mixin.accessor.AutismPlayerAccessor;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -296,7 +296,7 @@ public final class AutoTotemModule extends Module {
             if (this.push != 0) {
                this.read_V_3();
             } else {
-               int now = ck.init_ck().state_I();
+               int now = AutismSessionState.init_ck().state_I();
                boolean health = this.bool("health");
                boolean wantTotem = health ? !sync_Z() && this.pop() : true;
                int mode = wantTotem ? 1 : 0;
@@ -549,7 +549,7 @@ public final class AutoTotemModule extends Module {
          }
 
          if (switched && this.bool("pause-movement")) {
-            start = ck.init_ck().state_I() + 1;
+            start = AutismSessionState.init_ck().state_I() + 1;
          }
 
          return switched;
@@ -587,7 +587,7 @@ public final class AutoTotemModule extends Module {
          if (!pickup) {
             boolean switched = this.init_Z_I_Z_2(fromSlot, isTotem);
             if (switched) {
-               int now = ck.init_ck().state_I();
+               int now = AutismSessionState.init_ck().state_I();
                this.push = 3;
                this.pop = fromSlot;
                this.run = 0;
@@ -599,8 +599,8 @@ public final class AutoTotemModule extends Module {
 
             return switched;
          } else {
-            int from = autismclient.util.aw.load_I(MC, fromSlot);
-            int offhand = autismclient.util.aw.load_I(MC, 40);
+            int from = autismclient.util.InventorySlotHelper.load_I(MC, fromSlot);
+            int offhand = autismclient.util.InventorySlotHelper.load_I(MC, 40);
             if (from < 0 || offhand < 0) {
                return false;
             }
@@ -615,7 +615,7 @@ public final class AutoTotemModule extends Module {
 
             boolean clicked;
             try {
-               clicked = autismclient.util.av.init(MC, from, 0, ContainerInput.PICKUP);
+               clicked = autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
             } finally {
                autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
@@ -624,7 +624,7 @@ public final class AutoTotemModule extends Module {
                return false;
             }
 
-            int now = ck.init_ck().state_I();
+            int now = AutismSessionState.init_ck().state_I();
             this.push = 1;
             this.pop = fromSlot;
             this.run = 1;
@@ -651,7 +651,7 @@ public final class AutoTotemModule extends Module {
          }
 
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$ensureHasSentCarriedItem();
-         int now = ck.init_ck().state_I();
+         int now = AutismSessionState.init_ck().state_I();
          int selected = MC.player.getInventory().getSelectedSlot();
          if (selected == fromSlot) {
             if (!autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
@@ -697,7 +697,7 @@ public final class AutoTotemModule extends Module {
    }
 
    private void read_V_3() {
-      int now = ck.init_ck().state_I();
+      int now = AutismSessionState.init_ck().state_I();
       reset = now + this.write_I_2();
       if (this.init_DataUtil != null && MC.gui.screen() != this.init_DataUtil) {
          this.init_DataUtil = null;
@@ -760,8 +760,8 @@ public final class AutoTotemModule extends Module {
          this.flush_V();
          return true;
       } else {
-         int handlerSlot = autismclient.util.aw.load_I(MC, this.run == 1 ? 40 : this.pop);
-         return handlerSlot < 0 ? false : autismclient.util.av.init(MC, handlerSlot, 0, ContainerInput.PICKUP);
+         int handlerSlot = autismclient.util.InventorySlotHelper.load_I(MC, this.run == 1 ? 40 : this.pop);
+         return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.init(MC, handlerSlot, 0, ContainerInput.PICKUP);
       }
    }
 
@@ -798,17 +798,17 @@ public final class AutoTotemModule extends Module {
             }
          }
       } else if (MC.player != null && MC.player.containerMenu == MC.player.inventoryMenu && !MC.player.containerMenu.getCarried().isEmpty()) {
-         int from = autismclient.util.aw.load_I(MC, this.pop);
+         int from = autismclient.util.InventorySlotHelper.load_I(MC, this.pop);
          if (from >= 0 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
-               autismclient.util.av.init(MC, from, 0, ContainerInput.PICKUP);
+               autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
             } finally {
                autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
          }
       }
 
-      this.put = ck.init_ck().state_I() + this.init_I_Str("operation-delay", 0, 2);
+      this.put = AutismSessionState.init_ck().state_I() + this.init_I_Str("operation-delay", 0, 2);
       this.init_V_Z_2(true);
       this.update_V_3();
    }
@@ -850,7 +850,7 @@ public final class AutoTotemModule extends Module {
    }
 
    private static void init_V_I_2(int ticks) {
-      reset = ck.init_ck().state_I() + ticks;
+      reset = AutismSessionState.init_ck().state_I() + ticks;
    }
 
    private ValueRange init_ValueRange_Str(String settingId, int fallbackMin, int fallbackMax) {
@@ -903,7 +903,7 @@ public final class AutoTotemModule extends Module {
       int until = reset;
       if (until != -2147483648 && MC != null && MC.player != null) {
          Module module = al.init_Module_Str("auto-totem");
-         return module != null && module.isEnabled() ? ck.init_ck().state_I() <= until : false;
+         return module != null && module.isEnabled() ? AutismSessionState.init_ck().state_I() <= until : false;
       } else {
          return false;
       }
@@ -925,7 +925,7 @@ public final class AutoTotemModule extends Module {
 
    private void close_V() {
       if (this.bool("pause-movement")) {
-         start = ck.init_ck().state_I() + 1;
+         start = AutismSessionState.init_ck().state_I() + 1;
       }
    }
 
@@ -943,7 +943,7 @@ public final class AutoTotemModule extends Module {
          return false;
       }
 
-      int age = ck.init_ck().state_I() - until;
+      int age = AutismSessionState.init_ck().state_I() - until;
       return age <= 0 && age > -2;
    }
 
@@ -955,24 +955,24 @@ public final class AutoTotemModule extends Module {
       } else if (init_Z_6()) {
          return new Input(false, false, false, false, false, false, false);
       } else {
-         return ck.init_ck().state_I() > start ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
+         return AutismSessionState.init_ck().state_I() > start ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
       }
    }
 
    private static boolean load_Z_I(int fromSlot) {
-      int handlerSlot = autismclient.util.aw.load_I(MC, fromSlot);
-      return handlerSlot < 0 ? false : autismclient.util.av.init(MC, handlerSlot, 40, ContainerInput.SWAP);
+      int handlerSlot = autismclient.util.InventorySlotHelper.load_I(MC, fromSlot);
+      return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.init(MC, handlerSlot, 40, ContainerInput.SWAP);
    }
 
    private static boolean read(int fromSlot) {
-      int from = autismclient.util.aw.load_I(MC, fromSlot);
-      int offhand = autismclient.util.aw.load_I(MC, 40);
+      int from = autismclient.util.InventorySlotHelper.load_I(MC, fromSlot);
+      int offhand = autismclient.util.InventorySlotHelper.load_I(MC, 40);
       if (from >= 0 && offhand >= 0) {
          boolean offhandHadItem = !MC.player.getOffhandItem().isEmpty();
-         boolean ok = autismclient.util.av.init(MC, from, 0, ContainerInput.PICKUP);
-         ok &= autismclient.util.av.init(MC, offhand, 0, ContainerInput.PICKUP);
+         boolean ok = autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
+         ok &= autismclient.util.ContainerClickExecutor.init(MC, offhand, 0, ContainerInput.PICKUP);
          if (offhandHadItem) {
-            ok &= autismclient.util.av.init(MC, from, 0, ContainerInput.PICKUP);
+            ok &= autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
          }
 
          return ok;
@@ -1068,7 +1068,7 @@ public final class AutoTotemModule extends Module {
          return 0.0F;
       }
 
-      int now = ck.init_ck().state_I();
+      int now = AutismSessionState.init_ck().state_I();
       if (now - this.stop >= 2) {
          this.stop = now;
          this.read_Map.clear();

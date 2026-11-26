@@ -4,7 +4,7 @@ import autismclient.AutismClientAddon;
 import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismLivingEntityAccessor;
 import autismclient.modules.Module;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -361,12 +361,12 @@ final class au {
                   this.init_Minecraft.gameMode.useItem(player, InteractionHand.MAIN_HAND);
                } else {
                   ItemStack stack = player.getInventory().getItem(slot);
-                  U.Inner_StateCache request = new U.Inner_StateCache(
-                        cell, player.getEyePosition(), Math.max(4.5, player.blockInteractionRange()), U.init(stack, player, InteractionHand.MAIN_HAND)
+                  BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(
+                        cell, player.getEyePosition(), Math.max(4.5, player.blockInteractionRange()), BlockPlacementPlanner.init(stack, player, InteractionHand.MAIN_HAND)
                      )
                      .init_U_StateCache_Z(player.isShiftKeyDown())
-                     .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(6));
-                  U.Inner_CachePool candidate = U.init_U_CachePool(request);
+                     .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(6));
+                  BlockPlacementPlanner.Inner_CachePool candidate = BlockPlacementPlanner.init_U_CachePool(request);
                   if (candidate != null) {
                      player.setYRot(candidate.init_U_DataUtil().load().init());
                      player.setXRot(candidate.init_U_DataUtil().load().load());

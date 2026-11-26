@@ -4,7 +4,7 @@ import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismItemNbtInspectOverlay;
-import autismclient.util.ay;
+import autismclient.util.ItemSnbtCodec;
 import autismclient.util.bi;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.Minecraft;
@@ -68,7 +68,7 @@ public class NbtCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cHold an item in either hand first.");
       } else {
          try {
-            Minecraft.getInstance().keyboardHandler.setClipboard(ay.init(stack));
+            Minecraft.getInstance().keyboardHandler.setClipboard(ItemSnbtCodec.init(stack));
             bi.init("Copied /give command.");
          } catch (Throwable t) {
             bi.write("Copy failed.");

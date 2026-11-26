@@ -159,7 +159,7 @@ public final class cV {
    public static void read_V() {
       if (close_Z()) {
          if (init_cV == null || init_cV.init_SchematicLibraryOv == null) {
-            OverlayBounds saved = autismclient.util.ck.init_ck().init_cH_Str("schematic-library");
+            OverlayBounds saved = autismclient.util.AutismSessionState.init_ck().init_cH_Str("schematic-library");
             if (saved == null || !saved.init_Z) {
                return;
             }

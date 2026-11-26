@@ -2,7 +2,7 @@ package autismclient.util.macro;
 
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketTypeRegistry;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Locale;
@@ -109,7 +109,7 @@ public final class PacketGateManager {
          read();
          boolean shouldFlush = flushRequested || removed.stream().anyMatch(gate -> gate.init_Z);
          if (shouldFlush && !load_Z()) {
-            ck.init_ck().init_I_ClientPacketListen(connection);
+            AutismSessionState.init_ck().init_I_ClientPacketListen(connection);
          }
       } else {
          init(connection);
@@ -142,7 +142,7 @@ public final class PacketGateManager {
          boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.init_B_CachePool == PacketGateAction.Inner_CachePool.DELAY && g.init_Z);
          load_V();
          if (flush) {
-            ck.init_ck().init_I_ClientPacketListen(connection);
+            AutismSessionState.init_ck().init_I_ClientPacketListen(connection);
          }
       }
    }

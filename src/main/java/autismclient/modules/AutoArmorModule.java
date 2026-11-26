@@ -5,7 +5,7 @@ import autismclient.api.module.IntSetting;
 import autismclient.api.module.RangeSetting;
 import autismclient.api.module.ValueRange;
 import autismclient.util.AutismConfig;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -159,7 +159,7 @@ public final class AutoArmorModule extends Module {
                      this.init_Z = true;
                   }
                } else if (!BlinkPacketManager.load_Z()) {
-                  int now = ck.init_ck().state_I();
+                  int now = AutismSessionState.init_ck().state_I();
                   if (now >= this.close) {
                      int timesChanged = MC.player.getInventory().getTimesChanged();
                      if (timesChanged != this.update || now - this.write >= 4) {
@@ -210,7 +210,7 @@ public final class AutoArmorModule extends Module {
    }
 
    private void read_V_9() {
-      int now = ck.init_ck().state_I();
+      int now = AutismSessionState.init_ck().state_I();
       poll = now + this.init_I_12();
       if (now >= this.flush) {
          if (this.isEnabled()
@@ -261,7 +261,7 @@ public final class AutoArmorModule extends Module {
       this.load_Z = false;
       this.read_Z = false;
       this.sync = 0;
-      this.close = ck.init_ck().state_I() + this.init_I("operation-delay", 3, 5);
+      this.close = AutismSessionState.init_ck().state_I() + this.init_I("operation-delay", 3, 5);
    }
 
    private AutoArmorModule.Inner_DataUtil init_TableIndex_DataUti() {
@@ -336,9 +336,9 @@ public final class AutoArmorModule extends Module {
       }
 
       try {
-         boolean clicked = autismclient.util.av.init(MC, menuSlot, button, input);
+         boolean clicked = autismclient.util.ContainerClickExecutor.init(MC, menuSlot, button, input);
          if (clicked && this.bool("pause-movement")) {
-            push = ck.init_ck().state_I() + 1;
+            push = AutismSessionState.init_ck().state_I() + 1;
          }
 
          return clicked;
@@ -378,7 +378,7 @@ public final class AutoArmorModule extends Module {
       int until = poll;
       if (until != -2147483648 && MC != null && MC.player != null) {
          Module module = al.init_Module_Str("auto-armor");
-         return module != null && module.isEnabled() ? ck.init_ck().state_I() <= until : false;
+         return module != null && module.isEnabled() ? AutismSessionState.init_ck().state_I() <= until : false;
       } else {
          return false;
       }
@@ -409,7 +409,7 @@ public final class AutoArmorModule extends Module {
          return false;
       }
 
-      int age = ck.init_ck().state_I() - until;
+      int age = AutismSessionState.init_ck().state_I() - until;
       return age <= 0 && age > -2;
    }
 
@@ -423,12 +423,12 @@ public final class AutoArmorModule extends Module {
          if (module == null || !module.isEnabled() || push == -2147483648) {
             return original;
          }
-         return ck.init_ck().state_I() > push ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
+         return AutismSessionState.init_ck().state_I() > push ? original : new Input(false, false, false, false, original.jump(), original.shift(), false);
       }
    }
 
    private int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
-      return autismclient.util.aw.load_I(MC, candidate.init_I());
+      return autismclient.util.InventorySlotHelper.load_I(MC, candidate.init_I());
    }
 
    private autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil() {

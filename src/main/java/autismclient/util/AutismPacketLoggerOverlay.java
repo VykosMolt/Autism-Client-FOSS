@@ -359,7 +359,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    public static boolean poll_Z_13() {
-      OverlayBounds layout = ck.init_ck().init_cH_Str("AutismPacketLoggerOverlay");
+      OverlayBounds layout = AutismSessionState.init_ck().init_cH_Str("AutismPacketLoggerOverlay");
       return layout != null && layout.init_Z;
    }
 
@@ -1680,7 +1680,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                LoggedPacketActions.pop(e);
                break;
             case "+ Filter":
-               ck shared = ck.init_ck();
+               AutismSessionState shared = AutismSessionState.init_ck();
                Class<? extends Packet<?>> pktCls = (Class<? extends Packet<?>>)e.init_Class;
                boolean added;
                if (e.init_Str.equals("C2S")) {
@@ -1695,7 +1695,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                );
                break;
             case "- Filter":
-               ck sharedRem = ck.init_ck();
+               AutismSessionState sharedRem = AutismSessionState.init_ck();
                Class<? extends Packet<?>> pktClsRem = (Class<? extends Packet<?>>)e.init_Class;
                boolean removed;
                if (e.init_Str.equals("C2S")) {

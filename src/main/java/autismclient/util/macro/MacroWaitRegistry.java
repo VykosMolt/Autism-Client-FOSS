@@ -158,7 +158,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(WaitGamemodeChangeAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_ConfigStore condition = new MacroWaitRegistry.Inner_ConfigStore(action, autismclient.util.W.init_W_StreamUtil(), future);
+      MacroWaitRegistry.Inner_ConfigStore condition = new MacroWaitRegistry.Inner_ConfigStore(action, autismclient.util.FakeGamemodeManager.init_W_StreamUtil(), future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -541,7 +541,7 @@ public class MacroWaitRegistry {
                MacroItemTarget entryTarget = e.init_ArrayUtil();
                if (e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.init_Z()) {
                   int slotNum = entryTarget.init_I;
-                  int handlerSlot = autismclient.util.aw.read_I(mc, slotNum);
+                  int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                      ItemStack s = handler.slots.get(handlerSlot).getItem();
                      initialNames.put(i, init(s));
@@ -843,7 +843,7 @@ public class MacroWaitRegistry {
             if (handler == null) {
                return e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
             } else {
-               int handlerSlot = autismclient.util.aw.read_I(mc, slotNum);
+               int handlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, slotNum);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(handlerSlot).getItem();
                   return this.init(stack, entryTarget, slotNum, e, entryIdx);
@@ -855,7 +855,7 @@ public class MacroWaitRegistry {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
-                     int visibleSlot = autismclient.util.aw.init_I(mc, s.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, s.index);
                      if (!entryTarget.update() || entryTarget.init_Z_ItemStack_I(s.getItem(), visibleSlot)) {
                         return false;
                      }
@@ -876,7 +876,7 @@ public class MacroWaitRegistry {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
                      ItemStack stack = s.getItem();
-                     int visibleSlot = autismclient.util.aw.init_I(mc, s.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, s.index);
                      if ((!entryTarget.update() || entryTarget.init_Z_ItemStack_I(stack, visibleSlot))
                         && this.init(stack, entryTarget, visibleSlot, e, entryIdx)) {
                         return true;
@@ -997,19 +997,19 @@ public class MacroWaitRegistry {
 
    static class Inner_ConfigStore implements MacroWaitRegistry.Inner_EventBus {
       final WaitGamemodeChangeAction init_aI;
-      final autismclient.util.W.Inner_StreamUtil init_W_StreamUtil;
+      final autismclient.util.FakeGamemodeManager.Inner_StreamUtil init_W_StreamUtil;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_ConfigStore(WaitGamemodeChangeAction action, autismclient.util.W.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
+      Inner_ConfigStore(WaitGamemodeChangeAction action, autismclient.util.FakeGamemodeManager.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
          this.init_aI = action == null ? new WaitGamemodeChangeAction() : action;
-         this.init_W_StreamUtil = baseline == null ? autismclient.util.W.init_W_StreamUtil() : baseline;
+         this.init_W_StreamUtil = baseline == null ? autismclient.util.FakeGamemodeManager.init_W_StreamUtil() : baseline;
          this.init_CompletableFuture = future;
       }
 
       @Override
       public boolean init_Z_Minecraft(Minecraft mc) {
-         autismclient.util.W.Inner_StreamUtil now = autismclient.util.W.init_W_StreamUtil();
+         autismclient.util.FakeGamemodeManager.Inner_StreamUtil now = autismclient.util.FakeGamemodeManager.init_W_StreamUtil();
          return now.init_J() > this.init_W_StreamUtil.init_J() && this.init_aI.init(this.init(now.init_GameType()))
             ? true
             : this.init_aI.detectFake && now.load_J() > this.init_W_StreamUtil.load_J() && this.init_aI.init(this.init(now.load_GameType()));
@@ -1471,7 +1471,7 @@ public class MacroWaitRegistry {
       }
 
       boolean load_Z() {
-         autismclient.util.aE sync = autismclient.util.aE.init_aE();
+         autismclient.util.LanSyncManager sync = autismclient.util.LanSyncManager.init_aE();
          if (!sync.write_Z()) {
             return true;
          }
@@ -1584,7 +1584,7 @@ public class MacroWaitRegistry {
 
             for (Slot slot : handler.slots) {
                if (slot != null && !slot.getItem().isEmpty()) {
-                  int visibleSlot = autismclient.util.aw.init_I(mc, slot.index);
+                  int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, slot.index);
                   if (this.init_ArrayUtil.init_Z_ItemStack_I(slot.getItem(), visibleSlot)) {
                      return true;
                   }

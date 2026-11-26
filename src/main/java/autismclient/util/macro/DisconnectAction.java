@@ -312,11 +312,11 @@ public class DisconnectAction implements MacroAction {
             }
          }
 
-         autismclient.util.aw.read(mc, bundleSlot, target);
+         autismclient.util.InventorySlotHelper.read(mc, bundleSlot, target);
          hotbarSlot = target;
       }
 
-      autismclient.util.aw.init_V(mc, hotbarSlot);
+      autismclient.util.InventorySlotHelper.init_V(mc, hotbarSlot);
       mc.getConnection().send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));
       return true;
    }

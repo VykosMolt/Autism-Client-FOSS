@@ -16,7 +16,7 @@ public final class OverlaySuiteController {
    private AutismServerInfoOverlay init_AutismServerInfoOv;
 
    private OverlaySuiteController(Font font, AutismOverlay tiedOverlay) {
-      aE.init_aE().flush(() -> {});
+      LanSyncManager.init_aE().flush(() -> {});
       this.init_AutismLANSyncOverl = AutismLANSyncOverlay.init_AutismLANSyncOverl_Font(font);
       this.init_AutismMacroListOve = tiedOverlay instanceof AutismMacroListOverlay library ? library : new AutismMacroListOverlay(font);
       this.init_AutismQueueEditorO = new AutismQueueEditorOverlay(font);

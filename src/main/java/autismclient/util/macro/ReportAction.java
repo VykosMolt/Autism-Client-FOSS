@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -79,9 +79,9 @@ public class ReportAction implements MacroAction {
                         "§b" + this.init_Str_3() + ": " + deltaMs + " ms (" + this.load_Str_2() + " -> " + this.read_Str() + ")"
                      );
                      if (this.stashToSharedState) {
-                        ck.init_ck()
+                        AutismSessionState.init_ck()
                            .init_V_ck_ConfigStore(
-                              new ck.Inner_ConfigStore(this.init_Str_3(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
+                              new AutismSessionState.Inner_ConfigStore(this.init_Str_3(), deltaMs, this.load_Str_2(), this.read_Str(), System.currentTimeMillis())
                            );
                      }
                   }

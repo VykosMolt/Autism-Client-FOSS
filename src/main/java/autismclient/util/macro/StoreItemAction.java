@@ -26,7 +26,7 @@ public class StoreItemAction implements MacroAction {
          AbstractContainerMenu h = mc.player.containerMenu;
          if (h != mc.player.inventoryMenu) {
             for (int slotId : this.init_List_Minecraft_3(mc)) {
-               autismclient.util.av.init(mc, slotId, 0, ContainerInput.QUICK_MOVE);
+               autismclient.util.ContainerClickExecutor.init(mc, slotId, 0, ContainerInput.QUICK_MOVE);
             }
 
             if (this.closeAfter && !this.persistent) {
@@ -76,11 +76,11 @@ public class StoreItemAction implements MacroAction {
             for (int i = 0; i < h.slots.size(); i++) {
                Slot slot = h.slots.get(i);
                if (slot != null) {
-                  boolean playerInventorySlot = autismclient.util.aw.init_Z(mc, slot);
+                  boolean playerInventorySlot = autismclient.util.InventorySlotHelper.init_Z(mc, slot);
                   if ((this.mode != StoreItemAction.Inner_DataUtil.LOOT || !playerInventorySlot) && (this.mode != StoreItemAction.Inner_DataUtil.STORE || playerInventorySlot)) {
                      ItemStack stack = slot.getItem();
                      if (!stack.isEmpty()) {
-                        int visibleSlot = autismclient.util.aw.init_I(mc, i);
+                        int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, i);
                         if (this.init(stack, visibleSlot)) {
                            slotsToMove.add(i);
                         }

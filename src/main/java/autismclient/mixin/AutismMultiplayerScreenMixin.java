@@ -11,8 +11,8 @@ import autismclient.gui.f.b.h;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
-import autismclient.util.aA;
-import autismclient.util.aN;
+import autismclient.util.JoinMacroController;
+import autismclient.util.MacroLibraryManager;
 import autismclient.util.bW;
 import autismclient.util.ProxyListManager;
 import autismclient.util.cA;
@@ -314,17 +314,17 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
             statusY += 12;
          }
 
-         String macroName = aA.init_Str();
+         String macroName = JoinMacroController.init_Str();
          String macroLabel;
          int macroColor;
          if (macroName.isBlank()) {
             macroLabel = "Join Macro: none";
             macroColor = -7370102;
-         } else if (aN.init_aN().init_aM_Str(macroName) == null) {
+         } else if (MacroLibraryManager.init_aN().init_aM_Str(macroName) == null) {
             macroLabel = "Join Macro missing: " + macroName;
             macroColor = -38037;
          } else {
-            macroLabel = "Join Macro: " + macroName + " - " + aA.load_Str();
+            macroLabel = "Join Macro: " + macroName + " - " + JoinMacroController.load_Str();
             macroColor = -10035062;
          }
 

@@ -202,7 +202,7 @@ final class cv {
    }
 
    static long init_J() {
-      return autismclient.util.ck.init_ck().state_I();
+      return autismclient.util.AutismSessionState.init_ck().state_I();
    }
 
    static void init_V(Minecraft mc) {

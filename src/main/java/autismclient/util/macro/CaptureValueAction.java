@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
 import autismclient.api.custommenu.CustomMenuSnapshot;
-import autismclient.util.bO;
+import autismclient.util.TabPlayerListParser;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -568,11 +568,11 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    private CaptureValueAction.Inner_DataUtil load_TaskQueue_DataUtil_Minecraft(Minecraft mc) {
-      List<bO.Inner_StreamUtil> players = bO.init(mc);
+      List<TabPlayerListParser.Inner_StreamUtil> players = TabPlayerListParser.init(mc);
       List<String> names = new ArrayList<>(players.size() + 1);
       Map<String, String> prefixes = new HashMap<>();
 
-      for (bO.Inner_StreamUtil player : players) {
+      for (TabPlayerListParser.Inner_StreamUtil player : players) {
          names.add(player.init_Str());
          if (player.init_Z()) {
             prefixes.put(player.init_Str(), player.load());
@@ -674,9 +674,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
 
          for (Slot candidate : mc.player.containerMenu.slots) {
             if (candidate != null && !candidate.getItem().isEmpty()) {
-               boolean playerSlot = autismclient.util.aw.init_Z(mc, candidate);
+               boolean playerSlot = autismclient.util.InventorySlotHelper.init_Z(mc, candidate);
                if (playerOnly == playerSlot) {
-                  int visible = autismclient.util.aw.init_I(mc, candidate.index);
+                  int visible = autismclient.util.InventorySlotHelper.init_I(mc, candidate.index);
                   if ((this.slot < 0 || this.slot == visible || this.slot == candidate.index)
                      && (filter == null || !filter.update() || filter.init_I_ItemStack_I(candidate.getItem(), visible) >= 0)) {
                      return this.init_TaskQueue_DataUtil_ItemStack_I(candidate.getItem(), visible);

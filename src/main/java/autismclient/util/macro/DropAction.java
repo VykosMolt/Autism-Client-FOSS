@@ -55,7 +55,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                for (int i = 0; i < 36; i++) {
                   if (!mc.player.getInventory().getItem(i).isEmpty()) {
                      if (this.useHandlerSlots) {
-                        int resolved = autismclient.util.aw.load_I(mc, i);
+                        int resolved = autismclient.util.InventorySlotHelper.load_I(mc, i);
                         if (resolved >= 0) {
                            this.load(mc, resolved, 0);
                         }
@@ -68,7 +68,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                int selected = Math.max(0, Math.min(8, mc.player.getInventory().getSelectedSlot()));
                int count = Math.max(1, this.dropCount);
                if (this.useHandlerSlots) {
-                  int resolved = autismclient.util.aw.load_I(mc, selected);
+                  int resolved = autismclient.util.InventorySlotHelper.load_I(mc, selected);
                   if (resolved >= 0) {
                      this.load(mc, resolved, count);
                   }
@@ -87,7 +87,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
                      this.init(mc, configuredSlot, entryTarget, count);
                   } else if (configuredSlot >= 0) {
                      if (this.useHandlerSlots) {
-                        int resolvedSlot = autismclient.util.aw.read_I(mc, configuredSlot);
+                        int resolvedSlot = autismclient.util.InventorySlotHelper.read_I(mc, configuredSlot);
                         if (resolvedSlot >= 0) {
                            this.load(mc, resolvedSlot, count);
                         }
@@ -112,11 +112,11 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
          if (this.useHandlerSlots) {
             AbstractContainerMenu handler = mc.player.containerMenu;
             if (handler != null) {
-               int resolvedSlot = autismclient.util.aw.read_I(mc, configuredSlot);
+               int resolvedSlot = autismclient.util.InventorySlotHelper.read_I(mc, configuredSlot);
                if (resolvedSlot >= 0 && resolvedSlot < handler.slots.size()) {
                   Slot slot = handler.slots.get(resolvedSlot);
                   if (slot != null && !slot.getItem().isEmpty()) {
-                     int visibleSlot = autismclient.util.aw.init_I(mc, resolvedSlot);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, resolvedSlot);
                      if (target.init_Z_ItemStack_I(slot.getItem(), visibleSlot)) {
                         int toDrop = count == 0 ? 0 : Math.min(count, slot.getItem().getCount());
                         this.load(mc, resolvedSlot, toDrop);
@@ -146,7 +146,7 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
-                     int visibleSlot = autismclient.util.aw.init_I(mc, s.index);
+                     int visibleSlot = autismclient.util.InventorySlotHelper.init_I(mc, s.index);
                      if (target.init_Z_ItemStack_I(s.getItem(), visibleSlot)) {
                         if (count == 0) {
                            this.load(mc, s.index, 0);
@@ -185,11 +185,11 @@ public class DropAction implements PacketOrderAware, MacroAction, GuiWaitAware {
    }
 
    private void init(Minecraft mc, int invSlot, int count) {
-      autismclient.util.O.load(mc, invSlot, count);
+      autismclient.util.InventoryDropHelper.load(mc, invSlot, count);
    }
 
    private void load(Minecraft mc, int handlerSlotId, int count) {
-      autismclient.util.O.init(mc, handlerSlotId, count);
+      autismclient.util.InventoryDropHelper.init(mc, handlerSlotId, count);
    }
 
    @Override

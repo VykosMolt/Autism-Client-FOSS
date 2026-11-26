@@ -88,7 +88,7 @@ public final class CombatInteractionController {
          && mc.gui.overlay() == null
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !autismclient.util.g.PkgCls_a.init_Z())
          && !f.load()
@@ -113,7 +113,7 @@ public final class CombatInteractionController {
 
    public static boolean write() {
       Minecraft mc = Minecraft.getInstance();
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (open() && load_Z(mc) && !load()) {
          if (init_LocalPlayer != null && (init_LocalPlayer != mc.player || init_ClientPacketListen != mc.getConnection() || init_ClientLevel != mc.level)) {
             init_V();
@@ -250,7 +250,7 @@ public final class CombatInteractionController {
          && init_LocalPlayer == mc.player
          && init_ClientPacketListen == mc.getConnection()
          && init_ClientLevel == mc.level
-         && write_I == ck.init_ck().state_I()
+         && write_I == AutismSessionState.init_ck().state_I()
          && open();
    }
 
@@ -264,7 +264,7 @@ public final class CombatInteractionController {
          && wire.init_Z()
          && Math.abs(RotationMath.init(wire.read(), init_ce_DataUtil.init())) < 0.001F
          && Math.abs(wire.write() - init_ce_DataUtil.load()) < 0.001F
-         && ck.init_ck().state_I() > read_I;
+         && AutismSessionState.init_ck().state_I() > read_I;
    }
 
    public static void init_V(Minecraft mc) {
@@ -290,7 +290,7 @@ public final class CombatInteractionController {
                   init_ClientPacketListen = mc.getConnection();
                   init_ClientLevel = mc.level;
                   if (!init_Z) {
-                     sync_I = ck.init_ck().state_I();
+                     sync_I = AutismSessionState.init_ck().state_I();
                   }
 
                   init_Z = true;
@@ -299,7 +299,7 @@ public final class CombatInteractionController {
             } else {
                if (key.autism$clickCount() > 0) {
                   if (!init_Z) {
-                     sync_I = ck.init_ck().state_I();
+                     sync_I = AutismSessionState.init_ck().state_I();
                   }
 
                   init_Z = true;
@@ -337,8 +337,8 @@ public final class CombatInteractionController {
          && !f.load()
          && !autismclient.modules.aD.init_Z()
          && !autismclient.modules.FreecamController.init_Z()
-         && !cd.init_Z()) {
-         ck state = ck.init_ck();
+         && !RemoteViewController.init_Z()) {
+         AutismSessionState state = AutismSessionState.init_ck();
          return !state.frame() && !state.pool();
       } else {
          return false;
@@ -346,7 +346,7 @@ public final class CombatInteractionController {
    }
 
    public static CombatInteractionController.Inner_DataUtil init_ListPool_DataUtil(Minecraft mc) {
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (!load() && !sync_Z && load_Z(mc) && update_I != tick) {
          if (!close() || update_Z(mc) && !init(tick)) {
             if (update() && poll() && write_Z(mc) && init_Z(mc, init_ce_DataUtil)) {
@@ -398,7 +398,7 @@ public final class CombatInteractionController {
          : (init_HitResult instanceof EntityHitResult entity ? entity.getLocation().subtract(entity.getEntity().position()) : init_HitResult.getLocation());
       init_BlockState = init_HitResult instanceof BlockHitResult block && block.getType() == Type.BLOCK ? mc.level.getBlockState(block.getBlockPos()) : null;
       read_ce_DataUtil = load_ce_DataUtil;
-      read_I = ck.init_ck().state_I();
+      read_I = AutismSessionState.init_ck().state_I();
       load_J = System.nanoTime();
       close = true;
    }

@@ -26,12 +26,12 @@ import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismServerInfoOverlay;
-import autismclient.util.J;
+import autismclient.util.AutoCraftingEngine;
 import autismclient.util.MapTooltipPreview;
 import autismclient.util.RotationMath;
 import autismclient.util.cf;
 import autismclient.util.SprintStateTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SodiumRegionResourceProbe;
 import autismclient.util.e.LeafDupePacketTracker;
 import autismclient.util.g.PkgCls_a;
@@ -329,7 +329,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleContainerContent", at = @At("RETURN"))
    private void autism$aiContentsApplied(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
       VillagerTradeSession.init_V_ClientboundContain(packet);
-      J.init_V(packet.containerId());
+      AutoCraftingEngine.init_V(packet.containerId());
       if (!AutismLiteVariant.enabled()) {
          ca.init(packet.containerId(), packet.items());
          PkgCls_b.init(packet.containerId(), packet.items(), packet.carriedItem());
@@ -722,7 +722,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetTime", at = @At("RETURN"))
    private void yang$onWorldTimeUpdate(ClientboundSetTimePacket packet, CallbackInfo ci) {
       if (!aD.read_Z() && this.autism$packetHooksActive()) {
-         ck.init_ck().poll_V();
+         AutismSessionState.init_ck().poll_V();
       }
    }
 

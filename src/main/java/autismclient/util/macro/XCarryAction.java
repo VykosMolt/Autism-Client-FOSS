@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -246,7 +246,7 @@ public class XCarryAction implements MacroAction {
    public void execute(Minecraft mc) {
       if (mc != null && mc.player != null && mc.gameMode != null) {
          this.load_V_4();
-         ck shared = ck.init_ck();
+         AutismSessionState shared = AutismSessionState.init_ck();
          boolean prevBypass = shared.close_Z();
          shared.flush(true);
 
@@ -284,7 +284,7 @@ public class XCarryAction implements MacroAction {
    private void init_V_Minecraft_5(Minecraft mc) {
       if (mc.getConnection() != null) {
          this.load_V_4();
-         autismclient.util.E containerTarget = ck.init_ck().init_E();
+         autismclient.util.InteractionTargetRef containerTarget = AutismSessionState.init_ck().init_E();
          if (containerTarget != null) {
             InventoryMenu playerHandler = mc.player.inventoryMenu;
             if (!playerHandler.getCarried().isEmpty()) {
@@ -1408,7 +1408,7 @@ public class XCarryAction implements MacroAction {
 
    private void init_V_InventoryMenu_Z(InventoryMenu handler, boolean includeCursor) {
       boolean active = init_Z_InventoryMenu_3(handler, includeCursor, this.init_Set());
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (active) {
          shared.load(this.init_Set(), includeCursor);
          shared.sync(true);
@@ -1429,7 +1429,7 @@ public class XCarryAction implements MacroAction {
    }
 
    private void init_V_Z_2(boolean includeCursor) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       shared.load(this.init_Set(), includeCursor);
       shared.sync(true);
       shared.update(true);
@@ -1443,7 +1443,7 @@ public class XCarryAction implements MacroAction {
       return 10 + (carryCursor ? 1 : 0);
    }
 
-   static void init_V_Minecraft_E(Minecraft mc, autismclient.util.E target) {
+   static void init_V_Minecraft_E(Minecraft mc, autismclient.util.InteractionTargetRef target) {
       if (target != null) {
          target.init_Z_Minecraft(mc);
       }

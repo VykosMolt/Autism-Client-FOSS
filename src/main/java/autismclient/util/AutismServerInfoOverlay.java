@@ -743,7 +743,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public void write_V_24() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       this.flags_V_2();
       String stateAddress = this.load_Str_11();
       if (stateAddress.isEmpty() && this.poll_Str != null) {
@@ -764,7 +764,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public void update_V_21() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       this.b__V();
       this.start = Math.max(0, Math.min(init_StrArr.length - 1, shared.next_I()));
       this.state = Math.max(10, Math.min(500, shared.valid_I()));
@@ -806,7 +806,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    public static boolean poll_Z_16() {
-      OverlayBounds layout = ck.init_ck().init_cH_Str("autism-serverinfo");
+      OverlayBounds layout = AutismSessionState.init_ck().init_cH_Str("autism-serverinfo");
       return layout != null && layout.init_Z;
    }
 
@@ -878,7 +878,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          time = "Day " + dayCount + " (" + String.format("%02d:%02d", hours, minutes) + ")";
       }
 
-      double estimatedTps = ck.init_ck().load_D();
+      double estimatedTps = AutismSessionState.init_ck().load_D();
       String tps = estimatedTps > 0.0 ? String.format("%.1f", Math.min(20.0, estimatedTps)) : "--";
       this.init_PacketUtil = new autismclient.gui.f.c.PacketUtil();
       this.init_V_Str_2("IP:", displayedAddress, null, () -> this.init_V_Str_10(displayedAddress, "Server address copied.", "Server address unavailable."));
@@ -1197,7 +1197,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void load_V_2(int delayMs) {
       this.state = Math.max(10, Math.min(500, delayMs));
-      ck.init_ck().next(this.state);
+      AutismSessionState.init_ck().next(this.state);
    }
 
    @Override
@@ -4722,7 +4722,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String flush_Str_2() {
-      String version = ck.init_ck().init_Str_Str(this.open_Str_2());
+      String version = AutismSessionState.init_ck().init_Str_Str(this.open_Str_2());
       if (version != null && !version.isBlank()) {
          return version;
       }

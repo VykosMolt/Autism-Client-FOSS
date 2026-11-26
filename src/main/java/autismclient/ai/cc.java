@@ -3986,7 +3986,7 @@ public final class cc {
          Set<String> inputs = new LinkedHashSet<>();
 
          for (Item cooked : af.load_af_DataUtil(spec).items()) {
-            for (autismclient.util.J.Inner_StreamUtil plan : autismclient.util.J.load(mc, cooked)) {
+            for (autismclient.util.AutoCraftingEngine.Inner_StreamUtil plan : autismclient.util.AutoCraftingEngine.load(mc, cooked)) {
                for (Item input : plan.init_List()) {
                   inputs.add(BuiltInRegistries.ITEM.getKey(input).toString());
                }
@@ -4406,7 +4406,7 @@ public final class cc {
 
             return "evidence " + id + " is not a SUCCEEDED perform of this session";
          case "macro":
-            autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(p, "name", ""));
+            autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(ag.init_Str_JsonObject(p, "name", ""));
             if (macro == null) {
                return "no macro named " + ag.init_Str_JsonObject(p, "name", "");
             }
@@ -5289,7 +5289,7 @@ public final class cc {
       bL trace = bL.init_bL();
       if (trace != null) {
          JsonObject saved = evidence.deepCopy();
-         saved.addProperty("simulationTick", autismclient.util.ck.init_ck().state_I());
+         saved.addProperty("simulationTick", autismclient.util.AutismSessionState.init_ck().state_I());
          saved.addProperty("observedAtMs", System.currentTimeMillis());
          this.load_ExecutorService.execute(() -> trace.load(kind, saved));
       }

@@ -4,8 +4,8 @@ import autismclient.api.module.Setting;
 import autismclient.compat263.Compat263;
 import autismclient.modules.Module;
 import autismclient.modules.f;
-import autismclient.util.ay;
-import autismclient.util.az;
+import autismclient.util.ItemSnbtCodec;
+import autismclient.util.ItemNbtInspector;
 import autismclient.util.bi;
 import autismclient.util.cA;
 import autismclient.util.SnbtBraceRepairer;
@@ -294,7 +294,7 @@ public final class BufferHelper extends KeyHolder {
          return true;
       }
 
-      ItemStack stack = ay.init_ItemStack(this.init_BitSetUtil.init_Str());
+      ItemStack stack = ItemSnbtCodec.init_ItemStack(this.init_BitSetUtil.init_Str());
       if (stack.isEmpty()) {
          this.init_Z = false;
          this.init_Str = "Invalid ItemStack SNBT";
@@ -302,7 +302,7 @@ public final class BufferHelper extends KeyHolder {
          return false;
       }
 
-      String error = ay.read(stack);
+      String error = ItemSnbtCodec.read(stack);
       this.init_Z = error.isBlank();
       this.init_Str = this.init_Z ? "Valid complete ItemStack" : error;
       if (this.init_Z) {
@@ -317,14 +317,14 @@ public final class BufferHelper extends KeyHolder {
    private void read() {
       if (this.init_BufferHelper_DataU == BufferHelper.Inner_DataUtil.FULL_NBT) {
          String repaired = SnbtBraceRepairer.init_Str(this.init_BitSetUtil.init_Str());
-         ItemStack stack = ay.init_ItemStack(repaired);
+         ItemStack stack = ItemSnbtCodec.init_ItemStack(repaired);
          if (stack.isEmpty()) {
-            this.init_BitSetUtil.init_BitSetUtil_Str(az.init_Str_Str(repaired));
+            this.init_BitSetUtil.init_BitSetUtil_Str(ItemNbtInspector.init_Str_Str(repaired));
             this.init_Z = false;
             this.init_Str = "Formatted (structure repaired — still not a valid ItemStack; check ids/values)";
          } else {
-            String error = ay.read(stack);
-            this.init_BitSetUtil.init_BitSetUtil_Str(az.init_Str_Str(ay.load(stack)));
+            String error = ItemSnbtCodec.read(stack);
+            this.init_BitSetUtil.init_BitSetUtil_Str(ItemNbtInspector.init_Str_Str(ItemSnbtCodec.load(stack)));
             this.init_Z = error.isBlank();
             this.init_Str = this.init_Z ? "Formatted and valid" : "Formatted — " + error;
          }
@@ -430,7 +430,7 @@ public final class BufferHelper extends KeyHolder {
             var10000 = value;
             break;
          case FULL_NBT:
-            var10000 = az.init_Str_Str(value);
+            var10000 = ItemNbtInspector.init_Str_Str(value);
       }
 
       return var10000;

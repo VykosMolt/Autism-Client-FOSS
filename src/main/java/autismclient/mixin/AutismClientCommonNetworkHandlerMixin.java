@@ -8,7 +8,7 @@ import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.SprintStateTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.b.CustomMenuTracker;
 import autismclient.util.e.LeafDupePacketTracker;
 import java.net.MalformedURLException;
@@ -56,7 +56,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
       if (!aD.read_Z() && this.minecraft.isSameThread()) {
          ConnectionPrivacyRegistry.Inner_StreamUtil context = ConnectionPrivacyRegistry.init_BufferHelper_Strea(this.connection);
          if (context != null) {
-            ck shared = ck.init_ck();
+            AutismSessionState shared = AutismSessionState.init_ck();
             ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
             boolean forceDeny = shared.clear_Z() || module != null && module.set_Z();
             boolean sharedBypass = shared.add_Z();

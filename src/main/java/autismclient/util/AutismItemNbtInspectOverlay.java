@@ -15,7 +15,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private static AutismItemNbtInspectOverlay init_AutismItemNbtInspe;
    private final Font init_Font;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
-   private az.Inner_StreamUtil init_az_StreamUtil;
+   private ItemNbtInspector.Inner_StreamUtil init_az_StreamUtil;
    private autismclient.gui.f.c.EventBus init_EventBus;
    private List<AutismItemNbtInspectOverlay.Inner_StreamUtil> init_List = Collections.emptyList();
    private boolean write_Z = true;
@@ -68,7 +68,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public static boolean init_Z_az_StreamUtil(az.Inner_StreamUtil inspection) {
+   public static boolean init_Z_az_StreamUtil(ItemNbtInspector.Inner_StreamUtil inspection) {
       if (inspection != null && init_Minecraft.font != null) {
          AutismItemNbtInspectOverlay overlay = init_AutismItemNbtInspe_Font(init_Minecraft.font);
          if (overlay == null) {
@@ -85,11 +85,11 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    public void init_V_ItemStack(ItemStack stack, int anchorX, int anchorY) {
       if (stack != null && !stack.isEmpty()) {
-         this.init_V_az_StreamUtil(az.init_az_ConfigStore_ItemStack(stack), anchorX, anchorY);
+         this.init_V_az_StreamUtil(ItemNbtInspector.init_az_ConfigStore_ItemStack(stack), anchorX, anchorY);
       }
    }
 
-   public void init_V_az_StreamUtil(az.Inner_StreamUtil inspection, int anchorX, int anchorY) {
+   public void init_V_az_StreamUtil(ItemNbtInspector.Inner_StreamUtil inspection, int anchorX, int anchorY) {
       if (inspection != null) {
          OverlayManager manager = OverlayManager.init_bk();
          manager.init_V(this);
@@ -429,7 +429,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return this.run_I_8() + this.start_I_6() * 4 + 2;
    }
 
-   private List<az.Inner_BufferHelper> init_List_5() {
+   private List<ItemNbtInspector.Inner_BufferHelper> init_List_5() {
       if (this.init_az_StreamUtil == null) {
          return List.of();
       } else {
@@ -447,7 +447,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          } else {
             List<AutismItemNbtInspectOverlay.Inner_StreamUtil> wrapped = new ArrayList<>();
 
-            for (az.Inner_BufferHelper line : this.init_List_5()) {
+            for (ItemNbtInspector.Inner_BufferHelper line : this.init_List_5()) {
                this.init_V_az_BufferHelper(line, maxWidth, wrapped);
             }
 
@@ -459,7 +459,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_az_BufferHelper(az.Inner_BufferHelper line, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
+   private void init_V_az_BufferHelper(ItemNbtInspector.Inner_BufferHelper line, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
       if (line.init_List() != null && !line.init_List().isEmpty()) {
          this.init_V_List_2(line.init_List(), maxWidth, target);
       } else {
@@ -516,7 +516,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          }
       } else {
          target.add(
-            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new az.Inner_TaskQueue(prefix, UiColorPalette.pool()), new az.Inner_TaskQueue("", valueColor)), 0)
+            AutismItemNbtInspectOverlay.Inner_StreamUtil.init(List.of(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.pool()), new ItemNbtInspector.Inner_TaskQueue("", valueColor)), 0)
          );
       }
    }
@@ -547,7 +547,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       if (line != null && line.init_List() != null) {
          int cursor = x + line.init_I();
 
-         for (az.Inner_TaskQueue token : line.init_List()) {
+         for (ItemNbtInspector.Inner_TaskQueue token : line.init_List()) {
             if (token != null && token.init_Str() != null && !token.init_Str().isEmpty()) {
                autismclient.gui.f.b.k.init(
                   context,
@@ -565,15 +565,15 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_List_2(List<az.Inner_TaskQueue> source, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
+   private void init_V_List_2(List<ItemNbtInspector.Inner_TaskQueue> source, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
       if (source != null && !source.isEmpty()) {
          int indent = this.init_I_List_2(source);
          int continuationOffset = autismclient.gui.f.b.MapStore.load(maxWidth, indent + this.stop());
-         List<az.Inner_TaskQueue> current = new ArrayList<>();
+         List<ItemNbtInspector.Inner_TaskQueue> current = new ArrayList<>();
          int currentWidth = 0;
          boolean continuation = false;
 
-         for (az.Inner_TaskQueue token : source) {
+         for (ItemNbtInspector.Inner_TaskQueue token : source) {
             if (token != null && token.init_Str() != null && !token.init_Str().isEmpty()) {
                String remaining = token.init_Str();
 
@@ -593,7 +593,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      piece = remaining.substring(0, 1);
                   }
 
-                  current.add(new az.Inner_TaskQueue(piece, token.init_I()));
+                  current.add(new ItemNbtInspector.Inner_TaskQueue(piece, token.init_I()));
                   currentWidth += this.load(piece);
                   remaining = remaining.substring(piece.length());
                   if (!remaining.isEmpty()) {
@@ -621,19 +621,19 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private AutismItemNbtInspectOverlay.Inner_StreamUtil init_AutismItemNbtInspe_Str(String prefix, String value, int valueColor, int offset) {
-      List<az.Inner_TaskQueue> tokens = new ArrayList<>();
+      List<ItemNbtInspector.Inner_TaskQueue> tokens = new ArrayList<>();
       if (prefix != null && !prefix.isEmpty()) {
-         tokens.add(new az.Inner_TaskQueue(prefix, UiColorPalette.pool()));
+         tokens.add(new ItemNbtInspector.Inner_TaskQueue(prefix, UiColorPalette.pool()));
       }
 
-      tokens.add(new az.Inner_TaskQueue(value == null ? "" : value, valueColor));
+      tokens.add(new ItemNbtInspector.Inner_TaskQueue(value == null ? "" : value, valueColor));
       return AutismItemNbtInspectOverlay.Inner_StreamUtil.init(tokens, prefix != null && !prefix.isEmpty() ? 0 : offset);
    }
 
-   private int init_I_List_2(List<az.Inner_TaskQueue> tokens) {
+   private int init_I_List_2(List<ItemNbtInspector.Inner_TaskQueue> tokens) {
       int width = 0;
 
-      for (az.Inner_TaskQueue token : tokens) {
+      for (ItemNbtInspector.Inner_TaskQueue token : tokens) {
          if (token != null && token.init_Str() != null && !token.init_Str().isEmpty()) {
             String text = token.init_Str();
             int spaces = 0;
@@ -857,12 +857,12 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record Inner_StreamUtil(List<az.Inner_TaskQueue> init_List, int init_I) {
+   private record Inner_StreamUtil(List<ItemNbtInspector.Inner_TaskQueue> init_List, int init_I) {
       static AutismItemNbtInspectOverlay.Inner_StreamUtil init(String text, int offset, int color) {
-         return new AutismItemNbtInspectOverlay.Inner_StreamUtil(List.of(new az.Inner_TaskQueue(text, color)), offset);
+         return new AutismItemNbtInspectOverlay.Inner_StreamUtil(List.of(new ItemNbtInspector.Inner_TaskQueue(text, color)), offset);
       }
 
-      static AutismItemNbtInspectOverlay.Inner_StreamUtil init(List<az.Inner_TaskQueue> tokens, int offset) {
+      static AutismItemNbtInspectOverlay.Inner_StreamUtil init(List<ItemNbtInspector.Inner_TaskQueue> tokens, int offset) {
          return new AutismItemNbtInspectOverlay.Inner_StreamUtil(List.copyOf(tokens), offset);
       }
    }

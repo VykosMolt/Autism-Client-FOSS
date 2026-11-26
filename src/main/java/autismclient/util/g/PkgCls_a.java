@@ -5,8 +5,8 @@ import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.KeyMappingControl;
-import autismclient.util.bA;
-import autismclient.util.bl;
+import autismclient.util.GridWalkNavigator;
+import autismclient.util.PacedTpJobManager;
 import autismclient.util.macro.ClipCollisionHelper;
 import autismclient.util.macro.TpRoutePlanner;
 import autismclient.util.macro.MacroExecutor;
@@ -182,7 +182,7 @@ public final class PkgCls_a {
       return init_Str_Vec3(request.init_Vec3(), request.init_I(), request.load(), vehicle != null);
    }
 
-   public static PkgCls_a.Inner_StateCache init_a_StateCache_w_bl_StreamUtil(PacedTpAction action, bl.Inner_StreamUtil handle) {
+   public static PkgCls_a.Inner_StateCache init_a_StateCache_w_bl_StreamUtil(PacedTpAction action, PacedTpJobManager.Inner_StreamUtil handle) {
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer player = mc == null ? null : mc.player;
       if (handle == null || action == null || player == null || mc.getConnection() == null || player.level() == null) {
@@ -209,7 +209,7 @@ public final class PkgCls_a {
    public static void init_V_J_Str(long id, String reason) {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore_J(id);
       if (job != null) {
-         init_V_a_ConfigStore(job, bl.Inner_DataUtil.CANCELLED, reason == null ? "macro stopped" : reason);
+         init_V_a_ConfigStore(job, PacedTpJobManager.Inner_DataUtil.CANCELLED, reason == null ? "macro stopped" : reason);
       }
    }
 
@@ -1364,7 +1364,7 @@ public final class PkgCls_a {
          mc.options.keyRight.setDown(false);
          mc.options.keyJump.setDown(false);
          mc.options.keyShift.setDown(false);
-         bA.read();
+         GridWalkNavigator.read();
       }
    }
 
@@ -1422,17 +1422,17 @@ public final class PkgCls_a {
       }
 
       if (job.init_J != 0L) {
-         bl.init(job.init_J, bl.Inner_DataUtil.CANCELLED);
+         PacedTpJobManager.init(job.init_J, PacedTpJobManager.Inner_DataUtil.CANCELLED);
       }
 
       return "TP stopped";
    }
 
    private static void init_V_a_ConfigStore_3(PkgCls_a.Inner_ConfigStore job, boolean success, String reason) {
-      init_V_a_ConfigStore(job, success ? bl.Inner_DataUtil.SUCCEEDED : bl.Inner_DataUtil.FAILED, reason);
+      init_V_a_ConfigStore(job, success ? PacedTpJobManager.Inner_DataUtil.SUCCEEDED : PacedTpJobManager.Inner_DataUtil.FAILED, reason);
    }
 
-   private static void init_V_a_ConfigStore(PkgCls_a.Inner_ConfigStore job, bl.Inner_DataUtil completion, String reason) {
+   private static void init_V_a_ConfigStore(PkgCls_a.Inner_ConfigStore job, PacedTpJobManager.Inner_DataUtil completion, String reason) {
       synchronized (init_Obj) {
          if (init_a_ConfigStore != job) {
             return;
@@ -1451,10 +1451,10 @@ public final class PkgCls_a {
       }
 
       if (job.init_J != 0L) {
-         bl.init(job.init_J, completion);
+         PacedTpJobManager.init(job.init_J, completion);
       }
 
-      boolean success = completion == bl.Inner_DataUtil.SUCCEEDED;
+      boolean success = completion == PacedTpJobManager.Inner_DataUtil.SUCCEEDED;
       String color = success ? "§a" : "§e";
       AutismClientMessaging.sendPrefixed(color + "TP " + (success ? "complete: " : "stopped: ") + "§f" + reason);
    }

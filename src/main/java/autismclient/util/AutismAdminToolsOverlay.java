@@ -645,7 +645,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.init_V_AutismAdminToolsOv(
          new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.ACTION, preview, null, "edit-item-stack")
       );
-      List<String> lines = az.init_List_Str(module.value("nbt-item-stack"));
+      List<String> lines = ItemNbtInspector.init_List_Str(module.value("nbt-item-stack"));
       int x = preview.read() + 6;
       int y = preview.write() + 14 + 3;
       int width = Math.max(1, preview.update() - 12);
@@ -684,7 +684,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       int cursor = x;
       int remaining = maxWidth;
 
-      for (az.Inner_TaskQueue token : az.init_List_Str_I(line, context.init_TableIndex().init_JsonUtil().prev)) {
+      for (ItemNbtInspector.Inner_TaskQueue token : ItemNbtInspector.init_List_Str_I(line, context.init_TableIndex().init_JsonUtil().prev)) {
          if (token != null && token.init_Str() != null && !token.init_Str().isEmpty() && remaining > 0) {
             String text = context.init_PoolEntry().load(token.init_Str(), remaining);
             context.init_PoolEntry().init_V_GuiGraphicsExtract_2(context.init_GuiGraphicsExtract(), text, cursor, y, token.init_I());
@@ -1360,8 +1360,8 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          this.init_Z = false;
          this.open_Z = !(mc.gui.screen() instanceof AbstractContainerScreen);
          this.init_Screen = this.open_Z ? mc.gui.screen() : null;
-         ck.init_ck().cache(true);
-         ck.init_ck().read_V_Runnable(this::write_V_5);
+         AutismSessionState.init_ck().cache(true);
+         AutismSessionState.init_ck().read_V_Runnable(this::write_V_5);
          bi.init("Right-click an inventory item to pick it.", -13248397);
          if (this.open_Z) {
             mc.execute(() -> {
@@ -1401,7 +1401,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          itemText = "Empty slot";
       }
 
-      int visibleSlot = aw.init_I(Minecraft.getInstance(), slot);
+      int visibleSlot = InventorySlotHelper.init_I(Minecraft.getInstance(), slot);
       return "Hover: " + visibleSlot + " | " + itemText;
    }
 
@@ -1435,8 +1435,8 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       this.flush_Z = false;
       this.init_Z = this.close_Z;
       this.close_Z = false;
-      ck.init_ck().cache(false);
-      ck.init_ck().read_V_Runnable(null);
+      AutismSessionState.init_ck().cache(false);
+      AutismSessionState.init_ck().read_V_Runnable(null);
       OverlayManager.init_bk().update_V(this);
       if (this.open_Z) {
          Screen restore = this.init_Screen;

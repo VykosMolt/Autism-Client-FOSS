@@ -442,7 +442,7 @@ public final class DataUtil implements EventBus {
 
    @Override
    public boolean init_Z_ItemStack(ItemStack stack) {
-      return autismclient.util.ArrayUtil.init_Z(this.init_Minecraft, stack);
+      return autismclient.util.BlockBreakSpeedHelper.init_Z(this.init_Minecraft, stack);
    }
 
    public void init_V_Z(boolean value) {

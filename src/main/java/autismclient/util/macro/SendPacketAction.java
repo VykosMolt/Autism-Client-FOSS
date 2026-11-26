@@ -3,7 +3,7 @@ package autismclient.util.macro;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.PacketNameResolver;
 import autismclient.util.DirectPacketSender;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.PacketRegenerator;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -17,18 +17,18 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 
 public class SendPacketAction implements MacroAction, GuiWaitAware {
-   public List<ck.Inner_CachePool> packets = new ArrayList<>();
+   public List<AutismSessionState.Inner_CachePool> packets = new ArrayList<>();
    public String customName = "";
    public int sendCount = 1;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String guiName = "";
 
-   public List<ck.Inner_CachePool> init_List_8() {
+   public List<AutismSessionState.Inner_CachePool> init_List_8() {
       return this.packets;
    }
 
-   public static Packet<?> init_Packet_ck_CachePool(ck.Inner_CachePool qp) {
+   public static Packet<?> init_Packet_ck_CachePool(AutismSessionState.Inner_CachePool qp) {
       if (qp != null && qp.init_Packet != null) {
          return qp.init_Z() ? qp.init_Packet : PacketRegenerator.init(qp.init_Packet);
       } else {
@@ -51,7 +51,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
             int failCount = 0;
             int repeats = init_I_I_5(this.sendCount);
 
-            for (ck.Inner_CachePool qp : this.packets) {
+            for (AutismSessionState.Inner_CachePool qp : this.packets) {
                if (qp != null && qp.init_Packet != null) {
                   for (int k = 0; k < repeats; k++) {
                      try {
@@ -129,7 +129,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
       tag.putString("guiName", this.guiName);
       ListTag packetList = new ListTag();
 
-      for (ck.Inner_CachePool qp : this.packets) {
+      for (AutismSessionState.Inner_CachePool qp : this.packets) {
          CompoundTag packetTag = autismclient.util.MacroClipboardCodec.init(qp);
          if (packetTag != null) {
             packetList.add(packetTag);
@@ -157,7 +157,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
             for (int i = 0; i < packetList.size(); i++) {
                Tag element = packetList.get(i);
                if (element instanceof CompoundTag) {
-                  ck.Inner_CachePool qp = autismclient.util.MacroClipboardCodec.init_ck_CachePool((CompoundTag)element);
+                  AutismSessionState.Inner_CachePool qp = autismclient.util.MacroClipboardCodec.init_ck_CachePool((CompoundTag)element);
                   if (qp != null) {
                      this.packets.add(qp);
                   }
@@ -177,7 +177,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
       } else {
          Map<String, Integer> nameCounts = new LinkedHashMap<>();
 
-         for (ck.Inner_CachePool qp : this.packets) {
+         for (AutismSessionState.Inner_CachePool qp : this.packets) {
             if (qp.init_Packet != null) {
                String name = PacketNameResolver.init_Str_Packet(qp.init_Packet);
                nameCounts.merge(name, 1, Integer::sum);

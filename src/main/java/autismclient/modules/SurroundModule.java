@@ -7,12 +7,12 @@ import autismclient.api.module.RegistryListSetting;
 import autismclient.util.AuditClientFixes;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.PerTickPlacementLock;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
-import autismclient.util.di;
+import autismclient.util.RegistryIdValidator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private boolean load_Z;
    private int sync_I = -2147483648;
    private int flush_I = -2147483648;
-   private final autismclient.util.U.Inner_StreamUtil init_U_StreamUtil = new autismclient.util.U.Inner_StreamUtil(4);
+   private final autismclient.util.BlockPlacementPlanner.Inner_StreamUtil init_U_StreamUtil = new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(4);
    private int close_I = -1;
    private int open = -1;
    private int poll;
@@ -182,7 +182,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       if (!(al.init_Module_Str("surround") instanceof SurroundModule surround)) {
          return false;
       } else {
-         int age = ck.init_ck().state_I() - surround.flush_I;
+         int age = AutismSessionState.init_ck().state_I() - surround.flush_I;
          return age >= 0 && age <= 5 && "surround".equals(autismclient.util.SilentRotationManager.init_Str());
       }
    }
@@ -202,7 +202,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          && MC.gui.overlay() == null
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !MacroExecutor.write_Z()
          && !MC.player.isDeadOrDying()
@@ -216,7 +216,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private boolean sync_Z_7() {
-      return this.init_aa_JsonUtil.init(ck.init_ck().state_I(), this::flush_Z_6);
+      return this.init_aa_JsonUtil.init(AutismSessionState.init_ck().state_I(), this::flush_Z_6);
    }
 
    private boolean flush_Z_6() {
@@ -518,7 +518,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
 
    private boolean init(RotationMath.Inner_DataUtil goal, boolean holdPitch) {
       autismclient.util.SilentRotationManager.init_V_Str(this.id(), 25, goal);
-      this.flush_I = ck.init_ck().state_I();
+      this.flush_I = AutismSessionState.init_ck().state_I();
       if (!this.id().equals(autismclient.util.SilentRotationManager.init_Str())) {
          return false;
       }
@@ -575,8 +575,8 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       AABB playerBox = MC.player.getBoundingBox();
       Vec3 delta = MC.player.getDeltaMovement();
       BlockState placed = material.getItem() instanceof BlockItem blockItem ? blockItem.getBlock().defaultBlockState() : null;
-      autismclient.util.U.Inner_StateCache request = new autismclient.util.U.Inner_StateCache(
-            null, eye, reach, autismclient.util.U.init(material, MC.player, InteractionHand.MAIN_HAND)
+      autismclient.util.BlockPlacementPlanner.Inner_StateCache request = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
+            null, eye, reach, autismclient.util.BlockPlacementPlanner.init(material, MC.player, InteractionHand.MAIN_HAND)
          )
          .init_U_StateCache_ce_DataUtil(from)
          .init_U_StateCache_Z(MC.player.isShiftKeyDown())
@@ -586,7 +586,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       for (BlockPos cell : this.init_List) {
          if (!cell.equals(skip) && !this.init(cell, placed, playerBox, delta)) {
             this.init_U_StreamUtil.init(4);
-            autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool(request.init_U_StateCache_BlockPos(cell));
+            autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(request.init_U_StateCache_BlockPos(cell));
             if (candidate != null) {
                return new SurroundModule.Inner_StreamUtil(cell, candidate);
             }
@@ -610,18 +610,18 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private BlockHitResult init(SurroundModule.Inner_StreamUtil plan, RotationMath.Inner_DataUtil rotation) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
-      autismclient.util.U.Inner_StateCache gate = new autismclient.util.U.Inner_StateCache(
+      autismclient.util.BlockPlacementPlanner.Inner_StateCache gate = new autismclient.util.BlockPlacementPlanner.Inner_StateCache(
             plan.init_BlockPos(),
             eye,
             reach,
-            autismclient.util.U.init(MC.player.getItemInHand(InteractionHand.MAIN_HAND), MC.player, InteractionHand.MAIN_HAND)
+            autismclient.util.BlockPlacementPlanner.init(MC.player.getItemInHand(InteractionHand.MAIN_HAND), MC.player, InteractionHand.MAIN_HAND)
          )
          .init_U_StateCache_Z(MC.player.isShiftKeyDown());
-      return autismclient.util.U.init_BlockHitResult_U_CachePool(plan.init_U_CachePool(), rotation, eye, reach, gate);
+      return autismclient.util.BlockPlacementPlanner.init_BlockHitResult_U_CachePool(plan.init_U_CachePool(), rotation, eye, reach, gate);
    }
 
    private boolean close_Z_5() {
-      return ck.init_ck().state_I() != this.sync_I;
+      return AutismSessionState.init_ck().state_I() != this.sync_I;
    }
 
    private void init(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
@@ -656,12 +656,12 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private void close_V_5() {
-      this.sync_I = ck.init_ck().state_I();
+      this.sync_I = AutismSessionState.init_ck().state_I();
    }
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return this.sync_I == ck.init_ck().state_I();
+      return this.sync_I == AutismSessionState.init_ck().state_I();
    }
 
    @Override
@@ -711,7 +711,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                this.close_I = selected;
             }
 
-            autismclient.util.aw.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.init_V(MC, slot);
             this.open = slot;
          } finally {
             autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -729,7 +729,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             this.open = -1;
          } else if (++this.poll >= 6 && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
-               autismclient.util.aw.init_V(MC, this.close_I);
+               autismclient.util.InventorySlotHelper.init_V(MC, this.close_I);
                this.close_I = -1;
                this.open = -1;
                this.poll = 0;
@@ -762,7 +762,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       Set<Block> blocks = new HashSet<>();
 
       for (String entry : this.list("blocks")) {
-         Identifier identifier = Identifier.tryParse(di.init(entry));
+         Identifier identifier = Identifier.tryParse(RegistryIdValidator.init(entry));
          if (identifier != null) {
             BuiltInRegistries.BLOCK.getOptional(identifier).ifPresent(blocks::add);
          }
@@ -776,7 +776,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private record Inner_DataUtil(long init_J, int init_I, long load) {
    }
 
-   private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.U.Inner_CachePool init_U_CachePool) {
+   private record Inner_StreamUtil(BlockPos init_BlockPos, autismclient.util.BlockPlacementPlanner.Inner_CachePool init_U_CachePool) {
       RotationMath.Inner_DataUtil init_ce_DataUtil() {
          return this.init_U_CachePool.init_U_DataUtil().init_ce_DataUtil();
       }

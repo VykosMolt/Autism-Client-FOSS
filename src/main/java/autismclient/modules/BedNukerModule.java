@@ -2,10 +2,10 @@ package autismclient.modules;
 
 import autismclient.api.module.BoolSetting;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -68,7 +68,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
    }
 
    private int init_I_14() {
-      return ck.init_ck().state_I();
+      return AutismSessionState.init_ck().state_I();
    }
 
    public static BedNukerModule init_UtilCore() {
@@ -158,7 +158,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             try {
                m.read_V_10();
                m.read_I = -1;
-               autismclient.util.aw.init_V(MC, slot);
+               autismclient.util.InventorySlotHelper.init_V(MC, slot);
                m.init_V_20();
                return true;
             } finally {
@@ -258,7 +258,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          && !aD.init_Z()
          && !FreecamController.init_Z()
          && !FreecamController.write()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && !PkgCls_a.init_Z()
          && !MacroExecutor.write_Z()
          && !f.load()
@@ -451,7 +451,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                               this.write_I = MC.player.getInventory().getSelectedSlot();
                            }
 
-                           autismclient.util.aw.init_V(MC, slot);
+                           autismclient.util.InventorySlotHelper.init_V(MC, slot);
                            this.load_I = this.init_I_14();
                            this.update = slot;
                            this.init_ItemStack = MC.player.getMainHandItem().copy();

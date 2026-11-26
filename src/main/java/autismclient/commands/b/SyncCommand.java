@@ -3,9 +3,9 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.aE;
+import autismclient.util.LanSyncManager;
 import autismclient.util.AutismMacro;
-import autismclient.util.aN;
+import autismclient.util.MacroLibraryManager;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -48,7 +48,7 @@ public final class SyncCommand extends Command {
    }
 
    private static int init(String message) {
-      aE sync = aE.init_aE();
+      LanSyncManager sync = LanSyncManager.init_aE();
       if (!sync.write_Z()) {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");
          return 1;
@@ -59,12 +59,12 @@ public final class SyncCommand extends Command {
    }
 
    private static int load(String name) {
-      aE sync = aE.init_aE();
+      LanSyncManager sync = LanSyncManager.init_aE();
       if (!sync.write_Z()) {
          AutismClientMessaging.sendPrefixed("§cJoin a LAN Sync session first.");
          return 1;
       } else {
-         AutismMacro macro = aN.init_aN().init_aM_Str(name);
+         AutismMacro macro = MacroLibraryManager.init_aN().init_aM_Str(name);
          if (macro == null) {
             AutismClientMessaging.sendPrefixed("§cMacro not found: §f" + name);
             return 1;

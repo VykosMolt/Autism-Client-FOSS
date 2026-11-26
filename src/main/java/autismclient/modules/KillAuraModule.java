@@ -12,12 +12,12 @@ import autismclient.mixin.accessor.AutismMinecraftAccessor;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismConfig;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
 import autismclient.util.SprintStateTracker;
 import autismclient.util.EntityMotionTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -389,7 +389,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             && !BlinkPacketManager.load_Z()
             && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
-               autismclient.util.aw.init_V(MC, this.clear_I);
+               autismclient.util.InventorySlotHelper.init_V(MC, this.clear_I);
             } finally {
                autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
@@ -413,7 +413,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             && !BlinkPacketManager.load_Z()
             && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
             try {
-               autismclient.util.aw.init_V(MC, this.clear_I);
+               autismclient.util.InventorySlotHelper.init_V(MC, this.clear_I);
             } finally {
                autismclient.util.InventorySlotArbiter.read_V(this.id());
             }
@@ -487,7 +487,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             } else {
                this.push_V_3();
                if (!AutismLiteVariant.enabled() && !BedNukerModule.init_Z_23() && BedNukerModule.sync() && Double.isFinite(init_D_9()) && BedNukerModule.flush()) {
-                  this.level = ck.init_ck().state_I();
+                  this.level = AutismSessionState.init_ck().state_I();
                }
 
                if (MC.gui.screen() == null && MC.missTime > 10) {
@@ -744,12 +744,12 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private void init_V_Entity_Z(Entity target, boolean lastChance) {
       int gap = lastChance ? 0 : this.init_TaskQueue.init();
-      this.set_I = gap > 0 ? ck.init_ck().state_I() + gap : -2147483648;
+      this.set_I = gap > 0 ? AutismSessionState.init_ck().state_I() + gap : -2147483648;
       this.put_I = target.getId();
    }
 
    private void update_V_12() {
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (tick == this.set_I) {
          this.set_I = -2147483648;
          LivingEntity target = this.init_LivingEntity;
@@ -781,7 +781,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (!autismclient.util.ClientInteractionOverride.close_Z()) {
          LivingEntity target = this.init_LivingEntity;
          if (this.load_LivingEntity == null
-            && ck.init_ck().state_I() != this.pool
+            && AutismSessionState.init_ck().state_I() != this.pool
             && !this.push_Z_3()
             && (target == null || this.init_Z_LivingEntity_3(target))
             && this.init_q != null
@@ -860,7 +860,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private void init_V_LivingEntity_3(LivingEntity target) {
-      this.init_cj.init(target, ck.init_ck().state_I());
+      this.init_cj.init(target, AutismSessionState.init_ck().state_I());
       if (target == null) {
          this.run_I = -1;
          this.init_Z = false;
@@ -963,7 +963,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private void poll_V_4() {
       if (this.read_InteractionHand != null) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          long age = (long)tick - this.pool;
          if (!AutismLiteVariant.enabled() && FreecamController.write()) {
             this.open_V_4();
@@ -1045,7 +1045,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       ItemStack stack = this.init_ItemStack;
       boolean dispatched = autismclient.util.ClientInteractionOverride.init_Z(this.id());
       if (hand != null && dispatched && MC.player != null) {
-         this.pool = ck.init_ck().state_I();
+         this.pool = AutismSessionState.init_ck().state_I();
       }
 
       if (hand != null) {
@@ -1110,7 +1110,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          && MC.gui.overlay() == null
          && this.get_I != 0
          && this.add_I != 0
-         && ck.init_ck().state_I() != this.stop_I
+         && AutismSessionState.init_ck().state_I() != this.stop_I
          && !autismclient.util.ClientInteractionOverride.close_Z()) {
          InteractionHand hand = this.load_InteractionHand;
          LivingEntity threat = this.load_LivingEntity;
@@ -1128,7 +1128,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             ShieldHitWindowHelper.Inner_CachePool decision = this.pop_Z_2()
                ? ShieldHitWindowHelper.init(true, this.init_InteractionHand != null, raise, ownHit)
                : ShieldHitWindowHelper.init_l_CachePool_Z(true, this.init_InteractionHand != null, MC.player.hurtTime, raise, ownHit);
-            if (ck.init_ck().state_I() == this.pool) {
+            if (AutismSessionState.init_ck().state_I() == this.pool) {
                decision = ShieldHitWindowHelper.Inner_CachePool.DOWN;
             }
 
@@ -1168,7 +1168,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          }
 
          EntityHitResult hit = this.init_EntityHitResult_Entity(target, rotation, this.write_D(), 0.0);
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          int open = this.init_l_BufferHelper.init_I(target.getUUID(), target.hurtTime, tick, this.read_D());
          int falling = this.write_I_6();
          boolean strongerSoon = falling <= 1
@@ -1265,7 +1265,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             if (ShieldHitWindowHelper.init_Z_Vec3(eye, body, reach[0], reach[1] + 0.5, reach[2])
                && ShieldHitWindowHelper.init(eye, view, body)
                && this.init_Z_LivingEntity(enemy, eye, body)
-               && this.init_l_BufferHelper.init_Z(enemy.getUUID(), enemy.hurtTime, ck.init_ck().state_I(), this.bool("block-hit-after-hit"))
+               && this.init_l_BufferHelper.init_Z(enemy.getUUID(), enemy.hurtTime, AutismSessionState.init_ck().state_I(), this.bool("block-hit-after-hit"))
                && (everySide || init_Z_BlocksAttacks(blocks, MC.player.getEyePosition(), eye, yaw))
                && distance < bestDistance) {
                best = enemy;
@@ -1320,7 +1320,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private boolean init_Z_LivingEntity_3(LivingEntity target) {
       return this.bool("block-hit") && !this.pop_Z_2() && !this.sync(target)
-         ? this.init_l_BufferHelper.load(target.getUUID(), target.hurtTime, ck.init_ck().state_I(), this.read_D())
+         ? this.init_l_BufferHelper.load(target.getUUID(), target.hurtTime, AutismSessionState.init_ck().state_I(), this.read_D())
          : true;
    }
 
@@ -1342,7 +1342,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private int write_I_6() {
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (tick == this.table) {
          return this.store;
       }
@@ -1401,11 +1401,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean run_Z_2() {
-      return this.load_aa_JsonUtil.init(ck.init_ck().state_I(), this::tick_Z_5);
+      return this.load_aa_JsonUtil.init(AutismSessionState.init_ck().state_I(), this::tick_Z_5);
    }
 
    private boolean get_Z_2() {
-      return this.init_aa_JsonUtil.init(ck.init_ck().state_I(), this::set_Z_2);
+      return this.init_aa_JsonUtil.init(AutismSessionState.init_ck().state_I(), this::set_Z_2);
    }
 
    private boolean set_Z_2() {
@@ -1449,10 +1449,10 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          && (allowReleasedUse || !this.open_Z_4())
          && !this.run_Z_2()
          && (bedBudget ? this.next() : this.get_Z_2())
-         && (bedBudget || this.level != ck.init_ck().state_I())
+         && (bedBudget || this.level != AutismSessionState.init_ck().state_I())
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && (AutismLiteVariant.enabled() || !PkgCls_a.init_Z())
          && !f.load()
@@ -1674,7 +1674,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
 
       if (aura.init_Z_Z_Z_2(false, true) && !autismclient.util.ManualInteractionYield.init()) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          Vec3 eyes = MC.player.getEyePosition();
          double range = aura.write_D();
 
@@ -2105,7 +2105,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean read_Z_LivingEntity(LivingEntity target) {
-      if (ck.init_ck().state_I() != this.pool && this.load_LivingEntity == null) {
+      if (AutismSessionState.init_ck().state_I() != this.pool && this.load_LivingEntity == null) {
          RotationMath.Inner_DataUtil rotation = autismclient.util.SilentRotationManager.init_ce_DataUtil();
          if (rotation == null) {
             rotation = RotationMath.init(MC.player);
@@ -2153,7 +2153,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private boolean prev() {
       LivingEntity target = this.init_LivingEntity;
-      if (target != null && ck.init_ck().state_I() != this.stop_I) {
+      if (target != null && AutismSessionState.init_ck().state_I() != this.stop_I) {
          boolean shieldBreak = this.buffer() && this.sync(target);
          boolean lastChance = !shieldBreak && this.read_Z_Entity(target);
          if (!reset_Z_2() && (shieldBreak || lastChance || this.init_aa_CachePool.load_Z())) {
@@ -2214,7 +2214,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          this.init_V_Entity(target);
       } else if (target instanceof Player player && !this.init_Z_Player_ce_DataUtil(player, rotation)) {
          this.init_aa_CachePool.read("trackedYaw");
-      } else if (ck.init_ck().state_I() != this.stop_I && !this.write(target) && (this.update(target) || !this.valid())) {
+      } else if (AutismSessionState.init_ck().state_I() != this.stop_I && !this.write(target) && (this.update(target) || !this.valid())) {
          if (target instanceof Player && SprintStateTracker.read() && MC.player.getAttackStrengthScale(0.5F) > 0.9F) {
             this.init_aa_CachePool.write_V();
          } else {
@@ -2328,7 +2328,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
 
       int age = 2 + Math.min(10, latency / 100);
-      return this.init_cj.init(ck.init_ck().state_I(), age);
+      return this.init_cj.init(AutismSessionState.init_ck().state_I(), age);
    }
 
    static boolean init_Z_Vec3_7(Vec3 eye, Vec3 target, float yaw) {
@@ -2364,7 +2364,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          } else if (!this.init_aa_ConfigStore.load(target.getId())) {
             this.init_aa_ConfigStore.read_V();
             return rotation;
-         } else if (this.init_aa_ConfigStore.init(ck.init_ck().state_I())) {
+         } else if (this.init_aa_ConfigStore.init(AutismSessionState.init_ck().state_I())) {
             this.init_aa_ConfigStore.load_V();
             return rotation;
          } else {
@@ -2396,7 +2396,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                      target.getId(),
                      init_Vec3_AABB_2(target.getBoundingBox(), MC.player.getEyePosition(), this.load_Random),
                      !this.buffer(),
-                     ck.init_ck().state_I()
+                     AutismSessionState.init_ck().state_I()
                   );
                this.init_aa_ConfigStore.init(target.getBoundingBox().getCenter());
                return "Human".equals(this.choice("aim")) ? rotation : RotationMath.init(this.init_aa_ConfigStore.init_Vec3(), MC.player.getEyePosition());
@@ -2470,7 +2470,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                this.start_I = 20;
             }
 
-            int tick = ck.init_ck().state_I();
+            int tick = AutismSessionState.init_ck().state_I();
             if (tick == this.stop_I) {
                return true;
             }
@@ -2480,7 +2480,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             }
 
             try {
-               autismclient.util.aw.init_V(MC, slot);
+               autismclient.util.InventorySlotHelper.init_V(MC, slot);
                this.reset_I = slot;
                this.stop_I = tick;
             } finally {
@@ -2523,7 +2523,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (!this.bool("shield-break")) {
          return false;
       } else {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (this.close(target)) {
             this.next = tick;
             this.prev = target.getId();
@@ -2559,7 +2559,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                return false;
             }
 
-            int tick = ck.init_ck().state_I();
+            int tick = AutismSessionState.init_ck().state_I();
             if (tick == this.stop_I) {
                return false;
             }
@@ -2569,7 +2569,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             }
 
             try {
-               autismclient.util.aw.init_V(MC, back);
+               autismclient.util.InventorySlotHelper.init_V(MC, back);
                this.stop_I = tick;
             } finally {
                autismclient.util.InventorySlotArbiter.read_V(this.id());
@@ -2611,7 +2611,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          return false;
       }
 
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (this.cache != target.getId()) {
          this.cache = target.getId();
          this.state = tick;
@@ -2678,7 +2678,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          if (this.push_Z_3()) {
             this.load_V_Z_2(false);
             this.init_aa_CachePool.write_V();
-         } else if (ck.init_ck().state_I() == this.pool) {
+         } else if (AutismSessionState.init_ck().state_I() == this.pool) {
             this.init_aa_CachePool.write_V();
          } else if (!MC.player.isBlocking() && !MC.player.isUsingItem()) {
             this.init_aa_CachePool.init_V_BooleanSupplier(attack);
@@ -2767,7 +2767,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          this.init_V_Entity_D(target, damage);
          this.drain = 0;
          if (brokeShield) {
-            this.valid = ck.init_ck().state_I();
+            this.valid = AutismSessionState.init_ck().state_I();
             this.size = target.getId();
          }
 
@@ -2815,7 +2815,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private void init_V_Entity_D(Entity target, double damage) {
       if (target instanceof LivingEntity living) {
-         this.init_l_BufferHelper.init_V(living.getUUID(), living.hurtTime, ck.init_ck().state_I(), damage);
+         this.init_l_BufferHelper.init_V(living.getUUID(), living.hurtTime, AutismSessionState.init_ck().state_I(), damage);
          this.queue = living.getId();
          this.buffer = living.hurtTime;
          this.entry = 8;
@@ -2828,7 +2828,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          boolean landed = entity instanceof LivingEntity living && (living.hurtTime > this.buffer || this.buffer >= 10 && living.hurtTime >= 10);
          if (landed) {
             if (entity instanceof LivingEntity living && living.hurtTime > this.buffer) {
-               this.init_l_BufferHelper.init_V_UUID_I(living.getUUID(), ck.init_ck().state_I());
+               this.init_l_BufferHelper.init_V_UUID_I(living.getUUID(), AutismSessionState.init_ck().state_I());
             }
 
             if (this.bool("hitsound") || this.bool("hit-marker")) {
@@ -3114,13 +3114,13 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                && !CrystalAuraModule.sync_Z_11()
                && !AnchorAuraModule.init_Z_2()
                && !autismclient.util.InventorySlotArbiter.init(this.clear_I, this.id())) {
-               int tick = ck.init_ck().state_I();
+               int tick = AutismSessionState.init_ck().state_I();
                if (tick != this.stop_I && autismclient.util.InventorySlotArbiter.write_Z(this.id())) {
                   try {
                      int back = this.clear_I;
                      this.clear_I = -1;
                      this.reset_I = -1;
-                     autismclient.util.aw.init_V(MC, back);
+                     autismclient.util.InventorySlotHelper.init_V(MC, back);
                      this.stop_I = tick;
                   } finally {
                      autismclient.util.InventorySlotArbiter.read_V(this.id());

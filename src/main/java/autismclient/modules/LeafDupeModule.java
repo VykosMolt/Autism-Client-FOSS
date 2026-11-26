@@ -608,7 +608,7 @@ public final class LeafDupeModule extends Module {
       for (int slot = 0; slot < 9; slot++) {
          ItemStack stack = MC.player.getInventory().getItem(slot);
          if (!autismclient.util.InventorySlotArbiter.init(slot, "leaf-dupe") && init_Z_ItemStack_BlockState(stack, state)) {
-            float speed = autismclient.util.ArrayUtil.init(MC, stack, state);
+            float speed = autismclient.util.BlockBreakSpeedHelper.init(MC, stack, state);
             if (speed > bestSpeed || speed == bestSpeed && slot == MC.player.getInventory().getSelectedSlot()) {
                best = slot;
                bestSpeed = speed;
@@ -1192,7 +1192,7 @@ public final class LeafDupeModule extends Module {
 
    private boolean load_Z_I_4(int slot) {
       if (slot >= 0 && slot <= 8 && MC.player != null) {
-         autismclient.util.aw.init_V(MC, slot);
+         autismclient.util.InventorySlotHelper.init_V(MC, slot);
          return MC.player.getInventory().getSelectedSlot() == slot;
       } else {
          return false;

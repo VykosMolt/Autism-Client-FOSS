@@ -574,7 +574,7 @@ public final class CommandTabNameProber {
       for (String suggestion : suggestions) {
          if (suggestion != null) {
             String trimmed = suggestion.trim();
-            if (!trimmed.isEmpty() && (!usernamesOnly || bO.init_Z(trimmed))) {
+            if (!trimmed.isEmpty() && (!usernamesOnly || TabPlayerListParser.init_Z(trimmed))) {
                return true;
             }
          }
@@ -597,7 +597,7 @@ public final class CommandTabNameProber {
    private static void init_V(Map<String, String> names, String name, String self) {
       if (name != null) {
          String trimmed = name.trim();
-         if (!trimmed.equalsIgnoreCase(self) && bO.init_Z(trimmed)) {
+         if (!trimmed.equalsIgnoreCase(self) && TabPlayerListParser.init_Z(trimmed)) {
             names.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed);
          }
       }
@@ -609,7 +609,7 @@ public final class CommandTabNameProber {
       }
 
       String trimmed = name.trim();
-      return !trimmed.equalsIgnoreCase(self) && bO.init_Z(trimmed) ? names.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed) == null : false;
+      return !trimmed.equalsIgnoreCase(self) && TabPlayerListParser.init_Z(trimmed) ? names.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed) == null : false;
    }
 
    private static void init_V_be_DataUtil(CommandTabNameProber.Inner_DataUtil control) {

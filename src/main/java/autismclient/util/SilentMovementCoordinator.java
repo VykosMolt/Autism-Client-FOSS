@@ -68,7 +68,7 @@ public final class SilentMovementCoordinator {
          }
 
          if (!AutismLiteVariant.enabled() && "kb-displacement".equals(SilentRotationManager.init_Str())) {
-            return init_bb.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.init(), ck.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return init_bb.load(input, autismclient.modules.KBDisplacementModule.init_F_F_2(mc.player.getYRot()), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
          }
 
          String aimOwner = SilentRotationManager.init_Str();
@@ -80,22 +80,22 @@ public final class SilentMovementCoordinator {
                }
             }
 
-            return init_bb.load(input, mc.player.getYRot(), rotation.init(), ck.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return init_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
          } else if (!"crystal-aura".equals(aimOwner) && !"anchor-aura".equals(aimOwner)) {
             init_bb.init();
             if ("bed-nuker".equals(SilentRotationManager.init_Str())) {
-               return load_bb.load(input, mc.player.getYRot(), rotation.init(), ck.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+               return load_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
             }
 
             load_bb.init();
             if (load_Z()) {
-               return read_bb.load(input, mc.player.getYRot(), rotation.init(), ck.init_ck().state_I());
+               return read_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I());
             }
 
             read_bb.init();
             return autismclient.modules.ScaffoldModule.init_Input_Input_2(input, mc.player.getYRot(), rotation.init());
          } else {
-            return init_bb.load(input, mc.player.getYRot(), rotation.init(), ck.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
+            return init_bb.load(input, mc.player.getYRot(), rotation.init(), AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc.player));
          }
       } else {
          return input;
@@ -104,7 +104,7 @@ public final class SilentMovementCoordinator {
 
    public static Input init(Input input, float referenceYaw, float yaw) {
       Minecraft mc = Minecraft.getInstance();
-      return init_bb.init(input, referenceYaw, yaw, ck.init_ck().state_I(), LedgeFootingPredictor.init(mc == null ? null : mc.player));
+      return init_bb.init(input, referenceYaw, yaw, AutismSessionState.init_ck().state_I(), LedgeFootingPredictor.init(mc == null ? null : mc.player));
    }
 
    private static boolean load_Z() {
@@ -177,7 +177,7 @@ public final class SilentMovementCoordinator {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && entity == mc.player) {
          init_F = yaw;
-         init_I = ck.init_ck().state_I();
+         init_I = AutismSessionState.init_ck().state_I();
       }
    }
 

@@ -21,7 +21,7 @@ import autismclient.util.OverlayManager;
 import autismclient.util.PacketTypeRegistry;
 import autismclient.util.AutismOverlay;
 import autismclient.util.cf;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.ThemePaletteManager;
 import autismclient.util.OverlayScreenController;
 import autismclient.util.SodiumRegionResourceProbe;
@@ -163,7 +163,7 @@ public final class ModuleRuntimeManager {
          });
          this.init("lanSync", () -> {
             if (this.init_AutismConfig.lanSyncEnabled && !aD.init_Z()) {
-               autismclient.util.aE.init_aE().init_V();
+               autismclient.util.LanSyncManager.init_aE().init_V();
             }
          });
          if (!AutismLiteVariant.enabled()) {
@@ -234,10 +234,10 @@ public final class ModuleRuntimeManager {
          }
 
          if (!panicNow) {
-            if (next.lanSyncEnabled && !autismclient.util.aE.init_aE().init_Z()) {
-               autismclient.util.aE.init_aE().init_V();
-            } else if (!next.lanSyncEnabled && autismclient.util.aE.init_aE().init_Z()) {
-               autismclient.util.aE.init_aE().load_V();
+            if (next.lanSyncEnabled && !autismclient.util.LanSyncManager.init_aE().init_Z()) {
+               autismclient.util.LanSyncManager.init_aE().init_V();
+            } else if (!next.lanSyncEnabled && autismclient.util.LanSyncManager.init_aE().init_Z()) {
+               autismclient.util.LanSyncManager.init_aE().load_V();
             }
          }
       }
@@ -306,7 +306,7 @@ public final class ModuleRuntimeManager {
             PayloadSubscriptionManager.init(init_Minecraft, this.open_Z());
          }
 
-         autismclient.util.aE lanSync = autismclient.util.aE.init_aE();
+         autismclient.util.LanSyncManager lanSync = autismclient.util.LanSyncManager.init_aE();
          if (!hidden && lanSync.read_Z()) {
             long perf = bK.read_J();
             lanSync.poll();
@@ -319,7 +319,7 @@ public final class ModuleRuntimeManager {
             bK.load("join.macroConditions.tick", perf);
          }
 
-         ck shared = ck.init_ck();
+         AutismSessionState shared = AutismSessionState.init_ck();
          NoFallPauseTimer.read();
          if (!hidden && shared.push_Z()) {
             shared.read_V();
@@ -375,7 +375,7 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   private void init(boolean hidden, ck shared, AutismServerInfoOverlay serverInfo) {
+   private void init(boolean hidden, AutismSessionState shared, AutismServerInfoOverlay serverInfo) {
       boolean active = !hidden
          && (
             MacroExecutor.load_Z()
@@ -425,12 +425,12 @@ public final class ModuleRuntimeManager {
          this.init_AutismPacketLogger();
       }
 
-      if (this.init_AutismConfig.lanSyncEnabled && !aD.init_Z() && !autismclient.util.aE.init_aE().init_Z()) {
-         autismclient.util.aE.init_aE().init_V();
+      if (this.init_AutismConfig.lanSyncEnabled && !aD.init_Z() && !autismclient.util.LanSyncManager.init_aE().init_Z()) {
+         autismclient.util.LanSyncManager.init_aE().init_V();
       }
 
       if (!aD.init_Z()) {
-         autismclient.util.aE.init_aE().tick();
+         autismclient.util.LanSyncManager.init_aE().tick();
       }
 
       if (!aD.init_Z()) {
@@ -462,7 +462,7 @@ public final class ModuleRuntimeManager {
 
       this.update_J = 0L;
       autismclient.util.PacketCaptureState.load(this);
-      ck.init_ck().close_V();
+      AutismSessionState.init_ck().close_V();
       this.read_Z = false;
       this.write_Z = false;
       this.update_Z = false;
@@ -489,7 +489,7 @@ public final class ModuleRuntimeManager {
 
    public boolean read_Z() {
       if (this.init_Z() && !aD.init_Z()) {
-         ck shared = ck.init_ck();
+         AutismSessionState shared = AutismSessionState.init_ck();
          return shared.pop_Z()
             || this.open_Z()
             || this.pool()
@@ -516,7 +516,7 @@ public final class ModuleRuntimeManager {
             : new ModuleRuntimeManager.Inner_DataUtil(false, passivePayloadCapture, loggerCapture, false);
       }
 
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       boolean serverInfoObservation = passivePayloadCapture && this.pool();
       boolean normalPath = playConnection
          && (
@@ -1263,7 +1263,7 @@ public final class ModuleRuntimeManager {
 
    public void write(boolean value) {
       this.init_AutismConfig.pretendPackAccepted = value;
-      ck.init_ck().push(value);
+      AutismSessionState.init_ck().push(value);
       this.reset_V();
    }
 
@@ -1280,7 +1280,7 @@ public final class ModuleRuntimeManager {
 
    public void sync(boolean value) {
       this.init_AutismConfig.autoDenyResourcePack = value;
-      ck.init_ck().pop(value);
+      AutismSessionState.init_ck().pop(value);
       this.reset_V();
    }
 
@@ -1340,13 +1340,13 @@ public final class ModuleRuntimeManager {
 
    public void open(boolean value) {
       this.init_AutismConfig.useCustomPackets = value;
-      ck.init_ck().tick(value);
+      AutismSessionState.init_ck().tick(value);
       this.reset_V();
    }
 
    public void poll(boolean value) {
       this.init_AutismConfig.sendGuiPackets = value;
-      ck.init_ck().read_V_Z(value);
+      AutismSessionState.init_ck().read_V_Z(value);
    }
 
    public boolean init_Z_Z(boolean value) {
@@ -1357,7 +1357,7 @@ public final class ModuleRuntimeManager {
 
    public void push(boolean value) {
       this.init_AutismConfig.delayGuiPackets = value;
-      ck.init_ck().write(value);
+      AutismSessionState.init_ck().write(value);
    }
 
    public String init_Str() {
@@ -1524,21 +1524,21 @@ public final class ModuleRuntimeManager {
       this.push(value);
       this.reset_V();
       return !value && this.stop_Z() && init_Minecraft != null && init_Minecraft.getConnection() != null
-         ? ck.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection())
+         ? AutismSessionState.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection())
          : 0;
    }
 
    public int read_I() {
-      return init_Minecraft != null && init_Minecraft.getConnection() != null ? ck.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection()) : 0;
+      return init_Minecraft != null && init_Minecraft.getConnection() != null ? AutismSessionState.init_ck().init_I_ClientPacketListen(init_Minecraft.getConnection()) : 0;
    }
 
    public int write_I() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       return shared.write_I();
    }
 
    public void init(boolean enabled, int flushed) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (enabled) {
          autismclient.util.bi.init("Delay Packets on", -13248397);
       } else if (flushed > 0) {
@@ -1556,7 +1556,7 @@ public final class ModuleRuntimeManager {
    }
 
    public void load(int count) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (count > 0) {
          if (shared.tick_Z()) {
             shared.write_V("Sent " + count + " packet" + (count == 1 ? "" : "s") + ".");
@@ -1646,7 +1646,7 @@ public final class ModuleRuntimeManager {
    }
 
    public boolean task() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (init_Minecraft == null) {
          return false;
       } else if (shared.init_Screen() != null && shared.init_AbstractContainerM() != null) {
@@ -1664,23 +1664,23 @@ public final class ModuleRuntimeManager {
    }
 
    public Set<Class<? extends Packet<?>>> load_Set() {
-      return new LinkedHashSet<>(ck.init_ck().load_Set());
+      return new LinkedHashSet<>(AutismSessionState.init_ck().load_Set());
    }
 
    public Set<Class<? extends Packet<?>>> read_Set() {
-      return new LinkedHashSet<>(ck.init_ck().read_Set());
+      return new LinkedHashSet<>(AutismSessionState.init_ck().read_Set());
    }
 
    public void init_V_Set(Set<Class<? extends Packet<?>>> packets) {
       Set<Class<? extends Packet<?>>> safe = packets == null ? this.write_Set() : new LinkedHashSet<>(packets);
-      ck.init_ck().init_V_Set(safe);
+      AutismSessionState.init_ck().init_V_Set(safe);
       this.init_AutismConfig.c2sPackets = this.init_List_Set(safe);
       this.reset_V();
    }
 
    public void load(Set<Class<? extends Packet<?>>> packets) {
       Set<Class<? extends Packet<?>>> safe = packets == null ? this.update_Set() : new LinkedHashSet<>(packets);
-      ck.init_ck().load_V_Set(safe);
+      AutismSessionState.init_ck().load_V_Set(safe);
       this.init_AutismConfig.s2cPackets = this.init_List_Set(safe);
       this.reset_V();
    }
@@ -1714,7 +1714,7 @@ public final class ModuleRuntimeManager {
    }
 
    private void get_V() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       this.set_V();
       shared.tick(this.init_AutismConfig.useCustomPackets);
       shared.init_V_Set(this.init(this.init_AutismConfig.c2sPackets, true));
@@ -1731,7 +1731,7 @@ public final class ModuleRuntimeManager {
          this.init_AutismConfig.applyRuntimeDefaults();
       }
 
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       shared.read_V_Z(true);
       shared.write(false);
       shared.run(false);
@@ -1739,7 +1739,7 @@ public final class ModuleRuntimeManager {
    }
 
    private void put_V() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (!shared.sync_Z() && (shared.update_Z() || this.get_Z())) {
          if (aD.init_Z()) {
             shared.update(false);
@@ -1774,7 +1774,7 @@ public final class ModuleRuntimeManager {
          boolean wasSpawned = this.tick;
          this.tick = this.level();
          if (!wasSpawned && this.tick && !aD.init_Z()) {
-            autismclient.util.aA.read_V();
+            autismclient.util.JoinMacroController.read_V();
             this.run = true;
             this.sync_J = System.currentTimeMillis();
          }
@@ -1854,7 +1854,7 @@ public final class ModuleRuntimeManager {
    private void start_V() {
       AutismConfig cfg = this.init_AutismConfig;
       if (cfg != null) {
-         ck shared = ck.init_ck();
+         AutismSessionState shared = AutismSessionState.init_ck();
          this.stop_V();
          if (cfg.keybindModuleMenu != -1) {
             boolean pressed = this.init_Z_I(cfg.keybindModuleMenu);
@@ -1956,7 +1956,7 @@ public final class ModuleRuntimeManager {
    }
 
    private void stop_V() {
-      autismclient.util.aN macroManager = autismclient.util.aN.init_aN();
+      autismclient.util.MacroLibraryManager macroManager = autismclient.util.MacroLibraryManager.init_aN();
       long revision = macroManager.init_J();
       if (revision != this.load_J) {
          List<autismclient.util.AutismMacro> keyboundMacros = new ArrayList<>();
@@ -1984,7 +1984,7 @@ public final class ModuleRuntimeManager {
    }
 
    private void next_V() {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       if (init_Minecraft != null) {
          if (shared.init_Screen() != null && shared.init_AbstractContainerM() != null) {
             init_Minecraft.gui.setScreen(shared.init_Screen());

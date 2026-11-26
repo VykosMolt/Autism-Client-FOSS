@@ -2930,9 +2930,9 @@ final class cz {
             }
 
             if (id.equals("game:recipes")) {
-               autismclient.util.J.Inner_BufferHelper snapshot = this.init_cc
-                  .init_Obj_J_Supplier(generation, () -> autismclient.util.J.init_J_BufferHelper(Minecraft.getInstance()));
-               List<autismclient.util.J.Inner_TaskQueue> options = autismclient.util.J.init(snapshot);
+               autismclient.util.AutoCraftingEngine.Inner_BufferHelper snapshot = this.init_cc
+                  .init_Obj_J_Supplier(generation, () -> autismclient.util.AutoCraftingEngine.init_J_BufferHelper(Minecraft.getInstance()));
+               List<autismclient.util.AutoCraftingEngine.Inner_TaskQueue> options = autismclient.util.AutoCraftingEngine.init(snapshot);
                String query = ag.init_Str_JsonObject(arguments, "query", "").toLowerCase(Locale.ROOT);
                JsonArray recipes = new JsonArray();
                options.stream()
@@ -3214,7 +3214,7 @@ final class cz {
          JsonObject data = args.getAsJsonObject("macro");
          String existing = this.init_cc.init_Obj_J_Supplier(generation, () -> {
             autismclient.util.AutismMacro validated = an.init(data, this.init_cc.init_AiCatalog_Snapshot());
-            autismclient.util.AutismMacro old = autismclient.util.aN.init_aN().init_aM_Str(validated.init_Str);
+            autismclient.util.AutismMacro old = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(validated.init_Str);
             return old == null ? "" : init_JsonObject_aM(old).toString();
          });
          if (!existing.isEmpty()) {
@@ -3230,7 +3230,7 @@ final class cz {
                generation,
                () -> {
                   autismclient.util.AutismMacro macro = an.init(data, this.init_cc.init_AiCatalog_Snapshot());
-                  autismclient.util.aN manager = autismclient.util.aN.init_aN();
+                  autismclient.util.MacroLibraryManager manager = autismclient.util.MacroLibraryManager.init_aN();
                   autismclient.util.AutismMacro old = manager.init_aM_Str(macro.init_Str);
                   if (!existing.equals(old == null ? "" : init_JsonObject_aM(old).toString())) {
                      throw new IllegalArgumentException("Macro changed while preserving its revision; inspect again");
@@ -3658,7 +3658,7 @@ final class cz {
       if (id.equals("client:macros")) {
          JsonArray macros = new JsonArray();
 
-         for (autismclient.util.AutismMacro m : autismclient.util.aN.init_aN().init_List()) {
+         for (autismclient.util.AutismMacro m : autismclient.util.MacroLibraryManager.init_aN().init_List()) {
             macros.add(ag.init_JsonObject_ObjArr("macro", init_JsonObject_aM(m), "fingerprint", ag.init_Str_Str(init_JsonObject_aM(m).toString())));
          }
 
@@ -3797,7 +3797,7 @@ final class cz {
                   var10000 = R.init_AiOperation(AiOperation.Status.SUCCEEDED, "LAN Sync action dispatched", ai.load(args));
                   break;
                case "client:run_macro":
-                  autismclient.util.AutismMacro macro = autismclient.util.aN.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
+                  autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.init_aN().init_aM_Str(ag.init_Str_JsonObject(args, "name", ""));
                   if (macro == null) {
                      throw new IllegalArgumentException("Unknown macro");
                   }

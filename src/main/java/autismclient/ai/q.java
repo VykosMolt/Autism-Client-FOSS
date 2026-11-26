@@ -2421,7 +2421,7 @@ final class q {
             void init_V_32() {
                int slot = af.read();
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
-                  autismclient.util.aw.init_V(mc, slot);
+                  autismclient.util.InventorySlotHelper.init_V(mc, slot);
                }
             }
 

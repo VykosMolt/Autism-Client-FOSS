@@ -7,8 +7,8 @@ import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.l;
 import autismclient.modules.Module;
 import autismclient.modules.al;
-import autismclient.util.bN;
-import autismclient.util.bO;
+import autismclient.util.OnlinePlayerCollector;
+import autismclient.util.TabPlayerListParser;
 import autismclient.util.bi;
 import autismclient.util.cA;
 import autismclient.util.ThemePaletteManager;
@@ -658,7 +658,7 @@ public class DataPipe extends KeyHolder {
          this.load_Z = true;
          this.poll = 0;
 
-         for (bO.Inner_StreamUtil player : bO.init(this.minecraft)) {
+         for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(this.minecraft)) {
             if (player != null && player.init_Str() != null && !player.init_Str().isBlank() && !load(this.write_List, player.init_Str())) {
                this.write_List.add(player.init_Str());
                if (player.init_Z()) {
@@ -670,7 +670,7 @@ public class DataPipe extends KeyHolder {
          this.write_List.sort(String::compareToIgnoreCase);
          bi.init("Scanned " + this.write_List.size() + " players.", -13248397);
          autismclient.util.BackgroundTaskExecutor.init_Future_Str_Runnable("player-rank-scan", () -> {
-            List<String> probed = bN.init(this.minecraft, true);
+            List<String> probed = OnlinePlayerCollector.init(this.minecraft, true);
             if (!probed.isEmpty()) {
                this.minecraft.execute(() -> {
                   boolean changed = false;
@@ -816,7 +816,7 @@ public class DataPipe extends KeyHolder {
          List<String> values = this.load_List_2();
          int added = 0;
 
-         for (bO.Inner_StreamUtil player : bO.init(this.minecraft)) {
+         for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(this.minecraft)) {
             if (player != null && player.init_Z()) {
                String tag = player.load().trim();
                if (!tag.isEmpty() && !load(values, tag)) {

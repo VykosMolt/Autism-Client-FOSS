@@ -194,7 +194,7 @@ final class ValueSink {
 
    static Entity init_Entity(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
-         long now = autismclient.util.ck.init_ck().state_I();
+         long now = autismclient.util.AutismSessionState.init_ck().state_I();
          if (now != write_J) {
             write_J = now;
             Set<Integer> seen = new HashSet<>();
@@ -2671,7 +2671,7 @@ final class ValueSink {
 
                   this.init_DataUtil.init_V();
                   if (mc.level == this.init_Obj && mc.player == this.init_LocalPlayer && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.aw.init_V(mc, this.init_I);
+                     autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
                   }
                }
             }

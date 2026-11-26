@@ -2,7 +2,7 @@ package autismclient.util.macro;
 
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketTypeRegistry;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +56,7 @@ public class DelayPacketsAction implements MacroAction {
    public void write() {
       this.c2sPacketNames.clear();
       this.s2cPacketNames.clear();
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
 
       for (Class<?> clz : shared.load_Set()) {
          this.c2sPacketNames.add(PacketNameResolver.init_Str_Class((Class<? extends Packet<?>>)clz));
@@ -69,7 +69,7 @@ public class DelayPacketsAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
       boolean shouldEnable = this.mode == DelayPacketsAction.Inner_DataUtil.ENABLE;
       int flushed = 0;

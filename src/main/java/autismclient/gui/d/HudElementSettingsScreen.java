@@ -9,7 +9,7 @@ import autismclient.modules.Module;
 import autismclient.util.AutismHudManager;
 import autismclient.util.NativeImageFilePicker;
 import autismclient.util.cA;
-import autismclient.util.cc;
+import autismclient.util.RegistryDisplayNameCache;
 import autismclient.util.ThemePaletteManager;
 import autismclient.util.ThemedTextInputBox;
 import java.util.ArrayList;
@@ -228,7 +228,7 @@ public class HudElementSettingsScreen extends Screen {
       } else if (row.init_EventBus_CachePool == HudElementSettingsScreen.Inner_CachePool.ITEM) {
          int pickW = this.load("Pick");
          String raw = AutismHudManager.init_Str_Str_Str(this.init_Str, row.init_Str);
-         String itemName = raw != null && !raw.isBlank() ? cc.init(raw.contains(":") ? raw : "minecraft:" + raw) : "None";
+         String itemName = raw != null && !raw.isBlank() ? RegistryDisplayNameCache.init(raw.contains(":") ? raw : "minecraft:" + raw) : "None";
          this.init(graphics, itemName, valueX, textY, -791321, Math.max(1, valueW - pickW - 4));
          this.init(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY);
       } else if (row.init_EventBus_CachePool == HudElementSettingsScreen.Inner_CachePool.PICK) {

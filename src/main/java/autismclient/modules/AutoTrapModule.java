@@ -7,7 +7,7 @@ import autismclient.api.module.RegistryListSetting;
 import autismclient.util.PerTickPlacementLock;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -387,7 +387,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (tick - source.read() >= 200) {
          this.init_PathHelper_CachePo = null;
          return null;
@@ -419,7 +419,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       RotationMath.Inner_DataUtil rotation = RotationMath.init(Vec3.atCenterOf(cell), eye);
-      return Math.abs(rotation.load()) > autismclient.util.U.init_D()
+      return Math.abs(rotation.load()) > autismclient.util.BlockPlacementPlanner.init_D()
          ? null
          : new AutoTrapModule.Inner_BufferHelper(false, source.init_I(), new AABB(cell), source.load(), source.init_InteractionHand(), rotation, true);
    }
@@ -935,20 +935,20 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      autismclient.util.U.Inner_CachePool candidate = autismclient.util.U.init_U_CachePool(
-         new autismclient.util.U.Inner_StateCache(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
+      autismclient.util.BlockPlacementPlanner.Inner_CachePool candidate = autismclient.util.BlockPlacementPlanner.init_U_CachePool(
+         new autismclient.util.BlockPlacementPlanner.Inner_StateCache(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
             .init_U_StateCache_ce_DataUtil(RotationMath.init(MC.player))
-            .init_U_StateCache_D(autismclient.util.U.init_D())
+            .init_U_StateCache_D(autismclient.util.BlockPlacementPlanner.init_D())
             .init_U_StateCache_Z(MC.player.isSecondaryUseActive())
             .load(false)
-            .init_U_StateCache_U_StreamUtil(new autismclient.util.U.Inner_StreamUtil(48))
+            .init_U_StateCache_U_StreamUtil(new autismclient.util.BlockPlacementPlanner.Inner_StreamUtil(48))
       );
       return candidate == null ? null : candidate.init_U_DataUtil().init_ce_DataUtil();
    }
 
-   private autismclient.util.U.Inner_NetHelper init_U_NetHelper_ItemStack_InteractionHand(ItemStack material, InteractionHand hand) {
+   private autismclient.util.BlockPlacementPlanner.Inner_NetHelper init_U_NetHelper_ItemStack_InteractionHand(ItemStack material, InteractionHand hand) {
       return material.getItem() instanceof BlockItem
-         ? autismclient.util.U.init(material, MC.player, hand)
+         ? autismclient.util.BlockPlacementPlanner.init(material, MC.player, hand)
          : (hit, target) -> hit.getBlockPos().relative(hit.getDirection()).equals(target);
    }
 
@@ -976,7 +976,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private RotationMath.Inner_DataUtil init_ce_DataUtil_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
-      int tick = ck.init_ck().state_I();
+      int tick = AutismSessionState.init_ck().state_I();
       if (tick == this.start) {
          return null;
       }
@@ -1031,7 +1031,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       BlockPos clicked = ray.getBlockPos();
-      if (!autismclient.util.U.load(MC.level.getBlockState(clicked), clicked, MC.player.isSecondaryUseActive())) {
+      if (!autismclient.util.BlockPlacementPlanner.load(MC.level.getBlockState(clicked), clicked, MC.player.isSecondaryUseActive())) {
          return null;
       }
 
@@ -1164,7 +1164,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    @Override
    public boolean shouldCancelUse(HitResult hitResult, InteractionHand hand) {
-      return this.start == ck.init_ck().state_I();
+      return this.start == AutismSessionState.init_ck().state_I();
    }
 
    @Override
@@ -1192,7 +1192,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
    private boolean init_Z_I_I(int slot, int selected) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27() && !CrystalAuraModule.init_Z_51() && !AnchorAuraModule.init_Z_2()) {
-         int tick = ck.init_ck().state_I();
+         int tick = AutismSessionState.init_ck().state_I();
          if (tick == this.size) {
             return false;
          }
@@ -1206,7 +1206,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                this.next = selected;
             }
 
-            autismclient.util.aw.init_V(MC, slot);
+            autismclient.util.InventorySlotHelper.init_V(MC, slot);
          } finally {
             autismclient.util.InventorySlotArbiter.read_V(this.id());
          }

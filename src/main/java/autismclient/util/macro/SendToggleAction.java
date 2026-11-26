@@ -1,6 +1,6 @@
 package autismclient.util.macro;
 
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
@@ -18,7 +18,7 @@ public class SendToggleAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       shared.read_V_Z(this.mode == SendToggleAction.Inner_DataUtil.ENABLE);
    }
 

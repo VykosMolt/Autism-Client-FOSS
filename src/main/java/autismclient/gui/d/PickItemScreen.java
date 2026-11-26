@@ -3,7 +3,7 @@ package autismclient.gui.d;
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.j;
 import autismclient.gui.f.b.l;
-import autismclient.util.M;
+import autismclient.util.DisplayItemStackFactory;
 import autismclient.util.cA;
 import autismclient.util.ThemePaletteManager;
 import autismclient.util.ThemedTextInputBox;
@@ -323,7 +323,7 @@ public final class PickItemScreen extends KeyHolder {
          if (item != Items.AIR) {
             Identifier id = BuiltInRegistries.ITEM.getKey(item);
             if (id != null) {
-               ItemStack stack = M.init_ItemStack(item);
+               ItemStack stack = DisplayItemStackFactory.init_ItemStack(item);
                String itemId = id.toString().toLowerCase(Locale.ROOT);
                out.add(new PickItemScreen.Inner_DataUtil(itemId, item.getName(item.getDefaultInstance()).getString(), stack));
             }

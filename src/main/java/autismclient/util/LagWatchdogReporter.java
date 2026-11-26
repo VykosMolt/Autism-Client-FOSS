@@ -149,7 +149,7 @@ public final class LagWatchdogReporter {
          () -> {
             boolean focused = client != null && client.getWindow() != null && client.getWindow().isFocused();
             Screen screen = client == null ? null : client.gui.screen();
-            ck shared = ck.init_ck();
+            AutismSessionState shared = AutismSessionState.init_ck();
             boolean capture = shared != null && (shared.chunk() || shared.level() || shared.count() || shared.pool() || shared.frame() || shared.cache_Z());
             return "focused="
                + focused

@@ -527,7 +527,7 @@ public final class BedEspModule extends Module {
       for (ItemStack stack : tools) {
          if (stack.isEmpty()
             || stack.isItemEnabled(MC.level.enabledFeatures()) && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() >= 2)) {
-            double speed = stack.isEmpty() ? 1.0 : autismclient.util.ArrayUtil.init(MC, stack, state);
+            double speed = stack.isEmpty() ? 1.0 : autismclient.util.BlockBreakSpeedHelper.init(MC, stack, state);
             int haste = MobEffectUtil.hasDigSpeed(MC.player) ? MobEffectUtil.getDigSpeedAmplification(MC.player) + 1 : 0;
             speed *= 1.0 + 0.2 * haste;
             MobEffectInstance fatigue = MC.player.getEffect(MobEffects.MINING_FATIGUE);

@@ -260,7 +260,7 @@ final class cl {
             final UUID init_UUID = mc.player.getUUID();
             final Object load_Obj = mc.getConnection();
             final long init_J = ca.load_J();
-            final int init_I = autismclient.util.ck.init_ck().state_I();
+            final int init_I = autismclient.util.AutismSessionState.init_ck().state_I();
             final long load_J = System.nanoTime();
             final long read_J = this.load_J + timeoutSeconds * 1000000000L;
             final Map<cl.Inner_BufferHelper, Integer> init_Map = new LinkedHashMap<>();
@@ -567,7 +567,7 @@ final class cl {
                                  "seconds",
                                  (System.nanoTime() - this.poll_J) / 1000000000L,
                                  "tick",
-                                 autismclient.util.ck.init_ck().state_I(),
+                                 autismclient.util.AutismSessionState.init_ck().state_I(),
                                  "data",
                                  bK.load_JsonObject(r.dataJson())
                               )
@@ -1277,7 +1277,7 @@ final class cl {
                   "dimension",
                   cL.load(mc),
                   "simulationTicks",
-                  autismclient.util.ck.init_ck().state_I() - this.init_I,
+                  autismclient.util.AutismSessionState.init_ck().state_I() - this.init_I,
                   "resources",
                   bK.init_JsonObject(),
                   "memoryCapabilities",

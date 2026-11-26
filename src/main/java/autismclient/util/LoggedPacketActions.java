@@ -92,7 +92,7 @@ public final class LoggedPacketActions {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be queued.");
          return false;
       } else {
-         ck.init_ck().init_V_Packet(entry.init_Packet);
+         AutismSessionState.init_ck().init_V_Packet(entry.init_Packet);
          AutismClientMessaging.sendPrefixed("Queued: " + entry.load_Str);
          return true;
       }
@@ -112,7 +112,7 @@ public final class LoggedPacketActions {
             action.waitForGuiBefore = false;
             action.waitForGuiAfter = false;
             action.guiName = "";
-            action.packets.add(new ck.Inner_CachePool(entry.init_Packet, 0, ck.Inner_BufferHelper.EXACT));
+            action.packets.add(new AutismSessionState.Inner_CachePool(entry.init_Packet, 0, AutismSessionState.Inner_BufferHelper.EXACT));
             macroEditor.init_V_MacroAction_2(action);
             OverlayManager.init_bk().update_V(macroEditor);
             AutismClientMessaging.sendPrefixed("Added send action: " + entry.load_Str);
@@ -204,7 +204,7 @@ public final class LoggedPacketActions {
          return null;
       }
 
-      AutismMacro existingMacro = ck.init_ck().init_aM();
+      AutismMacro existingMacro = AutismSessionState.init_ck().init_aM();
       macroEditor.init_V_aM(existingMacro);
       OverlayManager.init_bk().update_V(macroEditor);
       return macroEditor;

@@ -30,7 +30,7 @@ public class SwapSlotsAction implements MacroAction {
                return;
             }
 
-            resolvedFrom = autismclient.util.aw.load(mc, target);
+            resolvedFrom = autismclient.util.InventorySlotHelper.load(mc, target);
             if (resolvedFrom == -1) {
                return;
             }
@@ -46,16 +46,16 @@ public class SwapSlotsAction implements MacroAction {
                return;
             }
 
-            resolvedTo = autismclient.util.aw.load(mc, target);
+            resolvedTo = autismclient.util.InventorySlotHelper.load(mc, target);
             if (resolvedTo == -1) {
                return;
             }
          }
 
-         int fromHandlerSlot = autismclient.util.aw.read_I(mc, resolvedFrom);
-         int toHandlerSlot = autismclient.util.aw.read_I(mc, resolvedTo);
+         int fromHandlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, resolvedFrom);
+         int toHandlerSlot = autismclient.util.InventorySlotHelper.read_I(mc, resolvedTo);
          if (fromHandlerSlot >= 0 && toHandlerSlot >= 0) {
-            autismclient.util.aw.write(mc, fromHandlerSlot, toHandlerSlot);
+            autismclient.util.InventorySlotHelper.write(mc, fromHandlerSlot, toHandlerSlot);
          }
       }
    }

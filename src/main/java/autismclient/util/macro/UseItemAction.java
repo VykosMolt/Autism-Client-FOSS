@@ -30,7 +30,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
          target = target.init_ArrayUtil_Minecraft(mc);
          if (target != null) {
             if (target.init_Z() || target.update()) {
-               autismclient.util.aw.init(mc, target, mc.player.getInventory().getSelectedSlot());
+               autismclient.util.InventorySlotHelper.init(mc, target, mc.player.getInventory().getSelectedSlot());
             }
 
             mc.getConnection().send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 0, mc.player.getYRot(), mc.player.getXRot()));

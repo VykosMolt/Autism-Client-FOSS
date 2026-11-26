@@ -16,12 +16,12 @@ final class f {
    private f() {
    }
 
-   static boolean init_Z_J_CachePool_Z(autismclient.util.J.Inner_CachePool result, boolean allowed) {
+   static boolean init_Z_J_CachePool_Z(autismclient.util.AutoCraftingEngine.Inner_CachePool result, boolean allowed) {
       return allowed
          && !result.init_Z
          && !result.load
          && result.init_I == 0
-         && result.init_J_CachePool_DataUt == autismclient.util.J.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL;
+         && result.init_J_CachePool_DataUt == autismclient.util.AutoCraftingEngine.Inner_CachePool.Inner_DataUtil.INVENTORY_FULL;
    }
 
    static JsonObject init_JsonObject_g_CachePool(g.Inner_CachePool plan, int firstStep, String target, int seconds, g.Inner_CachePool... obligations) {

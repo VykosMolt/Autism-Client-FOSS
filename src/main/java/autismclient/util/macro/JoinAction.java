@@ -25,7 +25,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 
 public class JoinAction implements MacroAction {
-   public static final autismclient.util.aA.Inner_StreamUtil DEFAULT_WHEN = autismclient.util.aA.Inner_StreamUtil.PLAYABLE;
+   public static final autismclient.util.JoinMacroController.Inner_StreamUtil DEFAULT_WHEN = autismclient.util.JoinMacroController.Inner_StreamUtil.PLAYABLE;
    public static final int DEFAULT_TIMEOUT_SEC = 60;
    public static final int MAX_TIMEOUT_SEC = 300;
    static final long init_J = 5000L;
@@ -82,8 +82,8 @@ public class JoinAction implements MacroAction {
       return last != null && last.ip != null ? last.ip.trim() : "";
    }
 
-   public autismclient.util.aA.Inner_StreamUtil init_aA_StreamUtil() {
-      return autismclient.util.aA.Inner_StreamUtil.init(this.when);
+   public autismclient.util.JoinMacroController.Inner_StreamUtil init_aA_StreamUtil() {
+      return autismclient.util.JoinMacroController.Inner_StreamUtil.init(this.when);
    }
 
    public boolean init_Z_Minecraft_Consumer(Minecraft mc, Consumer<String> status) throws InterruptedException {
@@ -196,7 +196,7 @@ public class JoinAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.server = tag.getStringOr("server", "");
-      this.when = autismclient.util.aA.Inner_StreamUtil.init(tag.getStringOr("when", DEFAULT_WHEN.init_Str())).init_Str();
+      this.when = autismclient.util.JoinMacroController.Inner_StreamUtil.init(tag.getStringOr("when", DEFAULT_WHEN.init_Str())).init_Str();
       this.timeoutSec = Math.max(1, Math.min(300, tag.getIntOr("timeoutSec", 60)));
       if (tag.contains("enabled")) {
          this.init_Z = tag.getBooleanOr("enabled", true);
@@ -232,10 +232,10 @@ public class JoinAction implements MacroAction {
    private static final class Inner_CachePool {
       private final Minecraft init_Minecraft;
       private final String init_Str;
-      private final autismclient.util.aA.Inner_StreamUtil init_aA_StreamUtil;
+      private final autismclient.util.JoinMacroController.Inner_StreamUtil init_aA_StreamUtil;
       private final long init_J;
       private final Consumer<String> init_Consumer;
-      private final autismclient.util.aA.Inner_DataUtil init_aA_DataUtil = new autismclient.util.aA.Inner_DataUtil();
+      private final autismclient.util.JoinMacroController.Inner_DataUtil init_aA_DataUtil = new autismclient.util.JoinMacroController.Inner_DataUtil();
       private JoinAction.Inner_DataUtil init_ClassCache_DataUti;
       private int init_I;
       private long load_J;
@@ -246,7 +246,7 @@ public class JoinAction implements MacroAction {
       private Screen init_Screen;
       private String read_Str;
 
-      Inner_CachePool(Minecraft mc, String address, autismclient.util.aA.Inner_StreamUtil timing, long budgetMs, Consumer<String> status) {
+      Inner_CachePool(Minecraft mc, String address, autismclient.util.JoinMacroController.Inner_StreamUtil timing, long budgetMs, Consumer<String> status) {
          this.init_Minecraft = mc;
          this.init_Str = address;
          this.init_aA_StreamUtil = timing;

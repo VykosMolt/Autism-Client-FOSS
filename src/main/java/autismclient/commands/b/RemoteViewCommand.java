@@ -3,8 +3,8 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.bO;
-import autismclient.util.cd;
+import autismclient.util.TabPlayerListParser;
+import autismclient.util.RemoteViewController;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -27,10 +27,10 @@ public final class RemoteViewCommand extends Command {
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> init());
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
-         if (!cd.init_Z()) {
+         if (!RemoteViewController.init_Z()) {
             AutismClientMessaging.sendPrefixed("§7Remote view is not active.");
          } else {
-            cd.init(false);
+            RemoteViewController.init(false);
             AutismClientMessaging.sendPrefixed("§aRemote view stopped.");
          }
 
@@ -51,7 +51,7 @@ public final class RemoteViewCommand extends Command {
       }
 
       if (entity instanceof Player player) {
-         init(cd.init_cd_DataUtil(player));
+         init(RemoteViewController.init_cd_DataUtil(player));
          return 1;
       } else {
          AutismClientMessaging.sendPrefixed("§cLook at a loaded player first.");
@@ -65,7 +65,7 @@ public final class RemoteViewCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cPlayer is not loaded: §f" + requested.trim());
          return 1;
       } else {
-         init(cd.init_cd_DataUtil(player));
+         init(RemoteViewController.init_cd_DataUtil(player));
          return 1;
       }
    }
@@ -93,14 +93,14 @@ public final class RemoteViewCommand extends Command {
       }
    }
 
-   private static void init(cd.Inner_DataUtil result) {
+   private static void init(RemoteViewController.Inner_DataUtil result) {
       AutismClientMessaging.sendPrefixed((result.init_Z() ? "§a" : "§c") + result.init_Str());
    }
 
    private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (bO.Inner_StreamUtil player : bO.init(Minecraft.getInstance())) {
+      for (TabPlayerListParser.Inner_StreamUtil player : TabPlayerListParser.init(Minecraft.getInstance())) {
          if (player.init_Str().toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(player.init_Str());
          }

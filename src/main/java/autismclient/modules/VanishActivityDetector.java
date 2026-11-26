@@ -75,7 +75,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 final class VanishActivityDetector {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final autismclient.util.DataUtil init_DataUtil = new autismclient.util.DataUtil();
+   private final autismclient.util.UnexplainedBlockTracker init_DataUtil = new autismclient.util.UnexplainedBlockTracker();
    private final Map<Long, Long> init_Map = new HashMap<>();
    private final Map<Long, VanishActivityDetector.Inner_CachePool> load_Map = new LinkedHashMap<>();
    private final ArrayDeque<VanishActivityDetector.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>();
@@ -132,13 +132,13 @@ final class VanishActivityDetector {
       }
    }
 
-   static autismclient.util.DataUtil.Inner_CachePool init_DataUtil_CachePool_BlockState_BlockState(BlockState before, BlockState after) {
+   static autismclient.util.UnexplainedBlockTracker.Inner_CachePool init_DataUtil_CachePool_BlockState_BlockState(BlockState before, BlockState after) {
       if (before.getBlock() == after.getBlock()) {
          return null;
       } else if (before.isAir() && init_Z_BlockState_Z(after, true)) {
-         return autismclient.util.DataUtil.Inner_CachePool.PLACE;
+         return autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE;
       } else {
-         return after.isAir() && init_Z_BlockState_Z(before, false) ? autismclient.util.DataUtil.Inner_CachePool.BREAK : null;
+         return after.isAir() && init_Z_BlockState_Z(before, false) ? autismclient.util.UnexplainedBlockTracker.Inner_CachePool.BREAK : null;
       }
    }
 
@@ -152,18 +152,18 @@ final class VanishActivityDetector {
 
          this.load(pos, before, at);
          this.load(pos, after, at);
-         autismclient.util.DataUtil.Inner_CachePool kind = init_DataUtil_CachePool_BlockState_BlockState(before, after);
+         autismclient.util.UnexplainedBlockTracker.Inner_CachePool kind = init_DataUtil_CachePool_BlockState_BlockState(before, after);
          if (kind != null) {
             if (this.load_Map.size() >= 256) {
                this.load_Map.remove(this.load_Map.keySet().iterator().next());
             }
 
             this.load_Map
-               .put(pos.asLong(), new VanishActivityDetector.Inner_CachePool(kind == autismclient.util.DataUtil.Inner_CachePool.PLACE ? after : before, kind, at + 10000L));
+               .put(pos.asLong(), new VanishActivityDetector.Inner_CachePool(kind == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE ? after : before, kind, at + 10000L));
             if (this.init_Map.getOrDefault(pos.asLong(), 0L) <= at && at >= this.load_J && !this.init_Z_BlockPos_J(pos, at)) {
                this.init_DataUtil
                   .init_V_DataUtil_StreamUti(
-                     new autismclient.util.DataUtil.Inner_StreamUtil(pos.immutable(), init_Str_BlockState(before), init_Str_BlockState(after), kind, at)
+                     new autismclient.util.UnexplainedBlockTracker.Inner_StreamUtil(pos.immutable(), init_Str_BlockState(before), init_Str_BlockState(after), kind, at)
                   );
             } else {
                this.init_DataUtil.init(pos, 1.5, at + 2000L);
@@ -393,7 +393,7 @@ final class VanishActivityDetector {
                   }
 
                   if (focus != null
-                     && focus.init_DataUtil_CachePool == autismclient.util.DataUtil.Inner_CachePool.PLACE
+                     && focus.init_DataUtil_CachePool == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE
                      && p.distManhattan(pos) == 1
                      && (focus.init_BlockState.getBlock() == Blocks.MELON || focus.init_BlockState.getBlock() == Blocks.PUMPKIN)
                      && (state.getBlock() instanceof StemBlock || state.getBlock() instanceof AttachedStemBlock)) {
@@ -497,8 +497,8 @@ final class VanishActivityDetector {
       return state.getBlock() instanceof CarvedPumpkinBlock || state.getBlock() instanceof ShulkerBoxBlock || state.getBlock() instanceof TntBlock;
    }
 
-   static boolean init(BlockState state, autismclient.util.DataUtil.Inner_CachePool kind, boolean fluid, boolean heat) {
-      if (kind == autismclient.util.DataUtil.Inner_CachePool.BREAK) {
+   static boolean init(BlockState state, autismclient.util.UnexplainedBlockTracker.Inner_CachePool kind, boolean fluid, boolean heat) {
+      if (kind == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.BREAK) {
          return heat && state.ignitedByLava();
       }
 
@@ -520,7 +520,7 @@ final class VanishActivityDetector {
       return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
    }
 
-   List<autismclient.util.DataUtil.Inner_BufferHelper> init_List_J(long at) {
+   List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> init_List_J(long at) {
       return this.init_DataUtil.init_List_J(at);
    }
 
@@ -534,7 +534,7 @@ final class VanishActivityDetector {
       this.load_J = 0L;
    }
 
-   private record Inner_CachePool(BlockState init_BlockState, autismclient.util.DataUtil.Inner_CachePool init_DataUtil_CachePool, long init_J) {
+   private record Inner_CachePool(BlockState init_BlockState, autismclient.util.UnexplainedBlockTracker.Inner_CachePool init_DataUtil_CachePool, long init_J) {
    }
 
    private record Inner_DataUtil(BlockPos init_BlockPos, int init_I, double init_D, long init_J) {

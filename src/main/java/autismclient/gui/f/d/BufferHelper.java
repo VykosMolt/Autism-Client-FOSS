@@ -22,7 +22,7 @@ import autismclient.gui.f.b.k;
 import autismclient.modules.Module;
 import autismclient.modules.CrosshairModule;
 import autismclient.util.ValueSink;
-import autismclient.util.aN;
+import autismclient.util.MacroLibraryManager;
 import autismclient.util.PacketNameResolver;
 import autismclient.util.PacketFilterListCodec;
 import autismclient.util.PipeDelimitedListUtil;
@@ -755,7 +755,7 @@ final class BufferHelper {
             if (macroName.isBlank()) {
                return "No macro";
             } else {
-               return aN.init_aN().init_aM_Str(macroName) == null ? "Missing: " + macroName : macroName;
+               return MacroLibraryManager.init_aN().init_aM_Str(macroName) == null ? "Missing: " + macroName : macroName;
             }
          }
       } else {

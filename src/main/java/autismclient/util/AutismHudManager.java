@@ -1973,7 +1973,7 @@ public final class AutismHudManager {
 
       try {
          String name = init_Minecraft.gameMode.getPlayerMode().getName();
-         return name != null && !name.isBlank() ? cc.update(name) : "N/A";
+         return name != null && !name.isBlank() ? RegistryDisplayNameCache.update(name) : "N/A";
       } catch (Throwable ignored) {
          return init_Minecraft.gameMode.toString();
       }
@@ -2146,9 +2146,9 @@ public final class AutismHudManager {
       } else if (hit instanceof BlockHitResult blockHit && init_Minecraft.level != null) {
          BlockPos pos = blockHit.getBlockPos();
          Identifier id = BuiltInRegistries.BLOCK.getKey(init_Minecraft.level.getBlockState(pos).getBlock());
-         return cc.load(id.toString()) + " " + init_Str_D(pos.getX(), pos.getY(), pos.getZ());
+         return RegistryDisplayNameCache.load(id.toString()) + " " + init_Str_D(pos.getX(), pos.getY(), pos.getZ());
       } else {
-         return cc.update(hit.getType().name());
+         return RegistryDisplayNameCache.update(hit.getType().name());
       }
    }
 
@@ -2252,7 +2252,7 @@ public final class AutismHudManager {
             if (init_Z_Str_Str("looking_at", "show-block-id")) {
                name = id.toString();
             } else {
-               name = cc.load(id.toString());
+               name = RegistryDisplayNameCache.load(id.toString());
             }
 
             if (init_Z_Str_Str("looking_at", "show-distance")) {
@@ -2260,7 +2260,7 @@ public final class AutismHudManager {
                name = name + " " + String.format(Locale.ROOT, "%.1fm", dist);
             }
          } else {
-            name = cc.update(hit.getType().name());
+            name = RegistryDisplayNameCache.update(hit.getType().name());
          }
 
          line.init(name, load_I_Str_2("looking_at", "value-color", -791321));
@@ -2289,7 +2289,7 @@ public final class AutismHudManager {
          int pct = (int)Math.round(progress * 100.0);
          if (init_Z_Str_Str("breaking_progress", "show-block-name")) {
             BlockPos pos = ((BlockHitResult)init_Minecraft.hitResult).getBlockPos();
-            String blockName = cc.load(BuiltInRegistries.BLOCK.getKey(init_Minecraft.level.getBlockState(pos).getBlock()).toString());
+            String blockName = RegistryDisplayNameCache.load(BuiltInRegistries.BLOCK.getKey(init_Minecraft.level.getBlockState(pos).getBlock()).toString());
             line.init(blockName + ": ", load_I_Str_2("breaking_progress", "label-color", -4743522));
          } else {
             line.init("Breaking: ", load_I_Str_2("breaking_progress", "label-color", -4743522));
@@ -2404,7 +2404,7 @@ public final class AutismHudManager {
    private static String close_Str() {
       if (init_Minecraft.level != null && init_Minecraft.player != null) {
          try {
-            return init_Minecraft.level.getBiome(init_BlockPos()).unwrapKey().map(key -> cc.update(key.identifier().toString())).orElse("Unknown");
+            return init_Minecraft.level.getBiome(init_BlockPos()).unwrapKey().map(key -> RegistryDisplayNameCache.update(key.identifier().toString())).orElse("Unknown");
          } catch (Throwable ignored) {
             return "Unknown";
          }
@@ -2498,7 +2498,7 @@ public final class AutismHudManager {
       if (target == null) {
          return init_Z_Str_Str("item_counter", "item-count-held") ? "Hand" : "Items";
       } else {
-         return cc.init(BuiltInRegistries.ITEM.getKey(target).toString());
+         return RegistryDisplayNameCache.init(BuiltInRegistries.ITEM.getKey(target).toString());
       }
    }
 

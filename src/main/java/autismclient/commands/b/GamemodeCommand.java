@@ -3,8 +3,8 @@ package autismclient.commands.b;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
-import autismclient.util.W;
-import autismclient.util.ae;
+import autismclient.util.FakeGamemodeManager;
+import autismclient.util.RealGamemodeSender;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -25,9 +25,9 @@ public class GamemodeCommand extends Command {
       });
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::put).executes(ctx -> {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
-         GameType resolved = W.init(mode);
+         GameType resolved = FakeGamemodeManager.init(mode);
          if (resolved != null) {
-            W.Inner_DataUtil result = ae.init(resolved);
+            FakeGamemodeManager.Inner_DataUtil result = RealGamemodeSender.init(resolved);
             AutismClientMessaging.sendPrefixed((result.init_Z() ? "§a" : "§c") + result.init_Str());
             return 1;
          }

@@ -9,11 +9,11 @@ import autismclient.api.module.IntSetting;
 import autismclient.compat263.Compat263;
 import autismclient.mixin.accessor.AutismDangerArrowAccessor;
 import autismclient.util.AutismConfig;
-import autismclient.util.cd;
+import autismclient.util.RemoteViewController;
 import autismclient.util.RotationMath;
 import autismclient.util.ServerRotationTracker;
 import autismclient.util.SprintStateTracker;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.SilentMovementCoordinator;
 import autismclient.util.g.PkgCls_a;
 import autismclient.util.macro.MacroExecutor;
@@ -218,7 +218,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    public static boolean init_Z_52() {
       DangerModule danger = init_z();
-      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.init_Z_I(ck.init_ck().state_I(), danger.poll, 1);
+      return danger != null && danger.isEnabled() && danger.poll != -2147483648 && ClutchFallPhysics.init_Z_I(AutismSessionState.init_ck().state_I(), danger.poll, 1);
    }
 
    private boolean pop() {
@@ -362,7 +362,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       if (!this.isEnabled() && this.init_Z) {
-         this.open = ck.init_ck().state_I();
+         this.open = AutismSessionState.init_ck().state_I();
          this.flush_V_10();
       }
 
@@ -389,7 +389,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             this.init_Obj = MC.level;
          }
 
-         int nextTick = ck.init_ck().state_I();
+         int nextTick = AutismSessionState.init_ck().state_I();
          if (this.init_Z && nextTick - this.open > 1) {
             autismclient.util.SilentRotationManager.init_V();
          }
@@ -626,7 +626,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          && MC.gui.screen() == null
          && !aD.init_Z()
          && !FreecamController.init_Z()
-         && !cd.init_Z()
+         && !RemoteViewController.init_Z()
          && !MacroExecutor.write_Z()
          && !BlinkPacketManager.init_Z()
          && !PkgCls_a.init_Z()
@@ -1051,7 +1051,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
 
       if (!danger.init_Z || danger.load_Z) {
-         float progress = (ck.init_ck().state_I() - danger.push + partialTick) / 2.0F;
+         float progress = (AutismSessionState.init_ck().state_I() - danger.push + partialTick) / 2.0F;
          if (danger.read_ce_DataUtil != null && !(progress >= 1.0F) && !(progress < 0.0F)) {
             progress = progress * progress * (3.0F - 2.0F * progress);
             return RotationMath.init_ce_DataUtil_ce_DataUtil(danger.read_ce_DataUtil, new RotationMath.Inner_DataUtil(MC.player.getYRot(), MC.player.getXRot()), progress);
@@ -1068,7 +1068,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private void close_V_9() {
-      this.push = ck.init_ck().state_I();
+      this.push = AutismSessionState.init_ck().state_I();
       this.read_ce_DataUtil = this.load_ce_DataUtil;
    }
 

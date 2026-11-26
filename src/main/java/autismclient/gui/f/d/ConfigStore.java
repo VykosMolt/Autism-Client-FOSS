@@ -30,7 +30,7 @@ import autismclient.util.AutismLiteVariant;
 import autismclient.util.ValueSink;
 import autismclient.util.AutismMacro;
 import autismclient.util.OverlayManager;
-import autismclient.util.ck;
+import autismclient.util.AutismSessionState;
 import autismclient.util.GuiIconAtlas;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import java.util.ArrayDeque;
@@ -891,8 +891,8 @@ public final class ConfigStore {
 
    private void init_V_SyncManager(SyncManager context, int x, int y, int w) {
       NetHelper[] toggles = init_NetHelperArr_I(x, y, w, this.start);
-      float sendT = autismclient.gui.f.BufferHelper.init("packet:send", ck.init_ck().read_Z());
-      float delayT = autismclient.gui.f.BufferHelper.init("packet:delay", ck.init_ck().write_Z());
+      float sendT = autismclient.gui.f.BufferHelper.init("packet:send", AutismSessionState.init_ck().read_Z());
+      float delayT = autismclient.gui.f.BufferHelper.init("packet:delay", AutismSessionState.init_ck().write_Z());
       MethodUtil.init(context, toggles[0], "Send", null, toggles[0].init_Z(context.read(), context.write()), sendT, MethodUtil.write);
       this.init_V_ConfigStore_CacheP(ConfigStore.Inner_CachePool.UTILITY, toggles[0], null, null, "send", -1);
       MethodUtil.init(context, toggles[1], "Delay", null, toggles[1].init_Z(context.read(), context.write()), delayT, MethodUtil.write);

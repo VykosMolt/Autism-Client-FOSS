@@ -5,8 +5,8 @@ import autismclient.compat263.Compat263;
 import autismclient.modules.AutoTotemModule;
 import autismclient.modules.aD;
 import autismclient.util.InventorySlotArbiter;
-import autismclient.util.aw;
-import autismclient.util.ck;
+import autismclient.util.InventorySlotHelper;
+import autismclient.util.AutismSessionState;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -142,7 +142,7 @@ public final class VillagerDupeDriver {
 
       LocalPlayer player = mc.player;
       VillagerDupeDriver.ConfigStore emerald = this.init_DataUtil_ConfigSto_LocalPlayer_DataUtil_CachePool(player, opts);
-      return emerald != null ? emerald : this.init(mc, player, opts, player.hasInfiniteMaterials(), ck.init_ck().state_I());
+      return emerald != null ? emerald : this.init(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.init_ck().state_I());
    }
 
    public static boolean init_Z_Minecraft(Minecraft mc, VillagerDupeDriver.Inner_DataUtil filter, boolean traders) {
@@ -182,7 +182,7 @@ public final class VillagerDupeDriver {
       }
 
       LocalPlayer player = mc.player;
-      int now = ck.init_ck().state_I();
+      int now = AutismSessionState.init_ck().state_I();
       this.init_V_ClientLevel(mc.level);
       this.load(mc, player, opts, now);
       if (mc.gui.screen() != null) {
@@ -343,7 +343,7 @@ public final class VillagerDupeDriver {
                into = inventory.getSelectedSlot();
             }
 
-            if (!this.load_Z() || !aw.init(mc, from, into)) {
+            if (!this.load_Z() || !InventorySlotHelper.init(mc, from, into)) {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
 
@@ -355,7 +355,7 @@ public final class VillagerDupeDriver {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
 
-            aw.init_V(mc, slot);
+            InventorySlotHelper.init_V(mc, slot);
             if (inventory.getSelectedSlot() != slot) {
                return VillagerDupeDriver.ConfigStore.BUSY;
             }
@@ -380,7 +380,7 @@ public final class VillagerDupeDriver {
          int slot = init_I_LocalPlayer_Z(player, player.hasInfiniteMaterials());
          if (slot < 0) {
             return VillagerDupeDriver.ConfigStore.EMERALD_IN_OFFHAND;
-         } else if (this.load_Z() && aw.init_Z(mc, slot)) {
+         } else if (this.load_Z() && InventorySlotHelper.init_Z(mc, slot)) {
             this.load_V_LocalPlayer(player);
             return VillagerDupeDriver.ConfigStore.BUSY;
          } else {
@@ -449,7 +449,7 @@ public final class VillagerDupeDriver {
          int slot = init_I_LocalPlayer_Z(player, creative);
          if (slot < 0) {
             return VillagerDupeDriver.ConfigStore.NO_SHEARS;
-         } else if (this.load_Z() && aw.init_Z(mc, slot)) {
+         } else if (this.load_Z() && InventorySlotHelper.init_Z(mc, slot)) {
             this.load_V_LocalPlayer(player);
             return player.getOffhandItem().is(Items.SHEARS) ? null : VillagerDupeDriver.ConfigStore.BUSY;
          } else {
@@ -558,7 +558,7 @@ public final class VillagerDupeDriver {
          if (away >= 0 && this.load_Z()) {
             int from = inventory.getSelectedSlot();
             boolean empty = inventory.getItem(away).isEmpty();
-            aw.init_V(mc, away);
+            InventorySlotHelper.init_V(mc, away);
             if (inventory.getSelectedSlot() == away) {
                this.pop = now;
                this.close = from;
@@ -734,7 +734,7 @@ public final class VillagerDupeDriver {
          return false;
       }
 
-      if (init_I_I_I(ck.init_ck().state_I(), this.run) > init_I_Minecraft(mc)) {
+      if (init_I_I_I(AutismSessionState.init_ck().state_I(), this.run) > init_I_Minecraft(mc)) {
          return false;
       }
 

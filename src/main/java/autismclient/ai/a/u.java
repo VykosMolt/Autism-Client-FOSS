@@ -1,7 +1,7 @@
 package autismclient.ai.a;
 
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.U;
+import autismclient.util.BlockPlacementPlanner;
 import autismclient.util.RotationMath;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -515,7 +515,7 @@ public final class u implements ClassCache.Inner_JsonUtil {
             }
          }
 
-         U.Inner_CachePool hit = init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, 72);
+         BlockPlacementPlanner.Inner_CachePool hit = init(mc, this.init_BlockPos, this.init_Item, this.init_u_DataUtil, 72);
          if (hit != null && this.init_Item instanceof BlockItem blockItem) {
             BlockState state = blockItem.getBlock()
                .getStateForPlacement(
@@ -545,7 +545,7 @@ public final class u implements ClassCache.Inner_JsonUtil {
       }
    }
 
-   public static U.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, u.Inner_DataUtil constraint, int rays) {
+   public static BlockPlacementPlanner.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, u.Inner_DataUtil constraint, int rays) {
       return init(
          mc,
          target,
@@ -577,12 +577,12 @@ public final class u implements ClassCache.Inner_JsonUtil {
       return AutismLiteVariant.enabled() ? new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit) : new ValueSink(player, stack, hit, eye);
    }
 
-   public static U.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, u.Inner_DataUtil constraint, Vec3 feet, int rays) {
+   public static BlockPlacementPlanner.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, u.Inner_DataUtil constraint, Vec3 feet, int rays) {
       AABB body = new AABB(feet.x - 0.3, feet.y, feet.z - 0.3, feet.x + 0.3, feet.y + 1.8, feet.z + 0.3);
       return init(mc, target, item, constraint, init(mc, target, item, constraint, feet, true), body, mc.player.blockInteractionRange() - 0.25, rays);
    }
 
-   private static U.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, u.Inner_DataUtil constraint, Vec3 eye, AABB body, double reach, int rays) {
+   private static BlockPlacementPlanner.Inner_CachePool init(Minecraft mc, BlockPos target, Item item, u.Inner_DataUtil constraint, Vec3 eye, AABB body, double reach, int rays) {
       if (constraint != null && constraint.placedShape() != null) {
          for (AABB box : e.init_List_S(constraint.placedShape())) {
             if (box.move(target.getX(), target.getY(), target.getZ()).intersects(body)) {
@@ -591,11 +591,11 @@ public final class u implements ClassCache.Inner_JsonUtil {
          }
       }
 
-      U.Inner_NetHelper placement = (hit, cell) -> init(mc, cell, item, constraint, eye, body, hit);
-      U.Inner_StateCache request = new U.Inner_StateCache(target, eye, reach, placement)
+      BlockPlacementPlanner.Inner_NetHelper placement = (hit, cell) -> init(mc, cell, item, constraint, eye, body, hit);
+      BlockPlacementPlanner.Inner_StateCache request = new BlockPlacementPlanner.Inner_StateCache(target, eye, reach, placement)
          .init_U_StateCache_Z(mc.player.isShiftKeyDown())
          .load(constraint != null)
-         .init_U_StateCache_U_StreamUtil(new U.Inner_StreamUtil(rays));
+         .init_U_StateCache_U_StreamUtil(new BlockPlacementPlanner.Inner_StreamUtil(rays));
       if (constraint != null) {
          if (constraint.clickYaw() != null) {
             request.init_U_StateCache_ce_DataUtil(new RotationMath.Inner_DataUtil(constraint.clickYaw(), mc.player.getXRot()));
@@ -613,11 +613,11 @@ public final class u implements ClassCache.Inner_JsonUtil {
       }
 
       if (constraint != null && (constraint.highHalf() != null || constraint.crouchForLook())) {
-         ArrayList<U.Inner_TaskQueue> options = new ArrayList<>();
-         U.init(request, options);
-         U.Inner_JsonUtil[] refusal = new U.Inner_JsonUtil[1];
+         ArrayList<BlockPlacementPlanner.Inner_TaskQueue> options = new ArrayList<>();
+         BlockPlacementPlanner.init(request, options);
+         BlockPlacementPlanner.Inner_JsonUtil[] refusal = new BlockPlacementPlanner.Inner_JsonUtil[1];
 
-         for (U.Inner_TaskQueue option : options) {
+         for (BlockPlacementPlanner.Inner_TaskQueue option : options) {
             AABB rect = constraint.highHalf() == null
                ? option.init_AABB()
                : init_AABB_AABB(option.init_AABB(), option.init_Direction(), option.load_BlockPos().getY(), constraint.highHalf());
@@ -626,7 +626,7 @@ public final class u implements ClassCache.Inner_JsonUtil {
             }
 
             if (rect != null) {
-               U.Inner_TaskQueue clipped = new U.Inner_TaskQueue(
+               BlockPlacementPlanner.Inner_TaskQueue clipped = new BlockPlacementPlanner.Inner_TaskQueue(
                   option.init_BlockPos(),
                   option.load_BlockPos(),
                   option.init_Direction(),
@@ -638,14 +638,14 @@ public final class u implements ClassCache.Inner_JsonUtil {
                   option.init_Z(),
                   option.init_U_BufferHelper()
                );
-               U.Inner_DataUtil aim = U.init(clipped, request, refusal);
+               BlockPlacementPlanner.Inner_DataUtil aim = BlockPlacementPlanner.init(clipped, request, refusal);
                if (aim != null) {
-                  U.Inner_CachePool candidate = U.init_U_CachePool_U_TaskQueue(clipped, aim, request, refusal);
+                  BlockPlacementPlanner.Inner_CachePool candidate = BlockPlacementPlanner.init_U_CachePool_U_TaskQueue(clipped, aim, request, refusal);
                   if (candidate != null) {
                      return candidate;
                   }
 
-                  if (refusal[0] == U.Inner_JsonUtil.NO_BUDGET) {
+                  if (refusal[0] == BlockPlacementPlanner.Inner_JsonUtil.NO_BUDGET) {
                      break;
                   }
                }
@@ -654,7 +654,7 @@ public final class u implements ClassCache.Inner_JsonUtil {
 
          return null;
       } else {
-         return U.init_U_CachePool(request);
+         return BlockPlacementPlanner.init_U_CachePool(request);
       }
    }
 

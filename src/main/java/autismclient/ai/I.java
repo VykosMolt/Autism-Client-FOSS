@@ -53,7 +53,7 @@ final class I {
       boolean open = above.isAir();
       if (above.is(crop)) {
          return I.Inner_DataUtil.read;
-      } else if (autismclient.util.Y.init_Z_Block_BlockState(crop, ground)) {
+      } else if (autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, ground)) {
          return !open ? I.Inner_DataUtil.write : (seeds ? I.Inner_DataUtil.load : I.Inner_DataUtil.read);
       } else if (crop != Blocks.NETHER_WART && (ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.DIRT) || ground.is(Blocks.DIRT_PATH))) {
          return open ? I.Inner_DataUtil.init : I.Inner_DataUtil.write;
@@ -298,7 +298,7 @@ final class I {
                      && seedAvailable
                      && state.isAir()
                      && this.init(ground)
-                     && autismclient.util.Y.init_Z_Block_BlockState(crop, mc.level.getBlockState(ground));
+                     && autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(ground));
                   if (ripeHere || sow) {
                      if (ripeHere) {
                         ripe++;
@@ -350,7 +350,7 @@ final class I {
                   if (ray != null && ray.getBlockPos().equals(best)) {
                      if (bestBreak) {
                         if (this.read_Z && mc.player.getInventory().getItem(this.load_I).is(this.init_Item)) {
-                           autismclient.util.aw.init_V(mc, this.load_I);
+                           autismclient.util.InventorySlotHelper.init_V(mc, this.load_I);
                         }
 
                         long ground = best.below().asLong();
@@ -417,7 +417,7 @@ final class I {
                         if (ripe == 0 && !this.load_Set.isEmpty()) {
                            boolean waiting = this.load_Set
                               .stream()
-                              .anyMatch(key -> autismclient.util.ab.init(this.update_I, this.init_Map.get(key), this.init_I_4()));
+                              .anyMatch(key -> autismclient.util.BlockBreakGraceCalc.init(this.update_I, this.init_Map.get(key), this.init_I_4()));
                            if (lying.isEmpty() && bare > 0 && S.init_I_Str(seedItem) <= 0 && !waiting) {
                               return this.init(AiOperation.Status.FAILED, "Harvest needs " + seedItem + " to replant " + bare + " plots");
                            }
@@ -531,7 +531,7 @@ final class I {
                if (!(mc.player.getMainHandItem().getItem() instanceof BlockItem)) {
                   return true;
                } else {
-                  return !autismclient.util.aw.init_Z(mc, mc.player.getInventory().getSelectedSlot()) ? false : seed.matches(mc.player.getMainHandItem());
+                  return !autismclient.util.InventorySlotHelper.init_Z(mc, mc.player.getInventory().getSelectedSlot()) ? false : seed.matches(mc.player.getMainHandItem());
                }
             } else {
                return af.read(seed) >= 0 && seed.matches(mc.player.getMainHandItem());
@@ -583,7 +583,7 @@ final class I {
 
                for (long key : this.load_Set) {
                   BlockPos ground = BlockPos.of(key);
-                  if (autismclient.util.Y.init_Z_Block_BlockState(crop, mc.level.getBlockState(ground)) && mc.level.getBlockState(ground.above()).isAir()) {
+                  if (autismclient.util.FarmCropCatalog.init_Z_Block_BlockState(crop, mc.level.getBlockState(ground)) && mc.level.getBlockState(ground.above()).isAir()) {
                      n++;
                   }
                }

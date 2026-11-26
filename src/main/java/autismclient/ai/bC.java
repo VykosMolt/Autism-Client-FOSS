@@ -416,7 +416,7 @@ final class bC {
                   this.init_V_21();
                   this.init_DataUtil.init_V();
                   if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.aw.init_V(mc, this.init_I);
+                     autismclient.util.InventorySlotHelper.init_V(mc, this.init_I);
                   }
                }
             }

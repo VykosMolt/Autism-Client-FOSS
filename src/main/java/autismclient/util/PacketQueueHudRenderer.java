@@ -60,9 +60,9 @@ public final class PacketQueueHudRenderer {
    }
 
    private static void init_V(Font textRenderer, int panelWidth, int maxLines) {
-      ck shared = ck.init_ck();
+      AutismSessionState shared = AutismSessionState.init_ck();
       boolean isSending = shared.run_Z();
-      String modeStr = shared.load_ck_DataUtil() == ck.Inner_DataUtil.MS ? "ms" : "t";
+      String modeStr = shared.load_ck_DataUtil() == AutismSessionState.Inner_DataUtil.MS ? "ms" : "t";
       int queueRevision = shared.read_I();
       long now = System.nanoTime();
       if (init_Z_Z(isSending, modeStr, maxLines, panelWidth, queueRevision, now)) {
@@ -82,9 +82,9 @@ public final class PacketQueueHudRenderer {
    }
 
    private static void init(
-      Font textRenderer, ck.Inner_StreamUtil snapshot, boolean isSending, String modeStr, int maxLines, int panelWidth, int queueRevision, long now
+      Font textRenderer, AutismSessionState.Inner_StreamUtil snapshot, boolean isSending, String modeStr, int maxLines, int panelWidth, int queueRevision, long now
    ) {
-      List<ck.Inner_CachePool> packets = snapshot.init_List();
+      List<AutismSessionState.Inner_CachePool> packets = snapshot.init_List();
       int totalCount = snapshot.init_I();
       int visibleCount = Math.min(packets.size(), maxLines);
       int contentWidth = panelWidth - 12;
@@ -110,7 +110,7 @@ public final class PacketQueueHudRenderer {
          );
       } else {
          for (int i = 0; i < visibleCount; i++) {
-            ck.Inner_CachePool qp = packets.get(i);
+            AutismSessionState.Inner_CachePool qp = packets.get(i);
             String simpleName = PacketNameResolver.init_Str_Packet(qp.init_Packet);
             String delayStr = qp.load_I() > 0 ? " +" + qp.load_I() + modeStr : "";
             String label = "#" + qp.init_I() + " " + (qp.init_Z() ? "[Exact] " : "") + simpleName + delayStr;

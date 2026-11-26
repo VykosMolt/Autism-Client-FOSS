@@ -3,7 +3,7 @@ package autismclient.ai;
 import autismclient.AutismClientAddon;
 import autismclient.ai.a.a;
 import autismclient.api.ai.AiOperation;
-import autismclient.util.ArrayUtil;
+import autismclient.util.BlockBreakSpeedHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -1048,7 +1048,7 @@ final class bf implements AiOperation {
          if (this.init_Minecraft.player == this.init_LocalPlayer
             && this.init_Minecraft.player != null
             && this.init_Minecraft.player.getInventory().getSelectedSlot() != this.sync_I) {
-            autismclient.util.aw.init_V(this.init_Minecraft, this.sync_I);
+            autismclient.util.InventorySlotHelper.init_V(this.init_Minecraft, this.sync_I);
          }
       }
    }
@@ -1130,7 +1130,7 @@ final class bf implements AiOperation {
                false,
                Set.of(),
                (state, stack) -> !state.is(Blocks.GRASS_BLOCK) && !state.is(Blocks.MYCELIUM) && !state.is(Blocks.PODZOL)
-                  || !ArrayUtil.init_Z(bf.this.init_Minecraft, stack)
+                  || !BlockBreakSpeedHelper.init_Z(bf.this.init_Minecraft, stack)
             );
          }
 

@@ -143,7 +143,7 @@ public final class InventorySlotArbiter {
          }
 
          synchronized (init_Obj) {
-            return load(id, ck.init_ck().state_I());
+            return load(id, AutismSessionState.init_ck().state_I());
          }
       } else {
          return false;
@@ -162,7 +162,7 @@ public final class InventorySlotArbiter {
          }
 
          synchronized (init_Obj) {
-            int tick = ck.init_ck().state_I();
+            int tick = AutismSessionState.init_ck().state_I();
             if (!load(id, tick)) {
                return false;
             }
@@ -191,7 +191,7 @@ public final class InventorySlotArbiter {
    public static String load() {
       synchronized (init_Obj) {
          if (init_Z && load_Str != null) {
-            return write_I == ck.init_ck().state_I() ? load_Str : null;
+            return write_I == AutismSessionState.init_ck().state_I() ? load_Str : null;
          } else {
             return null;
          }
@@ -222,7 +222,7 @@ public final class InventorySlotArbiter {
             if (id.equals(read_Str)) {
                read_Str = null;
                write_Str = id;
-               update = ck.init_ck().state_I();
+               update = AutismSessionState.init_ck().state_I();
             }
          }
       }
@@ -234,7 +234,7 @@ public final class InventorySlotArbiter {
          if (write_Str == null) {
             return false;
          } else {
-            int tick = ck.init_ck().state_I();
+            int tick = AutismSessionState.init_ck().state_I();
             if (tick != update && tick != update + 1) {
                write_Str = null;
                return false;
@@ -262,7 +262,7 @@ public final class InventorySlotArbiter {
             if (id.equals(read_Str)) {
                read_Str = null;
                write_Str = id;
-               update = ck.init_ck().state_I();
+               update = AutismSessionState.init_ck().state_I();
             }
          }
       }

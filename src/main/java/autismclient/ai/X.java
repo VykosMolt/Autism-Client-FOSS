@@ -426,7 +426,7 @@ final class X {
          boolean heavy = false;
          double nearestCreeper = 1.7976931348623157E308;
          Map<String, Integer> kinds = new TreeMap<>();
-         long now = autismclient.util.ck.init_ck().state_I();
+         long now = autismclient.util.AutismSessionState.init_ck().state_I();
          if (mc.player.hurtTime > 0) {
             write_J = now;
          }

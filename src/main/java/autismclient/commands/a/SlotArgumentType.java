@@ -1,7 +1,7 @@
 package autismclient.commands.a;
 
 import autismclient.commands.AutismCommandSource;
-import autismclient.util.aw;
+import autismclient.util.InventorySlotHelper;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -87,7 +87,7 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
       Set<String> values = new LinkedHashSet<>();
       if (menu != null) {
          for (int handlerSlot = 0; handlerSlot < menu.slots.size(); handlerSlot++) {
-            int visible = aw.init_I(mc, handlerSlot);
+            int visible = InventorySlotHelper.init_I(mc, handlerSlot);
             values.add(init_Str_I(visible));
             values.add(String.valueOf(visible));
          }

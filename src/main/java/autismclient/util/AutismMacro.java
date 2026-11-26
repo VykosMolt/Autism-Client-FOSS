@@ -100,7 +100,7 @@ public class AutismMacro {
       CompoundTag tag = new CompoundTag();
       tag.putString("name", this.init_Str);
       tag.putString("description", this.load_Str);
-      tag.putString("folder", cY.init_Str_Str(this.read));
+      tag.putString("folder", MacroFolderLayout.init_Str_Str(this.read));
       tag.putBoolean("loop", this.init_Z);
       tag.putInt("loopCount", this.init_I);
       tag.putInt("keyCode", this.load_I);
@@ -118,7 +118,7 @@ public class AutismMacro {
    }
 
    public AutismMacro init_aM_CompoundTag(CompoundTag tag) {
-      this.read = cY.init_Str_Str(tag.getStringOr("folder", ""));
+      this.read = MacroFolderLayout.init_Str_Str(tag.getStringOr("folder", ""));
       if (tag.contains("name")) {
          this.init_Str = tag.getStringOr("name", "");
       }
@@ -618,7 +618,7 @@ public class AutismMacro {
          return true;
       } else if (o != null && this.getClass() == o.getClass()) {
          AutismMacro that = (AutismMacro)o;
-         return cZ.init(this.init_Str, that.init_Str);
+         return MacroNameNormalizer.init(this.init_Str, that.init_Str);
       } else {
          return false;
       }
@@ -626,7 +626,7 @@ public class AutismMacro {
 
    @Override
    public int hashCode() {
-      return Objects.hash(cZ.init(this.init_Str));
+      return Objects.hash(MacroNameNormalizer.init(this.init_Str));
    }
 
    static {

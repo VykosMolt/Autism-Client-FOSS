@@ -314,7 +314,7 @@ public final class ExplosionDamageCalculator {
    }
 
    private static int init_I_Minecraft(Minecraft mc) {
-      return mc.player == null ? -2147483648 : ck.init_ck().state_I();
+      return mc.player == null ? -2147483648 : AutismSessionState.init_ck().state_I();
    }
 
    private static void init_V_Level_I(Level level, int tick) {

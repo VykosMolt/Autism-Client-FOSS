@@ -17,7 +17,7 @@ final class bG {
          && update != null
          && update.revision() > brokenRevision
          && update.state().isAir()
-         && !autismclient.util.ab.init(now, brokenAt, latencyMillis);
+         && !autismclient.util.BlockBreakGraceCalc.init(now, brokenAt, latencyMillis);
    }
 
    static bG.Inner_DataUtil init(BlockState current, ca.Inner_DataUtil update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {

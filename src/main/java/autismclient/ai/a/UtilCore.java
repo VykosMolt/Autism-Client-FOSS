@@ -5,7 +5,7 @@ import autismclient.ai.bK;
 import autismclient.ai.ca;
 import autismclient.modules.aD;
 import autismclient.util.AutismLiteVariant;
-import autismclient.util.aw;
+import autismclient.util.InventorySlotHelper;
 import java.util.List;
 import java.util.Map;
 import java.util.function.LongSupplier;
@@ -291,7 +291,7 @@ public final class UtilCore {
          @Override
          public boolean init(int backpackSlot, int hotbarSlot) {
             if (mc.player != null && !aD.read_Z()) {
-               int slot = aw.load_I(mc, backpackSlot);
+               int slot = InventorySlotHelper.load_I(mc, backpackSlot);
                if (slot < 0) {
                   return false;
                }

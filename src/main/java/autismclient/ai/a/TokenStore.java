@@ -9,7 +9,7 @@ import autismclient.ai.at;
 import autismclient.ai.ca;
 import autismclient.api.ai.AiOperation;
 import autismclient.util.KeyMappingControl;
-import autismclient.util.aw;
+import autismclient.util.InventorySlotHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -749,7 +749,7 @@ public final class TokenStore {
                } else {
                   if (decision instanceof v.Inner_DataUtil.Inner_CachePool swap) {
                      int selected = this.init_Minecraft.player.getInventory().getSelectedSlot();
-                     if (aw.init(this.init_Minecraft, swap.backpackSlot(), selected)) {
+                     if (InventorySlotHelper.init(this.init_Minecraft, swap.backpackSlot(), selected)) {
                         this.init_V(selected);
                         return null;
                      }
