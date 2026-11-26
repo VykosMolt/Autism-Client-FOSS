@@ -82,7 +82,7 @@ final class AuditBuilderShulkerStock {
       return null;
    }
 
-   static JsonObject before(AiService assistant, long generation, AiService.Inner_RenderState session, AiIntents.Inner_BufferHelper step, String label)
+   static JsonObject before(AiService assistant, long generation, AiService.SessionState session, AiIntents.Inner_BufferHelper step, String label)
       throws InterruptedException {
       try {
          String capability = step.capability();

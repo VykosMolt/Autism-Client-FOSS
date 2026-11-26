@@ -191,23 +191,23 @@ public final class PacketInspectorEngine {
    private PacketInspectorEngine() {
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil init_bu_JsonUtil_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static PacketInspectorEngine.InspectionReport init_bu_JsonUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return init_bu_JsonUtil_AutismPacketLogger(entry, null, true);
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil init_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
-      AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_SyncManager payloadAnalysis
+   public static PacketInspectorEngine.InspectionReport init_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
+      AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis
    ) {
       return init_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, true);
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil init_bu_JsonUtil_AutismPacketLogger(
-      AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_SyncManager payloadAnalysis, boolean includePayloadAnalyzer
+   public static PacketInspectorEngine.InspectionReport init_bu_JsonUtil_AutismPacketLogger(
+      AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis, boolean includePayloadAnalyzer
    ) {
       try {
          return load_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, includePayloadAnalyzer);
       } catch (Throwable t) {
-         PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(entry.load_Str + " [" + entry.init_Str + "]");
+         PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(entry.load_Str + " [" + entry.init_Str + "]");
          builder.init("Meta", UiColorPalette.index());
          builder.load("Name: " + entry.load_Str, UiColorPalette.task());
          builder.load("Direction: " + entry.init_Str, init_I_Str(entry.init_Str));
@@ -229,21 +229,21 @@ public final class PacketInspectorEngine {
       }
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil load_bu_JsonUtil_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static PacketInspectorEngine.InspectionReport load_bu_JsonUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return load_bu_JsonUtil_AutismPacketLogger(entry, null, true);
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil load_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
-      AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_SyncManager payloadAnalysis
+   public static PacketInspectorEngine.InspectionReport load_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
+      AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis
    ) {
       return load_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, true);
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil load_bu_JsonUtil_AutismPacketLogger(
-      AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_SyncManager payloadAnalysis, boolean includePayloadAnalyzer
+   public static PacketInspectorEngine.InspectionReport load_bu_JsonUtil_AutismPacketLogger(
+      AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis, boolean includePayloadAnalyzer
    ) {
       String title = entry.load_Str + " [" + entry.init_Str + "]";
-      PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(title);
+      PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
       AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       builder.init("Meta", UiColorPalette.index());
       builder.load("Name: " + entry.load_Str, UiColorPalette.task());
@@ -289,7 +289,7 @@ public final class PacketInspectorEngine {
          }
 
          if (includePayloadAnalyzer && payloadSnapshot != null) {
-            PacketInspectorEngine.Inner_ConfigStore analyzerBuilder = new PacketInspectorEngine.Inner_ConfigStore(title);
+            PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.init_V();
                builder.init("Analyzer", UiColorPalette.cache());
@@ -305,7 +305,7 @@ public final class PacketInspectorEngine {
 
          return builder.init_bu_JsonUtil();
       } else {
-         PacketInspectorEngine.Inner_FileCache summary = PacketInspectorEngine.Inner_FileCache.init_bu_FileCache;
+         PacketInspectorEngine.PacketSummaryFlags summary = PacketInspectorEngine.PacketSummaryFlags.init_bu_FileCache;
          if (normalAnalysis.init_Z()) {
             builder.init_V();
             builder.init("Reality", UiColorPalette.node());
@@ -315,7 +315,7 @@ public final class PacketInspectorEngine {
             builder.init("Reality", UiColorPalette.node());
             init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
          } else {
-            PacketInspectorEngine.Inner_ConfigStore summaryBuilder = new PacketInspectorEngine.Inner_ConfigStore(title);
+            PacketInspectorEngine.ReportBuilder summaryBuilder = new PacketInspectorEngine.ReportBuilder(title);
             summary = init_bu_FileCache_Packet(entry.init_Packet, entry.load_Str, entry, summaryBuilder);
             if (summary.init_Z()) {
                builder.init_V();
@@ -331,7 +331,7 @@ public final class PacketInspectorEngine {
          }
 
          if (includePayloadAnalyzer && payloadSnapshot != null) {
-            PacketInspectorEngine.Inner_ConfigStore analyzerBuilder = new PacketInspectorEngine.Inner_ConfigStore(title);
+            PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
             if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.init_V();
                builder.init("Analyzer", UiColorPalette.cache());
@@ -356,12 +356,12 @@ public final class PacketInspectorEngine {
       }
    }
 
-   public static PacketInspectorEngine.Inner_JsonUtil read_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
-      AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_SyncManager payloadAnalysis
+   public static PacketInspectorEngine.InspectionReport read_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
+      AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis
    ) {
       try {
          String title = entry == null ? "Payload Analyzer" : entry.load_Str + " Analyzer";
-         PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore(title);
+         PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(title);
          AutismPayloadSupport.PayloadEntry snapshot = entry == null ? null : AutismPayloadSupport.init_AutismPayloadSuppo(entry);
          builder.init("Analyzer", UiColorPalette.cache());
          if (snapshot == null) {
@@ -388,37 +388,37 @@ public final class PacketInspectorEngine {
             return builder.init_bu_JsonUtil();
          }
       } catch (Throwable t) {
-         PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore("Payload Analyzer");
+         PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder("Payload Analyzer");
          builder.init("Analyzer Error", UiColorPalette.valid());
          builder.load("Reason: " + t.getClass().getSimpleName() + (t.getMessage() == null ? "" : " - " + poll(t.getMessage())), UiColorPalette.valid());
          return builder.init_bu_JsonUtil();
       }
    }
 
-   public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
+   public static PacketInspectorEngine.PayloadAnalysis init_bu_SyncManager_AutismPayloadSuppo(AutismPayloadSupport.PayloadEntry snapshot) {
       String channel = snapshot == null ? "payload" : init_Str_Str_Str(snapshot.load_Str(), "payload");
-      return new PacketInspectorEngine.Inner_SyncManager(
-         false, false, 0.02, "Preparing " + channel, List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: preparing automatic payload analysis", UiColorPalette.parse()))
+      return new PacketInspectorEngine.PayloadAnalysis(
+         false, false, 0.02, "Preparing " + channel, List.of(new PacketInspectorEngine.ColoredLine("Decoder Status: preparing automatic payload analysis", UiColorPalette.parse()))
       );
    }
 
-   public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_Str(String message) {
+   public static PacketInspectorEngine.PayloadAnalysis init_bu_SyncManager_Str(String message) {
       String reason = message != null && !message.isBlank() ? message : "unknown error";
-      return new PacketInspectorEngine.Inner_SyncManager(
+      return new PacketInspectorEngine.PayloadAnalysis(
          true,
          true,
          1.0,
          "Decoder failed",
-         List.of(new PacketInspectorEngine.Inner_TaskQueue("Decoder Status: failed", UiColorPalette.valid()), new PacketInspectorEngine.Inner_TaskQueue("Reason: " + poll(reason), UiColorPalette.valid()))
+         List.of(new PacketInspectorEngine.ColoredLine("Decoder Status: failed", UiColorPalette.valid()), new PacketInspectorEngine.ColoredLine("Reason: " + poll(reason), UiColorPalette.valid()))
       );
    }
 
-   public static PacketInspectorEngine.Inner_SyncManager init_bu_SyncManager_AutismPayloadSuppo_Consumer(
-      AutismPayloadSupport.PayloadEntry snapshot, Consumer<PacketInspectorEngine.Inner_SyncManager> progressSink
+   public static PacketInspectorEngine.PayloadAnalysis init_bu_SyncManager_AutismPayloadSuppo_Consumer(
+      AutismPayloadSupport.PayloadEntry snapshot, Consumer<PacketInspectorEngine.PayloadAnalysis> progressSink
    ) {
       if (snapshot == null) {
-         PacketInspectorEngine.Inner_SyncManager empty = new PacketInspectorEngine.Inner_SyncManager(
-            true, false, 1.0, "No payload body", List.of(new PacketInspectorEngine.Inner_TaskQueue("No payload snapshot is available.", UiColorPalette.a()))
+         PacketInspectorEngine.PayloadAnalysis empty = new PacketInspectorEngine.PayloadAnalysis(
+            true, false, 1.0, "No payload body", List.of(new PacketInspectorEngine.ColoredLine("No payload snapshot is available.", UiColorPalette.a()))
          );
          if (progressSink != null) {
             progressSink.accept(empty);
@@ -426,18 +426,18 @@ public final class PacketInspectorEngine {
 
          return empty;
       } else {
-         PacketInspectorEngine.Inner_ConfigStore builder = new PacketInspectorEngine.Inner_ConfigStore("Payload Analyzer");
+         PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder("Payload Analyzer");
 
          try {
             init_Z_AutismPayloadSuppo_2(snapshot, builder, progressSink);
-            PacketInspectorEngine.Inner_SyncManager done = new PacketInspectorEngine.Inner_SyncManager(true, false, 1.0, init_Str_List(builder.init_List), builder.init_List);
+            PacketInspectorEngine.PayloadAnalysis done = new PacketInspectorEngine.PayloadAnalysis(true, false, 1.0, init_Str_List(builder.init_List), builder.init_List);
             if (progressSink != null) {
                progressSink.accept(done);
             }
 
             return done;
          } catch (Throwable t) {
-            PacketInspectorEngine.Inner_SyncManager failed = init_bu_SyncManager_Str(t.getClass().getSimpleName() + (t.getMessage() == null ? "" : ": " + t.getMessage()));
+            PacketInspectorEngine.PayloadAnalysis failed = init_bu_SyncManager_Str(t.getClass().getSimpleName() + (t.getMessage() == null ? "" : ": " + t.getMessage()));
             if (progressSink != null) {
                progressSink.accept(failed);
             }
@@ -447,9 +447,9 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String init_Str_List(List<PacketInspectorEngine.Inner_TaskQueue> lines) {
+   private static String init_Str_List(List<PacketInspectorEngine.ColoredLine> lines) {
       if (lines != null) {
-         for (PacketInspectorEngine.Inner_TaskQueue line : lines) {
+         for (PacketInspectorEngine.ColoredLine line : lines) {
             String text = line == null ? "" : line.init_Str();
             if (text != null) {
                String lower = text.toLowerCase(Locale.ROOT);
@@ -475,14 +475,14 @@ public final class PacketInspectorEngine {
       return "Analysis finished";
    }
 
-   private static PacketInspectorEngine.Inner_FileCache init_bu_FileCache_Packet(
-      Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_ConfigStore builder
+   private static PacketInspectorEngine.PacketSummaryFlags init_bu_FileCache_Packet(
+      Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
-      PacketInspectorEngine.Inner_FileCache packetSpecific = load_bu_FileCache_Packet(packet, packetNameHint, entry, builder);
+      PacketInspectorEngine.PacketSummaryFlags packetSpecific = load_bu_FileCache_Packet(packet, packetNameHint, entry, builder);
       return packetSpecific.init_Z() ? packetSpecific : load_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_bu_ConfigStore(AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static boolean init_Z_AutismPayloadSuppo_bu_ConfigStore(AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder) {
       if (snapshot == null) {
          return false;
       }
@@ -556,9 +556,9 @@ public final class PacketInspectorEngine {
       return true;
    }
 
-   private static void init_V_bu_ConfigStore_List(PacketInspectorEngine.Inner_ConfigStore builder, List<PacketInspectorEngine.Inner_TaskQueue> lines) {
+   private static void init_V_bu_ConfigStore_List(PacketInspectorEngine.ReportBuilder builder, List<PacketInspectorEngine.ColoredLine> lines) {
       if (builder != null && lines != null) {
-         for (PacketInspectorEngine.Inner_TaskQueue line : lines) {
+         for (PacketInspectorEngine.ColoredLine line : lines) {
             if (line != null) {
                builder.load(line.init_Str(), line.init_I());
             }
@@ -578,8 +578,8 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.Inner_FileCache load_bu_FileCache_Packet(
-      Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_ConfigStore builder
+   private static PacketInspectorEngine.PacketSummaryFlags load_bu_FileCache_Packet(
+      Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
       boolean wrote = false;
       boolean complete = false;
@@ -660,7 +660,7 @@ public final class PacketInspectorEngine {
          int entityId = interactEntity.entityId();
          init_V_bu_ConfigStore(builder, "Entity Id", entityId);
          builder.load("Player Sneaking: " + interactEntity.usingSecondaryAction(), UiColorPalette.scan());
-         PacketInspectorEngine.Inner_NetHelper capture = init_bu_NetHelper_ServerboundInterac(interactEntity);
+         PacketInspectorEngine.InteractEntityCapture capture = init_bu_NetHelper_ServerboundInterac(interactEntity);
          if (capture.init_Str != null) {
             builder.load("Interaction: " + capture.init_Str, UiColorPalette.scan());
          }
@@ -763,7 +763,7 @@ public final class PacketInspectorEngine {
          builder.load("Value: " + gameState.getParam(), UiColorPalette.scan());
       }
 
-      PacketInspectorEngine.Inner_FileCache broadKnown = init_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
+      PacketInspectorEngine.PacketSummaryFlags broadKnown = init_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
       if (!wrote && broadKnown.init_Z()) {
          return broadKnown;
       }
@@ -805,18 +805,18 @@ public final class PacketInspectorEngine {
          complete = false;
       }
 
-      PacketInspectorEngine.Inner_FileCache reflective = read_bu_FileCache_Packet(packet, packetNameHint, entry, builder);
-      return !wrote && reflective.init_Z() ? reflective : new PacketInspectorEngine.Inner_FileCache(wrote, complete);
+      PacketInspectorEngine.PacketSummaryFlags reflective = read_bu_FileCache_Packet(packet, packetNameHint, entry, builder);
+      return !wrote && reflective.init_Z() ? reflective : new PacketInspectorEngine.PacketSummaryFlags(wrote, complete);
    }
 
    private static boolean init_Z_AutismPayloadSuppo(
-      AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.Inner_ConfigStore builder, PacketInspectorEngine.Inner_SyncManager payloadAnalysis
+      AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder, PacketInspectorEngine.PayloadAnalysis payloadAnalysis
    ) {
       if (payloadAnalysis == null) {
-         return init_Z_AutismPayloadSuppo_2(snapshot, builder, (Consumer<PacketInspectorEngine.Inner_SyncManager>)null);
+         return init_Z_AutismPayloadSuppo_2(snapshot, builder, (Consumer<PacketInspectorEngine.PayloadAnalysis>)null);
       }
 
-      for (PacketInspectorEngine.Inner_TaskQueue line : payloadAnalysis.init_List()) {
+      for (PacketInspectorEngine.ColoredLine line : payloadAnalysis.init_List()) {
          builder.load(line.init_Str(), line.init_I());
       }
 
@@ -824,7 +824,7 @@ public final class PacketInspectorEngine {
    }
 
    private static boolean init_Z_AutismPayloadSuppo_2(
-      AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.Inner_ConfigStore builder, Consumer<PacketInspectorEngine.Inner_SyncManager> progressSink
+      AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder, Consumer<PacketInspectorEngine.PayloadAnalysis> progressSink
    ) {
       if (snapshot == null) {
          return false;
@@ -857,7 +857,7 @@ public final class PacketInspectorEngine {
 
       load_V_BArr_bu_ConfigStore(raw, builder);
       init_V_bu_ConfigStore(builder, progressSink, 0.2, "Checking plugin-channel structure", false, false);
-      PacketInspectorEngine.Inner_BufferHelper knownChannel = init_bu_BufferHelper_AutismPayloadSuppo(snapshot, raw, builder);
+      PacketInspectorEngine.PayloadDecodeResult knownChannel = init_bu_BufferHelper_AutismPayloadSuppo(snapshot, raw, builder);
       decodedAnything |= knownChannel.init_Z();
       decodedStrongly |= knownChannel.load_Z();
       textualPayload |= knownChannel.read();
@@ -866,7 +866,7 @@ public final class PacketInspectorEngine {
          bestInterpretation = init_Str_Str_Z(snapshot.load_Str(), completeKnownSchema);
       }
 
-      PacketInspectorEngine.Inner_BufferHelper decompressed = PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+      PacketInspectorEngine.PayloadDecodeResult decompressed = PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       if (!completeKnownSchema) {
          decompressed = load_bu_BufferHelper_AutismPayloadSuppo(snapshot, raw, builder);
          decodedAnything |= decompressed.init_Z();
@@ -980,7 +980,7 @@ public final class PacketInspectorEngine {
 
       init_V_bu_ConfigStore(builder, progressSink, 0.7, "Extracting identifiers and fragments", false, false);
       if (!completeKnownSchema) {
-         PacketInspectorEngine.Inner_BufferHelper byteBufScan = load_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult byteBufScan = load_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
          decodedAnything |= byteBufScan.init_Z();
          decodedStrongly |= byteBufScan.load_Z();
          textualPayload |= byteBufScan.read();
@@ -1021,7 +1021,7 @@ public final class PacketInspectorEngine {
 
       init_V_bu_ConfigStore(builder, progressSink, 0.78, "Running deep nested probes", false, false);
       if (!completeKnownSchema) {
-         PacketInspectorEngine.Inner_BufferHelper deep = read_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult deep = read_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
          decodedAnything |= deep.init_Z();
          decodedStrongly |= deep.load_Z();
          textualPayload |= deep.read();
@@ -1066,24 +1066,24 @@ public final class PacketInspectorEngine {
    }
 
    private static void init_V_bu_ConfigStore(
-      PacketInspectorEngine.Inner_ConfigStore builder, Consumer<PacketInspectorEngine.Inner_SyncManager> sink, double progress, String status, boolean done, boolean failed
+      PacketInspectorEngine.ReportBuilder builder, Consumer<PacketInspectorEngine.PayloadAnalysis> sink, double progress, String status, boolean done, boolean failed
    ) {
       if (sink != null) {
-         sink.accept(new PacketInspectorEngine.Inner_SyncManager(done, failed, progress, status, builder.init_List));
+         sink.accept(new PacketInspectorEngine.PayloadAnalysis(done, failed, progress, status, builder.init_List));
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_AutismPayloadSuppo(
-      AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder
+   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_AutismPayloadSuppo(
+      AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder
    ) {
       if (snapshot == null) {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
 
       String channel = load_Str_Str(snapshot.load_Str());
       if (load_Z_Str(channel)) {
          boolean decodedRegister = init_Z_AutismPayloadSuppo_3(snapshot, raw, builder);
-         return decodedRegister ? PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper : PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return decodedRegister ? PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper : PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
 
       if ("minecraft:brand".equals(channel)) {
@@ -1097,9 +1097,9 @@ public final class PacketInspectorEngine {
          if (brand != null && !brand.isBlank()) {
             builder.load("Decoded As: Brand payload (" + mode + ")", UiColorPalette.value());
             builder.load("Brand: " + open(poll(init_Str_Str(brand))), UiColorPalette.scan());
-            return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
          } else {
-            return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
          }
       } else {
          if ("vv:server_details".equals(channel)) {
@@ -1107,7 +1107,7 @@ public final class PacketInspectorEngine {
             if (json != null) {
                builder.load("Decoded As: ViaVersion server details JSON", UiColorPalette.value());
                init_V_JsonElement_bu_ConfigStore(json, builder);
-               return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+               return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
             }
          }
 
@@ -1125,14 +1125,14 @@ public final class PacketInspectorEngine {
                      builder.load("  - " + open(poll(init_Str_Str(value))), UiColorPalette.scan());
                   }
 
-                  return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
+                  return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
 
                String utf8 = AutismPayloadSupport.write(raw);
                if (utf8 != null && !utf8.isBlank()) {
                   builder.load("Decoded As: Fabric readable text payload", UiColorPalette.value());
                   builder.load("Text: " + open(poll(init_Str_Str(utf8))), UiColorPalette.scan());
-                  return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
+                  return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
             }
 
@@ -1141,25 +1141,25 @@ public final class PacketInspectorEngine {
                if (utf8 != null && !utf8.isBlank()) {
                   builder.load("Decoded As: WorldEdit/CUI text payload", UiColorPalette.value());
                   builder.load("Message: " + open(poll(init_Str_Str(utf8))), UiColorPalette.scan());
-                  return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
+                  return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
             }
 
-            return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
          } else {
             return init_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
          }
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
-      PacketInspectorEngine.Inner_UiHelper reader = new PacketInspectorEngine.Inner_UiHelper(raw);
+   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+      PacketInspectorEngine.ByteCursor reader = new PacketInspectorEngine.ByteCursor(raw);
 
       String subchannel;
       try {
          subchannel = reader.init_Str();
       } catch (IOException ignored) {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
 
       if (subchannel != null && !subchannel.isBlank()) {
@@ -1241,47 +1241,47 @@ public final class PacketInspectorEngine {
             }
          } catch (IOException ex) {
             builder.load("BungeeCord Parse Stopped: " + poll(ex.getMessage()), UiColorPalette.entry());
-            return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, false);
+            return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
          }
 
          if (reader.load_I() > 0) {
             builder.load("Remaining Bytes: " + reader.load_I() + "B " + AutismPayloadSupport.init_Str(reader.init_BArr(), 48), UiColorPalette.a());
          }
 
-         return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, known && reader.load_I() == 0);
+         return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, known && reader.load_I() == 0);
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper load_bu_BufferHelper_AutismPayloadSuppo(
-      AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder
+   private static PacketInspectorEngine.PayloadDecodeResult load_bu_BufferHelper_AutismPayloadSuppo(
+      AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder
    ) {
-      PacketInspectorEngine.Inner_CachePool kind = init_bu_CachePool_BArr(raw);
-      if (kind == PacketInspectorEngine.Inner_CachePool.NONE) {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+      PacketInspectorEngine.CompressionKind kind = init_bu_CachePool_BArr(raw);
+      if (kind == PacketInspectorEngine.CompressionKind.NONE) {
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       } else {
          byte[] decoded = init_BArr_BArr_bu_CachePool(raw, kind);
          if (decoded != null && decoded.length != 0) {
             builder.load("Decoded As: " + kind.init() + " compressed payload", UiColorPalette.value());
             builder.load("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.scan());
-            PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.load_Str(), decoded, builder);
-            return nested.init_Z() ? new PacketInspectorEngine.Inner_BufferHelper(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.Inner_BufferHelper(true, true, false, false);
+            PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.load_Str(), decoded, builder);
+            return nested.init_Z() ? new PacketInspectorEngine.PayloadDecodeResult(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false);
          } else {
             builder.load("Compression Decode: " + kind.init() + " header found, but decompression failed.", UiColorPalette.entry());
-            return new PacketInspectorEngine.Inner_BufferHelper(true, false, false, false);
+            return new PacketInspectorEngine.PayloadDecodeResult(true, false, false, false);
          }
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_Str(String title, String channel, byte[] bytes, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_Str(String title, String channel, byte[] bytes, PacketInspectorEngine.ReportBuilder builder) {
       if (bytes == null) {
          bytes = new byte[0];
       }
 
       builder.load(title + ": " + bytes.length + " bytes", UiColorPalette.scan());
       if (bytes.length == 0) {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
 
       boolean anything = false;
@@ -1292,7 +1292,7 @@ public final class PacketInspectorEngine {
       if (json != null) {
          builder.load("  Nested Decoded As: JSON", UiColorPalette.value());
          init_V_JsonElement_bu_ConfigStore(json, builder);
-         return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       }
 
       if (load_Z_Str(channel)) {
@@ -1301,7 +1301,7 @@ public final class PacketInspectorEngine {
          );
          boolean register = init_Z_AutismPayloadSuppo_3(nestedSnapshot, bytes, builder);
          if (register) {
-            return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
          }
       }
 
@@ -1351,34 +1351,34 @@ public final class PacketInspectorEngine {
          }
       }
 
-      return new PacketInspectorEngine.Inner_BufferHelper(anything, strong, textual, complete);
+      return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, complete);
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper load_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult load_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length >= 2) {
-         List<PacketInspectorEngine.Inner_DataUtil> fields = write_List_BArr_I(raw, 16);
+         List<PacketInspectorEngine.WireFieldSlice> fields = write_List_BArr_I(raw, 16);
          if (fields.isEmpty()) {
-            return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
          }
 
          builder.load("Minecraft ByteBuf String Fields: " + fields.size(), UiColorPalette.scan());
 
-         for (PacketInspectorEngine.Inner_DataUtil field : fields) {
+         for (PacketInspectorEngine.WireFieldSlice field : fields) {
             builder.load("  @" + field.init_I() + " len=" + field.load() + ": " + open(poll(field.init_Str())), UiColorPalette.parse());
          }
 
-         return new PacketInspectorEngine.Inner_BufferHelper(true, false, true, false);
+         return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper read_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult read_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length != 0) {
          boolean anything = false;
          boolean strong = false;
          boolean textual = false;
-         PacketInspectorEngine.Inner_BufferHelper nbt = init_bu_BufferHelper_BArr(raw, builder, "Payload NBT");
+         PacketInspectorEngine.PayloadDecodeResult nbt = init_bu_BufferHelper_BArr(raw, builder, "Payload NBT");
          anything |= nbt.init_Z();
          strong |= nbt.load_Z();
          textual |= nbt.read();
@@ -1388,39 +1388,39 @@ public final class PacketInspectorEngine {
             textual = true;
          }
 
-         PacketInspectorEngine.Inner_BufferHelper embedded = init_bu_BufferHelper_Str_bu_ConfigStore(text, builder);
+         PacketInspectorEngine.PayloadDecodeResult embedded = init_bu_BufferHelper_Str_bu_ConfigStore(text, builder);
          anything |= embedded.init_Z();
          strong |= embedded.load_Z();
          textual |= embedded.read();
-         PacketInspectorEngine.Inner_BufferHelper lengthPrefixed = write_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult lengthPrefixed = write_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
          anything |= lengthPrefixed.init_Z();
          strong |= lengthPrefixed.load_Z();
          textual |= lengthPrefixed.read();
-         PacketInspectorEngine.Inner_BufferHelper rawUuid = update(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult rawUuid = update(raw, builder);
          anything |= rawUuid.init_Z();
-         return new PacketInspectorEngine.Inner_BufferHelper(anything, strong, textual, false);
+         return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, false);
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_BArr(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder, String label) {
+   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_BArr(byte[] raw, PacketInspectorEngine.ReportBuilder builder, String label) {
       if (raw != null && raw.length >= 3) {
          CompoundTag compressed = init_CompoundTag_BArr(raw);
          if (compressed != null) {
             builder.load(label + ": compressed NBT compound", UiColorPalette.value());
             init_V_CompoundTag(compressed, builder, "  ");
-            return new PacketInspectorEngine.Inner_BufferHelper(true, true, true, true);
+            return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, true);
          } else {
-            return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
          }
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
    private static CompoundTag init_CompoundTag_BArr(byte[] raw) {
-      if (init_bu_CachePool_BArr(raw) != PacketInspectorEngine.Inner_CachePool.GZIP) {
+      if (init_bu_CachePool_BArr(raw) != PacketInspectorEngine.CompressionKind.GZIP) {
          return null;
       }
 
@@ -1432,7 +1432,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void init_V_CompoundTag(CompoundTag tag, PacketInspectorEngine.Inner_ConfigStore builder, String indent) {
+   private static void init_V_CompoundTag(CompoundTag tag, PacketInspectorEngine.ReportBuilder builder, String indent) {
       if (tag != null) {
          builder.load(indent + "Keys: " + tag.size(), UiColorPalette.scan());
          int shown = 0;
@@ -1459,7 +1459,7 @@ public final class PacketInspectorEngine {
       return tag.getClass().getSimpleName() + " " + poll(value);
    }
 
-   private static boolean init_Z_Str_bu_ConfigStore(String text, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static boolean init_Z_Str_bu_ConfigStore(String text, PacketInspectorEngine.ReportBuilder builder) {
       if (text != null && !text.isBlank()) {
          boolean wrote = false;
          List<String> uuids = init_List_Pattern(flush_Pattern, text, 8);
@@ -1490,7 +1490,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_Str_bu_ConfigStore(String text, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_Str_bu_ConfigStore(String text, PacketInspectorEngine.ReportBuilder builder) {
       if (text != null && text.length() >= 16) {
          boolean anything = false;
          boolean strong = false;
@@ -1502,10 +1502,10 @@ public final class PacketInspectorEngine {
             String token = base64.group();
             byte[] decoded = init_BArr_Str(token);
             if (init_Z_BArr(decoded)) {
-               PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(decoded);
+               PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(decoded);
                if (outcome.init_Z()) {
                   builder.load("Embedded Base64 Payload @" + base64.start() + ": " + decoded.length + " bytes", UiColorPalette.value());
-                  PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Base64 decoded", "", decoded, builder);
+                  PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Base64 decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
                   textual |= nested.read() || outcome.read();
@@ -1521,10 +1521,10 @@ public final class PacketInspectorEngine {
             String token = hex.group();
             byte[] decoded = load_BArr_Str(token);
             if (init_Z_BArr(decoded)) {
-               PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(decoded);
+               PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(decoded);
                if (outcome.init_Z()) {
                   builder.load("Embedded Hex Payload @" + hex.start() + ": " + decoded.length + " bytes", UiColorPalette.value());
-                  PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Hex decoded", "", decoded, builder);
+                  PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Hex decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
                   textual |= nested.read() || outcome.read();
@@ -1533,13 +1533,13 @@ public final class PacketInspectorEngine {
             }
          }
 
-         return new PacketInspectorEngine.Inner_BufferHelper(anything, strong, textual, false);
+         return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, false);
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper write_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult write_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length >= 5) {
          boolean anything = false;
          boolean strong = false;
@@ -1548,7 +1548,7 @@ public final class PacketInspectorEngine {
          int shown = 0;
 
          for (int offset = 0; offset < raw.length - 2 && shown < 6; offset++) {
-            PacketInspectorEngine.Inner_TextFormat varInt = init_bu_TextFormat_BArr_I(raw, offset);
+            PacketInspectorEngine.VarIntRead varInt = init_bu_TextFormat_BArr_I(raw, offset);
             if (varInt != null) {
                int length = varInt.init();
                int start = varInt.load();
@@ -1556,10 +1556,10 @@ public final class PacketInspectorEngine {
                   String key = start + ":" + length;
                   if (seen.add(key)) {
                      byte[] slice = Arrays.copyOfRange(raw, start, start + length);
-                     PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(slice);
+                     PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(slice);
                      if (outcome.init_Z()) {
                         builder.load("Nested Candidate: VarInt length @" + offset + " -> " + length + " bytes", UiColorPalette.scan());
-                        PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
+                        PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
                         anything = true;
                         strong |= nested.load_Z() || outcome.load_Z();
                         textual |= nested.read() || outcome.read();
@@ -1575,10 +1575,10 @@ public final class PacketInspectorEngine {
                String key = shortStart + ":" + shortLength;
                if (seen.add(key)) {
                   byte[] slice = Arrays.copyOfRange(raw, shortStart, shortStart + shortLength);
-                  PacketInspectorEngine.Inner_BufferHelper outcome = init_bu_BufferHelper_BArr(slice);
+                  PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(slice);
                   if (outcome.init_Z()) {
                      builder.load("Nested Candidate: unsigned-short length @" + offset + " -> " + shortLength + " bytes", UiColorPalette.scan());
-                     PacketInspectorEngine.Inner_BufferHelper nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
+                     PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
                      anything = true;
                      strong |= nested.load_Z() || outcome.load_Z();
                      textual |= nested.read() || outcome.read();
@@ -1588,13 +1588,13 @@ public final class PacketInspectorEngine {
             }
          }
 
-         return new PacketInspectorEngine.Inner_BufferHelper(anything, strong, textual, false);
+         return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, false);
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper update(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult update(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length >= 16) {
          List<String> uuids = new ArrayList<>();
 
@@ -1609,7 +1609,7 @@ public final class PacketInspectorEngine {
          }
 
          if (uuids.isEmpty()) {
-            return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
          }
 
          builder.load("Raw UUID Candidates: " + uuids.size(), UiColorPalette.scan());
@@ -1618,31 +1618,31 @@ public final class PacketInspectorEngine {
             builder.load("  - " + uuid, UiColorPalette.parse());
          }
 
-         return new PacketInspectorEngine.Inner_BufferHelper(true, false, false, false);
+         return new PacketInspectorEngine.PayloadDecodeResult(true, false, false, false);
       } else {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       }
    }
 
-   private static PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper_BArr(byte[] bytes) {
+   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_BArr(byte[] bytes) {
       if (bytes == null || bytes.length == 0) {
-         return PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
       } else if (load_JsonElement_BArr(bytes) != null) {
-         return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       } else if (AutismPayloadSupport.read(bytes) != null) {
-         return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       } else if (!read_List_BArr_I(bytes, 4).isEmpty()) {
-         return PacketInspectorEngine.Inner_BufferHelper.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
       } else if (!sync(bytes, 4).isEmpty()) {
-         return new PacketInspectorEngine.Inner_BufferHelper(true, false, true, false);
+         return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
       } else {
          String utf8 = AutismPayloadSupport.write(bytes);
          if (utf8 != null && utf8.length() >= 4) {
-            return new PacketInspectorEngine.Inner_BufferHelper(true, false, true, false);
+            return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
          } else {
-            return init_bu_CachePool_BArr(bytes) != PacketInspectorEngine.Inner_CachePool.NONE
-               ? new PacketInspectorEngine.Inner_BufferHelper(true, true, false, false)
-               : PacketInspectorEngine.Inner_BufferHelper.init_bu_BufferHelper;
+            return init_bu_CachePool_BArr(bytes) != PacketInspectorEngine.CompressionKind.NONE
+               ? new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false)
+               : PacketInspectorEngine.PayloadDecodeResult.init_bu_BufferHelper;
          }
       }
    }
@@ -1744,7 +1744,7 @@ public final class PacketInspectorEngine {
       return version >= 1 && version <= 7;
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_3(AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static boolean init_Z_AutismPayloadSuppo_3(AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       List<String> nullSeparated = init_List_BArr_I(raw, 48);
       List<String> identifiers = sync(raw, 48);
       LinkedHashSet<String> channels = new LinkedHashSet<>();
@@ -1807,7 +1807,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean init_Z_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static boolean init_Z_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       List<String> parts = init_List_BArr_I(raw, 16);
       if (parts.size() <= 1) {
          return false;
@@ -1863,7 +1863,7 @@ public final class PacketInspectorEngine {
          List<String> values = new ArrayList<>();
 
          while (index < raw.length && values.size() < Math.max(1, max)) {
-            PacketInspectorEngine.Inner_TextFormat length = init_bu_TextFormat_BArr_I(raw, index);
+            PacketInspectorEngine.VarIntRead length = init_bu_TextFormat_BArr_I(raw, index);
             if (length == null || length.init() < 0 || length.init() > 32767) {
                return List.of();
             }
@@ -1911,7 +1911,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.Inner_TextFormat init_bu_TextFormat_BArr_I(byte[] bytes, int startIndex) {
+   private static PacketInspectorEngine.VarIntRead init_bu_TextFormat_BArr_I(byte[] bytes, int startIndex) {
       if (bytes != null && startIndex >= 0 && startIndex < bytes.length) {
          int value = 0;
          int shift = 0;
@@ -1920,7 +1920,7 @@ public final class PacketInspectorEngine {
             int current = bytes[index++] & 255;
             value |= (current & 127) << shift;
             if ((current & 128) == 0) {
-               return new PacketInspectorEngine.Inner_TextFormat(value, index);
+               return new PacketInspectorEngine.VarIntRead(value, index);
             }
          }
 
@@ -1930,14 +1930,14 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static List<PacketInspectorEngine.Inner_DataUtil> write_List_BArr_I(byte[] raw, int max) {
+   private static List<PacketInspectorEngine.WireFieldSlice> write_List_BArr_I(byte[] raw, int max) {
       if (raw != null && raw.length >= 2) {
-         List<PacketInspectorEngine.Inner_DataUtil> fields = new ArrayList<>();
+         List<PacketInspectorEngine.WireFieldSlice> fields = new ArrayList<>();
          Set<Integer> occupied = new LinkedHashSet<>();
 
          for (int offset = 0; offset < raw.length && fields.size() < Math.max(1, max); offset++) {
             if (!occupied.contains(offset)) {
-               PacketInspectorEngine.Inner_TextFormat length = init_bu_TextFormat_BArr_I(raw, offset);
+               PacketInspectorEngine.VarIntRead length = init_bu_TextFormat_BArr_I(raw, offset);
                if (length != null) {
                   int valueLength = length.init();
                   if (valueLength >= 1 && valueLength <= 32767) {
@@ -1947,7 +1947,7 @@ public final class PacketInspectorEngine {
                         if (init_Z_Str(value)) {
                            int fieldBytes = start + valueLength - offset;
                            if (fieldBytes > 1) {
-                              fields.add(new PacketInspectorEngine.Inner_DataUtil(offset, valueLength, value));
+                              fields.add(new PacketInspectorEngine.WireFieldSlice(offset, valueLength, value));
 
                               for (int i = offset; i < start + valueLength; i++) {
                                  occupied.add(i);
@@ -1966,25 +1966,25 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.Inner_CachePool init_bu_CachePool_BArr(byte[] raw) {
+   private static PacketInspectorEngine.CompressionKind init_bu_CachePool_BArr(byte[] raw) {
       if (raw != null && raw.length >= 2) {
          int b0 = raw[0] & 255;
          int b1 = raw[1] & 255;
          if (b0 == 31 && b1 == 139) {
-            return PacketInspectorEngine.Inner_CachePool.GZIP;
+            return PacketInspectorEngine.CompressionKind.GZIP;
          } else {
-            return b0 == 120 && (b1 == 1 || b1 == 94 || b1 == 156 || b1 == 218) ? PacketInspectorEngine.Inner_CachePool.ZLIB : PacketInspectorEngine.Inner_CachePool.NONE;
+            return b0 == 120 && (b1 == 1 || b1 == 94 || b1 == 156 || b1 == 218) ? PacketInspectorEngine.CompressionKind.ZLIB : PacketInspectorEngine.CompressionKind.NONE;
          }
       } else {
-         return PacketInspectorEngine.Inner_CachePool.NONE;
+         return PacketInspectorEngine.CompressionKind.NONE;
       }
    }
 
-   private static byte[] init_BArr_BArr_bu_CachePool(byte[] raw, PacketInspectorEngine.Inner_CachePool kind) {
-      if (raw != null && raw.length != 0 && kind != null && kind != PacketInspectorEngine.Inner_CachePool.NONE) {
+   private static byte[] init_BArr_BArr_bu_CachePool(byte[] raw, PacketInspectorEngine.CompressionKind kind) {
+      if (raw != null && raw.length != 0 && kind != null && kind != PacketInspectorEngine.CompressionKind.NONE) {
          try {
             ByteArrayInputStream source = new ByteArrayInputStream(raw);
-            InputStream input = kind == PacketInspectorEngine.Inner_CachePool.GZIP ? new GZIPInputStream(source) : new InflaterInputStream(source);
+            InputStream input = kind == PacketInspectorEngine.CompressionKind.GZIP ? new GZIPInputStream(source) : new InflaterInputStream(source);
 
             try (
                input;
@@ -2015,7 +2015,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void init_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static void init_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length != 0) {
          List<String> varInts = update(raw, 5);
          if (!varInts.isEmpty()) {
@@ -2068,7 +2068,7 @@ public final class PacketInspectorEngine {
          int index = 0;
 
          while (index < raw.length && values.size() < Math.max(1, max) && index < 20) {
-            PacketInspectorEngine.Inner_TextFormat read = init_bu_TextFormat_BArr_I(raw, index);
+            PacketInspectorEngine.VarIntRead read = init_bu_TextFormat_BArr_I(raw, index);
             if (read == null || read.load() <= index) {
                break;
             }
@@ -2083,16 +2083,16 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void load_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
-      PacketInspectorEngine.Inner_CachePool kind = init_bu_CachePool_BArr(raw);
-      if (kind == PacketInspectorEngine.Inner_CachePool.GZIP) {
+   private static void load_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+      PacketInspectorEngine.CompressionKind kind = init_bu_CachePool_BArr(raw);
+      if (kind == PacketInspectorEngine.CompressionKind.GZIP) {
          builder.load("Compression Hint: gzip stream header", UiColorPalette.entry());
-      } else if (kind == PacketInspectorEngine.Inner_CachePool.ZLIB) {
+      } else if (kind == PacketInspectorEngine.CompressionKind.ZLIB) {
          builder.load("Compression Hint: zlib/deflate stream header", UiColorPalette.entry());
       }
    }
 
-   private static void read_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static void read_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length != 0) {
          int printable = 0;
          int zero = 0;
@@ -2201,7 +2201,7 @@ public final class PacketInspectorEngine {
       return count == 1 ? "" : "s";
    }
 
-   private static void init_V_JsonElement_bu_ConfigStore(JsonElement json, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static void init_V_JsonElement_bu_ConfigStore(JsonElement json, PacketInspectorEngine.ReportBuilder builder) {
       if (json != null) {
          if (json.isJsonObject()) {
             JsonObject object = json.getAsJsonObject();
@@ -2401,9 +2401,9 @@ public final class PacketInspectorEngine {
       return value != null && !value.isBlank() ? value : fallback;
    }
 
-   private static PacketInspectorEngine.Inner_FileCache init_bu_FileCache_Packet_bu_ConfigStore(Packet<?> packet, PacketInspectorEngine.Inner_ConfigStore builder) {
+   private static PacketInspectorEngine.PacketSummaryFlags init_bu_FileCache_Packet_bu_ConfigStore(Packet<?> packet, PacketInspectorEngine.ReportBuilder builder) {
       if (packet == null) {
-         return PacketInspectorEngine.Inner_FileCache.init_bu_FileCache;
+         return PacketInspectorEngine.PacketSummaryFlags.init_bu_FileCache;
       }
 
       String simpleName = packet.getClass().getSimpleName();
@@ -2790,10 +2790,10 @@ public final class PacketInspectorEngine {
             }
       }
 
-      return new PacketInspectorEngine.Inner_FileCache(wrote, complete);
+      return new PacketInspectorEngine.PacketSummaryFlags(wrote, complete);
    }
 
-   private static boolean init_Z_bu_ConfigStore_Str(PacketInspectorEngine.Inner_ConfigStore builder, String meaning) {
+   private static boolean init_Z_bu_ConfigStore_Str(PacketInspectorEngine.ReportBuilder builder, String meaning) {
       if (meaning != null && !meaning.isBlank()) {
          builder.load("Meaning: " + meaning, UiColorPalette.scan());
          return true;
@@ -2802,12 +2802,12 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, accessors), read_Obj_Obj_StrArr(packet, label));
       return init_Z_bu_ConfigStore(builder, label, value);
    }
 
-   private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, String label, Object value) {
+   private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
       if (value != null && value != init_Obj) {
          builder.load(label + ": " + load_Str_Str_Obj(label, value), init_I_Str_Obj(label, value));
          return true;
@@ -2816,7 +2816,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, String label, Object value) {
+   private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
       if (value != null && value != init_Obj) {
          builder.load(label + ": " + poll(value), init_I_Str_Obj(label, value));
          return true;
@@ -2825,7 +2825,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, accessors), read_Obj_Obj_StrArr(packet, label));
       if (value instanceof Number number) {
          init_V_bu_ConfigStore(builder, label, number.intValue());
@@ -2838,7 +2838,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean read_Z_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean read_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, accessors), read_Obj_Obj_StrArr(packet, label));
       if (value != null && value != init_Obj) {
          String text = update(value);
@@ -2849,7 +2849,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean write_Z_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean write_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, accessors), read_Obj_Obj_StrArr(packet, label));
       if (value != null && value != init_Obj) {
          if (value instanceof Collection<?> collection) {
@@ -2865,7 +2865,7 @@ public final class PacketInspectorEngine {
    }
 
    private static boolean init_Z_bu_ConfigStore(
-      PacketInspectorEngine.Inner_ConfigStore builder, Packet<?> packet, String label, String xGetter, String xField, String yGetter, String yField, String zGetter, String zField
+      PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String xGetter, String xField, String yGetter, String yField, String zGetter, String zField
    ) {
       Object x = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, xGetter, xField), read_Obj_Obj_StrArr(packet, xField));
       Object y = init_Obj_ObjArr(load_Obj_Obj_StrArr(packet, yGetter, yField), read_Obj_Obj_StrArr(packet, yField));
@@ -2878,20 +2878,20 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.Inner_FileCache load_bu_FileCache_Packet_bu_ConfigStore(Packet<?> packet, PacketInspectorEngine.Inner_ConfigStore builder) {
-      List<PacketInspectorEngine.Inner_EventBus> properties = init_List_Obj(packet);
+   private static PacketInspectorEngine.PacketSummaryFlags load_bu_FileCache_Packet_bu_ConfigStore(Packet<?> packet, PacketInspectorEngine.ReportBuilder builder) {
+      List<PacketInspectorEngine.PropertyEntry> properties = init_List_Obj(packet);
       if (properties.isEmpty()) {
          String rawFallback = read_Str_Obj(packet);
          if (rawFallback != null) {
             builder.load("Raw: " + rawFallback, UiColorPalette.a());
-            return new PacketInspectorEngine.Inner_FileCache(true, false);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, false);
          } else {
-            return PacketInspectorEngine.Inner_FileCache.init_bu_FileCache;
+            return PacketInspectorEngine.PacketSummaryFlags.init_bu_FileCache;
          }
       } else {
          int lines = 0;
 
-         for (PacketInspectorEngine.Inner_EventBus property : properties) {
+         for (PacketInspectorEngine.PropertyEntry property : properties) {
             if (lines >= 8) {
                break;
             }
@@ -2906,12 +2906,12 @@ public final class PacketInspectorEngine {
             }
          }
 
-         return new PacketInspectorEngine.Inner_FileCache(lines > 0, false);
+         return new PacketInspectorEngine.PacketSummaryFlags(lines > 0, false);
       }
    }
 
-   private static PacketInspectorEngine.Inner_FileCache read_bu_FileCache_Packet(
-      Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketInspectorEngine.Inner_ConfigStore builder
+   private static PacketInspectorEngine.PacketSummaryFlags read_bu_FileCache_Packet(
+      Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
       if (packet instanceof ServerboundPunchPacket) {
          builder.load("Interaction: Punch / Swing (attack / use animation)", UiColorPalette.scan());
@@ -2919,7 +2919,7 @@ public final class PacketInspectorEngine {
             builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getMainHandItem()), UiColorPalette.value());
          }
 
-         return new PacketInspectorEngine.Inner_FileCache(true, true);
+         return new PacketInspectorEngine.PacketSummaryFlags(true, true);
       }
 
       if (packet instanceof CompatSwingPacket || init_Z_Packet(packet, packetNameHint, "HandSwingC2S", "HandSwingC2SPacket")) {
@@ -2931,7 +2931,7 @@ public final class PacketInspectorEngine {
                builder.load("Held Item: " + init_Str_ItemStack(init_Minecraft.player.getItemInHand(playerHand)), UiColorPalette.value());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -2944,7 +2944,7 @@ public final class PacketInspectorEngine {
                builder.load("Selected Slot: " + load_Str_Obj(slot), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -2984,7 +2984,7 @@ public final class PacketInspectorEngine {
                builder.load("Acknowledgment: " + poll(acknowledgment), load_I_Obj(acknowledgment));
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -2999,7 +2999,7 @@ public final class PacketInspectorEngine {
          if (sequence != null) {
             builder.load("Meaning: Server acknowledged a sequence-based player action", UiColorPalette.scan());
             builder.load("Sequence: " + load_Str_Obj(sequence), UiColorPalette.scan());
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3023,7 +3023,7 @@ public final class PacketInspectorEngine {
             }
 
             builder.load("Note: This packet only sends the sync id, not the closed screen title/type", UiColorPalette.parse());
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3059,7 +3059,7 @@ public final class PacketInspectorEngine {
                builder.load("Equipment: " + poll(equipmentListValue), load_I_Obj(equipmentListValue));
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3076,7 +3076,7 @@ public final class PacketInspectorEngine {
                builder.load("Button Id: " + load_Str_Obj(buttonId), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3092,7 +3092,7 @@ public final class PacketInspectorEngine {
                builder.load("Stack: " + poll(stack), load_I_Obj(stack));
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3136,7 +3136,7 @@ public final class PacketInspectorEngine {
                builder.load("Changed Slots: " + poll(modifiedStacks), load_I_Obj(modifiedStacks));
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, false);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, false);
          }
       }
 
@@ -3168,7 +3168,7 @@ public final class PacketInspectorEngine {
                }
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3192,7 +3192,7 @@ public final class PacketInspectorEngine {
                builder.load("Component: " + poll(lines), load_I_Obj(lines));
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3201,7 +3201,7 @@ public final class PacketInspectorEngine {
          if (name != null) {
             builder.load("Interaction: Rename Item in Anvil", UiColorPalette.scan());
             builder.load("Name: " + open(poll(String.valueOf(name))), UiColorPalette.value());
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3223,7 +3223,7 @@ public final class PacketInspectorEngine {
                builder.load("Craft All: " + load_Str_Obj(craftAll), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3232,7 +3232,7 @@ public final class PacketInspectorEngine {
          if (tradeId != null) {
             builder.load("Interaction: Select Merchant Trade", UiColorPalette.scan());
             builder.load("Trade Index: " + load_Str_Obj(tradeId), UiColorPalette.scan());
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3253,7 +3253,7 @@ public final class PacketInspectorEngine {
                builder.load("Value: " + load_Str_Obj(value), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3276,7 +3276,7 @@ public final class PacketInspectorEngine {
                builder.load("Progress: " + load_Str_Obj(progress), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3305,7 +3305,7 @@ public final class PacketInspectorEngine {
                builder.load("Status: " + load_Str_Obj(status), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3327,7 +3327,7 @@ public final class PacketInspectorEngine {
                builder.load("Velocity: " + poll(velocity), load_I_Obj(velocity));
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3337,7 +3337,7 @@ public final class PacketInspectorEngine {
          if (content != null || overlay != null) {
             String message = update(content);
             builder.load("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), UiColorPalette.scan());
-            PacketInspectorEngine.Inner_StateCache parsed = init_bu_StateCache_Str(message);
+            PacketInspectorEngine.ParsedMessagePair parsed = init_bu_StateCache_Str(message);
             if (parsed != null) {
                builder.load("Possible Sender: " + parsed.init(), UiColorPalette.scan());
                builder.load("Message: " + open(poll(parsed.load())), UiColorPalette.value());
@@ -3351,16 +3351,16 @@ public final class PacketInspectorEngine {
                builder.load("Overlay: " + load_Str_Obj(overlay), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
       if (packet instanceof ClientboundDisguisedChatPacket profilelessChatMessagePacket) {
          Object message = load_Obj_Obj_StrArr(profilelessChatMessagePacket, "message", "getMessage");
          Object chatType = load_Obj_Obj_StrArr(profilelessChatMessagePacket, "chatType", "getChatType");
-         PacketInspectorEngine.Inner_StreamUtil chatSummary = init_bu_StreamUtil_Obj(message, chatType, null, null, null, "Incoming Chat Message", builder);
+         PacketInspectorEngine.DecodeCheckPair chatSummary = init_bu_StreamUtil_Obj(message, chatType, null, null, null, "Incoming Chat Message", builder);
          if (chatSummary.init()) {
-            return new PacketInspectorEngine.Inner_FileCache(true, chatSummary.load());
+            return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.load());
          }
       }
 
@@ -3403,11 +3403,11 @@ public final class PacketInspectorEngine {
             );
          }
 
-         PacketInspectorEngine.Inner_StreamUtil chatSummary = init_bu_StreamUtil_Obj(
+         PacketInspectorEngine.DecodeCheckPair chatSummary = init_bu_StreamUtil_Obj(
             message, serializedParameters, sender instanceof UUID uuid ? uuid : null, timestamp, filterMask, "Incoming Signed Chat Message", builder
          );
          if (chatSummary.init()) {
-            return new PacketInspectorEngine.Inner_FileCache(true, chatSummary.load());
+            return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.load());
          }
       }
 
@@ -3417,7 +3417,7 @@ public final class PacketInspectorEngine {
          if (message != null || text != null) {
             builder.load("Kind: Overlay / HUD message", UiColorPalette.scan());
             builder.load("Message: " + (message == null ? poll(text) : open(poll(message))), message == null ? load_I_Obj(text) : UiColorPalette.value());
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3426,7 +3426,7 @@ public final class PacketInspectorEngine {
          if (hand != null) {
             builder.load("Interaction: Open Written Book", UiColorPalette.scan());
             builder.load("Hand: " + load_Str_Obj(hand), UiColorPalette.scan());
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3434,7 +3434,7 @@ public final class PacketInspectorEngine {
          Object reason = load_Obj_Obj_StrArr(disconnectPacket, "reason", "getReason");
          if (reason != null) {
             builder.load("Reason: " + poll(reason), load_I_Obj(reason));
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
@@ -3458,20 +3458,20 @@ public final class PacketInspectorEngine {
                builder.load("On Ground: " + load_Str_Obj(onGround), UiColorPalette.scan());
             }
 
-            return new PacketInspectorEngine.Inner_FileCache(true, true);
+            return new PacketInspectorEngine.PacketSummaryFlags(true, true);
          }
       }
 
-      return PacketInspectorEngine.Inner_FileCache.init_bu_FileCache;
+      return PacketInspectorEngine.PacketSummaryFlags.init_bu_FileCache;
    }
 
-   private static void init_V_Obj(Object root, PacketInspectorEngine.Inner_ConfigStore builder, IdentityHashMap<Object, Boolean> visited) {
+   private static void init_V_Obj(Object root, PacketInspectorEngine.ReportBuilder builder, IdentityHashMap<Object, Boolean> visited) {
       visited.put(root, Boolean.TRUE);
-      List<PacketInspectorEngine.Inner_EventBus> properties = init_List_Obj(root);
+      List<PacketInspectorEngine.PropertyEntry> properties = init_List_Obj(root);
       List<Field> fields = init_List_Class(root.getClass());
       Set<String> consumedFieldNames = new LinkedHashSet<>();
 
-      for (PacketInspectorEngine.Inner_EventBus property : properties) {
+      for (PacketInspectorEngine.PropertyEntry property : properties) {
          init_V_Str(property.init_Str(), property.init_Obj(), 0, builder, visited);
          consumedFieldNames.add(update_Str(sync_Str(property.init_Str())));
       }
@@ -3496,7 +3496,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void init_V_Str(String label, Object value, int depth, PacketInspectorEngine.Inner_ConfigStore builder, IdentityHashMap<Object, Boolean> visited) {
+   private static void init_V_Str(String label, Object value, int depth, PacketInspectorEngine.ReportBuilder builder, IdentityHashMap<Object, Boolean> visited) {
       String indent = "  ".repeat(Math.max(0, depth));
 
       try {
@@ -3506,7 +3506,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void init_V_Str(String label, Object value, int depth, String indent, PacketInspectorEngine.Inner_ConfigStore builder, IdentityHashMap<Object, Boolean> visited) {
+   private static void init_V_Str(String label, Object value, int depth, String indent, PacketInspectorEngine.ReportBuilder builder, IdentityHashMap<Object, Boolean> visited) {
       if (!builder.init_Z()) {
          if (value == init_Obj) {
             builder.load(indent + label + ": <inaccessible>", UiColorPalette.a());
@@ -3586,7 +3586,7 @@ public final class PacketInspectorEngine {
                builder.load(indent + label + ": " + load_Str_Obj(value), load_I_Str_Obj(label, value));
             } else {
                visited.put(value, Boolean.TRUE);
-               List<PacketInspectorEngine.Inner_EventBus> properties = init_List_Obj(value);
+               List<PacketInspectorEngine.PropertyEntry> properties = init_List_Obj(value);
                List<Field> fields = init_List_Class(valueClass);
                if (properties.isEmpty() && fields.isEmpty()) {
                   builder.load(indent + label + ": " + load_Str_Obj(value), load_I_Str_Obj(label, value));
@@ -3594,7 +3594,7 @@ public final class PacketInspectorEngine {
                   builder.load(indent + label + ": " + load_Str_Class(valueClass), UiColorPalette.parse());
                   Set<String> consumedFieldNames = new LinkedHashSet<>();
 
-                  for (PacketInspectorEngine.Inner_EventBus property : properties) {
+                  for (PacketInspectorEngine.PropertyEntry property : properties) {
                      init_V_Str(property.init_Str(), property.init_Obj(), depth + 1, builder, visited);
                      consumedFieldNames.add(update_Str(sync_Str(property.init_Str())));
                   }
@@ -3611,24 +3611,24 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static List<PacketInspectorEngine.Inner_EventBus> init_List_Obj(Object owner) {
+   private static List<PacketInspectorEngine.PropertyEntry> init_List_Obj(Object owner) {
       if (owner == null) {
          return List.of();
       }
 
-      Map<String, PacketInspectorEngine.Inner_EventBus> properties = new LinkedHashMap<>();
+      Map<String, PacketInspectorEngine.PropertyEntry> properties = new LinkedHashMap<>();
       Class<?> type = owner.getClass();
       if (type.isRecord()) {
          for (RecordComponent component : type.getRecordComponents()) {
             Object value = init_Obj_Method_Obj(component.getAccessor(), owner);
-            init_V_Map(properties, init_Str_Class_RecordComponent(type, component), value, PacketInspectorEngine.Inner_RenderState.RECORD);
+            init_V_Map(properties, init_Str_Class_RecordComponent(type, component), value, PacketInspectorEngine.PropertySource.RECORD);
          }
       }
 
       Arrays.stream(type.getMethods())
          .filter(method -> init_Z_Method(method))
          .sorted(Comparator.comparing(Method::getName, String.CASE_INSENSITIVE_ORDER))
-         .forEach(method -> init_V_Map(properties, init_Str_Method(method), init_Obj_Method_Obj(method, owner), PacketInspectorEngine.Inner_RenderState.METHOD));
+         .forEach(method -> init_V_Map(properties, init_Str_Method(method), init_Obj_Method_Obj(method, owner), PacketInspectorEngine.PropertySource.METHOD));
       if (properties.isEmpty()) {
          init_V_Map(properties, owner, type);
       }
@@ -3636,7 +3636,7 @@ public final class PacketInspectorEngine {
       return new ArrayList<>(properties.values());
    }
 
-   private static void init_V_Map(Map<String, PacketInspectorEngine.Inner_EventBus> properties, Object owner, Class<?> type) {
+   private static void init_V_Map(Map<String, PacketInspectorEngine.PropertyEntry> properties, Object owner, Class<?> type) {
       if (type.isRecord()) {
          Map<String, Integer> labelCounts = new LinkedHashMap<>();
 
@@ -3645,7 +3645,7 @@ public final class PacketInspectorEngine {
             String alias = init_Str_StrArr(
                init_Str_Class_RecordComponent(type, component), init_Str_Class_Map(component.getAccessor().getReturnType(), labelCounts)
             );
-            init_V_Map(properties, alias, value, PacketInspectorEngine.Inner_RenderState.RECORD);
+            init_V_Map(properties, alias, value, PacketInspectorEngine.PropertySource.RECORD);
          }
       }
    }
@@ -3729,11 +3729,11 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void init_V_Map(Map<String, PacketInspectorEngine.Inner_EventBus> properties, String label, Object value, PacketInspectorEngine.Inner_RenderState source) {
+   private static void init_V_Map(Map<String, PacketInspectorEngine.PropertyEntry> properties, String label, Object value, PacketInspectorEngine.PropertySource source) {
       if (label != null && !label.isBlank() && !sync_Z(label) && !flush_Z(label)) {
          String key = sync_Str(label);
          if (!properties.containsKey(key)) {
-            properties.put(key, new PacketInspectorEngine.Inner_EventBus(write_Str_Str(label), value, source));
+            properties.put(key, new PacketInspectorEngine.PropertyEntry(write_Str_Str(label), value, source));
          }
       }
    }
@@ -4050,12 +4050,12 @@ public final class PacketInspectorEngine {
 
    private static Object read_Obj_Obj_StrArr(Object owner, String... labels) {
       if (owner != null && labels != null && labels.length != 0) {
-         List<PacketInspectorEngine.Inner_EventBus> properties = init_List_Obj(owner);
+         List<PacketInspectorEngine.PropertyEntry> properties = init_List_Obj(owner);
 
          for (String label : labels) {
             String normalizedTarget = sync_Str(label);
 
-            for (PacketInspectorEngine.Inner_EventBus property : properties) {
+            for (PacketInspectorEngine.PropertyEntry property : properties) {
                if (normalizedTarget.equals(sync_Str(property.init_Str()))) {
                   Object value = property.init_Obj();
                   if (value != null && value != init_Obj) {
@@ -4389,8 +4389,8 @@ public final class PacketInspectorEngine {
       return parts.isEmpty() ? "<empty sign>" : String.join(" | ", parts);
    }
 
-   private static PacketInspectorEngine.Inner_StreamUtil init_bu_StreamUtil_Obj(
-      Object messageValue, Object parameters, UUID senderUuid, Object timestampValue, Object filterMask, String kind, PacketInspectorEngine.Inner_ConfigStore builder
+   private static PacketInspectorEngine.DecodeCheckPair init_bu_StreamUtil_Obj(
+      Object messageValue, Object parameters, UUID senderUuid, Object timestampValue, Object filterMask, String kind, PacketInspectorEngine.ReportBuilder builder
    ) {
       boolean wrote = false;
       boolean informative = false;
@@ -4444,7 +4444,7 @@ public final class PacketInspectorEngine {
          informative = true;
       }
 
-      return new PacketInspectorEngine.Inner_StreamUtil(wrote, informative);
+      return new PacketInspectorEngine.DecodeCheckPair(wrote, informative);
    }
 
    private static String init_Str_Obj_UUID(Object parameters, UUID senderUuid) {
@@ -4525,7 +4525,7 @@ public final class PacketInspectorEngine {
       return null;
    }
 
-   private static PacketInspectorEngine.Inner_StateCache init_bu_StateCache_Str(String raw) {
+   private static PacketInspectorEngine.ParsedMessagePair init_bu_StateCache_Str(String raw) {
       if (raw == null) {
          return null;
       }
@@ -4538,7 +4538,7 @@ public final class PacketInspectorEngine {
       if (text.startsWith("<")) {
          int end = text.indexOf("> ");
          if (end > 1 && end + 2 < text.length()) {
-            return new PacketInspectorEngine.Inner_StateCache(text.substring(1, end).trim(), text.substring(end + 2).trim());
+            return new PacketInspectorEngine.ParsedMessagePair(text.substring(1, end).trim(), text.substring(end + 2).trim());
          }
       }
 
@@ -4547,7 +4547,7 @@ public final class PacketInspectorEngine {
          String sender = text.substring(0, colon).trim();
          String message = text.substring(colon + 2).trim();
          if (!sender.isEmpty() && !message.isEmpty()) {
-            return new PacketInspectorEngine.Inner_StateCache(sender, message);
+            return new PacketInspectorEngine.ParsedMessagePair(sender, message);
          }
       }
 
@@ -4560,7 +4560,7 @@ public final class PacketInspectorEngine {
       return typeId + " #" + entity.getId() + " [" + poll(name) + "] @" + init_Str_Vec3(new Vec3(entity.getX(), entity.getY(), entity.getZ()));
    }
 
-   private static void init_V_bu_ConfigStore(PacketInspectorEngine.Inner_ConfigStore builder, String label, int entityId) {
+   private static void init_V_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, int entityId) {
       builder.load(label + ": " + read_Str_I(entityId), UiColorPalette.node());
    }
 
@@ -4896,8 +4896,8 @@ public final class PacketInspectorEngine {
       return count;
    }
 
-   private static PacketInspectorEngine.Inner_NetHelper init_bu_NetHelper_ServerboundInterac(ServerboundInteractPacket packet) {
-      PacketInspectorEngine.Inner_NetHelper capture = new PacketInspectorEngine.Inner_NetHelper();
+   private static PacketInspectorEngine.InteractEntityCapture init_bu_NetHelper_ServerboundInterac(ServerboundInteractPacket packet) {
+      PacketInspectorEngine.InteractEntityCapture capture = new PacketInspectorEngine.InteractEntityCapture();
 
       try {
          capture.init_Str = "Interact At";
@@ -5090,19 +5090,19 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private record Inner_BufferHelper(boolean init_Z, boolean load_Z, boolean read, boolean write) {
-      private static final PacketInspectorEngine.Inner_BufferHelper init_bu_BufferHelper = new PacketInspectorEngine.Inner_BufferHelper(false, false, false, false);
-      private static final PacketInspectorEngine.Inner_BufferHelper load_bu_BufferHelper = new PacketInspectorEngine.Inner_BufferHelper(true, true, true, true);
+   private record PayloadDecodeResult(boolean init_Z, boolean load_Z, boolean read, boolean write) {
+      private static final PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper = new PacketInspectorEngine.PayloadDecodeResult(false, false, false, false);
+      private static final PacketInspectorEngine.PayloadDecodeResult load_bu_BufferHelper = new PacketInspectorEngine.PayloadDecodeResult(true, true, true, true);
    }
 
-   private enum Inner_CachePool {
+   private enum CompressionKind {
       NONE("none"),
       GZIP("gzip"),
       ZLIB("zlib/deflate");
 
       private final String init_Str;
 
-      Inner_CachePool(String label) {
+      CompressionKind(String label) {
          this.init_Str = label;
       }
 
@@ -5111,13 +5111,13 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static final class Inner_ConfigStore {
+   private static final class ReportBuilder {
       private final String init_Str;
-      private final List<PacketInspectorEngine.Inner_TaskQueue> init_List = new ArrayList<>();
+      private final List<PacketInspectorEngine.ColoredLine> init_List = new ArrayList<>();
       private final StringBuilder init_StringBuilder = new StringBuilder();
       private boolean init_Z;
 
-      private Inner_ConfigStore(String title) {
+      private ReportBuilder(String title) {
          this.init_Str = title;
       }
 
@@ -5129,10 +5129,10 @@ public final class PacketInspectorEngine {
          if (!this.init_Z) {
             if (this.init_List.size() >= 900) {
                this.init_Z = true;
-               this.init_List.add(new PacketInspectorEngine.Inner_TaskQueue("... output truncated ...", UiColorPalette.valid()));
+               this.init_List.add(new PacketInspectorEngine.ColoredLine("... output truncated ...", UiColorPalette.valid()));
                this.init_StringBuilder.append("... output truncated ...\n");
             } else {
-               this.init_List.add(new PacketInspectorEngine.Inner_TaskQueue(text, color));
+               this.init_List.add(new PacketInspectorEngine.ColoredLine(text, color));
                this.init_StringBuilder.append(text).append('\n');
             }
          }
@@ -5142,9 +5142,9 @@ public final class PacketInspectorEngine {
          this.load("", UiColorPalette.scan());
       }
 
-      void init(PacketInspectorEngine.Inner_ConfigStore other) {
+      void init(PacketInspectorEngine.ReportBuilder other) {
          if (other != null) {
-            for (PacketInspectorEngine.Inner_TaskQueue line : other.init_List) {
+            for (PacketInspectorEngine.ColoredLine line : other.init_List) {
                this.load(line.init_Str(), line.init_I());
             }
          }
@@ -5154,27 +5154,27 @@ public final class PacketInspectorEngine {
          return this.init_Z;
       }
 
-      PacketInspectorEngine.Inner_JsonUtil init_bu_JsonUtil() {
-         return new PacketInspectorEngine.Inner_JsonUtil(this.init_Str, this.init_List, this.init_StringBuilder.toString());
+      PacketInspectorEngine.InspectionReport init_bu_JsonUtil() {
+         return new PacketInspectorEngine.InspectionReport(this.init_Str, this.init_List, this.init_StringBuilder.toString());
       }
    }
 
-   private record Inner_DataUtil(int init_I, int load, String init_Str) {
+   private record WireFieldSlice(int init_I, int load, String init_Str) {
    }
 
-   private record Inner_EventBus(String init_Str, Object init_Obj, PacketInspectorEngine.Inner_RenderState init_bu_RenderState) {
+   private record PropertyEntry(String init_Str, Object init_Obj, PacketInspectorEngine.PropertySource init_bu_RenderState) {
    }
 
-   private record Inner_FileCache(boolean init_Z, boolean load) {
-      private static final PacketInspectorEngine.Inner_FileCache init_bu_FileCache = new PacketInspectorEngine.Inner_FileCache(false, false);
+   private record PacketSummaryFlags(boolean init_Z, boolean load) {
+      private static final PacketInspectorEngine.PacketSummaryFlags init_bu_FileCache = new PacketInspectorEngine.PacketSummaryFlags(false, false);
    }
 
-   public static final class Inner_JsonUtil {
+   public static final class InspectionReport {
       private final String init_Str;
-      private final List<PacketInspectorEngine.Inner_TaskQueue> init_List;
+      private final List<PacketInspectorEngine.ColoredLine> init_List;
       private final String load;
 
-      private Inner_JsonUtil(String title, List<PacketInspectorEngine.Inner_TaskQueue> lines, String copyText) {
+      private InspectionReport(String title, List<PacketInspectorEngine.ColoredLine> lines, String copyText) {
          this.init_Str = title;
          this.init_List = Collections.unmodifiableList(lines);
          this.load = copyText;
@@ -5184,7 +5184,7 @@ public final class PacketInspectorEngine {
          return this.init_Str;
       }
 
-      public List<PacketInspectorEngine.Inner_TaskQueue> init_List() {
+      public List<PacketInspectorEngine.ColoredLine> init_List() {
          return this.init_List;
       }
 
@@ -5193,36 +5193,36 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static final class Inner_NetHelper {
+   private static final class InteractEntityCapture {
       private String init_Str;
       private InteractionHand init_InteractionHand;
       private Vec3 init_Vec3;
    }
 
-   private enum Inner_RenderState {
+   private enum PropertySource {
       RECORD,
       METHOD;
    }
 
-   private record Inner_StateCache(String init, String load) {
+   private record ParsedMessagePair(String init, String load) {
    }
 
-   private record Inner_StreamUtil(boolean init, boolean load) {
+   private record DecodeCheckPair(boolean init, boolean load) {
    }
 
-   public record Inner_SyncManager(boolean init_Z, boolean load, double init_D, String init_Str, List<PacketInspectorEngine.Inner_TaskQueue> init_List) {
-      public Inner_SyncManager {
+   public record PayloadAnalysis(boolean init_Z, boolean load, double init_D, String init_Str, List<PacketInspectorEngine.ColoredLine> init_List) {
+      public PayloadAnalysis {
          init_D = Math.max(0.0, Math.min(1.0, init_D));
          init_Str = init_Str == null ? "" : init_Str;
          init_List = init_List == null ? List.of() : List.copyOf(init_List);
       }
    }
 
-   public static final class Inner_TaskQueue {
+   public static final class ColoredLine {
       private final String init_Str;
       private final int init_I;
 
-      public Inner_TaskQueue(String text, int color) {
+      public ColoredLine(String text, int color) {
          this.init_Str = text;
          this.init_I = color;
       }
@@ -5236,14 +5236,14 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private record Inner_TextFormat(int init, int load) {
+   private record VarIntRead(int init, int load) {
    }
 
-   private static final class Inner_UiHelper {
+   private static final class ByteCursor {
       private final byte[] init_BArr;
       private int init_I;
 
-      private Inner_UiHelper(byte[] bytes) {
+      private ByteCursor(byte[] bytes) {
          this.init_BArr = bytes == null ? new byte[0] : bytes;
       }
 

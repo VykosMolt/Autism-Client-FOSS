@@ -8,15 +8,15 @@ public final class LoggedPacketActions {
    private LoggedPacketActions() {
    }
 
-   public static boolean init(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean init(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return entry != null && "C2S".equalsIgnoreCase(entry.init_Str) && entry.init_Packet != null;
    }
 
-   public static boolean load(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean load(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return init(entry);
    }
 
-   public static boolean read(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean read(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!load(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be sent.");
          return false;
@@ -42,7 +42,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   private static boolean tick(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   private static boolean tick(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.init_AutismPayloadSuppo(entry);
       if (snapshot != null && snapshot.load_Str() != null && !snapshot.load_Str().isBlank()) {
          byte[] rawBytes = snapshot.init_BArr();
@@ -71,23 +71,23 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean write(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean write(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return init(entry);
    }
 
-   public static boolean update(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean update(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return entry != null && entry.load_Str != null && !entry.load_Str.isBlank() && entry.init_Str != null && !entry.init_Str.isBlank();
    }
 
-   public static boolean sync(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean sync(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return entry != null && entry.read_Z && "C2S".equalsIgnoreCase(entry.init_Str);
    }
 
-   public static boolean flush(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean flush(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return sync(entry);
    }
 
-   public static boolean close(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean close(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!init(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be queued.");
          return false;
@@ -98,7 +98,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean open(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean open(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!write(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be added as send actions.");
          return false;
@@ -121,7 +121,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean poll(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean poll(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!update(entry)) {
          AutismClientMessaging.sendPrefixed("§cCannot add this packet as a wait condition.");
          return false;
@@ -147,7 +147,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean push(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean push(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!sync(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly captured C2S custom payload packets can be edited.");
          return false;
@@ -164,7 +164,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean pop(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static boolean pop(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!flush(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly captured C2S custom payload packets can be added as payload actions.");
          return false;

@@ -125,21 +125,21 @@ public final class AiService {
    private final AiTools init_cz = new AiTools(this);
    private final AiRegions init_AiRegions = new AiRegions();
    private final AiPerfMetrics init_aM = new AiPerfMetrics();
-   private final Map<String, AiService.Inner_RenderState> init_Map = new ConcurrentHashMap<>();
+   private final Map<String, AiService.SessionState> init_Map = new ConcurrentHashMap<>();
    private final Set<String> load_Set = ConcurrentHashMap.newKeySet();
    private volatile String write_Str;
    private volatile AiSessions init_cd;
-   private final List<AiService.Inner_StreamUtil> init_List = new ArrayList<>();
+   private final List<AiService.SettingDelta> init_List = new ArrayList<>();
    private final Map<String, AiObservation> load_Map = new ConcurrentHashMap<>();
    private final Map<String, String> read_Map = new ConcurrentHashMap<>();
    private volatile String update_Str;
    private volatile boolean init_Z;
-   private final Map<AiSettings.Provider, AiService.Inner_ConfigStore> write_Map = new ConcurrentHashMap<>();
+   private final Map<AiSettings.Provider, AiService.ProviderTestResult> write_Map = new ConcurrentHashMap<>();
    private final AtomicLong load_AtomicLong = new AtomicLong();
    private volatile AiSettings init_AiSettings = new AiSettings();
-   private volatile AiService.Inner_FileCache init_cc_FileCache = AiService.Inner_FileCache.IDLE;
+   private volatile AiService.RunState init_cc_FileCache = AiService.RunState.IDLE;
    private volatile AiChatMode init_FieldCache;
-   private volatile AiService.Inner_FileCache load_cc_FileCache = AiService.Inner_FileCache.IDLE;
+   private volatile AiService.RunState load_cc_FileCache = AiService.RunState.IDLE;
    private volatile JsonObject init_JsonObject = new JsonObject();
    private volatile String sync_Str = "";
    private volatile String flush_Str = UUID.randomUUID().toString();
@@ -147,9 +147,9 @@ public final class AiService {
    private volatile long write_J;
    private volatile long update_J;
    private volatile JsonObject load_JsonObject = new JsonObject();
-   private volatile List<AiService.Inner_DataUtil> load_List = List.of();
+   private volatile List<AiService.AttachmentRef> load_List = List.of();
    private volatile String open_Str = "";
-   private volatile AiService.Inner_SyncManager init_cc_SyncManager;
+   private volatile AiService.ActiveOperation init_cc_SyncManager;
    private volatile String poll_Str = "{}";
    private volatile AiProvider init_bA;
    private volatile AiScriptHost init_bZ;
@@ -201,13 +201,13 @@ public final class AiService {
    private long set_J;
    private volatile String get_Str;
    private final Object load_Obj = new Object();
-   private volatile AiService.Inner_UiHelper init_cc_UiHelper;
+   private volatile AiService.UserPromptQuestion init_cc_UiHelper;
    private String set_Str;
    static final String load_Str = "minecraft.killed:minecraft.ender_dragon";
    private static final String put = "hostPlanningPhase";
    private static final String add = "hostPlanAwaitingApproval";
 
-   static boolean init_Z_cc_RenderState(AiService.Inner_RenderState s) {
+   static boolean init_Z_cc_RenderState(AiService.SessionState s) {
       return s.update_Str.isBlank() && s.init_Deque.isEmpty() && s.load_List.stream().noneMatch(m -> "user".equals(m.role()));
    }
 
@@ -221,12 +221,12 @@ public final class AiService {
       return null;
    }
 
-   static boolean init_Z_cc_FileCache(AiService.Inner_FileCache s) {
-      return s == AiService.Inner_FileCache.RUNNING || s == AiService.Inner_FileCache.PLANNING;
+   static boolean init_Z_cc_FileCache(AiService.RunState s) {
+      return s == AiService.RunState.RUNNING || s == AiService.RunState.PLANNING;
    }
 
-   static boolean load_Z_cc_FileCache(AiService.Inner_FileCache s) {
-      return init_Z_cc_FileCache(s) || s == AiService.Inner_FileCache.CHATTING;
+   static boolean load_Z_cc_FileCache(AiService.RunState s) {
+      return init_Z_cc_FileCache(s) || s == AiService.RunState.CHATTING;
    }
 
    public static synchronized AiService init_cc() {
@@ -247,7 +247,7 @@ public final class AiService {
          return false;
       }
 
-      AiService.Inner_SyncManager current = assistant.init_cc_SyncManager;
+      AiService.ActiveOperation current = assistant.init_cc_SyncManager;
       if (current == null || !"game:build".equals(current.id())) {
          return false;
       }
@@ -256,15 +256,15 @@ public final class AiService {
          return false;
       }
 
-      AiService.Inner_FileCache state = assistant.init_cc_FileCache;
-      if (state == AiService.Inner_FileCache.RUNNING) {
+      AiService.RunState state = assistant.init_cc_FileCache;
+      if (state == AiService.RunState.RUNNING) {
          return true;
       }
 
-      return state == AiService.Inner_FileCache.CHATTING && current.hostParked();
+      return state == AiService.RunState.CHATTING && current.hostParked();
    }
 
-   JsonObject auditRunStep(long g, AiService.Inner_RenderState s, AiIntents.Inner_BufferHelper step, String occurrence)
+   JsonObject auditRunStep(long g, AiService.SessionState s, AiIntents.Inner_BufferHelper step, String occurrence)
       throws InterruptedException, ExecutionException {
       return this.init_JsonObject_J(g, s, step, occurrence);
    }
@@ -364,8 +364,8 @@ public final class AiService {
       );
    }
 
-   static boolean init_Z_cc_FileCache(AiService.Inner_FileCache state, long threatEscalatedAt, long now, boolean planMode) {
-      return state == AiService.Inner_FileCache.PAUSED && threatEscalatedAt != 0L && now - threatEscalatedAt >= 20000L && !planMode;
+   static boolean init_Z_cc_FileCache(AiService.RunState state, long threatEscalatedAt, long now, boolean planMode) {
+      return state == AiService.RunState.PAUSED && threatEscalatedAt != 0L && now - threatEscalatedAt >= 20000L && !planMode;
    }
 
    static boolean init_Z_I(int hostilesNear, boolean sameDimension, boolean executing, boolean planMode) {
@@ -496,7 +496,7 @@ public final class AiService {
    }
 
    private AiService() {
-      AiService.Inner_RenderState initial = new AiService.Inner_RenderState(UUID.randomUUID().toString(), System.currentTimeMillis());
+      AiService.SessionState initial = new AiService.SessionState(UUID.randomUUID().toString(), System.currentTimeMillis());
       this.init_Map.put(initial.init_Str, initial);
       this.write_Str = initial.init_Str;
       this.init_ExecutorService
@@ -544,7 +544,7 @@ public final class AiService {
                         }
                      }
 
-                     AiService.Inner_RenderState preliminary = this.init_cc_RenderState();
+                     AiService.SessionState preliminary = this.init_cc_RenderState();
                      List<AiSessions.Inner_StreamUtil> metas = this.init_cd.load();
                      if (!metas.isEmpty()) {
                         boolean keepPreliminary = !init_Z_cc_RenderState(preliminary);
@@ -552,7 +552,7 @@ public final class AiService {
                            this.init_cd.init_V_cd_DataUtil(this.init_cd_DataUtil_cc_RenderState(preliminary));
                         }
 
-                        AiService.Inner_RenderState restored = this.init_cc_RenderState_cd_DataUtil(this.init_cd.init_cd_DataUtil_Str(metas.get(0).id()));
+                        AiService.SessionState restored = this.init_cc_RenderState_cd_DataUtil(this.init_cd.init_cd_DataUtil_Str(metas.get(0).id()));
                         if (!keepPreliminary) {
                            restored.load_List.addAll(preliminary.load_List);
                            this.init_Map.remove(preliminary.init_Str);
@@ -561,7 +561,7 @@ public final class AiService {
                         this.init_Map.put(restored.init_Str, restored);
                         this.write_Str = restored.init_Str;
                         this.init_cc_FileCache = init_cc_FileCache_cc_RenderState(restored);
-                        if (this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED) {
+                        if (this.init_cc_FileCache == AiService.RunState.PAUSED) {
                            this.init_V_Str_Str("system", "Previous objective restored paused. Resume after joining the correct world.");
                         }
                      }
@@ -580,11 +580,11 @@ public final class AiService {
          );
    }
 
-   private AiService.Inner_RenderState init_cc_RenderState() {
+   private AiService.SessionState init_cc_RenderState() {
       return this.init_Map.get(this.write_Str);
    }
 
-   public AiService.Inner_FileCache init_cc_FileCache() {
+   public AiService.RunState init_cc_FileCache() {
       return this.init_cc_FileCache;
    }
 
@@ -688,7 +688,7 @@ public final class AiService {
 
    public void init_V_Str(String text) {
       if (text != null && !text.isBlank()) {
-         AiService.Inner_RenderState s = this.init_cc_RenderState();
+         AiService.SessionState s = this.init_cc_RenderState();
          if (text.length() <= 16000 && s.init_Deque.size() < 20) {
             s.init_Deque.add(text);
             this.init_V_Str_Str("system", "Objective queued: " + text);
@@ -776,8 +776,8 @@ public final class AiService {
       return u == null ? null : u.id();
    }
 
-   public List<AiService.Inner_JsonUtil> read_List() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+   public List<AiService.TranscriptEntry> read_List() {
+      AiService.SessionState s = this.init_cc_RenderState();
       return s == null ? List.of() : List.copyOf(s.load_List);
    }
 
@@ -789,15 +789,15 @@ public final class AiService {
       this.init_V_cc_RenderState(this.init_cc_RenderState(), role, text, detail);
    }
 
-   private void init_V_cc_RenderState(AiService.Inner_RenderState s, String role, String text) {
+   private void init_V_cc_RenderState(AiService.SessionState s, String role, String text) {
       this.init_V_cc_RenderState(s, role, text, "");
    }
 
-   private void init_V_cc_RenderState(AiService.Inner_RenderState s, String role, String text, String detail) {
+   private void init_V_cc_RenderState(AiService.SessionState s, String role, String text, String detail) {
       if (s != null && text != null && !text.isBlank()) {
          s.load_List
             .add(
-               new AiService.Inner_JsonUtil(
+               new AiService.TranscriptEntry(
                   System.currentTimeMillis(),
                   role,
                   text.length() > 32000 ? text.substring(0, 32000) : text,
@@ -822,7 +822,7 @@ public final class AiService {
          }
       }
 
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       if (s != null) {
          AiSessions.Inner_StreamUtil live = new AiSessions.Inner_StreamUtil(
             s.init_Str, s.load_Str, s.init_J, s.load_J, s.read_Str, this.init_cc_FileCache.name(), s.load_List.size()
@@ -850,34 +850,34 @@ public final class AiService {
    }
 
    public String tick_Str() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       return s == null ? "" : s.load_Str;
    }
 
-   private static AiService.Inner_FileCache init_cc_FileCache_cc_RenderState(AiService.Inner_RenderState s) {
+   private static AiService.RunState init_cc_FileCache_cc_RenderState(AiService.SessionState s) {
       if (s.update_Str.isBlank()) {
-         return AiService.Inner_FileCache.IDLE;
+         return AiService.RunState.IDLE;
       }
 
-      AiService.Inner_FileCache var10000;
+      AiService.RunState var10000;
       switch (s.write_Str) {
          case "COMPLETED":
-            var10000 = AiService.Inner_FileCache.COMPLETED;
+            var10000 = AiService.RunState.COMPLETED;
             break;
          case "ANSWERED":
-            var10000 = AiService.Inner_FileCache.ANSWERED;
+            var10000 = AiService.RunState.ANSWERED;
             break;
          case "FAILED":
-            var10000 = AiService.Inner_FileCache.FAILED;
+            var10000 = AiService.RunState.FAILED;
             break;
          case "IDLE":
-            var10000 = AiService.Inner_FileCache.IDLE;
+            var10000 = AiService.RunState.IDLE;
             break;
          case "CHATTING":
-            var10000 = s.update_Str.isBlank() ? AiService.Inner_FileCache.IDLE : AiService.Inner_FileCache.PAUSED;
+            var10000 = s.update_Str.isBlank() ? AiService.RunState.IDLE : AiService.RunState.PAUSED;
             break;
          default:
-            var10000 = AiService.Inner_FileCache.PAUSED;
+            var10000 = AiService.RunState.PAUSED;
       }
 
       return var10000;
@@ -885,7 +885,7 @@ public final class AiService {
 
    public synchronized String run_Str() {
       if (this.load_Z && this.init_cd != null) {
-         AiService.Inner_RenderState current = this.init_cc_RenderState();
+         AiService.SessionState current = this.init_cc_RenderState();
          if (current != null && init_Z_cc_RenderState(current) && !init_Z_cc_FileCache(this.init_cc_FileCache)) {
             this.sync_Str = "";
             return current.init_Str;
@@ -893,11 +893,11 @@ public final class AiService {
 
          this.sync_V_Str("Chat mode stopped: session switched");
          if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-            this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "Session switched; task paused");
+            this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Session switched; task paused");
          }
 
          this.read_V_cc_RenderState(current);
-         this.init_V_cc_RenderState(new AiService.Inner_RenderState(UUID.randomUUID().toString(), System.currentTimeMillis()));
+         this.init_V_cc_RenderState(new AiService.SessionState(UUID.randomUUID().toString(), System.currentTimeMillis()));
          return this.write_Str;
       } else {
          this.init_V_Str_Str("system", "AI storage is still loading");
@@ -905,9 +905,9 @@ public final class AiService {
       }
    }
 
-   private void init_V_cc_RenderState(AiService.Inner_RenderState target) {
+   private void init_V_cc_RenderState(AiService.SessionState target) {
       this.run_Str = null;
-      AiService.Inner_RenderState previous = this.init_cc_RenderState();
+      AiService.SessionState previous = this.init_cc_RenderState();
       if (previous != null && previous != target && init_Z_cc_RenderState(previous)) {
          this.init_Map.remove(previous.init_Str);
       }
@@ -927,14 +927,14 @@ public final class AiService {
    public synchronized void load_V_Str(String id) {
       if (id != null && !id.equals(this.write_Str)) {
          if (this.load_Z && this.init_cd != null) {
-            AiService.Inner_RenderState loaded = this.init_Map.get(id);
+            AiService.SessionState loaded = this.init_Map.get(id);
             if (loaded != null) {
                this.load_V_cc_RenderState(loaded);
             } else {
                this.run_Str = id;
                AiSessions storeRef = this.init_cd;
                this.load_ExecutorService.execute(() -> {
-                  AiService.Inner_RenderState target;
+                  AiService.SessionState target;
                   try {
                      target = this.init_cc_RenderState_cd_DataUtil(storeRef.init_cd_DataUtil_Str(id));
                   } catch (Exception e) {
@@ -958,10 +958,10 @@ public final class AiService {
       }
    }
 
-   private void load_V_cc_RenderState(AiService.Inner_RenderState target) {
+   private void load_V_cc_RenderState(AiService.SessionState target) {
       this.sync_V_Str("Chat mode stopped: session switched");
       if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-         this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "Switched to another session; task paused");
+         this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Switched to another session; task paused");
       }
 
       this.read_V_cc_RenderState(this.init_cc_RenderState());
@@ -977,7 +977,7 @@ public final class AiService {
             clean = clean.substring(0, 96).trim();
          }
 
-         AiService.Inner_RenderState s = this.init_Map.get(id);
+         AiService.SessionState s = this.init_Map.get(id);
          if (s != null) {
             s.load_Str = clean;
             this.read_V_cc_RenderState(s);
@@ -1005,13 +1005,13 @@ public final class AiService {
             this.load_Set.add(id);
             if (id.equals(this.write_Str)) {
                this.sync_V_Str("Chat mode stopped: session deleted");
-               if (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED) {
-                  this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.IDLE, "Session deleted");
+               if (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.RunState.PAUSED) {
+                  this.init_V_cc_FileCache_Str(AiService.RunState.IDLE, "Session deleted");
                }
 
                String next = init_Str_List_2(this.init_cd.load(), id, this.init_cd::init_Z_Str);
-               AiService.Inner_RenderState target = next == null ? null : this.init_Map.get(next);
-               this.init_V_cc_RenderState(target != null ? target : new AiService.Inner_RenderState(UUID.randomUUID().toString(), System.currentTimeMillis()));
+               AiService.SessionState target = next == null ? null : this.init_Map.get(next);
+               this.init_V_cc_RenderState(target != null ? target : new AiService.SessionState(UUID.randomUUID().toString(), System.currentTimeMillis()));
                if (next != null && target == null) {
                   this.load_V_Str(next);
                }
@@ -1038,7 +1038,7 @@ public final class AiService {
       }
 
       if (this.load_Z && this.init_cd != null) {
-         AiService.Inner_RenderState source = this.init_Map.get(id);
+         AiService.SessionState source = this.init_Map.get(id);
          if (source != null && init_Z_cc_RenderState(source)) {
             return false;
          }
@@ -1048,7 +1048,7 @@ public final class AiService {
          }
 
          if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-            this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "Session branched; task paused");
+            this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Session branched; task paused");
          }
 
          if (source != null) {
@@ -1057,7 +1057,7 @@ public final class AiService {
 
          AiSessions storeRef = this.init_cd;
          this.load_ExecutorService.execute(() -> {
-            AiService.Inner_RenderState fork;
+            AiService.SessionState fork;
             try {
                fork = this.init_cc_RenderState_cd_DataUtil(storeRef.load_cd_DataUtil(id));
             } catch (Exception e) {
@@ -1145,7 +1145,7 @@ public final class AiService {
          } else if (!this.push_Str.isEmpty()) {
             this.init_V_Str_Str("error", "Resolve AI settings/memory error first: " + this.push_Str);
          } else {
-            AiService.Inner_RenderState s = this.init_cc_RenderState();
+            AiService.SessionState s = this.init_cc_RenderState();
             if (this.init_cc_UiHelper != null) {
                this.open(prompt);
             } else if (AiChatPolicy.read(prompt) && this.read_Z() && !AiChatPolicy.write(prompt)) {
@@ -1153,7 +1153,7 @@ public final class AiService {
                this.sync_V_Str("Chat mode stopped by user");
             } else {
                if (init_Z_cc_FileCache(this.init_cc_FileCache) && this.init_AiSettings.builtIn) {
-                  this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.IDLE, "Replaced by a new request");
+                  this.init_V_cc_FileCache_Str(AiService.RunState.IDLE, "Replaced by a new request");
                }
 
                if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
@@ -1189,7 +1189,7 @@ public final class AiService {
                      && !this.update_Z()
                      && !this.init_AiSettings.planMode
                      && !this.init_AiSettings.builtIn) {
-                     if (this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING && this.read_Z() && !AiChatPolicy.write(prompt)) {
+                     if (this.init_cc_FileCache == AiService.RunState.CHATTING && this.read_Z() && !AiChatPolicy.write(prompt)) {
                         this.init_V_Str_Str("user", prompt);
                         this.close_Z(prompt);
                         return;
@@ -1329,7 +1329,7 @@ public final class AiService {
             return lane.init_JsonObject();
          }
 
-         AiService.Inner_CachePool host = new AiService.Inner_CachePool();
+         AiService.ChatModeHost host = new AiService.ChatModeHost();
          AiSettings chatSettings = live.copy();
          AiChatMode fresh = new AiChatMode(config, host, () -> new AiChatMode.Inner_ConfigStore(chatSettings), this.read_ExecutorService);
          host.init_FieldCache = fresh;
@@ -1339,8 +1339,8 @@ public final class AiService {
             fresh.init_V();
          } catch (RuntimeException | Error failure) {
             this.init_FieldCache = null;
-            if (this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING) {
-               this.init_cc_FileCache = this.load_cc_FileCache == null ? AiService.Inner_FileCache.IDLE : this.load_cc_FileCache;
+            if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
+               this.init_cc_FileCache = this.load_cc_FileCache == null ? AiService.RunState.IDLE : this.load_cc_FileCache;
                this.sync_Str = "Chat mode could not start";
             }
 
@@ -1437,7 +1437,7 @@ public final class AiService {
    private void write_V_JsonObject(JsonObject status) {
       JsonObject copy = status == null ? new JsonObject() : status.deepCopy();
       this.init_JsonObject = copy;
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       if (s != null) {
          synchronized (s) {
             JsonObject next = s.init_JsonObject.deepCopy();
@@ -1451,7 +1451,7 @@ public final class AiService {
          }
       }
 
-      if (this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING) {
+      if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
          this.sync_Str = copy.isEmpty() ? "Chat mode off" : AiJson.init_Str_JsonObject(copy, "summary", "Chatting");
       }
    }
@@ -1459,12 +1459,12 @@ public final class AiService {
    private synchronized void pop_V() {
       if (this.read_Z()
          && (
-            this.init_cc_FileCache == AiService.Inner_FileCache.COMPLETED
-               || this.init_cc_FileCache == AiService.Inner_FileCache.ANSWERED
-               || this.init_cc_FileCache == AiService.Inner_FileCache.IDLE
+            this.init_cc_FileCache == AiService.RunState.COMPLETED
+               || this.init_cc_FileCache == AiService.RunState.ANSWERED
+               || this.init_cc_FileCache == AiService.RunState.IDLE
          )) {
          this.load_cc_FileCache = this.init_cc_FileCache;
-         this.init_cc_FileCache = AiService.Inner_FileCache.CHATTING;
+         this.init_cc_FileCache = AiService.RunState.CHATTING;
          this.sync_Str = this.init_Str();
       }
    }
@@ -1476,8 +1476,8 @@ public final class AiService {
    private synchronized void get(String reason) {
       String line = reason != null && !reason.isBlank() ? reason : "Chat mode stopped";
       this.write_V_JsonObject(null);
-      if (this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING) {
-         this.init_cc_FileCache = this.load_cc_FileCache == null ? AiService.Inner_FileCache.IDLE : this.load_cc_FileCache;
+      if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
+         this.init_cc_FileCache = this.load_cc_FileCache == null ? AiService.RunState.IDLE : this.load_cc_FileCache;
          this.sync_Str = line;
       }
 
@@ -1492,8 +1492,8 @@ public final class AiService {
    private void init_V_Z_Str(boolean resume, String note) {
       this.flush_J = 0L;
       long g = this.init_AtomicLong.incrementAndGet();
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
-      this.init_cc_FileCache = s != null && s.load_Z ? AiService.Inner_FileCache.PLANNING : AiService.Inner_FileCache.RUNNING;
+      AiService.SessionState s = this.init_cc_RenderState();
+      this.init_cc_FileCache = s != null && s.load_Z ? AiService.RunState.PLANNING : AiService.RunState.RUNNING;
       this.write_J = System.nanoTime();
       this.sync_Str = resume ? "Reobserving before resuming" : "Preparing client context";
       if (resume) {
@@ -1505,14 +1505,14 @@ public final class AiService {
 
    public void read_V() {
       if (AutismLiteVariant.enabled() || autismclient.e.SyncManager.init()) {
-         AiService.Inner_RenderState s = this.init_cc_RenderState();
+         AiService.SessionState s = this.init_cc_RenderState();
          if (s != null && s.read_Z) {
             this.init_V_Str_Str("system", "A plan awaits approval; approve or reject it instead of resuming");
          } else if ((
-               this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED
-                  || this.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED
-                  || this.init_cc_FileCache == AiService.Inner_FileCache.FAILED
-                  || this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING && !this.init_cc_RenderState().update_Str.isBlank()
+               this.init_cc_FileCache == AiService.RunState.PAUSED
+                  || this.init_cc_FileCache == AiService.RunState.BLOCKED
+                  || this.init_cc_FileCache == AiService.RunState.FAILED
+                  || this.init_cc_FileCache == AiService.RunState.CHATTING && !this.init_cc_RenderState().update_Str.isBlank()
             )
             && !this.init_cc_RenderState().update_Str.isBlank()) {
             this.init_V_Z_Str(true, "The run resumed after a pause; continue the objective from the latest HOST STATE.");
@@ -1521,17 +1521,17 @@ public final class AiService {
    }
 
    public boolean update_Z() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
-      return this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING || this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED && s != null && s.read_Z;
+      AiService.SessionState s = this.init_cc_RenderState();
+      return this.init_cc_FileCache == AiService.RunState.PLANNING || this.init_cc_FileCache == AiService.RunState.PAUSED && s != null && s.read_Z;
    }
 
    public boolean sync_Z() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       return s != null && s.read_Z;
    }
 
    public synchronized boolean flush_Z() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       if (s != null && s.read_Z) {
          s.init();
          this.init_V_Str_Str("system", "Plan approved; execution started");
@@ -1544,7 +1544,7 @@ public final class AiService {
    }
 
    public synchronized boolean update_Z_Str(String feedback) {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       if (s == null || !s.read_Z) {
          return false;
       } else if (feedback != null && !feedback.isBlank()) {
@@ -1561,22 +1561,22 @@ public final class AiService {
 
    public void write_V() {
       this.sync_V_Str("Chat mode stopped by user");
-      this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "Paused by user");
+      this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Paused by user");
    }
 
    public void update_V() {
       this.sync_V_Str("Chat mode stopped by user");
-      this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.IDLE, "Stopped by user");
+      this.init_V_cc_FileCache_Str(AiService.RunState.IDLE, "Stopped by user");
    }
 
-   private void init_V_cc_FileCache_Str(AiService.Inner_FileCache next, String reason) {
+   private void init_V_cc_FileCache_Str(AiService.RunState next, String reason) {
       this.set_V();
       this.read_Z = false;
       this.flush_J = 0L;
       this.init_AtomicLong.incrementAndGet();
       this.init_cc_FileCache = next;
       this.sync_Str = reason;
-      if (next == AiService.Inner_FileCache.PAUSED) {
+      if (next == AiService.RunState.PAUSED) {
          this.init_V_Str_Str("system", reason);
          System.out.println("[AI task] PAUSED: " + reason);
       }
@@ -1598,7 +1598,7 @@ public final class AiService {
    public void sync_V() {
       this.sync_V_Str("Chat mode stopped: left the world");
       if (init_Z_cc_FileCache(this.init_cc_FileCache) && !this.init_AiSettings.autoRejoin) {
-         this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "World changed; reobserve before resuming");
+         this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "World changed; reobserve before resuming");
       }
    }
 
@@ -1612,7 +1612,7 @@ public final class AiService {
             }
 
             if (init_Z_cc_FileCache(this.init_cc_FileCache)) {
-               this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "Client panic mode; task paused");
+               this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Client panic mode; task paused");
             }
          }
 
@@ -1627,7 +1627,7 @@ public final class AiService {
    }
 
    private boolean auditAfloat(Minecraft mc) {
-      AiService.Inner_SyncManager driving = this.init_cc_SyncManager;
+      AiService.ActiveOperation driving = this.init_cc_SyncManager;
       return mc.player != null
          && mc.player.isAlive()
          && load_Z_cc_FileCache(this.init_cc_FileCache)
@@ -1669,7 +1669,7 @@ public final class AiService {
             AiEventLog.init_x().auditReset(mc.getConnection());
             AiEventLog.init_x().init("dimension_changed", AiJson.init_JsonObject_ObjArr("dimension", AiWorldIdentity.load(mc)));
             AiRunTrace trace = AiRunTrace.init_bL();
-            if (trace != null && (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED)) {
+            if (trace != null && (init_Z_cc_FileCache(this.init_cc_FileCache) || this.init_cc_FileCache == AiService.RunState.PAUSED)) {
                String nowDimension = AiWorldIdentity.load(mc);
                trace.load(previousDimension, nowDimension);
                if ("minecraft:the_nether".equals(nowDimension)) {
@@ -1680,7 +1680,7 @@ public final class AiService {
             }
 
             if (init_Z_cc_FileCache(this.init_cc_FileCache) && this.init_AiSettings.autoRejoin) {
-               AiService.Inner_SyncManager current = this.init_cc_SyncManager;
+               AiService.ActiveOperation current = this.init_cc_SyncManager;
                if (current != null && !AiDirectOps.init_Z(current.id())) {
                   this.init_V_cc_SyncManager_Z(current, true);
                   current.result()
@@ -1700,7 +1700,7 @@ public final class AiService {
                   + "\nThe world or session changed (kick, rejoin, or world switch); the scope re-bases automatically - re-observe before continuing.";
                this.close_V(note.length() > 11900 ? note.substring(note.length() - 11900) : note);
             } else if (init_Z_cc_FileCache(this.init_cc_FileCache) && (this.init_cc_SyncManager == null || !AiDirectOps.init_Z(this.init_cc_SyncManager.id()))) {
-               this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "World/session changed");
+               this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "World/session changed");
             }
 
             this.pop_Str = mc.player == null ? "offline" : this.init_AiMemoryStore.init_Str(AiWorldIdentity.init(mc));
@@ -1715,9 +1715,9 @@ public final class AiService {
                } else if (this.init_AiSettings.builtIn) {
                   this.sync_V_Str("Chat mode stopped: the provider switched to Built-In");
                } else {
-                  if (this.init_cc_FileCache == AiService.Inner_FileCache.COMPLETED
-                     || this.init_cc_FileCache == AiService.Inner_FileCache.ANSWERED
-                     || this.init_cc_FileCache == AiService.Inner_FileCache.IDLE) {
+                  if (this.init_cc_FileCache == AiService.RunState.COMPLETED
+                     || this.init_cc_FileCache == AiService.RunState.ANSWERED
+                     || this.init_cc_FileCache == AiService.RunState.IDLE) {
                      this.pop_V();
                   }
 
@@ -1744,8 +1744,8 @@ public final class AiService {
                   trace.read();
                }
 
-               if (this.init_cc_FileCache != AiService.Inner_FileCache.CHATTING) {
-                  AiService.Inner_SyncManager dying = this.init_cc_SyncManager;
+               if (this.init_cc_FileCache != AiService.RunState.CHATTING) {
+                  AiService.ActiveOperation dying = this.init_cc_SyncManager;
                   if (sync_Z_Str(dying == null ? "" : dying.id())) {
                      String reason = "The deathless speedrun ended: player death was observed";
 
@@ -1762,12 +1762,12 @@ public final class AiService {
                      }
 
                      this.sync_J = 0L;
-                     this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.FAILED, reason);
+                     this.init_V_cc_FileCache_Str(AiService.RunState.FAILED, reason);
                      return;
                   }
 
                   this.init_V_cc_FileCache_Str(
-                     AiService.Inner_FileCache.PAUSED,
+                     AiService.RunState.PAUSED,
                      this.init_AiSettings.autoRespawn ? "Player died; respawning and resuming automatically" : "Player died; task paused"
                   );
                   this.read_Z = true;
@@ -1779,7 +1779,7 @@ public final class AiService {
                   return;
                }
 
-               AiService.Inner_SyncManager dying = this.init_cc_SyncManager;
+               AiService.ActiveOperation dying = this.init_cc_SyncManager;
                if (dying != null) {
                   this.init_V_cc_SyncManager_Z(dying, true);
                   dying.result().complete(AiOperation.Result.failed(AiFailure.THREAT_INTERRUPT, "Player died while chatting", "{}"));
@@ -1794,7 +1794,7 @@ public final class AiService {
                }
             }
 
-            if ((this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED || this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING)
+            if ((this.init_cc_FileCache == AiService.RunState.PAUSED || this.init_cc_FileCache == AiService.RunState.CHATTING)
                && this.sync_J != 0L
                && System.currentTimeMillis() >= this.sync_J) {
                this.sync_J = 0L;
@@ -1812,7 +1812,7 @@ public final class AiService {
                      trace.write();
                   }
 
-                  if (this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING) {
+                  if (this.init_cc_FileCache == AiService.RunState.CHATTING) {
                      this.init_V_Str_Str("system", "Respawned after dying; chat continues.");
                      this.sync_Str = this.init_Str();
                   } else {
@@ -1856,7 +1856,7 @@ public final class AiService {
             }
 
             if (init_Z_cc_FileCache(this.init_cc_FileCache) && this.write_J() > this.init_cc_RenderState().init_I * 60000000000L) {
-               this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.FAILED, "Task time limit reached");
+               this.init_V_cc_FileCache_Str(AiService.RunState.FAILED, "Task time limit reached");
             } else {
                if (this.update_I % 100 == 0) {
                   this.load_ExecutorService.execute(() -> {
@@ -1903,7 +1903,7 @@ public final class AiService {
 
                      this.init_F = health;
                      if (load_Z_cc_FileCache(this.init_cc_FileCache) && init_Z_Minecraft(mc)) {
-                        AiService.Inner_SyncManager falling = this.init_cc_SyncManager;
+                        AiService.ActiveOperation falling = this.init_cc_SyncManager;
                         if (falling == null || !falling.id().equals("game:mlg")) {
                            if (falling != null) {
                               AiOperation.Result interruption = init_AiOperation_Result_AiOperation(
@@ -1925,7 +1925,7 @@ public final class AiService {
                         }
                      }
 
-                     AiService.Inner_SyncManager hazardPending = this.init_cc_SyncManager;
+                     AiService.ActiveOperation hazardPending = this.init_cc_SyncManager;
                      String urgentHazard = AiHazardEscape.init(mc);
                      if (!this.init_AiSettings.planMode
                         && urgentHazard != null
@@ -1953,7 +1953,7 @@ public final class AiService {
                         }
                      }
 
-                     AiService.Inner_SyncManager threatPending = this.init_cc_SyncManager;
+                     AiService.ActiveOperation threatPending = this.init_cc_SyncManager;
                      if (threatPending != null
                         && init_Z_Str(threatPending.id())
                         && !AiGuard.init_Z()
@@ -2058,7 +2058,7 @@ public final class AiService {
                               }
 
                               this.init_V_cc_FileCache_Str(
-                                 AiService.Inner_FileCache.PAUSED,
+                                 AiService.RunState.PAUSED,
                                  "Repeated threat interruptions ("
                                     + interruptionCount
                                     + " within a minute): the area is too dangerous for this objective. Clear the threat or move elsewhere, then resume."
@@ -2198,7 +2198,7 @@ public final class AiService {
                      }
                   }
 
-                  AiService.Inner_SyncManager duskPending = this.init_cc_SyncManager;
+                  AiService.ActiveOperation duskPending = this.init_cc_SyncManager;
                   if (duskPending == null
                      && mc.player != null
                      && mc.player.isAlive()
@@ -2233,7 +2233,7 @@ public final class AiService {
                      && load_Z_cc_FileCache(this.init_cc_FileCache)
                      && AiBreathe.init(mc.player)
                      && (this.init_cc_SyncManager == null || this.init_cc_SyncManager.hostParked() || !AiGuard.init_Z())) {
-                     AiService.Inner_SyncManager reflex = this.init_cc_SyncManager;
+                     AiService.ActiveOperation reflex = this.init_cc_SyncManager;
                      if (reflex != null && reflex.hostParked() && !reflex.id().equals("game:breathe") && !reflex.id().equals("game:escape_hazard")) {
                         this.init_V_cc_SyncManager_Z(reflex, true);
                         reflex.result().complete(AiOperation.Result.failed(AiFailure.ENVIRONMENTAL_HAZARD, "Out of air", "{}"));
@@ -2283,16 +2283,16 @@ public final class AiService {
                      }
                   }
 
-                  AiService.Inner_SyncManager current = this.init_cc_SyncManager;
+                  AiService.ActiveOperation current = this.init_cc_SyncManager;
                   if (current != null) {
-                     boolean liveOperation = this.init_cc_FileCache == AiService.Inner_FileCache.RUNNING
-                        || this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING && current.hostParked();
+                     boolean liveOperation = this.init_cc_FileCache == AiService.RunState.RUNNING
+                        || this.init_cc_FileCache == AiService.RunState.CHATTING && current.hostParked();
                      if (current.generation() == this.init_AtomicLong.get() && liveOperation) {
                         AiCatalog.Entry contract = this.init_AiCatalog.init_AiCatalog_Snapshot().get(current.id());
                         if (contract != null && contract.fingerprint().equals(current.fingerprint())) {
                            try {
                               if (this.init_AiSettings.stopOnInput && !Boolean.getBoolean("autism.ai.livetask") && this.load_Z_Minecraft(mc)) {
-                                 this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, "Manual game input; AI controls released");
+                                 this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, "Manual game input; AI controls released");
                                  return;
                               }
 
@@ -2301,7 +2301,7 @@ public final class AiService {
                               this.poll_Str = result.dataJson();
                               autismclient.ai.engine.AiMotionAudit.init(mc, current.id(), result.message());
                               if (this.update_I % 20 == 0 && !result.terminal()) {
-                                 AiService.Inner_RenderState s = this.init_cc_RenderState();
+                                 AiService.SessionState s = this.init_cc_RenderState();
                                  synchronized (s) {
                                     JsonObject next = s.init_JsonObject.deepCopy();
                                     JsonObject old = next.has("activeOperation") && next.get("activeOperation").isJsonObject()
@@ -2329,7 +2329,7 @@ public final class AiService {
                                  autismclient.ai.engine.AiMotionAudit.init_V();
                                  this.init_cc_SyncManager = null;
                                  this.init_V_cc_SyncManager_Z(current, false);
-                                 AiService.Inner_RenderState s = this.init_cc_RenderState();
+                                 AiService.SessionState s = this.init_cc_RenderState();
                                  if (s != null && s.init_JsonObject.has("activeOperation")) {
                                     synchronized (s) {
                                        JsonObject next = s.init_JsonObject.deepCopy();
@@ -2338,7 +2338,7 @@ public final class AiService {
                                     }
                                  }
 
-                                 if (this.init_cc_FileCache == AiService.Inner_FileCache.CHATTING && current.hostParked()) {
+                                 if (this.init_cc_FileCache == AiService.RunState.CHATTING && current.hostParked()) {
                                     this.sync_Str = this.init_Str();
                                  }
 
@@ -2376,12 +2376,12 @@ public final class AiService {
          && !autismclient.modules.FreecamController.init_Z()
          && load_Z_cc_FileCache(this.init_cc_FileCache)
          && this.init_cc_SyncManager != null) {
-         this.init_V_cc_FileCache_Str(AiService.Inner_FileCache.PAUSED, reason);
+         this.init_V_cc_FileCache_Str(AiService.RunState.PAUSED, reason);
       }
    }
 
    public boolean close_Z() {
-      AiService.Inner_SyncManager p = this.init_cc_SyncManager;
+      AiService.ActiveOperation p = this.init_cc_SyncManager;
       return !this.init_AiSettings.stopOnInput && p != null && load_Z_cc_FileCache(this.init_cc_FileCache) && p.resources().contains("INPUT");
    }
 
@@ -2469,7 +2469,7 @@ public final class AiService {
       if (!AiClientTick.init()) {
          AiClientTick.init_V_Runnable(this::run_V);
       } else {
-         AiService.Inner_SyncManager current = this.init_cc_SyncManager;
+         AiService.ActiveOperation current = this.init_cc_SyncManager;
          this.init_cc_SyncManager = null;
          if (current != null) {
             this.init_V_cc_SyncManager_Z(current, true);
@@ -2485,7 +2485,7 @@ public final class AiService {
          this.run_V();
 
          for (int i = this.init_List.size() - 1; i >= 0; i--) {
-            AiService.Inner_StreamUtil c = this.init_List.get(i);
+            AiService.SettingDelta c = this.init_List.get(i);
             Module m = autismclient.modules.al.init_Module_Str(c.module());
             if (m != null && m.controlRevision(c.key()) == c.revision()) {
                if (c.key().equals("enabled")) {
@@ -2505,7 +2505,7 @@ public final class AiService {
       }
    }
 
-   private void init_V_cc_SyncManager_Z(AiService.Inner_SyncManager current, boolean cancel) {
+   private void init_V_cc_SyncManager_Z(AiService.ActiveOperation current, boolean cancel) {
       if (!AiClientTick.init()) {
          AiClientTick.init_V_Runnable(() -> this.init_V_cc_SyncManager_Z(current, cancel));
       } else {
@@ -2581,7 +2581,7 @@ public final class AiService {
       return mc.level.getHeight(Types.MOTION_BLOCKING, pos.getX(), pos.getZ()) <= pos.getY();
    }
 
-   private void init_V_Minecraft(Minecraft mc, AiService.Inner_SyncManager interrupted, float health, int hostiles) {
+   private void init_V_Minecraft(Minecraft mc, AiService.ActiveOperation interrupted, float health, int hostiles) {
       int weaponSlot = AiItems.read();
       boolean armed = weaponSlot >= 0 && load_Z_Str(BuiltInRegistries.ITEM.getKey(mc.player.getInventory().getItem(weaponSlot).getItem()).toString());
       String reflex = init_Str_F(
@@ -2670,7 +2670,7 @@ public final class AiService {
             } else {
                AiOperation op = inner;
                this.poll_Str = "{}";
-               this.init_cc_SyncManager = new AiService.Inner_SyncManager(
+               this.init_cc_SyncManager = new AiService.ActiveOperation(
                   this.init_AtomicLong.get(), id, entry.fingerprint(), op, new CompletableFuture<>(), lease, entry.contract().resources(), true
                );
                AiRunTrace trace = AiRunTrace.init_bL();
@@ -2691,7 +2691,7 @@ public final class AiService {
 
    private synchronized void set_V() {
       if (this.write_J != 0L) {
-         AiService.Inner_RenderState s = this.init_cc_RenderState();
+         AiService.SessionState s = this.init_cc_RenderState();
          if (s != null) {
             s.update_J = s.update_J + (System.nanoTime() - this.write_J);
          }
@@ -2704,7 +2704,7 @@ public final class AiService {
       return this.init_J_cc_RenderState(this.init_cc_RenderState());
    }
 
-   private long init_J_cc_RenderState(AiService.Inner_RenderState s) {
+   private long init_J_cc_RenderState(AiService.SessionState s) {
       return s == null ? 0L : s.update_J + (s.init_Str.equals(this.write_Str) && this.write_J != 0L ? System.nanoTime() - this.write_J : 0L);
    }
 
@@ -2713,7 +2713,7 @@ public final class AiService {
          if (this.update_J != 0L && System.nanoTime() > this.update_J) {
             throw new IllegalStateException("Script deadline reached");
          } else {
-            AiService.Inner_RenderState s = this.init_cc_RenderState();
+            AiService.SessionState s = this.init_cc_RenderState();
             if (s.write_J >= this.init_AiSettings.maxTokens || this.init_J_cc_RenderState(s) > s.init_I * 60000000000L) {
                throw new IllegalStateException("Task usage/time limit reached; adjust limits before resuming");
             }
@@ -2751,7 +2751,7 @@ public final class AiService {
    }
 
    AiObservation init_AiObservation_J_Str(long g, String source) throws InterruptedException, ExecutionException {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       AiObservation o = this.init_Obj_J_Supplier(g, () -> {
          if (s.flush_Str.isBlank() || s.flush_Str.equals("offline")) {
             s.flush_Str = this.pop_Str;
@@ -2783,7 +2783,7 @@ public final class AiService {
       String shown = null;
 
       while (true) {
-         AiService.Inner_SyncManager p = this.init_cc_SyncManager;
+         AiService.ActiveOperation p = this.init_cc_SyncManager;
          if (this.init_cc_SyncManager == null || !p.hostParked() || System.nanoTime() >= until) {
             return;
          }
@@ -2851,7 +2851,7 @@ public final class AiService {
 
                   return factory.get();
                });
-               this.init_cc_SyncManager = new AiService.Inner_SyncManager(
+               this.init_cc_SyncManager = new AiService.ActiveOperation(
                   g,
                   id,
                   fingerprint,
@@ -3107,7 +3107,7 @@ public final class AiService {
 
    private void init_V_Module(Module m, String key, String before, String after, long previousRevision) {
       for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         AiService.Inner_StreamUtil old = this.init_List.get(i);
+         AiService.SettingDelta old = this.init_List.get(i);
          if (old.module().equals(m.id()) && old.key().equals(key)) {
             if (old.revision() == previousRevision) {
                before = old.before();
@@ -3118,7 +3118,7 @@ public final class AiService {
          }
       }
 
-      this.init_List.add(new AiService.Inner_StreamUtil(m.id(), key, before, after, m.controlRevision(key)));
+      this.init_List.add(new AiService.SettingDelta(m.id(), key, before, after, m.controlRevision(key)));
    }
 
    private void set(String text) {
@@ -3175,7 +3175,7 @@ public final class AiService {
          }
       }
 
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       synchronized (s) {
          s.init_JsonObject = AiJson.auditKeepHostKeys(s.init_JsonObject, next);
       }
@@ -3183,7 +3183,7 @@ public final class AiService {
       this.close_V(AiJson.init_Str_JsonObject(value, "state", s.sync_Str));
    }
 
-   private AiService.Inner_NetHelper init_cc_NetHelper_cc_RenderState(AiService.Inner_RenderState s, boolean planning, int promptBudget) {
+   private AiService.PromptContextBundle init_cc_NetHelper_cc_RenderState(AiService.SessionState s, boolean planning, int promptBudget) {
       AiCatalog.Snapshot contracts = this.init_AiCatalog_Snapshot();
       List<AiMemoryStore.Memory> memories = this.init_AiMemoryStore.init_List_Str_Str(this.close_Str, s.update_Str + " " + String.join(" ", s.init_List));
       int systemChars = (int)Math.min(2147483647L, (long)(promptBudget * 3.5 * 0.6));
@@ -3199,7 +3199,7 @@ public final class AiService {
          System.currentTimeMillis(),
          systemChars
       );
-      return new AiService.Inner_NetHelper(prompt, new AiContext.Inner_DataUtil(), contracts.revision());
+      return new AiService.PromptContextBundle(prompt, new AiContext.Inner_DataUtil(), contracts.revision());
    }
 
    static long init_J_J_I(long systemChars, int promptBudget) {
@@ -3208,15 +3208,15 @@ public final class AiService {
       return Math.max((long)(0.15 * promptBudget * perToken), room);
    }
 
-   private static long init_J_cc_NetHelper_I(AiService.Inner_NetHelper epoch, int promptBudget) {
+   private static long init_J_cc_NetHelper_I(AiService.PromptContextBundle epoch, int promptBudget) {
       return init_J_J_I(epoch.prompt().stable().length() + epoch.prompt().objective().length(), promptBudget);
    }
 
-   private static long init_J_cc_NetHelper_List(AiService.Inner_NetHelper epoch, List<JsonObject> history) {
+   private static long init_J_cc_NetHelper_List(AiService.PromptContextBundle epoch, List<JsonObject> history) {
       return AiContext.init_J(epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.init(AiJson.init.toJsonTree(history)));
    }
 
-   private boolean init_Z_cc_RenderState(AiService.Inner_RenderState s, String sid, List<JsonObject> history, AiProvider transport, long budgetTokens, boolean forced) {
+   private boolean init_Z_cc_RenderState(AiService.SessionState s, String sid, List<JsonObject> history, AiProvider transport, long budgetTokens, boolean forced) {
       long total = AiContext.init(AiJson.init.toJsonTree(history));
       boolean keepLastThinking = transport.init_AiSettings_Provide() == AiSettings.Provider.ANTHROPIC
          && AiSettings.anthropicThinking(transport.init_Str()) == AiSettings.Thinking.BUDGET;
@@ -3255,26 +3255,26 @@ public final class AiService {
    }
 
    private void init_V_J(long g, boolean resume, String note) {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       String sid = s.init_Str;
       AiSettings pinned = this.init_AiSettings.copy();
       this.init_Z = pinned.verifyOutcomes;
       this.get_Str = null;
       String hostNote = null;
       if (pinned.builtIn) {
-         if (this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING) {
-            this.init_cc_FileCache = AiService.Inner_FileCache.RUNNING;
+         if (this.init_cc_FileCache == AiService.RunState.PLANNING) {
+            this.init_cc_FileCache = AiService.RunState.RUNNING;
          }
 
          if (!this.init_cc_TaskQueue_J(g, s, true).finished()) {
-            this.init_cc_FileCache = AiService.Inner_FileCache.BLOCKED;
+            this.init_cc_FileCache = AiService.RunState.BLOCKED;
             this.sync_Str = "Not something the built-in assistant understands";
             this.init_V_cc_RenderState(s, "warning", load_Str_Str(s.update_Str));
             this.init_V_J_cc_RenderState(g, s);
          }
       } else {
-         if (!resume && this.init_cc_FileCache == AiService.Inner_FileCache.RUNNING && pinned.hostIntents) {
-            AiService.Inner_TaskQueue desk = this.init_cc_TaskQueue_J(g, s, false);
+         if (!resume && this.init_cc_FileCache == AiService.RunState.RUNNING && pinned.hostIntents) {
+            AiService.CompletionNote desk = this.init_cc_TaskQueue_J(g, s, false);
             if (desk.finished()) {
                return;
             }
@@ -3283,8 +3283,8 @@ public final class AiService {
          }
 
          List<JsonObject> history = new ArrayList<>();
-         AiService.Inner_TextFormat transcript = new AiService.Inner_TextFormat(sid);
-         AiService.Inner_StateCache[] open = new AiService.Inner_StateCache[]{null};
+         AiService.SessionTurnTracker transcript = new AiService.SessionTurnTracker(sid);
+         AiService.PendingToolBatch[] open = new AiService.PendingToolBatch[]{null};
          AiProvider transport = new AiProvider(pinned);
 
          try {
@@ -3295,7 +3295,7 @@ public final class AiService {
             int promptBudget = Math.max(12000, pinned.contextTokens - pinned.outputTokens);
             AiSessions storeRef = this.init_cd;
             boolean sameWire = s.open_Str == null || s.open_Str.equals(pinned.provider.name());
-            AiService.Inner_NetHelper epoch = this.init_cc_NetHelper_cc_RenderState(s, this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING, promptBudget);
+            AiService.PromptContextBundle epoch = this.init_cc_NetHelper_cc_RenderState(s, this.init_cc_FileCache == AiService.RunState.PLANNING, promptBudget);
             if (storeRef != null && sameWire) {
                this.push_V();
                long replay = init_J_cc_NetHelper_I(epoch, promptBudget);
@@ -3352,7 +3352,7 @@ public final class AiService {
                long budget = Math.max(1, this.init_AiSettings.contextTokens - this.init_AiSettings.outputTokens);
                if (forceCompact || s.pop > 0.7 * budget) {
                   if (this.init_Z_cc_RenderState(s, sid, history, transport, budget, forceCompact)) {
-                     epoch = this.init_cc_NetHelper_cc_RenderState(s, this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING, promptBudget);
+                     epoch = this.init_cc_NetHelper_cc_RenderState(s, this.init_cc_FileCache == AiService.RunState.PLANNING, promptBudget);
                      transcript.init();
                      s.pop = init_J_cc_NetHelper_List(epoch, history);
                   }
@@ -3385,7 +3385,7 @@ public final class AiService {
                s.read_J++;
                s.push++;
                StringBuilder live = new StringBuilder();
-               AiService.Inner_EventBus gate = new AiService.Inner_EventBus();
+               AiService.ToolCallGate gate = new AiService.ToolCallGate();
                boolean[] finishedByTool = new boolean[]{false};
                List<String> executedCalls = new ArrayList<>();
                long providerStarted = System.nanoTime();
@@ -3469,7 +3469,7 @@ public final class AiService {
                boolean normalStop = reply.finish().isBlank() || Set.of("stop", "STOP", "end_turn", "tool_calls", "tool_use").contains(reply.finish());
                if (reply.calls().isEmpty() && normalStop && textOnlyNudges++ < 2) {
                   this.init_V_cc_RenderState(s, "system", "The reply had no action; asking the model to act instead of describing steps");
-                  transport.init_V_List_Str(history, init_Str_Z(this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING));
+                  transport.init_V_List_Str(history, init_Str_Z(this.init_cc_FileCache == AiService.RunState.PLANNING));
                   toolChoice = "required";
                   this.init_V_J(g);
                } else {
@@ -3478,7 +3478,7 @@ public final class AiService {
                   }
 
                   if (reply.calls().isEmpty()) {
-                     this.init_cc_FileCache = AiService.Inner_FileCache.BLOCKED;
+                     this.init_cc_FileCache = AiService.RunState.BLOCKED;
                      this.sync_Str = "Model ended its response without a tool call; objective remains unverified";
                      if (!reply.finish().isBlank() && !Set.of("stop", "STOP", "end_turn", "tool_calls", "tool_use").contains(reply.finish())) {
                         boolean refused = Set.of("SAFETY", "content_filter", "refusal", "blocklist", "PROHIBITED_CONTENT").contains(reply.finish());
@@ -3489,7 +3489,7 @@ public final class AiService {
                      break;
                   }
 
-                  open[0] = new AiService.Inner_StateCache(reply.calls(), gate);
+                  open[0] = new AiService.PendingToolBatch(reply.calls(), gate);
                   int k = 0;
 
                   while (true) {
@@ -3526,7 +3526,7 @@ public final class AiService {
          } catch (CancellationException var62) {
          } catch (Exception e) {
             if (g == this.init_AtomicLong.get()) {
-               this.init_cc_FileCache = AiService.Inner_FileCache.FAILED;
+               this.init_cc_FileCache = AiService.RunState.FAILED;
                this.sync_Str = Objects.toString(e.getMessage(), "AI task failed");
                this.init_V_cc_RenderState(s, "error", this.sync_Str);
                AiRunTrace trace = AiRunTrace.init_bL();
@@ -3535,7 +3535,7 @@ public final class AiService {
                }
             }
          } finally {
-            AiService.Inner_StateCache round = open[0];
+            AiService.PendingToolBatch round = open[0];
             if (round != null) {
                try {
                   history.addAll(
@@ -3563,7 +3563,7 @@ public final class AiService {
                this.set_V();
                this.init_bA = null;
                Minecraft.getInstance().execute(this::get_V);
-               if (this.init_cc_FileCache == AiService.Inner_FileCache.COMPLETED && !s.init_Deque.isEmpty()) {
+               if (this.init_cc_FileCache == AiService.RunState.COMPLETED && !s.init_Deque.isEmpty()) {
                   String next = s.init_Deque.poll();
                   Minecraft.getInstance().execute(() -> {
                      if (s.init_Str.equals(this.write_Str) && !init_Z_cc_FileCache(this.init_cc_FileCache)) {
@@ -3636,7 +3636,7 @@ public final class AiService {
          : "Your last reply had no tool call, and a reply without one ends the run. Do not tell the user how to do it or list steps for them: you operate the game, so carry out the next step now with a tool call. If the objective is already done, call finish; if the user only asked a question, call finish with outcome answered and the answer as the message; if you need a decision, call ask_user.";
    }
 
-   private JsonObject init_JsonObject_cc_RenderState(AiService.Inner_RenderState s, String sid, AiProvider.Inner_DataUtil call, long g) {
+   private JsonObject init_JsonObject_cc_RenderState(AiService.SessionState s, String sid, AiProvider.Inner_DataUtil call, long g) {
       this.init_V_J(g);
       AiRunTrace trace = AiRunTrace.init_bL();
       long toolStarted = System.nanoTime();
@@ -3695,12 +3695,12 @@ public final class AiService {
       return result;
    }
 
-   private AiService.Inner_TaskQueue init_cc_TaskQueue_J(long g, AiService.Inner_RenderState s, boolean builtIn) {
+   private AiService.CompletionNote init_cc_TaskQueue_J(long g, AiService.SessionState s, boolean builtIn) {
       if (builtIn && s.init_JsonObject.has("builtInAction")) {
          JsonObject local = s.init_JsonObject.getAsJsonObject("builtInAction");
          if (!AiLocalRequest.init(local, AiWorldIdentity.init(Minecraft.getInstance()), AiWorldIdentity.load(Minecraft.getInstance()))) {
             return this.init_cc_TaskQueue_J(
-               g, s, AiService.Inner_FileCache.BLOCKED, "warning", "This placement belongs to another world or dimension. Select the destination again."
+               g, s, AiService.RunState.BLOCKED, "warning", "This placement belongs to another world or dimension. Select the destination again."
             );
          }
 
@@ -3716,7 +3716,7 @@ public final class AiService {
 
             if (!unchanged) {
                return this.init_cc_TaskQueue_J(
-                  g, s, AiService.Inner_FileCache.BLOCKED, "warning", "The schematic changed or was removed. Select it again before building."
+                  g, s, AiService.RunState.BLOCKED, "warning", "The schematic changed or was removed. Select it again before building."
                );
             }
          }
@@ -3726,7 +3726,7 @@ public final class AiService {
          ? AiLocalRequest.init(s.init_JsonObject.getAsJsonObject("builtInAction"))
          : AiIntents.init_ad_CachePool(s.update_Str, init_ad_StreamUtil());
       if (plan.steps().isEmpty()) {
-         return new AiService.Inner_TaskQueue(false, null);
+         return new AiService.CompletionNote(false, null);
       }
 
       List<AiIntents.Inner_BufferHelper> steps = new ArrayList<>(plan.steps());
@@ -3748,14 +3748,14 @@ public final class AiService {
                         return this.init_cc_TaskQueue_J(
                            g,
                            s,
-                           AiService.Inner_FileCache.BLOCKED,
+                           AiService.RunState.BLOCKED,
                            "warning",
                            "The built-in assistant did not understand the answer \"" + said + "\"; pick one of the options"
                         );
                      }
 
                      this.init_V_cc_RenderState(s, "system", "That answer needs the AI; handing the request over");
-                     return new AiService.Inner_TaskQueue(
+                     return new AiService.CompletionNote(
                         false, init_Str_List(done, s.update_Str + " (asked \"" + ask.question() + "\", the user answered \"" + said + "\")", null)
                      );
                   }
@@ -3827,7 +3827,7 @@ public final class AiService {
 
             if (failure != null) {
                if (builtIn) {
-                  return this.init_cc_TaskQueue_J(g, s, AiService.Inner_FileCache.FAILED, "error", "Could not finish: " + failure);
+                  return this.init_cc_TaskQueue_J(g, s, AiService.RunState.FAILED, "error", "Could not finish: " + failure);
                }
 
                List<String> rest = new ArrayList<>();
@@ -3841,13 +3841,13 @@ public final class AiService {
                }
 
                this.init_V_cc_RenderState(s, "warning", "Quick action failed (" + failure + "); the AI takes over");
-               return new AiService.Inner_TaskQueue(false, init_Str_List(done, String.join(", then ", rest), failure));
+               return new AiService.CompletionNote(false, init_Str_List(done, String.join(", then ", rest), failure));
             }
          }
 
          if (plan.handledAll()) {
             this.set(s.update_Str);
-            this.init_cc_FileCache = AiService.Inner_FileCache.COMPLETED;
+            this.init_cc_FileCache = AiService.RunState.COMPLETED;
             this.sync_Str = "Done without an AI turn";
             List<String> what = new ArrayList<>();
 
@@ -3862,11 +3862,11 @@ public final class AiService {
             }
 
             this.init_V_J_cc_RenderState(g, s);
-            return new AiService.Inner_TaskQueue(true, null);
+            return new AiService.CompletionNote(true, null);
          } else {
             if (!builtIn) {
                this.init_V_cc_RenderState(s, "system", "Quick actions done; the AI takes over: " + plan.remainder());
-               return new AiService.Inner_TaskQueue(false, init_Str_List(done, plan.remainder(), null));
+               return new AiService.CompletionNote(false, init_Str_List(done, plan.remainder(), null));
             }
 
             List<String> what = new ArrayList<>();
@@ -3876,23 +3876,23 @@ public final class AiService {
             }
 
             return this.init_cc_TaskQueue_J(
-               g, s, AiService.Inner_FileCache.BLOCKED, "warning", "Done: " + String.join("; ", what) + ". " + load_Str_Str(plan.remainder())
+               g, s, AiService.RunState.BLOCKED, "warning", "Done: " + String.join("; ", what) + ". " + load_Str_Str(plan.remainder())
             );
          }
       } catch (CancellationException e) {
          this.init_V_J_cc_RenderState(g, s);
-         return new AiService.Inner_TaskQueue(true, null);
+         return new AiService.CompletionNote(true, null);
       } catch (Exception e) {
          if (builtIn) {
-            return this.init_cc_TaskQueue_J(g, s, AiService.Inner_FileCache.FAILED, "error", "Stopped: " + e.getMessage());
+            return this.init_cc_TaskQueue_J(g, s, AiService.RunState.FAILED, "error", "Stopped: " + e.getMessage());
          }
 
          this.init_V_cc_RenderState(s, "warning", "Quick actions stopped (" + e.getMessage() + "); the AI takes over");
-         return new AiService.Inner_TaskQueue(false, init_Str_List(done, s.update_Str, null));
+         return new AiService.CompletionNote(false, init_Str_List(done, s.update_Str, null));
       }
    }
 
-   private JsonObject init_JsonObject_J(long g, AiService.Inner_RenderState s, AiIntents.Inner_BufferHelper step, String occurrence) throws InterruptedException, ExecutionException {
+   private JsonObject init_JsonObject_J(long g, AiService.SessionState s, AiIntents.Inner_BufferHelper step, String occurrence) throws InterruptedException, ExecutionException {
       JsonObject stocked = AuditBuilderShulkerStock.before(this, g, s, step, occurrence);
       if (stocked != null) {
          return stocked;
@@ -4091,7 +4091,7 @@ public final class AiService {
       }
    }
 
-   private AiService.Inner_TaskQueue init_cc_TaskQueue_J(long g, AiService.Inner_RenderState s, AiService.Inner_FileCache end, String role, String text) {
+   private AiService.CompletionNote init_cc_TaskQueue_J(long g, AiService.SessionState s, AiService.RunState end, String role, String text) {
       if (g == this.init_AtomicLong.get()) {
          this.init_cc_FileCache = end;
          this.sync_Str = text;
@@ -4100,11 +4100,11 @@ public final class AiService {
       this.init_V_cc_RenderState(s, role, text);
       AiRunTrace trace = AiRunTrace.init_bL();
       if (trace != null) {
-         trace.read(end == AiService.Inner_FileCache.FAILED ? "failed" : "blocked");
+         trace.read(end == AiService.RunState.FAILED ? "failed" : "blocked");
       }
 
       this.init_V_J_cc_RenderState(g, s);
-      return new AiService.Inner_TaskQueue(true, null);
+      return new AiService.CompletionNote(true, null);
    }
 
    static String load_Str_Str(String request) {
@@ -4201,7 +4201,7 @@ public final class AiService {
          + (args.has("width") ? " (" + AiJson.init_I_JsonObject(args, "width", 3) + "x" + AiJson.init_I_JsonObject(args, "length", 3) + ")" : " (" + count + " crops)");
    }
 
-   private void init_V_J_cc_RenderState(long g, AiService.Inner_RenderState s) {
+   private void init_V_J_cc_RenderState(long g, AiService.SessionState s) {
       if (g == this.init_AtomicLong.get()) {
          this.set_V();
          this.tick_V();
@@ -4297,9 +4297,9 @@ public final class AiService {
    JsonObject read_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
       String outcome = update_Str_Str(AiJson.init_Str_JsonObject(args, "outcome", ""));
       String text = AiJson.init_Str_JsonObject(args, "message", "");
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       if (outcome.equals("completed")) {
-         if (this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING) {
+         if (this.init_cc_FileCache == AiService.RunState.PLANNING) {
             throw new IllegalArgumentException(
                "Plan mode: the planning phase cannot complete an objective; finish with outcome 'answered' and the full plan for user approval"
             );
@@ -4332,7 +4332,7 @@ public final class AiService {
             }
          }
 
-         this.init_cc_FileCache = AiService.Inner_FileCache.COMPLETED;
+         this.init_cc_FileCache = AiService.RunState.COMPLETED;
          this.init_V_cc_RenderState(s, "success", "Objective completed");
       } else if (outcome.equals("answered")) {
          if (this.init_Z && s.init_Z && this.update_Str == null) {
@@ -4341,21 +4341,21 @@ public final class AiService {
             );
          }
 
-         if (this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING) {
+         if (this.init_cc_FileCache == AiService.RunState.PLANNING) {
             if (text.isBlank()) {
                throw new IllegalArgumentException("Provide the full plan as the finish message");
             }
 
             s.load(text);
-            this.init_cc_FileCache = AiService.Inner_FileCache.PAUSED;
+            this.init_cc_FileCache = AiService.RunState.PAUSED;
             this.sync_Str = "Plan awaiting user approval";
             this.init_V_Str_Str("assistant", text);
             return AiJson.init_JsonObject_ObjArr("outcome", outcome, "message", text);
          }
 
-         this.init_cc_FileCache = AiService.Inner_FileCache.ANSWERED;
+         this.init_cc_FileCache = AiService.RunState.ANSWERED;
       } else {
-         this.init_cc_FileCache = AiService.Inner_FileCache.BLOCKED;
+         this.init_cc_FileCache = AiService.RunState.BLOCKED;
          this.init_V_cc_RenderState(s, "warning", "Objective blocked");
       }
 
@@ -4443,7 +4443,7 @@ public final class AiService {
       }
    }
 
-   public static String init_Str_cc_JsonUtil(AiService.Inner_JsonUtil message) {
+   public static String init_Str_cc_JsonUtil(AiService.TranscriptEntry message) {
       if (message != null && "tool".equals(message.role()) && !message.detail().isBlank()) {
          try {
             JsonObject d = AiJson.init_JsonObject_Str(message.detail());
@@ -4456,14 +4456,14 @@ public final class AiService {
       }
    }
 
-   public AiService.Inner_UiHelper init_cc_UiHelper() {
+   public AiService.UserPromptQuestion init_cc_UiHelper() {
       return this.init_cc_UiHelper;
    }
 
    public void init_V_Str_List(String text, List<String> options) {
       synchronized (this.load_Obj) {
          this.init_cc_UiHelper = text != null && !text.isBlank()
-            ? new AiService.Inner_UiHelper(text, options == null ? List.of() : List.copyOf(options), System.currentTimeMillis())
+            ? new AiService.UserPromptQuestion(text, options == null ? List.of() : List.copyOf(options), System.currentTimeMillis())
             : null;
          this.set_Str = null;
       }
@@ -4508,10 +4508,10 @@ public final class AiService {
          }
       }
 
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       this.init_V_cc_RenderState(s, "assistant", text);
       synchronized (this.load_Obj) {
-         this.init_cc_UiHelper = new AiService.Inner_UiHelper(text, List.copyOf(options), System.currentTimeMillis());
+         this.init_cc_UiHelper = new AiService.UserPromptQuestion(text, List.copyOf(options), System.currentTimeMillis());
          this.set_Str = null;
       }
 
@@ -4657,7 +4657,7 @@ public final class AiService {
    JsonObject init_JsonObject_Str_J(String query, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       if (this.init_AiSettings.nativeSearch && AiNativeSearch.init(this.init_AiSettings.provider)) {
          this.init_V_J(g);
-         AiService.Inner_RenderState s = this.init_cc_RenderState();
+         AiService.SessionState s = this.init_cc_RenderState();
          if (s.read_J >= this.init_AiSettings.maxRequests) {
             throw new IllegalStateException("Task request limit reached");
          }
@@ -4745,7 +4745,7 @@ public final class AiService {
       AiMemoryStore.init_V_Path_I(revisions, 100);
    }
 
-   static JsonObject init_JsonObject_cc_RenderState(AiService.Inner_RenderState s) {
+   static JsonObject init_JsonObject_cc_RenderState(AiService.SessionState s) {
       JsonObject stored = s.init_JsonObject.deepCopy();
       if (s.load_Z) {
          stored.addProperty("hostPlanningPhase", true);
@@ -4758,7 +4758,7 @@ public final class AiService {
       return stored;
    }
 
-   static void init_V_cc_RenderState_JsonObject(AiService.Inner_RenderState s, JsonObject stored) {
+   static void init_V_cc_RenderState_JsonObject(AiService.SessionState s, JsonObject stored) {
       if (stored == null) {
          stored = new JsonObject();
       }
@@ -4771,7 +4771,7 @@ public final class AiService {
       s.init_JsonObject = stored;
    }
 
-   private AiSessions.Inner_DataUtil init_cd_DataUtil_cc_RenderState(AiService.Inner_RenderState s) {
+   private AiSessions.Inner_DataUtil init_cd_DataUtil_cc_RenderState(AiService.SessionState s) {
       AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
       d.init_Str = s.init_Str;
       d.load_Str = s.load_Str;
@@ -4808,8 +4808,8 @@ public final class AiService {
       return d;
    }
 
-   private AiService.Inner_RenderState init_cc_RenderState_cd_DataUtil(AiSessions.Inner_DataUtil d) {
-      AiService.Inner_RenderState s = new AiService.Inner_RenderState(d.init_Str, d.init_J == 0L ? System.currentTimeMillis() : d.init_J);
+   private AiService.SessionState init_cc_RenderState_cd_DataUtil(AiSessions.Inner_DataUtil d) {
+      AiService.SessionState s = new AiService.SessionState(d.init_Str, d.init_J == 0L ? System.currentTimeMillis() : d.init_J);
       s.load_Str = d.load_Str;
       s.read_Str = d.read_Str;
       s.load_J = d.load_J;
@@ -4842,7 +4842,7 @@ public final class AiService {
       return s;
    }
 
-   private void read_V_cc_RenderState(AiService.Inner_RenderState s) {
+   private void read_V_cc_RenderState(AiService.SessionState s) {
       AiSessions storeRef = this.init_cd;
       if (s != null && storeRef != null) {
          s.load_J = System.currentTimeMillis();
@@ -4880,7 +4880,7 @@ public final class AiService {
                boolean connectionChanged = !previous.sameConnection(draft);
                draft.save(this.init_AiMemoryStore.init_Path());
                if (previous.maxMinutes != draft.maxMinutes) {
-                  AiService.Inner_RenderState s = this.init_cc_RenderState();
+                  AiService.SessionState s = this.init_cc_RenderState();
                   if (s != null) {
                      s.init_I = draft.maxMinutes;
                   }
@@ -4994,19 +4994,19 @@ public final class AiService {
       });
    }
 
-   public AiService.Inner_BufferHelper init_cc_BufferHelper() {
-      AiService.Inner_ConfigStore c = this.init_cc_ConfigStore();
-      return c == null ? AiService.Inner_BufferHelper.UNKNOWN : c.state();
+   public AiService.ProviderTestState init_cc_BufferHelper() {
+      AiService.ProviderTestResult c = this.init_cc_ConfigStore();
+      return c == null ? AiService.ProviderTestState.UNKNOWN : c.state();
    }
 
    public String set_Str() {
-      AiService.Inner_ConfigStore c = this.init_cc_ConfigStore();
+      AiService.ProviderTestResult c = this.init_cc_ConfigStore();
       return c == null ? "" : c.detail();
    }
 
-   private AiService.Inner_ConfigStore init_cc_ConfigStore() {
+   private AiService.ProviderTestResult init_cc_ConfigStore() {
       AiSettings s = this.init_AiSettings;
-      AiService.Inner_ConfigStore c = this.write_Map.get(s.provider);
+      AiService.ProviderTestResult c = this.write_Map.get(s.provider);
       return c != null && c.fingerprint().equals(init_Str_AiSettings(s)) ? c : null;
    }
 
@@ -5021,17 +5021,17 @@ public final class AiService {
          AiSettings snapshot = this.init_AiSettings.copy();
          String fingerprint = init_Str_AiSettings(snapshot);
          long probe = this.load_AtomicLong.incrementAndGet();
-         this.write_Map.put(snapshot.provider, new AiService.Inner_ConfigStore(AiService.Inner_BufferHelper.TESTING, "Testing " + snapshot.model, fingerprint));
+         this.write_Map.put(snapshot.provider, new AiService.ProviderTestResult(AiService.ProviderTestState.TESTING, "Testing " + snapshot.model, fingerprint));
          long deadline = System.nanoTime() + 90000000000L;
          BooleanSupplier expired = () -> System.nanoTime() > deadline || probe != this.load_AtomicLong.get();
          Thread.ofVirtual().name("autism-ai-connection-test").start(() -> {
             try {
                this.init_V_AiSettings_BooleanSupplier(snapshot, expired);
-               this.init_V_J(probe, snapshot.provider, fingerprint, AiService.Inner_BufferHelper.OK, "Round trip passed (" + snapshot.model + ")");
+               this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.OK, "Round trip passed (" + snapshot.model + ")");
                this.init_V_Str_Str("system", "Connection OK: tool-result round trip passed (" + snapshot.model + "). Model remains unqualified for gameplay.");
             } catch (CancellationException e) {
                if (probe == this.load_AtomicLong.get()) {
-                  this.init_V_J(probe, snapshot.provider, fingerprint, AiService.Inner_BufferHelper.FAILED, "Timed out");
+                  this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.FAILED, "Timed out");
                   this.init_V_Str_Str("error", "Connection test timed out");
                }
             } catch (Exception e) {
@@ -5043,14 +5043,14 @@ public final class AiService {
                   try {
                      this.init_V_AiSettings_BooleanSupplier(regional, expired);
                      this.init_V_AiSettings(snapshot, alt, probe);
-                     this.init_V_J(probe, snapshot.provider, init_Str_AiSettings(regional), AiService.Inner_BufferHelper.OK, "Round trip passed on " + alt);
+                     this.init_V_J(probe, snapshot.provider, init_Str_AiSettings(regional), AiService.ProviderTestState.OK, "Round trip passed on " + alt);
                      this.init_V_Str_Str("system", "Connection OK: tool-result round trip passed after switching the DashScope region to " + alt + ".");
                   } catch (Exception second) {
-                     this.init_V_J(probe, snapshot.provider, fingerprint, AiService.Inner_BufferHelper.FAILED, "Both DashScope regions failed: " + second.getMessage());
+                     this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.FAILED, "Both DashScope regions failed: " + second.getMessage());
                      this.init_V_Str_Str("error", "Connection test failed on both DashScope regions: " + second.getMessage());
                   }
                } else {
-                  this.init_V_J(probe, snapshot.provider, fingerprint, AiService.Inner_BufferHelper.FAILED, Objects.toString(e.getMessage(), "Connection failed"));
+                  this.init_V_J(probe, snapshot.provider, fingerprint, AiService.ProviderTestState.FAILED, Objects.toString(e.getMessage(), "Connection failed"));
                   this.init_V_Str_Str("error", "Connection test failed: " + e.getMessage());
                }
             }
@@ -5058,9 +5058,9 @@ public final class AiService {
       }
    }
 
-   private void init_V_J(long probe, AiSettings.Provider provider, String fingerprint, AiService.Inner_BufferHelper state, String detail) {
+   private void init_V_J(long probe, AiSettings.Provider provider, String fingerprint, AiService.ProviderTestState state, String detail) {
       if (probe == this.load_AtomicLong.get()) {
-         this.write_Map.put(provider, new AiService.Inner_ConfigStore(state, detail == null ? "" : detail, fingerprint));
+         this.write_Map.put(provider, new AiService.ProviderTestResult(state, detail == null ? "" : detail, fingerprint));
       }
    }
 
@@ -5134,15 +5134,15 @@ public final class AiService {
          );
    }
 
-   public AiService.Inner_ByteReader init_cc_ByteReader() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+   public AiService.TokenUsage init_cc_ByteReader() {
+      AiService.SessionState s = this.init_cc_RenderState();
       return s == null
-         ? new AiService.Inner_ByteReader(0L, 0L, 0L, 0L, 0L, this.init_AiSettings.contextTokens, 0L)
-         : new AiService.Inner_ByteReader(s.flush_J, s.close_J, s.open_J, s.poll, s.pop, this.init_AiSettings.contextTokens, s.push);
+         ? new AiService.TokenUsage(0L, 0L, 0L, 0L, 0L, this.init_AiSettings.contextTokens, 0L)
+         : new AiService.TokenUsage(s.flush_J, s.close_J, s.open_J, s.poll, s.pop, this.init_AiSettings.contextTokens, s.push);
    }
 
    public List<String> sync_List() {
-      AiService.Inner_RenderState s = this.init_cc_RenderState();
+      AiService.SessionState s = this.init_cc_RenderState();
       return s == null ? List.of() : List.copyOf(s.init_List);
    }
 
@@ -5344,7 +5344,7 @@ public final class AiService {
          );
    }
 
-   public List<AiService.Inner_DataUtil> flush_List() {
+   public List<AiService.AttachmentRef> flush_List() {
       return this.load_List;
    }
 
@@ -5357,7 +5357,7 @@ public final class AiService {
          .execute(
             () -> {
                try {
-                  List<AiService.Inner_DataUtil> found = new ArrayList<>();
+                  List<AiService.AttachmentRef> found = new ArrayList<>();
 
                   for (String folder : List.of("scripts", "revisions")) {
                      Path path = this.init_AiMemoryStore.init_Path().resolve(folder);
@@ -5367,7 +5367,7 @@ public final class AiService {
                               .filter(p -> p.toString().endsWith(".js") || p.toString().endsWith(".json"))
                               .sorted(Comparator.comparing(Path::toString).reversed())
                               .limit(100L)
-                              .forEach(p -> found.add(new AiService.Inner_DataUtil(folder + " / " + p.getFileName(), folder + "/" + p.getFileName())));
+                              .forEach(p -> found.add(new AiService.AttachmentRef(folder + " / " + p.getFileName(), folder + "/" + p.getFileName())));
                         }
                      }
                   }
@@ -5461,20 +5461,20 @@ public final class AiService {
       });
    }
 
-   public enum Inner_BufferHelper {
+   public enum ProviderTestState {
       UNKNOWN,
       TESTING,
       OK,
       FAILED;
    }
 
-   public record Inner_ByteReader(
+   public record TokenUsage(
       long inputTokens, long cachedInputTokens, long cacheWriteTokens, long outputTokens, long lastPromptTokens, int contextWindow, long requests
    ) {
    }
 
-   private final class Inner_CachePool implements AiChatMode.Inner_BufferHelper {
-      private final AiService.Inner_RenderState init_cc_RenderState = AiService.this.init_cc_RenderState();
+   private final class ChatModeHost implements AiChatMode.Inner_BufferHelper {
+      private final AiService.SessionState init_cc_RenderState = AiService.this.init_cc_RenderState();
       private final ClientLevel init_ClientLevel = Minecraft.getInstance().level;
       private final ClientPacketListener init_ClientPacketListen = Minecraft.getInstance().getConnection();
       private AiChatMode init_FieldCache;
@@ -5595,7 +5595,7 @@ public final class AiService {
 
       @Override
       public void init(long inputTokens, long outputTokens, long requests) {
-         AiService.Inner_RenderState s = this.init_cc_RenderState;
+         AiService.SessionState s = this.init_cc_RenderState;
          if (s != null) {
             synchronized (s) {
                s.flush_J = s.flush_J + Math.max(0L, inputTokens);
@@ -5606,13 +5606,13 @@ public final class AiService {
       }
    }
 
-   private record Inner_ConfigStore(AiService.Inner_BufferHelper state, String detail, String fingerprint) {
+   private record ProviderTestResult(AiService.ProviderTestState state, String detail, String fingerprint) {
    }
 
-   public record Inner_DataUtil(String name, String relativePath) {
+   public record AttachmentRef(String name, String relativePath) {
    }
 
-   static final class Inner_EventBus {
+   static final class ToolCallGate {
       private final List<Integer> init_List = new ArrayList<>();
       private final TreeMap<Integer, JsonObject> init_TreeMap = new TreeMap<>();
       private List<Integer> load;
@@ -5680,7 +5680,7 @@ public final class AiService {
       }
    }
 
-   public enum Inner_FileCache {
+   public enum RunState {
       IDLE,
       RUNNING,
       PLANNING,
@@ -5692,13 +5692,13 @@ public final class AiService {
       CHATTING;
    }
 
-   public record Inner_JsonUtil(long at, String role, String text, String detail) {
+   public record TranscriptEntry(long at, String role, String text, String detail) {
    }
 
-   private record Inner_NetHelper(AiContext.Inner_StreamUtil prompt, AiContext.Inner_DataUtil host, String catalogRevision) {
+   private record PromptContextBundle(AiContext.Inner_StreamUtil prompt, AiContext.Inner_DataUtil host, String catalogRevision) {
    }
 
-   static final class Inner_RenderState {
+   static final class SessionState {
       final String init_Str;
       final long init_J;
       volatile String load_Str = "New session";
@@ -5729,9 +5729,9 @@ public final class AiService {
       final Queue<String> init_Queue = new ConcurrentLinkedQueue<>();
       final List<String> init_List = new CopyOnWriteArrayList<>();
       final Deque<String> init_Deque = new ConcurrentLinkedDeque<>();
-      final List<AiService.Inner_JsonUtil> load_List = new CopyOnWriteArrayList<>();
+      final List<AiService.TranscriptEntry> load_List = new CopyOnWriteArrayList<>();
 
-      Inner_RenderState(String id, long createdAt) {
+      SessionState(String id, long createdAt) {
          this.init_Str = id;
          this.init_J = createdAt;
          this.load_J = createdAt;
@@ -5773,13 +5773,13 @@ public final class AiService {
       }
    }
 
-   private record Inner_StateCache(List<AiProvider.Inner_DataUtil> calls, AiService.Inner_EventBus gate) {
+   private record PendingToolBatch(List<AiProvider.Inner_DataUtil> calls, AiService.ToolCallGate gate) {
    }
 
-   private record Inner_StreamUtil(String module, String key, String before, String after, long revision) {
+   private record SettingDelta(String module, String key, String before, String after, long revision) {
    }
 
-   private record Inner_SyncManager(
+   private record ActiveOperation(
       long generation,
       String id,
       String fingerprint,
@@ -5791,16 +5791,16 @@ public final class AiService {
    ) {
    }
 
-   private record Inner_TaskQueue(boolean finished, String note) {
+   private record CompletionNote(boolean finished, String note) {
    }
 
-   private final class Inner_TextFormat {
+   private final class SessionTurnTracker {
       private final String init_Str;
       private int init_I;
       private String load;
       private boolean init_Z;
 
-      Inner_TextFormat(String sid) {
+      SessionTurnTracker(String sid) {
          this.init_Str = sid;
       }
 
@@ -5846,6 +5846,6 @@ public final class AiService {
       }
    }
 
-   public record Inner_UiHelper(String text, List<String> options, long at) {
+   public record UserPromptQuestion(String text, List<String> options, long at) {
    }
 }

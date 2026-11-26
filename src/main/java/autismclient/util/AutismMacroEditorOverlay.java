@@ -68,7 +68,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private AutismMacro load_aM;
    private boolean update_Z = false;
    private boolean sync_Z = false;
-   private AutismMacroEditorOverlay.Inner_DataUtil init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.NORMAL;
+   private AutismMacroEditorOverlay.EditorMode init_AutismMacroEditorO = AutismMacroEditorOverlay.EditorMode.NORMAL;
    private Consumer<AutismMacro> init_Consumer = null;
    private int tick_I;
    private int run_I;
@@ -114,13 +114,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private static final int queue = 14;
    private String init_Str_2 = "";
    private List<String> flush_List = null;
-   private AutismMacroEditorOverlay.Inner_JsonUtil init_AutismMacroEditorO_3 = null;
-   private List<AutismMacroEditorOverlay.Inner_TaskQueue> close_List = Collections.emptyList();
-   private List<AutismMacroEditorOverlay.Inner_NetHelper> open_List = Collections.emptyList();
-   private Map<String, List<AutismMacroEditorOverlay.Inner_NetHelper>> init_Map = Collections.emptyMap();
-   private final SearchFilterList<AutismMacroEditorOverlay.Inner_NetHelper> init_a = new SearchFilterList<>(entry -> entry.init_Str + "\n" + entry.load + "\n" + entry.read);
+   private AutismMacroEditorOverlay.PaletteSectionKind init_AutismMacroEditorO_3 = null;
+   private List<AutismMacroEditorOverlay.PaletteCategory> close_List = Collections.emptyList();
+   private List<AutismMacroEditorOverlay.PaletteEntry> open_List = Collections.emptyList();
+   private Map<String, List<AutismMacroEditorOverlay.PaletteEntry>> init_Map = Collections.emptyMap();
+   private final SearchFilterList<AutismMacroEditorOverlay.PaletteEntry> init_a = new SearchFilterList<>(entry -> entry.init_Str + "\n" + entry.load + "\n" + entry.read);
    private ThemedTextInputBox read_k;
-   private final AutismMacroEditorOverlay.Inner_StateCache init_AutismMacroEditorO_4 = new AutismMacroEditorOverlay.Inner_StateCache();
+   private final AutismMacroEditorOverlay.OverlayAdapter init_AutismMacroEditorO_4 = new AutismMacroEditorOverlay.OverlayAdapter();
    private int buffer = 0;
    private final HashMap<String, Integer> init_HashMap = new HashMap<>();
    private long read_J = 0L;
@@ -142,8 +142,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private String load_Str = null;
    private int chunk;
    private int table;
-   private final Deque<AutismMacroEditorOverlay.Inner_CachePool> init_Deque = new ArrayDeque<>();
-   private final Deque<AutismMacroEditorOverlay.Inner_CachePool> load_Deque = new ArrayDeque<>();
+   private final Deque<AutismMacroEditorOverlay.UndoSnapshot> init_Deque = new ArrayDeque<>();
+   private final Deque<AutismMacroEditorOverlay.UndoSnapshot> load_Deque = new ArrayDeque<>();
    private AutismMacro read_aM;
    private boolean tick_Z = false;
    private boolean run_Z = false;
@@ -158,10 +158,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private boolean put_Z = false;
    private boolean add_Z = false;
    private final IdentityHashMap<MacroAction, Integer> init_IdentityHashMap = new IdentityHashMap<>();
-   private final AutismMacroEditorOverlay.Inner_FileCache init_AutismMacroEditorO_2 = new AutismMacroEditorOverlay.Inner_FileCache();
+   private final AutismMacroEditorOverlay.RowSelectionSet init_AutismMacroEditorO_2 = new AutismMacroEditorOverlay.RowSelectionSet();
    private Integer init_Integer;
-   private final List<AutismMacroEditorOverlay.Inner_EventBus> poll_List = new ArrayList<>();
-   private final List<AutismMacroEditorOverlay.Inner_UiHelper> push_List = new ArrayList<>();
+   private final List<AutismMacroEditorOverlay.ActionRowItem> poll_List = new ArrayList<>();
+   private final List<AutismMacroEditorOverlay.RowTransitionAnim> push_List = new ArrayList<>();
    private int store = 1;
    private long poll_J = System.nanoTime();
    private static final int drain = -5609729;
@@ -734,21 +734,21 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return created;
    }
 
-   private AutismMacroEditorOverlay.Inner_TextFormat init_AutismMacroEditorO_I_2(int index) {
+   private AutismMacroEditorOverlay.IndexRange init_AutismMacroEditorO_I_2(int index) {
       if (this.init_aM != null && index >= 0 && index < this.init_aM.init_List.size()) {
          MacroAction action = this.init_aM.init_List.get(index);
-         AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(index, action);
+         AutismMacroEditorOverlay.BlockGroupLayout group = this.init_AutismMacroEditorO_I_MacroAction(index, action);
          if (group.write && !group.init_Z) {
-            return new AutismMacroEditorOverlay.Inner_TextFormat(index, index + 1);
+            return new AutismMacroEditorOverlay.IndexRange(index, index + 1);
          }
 
          int start = group.init() ? group.init_I : index;
          int end = group.init() ? group.init_I + group.load_I + 1 : index + 1;
          start = Math.max(0, Math.min(start, this.init_aM.init_List.size()));
          end = Math.max(start, Math.min(end, this.init_aM.init_List.size()));
-         return new AutismMacroEditorOverlay.Inner_TextFormat(start, end);
+         return new AutismMacroEditorOverlay.IndexRange(start, end);
       } else {
-         return AutismMacroEditorOverlay.Inner_TextFormat.init_AutismMacroEditorO;
+         return AutismMacroEditorOverlay.IndexRange.init_AutismMacroEditorO;
       }
    }
 
@@ -758,7 +758,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void load_V_I_2(int index) {
-      AutismMacroEditorOverlay.Inner_TextFormat unit = this.init_AutismMacroEditorO_I_2(index);
+      AutismMacroEditorOverlay.IndexRange unit = this.init_AutismMacroEditorO_I_2(index);
       if (!unit.init()) {
          boolean allSelected = true;
 
@@ -817,7 +817,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void read_V_2(int index) {
-      AutismMacroEditorOverlay.Inner_TextFormat unit = this.init_AutismMacroEditorO_I_2(index);
+      AutismMacroEditorOverlay.IndexRange unit = this.init_AutismMacroEditorO_I_2(index);
       if (!unit.init() && this.init_aM != null) {
          for (int i = unit.init_I; i < unit.load; i++) {
             this.init_AutismMacroEditorO_2.init_V(this.write_I(this.init_aM.init_List.get(i)));
@@ -835,12 +835,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_AutismMacroEditorO_2.init_V();
    }
 
-   private List<AutismMacroEditorOverlay.Inner_TextFormat> init_List_6() {
-      List<AutismMacroEditorOverlay.Inner_TextFormat> ranges = new ArrayList<>();
+   private List<AutismMacroEditorOverlay.IndexRange> init_List_6() {
+      List<AutismMacroEditorOverlay.IndexRange> ranges = new ArrayList<>();
       if (this.init_aM != null && !this.init_AutismMacroEditorO_2.init_Z()) {
          for (int i = 0; i < this.init_aM.init_List.size(); i++) {
             if (this.read_Z(i)) {
-               AutismMacroEditorOverlay.Inner_TextFormat unit = this.init_AutismMacroEditorO_I_2(i);
+               AutismMacroEditorOverlay.IndexRange unit = this.init_AutismMacroEditorO_I_2(i);
                if (!unit.init()) {
                   ranges.add(unit);
                }
@@ -853,20 +853,20 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static List<AutismMacroEditorOverlay.Inner_TextFormat> init_List_List_2(List<AutismMacroEditorOverlay.Inner_TextFormat> units) {
+   private static List<AutismMacroEditorOverlay.IndexRange> init_List_List_2(List<AutismMacroEditorOverlay.IndexRange> units) {
       if (units != null && !units.isEmpty()) {
-         List<AutismMacroEditorOverlay.Inner_TextFormat> sorted = new ArrayList<>(units);
+         List<AutismMacroEditorOverlay.IndexRange> sorted = new ArrayList<>(units);
          sorted.sort((a, b) -> Integer.compare(a.init_I, b.init_I));
-         List<AutismMacroEditorOverlay.Inner_TextFormat> merged = new ArrayList<>();
+         List<AutismMacroEditorOverlay.IndexRange> merged = new ArrayList<>();
 
-         for (AutismMacroEditorOverlay.Inner_TextFormat unit : sorted) {
+         for (AutismMacroEditorOverlay.IndexRange unit : sorted) {
             if (unit != null && !unit.init()) {
                if (merged.isEmpty()) {
                   merged.add(unit);
                } else {
-                  AutismMacroEditorOverlay.Inner_TextFormat previous = merged.get(merged.size() - 1);
+                  AutismMacroEditorOverlay.IndexRange previous = merged.get(merged.size() - 1);
                   if (unit.init_I <= previous.load) {
-                     merged.set(merged.size() - 1, new AutismMacroEditorOverlay.Inner_TextFormat(previous.init_I, Math.max(previous.load, unit.load)));
+                     merged.set(merged.size() - 1, new AutismMacroEditorOverlay.IndexRange(previous.init_I, Math.max(previous.load, unit.load)));
                   } else {
                      merged.add(unit);
                   }
@@ -886,7 +886,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          return out;
       }
 
-      for (AutismMacroEditorOverlay.Inner_TextFormat unit : this.init_List_6()) {
+      for (AutismMacroEditorOverlay.IndexRange unit : this.init_List_6()) {
          for (int i = unit.init_I; i < unit.load && i < this.init_aM.init_List.size(); i++) {
             out.add(this.init_aM.init_List.get(i));
          }
@@ -1020,7 +1020,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (this.init_aM != null && startIndex >= 0 && startIndex < this.init_aM.init_List.size()) {
          int endExclusive = this.init_aM.init_List.size();
          if (singleStep) {
-            AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(startIndex, this.init_aM.init_List.get(startIndex));
+            AutismMacroEditorOverlay.BlockGroupLayout group = this.init_AutismMacroEditorO_I_MacroAction(startIndex, this.init_aM.init_List.get(startIndex));
             endExclusive = group.init() && group.init_Z ? Math.min(this.init_aM.init_List.size(), startIndex + 1 + group.load_I) : startIndex + 1;
          }
 
@@ -1173,7 +1173,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int v() {
-      List<AutismMacroEditorOverlay.Inner_TextFormat> units = this.init_List_6();
+      List<AutismMacroEditorOverlay.IndexRange> units = this.init_List_6();
       if (units.isEmpty()) {
          return this.init_aM == null ? 0 : this.init_aM.init_List.size();
       } else {
@@ -1358,7 +1358,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (this.init_aM != null && !this.init_AutismMacroEditorO_2.init_Z()) {
-         List<AutismMacroEditorOverlay.Inner_TextFormat> units = new ArrayList<>(this.init_List_6());
+         List<AutismMacroEditorOverlay.IndexRange> units = new ArrayList<>(this.init_List_6());
          if (units.isEmpty()) {
             this.init_AutismMacroEditorO_2.init_V();
             return false;
@@ -1368,7 +1368,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.count_V();
          TreeSet<Integer> deleteIndices = new TreeSet<>();
 
-         for (AutismMacroEditorOverlay.Inner_TextFormat unit : units) {
+         for (AutismMacroEditorOverlay.IndexRange unit : units) {
             for (int i = unit.init_I; i < unit.load && i < this.init_aM.init_List.size(); i++) {
                deleteIndices.add(i);
             }
@@ -1417,11 +1417,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (this.init_aM != null && !this.init_AutismMacroEditorO_2.init_Z() && direction != 0) {
-         List<AutismMacroEditorOverlay.Inner_TextFormat> orderedUnits = new ArrayList<>();
+         List<AutismMacroEditorOverlay.IndexRange> orderedUnits = new ArrayList<>();
          int i = 0;
 
          while (i < this.init_aM.init_List.size()) {
-            AutismMacroEditorOverlay.Inner_TextFormat unit = this.init_AutismMacroEditorO_I_2(i);
+            AutismMacroEditorOverlay.IndexRange unit = this.init_AutismMacroEditorO_I_2(i);
             if (unit.init()) {
                i++;
             } else {
@@ -1438,7 +1438,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          if (direction < 0) {
             for (int ix = 1; ix < orderedUnits.size(); ix++) {
                if (this.init_Z_AutismMacroEditorO(orderedUnits.get(ix)) && !this.init_Z_AutismMacroEditorO(orderedUnits.get(ix - 1))) {
-                  AutismMacroEditorOverlay.Inner_TextFormat unit = orderedUnits.remove(ix);
+                  AutismMacroEditorOverlay.IndexRange unit = orderedUnits.remove(ix);
                   orderedUnits.add(ix - 1, unit);
                   moved = true;
                }
@@ -1446,7 +1446,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          } else {
             for (int ix = orderedUnits.size() - 2; ix >= 0; ix--) {
                if (this.init_Z_AutismMacroEditorO(orderedUnits.get(ix)) && !this.init_Z_AutismMacroEditorO(orderedUnits.get(ix + 1))) {
-                  AutismMacroEditorOverlay.Inner_TextFormat unit = orderedUnits.remove(ix);
+                  AutismMacroEditorOverlay.IndexRange unit = orderedUnits.remove(ix);
                   orderedUnits.add(ix + 1, unit);
                   moved = true;
                }
@@ -1462,7 +1462,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          movedRefs.addAll(this.load_List_3());
          List<MacroAction> rebuilt = new ArrayList<>(this.init_aM.init_List.size());
 
-         for (AutismMacroEditorOverlay.Inner_TextFormat unit : orderedUnits) {
+         for (AutismMacroEditorOverlay.IndexRange unit : orderedUnits) {
             for (int ix = unit.init_I; ix < unit.load && ix < this.init_aM.init_List.size(); ix++) {
                rebuilt.add(this.init_aM.init_List.get(ix));
             }
@@ -1479,7 +1479,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_AutismMacroEditorO(AutismMacroEditorOverlay.Inner_TextFormat unit) {
+   private boolean init_Z_AutismMacroEditorO(AutismMacroEditorOverlay.IndexRange unit) {
       if (unit != null && !unit.init() && this.init_aM != null) {
          for (int i = unit.init_I; i < unit.load && i < this.init_aM.init_List.size(); i++) {
             if (this.init_AutismMacroEditorO_2.init_Z(this.write_I(this.init_aM.init_List.get(i)))) {
@@ -1493,22 +1493,22 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<AutismMacroEditorOverlay.Inner_EventBus> write_List_2() {
-      List<AutismMacroEditorOverlay.Inner_EventBus> snapshots = new ArrayList<>();
+   private List<AutismMacroEditorOverlay.ActionRowItem> write_List_2() {
+      List<AutismMacroEditorOverlay.ActionRowItem> snapshots = new ArrayList<>();
       if (this.init_aM == null) {
          return snapshots;
       }
 
       for (int index = 0; index < this.init_aM.init_List.size(); index++) {
          MacroAction action = this.init_aM.init_List.get(index);
-         snapshots.add(new AutismMacroEditorOverlay.Inner_EventBus(action, this.write_I(action), action.getDisplayName(), this.write_Z(action), index));
+         snapshots.add(new AutismMacroEditorOverlay.ActionRowItem(action, this.write_I(action), action.getDisplayName(), this.write_Z(action), index));
       }
 
       return snapshots;
    }
 
-   private AutismMacroEditorOverlay.Inner_EventBus init_AutismMacroEditorO_List_I(List<AutismMacroEditorOverlay.Inner_EventBus> snapshots, int stableId) {
-      for (AutismMacroEditorOverlay.Inner_EventBus snapshot : snapshots) {
+   private AutismMacroEditorOverlay.ActionRowItem init_AutismMacroEditorO_List_I(List<AutismMacroEditorOverlay.ActionRowItem> snapshots, int stableId) {
+      for (AutismMacroEditorOverlay.ActionRowItem snapshot : snapshots) {
          if (snapshot.init_I == stableId) {
             return snapshot;
          }
@@ -1517,8 +1517,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return null;
    }
 
-   private AutismMacroEditorOverlay.Inner_UiHelper init_AutismMacroEditorO_I_3(int stableId) {
-      for (AutismMacroEditorOverlay.Inner_UiHelper motion : this.push_List) {
+   private AutismMacroEditorOverlay.RowTransitionAnim init_AutismMacroEditorO_I_3(int stableId) {
+      for (AutismMacroEditorOverlay.RowTransitionAnim motion : this.push_List) {
          if (motion.init_I == stableId) {
             return motion;
          }
@@ -1532,7 +1532,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void read(boolean animateChanges) {
-      List<AutismMacroEditorOverlay.Inner_EventBus> current = this.write_List_2();
+      List<AutismMacroEditorOverlay.ActionRowItem> current = this.write_List_2();
       if (!animateChanges) {
          this.push_List.clear();
          this.poll_List.clear();
@@ -1541,34 +1541,34 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       } else {
          this.push_List.clear();
 
-         for (AutismMacroEditorOverlay.Inner_EventBus snapshot : current) {
-            AutismMacroEditorOverlay.Inner_EventBus previous = this.init_AutismMacroEditorO_List_I(this.poll_List, snapshot.init_I);
+         for (AutismMacroEditorOverlay.ActionRowItem snapshot : current) {
+            AutismMacroEditorOverlay.ActionRowItem previous = this.init_AutismMacroEditorO_List_I(this.poll_List, snapshot.init_I);
             if (previous == null) {
                this.update_V_2(snapshot.init_I);
                this.push_List
                   .add(
-                     new AutismMacroEditorOverlay.Inner_UiHelper(
-                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.ENTER
+                     new AutismMacroEditorOverlay.RowTransitionAnim(
+                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.RowAnimKind.ENTER
                      )
                   );
             } else if (previous.load != snapshot.load) {
                this.update_V_2(snapshot.init_I);
                this.push_List
                   .add(
-                     new AutismMacroEditorOverlay.Inner_UiHelper(
-                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, previous.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.MOVE
+                     new AutismMacroEditorOverlay.RowTransitionAnim(
+                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, previous.load, snapshot.load, AutismMacroEditorOverlay.RowAnimKind.MOVE
                      )
                   );
             }
          }
 
-         for (AutismMacroEditorOverlay.Inner_EventBus snapshot : this.poll_List) {
+         for (AutismMacroEditorOverlay.ActionRowItem snapshot : this.poll_List) {
             if (this.init_AutismMacroEditorO_List_I(current, snapshot.init_I) == null) {
                this.update_V_2(snapshot.init_I);
                this.push_List
                   .add(
-                     new AutismMacroEditorOverlay.Inner_UiHelper(
-                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.Inner_RenderState.EXIT
+                     new AutismMacroEditorOverlay.RowTransitionAnim(
+                        snapshot.init_I, snapshot.init_Str, snapshot.init_Z, snapshot.load, snapshot.load, AutismMacroEditorOverlay.RowAnimKind.EXIT
                      )
                   );
             }
@@ -1623,18 +1623,18 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private float init_F_I(int stableId) {
-      AutismMacroEditorOverlay.Inner_UiHelper motion = this.init_AutismMacroEditorO_I_3(stableId);
-      return motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.ENTER ? this.init_F_F(motion.init_F) : 1.0F;
+      AutismMacroEditorOverlay.RowTransitionAnim motion = this.init_AutismMacroEditorO_I_3(stableId);
+      return motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.RowAnimKind.ENTER ? this.init_F_F(motion.init_F) : 1.0F;
    }
 
-   private int init_I_AutismMacroEditorO_I(AutismMacroEditorOverlay.Inner_UiHelper motion, int baseListY) {
+   private int init_I_AutismMacroEditorO_I(AutismMacroEditorOverlay.RowTransitionAnim motion, int baseListY) {
       float eased = this.init_F_F(motion.init_F);
       int fromY = baseListY + motion.load * this.mark_I();
       int toY = baseListY + motion.read * this.mark_I();
       return Math.round(fromY + (toY - fromY) * eased);
    }
 
-   private int init_I_AutismMacroEditorO(AutismMacroEditorOverlay.Inner_UiHelper motion) {
+   private int init_I_AutismMacroEditorO(AutismMacroEditorOverlay.RowTransitionAnim motion) {
       if (motion == null) {
          return 0;
       }
@@ -1658,7 +1658,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private float init_F_AutismMacroEditorO(AutismMacroEditorOverlay.Inner_UiHelper motion) {
+   private float init_F_AutismMacroEditorO(AutismMacroEditorOverlay.RowTransitionAnim motion) {
       if (motion == null) {
          return 1.0F;
       }
@@ -1837,13 +1837,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             return;
          }
 
-         AutismMacroEditorOverlay.Inner_StreamUtil targetGroup = this.init_AutismMacroEditorO_I_MacroAction(toIndex, this.init_aM.init_List.get(toIndex));
+         AutismMacroEditorOverlay.BlockGroupLayout targetGroup = this.init_AutismMacroEditorO_I_MacroAction(toIndex, this.init_aM.init_List.get(toIndex));
          if (targetGroup.init() && targetGroup.init_I == fromIndex) {
             return;
          }
 
          if (targetGroup.write) {
-            targetGroup = AutismMacroEditorOverlay.Inner_StreamUtil.init_AutismMacroEditorO;
+            targetGroup = AutismMacroEditorOverlay.BlockGroupLayout.init_AutismMacroEditorO;
          }
 
          int insertIndex;
@@ -1953,9 +1953,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          }
 
          boolean movingDown = targetIndex > sourceIndex;
-         AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(targetIndex, anchor);
+         AutismMacroEditorOverlay.BlockGroupLayout group = this.init_AutismMacroEditorO_I_MacroAction(targetIndex, anchor);
          if (group.write) {
-            group = AutismMacroEditorOverlay.Inner_StreamUtil.init_AutismMacroEditorO;
+            group = AutismMacroEditorOverlay.BlockGroupLayout.init_AutismMacroEditorO;
          }
 
          int anchorReal;
@@ -2070,12 +2070,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int maxViewportWidth = Math.max(1, Math.min(456, screenW - 20));
       int minViewportWidth = Math.min(132, maxViewportWidth);
       int maxContentHeight = Math.max(1, screenH - 36);
-      List<AutismMacroEditorOverlay.Inner_SyncManager> fallbackLayouts = null;
+      List<AutismMacroEditorOverlay.PaletteCategoryLayout> fallbackLayouts = null;
       int fallbackOverflow = 2147483647;
       int fallbackWidth = maxViewportWidth;
 
       for (int candidateWidth = minViewportWidth; candidateWidth <= maxViewportWidth; candidateWidth += 6) {
-         List<AutismMacroEditorOverlay.Inner_SyncManager> layouts = this.init_List_I(0, 0, candidateWidth);
+         List<AutismMacroEditorOverlay.PaletteCategoryLayout> layouts = this.init_List_I(0, 0, candidateWidth);
          int contentHeight = this.init_I_List_3(layouts);
          if (contentHeight <= maxContentHeight) {
             return this.read_I_I(this.load_I_List(layouts), minViewportWidth, maxViewportWidth);
@@ -2098,7 +2098,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int z() {
-      List<AutismMacroEditorOverlay.Inner_SyncManager> layouts = this.init_List_I(0, 0, this.y());
+      List<AutismMacroEditorOverlay.PaletteCategoryLayout> layouts = this.init_List_I(0, 0, this.y());
       return this.init_I_List_3(layouts);
    }
 
@@ -2182,8 +2182,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.buffer = 0;
    }
 
-   private void init_V_List(List<AutismMacroEditorOverlay.Inner_NetHelper> entries, String categoryId, String label, String description, Runnable action) {
-      entries.add(new AutismMacroEditorOverlay.Inner_NetHelper(categoryId, label, description, action));
+   private void init_V_List(List<AutismMacroEditorOverlay.PaletteEntry> entries, String categoryId, String label, String description, Runnable action) {
+      entries.add(new AutismMacroEditorOverlay.PaletteEntry(categoryId, label, description, action));
    }
 
    private void prev_V_3() {
@@ -2463,24 +2463,24 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismMacroEditorOverlay.Inner_StreamUtil init_AutismMacroEditorO_I_MacroAction(int index, MacroAction action) {
+   private AutismMacroEditorOverlay.BlockGroupLayout init_AutismMacroEditorO_I_MacroAction(int index, MacroAction action) {
       if (this.init_aM == null || action == null || index < 0 || index >= this.init_aM.init_List.size()) {
-         return AutismMacroEditorOverlay.Inner_StreamUtil.init_AutismMacroEditorO;
+         return AutismMacroEditorOverlay.BlockGroupLayout.init_AutismMacroEditorO;
       } else if (action instanceof autismclient.util.macro.RaceAction race) {
-         return new AutismMacroEditorOverlay.Inner_StreamUtil(true, false, false, index, race.init_I_List_I(this.init_aM.init_List, index), 0, "RACE");
+         return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, false, index, race.init_I_List_I(this.init_aM.init_List, index), 0, "RACE");
       } else if (action instanceof autismclient.util.macro.ReportAction report) {
-         return new AutismMacroEditorOverlay.Inner_StreamUtil(true, true, false, index, report.init(this.init_aM.init_List, index), 0, "REPORT");
+         return new AutismMacroEditorOverlay.BlockGroupLayout(true, true, false, index, report.init(this.init_aM.init_List, index), 0, "REPORT");
       } else if (action instanceof autismclient.util.macro.PacketGateAction) {
-         return new AutismMacroEditorOverlay.Inner_StreamUtil(true, false, true, index, this.sync_I(index), 0, "GATE START");
+         return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, true, index, this.sync_I(index), 0, "GATE START");
       } else if (action instanceof autismclient.util.macro.MultiAction multi) {
-         return new AutismMacroEditorOverlay.Inner_StreamUtil(true, false, false, true, index, multi.init(this.init_aM.init_List, index), 0, "MULTI");
+         return new AutismMacroEditorOverlay.BlockGroupLayout(true, false, false, true, index, multi.init(this.init_aM.init_List, index), 0, "MULTI");
       } else {
          int raceHeader = this.read_I_2(index);
          if (raceHeader >= 0 && this.init_aM.init_List.get(raceHeader) instanceof autismclient.util.macro.RaceAction race) {
             int childCount = race.init_I_List_I(this.init_aM.init_List, raceHeader);
             int conditionCount = race.load(this.init_aM.init_List, raceHeader);
             int offset = index - raceHeader;
-            return new AutismMacroEditorOverlay.Inner_StreamUtil(
+            return new AutismMacroEditorOverlay.BlockGroupLayout(
                false, false, false, raceHeader, childCount, offset, offset <= conditionCount ? "CONDITION" : "ACTION"
             );
          } else {
@@ -2488,22 +2488,22 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             if (reportHeader >= 0 && this.init_aM.init_List.get(reportHeader) instanceof autismclient.util.macro.ReportAction report) {
                int childCount = report.init(this.init_aM.init_List, reportHeader);
                int offset = index - reportHeader;
-               return new AutismMacroEditorOverlay.Inner_StreamUtil(false, true, false, reportHeader, childCount, offset, offset == 1 ? "START" : "END");
+               return new AutismMacroEditorOverlay.BlockGroupLayout(false, true, false, reportHeader, childCount, offset, offset == 1 ? "START" : "END");
             } else {
                int gateHeader = this.flush_I(index);
                if (gateHeader >= 0) {
                   int childCount = this.sync_I(gateHeader);
                   int offset = index - gateHeader;
                   String role = action instanceof autismclient.util.macro.EndPacketGateAction ? "GATE END" : "GATED";
-                  return new AutismMacroEditorOverlay.Inner_StreamUtil(false, false, true, gateHeader, childCount, offset, role);
+                  return new AutismMacroEditorOverlay.BlockGroupLayout(false, false, true, gateHeader, childCount, offset, role);
                } else {
                   int multiHeader = this.update_I_2(index);
                   if (multiHeader >= 0 && this.init_aM.init_List.get(multiHeader) instanceof autismclient.util.macro.MultiAction multi) {
                      int childCount = multi.init(this.init_aM.init_List, multiHeader);
                      int offset = index - multiHeader;
-                     return new AutismMacroEditorOverlay.Inner_StreamUtil(false, false, false, true, multiHeader, childCount, offset, "SKIP");
+                     return new AutismMacroEditorOverlay.BlockGroupLayout(false, false, false, true, multiHeader, childCount, offset, "SKIP");
                   } else {
-                     return AutismMacroEditorOverlay.Inner_StreamUtil.init_AutismMacroEditorO;
+                     return AutismMacroEditorOverlay.BlockGroupLayout.init_AutismMacroEditorO;
                   }
                }
             }
@@ -2558,17 +2558,17 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismMacroEditorOverlay.Inner_BufferHelper init_AutismMacroEditorO_I(int index) {
+   private AutismMacroEditorOverlay.RowHighlightFlags init_AutismMacroEditorO_I(int index) {
       int header = this.open(index);
       if (header < 0) {
-         return AutismMacroEditorOverlay.Inner_BufferHelper.init_AutismMacroEditorO;
+         return AutismMacroEditorOverlay.RowHighlightFlags.init_AutismMacroEditorO;
       }
 
       boolean ping = this.init_aM.init_List.get(header) instanceof autismclient.util.macro.SPingAction;
       boolean isHeaderRow = header == index;
       boolean first = index == 0 || this.open(index - 1) < 0;
       boolean last = index >= this.init_aM.init_List.size() - 1 || this.open(index + 1) < 0;
-      return new AutismMacroEditorOverlay.Inner_BufferHelper(true, isHeaderRow, ping, first, last);
+      return new AutismMacroEditorOverlay.RowHighlightFlags(true, isHeaderRow, ping, first, last);
    }
 
    private void data_V() {
@@ -2803,9 +2803,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       actions.add(disable);
    }
 
-   private List<AutismMacroEditorOverlay.Inner_NetHelper> init_List_AutismMacroEditorO(AutismMacroEditorOverlay.Inner_JsonUtil mode) {
-      List<AutismMacroEditorOverlay.Inner_NetHelper> entries = new ArrayList<>();
-      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
+   private List<AutismMacroEditorOverlay.PaletteEntry> init_List_AutismMacroEditorO(AutismMacroEditorOverlay.PaletteSectionKind mode) {
+      List<AutismMacroEditorOverlay.PaletteEntry> entries = new ArrayList<>();
+      if (mode == AutismMacroEditorOverlay.PaletteSectionKind.ACTION) {
          this.init_V_List(entries, "flow", "Chat", "Send a chat message or slash command.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.SendChatAction()));
          this.init_V_List(
             entries, "flow", "Delay", "Pause for a time in ms or ticks.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.DelayAction(1000))
@@ -3060,7 +3060,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.init_V_List(
             entries, "flow", "Stop Macro", "Stop this, all, or a selected macro.", () -> this.init_V_MacroAction_2(new autismclient.util.macro.StopMacroAction())
          );
-      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
+      } else if (mode == AutismMacroEditorOverlay.PaletteSectionKind.PRESET) {
          this.init_V_List(entries, "singleplayer", "Rollback", "Local container duplicate", () -> this.write(this.sync_List_2()));
          this.init_V_List(entries, "dupe", "Bundle Dupe V3", "Paper / Spigot", () -> this.write(this.update_List_2()));
          this.init_V_List(entries, "dupe", "Bundle Dupe V2", "Paper / Spigot", () -> this.write(this.flush_List_2()));
@@ -3154,9 +3154,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          );
       }
 
-      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
+      if (mode == AutismMacroEditorOverlay.PaletteSectionKind.ACTION) {
          this.init_V_List_Z_2(entries, false);
-      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
+      } else if (mode == AutismMacroEditorOverlay.PaletteSectionKind.PRESET) {
          this.read_V(entries);
       } else {
          this.init_V_List_Z_2(entries, true);
@@ -3165,7 +3165,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return entries;
    }
 
-   private void init_V_List_Z_2(List<AutismMacroEditorOverlay.Inner_NetHelper> entries, boolean conditions) {
+   private void init_V_List_Z_2(List<AutismMacroEditorOverlay.PaletteEntry> entries, boolean conditions) {
       for (MacroActionEntry entry : MacroActionRegistry.entries()) {
          if (entry.hasPicker() && entry.isCondition() == conditions) {
             Supplier<MacroAction> factory = entry.factory();
@@ -3186,7 +3186,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void read_V(List<AutismMacroEditorOverlay.Inner_NetHelper> entries) {
+   private void read_V(List<AutismMacroEditorOverlay.PaletteEntry> entries) {
       for (MacroPresetRegistry.PresetEntry preset : MacroPresetRegistry.entries()) {
          Supplier<List<MacroAction>> builder = preset.builder();
          this.init_V_List(entries, preset.categoryId(), preset.label(), preset.tip(), () -> {
@@ -3206,47 +3206,47 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<AutismMacroEditorOverlay.Inner_TaskQueue> init_List_AutismMacroEditorO_List(
-      AutismMacroEditorOverlay.Inner_JsonUtil mode, List<AutismMacroEditorOverlay.Inner_NetHelper> entries
+   private List<AutismMacroEditorOverlay.PaletteCategory> init_List_AutismMacroEditorO_List(
+      AutismMacroEditorOverlay.PaletteSectionKind mode, List<AutismMacroEditorOverlay.PaletteEntry> entries
    ) {
-      List<AutismMacroEditorOverlay.Inner_TaskQueue> categories = new ArrayList<>();
-      Consumer<AutismMacroEditorOverlay.Inner_TaskQueue> addCategory = category -> {
-         for (AutismMacroEditorOverlay.Inner_NetHelper entry : entries) {
+      List<AutismMacroEditorOverlay.PaletteCategory> categories = new ArrayList<>();
+      Consumer<AutismMacroEditorOverlay.PaletteCategory> addCategory = category -> {
+         for (AutismMacroEditorOverlay.PaletteEntry entry : entries) {
             if (entry.init_Str.equals(category.init_Str)) {
                categories.add(category);
                return;
             }
          }
       };
-      if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION) {
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("flow", "Flow", -11352981));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("movement", "Movement", -42406));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("interaction", "Interaction", -12268476));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("inventory", "Inventory", -11182));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("network", "Packets", -10835457));
-      } else if (mode == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET) {
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("singleplayer", "Singleplayer", -12268476));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("dupe", "Duplication", -10835457));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("trade", "Trade", -11182));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("crash", "Crash", -4555521));
+      if (mode == AutismMacroEditorOverlay.PaletteSectionKind.ACTION) {
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("flow", "Flow", -11352981));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("movement", "Movement", -42406));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("interaction", "Interaction", -12268476));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("inventory", "Inventory", -11182));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("network", "Packets", -10835457));
+      } else if (mode == AutismMacroEditorOverlay.PaletteSectionKind.PRESET) {
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("singleplayer", "Singleplayer", -12268476));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("dupe", "Duplication", -10835457));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("trade", "Trade", -11182));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("crash", "Crash", -4555521));
       } else {
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("player", "Player", -42406));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("inventory", "Inventory", -11182));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("world", "World", -11352981));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("gui_chat", "GUI / Chat", -11182));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("packets", "Packets", -10835457));
-         addCategory.accept(new AutismMacroEditorOverlay.Inner_TaskQueue("sync", "Sync", -10835457));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("player", "Player", -42406));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("inventory", "Inventory", -11182));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("world", "World", -11352981));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("gui_chat", "GUI / Chat", -11182));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("packets", "Packets", -10835457));
+         addCategory.accept(new AutismMacroEditorOverlay.PaletteCategory("sync", "Sync", -10835457));
       }
 
       Set<String> known = new HashSet<>();
 
-      for (AutismMacroEditorOverlay.Inner_TaskQueue c : categories) {
+      for (AutismMacroEditorOverlay.PaletteCategory c : categories) {
          known.add(c.init_Str);
       }
 
       LinkedHashSet<String> extra = new LinkedHashSet<>();
 
-      for (AutismMacroEditorOverlay.Inner_NetHelper entry : entries) {
+      for (AutismMacroEditorOverlay.PaletteEntry entry : entries) {
          if (!known.contains(entry.init_Str)) {
             extra.add(entry.init_Str);
          }
@@ -3265,7 +3265,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             color = -5609729;
          }
 
-         categories.add(new AutismMacroEditorOverlay.Inner_TaskQueue(catId, label, color));
+         categories.add(new AutismMacroEditorOverlay.PaletteCategory(catId, label, color));
       }
 
       return categories;
@@ -3308,11 +3308,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil mode) {
+   private void init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind mode) {
       if (!this.queue_Z() && mode != null) {
          this.reset_V_3();
          this.init_AutismMacroEditorO_3 = mode;
-         List<AutismMacroEditorOverlay.Inner_NetHelper> entries = this.init_List_AutismMacroEditorO(mode);
+         List<AutismMacroEditorOverlay.PaletteEntry> entries = this.init_List_AutismMacroEditorO(mode);
          this.init_a.init_V_List(entries);
          this.init_a.init_V_Str("");
          this.read_k = new ThemedTextInputBox(init_Minecraft, this.init_Font, 0, 0, 1, 16, false);
@@ -3335,11 +3335,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<AutismMacroEditorOverlay.Inner_NetHelper> get_List() {
+   private List<AutismMacroEditorOverlay.PaletteEntry> get_List() {
       return !this.valid_Z() ? Collections.emptyList() : this.open_List;
    }
 
-   private List<AutismMacroEditorOverlay.Inner_NetHelper> init_List_Str_2(String categoryId) {
+   private List<AutismMacroEditorOverlay.PaletteEntry> init_List_Str_2(String categoryId) {
       return categoryId != null && !categoryId.isEmpty() ? this.init_Map.getOrDefault(categoryId, Collections.emptyList()) : Collections.emptyList();
    }
 
@@ -3348,15 +3348,15 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.init_a.init_V_Str(query);
       this.open_List = this.init_a.init_List();
       this.close_List = this.init_List_AutismMacroEditorO_List(this.init_AutismMacroEditorO_3, this.open_List);
-      Map<String, List<AutismMacroEditorOverlay.Inner_NetHelper>> grouped = new LinkedHashMap<>();
+      Map<String, List<AutismMacroEditorOverlay.PaletteEntry>> grouped = new LinkedHashMap<>();
 
-      for (AutismMacroEditorOverlay.Inner_NetHelper entry : this.open_List) {
+      for (AutismMacroEditorOverlay.PaletteEntry entry : this.open_List) {
          grouped.computeIfAbsent(entry.init_Str, ignored -> new ArrayList<>()).add(entry);
       }
 
-      Map<String, List<AutismMacroEditorOverlay.Inner_NetHelper>> frozen = new LinkedHashMap<>();
+      Map<String, List<AutismMacroEditorOverlay.PaletteEntry>> frozen = new LinkedHashMap<>();
 
-      for (Entry<String, List<AutismMacroEditorOverlay.Inner_NetHelper>> entry : grouped.entrySet()) {
+      for (Entry<String, List<AutismMacroEditorOverlay.PaletteEntry>> entry : grouped.entrySet()) {
          frozen.put(entry.getKey(), List.copyOf(entry.getValue()));
       }
 
@@ -3384,7 +3384,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return Math.max(1, Math.min(maxColumns, (gridW + columnGap) / (minColumnW + columnGap)));
    }
 
-   private int init_I_List_I_2(List<AutismMacroEditorOverlay.Inner_NetHelper> entries, int columnW) {
+   private int init_I_List_I_2(List<AutismMacroEditorOverlay.PaletteEntry> entries, int columnW) {
       int cardGap = 3;
       int rowGap = 1;
       int cardH = 14;
@@ -3393,7 +3393,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int buttonX = 0;
       int buttonY = sectionLabelH + 2;
 
-      for (AutismMacroEditorOverlay.Inner_NetHelper entry : entries) {
+      for (AutismMacroEditorOverlay.PaletteEntry entry : entries) {
          if (buttonX > 0 && buttonX + buttonW > columnW) {
             buttonX = 0;
             buttonY += cardH + rowGap;
@@ -3405,7 +3405,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return entries.isEmpty() ? sectionLabelH : buttonY + cardH;
    }
 
-   private List<AutismMacroEditorOverlay.Inner_SyncManager> init_List_I(int gridX, int startY, int gridW) {
+   private List<AutismMacroEditorOverlay.PaletteCategoryLayout> init_List_I(int gridX, int startY, int gridW) {
       int cardGap = 3;
       int rowGap = 1;
       int cardH = 14;
@@ -3415,13 +3415,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int columnCount = this.poll(gridW);
       int columnW = Math.max(1, (gridW - columnGap * (columnCount - 1)) / columnCount);
       int targetColumnHeight = Math.max(96, (init_Minecraft.getWindow() != null ? cA.load_I() : 320) - 96);
-      List<AutismMacroEditorOverlay.Inner_SyncManager> layouts = new ArrayList<>();
+      List<AutismMacroEditorOverlay.PaletteCategoryLayout> layouts = new ArrayList<>();
       int column = 0;
       int[] columnY = new int[columnCount];
       Arrays.fill(columnY, startY);
 
-      for (AutismMacroEditorOverlay.Inner_TaskQueue category : this.close_List) {
-         List<AutismMacroEditorOverlay.Inner_NetHelper> categoryEntries = this.init_List_Str_2(category.init_Str);
+      for (AutismMacroEditorOverlay.PaletteCategory category : this.close_List) {
+         List<AutismMacroEditorOverlay.PaletteEntry> categoryEntries = this.init_List_Str_2(category.init_Str);
          if (!categoryEntries.isEmpty()) {
             int blockHeight = this.init_I_List_I_2(categoryEntries, columnW);
             if (column < columnCount - 1 && columnY[column] > startY && columnY[column] + blockHeight > startY + targetColumnHeight) {
@@ -3431,9 +3431,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             int sectionX = gridX + column * (columnW + columnGap);
             int sectionY = columnY[column];
             int firstRowY = sectionY + sectionLabelH + 2;
-            List<AutismMacroEditorOverlay.Inner_ConfigStore> buttons = this.init(categoryEntries, sectionX, firstRowY, columnW, cardGap, cardH, rowGap);
+            List<AutismMacroEditorOverlay.PaletteButtonBounds> buttons = this.init(categoryEntries, sectionX, firstRowY, columnW, cardGap, cardH, rowGap);
             int bottomY = buttons.isEmpty() ? sectionY + sectionLabelH : buttons.get(buttons.size() - 1).load + cardH;
-            layouts.add(new AutismMacroEditorOverlay.Inner_SyncManager(category, sectionX, sectionY, columnW, buttons, bottomY));
+            layouts.add(new AutismMacroEditorOverlay.PaletteCategoryLayout(category, sectionX, sectionY, columnW, buttons, bottomY));
             columnY[column] = bottomY + sectionGap;
          }
       }
@@ -3441,18 +3441,18 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return layouts;
    }
 
-   private List<AutismMacroEditorOverlay.Inner_ConfigStore> init(
-      List<AutismMacroEditorOverlay.Inner_NetHelper> entries, int sectionX, int firstRowY, int columnW, int cardGap, int cardH, int rowGap
+   private List<AutismMacroEditorOverlay.PaletteButtonBounds> init(
+      List<AutismMacroEditorOverlay.PaletteEntry> entries, int sectionX, int firstRowY, int columnW, int cardGap, int cardH, int rowGap
    ) {
-      List<AutismMacroEditorOverlay.Inner_ConfigStore> buttons = new ArrayList<>();
+      List<AutismMacroEditorOverlay.PaletteButtonBounds> buttons = new ArrayList<>();
       if (entries != null && !entries.isEmpty()) {
-         List<AutismMacroEditorOverlay.Inner_NetHelper> ordered = this.read_List(entries);
+         List<AutismMacroEditorOverlay.PaletteEntry> ordered = this.read_List(entries);
          int minBtn = Math.min(34, Math.max(1, (columnW - cardGap) / 2));
          int y = firstRowY;
 
          for (int i = 0; i < ordered.size(); i += 2) {
             if (i + 1 >= ordered.size()) {
-               buttons.add(new AutismMacroEditorOverlay.Inner_ConfigStore(ordered.get(i), sectionX, y, columnW, cardH));
+               buttons.add(new AutismMacroEditorOverlay.PaletteButtonBounds(ordered.get(i), sectionX, y, columnW, cardH));
             } else {
                int avail = Math.max(2 * minBtn, columnW - cardGap);
                int n0 = this.write(ordered.get(i).load) + 10;
@@ -3461,8 +3461,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                int w0 = Math.round((float)avail * n0 / total);
                w0 = Math.max(minBtn, Math.min(avail - minBtn, w0));
                int w1 = avail - w0;
-               buttons.add(new AutismMacroEditorOverlay.Inner_ConfigStore(ordered.get(i), sectionX, y, w0, cardH));
-               buttons.add(new AutismMacroEditorOverlay.Inner_ConfigStore(ordered.get(i + 1), sectionX + w0 + cardGap, y, w1, cardH));
+               buttons.add(new AutismMacroEditorOverlay.PaletteButtonBounds(ordered.get(i), sectionX, y, w0, cardH));
+               buttons.add(new AutismMacroEditorOverlay.PaletteButtonBounds(ordered.get(i + 1), sectionX + w0 + cardGap, y, w1, cardH));
             }
 
             y += cardH + rowGap;
@@ -3474,14 +3474,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<AutismMacroEditorOverlay.Inner_NetHelper> read_List(List<AutismMacroEditorOverlay.Inner_NetHelper> entries) {
+   private List<AutismMacroEditorOverlay.PaletteEntry> read_List(List<AutismMacroEditorOverlay.PaletteEntry> entries) {
       if (entries.size() <= 2) {
          return new ArrayList<>(entries);
       }
 
-      List<AutismMacroEditorOverlay.Inner_NetHelper> sorted = new ArrayList<>(entries);
+      List<AutismMacroEditorOverlay.PaletteEntry> sorted = new ArrayList<>(entries);
       sorted.sort(Comparator.comparingInt(e -> this.write(e.load)));
-      List<AutismMacroEditorOverlay.Inner_NetHelper> ordered = new ArrayList<>(entries.size());
+      List<AutismMacroEditorOverlay.PaletteEntry> ordered = new ArrayList<>(entries.size());
       int lo = 0;
       int hi = sorted.size() - 1;
 
@@ -3498,10 +3498,10 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return ordered;
    }
 
-   private int init_I_List_3(List<AutismMacroEditorOverlay.Inner_SyncManager> layouts) {
+   private int init_I_List_3(List<AutismMacroEditorOverlay.PaletteCategoryLayout> layouts) {
       int maxBottom = 0;
       if (layouts != null) {
-         for (AutismMacroEditorOverlay.Inner_SyncManager layout : layouts) {
+         for (AutismMacroEditorOverlay.PaletteCategoryLayout layout : layouts) {
             maxBottom = Math.max(maxBottom, layout.write);
          }
       }
@@ -3509,14 +3509,14 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return Math.max(0, maxBottom);
    }
 
-   private int load_I_List(List<AutismMacroEditorOverlay.Inner_SyncManager> layouts) {
+   private int load_I_List(List<AutismMacroEditorOverlay.PaletteCategoryLayout> layouts) {
       if (layouts != null && !layouts.isEmpty()) {
          int maxRight = 0;
          int minLeft = 2147483647;
          Identifier pickerFont = this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.load);
          int pickerColor = this.init_CharEncoder.load(autismclient.gui.f.b.l.read);
 
-         for (AutismMacroEditorOverlay.Inner_SyncManager section : layouts) {
+         for (AutismMacroEditorOverlay.PaletteCategoryLayout section : layouts) {
             minLeft = Math.min(minLeft, section.init_I);
             maxRight = Math.max(
                maxRight,
@@ -3524,7 +3524,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                   + Math.min(section.read, autismclient.gui.f.b.k.init(this.init_Font, section.init_AutismMacroEditorO.load, pickerFont, pickerColor))
             );
 
-            for (AutismMacroEditorOverlay.Inner_ConfigStore button : section.init_List) {
+            for (AutismMacroEditorOverlay.PaletteButtonBounds button : section.init_List) {
                minLeft = Math.min(minLeft, button.init_I);
                maxRight = Math.max(maxRight, button.init_I + button.read);
             }
@@ -3583,7 +3583,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismMacroEditorOverlay.Inner_CachePool init_AutismMacroEditorO() {
+   private AutismMacroEditorOverlay.UndoSnapshot init_AutismMacroEditorO() {
       CompoundTag snapshot = this.init_CompoundTag();
       if (snapshot == null) {
          return null;
@@ -3598,12 +3598,12 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      return new AutismMacroEditorOverlay.Inner_CachePool(snapshot, List.copyOf(selectedIndices));
+      return new AutismMacroEditorOverlay.UndoSnapshot(snapshot, List.copyOf(selectedIndices));
    }
 
-   private void init_V_Deque_AutismMacroEditorO(Deque<AutismMacroEditorOverlay.Inner_CachePool> history, AutismMacroEditorOverlay.Inner_CachePool state) {
+   private void init_V_Deque_AutismMacroEditorO(Deque<AutismMacroEditorOverlay.UndoSnapshot> history, AutismMacroEditorOverlay.UndoSnapshot state) {
       if (history != null && state != null && state.init_CompoundTag != null) {
-         AutismMacroEditorOverlay.Inner_CachePool head = history.peekFirst();
+         AutismMacroEditorOverlay.UndoSnapshot head = history.peekFirst();
          if (head != null && init_Z_CompoundTag_CompoundTag(head.init_CompoundTag, state.init_CompoundTag)) {
             history.removeFirst();
          }
@@ -3634,7 +3634,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return this.init_aM != null && !this.load_Deque.isEmpty();
    }
 
-   private void init_V_AutismMacroEditorO_2(AutismMacroEditorOverlay.Inner_CachePool state) {
+   private void init_V_AutismMacroEditorO_2(AutismMacroEditorOverlay.UndoSnapshot state) {
       if (this.init_aM != null && state != null && state.init_CompoundTag != null) {
          this.init_aM.init_aM_CompoundTag(state.init_CompoundTag);
          this.fill_V();
@@ -3652,7 +3652,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void flags_V() {
       if (!this.queue_Z() && this.size_Z()) {
-         AutismMacroEditorOverlay.Inner_CachePool previous = this.init_Deque.pollFirst();
+         AutismMacroEditorOverlay.UndoSnapshot previous = this.init_Deque.pollFirst();
          if (previous != null) {
             this.init_V_Deque_AutismMacroEditorO(this.load_Deque, this.init_AutismMacroEditorO());
             this.init_V_AutismMacroEditorO_2(previous);
@@ -3662,7 +3662,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void level_V() {
       if (!this.queue_Z() && this.data_Z()) {
-         AutismMacroEditorOverlay.Inner_CachePool next = this.load_Deque.pollFirst();
+         AutismMacroEditorOverlay.UndoSnapshot next = this.load_Deque.pollFirst();
          if (next != null) {
             this.init_V_Deque_AutismMacroEditorO(this.init_Deque, this.init_AutismMacroEditorO());
             this.init_V_AutismMacroEditorO_2(next);
@@ -3675,23 +3675,23 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    public void init_V_aM_Z(AutismMacro macroToEdit, boolean reopenMacroListOnClose) {
-      this.init_V_aM(macroToEdit, reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, null, false);
+      this.init_V_aM(macroToEdit, reopenMacroListOnClose, AutismMacroEditorOverlay.EditorMode.NORMAL, null, false);
    }
 
    public void load_V_aM(AutismMacro sharedMacro) {
-      this.init_V_aM(sharedMacro, false, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, null, true);
+      this.init_V_aM(sharedMacro, false, AutismMacroEditorOverlay.EditorMode.NORMAL, null, true);
    }
 
    public void init_V_aM_Consumer_2(AutismMacro macroToEdit, Consumer<AutismMacro> onSaveComplete) {
-      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.JOIN_MACRO_MENU, onSaveComplete, false);
+      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.EditorMode.JOIN_MACRO_MENU, onSaveComplete, false);
    }
 
    public void load_V_aM_Consumer(AutismMacro macroToEdit, Consumer<AutismMacro> onSaveComplete) {
-      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.Inner_DataUtil.NORMAL, onSaveComplete, false);
+      this.init_V_aM(macroToEdit, false, AutismMacroEditorOverlay.EditorMode.NORMAL, onSaveComplete, false);
    }
 
    private void init_V_aM(
-      AutismMacro macroToEdit, boolean reopenMacroListOnClose, AutismMacroEditorOverlay.Inner_DataUtil context, Consumer<AutismMacro> onSaveComplete, boolean forceNew
+      AutismMacro macroToEdit, boolean reopenMacroListOnClose, AutismMacroEditorOverlay.EditorMode context, Consumer<AutismMacro> onSaveComplete, boolean forceNew
    ) {
       this.load_aM = null;
       if (this.write_Z) {
@@ -3708,7 +3708,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.read_aM = null;
       this.init_aM = null;
       this.sync_Z = reopenMacroListOnClose;
-      this.init_AutismMacroEditorO = context == null ? AutismMacroEditorOverlay.Inner_DataUtil.NORMAL : context;
+      this.init_AutismMacroEditorO = context == null ? AutismMacroEditorOverlay.EditorMode.NORMAL : context;
       this.init_Consumer = onSaveComplete;
       this.write_Z = true;
       AutismSessionState.init_ck().init_V_Z(true);
@@ -3763,7 +3763,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean value_Z() {
-      return this.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_DataUtil.JOIN_MACRO_MENU;
+      return this.init_AutismMacroEditorO == AutismMacroEditorOverlay.EditorMode.JOIN_MACRO_MENU;
    }
 
    private boolean cache_Z() {
@@ -3846,7 +3846,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.run_Z = false;
       this.init_CompoundTag = null;
       this.sync_Z = false;
-      this.init_AutismMacroEditorO = AutismMacroEditorOverlay.Inner_DataUtil.NORMAL;
+      this.init_AutismMacroEditorO = AutismMacroEditorOverlay.EditorMode.NORMAL;
       this.init_Consumer = null;
       ActionEditorOverlay.init_ActionEditorOverla_2().load_V_Z(true);
       this.next_V_3();
@@ -4364,7 +4364,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             builderButtonY,
             addActionW,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.ACTION),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind.ACTION),
             !stepListLocked
          );
          groupX += addActionW + builderGroupGap;
@@ -4374,7 +4374,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             builderButtonY,
             addConditionalW,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.CONDITIONAL),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind.CONDITIONAL),
             !stepListLocked
          );
          groupX += addConditionalW + builderGroupGap;
@@ -4384,7 +4384,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             builderButtonY,
             presetsW,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.PRESET),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind.PRESET),
             !stepListLocked
          );
       } else {
@@ -4398,7 +4398,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             builderButtonY,
             sideBuilderWidth,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.ACTION),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind.ACTION),
             !stepListLocked
          );
          this.init(
@@ -4407,7 +4407,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             builderButtonY,
             conditionalBuilderWidth,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.CONDITIONAL),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind.CONDITIONAL),
             !stepListLocked
          );
          this.init(
@@ -4416,7 +4416,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             builderButtonY,
             sideBuilderWidth,
             bh,
-            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.Inner_JsonUtil.PRESET),
+            () -> this.init_V_AutismMacroEditorO_3(AutismMacroEditorOverlay.PaletteSectionKind.PRESET),
             !stepListLocked
          );
       }
@@ -5036,8 +5036,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                            : this.load_I_I_2(i, activeDragIndex, activeDragTarget);
                         int actionY = y + visualIndex * this.mark_I();
                         if (this.init_Z_I_2(actionY)) {
-                           AutismMacroEditorOverlay.Inner_UiHelper motion = this.init_AutismMacroEditorO_I_3(this.write_I(action));
-                           int animatedY = motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.MOVE
+                           AutismMacroEditorOverlay.RowTransitionAnim motion = this.init_AutismMacroEditorO_I_3(this.write_I(action));
+                           int animatedY = motion != null && motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.RowAnimKind.MOVE
                               ? this.init_I_AutismMacroEditorO_I(motion, y)
                               : actionY;
                            int enterOffset = this.init_I_AutismMacroEditorO(motion);
@@ -5059,8 +5059,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  for (AutismMacroEditorOverlay.Inner_UiHelper motion : this.push_List) {
-                     if (motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.Inner_RenderState.EXIT) {
+                  for (AutismMacroEditorOverlay.RowTransitionAnim motion : this.push_List) {
+                     if (motion.init_AutismMacroEditorO == AutismMacroEditorOverlay.RowAnimKind.EXIT) {
                         int actionY = this.init_I_AutismMacroEditorO_I(motion, y);
                         if (this.init_Z_I_2(actionY)) {
                            this.init_V_GuiGraphicsExtract_5(
@@ -5186,8 +5186,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void init(
       GuiGraphicsExtractor context,
-      AutismMacroEditorOverlay.Inner_TaskQueue category,
-      AutismMacroEditorOverlay.Inner_NetHelper entry,
+      AutismMacroEditorOverlay.PaletteCategory category,
+      AutismMacroEditorOverlay.PaletteEntry entry,
       int x,
       int y,
       int width,
@@ -5267,7 +5267,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    ) {
       int rowLeft = this.get_I_10() + 1 + xOffset;
       int rowRight = this.chunk_I() + xOffset;
-      AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(actionIndex, action);
+      AutismMacroEditorOverlay.BlockGroupLayout group = this.init_AutismMacroEditorO_I_MacroAction(actionIndex, action);
       boolean groupBody = group.init() && !group.init_Z;
       boolean multiBody = group.write && !group.init_Z;
       boolean groupHeader = group.init() && group.init_Z;
@@ -5284,7 +5284,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.init(
          context, rowLeft, actionY + 1, rowRight - rowLeft, this.mark_I() - 2, autismclient.gui.ui.layout.LayoutContext.init(bgColor, alpha)
       );
-      AutismMacroEditorOverlay.Inner_BufferHelper impact = this.init_AutismMacroEditorO_I(actionIndex);
+      AutismMacroEditorOverlay.RowHighlightFlags impact = this.init_AutismMacroEditorO_I(actionIndex);
       if (impact.init_Z) {
          int rh = this.mark_I();
          int rgb = (impact.read ? UiColorPalette.buffer() : UiColorPalette.queue()) & 16777215;
@@ -5511,9 +5511,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int pickerY = this.C();
       int pickerW = this.x();
       int pickerH = this.A();
-      String title = this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.Inner_JsonUtil.ACTION
+      String title = this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.PaletteSectionKind.ACTION
          ? "Add Action"
-         : (this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.Inner_JsonUtil.PRESET ? "Presets" : "Add Conditional");
+         : (this.init_AutismMacroEditorO_3 == AutismMacroEditorOverlay.PaletteSectionKind.PRESET ? "Presets" : "Add Conditional");
       autismclient.gui.ui.widgets.WindowFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(context, this.init_Font, mouseX, mouseY),
          autismclient.gui.f.NetHelper.init(pickerX, pickerY, pickerW, pickerH),
@@ -5539,7 +5539,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       int contentH = Math.max(1, pickerH - 48);
       int gridY = contentY;
       int gridH = contentH;
-      List<AutismMacroEditorOverlay.Inner_SyncManager> layouts = this.init_List_I(contentX, contentY - this.buffer, contentW);
+      List<AutismMacroEditorOverlay.PaletteCategoryLayout> layouts = this.init_List_I(contentX, contentY - this.buffer, contentW);
       int contentHeight = this.z();
       int maxScroll = Math.max(0, contentHeight - contentH);
       this.buffer = Math.max(0, Math.min(this.buffer, maxScroll));
@@ -5547,7 +5547,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          .init(context, autismclient.gui.f.NetHelper.init(contentX, contentY, Math.max(0, contentW), Math.max(0, contentH)));
 
       try {
-         for (AutismMacroEditorOverlay.Inner_SyncManager section : layouts) {
+         for (AutismMacroEditorOverlay.PaletteCategoryLayout section : layouts) {
             int sectionTop = section.load;
             int sectionBottom = section.write;
             if (sectionBottom >= gridY && sectionTop <= gridY + gridH) {
@@ -5570,7 +5570,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
                );
             }
 
-            for (AutismMacroEditorOverlay.Inner_ConfigStore button : section.init_List) {
+            for (AutismMacroEditorOverlay.PaletteButtonBounds button : section.init_List) {
                int cardX = button.init_I;
                int cardY = button.load;
                int cardW = button.read;
@@ -5643,8 +5643,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (!(mouseX < contentX) && !(mouseX >= contentX + contentW) && !(mouseY < contentY) && !(mouseY >= contentY + contentH)) {
-         for (AutismMacroEditorOverlay.Inner_SyncManager section : this.init_List_I(contentX, contentY - this.buffer, contentW)) {
-            for (AutismMacroEditorOverlay.Inner_ConfigStore buttonLayout : section.init_List) {
+         for (AutismMacroEditorOverlay.PaletteCategoryLayout section : this.init_List_I(contentX, contentY - this.buffer, contentW)) {
+            for (AutismMacroEditorOverlay.PaletteButtonBounds buttonLayout : section.init_List) {
                int cardX = buttonLayout.init_I;
                int cardY = buttonLayout.load;
                int cardW = buttonLayout.read;
@@ -5808,7 +5808,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
             if (index >= 0 && index < this.init_aM.init_List.size()) {
                MacroAction action = this.init_aM.init_List.get(index);
-               AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(index, action);
+               AutismMacroEditorOverlay.BlockGroupLayout group = this.init_AutismMacroEditorO_I_MacroAction(index, action);
                boolean groupBody = group.init() && !group.init_Z;
                boolean multiBody = group.write && !group.init_Z;
                boolean gateEnd = group.read_Z && action instanceof autismclient.util.macro.EndPacketGateAction;
@@ -5935,7 +5935,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void sync_V(int index) {
       if (!this.queue_Z() && index >= 0 && index < this.init_aM.init_List.size()) {
-         AutismMacroEditorOverlay.Inner_StreamUtil group = this.init_AutismMacroEditorO_I_MacroAction(index, this.init_aM.init_List.get(index));
+         AutismMacroEditorOverlay.BlockGroupLayout group = this.init_AutismMacroEditorO_I_MacroAction(index, this.init_aM.init_List.get(index));
          if (group.init() && !group.write) {
             return;
          }
@@ -6548,8 +6548,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       return false;
    }
 
-   private static final class Inner_BufferHelper {
-      private static final AutismMacroEditorOverlay.Inner_BufferHelper init_AutismMacroEditorO = new AutismMacroEditorOverlay.Inner_BufferHelper(
+   private static final class RowHighlightFlags {
+      private static final AutismMacroEditorOverlay.RowHighlightFlags init_AutismMacroEditorO = new AutismMacroEditorOverlay.RowHighlightFlags(
          false, false, false, false, false
       );
       private final boolean init_Z;
@@ -6558,7 +6558,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       private final boolean write;
       private final boolean update;
 
-      private Inner_BufferHelper(boolean impacted, boolean header, boolean ping, boolean first, boolean last) {
+      private RowHighlightFlags(boolean impacted, boolean header, boolean ping, boolean first, boolean last) {
          this.init_Z = impacted;
          this.load = header;
          this.read = ping;
@@ -6567,17 +6567,17 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record Inner_CachePool(CompoundTag init_CompoundTag, List<Integer> init_List) {
+   private record UndoSnapshot(CompoundTag init_CompoundTag, List<Integer> init_List) {
    }
 
-   private static final class Inner_ConfigStore {
-      private final AutismMacroEditorOverlay.Inner_NetHelper init_AutismMacroEditorO;
+   private static final class PaletteButtonBounds {
+      private final AutismMacroEditorOverlay.PaletteEntry init_AutismMacroEditorO;
       private final int init_I;
       private final int load;
       private final int read;
       private final int write;
 
-      private Inner_ConfigStore(AutismMacroEditorOverlay.Inner_NetHelper entry, int x, int y, int width, int height) {
+      private PaletteButtonBounds(AutismMacroEditorOverlay.PaletteEntry entry, int x, int y, int width, int height) {
          this.init_AutismMacroEditorO = entry;
          this.init_I = x;
          this.load = y;
@@ -6586,19 +6586,19 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum EditorMode {
       NORMAL,
       JOIN_MACRO_MENU;
    }
 
-   private static final class Inner_EventBus {
+   private static final class ActionRowItem {
       private final MacroAction init_MacroAction;
       private final int init_I;
       private final String init_Str;
       private final boolean init_Z;
       private final int load;
 
-      private Inner_EventBus(MacroAction action, int stableId, String label, boolean conditional, int index) {
+      private ActionRowItem(MacroAction action, int stableId, String label, boolean conditional, int index) {
          this.init_MacroAction = action;
          this.init_I = stableId;
          this.init_Str = label;
@@ -6607,7 +6607,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_FileCache {
+   private static final class RowSelectionSet {
       private final LinkedHashSet<Integer> init = new LinkedHashSet<>();
 
       private void init_V() {
@@ -6643,19 +6643,19 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private enum Inner_JsonUtil {
+   private enum PaletteSectionKind {
       ACTION,
       CONDITIONAL,
       PRESET;
    }
 
-   private static final class Inner_NetHelper {
+   private static final class PaletteEntry {
       private final String init_Str;
       private final String load;
       private final String read;
       private final Runnable init_Runnable;
 
-      private Inner_NetHelper(String categoryId, String label, String description, Runnable action) {
+      private PaletteEntry(String categoryId, String label, String description, Runnable action) {
          this.init_Str = categoryId;
          this.load = label;
          this.read = description;
@@ -6663,13 +6663,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private enum Inner_RenderState {
+   private enum RowAnimKind {
       ENTER,
       MOVE,
       EXIT;
    }
 
-   private final class Inner_StateCache implements AutismOverlay {
+   private final class OverlayAdapter implements AutismOverlay {
       @Override
       public void init_V_GuiGraphicsExtract_15(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
          if (this.sync_Z()) {
@@ -6753,8 +6753,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_StreamUtil {
-      private static final AutismMacroEditorOverlay.Inner_StreamUtil init_AutismMacroEditorO = new AutismMacroEditorOverlay.Inner_StreamUtil(
+   private static final class BlockGroupLayout {
+      private static final AutismMacroEditorOverlay.BlockGroupLayout init_AutismMacroEditorO = new AutismMacroEditorOverlay.BlockGroupLayout(
          false, false, false, -1, 0, 0, ""
       );
       private final boolean init_Z;
@@ -6766,11 +6766,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       private final int read_I;
       private final String init_Str;
 
-      private Inner_StreamUtil(boolean header, boolean report, boolean gate, int headerIndex, int childCount, int offsetFromHeader, String roleLabel) {
+      private BlockGroupLayout(boolean header, boolean report, boolean gate, int headerIndex, int childCount, int offsetFromHeader, String roleLabel) {
          this(header, report, gate, false, headerIndex, childCount, offsetFromHeader, roleLabel);
       }
 
-      private Inner_StreamUtil(
+      private BlockGroupLayout(
          boolean header, boolean report, boolean gate, boolean multi, int headerIndex, int childCount, int offsetFromHeader, String roleLabel
       ) {
          this.init_Z = header;
@@ -6796,20 +6796,20 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_SyncManager {
-      private final AutismMacroEditorOverlay.Inner_TaskQueue init_AutismMacroEditorO;
+   private static final class PaletteCategoryLayout {
+      private final AutismMacroEditorOverlay.PaletteCategory init_AutismMacroEditorO;
       private final int init_I;
       private final int load;
       private final int read;
-      private final List<AutismMacroEditorOverlay.Inner_ConfigStore> init_List;
+      private final List<AutismMacroEditorOverlay.PaletteButtonBounds> init_List;
       private final int write;
 
-      private Inner_SyncManager(
-         AutismMacroEditorOverlay.Inner_TaskQueue category,
+      private PaletteCategoryLayout(
+         AutismMacroEditorOverlay.PaletteCategory category,
          int x,
          int headerY,
          int width,
-         List<AutismMacroEditorOverlay.Inner_ConfigStore> buttons,
+         List<AutismMacroEditorOverlay.PaletteButtonBounds> buttons,
          int bottomY
       ) {
          this.init_AutismMacroEditorO = category;
@@ -6821,24 +6821,24 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_TaskQueue {
+   private static final class PaletteCategory {
       private final String init_Str;
       private final String load;
       private final int init_I;
 
-      private Inner_TaskQueue(String id, String label, int color) {
+      private PaletteCategory(String id, String label, int color) {
          this.init_Str = id;
          this.load = label;
          this.init_I = color;
       }
    }
 
-   private static final class Inner_TextFormat {
-      private static final AutismMacroEditorOverlay.Inner_TextFormat init_AutismMacroEditorO = new AutismMacroEditorOverlay.Inner_TextFormat(-1, -1);
+   private static final class IndexRange {
+      private static final AutismMacroEditorOverlay.IndexRange init_AutismMacroEditorO = new AutismMacroEditorOverlay.IndexRange(-1, -1);
       private final int init_I;
       private final int load;
 
-      private Inner_TextFormat(int start, int endExclusive) {
+      private IndexRange(int start, int endExclusive) {
          this.init_I = start;
          this.load = endExclusive;
       }
@@ -6848,16 +6848,16 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_UiHelper {
+   private static final class RowTransitionAnim {
       private final int init_I;
       private final String init_Str;
       private final boolean init_Z;
       private final int load;
       private final int read;
-      private final AutismMacroEditorOverlay.Inner_RenderState init_AutismMacroEditorO;
+      private final AutismMacroEditorOverlay.RowAnimKind init_AutismMacroEditorO;
       private float init_F;
 
-      private Inner_UiHelper(int stableId, String label, boolean conditional, int fromRowIndex, int toRowIndex, AutismMacroEditorOverlay.Inner_RenderState kind) {
+      private RowTransitionAnim(int stableId, String label, boolean conditional, int fromRowIndex, int toRowIndex, AutismMacroEditorOverlay.RowAnimKind kind) {
          this.init_I = stableId;
          this.init_Str = label;
          this.init_Z = conditional;

@@ -20,7 +20,7 @@ final class AiChatView {
    final AiActionMenu init_StreamUtil;
    private final AiTranscriptLayout init_cC = new AiTranscriptLayout();
    private final AiUiKit.Inner_StreamUtil init_cE_StreamUtil = new AiUiKit.Inner_StreamUtil(true);
-   private final Map<AiService.Inner_JsonUtil, Boolean> init_Map = new IdentityHashMap<>();
+   private final Map<AiService.TranscriptEntry, Boolean> init_Map = new IdentityHashMap<>();
    private AiTranscriptLayout.Inner_ConfigStore init_cC_ConfigStore;
    private int read_I;
    private boolean init_Z;
@@ -37,7 +37,7 @@ final class AiChatView {
    private final ArrayList<AiAttachments.Inner_DataUtil> init_ArrayList = new ArrayList<>();
    private boolean read_Z;
    private boolean write_Z;
-   private final Map<AiService.Inner_JsonUtil, String> load_Map = new IdentityHashMap<>();
+   private final Map<AiService.TranscriptEntry, String> load_Map = new IdentityHashMap<>();
    private String write_Str = "";
    private List<String> read_List = List.of();
    private int flush = -1;
@@ -187,7 +187,7 @@ final class AiChatView {
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(area.read(), area.write(), area.update(), Math.max(0, bottom - area.write()));
          int keep = AiUiKit.write() * 3;
          if (this.init_cF.init_cc_UiHelper != null) {
-            AiService.Inner_UiHelper q = this.init_cF.init_cc_UiHelper;
+            AiService.UserPromptQuestion q = this.init_cF.init_cc_UiHelper;
             int options = q.options().size();
             int base = load(options);
             int wrapped = this.init_List_cE(kit, q, area.update() - 10).size();
@@ -257,7 +257,7 @@ final class AiChatView {
       );
       int right = activity.init();
       if (this.init_cF.load()
-         || (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.FAILED || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED)
+         || (this.init_cF.init_cc_FileCache == AiService.RunState.FAILED || this.init_cF.init_cc_FileCache == AiService.RunState.BLOCKED)
             && !this.init_cF.write_Str.isBlank()) {
          int stopW = kit.load("Stop");
          right -= stopW;
@@ -272,9 +272,9 @@ final class AiChatView {
                this.init_cc.write_V();
                this.init_cF.init_V();
             });
-         } else if (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.PAUSED
-            || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.FAILED
-            || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED) {
+         } else if (this.init_cF.init_cc_FileCache == AiService.RunState.PAUSED
+            || this.init_cF.init_cc_FileCache == AiService.RunState.FAILED
+            || this.init_cF.init_cc_FileCache == AiService.RunState.BLOCKED) {
             int resumeW = kit.load("Resume");
             right -= resumeW + 2;
             kit.init_V_NetHelper_2(
@@ -341,7 +341,7 @@ final class AiChatView {
                }
 
                autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(v.read(), top + block.top(), contentW, block.bottom() - block.top());
-               AiService.Inner_JsonUtil message = block.message();
+               AiService.TranscriptEntry message = block.message();
                Runnable toggle = null;
                if (block.kind() == AiTranscriptLayout.Inner_CachePool.USER) {
                   PacketUtil.load(kit.init_GuiGraphicsExtract, bounds, 3, colors.open);
@@ -432,7 +432,7 @@ final class AiChatView {
       return autismclient.gui.sdf.MsdfTextRenderer.init_I() * 31 + Float.floatToIntBits(autismclient.gui.sdf.MsdfTextRenderer.init_F());
    }
 
-   private int init_I_cE_cc_JsonUtil(AiUiKit kit, AiService.Inner_JsonUtil message) {
+   private int init_I_cE_cc_JsonUtil(AiUiKit kit, AiService.TranscriptEntry message) {
       if (this.load_Map.size() > 400) {
          this.load_Map.clear();
       }
@@ -511,7 +511,7 @@ final class AiChatView {
    private void init_V_cE(AiUiKit kit, int x, int y, int width, int height, long now) {
       float pulse = 0.55F + 0.45F * (float)Math.sin(now / 220.0);
       kit.init_V_I(x + 4, y + height / 2, 2.5F, PacketUtil.init(-10497050, pulse));
-      AiService.Inner_JsonUtil last = this.init_cF.init_cc_JsonUtil();
+      AiService.TranscriptEntry last = this.init_cF.init_cc_JsonUtil();
       long since = Math.max(this.init_cF.init_J, last == null ? 0L : last.at());
       String seconds = Math.max(0L, (now - since) / 1000L) + "s";
       String progress = this.init_cF.init_Str;
@@ -558,7 +558,7 @@ final class AiChatView {
       }
    }
 
-   private void init_V_cc_JsonUtil_Z(AiService.Inner_JsonUtil message, boolean expanded) {
+   private void init_V_cc_JsonUtil_Z(AiService.TranscriptEntry message, boolean expanded) {
       this.init_Map.put(message, !expanded);
       this.read_I++;
       if (this.init_cE_StreamUtil.init_Z && this.init_cE_StreamUtil.init_I() > 0) {
@@ -566,7 +566,7 @@ final class AiChatView {
       }
    }
 
-   private static void init_V_cc_JsonUtil(AiService.Inner_JsonUtil message) {
+   private static void init_V_cc_JsonUtil(AiService.TranscriptEntry message) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.keyboardHandler != null) {
          mc.keyboardHandler.setClipboard(AiTranscriptLayout.init_Str_cc_JsonUtil(message));
@@ -627,7 +627,7 @@ final class AiChatView {
       return AiUiKit.load_I() + 2 + 2 + (options > 0 ? options * (ctrl + 2) : AiUiKit.write() + 2) + 4;
    }
 
-   private List<String> init_List_cE(AiUiKit kit, AiService.Inner_UiHelper q, int w) {
+   private List<String> init_List_cE(AiUiKit kit, AiService.UserPromptQuestion q, int w) {
       int epoch = load_I();
       if (this.flush != w || this.close != epoch || !this.write_Str.equals(q.text())) {
          this.read_List = kit.init_SyncManager.init_PoolEntry().init_List(AiUiKit.init_Str_Str(q.text()), Math.max(20, w));
@@ -639,7 +639,7 @@ final class AiChatView {
       return this.read_List;
    }
 
-   private void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper card, AiService.Inner_UiHelper q, int lines) {
+   private void init_V_cE(AiUiKit kit, autismclient.gui.f.NetHelper card, AiService.UserPromptQuestion q, int lines) {
       String title = "The assistant asks";
       kit.load_V(card);
       autismclient.gui.f.b.BufferHelper.init_V(kit.init_SyncManager, card, title);
@@ -685,7 +685,7 @@ final class AiChatView {
    }
 
    private String init_Str() {
-      List<AiService.Inner_JsonUtil> messages = this.init_cF.init_List;
+      List<AiService.TranscriptEntry> messages = this.init_cF.init_List;
 
       for (int i = messages.size() - 1; i >= 0; i--) {
          if ("assistant".equals(messages.get(i).role())) {
@@ -751,8 +751,8 @@ final class AiChatView {
       int fieldX = c.read() + attachW + 2;
       boolean canResume = !this.init_cF.init_Z
          && (
-            this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.PAUSED
-               || (this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.BLOCKED || this.init_cF.init_cc_FileCache == AiService.Inner_FileCache.FAILED)
+            this.init_cF.init_cc_FileCache == AiService.RunState.PAUSED
+               || (this.init_cF.init_cc_FileCache == AiService.RunState.BLOCKED || this.init_cF.init_cc_FileCache == AiService.RunState.FAILED)
                   && !this.init_cF.write_Str.isBlank()
          );
       if (this.init_cF.load()) {
@@ -963,12 +963,12 @@ final class AiChatView {
          x += kit.init_I_Str(this.read_Z() ? "Plan" : "Act") + 10 + 8;
       }
 
-      if (this.init_cF.load_Z && this.init_cF.init_cc_FileCache != AiService.Inner_FileCache.CHATTING && limit - x > 40) {
+      if (this.init_cF.load_Z && this.init_cF.init_cc_FileCache != AiService.RunState.CHATTING && limit - x > 40) {
          kit.init_V_Str_3("Chat", s, x, limit - x, -10497050);
          x += kit.init_I_Str("Chat") + 8;
       }
 
-      AiService.Inner_ByteReader u = this.init_cF.init_cc_ByteReader;
+      AiService.TokenUsage u = this.init_cF.init_cc_ByteReader;
       if (this.init_cF.init_AiSettings.builtIn) {
          if (!this.init_cF.init_Str.isBlank() && x < limit) {
             kit.init_V_Str_3(this.init_cF.init_Str, s, x, limit - x, colors.valid);
@@ -1077,7 +1077,7 @@ final class AiChatView {
    }
 
    private String init_Str_Z(boolean hasTask) {
-      AiService.Inner_ByteReader u = this.init_cF.init_cc_ByteReader;
+      AiService.TokenUsage u = this.init_cF.init_cc_ByteReader;
       StringBuilder tip = new StringBuilder();
       if (this.init_cF.init_AiSettings.builtIn) {
          tip.append("Built-In: nothing is sent to an API");

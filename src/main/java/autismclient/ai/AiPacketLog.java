@@ -129,10 +129,10 @@ public final class AiPacketLog {
       int limit = init(AiJson.init_I_JsonObject(args, "limit", 20), detail ? 10 : 50);
       int offset = init(AiJson.init_I_JsonObject(args, "offset", 0));
       String query = AiJson.init_Str_JsonObject(args, "query", "").toLowerCase(Locale.ROOT);
-      List<AutismPacketLoggerOverlay.Inner_JsonUtil> buffered = overlay.init_List_Str_3(category, 0, -1);
-      List<AutismPacketLoggerOverlay.Inner_JsonUtil> matched = new ArrayList<>();
+      List<AutismPacketLoggerOverlay.LoggedPacketEntry> buffered = overlay.init_List_Str_3(category, 0, -1);
+      List<AutismPacketLoggerOverlay.LoggedPacketEntry> matched = new ArrayList<>();
 
-      for (AutismPacketLoggerOverlay.Inner_JsonUtil entry : buffered) {
+      for (AutismPacketLoggerOverlay.LoggedPacketEntry entry : buffered) {
          if (query.isEmpty() || entry.load_Str != null && entry.load_Str.toLowerCase(Locale.ROOT).contains(query)) {
             matched.add(entry);
          }
@@ -177,7 +177,7 @@ public final class AiPacketLog {
       );
    }
 
-   private static JsonObject init(AutismPacketLoggerOverlay.Inner_JsonUtil entry, int index, boolean detail) {
+   private static JsonObject init(AutismPacketLoggerOverlay.LoggedPacketEntry entry, int index, boolean detail) {
       JsonObject out = AiJson.init_JsonObject_ObjArr(
          "index",
          index,
@@ -220,7 +220,7 @@ public final class AiPacketLog {
       return out;
    }
 
-   private static void init(JsonObject out, AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   private static void init(JsonObject out, AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry.init_Class != null) {
          autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(entry.init_Class);
          if (schema != null) {

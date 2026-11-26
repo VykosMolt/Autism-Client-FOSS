@@ -276,14 +276,14 @@ public final class ScaffoldModule extends Module {
    private int f_m_I;
    private boolean write_Z;
    private RotationMath.Rotation init_ce_DataUtil;
-   private ScaffoldModule.Inner_HashUtil init_aI_HashUtil;
+   private ScaffoldModule.MotionVectorPair init_aI_HashUtil;
    private final ArrayDeque<BlockPos> init_ArrayDeque = new ArrayDeque<>(4);
    private final ArrayDeque<Vec3> load_ArrayDeque = new ArrayDeque<>(5);
    private BlockPos init_BlockPos;
-   private ScaffoldModule.Inner_BitSetUtil init_aI_BitSetUtil;
+   private ScaffoldModule.SupportHeightSample init_aI_BitSetUtil;
    private int f_n_I;
    private int f_o_I = -2147483648;
-   private ScaffoldModule.Inner_HashUtil load_aI_HashUtil;
+   private ScaffoldModule.MotionVectorPair load_aI_HashUtil;
    private int f_p_I = -1;
    private int f_q_I = -1;
    private int f_r_I;
@@ -313,9 +313,9 @@ public final class ScaffoldModule extends Module {
    private boolean sync_Z;
    private boolean flush_Z;
    private float count_F = 74.0F;
-   private ScaffoldModule.Inner_ValueSink init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.IDLE;
-   private ScaffoldModule.Inner_NodeWalker init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.FORWARD;
-   private ScaffoldModule.Inner_CacheEntry init_aI_CacheEntry;
+   private ScaffoldModule.TellyPhase init_aI_ValueSink = ScaffoldModule.TellyPhase.IDLE;
+   private ScaffoldModule.TurnCyclePhase init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.FORWARD;
+   private ScaffoldModule.QuantizedPlacement init_aI_CacheEntry;
    private boolean close_Z;
    private boolean open_Z;
    private final ScaffoldPlaceRateTracker init_aN = new ScaffoldPlaceRateTracker();
@@ -330,12 +330,12 @@ public final class ScaffoldModule extends Module {
    private final int[] read_IArr = new int[9];
    private final int[] write_IArr = new int[9];
    private int f_C_I = -1;
-   private ScaffoldModule.Inner_KeyHolder init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.RELEASED;
+   private ScaffoldModule.ForwardKeyState init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.RELEASED;
    private boolean push_Z;
    private BlockPos read_BlockPos;
    private boolean pop_Z;
    private boolean tick_Z;
-   private ScaffoldModule.Inner_b init_aI_b;
+   private ScaffoldModule.SneakHoldFlags init_aI_b;
    private Input init_Input;
    private Input load_Input;
    private Input read_Input;
@@ -370,8 +370,8 @@ public final class ScaffoldModule extends Module {
    private boolean valid_Z;
    private float frame_F;
    private float block_F;
-   private ScaffoldModule.Inner_c init_aI_c;
-   private ScaffoldModule.Inner_c load_aI_c;
+   private ScaffoldModule.StrafeSide init_aI_c;
+   private ScaffoldModule.StrafeSide load_aI_c;
    private int f_N_I;
    private int f_O_I;
    private int f_P_I;
@@ -392,7 +392,7 @@ public final class ScaffoldModule extends Module {
    private boolean entry_Z;
    private boolean node_Z;
    private int f_X_I;
-   private ScaffoldModule.Inner_PathHelper init_aI_PathHelper;
+   private ScaffoldModule.PushTarget init_aI_PathHelper;
    private int f_Y_I;
    private BlockPos update_BlockPos;
    private int f_Z_I;
@@ -409,7 +409,7 @@ public final class ScaffoldModule extends Module {
    private BlockPos push_BlockPos;
    private boolean pool_Z;
    private Vec3 init_Vec3;
-   private ScaffoldModule.Inner_DataPipe init_aI_DataPipe;
+   private ScaffoldModule.LivePlacement init_aI_DataPipe;
    private long pop_J;
    private static final String[] init_StrArr = new String[]{"S", "SW", "W", "NW", "N", "NE", "E", "SE"};
    private int f_ad_I;
@@ -431,7 +431,7 @@ public final class ScaffoldModule extends Module {
    private BlockPos tick_BlockPos;
    private int f_ak_I;
    private static final int f_al_I = 8;
-   private final ArrayDeque<ScaffoldModule.Inner_JsonUtil> read_ArrayDeque;
+   private final ArrayDeque<ScaffoldModule.PlacedBlockStamp> read_ArrayDeque;
    private final ArrayDeque<Long> write_ArrayDeque;
    private final ArrayDeque<Long> update_ArrayDeque;
    private final ArrayDeque<BlockPos> sync_ArrayDeque;
@@ -457,7 +457,7 @@ public final class ScaffoldModule extends Module {
    private int f_av_I;
    private int f_aw_I;
    private int f_ax_I;
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex;
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex;
    private BlockPos get_BlockPos;
    private double f_y_D;
    private int f_ay_I;
@@ -476,22 +476,22 @@ public final class ScaffoldModule extends Module {
    private int f_aE_I;
    private boolean frame_Z;
    private int f_aF_I;
-   private ScaffoldModule.Inner_TableIndex load_aI_TableIndex;
+   private ScaffoldModule.PlannedPlacement load_aI_TableIndex;
    private int f_aG_I;
    private int f_aH_I;
    private int f_aI_I;
-   private static final ConcurrentLinkedQueue<ScaffoldModule.Inner_NetHelper> init_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
-   private static final AtomicReference<ScaffoldModule.Inner_TaskQueue> init_AtomicReference = new AtomicReference<>();
+   private static final ConcurrentLinkedQueue<ScaffoldModule.QueuedPlacementClick> init_ConcurrentLinkedQu = new ConcurrentLinkedQueue<>();
+   private static final AtomicReference<ScaffoldModule.InputFlags> init_AtomicReference = new AtomicReference<>();
    private static volatile Vec3 write_Vec3;
    private static volatile Vec3 update_Vec3;
    private static volatile boolean block_Z;
    private static final ReferenceQueue<Packet<?>> init_ReferenceQueue = new ReferenceQueue<>();
-   private static final Map<ScaffoldModule.Inner_StateCache, ScaffoldModule.Inner_RenderState> load_Map = new HashMap<>();
-   private ScaffoldModule.Inner_TableIndex read_aI_TableIndex;
-   private ScaffoldModule.Inner_HashUtil read_aI_HashUtil;
+   private static final Map<ScaffoldModule.WeakPacketKey, ScaffoldModule.QueuedPacketContext> load_Map = new HashMap<>();
+   private ScaffoldModule.PlannedPlacement read_aI_TableIndex;
+   private ScaffoldModule.MotionVectorPair read_aI_HashUtil;
    private Vec3 sync_Vec3;
    private int f_aJ_I;
-   private ScaffoldModule.Inner_SyncManager init_aI_SyncManager;
+   private ScaffoldModule.PlacementState init_aI_SyncManager;
    private long put_J;
    private long add_J;
    private InteractionHand init_InteractionHand;
@@ -506,7 +506,7 @@ public final class ScaffoldModule extends Module {
    private boolean drain_Z;
    private boolean fill_Z;
    private String write_Str;
-   private final ArrayDeque<ScaffoldModule.Inner_UiHelper> flush_ArrayDeque;
+   private final ArrayDeque<ScaffoldModule.PendingPlacementSeq> flush_ArrayDeque;
    private final ScaffoldFailureRecorder init_aO;
    private final AtomicBoolean init_AtomicBoolean;
    private final Map<BlockPos, Integer> read_Map;
@@ -724,9 +724,9 @@ public final class ScaffoldModule extends Module {
 
    ScaffoldModule() {
       super("scaffold", "Scaffold", ae.load_ae, "Places blocks beneath you.");
-      this.init_aI_b = ScaffoldModule.Inner_b.init_aI_b;
-      this.init_aI_c = ScaffoldModule.Inner_c.NONE;
-      this.load_aI_c = ScaffoldModule.Inner_c.NONE;
+      this.init_aI_b = ScaffoldModule.SneakHoldFlags.init_aI_b;
+      this.init_aI_c = ScaffoldModule.StrafeSide.NONE;
+      this.load_aI_c = ScaffoldModule.StrafeSide.NONE;
       this.f_P_I = -1;
       this.f_T_I = -2147483648;
       this.f_U_I = -2147483648;
@@ -768,7 +768,7 @@ public final class ScaffoldModule extends Module {
       this.f_aG_I = -1;
       this.f_aI_I = -2147483648;
       this.f_aJ_I = -2147483648;
-      this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.IDLE;
+      this.init_aI_SyncManager = ScaffoldModule.PlacementState.IDLE;
       this.f_aM_I = -1;
       this.write_Str = "--";
       this.flush_ArrayDeque = new ArrayDeque<>();
@@ -1031,7 +1031,7 @@ public final class ScaffoldModule extends Module {
          } else {
             this.poll_V_3();
          }
-      } else if (this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.ARMED) {
+      } else if (this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
          this.index_V();
       }
    }
@@ -1364,7 +1364,7 @@ public final class ScaffoldModule extends Module {
                return false;
             }
 
-            ScaffoldModule.Inner_TableIndex target = new ScaffoldModule.Inner_TableIndex(neighbour, cell, side.getOpposite(), hit, RotationMath.init(hitPos, eye), cell.getY());
+            ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(neighbour, cell, side.getOpposite(), hit, RotationMath.init(hitPos, eye), cell.getY());
             return this.init_Z_aI_TableIndex_3(target, hand, stack);
          } else {
             return false;
@@ -1423,7 +1423,7 @@ public final class ScaffoldModule extends Module {
          } else {
             this.close_BlockPos();
             ItemStack planningStack = this.init_ItemStack_2();
-            ScaffoldModule.Inner_TableIndex target = this.init_aI_TableIndex_ItemStack(planningStack);
+            ScaffoldModule.PlannedPlacement target = this.init_aI_TableIndex_ItemStack(planningStack);
             if (target == null) {
                this.f_ai_I++;
                this.write_V_aI_TableIndex(null);
@@ -1462,7 +1462,7 @@ public final class ScaffoldModule extends Module {
                         this.write_V_aI_TableIndex(null);
                         boolean droppedTopHasASide = false;
                         if (target.init_Direction() == Direction.UP) {
-                           ScaffoldModule.Inner_TableIndex viaSide = this.init_aI_TableIndex_BlockPos(
+                           ScaffoldModule.PlannedPlacement viaSide = this.init_aI_TableIndex_BlockPos(
                               target.load(),
                               target.init_BlockPos(),
                               this.load_Vec3_aI_HashUtil(this.init_aI_HashUtil),
@@ -1485,7 +1485,7 @@ public final class ScaffoldModule extends Module {
                            }
 
                            this.read_V_BlockPos(target.load());
-                           ScaffoldModule.Inner_TableIndex replanned = this.init_aI_TableIndex_ItemStack(stack);
+                           ScaffoldModule.PlannedPlacement replanned = this.init_aI_TableIndex_ItemStack(stack);
                            if (replanned == null || this.load_Z_aI_TableIndex(replanned)) {
                               this.add_Str = "drop-" + this.clear_Str;
                               this.init_V_Str_aI_TableIndex("rise-drop", target);
@@ -1500,10 +1500,10 @@ public final class ScaffoldModule extends Module {
 
                      this.write_V_aI_TableIndex(target);
                      this.f_c_F = target.init_ce_DataUtil().load();
-                     ScaffoldModule.Inner_TextFormat wireClick = this.init_aI_TextFormat();
+                     ScaffoldModule.WireClickRotation wireClick = this.init_aI_TextFormat();
                      RotationMath.Rotation clickRotation = wireClick == null ? null : wireClick.load();
                      boolean rayLands = clickRotation != null && this.load_Z_aI_TableIndex_ce_DataUtil(target, clickRotation);
-                     ScaffoldModule.Inner_TableIndex laneRay = null;
+                     ScaffoldModule.PlannedPlacement laneRay = null;
                      if (clickRotation != null && !rayLands) {
                         laneRay = this.init_aI_TableIndex_aI_TableIndex_BlockHitResult(target, this.init_BlockHitResult);
                         if (laneRay != null && this.load_Z_aI_TableIndex(laneRay)) {
@@ -1511,7 +1511,7 @@ public final class ScaffoldModule extends Module {
                         }
                      }
 
-                     ScaffoldModule.Inner_TableIndex clickable = rayLands ? target : laneRay;
+                     ScaffoldModule.PlannedPlacement clickable = rayLands ? target : laneRay;
                      boolean paceFreesPitch = false;
                      if (clickable != null && this.init_Z_aI_TableIndex_ce_DataUtil(clickable, clickRotation)) {
                         paceFreesPitch = true;
@@ -1629,7 +1629,7 @@ public final class ScaffoldModule extends Module {
                                  this.read_aI_HashUtil = this.init_aI_HashUtil;
                                  this.sync_Vec3 = this.read_Vec3_aI_HashUtil(this.init_aI_HashUtil);
                                  this.f_aJ_I = tick;
-                                 this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.ARMED;
+                                 this.init_aI_SyncManager = ScaffoldModule.PlacementState.ARMED;
                                  this.add_J = load_J_J(this.add_J);
                                  this.put_J = this.add_J;
                                  this.init_InteractionHand = hand;
@@ -1674,26 +1674,26 @@ public final class ScaffoldModule extends Module {
    private void pop_V() {
       this.table_V();
       this.set_V();
-      ScaffoldModule.Inner_TableIndex pending = this.read_aI_TableIndex;
+      ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
       if (pending != null && MC.level != null && MC.player != null) {
          int tick = AutismSessionState.init_ck().state_I();
          int age = Math.max(0, tick - this.f_aJ_I);
          BlockPos cell = pending.load();
          boolean solid = this.init_Z_BlockState_BlockPos(MC.level.getBlockState(cell), cell);
-         ScaffoldModule.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
+         ScaffoldModule.StateDecision decision = init_aI_ConfigStore_aI_SyncManager(
             this.init_aI_SyncManager, age, this.store_Z, this.drain_Z, solid, load_Z_I_I(this.f_aM_I, this.f_aN_I)
          );
-         if (decision.init_aI_SyncManager() == ScaffoldModule.Inner_SyncManager.FAILED) {
+         if (decision.init_aI_SyncManager() == ScaffoldModule.PlacementState.FAILED) {
             String reason = "use".equals(decision.init_Str()) ? "use-" + this.write_Str : decision.init_Str();
             this.init_V_Str_3(reason);
          } else {
             this.init_aI_SyncManager = decision.init_aI_SyncManager();
          }
 
-         if (this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.RECONCILING) {
+         if (this.init_aI_SyncManager == ScaffoldModule.PlacementState.RECONCILING) {
             this.add_Str = "reconcile";
             this.init_V_Str_aI_TableIndex("real-wait", pending);
-         } else if (this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.PREDICTED && solid) {
+         } else if (this.init_aI_SyncManager == ScaffoldModule.PlacementState.PREDICTED && solid) {
             this.read_Map.remove(cell);
             this.init_V_BlockPos_3(cell, this.read_aI_HashUtil, this.sync_Vec3);
             this.size_BlockPos = cell;
@@ -1709,12 +1709,12 @@ public final class ScaffoldModule extends Module {
             this.add_Str = "ok";
             this.init_V_Str_aI_TableIndex("settle-ok", pending);
             this.run_V();
-         } else if (this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.FAILED) {
+         } else if (this.init_aI_SyncManager == ScaffoldModule.PlacementState.FAILED) {
             this.add_Str = this.write_Str;
             this.init_V_Str_aI_TableIndex("real-miss", pending);
             this.run_V();
          }
-      } else if (pending == null && this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE) {
+      } else if (pending == null && this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE) {
          this.run_V();
       }
    }
@@ -1732,7 +1732,7 @@ public final class ScaffoldModule extends Module {
          }
       }
 
-      this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.FAILED;
+      this.init_aI_SyncManager = ScaffoldModule.PlacementState.FAILED;
       this.write_Str = reason == null ? "failed" : reason;
       if (this.load_aI_TableIndex != null && this.read_aI_TableIndex != null && this.load_aI_TableIndex.load().equals(this.read_aI_TableIndex.load())) {
          this.load_aI_TableIndex = null;
@@ -1744,7 +1744,7 @@ public final class ScaffoldModule extends Module {
       this.read_aI_HashUtil = null;
       this.sync_Vec3 = null;
       this.f_aJ_I = -2147483648;
-      this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.IDLE;
+      this.init_aI_SyncManager = ScaffoldModule.PlacementState.IDLE;
       this.put_J = 0L;
       this.init_InteractionHand = null;
       this.chunk_Z = false;
@@ -1766,7 +1766,7 @@ public final class ScaffoldModule extends Module {
 
    private void init_V_I_3(int sequence, BlockPos cell, BlockPos supportingCell) {
       if (sequence >= 0 && cell != null && !load_Z_I_I(sequence, this.f_aN_I)) {
-         this.flush_ArrayDeque.addLast(new ScaffoldModule.Inner_UiHelper(sequence, cell.immutable(), supportingCell == null ? null : supportingCell.immutable()));
+         this.flush_ArrayDeque.addLast(new ScaffoldModule.PendingPlacementSeq(sequence, cell.immutable(), supportingCell == null ? null : supportingCell.immutable()));
 
          while (this.flush_ArrayDeque.size() > 64) {
             this.flush_ArrayDeque.removeFirst();
@@ -1792,7 +1792,7 @@ public final class ScaffoldModule extends Module {
          this.f_aN_I = -2147483648;
          this.f_aO_I = -2147483648;
          init_ConcurrentLinkedQu.clear();
-         if (this.read_aI_TableIndex != null || this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE) {
+         if (this.read_aI_TableIndex != null || this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE) {
             this.run_V();
          }
 
@@ -1812,7 +1812,7 @@ public final class ScaffoldModule extends Module {
          Set<BlockPos> rejected = new HashSet<>();
          Set<BlockPos> confirmed = new HashSet<>();
 
-         for (ScaffoldModule.Inner_UiHelper predicted : this.flush_ArrayDeque) {
+         for (ScaffoldModule.PendingPlacementSeq predicted : this.flush_ArrayDeque) {
             if (load_Z_I_I(predicted.init_I(), acknowledged)) {
                BlockState state = MC.level.getBlockState(predicted.init_BlockPos());
                boolean solid = predicted.load() == null
@@ -1830,10 +1830,10 @@ public final class ScaffoldModule extends Module {
          }
 
          Set<BlockPos> brokenChain = init_Set_List(new ArrayList<>(this.flush_ArrayDeque), rejected, confirmed);
-         Iterator<ScaffoldModule.Inner_UiHelper> iterator = this.flush_ArrayDeque.iterator();
+         Iterator<ScaffoldModule.PendingPlacementSeq> iterator = this.flush_ArrayDeque.iterator();
 
          while (iterator.hasNext()) {
-            ScaffoldModule.Inner_UiHelper predicted = iterator.next();
+            ScaffoldModule.PendingPlacementSeq predicted = iterator.next();
             if (brokenChain.contains(predicted.init_BlockPos()) && !load_Z_I_I(predicted.init_I(), acknowledged)) {
                this.init_V_BlockPos_I_2(predicted.init_BlockPos(), predicted.init_I());
                this.init_V_BlockPos_4(predicted.init_BlockPos());
@@ -1856,18 +1856,18 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static Set<BlockPos> init_Set_List_Set(List<ScaffoldModule.Inner_UiHelper> predictions, Set<BlockPos> rejected) {
+   static Set<BlockPos> init_Set_List_Set(List<ScaffoldModule.PendingPlacementSeq> predictions, Set<BlockPos> rejected) {
       return init_Set_List(predictions, rejected, Set.of());
    }
 
-   static Set<BlockPos> init_Set_List(List<ScaffoldModule.Inner_UiHelper> predictions, Set<BlockPos> rejected, Set<BlockPos> confirmed) {
+   static Set<BlockPos> init_Set_List(List<ScaffoldModule.PendingPlacementSeq> predictions, Set<BlockPos> rejected, Set<BlockPos> confirmed) {
       Set<BlockPos> broken = new HashSet<>(rejected);
 
       boolean changed;
       do {
          changed = false;
 
-         for (ScaffoldModule.Inner_UiHelper predicted : predictions) {
+         for (ScaffoldModule.PendingPlacementSeq predicted : predictions) {
             if (predicted.load() != null && broken.contains(predicted.load()) && !confirmed.contains(predicted.init_BlockPos())) {
                changed |= broken.add(predicted.init_BlockPos());
             }
@@ -1947,7 +1947,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private RotationMath.Rotation init_ce_DataUtil_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private RotationMath.Rotation init_ce_DataUtil_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player != null
          && target.init_Direction().getAxis().isHorizontal()
          && this.f_ag_I >= 3
@@ -1968,7 +1968,7 @@ public final class ScaffoldModule extends Module {
       return eyePast > 0.0 ? hitPast > 0.01 && hitPast < eyePast : hitPast < -0.01 && hitPast > eyePast;
    }
 
-   private void init_V_aI_TableIndex_ce_DataUtil(ScaffoldModule.Inner_TableIndex target, RotationMath.Rotation clickRotation) {
+   private void init_V_aI_TableIndex_ce_DataUtil(ScaffoldModule.PlannedPlacement target, RotationMath.Rotation clickRotation) {
       if (!target.init_BlockPos().equals(this.pop_BlockPos) || target.init_Direction() != this.init_Direction) {
          this.pop_BlockPos = target.init_BlockPos();
          this.init_Direction = target.init_Direction();
@@ -2012,7 +2012,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean init_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private boolean init_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player != null && !target.init_Direction().getAxis().isVertical()) {
          float yaw = target.init_ce_DataUtil().init();
          Vec3 lead = this.load_Vec3();
@@ -2128,7 +2128,7 @@ public final class ScaffoldModule extends Module {
          : false;
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex_BlockHitResult(ScaffoldModule.Inner_TableIndex planned, BlockHitResult ray) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex_BlockHitResult(ScaffoldModule.PlannedPlacement planned, BlockHitResult ray) {
       if (MC.player != null && MC.level != null && this.load_ce_DataUtil != null && ray != null) {
          BlockPos support = ray.getBlockPos().immutable();
          Direction face = ray.getDirection();
@@ -2148,7 +2148,7 @@ public final class ScaffoldModule extends Module {
          } else {
             return this.load_Z_BlockPos_2(planned.load()) && !this.load_Z_BlockPos_2(cell)
                ? null
-               : new ScaffoldModule.Inner_TableIndex(support, cell, face, ray, this.load_ce_DataUtil, cell.getY());
+               : new ScaffoldModule.PlannedPlacement(support, cell, face, ray, this.load_ce_DataUtil, cell.getY());
          }
       } else {
          return null;
@@ -2168,7 +2168,7 @@ public final class ScaffoldModule extends Module {
       return row == -2147483648 ? this.close_BlockPos() : this.init_BlockPos_I_2(row);
    }
 
-   private String init_Str_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private String init_Str_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       this.init_V_aI_TableIndex(target);
       if (this.init_BlockHitResult == null) {
          return this.sync(target) ? "blank" : "plane";
@@ -2181,7 +2181,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private void init_V_aI_TableIndex_Str(ScaffoldModule.Inner_TableIndex target, String waitCode) {
+   private void init_V_aI_TableIndex_Str(ScaffoldModule.PlannedPlacement target, String waitCode) {
       this.read_Direction = null;
       if (MC.player != null
          && target != null
@@ -2248,7 +2248,7 @@ public final class ScaffoldModule extends Module {
       return (rx == 0 || rx == dx) && (rz == 0 || rz == dz);
    }
 
-   private boolean load_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private boolean load_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target != null && MC.player != null && target.init_Direction().getAxis().isVertical()) {
          boolean stairRiser = target.init_Direction() == Direction.UP && !MC.player.onGround() && target.load().getY() > this.close_I();
          Vec3 dropCarry = MC.player.onGround() ? Vec3.ZERO : MC.player.getDeltaMovement();
@@ -2283,7 +2283,7 @@ public final class ScaffoldModule extends Module {
       return since < 0 ? -1 : since;
    }
 
-   private boolean init_Z_aI_TableIndex_ce_DataUtil(ScaffoldModule.Inner_TableIndex target, RotationMath.Rotation clickRotation) {
+   private boolean init_Z_aI_TableIndex_ce_DataUtil(ScaffoldModule.PlannedPlacement target, RotationMath.Rotation clickRotation) {
       if (MC.player == null) {
          return false;
       }
@@ -2334,7 +2334,7 @@ public final class ScaffoldModule extends Module {
          if (!this.read_Z_aI_TableIndex(target)) {
             List<BlockPos> booked = new ArrayList<>(this.read_ArrayDeque.size() + 1);
 
-            for (ScaffoldModule.Inner_JsonUtil sample : this.read_ArrayDeque) {
+            for (ScaffoldModule.PlacedBlockStamp sample : this.read_ArrayDeque) {
                booked.add(sample.init_BlockPos());
             }
 
@@ -2354,7 +2354,7 @@ public final class ScaffoldModule extends Module {
                long[] recent = new long[this.read_ArrayDeque.size()];
                int index = 0;
 
-               for (ScaffoldModule.Inner_JsonUtil sample : this.read_ArrayDeque) {
+               for (ScaffoldModule.PlacedBlockStamp sample : this.read_ArrayDeque) {
                   recent[index++] = sample.init_J();
                }
 
@@ -2380,7 +2380,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean init_Z_aI_TableIndex_2(ScaffoldModule.Inner_TableIndex target, RotationMath.Rotation clickRotation, long nowNanos) {
+   private boolean init_Z_aI_TableIndex_2(ScaffoldModule.PlannedPlacement target, RotationMath.Rotation clickRotation, long nowNanos) {
       if (MC.player == null || !MC.player.onGround()) {
          return false;
       }
@@ -2481,7 +2481,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean read_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private boolean read_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player != null && MC.level != null) {
          int row = this.read_I_5();
          if (row == -2147483648) {
@@ -2505,7 +2505,7 @@ public final class ScaffoldModule extends Module {
       return new BlockPos(Mth.floor(position.x), row + 1, Mth.floor(position.z));
    }
 
-   private boolean write_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private boolean write_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player == null || MC.level == null) {
          return false;
       }
@@ -2537,7 +2537,7 @@ public final class ScaffoldModule extends Module {
          || placed.equals(this.clear_BlockPos);
    }
 
-   private boolean update_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private boolean update_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target.init_Direction().getAxis().isVertical()) {
          return false;
       }
@@ -2581,7 +2581,7 @@ public final class ScaffoldModule extends Module {
       }
 
       this.run_J = now;
-      this.read_ArrayDeque.addLast(new ScaffoldModule.Inner_JsonUtil(interval, placed));
+      this.read_ArrayDeque.addLast(new ScaffoldModule.PlacedBlockStamp(interval, placed));
 
       while (this.read_ArrayDeque.size() > 8) {
          this.read_ArrayDeque.removeFirst();
@@ -3016,7 +3016,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean sync(ScaffoldModule.Inner_TableIndex target) {
+   private boolean sync(ScaffoldModule.PlannedPlacement target) {
       return init_D_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction()) > 0.05;
    }
 
@@ -3027,8 +3027,8 @@ public final class ScaffoldModule extends Module {
       return this.f_z_I != -2147483648 && tick - this.f_z_I <= 40;
    }
 
-   static boolean init_Z_aI_SyncManager(ScaffoldModule.Inner_SyncManager state) {
-      return state == ScaffoldModule.Inner_SyncManager.ARMED || state == ScaffoldModule.Inner_SyncManager.SENT || state == ScaffoldModule.Inner_SyncManager.RECONCILING;
+   static boolean init_Z_aI_SyncManager(ScaffoldModule.PlacementState state) {
+      return state == ScaffoldModule.PlacementState.ARMED || state == ScaffoldModule.PlacementState.SENT || state == ScaffoldModule.PlacementState.RECONCILING;
    }
 
    static long load_J_J(long previous) {
@@ -3039,62 +3039,62 @@ public final class ScaffoldModule extends Module {
       return sequence >= 0 && acknowledged >= sequence;
    }
 
-   static ScaffoldModule.Inner_ConfigStore init_aI_ConfigStore_aI_SyncManager(
-      ScaffoldModule.Inner_SyncManager state, int age, boolean resultSeen, boolean resultConsumed, boolean solid, boolean ackCovered
+   static ScaffoldModule.StateDecision init_aI_ConfigStore_aI_SyncManager(
+      ScaffoldModule.PlacementState state, int age, boolean resultSeen, boolean resultConsumed, boolean solid, boolean ackCovered
    ) {
       if (state == null) {
-         state = ScaffoldModule.Inner_SyncManager.IDLE;
+         state = ScaffoldModule.PlacementState.IDLE;
       }
 
-      if (state == ScaffoldModule.Inner_SyncManager.IDLE || state == ScaffoldModule.Inner_SyncManager.FAILED) {
-         return new ScaffoldModule.Inner_ConfigStore(state, null);
+      if (state == ScaffoldModule.PlacementState.IDLE || state == ScaffoldModule.PlacementState.FAILED) {
+         return new ScaffoldModule.StateDecision(state, null);
       }
 
       if (resultSeen && !resultConsumed) {
-         return new ScaffoldModule.Inner_ConfigStore(ScaffoldModule.Inner_SyncManager.FAILED, "use");
+         return new ScaffoldModule.StateDecision(ScaffoldModule.PlacementState.FAILED, "use");
       }
 
-      if (state == ScaffoldModule.Inner_SyncManager.ARMED) {
-         return age >= 2 ? new ScaffoldModule.Inner_ConfigStore(ScaffoldModule.Inner_SyncManager.FAILED, "not-sent") : new ScaffoldModule.Inner_ConfigStore(state, null);
+      if (state == ScaffoldModule.PlacementState.ARMED) {
+         return age >= 2 ? new ScaffoldModule.StateDecision(ScaffoldModule.PlacementState.FAILED, "not-sent") : new ScaffoldModule.StateDecision(state, null);
       }
 
       if (resultSeen && resultConsumed && solid) {
-         return new ScaffoldModule.Inner_ConfigStore(ScaffoldModule.Inner_SyncManager.PREDICTED, null);
+         return new ScaffoldModule.StateDecision(ScaffoldModule.PlacementState.PREDICTED, null);
       }
 
-      if (state == ScaffoldModule.Inner_SyncManager.PREDICTED && !solid) {
-         state = ScaffoldModule.Inner_SyncManager.RECONCILING;
-      } else if (state == ScaffoldModule.Inner_SyncManager.SENT && resultSeen && resultConsumed) {
-         state = ScaffoldModule.Inner_SyncManager.RECONCILING;
+      if (state == ScaffoldModule.PlacementState.PREDICTED && !solid) {
+         state = ScaffoldModule.PlacementState.RECONCILING;
+      } else if (state == ScaffoldModule.PlacementState.SENT && resultSeen && resultConsumed) {
+         state = ScaffoldModule.PlacementState.RECONCILING;
       }
 
-      if (state == ScaffoldModule.Inner_SyncManager.RECONCILING) {
+      if (state == ScaffoldModule.PlacementState.RECONCILING) {
          if (ackCovered) {
-            return new ScaffoldModule.Inner_ConfigStore(ScaffoldModule.Inner_SyncManager.FAILED, "ack-air");
+            return new ScaffoldModule.StateDecision(ScaffoldModule.PlacementState.FAILED, "ack-air");
          }
 
          if (age >= 2) {
-            return new ScaffoldModule.Inner_ConfigStore(ScaffoldModule.Inner_SyncManager.FAILED, "timeout-air");
+            return new ScaffoldModule.StateDecision(ScaffoldModule.PlacementState.FAILED, "timeout-air");
          }
-      } else if (state == ScaffoldModule.Inner_SyncManager.SENT && age >= 2) {
-         return new ScaffoldModule.Inner_ConfigStore(ScaffoldModule.Inner_SyncManager.FAILED, "result-timeout");
+      } else if (state == ScaffoldModule.PlacementState.SENT && age >= 2) {
+         return new ScaffoldModule.StateDecision(ScaffoldModule.PlacementState.FAILED, "result-timeout");
       }
 
-      return new ScaffoldModule.Inner_ConfigStore(state, null);
+      return new ScaffoldModule.StateDecision(state, null);
    }
 
    private static void reset_V() {
-      ScaffoldModule.Inner_StateCache collected;
-      while ((collected = (ScaffoldModule.Inner_StateCache)init_ReferenceQueue.poll()) != null) {
+      ScaffoldModule.WeakPacketKey collected;
+      while ((collected = (ScaffoldModule.WeakPacketKey)init_ReferenceQueue.poll()) != null) {
          load_Map.remove(collected);
       }
    }
 
-   static ScaffoldModule.Inner_EventBus init_aI_EventBus_Z(boolean supportSolid, int supportDeficit, boolean riserSolid) {
+   static ScaffoldModule.BridgeStage init_aI_EventBus_Z(boolean supportSolid, int supportDeficit, boolean riserSolid) {
       if (!supportSolid) {
-         return supportDeficit <= 1 ? ScaffoldModule.Inner_EventBus.SUPPORT : ScaffoldModule.Inner_EventBus.CONNECTOR;
+         return supportDeficit <= 1 ? ScaffoldModule.BridgeStage.SUPPORT : ScaffoldModule.BridgeStage.CONNECTOR;
       } else {
-         return riserSolid ? ScaffoldModule.Inner_EventBus.READY : ScaffoldModule.Inner_EventBus.RISER;
+         return riserSolid ? ScaffoldModule.BridgeStage.READY : ScaffoldModule.BridgeStage.RISER;
       }
    }
 
@@ -3102,7 +3102,7 @@ public final class ScaffoldModule extends Module {
       return this.f_au_I >= 0;
    }
 
-   private void init_V_Str_aI_TableIndex(String outcome, ScaffoldModule.Inner_TableIndex target) {
+   private void init_V_Str_aI_TableIndex(String outcome, ScaffoldModule.PlannedPlacement target) {
       if (this.get_Z() && MC.player != null) {
          if (this.f_au_I == 0) {
             AsyncTraceLogger.init("[scaffold-live] capture start");
@@ -3192,7 +3192,7 @@ public final class ScaffoldModule extends Module {
          if (!this.f_o_Z && MC.player != null && !MC.player.onGround() && MC.player.fallDistance >= 0.5 && MC.player.getDeltaMovement().y < 0.0) {
             this.f_o_Z = true;
             int placeAge = this.f_av_I == -2147483648 ? -1 : AutismSessionState.init_ck().state_I() - this.f_av_I;
-            ScaffoldModule.Inner_TableIndex held = this.read_aI_TableIndex != null ? this.read_aI_TableIndex : this.load_aI_TableIndex;
+            ScaffoldModule.PlannedPlacement held = this.read_aI_TableIndex != null ? this.read_aI_TableIndex : this.load_aI_TableIndex;
             AsyncTraceLogger.init(
                String.format(
                   Locale.ROOT,
@@ -3335,7 +3335,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private String load_Str_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private String load_Str_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target != null && target.init_BlockHitResult() != null) {
          Vec3 loc = target.init_BlockHitResult().getLocation();
          BlockPos block = target.init_BlockHitResult().getBlockPos();
@@ -3411,7 +3411,7 @@ public final class ScaffoldModule extends Module {
          );
    }
 
-   private ScaffoldModule.Inner_TaskTimer init_aI_TaskTimer() {
+   private ScaffoldModule.KinematicsSnapshot init_aI_TaskTimer() {
       Input emitted = MC.player.input == null ? Input.EMPTY : MC.player.input.keyPresses;
       int forwardImpulse = (emitted.forward() ? 1 : 0) - (emitted.backward() ? 1 : 0);
       int sidewaysImpulse = (emitted.left() ? 1 : 0) - (emitted.right() ? 1 : 0);
@@ -3430,9 +3430,9 @@ public final class ScaffoldModule extends Module {
             lateralAccel += -0.2 * Math.sin(impulse);
          }
 
-         return new ScaffoldModule.Inner_TaskTimer(octant, residual, forwardAccel, lateralAccel, flip, emitted.sprint(), this.f_q_Z);
+         return new ScaffoldModule.KinematicsSnapshot(octant, residual, forwardAccel, lateralAccel, flip, emitted.sprint(), this.f_q_Z);
       } else {
-         return new ScaffoldModule.Inner_TaskTimer(octant, 0.0 / 0.0, 0.0 / 0.0, 0.0 / 0.0, flip, emitted.sprint(), this.f_q_Z);
+         return new ScaffoldModule.KinematicsSnapshot(octant, 0.0 / 0.0, 0.0 / 0.0, 0.0 / 0.0, flip, emitted.sprint(), this.f_q_Z);
       }
    }
 
@@ -3444,7 +3444,7 @@ public final class ScaffoldModule extends Module {
       return (perp + lateralAccel) * (groundedWhenEmitted ? 0.546 : 0.91);
    }
 
-   private String init_Str_aI_TaskTimer(ScaffoldModule.Inner_TaskTimer drift) {
+   private String init_Str_aI_TaskTimer(ScaffoldModule.KinematicsSnapshot drift) {
       return "oct="
          + (Double.isNaN(drift.init_D()) ? "--" : init_Str_D(drift.init_D()))
          + " res="
@@ -3476,7 +3476,7 @@ public final class ScaffoldModule extends Module {
       return forward.horizontalDistanceSqr() <= 1.0E-8 ? 0.0 / 0.0 : pos.dot(forward.normalize());
    }
 
-   private void init_V_aI_TaskTimer(ScaffoldModule.Inner_TaskTimer drift, double laneError, Vec3 pos) {
+   private void init_V_aI_TaskTimer(ScaffoldModule.KinematicsSnapshot drift, double laneError, Vec3 pos) {
       int tick = AutismSessionState.init_ck().state_I();
       if (tick != this.f_bA_I) {
          this.f_bA_I = tick;
@@ -3562,7 +3562,7 @@ public final class ScaffoldModule extends Module {
          Vec3 vel = MC.player.getDeltaMovement();
          double laneError = this.sync_BlockPos == null ? 0.0 / 0.0 : this.f_x_D - init_D_Vec3_F(pos, this.flags_F);
          double perp = vel.dot(this.update_Vec3());
-         ScaffoldModule.Inner_TaskTimer drift = this.init_aI_TaskTimer();
+         ScaffoldModule.KinematicsSnapshot drift = this.init_aI_TaskTimer();
          this.init_V_aI_TaskTimer(drift, laneError, pos);
          AsyncTraceLogger.init(
             String.format(
@@ -3669,7 +3669,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private String sync_Str() {
-      ScaffoldModule.Inner_HashUtil line = this.init_aI_HashUtil;
+      ScaffoldModule.MotionVectorPair line = this.init_aI_HashUtil;
       if (line != null && !(line.load().horizontalDistanceSqr() <= 1.0E-8)) {
          Vec3 d = line.load().normalize();
          Vec3 left = new Vec3(d.z, 0.0, -d.x);
@@ -3684,7 +3684,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private String flush_Str() {
-      ScaffoldModule.Inner_FileCache lock = this.flags_Z() ? this.init_aI_FileCache() : null;
+      ScaffoldModule.RowLockBounds lock = this.flags_Z() ? this.init_aI_FileCache() : null;
       int age = this.f_aG_I < 0 ? -1 : AutismSessionState.init_ck().state_I() - this.f_aG_I;
       String sticky = "stk=" + (this.load_aI_TableIndex == null ? "none" : age + "/" + this.f_aH_I);
       return lock == null
@@ -3718,7 +3718,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private void init_V_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private void init_V_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (MC.player != null && target != null) {
          Vec3 eye = MC.player.getEyePosition();
          float yaw = this.load_ce_DataUtil != null ? this.load_ce_DataUtil.init() : MC.player.getYRot();
@@ -3739,7 +3739,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private void load_V_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private void load_V_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       AsyncTraceLogger.init(
          String.format(
             Locale.ROOT,
@@ -3929,7 +3929,7 @@ public final class ScaffoldModule extends Module {
       return rotation == null ? "null" : String.format(Locale.ROOT, "%.1f,%.1f", rotation.init(), rotation.load());
    }
 
-   private static String read_Str_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private static String read_Str_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target == null) {
          return "none";
       }
@@ -4098,24 +4098,24 @@ public final class ScaffoldModule extends Module {
       return next;
    }
 
-   private ScaffoldModule.Inner_TextFormat init_aI_TextFormat() {
+   private ScaffoldModule.WireClickRotation init_aI_TextFormat() {
       return init_aI_TextFormat_ch_CachePool(ServerRotationTracker.init_ch_CachePool());
    }
 
-   static ScaffoldModule.Inner_TextFormat init_aI_TextFormat_ch_CachePool(ServerRotationTracker.RotationSnapshot snapshot) {
+   static ScaffoldModule.WireClickRotation init_aI_TextFormat_ch_CachePool(ServerRotationTracker.RotationSnapshot snapshot) {
       if (snapshot != null && snapshot.init_Z() && Float.isFinite(snapshot.read()) && Float.isFinite(snapshot.write())) {
          RotationMath.Rotation current = new RotationMath.Rotation(snapshot.read(), snapshot.write());
          RotationMath.Rotation previous = Float.isFinite(snapshot.init_F()) && Float.isFinite(snapshot.load())
             ? new RotationMath.Rotation(snapshot.init_F(), snapshot.load())
             : current;
-         return new ScaffoldModule.Inner_TextFormat(previous, current, snapshot.init_I());
+         return new ScaffoldModule.WireClickRotation(previous, current, snapshot.init_I());
       } else {
          return null;
       }
    }
 
    static float init_F_ch_CachePool(ServerRotationTracker.RotationSnapshot snapshot) {
-      ScaffoldModule.Inner_TextFormat wire = init_aI_TextFormat_ch_CachePool(snapshot);
+      ScaffoldModule.WireClickRotation wire = init_aI_TextFormat_ch_CachePool(snapshot);
       return wire == null ? 0.0F / 0.0F : Math.abs(wire.load().load() - wire.init_ce_DataUtil().load());
    }
 
@@ -4146,7 +4146,7 @@ public final class ScaffoldModule extends Module {
          AABB box = MC.player.getBoundingBox();
          int below = Mth.floor(box.minY - 0.001);
 
-         for (ScaffoldModule.Inner_UiHelper placement : this.flush_ArrayDeque) {
+         for (ScaffoldModule.PendingPlacementSeq placement : this.flush_ArrayDeque) {
             BlockPos cell = placement.init_BlockPos();
             if (cell.getY() == below && cell.getX() + 1 > box.minX && cell.getX() < box.maxX && cell.getZ() + 1 > box.minZ && cell.getZ() < box.maxZ) {
                return true;
@@ -4159,7 +4159,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean load_Z_aI_TableIndex_ce_DataUtil(ScaffoldModule.Inner_TableIndex target, RotationMath.Rotation clickRotation) {
+   private boolean load_Z_aI_TableIndex_ce_DataUtil(ScaffoldModule.PlannedPlacement target, RotationMath.Rotation clickRotation) {
       if (MC.player != null && MC.level != null && clickRotation != null) {
          double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
          BlockHitResult ray = init_BlockHitResult_Vec3(MC.player.getEyePosition(), clickRotation, reach, MC.level, MC.player);
@@ -4170,14 +4170,14 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private String write_Str_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private String write_Str_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (!this.get_Z()) {
          return "";
       }
 
       RotationMath.Rotation rotation = this.update_ce_DataUtil;
       if (rotation == null) {
-         ScaffoldModule.Inner_TextFormat wire = this.init_aI_TextFormat();
+         ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
          rotation = wire == null ? null : wire.load();
       }
 
@@ -4438,7 +4438,7 @@ public final class ScaffoldModule extends Module {
       this.init_aI_PathHelper = null;
       this.f_Y_I = -2147483648;
       this.value_Z = false;
-      this.init_aI_c = ScaffoldModule.Inner_c.NONE;
+      this.init_aI_c = ScaffoldModule.StrafeSide.NONE;
       this.update_Input = null;
       this.node_V();
       if (!this.cache_Z()) {
@@ -4528,7 +4528,7 @@ public final class ScaffoldModule extends Module {
 
          this.pop_Z = this.init_aI_b.init_Z();
          if (this.pop_Z && !player.onGround()) {
-            this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+            this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
          }
 
          if (this.pop_Z && !this.start_Z) {
@@ -4549,7 +4549,7 @@ public final class ScaffoldModule extends Module {
             && !player.onGround()
             && this.init_aI_DataPipe == null
             && !this.stop_Z
-            && (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING)
+            && (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING)
             && (!this.open_Z(player) || this.load_BlockPos_LocalPlayer(player) == null)) {
             this.init_aI_DataPipe = this.init_aI_DataPipe_LocalPlayer_ItemStack(player, this.init_ItemStack_2());
          }
@@ -4559,7 +4559,7 @@ public final class ScaffoldModule extends Module {
          this.f_v_I = 5;
          if (player.onGround()) {
             this.load_V_LocalPlayer(player);
-         } else if (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RECOVERING) {
+         } else if (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RECOVERING) {
             this.sync_V(player);
             this.read_V_LocalPlayer(player);
          } else {
@@ -4568,7 +4568,7 @@ public final class ScaffoldModule extends Module {
 
          if (!this.cache_Z) {
             this.poll_V(player);
-            if (this.push_Z && player.onGround() && this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.HOLD && !this.pop_Z && !this.add_Z) {
+            if (this.push_Z && player.onGround() && this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.HOLD && !this.pop_Z && !this.add_Z) {
                if (++this.f_W_I >= 30) {
                   this.f_W_I = 0;
                   this.f_R_I = 0;
@@ -4583,7 +4583,7 @@ public final class ScaffoldModule extends Module {
             }
 
             if (this.push_Z) {
-               if (this.init_aI_NodeWalker != ScaffoldModule.Inner_NodeWalker.PLACING) {
+               if (this.init_aI_NodeWalker != ScaffoldModule.TurnCyclePhase.PLACING) {
                   this.init_InteractionHand();
                }
 
@@ -4598,14 +4598,14 @@ public final class ScaffoldModule extends Module {
    private void init_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos under) {
       this.write_BlockPos = null;
       this.reset_Z = false;
-      this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.FORWARD;
+      this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.push_Z = true;
       this.pop_Z = false;
       this.add_Z = false;
-      this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.FORWARD_DWELL;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+      this.init_aI_ValueSink = ScaffoldModule.TellyPhase.FORWARD_DWELL;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
       this.sync_Z = false;
       this.f_bG_I = 0;
       if (!autismclient.util.RotationStreamPlanner.init_Z_ap_TaskQueue(this.init_ap_TaskQueue)) {
@@ -4676,14 +4676,14 @@ public final class ScaffoldModule extends Module {
       return forward || backward || left || right;
    }
 
-   static ScaffoldModule.Inner_b init_aI_b_aI_b(ScaffoldModule.Inner_b previous, boolean rawStop, boolean airborneOwned, boolean stopSafeHere) {
-      ScaffoldModule.Inner_b last = previous == null ? ScaffoldModule.Inner_b.init_aI_b : previous;
+   static ScaffoldModule.SneakHoldFlags init_aI_b_aI_b(ScaffoldModule.SneakHoldFlags previous, boolean rawStop, boolean airborneOwned, boolean stopSafeHere) {
+      ScaffoldModule.SneakHoldFlags last = previous == null ? ScaffoldModule.SneakHoldFlags.init_aI_b : previous;
       if (airborneOwned) {
-         return new ScaffoldModule.Inner_b(last.init_Z(), last.load() || rawStop && !last.init_Z());
+         return new ScaffoldModule.SneakHoldFlags(last.init_Z(), last.load() || rawStop && !last.init_Z());
       }
 
       boolean stop = rawStop && (last.init_Z() || stopSafeHere);
-      return new ScaffoldModule.Inner_b(stop, rawStop && !stop);
+      return new ScaffoldModule.SneakHoldFlags(stop, rawStop && !stop);
    }
 
    private void load_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos laneSupport) {
@@ -4747,7 +4747,7 @@ public final class ScaffoldModule extends Module {
          if (!this.pop_Z && !this.add_Z) {
             if (under != null && !init_Z_KeyMapping(MC.options.keyShift) && autismclient.util.BlockPlacementPlanner.init_Z(MC.level.getBlockState(under), under)) {
                this.flush_V_LocalPlayer_BlockPos(player, under);
-            } else if (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RECOVERING) {
+            } else if (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RECOVERING) {
                this.sync_V_LocalPlayer_BlockPos(player, under != null ? under : this.sync_BlockPos);
             } else {
                if (under != null) {
@@ -4768,9 +4768,9 @@ public final class ScaffoldModule extends Module {
                      this.write_V_LocalPlayer_BlockPos(player, this.sync_BlockPos);
                   } else {
                      if (this.f_H_I > 0
-                        || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH
-                        || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING
-                        || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING) {
+                        || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH
+                        || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING
+                        || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING) {
                         this.update_V_BlockPos(this.sync_BlockPos);
                      }
 
@@ -4789,7 +4789,7 @@ public final class ScaffoldModule extends Module {
                            if (this.value_Z()) {
                               this.init_V_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
                            } else {
-                              this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+                              this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                            }
                         } else {
                            if (this.start_Z()) {
@@ -4813,9 +4813,9 @@ public final class ScaffoldModule extends Module {
                   }
                } else if (!this.task_Z || !this.init_Z_LocalPlayer_BlockPos(player, under)) {
                   if (this.f_H_I > 0
-                     || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH
-                     || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING
-                     || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING) {
+                     || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH
+                     || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING
+                     || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING) {
                      boolean interruptedLanding = this.queue_Z || this.next_Z;
                      this.update_V_BlockPos(under);
                      this.close_ce_DataUtil();
@@ -4824,24 +4824,24 @@ public final class ScaffoldModule extends Module {
                         return;
                      }
 
-                     this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RUNNING;
+                     this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RUNNING;
                      this.f_K_I = 0;
                   }
 
                   if (this.init_aM != null && this.init_aM.init_Z() && !this.data_Z()) {
                      this.close_ce_DataUtil();
-                     this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+                     this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                      Input carry = this.init_Input_LocalPlayer_BlockPos(player, under);
                      this.update_Input = carry != null
                         ? carry
                         : this.init_Input_LocalPlayer_2(player, under, new Input(false, false, false, false, false, false, false));
-                  } else if (this.init_aI_ValueSink != ScaffoldModule.Inner_ValueSink.FORWARD_DWELL || !this.load_Z_LocalPlayer_BlockPos(player, under)) {
+                  } else if (this.init_aI_ValueSink != ScaffoldModule.TellyPhase.FORWARD_DWELL || !this.load_Z_LocalPlayer_BlockPos(player, under)) {
                      boolean nearEdge = this.read_Z_LocalPlayer_BlockPos(player, under);
                      this.value_Z = !nearEdge && this.init_D_LocalPlayer_BlockPos(player, under) > 4.5;
                      if (this.pop_Z) {
                         this.read_V_LocalPlayer_BlockPos(player, under);
                      } else {
-                        this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+                        this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
                         this.open_V(player, under);
                         this.write_Z = false;
                         InteractionHand hand = this.init_InteractionHand();
@@ -4851,7 +4851,7 @@ public final class ScaffoldModule extends Module {
                            if (this.init_Z_ItemStack_4(stack)) {
                               this.sync_BlockPos = under.immutable();
                               this.f_L_I = under.getY();
-                              ScaffoldModule.Inner_DataPipe first = this.init_aI_DataPipe_LocalPlayer_ItemStack(player, stack);
+                              ScaffoldModule.LivePlacement first = this.init_aI_DataPipe_LocalPlayer_ItemStack(player, stack);
                               this.init_aI_DataPipe = first;
                               if (this.sync_Z_LocalPlayer_BlockPos(player, under)) {
                                  this.flush_V_LocalPlayer_BlockPos(player, under);
@@ -4867,7 +4867,7 @@ public final class ScaffoldModule extends Module {
                                  if (this.f_S_I >= 40) {
                                     this.flush_V_LocalPlayer_BlockPos(player, under);
                                  } else {
-                                    this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+                                    this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                                  }
                               } else {
                                  if (this.start_Z()) {
@@ -4888,7 +4888,7 @@ public final class ScaffoldModule extends Module {
                                  if (init_Z_Z_2(launchCatchable)) {
                                     this.update_V_LocalPlayer_BlockPos(player, under);
                                  } else if (!this.value_Z()) {
-                                    this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+                                    this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                                  } else {
                                     this.init_V_LocalPlayer_aI_DataPipe(player, first);
                                  }
@@ -4898,14 +4898,14 @@ public final class ScaffoldModule extends Module {
                                  this.write_V_LocalPlayer_BlockPos(player, under);
                               }
                            } else {
-                              this.init_aI_KeyHolder = nearEdge ? ScaffoldModule.Inner_KeyHolder.HOLD : ScaffoldModule.Inner_KeyHolder.FORWARD;
+                              this.init_aI_KeyHolder = nearEdge ? ScaffoldModule.ForwardKeyState.HOLD : ScaffoldModule.ForwardKeyState.FORWARD;
                            }
                         } else if (!this.write_Z) {
                            if (nearEdge) {
                               this.write_V_LocalPlayer_BlockPos(player, under);
                            }
                         } else {
-                           this.init_aI_KeyHolder = nearEdge ? ScaffoldModule.Inner_KeyHolder.HOLD : ScaffoldModule.Inner_KeyHolder.FORWARD;
+                           this.init_aI_KeyHolder = nearEdge ? ScaffoldModule.ForwardKeyState.HOLD : ScaffoldModule.ForwardKeyState.FORWARD;
                            if (this.write_Z) {
                               this.f_V();
                            }
@@ -4933,9 +4933,9 @@ public final class ScaffoldModule extends Module {
       }
 
       if (this.f_H_I > 0
-         || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH
-         || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING
-         || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING) {
+         || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH
+         || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING
+         || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING) {
          this.update_V_BlockPos(under);
       }
 
@@ -4963,8 +4963,8 @@ public final class ScaffoldModule extends Module {
       if (settled && this.f_ab_I <= 0) {
          this.task_Z = false;
          this.data_V();
-         this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.FORWARD_DWELL;
-         this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+         this.init_aI_ValueSink = ScaffoldModule.TellyPhase.FORWARD_DWELL;
+         this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
          this.f_M_I = 0;
          this.f_K_I = 0;
          return true;
@@ -4975,7 +4975,7 @@ public final class ScaffoldModule extends Module {
       }
 
       this.scan_V();
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
       Direction overhang = this.init_Direction_LocalPlayer(player);
       this.update_Input = recovery;
       if (!init_Z_BlockPos_4(this.poll_BlockPos, this.push_BlockPos, overhang)) {
@@ -5024,7 +5024,7 @@ public final class ScaffoldModule extends Module {
 
    private void write_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos support) {
       this.scan_V();
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
       this.run_Z = false;
       this.update_Input = support == null
          ? null
@@ -5068,7 +5068,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static Input init_Input_Input_3(Input recovery, ScaffoldModule.Inner_MethodUtil along, ScaffoldModule.Inner_MethodUtil across) {
+   static Input init_Input_Input_3(Input recovery, ScaffoldModule.AxisDriftMetrics along, ScaffoldModule.AxisDriftMetrics across) {
       boolean forward = recovery != null && recovery.forward();
       boolean backward = recovery != null && recovery.backward();
       boolean left = recovery != null && recovery.left();
@@ -5117,10 +5117,10 @@ public final class ScaffoldModule extends Module {
          Vec3 left = this.update_Vec3();
          AABB box = player.getBoundingBox();
          Vec3 toSupport = Vec3.atCenterOf(support).subtract(box.getCenter());
-         ScaffoldModule.Inner_MethodUtil along = this.init_aI_MethodUtil_LocalPlayer(
+         ScaffoldModule.AxisDriftMetrics along = this.init_aI_MethodUtil_LocalPlayer(
             player, box, forward, friction, velocity.x * forward.x + velocity.z * forward.z, toSupport.x * forward.x + toSupport.z * forward.z
          );
-         ScaffoldModule.Inner_MethodUtil across = this.init_aI_MethodUtil_LocalPlayer(
+         ScaffoldModule.AxisDriftMetrics across = this.init_aI_MethodUtil_LocalPlayer(
             player, box, left, friction, velocity.x * left.x + velocity.z * left.z, toSupport.x * left.x + toSupport.z * left.z
          );
          return init_Input_Input_3(recovery, along, across);
@@ -5190,10 +5190,10 @@ public final class ScaffoldModule extends Module {
       return true;
    }
 
-   private ScaffoldModule.Inner_MethodUtil init_aI_MethodUtil_LocalPlayer(LocalPlayer player, AABB box, Vec3 axis, double friction, double velocity, double toSupport) {
+   private ScaffoldModule.AxisDriftMetrics init_aI_MethodUtil_LocalPlayer(LocalPlayer player, AABB box, Vec3 axis, double friction, double velocity, double toSupport) {
       double coast = init_D_D_D(velocity, friction);
       boolean leaves = !this.init_Z_AABB(box.move(axis.scale(coast)), player.getY(), 0.12);
-      return new ScaffoldModule.Inner_MethodUtil(velocity, coast, toSupport, leaves);
+      return new ScaffoldModule.AxisDriftMetrics(velocity, coast, toSupport, leaves);
    }
 
    private boolean init_Z_LocalPlayer(LocalPlayer player) {
@@ -5263,11 +5263,11 @@ public final class ScaffoldModule extends Module {
       } else {
          this.f_K_I = init_I_I_Z(this.f_K_I, true);
          if (!write_Z_I(this.f_K_I)) {
-            this.init_aI_KeyHolder = nearEdge ? ScaffoldModule.Inner_KeyHolder.HOLD : ScaffoldModule.Inner_KeyHolder.FORWARD;
+            this.init_aI_KeyHolder = nearEdge ? ScaffoldModule.ForwardKeyState.HOLD : ScaffoldModule.ForwardKeyState.FORWARD;
             return true;
          } else {
-            this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RUNNING;
-            this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+            this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RUNNING;
+            this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
             this.f_K_I = 0;
             return false;
          }
@@ -5275,9 +5275,9 @@ public final class ScaffoldModule extends Module {
    }
 
    private void update_V_LocalPlayer_BlockPos(LocalPlayer player, BlockPos support) {
-      if (this.init_aI_ValueSink != ScaffoldModule.Inner_ValueSink.RECOVERING && player != null && support != null) {
-         this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RECOVERING;
-         this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+      if (this.init_aI_ValueSink != ScaffoldModule.TellyPhase.RECOVERING && player != null && support != null) {
+         this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RECOVERING;
+         this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
          this.f_M_I = 0;
          this.init_aI_DataPipe = null;
          this.stop_Z = false;
@@ -5297,22 +5297,22 @@ public final class ScaffoldModule extends Module {
          this.load_V_LocalPlayer_BlockPos(player, support);
          if (!this.task_Z || !this.init_Z_LocalPlayer_BlockPos(player, support)) {
             if (this.sync_Z_LocalPlayer_BlockPos(player, support)) {
-               this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RUNNING;
+               this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RUNNING;
                this.f_M_I = 0;
                this.flush_V_LocalPlayer_BlockPos(player, support);
             } else {
-               this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+               this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                this.init_Vec3 = this.read_Vec3_BlockPos(support, player.position(), this.flags_F);
                this.f_x_D = init_D_Vec3_F(this.init_Vec3, this.flags_F);
                this.update_Input = this.init_Input_LocalPlayer_2(player, support, init_Input_AABB(player.getBoundingBox(), support, this.flags_F));
                this.f_M_I++;
                if (this.f_M_I >= 60) {
-                  this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RUNNING;
+                  this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RUNNING;
                   this.flush_V_LocalPlayer_BlockPos(player, support);
                } else if (this.flush_Z_LocalPlayer_BlockPos(player, support)) {
                   this.update_Input = null;
-                  this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.FORWARD_DWELL;
-                  this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+                  this.init_aI_ValueSink = ScaffoldModule.TellyPhase.FORWARD_DWELL;
+                  this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
                   this.init_Vec3 = this.read_Vec3_BlockPos(support, player.position(), this.flags_F);
                   this.f_x_D = init_D_Vec3_F(this.init_Vec3, this.flags_F);
                   this.sync_BlockPos = support.immutable();
@@ -5347,14 +5347,14 @@ public final class ScaffoldModule extends Module {
             this.update_V_BlockPos(support);
          }
 
-         this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RUNNING;
-         this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.PLACING;
+         this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RUNNING;
+         this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.PLACING;
          if (support == null) {
             support = this.sync_BlockPos;
          }
 
          if (support == null) {
-            this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+            this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
          } else {
             float previousCourse = this.flags_F;
             this.load_V_LocalPlayer_BlockPos(player, support);
@@ -5380,7 +5380,7 @@ public final class ScaffoldModule extends Module {
                }
 
                if (this.read_BlockPos == null && this.init_aI_DataPipe != null) {
-                  ScaffoldModule.Inner_TableIndex next = this.init_aI_DataPipe.init_aI_TableIndex();
+                  ScaffoldModule.PlannedPlacement next = this.init_aI_DataPipe.init_aI_TableIndex();
                   Vec3 plane = Vec3.atCenterOf(next.init_BlockPos()).add(this.write_Vec3().scale(0.5));
                   if (player.getEyePosition().subtract(plane).dot(this.write_Vec3()) > 1.0E-9) {
                      this.read_BlockPos = next.load().immutable();
@@ -5403,7 +5403,7 @@ public final class ScaffoldModule extends Module {
                   && this.data_Z()
                   && this.init_Z_ItemStack_4(this.init_ItemStack_2())
                   && this.init_Z_AABB(player.getBoundingBox().move(stop), player.getY(), 0.08);
-               this.init_aI_KeyHolder = safe ? ScaffoldModule.Inner_KeyHolder.FORWARD : ScaffoldModule.Inner_KeyHolder.HOLD;
+               this.init_aI_KeyHolder = safe ? ScaffoldModule.ForwardKeyState.FORWARD : ScaffoldModule.ForwardKeyState.HOLD;
                if (!safe) {
                   this.scan_V();
                   this.update_Input = this.init_Input_LocalPlayer(player, support, speed);
@@ -5502,8 +5502,8 @@ public final class ScaffoldModule extends Module {
          this.push_Z = false;
          this.value_Z = false;
          this.run_Z = false;
-         this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.RELEASED;
-         this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RUNNING;
+         this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.RELEASED;
+         this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RUNNING;
          this.scan_V();
          this.mark_V();
          this.data_V();
@@ -5576,7 +5576,7 @@ public final class ScaffoldModule extends Module {
                      || init_Z_KeyMapping(MC.options.keyLeft)
                      || init_Z_KeyMapping(MC.options.keyRight)
                )
-               && this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.IDLE
+               && this.init_aI_SyncManager == ScaffoldModule.PlacementState.IDLE
                && !this.g_Z()
                && !this.sync_Z_LocalPlayer_BlockPos(player, support)
                && this.flush_Z_LocalPlayer_BlockPos(player, support)
@@ -5625,7 +5625,7 @@ public final class ScaffoldModule extends Module {
       return ("Telly".equals(mode) || "Eagle".equals(mode)) && allowed && load_Z_Input(physical) && init_Z_I_6(init_I_F(cameraYaw + init_F_Input(physical)));
    }
 
-   private void init_V_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.Inner_DataPipe first) {
+   private void init_V_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.LivePlacement first) {
       int jumpDelay = ((AutismLivingEntityAccessor)player).autism$getNoJumpDelay();
       if (!init_Z_Z_I(player.onGround(), jumpDelay)) {
          this.write_V_LocalPlayer_BlockPos(player, this.init_BlockPos_LocalPlayer(player));
@@ -5662,7 +5662,7 @@ public final class ScaffoldModule extends Module {
                   this.write_V_LocalPlayer_BlockPos(player, this.init_BlockPos_LocalPlayer(player));
                } else {
                   this.data_V();
-                  this.init_aI_NodeWalker = this.count_Z() ? ScaffoldModule.Inner_NodeWalker.PLACING : ScaffoldModule.Inner_NodeWalker.FORWARD;
+                  this.init_aI_NodeWalker = this.count_Z() ? ScaffoldModule.TurnCyclePhase.PLACING : ScaffoldModule.TurnCyclePhase.FORWARD;
                   this.init_aI_CacheEntry = null;
                   this.close_Z = false;
                   this.pop_J++;
@@ -5700,8 +5700,8 @@ public final class ScaffoldModule extends Module {
                   this.f_S_I = 0;
                   this.init_aI_DataPipe = first;
                   this.data_Z = true;
-                  this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.LAUNCH;
-                  this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+                  this.init_aI_ValueSink = ScaffoldModule.TellyPhase.LAUNCH;
+                  this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
                   this.scan_V();
                   this.mark_V();
                   this.state_V();
@@ -5711,7 +5711,7 @@ public final class ScaffoldModule extends Module {
          } else if (footing != null) {
             this.update_V_LocalPlayer_BlockPos(player, footing);
          } else {
-            this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+            this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
          }
       }
    }
@@ -5733,16 +5733,16 @@ public final class ScaffoldModule extends Module {
       if (this.sync_BlockPos == null) {
          this.chunk_V();
       } else {
-         if (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RUNNING || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.FORWARD_DWELL) {
+         if (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RUNNING || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.FORWARD_DWELL) {
             if (!this.next_Z() && this.init_Z_LocalPlayer_I(player, this.f_L_I)) {
-               this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+               this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
                return;
             }
 
             this.sync_V(player);
          }
 
-         this.init_aI_KeyHolder = !this.pop_Z && !this.add_Z && !this.buffer_Z ? ScaffoldModule.Inner_KeyHolder.FORWARD : ScaffoldModule.Inner_KeyHolder.HOLD;
+         this.init_aI_KeyHolder = !this.pop_Z && !this.add_Z && !this.buffer_Z ? ScaffoldModule.ForwardKeyState.FORWARD : ScaffoldModule.ForwardKeyState.HOLD;
          ItemStack stack = this.init_ItemStack_2();
          if (player.horizontalCollision
             || player.verticalCollision && player.getDeltaMovement().y <= 0.0
@@ -5778,7 +5778,7 @@ public final class ScaffoldModule extends Module {
             this.close_BlockPos = null;
             this.clear_Z = false;
             this.init_aI_DataPipe = null;
-            this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.AIMING;
+            this.init_aI_ValueSink = ScaffoldModule.TellyPhase.AIMING;
             if (this.load_Z_BlockState_BlockPos(MC.level.getBlockState(lowerSupport), lowerSupport)) {
                this.sync_BlockPos = lowerSupport;
             }
@@ -5792,7 +5792,7 @@ public final class ScaffoldModule extends Module {
             boolean landingSecured = this.init_Z_LocalPlayer_I(player, landingBlockY);
             if (!landingSecured && !this.node_Z && this.write_Z_LocalPlayer_I(player, landingBlockY)) {
                this.buffer_Z = true;
-               this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+               this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                landingSecured = this.init_Z_LocalPlayer_I(player, landingBlockY);
             }
 
@@ -5803,14 +5803,14 @@ public final class ScaffoldModule extends Module {
             }
 
             if (!landingSecured && this.start_Z && this.close_Z(player)) {
-               this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+               this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
             }
 
             boolean turnPending = this.start_Z();
             boolean reservePending = turnPending || this.init_aI_b.load();
             boolean turnReserveCovered = !reservePending || landingSecured && this.init_Z_LocalPlayer(player, landingBlockY, init_I_Z_2(turnPending));
             boolean chainCovered = load_Z_Z(landingSecured, reservePending, turnReserveCovered);
-            if (chainCovered && this.init_aI_ValueSink != ScaffoldModule.Inner_ValueSink.RETURNING) {
+            if (chainCovered && this.init_aI_ValueSink != ScaffoldModule.TellyPhase.RETURNING) {
                chainCovered = this.load_Z_LocalPlayer_I(player, landingBlockY);
             }
 
@@ -5836,10 +5836,10 @@ public final class ScaffoldModule extends Module {
             } else if (!this.init_Z_ItemStack_4(stack)) {
                this.flush_V(player);
             } else {
-               ScaffoldModule.Inner_ValueSink coveredPhase = init_aI_ValueSink_aI_ValueSink(
+               ScaffoldModule.TellyPhase coveredPhase = init_aI_ValueSink_aI_ValueSink(
                   this.init_aI_ValueSink, chainCovered, this.clear_Z && !this.start_Z || this.tick(player)
                );
-               if (coveredPhase == ScaffoldModule.Inner_ValueSink.RETURNING && this.init_aI_ValueSink != ScaffoldModule.Inner_ValueSink.RETURNING) {
+               if (coveredPhase == ScaffoldModule.TellyPhase.RETURNING && this.init_aI_ValueSink != ScaffoldModule.TellyPhase.RETURNING) {
                   this.init_aI_DataPipe = null;
                   this.init_aI_ValueSink = coveredPhase;
                } else {
@@ -5847,12 +5847,12 @@ public final class ScaffoldModule extends Module {
                      this.clear_Z = false;
                      this.init_aI_DataPipe = null;
                      if (chainCovered) {
-                        this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RETURNING;
+                        this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RETURNING;
                         return;
                      }
                   }
 
-                  if (this.init_aI_ValueSink != ScaffoldModule.Inner_ValueSink.RETURNING) {
+                  if (this.init_aI_ValueSink != ScaffoldModule.TellyPhase.RETURNING) {
                      if (this.init_aI_DataPipe == null) {
                         if (chainCovered) {
                            if ((!this.clear_Z || this.start_Z) && !this.tick(player)) {
@@ -5870,7 +5870,7 @@ public final class ScaffoldModule extends Module {
                      }
 
                      if (this.init_aI_DataPipe != null) {
-                        this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.AIMING;
+                        this.init_aI_ValueSink = ScaffoldModule.TellyPhase.AIMING;
                         this.write_Z = false;
                         InteractionHand hand = this.init_InteractionHand();
                         if (hand == null) {
@@ -5887,7 +5887,7 @@ public final class ScaffoldModule extends Module {
                               reservePending = turnPending || this.init_aI_b.load();
                               turnReserveCovered = !reservePending || landingSecured && this.init_Z_LocalPlayer(player, landingBlockY, init_I_Z_2(turnPending));
                               chainCovered = load_Z_Z(landingSecured, reservePending, turnReserveCovered);
-                              if (chainCovered && this.init_aI_ValueSink != ScaffoldModule.Inner_ValueSink.RETURNING) {
+                              if (chainCovered && this.init_aI_ValueSink != ScaffoldModule.TellyPhase.RETURNING) {
                                  chainCovered = this.load_Z_LocalPlayer_I(player, landingBlockY);
                               }
 
@@ -5910,7 +5910,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void write_V_LocalPlayer(LocalPlayer player) {
-      this.init_aI_KeyHolder = !this.pop_Z && !this.queue_Z && !this.add_Z ? ScaffoldModule.Inner_KeyHolder.FORWARD : ScaffoldModule.Inner_KeyHolder.HOLD;
+      this.init_aI_KeyHolder = !this.pop_Z && !this.queue_Z && !this.add_Z ? ScaffoldModule.ForwardKeyState.FORWARD : ScaffoldModule.ForwardKeyState.HOLD;
       if (!this.start_Z) {
          this.clear_Z = false;
          if (!this.stop_Z && this.init_aI_DataPipe != null && this.init_aI_DataPipe.init_Z()) {
@@ -5920,7 +5920,7 @@ public final class ScaffoldModule extends Module {
 
       int blockY = this.init_I_LocalPlayer(player);
       if (this.init_Z_LocalPlayer_I(player, blockY)) {
-         this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RETURNING;
+         this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RETURNING;
          if (!this.stop_Z) {
             this.init_aI_DataPipe = null;
          }
@@ -5961,7 +5961,7 @@ public final class ScaffoldModule extends Module {
 
             Vec3 landing = this.init_aI_FieldCache_LocalPlayer_D(player, blockY + 1.0).init_Vec3();
             AABB footprint = player.getBoundingBox().move(landing.x - player.getX(), blockY + 1.0 - player.getY(), landing.z - player.getZ());
-            ScaffoldModule.Inner_DataPipe best = null;
+            ScaffoldModule.LivePlacement best = null;
             double bestCost = 1.0 / 0.0;
 
             for (int x = Mth.floor(footprint.minX + 1.0E-9); x <= Mth.floor(footprint.maxX - 1.0E-9); x++) {
@@ -5975,8 +5975,8 @@ public final class ScaffoldModule extends Module {
                         BlockPos support = cell.relative(face.getOpposite());
                         if (this.load_Z_BlockState_BlockPos(MC.level.getBlockState(support), support)) {
                            Vec3 aim = init_Vec3_AABB_Direction(init_AABB_BlockPos(support), face);
-                           ScaffoldModule.Inner_DataPipe candidate = new ScaffoldModule.Inner_DataPipe(
-                              new ScaffoldModule.Inner_TableIndex(
+                           ScaffoldModule.LivePlacement candidate = new ScaffoldModule.LivePlacement(
+                              new ScaffoldModule.PlannedPlacement(
                                  support.immutable(),
                                  cell.immutable(),
                                  face,
@@ -5986,7 +5986,7 @@ public final class ScaffoldModule extends Module {
                               ),
                               false
                            );
-                           ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, candidate);
+                           ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, candidate);
                            if (live != null
                               && this.load_Z_BlockHitResult_aI_TableIndex(live.init_aI_TableIndex().init_BlockHitResult(), live.init_aI_TableIndex())
                               && !al.init_Z_HitResult(live.init_aI_TableIndex().init_BlockHitResult(), hand, this.id())) {
@@ -6008,7 +6008,7 @@ public final class ScaffoldModule extends Module {
             }
 
             if (best != null) {
-               this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.AIMING;
+               this.init_aI_ValueSink = ScaffoldModule.TellyPhase.AIMING;
                this.init_aI_DataPipe = best;
                return this.init_Z_aI_DataPipe(best, hand, held, null, true);
             }
@@ -6020,7 +6020,7 @@ public final class ScaffoldModule extends Module {
             this.init_aI_DataPipe = this.init_aI_DataPipe_LocalPlayer_ItemStack(player, held);
             boolean pending = this.init_Z_LocalPlayer_ItemStack(player, held);
             if (this.stop_Z) {
-               this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.AIMING;
+               this.init_aI_ValueSink = ScaffoldModule.TellyPhase.AIMING;
             }
 
             return pending;
@@ -6049,7 +6049,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void sync_V(LocalPlayer player) {
-      this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.FORWARD;
+      this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.pop_J++;
@@ -6067,8 +6067,8 @@ public final class ScaffoldModule extends Module {
       this.f_L_I = this.sync_BlockPos.getY();
       this.f_v_D = this.f_L_I + 1.0;
       this.f_w_D = player.position().dot(this.write_Vec3()) - 1.45;
-      this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.LAUNCH;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+      this.init_aI_ValueSink = ScaffoldModule.TellyPhase.LAUNCH;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
       this.scan_V();
       this.mark_V();
    }
@@ -6106,7 +6106,7 @@ public final class ScaffoldModule extends Module {
       }
 
       synchronized (load_Map) {
-         ScaffoldModule.Inner_RenderState queued = load_Map.get(new ScaffoldModule.Inner_StateCache(packet));
+         ScaffoldModule.QueuedPacketContext queued = load_Map.get(new ScaffoldModule.WeakPacketKey(packet));
          return queued == null ? null : queued.init_ce_DataUtil();
       }
    }
@@ -6115,7 +6115,7 @@ public final class ScaffoldModule extends Module {
       return al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold
          && scaffold.isEnabled()
          && scaffold.frame_Z()
-         && scaffold.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.ARMED
+         && scaffold.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED
          && scaffold.f_aJ_I == AutismSessionState.init_ck().state_I();
    }
 
@@ -6137,26 +6137,26 @@ public final class ScaffoldModule extends Module {
       if (packet instanceof ServerboundUseItemOnPacket use) {
          synchronized (load_Map) {
             reset_V();
-            if (load_Map.containsKey(new ScaffoldModule.Inner_StateCache(packet))) {
+            if (load_Map.containsKey(new ScaffoldModule.WeakPacketKey(packet))) {
                return;
             }
          }
 
          long edgeGeneration = autismclient.util.VirtualInputDispatcher.init_J();
          if (edgeGeneration > 0L && al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.frame_Z()) {
-            ScaffoldModule.Inner_TableIndex pending = scaffold.read_aI_TableIndex;
+            ScaffoldModule.PlannedPlacement pending = scaffold.read_aI_TableIndex;
             BlockHitResult hit = use.hitResult();
             if (pending != null
-               && scaffold.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.ARMED
+               && scaffold.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED
                && edgeGeneration == scaffold.put_J
                && use.hand() == scaffold.init_InteractionHand
                && init_Z_BlockHitResult(hit, pending, scaffold.chunk_Z)) {
                synchronized (load_Map) {
                   reset_V();
-                  ScaffoldModule.Inner_StateCache lookup = new ScaffoldModule.Inner_StateCache(packet);
+                  ScaffoldModule.WeakPacketKey lookup = new ScaffoldModule.WeakPacketKey(packet);
                   if (!load_Map.containsKey(lookup)) {
                      int ordinal = scaffold.f_aK_I++;
-                     ScaffoldModule.Inner_RenderState queued = new ScaffoldModule.Inner_RenderState(
+                     ScaffoldModule.QueuedPacketContext queued = new ScaffoldModule.QueuedPacketContext(
                         scaffold.put_J,
                         ordinal,
                         use.hand(),
@@ -6165,7 +6165,7 @@ public final class ScaffoldModule extends Module {
                         pending.init_Direction(),
                         scaffold.update_ce_DataUtil
                      );
-                     load_Map.put(new ScaffoldModule.Inner_StateCache(packet, init_ReferenceQueue), queued);
+                     load_Map.put(new ScaffoldModule.WeakPacketKey(packet, init_ReferenceQueue), queued);
                      if (ordinal > 0) {
                         scaffold.table_Z = true;
                      }
@@ -6180,7 +6180,7 @@ public final class ScaffoldModule extends Module {
       if (packet instanceof ServerboundUseItemOnPacket) {
          synchronized (load_Map) {
             reset_V();
-            load_Map.remove(new ScaffoldModule.Inner_StateCache(packet));
+            load_Map.remove(new ScaffoldModule.WeakPacketKey(packet));
          }
       }
    }
@@ -6189,7 +6189,7 @@ public final class ScaffoldModule extends Module {
       if (this.f_aJ_I == AutismSessionState.init_ck().state_I()
          && this.read_aI_TableIndex != null
          && this.update_ce_DataUtil != null
-         && this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.ARMED) {
+         && this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
          double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
          BlockHitResult ray = init_BlockHitResult_Vec3(MC.player.getEyePosition(), this.update_ce_DataUtil, reach, MC.level, MC.player);
          if (ray != null) {
@@ -6206,7 +6206,7 @@ public final class ScaffoldModule extends Module {
 
       if (!this.stop_Z && this.f_G_I <= 0 && !this.run_Z) {
          if (this.init_aI_CacheEntry != null && !this.init_aI_CacheEntry.init_aI_DataPipe().init_Z() && this.open_Z(MC.player)) {
-            ScaffoldModule.Inner_DataPipe rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(MC.player, this.init_ItemStack_2());
+            ScaffoldModule.LivePlacement rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(MC.player, this.init_ItemStack_2());
             if (rise != null && this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(MC.player, rise) != null) {
                this.init_aI_CacheEntry = null;
                this.close_Z = false;
@@ -6214,7 +6214,7 @@ public final class ScaffoldModule extends Module {
          }
 
          if (this.init_aI_CacheEntry != null) {
-            ScaffoldModule.Inner_DataPipe prepared = this.init_aI_CacheEntry.init_aI_DataPipe();
+            ScaffoldModule.LivePlacement prepared = this.init_aI_CacheEntry.init_aI_DataPipe();
             boolean optional = prepared.init_aI_TableIndex().load().equals(this.load_BlockPos);
             if (optional && this.init_aI_CacheEntry.init_I() == AutismSessionState.init_ck().state_I()) {
                return;
@@ -6236,7 +6236,7 @@ public final class ScaffoldModule extends Module {
          if (this.next_Z()) {
             this.read_Z_LocalPlayer(MC.player);
          } else {
-            ScaffoldModule.Inner_DataPipe optional = this.init_aI_DataPipe_LocalPlayer(MC.player);
+            ScaffoldModule.LivePlacement optional = this.init_aI_DataPipe_LocalPlayer(MC.player);
             if (optional != null) {
                InteractionHand optionalHand = this.init_InteractionHand();
                if (optionalHand != null && !al.init_Z_HitResult(optional.init_aI_TableIndex().init_BlockHitResult(), optionalHand, this.id())) {
@@ -6257,13 +6257,13 @@ public final class ScaffoldModule extends Module {
                   ItemStack held = MC.player.getItemInHand(hand);
                   if (this.init_Z_ItemStack_4(held)) {
                      if (this.open_Z(MC.player) && this.sync_BlockPos != null) {
-                        ScaffoldModule.Inner_DataPipe rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(MC.player, held);
+                        ScaffoldModule.LivePlacement rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(MC.player, held);
                         if (rise != null) {
-                           ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(MC.player, rise);
+                           ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(MC.player, rise);
                            if (live != null && !al.init_Z_HitResult(live.init_aI_TableIndex().init_BlockHitResult(), hand, this.id())) {
                               if (this.init_Z_aI_DataPipe(live, hand, held, null)
                                  && this.write_Z_LocalPlayer_BlockPos(MC.player, live.init_aI_TableIndex().load())) {
-                                 this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+                                 this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                               }
 
                               return;
@@ -6272,13 +6272,13 @@ public final class ScaffoldModule extends Module {
                      }
 
                      if (this.init_aI_DataPipe == null
-                        && (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING)
+                        && (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING)
                         && (!this.open_Z(MC.player) || this.load_BlockPos_LocalPlayer(MC.player) == null)) {
                         this.init_aI_DataPipe = this.init_aI_DataPipe_LocalPlayer_ItemStack(MC.player, held);
                      }
 
                      if (this.init_aI_DataPipe != null) {
-                        ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(MC.player, this.init_aI_DataPipe);
+                        ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(MC.player, this.init_aI_DataPipe);
                         if (live != null && !al.init_Z_HitResult(live.init_aI_TableIndex().init_BlockHitResult(), hand, this.id())) {
                            this.init_Z_aI_DataPipe(live, hand, held, null);
                         }
@@ -6346,7 +6346,7 @@ public final class ScaffoldModule extends Module {
             return false;
          }
 
-         ScaffoldModule.Inner_DataPipe urgent = this.init_aI_DataPipe;
+         ScaffoldModule.LivePlacement urgent = this.init_aI_DataPipe;
          if (urgent == null
             || !init_Z_BlockPos_6(
                urgent.init_aI_TableIndex().init_BlockPos(),
@@ -6365,7 +6365,7 @@ public final class ScaffoldModule extends Module {
                this.init_Direction()
             )) {
             this.init_aI_DataPipe = urgent;
-            ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, urgent);
+            ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, urgent);
             if (live == null) {
                return true;
             }
@@ -6398,8 +6398,8 @@ public final class ScaffoldModule extends Module {
          this.init_aI_DataPipe = null;
       }
 
-      this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.RETURNING;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+      this.init_aI_ValueSink = ScaffoldModule.TellyPhase.RETURNING;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
       this.write_V_LocalPlayer(player);
    }
 
@@ -6428,13 +6428,13 @@ public final class ScaffoldModule extends Module {
                this.init_V_Str_3("input-not-consumed");
             }
 
-            if (this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE && this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.FAILED) {
+            if (this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE && this.init_aI_SyncManager != ScaffoldModule.PlacementState.FAILED) {
                boolean supported = this.read_aI_TableIndex != null
                   && this.load_Z_BlockState_BlockPos(MC.level.getBlockState(this.read_aI_TableIndex.load()), this.read_aI_TableIndex.load());
-               ScaffoldModule.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
+               ScaffoldModule.StateDecision decision = init_aI_ConfigStore_aI_SyncManager(
                   this.init_aI_SyncManager, age, this.store_Z, this.drain_Z, supported, load_Z_I_I(this.f_aM_I, this.f_aN_I)
                );
-               if (decision.init_aI_SyncManager() == ScaffoldModule.Inner_SyncManager.FAILED) {
+               if (decision.init_aI_SyncManager() == ScaffoldModule.PlacementState.FAILED) {
                   this.init_V_Str_3(decision.init_Str());
                } else {
                   this.init_aI_SyncManager = decision.init_aI_SyncManager();
@@ -6442,8 +6442,8 @@ public final class ScaffoldModule extends Module {
             }
 
             this.pool_V();
-            if (this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE
-               && (this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.PREDICTED || this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.FAILED || age >= 2)) {
+            if (this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE
+               && (this.init_aI_SyncManager == ScaffoldModule.PlacementState.PREDICTED || this.init_aI_SyncManager == ScaffoldModule.PlacementState.FAILED || age >= 2)) {
                autismclient.util.VirtualInputDispatcher.update_V();
                this.run_V();
             }
@@ -6451,37 +6451,37 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_SyncManager(ScaffoldModule.Inner_SyncManager state, int age, boolean resultSeen, int submitted) {
-      return state == ScaffoldModule.Inner_SyncManager.ARMED && age > 0 && !resultSeen && submitted == 0;
+   static boolean init_Z_aI_SyncManager(ScaffoldModule.PlacementState state, int age, boolean resultSeen, int submitted) {
+      return state == ScaffoldModule.PlacementState.ARMED && age > 0 && !resultSeen && submitted == 0;
    }
 
    static boolean init_Z_Z_2(boolean turnReserve, boolean resultSeen, int submitted) {
       return !turnReserve && (resultSeen || submitted > 0);
    }
 
-   static ScaffoldModule.Inner_StreamGate init_aI_StreamGate_aI_SyncManager(ScaffoldModule.Inner_SyncManager state, int age, boolean resultSeen, boolean consumed, boolean supported) {
-      if (state != null && state != ScaffoldModule.Inner_SyncManager.IDLE && state != ScaffoldModule.Inner_SyncManager.FAILED && (!resultSeen || consumed)) {
-         if (resultSeen && consumed && supported && state != ScaffoldModule.Inner_SyncManager.ARMED) {
-            return ScaffoldModule.Inner_StreamGate.PLACED;
+   static ScaffoldModule.PlacementAckStatus init_aI_StreamGate_aI_SyncManager(ScaffoldModule.PlacementState state, int age, boolean resultSeen, boolean consumed, boolean supported) {
+      if (state != null && state != ScaffoldModule.PlacementState.IDLE && state != ScaffoldModule.PlacementState.FAILED && (!resultSeen || consumed)) {
+         if (resultSeen && consumed && supported && state != ScaffoldModule.PlacementState.ARMED) {
+            return ScaffoldModule.PlacementAckStatus.PLACED;
          } else {
-            return age >= 2 ? ScaffoldModule.Inner_StreamGate.FAILED : ScaffoldModule.Inner_StreamGate.WAITING;
+            return age >= 2 ? ScaffoldModule.PlacementAckStatus.FAILED : ScaffoldModule.PlacementAckStatus.WAITING;
          }
       } else {
-         return ScaffoldModule.Inner_StreamGate.FAILED;
+         return ScaffoldModule.PlacementAckStatus.FAILED;
       }
    }
 
    private void pool_V() {
       if (this.stop_Z && this.open_BlockPos != null) {
          int age = Math.max(0, AutismSessionState.init_ck().state_I() - this.f_aJ_I);
-         ScaffoldModule.Inner_StreamGate status = init_aI_StreamGate_aI_SyncManager(
+         ScaffoldModule.PlacementAckStatus status = init_aI_StreamGate_aI_SyncManager(
             this.init_aI_SyncManager,
             age,
             this.store_Z,
             this.drain_Z,
             this.load_Z_BlockState_BlockPos(MC.level.getBlockState(this.open_BlockPos), this.open_BlockPos)
          );
-         if (status != ScaffoldModule.Inner_StreamGate.WAITING) {
+         if (status != ScaffoldModule.PlacementAckStatus.WAITING) {
             this.stop_Z = false;
             BlockPos placed = this.open_BlockPos;
             this.open_BlockPos = null;
@@ -6489,7 +6489,7 @@ public final class ScaffoldModule extends Module {
             this.pool_Z = false;
             boolean imperfection = this.poll_Z;
             this.poll_Z = false;
-            if (status == ScaffoldModule.Inner_StreamGate.FAILED) {
+            if (status == ScaffoldModule.PlacementAckStatus.FAILED) {
                if (!imperfection && init_Z_Z_2(turnReserve, this.store_Z, this.f_aK_I)) {
                   this.f_J_I++;
                }
@@ -6535,11 +6535,11 @@ public final class ScaffoldModule extends Module {
       this.write_BlockPos = null;
       this.init_aM_DataUtil = null;
       this.flags_V();
-      this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.FORWARD;
+      this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
-      this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.FORWARD_DWELL;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+      this.init_aI_ValueSink = ScaffoldModule.TellyPhase.FORWARD_DWELL;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
       this.mark_V();
       this.f_H_I = 0;
       this.buffer_Z = false;
@@ -6635,7 +6635,7 @@ public final class ScaffoldModule extends Module {
       return best;
    }
 
-   private ScaffoldModule.Inner_DataPipe init_aI_DataPipe_LocalPlayer_ItemStack(LocalPlayer player, ItemStack stack) {
+   private ScaffoldModule.LivePlacement init_aI_DataPipe_LocalPlayer_ItemStack(LocalPlayer player, ItemStack stack) {
       if (this.sync_BlockPos != null && this.init_Vec3 != null && this.init_Z_ItemStack_4(stack)) {
          BlockPos support = this.write_BlockPos();
          return this.init_aI_DataPipe_LocalPlayer(player, stack, support);
@@ -6644,7 +6644,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_DataPipe init_aI_DataPipe_LocalPlayer(LocalPlayer player, ItemStack stack, BlockPos support) {
+   private ScaffoldModule.LivePlacement init_aI_DataPipe_LocalPlayer(LocalPlayer player, ItemStack stack, BlockPos support) {
       if (!this.init_Z_ItemStack_4(stack)) {
          return null;
       }
@@ -6668,7 +6668,7 @@ public final class ScaffoldModule extends Module {
             }
 
             Vec3 aim = this.init_Vec3_BlockPos_Direction(support, direction);
-            ScaffoldModule.Inner_TableIndex target = new ScaffoldModule.Inner_TableIndex(
+            ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(
                support.immutable(),
                next.immutable(),
                direction,
@@ -6676,7 +6676,7 @@ public final class ScaffoldModule extends Module {
                RotationMath.init(aim, player.getEyePosition()),
                support.getY()
             );
-            return new ScaffoldModule.Inner_DataPipe(target, false);
+            return new ScaffoldModule.LivePlacement(target, false);
          }
 
          support = next;
@@ -6685,7 +6685,7 @@ public final class ScaffoldModule extends Module {
       return null;
    }
 
-   private ScaffoldModule.Inner_DataPipe load_aI_DataPipe_LocalPlayer(LocalPlayer player, ItemStack stack, BlockPos support) {
+   private ScaffoldModule.LivePlacement load_aI_DataPipe_LocalPlayer(LocalPlayer player, ItemStack stack, BlockPos support) {
       if (support != null && this.init_Z_ItemStack_4(stack)) {
          BlockPos raised = support.above();
          if (MC.level.isOutsideBuildHeight(raised)) {
@@ -6699,7 +6699,7 @@ public final class ScaffoldModule extends Module {
 
          AABB box = init_AABB_BlockPos(support);
          Vec3 aim = init_Vec3_AABB_Direction(box, Direction.UP);
-         ScaffoldModule.Inner_TableIndex target = new ScaffoldModule.Inner_TableIndex(
+         ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(
             support.immutable(),
             raised.immutable(),
             Direction.UP,
@@ -6707,7 +6707,7 @@ public final class ScaffoldModule extends Module {
             RotationMath.init(aim, player.getEyePosition()),
             box.maxY - 0.1 * box.getYsize()
          );
-         return new ScaffoldModule.Inner_DataPipe(target, true);
+         return new ScaffoldModule.LivePlacement(target, true);
       } else {
          return null;
       }
@@ -6755,12 +6755,12 @@ public final class ScaffoldModule extends Module {
                   }
 
                   Vec3 aim = this.init_Vec3_BlockPos_Direction(support, direction);
-                  ScaffoldModule.Inner_TableIndex target = new ScaffoldModule.Inner_TableIndex(
+                  ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(
                      support, cell, direction, new BlockHitResult(aim, direction, support, false), RotationMath.init(aim, player.getEyePosition()), support.getY()
                   );
-                  ScaffoldModule.Inner_DataPipe placement = new ScaffoldModule.Inner_DataPipe(target, false);
+                  ScaffoldModule.LivePlacement placement = new ScaffoldModule.LivePlacement(target, false);
                   this.init_aI_DataPipe = placement;
-                  ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, placement);
+                  ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, placement);
                   if (live == null) {
                      return true;
                   }
@@ -6811,27 +6811,27 @@ public final class ScaffoldModule extends Module {
       return cell != null && playerBox != null && new AABB(cell).intersects(playerBox);
    }
 
-   private boolean init_Z_aI_DataPipe(ScaffoldModule.Inner_DataPipe live, InteractionHand hand, ItemStack held, BlockPos queuedCell) {
+   private boolean init_Z_aI_DataPipe(ScaffoldModule.LivePlacement live, InteractionHand hand, ItemStack held, BlockPos queuedCell) {
       return this.run_Z ? false : this.init_Z_aI_DataPipe(live, hand, held, queuedCell, false);
    }
 
-   private boolean init_Z_aI_DataPipe(ScaffoldModule.Inner_DataPipe live, InteractionHand hand, ItemStack held, BlockPos queuedCell, boolean lastChance) {
+   private boolean init_Z_aI_DataPipe(ScaffoldModule.LivePlacement live, InteractionHand hand, ItemStack held, BlockPos queuedCell, boolean lastChance) {
       this.close_Z = false;
       if (!MC.player.onGround() && !this.next_Z()) {
-         if (this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.RETURNED && !lastChance) {
+         if (this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.RETURNED && !lastChance) {
             return false;
          }
 
-         if (this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.FORWARD && !this.pop(MC.player)) {
+         if (this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.FORWARD && !this.pop(MC.player)) {
             return false;
          }
       }
 
-      if (this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.RETURNED && (lastChance || this.next_Z())) {
-         this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.PLACING;
+      if (this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.RETURNED && (lastChance || this.next_Z())) {
+         this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.PLACING;
          this.init_aI_CacheEntry = null;
          this.close_Z = false;
-         this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.AIMING;
+         this.init_aI_ValueSink = ScaffoldModule.TellyPhase.AIMING;
       }
 
       BlockState supportState = MC.level.getBlockState(live.init_aI_TableIndex().init_BlockPos());
@@ -6844,7 +6844,7 @@ public final class ScaffoldModule extends Module {
          boolean prepared = this.close(live.init_aI_TableIndex());
          boolean imperfection = live.init_aI_TableIndex().load().equals(this.load_BlockPos);
          float cap = this.update_F();
-         ScaffoldModule.Inner_TableIndex aimed = this.init_aI_TableIndex_aI_TableIndex(live.init_aI_TableIndex());
+         ScaffoldModule.PlannedPlacement aimed = this.init_aI_TableIndex_aI_TableIndex(live.init_aI_TableIndex());
          if (aimed == null) {
             aimed = this.init_aI_TableIndex_aI_TableIndex_Vec3(live.init_aI_TableIndex(), MC.player.getEyePosition());
          }
@@ -6854,7 +6854,7 @@ public final class ScaffoldModule extends Module {
          }
 
          if (aimed == null || !prepared) {
-            ScaffoldModule.Inner_UtilCore preview = this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(MC.player, live);
+            ScaffoldModule.AimGoal preview = this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(MC.player, live);
             if (preview != null) {
                queue_V();
                this.load_ce_DataUtil_ce_DataUtil(preview.init_ce_DataUtil());
@@ -6868,7 +6868,7 @@ public final class ScaffoldModule extends Module {
             }
 
             if (!MC.player.onGround()) {
-               this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.PLACING;
+               this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.PLACING;
             }
 
             queue_V();
@@ -6896,7 +6896,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex_F(ScaffoldModule.Inner_TableIndex target, float cap) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex_F(ScaffoldModule.PlannedPlacement target, float cap) {
       if (AutismLiteVariant.enabled()) {
          return target;
       }
@@ -6937,7 +6937,7 @@ public final class ScaffoldModule extends Module {
                   && ray.getBlockPos().equals(target.init_BlockPos())
                   && ray.getDirection() == target.init_Direction()
                   && this.init_Z_BlockHitResult_3(ray)) {
-                  return new ScaffoldModule.Inner_TableIndex(target.init_BlockPos(), target.load(), target.init_Direction(), ray, rotation, target.init_D());
+                  return new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), ray, rotation, target.init_D());
                }
             }
          }
@@ -6948,7 +6948,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean init_Z_aI_TableIndex_InteractionHand(ScaffoldModule.Inner_TableIndex aimed, InteractionHand hand) {
+   private boolean init_Z_aI_TableIndex_InteractionHand(ScaffoldModule.PlannedPlacement aimed, InteractionHand hand) {
       if (MC.player == null || aimed == null || hand == null) {
          return false;
       }
@@ -6970,7 +6970,7 @@ public final class ScaffoldModule extends Module {
       this.read_aI_HashUtil = this.init_aI_HashUtil;
       this.sync_Vec3 = null;
       this.f_aJ_I = tick;
-      this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.ARMED;
+      this.init_aI_SyncManager = ScaffoldModule.PlacementState.ARMED;
       this.add_J = load_J_J(this.add_J);
       this.put_J = this.add_J;
       this.init_InteractionHand = hand;
@@ -7002,14 +7002,14 @@ public final class ScaffoldModule extends Module {
    }
 
    private void index_V() {
-      if (this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE || this.read_aI_TableIndex != null) {
+      if (this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE || this.read_aI_TableIndex != null) {
          autismclient.util.VirtualInputDispatcher.update_V();
          this.run_V();
       }
    }
 
    private void count_V() {
-      if (this.f_aJ_I == AutismSessionState.init_ck().state_I() && this.read_aI_TableIndex != null && this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.ARMED) {
+      if (this.f_aJ_I == AutismSessionState.init_ck().state_I() && this.read_aI_TableIndex != null && this.init_aI_SyncManager == ScaffoldModule.PlacementState.ARMED) {
          if (this.flush(this.read_aI_TableIndex)) {
             MC.hitResult = this.read_aI_TableIndex.init_BlockHitResult();
          } else {
@@ -7026,7 +7026,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean flush(ScaffoldModule.Inner_TableIndex target) {
+   private boolean flush(ScaffoldModule.PlannedPlacement target) {
       Vec3 writtenPosition = write_Vec3;
       if (MC.player != null && MC.level != null && writtenPosition != null && target != null) {
          Vec3 eye = MC.player.getEyePosition();
@@ -7049,8 +7049,8 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean close(ScaffoldModule.Inner_TableIndex target) {
-      ScaffoldModule.Inner_TextFormat written = this.init_aI_TextFormat();
+   private boolean close(ScaffoldModule.PlannedPlacement target) {
+      ScaffoldModule.WireClickRotation written = this.init_aI_TextFormat();
       Vec3 position = write_Vec3;
       return target != null
          && MC.player != null
@@ -7116,7 +7116,7 @@ public final class ScaffoldModule extends Module {
 
    static boolean init_Z_Vec3_3(Vec3 hit, AABB box, Direction side) {
       if (hit != null && box != null && side != null) {
-         ScaffoldModule.Inner_DataUtil face = ScaffoldModule.Inner_DataUtil.init(box, side).load(0.08);
+         ScaffoldModule.FaceRect face = ScaffoldModule.FaceRect.init(box, side).load(0.08);
          double epsilon = 1.0E-5;
          return hit.x >= face.read().x - epsilon
             && hit.x <= face.write().x + epsilon
@@ -7142,8 +7142,8 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_BlockPos_2(BlockPos support, int acknowledged, Iterable<ScaffoldModule.Inner_UiHelper> predictions) {
-      for (ScaffoldModule.Inner_UiHelper prediction : predictions) {
+   static boolean init_Z_BlockPos_2(BlockPos support, int acknowledged, Iterable<ScaffoldModule.PendingPlacementSeq> predictions) {
+      for (ScaffoldModule.PendingPlacementSeq prediction : predictions) {
          if (support.equals(prediction.init_BlockPos()) && !load_Z_I_I(prediction.init_I(), acknowledged)) {
             return false;
          }
@@ -7152,12 +7152,12 @@ public final class ScaffoldModule extends Module {
       return true;
    }
 
-   private ScaffoldModule.Inner_DataPipe init_aI_DataPipe_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.Inner_DataPipe placement) {
+   private ScaffoldModule.LivePlacement init_aI_DataPipe_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.LivePlacement placement) {
       return this.init_aI_DataPipe_LocalPlayer(player, placement, player.getEyePosition(1.0F), player.getBoundingBox());
    }
 
-   private ScaffoldModule.Inner_DataPipe init_aI_DataPipe_LocalPlayer(LocalPlayer player, ScaffoldModule.Inner_DataPipe placement, Vec3 eye, AABB body) {
-      ScaffoldModule.Inner_TableIndex target = placement.init_aI_TableIndex();
+   private ScaffoldModule.LivePlacement init_aI_DataPipe_LocalPlayer(LocalPlayer player, ScaffoldModule.LivePlacement placement, Vec3 eye, AABB body) {
+      ScaffoldModule.PlannedPlacement target = placement.init_aI_TableIndex();
       if (!this.load_Z_BlockState_BlockPos(MC.level.getBlockState(target.init_BlockPos()), target.init_BlockPos())) {
          if (placement == this.init_aI_DataPipe) {
             this.init_aI_DataPipe = null;
@@ -7173,8 +7173,8 @@ public final class ScaffoldModule extends Module {
                && carried.getDirection() == target.init_Direction()
                && this.init_Z_BlockHitResult_3(carried)
                && (!this.size_Z() || Math.abs(RotationMath.init(current.init(), this.flags_F)) >= this.init_D_8() - 1.0)) {
-               return new ScaffoldModule.Inner_DataPipe(
-                  new ScaffoldModule.Inner_TableIndex(target.init_BlockPos(), target.load(), target.init_Direction(), carried, current, target.init_D()),
+               return new ScaffoldModule.LivePlacement(
+                  new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), carried, current, target.init_D()),
                   placement.init_Z()
                );
             }
@@ -7203,8 +7203,8 @@ public final class ScaffoldModule extends Module {
 
             BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, player.blockInteractionRange(), MC.level, player);
             return ray != null && ray.getBlockPos().equals(target.init_BlockPos()) && ray.getDirection() == target.init_Direction()
-               ? new ScaffoldModule.Inner_DataPipe(
-                  new ScaffoldModule.Inner_TableIndex(target.init_BlockPos(), target.load(), target.init_Direction(), ray, rotation, target.init_D()), placement.init_Z()
+               ? new ScaffoldModule.LivePlacement(
+                  new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), ray, rotation, target.init_D()), placement.init_Z()
                )
                : null;
          } else {
@@ -7235,17 +7235,17 @@ public final class ScaffoldModule extends Module {
                }
 
                BlockHitResult ray = init_BlockHitResult_Vec3(eye, fixed, reach, MC.level, player);
-               return new ScaffoldModule.Inner_DataPipe(
-                  new ScaffoldModule.Inner_TableIndex(target.init_BlockPos(), target.load(), target.init_Direction(), ray, fixed, target.init_D()), placement.init_Z()
+               return new ScaffoldModule.LivePlacement(
+                  new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), ray, fixed, target.init_D()), placement.init_Z()
                );
             } else {
-               ScaffoldModule.Inner_RefQueue[] samples = new ScaffoldModule.Inner_RefQueue[read_DArr.length];
+               ScaffoldModule.FaceAimSample[] samples = new ScaffoldModule.FaceAimSample[read_DArr.length];
                double[] costs = new double[read_DArr.length];
                Arrays.fill(costs, 1.0 / 0.0);
                Vec3 blockOffset = new Vec3(target.init_BlockPos().getX(), target.init_BlockPos().getY(), target.init_BlockPos().getZ());
 
                for (AABB localBox : shape.toAabbs()) {
-                  ScaffoldModule.Inner_DataUtil face = ScaffoldModule.Inner_DataUtil.init(localBox, target.init_Direction()).load(0.12).init(blockOffset);
+                  ScaffoldModule.FaceRect face = ScaffoldModule.FaceRect.init(localBox, target.init_Direction()).load(0.12).init(blockOffset);
                   if (!(face.init_D() <= 1.0E-9) && !(eye.subtract(face.load_Vec3()).dot(normal) <= 0.0125)) {
                      for (int offsetIndex = 0; offsetIndex < read_DArr.length; offsetIndex++) {
                         double offset = read_DArr[offsetIndex];
@@ -7265,7 +7265,7 @@ public final class ScaffoldModule extends Module {
                               double cost = init_D_ce_DataUtil_ce_DataUtil(current, rotation) + Math.abs(offset) * 4.0 + eye.distanceTo(point) * 0.015;
                               if (cost < costs[offsetIndex]) {
                                  costs[offsetIndex] = cost;
-                                 samples[offsetIndex] = new ScaffoldModule.Inner_RefQueue(face, point, rotation, ray, offsetIndex);
+                                 samples[offsetIndex] = new ScaffoldModule.FaceAimSample(face, point, rotation, ray, offsetIndex);
                               }
                            }
                         }
@@ -7274,13 +7274,13 @@ public final class ScaffoldModule extends Module {
                }
 
                int selectedOffset = Double.isFinite(costs[0]) ? 0 : init_I_I_DArr(this.f_V_I, costs);
-               ScaffoldModule.Inner_RefQueue best = selectedOffset < 0 ? null : samples[selectedOffset];
+               ScaffoldModule.FaceAimSample best = selectedOffset < 0 ? null : samples[selectedOffset];
                if (best == null) {
                   return null;
                }
 
                this.f_V_I = selectedOffset;
-               ScaffoldModule.Inner_TableIndex live = new ScaffoldModule.Inner_TableIndex(
+               ScaffoldModule.PlannedPlacement live = new ScaffoldModule.PlannedPlacement(
                   target.init_BlockPos(),
                   target.load(),
                   target.init_Direction(),
@@ -7288,7 +7288,7 @@ public final class ScaffoldModule extends Module {
                   best.init_ce_DataUtil(),
                   best.init_aI_DataUtil().read().y
                );
-               return new ScaffoldModule.Inner_DataPipe(live, placement.init_Z());
+               return new ScaffoldModule.LivePlacement(live, placement.init_Z());
             }
          }
       }
@@ -7326,7 +7326,7 @@ public final class ScaffoldModule extends Module {
       return new Vec3(Mth.clamp(center.x, from.x, to.x), Mth.clamp(height, from.y, to.y), Mth.clamp(center.z, from.z, to.z));
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (this.write_ce_DataUtil == null) {
          return null;
       }
@@ -7336,40 +7336,40 @@ public final class ScaffoldModule extends Module {
             && ray.getBlockPos().equals(target.init_BlockPos())
             && ray.getDirection() == target.init_Direction()
             && this.init_Z_BlockHitResult_3(ray)
-         ? new ScaffoldModule.Inner_TableIndex(target.init_BlockPos(), target.load(), target.init_Direction(), ray, this.write_ce_DataUtil, target.init_D())
+         ? new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), ray, this.write_ce_DataUtil, target.init_D())
          : null;
    }
 
-   private ScaffoldModule.Inner_TableIndex load_aI_TableIndex_aI_TableIndex(ScaffoldModule.Inner_TableIndex live) {
+   private ScaffoldModule.PlannedPlacement load_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement live) {
       return this.load_aI_TableIndex_aI_TableIndex_F(live, this.update_F());
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex_Vec3(ScaffoldModule.Inner_TableIndex live, Vec3 eye) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex_Vec3(ScaffoldModule.PlannedPlacement live, Vec3 eye) {
       this.update_Z = false;
       RotationMath.Rotation proposed = this.init_aM()
          .init(this.poll_ce_DataUtil(), live.init_ce_DataUtil(), false, this.init_RangeSetting.get(), RotationMath.init(), AutismSessionState.init_ck().state_I());
-      ScaffoldModule.Inner_TableIndex endpoint = new ScaffoldModule.Inner_TableIndex(
+      ScaffoldModule.PlannedPlacement endpoint = new ScaffoldModule.PlannedPlacement(
          live.init_BlockPos(), live.load(), live.init_Direction(), live.init_BlockHitResult(), proposed, live.init_D()
       );
       return this.init_aI_TableIndex_aI_TableIndex(endpoint, this.update_F(), eye, true);
    }
 
-   private ScaffoldModule.Inner_TableIndex load_aI_TableIndex_aI_TableIndex_F(ScaffoldModule.Inner_TableIndex live, float cap) {
+   private ScaffoldModule.PlannedPlacement load_aI_TableIndex_aI_TableIndex_F(ScaffoldModule.PlannedPlacement live, float cap) {
       return this.init_aI_TableIndex_aI_TableIndex(live, cap, MC.player.getEyePosition());
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex(ScaffoldModule.Inner_TableIndex live, float cap, Vec3 eye) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement live, float cap, Vec3 eye) {
       return this.init_aI_TableIndex_aI_TableIndex(live, cap, eye, false);
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex(ScaffoldModule.Inner_TableIndex live, float cap, Vec3 eye, boolean continuous) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement live, float cap, Vec3 eye, boolean continuous) {
       RotationMath.Rotation from = this.poll_ce_DataUtil();
       RotationMath.Rotation stepped = continuous
          ? RotationMath.load(from, live.init_ce_DataUtil(), cap, cap, RotationMath.init())
          : load_ce_DataUtil_ce_DataUtil(from, live.init_ce_DataUtil(), cap, cap, RotationMath.init());
       BlockHitResult ray = init_BlockHitResult_Vec3(eye, stepped, MC.player.blockInteractionRange(), MC.level, MC.player);
       if (ray != null && ray.getBlockPos().equals(live.init_BlockPos()) && ray.getDirection() == live.init_Direction() && this.init_Z_BlockHitResult_3(ray)) {
-         return new ScaffoldModule.Inner_TableIndex(live.init_BlockPos(), live.load(), live.init_Direction(), ray, stepped, live.init_D());
+         return new ScaffoldModule.PlannedPlacement(live.init_BlockPos(), live.load(), live.init_Direction(), ray, stepped, live.init_D());
       }
 
       double gcd = read_D_D(RotationMath.init());
@@ -7377,7 +7377,7 @@ public final class ScaffoldModule extends Module {
       for (int radius = 1; radius <= 3; radius++) {
          for (int yawCounts = -radius; yawCounts <= radius; yawCounts++) {
             int pitchCounts = radius - Math.abs(yawCounts);
-            ScaffoldModule.Inner_TableIndex adjusted = this.init_aI_TableIndex_aI_TableIndex(live, from, stepped, yawCounts, pitchCounts, gcd, cap, eye);
+            ScaffoldModule.PlannedPlacement adjusted = this.init_aI_TableIndex_aI_TableIndex(live, from, stepped, yawCounts, pitchCounts, gcd, cap, eye);
             if (adjusted != null) {
                return adjusted;
             }
@@ -7394,8 +7394,8 @@ public final class ScaffoldModule extends Module {
       return null;
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_aI_TableIndex(
-      ScaffoldModule.Inner_TableIndex live, RotationMath.Rotation from, RotationMath.Rotation base, int yawCounts, int pitchCounts, double gcd, float cap, Vec3 eye
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_aI_TableIndex(
+      ScaffoldModule.PlannedPlacement live, RotationMath.Rotation from, RotationMath.Rotation base, int yawCounts, int pitchCounts, double gcd, float cap, Vec3 eye
    ) {
       RotationMath.Rotation candidate = new RotationMath.Rotation(
          base.init() + (float)(yawCounts * gcd), Mth.clamp(base.load() + (float)(pitchCounts * gcd), -90.0F, 90.0F)
@@ -7409,7 +7409,7 @@ public final class ScaffoldModule extends Module {
                && ray.getBlockPos().equals(live.init_BlockPos())
                && ray.getDirection() == live.init_Direction()
                && this.init_Z_BlockHitResult_3(ray)
-            ? new ScaffoldModule.Inner_TableIndex(live.init_BlockPos(), live.load(), live.init_Direction(), ray, candidate, live.init_D())
+            ? new ScaffoldModule.PlannedPlacement(live.init_BlockPos(), live.load(), live.init_Direction(), ray, candidate, live.init_D())
             : null;
       } else {
          return null;
@@ -7449,7 +7449,7 @@ public final class ScaffoldModule extends Module {
             return false;
          }
 
-         ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
+         ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
          if (live == null) {
             return false;
          }
@@ -7816,7 +7816,7 @@ public final class ScaffoldModule extends Module {
       return Entity.collideBoundingBox(player, movement, box, MC.level, MC.level.getEntityCollisions(player, box.expandTowards(movement)));
    }
 
-   private ScaffoldModule.Inner_FieldCache init_aI_FieldCache_LocalPlayer_D(LocalPlayer player, double feetY) {
+   private ScaffoldModule.LedgePoint init_aI_FieldCache_LocalPlayer_D(LocalPlayer player, double feetY) {
       return init_aI_FieldCache_Vec3(
          player.position(),
          player.getDeltaMovement(),
@@ -7835,15 +7835,15 @@ public final class ScaffoldModule extends Module {
          return this.write_Vec3().scale(-1.0);
       }
 
-      Vec3 forward = this.init_aI_KeyHolder != ScaffoldModule.Inner_KeyHolder.HOLD && !this.pop_Z ? this.write_Vec3() : Vec3.ZERO;
-      double side = this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.FORWARD
+      Vec3 forward = this.init_aI_KeyHolder != ScaffoldModule.ForwardKeyState.HOLD && !this.pop_Z ? this.write_Vec3() : Vec3.ZERO;
+      double side = this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.FORWARD
          ? 0.0
-         : (this.init_aI_c == ScaffoldModule.Inner_c.LEFT ? 1.0 : (this.init_aI_c == ScaffoldModule.Inner_c.RIGHT ? -1.0 : 0.0));
+         : (this.init_aI_c == ScaffoldModule.StrafeSide.LEFT ? 1.0 : (this.init_aI_c == ScaffoldModule.StrafeSide.RIGHT ? -1.0 : 0.0));
       Vec3 input = forward.add(this.update_Vec3().scale(side));
       return input.normalize().scale(MC.player != null && MC.player.isCrouching() ? 0.3 : 1.0);
    }
 
-   static ScaffoldModule.Inner_FieldCache init_aI_FieldCache_Vec3(
+   static ScaffoldModule.LedgePoint init_aI_FieldCache_Vec3(
       Vec3 position,
       Vec3 velocity,
       double feetY,
@@ -7856,7 +7856,7 @@ public final class ScaffoldModule extends Module {
       return init_aI_FieldCache_Vec3(position, velocity, feetY, forward, launchDrag, footprint, launch, collisionResolver, 14);
    }
 
-   static ScaffoldModule.Inner_FieldCache init_aI_FieldCache_Vec3(
+   static ScaffoldModule.LedgePoint init_aI_FieldCache_Vec3(
       Vec3 position,
       Vec3 velocity,
       double feetY,
@@ -7893,14 +7893,14 @@ public final class ScaffoldModule extends Module {
          projected = projected.add(moved);
          box = box.move(moved);
          if (motion.y <= 0.0 && projected.y <= feetY + 0.08) {
-            return new ScaffoldModule.Inner_FieldCache(new Vec3(projected.x, feetY, projected.z), obstructed);
+            return new ScaffoldModule.LedgePoint(new Vec3(projected.x, feetY, projected.z), obstructed);
          }
 
          double drag = launch && tick == 0 ? Mth.clamp(launchDrag, 0.0, 1.2) : 0.91;
          motion = new Vec3(blockedX ? 0.0 : motion.x * drag, ((blockedY ? 0.0 : motion.y) - 0.08) * 0.98, blockedZ ? 0.0 : motion.z * drag);
       }
 
-      return new ScaffoldModule.Inner_FieldCache(new Vec3(projected.x, feetY, projected.z), obstructed);
+      return new ScaffoldModule.LedgePoint(new Vec3(projected.x, feetY, projected.z), obstructed);
    }
 
    private boolean flush_Z_LocalPlayer_BlockPos(LocalPlayer player, BlockPos support) {
@@ -7949,7 +7949,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean init_Z_LocalPlayer_3(LocalPlayer player, BlockPos under, ScaffoldModule.Inner_DataPipe first) {
+   private boolean init_Z_LocalPlayer_3(LocalPlayer player, BlockPos under, ScaffoldModule.LivePlacement first) {
       if (player == null || under == null || first == null) {
          return false;
       } else if (this.pop_Z || this.start_Z() || this.task_Z) {
@@ -7968,10 +7968,10 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean load_Z_LocalPlayer(LocalPlayer player, BlockPos under, ScaffoldModule.Inner_DataPipe first) {
+   private boolean load_Z_LocalPlayer(LocalPlayer player, BlockPos under, ScaffoldModule.LivePlacement first) {
       if (first != null && !first.init_Z()) {
          Vec3 forward = this.write_Vec3();
-         ScaffoldModule.Inner_TableIndex target = first.init_aI_TableIndex();
+         ScaffoldModule.PlannedPlacement target = first.init_aI_TableIndex();
          if (target.init_Direction() != null && target.init_Direction() == this.init_Direction()) {
             Vec3 launch = this.load_Vec3_LocalPlayer(player);
             double drag = MC.level.getBlockState(under).getBlock().getFriction() * 0.91;
@@ -7993,11 +7993,11 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean init_Z_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.Inner_DataPipe first) {
+   private boolean init_Z_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.LivePlacement first) {
       return this.init_Z_LocalPlayer_2(player, first, false);
    }
 
-   private boolean init_Z_LocalPlayer_2(LocalPlayer player, ScaffoldModule.Inner_DataPipe first, boolean flatEntry) {
+   private boolean init_Z_LocalPlayer_2(LocalPlayer player, ScaffoldModule.LivePlacement first, boolean flatEntry) {
       if (first != null && !first.init_Z() && (flatEntry || !this.set_Z && !this.put_Z)) {
          BlockPos root = first.init_aI_TableIndex().init_BlockPos();
          BlockPos under = this.init_BlockPos_LocalPlayer(player);
@@ -8243,7 +8243,7 @@ public final class ScaffoldModule extends Module {
             return false;
          }
 
-         this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.FORWARD;
+         this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.FORWARD;
          this.update_Input = null;
          this.run_Z = false;
          return true;
@@ -8356,23 +8356,23 @@ public final class ScaffoldModule extends Module {
          && !this.start_Z()
          && !this.init_aI_b.load()
          && (
-            this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH
-               || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING
-               || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING
+            this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH
+               || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING
+               || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING
          )) {
          BlockPos root = this.write_BlockPos();
          if (root != null) {
             if (this.f_A_I == 2 && (this.open_Z || this.poll_Z) && this.init_aN.init_Z()) {
                this.node_Z = true;
                this.buffer_Z = true;
-               this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+               this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
             } else {
-               boolean returning = this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING || this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.RETURNED;
+               boolean returning = this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING || this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.RETURNED;
                if (returning && this.flush_I() > 1) {
                   this.node_Z = true;
                   this.f_X_I = 0;
                   this.buffer_Z = true;
-                  this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+                  this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                } else {
                   int turn = returning ? 0 : this.init_aM().write(this.init_RangeSetting.get());
                   int optional = this.sync_I() / 2;
@@ -8382,7 +8382,7 @@ public final class ScaffoldModule extends Module {
                         returning && this.init_aM().init_Z()
                            ? this.init_aM().init_I()
                            : (
-                              this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.FORWARD
+                              this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.FORWARD
                                  ? this.init_aM().read(this.init_RangeSetting.get())
                                  : this.init_aM().init(this.init_RangeSetting.get(), this.poll_ce_DataUtil(), this.update_ce_DataUtil(), RotationMath.init())
                            )
@@ -8397,7 +8397,7 @@ public final class ScaffoldModule extends Module {
                   double walkSpeed = player.getAttributeValue(Attributes.MOVEMENT_SPEED) / (player.isSprinting() ? 1.3 : 1.0);
                   double groundBrake = load_D_D_D(walkSpeed, groundDrag / 0.91) * 0.7;
                   BlockPos published = this.init_BlockPos_LocalPlayer(player, root, optional);
-                  ScaffoldModule.Inner_PathHelper push = init(
+                  ScaffoldModule.PushTarget push = init(
                      player.position(),
                      player.getDeltaMovement(),
                      this.init_Direction(),
@@ -8416,7 +8416,7 @@ public final class ScaffoldModule extends Module {
                   );
                   if (this.f_A_I <= 1 && !returning) {
                      for (int ticks = 12; ticks > 1; ticks--) {
-                        ScaffoldModule.Inner_PathHelper sustained = init(
+                        ScaffoldModule.PushTarget sustained = init(
                            player.position(),
                            player.getDeltaMovement(),
                            this.init_Direction(),
@@ -8445,9 +8445,9 @@ public final class ScaffoldModule extends Module {
                   this.f_Y_I = AutismSessionState.init_ck().state_I();
                   this.init_aI_PathHelper = push;
                   this.buffer_Z = !push.init_Z();
-                  this.init_aI_KeyHolder = push.init_Z() ? ScaffoldModule.Inner_KeyHolder.FORWARD : ScaffoldModule.Inner_KeyHolder.HOLD;
+                  this.init_aI_KeyHolder = push.init_Z() ? ScaffoldModule.ForwardKeyState.FORWARD : ScaffoldModule.ForwardKeyState.HOLD;
                   if (!push.init_Z()) {
-                     ScaffoldModule.Inner_PathHelper coast = init(
+                     ScaffoldModule.PushTarget coast = init(
                         player.position(),
                         player.getDeltaMovement(),
                         this.init_Direction(),
@@ -8466,7 +8466,7 @@ public final class ScaffoldModule extends Module {
                      );
                      this.init_aI_PathHelper = coast;
                      if (!coast.init_Z() && !(player.getDeltaMovement().dot(this.write_Vec3()) <= 0.0236)) {
-                        ScaffoldModule.Inner_PathHelper brake = init(
+                        ScaffoldModule.PushTarget brake = init(
                            player.position(),
                            player.getDeltaMovement(),
                            this.init_Direction(),
@@ -8494,7 +8494,7 @@ public final class ScaffoldModule extends Module {
 
    private BlockPos init_BlockPos_LocalPlayer(LocalPlayer player, BlockPos root, int optional) {
       if (!this.stop_Z && this.f_G_I <= 0) {
-         ScaffoldModule.Inner_TextFormat wire = this.init_aI_TextFormat();
+         ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
          if (wire != null && wire.init_I() < AutismSessionState.init_ck().state_I()) {
             BlockHitResult ray = init_BlockHitResult_Vec3(player.getEyePosition(), wire.load(), player.blockInteractionRange() - 0.035, MC.level, player);
             if (ray != null && this.init_Z_BlockHitResult_3(ray)) {
@@ -8502,7 +8502,7 @@ public final class ScaffoldModule extends Module {
                boolean top = optional > 0 && ray.getDirection() == Direction.UP && placed.equals(this.load_BlockPos);
                boolean floor = optional == 0 && ray.getDirection() == this.init_Direction() && ray.getBlockPos().equals(root);
                if ((top || floor) && MC.level.getBlockState(placed).canBeReplaced()) {
-                  ScaffoldModule.Inner_TableIndex target = new ScaffoldModule.Inner_TableIndex(ray.getBlockPos(), placed, ray.getDirection(), ray, wire.load(), placed.getY());
+                  ScaffoldModule.PlannedPlacement target = new ScaffoldModule.PlannedPlacement(ray.getBlockPos(), placed, ray.getDirection(), ray, wire.load(), placed.getY());
                   return this.flush(target) ? placed : null;
                } else {
                   return null;
@@ -8518,7 +8518,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static ScaffoldModule.Inner_PathHelper init(
+   static ScaffoldModule.PushTarget init(
       Vec3 position,
       Vec3 velocity,
       Direction course,
@@ -8534,7 +8534,7 @@ public final class ScaffoldModule extends Module {
       return init(position, velocity, course, root, feetY, firstControl, turn, optionalTops, returnTicks, returning, solid, 1);
    }
 
-   static ScaffoldModule.Inner_PathHelper init(
+   static ScaffoldModule.PushTarget init(
       Vec3 position,
       Vec3 velocity,
       Direction course,
@@ -8551,7 +8551,7 @@ public final class ScaffoldModule extends Module {
       return init(position, velocity, course, root, feetY, firstControl, turn, optionalTops, returnTicks, returning, solid, powerTicks, 0.546);
    }
 
-   static ScaffoldModule.Inner_PathHelper init(
+   static ScaffoldModule.PushTarget init(
       Vec3 position,
       Vec3 velocity,
       Direction course,
@@ -8569,7 +8569,7 @@ public final class ScaffoldModule extends Module {
       return init(position, velocity, course, root, feetY, firstControl, turn, optionalTops, returnTicks, returning, solid, powerTicks, groundDrag, null);
    }
 
-   static ScaffoldModule.Inner_PathHelper init(
+   static ScaffoldModule.PushTarget init(
       Vec3 position,
       Vec3 velocity,
       Direction course,
@@ -8604,7 +8604,7 @@ public final class ScaffoldModule extends Module {
       );
    }
 
-   static ScaffoldModule.Inner_PathHelper init(
+   static ScaffoldModule.PushTarget init(
       Vec3 position,
       Vec3 velocity,
       Direction course,
@@ -8657,7 +8657,7 @@ public final class ScaffoldModule extends Module {
 
          int distance = Math.max(0, (int)Math.ceil(held.dot(forward) - rootAlong - 0.68));
          if (distance > 6) {
-            return new ScaffoldModule.Inner_PathHelper(false, distance, flight, flight, landing);
+            return new ScaffoldModule.PushTarget(false, distance, flight, flight, landing);
          }
 
          boolean publishedTop = optionalTops > 0 && publishedCell != null && publishedCell.getY() > root.getY();
@@ -8684,18 +8684,18 @@ public final class ScaffoldModule extends Module {
          }
 
          if (returning && missing > 0 || lastUse >= flight) {
-            return new ScaffoldModule.Inner_PathHelper(false, missing, flight, lastUse, landing);
+            return new ScaffoldModule.PushTarget(false, missing, flight, lastUse, landing);
          }
 
          int wait = Math.max(0, returnTicks - Math.max(0, flight - lastUse));
          if (wait <= groundWait) {
-            return new ScaffoldModule.Inner_PathHelper(true, missing, flight, lastUse, landing);
+            return new ScaffoldModule.PushTarget(true, missing, flight, lastUse, landing);
          }
 
          groundWait = wait;
       }
 
-      return new ScaffoldModule.Inner_PathHelper(false, missing, flight, lastUse, landing);
+      return new ScaffoldModule.PushTarget(false, missing, flight, lastUse, landing);
    }
 
    static double init_D_D_2(double velocity, double drag, int wait, double brake) {
@@ -8715,7 +8715,7 @@ public final class ScaffoldModule extends Module {
       return travel + init_D_D(motion, friction, Math.max(0.0, brake));
    }
 
-   static ScaffoldModule.Inner_ArrayUtil init_aI_ArrayUtil_Vec3(Vec3 position, Vec3 velocity, double feetY, Vec3 forward, boolean brake) {
+   static ScaffoldModule.PredictedTickStep init_aI_ArrayUtil_Vec3(Vec3 position, Vec3 velocity, double feetY, Vec3 forward, boolean brake) {
       Vec3 at = position;
       Vec3 motion = velocity;
 
@@ -8727,13 +8727,13 @@ public final class ScaffoldModule extends Module {
          at = at.add(motion);
          Vec3 next = new Vec3(motion.x * 0.91, (motion.y - 0.08) * 0.98, motion.z * 0.91);
          if (motion.y <= 0.0 && at.y <= feetY + 1.0E-9) {
-            return new ScaffoldModule.Inner_ArrayUtil(new Vec3(at.x, feetY, at.z), new Vec3(next.x, 0.0, next.z), tick + 1);
+            return new ScaffoldModule.PredictedTickStep(new Vec3(at.x, feetY, at.z), new Vec3(next.x, 0.0, next.z), tick + 1);
          }
 
          motion = next;
       }
 
-      return new ScaffoldModule.Inner_ArrayUtil(new Vec3(at.x, feetY, at.z), motion, 14);
+      return new ScaffoldModule.PredictedTickStep(new Vec3(at.x, feetY, at.z), motion, 14);
    }
 
    private boolean push(LocalPlayer player) {
@@ -8755,14 +8755,14 @@ public final class ScaffoldModule extends Module {
 
       if (this.write_BlockPos != null && this.clear_Z && !this.start_Z) {
          this.buffer_Z = this.f_H_I >= this.f_E_I;
-         this.init_aI_KeyHolder = this.buffer_Z ? ScaffoldModule.Inner_KeyHolder.HOLD : ScaffoldModule.Inner_KeyHolder.FORWARD;
+         this.init_aI_KeyHolder = this.buffer_Z ? ScaffoldModule.ForwardKeyState.HOLD : ScaffoldModule.ForwardKeyState.FORWARD;
          this.node_Z = true;
          this.f_X_I = Math.max(0, this.f_E_I - this.f_H_I);
          return false;
       }
 
       this.buffer_Z = true;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
       Vec3 forward = this.write_Vec3();
       Vec3 velocity = player.getDeltaMovement();
       if (velocity.dot(forward) <= 0.0196) {
@@ -8771,12 +8771,12 @@ public final class ScaffoldModule extends Module {
 
       int rise = this.clear_Z ? 1 : 0;
       double feetY = this.f_L_I + 1.0 + rise;
-      ScaffoldModule.Inner_ArrayUtil coast = init_aI_ArrayUtil_Vec3(player.position(), velocity, feetY, forward, false);
+      ScaffoldModule.PredictedTickStep coast = init_aI_ArrayUtil_Vec3(player.position(), velocity, feetY, forward, false);
       if (coast.init_I() < 2) {
          return false;
       }
 
-      ScaffoldModule.Inner_ArrayUtil eased = init_aI_ArrayUtil_Vec3(player.position(), velocity, feetY, forward, true);
+      ScaffoldModule.PredictedTickStep eased = init_aI_ArrayUtil_Vec3(player.position(), velocity, feetY, forward, true);
       AABB easedBody = player.getBoundingBox().move(eased.init_Vec3().subtract(player.position()));
       BlockPos projected = this.init_BlockPos_BlockPos(BlockPos.containing(coast.init_Vec3().x, this.f_L_I, coast.init_Vec3().z)).above(rise);
       BlockPos base = projected.below(rise);
@@ -8837,11 +8837,11 @@ public final class ScaffoldModule extends Module {
       return !projectedLandingCatchable;
    }
 
-   static ScaffoldModule.Inner_ValueSink init_aI_ValueSink_aI_ValueSink(ScaffoldModule.Inner_ValueSink current, boolean chainCovered, boolean risePending) {
-      if (current == ScaffoldModule.Inner_ValueSink.RETURNING) {
-         return ScaffoldModule.Inner_ValueSink.RETURNING;
+   static ScaffoldModule.TellyPhase init_aI_ValueSink_aI_ValueSink(ScaffoldModule.TellyPhase current, boolean chainCovered, boolean risePending) {
+      if (current == ScaffoldModule.TellyPhase.RETURNING) {
+         return ScaffoldModule.TellyPhase.RETURNING;
       } else {
-         return chainCovered && !risePending ? ScaffoldModule.Inner_ValueSink.RETURNING : current;
+         return chainCovered && !risePending ? ScaffoldModule.TellyPhase.RETURNING : current;
       }
    }
 
@@ -9171,8 +9171,8 @@ public final class ScaffoldModule extends Module {
       return physicalForward && physicalSpace ? !physicalSpaceWasDown || !ownsInput : false;
    }
 
-   static boolean init_Z_aI_ValueSink(ScaffoldModule.Inner_ValueSink phase) {
-      return phase != null && phase != ScaffoldModule.Inner_ValueSink.IDLE;
+   static boolean init_Z_aI_ValueSink(ScaffoldModule.TellyPhase phase) {
+      return phase != null && phase != ScaffoldModule.TellyPhase.IDLE;
    }
 
    private Vec3 write_Vec3() {
@@ -9249,8 +9249,8 @@ public final class ScaffoldModule extends Module {
          return this.write_ce_DataUtil;
       }
 
-      ScaffoldModule.Inner_UtilCore goal = this.init_aI_UtilCore_LocalPlayer(player);
-      if (goal.init_aI_a() == ScaffoldModule.Inner_a.RETURN) {
+      ScaffoldModule.AimGoal goal = this.init_aI_UtilCore_LocalPlayer(player);
+      if (goal.init_aI_a() == ScaffoldModule.AimMode.RETURN) {
          return this.close_ce_DataUtil();
       }
 
@@ -9260,11 +9260,11 @@ public final class ScaffoldModule extends Module {
          return this.load_ce_DataUtil_ce_DataUtil(goal.init_ce_DataUtil());
       }
 
-      if (goal.init_aI_a() == ScaffoldModule.Inner_a.HOLD) {
+      if (goal.init_aI_a() == ScaffoldModule.AimMode.HOLD) {
          return this.flush_ce_DataUtil();
       }
 
-      if (goal.init_aI_a() == ScaffoldModule.Inner_a.FORWARD && !player.onGround()) {
+      if (goal.init_aI_a() == ScaffoldModule.AimMode.FORWARD && !player.onGround()) {
          return this.close_ce_DataUtil();
       }
 
@@ -9272,8 +9272,8 @@ public final class ScaffoldModule extends Module {
       return this.load_ce_DataUtil_ce_DataUtil(goal.init_ce_DataUtil());
    }
 
-   static boolean init_Z_aI_a(ScaffoldModule.Inner_a intent) {
-      return intent == ScaffoldModule.Inner_a.PLACEMENT;
+   static boolean init_Z_aI_a(ScaffoldModule.AimMode intent) {
+      return intent == ScaffoldModule.AimMode.PLACEMENT;
    }
 
    private boolean prev_Z() {
@@ -9321,51 +9321,51 @@ public final class ScaffoldModule extends Module {
       this.data_Z = false;
    }
 
-   private ScaffoldModule.Inner_UtilCore init_aI_UtilCore_LocalPlayer(LocalPlayer player) {
+   private ScaffoldModule.AimGoal init_aI_UtilCore_LocalPlayer(LocalPlayer player) {
       if (this.count_Z()) {
          return this.load_aI_UtilCore_LocalPlayer(player);
       }
 
       if (player.onGround()) {
          if (this.f_H_I > 0 && this.init_aI_DataPipe != null && this.init_BlockPos_LocalPlayer(player) == null) {
-            ScaffoldModule.Inner_DataPipe catchTarget = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
-            return new ScaffoldModule.Inner_UtilCore(
+            ScaffoldModule.LivePlacement catchTarget = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
+            return new ScaffoldModule.AimGoal(
                catchTarget != null ? catchTarget.init_aI_TableIndex().init_ce_DataUtil() : this.poll_ce_DataUtil(),
-               catchTarget != null ? ScaffoldModule.Inner_a.PLACEMENT : ScaffoldModule.Inner_a.HOLD
+               catchTarget != null ? ScaffoldModule.AimMode.PLACEMENT : ScaffoldModule.AimMode.HOLD
             );
          }
 
-         if (this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.HOLD) {
+         if (this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.HOLD) {
             boolean turnReserveTarget = this.init_aI_DataPipe != null
                && this.push_BlockPos != null
                && this.push_BlockPos.equals(this.init_aI_DataPipe.init_aI_TableIndex().load());
-            ScaffoldModule.Inner_DataPipe heldTarget = !read_Z_Z_Z(this.pop_Z, this.add_Z) && !turnReserveTarget ? null : this.init_aI_DataPipe;
+            ScaffoldModule.LivePlacement heldTarget = !read_Z_Z_Z(this.pop_Z, this.add_Z) && !turnReserveTarget ? null : this.init_aI_DataPipe;
             if (heldTarget != null) {
-               return new ScaffoldModule.Inner_UtilCore(this.init_ce_DataUtil_LocalPlayer_aI_DataPipe(player, heldTarget), ScaffoldModule.Inner_a.PLACEMENT);
+               return new ScaffoldModule.AimGoal(this.init_ce_DataUtil_LocalPlayer_aI_DataPipe(player, heldTarget), ScaffoldModule.AimMode.PLACEMENT);
             }
          }
 
-         return new ScaffoldModule.Inner_UtilCore(this.valid_Z && !this.init_aM().init_Z() ? this.sync_ce_DataUtil() : this.update_ce_DataUtil(), ScaffoldModule.Inner_a.FORWARD);
+         return new ScaffoldModule.AimGoal(this.valid_Z && !this.init_aM().init_Z() ? this.sync_ce_DataUtil() : this.update_ce_DataUtil(), ScaffoldModule.AimMode.FORWARD);
       } else {
-         if (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING || this.add_Z) {
-            return new ScaffoldModule.Inner_UtilCore(this.update_ce_DataUtil(), init_aI_a_aI_ValueSink(this.init_aI_ValueSink, false, this.add_Z, this.init_aI_NodeWalker));
+         if (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING || this.add_Z) {
+            return new ScaffoldModule.AimGoal(this.update_ce_DataUtil(), init_aI_a_aI_ValueSink(this.init_aI_ValueSink, false, this.add_Z, this.init_aI_NodeWalker));
          }
 
-         if (this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.RETURNED) {
-            return new ScaffoldModule.Inner_UtilCore(this.update_ce_DataUtil(), ScaffoldModule.Inner_a.FORWARD);
+         if (this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.RETURNED) {
+            return new ScaffoldModule.AimGoal(this.update_ce_DataUtil(), ScaffoldModule.AimMode.FORWARD);
          }
 
-         boolean aimingPhase = !this.add_Z && (this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.LAUNCH || this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.AIMING);
+         boolean aimingPhase = !this.add_Z && (this.init_aI_ValueSink == ScaffoldModule.TellyPhase.LAUNCH || this.init_aI_ValueSink == ScaffoldModule.TellyPhase.AIMING);
          if (aimingPhase && this.clear_Z && !this.start_Z && (this.init_aI_CacheEntry == null || !this.init_aI_CacheEntry.init_aI_DataPipe().init_Z())) {
-            ScaffoldModule.Inner_DataPipe rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(player, this.init_ItemStack_2());
-            ScaffoldModule.Inner_UtilCore preview = rise == null ? null : this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, rise);
+            ScaffoldModule.LivePlacement rise = this.load_aI_DataPipe_LocalPlayer_ItemStack(player, this.init_ItemStack_2());
+            ScaffoldModule.AimGoal preview = rise == null ? null : this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, rise);
             if (preview != null) {
                return preview;
             }
          }
 
          if (this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() < AutismSessionState.init_ck().state_I()) {
-            ScaffoldModule.Inner_TextFormat wire = this.init_aI_TextFormat();
+            ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
             if (wire != null
                && init_Z_I_2(
                   this.init_aI_CacheEntry.init_I(),
@@ -9374,38 +9374,38 @@ public final class ScaffoldModule extends Module {
                   this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(),
                   wire.load()
                )) {
-               return new ScaffoldModule.Inner_UtilCore(wire.load(), ScaffoldModule.Inner_a.HOLD);
+               return new ScaffoldModule.AimGoal(wire.load(), ScaffoldModule.AimMode.HOLD);
             }
          }
 
-         ScaffoldModule.Inner_DataPipe optional = aimingPhase && this.open_Z ? this.init_aI_DataPipe_LocalPlayer(player) : null;
-         boolean windowDue = this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.PLACING || this.read_Z_LocalPlayer_I(player, this.sync_I());
+         ScaffoldModule.LivePlacement optional = aimingPhase && this.open_Z ? this.init_aI_DataPipe_LocalPlayer(player) : null;
+         boolean windowDue = this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.PLACING || this.read_Z_LocalPlayer_I(player, this.sync_I());
          if (aimingPhase && windowDue && optional != null) {
             if (!this.init_Z_LocalPlayer_2(player, optional.init_aI_TableIndex().init_BlockPos(), true, false)) {
                this.buffer_Z = true;
-               this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.HOLD;
+               this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.HOLD;
                optional = this.init_aI_DataPipe_LocalPlayer(player);
             }
 
-            ScaffoldModule.Inner_UtilCore preview = optional == null ? null : this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, optional);
+            ScaffoldModule.AimGoal preview = optional == null ? null : this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, optional);
             if (preview != null) {
                return preview;
             }
          }
 
          if (aimingPhase && windowDue && this.init_aI_DataPipe != null) {
-            ScaffoldModule.Inner_UtilCore preview = this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
+            ScaffoldModule.AimGoal preview = this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, this.init_aI_DataPipe);
             if (preview != null) {
                return preview;
             }
          }
 
-         ScaffoldModule.Inner_a gap = init_aI_a_aI_ValueSink(this.init_aI_ValueSink, false, this.add_Z, this.init_aI_NodeWalker);
-         return new ScaffoldModule.Inner_UtilCore(gap == ScaffoldModule.Inner_a.HOLD && this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.update_ce_DataUtil(), gap);
+         ScaffoldModule.AimMode gap = init_aI_a_aI_ValueSink(this.init_aI_ValueSink, false, this.add_Z, this.init_aI_NodeWalker);
+         return new ScaffoldModule.AimGoal(gap == ScaffoldModule.AimMode.HOLD && this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.update_ce_DataUtil(), gap);
       }
    }
 
-   private ScaffoldModule.Inner_UtilCore load_aI_UtilCore_LocalPlayer(LocalPlayer player) {
+   private ScaffoldModule.AimGoal load_aI_UtilCore_LocalPlayer(LocalPlayer player) {
       if (AutismLiteVariant.enabled()) {
          return null;
       }
@@ -9419,7 +9419,7 @@ public final class ScaffoldModule extends Module {
       }
 
       if (this.init_aI_CacheEntry != null) {
-         ScaffoldModule.Inner_DataPipe prepared = this.init_aI_CacheEntry.init_aI_DataPipe();
+         ScaffoldModule.LivePlacement prepared = this.init_aI_CacheEntry.init_aI_DataPipe();
          boolean current = this.init_aI_DataPipe != null && prepared.init_aI_TableIndex().load().equals(this.init_aI_DataPipe.init_aI_TableIndex().load());
          boolean stillVisible = this.init_aI_CacheEntry.init_I() == AutismSessionState.init_ck().state_I()
             || this.init_aI_TableIndex_aI_TableIndex(prepared.init_aI_TableIndex()) != null;
@@ -9430,7 +9430,7 @@ public final class ScaffoldModule extends Module {
       }
 
       if (this.init_aI_CacheEntry != null && this.init_aI_CacheEntry.init_I() < AutismSessionState.init_ck().state_I()) {
-         ScaffoldModule.Inner_TextFormat wire = this.init_aI_TextFormat();
+         ScaffoldModule.WireClickRotation wire = this.init_aI_TextFormat();
          if (wire != null
             && init_Z_I_2(
                this.init_aI_CacheEntry.init_I(),
@@ -9439,11 +9439,11 @@ public final class ScaffoldModule extends Module {
                this.init_aI_CacheEntry.init_aI_DataPipe().init_aI_TableIndex().init_ce_DataUtil(),
                wire.load()
             )) {
-            return new ScaffoldModule.Inner_UtilCore(wire.load(), ScaffoldModule.Inner_a.HOLD);
+            return new ScaffoldModule.AimGoal(wire.load(), ScaffoldModule.AimMode.HOLD);
          }
       }
 
-      ScaffoldModule.Inner_DataPipe target = !player.onGround() && this.open_Z(player)
+      ScaffoldModule.LivePlacement target = !player.onGround() && this.open_Z(player)
          ? this.load_aI_DataPipe_LocalPlayer_ItemStack(player, this.init_ItemStack_2())
          : null;
       if (target == null) {
@@ -9451,26 +9451,26 @@ public final class ScaffoldModule extends Module {
       }
 
       if (target != null) {
-         ScaffoldModule.Inner_UtilCore prepared = this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, target);
+         ScaffoldModule.AimGoal prepared = this.init_aI_UtilCore_LocalPlayer_aI_DataPipe(player, target);
          if (prepared != null) {
             return prepared;
          }
       }
 
       return this.data_Z()
-         ? new ScaffoldModule.Inner_UtilCore(this.write_ce_DataUtil, ScaffoldModule.Inner_a.HOLD)
-         : new ScaffoldModule.Inner_UtilCore(new RotationMath.Rotation(this.flags_F + 180.0F, 82.0F), ScaffoldModule.Inner_a.PLACEMENT);
+         ? new ScaffoldModule.AimGoal(this.write_ce_DataUtil, ScaffoldModule.AimMode.HOLD)
+         : new ScaffoldModule.AimGoal(new RotationMath.Rotation(this.flags_F + 180.0F, 82.0F), ScaffoldModule.AimMode.PLACEMENT);
    }
 
-   static ScaffoldModule.Inner_a init_aI_a_aI_ValueSink(ScaffoldModule.Inner_ValueSink phase, boolean placementGoal, boolean finishing, ScaffoldModule.Inner_NodeWalker lookPhase) {
-      if (finishing || phase == ScaffoldModule.Inner_ValueSink.RETURNING) {
-         return ScaffoldModule.Inner_a.RETURN;
-      } else if (lookPhase == ScaffoldModule.Inner_NodeWalker.RETURNED) {
-         return ScaffoldModule.Inner_a.FORWARD;
+   static ScaffoldModule.AimMode init_aI_a_aI_ValueSink(ScaffoldModule.TellyPhase phase, boolean placementGoal, boolean finishing, ScaffoldModule.TurnCyclePhase lookPhase) {
+      if (finishing || phase == ScaffoldModule.TellyPhase.RETURNING) {
+         return ScaffoldModule.AimMode.RETURN;
+      } else if (lookPhase == ScaffoldModule.TurnCyclePhase.RETURNED) {
+         return ScaffoldModule.AimMode.FORWARD;
       } else if (placementGoal) {
-         return ScaffoldModule.Inner_a.PLACEMENT;
+         return ScaffoldModule.AimMode.PLACEMENT;
       } else {
-         return lookPhase == ScaffoldModule.Inner_NodeWalker.PLACING ? ScaffoldModule.Inner_a.HOLD : ScaffoldModule.Inner_a.FORWARD;
+         return lookPhase == ScaffoldModule.TurnCyclePhase.PLACING ? ScaffoldModule.AimMode.HOLD : ScaffoldModule.AimMode.FORWARD;
       }
    }
 
@@ -9554,7 +9554,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean write_Z_LocalPlayer_I(LocalPlayer player, int blockY) {
-      if (this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.FORWARD && !this.start_Z) {
+      if (this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.FORWARD && !this.start_Z) {
          BlockPos root = this.write_BlockPos();
          if (root == null) {
             return true;
@@ -9574,11 +9574,11 @@ public final class ScaffoldModule extends Module {
             }
          }
 
-         int turnTicks = this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.FORWARD
+         int turnTicks = this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.FORWARD
             ? this.init_aM().load(this.init_RangeSetting.get())
-            : (this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.PLACING ? this.init_aM().write(this.init_RangeSetting.get()) : 0);
+            : (this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.PLACING ? this.init_aM().write(this.init_RangeSetting.get()) : 0);
          int remaining = init_I_Vec3(player.position(), player.getDeltaMovement(), feetY);
-         int needed = init_I_I_3(missing, this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.FORWARD, turnTicks, this.update_I(), !this.count_Z());
+         int needed = init_I_I_3(missing, this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.FORWARD, turnTicks, this.update_I(), !this.count_Z());
          return missing > 0 && remaining <= needed + this.sync_I();
       } else {
          return false;
@@ -9599,12 +9599,12 @@ public final class ScaffoldModule extends Module {
       return remainingFlightTicks <= Math.max(1, missingBlocks + (rise ? 1 : 0)) * 2 + 6 - delayTicks;
    }
 
-   private ScaffoldModule.Inner_UtilCore init_aI_UtilCore_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.Inner_DataPipe placement) {
-      if (!this.run_Z && this.init_aI_NodeWalker != ScaffoldModule.Inner_NodeWalker.RETURNED) {
+   private ScaffoldModule.AimGoal init_aI_UtilCore_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.LivePlacement placement) {
+      if (!this.run_Z && this.init_aI_NodeWalker != ScaffoldModule.TurnCyclePhase.RETURNED) {
          Vec3 motion = player.getDeltaMovement().add(this.read_Vec3().scale(this.count_Z() && player.onGround() && this.read_BlockPos != null ? 0.0 : 0.0196));
          Vec3 moved = this.init_Vec3_LocalPlayer(player, player.getBoundingBox(), motion);
          Vec3 eye = player.getEyePosition().add(moved);
-         ScaffoldModule.Inner_DataPipe future = this.init_aI_DataPipe_LocalPlayer(player, placement, eye, player.getBoundingBox().move(moved));
+         ScaffoldModule.LivePlacement future = this.init_aI_DataPipe_LocalPlayer(player, placement, eye, player.getBoundingBox().move(moved));
          if (future == null) {
             return null;
          }
@@ -9619,7 +9619,7 @@ public final class ScaffoldModule extends Module {
             Vec3 nextEye = new Vec3(
                eye.x + motion.x * 0.91, Math.max(this.f_L_I + 1.0 + player.getEyeHeight(), eye.y + (motion.y - 0.08) * 0.98), eye.z + motion.z * 0.91
             );
-            ScaffoldModule.Inner_TableIndex target = future.init_aI_TableIndex();
+            ScaffoldModule.PlannedPlacement target = future.init_aI_TableIndex();
             RotationMath.Rotation carry = init_ce_DataUtil_BlockPos_2(
                target.init_BlockPos(),
                target.init_Direction(),
@@ -9633,18 +9633,18 @@ public final class ScaffoldModule extends Module {
             );
             if (carry != null && this.init_Z_Vec3(eye, carry, target.init_BlockPos(), target.init_Direction(), player.blockInteractionRange())) {
                BlockHitResult hit = init_BlockHitResult_Vec3(eye, carry, player.blockInteractionRange(), MC.level, player);
-               future = new ScaffoldModule.Inner_DataPipe(
-                  new ScaffoldModule.Inner_TableIndex(target.init_BlockPos(), target.load(), target.init_Direction(), hit, carry, target.init_D()), future.init_Z()
+               future = new ScaffoldModule.LivePlacement(
+                  new ScaffoldModule.PlannedPlacement(target.init_BlockPos(), target.load(), target.init_Direction(), hit, carry, target.init_D()), future.init_Z()
                );
             }
          }
 
-         ScaffoldModule.Inner_TableIndex quantized = this.init_aI_TableIndex_aI_TableIndex_Vec3(future.init_aI_TableIndex(), eye);
+         ScaffoldModule.PlannedPlacement quantized = this.init_aI_TableIndex_aI_TableIndex_Vec3(future.init_aI_TableIndex(), eye);
          if (quantized == null) {
             this.init_aI_CacheEntry = null;
             this.close_Z = false;
-            this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.PLACING;
-            return new ScaffoldModule.Inner_UtilCore(future.init_aI_TableIndex().init_ce_DataUtil(), ScaffoldModule.Inner_a.PLACEMENT);
+            this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.PLACING;
+            return new ScaffoldModule.AimGoal(future.init_aI_TableIndex().init_ce_DataUtil(), ScaffoldModule.AimMode.PLACEMENT);
          }
 
          if (!this.count_Z()
@@ -9654,7 +9654,7 @@ public final class ScaffoldModule extends Module {
             && !this.pop_Z
             && !this.init_aI_b.load()
             && !this.start_Z()
-            && this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.FORWARD
+            && this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.FORWARD
             && !this.entry_Z
             && quantized.init_Direction().getAxis().isHorizontal()) {
             boolean stable = init_Z_F(
@@ -9675,13 +9675,13 @@ public final class ScaffoldModule extends Module {
             if (!stable) {
                this.init_aI_CacheEntry = null;
                this.close_Z = false;
-               return new ScaffoldModule.Inner_UtilCore(this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.poll_ce_DataUtil(), ScaffoldModule.Inner_a.HOLD);
+               return new ScaffoldModule.AimGoal(this.write_ce_DataUtil != null ? this.write_ce_DataUtil : this.poll_ce_DataUtil(), ScaffoldModule.AimMode.HOLD);
             }
          }
 
-         this.init_aI_CacheEntry = new ScaffoldModule.Inner_CacheEntry(new ScaffoldModule.Inner_DataPipe(quantized, placement.init_Z()), AutismSessionState.init_ck().state_I());
-         this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.PLACING;
-         return new ScaffoldModule.Inner_UtilCore(quantized.init_ce_DataUtil(), ScaffoldModule.Inner_a.PLACEMENT);
+         this.init_aI_CacheEntry = new ScaffoldModule.QuantizedPlacement(new ScaffoldModule.LivePlacement(quantized, placement.init_Z()), AutismSessionState.init_ck().state_I());
+         this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.PLACING;
+         return new ScaffoldModule.AimGoal(quantized.init_ce_DataUtil(), ScaffoldModule.AimMode.PLACEMENT);
       } else {
          return null;
       }
@@ -9830,9 +9830,9 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_ValueSink(ScaffoldModule.Inner_ValueSink phase, ScaffoldModule.Inner_NodeWalker look, int remaining, int turning) {
-      return (phase == ScaffoldModule.Inner_ValueSink.LAUNCH || phase == ScaffoldModule.Inner_ValueSink.AIMING)
-         && look != ScaffoldModule.Inner_NodeWalker.RETURNED
+   static boolean init_Z_aI_ValueSink(ScaffoldModule.TellyPhase phase, ScaffoldModule.TurnCyclePhase look, int remaining, int turning) {
+      return (phase == ScaffoldModule.TellyPhase.LAUNCH || phase == ScaffoldModule.TellyPhase.AIMING)
+         && look != ScaffoldModule.TurnCyclePhase.RETURNED
          && remaining >= Math.max(0, turning) + 2;
    }
 
@@ -9870,11 +9870,11 @@ public final class ScaffoldModule extends Module {
          && !this.start_Z()
          && player != null
          && !player.onGround()
-         && this.init_aI_NodeWalker != ScaffoldModule.Inner_NodeWalker.RETURNED
+         && this.init_aI_NodeWalker != ScaffoldModule.TurnCyclePhase.RETURNED
          && init_I_Vec3(player.position(), player.getDeltaMovement(), this.f_L_I + 1.0) >= this.init_aN.init_I() * 2;
    }
 
-   private ScaffoldModule.Inner_DataPipe init_aI_DataPipe_LocalPlayer(LocalPlayer player) {
+   private ScaffoldModule.LivePlacement init_aI_DataPipe_LocalPlayer(LocalPlayer player) {
       if (this.open_Z && this.tick(player)) {
          boolean deferredPastArc = false;
          Vec3 motion = player.getDeltaMovement().add(this.read_Vec3().scale(0.0196));
@@ -9922,8 +9922,8 @@ public final class ScaffoldModule extends Module {
                      BlockHitResult ray = init_BlockHitResult_Vec3(eye, rotation, player.blockInteractionRange() - 0.035, MC.level, player);
                      if (ray != null && ray.getDirection() == Direction.UP && ray.getBlockPos().equals(support) && this.init_Z_BlockHitResult_3(ray)) {
                         this.load_BlockPos = support.above().immutable();
-                        return new ScaffoldModule.Inner_DataPipe(
-                           new ScaffoldModule.Inner_TableIndex(support.immutable(), this.load_BlockPos, Direction.UP, ray, rotation, support.getY()), false
+                        return new ScaffoldModule.LivePlacement(
+                           new ScaffoldModule.PlannedPlacement(support.immutable(), this.load_BlockPos, Direction.UP, ray, rotation, support.getY()), false
                         );
                      }
                   }
@@ -10131,7 +10131,7 @@ public final class ScaffoldModule extends Module {
          && support != null
          && support.getY() >= this.f_L_I
          && support.getY() <= this.f_L_I + 1
-         && this.init_aI_NodeWalker != ScaffoldModule.Inner_NodeWalker.RETURNED
+         && this.init_aI_NodeWalker != ScaffoldModule.TurnCyclePhase.RETURNED
          && !(player.getDeltaMovement().dot(this.write_Vec3()) <= 1.0E-4)) {
          BlockPos extra = support.above();
          BlockState state = MC.level.getBlockState(support);
@@ -10200,7 +10200,7 @@ public final class ScaffoldModule extends Module {
       int turning = !preparing
          ? 0
          : (
-            this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.PLACING
+            this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.PLACING
                ? this.init_aM().write(this.init_RangeSetting.get())
                : this.init_aM().load(this.init_RangeSetting.get())
          );
@@ -10359,7 +10359,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_DataPipe load_aI_DataPipe_LocalPlayer_ItemStack(LocalPlayer player, ItemStack stack) {
+   private ScaffoldModule.LivePlacement load_aI_DataPipe_LocalPlayer_ItemStack(LocalPlayer player, ItemStack stack) {
       if (player != null && this.sync_BlockPos != null && this.open_Z(player) && this.init_Z_ItemStack_4(stack)) {
          BlockPos riseCell = this.load_BlockPos_LocalPlayer(player);
          return riseCell == null ? null : this.load_aI_DataPipe_LocalPlayer(player, stack, riseCell);
@@ -10373,7 +10373,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void poll_V(LocalPlayer player) {
-      if (this.push_Z && player != null && !player.onGround() && this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RETURNING && (!this.size_Z || !this.prev_Z())) {
+      if (this.push_Z && player != null && !player.onGround() && this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RETURNING && (!this.size_Z || !this.prev_Z())) {
          if (read_Z_Z(this.prev_Z(), this.f_U_I == AutismSessionState.init_ck().state_I(), this.size_Z)) {
             this.f_T_I = -2147483648;
          }
@@ -10401,8 +10401,8 @@ public final class ScaffoldModule extends Module {
          return this.flush_ce_DataUtil();
       }
 
-      if (this.init_aI_NodeWalker == ScaffoldModule.Inner_NodeWalker.PLACING) {
-         this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.RETURNED;
+      if (this.init_aI_NodeWalker == ScaffoldModule.TurnCyclePhase.PLACING) {
+         this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.RETURNED;
       }
 
       this.init_aI_CacheEntry = null;
@@ -10425,8 +10425,8 @@ public final class ScaffoldModule extends Module {
       return heldForPlacement && sameTick;
    }
 
-   private RotationMath.Rotation init_ce_DataUtil_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.Inner_DataPipe placement) {
-      ScaffoldModule.Inner_DataPipe live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, placement);
+   private RotationMath.Rotation init_ce_DataUtil_LocalPlayer_aI_DataPipe(LocalPlayer player, ScaffoldModule.LivePlacement placement) {
+      ScaffoldModule.LivePlacement live = this.init_aI_DataPipe_LocalPlayer_aI_DataPipe(player, placement);
       return live != null ? live.init_aI_TableIndex().init_ce_DataUtil() : this.update_ce_DataUtil();
    }
 
@@ -10484,7 +10484,7 @@ public final class ScaffoldModule extends Module {
       this.index_F = 0.0F / 0.0F;
       this.f_x_I = -2147483648;
       this.flags_V();
-      this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.FORWARD;
+      this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.cache_Z = false;
@@ -10495,11 +10495,11 @@ public final class ScaffoldModule extends Module {
       this.parse_V();
       this.index_V();
       this.update_Input = null;
-      this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.IDLE;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.RELEASED;
+      this.init_aI_ValueSink = ScaffoldModule.TellyPhase.IDLE;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.RELEASED;
       this.push_Z = false;
       this.pop_Z = false;
-      this.init_aI_b = ScaffoldModule.Inner_b.init_aI_b;
+      this.init_aI_b = ScaffoldModule.SneakHoldFlags.init_aI_b;
       this.run_Z = false;
       this.get_Z = false;
       this.set_Z = false;
@@ -10555,7 +10555,7 @@ public final class ScaffoldModule extends Module {
       this.index_F = 0.0F / 0.0F;
       this.f_x_I = -2147483648;
       this.flags_V();
-      this.init_aI_NodeWalker = ScaffoldModule.Inner_NodeWalker.FORWARD;
+      this.init_aI_NodeWalker = ScaffoldModule.TurnCyclePhase.FORWARD;
       this.init_aI_CacheEntry = null;
       this.close_Z = false;
       this.cache_Z = false;
@@ -10566,8 +10566,8 @@ public final class ScaffoldModule extends Module {
       this.parse_V();
       this.index_V();
       this.update_Input = null;
-      this.init_aI_ValueSink = ScaffoldModule.Inner_ValueSink.IDLE;
-      this.init_aI_KeyHolder = ScaffoldModule.Inner_KeyHolder.RELEASED;
+      this.init_aI_ValueSink = ScaffoldModule.TellyPhase.IDLE;
+      this.init_aI_KeyHolder = ScaffoldModule.ForwardKeyState.RELEASED;
       this.push_Z = false;
       this.pop_Z = false;
       this.run_Z = false;
@@ -10641,11 +10641,11 @@ public final class ScaffoldModule extends Module {
          }
       }
 
-      ScaffoldModule.Inner_RenderState queued = null;
+      ScaffoldModule.QueuedPacketContext queued = null;
       if (packet instanceof ServerboundUseItemOnPacket) {
          synchronized (load_Map) {
             reset_V();
-            queued = load_Map.remove(new ScaffoldModule.Inner_StateCache(packet));
+            queued = load_Map.remove(new ScaffoldModule.WeakPacketKey(packet));
          }
       }
 
@@ -10655,11 +10655,11 @@ public final class ScaffoldModule extends Module {
          }
 
          if (packet instanceof ServerboundMovePlayerPacket movement) {
-            init_AtomicReference.set(new ScaffoldModule.Inner_TaskQueue(movement.isOnGround(), movement.horizontalCollision(), movement.hasPosition()));
+            init_AtomicReference.set(new ScaffoldModule.InputFlags(movement.isOnGround(), movement.horizontalCollision(), movement.hasPosition()));
          } else if (packet instanceof ServerboundUseItemOnPacket use && queued != null) {
             BlockHitResult hit = use.hitResult();
             init_ConcurrentLinkedQu.offer(
-               new ScaffoldModule.Inner_NetHelper(
+               new ScaffoldModule.QueuedPlacementClick(
                   use.sequence(),
                   hit.getBlockPos().immutable(),
                   hit.getDirection(),
@@ -10694,7 +10694,7 @@ public final class ScaffoldModule extends Module {
       init_AtomicReference.set(null);
    }
 
-   private void init_V_Packet_aI_RenderState(Packet<?> packet, ScaffoldModule.Inner_RenderState queued) {
+   private void init_V_Packet_aI_RenderState(Packet<?> packet, ScaffoldModule.QueuedPacketContext queued) {
       ServerRotationTracker.RotationSnapshot snapshot = ServerRotationTracker.init_ch_CachePool();
       RotationMath.Rotation wire = snapshot.init_Z() ? new RotationMath.Rotation(ServerRotationTracker.init_F(), snapshot.write()) : null;
       int tick = AutismSessionState.init_ck().state_I();
@@ -10780,14 +10780,14 @@ public final class ScaffoldModule extends Module {
    }
 
    private void table_V() {
-      ScaffoldModule.Inner_NetHelper written;
+      ScaffoldModule.QueuedPlacementClick written;
       while ((written = init_ConcurrentLinkedQu.poll()) != null) {
          this.init_V_aI_NetHelper(written);
       }
    }
 
    private void store_V() {
-      ScaffoldModule.Inner_TaskQueue written = init_AtomicReference.getAndSet(null);
+      ScaffoldModule.InputFlags written = init_AtomicReference.getAndSet(null);
       if (written != null) {
          this.mark_Z = true;
          this.scan_Z = written.init();
@@ -10796,17 +10796,17 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private void init_V_aI_NetHelper(ScaffoldModule.Inner_NetHelper written) {
-      ScaffoldModule.Inner_RenderState queued = written == null ? null : written.init_aI_RenderState();
+   private void init_V_aI_NetHelper(ScaffoldModule.QueuedPlacementClick written) {
+      ScaffoldModule.QueuedPacketContext queued = written == null ? null : written.init_aI_RenderState();
       if (queued != null) {
-         ScaffoldModule.Inner_TextFormat writtenWire = init_aI_TextFormat_ch_CachePool(written.init_ch_CachePool());
+         ScaffoldModule.WireClickRotation writtenWire = init_aI_TextFormat_ch_CachePool(written.init_ch_CachePool());
          RotationMath.Rotation actualClick = writtenWire == null ? null : writtenWire.load();
          if (this.flags_Z()) {
             this.set_J = written.init_J();
             this.init_V_BlockPos_2(queued.init_BlockPos(), queued.load(), written.init_Direction(), actualClick == null ? 0.0F / 0.0F : actualClick.load());
          }
 
-         ScaffoldModule.Inner_TableIndex pending = this.read_aI_TableIndex;
+         ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
          boolean matches = init_Z_aI_TableIndex(pending, written, this.chunk_Z);
          if (init_Z_aI_NetHelper_J(written, this.put_J)) {
             this.f_aL_I++;
@@ -10825,7 +10825,7 @@ public final class ScaffoldModule extends Module {
             } else if (!this.level_Z() && !init_Z_aI_RenderState_ch_CachePool(queued, written.init_ch_CachePool())) {
                this.init_V_Str_3("wire-rotation");
             } else {
-               this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.SENT;
+               this.init_aI_SyncManager = ScaffoldModule.PlacementState.SENT;
                this.write_Str = "sent";
                this.fill_Z = true;
                if (actualClick != null) {
@@ -10840,11 +10840,11 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_TableIndex_aI_NetHelper(ScaffoldModule.Inner_TableIndex pending, ScaffoldModule.Inner_NetHelper written) {
+   static boolean init_Z_aI_TableIndex_aI_NetHelper(ScaffoldModule.PlannedPlacement pending, ScaffoldModule.QueuedPlacementClick written) {
       return init_Z_aI_TableIndex(pending, written, false);
    }
 
-   static boolean init_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex pending, ScaffoldModule.Inner_NetHelper written, boolean buildsPlannedCell) {
+   static boolean init_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement pending, ScaffoldModule.QueuedPlacementClick written, boolean buildsPlannedCell) {
       if (pending != null && written != null) {
          if (!written.init_BlockPos().equals(pending.init_BlockPos())) {
             return false;
@@ -10856,21 +10856,21 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_NetHelper_J(ScaffoldModule.Inner_NetHelper written, long generation) {
+   static boolean init_Z_aI_NetHelper_J(ScaffoldModule.QueuedPlacementClick written, long generation) {
       return written != null && written.init_aI_RenderState() != null && written.init_aI_RenderState().init_J() == generation;
    }
 
-   static boolean init_Z_aI_SyncManager_I(ScaffoldModule.Inner_SyncManager state, int writeCount) {
-      return state == ScaffoldModule.Inner_SyncManager.ARMED && writeCount == 1;
+   static boolean init_Z_aI_SyncManager_I(ScaffoldModule.PlacementState state, int writeCount) {
+      return state == ScaffoldModule.PlacementState.ARMED && writeCount == 1;
    }
 
-   static boolean init_Z_aI_RenderState(ScaffoldModule.Inner_RenderState queued, boolean duplicateSubmitted, ScaffoldModule.Inner_SyncManager state, int writeCount) {
+   static boolean init_Z_aI_RenderState(ScaffoldModule.QueuedPacketContext queued, boolean duplicateSubmitted, ScaffoldModule.PlacementState state, int writeCount) {
       return queued == null || queued.init_I() != 0 || duplicateSubmitted || !init_Z_aI_SyncManager_I(state, writeCount);
    }
 
-   static boolean init_Z_aI_RenderState_ch_CachePool(ScaffoldModule.Inner_RenderState queued, ServerRotationTracker.RotationSnapshot snapshot) {
+   static boolean init_Z_aI_RenderState_ch_CachePool(ScaffoldModule.QueuedPacketContext queued, ServerRotationTracker.RotationSnapshot snapshot) {
       if (queued != null && queued.init_ce_DataUtil() != null && snapshot != null) {
-         ScaffoldModule.Inner_TextFormat wire = init_aI_TextFormat_ch_CachePool(snapshot);
+         ScaffoldModule.WireClickRotation wire = init_aI_TextFormat_ch_CachePool(snapshot);
          return wire != null && init_Z_ce_DataUtil_ce_DataUtil_4(queued.init_ce_DataUtil(), wire.load());
       } else {
          return false;
@@ -10885,8 +10885,8 @@ public final class ScaffoldModule extends Module {
    }
 
    private void init_V_J(long generation, InteractionHand hand, BlockHitResult hit, InteractionResult result) {
-      ScaffoldModule.Inner_TableIndex pending = this.read_aI_TableIndex;
-      if (this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE
+      ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
+      if (this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE
          && init_Z_J(generation, this.put_J, hand, this.init_InteractionHand, this.store_Z, hit, pending, this.chunk_Z)) {
          this.store_Z = true;
          this.drain_Z = result != null && result.consumesAction();
@@ -10908,7 +10908,7 @@ public final class ScaffoldModule extends Module {
       InteractionHand expectedHand,
       boolean resultSeen,
       BlockHitResult hit,
-      ScaffoldModule.Inner_TableIndex pending
+      ScaffoldModule.PlannedPlacement pending
    ) {
       return init_Z_J(generation, activeGeneration, hand, expectedHand, resultSeen, hit, pending, false);
    }
@@ -10920,7 +10920,7 @@ public final class ScaffoldModule extends Module {
       InteractionHand expectedHand,
       boolean resultSeen,
       BlockHitResult hit,
-      ScaffoldModule.Inner_TableIndex pending,
+      ScaffoldModule.PlannedPlacement pending,
       boolean buildsPlannedCell
    ) {
       return !resultSeen
@@ -10934,11 +10934,11 @@ public final class ScaffoldModule extends Module {
    }
 
    private void drain_V() {
-      ScaffoldModule.Inner_TableIndex pending = this.read_aI_TableIndex;
-      if (pending != null && this.store_Z && this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.SENT && MC.level != null) {
+      ScaffoldModule.PlannedPlacement pending = this.read_aI_TableIndex;
+      if (pending != null && this.store_Z && this.init_aI_SyncManager == ScaffoldModule.PlacementState.SENT && MC.level != null) {
          BlockPos cell = pending.load();
          int age = Math.max(0, AutismSessionState.init_ck().state_I() - this.f_aJ_I);
-         ScaffoldModule.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
+         ScaffoldModule.StateDecision decision = init_aI_ConfigStore_aI_SyncManager(
             this.init_aI_SyncManager,
             age,
             true,
@@ -10948,7 +10948,7 @@ public final class ScaffoldModule extends Module {
                : this.init_Z_BlockState_BlockPos(MC.level.getBlockState(cell), cell),
             load_Z_I_I(this.f_aM_I, this.f_aN_I)
          );
-         if (decision.init_aI_SyncManager() == ScaffoldModule.Inner_SyncManager.FAILED) {
+         if (decision.init_aI_SyncManager() == ScaffoldModule.PlacementState.FAILED) {
             this.init_V_Str_3("use".equals(decision.init_Str()) ? "use-" + this.write_Str : decision.init_Str());
          } else {
             this.init_aI_SyncManager = decision.init_aI_SyncManager();
@@ -10968,20 +10968,20 @@ public final class ScaffoldModule extends Module {
 
             scaffold.set_V();
             scaffold.load_V_I_2(sequence);
-            ScaffoldModule.Inner_TableIndex active = scaffold.read_aI_TableIndex;
+            ScaffoldModule.PlannedPlacement active = scaffold.read_aI_TableIndex;
             if (active != null && load_Z_I_I(scaffold.f_aM_I, sequence)) {
                boolean solid = scaffold.level_Z()
                   ? scaffold.load_Z_BlockState_BlockPos(MC.level.getBlockState(active.load()), active.load())
                   : scaffold.open(active.load());
-               if (scaffold.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.FAILED) {
+               if (scaffold.init_aI_SyncManager == ScaffoldModule.PlacementState.FAILED) {
                   return;
                }
 
                int age = Math.max(0, AutismSessionState.init_ck().state_I() - scaffold.f_aJ_I);
-               ScaffoldModule.Inner_ConfigStore decision = init_aI_ConfigStore_aI_SyncManager(
+               ScaffoldModule.StateDecision decision = init_aI_ConfigStore_aI_SyncManager(
                   scaffold.init_aI_SyncManager, age, scaffold.store_Z, scaffold.drain_Z, solid, true
                );
-               if (decision.init_aI_SyncManager() == ScaffoldModule.Inner_SyncManager.FAILED) {
+               if (decision.init_aI_SyncManager() == ScaffoldModule.PlacementState.FAILED) {
                   scaffold.init_V_Str_3(decision.init_Str());
                } else {
                   scaffold.init_aI_SyncManager = decision.init_aI_SyncManager();
@@ -11224,7 +11224,7 @@ public final class ScaffoldModule extends Module {
                Input result = scaffold.push_Z ? scaffold.poll(authored) : scaffold.flush(authored);
                if (scaffold.push_Z) {
                   int inputTick = AutismSessionState.init_ck().state_I();
-                  if (scaffold.count_Z() || scaffold.f_Z_I == inputTick || init_Z_Z_Input(scaffold.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.FORWARD, result)) {
+                  if (scaffold.count_Z() || scaffold.f_Z_I == inputTick || init_Z_Z_Input(scaffold.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.FORWARD, result)) {
                      scaffold.f_aP_I = inputTick;
                   } else if (scaffold.f_aP_I == inputTick) {
                      scaffold.f_aP_I = -2147483648;
@@ -11247,8 +11247,8 @@ public final class ScaffoldModule extends Module {
                }
 
                boolean directionalInput = load_Z_Input(original);
-               ScaffoldModule.Inner_HashUtil previousLine = scaffold.init_aI_HashUtil;
-               ScaffoldModule.Inner_HashUtil requestedLine = directionalInput ? scaffold.init_aI_HashUtil_Input(original) : null;
+               ScaffoldModule.MotionVectorPair previousLine = scaffold.init_aI_HashUtil;
+               ScaffoldModule.MotionVectorPair requestedLine = directionalInput ? scaffold.init_aI_HashUtil_Input(original) : null;
                boolean courseChanged = init_Z_aI_HashUtil_aI_HashUtil(previousLine, requestedLine);
                scaffold.init_aI_HashUtil = requestedLine;
                if (!scaffold.flags_Z()) {
@@ -11288,7 +11288,7 @@ public final class ScaffoldModule extends Module {
 
                boolean carryArc = scaffold.entry_Z();
                boolean atEdge = scaffold.j() && !carryArc;
-               boolean fallAhead = scaffold.init_aI_CachePool() == ScaffoldModule.Inner_CachePool.IMMINENT && !carryArc;
+               boolean fallAhead = scaffold.init_aI_CachePool() == ScaffoldModule.EdgeDropWarning.IMMINENT && !carryArc;
                boolean clickArmed = scaffold.state_Z();
                boolean clickLands = (atEdge || fallAhead) && clickArmed;
                boolean edgeDanger = atEdge && !clickLands;
@@ -11457,7 +11457,7 @@ public final class ScaffoldModule extends Module {
       this.table_V();
       this.drain_V();
       boolean ready = this.f_aJ_I == AutismSessionState.init_ck().state_I()
-         && this.init_aI_SyncManager == ScaffoldModule.Inner_SyncManager.PREDICTED
+         && this.init_aI_SyncManager == ScaffoldModule.PlacementState.PREDICTED
          && !this.table_Z
          && this.read_aI_TableIndex != null
          && this.open(this.read_aI_TableIndex.load());
@@ -11465,11 +11465,11 @@ public final class ScaffoldModule extends Module {
       return ready;
    }
 
-   static boolean init_Z_BlockHitResult_aI_TableIndex(BlockHitResult hit, ScaffoldModule.Inner_TableIndex pending) {
+   static boolean init_Z_BlockHitResult_aI_TableIndex(BlockHitResult hit, ScaffoldModule.PlannedPlacement pending) {
       return init_Z_BlockHitResult(hit, pending, false);
    }
 
-   static boolean init_Z_BlockHitResult(BlockHitResult hit, ScaffoldModule.Inner_TableIndex pending, boolean buildsPlannedCell) {
+   static boolean init_Z_BlockHitResult(BlockHitResult hit, ScaffoldModule.PlannedPlacement pending, boolean buildsPlannedCell) {
       if (hit != null && pending != null) {
          if (!hit.getBlockPos().equals(pending.init_BlockPos())) {
             return false;
@@ -11627,8 +11627,8 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_SyncManager(ScaffoldModule.Inner_SyncManager state, ScaffoldModule.Inner_TableIndex pending, BlockPos support) {
-      return pending == null || support == null || !pending.load().equals(support) || state == ScaffoldModule.Inner_SyncManager.PREDICTED;
+   static boolean init_Z_aI_SyncManager(ScaffoldModule.PlacementState state, ScaffoldModule.PlannedPlacement pending, BlockPos support) {
+      return pending == null || support == null || !pending.load().equals(support) || state == ScaffoldModule.PlacementState.PREDICTED;
    }
 
    private void fill_V() {
@@ -11685,7 +11685,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private int poll_I() {
-      ScaffoldModule.Inner_FileCache lock = this.init_aI_FileCache();
+      ScaffoldModule.RowLockBounds lock = this.init_aI_FileCache();
       return init_I_I(this.close_I(), lock == null ? -2147483648 : lock.load(), this.f_cd_I);
    }
 
@@ -11710,7 +11710,7 @@ public final class ScaffoldModule extends Module {
       return init_Z_I_3(placedY, builtFloorRow, fallingBelowFooting) && !arcLandsOnColumn;
    }
 
-   private boolean open(ScaffoldModule.Inner_TableIndex target) {
+   private boolean open(ScaffoldModule.PlannedPlacement target) {
       if (target != null && MC.player != null) {
          BlockPos placed = target.load();
          return init_Z_I_6(placed.getY(), this.poll_I(), this.h_Z(), load_Z_Vec3_2(MC.player.position(), MC.player.getDeltaMovement(), placed));
@@ -11723,7 +11723,7 @@ public final class ScaffoldModule extends Module {
       return fallingBelowFooting && placedY + 1.0 > feetY + Math.min(feetVelY, 0.0) + 0.001;
    }
 
-   private boolean poll(ScaffoldModule.Inner_TableIndex target) {
+   private boolean poll(ScaffoldModule.PlannedPlacement target) {
       return target != null && MC.player != null ? init_Z_Z_3(this.h_Z(), target.load().getY(), MC.player.position().y, MC.player.getDeltaMovement().y) : false;
    }
 
@@ -11738,7 +11738,7 @@ public final class ScaffoldModule extends Module {
             Vec3 lane = this.init_aI_HashUtil.load();
             Vec3 position = MC.player.position();
             int riseY = footingRow + 1;
-            ScaffoldModule.Inner_FileCache rowLock = this.init_aI_FileCache();
+            ScaffoldModule.RowLockBounds rowLock = this.init_aI_FileCache();
             BlockPos last = null;
             BlockPos far = null;
 
@@ -11792,12 +11792,12 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private BlockPos init_BlockPos_Vec3_2(Vec3 position, int riseY, ScaffoldModule.Inner_FileCache rowLock) {
+   private BlockPos init_BlockPos_Vec3_2(Vec3 position, int riseY, ScaffoldModule.RowLockBounds rowLock) {
       BlockPos cell = this.load_BlockPos_Vec3(position, riseY, rowLock);
       return cell != null && this.open(cell.below()) ? cell : null;
    }
 
-   private BlockPos load_BlockPos_Vec3(Vec3 position, int riseY, ScaffoldModule.Inner_FileCache rowLock) {
+   private BlockPos load_BlockPos_Vec3(Vec3 position, int riseY, ScaffoldModule.RowLockBounds rowLock) {
       if (!this.update_Z_I(AutismSessionState.init_ck().state_I())) {
          return null;
       }
@@ -11928,7 +11928,7 @@ public final class ScaffoldModule extends Module {
       int sneakedTicks,
       Vec3 inputDirection,
       AABB initialBox,
-      ScaffoldModule.Inner_BufferHelper collisionResolver
+      ScaffoldModule.FacePointResolver collisionResolver
    ) {
       if (position != null && velocity != null) {
          double x = position.x;
@@ -12114,12 +12114,12 @@ public final class ScaffoldModule extends Module {
       return jumpHeld && !onGround;
    }
 
-   static boolean init_Z_aI_HashUtil_aI_HashUtil(ScaffoldModule.Inner_HashUtil previous, ScaffoldModule.Inner_HashUtil requested) {
+   static boolean init_Z_aI_HashUtil_aI_HashUtil(ScaffoldModule.MotionVectorPair previous, ScaffoldModule.MotionVectorPair requested) {
       return previous != null && requested != null && !load_Z_Vec3_Vec3(previous.load(), requested.load());
    }
 
    private Input sync(Input original) {
-      if (this.push_Z && this.init_aI_KeyHolder != ScaffoldModule.Inner_KeyHolder.RELEASED) {
+      if (this.push_Z && this.init_aI_KeyHolder != ScaffoldModule.ForwardKeyState.RELEASED) {
          Input authored = this.init_Input();
          if (this.f_Z_I == AutismSessionState.init_ck().state_I()) {
             authored = new Input(authored.forward(), authored.backward(), authored.left(), authored.right(), authored.jump(), authored.shift(), false);
@@ -12142,7 +12142,7 @@ public final class ScaffoldModule extends Module {
          return new Input(false, true, false, false, false, false, false);
       }
 
-      if (this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.HOLD) {
+      if (this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.HOLD) {
          if (this.update_Input != null) {
             Input recovery = this.update_Input;
             this.update_Input = null;
@@ -12163,8 +12163,8 @@ public final class ScaffoldModule extends Module {
             }
          }
 
-         ScaffoldModule.Inner_c strafe = this.init_aI_c;
-         return new Input(false, false, strafe == ScaffoldModule.Inner_c.LEFT, strafe == ScaffoldModule.Inner_c.RIGHT, this.run_Z, false, false);
+         ScaffoldModule.StrafeSide strafe = this.init_aI_c;
+         return new Input(false, false, strafe == ScaffoldModule.StrafeSide.LEFT, strafe == ScaffoldModule.StrafeSide.RIGHT, this.run_Z, false, false);
       } else {
          return MC.player != null && MC.player.onGround() && load_Z_aI_ValueSink(this.init_aI_ValueSink)
             ? init_Input_Z_Z(this.run_Z, false)
@@ -12189,55 +12189,55 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static Input init_Input_aI_c(ScaffoldModule.Inner_c strafe, boolean jump, boolean sneak) {
-      ScaffoldModule.Inner_c safe = strafe == null ? ScaffoldModule.Inner_c.NONE : strafe;
-      return new Input(true, false, safe == ScaffoldModule.Inner_c.LEFT, safe == ScaffoldModule.Inner_c.RIGHT, jump, sneak, true);
+   static Input init_Input_aI_c(ScaffoldModule.StrafeSide strafe, boolean jump, boolean sneak) {
+      ScaffoldModule.StrafeSide safe = strafe == null ? ScaffoldModule.StrafeSide.NONE : strafe;
+      return new Input(true, false, safe == ScaffoldModule.StrafeSide.LEFT, safe == ScaffoldModule.StrafeSide.RIGHT, jump, sneak, true);
    }
 
-   static ScaffoldModule.Inner_TokenStore init_aI_TokenStore_I(
-      int cooldown, ScaffoldModule.Inner_c lastPulse, int pulsesUsed, double laneError, double lateralVelocity, int ticksUntilLanding
+   static ScaffoldModule.StrafeSwitchState init_aI_TokenStore_I(
+      int cooldown, ScaffoldModule.StrafeSide lastPulse, int pulsesUsed, double laneError, double lateralVelocity, int ticksUntilLanding
    ) {
       int cooled = Math.max(0, cooldown - 1);
       int used = Math.max(0, pulsesUsed);
-      ScaffoldModule.Inner_c previous = lastPulse == null ? ScaffoldModule.Inner_c.NONE : lastPulse;
+      ScaffoldModule.StrafeSide previous = lastPulse == null ? ScaffoldModule.StrafeSide.NONE : lastPulse;
       if (Double.isFinite(laneError) && Double.isFinite(lateralVelocity)) {
          double predictedError = init_D_D_3(laneError, lateralVelocity, ticksUntilLanding);
          double projectedDistance = Math.abs(predictedError);
          if (projectedDistance <= 0.1 && Math.abs(laneError) <= 0.16) {
-            previous = ScaffoldModule.Inner_c.NONE;
+            previous = ScaffoldModule.StrafeSide.NONE;
          }
 
          if (!(projectedDistance <= 0.16) && cooldown <= 0) {
             double desired = Mth.clamp(laneError * 0.18, -0.055, 0.055);
-            ScaffoldModule.Inner_c requested = init_aI_c_D_D(lateralVelocity, desired);
-            if (requested == ScaffoldModule.Inner_c.NONE) {
-               return new ScaffoldModule.Inner_TokenStore(ScaffoldModule.Inner_c.NONE, cooled, previous, used);
+            ScaffoldModule.StrafeSide requested = init_aI_c_D_D(lateralVelocity, desired);
+            if (requested == ScaffoldModule.StrafeSide.NONE) {
+               return new ScaffoldModule.StrafeSwitchState(ScaffoldModule.StrafeSide.NONE, cooled, previous, used);
             }
 
-            boolean reversing = previous != ScaffoldModule.Inner_c.NONE && requested != previous;
+            boolean reversing = previous != ScaffoldModule.StrafeSide.NONE && requested != previous;
             if (reversing && projectedDistance < 0.48) {
-               return new ScaffoldModule.Inner_TokenStore(ScaffoldModule.Inner_c.NONE, cooled, previous, used);
+               return new ScaffoldModule.StrafeSwitchState(ScaffoldModule.StrafeSide.NONE, cooled, previous, used);
             }
 
             int pulseLimit = projectedDistance >= 0.48 ? 3 : 2;
             return used >= pulseLimit
-               ? new ScaffoldModule.Inner_TokenStore(ScaffoldModule.Inner_c.NONE, cooled, previous, used)
-               : new ScaffoldModule.Inner_TokenStore(requested, 2, requested, used + 1);
+               ? new ScaffoldModule.StrafeSwitchState(ScaffoldModule.StrafeSide.NONE, cooled, previous, used)
+               : new ScaffoldModule.StrafeSwitchState(requested, 2, requested, used + 1);
          } else {
-            return new ScaffoldModule.Inner_TokenStore(ScaffoldModule.Inner_c.NONE, cooled, previous, used);
+            return new ScaffoldModule.StrafeSwitchState(ScaffoldModule.StrafeSide.NONE, cooled, previous, used);
          }
       } else {
-         return new ScaffoldModule.Inner_TokenStore(ScaffoldModule.Inner_c.NONE, cooled, previous, used);
+         return new ScaffoldModule.StrafeSwitchState(ScaffoldModule.StrafeSide.NONE, cooled, previous, used);
       }
    }
 
-   static ScaffoldModule.Inner_c init_aI_c_D_D(double lateralVelocity, double desiredVelocity) {
+   static ScaffoldModule.StrafeSide init_aI_c_D_D(double lateralVelocity, double desiredVelocity) {
       if (!Double.isFinite(lateralVelocity) || !Double.isFinite(desiredVelocity)) {
-         return ScaffoldModule.Inner_c.NONE;
+         return ScaffoldModule.StrafeSide.NONE;
       } else if (lateralVelocity < desiredVelocity - 0.026) {
-         return ScaffoldModule.Inner_c.LEFT;
+         return ScaffoldModule.StrafeSide.LEFT;
       } else {
-         return lateralVelocity > desiredVelocity + 0.026 ? ScaffoldModule.Inner_c.RIGHT : ScaffoldModule.Inner_c.NONE;
+         return lateralVelocity > desiredVelocity + 0.026 ? ScaffoldModule.StrafeSide.RIGHT : ScaffoldModule.StrafeSide.NONE;
       }
    }
 
@@ -12260,7 +12260,7 @@ public final class ScaffoldModule extends Module {
          double laneError = this.f_x_D - init_D_Vec3_F(player.position(), this.flags_F);
          double lateralVelocity = player.getDeltaMovement().dot(left);
          int ticksUntilLanding = init_I_Vec3(player.position(), player.getDeltaMovement(), catchFeetY);
-         ScaffoldModule.Inner_TokenStore next = init_aI_TokenStore_I(this.f_N_I, this.load_aI_c, this.f_O_I, laneError, lateralVelocity, ticksUntilLanding);
+         ScaffoldModule.StrafeSwitchState next = init_aI_TokenStore_I(this.f_N_I, this.load_aI_c, this.f_O_I, laneError, lateralVelocity, ticksUntilLanding);
          this.init_aI_c = next.init_aI_c();
          this.f_N_I = next.init_I();
          this.load_aI_c = next.load_aI_c();
@@ -12269,8 +12269,8 @@ public final class ScaffoldModule extends Module {
    }
 
    private void mark_V() {
-      this.init_aI_c = ScaffoldModule.Inner_c.NONE;
-      this.load_aI_c = ScaffoldModule.Inner_c.NONE;
+      this.init_aI_c = ScaffoldModule.StrafeSide.NONE;
+      this.load_aI_c = ScaffoldModule.StrafeSide.NONE;
       this.f_N_I = 0;
       this.f_O_I = 0;
       this.f_P_I = -1;
@@ -12297,12 +12297,12 @@ public final class ScaffoldModule extends Module {
          : new Input(physical.forward(), physical.backward(), physical.left(), physical.right(), false, physical.shift(), diagonal && physical.sprint());
    }
 
-   static boolean load_Z_aI_ValueSink(ScaffoldModule.Inner_ValueSink phase) {
-      return phase == ScaffoldModule.Inner_ValueSink.RUNNING;
+   static boolean load_Z_aI_ValueSink(ScaffoldModule.TellyPhase phase) {
+      return phase == ScaffoldModule.TellyPhase.RUNNING;
    }
 
    private void open_V(LocalPlayer player, BlockPos support) {
-      if (player != null && support != null && player.onGround() && this.init_aI_ValueSink == ScaffoldModule.Inner_ValueSink.RUNNING) {
+      if (player != null && support != null && player.onGround() && this.init_aI_ValueSink == ScaffoldModule.TellyPhase.RUNNING) {
          Vec3 left = this.update_Vec3();
          double error = this.f_x_D - init_D_Vec3_F(player.position(), this.flags_F);
          double lateralVelocity = player.getDeltaMovement().dot(left);
@@ -12313,7 +12313,7 @@ public final class ScaffoldModule extends Module {
          double runwayRemaining = this.init_D_LocalPlayer_BlockPos(player, support);
          double launchPoint = load_D_D(forwardSpeed);
          boolean returnToCourse = runwayRemaining <= init_D_D_2(launchPoint, forwardSpeed, this.block_F);
-         ScaffoldModule.Inner_MapStore next = init_aI_MapStore_Z(this.valid_Z, this.block_F, error, lateralVelocity, groundAcceleration, drag, returnToCourse);
+         ScaffoldModule.LateralCorrection next = init_aI_MapStore_Z(this.valid_Z, this.block_F, error, lateralVelocity, groundAcceleration, drag, returnToCourse);
          this.valid_Z = next.init_Z();
          this.block_F = next.init_F();
       } else {
@@ -12353,7 +12353,7 @@ public final class ScaffoldModule extends Module {
       return 1.0 / 0.0;
    }
 
-   static ScaffoldModule.Inner_MapStore init_aI_MapStore_Z(
+   static ScaffoldModule.LateralCorrection init_aI_MapStore_Z(
       boolean active, float currentOffset, double laneError, double lateralVelocity, double groundAcceleration, double drag, boolean returnToCourse
    ) {
       boolean nextActive = active;
@@ -12391,7 +12391,7 @@ public final class ScaffoldModule extends Module {
          nextOffset = 0.0F;
       }
 
-      return new ScaffoldModule.Inner_MapStore(nextActive, nextOffset);
+      return new ScaffoldModule.LateralCorrection(nextActive, nextOffset);
    }
 
    static double init_D_D_2(double launchPoint, double forwardSpeed, float steeringOffset) {
@@ -12658,7 +12658,7 @@ public final class ScaffoldModule extends Module {
       return Math.toDegrees(Math.atan2(cross, dot));
    }
 
-   private boolean init_Z_Vec3_aI_HashUtil(Vec3 position, ScaffoldModule.Inner_HashUtil line) {
+   private boolean init_Z_Vec3_aI_HashUtil(Vec3 position, ScaffoldModule.MotionVectorPair line) {
       if (this.init_aI_FileCache() != null) {
          return true;
       }
@@ -12672,7 +12672,7 @@ public final class ScaffoldModule extends Module {
       return heading != null && this.load_Z_Vec3(position, heading, 1.0);
    }
 
-   private Vec3 init_Vec3_aI_HashUtil(ScaffoldModule.Inner_HashUtil line) {
+   private Vec3 init_Vec3_aI_HashUtil(ScaffoldModule.MotionVectorPair line) {
       Vec3 velocity = MC.player.getDeltaMovement();
       Vec3 horizontal = new Vec3(velocity.x, 0.0, velocity.z);
       if (horizontal.length() >= 0.05) {
@@ -12702,7 +12702,7 @@ public final class ScaffoldModule extends Module {
          return true;
       }
 
-      ScaffoldModule.Inner_HashUtil line = this.init_aI_HashUtil;
+      ScaffoldModule.MotionVectorPair line = this.init_aI_HashUtil;
       if (line != null && !(line.load().horizontalDistanceSqr() <= 1.0E-8)) {
          Vec3 position = MC.player.position();
          if (Math.abs(init_D_aI_HashUtil_Vec3(line, position)) <= 0.45) {
@@ -12863,7 +12863,7 @@ public final class ScaffoldModule extends Module {
             return false;
          }
 
-         ScaffoldModule.Inner_TableIndex next = this.read_aI_TableIndex != null ? this.read_aI_TableIndex : this.load_aI_TableIndex;
+         ScaffoldModule.PlannedPlacement next = this.read_aI_TableIndex != null ? this.read_aI_TableIndex : this.load_aI_TableIndex;
          if (next != null
             && this.load_ce_DataUtil != null
             && !init_Z_Direction(next.init_Direction(), this.load_ce_DataUtil.load(), next.init_ce_DataUtil().load(), this.chunk_F, sinceLast)) {
@@ -12954,7 +12954,7 @@ public final class ScaffoldModule extends Module {
                return false;
             } else {
                Vec3 velocity = MC.player.getDeltaMovement();
-               ScaffoldModule.Inner_HashUtil line = this.init_aI_HashUtil;
+               ScaffoldModule.MotionVectorPair line = this.init_aI_HashUtil;
                Vec3 lane = line == null ? null : line.load();
                double brakeSpeed = velocity.horizontalDistance();
                if (!init_Z_Vec3_Vec3(velocity, lane) && lane != null && lane.horizontalDistanceSqr() > 1.0E-8) {
@@ -13093,7 +13093,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean a_Z() {
-      ScaffoldModule.Inner_HashUtil line = this.init_aI_HashUtil;
+      ScaffoldModule.MotionVectorPair line = this.init_aI_HashUtil;
       if (line != null && !(line.load().horizontalDistanceSqr() <= 1.0E-8)) {
          Vec3 velocity = MC.player.getDeltaMovement();
          Vec3 horizontal = new Vec3(velocity.x, 0.0, velocity.z);
@@ -13107,13 +13107,13 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static double init_D_aI_HashUtil_Vec3(ScaffoldModule.Inner_HashUtil line, Vec3 position) {
+   static double init_D_aI_HashUtil_Vec3(ScaffoldModule.MotionVectorPair line, Vec3 position) {
       Vec3 direction = line.load().normalize();
       Vec3 left = new Vec3(direction.z, 0.0, -direction.x);
       return init_Vec3_aI_HashUtil_Vec3(line, position).subtract(position).dot(left);
    }
 
-   static Vec3 init_Vec3_aI_HashUtil(ScaffoldModule.Inner_HashUtil line, Vec3 position, double distance) {
+   static Vec3 init_Vec3_aI_HashUtil(ScaffoldModule.MotionVectorPair line, Vec3 position, double distance) {
       Vec3 direction = line.load().normalize();
       Vec3 left = new Vec3(direction.z, 0.0, -direction.x);
       double error = init_D_aI_HashUtil_Vec3(line, position);
@@ -13181,7 +13181,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private float sync_F() {
-      ScaffoldModule.Inner_HashUtil line = this.init_aI_HashUtil;
+      ScaffoldModule.MotionVectorPair line = this.init_aI_HashUtil;
       if (line != null && MC.player != null) {
          Vec3 direction = line.load();
          if (direction.horizontalDistanceSqr() <= 1.0E-8) {
@@ -13363,7 +13363,7 @@ public final class ScaffoldModule extends Module {
          && scaffold.isEnabled()
          && scaffold.pool_Z()
          && scaffold.push_Z
-         && scaffold.init_aI_KeyHolder != ScaffoldModule.Inner_KeyHolder.RELEASED;
+         && scaffold.init_aI_KeyHolder != ScaffoldModule.ForwardKeyState.RELEASED;
    }
 
    private void init_V_F(float courseYaw) {
@@ -13402,7 +13402,7 @@ public final class ScaffoldModule extends Module {
          if (MC.player != null
             && !MC.player.onGround()
             && this.sync_BlockPos != null
-            && (easing || this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.FORWARD && input.forward() && !input.backward())) {
+            && (easing || this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.FORWARD && input.forward() && !input.backward())) {
             double error = this.f_x_D - init_D_Vec3_F(MC.player.position(), this.flags_F);
             double velocity = MC.player.getDeltaMovement().dot(this.update_Vec3());
             float controlCourse = easing ? this.flags_F + 180.0F : this.flags_F;
@@ -13416,7 +13416,7 @@ public final class ScaffoldModule extends Module {
                float nextYaw = this.init_aM().init(this.load_ce_DataUtil, this.init_RangeSetting.get(), RotationMath.init());
                boolean turning = Math.abs(Mth.wrapDegrees(nextYaw - this.load_ce_DataUtil.init())) > 4.0F
                   || Float.isFinite(this.index_F) && Math.abs(Mth.wrapDegrees(this.index_F - this.load_ce_DataUtil.init())) > 4.0F;
-               ScaffoldModule.Inner_ClassCache next = init_aI_ClassCache_F(
+               ScaffoldModule.StrafeTickBudget next = init_aI_ClassCache_F(
                   controlCourse,
                   this.load_ce_DataUtil.init(),
                   nextYaw,
@@ -13436,7 +13436,7 @@ public final class ScaffoldModule extends Module {
             return init_Input_I_Input(this.f_P_I, input);
          } else {
             float courseYaw = this.valid_Z ? Mth.wrapDegrees(this.flags_F + this.block_F) : this.flags_F;
-            if (this.init_aI_KeyHolder == ScaffoldModule.Inner_KeyHolder.HOLD && MC.player != null && MC.player.onGround()) {
+            if (this.init_aI_KeyHolder == ScaffoldModule.ForwardKeyState.HOLD && MC.player != null && MC.player.onGround()) {
                this.parse_V();
                this.state_V();
                this.f_aQ_I = 0;
@@ -13451,13 +13451,13 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static ScaffoldModule.Inner_ClassCache init_aI_ClassCache_F(
+   static ScaffoldModule.StrafeTickBudget init_aI_ClassCache_F(
       float courseYaw, float emittedYaw, double error, double velocity, double acceleration, int previous, int dwell
    ) {
       return init_aI_ClassCache_F(courseYaw, emittedYaw, emittedYaw, error, velocity, acceleration, previous, dwell, false);
    }
 
-   static ScaffoldModule.Inner_ClassCache init_aI_ClassCache_F(
+   static ScaffoldModule.StrafeTickBudget init_aI_ClassCache_F(
       float courseYaw, float emittedYaw, float nextYaw, double error, double velocity, double acceleration, int previous, int dwell, boolean turning
    ) {
       int nearest = Math.floorMod(Math.round(Mth.wrapDegrees(courseYaw - emittedYaw) / 45.0F), 8);
@@ -13505,9 +13505,9 @@ public final class ScaffoldModule extends Module {
             best = previous;
          }
 
-         return new ScaffoldModule.Inner_ClassCache(best, best == previous ? Math.min(20, dwell + 1) : 1);
+         return new ScaffoldModule.StrafeTickBudget(best, best == previous ? Math.min(20, dwell + 1) : 1);
       } else {
-         return new ScaffoldModule.Inner_ClassCache(nearest, 1);
+         return new ScaffoldModule.StrafeTickBudget(nearest, 1);
       }
    }
 
@@ -13681,7 +13681,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_FileCache init_aI_FileCache() {
+   private ScaffoldModule.RowLockBounds init_aI_FileCache() {
       if (this.b_Z() && MC.player != null && this.init_aI_HashUtil != null) {
          Vec3 direction = this.init_aI_HashUtil.load();
          if (init_Z_Vec3_2(direction)) {
@@ -13712,7 +13712,7 @@ public final class ScaffoldModule extends Module {
 
             boolean xAxis = stepX != 0;
             BlockPos playerCell = BlockPos.containing(MC.player.position());
-            return new ScaffoldModule.Inner_FileCache(
+            return new ScaffoldModule.RowLockBounds(
                xAxis,
                xAxis ? lastPlaced.getZ() : lastPlaced.getX(),
                rowY,
@@ -13784,7 +13784,7 @@ public final class ScaffoldModule extends Module {
       return null;
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_Vec3_ItemStack(Vec3 predicted, ItemStack stack) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_Vec3_ItemStack(Vec3 predicted, ItemStack stack) {
       if (MC.player != null && MC.level != null) {
          Vec3 velocity = MC.player.getDeltaMovement();
          if (!MC.player.onGround() && velocity.y > 0.0) {
@@ -13811,7 +13811,7 @@ public final class ScaffoldModule extends Module {
                   if (!MC.level.isOutsideBuildHeight(cell)) {
                      BlockState state = MC.level.getBlockState(cell);
                      if (state.canBeReplaced() && !this.init_Z_BlockState_BlockPos(state, cell)) {
-                        ScaffoldModule.Inner_TableIndex target = this.init_aI_TableIndex_BlockPos_3(cell, predicted, false, lane, jumping);
+                        ScaffoldModule.PlannedPlacement target = this.init_aI_TableIndex_BlockPos_3(cell, predicted, false, lane, jumping);
                         if (!this.push(target) && target != null) {
                            return target;
                         }
@@ -13831,7 +13831,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_Vec3(Vec3 predicted, Vec3 lane, boolean jumping) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_Vec3(Vec3 predicted, Vec3 lane, boolean jumping) {
       Vec3 position = MC.player.position();
       List<BlockPos> columns = init_List_Vec3(position);
       BlockPos centered = columns.get(0);
@@ -13847,7 +13847,7 @@ public final class ScaffoldModule extends Module {
          if (!MC.level.isOutsideBuildHeight(support)) {
             BlockState state = MC.level.getBlockState(support);
             if (state.canBeReplaced() && !this.init_Z_BlockState_BlockPos(state, support)) {
-               ScaffoldModule.Inner_TableIndex target = this.init_aI_TableIndex_BlockPos_3(support, predicted, false, lane, jumping);
+               ScaffoldModule.PlannedPlacement target = this.init_aI_TableIndex_BlockPos_3(support, predicted, false, lane, jumping);
                if (!this.push(target) && target != null) {
                   return target;
                }
@@ -13858,7 +13858,7 @@ public final class ScaffoldModule extends Module {
       return null;
    }
 
-   private boolean push(ScaffoldModule.Inner_TableIndex target) {
+   private boolean push(ScaffoldModule.PlannedPlacement target) {
       return target != null && MC.player != null && !init_Z_aI_TableIndex_4(target, MC.player.getEyePosition(), this.load_Vec3());
    }
 
@@ -13940,7 +13940,7 @@ public final class ScaffoldModule extends Module {
       return new RotationMath.Rotation(yaw, load_F_F_2(pitch));
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex() {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex() {
       if (this.c_Z() && !MC.player.onGround() && MC.level != null) {
          BlockPos cell = BlockPos.containing(MC.player.position());
 
@@ -13971,7 +13971,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex load_aI_TableIndex() {
+   private ScaffoldModule.PlannedPlacement load_aI_TableIndex() {
       this.push_Str = "--";
       if (MC.player != null && MC.level != null) {
          if (!MC.player.onGround() && this.queue_Z()) {
@@ -13984,7 +13984,7 @@ public final class ScaffoldModule extends Module {
             Vec3 velocity = MC.player.getDeltaMovement();
             Vec3 lane = this.init_aI_HashUtil == null ? null : this.init_aI_HashUtil.load();
             StringBuilder fails = new StringBuilder();
-            ScaffoldModule.Inner_TableIndex footing = null;
+            ScaffoldModule.PlannedPlacement footing = null;
             BlockPos arcLanding = this.load_BlockPos_I(this.close_I());
             BlockPos ownSupport = this.update_BlockPos();
 
@@ -14004,7 +14004,7 @@ public final class ScaffoldModule extends Module {
                         fail = landing == null ? "arc(null)" : String.format(Locale.ROOT, "arc(ovl%.2f)", init_D_DArr_BlockPos(landing, riser));
                      }
                   } else if (!this.init_Z_BlockState_BlockPos(MC.level.getBlockState(support), support)) {
-                     ScaffoldModule.Inner_TableIndex sideReach = this.init_aI_TableIndex_BlockPos(riser, position, false, lane, true, null);
+                     ScaffoldModule.PlannedPlacement sideReach = this.init_aI_TableIndex_BlockPos(riser, position, false, lane, true, null);
                      if (sideReach != null) {
                         this.push_Str = "--";
                         return sideReach;
@@ -14016,7 +14016,7 @@ public final class ScaffoldModule extends Module {
 
                      fail = footing == null ? "no-support" : "footing";
                   } else {
-                     ScaffoldModule.Inner_TableIndex plan = this.init_aI_TableIndex_BlockPos(riser, position, false, lane, true, Direction.UP);
+                     ScaffoldModule.PlannedPlacement plan = this.init_aI_TableIndex_BlockPos(riser, position, false, lane, true, Direction.UP);
                      if (plan != null) {
                         this.push_Str = "--";
                         return plan;
@@ -14149,12 +14149,12 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos(BlockPos riser, BlockPos landing, Vec3 predicted, ItemStack stack, Vec3 lane) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos(BlockPos riser, BlockPos landing, Vec3 predicted, ItemStack stack, Vec3 lane) {
       if (riser != null && landing != null) {
          for (BlockPos connector : init_List_BlockPos_Vec3(landing, lane)) {
             Direction face = load_Direction_BlockPos_BlockPos(landing, connector);
             if (face != null) {
-               ScaffoldModule.Inner_TableIndex viaStep = this.init_aI_TableIndex_BlockPos_2(riser, predicted, stack, lane, face);
+               ScaffoldModule.PlannedPlacement viaStep = this.init_aI_TableIndex_BlockPos_2(riser, predicted, stack, lane, face);
                if (viaStep != null) {
                   return viaStep;
                }
@@ -14185,7 +14185,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex load_aI_TableIndex_Vec3_ItemStack(Vec3 predicted, ItemStack stack) {
+   private ScaffoldModule.PlannedPlacement load_aI_TableIndex_Vec3_ItemStack(Vec3 predicted, ItemStack stack) {
       if (MC.player != null && MC.level != null && this.f_Z() && this.init_aI_HashUtil != null) {
          Vec3 lane = this.init_aI_HashUtil.load();
          BlockPos landing = this.put_BlockPos;
@@ -14203,14 +14203,14 @@ public final class ScaffoldModule extends Module {
          int deficit = supportSolid ? 0 : this.load_I_BlockPos(landing);
          BlockPos riser = landing.above();
          boolean riserSolid = !MC.level.isOutsideBuildHeight(riser) && this.open(riser);
-         ScaffoldModule.Inner_EventBus need = init_aI_EventBus_Z(supportSolid, deficit, riserSolid);
-         if (need == ScaffoldModule.Inner_EventBus.READY || MC.level.isOutsideBuildHeight(riser)) {
+         ScaffoldModule.BridgeStage need = init_aI_EventBus_Z(supportSolid, deficit, riserSolid);
+         if (need == ScaffoldModule.BridgeStage.READY || MC.level.isOutsideBuildHeight(riser)) {
             this.add_BlockPos = null;
             this.update_Str = "ready";
             return null;
          }
 
-         if (need == ScaffoldModule.Inner_EventBus.RISER) {
+         if (need == ScaffoldModule.BridgeStage.RISER) {
             this.add_BlockPos = null;
             if (!this.d_Z()) {
                this.clear_BlockPos = null;
@@ -14219,33 +14219,33 @@ public final class ScaffoldModule extends Module {
             }
 
             this.clear_BlockPos = riser.immutable();
-            ScaffoldModule.Inner_TableIndex rise = this.init_aI_TableIndex_BlockPos_2(riser, predicted, stack, lane, Direction.UP);
+            ScaffoldModule.PlannedPlacement rise = this.init_aI_TableIndex_BlockPos_2(riser, predicted, stack, lane, Direction.UP);
             if (rise == null) {
                rise = this.init_aI_TableIndex_BlockPos(riser, landing, predicted, stack, lane);
             }
 
             this.update_Str = rise == null ? "riser-wait" : "riser";
             return rise;
-         } else if (need == ScaffoldModule.Inner_EventBus.SUPPORT) {
+         } else if (need == ScaffoldModule.BridgeStage.SUPPORT) {
             this.add_BlockPos = null;
-            ScaffoldModule.Inner_TableIndex step = this.init_aI_TableIndex_BlockPos(landing, predicted, stack, lane);
+            ScaffoldModule.PlannedPlacement step = this.init_aI_TableIndex_BlockPos(landing, predicted, stack, lane);
             if (step != null) {
                this.update_Str = "step";
                return step;
             } else {
-               ScaffoldModule.Inner_TableIndex support = this.init_aI_TableIndex_BlockPos_2(landing, predicted, stack, lane, null);
+               ScaffoldModule.PlannedPlacement support = this.init_aI_TableIndex_BlockPos_2(landing, predicted, stack, lane, null);
                this.update_Str = support == null ? "support-wait" : "support";
                return support;
             }
          } else {
-            List<ScaffoldModule.Inner_TableIndex> legs = new ArrayList<>(2);
+            List<ScaffoldModule.PlannedPlacement> legs = new ArrayList<>(2);
 
             for (BlockPos connector : init_List_BlockPos_Vec3(landing, lane)) {
                if (!MC.level.isOutsideBuildHeight(connector)
                   && !this.open(connector)
                   && this.load_I_BlockPos(connector) <= 1
                   && !init_Z_Vec3_6(MC.player.position(), lane, connector, 0.8)) {
-                  ScaffoldModule.Inner_TableIndex leg = this.init_aI_TableIndex_BlockPos_2(connector, predicted, stack, lane, null);
+                  ScaffoldModule.PlannedPlacement leg = this.init_aI_TableIndex_BlockPos_2(connector, predicted, stack, lane, null);
                   if (leg != null) {
                      legs.add(leg);
                   }
@@ -14258,7 +14258,7 @@ public final class ScaffoldModule extends Module {
                return null;
             } else {
                legs.sort(init_Comparator_Vec3_ce_DataUtil(predicted, this.write_ce_DataUtil()));
-               ScaffoldModule.Inner_TableIndex leg = init_aI_TableIndex_List(legs, MC.player.getEyePosition(), this.load_Vec3(), landing, this.add_BlockPos);
+               ScaffoldModule.PlannedPlacement leg = init_aI_TableIndex_List(legs, MC.player.getEyePosition(), this.load_Vec3(), landing, this.add_BlockPos);
                this.add_BlockPos = leg.load().immutable();
                this.update_Str = leg == legs.get(0) ? "leg" : "leg-plane";
                return leg;
@@ -14270,13 +14270,13 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static ScaffoldModule.Inner_TableIndex init_aI_TableIndex_List(List<ScaffoldModule.Inner_TableIndex> legs, Vec3 eye, BlockPos held) {
-      ScaffoldModule.Inner_TableIndex best = legs.get(0);
+   static ScaffoldModule.PlannedPlacement init_aI_TableIndex_List(List<ScaffoldModule.PlannedPlacement> legs, Vec3 eye, BlockPos held) {
+      ScaffoldModule.PlannedPlacement best = legs.get(0);
       if (legs.size() >= 2 && best.init_Direction().getAxis().isHorizontal()) {
          double bestPast = init_D_Vec3(eye, best.init_BlockPos(), best.init_Direction());
 
          for (int i = 1; i < legs.size(); i++) {
-            ScaffoldModule.Inner_TableIndex leg = legs.get(i);
+            ScaffoldModule.PlannedPlacement leg = legs.get(i);
             if (leg.init_Direction().getAxis().isHorizontal()) {
                double past = init_D_Vec3(eye, leg.init_BlockPos(), leg.init_Direction());
                if (past > bestPast) {
@@ -14287,7 +14287,7 @@ public final class ScaffoldModule extends Module {
          }
 
          if (held != null && !best.load().equals(held)) {
-            for (ScaffoldModule.Inner_TableIndex leg : legs) {
+            for (ScaffoldModule.PlannedPlacement leg : legs) {
                if (leg.load().equals(held) && leg.init_Direction().getAxis().isHorizontal()) {
                   double heldPast = init_D_Vec3(eye, leg.init_BlockPos(), leg.init_Direction());
                   if (!read_Z_D_D(bestPast, heldPast) && bestPast - heldPast <= 0.25) {
@@ -14310,14 +14310,14 @@ public final class ScaffoldModule extends Module {
       return bestPast >= 0.05 && heldPast < 0.05;
    }
 
-   static ScaffoldModule.Inner_TableIndex init_aI_TableIndex_List(List<ScaffoldModule.Inner_TableIndex> legs, Vec3 eye, Vec3 lead, BlockPos held) {
+   static ScaffoldModule.PlannedPlacement init_aI_TableIndex_List(List<ScaffoldModule.PlannedPlacement> legs, Vec3 eye, Vec3 lead, BlockPos held) {
       return init_aI_TableIndex_List(legs, eye, lead, null, held);
    }
 
-   static ScaffoldModule.Inner_TableIndex init_aI_TableIndex_List(List<ScaffoldModule.Inner_TableIndex> legs, Vec3 eye, Vec3 lead, BlockPos landing, BlockPos held) {
-      List<ScaffoldModule.Inner_TableIndex> live = init_List_List(legs, eye, lead);
+   static ScaffoldModule.PlannedPlacement init_aI_TableIndex_List(List<ScaffoldModule.PlannedPlacement> legs, Vec3 eye, Vec3 lead, BlockPos landing, BlockPos held) {
+      List<ScaffoldModule.PlannedPlacement> live = init_List_List(legs, eye, lead);
       if (held == null) {
-         ScaffoldModule.Inner_TableIndex successor = load_aI_TableIndex_List(live, eye, lead, landing);
+         ScaffoldModule.PlannedPlacement successor = load_aI_TableIndex_List(live, eye, lead, landing);
          if (successor != null) {
             return successor;
          }
@@ -14326,12 +14326,12 @@ public final class ScaffoldModule extends Module {
       return init_aI_TableIndex_List(live, eye, held);
    }
 
-   static ScaffoldModule.Inner_TableIndex load_aI_TableIndex_List(List<ScaffoldModule.Inner_TableIndex> legs, Vec3 eye, Vec3 lead, BlockPos landing) {
+   static ScaffoldModule.PlannedPlacement load_aI_TableIndex_List(List<ScaffoldModule.PlannedPlacement> legs, Vec3 eye, Vec3 lead, BlockPos landing) {
       if (legs != null && legs.size() >= 2 && landing != null && eye != null) {
-         ScaffoldModule.Inner_TableIndex only = null;
+         ScaffoldModule.PlannedPlacement only = null;
          double bestPast = -1.7976931348623157E308;
 
-         for (ScaffoldModule.Inner_TableIndex leg : legs) {
+         for (ScaffoldModule.PlannedPlacement leg : legs) {
             bestPast = Math.max(bestPast, init_D_Vec3(eye, leg.init_BlockPos(), leg.init_Direction()));
             if (init_Z_aI_TableIndex(leg, landing, eye, lead)) {
                if (only != null) {
@@ -14353,7 +14353,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_TableIndex(ScaffoldModule.Inner_TableIndex leg, BlockPos landing, Vec3 eye, Vec3 lead) {
+   static boolean init_Z_aI_TableIndex(ScaffoldModule.PlannedPlacement leg, BlockPos landing, Vec3 eye, Vec3 lead) {
       if (leg != null && landing != null) {
          Direction face = load_Direction_BlockPos_BlockPos(landing, leg.load());
          if (face == null) {
@@ -14367,11 +14367,11 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static List<ScaffoldModule.Inner_TableIndex> init_List_List(List<ScaffoldModule.Inner_TableIndex> legs, Vec3 eye, Vec3 lead) {
+   static List<ScaffoldModule.PlannedPlacement> init_List_List(List<ScaffoldModule.PlannedPlacement> legs, Vec3 eye, Vec3 lead) {
       if (legs != null && legs.size() >= 2) {
-         List<ScaffoldModule.Inner_TableIndex> sighted = new ArrayList<>(legs.size());
+         List<ScaffoldModule.PlannedPlacement> sighted = new ArrayList<>(legs.size());
 
-         for (ScaffoldModule.Inner_TableIndex leg : legs) {
+         for (ScaffoldModule.PlannedPlacement leg : legs) {
             if (init_Z_aI_TableIndex_4(leg, eye, lead)) {
                sighted.add(leg);
             }
@@ -14383,7 +14383,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static boolean init_Z_aI_TableIndex_4(ScaffoldModule.Inner_TableIndex leg, Vec3 eye, Vec3 lead) {
+   static boolean init_Z_aI_TableIndex_4(ScaffoldModule.PlannedPlacement leg, Vec3 eye, Vec3 lead) {
       if (leg != null && eye != null && leg.init_Direction().getAxis().isHorizontal()) {
          float yaw = leg.init_ce_DataUtil().init();
 
@@ -14404,7 +14404,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos_2(BlockPos candidate, Vec3 predicted, ItemStack stack, Vec3 lane, Direction preferredFace) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos_2(BlockPos candidate, Vec3 predicted, ItemStack stack, Vec3 lane, Direction preferredFace) {
       if (candidate == null || MC.level.isOutsideBuildHeight(candidate)) {
          return this.init_aI_TableIndex_BlockPos(candidate, "oob", null);
       }
@@ -14424,14 +14424,14 @@ public final class ScaffoldModule extends Module {
             return this.init_aI_TableIndex_BlockPos(candidate, "no-repl", null);
          }
 
-         ScaffoldModule.Inner_FileCache rowLock = this.init_aI_FileCache();
+         ScaffoldModule.RowLockBounds rowLock = this.init_aI_FileCache();
          boolean rising = candidate.getY() > this.close_I();
          if (rowLock != null && !rowLock.init(candidate, rising)) {
             return this.init_aI_TableIndex_BlockPos(candidate, "rowlock", null);
          }
 
          Direction onlyFace = preferredFace != null ? preferredFace : (rowLock == null ? null : rowLock.init(candidate));
-         ScaffoldModule.Inner_TableIndex plan = this.init_aI_TableIndex_BlockPos(candidate, predicted, replaceExisting, lane, true, onlyFace, true);
+         ScaffoldModule.PlannedPlacement plan = this.init_aI_TableIndex_BlockPos(candidate, predicted, replaceExisting, lane, true, onlyFace, true);
          return plan != null && this.push(plan)
             ? this.init_aI_TableIndex_BlockPos(candidate, "blind", null)
             : this.init_aI_TableIndex_BlockPos(candidate, plan == null ? "plan" : "ok", plan);
@@ -14459,13 +14459,13 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos(BlockPos landing, Vec3 predicted, ItemStack stack, Vec3 lane) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos(BlockPos landing, Vec3 predicted, ItemStack stack, Vec3 lane) {
       if (landing != null && lane != null && MC.level != null && this.d_Z()) {
          BlockPos rise = landing.above();
          if (!MC.level.isOutsideBuildHeight(rise) && !this.open(rise)) {
             for (BlockPos step : load_List_BlockPos_Vec3(landing, lane)) {
                if (!MC.level.isOutsideBuildHeight(step) && !this.open(step) && this.open(step.below())) {
-                  ScaffoldModule.Inner_TableIndex plan = this.init_aI_TableIndex_BlockPos_2(step, predicted, stack, lane, Direction.UP);
+                  ScaffoldModule.PlannedPlacement plan = this.init_aI_TableIndex_BlockPos_2(step, predicted, stack, lane, Direction.UP);
                   if (plan != null) {
                      this.reset_BlockPos = step.immutable();
                      return plan;
@@ -14482,7 +14482,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos(BlockPos cell, String why, ScaffoldModule.Inner_TableIndex plan) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos(BlockPos cell, String why, ScaffoldModule.PlannedPlacement plan) {
       if (this.get_Z() && this.get_Str.length() <= 220) {
          String detail = "plan".equals(why) && this.load_StringBuilder.length() > 0 ? "plan[" + this.load_StringBuilder.toString().trim() + "]" : why;
          if (plan != null && MC.player != null && plan.init_Direction().getAxis().isHorizontal()) {
@@ -14500,10 +14500,10 @@ public final class ScaffoldModule extends Module {
       return cell == null ? "--" : cell.getX() + "," + cell.getY() + "," + cell.getZ();
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_ItemStack(ItemStack stack) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_ItemStack(ItemStack stack) {
       this.frame_Z = false;
       this.get_Str = "--";
-      ScaffoldModule.Inner_TableIndex target = this.load_aI_TableIndex_ItemStack(stack);
+      ScaffoldModule.PlannedPlacement target = this.load_aI_TableIndex_ItemStack(stack);
       if (this.flags_Z() && target != null && MC.player != null) {
          int stampAge = load_I_I_I(AutismSessionState.init_ck().state_I(), this.f_ak_I);
          boolean stampFresh = this.tick_BlockPos != null && stampAge >= 0 && stampAge <= 8;
@@ -14532,7 +14532,7 @@ public final class ScaffoldModule extends Module {
       return target;
    }
 
-   private ScaffoldModule.Inner_TableIndex read_aI_TableIndex_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private ScaffoldModule.PlannedPlacement read_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target != null && this.flags_Z() && MC.player != null && MC.level != null) {
          BlockPos placed = target.load();
          BlockState state = MC.level.getBlockState(placed);
@@ -14541,7 +14541,7 @@ public final class ScaffoldModule extends Module {
             return target;
          } else {
             String planFail = this.reset_Str;
-            ScaffoldModule.Inner_TableIndex up = this.init_aI_TableIndex_BlockPos(
+            ScaffoldModule.PlannedPlacement up = this.init_aI_TableIndex_BlockPos(
                placed,
                this.load_Vec3_aI_HashUtil(this.init_aI_HashUtil),
                replaceExisting,
@@ -14562,17 +14562,17 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static List<ScaffoldModule.Inner_ListPool> init_List_BlockPos(BlockPos landing, int maxMissing, Predicate<BlockPos> supported, Predicate<BlockPos> open) {
+   static List<ScaffoldModule.BridgeStepNode> init_List_BlockPos(BlockPos landing, int maxMissing, Predicate<BlockPos> supported, Predicate<BlockPos> open) {
       if (landing != null && maxMissing > 0 && !supported.test(landing) && open.test(landing)) {
          int limit = Math.min(6, maxMissing);
-         ArrayDeque<ScaffoldModule.Inner_ListPool> queue = new ArrayDeque<>();
+         ArrayDeque<ScaffoldModule.BridgeStepNode> queue = new ArrayDeque<>();
          Set<BlockPos> seen = new HashSet<>();
-         List<ScaffoldModule.Inner_ListPool> frontier = new ArrayList<>();
-         queue.add(new ScaffoldModule.Inner_ListPool(landing.immutable(), 1));
+         List<ScaffoldModule.BridgeStepNode> frontier = new ArrayList<>();
+         queue.add(new ScaffoldModule.BridgeStepNode(landing.immutable(), 1));
          seen.add(landing);
 
          while (!queue.isEmpty()) {
-            ScaffoldModule.Inner_ListPool link = queue.removeFirst();
+            ScaffoldModule.BridgeStepNode link = queue.removeFirst();
             boolean anchored = false;
 
             for (Direction side : Direction.values()) {
@@ -14580,7 +14580,7 @@ public final class ScaffoldModule extends Module {
                if (supported.test(adjacent)) {
                   anchored = true;
                } else if (side.getAxis().isHorizontal() && link.init_I() < limit && seen.add(adjacent) && open.test(adjacent)) {
-                  queue.addLast(new ScaffoldModule.Inner_ListPool(adjacent, link.init_I() + 1));
+                  queue.addLast(new ScaffoldModule.BridgeStepNode(adjacent, link.init_I() + 1));
                }
             }
 
@@ -14590,7 +14590,7 @@ public final class ScaffoldModule extends Module {
          }
 
          frontier.sort(
-            Comparator.comparingInt(ScaffoldModule.Inner_ListPool::init_I)
+            Comparator.comparingInt(ScaffoldModule.BridgeStepNode::init_I)
                .thenComparingInt(linkx -> linkx.init_BlockPos().getX())
                .thenComparingInt(linkx -> linkx.init_BlockPos().getZ())
          );
@@ -14604,7 +14604,7 @@ public final class ScaffoldModule extends Module {
       return "Telly".equals(mode) && diagonal && !ascending;
    }
 
-   private ScaffoldModule.Inner_TableIndex read_aI_TableIndex_Vec3_ItemStack(Vec3 predicted, ItemStack stack) {
+   private ScaffoldModule.PlannedPlacement read_aI_TableIndex_Vec3_ItemStack(Vec3 predicted, ItemStack stack) {
       if (init_Z_Str(this.choice("mode"), this.state_Z, this.d_Z())
          && MC.player != null
          && MC.level != null
@@ -14621,7 +14621,7 @@ public final class ScaffoldModule extends Module {
             }
 
             BlockPos goal = new BlockPos(Mth.floor(landing[0]), row, Mth.floor(landing[1]));
-            List<ScaffoldModule.Inner_ListPool> links = init_List_BlockPos(
+            List<ScaffoldModule.BridgeStepNode> links = init_List_BlockPos(
                goal, 6, this::poll, cell -> !MC.level.isOutsideBuildHeight(cell) && MC.level.hasChunkAt(cell) && MC.level.getBlockState(cell).canBeReplaced()
             );
             if (links.isEmpty()) {
@@ -14630,16 +14630,16 @@ public final class ScaffoldModule extends Module {
 
             this.put_BlockPos = goal.immutable();
             Vec3 lane = this.init_aI_HashUtil.load();
-            List<ScaffoldModule.Inner_TableIndex> plans = new ArrayList<>();
+            List<ScaffoldModule.PlannedPlacement> plans = new ArrayList<>();
             int bestMissing = 2147483647;
 
-            for (ScaffoldModule.Inner_ListPool link : links) {
+            for (ScaffoldModule.BridgeStepNode link : links) {
                if (link.init_I() > bestMissing) {
                   break;
                }
 
                if (!this.sync(link.init_BlockPos())) {
-                  ScaffoldModule.Inner_TableIndex plan = this.init_aI_TableIndex_BlockPos_2(link.init_BlockPos(), predicted, stack, lane, null);
+                  ScaffoldModule.PlannedPlacement plan = this.init_aI_TableIndex_BlockPos_2(link.init_BlockPos(), predicted, stack, lane, null);
                   if (plan != null && !this.poll(plan)) {
                      bestMissing = link.init_I();
                      plans.add(plan);
@@ -14663,7 +14663,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex load_aI_TableIndex_ItemStack(ItemStack stack) {
+   private ScaffoldModule.PlannedPlacement load_aI_TableIndex_ItemStack(ItemStack stack) {
       if (!this.init_Z_ItemStack_4(stack)) {
          return null;
       }
@@ -14671,7 +14671,7 @@ public final class ScaffoldModule extends Module {
       Vec3 predicted = this.load_Vec3_aI_HashUtil(this.init_aI_HashUtil);
       BlockPos predictedBase = init_BlockPos_Vec3(predicted);
       if (this.flags_Z()) {
-         ScaffoldModule.Inner_TableIndex tower = this.init_aI_TableIndex();
+         ScaffoldModule.PlannedPlacement tower = this.init_aI_TableIndex();
          if (tower != null) {
             this.load_aI_TableIndex = tower;
             this.f_aG_I = AutismSessionState.init_ck().state_I();
@@ -14680,7 +14680,7 @@ public final class ScaffoldModule extends Module {
             return tower;
          }
 
-         ScaffoldModule.Inner_TableIndex tellyLanding = this.read_aI_TableIndex_Vec3_ItemStack(predicted, stack);
+         ScaffoldModule.PlannedPlacement tellyLanding = this.read_aI_TableIndex_Vec3_ItemStack(predicted, stack);
          if (tellyLanding != null) {
             this.load_aI_TableIndex = tellyLanding;
             this.f_aG_I = AutismSessionState.init_ck().state_I();
@@ -14689,7 +14689,7 @@ public final class ScaffoldModule extends Module {
             return tellyLanding;
          }
 
-         ScaffoldModule.Inner_TableIndex rescue = this.init_aI_TableIndex_Vec3_ItemStack(predicted, stack);
+         ScaffoldModule.PlannedPlacement rescue = this.init_aI_TableIndex_Vec3_ItemStack(predicted, stack);
          if (rescue != null) {
             this.f_aU_I = AutismSessionState.init_ck().state_I();
             this.load_aI_TableIndex = rescue;
@@ -14699,7 +14699,7 @@ public final class ScaffoldModule extends Module {
             return rescue;
          }
 
-         ScaffoldModule.Inner_TableIndex riser = this.load_aI_TableIndex();
+         ScaffoldModule.PlannedPlacement riser = this.load_aI_TableIndex();
          if (riser != null) {
             this.load_aI_TableIndex = riser;
             this.f_aG_I = AutismSessionState.init_ck().state_I();
@@ -14708,7 +14708,7 @@ public final class ScaffoldModule extends Module {
             return riser;
          }
 
-         ScaffoldModule.Inner_TableIndex reservation = this.load_aI_TableIndex_Vec3_ItemStack(predicted, stack);
+         ScaffoldModule.PlannedPlacement reservation = this.load_aI_TableIndex_Vec3_ItemStack(predicted, stack);
          if (reservation != null && !this.open(reservation) && !this.poll(reservation)) {
             this.load_aI_TableIndex = reservation;
             this.f_aG_I = AutismSessionState.init_ck().state_I();
@@ -14718,7 +14718,7 @@ public final class ScaffoldModule extends Module {
          }
 
          if (MC.player != null && !MC.player.onGround() && MC.player.getDeltaMovement().y < 0.0 && this.i()) {
-            ScaffoldModule.Inner_TableIndex catchBelow = this.init_aI_TableIndex_Vec3(
+            ScaffoldModule.PlannedPlacement catchBelow = this.init_aI_TableIndex_Vec3(
                predicted, this.init_aI_HashUtil == null ? null : this.init_aI_HashUtil.load(), this.queue_Z()
             );
             if (catchBelow != null) {
@@ -14734,7 +14734,7 @@ public final class ScaffoldModule extends Module {
          boolean rowLocked = this.init_aI_FileCache() != null;
          if (!rowLocked) {
             predictedBase = this.load_BlockPos_BlockPos(predictedBase);
-            ScaffoldModule.Inner_TableIndex drift = this.init_aI_TableIndex_BlockPos(predictedBase);
+            ScaffoldModule.PlannedPlacement drift = this.init_aI_TableIndex_BlockPos(predictedBase);
             if (drift != null) {
                this.load_aI_TableIndex = drift;
                this.f_aG_I = AutismSessionState.init_ck().state_I();
@@ -14743,19 +14743,19 @@ public final class ScaffoldModule extends Module {
             }
          }
 
-         ScaffoldModule.Inner_TableIndex held = this.read_aI_TableIndex();
+         ScaffoldModule.PlannedPlacement held = this.read_aI_TableIndex();
          if (held != null && !this.poll(held)) {
             this.stop_Str = "hold:" + held.load().toShortString();
             return held;
          }
 
-         ScaffoldModule.Inner_TableIndex sticky = this.init_aI_TableIndex_Vec3(predicted);
+         ScaffoldModule.PlannedPlacement sticky = this.init_aI_TableIndex_Vec3(predicted);
          if (sticky != null && !this.open(sticky) && !this.poll(sticky)) {
             this.stop_Str = "sticky";
             return sticky;
          }
 
-         ScaffoldModule.Inner_TableIndex fresh = this.init_aI_TableIndex_BlockPos_2(predictedBase, predicted, stack);
+         ScaffoldModule.PlannedPlacement fresh = this.init_aI_TableIndex_BlockPos_2(predictedBase, predicted, stack);
          String freshTier = rowLocked ? "row" : "lane";
          if (fresh != null && this.poll(fresh)) {
             fresh = null;
@@ -14851,8 +14851,8 @@ public final class ScaffoldModule extends Module {
       return positive ? fraction > 0.15 : fraction < 0.85;
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_Vec3(Vec3 predicted) {
-      ScaffoldModule.Inner_TableIndex sticky = this.load_aI_TableIndex;
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_Vec3(Vec3 predicted) {
+      ScaffoldModule.PlannedPlacement sticky = this.load_aI_TableIndex;
       if (sticky == null) {
          return null;
       }
@@ -14882,12 +14882,12 @@ public final class ScaffoldModule extends Module {
                }
 
                boolean jumping = this.f_Z();
-               ScaffoldModule.Inner_FileCache rowLock = this.init_aI_FileCache();
+               ScaffoldModule.RowLockBounds rowLock = this.init_aI_FileCache();
                if (rowLock != null && !rowLock.init(placed, this.read_Z_Z(jumping))) {
                   return null;
                }
 
-               ScaffoldModule.Inner_TableIndex replanned = this.init_aI_TableIndex_BlockPos(placed, predicted, false, laneDirection, jumping, sticky.init_Direction());
+               ScaffoldModule.PlannedPlacement replanned = this.init_aI_TableIndex_BlockPos(placed, predicted, false, laneDirection, jumping, sticky.init_Direction());
                if (replanned == null || !replanned.init_BlockPos().equals(support) || replanned.init_Direction() != sticky.init_Direction()) {
                   return null;
                }
@@ -14955,7 +14955,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean pop(ScaffoldModule.Inner_TableIndex target) {
+   private boolean pop(ScaffoldModule.PlannedPlacement target) {
       return target != null && MC.player != null && target.init_Direction().getAxis().isHorizontal()
          ? update_Z_F(init_F_Vec3(MC.player.getEyePosition(), target.init_BlockPos(), target.init_Direction(), target.init_ce_DataUtil().init()))
          : false;
@@ -14968,7 +14968,7 @@ public final class ScaffoldModule extends Module {
       return lateral < edge || lateral > edge + 1.0;
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos(BlockPos laneBase) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos(BlockPos laneBase) {
       if (MC.player != null && laneBase != null) {
          Vec3 velocity = MC.player.getDeltaMovement();
          double horizontalSpeed = Math.hypot(velocity.x, velocity.z);
@@ -15009,20 +15009,20 @@ public final class ScaffoldModule extends Module {
             return null;
          }
 
-         ScaffoldModule.Inner_TableIndex direct = this.init_aI_TableIndex_BlockPos_3(driftBase, future, false, laneDirection, jumping);
+         ScaffoldModule.PlannedPlacement direct = this.init_aI_TableIndex_BlockPos_3(driftBase, future, false, laneDirection, jumping);
          if (direct != null) {
             this.stop_Str = "guard:" + driftBase.toShortString();
             return direct;
          }
 
-         List<ScaffoldModule.Inner_TableIndex> seedPlans = new ArrayList<>(4);
+         List<ScaffoldModule.PlannedPlacement> seedPlans = new ArrayList<>(4);
 
          for (Direction direction : Plane.HORIZONTAL) {
             BlockPos seed = driftBase.relative(direction);
             if (!MC.level.isOutsideBuildHeight(seed) && !(Vec3.atCenterOf(seed).subtract(MC.player.position()).horizontalDistance() > 2.0)) {
                BlockState seedState = MC.level.getBlockState(seed);
                if (seedState.isAir()) {
-                  ScaffoldModule.Inner_TableIndex seeded = this.init_aI_TableIndex_BlockPos_3(seed, future, false, laneDirection, jumping);
+                  ScaffoldModule.PlannedPlacement seeded = this.init_aI_TableIndex_BlockPos_3(seed, future, false, laneDirection, jumping);
                   if (seeded != null) {
                      seedPlans.add(seeded);
                   }
@@ -15044,8 +15044,8 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static Comparator<ScaffoldModule.Inner_TableIndex> init_Comparator_Vec3_ce_DataUtil(Vec3 future, RotationMath.Rotation posture) {
-      return Comparator.<ScaffoldModule.Inner_TableIndex>comparingDouble(plan -> Math.ceil(Vec3.atCenterOf(plan.load()).distanceTo(future) / 0.5))
+   static Comparator<ScaffoldModule.PlannedPlacement> init_Comparator_Vec3_ce_DataUtil(Vec3 future, RotationMath.Rotation posture) {
+      return Comparator.<ScaffoldModule.PlannedPlacement>comparingDouble(plan -> Math.ceil(Vec3.atCenterOf(plan.load()).distanceTo(future) / 0.5))
          .thenComparingDouble(plan -> init_D_ce_DataUtil_ce_DataUtil(posture, plan.init_ce_DataUtil()));
    }
 
@@ -15079,7 +15079,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos_2(BlockPos base, Vec3 plannedPosition, ItemStack stack) {
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos_2(BlockPos base, Vec3 plannedPosition, ItemStack stack) {
       if (base == null) {
          this.reset_Str = "base-null";
          return null;
@@ -15129,7 +15129,7 @@ public final class ScaffoldModule extends Module {
       int gateBelow = 0;
       String firstPlanDetail = null;
       this.reset_Str = "";
-      ScaffoldModule.Inner_FileCache rowLock = this.flags_Z() ? this.init_aI_FileCache() : null;
+      ScaffoldModule.RowLockBounds rowLock = this.flags_Z() ? this.init_aI_FileCache() : null;
       boolean gateRise = this.flags_Z() && !this.h_Z();
       Vec3 riseFrom = MC.player.position();
       Vec3 riseCarry = MC.player.getDeltaMovement();
@@ -15138,7 +15138,7 @@ public final class ScaffoldModule extends Module {
       boolean preferHeight = gateRise && riseAllowed;
       int footingRow = this.close_I();
       int planTick = AutismSessionState.init_ck().state_I();
-      ScaffoldModule.Inner_TableIndex firstPlan = null;
+      ScaffoldModule.PlannedPlacement firstPlan = null;
 
       for (BlockPos offset : offsets) {
          BlockPos candidate = base.offset(offset);
@@ -15186,7 +15186,7 @@ public final class ScaffoldModule extends Module {
                   if (replaceExisting && !this.init_Z_BlockState_3(candidateState, candidate, stack)) {
                      replaceSkips++;
                   } else {
-                     ScaffoldModule.Inner_TableIndex target = this.init_aI_TableIndex_BlockPos(
+                     ScaffoldModule.PlannedPlacement target = this.init_aI_TableIndex_BlockPos(
                         candidate, plannedPosition, replaceExisting, laneDirection, jumping, pinnedFace
                      );
                      if (target != null) {
@@ -15274,7 +15274,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private List<BlockPos> init_List_List(List<BlockPos> source, BlockPos base, Vec3 predictedPosition, ScaffoldModule.Inner_HashUtil optimalLine) {
+   private List<BlockPos> init_List_List(List<BlockPos> source, BlockPos base, Vec3 predictedPosition, ScaffoldModule.MotionVectorPair optimalLine) {
       List<BlockPos> ordered = new ArrayList<>(source);
       ordered.sort(
          Comparator.<BlockPos>comparingInt(ScaffoldModule::init_I_BlockPos)
@@ -15291,7 +15291,7 @@ public final class ScaffoldModule extends Module {
       return BlockPos.ZERO.equals(offset) ? 0 : 1;
    }
 
-   private double init_D_BlockPos(BlockPos pos, Vec3 predictedPosition, ScaffoldModule.Inner_HashUtil optimalLine) {
+   private double init_D_BlockPos(BlockPos pos, Vec3 predictedPosition, ScaffoldModule.MotionVectorPair optimalLine) {
       VoxelShape shape = MC.level.getBlockState(pos).getShape(MC.level, pos, CollisionContext.of(MC.player));
       if (shape.isEmpty()) {
          return optimalLine == null ? Vec3.atCenterOf(pos).distanceToSqr(predictedPosition) : load_D_aI_HashUtil_Vec3(optimalLine, Vec3.atCenterOf(pos));
@@ -15308,22 +15308,22 @@ public final class ScaffoldModule extends Module {
       return best;
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos_3(
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos_3(
       BlockPos candidate, Vec3 plannedPosition, boolean replaceExisting, Vec3 laneDirection, boolean jumping
    ) {
       return this.init_aI_TableIndex_BlockPos(candidate, plannedPosition, replaceExisting, laneDirection, jumping, null);
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos(
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos(
       BlockPos candidate, Vec3 plannedPosition, boolean replaceExisting, Vec3 laneDirection, boolean jumping, Direction onlyFace
    ) {
       return this.init_aI_TableIndex_BlockPos(candidate, plannedPosition, replaceExisting, laneDirection, jumping, onlyFace, false);
    }
 
-   private ScaffoldModule.Inner_TableIndex init_aI_TableIndex_BlockPos(
+   private ScaffoldModule.PlannedPlacement init_aI_TableIndex_BlockPos(
       BlockPos candidate, Vec3 plannedPosition, boolean replaceExisting, Vec3 laneDirection, boolean jumping, Direction onlyFace, boolean planeLead
    ) {
-      ScaffoldModule.Inner_CharEncoder bestPlan = null;
+      ScaffoldModule.SupportCandidate bestPlan = null;
       double bestFaceAngle = 1.0 / 0.0;
       this.load_StringBuilder.setLength(0);
       if (!replaceExisting && MC.player != null) {
@@ -15355,8 +15355,8 @@ public final class ScaffoldModule extends Module {
          && init_Z_BlockPos_6(this.prev_BlockPos, this.write_Direction, candidate)
          && init_Z_Vec3_2(pinEye, pinLead, this.prev_BlockPos, this.write_Direction, pinYaw, true, 2);
       boolean bestFacePins = false;
-      ScaffoldModule.Inner_StreamUtil bestSample = null;
-      ScaffoldModule.Inner_FileCache visibilityLock = this.flags_Z() ? this.init_aI_FileCache() : null;
+      ScaffoldModule.FaceHitTarget bestSample = null;
+      ScaffoldModule.RowLockBounds visibilityLock = this.flags_Z() ? this.init_aI_FileCache() : null;
       boolean lockPinnedFace = visibilityLock != null && onlyFace != null && onlyFace == visibilityLock.init(candidate);
       boolean requireExactVisibility = !lockPinnedFace && write(this.flags_Z(), this.flush_Z, MC.player.onGround(), jumping);
       double visibilityReach = requireExactVisibility ? Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange()) : 0.0;
@@ -15405,13 +15405,13 @@ public final class ScaffoldModule extends Module {
                         this.load_StringBuilder.append(faceCode).append(":pc ");
                      } else if (init_Z_Z_2(facePins, faceAngle, bestFacePins, bestFaceAngle)) {
                         VoxelShape shape = supportState.getShape(MC.level, supportPos, CollisionContext.of(MC.player));
-                        ScaffoldModule.Inner_StreamUtil planSample = null;
+                        ScaffoldModule.FaceHitTarget planSample = null;
 
                         for (AABB localBox : shape.toAabbs()) {
-                           ScaffoldModule.Inner_DataUtil sampledFace = ScaffoldModule.Inner_DataUtil.init(localBox, face);
-                           ScaffoldModule.Inner_DataUtil searchFace = sampledFace;
+                           ScaffoldModule.FaceRect sampledFace = ScaffoldModule.FaceRect.init(localBox, face);
+                           ScaffoldModule.FaceRect searchFace = sampledFace;
                            if (searchFace.write().y >= 0.9) {
-                              ScaffoldModule.Inner_DataUtil truncated = searchFace.init(0.6);
+                              ScaffoldModule.FaceRect truncated = searchFace.init(0.6);
                               if (truncated.init_D() > 1.0E-9) {
                                  searchFace = truncated;
                               }
@@ -15433,7 +15433,7 @@ public final class ScaffoldModule extends Module {
                                  }
                               }
 
-                              ScaffoldModule.Inner_StreamUtil sample = new ScaffoldModule.Inner_StreamUtil(sampledFace, point, face);
+                              ScaffoldModule.FaceHitTarget sample = new ScaffoldModule.FaceHitTarget(sampledFace, point, face);
                               if (planSample == null || init_I_aI_StreamUtil_aI_StreamUtil(sample, planSample) > 0) {
                                  planSample = sample;
                               }
@@ -15443,7 +15443,7 @@ public final class ScaffoldModule extends Module {
                         if (planSample != null) {
                            bestFaceAngle = faceAngle;
                            bestFacePins = facePins;
-                           bestPlan = new ScaffoldModule.Inner_CharEncoder(supportPos.immutable(), face);
+                           bestPlan = new ScaffoldModule.SupportCandidate(supportPos.immutable(), face);
                            bestSample = planSample;
                         }
                      }
@@ -15455,7 +15455,7 @@ public final class ScaffoldModule extends Module {
 
       if (bestPlan != null && bestSample != null) {
          Vec3 worldPoint = bestSample.init_Vec3().add(bestPlan.init_BlockPos().getX(), bestPlan.init_BlockPos().getY(), bestPlan.init_BlockPos().getZ());
-         ScaffoldModule.Inner_FileCache goalLock = this.flags_Z() ? this.init_aI_FileCache() : null;
+         ScaffoldModule.RowLockBounds goalLock = this.flags_Z() ? this.init_aI_FileCache() : null;
          Direction goalPinnedFace = goalLock == null ? null : goalLock.init(candidate);
          RotationMath.Rotation rotation;
          if (this.flags_Z() && MC.player != null && !MC.player.onGround()) {
@@ -15624,7 +15624,7 @@ public final class ScaffoldModule extends Module {
          }
 
          BlockHitResult plannedHit = new BlockHitResult(worldPoint, bestPlan.init_Direction(), bestPlan.init_BlockPos(), false);
-         return new ScaffoldModule.Inner_TableIndex(
+         return new ScaffoldModule.PlannedPlacement(
             bestPlan.init_BlockPos(),
             candidate.immutable(),
             bestPlan.init_Direction(),
@@ -15768,7 +15768,7 @@ public final class ScaffoldModule extends Module {
       return servedTick == now && held != null && held.equals(noted);
    }
 
-   private void read_V_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private void read_V_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       if (target != null) {
          int tick = AutismSessionState.init_ck().state_I();
          if (!init_Z_I_4(this.f_aF_I, tick, this.init_aI_TableIndex == null ? null : this.init_aI_TableIndex.load(), target.load())) {
@@ -15803,8 +15803,8 @@ public final class ScaffoldModule extends Module {
       return !descending && init_Z_Vec3_6(position, laneDirection, placed, 0.8);
    }
 
-   private ScaffoldModule.Inner_TableIndex read_aI_TableIndex() {
-      ScaffoldModule.Inner_TableIndex held = this.init_aI_TableIndex;
+   private ScaffoldModule.PlannedPlacement read_aI_TableIndex() {
+      ScaffoldModule.PlannedPlacement held = this.init_aI_TableIndex;
       if (held != null && MC.level != null) {
          BlockPos placed = held.load();
          BlockPos support = held.init_BlockPos();
@@ -15838,7 +15838,7 @@ public final class ScaffoldModule extends Module {
                } else {
                   this.frame_Z = true;
                   this.f_aF_I = AutismSessionState.init_ck().state_I();
-                  ScaffoldModule.Inner_TableIndex resolved = this.write_aI_TableIndex_aI_TableIndex(held);
+                  ScaffoldModule.PlannedPlacement resolved = this.write_aI_TableIndex_aI_TableIndex(held);
                   return resolved == null ? held : resolved;
                }
             }
@@ -15859,18 +15859,18 @@ public final class ScaffoldModule extends Module {
       return heldFace != null && heldFace.getAxis().isHorizontal() ? replaceExisting || fullCubeBelow : false;
    }
 
-   private ScaffoldModule.Inner_TableIndex write_aI_TableIndex_aI_TableIndex(ScaffoldModule.Inner_TableIndex held) {
+   private ScaffoldModule.PlannedPlacement write_aI_TableIndex_aI_TableIndex(ScaffoldModule.PlannedPlacement held) {
       if (MC.player != null && MC.level != null) {
          BlockPos placed = held.load();
          BlockState state = MC.level.getBlockState(placed);
          boolean replaceExisting = !state.isAir() && state.getFluidState().isEmpty();
          String planFail = this.reset_Str;
-         ScaffoldModule.Inner_TableIndex upgraded = this.read_aI_TableIndex_aI_TableIndex(held);
+         ScaffoldModule.PlannedPlacement upgraded = this.read_aI_TableIndex_aI_TableIndex(held);
          if (upgraded != held) {
             this.init_aI_TableIndex = upgraded;
             return upgraded;
          } else {
-            ScaffoldModule.Inner_TableIndex fresh = this.init_aI_TableIndex_BlockPos(
+            ScaffoldModule.PlannedPlacement fresh = this.init_aI_TableIndex_BlockPos(
                placed,
                this.load_Vec3_aI_HashUtil(this.init_aI_HashUtil),
                replaceExisting,
@@ -15938,7 +15938,7 @@ public final class ScaffoldModule extends Module {
       return pins != bestPins ? pins : angle < bestAngle;
    }
 
-   private void write_V_aI_TableIndex(ScaffoldModule.Inner_TableIndex target) {
+   private void write_V_aI_TableIndex(ScaffoldModule.PlannedPlacement target) {
       this.f_Z_D = target != null && MC.player != null
          ? init_D_Vec3_3(MC.player.getEyePosition().add(this.load_Vec3()), target.init_BlockPos(), target.init_Direction(), this.read_F())
          : 0.0 / 0.0;
@@ -15965,7 +15965,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean tick(ScaffoldModule.Inner_TableIndex target) {
+   private boolean tick(ScaffoldModule.PlannedPlacement target) {
       if (target == null) {
          this.valid_BlockPos = null;
          this.update_Direction = null;
@@ -16005,16 +16005,16 @@ public final class ScaffoldModule extends Module {
          : new RotationMath.Rotation(predicted.init(), Math.min(predicted.load(), 90.0F));
    }
 
-   private boolean init_Z_aI_TableIndex_3(ScaffoldModule.Inner_TableIndex target, InteractionHand hand, ItemStack stack) {
+   private boolean init_Z_aI_TableIndex_3(ScaffoldModule.PlannedPlacement target, InteractionHand hand, ItemStack stack) {
       return this.init_Z_aI_TableIndex(target, hand, stack, true, true);
    }
 
    private boolean init_Z_aI_TableIndex(
-      ScaffoldModule.Inner_TableIndex target, InteractionHand hand, ItemStack stack, boolean restoreClientRotation, boolean sendPlacementRotation
+      ScaffoldModule.PlannedPlacement target, InteractionHand hand, ItemStack stack, boolean restoreClientRotation, boolean sendPlacementRotation
    ) {
       if (AutismLiteVariant.enabled() || !DangerModule.read_Z_22() && !ClutchModule.read_Z_20()) {
          RotationMath.Rotation rotation = target.init_ce_DataUtil();
-         ScaffoldModule.Inner_HashUtil placementLine = this.init_aI_HashUtil;
+         ScaffoldModule.MotionVectorPair placementLine = this.init_aI_HashUtil;
          Vec3 previousFallOff = this.read_Vec3_aI_HashUtil(placementLine);
          float clientYaw = MC.player.getYRot();
          float clientPitch = MC.player.getXRot();
@@ -16087,7 +16087,7 @@ public final class ScaffoldModule extends Module {
       return predictedPosition == null ? aimPosition : predictedPosition;
    }
 
-   private void init_V_BlockPos_3(BlockPos placed, ScaffoldModule.Inner_HashUtil line, Vec3 previousFallOff) {
+   private void init_V_BlockPos_3(BlockPos placed, ScaffoldModule.MotionVectorPair line, Vec3 previousFallOff) {
       this.load_aI_HashUtil = null;
       BlockPos immutable = placed.immutable();
       if (!immutable.equals(this.init_ArrayDeque.peekLast())) {
@@ -16160,7 +16160,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private boolean load_Z_BlockHitResult_aI_TableIndex(BlockHitResult hit, ScaffoldModule.Inner_TableIndex pending) {
+   private boolean load_Z_BlockHitResult_aI_TableIndex(BlockHitResult hit, ScaffoldModule.PlannedPlacement pending) {
       return hit != null && pending != null ? pending.load().equals(this.init_BlockPos_BlockHitResult_ItemStack_2(hit, this.init_ItemStack_2())) : false;
    }
 
@@ -16235,7 +16235,7 @@ public final class ScaffoldModule extends Module {
       int selected = MC.player.getInventory().getSelectedSlot();
       int remaining = this.index_Z() ? this.read_I_I(selected) : main.getCount();
       int freshSlot = -1;
-      if (this.index_Z() && this.init_aI_NodeWalker != ScaffoldModule.Inner_NodeWalker.PLACING && remaining < 8) {
+      if (this.index_Z() && this.init_aI_NodeWalker != ScaffoldModule.TurnCyclePhase.PLACING && remaining < 8) {
          for (int candidate = 0; candidate < 9; candidate++) {
             if (candidate != selected && !autismclient.util.InventorySlotArbiter.init(candidate, this.id())) {
                ItemStack stack = MC.player.getInventory().getItem(candidate);
@@ -16583,16 +16583,16 @@ public final class ScaffoldModule extends Module {
       return Vec3.directionFromRotation(rotation.load(), rotation.init());
    }
 
-   private ScaffoldModule.Inner_HashUtil init_aI_HashUtil_Input(Input input) {
+   private ScaffoldModule.MotionVectorPair init_aI_HashUtil_Input(Input input) {
       Vec3 direction = this.init_Vec3_3();
-      ScaffoldModule.Inner_BitSetUtil support = this.init_aI_BitSetUtil();
+      ScaffoldModule.SupportHeightSample support = this.init_aI_BitSetUtil();
       if (support == null) {
          if (!this.flags_Z()) {
             return null;
          }
 
          Vec3 position = MC.player.position();
-         ScaffoldModule.Inner_HashUtil previous = this.init_aI_HashUtil;
+         ScaffoldModule.MotionVectorPair previous = this.init_aI_HashUtil;
          Vec3 anchor = init_Vec3_Vec3_4(
             position,
             previous == null ? null : previous.init(),
@@ -16600,10 +16600,10 @@ public final class ScaffoldModule extends Module {
             direction,
             this.f_n_I <= 2 ? this.init_BlockPos : null
          );
-         return new ScaffoldModule.Inner_HashUtil(new Vec3(anchor.x, position.y, anchor.z), direction);
+         return new ScaffoldModule.MotionVectorPair(new Vec3(anchor.x, position.y, anchor.z), direction);
       } else {
          this.init_aI_BitSetUtil = support;
-         ScaffoldModule.Inner_HashUtil placedLine = this.init_aI_HashUtil();
+         ScaffoldModule.MotionVectorPair placedLine = this.init_aI_HashUtil();
          Vec3 anchor;
          if (placedLine != null && placedLine.load().dot(direction) >= 0.5) {
             anchor = init_Vec3_aI_HashUtil_Vec3(placedLine, MC.player.position());
@@ -16611,12 +16611,12 @@ public final class ScaffoldModule extends Module {
             anchor = new Vec3(support.init_BlockPos().getX() + 0.5, MC.player.getY(), support.init_BlockPos().getZ() + 0.5);
          }
 
-         return new ScaffoldModule.Inner_HashUtil(new Vec3(anchor.x, MC.player.getY(), anchor.z), direction);
+         return new ScaffoldModule.MotionVectorPair(new Vec3(anchor.x, MC.player.getY(), anchor.z), direction);
       }
    }
 
-   private ScaffoldModule.Inner_HashUtil init_aI_HashUtil_aI_HashUtil_Z(ScaffoldModule.Inner_HashUtil requested, boolean edgeActive) {
-      ScaffoldModule.Inner_HashUtil retained = init_aI_HashUtil_aI_HashUtil(requested, this.load_aI_HashUtil, edgeActive, MC.player.getY());
+   private ScaffoldModule.MotionVectorPair init_aI_HashUtil_aI_HashUtil_Z(ScaffoldModule.MotionVectorPair requested, boolean edgeActive) {
+      ScaffoldModule.MotionVectorPair retained = init_aI_HashUtil_aI_HashUtil(requested, this.load_aI_HashUtil, edgeActive, MC.player.getY());
       if (edgeActive && requested != null) {
          if (this.load_aI_HashUtil == null) {
             this.load_aI_HashUtil = requested;
@@ -16629,11 +16629,11 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   static ScaffoldModule.Inner_HashUtil init_aI_HashUtil_aI_HashUtil(ScaffoldModule.Inner_HashUtil requested, ScaffoldModule.Inner_HashUtil locked, boolean edgeActive, double playerY) {
+   static ScaffoldModule.MotionVectorPair init_aI_HashUtil_aI_HashUtil(ScaffoldModule.MotionVectorPair requested, ScaffoldModule.MotionVectorPair locked, boolean edgeActive, double playerY) {
       if (edgeActive && requested != null) {
-         ScaffoldModule.Inner_HashUtil selected = locked == null ? requested : locked;
+         ScaffoldModule.MotionVectorPair selected = locked == null ? requested : locked;
          Vec3 origin = selected.init();
-         return new ScaffoldModule.Inner_HashUtil(new Vec3(origin.x, playerY, origin.z), selected.load());
+         return new ScaffoldModule.MotionVectorPair(new Vec3(origin.x, playerY, origin.z), selected.load());
       } else {
          return requested;
       }
@@ -16654,7 +16654,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_HashUtil init_aI_HashUtil() {
+   private ScaffoldModule.MotionVectorPair init_aI_HashUtil() {
       if (this.init_ArrayDeque.size() < 2) {
          return null;
       }
@@ -16668,15 +16668,15 @@ public final class ScaffoldModule extends Module {
          Vec3 previousCenter = new Vec3(previous.getX() + 0.5, previous.getY(), previous.getZ() + 0.5);
          Vec3 direction = new Vec3(lastCenter.x - previousCenter.x, 0.0, lastCenter.z - previousCenter.z);
          if (!(direction.lengthSqr() <= 1.0E-8)) {
-            return new ScaffoldModule.Inner_HashUtil(previousCenter.add(lastCenter).scale(0.5), direction.normalize());
+            return new ScaffoldModule.MotionVectorPair(previousCenter.add(lastCenter).scale(0.5), direction.normalize());
          }
       }
 
       return null;
    }
 
-   private ScaffoldModule.Inner_BitSetUtil init_aI_BitSetUtil() {
-      List<ScaffoldModule.Inner_RingBuffer> candidates = new ArrayList<>(load_DArr.length * load_DArr.length);
+   private ScaffoldModule.SupportHeightSample init_aI_BitSetUtil() {
+      List<ScaffoldModule.SupportDistanceCandidate> candidates = new ArrayList<>(load_DArr.length * load_DArr.length);
       Set<BlockPos> visited = new HashSet<>();
       Vec3 playerPosition = MC.player.position();
 
@@ -16684,7 +16684,7 @@ public final class ScaffoldModule extends Module {
          for (double zOffset : load_DArr) {
             BlockPos pos = BlockPos.containing(playerPosition.x + xOffset, playerPosition.y - 1.0, playerPosition.z + zOffset);
             if (visited.add(pos)) {
-               ScaffoldModule.Inner_RingBuffer candidate = this.init_aI_RingBuffer_BlockPos(pos);
+               ScaffoldModule.SupportDistanceCandidate candidate = this.init_aI_RingBuffer_BlockPos(pos);
                if (candidate != null) {
                   candidates.add(candidate);
                }
@@ -16693,16 +16693,16 @@ public final class ScaffoldModule extends Module {
       }
 
       if (!candidates.isEmpty()) {
-         ScaffoldModule.Inner_RingBuffer best = candidates.stream().min(ScaffoldModule::init_I_aI_RingBuffer_aI_RingBuffer).orElse(null);
+         ScaffoldModule.SupportDistanceCandidate best = candidates.stream().min(ScaffoldModule::init_I_aI_RingBuffer_aI_RingBuffer).orElse(null);
          if (best == null) {
             return null;
          }
 
          this.f_n_I = 0;
          this.f_o_I = -2147483648;
-         ScaffoldModule.Inner_RingBuffer chosen = this.init_aI_RingBuffer_List_aI_RingBuffer(candidates, best);
+         ScaffoldModule.SupportDistanceCandidate chosen = this.init_aI_RingBuffer_List_aI_RingBuffer(candidates, best);
          this.init_BlockPos = chosen.init_BlockPos();
-         return new ScaffoldModule.Inner_BitSetUtil(
+         return new ScaffoldModule.SupportHeightSample(
             chosen.init_BlockPos(), playerPosition.x - (chosen.init_BlockPos().getX() + 0.5), playerPosition.z - (chosen.init_BlockPos().getZ() + 0.5)
          );
       } else {
@@ -16729,7 +16729,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_RingBuffer init_aI_RingBuffer_BlockPos(BlockPos pos) {
+   private ScaffoldModule.SupportDistanceCandidate init_aI_RingBuffer_BlockPos(BlockPos pos) {
       BlockState state = MC.level.getBlockState(pos);
       VoxelShape shape = state.getCollisionShape(MC.level, pos, CollisionContext.of(MC.player));
       if (shape.isEmpty()) {
@@ -16766,12 +16766,12 @@ public final class ScaffoldModule extends Module {
 
       double dx = MC.player.getX() - (pos.getX() + 0.5);
       double dz = MC.player.getZ() - (pos.getZ() + 0.5);
-      return new ScaffoldModule.Inner_RingBuffer(pos.immutable(), overlapAtBestSurface, bestSurfaceDelta, dx * dx + dz * dz);
+      return new ScaffoldModule.SupportDistanceCandidate(pos.immutable(), overlapAtBestSurface, bestSurfaceDelta, dx * dx + dz * dz);
    }
 
-   private ScaffoldModule.Inner_RingBuffer init_aI_RingBuffer_List_aI_RingBuffer(List<ScaffoldModule.Inner_RingBuffer> candidates, ScaffoldModule.Inner_RingBuffer best) {
+   private ScaffoldModule.SupportDistanceCandidate init_aI_RingBuffer_List_aI_RingBuffer(List<ScaffoldModule.SupportDistanceCandidate> candidates, ScaffoldModule.SupportDistanceCandidate best) {
       BlockPos lastPlaced = this.init_ArrayDeque.peekLast();
-      ScaffoldModule.Inner_RingBuffer preferred = init_aI_RingBuffer_List_BlockPos(candidates, lastPlaced);
+      ScaffoldModule.SupportDistanceCandidate preferred = init_aI_RingBuffer_List_BlockPos(candidates, lastPlaced);
       if (preferred != null && init_Z_aI_RingBuffer_aI_RingBuffer(preferred, best)) {
          return preferred;
       }
@@ -16780,12 +16780,12 @@ public final class ScaffoldModule extends Module {
       return preferred != null && init_Z_aI_RingBuffer_aI_RingBuffer(preferred, best) ? preferred : best;
    }
 
-   private static ScaffoldModule.Inner_RingBuffer init_aI_RingBuffer_List_BlockPos(List<ScaffoldModule.Inner_RingBuffer> candidates, BlockPos position) {
+   private static ScaffoldModule.SupportDistanceCandidate init_aI_RingBuffer_List_BlockPos(List<ScaffoldModule.SupportDistanceCandidate> candidates, BlockPos position) {
       if (position == null) {
          return null;
       }
 
-      for (ScaffoldModule.Inner_RingBuffer candidate : candidates) {
+      for (ScaffoldModule.SupportDistanceCandidate candidate : candidates) {
          if (candidate.init_BlockPos().equals(position)) {
             return candidate;
          }
@@ -16794,11 +16794,11 @@ public final class ScaffoldModule extends Module {
       return null;
    }
 
-   private static boolean init_Z_aI_RingBuffer_aI_RingBuffer(ScaffoldModule.Inner_RingBuffer candidate, ScaffoldModule.Inner_RingBuffer best) {
+   private static boolean init_Z_aI_RingBuffer_aI_RingBuffer(ScaffoldModule.SupportDistanceCandidate candidate, ScaffoldModule.SupportDistanceCandidate best) {
       return candidate.load() <= best.load() + 0.001 && candidate.init_D() + 0.02 >= best.init_D();
    }
 
-   private static int init_I_aI_RingBuffer_aI_RingBuffer(ScaffoldModule.Inner_RingBuffer first, ScaffoldModule.Inner_RingBuffer second) {
+   private static int init_I_aI_RingBuffer_aI_RingBuffer(ScaffoldModule.SupportDistanceCandidate first, ScaffoldModule.SupportDistanceCandidate second) {
       if (first.load() + 0.001 < second.load()) {
          return -1;
       } else if (second.load() + 0.001 < first.load()) {
@@ -16810,7 +16810,7 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private Vec3 load_Vec3_aI_HashUtil(ScaffoldModule.Inner_HashUtil line) {
+   private Vec3 load_Vec3_aI_HashUtil(ScaffoldModule.MotionVectorPair line) {
       Vec3 playerPosition = MC.player.position();
       if (line == null) {
          return playerPosition;
@@ -16829,7 +16829,7 @@ public final class ScaffoldModule extends Module {
             Vec3 bootstrap = horizontalDistance <= 1.0E-8 ? fallOff : fallOff.subtract(new Vec3(delta.x, 0.0, delta.z).scale(0.2 / horizontalDistance));
             Vec3 average = this.flush_Vec3();
             if (average == null) {
-               ScaffoldModule.Inner_BitSetUtil support = this.init_aI_BitSetUtil;
+               ScaffoldModule.SupportHeightSample support = this.init_aI_BitSetUtil;
                return support == null ? bootstrap : bootstrap.add(support.init_D(), 0.0, support.load());
             } else {
                float angle = (float)Math.atan2(line.load().z, line.load().x);
@@ -17341,7 +17341,7 @@ public final class ScaffoldModule extends Module {
       return grimFamily && edgeSneakActive && onGround && !jumping;
    }
 
-   private Vec3 read_Vec3_aI_HashUtil(ScaffoldModule.Inner_HashUtil line) {
+   private Vec3 read_Vec3_aI_HashUtil(ScaffoldModule.MotionVectorPair line) {
       if (line == null) {
          return null;
       }
@@ -17385,9 +17385,9 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   private ScaffoldModule.Inner_CachePool init_aI_CachePool() {
+   private ScaffoldModule.EdgeDropWarning init_aI_CachePool() {
       if (MC.player.onGround() && !this.init_Z_D_Vec3(0.35, MC.player.position())) {
-         return ScaffoldModule.Inner_CachePool.NONE;
+         return ScaffoldModule.EdgeDropWarning.NONE;
       }
 
       Vec3 position = MC.player.position();
@@ -17408,20 +17408,20 @@ public final class ScaffoldModule extends Module {
          y += vy;
          z += vz;
          if (this.init_Z_D(x, y, z, 2)) {
-            return ScaffoldModule.Inner_CachePool.NONE;
+            return ScaffoldModule.EdgeDropWarning.NONE;
          }
 
          double drop = startY - y;
          if (drop > 2.0) {
-            return ScaffoldModule.Inner_CachePool.IMMINENT;
+            return ScaffoldModule.EdgeDropWarning.IMMINENT;
          }
 
          if (drop > 0.6 && tick < 4) {
-            return ScaffoldModule.Inner_CachePool.IMMINENT;
+            return ScaffoldModule.EdgeDropWarning.IMMINENT;
          }
       }
 
-      return ScaffoldModule.Inner_CachePool.NONE;
+      return ScaffoldModule.EdgeDropWarning.NONE;
    }
 
    private boolean init_Z_D(double x, double y, double z, int blocks) {
@@ -17550,13 +17550,13 @@ public final class ScaffoldModule extends Module {
       return sum.scale(1.0 / this.load_ArrayDeque.size());
    }
 
-   private static Vec3 init_Vec3_aI_HashUtil_Vec3(ScaffoldModule.Inner_HashUtil line, Vec3 point) {
+   private static Vec3 init_Vec3_aI_HashUtil_Vec3(ScaffoldModule.MotionVectorPair line, Vec3 point) {
       Vec3 delta = point.subtract(line.init());
       double projection = delta.dot(line.load());
       return line.init().add(line.load().scale(projection));
    }
 
-   private static double load_D_aI_HashUtil_Vec3(ScaffoldModule.Inner_HashUtil line, Vec3 point) {
+   private static double load_D_aI_HashUtil_Vec3(ScaffoldModule.MotionVectorPair line, Vec3 point) {
       return init_Vec3_aI_HashUtil_Vec3(line, point).distanceToSqr(point);
    }
 
@@ -17567,8 +17567,8 @@ public final class ScaffoldModule extends Module {
       return point.distanceToSqr(new Vec3(x, y, z));
    }
 
-   private static double init_D_aI_HashUtil_AABB(ScaffoldModule.Inner_HashUtil movementLine, AABB box) {
-      ScaffoldModule.Inner_ByteReader line = new ScaffoldModule.Inner_ByteReader(movementLine.init(), movementLine.load());
+   private static double init_D_aI_HashUtil_AABB(ScaffoldModule.MotionVectorPair movementLine, AABB box) {
+      ScaffoldModule.RayLine line = new ScaffoldModule.RayLine(movementLine.init(), movementLine.load());
       if (init_Z_aI_ByteReader_AABB(line, box)) {
          return 0.0;
       }
@@ -17581,24 +17581,24 @@ public final class ScaffoldModule extends Module {
       Vec3 p101 = new Vec3(box.maxX, box.minY, box.maxZ);
       Vec3 p110 = new Vec3(box.maxX, box.maxY, box.minZ);
       Vec3 p111 = new Vec3(box.maxX, box.maxY, box.maxZ);
-      ScaffoldModule.Inner_PacketUtil[] edges = new ScaffoldModule.Inner_PacketUtil[]{
-         new ScaffoldModule.Inner_PacketUtil(p000, p001),
-         new ScaffoldModule.Inner_PacketUtil(p000, p010),
-         new ScaffoldModule.Inner_PacketUtil(p000, p100),
-         new ScaffoldModule.Inner_PacketUtil(p111, p110),
-         new ScaffoldModule.Inner_PacketUtil(p111, p101),
-         new ScaffoldModule.Inner_PacketUtil(p111, p011),
-         new ScaffoldModule.Inner_PacketUtil(p001, p011),
-         new ScaffoldModule.Inner_PacketUtil(p001, p101),
-         new ScaffoldModule.Inner_PacketUtil(p010, p011),
-         new ScaffoldModule.Inner_PacketUtil(p010, p110),
-         new ScaffoldModule.Inner_PacketUtil(p100, p101),
-         new ScaffoldModule.Inner_PacketUtil(p100, p110)
+      ScaffoldModule.EdgeSegment[] edges = new ScaffoldModule.EdgeSegment[]{
+         new ScaffoldModule.EdgeSegment(p000, p001),
+         new ScaffoldModule.EdgeSegment(p000, p010),
+         new ScaffoldModule.EdgeSegment(p000, p100),
+         new ScaffoldModule.EdgeSegment(p111, p110),
+         new ScaffoldModule.EdgeSegment(p111, p101),
+         new ScaffoldModule.EdgeSegment(p111, p011),
+         new ScaffoldModule.EdgeSegment(p001, p011),
+         new ScaffoldModule.EdgeSegment(p001, p101),
+         new ScaffoldModule.EdgeSegment(p010, p011),
+         new ScaffoldModule.EdgeSegment(p010, p110),
+         new ScaffoldModule.EdgeSegment(p100, p101),
+         new ScaffoldModule.EdgeSegment(p100, p110)
       };
       double best = 1.0 / 0.0;
 
-      for (ScaffoldModule.Inner_PacketUtil edge : edges) {
-         ScaffoldModule.Inner_PoolEntry pair = init_aI_PoolEntry_aI_PacketUtil_aI_ByteReader(edge, line);
+      for (ScaffoldModule.EdgeSegment edge : edges) {
+         ScaffoldModule.SegmentIntersection pair = init_aI_PoolEntry_aI_PacketUtil_aI_ByteReader(edge, line);
          if (pair != null) {
             best = Math.min(best, pair.init().distanceToSqr(pair.load()));
          }
@@ -17607,7 +17607,7 @@ public final class ScaffoldModule extends Module {
       return best;
    }
 
-   private static boolean init_Z_aI_ByteReader_AABB(ScaffoldModule.Inner_ByteReader line, AABB box) {
+   private static boolean init_Z_aI_ByteReader_AABB(ScaffoldModule.RayLine line, AABB box) {
       double enter = -1.0 / 0.0;
       double exit = 1.0 / 0.0;
       double[] anchors = new double[]{line.init().x, line.init().y, line.init().z};
@@ -17670,12 +17670,12 @@ public final class ScaffoldModule extends Module {
    }
 
    private Vec3 init_Vec3_aI_DataUtil(
-      ScaffoldModule.Inner_DataUtil face, ScaffoldModule.Inner_DataUtil fullFace, BlockPos targetPos, Vec3 eye, RotationMath.Rotation currentRotation, ScaffoldModule.Inner_HashUtil optimalLine
+      ScaffoldModule.FaceRect face, ScaffoldModule.FaceRect fullFace, BlockPos targetPos, Vec3 eye, RotationMath.Rotation currentRotation, ScaffoldModule.MotionVectorPair optimalLine
    ) {
       Vec3 offset = new Vec3(targetPos.getX(), targetPos.getY(), targetPos.getZ());
-      ScaffoldModule.Inner_DataUtil trimmed = face.load(0.15).init(offset);
-      ScaffoldModule.Inner_DataUtil targetFace = this.init_aI_DataUtil_aI_DataUtil(trimmed, eye, optimalLine);
-      Vec3 point = init_Vec3_aI_DataUtil_aI_ByteReader(targetFace, new ScaffoldModule.Inner_ByteReader(eye, init_Vec3_ce_DataUtil(currentRotation)));
+      ScaffoldModule.FaceRect trimmed = face.load(0.15).init(offset);
+      ScaffoldModule.FaceRect targetFace = this.init_aI_DataUtil_aI_DataUtil(trimmed, eye, optimalLine);
+      Vec3 point = init_Vec3_aI_DataUtil_aI_ByteReader(targetFace, new ScaffoldModule.RayLine(eye, init_Vec3_ce_DataUtil(currentRotation)));
       if (this.flags_Z()) {
          point = init_Vec3_Vec3(point, fullFace, offset);
       }
@@ -17683,7 +17683,7 @@ public final class ScaffoldModule extends Module {
       return point.subtract(offset);
    }
 
-   private static Vec3 init_Vec3_Vec3(Vec3 point, ScaffoldModule.Inner_DataUtil face, Vec3 offset) {
+   private static Vec3 init_Vec3_Vec3(Vec3 point, ScaffoldModule.FaceRect face, Vec3 offset) {
       double cx = offset.x + (face.read().x + face.write().x) * 0.5;
       double cy = offset.y + (face.read().y + face.write().y) * 0.5;
       double cz = offset.z + (face.read().z + face.write().z) * 0.5;
@@ -17697,30 +17697,30 @@ public final class ScaffoldModule extends Module {
       return Math.max(0.0, Math.min(0.2, span * 0.5 - 0.15));
    }
 
-   private ScaffoldModule.Inner_DataUtil init_aI_DataUtil_aI_DataUtil(ScaffoldModule.Inner_DataUtil trimmedFace, Vec3 eye, ScaffoldModule.Inner_HashUtil optimalLine) {
+   private ScaffoldModule.FaceRect init_aI_DataUtil_aI_DataUtil(ScaffoldModule.FaceRect trimmedFace, Vec3 eye, ScaffoldModule.MotionVectorPair optimalLine) {
       if (optimalLine == null) {
          return trimmedFace;
       }
 
       Vec3 nearest = init_Vec3_aI_HashUtil_Vec3(optimalLine, MC.player.position());
       Vec3 directionToLine = MC.player.position().subtract(nearest).normalize();
-      Vec3 collision = load_Vec3_aI_DataUtil_aI_ByteReader(trimmedFace, new ScaffoldModule.Inner_ByteReader(eye, optimalLine.load()));
+      Vec3 collision = load_Vec3_aI_DataUtil_aI_ByteReader(trimmedFace, new ScaffoldModule.RayLine(eye, optimalLine.load()));
       if (collision == null) {
          return trimmedFace;
       }
 
       Vec3 b = MC.player.position().add(directionToLine.scale(2.0));
       AABB crop = new AABB(collision.x, MC.player.getY() - 2.0, collision.z, b.x, MC.player.getY() + 1.0, b.z);
-      ScaffoldModule.Inner_DataUtil clamped = trimmedFace.init(crop);
+      ScaffoldModule.FaceRect clamped = trimmedFace.init(crop);
       return clamped.init_D() < 1.0E-4 ? trimmedFace : clamped;
    }
 
-   private static int init_I_aI_StreamUtil_aI_StreamUtil(ScaffoldModule.Inner_StreamUtil first, ScaffoldModule.Inner_StreamUtil second) {
+   private static int init_I_aI_StreamUtil_aI_StreamUtil(ScaffoldModule.FaceHitTarget first, ScaffoldModule.FaceHitTarget second) {
       int normal = Double.compare(init_D_aI_StreamUtil(first), init_D_aI_StreamUtil(second));
       return normal != 0 ? normal : Double.compare(first.init_Vec3().y, second.init_Vec3().y);
    }
 
-   private static double init_D_aI_StreamUtil(ScaffoldModule.Inner_StreamUtil sample) {
+   private static double init_D_aI_StreamUtil(ScaffoldModule.FaceHitTarget sample) {
       Vec3 centered = sample.init_Vec3().subtract(0.5, 0.5, 0.5);
       double x = centered.x * sample.init_Direction().getStepX();
       double y = centered.y * sample.init_Direction().getStepY();
@@ -17728,9 +17728,9 @@ public final class ScaffoldModule extends Module {
       return x * x + y * y + z * z;
    }
 
-   private static Vec3 init_Vec3_aI_DataUtil_aI_ByteReader(ScaffoldModule.Inner_DataUtil face, ScaffoldModule.Inner_ByteReader line) {
+   private static Vec3 init_Vec3_aI_DataUtil_aI_ByteReader(ScaffoldModule.FaceRect face, ScaffoldModule.RayLine line) {
       Vec3 intersection = load_Vec3_aI_DataUtil_aI_ByteReader(face, line);
-      List<ScaffoldModule.Inner_PacketUtil> edges = face.init_List();
+      List<ScaffoldModule.EdgeSegment> edges = face.init_List();
       Vec3 center = face.load_Vec3();
       if (intersection != null) {
          boolean inside = true;
@@ -17738,7 +17738,7 @@ public final class ScaffoldModule extends Module {
 
          while (true) {
             if (bestDistance.hasNext()) {
-               ScaffoldModule.Inner_PacketUtil edge = (ScaffoldModule.Inner_PacketUtil)bestDistance.next();
+               ScaffoldModule.EdgeSegment edge = (ScaffoldModule.EdgeSegment)bestDistance.next();
                Vec3 edgeCenter = edge.init(0.5);
                if (!(edgeCenter.subtract(intersection).dot(edgeCenter.subtract(center)) <= 0.0)) {
                   continue;
@@ -17757,8 +17757,8 @@ public final class ScaffoldModule extends Module {
       Vec3 bestPoint = null;
       double bestDistance = 1.0 / 0.0;
 
-      for (ScaffoldModule.Inner_PacketUtil edge : edges) {
-         ScaffoldModule.Inner_PoolEntry pair = init_aI_PoolEntry_aI_PacketUtil_aI_ByteReader(edge, line);
+      for (ScaffoldModule.EdgeSegment edge : edges) {
+         ScaffoldModule.SegmentIntersection pair = init_aI_PoolEntry_aI_PacketUtil_aI_ByteReader(edge, line);
          if (pair != null) {
             double distance = pair.init().distanceToSqr(pair.load());
             if (distance < bestDistance) {
@@ -17771,7 +17771,7 @@ public final class ScaffoldModule extends Module {
       return bestPoint != null ? bestPoint : (intersection != null ? intersection : center);
    }
 
-   private static Vec3 load_Vec3_aI_DataUtil_aI_ByteReader(ScaffoldModule.Inner_DataUtil face, ScaffoldModule.Inner_ByteReader line) {
+   private static Vec3 load_Vec3_aI_DataUtil_aI_ByteReader(ScaffoldModule.FaceRect face, ScaffoldModule.RayLine line) {
       Vec3 dimensions = face.init_Vec3();
       double plane;
       double anchor;
@@ -17802,7 +17802,7 @@ public final class ScaffoldModule extends Module {
       return Double.isFinite(parameter) ? line.init(parameter) : null;
    }
 
-   private static ScaffoldModule.Inner_PoolEntry init_aI_PoolEntry_aI_PacketUtil_aI_ByteReader(ScaffoldModule.Inner_PacketUtil segment, ScaffoldModule.Inner_ByteReader line) {
+   private static ScaffoldModule.SegmentIntersection init_aI_PoolEntry_aI_PacketUtil_aI_ByteReader(ScaffoldModule.EdgeSegment segment, ScaffoldModule.RayLine line) {
       Vec3 firstDirection = segment.init_Vec3();
       Vec3 secondDirection = line.load();
       Vec3 delta = segment.load().subtract(line.init());
@@ -17812,7 +17812,7 @@ public final class ScaffoldModule extends Module {
       double d = firstDirection.dot(delta);
       double e = secondDirection.dot(delta);
       double determinant = a * c - b * b;
-      ScaffoldModule.Inner_IoWorker best = null;
+      ScaffoldModule.BestAimHit best = null;
       if (Math.abs(determinant) > 1.0E-9) {
          best = init_aI_IoWorker_aI_IoWorker(best, segment, line, (b * e - c * d) / determinant, (a * e - b * d) / determinant);
       }
@@ -17821,18 +17821,18 @@ public final class ScaffoldModule extends Module {
       best = init_aI_IoWorker_aI_IoWorker(best, segment, line, 1.0, (b + e) / c);
       best = init_aI_IoWorker_aI_IoWorker(best, segment, line, Mth.clamp(-d / a, 0.0, 1.0), 0.0);
       best = init_aI_IoWorker_aI_IoWorker(best, segment, line, 0.0, e / c);
-      return best == null ? null : new ScaffoldModule.Inner_PoolEntry(best.init_Vec3(), best.load());
+      return best == null ? null : new ScaffoldModule.SegmentIntersection(best.init_Vec3(), best.load());
    }
 
-   private static ScaffoldModule.Inner_IoWorker init_aI_IoWorker_aI_IoWorker(
-      ScaffoldModule.Inner_IoWorker best, ScaffoldModule.Inner_PacketUtil segment, ScaffoldModule.Inner_ByteReader line, double firstParameter, double secondParameter
+   private static ScaffoldModule.BestAimHit init_aI_IoWorker_aI_IoWorker(
+      ScaffoldModule.BestAimHit best, ScaffoldModule.EdgeSegment segment, ScaffoldModule.RayLine line, double firstParameter, double secondParameter
    ) {
       if (Double.isFinite(firstParameter) && Double.isFinite(secondParameter) && !(firstParameter < -1.0E-9) && !(firstParameter > 1.000000001)) {
          double first = Mth.clamp(firstParameter, 0.0, 1.0);
          Vec3 firstPoint = segment.init(first);
          Vec3 secondPoint = line.init(secondParameter);
          double distance = firstPoint.distanceToSqr(secondPoint);
-         return best != null && !(distance < best.init_D() - 1.0E-9) ? best : new ScaffoldModule.Inner_IoWorker(firstPoint, secondPoint, distance);
+         return best != null && !(distance < best.init_D() - 1.0E-9) ? best : new ScaffoldModule.BestAimHit(firstPoint, secondPoint, distance);
       } else {
          return best;
       }
@@ -17942,7 +17942,7 @@ public final class ScaffoldModule extends Module {
          this.flush_ArrayDeque.clear();
       }
 
-      if (this.init_aI_SyncManager != ScaffoldModule.Inner_SyncManager.IDLE) {
+      if (this.init_aI_SyncManager != ScaffoldModule.PlacementState.IDLE) {
          this.init_V_Str_3("position-correction");
       }
 
@@ -17994,7 +17994,7 @@ public final class ScaffoldModule extends Module {
       this.read_aI_HashUtil = null;
       this.sync_Vec3 = null;
       this.f_aJ_I = -2147483648;
-      this.init_aI_SyncManager = ScaffoldModule.Inner_SyncManager.IDLE;
+      this.init_aI_SyncManager = ScaffoldModule.PlacementState.IDLE;
       this.put_J = 0L;
       this.init_InteractionHand = null;
       this.chunk_Z = false;
@@ -18197,71 +18197,71 @@ public final class ScaffoldModule extends Module {
       return List.copyOf(offsets);
    }
 
-   record Inner_ArrayUtil(Vec3 init_Vec3, Vec3 load, int init_I) {
+   record PredictedTickStep(Vec3 init_Vec3, Vec3 load, int init_I) {
    }
 
-   private record Inner_BitSetUtil(BlockPos init_BlockPos, double init_D, double load) {
+   private record SupportHeightSample(BlockPos init_BlockPos, double init_D, double load) {
    }
 
    @FunctionalInterface
-   private interface Inner_BufferHelper {
+   private interface FacePointResolver {
       Vec3 resolve(AABB var1, Vec3 var2);
    }
 
-   private record Inner_ByteReader(Vec3 init, Vec3 load) {
+   private record RayLine(Vec3 init, Vec3 load) {
       Vec3 init(double parameter) {
          return this.init.add(this.load.scale(parameter));
       }
    }
 
-   private record Inner_CacheEntry(ScaffoldModule.Inner_DataPipe init_aI_DataPipe, int init_I) {
+   private record QuantizedPlacement(ScaffoldModule.LivePlacement init_aI_DataPipe, int init_I) {
    }
 
-   private enum Inner_CachePool {
+   private enum EdgeDropWarning {
       NONE,
       IMMINENT;
    }
 
-   record Inner_CharEncoder(BlockPos init_BlockPos, Direction init_Direction) {
+   record SupportCandidate(BlockPos init_BlockPos, Direction init_Direction) {
    }
 
-   record Inner_ClassCache(int init, int load) {
+   record StrafeTickBudget(int init, int load) {
    }
 
-   record Inner_ConfigStore(ScaffoldModule.Inner_SyncManager init_aI_SyncManager, String init_Str) {
+   record StateDecision(ScaffoldModule.PlacementState init_aI_SyncManager, String init_Str) {
    }
 
-   private record Inner_DataPipe(ScaffoldModule.Inner_TableIndex init_aI_TableIndex, boolean init_Z) {
+   private record LivePlacement(ScaffoldModule.PlannedPlacement init_aI_TableIndex, boolean init_Z) {
    }
 
-   private record Inner_DataUtil(Vec3 init, Vec3 load) {
-      private Inner_DataUtil {
+   private record FaceRect(Vec3 init, Vec3 load) {
+      private FaceRect {
          Vec3 minimum = new Vec3(Math.min(init.x, load.x), Math.min(init.y, load.y), Math.min(init.z, load.z));
          Vec3 maximum = new Vec3(Math.max(init.x, load.x), Math.max(init.y, load.y), Math.max(init.z, load.z));
          init = minimum;
          load = maximum;
       }
 
-      static ScaffoldModule.Inner_DataUtil init(AABB box, Direction side) {
-         ScaffoldModule.Inner_DataUtil var10000;
+      static ScaffoldModule.FaceRect init(AABB box, Direction side) {
+         ScaffoldModule.FaceRect var10000;
          switch (side) {
             case EAST:
-               var10000 = new ScaffoldModule.Inner_DataUtil(new Vec3(box.maxX, box.minY, box.minZ), new Vec3(box.maxX, box.maxY, box.maxZ));
+               var10000 = new ScaffoldModule.FaceRect(new Vec3(box.maxX, box.minY, box.minZ), new Vec3(box.maxX, box.maxY, box.maxZ));
                break;
             case WEST:
-               var10000 = new ScaffoldModule.Inner_DataUtil(new Vec3(box.minX, box.minY, box.minZ), new Vec3(box.minX, box.maxY, box.maxZ));
+               var10000 = new ScaffoldModule.FaceRect(new Vec3(box.minX, box.minY, box.minZ), new Vec3(box.minX, box.maxY, box.maxZ));
                break;
             case SOUTH:
-               var10000 = new ScaffoldModule.Inner_DataUtil(new Vec3(box.minX, box.minY, box.maxZ), new Vec3(box.maxX, box.maxY, box.maxZ));
+               var10000 = new ScaffoldModule.FaceRect(new Vec3(box.minX, box.minY, box.maxZ), new Vec3(box.maxX, box.maxY, box.maxZ));
                break;
             case NORTH:
-               var10000 = new ScaffoldModule.Inner_DataUtil(new Vec3(box.minX, box.minY, box.minZ), new Vec3(box.maxX, box.maxY, box.minZ));
+               var10000 = new ScaffoldModule.FaceRect(new Vec3(box.minX, box.minY, box.minZ), new Vec3(box.maxX, box.maxY, box.minZ));
                break;
             case DOWN:
-               var10000 = new ScaffoldModule.Inner_DataUtil(new Vec3(box.minX, box.minY, box.minZ), new Vec3(box.maxX, box.minY, box.maxZ));
+               var10000 = new ScaffoldModule.FaceRect(new Vec3(box.minX, box.minY, box.minZ), new Vec3(box.maxX, box.minY, box.maxZ));
                break;
             case UP:
-               var10000 = new ScaffoldModule.Inner_DataUtil(new Vec3(box.minX, box.maxY, box.minZ), new Vec3(box.maxX, box.maxY, box.maxZ));
+               var10000 = new ScaffoldModule.FaceRect(new Vec3(box.minX, box.maxY, box.minZ), new Vec3(box.maxX, box.maxY, box.maxZ));
                break;
             default:
                throw new MatchException(null, null);
@@ -18283,26 +18283,26 @@ public final class ScaffoldModule extends Module {
          return dimensions.x * dimensions.y + dimensions.y * dimensions.z + dimensions.x * dimensions.z;
       }
 
-      ScaffoldModule.Inner_DataUtil init(double minimumY) {
-         return new ScaffoldModule.Inner_DataUtil(
+      ScaffoldModule.FaceRect init(double minimumY) {
+         return new ScaffoldModule.FaceRect(
             new Vec3(this.init.x, Math.max(this.init.y, minimumY), this.init.z), new Vec3(this.load.x, Math.max(this.load.y, minimumY), this.load.z)
          );
       }
 
-      ScaffoldModule.Inner_DataUtil load(double amount) {
+      ScaffoldModule.FaceRect load(double amount) {
          Vec3 inset = this.init_Vec3().scale(amount);
-         return new ScaffoldModule.Inner_DataUtil(this.init.add(inset), this.load.subtract(inset));
+         return new ScaffoldModule.FaceRect(this.init.add(inset), this.load.subtract(inset));
       }
 
-      ScaffoldModule.Inner_DataUtil init(Vec3 offset) {
-         return new ScaffoldModule.Inner_DataUtil(this.init.add(offset), this.load.add(offset));
+      ScaffoldModule.FaceRect init(Vec3 offset) {
+         return new ScaffoldModule.FaceRect(this.init.add(offset), this.load.add(offset));
       }
 
-      ScaffoldModule.Inner_DataUtil init(AABB box) {
-         return new ScaffoldModule.Inner_DataUtil(init(this.init, box), init(this.load, box));
+      ScaffoldModule.FaceRect init(AABB box) {
+         return new ScaffoldModule.FaceRect(init(this.init, box), init(this.load, box));
       }
 
-      List<ScaffoldModule.Inner_PacketUtil> init_List() {
+      List<ScaffoldModule.EdgeSegment> init_List() {
          Vec3 dimensions = this.init_Vec3();
          Vec3 first;
          Vec3 second;
@@ -18321,15 +18321,15 @@ public final class ScaffoldModule extends Module {
             second = new Vec3(dimensions.x, 0.0, 0.0);
          }
 
-         List<ScaffoldModule.Inner_PacketUtil> edges = new ArrayList<>(4);
+         List<ScaffoldModule.EdgeSegment> edges = new ArrayList<>(4);
          if (first.lengthSqr() > 1.0E-9) {
-            edges.add(new ScaffoldModule.Inner_PacketUtil(this.init, this.init.add(first)));
-            edges.add(new ScaffoldModule.Inner_PacketUtil(this.load, this.load.subtract(first)));
+            edges.add(new ScaffoldModule.EdgeSegment(this.init, this.init.add(first)));
+            edges.add(new ScaffoldModule.EdgeSegment(this.load, this.load.subtract(first)));
          }
 
          if (second.lengthSqr() > 1.0E-9) {
-            edges.add(new ScaffoldModule.Inner_PacketUtil(this.init, this.init.add(second)));
-            edges.add(new ScaffoldModule.Inner_PacketUtil(this.load, this.load.subtract(second)));
+            edges.add(new ScaffoldModule.EdgeSegment(this.init, this.init.add(second)));
+            edges.add(new ScaffoldModule.EdgeSegment(this.load, this.load.subtract(second)));
          }
 
          return edges;
@@ -18348,17 +18348,17 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   enum Inner_EventBus {
+   enum BridgeStage {
       CONNECTOR,
       SUPPORT,
       RISER,
       READY;
    }
 
-   record Inner_FieldCache(Vec3 init_Vec3, boolean init_Z) {
+   record LedgePoint(Vec3 init_Vec3, boolean init_Z) {
    }
 
-   record Inner_FileCache(boolean init_Z, int init_I, int load, int read, int write, int update, int sync) {
+   record RowLockBounds(boolean init_Z, int init_I, int load, int read, int write, int update, int sync) {
       boolean init(BlockPos pos, boolean rising) {
          int perp = this.init_Z ? pos.getZ() : pos.getX();
          int index = this.init_Z ? pos.getX() : pos.getZ();
@@ -18392,28 +18392,28 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   record Inner_HashUtil(Vec3 init, Vec3 load) {
+   record MotionVectorPair(Vec3 init, Vec3 load) {
    }
 
-   private record Inner_IoWorker(Vec3 init_Vec3, Vec3 load, double init_D) {
+   private record BestAimHit(Vec3 init_Vec3, Vec3 load, double init_D) {
    }
 
-   private record Inner_JsonUtil(long init_J, BlockPos init_BlockPos) {
+   private record PlacedBlockStamp(long init_J, BlockPos init_BlockPos) {
    }
 
-   private enum Inner_KeyHolder {
+   private enum ForwardKeyState {
       RELEASED,
       FORWARD,
       HOLD;
    }
 
-   record Inner_ListPool(BlockPos init_BlockPos, int init_I) {
+   record BridgeStepNode(BlockPos init_BlockPos, int init_I) {
    }
 
-   record Inner_MapStore(boolean init_Z, float init_F) {
+   record LateralCorrection(boolean init_Z, float init_F) {
    }
 
-   record Inner_MethodUtil(double init_D, double load, double read, boolean init_Z) {
+   record AxisDriftMetrics(double init_D, double load, double read, boolean init_Z) {
       boolean init_Z_2() {
          return this.init_Z
             && Double.isFinite(this.init_D)
@@ -18430,28 +18430,28 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   record Inner_NetHelper(
+   record QueuedPlacementClick(
       int init_I,
       BlockPos init_BlockPos,
       Direction init_Direction,
       Vec3 init_Vec3,
       long init_J,
       InteractionHand init_InteractionHand,
-      ScaffoldModule.Inner_RenderState init_aI_RenderState,
+      ScaffoldModule.QueuedPacketContext init_aI_RenderState,
       ServerRotationTracker.RotationSnapshot init_ch_CachePool
    ) {
-      Inner_NetHelper(int sequence, BlockPos support, Direction face, Vec3 location, long nanos) {
+      QueuedPlacementClick(int sequence, BlockPos support, Direction face, Vec3 location, long nanos) {
          this(sequence, support, face, location, nanos, InteractionHand.MAIN_HAND, null, null);
       }
    }
 
-   enum Inner_NodeWalker {
+   enum TurnCyclePhase {
       FORWARD,
       PLACING,
       RETURNED;
    }
 
-   private record Inner_PacketUtil(Vec3 init, Vec3 load) {
+   private record EdgeSegment(Vec3 init, Vec3 load) {
       Vec3 init_Vec3() {
          return this.load.subtract(this.init);
       }
@@ -18469,18 +18469,18 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   record Inner_PathHelper(boolean init_Z, int init_I, int load, int read, Vec3 init_Vec3) {
+   record PushTarget(boolean init_Z, int init_I, int load, int read, Vec3 init_Vec3) {
    }
 
-   private record Inner_PoolEntry(Vec3 init, Vec3 load) {
+   private record SegmentIntersection(Vec3 init, Vec3 load) {
    }
 
-   private record Inner_RefQueue(
-      ScaffoldModule.Inner_DataUtil init_aI_DataUtil, Vec3 init_Vec3, RotationMath.Rotation init_ce_DataUtil, BlockHitResult init_BlockHitResult, int init_I
+   private record FaceAimSample(
+      ScaffoldModule.FaceRect init_aI_DataUtil, Vec3 init_Vec3, RotationMath.Rotation init_ce_DataUtil, BlockHitResult init_BlockHitResult, int init_I
    ) {
    }
 
-   record Inner_RenderState(
+   record QueuedPacketContext(
       long init_J,
       int init_I,
       InteractionHand init_InteractionHand,
@@ -18491,18 +18491,18 @@ public final class ScaffoldModule extends Module {
    ) {
    }
 
-   private record Inner_RingBuffer(BlockPos init_BlockPos, double init_D, double load, double read) {
+   private record SupportDistanceCandidate(BlockPos init_BlockPos, double init_D, double load, double read) {
    }
 
-   private static final class Inner_StateCache extends WeakReference<Packet<?>> {
+   private static final class WeakPacketKey extends WeakReference<Packet<?>> {
       private final int init;
 
-      Inner_StateCache(Packet<?> packet) {
+      WeakPacketKey(Packet<?> packet) {
          super(packet);
          this.init = System.identityHashCode(packet);
       }
 
-      Inner_StateCache(Packet<?> packet, ReferenceQueue<Packet<?>> queue) {
+      WeakPacketKey(Packet<?> packet, ReferenceQueue<Packet<?>> queue) {
          super(packet, queue);
          this.init = System.identityHashCode(packet);
       }
@@ -18516,7 +18516,7 @@ public final class ScaffoldModule extends Module {
       public boolean equals(Object other) {
          if (this == other) {
             return true;
-         } else if (!(other instanceof ScaffoldModule.Inner_StateCache identity)) {
+         } else if (!(other instanceof ScaffoldModule.WeakPacketKey identity)) {
             return false;
          } else {
             Packet<?> packet = this.get();
@@ -18525,16 +18525,16 @@ public final class ScaffoldModule extends Module {
       }
    }
 
-   enum Inner_StreamGate {
+   enum PlacementAckStatus {
       WAITING,
       PLACED,
       FAILED;
    }
 
-   private record Inner_StreamUtil(ScaffoldModule.Inner_DataUtil init_aI_DataUtil, Vec3 init_Vec3, Direction init_Direction) {
+   private record FaceHitTarget(ScaffoldModule.FaceRect init_aI_DataUtil, Vec3 init_Vec3, Direction init_Direction) {
    }
 
-   enum Inner_SyncManager {
+   enum PlacementState {
       IDLE,
       ARMED,
       SENT,
@@ -18543,30 +18543,30 @@ public final class ScaffoldModule extends Module {
       FAILED;
    }
 
-   record Inner_TableIndex(
+   record PlannedPlacement(
       BlockPos init_BlockPos, BlockPos load, Direction init_Direction, BlockHitResult init_BlockHitResult, RotationMath.Rotation init_ce_DataUtil, double init_D
    ) {
    }
 
-   private record Inner_TaskQueue(boolean init, boolean load, boolean read) {
+   private record InputFlags(boolean init, boolean load, boolean read) {
    }
 
-   private record Inner_TaskTimer(double init_D, double load_D, double read, double write, double update, boolean init_Z, boolean load_Z) {
+   private record KinematicsSnapshot(double init_D, double load_D, double read, double write, double update, boolean init_Z, boolean load_Z) {
    }
 
-   record Inner_TextFormat(RotationMath.Rotation init_ce_DataUtil, RotationMath.Rotation load, int init_I) {
+   record WireClickRotation(RotationMath.Rotation init_ce_DataUtil, RotationMath.Rotation load, int init_I) {
    }
 
-   record Inner_TokenStore(ScaffoldModule.Inner_c init_aI_c, int init_I, ScaffoldModule.Inner_c load_aI_c, int load_I) {
+   record StrafeSwitchState(ScaffoldModule.StrafeSide init_aI_c, int init_I, ScaffoldModule.StrafeSide load_aI_c, int load_I) {
    }
 
-   record Inner_UiHelper(int init_I, BlockPos init_BlockPos, BlockPos load) {
+   record PendingPlacementSeq(int init_I, BlockPos init_BlockPos, BlockPos load) {
    }
 
-   private record Inner_UtilCore(RotationMath.Rotation init_ce_DataUtil, ScaffoldModule.Inner_a init_aI_a) {
+   private record AimGoal(RotationMath.Rotation init_ce_DataUtil, ScaffoldModule.AimMode init_aI_a) {
    }
 
-   enum Inner_ValueSink {
+   enum TellyPhase {
       IDLE,
       RUNNING,
       FORWARD_DWELL,
@@ -18576,18 +18576,18 @@ public final class ScaffoldModule extends Module {
       RETURNING;
    }
 
-   enum Inner_a {
+   enum AimMode {
       FORWARD,
       PLACEMENT,
       HOLD,
       RETURN;
    }
 
-   record Inner_b(boolean init_Z, boolean load) {
-      static final ScaffoldModule.Inner_b init_aI_b = new ScaffoldModule.Inner_b(false, false);
+   record SneakHoldFlags(boolean init_Z, boolean load) {
+      static final ScaffoldModule.SneakHoldFlags init_aI_b = new ScaffoldModule.SneakHoldFlags(false, false);
    }
 
-   enum Inner_c {
+   enum StrafeSide {
       NONE,
       LEFT,
       RIGHT;

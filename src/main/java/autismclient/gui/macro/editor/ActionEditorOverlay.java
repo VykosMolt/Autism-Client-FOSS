@@ -259,7 +259,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private final Map<String, List<Integer>> push_Map = new HashMap<>();
    private final Map<String, List<String>> pop_Map = new HashMap<>();
    private final Map<String, ScrollableListView> tick_Map = new HashMap<>();
-   private final List<MacroExecutor.Inner_PacketUtil> update_List = new ArrayList<>();
+   private final List<MacroExecutor.LoggedChatMessage> update_List = new ArrayList<>();
    private int f_e_I = 0;
    private ItemAction init_MapStore;
    private final autismclient.gui.macro.editor.capture.ActiveCaptureSession init_StreamUtil = new autismclient.gui.macro.editor.capture.ActiveCaptureSession();
@@ -12633,7 +12633,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int read_I(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
-      List<MacroExecutor.Inner_PacketUtil> history = MacroExecutor.load_List().stream().limit(6L).toList();
+      List<MacroExecutor.LoggedChatMessage> history = MacroExecutor.load_List().stream().limit(6L).toList();
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Recent Chat", font, UiColorPalette.parse(), x, y + 2, false);
       y += 13;
@@ -12642,7 +12642,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return y + listH + 2;
    }
 
-   private void init_V_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil entry) {
+   private void init_V_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage entry) {
       if (entry != null) {
          String text = this.init_Str_MacroExecutor_Pack(entry);
          String suggested = autismclient.util.macro.CaptureValueAction.init_Str_Str_5(text);
@@ -13146,7 +13146,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          cy += 18;
       }
 
-      List<MacroExecutor.Inner_PacketUtil> history = this.update_List();
+      List<MacroExecutor.LoggedChatMessage> history = this.update_List();
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Recent Messages (" + history.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       autismclient.gui.f.b.k.init(
          ctx,
@@ -13417,7 +13417,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load_V_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil entry) {
+   private void load_V_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage entry) {
       ThemedTextInputBox field = this.init_Map.get("pattern");
       if (field != null && entry != null) {
          Component patternComponent = entry.init_Component() != null
@@ -13585,14 +13585,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return previousStyles.get(Math.max(0, Math.min(anchorIndex, previousStyles.size() - 1)));
    }
 
-   private List<MacroExecutor.Inner_PacketUtil> update_List() {
-      List<MacroExecutor.Inner_PacketUtil> history = MacroExecutor.load_List();
+   private List<MacroExecutor.LoggedChatMessage> update_List() {
+      List<MacroExecutor.LoggedChatMessage> history = MacroExecutor.load_List();
       ThemedTextInputBox searchField = this.flush_Map.get("_wait_chat_search");
       String query = searchField != null ? searchField.load_Str().trim() : "";
       this.update_List.clear();
       String normalizedQuery = query.isEmpty() ? "" : this.put_Str(query);
 
-      for (MacroExecutor.Inner_PacketUtil entry : history) {
+      for (MacroExecutor.LoggedChatMessage entry : history) {
          if (normalizedQuery.isEmpty()) {
             this.update_List.add(entry);
          } else {
@@ -13610,7 +13610,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return MacroExecutor.load_Str_Str(text);
    }
 
-   private String init_Str_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil entry) {
+   private String init_Str_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage entry) {
       if (entry == null) {
          return "";
       }
@@ -13627,14 +13627,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (!sender.isEmpty() && !message.isEmpty()) {
          return sender + ": " + message;
       } else if (!message.isEmpty()) {
-         return (entry.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.SERVER ? "[Server] " : "[Player] ") + message;
+         return (entry.init_MacroExecutor_Task() == MacroExecutor.ChatSenderKind.SERVER ? "[Server] " : "[Player] ") + message;
       } else {
          return entry.read() == null ? "" : entry.read();
       }
    }
 
    private void init_V_GuiGraphicsExtract_2(
-      GuiGraphicsExtractor ctx, int x, int y, int w, int listH, int mx, int my, List<MacroExecutor.Inner_PacketUtil> values
+      GuiGraphicsExtractor ctx, int x, int y, int w, int listH, int mx, int my, List<MacroExecutor.LoggedChatMessage> values
    ) {
       this.init_V_GuiGraphicsExtract(ctx, x, y, w, listH, mx, my, values, "wait_chat_recent", 4, this::load_V_MacroExecutor_Pack);
    }
@@ -13647,10 +13647,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH,
       int mx,
       int my,
-      List<MacroExecutor.Inner_PacketUtil> values,
+      List<MacroExecutor.LoggedChatMessage> values,
       String viewportKey,
       int visibleRows,
-      Consumer<MacroExecutor.Inner_PacketUtil> onSelect
+      Consumer<MacroExecutor.LoggedChatMessage> onSelect
    ) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int desiredListH = values.isEmpty() ? 24 : Math.min(Math.max(1, visibleRows), values.size()) * 34;
@@ -13678,10 +13678,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (itemH > 0) {
-                  MacroExecutor.Inner_PacketUtil value = values.get(i);
+                  MacroExecutor.LoggedChatMessage value = values.get(i);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + itemH;
                   PanelSurfaceHelper.init(ctx, x, iy, itemW, itemH, hovered, false);
-                  int border = value.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.SERVER
+                  int border = value.init_MacroExecutor_Task() == MacroExecutor.ChatSenderKind.SERVER
                      ? (hovered ? -20134 : -3376606)
                      : (hovered ? -8597761 : -11627064);
                   this.sync_V(ctx, x, iy, itemW, itemH, border);
@@ -13700,7 +13700,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  MacroExecutor.Inner_PacketUtil selected = value;
+                  MacroExecutor.LoggedChatMessage selected = value;
                   this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, iy, itemW, itemH, () -> {
                      if (onSelect != null) {
                         onSelect.accept(selected);
@@ -13719,7 +13719,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return count <= 0 ? 24 : Math.min(4, count) * 34;
    }
 
-   private List<FormattedCharSequence> init_List_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil entry, int maxWidth, int maxLines) {
+   private List<FormattedCharSequence> init_List_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage entry, int maxWidth, int maxLines) {
       Component display = entry != null && entry.init_Component() != null ? entry.init_Component() : Component.literal(this.init_Str_MacroExecutor_Pack(entry));
       List<FormattedCharSequence> wrapped = this.init_Font.split(display, Math.max(20, maxWidth));
       return wrapped.size() <= maxLines ? wrapped : new ArrayList<>(wrapped.subList(0, Math.max(0, maxLines)));

@@ -10,24 +10,24 @@ final class AiViewState {
    private long update_J;
    private long sync_J;
    private long flush_J;
-   AiService.Inner_FileCache init_cc_FileCache = AiService.Inner_FileCache.IDLE;
+   AiService.RunState init_cc_FileCache = AiService.RunState.IDLE;
    boolean init_Z;
    String init_Str = "";
    String load_Str = "";
    String read_Str = "";
    String write_Str = "";
    String update_Str = "";
-   List<AiService.Inner_JsonUtil> init_List = List.of();
+   List<AiService.TranscriptEntry> init_List = List.of();
    List<String> load_List = List.of();
    List<String> read_List = List.of();
    List<String> write_List = List.of();
    String sync_Str = "high";
-   AiService.Inner_ByteReader init_cc_ByteReader = new AiService.Inner_ByteReader(0L, 0L, 0L, 0L, 0L, 0, 0L);
-   AiService.Inner_BufferHelper init_cc_BufferHelper = AiService.Inner_BufferHelper.UNKNOWN;
+   AiService.TokenUsage init_cc_ByteReader = new AiService.TokenUsage(0L, 0L, 0L, 0L, 0L, 0, 0L);
+   AiService.ProviderTestState init_cc_BufferHelper = AiService.ProviderTestState.UNKNOWN;
    String flush_Str = "";
    boolean load_Z;
    String close = "Chat mode off";
-   AiService.Inner_UiHelper init_cc_UiHelper;
+   AiService.UserPromptQuestion init_cc_UiHelper;
    AiSettings init_AiSettings = new AiSettings();
    boolean read_Z;
    List<AiSessions.Inner_StreamUtil> update_List = List.of();
@@ -47,7 +47,7 @@ final class AiViewState {
          if (now >= this.update_J) {
             this.update_J = now + 100L;
             this.init_I++;
-            AiService.Inner_FileCache next = this.init_cc.init_cc_FileCache();
+            AiService.RunState next = this.init_cc.init_cc_FileCache();
             boolean wasWorking = this.init_Z();
             this.init_cc_FileCache = next;
             this.init_Z = this.init_cc.sync_Z();
@@ -89,14 +89,14 @@ final class AiViewState {
    }
 
    boolean init_Z() {
-      return this.init_cc_FileCache == AiService.Inner_FileCache.RUNNING || this.init_cc_FileCache == AiService.Inner_FileCache.PLANNING && !this.init_Z;
+      return this.init_cc_FileCache == AiService.RunState.RUNNING || this.init_cc_FileCache == AiService.RunState.PLANNING && !this.init_Z;
    }
 
    boolean load() {
-      return this.init_Z() || this.init_cc_FileCache == AiService.Inner_FileCache.PAUSED || this.init_Z || this.load_Z;
+      return this.init_Z() || this.init_cc_FileCache == AiService.RunState.PAUSED || this.init_Z || this.load_Z;
    }
 
-   AiService.Inner_JsonUtil init_cc_JsonUtil() {
+   AiService.TranscriptEntry init_cc_JsonUtil() {
       return this.init_List.isEmpty() ? null : this.init_List.get(this.init_List.size() - 1);
    }
 }

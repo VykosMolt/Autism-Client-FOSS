@@ -83,13 +83,13 @@ public final class MacroStatusHudRenderer {
    }
 
    private static boolean load(Font textRenderer, int panelWidth, int maxLines) {
-      List<MacroExecutor.Inner_UiHelper> runs = MacroExecutor.init_List();
+      List<MacroExecutor.ActiveRunSnapshot> runs = MacroExecutor.init_List();
       if (runs.isEmpty()) {
          init_V();
          return false;
       }
 
-      MacroExecutor.Inner_UiHelper primary = runs.get(0);
+      MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
       AutismMacro macro = primary.init_aM();
       if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
          int total = init(primary, macro);
@@ -110,7 +110,7 @@ public final class MacroStatusHudRenderer {
       }
    }
 
-   private static int init(MacroExecutor.Inner_UiHelper run, AutismMacro macro) {
+   private static int init(MacroExecutor.ActiveRunSnapshot run, AutismMacro macro) {
       int actionCount = macro != null && macro.init_List != null ? macro.init_List.size() : 0;
       return Math.max(run.load_I(), actionCount);
    }
@@ -123,10 +123,10 @@ public final class MacroStatusHudRenderer {
       return total <= rowsPerRun ? 0 : Math.max(0, Math.min(current - rowsPerRun / 2, total - rowsPerRun));
    }
 
-   private static boolean init(List<MacroExecutor.Inner_UiHelper> runs, int rowsPerRun) {
+   private static boolean init(List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun) {
       if (rowsPerRun == write && runs.size() == init_StrArr.length) {
          for (int i = 0; i < runs.size(); i++) {
-            MacroExecutor.Inner_UiHelper run = runs.get(i);
+            MacroExecutor.ActiveRunSnapshot run = runs.get(i);
             if (run.init_I() != init_IArr[i] || run.load_I() != load_IArr[i] || run.read() != read_IArr[i] || !Objects.equals(run.init_Str(), init_StrArr[i])) {
                return false;
             }
@@ -153,12 +153,12 @@ public final class MacroStatusHudRenderer {
       return ThemePaletteManager.init_I_I_ct_DataUtil(-9448565, ThemePaletteManager.ColorRole.ACCENT);
    }
 
-   private static void init(Font textRenderer, List<MacroExecutor.Inner_UiHelper> runs, int rowsPerRun, int panelWidth, long now) {
+   private static void init(Font textRenderer, List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun, int panelWidth, long now) {
       int contentWidth = panelWidth - 12;
       int nowColor = init_I();
       ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>();
 
-      for (MacroExecutor.Inner_UiHelper run : runs) {
+      for (MacroExecutor.ActiveRunSnapshot run : runs) {
          AutismMacro macro = run.init_aM();
          if (macro != null && macro.init_List != null && !macro.init_List.isEmpty()) {
             List<MacroAction> actions = macro.init_List;
@@ -198,7 +198,7 @@ public final class MacroStatusHudRenderer {
          }
       }
 
-      MacroExecutor.Inner_UiHelper primary = runs.get(0);
+      MacroExecutor.ActiveRunSnapshot primary = runs.get(0);
       int runCount = runs.size();
       init_StrArr = new String[runCount];
       init_IArr = new int[runCount];
@@ -206,7 +206,7 @@ public final class MacroStatusHudRenderer {
       read_IArr = new int[runCount];
 
       for (int i = 0; i < runCount; i++) {
-         MacroExecutor.Inner_UiHelper run = runs.get(i);
+         MacroExecutor.ActiveRunSnapshot run = runs.get(i);
          init_StrArr[i] = run.init_Str();
          init_IArr[i] = run.init_I();
          load_IArr[i] = run.load_I();

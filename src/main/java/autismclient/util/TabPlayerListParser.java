@@ -75,7 +75,7 @@ public final class TabPlayerListParser {
          keys.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
          try {
-            for (MacroExecutor.Inner_PacketUtil chat : MacroExecutor.load_List()) {
+            for (MacroExecutor.LoggedChatMessage chat : MacroExecutor.load_List()) {
                if (chat != null && chat.read() != null && !chat.read().isBlank()) {
                   String display = chat.read();
                   int sep = display.indexOf(187);

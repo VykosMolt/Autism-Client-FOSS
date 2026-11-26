@@ -744,7 +744,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static AutismPayloadSupport.PayloadEntry init_AutismPayloadSuppo(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry == null) {
          return null;
       } else {
@@ -762,7 +762,7 @@ public final class AutismPayloadSupport {
       }
    }
 
-   public static autismclient.util.macro.PayloadAction init_H(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static autismclient.util.macro.PayloadAction init_H(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       AutismPayloadSupport.PayloadEntry snapshot = init_AutismPayloadSuppo(entry);
       if (snapshot == null) {
          return null;

@@ -98,7 +98,7 @@ public class ReportAction implements MacroAction {
                || p instanceof ServerboundChatCommandSignedPacket
                || p instanceof ServerboundChatPacket spc && spc.message() != null && spc.message().startsWith("/")
             : p -> p instanceof ServerboundContainerClickPacket;
-         MacroExecutor.Inner_EventBus sendListener = MacroExecutor.load_MacroExecutor_Even_Predicate(startMatch);
+         MacroExecutor.PacketWaiter sendListener = MacroExecutor.load_MacroExecutor_Even_Predicate(startMatch);
 
          try {
             if (this.startEvent == ReportAction.Inner_CachePool.COMMAND_SENT) {

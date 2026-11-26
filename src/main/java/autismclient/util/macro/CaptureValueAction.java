@@ -96,12 +96,12 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       if (this.source == CaptureValueAction.Inner_StateCache.RECENT_CHAT) {
-         List<MacroExecutor.Inner_PacketUtil> messages = MacroExecutor.load_List();
+         List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.load_List();
          if (messages.isEmpty()) {
             return CaptureValueAction.Inner_NetHelper.init_TaskQueue_NetHelpe_Str("No recent chat");
          }
 
-         for (MacroExecutor.Inner_PacketUtil chat : messages) {
+         for (MacroExecutor.LoggedChatMessage chat : messages) {
             CaptureValueAction.Inner_NetHelper candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Pack(chat));
             if (candidate.init_Z()) {
                return candidate;
@@ -115,9 +115,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             return current;
          }
 
-         List<MacroExecutor.Inner_HashUtil> titles = MacroExecutor.read_List();
+         List<MacroExecutor.ChatHistoryEntry> titles = MacroExecutor.read_List();
 
-         for (MacroExecutor.Inner_HashUtil title : titles) {
+         for (MacroExecutor.ChatHistoryEntry title : titles) {
             CaptureValueAction.Inner_NetHelper candidate = this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Hash(title));
             if (candidate.init_Z()) {
                return candidate;
@@ -167,7 +167,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          || this.source == CaptureValueAction.Inner_StateCache.NAMESCRAPE;
    }
 
-   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil chat) {
+   public CaptureValueAction.Inner_NetHelper init_TaskQueue_NetHelpe_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage chat) {
       return this.init_TaskQueue_NetHelpe_TaskQueue_DataUtil(this.init_TaskQueue_DataUtil_MacroExecutor_Pack(chat));
    }
 
@@ -531,7 +531,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             }
             break;
          case RECENT_CHAT:
-            List<MacroExecutor.Inner_PacketUtil> messages = MacroExecutor.load_List();
+            List<MacroExecutor.LoggedChatMessage> messages = MacroExecutor.load_List();
             var10000 = messages.isEmpty() ? null : this.init_TaskQueue_DataUtil_MacroExecutor_Pack(messages.get(0));
             break;
          case SCOREBOARD:
@@ -623,7 +623,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return new CaptureValueAction.Inner_DataUtil(value, MacroVarValue.init(MacroVarValue.ValueType.TEXT, value, props));
    }
 
-   private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Pack(MacroExecutor.Inner_PacketUtil chat) {
+   private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Pack(MacroExecutor.LoggedChatMessage chat) {
       if (chat == null) {
          return null;
       }
@@ -637,7 +637,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       return new CaptureValueAction.Inner_DataUtil(display, MacroVarValue.init(MacroVarValue.ValueType.TEXT, display, props));
    }
 
-   private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Hash(MacroExecutor.Inner_HashUtil gui) {
+   private CaptureValueAction.Inner_DataUtil init_TaskQueue_DataUtil_MacroExecutor_Hash(MacroExecutor.ChatHistoryEntry gui) {
       if (gui == null) {
          return null;
       }

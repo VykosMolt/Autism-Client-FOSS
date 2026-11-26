@@ -164,12 +164,12 @@ public final class AutismHudManager {
    private static double read_D;
    private static double write_D = 1.0;
    private static int open_I = -2147483648;
-   private static final Map<String, AutismHudManager.Inner_CachePool> init_Map = new HashMap<>();
+   private static final Map<String, AutismHudManager.CachedElementLayout> init_Map = new HashMap<>();
    private static final Map<String, Map<String, String>> load_Map = new HashMap<>();
    private static long read_J;
    private static int poll_I;
    private static long write_J;
-   private static List<AutismHudManager.Inner_BufferHelper> load_List = List.of();
+   private static List<AutismHudManager.HudElementBounds> load_List = List.of();
    private static boolean load_Z;
    private static List<String> read_List = init_List;
    private static int push_I = -1;
@@ -204,9 +204,9 @@ public final class AutismHudManager {
    private static int pool_I;
    private static final Map<String, String> write_Map = new HashMap<>();
    private static final Map<String, Integer> update_Map = init_Map();
-   private static List<AutismHudManager.Inner_JsonUtil> write_List;
-   private static final AutismHudManager.Inner_CachePool[] init_al_CachePoolArr = new AutismHudManager.Inner_CachePool[init_List.size()];
-   private static List<AutismHudManager.Inner_JsonUtil> update_List = List.of();
+   private static List<AutismHudManager.PlacedHudItem> write_List;
+   private static final AutismHudManager.CachedElementLayout[] init_al_CachePoolArr = new AutismHudManager.CachedElementLayout[init_List.size()];
+   private static List<AutismHudManager.PlacedHudItem> update_List = List.of();
    private static long put_J = -9223372036854775808L;
 
    private AutismHudManager() {
@@ -610,7 +610,7 @@ public final class AutismHudManager {
    }
 
    public static void init_V_GuiGraphicsExtract_4(
-      GuiGraphicsExtractor context, Font font, boolean editor, String selectedId, int mouseX, int mouseY, List<AutismHudManager.Inner_BufferHelper> occluders
+      GuiGraphicsExtractor context, Font font, boolean editor, String selectedId, int mouseX, int mouseY, List<AutismHudManager.HudElementBounds> occluders
    ) {
       long perf = bK.load_J();
       init_V();
@@ -629,8 +629,8 @@ public final class AutismHudManager {
                && (editor || !"bed_danger".equals(id))
                && (editor || !"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())
                && !flush_Z(id)) {
-               AutismHudManager.Inner_CachePool cached = init_al_CachePool_Str_Font(id, font);
-               AutismHudManager.Inner_BufferHelper bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
+               AutismHudManager.CachedElementLayout cached = init_al_CachePool_Str_Font(id, font);
+               AutismHudManager.HudElementBounds bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
                if (bounds.read > 0 && bounds.write > 0) {
                   int dodgeY = 0;
                   if (!editor && "anti_vanish".equals(id)) {
@@ -667,7 +667,7 @@ public final class AutismHudManager {
       }
    }
 
-   public static AutismHudManager.Inner_TaskQueue init_al_TaskQueue_Str_Font(String id, Font font) {
+   public static AutismHudManager.ScaledElementBox init_al_TaskQueue_Str_Font(String id, Font font) {
       return init_al_CachePool_Str_Font(id, font).init_al_TaskQueue();
    }
 
@@ -681,8 +681,8 @@ public final class AutismHudManager {
 
             try {
                write_List = init_List_Font_Z(font, false);
-               AutismHudManager.Inner_CachePool cached = init_al_CachePool_Str_Font(id, font);
-               AutismHudManager.Inner_BufferHelper bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
+               AutismHudManager.CachedElementLayout cached = init_al_CachePool_Str_Font(id, font);
+               AutismHudManager.HudElementBounds bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
                if (bounds.update() <= 0 || bounds.sync() <= 0) {
                   return;
                }
@@ -699,8 +699,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_TaskQueue init_al_TaskQueue_Str(
-      String id, Font font, AutismConfig.HudElementState state, List<AutismHudManager.Inner_NetHelper> lines, List<Integer> widths
+   private static AutismHudManager.ScaledElementBox init_al_TaskQueue_Str(
+      String id, Font font, AutismConfig.HudElementState state, List<AutismHudManager.ColoredTextLine> lines, List<Integer> widths
    ) {
       int pad = flush_I(id);
       int width;
@@ -789,24 +789,24 @@ public final class AutismHudManager {
 
       int renderX = read(id, init_I_Str(state.anchor, state.f_x_I, width), width);
       int renderY = write(id, load_I_Str(state.anchor, state.f_y_I, height), height);
-      return new AutismHudManager.Inner_TaskQueue(id, renderX, renderY, width, height, 1.0);
+      return new AutismHudManager.ScaledElementBox(id, renderX, renderY, width, height, 1.0);
    }
 
-   public static AutismHudManager.Inner_BufferHelper init_al_BufferHelper_Str_Font(String id, Font font) {
+   public static AutismHudManager.HudElementBounds init_al_BufferHelper_Str_Font(String id, Font font) {
       return init_al_TaskQueue_Str_Font(id, font).init_al_BufferHelper();
    }
 
-   private static AutismHudManager.Inner_BufferHelper load(String id, Font font) {
-      AutismHudManager.Inner_CachePool cached = init_al_CachePool_Str_Font(id, font);
+   private static AutismHudManager.HudElementBounds load(String id, Font font) {
+      AutismHudManager.CachedElementLayout cached = init_al_CachePool_Str_Font(id, font);
       if (!"active_modules".equals(id)) {
-         AutismHudManager.Inner_BufferHelper bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
-         AutismHudManager.Inner_HashUtil rect = init_al_HashUtil_al_HashUtil_al_SyncManager(
-            new AutismHudManager.Inner_HashUtil(id, bounds.read(), bounds.write(), bounds.update(), bounds.sync()), cached.init_al_SyncManager()
+         AutismHudManager.HudElementBounds bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
+         AutismHudManager.LayoutRect rect = init_al_HashUtil_al_HashUtil_al_SyncManager(
+            new AutismHudManager.LayoutRect(id, bounds.read(), bounds.write(), bounds.update(), bounds.sync()), cached.init_al_SyncManager()
          );
-         return new AutismHudManager.Inner_BufferHelper(id, rect.read(), rect.write(), rect.update(), rect.sync());
+         return new AutismHudManager.HudElementBounds(id, rect.read(), rect.write(), rect.update(), rect.sync());
       }
 
-      List<AutismHudManager.Inner_HashUtil> rects = init_List_Str_al_CachePool(id, cached);
+      List<AutismHudManager.LayoutRect> rects = init_List_Str_al_CachePool(id, cached);
       if (rects.isEmpty()) {
          return cached.init_al_TaskQueue().init_al_BufferHelper();
       }
@@ -816,14 +816,14 @@ public final class AutismHudManager {
       int right = -2147483648;
       int bottom = -2147483648;
 
-      for (AutismHudManager.Inner_HashUtil rect : rects) {
+      for (AutismHudManager.LayoutRect rect : rects) {
          left = Math.min(left, rect.read());
          top = Math.min(top, rect.write());
          right = Math.max(right, rect.init_I_2());
          bottom = Math.max(bottom, rect.load_I());
       }
 
-      return new AutismHudManager.Inner_BufferHelper(id, left, top, Math.max(0, right - left), Math.max(0, bottom - top));
+      return new AutismHudManager.HudElementBounds(id, left, top, Math.max(0, right - left), Math.max(0, bottom - top));
    }
 
    public static String init_Str_Font(Font font, int mouseX, int mouseY) {
@@ -833,7 +833,7 @@ public final class AutismHudManager {
       for (int i = ids.size() - 1; i >= 0; i--) {
          String id = ids.get(i);
          if (init_AutismConfig_HudEl_Str(id).enabled && !flush_Z(id)) {
-            AutismHudManager.Inner_BufferHelper bounds = load(id, font);
+            AutismHudManager.HudElementBounds bounds = load(id, font);
             if (init_Z_I(mouseX, mouseY, bounds)) {
                return id;
             }
@@ -846,7 +846,7 @@ public final class AutismHudManager {
    public static void init_V_Str(String id, int x, int y, int screenW, int screenH) {
       if (screenW > 0 && screenH > 0) {
          AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
-         AutismHudManager.Inner_TaskQueue layout = init_al_TaskQueue_Str_Font(id, init_Minecraft.font);
+         AutismHudManager.ScaledElementBox layout = init_al_TaskQueue_Str_Font(id, init_Minecraft.font);
          int w = layout.init_I();
          int h = layout.load();
          int px = init_I_I_2(x, get(id), update(id, screenW, w));
@@ -936,7 +936,7 @@ public final class AutismHudManager {
    public static List<String> init_List_Str(String id) {
       List<String> lines = new ArrayList<>();
 
-      for (AutismHudManager.Inner_NetHelper line : init_al_CachePool_Str_Font(id, init_Minecraft.font).init_List()) {
+      for (AutismHudManager.ColoredTextLine line : init_al_CachePool_Str_Font(id, init_Minecraft.font).init_List()) {
          lines.add(line.init());
       }
 
@@ -986,24 +986,24 @@ public final class AutismHudManager {
       read_Z = false;
    }
 
-   private static AutismHudManager.Inner_CachePool init_al_CachePool_Str_Font(String id, Font font) {
-      AutismHudManager.Inner_CachePool fastCached = init_Map.get(id);
+   private static AutismHudManager.CachedElementLayout init_al_CachePool_Str_Font(String id, Font font) {
+      AutismHudManager.CachedElementLayout fastCached = init_Map.get(id);
       if (read_Z && !write_Z && fastCached != null && update_J < fastCached.init_J) {
          return fastCached;
       }
 
       AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
       long now = read_Z ? update_J : System.currentTimeMillis();
-      AutismHudManager.Inner_ConfigStore signature = init_al_ConfigStore_Str(id, state, font, now);
+      AutismHudManager.LayoutSignature signature = init_al_ConfigStore_Str(id, state, font, now);
       long interval = init_J_Str(id);
       long nextCheck = (now / interval + 1L) * interval;
-      AutismHudManager.Inner_CachePool cached = init_Map.get(id);
+      AutismHudManager.CachedElementLayout cached = init_Map.get(id);
       if (cached != null && cached.init_al_ConfigStore().equals(signature)) {
          cached.init_J = nextCheck;
          return cached;
       }
 
-      List<AutismHudManager.Inner_NetHelper> lines = !"armor".equals(id)
+      List<AutismHudManager.ColoredTextLine> lines = !"armor".equals(id)
             && !"inventory".equals(id)
             && !"compass".equals(id)
             && !"watermark".equals(id)
@@ -1015,18 +1015,18 @@ public final class AutismHudManager {
          : List.of();
       List<Integer> widths = new ArrayList<>(lines.size());
 
-      for (AutismHudManager.Inner_NetHelper line : lines) {
+      for (AutismHudManager.ColoredTextLine line : lines) {
          widths.add(init_I_Str_3(id, font, line));
       }
 
-      AutismHudManager.Inner_TaskQueue layout = init_al_TaskQueue_Str(id, font, state, lines, widths);
-      AutismHudManager.Inner_CachePool next = new AutismHudManager.Inner_CachePool(signature, lines, widths, layout, init_al_SyncManager_Str(id));
+      AutismHudManager.ScaledElementBox layout = init_al_TaskQueue_Str(id, font, state, lines, widths);
+      AutismHudManager.CachedElementLayout next = new AutismHudManager.CachedElementLayout(signature, lines, widths, layout, init_al_SyncManager_Str(id));
       next.init_J = nextCheck;
       init_Map.put(id, next);
       return next;
    }
 
-   private static int init_I_Str_3(String id, Font font, AutismHudManager.Inner_NetHelper line) {
+   private static int init_I_Str_3(String id, Font font, AutismHudManager.ColoredTextLine line) {
       int width = init_I_Font_al_NetHelper(font, line);
       if ("breaking_progress".equals(id)) {
          width = Math.max(width, init_I_Font_al_NetHelper(font, init_al_NetHelper_Str(id, "Breaking", "100%")));
@@ -1035,14 +1035,14 @@ public final class AutismHudManager {
       return width;
    }
 
-   private static AutismHudManager.Inner_ConfigStore init_al_ConfigStore_Str(String id, AutismConfig.HudElementState state, Font font, long now) {
+   private static AutismHudManager.LayoutSignature init_al_ConfigStore_Str(String id, AutismConfig.HudElementState state, Font font, long now) {
       long nowBucket = now / init_J_Str(id);
       int screenW = read_I();
       int screenH = write_I();
       int playerId = init_Minecraft.player == null ? 0 : init_Minecraft.player.getId();
       int activeRevision = "active_modules".equals(id) ? autismclient.modules.al.load_I() : 0;
       int moduleRevision = "active_modules".equals(id) ? autismclient.modules.al.init_I() : 0;
-      return new AutismHudManager.Inner_ConfigStore(
+      return new AutismHudManager.LayoutSignature(
          state.enabled,
          state.anchor,
          state.f_x_I,
@@ -1137,8 +1137,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static List<AutismHudManager.Inner_NetHelper> load_List(String id) {
-      List<AutismHudManager.Inner_NetHelper> lines = new ArrayList<>();
+   private static List<AutismHudManager.ColoredTextLine> load_List(String id) {
+      List<AutismHudManager.ColoredTextLine> lines = new ArrayList<>();
       if (init_Minecraft.player == null) {
          lines.add(init_al_NetHelper_Str(id, init_Str_Str(id), "Preview"));
          return lines;
@@ -1241,7 +1241,7 @@ public final class AutismHudManager {
       return lines;
    }
 
-   private static void init_V_List(List<AutismHudManager.Inner_NetHelper> lines) {
+   private static void init_V_List(List<AutismHudManager.ColoredTextLine> lines) {
       boolean showInfo = init_Z_Str_Str("active_modules", "module-info");
       boolean showKeybind = init_Z_Str_Str("active_modules", "show-keybind");
       String hidden = "|" + init_Str_Str_Str("active_modules", "hidden-modules").toLowerCase(Locale.ROOT) + "|";
@@ -1268,13 +1268,13 @@ public final class AutismHudManager {
 
       String colorMode = init_Str_Str_Str("active_modules", "color-mode");
       int moduleCount = modules.size();
-      AutismHudManager.Inner_EventBus rainbow = init_al_EventBus_Str_I(colorMode, moduleCount);
+      AutismHudManager.RainbowParams rainbow = init_al_EventBus_Str_I(colorMode, moduleCount);
       int infoColor = load("module-info-color", -4743522);
 
       for (int i = 0; i < modules.size(); i++) {
          Module module = modules.get(i);
          int moduleColor = init_I_Module(module, i, rainbow);
-         AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+         AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
          line.init(module.name(), moduleColor);
          String info = module.info();
          if (showInfo && info != null && !info.isBlank()) {
@@ -1289,7 +1289,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static void load(List<AutismHudManager.Inner_NetHelper> lines) {
+   private static void load(List<AutismHudManager.ColoredTextLine> lines) {
       for (autismclient.modules.AntiVanishModule.Inner_StreamUtil entry : autismclient.modules.AntiVanishModule.init_List_8()) {
          lines.add(
             init_al_NetHelper_Str(
@@ -1305,8 +1305,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_EventBus init_al_EventBus_Str_I(String colorMode, int moduleCount) {
-      return new AutismHudManager.Inner_EventBus(
+   private static AutismHudManager.RainbowParams init_al_EventBus_Str_I(String colorMode, int moduleCount) {
+      return new AutismHudManager.RainbowParams(
          colorMode,
          init_F_D(load_D()),
          (float)init_D_Str("active_modules", "rainbow-spread", 0.035),
@@ -1341,7 +1341,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static int init_I_Module(Module module, int index, AutismHudManager.Inner_EventBus rainbow) {
+   private static int init_I_Module(Module module, int index, AutismHudManager.RainbowParams rainbow) {
       if ("Flat".equals(rainbow.init_Str())) {
          return rainbow.init_I();
       } else if ("Random".equals(rainbow.init_Str())) {
@@ -1381,7 +1381,7 @@ public final class AutismHudManager {
       );
    }
 
-   private static AutismHudManager.Inner_NetHelper init_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine init_al_NetHelper() {
       if (init_Minecraft.level != null && init_Minecraft.player != null) {
          Identifier dimension = init_Minecraft.level.dimension().identifier();
          String path = dimension.getPath();
@@ -1407,14 +1407,14 @@ public final class AutismHudManager {
       Font font,
       String id,
       AutismConfig.HudElementState state,
-      AutismHudManager.Inner_CachePool cached,
+      AutismHudManager.CachedElementLayout cached,
       boolean editor,
       boolean selected,
       boolean hovered,
       int dodgeY
    ) {
       float alpha = 1.0F;
-      AutismHudManager.Inner_TaskQueue layout = cached.init_al_TaskQueue();
+      AutismHudManager.ScaledElementBox layout = cached.init_al_TaskQueue();
       int x = layout.read();
       int y = layout.write() + dodgeY;
       int unscaledW = layout.update();
@@ -1427,14 +1427,14 @@ public final class AutismHudManager {
       } else if ("active_modules".equals(id)) {
          init(context, font, id, cached, editor, selected, hovered, alpha);
       } else {
-         AutismHudManager.Inner_SyncManager style = cached.init_al_SyncManager();
+         AutismHudManager.ElementStyle style = cached.init_al_SyncManager();
          boolean flatGrid = ("armor".equals(id) || "inventory".equals(id)) && load_Z(id);
          boolean background = style.init_Z() && !flatGrid;
-         AutismHudManager.Inner_HashUtil contentRect = new AutismHudManager.Inner_HashUtil(id, x, y, unscaledW, unscaledH);
-         AutismHudManager.Inner_HashUtil rect = init_al_HashUtil_al_HashUtil_al_SyncManager(contentRect, style);
+         AutismHudManager.LayoutRect contentRect = new AutismHudManager.LayoutRect(id, x, y, unscaledW, unscaledH);
+         AutismHudManager.LayoutRect rect = init_al_HashUtil_al_HashUtil_al_SyncManager(contentRect, style);
          boolean inGameOutline = style.load_Z() && !flatGrid && !editor && !selected && !hovered;
          boolean needsBlockers = background && !"compass".equals(id) || inGameOutline;
-         List<AutismHudManager.Inner_HashUtil> blockers = needsBlockers ? load_List_Font(font, id, rect) : null;
+         List<AutismHudManager.LayoutRect> blockers = needsBlockers ? load_List_Font(font, id, rect) : null;
          if (background) {
             if ("compass".equals(id)) {
                init_V_GuiGraphicsExtract(context, rect.read(), rect.write(), rect.update(), rect.sync(), alpha, style.close());
@@ -1483,11 +1483,11 @@ public final class AutismHudManager {
    }
 
    private static void init(
-      GuiGraphicsExtractor context, Font font, String id, AutismHudManager.Inner_CachePool cached, boolean editor, boolean selected, boolean hovered, float alpha
+      GuiGraphicsExtractor context, Font font, String id, AutismHudManager.CachedElementLayout cached, boolean editor, boolean selected, boolean hovered, float alpha
    ) {
-      List<AutismHudManager.Inner_NetHelper> lines = cached.init_List();
-      List<AutismHudManager.Inner_HashUtil> rowRects = load(id, cached);
-      AutismHudManager.Inner_SyncManager style = cached.init_al_SyncManager();
+      List<AutismHudManager.ColoredTextLine> lines = cached.init_List();
+      List<AutismHudManager.LayoutRect> rowRects = load(id, cached);
+      AutismHudManager.ElementStyle style = cached.init_al_SyncManager();
       int pad = style.load_I();
       boolean background = style.init_Z();
       boolean drawOutline = style.load_Z() || editor || selected || hovered;
@@ -1500,10 +1500,10 @@ public final class AutismHudManager {
       int verticalPad = style.read_I();
 
       for (int i = 0; i < lines.size() && i < rowRects.size(); i++) {
-         AutismHudManager.Inner_HashUtil contentRect = rowRects.get(i);
-         AutismHudManager.Inner_HashUtil rect = init_al_HashUtil_al_HashUtil_al_SyncManager(contentRect, style);
+         AutismHudManager.LayoutRect contentRect = rowRects.get(i);
+         AutismHudManager.LayoutRect rect = init_al_HashUtil_al_HashUtil_al_SyncManager(contentRect, style);
          if (!init_Z_al_HashUtil(rect)) {
-            List<AutismHudManager.Inner_HashUtil> blockers = !background && !drawOutline ? null : load_List_Font(font, id, rect);
+            List<AutismHudManager.LayoutRect> blockers = !background && !drawOutline ? null : load_List_Font(font, id, rect);
             if (background) {
                init_V_GuiGraphicsExtract_3(context, font, id, rect, backgroundColor, blockers);
             } else if (editor) {
@@ -1574,14 +1574,14 @@ public final class AutismHudManager {
       Font font,
       String id,
       AutismConfig.HudElementState state,
-      AutismHudManager.Inner_CachePool cached,
+      AutismHudManager.CachedElementLayout cached,
       int renderX,
       int renderY,
       int unscaledW,
       float alpha
    ) {
-      List<AutismHudManager.Inner_NetHelper> lines = cached.init_List();
-      AutismHudManager.Inner_SyncManager style = cached.init_al_SyncManager();
+      List<AutismHudManager.ColoredTextLine> lines = cached.init_List();
+      AutismHudManager.ElementStyle style = cached.init_al_SyncManager();
       int pad = style.load_I();
       int y = renderY + style.read_I();
       int lineH = style.update();
@@ -1590,7 +1590,7 @@ public final class AutismHudManager {
       int maxW = Math.max(1, unscaledW - pad * 2);
 
       for (int i = 0; i < lines.size(); i++) {
-         AutismHudManager.Inner_NetHelper line = lines.get(i);
+         AutismHudManager.ColoredTextLine line = lines.get(i);
          int lineW = i < cached.load().size() ? cached.load().get(i) : init_I_Font_al_NetHelper(font, line);
          int tx = renderX + pad;
          if ("Center".equals(alignment)) {
@@ -1605,7 +1605,7 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract_2(
-      GuiGraphicsExtractor context, Font font, AutismHudManager.Inner_NetHelper line, int x, int y, int maxW, float alpha, boolean shadow, int lineWidth
+      GuiGraphicsExtractor context, Font font, AutismHudManager.ColoredTextLine line, int x, int y, int maxW, float alpha, boolean shadow, int lineWidth
    ) {
       int drawX = x;
       int used = 0;
@@ -1614,7 +1614,7 @@ public final class AutismHudManager {
       boolean cachedWidthsValid = cachedWidths != null && cachedWidths.length == line.init_List.size();
 
       for (int i = 0; i < line.init_List.size(); i++) {
-         AutismHudManager.Inner_StateCache segment = line.init_List.get(i);
+         AutismHudManager.ColoredSegment segment = line.init_List.get(i);
          int remaining = Math.max(1, maxW - used);
          String text = fits
             ? segment.init_Str
@@ -1633,7 +1633,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y, float alpha, AutismHudManager.Inner_SyncManager style) {
+   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int x, int y, float alpha, AutismHudManager.ElementStyle style) {
       if (init_Minecraft.player != null) {
          EquipmentSlot[] slots = new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
          boolean flat = load_Z("armor");
@@ -1653,7 +1653,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static void load(GuiGraphicsExtractor context, int x, int y, float alpha, AutismHudManager.Inner_SyncManager style) {
+   private static void load(GuiGraphicsExtractor context, int x, int y, float alpha, AutismHudManager.ElementStyle style) {
       if (init_Minecraft.player != null) {
          boolean flat = load_Z("inventory");
          if (flat) {
@@ -1686,7 +1686,7 @@ public final class AutismHudManager {
       return "Flat".equals(init_Str_Str_Str(id, "slot-style"));
    }
 
-   private static void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor context, int x, int y, int cols, int rows, float alpha, AutismHudManager.Inner_SyncManager style) {
+   private static void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor context, int x, int y, int cols, int rows, float alpha, AutismHudManager.ElementStyle style) {
       int w = cols * 18;
       int h = rows * 18;
       if (style.init_Z()) {
@@ -1720,7 +1720,7 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract_3(
-      GuiGraphicsExtractor context, Font font, String id, int x, int y, int width, int height, float alpha, AutismHudManager.Inner_SyncManager style
+      GuiGraphicsExtractor context, Font font, String id, int x, int y, int width, int height, float alpha, AutismHudManager.ElementStyle style
    ) {
       int stripH = Math.max(16, height);
       int centerX = x + width / 2;
@@ -1943,15 +1943,15 @@ public final class AutismHudManager {
       return wrapped;
    }
 
-   private static AutismHudManager.Inner_NetHelper init_al_NetHelper_Str(String elementId, String label, String value) {
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+   private static AutismHudManager.ColoredTextLine init_al_NetHelper_Str(String elementId, String label, String value) {
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init(label + ": ", load_I_Str_2(elementId, "label-color", -4743522));
       line.init(value != null && !value.isBlank() ? value : "N/A", load_I_Str_2(elementId, "value-color", -791321));
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper load_al_NetHelper() {
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+   private static AutismHudManager.ColoredTextLine load_al_NetHelper() {
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       int labelColor = load_I_Str_2("fps", "label-color", -4743522);
       int valueColor = load_I_Str_2("fps", "value-color", -791321);
       int muted = init_I_I_F(labelColor, 0.72F);
@@ -1994,7 +1994,7 @@ public final class AutismHudManager {
       return String.format(Locale.ROOT, "%d / %d (%d%%)", left, max, Math.round(left * 100.0F / max));
    }
 
-   private static AutismHudManager.Inner_NetHelper read_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine read_al_NetHelper() {
       Runtime rt = Runtime.getRuntime();
       long used = rt.totalMemory() - rt.freeMemory() >> 20;
       long max = rt.maxMemory() >> 20;
@@ -2002,7 +2002,7 @@ public final class AutismHudManager {
       boolean showPct = init_Z_Str_Str("memory", "show-percent");
       String fmt = init_Str_Str_Str("memory", "memory-format");
       long pct = max > 0L ? used * 100L / max : 0L;
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Memory: ", load_I_Str_2("memory", "label-color", -4743522));
       boolean isPctFormat = !"used/max".equals(fmt);
       if (isPctFormat) {
@@ -2036,8 +2036,8 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper write_al_NetHelper() {
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+   private static AutismHudManager.ColoredTextLine write_al_NetHelper() {
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("IP: ", load_I_Str_2("server_ip", "label-color", -4743522));
       if (init_Minecraft.getCurrentServer() != null && init_Minecraft.getCurrentServer().ip != null && !init_Minecraft.getCurrentServer().ip.isBlank()) {
          String ip = init_Minecraft.getCurrentServer().ip;
@@ -2068,7 +2068,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_NetHelper update_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine update_al_NetHelper() {
       int fps = init_Minecraft.getFps();
       load_IArr[node_I] = fps;
       node_I = (node_I + 1) % 200;
@@ -2100,7 +2100,7 @@ public final class AutismHudManager {
       }
 
       int range = Math.max(1, maxFps - minFps);
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       if (init_Z_Str_Str("fps_graph", "show-current-fps")) {
          line.init(Integer.toString(fps), load_I_Str_2("fps_graph", "value-color", -791321));
       }
@@ -2126,7 +2126,7 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static void read(List<AutismHudManager.Inner_NetHelper> lines) {
+   private static void read(List<AutismHudManager.ColoredTextLine> lines) {
       boolean showTotal = init_Z_Str_Str("cps", "show-total");
       int leftCps = ClickRateTracker.init_I();
       int rightCps = ClickRateTracker.load_I();
@@ -2165,7 +2165,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_NetHelper sync_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine sync_al_NetHelper() {
       double tps = autismclient.util.macro.ServerTickPhaseTracker.init_D();
       if (tps < flush_D || System.currentTimeMillis() - set_J > 5000L) {
          flush_D = tps;
@@ -2178,7 +2178,7 @@ public final class AutismHudManager {
          valueColor = tps >= 19.0 ? -12588930 : (tps >= 15.0 ? -10752 : -50373);
       }
 
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("TPS: ", load_I_Str_2("tps", "label-color", -4743522));
       line.init(value, valueColor);
       if (init_Z_Str_Str("tps", "tps-show-jitter")) {
@@ -2188,14 +2188,14 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper flush_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine flush_al_NetHelper() {
       int ping = autismclient.util.macro.ServerTickPhaseTracker.init_I();
       int valueColor = load_I_Str_2("ping", "value-color", -791321);
       if (init_Z_Str_Str("ping", "ping-color-threshold")) {
          valueColor = ping <= 50 ? -12588930 : (ping <= 150 ? -10752 : -50373);
       }
 
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Ping: ", load_I_Str_2("ping", "label-color", -4743522));
       line.init(ping + " ms", valueColor);
       if (init_Z_Str_Str("ping", "ping-show-jitter")) {
@@ -2210,9 +2210,9 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper close_al_NetHelper() {
+   private static AutismHudManager.ColoredTextLine close_al_NetHelper() {
       ItemStack stack = init_Minecraft.player == null ? ItemStack.EMPTY : init_Minecraft.player.getMainHandItem();
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       if (init_Z_Str_Str("durability", "show-item-name") && !stack.isEmpty()) {
          line.init(stack.getHoverName().getString() + ": ", load_I_Str_2("durability", "label-color", -4743522));
       } else {
@@ -2238,8 +2238,8 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper open_al_NetHelper() {
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+   private static AutismHudManager.ColoredTextLine open_al_NetHelper() {
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       HitResult hit = init_Minecraft.hitResult;
       line.init("Looking: ", load_I_Str_2("looking_at", "label-color", -4743522));
       if (hit != null && hit.getType() != Type.MISS) {
@@ -2271,8 +2271,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_NetHelper poll_al_NetHelper() {
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+   private static AutismHudManager.ColoredTextLine poll_al_NetHelper() {
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       if (init_Minecraft.hitResult instanceof BlockHitResult && init_Minecraft.gameMode != null && init_Minecraft.level != null) {
          double progress = 0.0;
 
@@ -2303,8 +2303,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_NetHelper push() {
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+   private static AutismHudManager.ColoredTextLine push() {
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Server: ", load_I_Str_2("server", "label-color", -4743522));
       if (init_Minecraft.getCurrentServer() != null && init_Minecraft.getCurrentServer().ip != null && !init_Minecraft.getCurrentServer().ip.isBlank()) {
          line.init(init_Minecraft.getCurrentServer().ip, load_I_Str_2("server", "value-color", -791321));
@@ -2317,9 +2317,9 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper pop() {
+   private static AutismHudManager.ColoredTextLine pop() {
       String w = flush_Str();
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Weather: ", load_I_Str_2("weather", "label-color", -4743522));
       int var10000;
       switch (w) {
@@ -2344,17 +2344,17 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper tick() {
+   private static AutismHudManager.ColoredTextLine tick() {
       String b = close_Str();
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Biome: ", load_I_Str_2("biome", "label-color", -4743522));
       line.init(b, load_I_Str_2("biome", "value-color", -791321));
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper run() {
+   private static AutismHudManager.ColoredTextLine run() {
       String fmt = init_Str_Str_Str("world_time", "world-time-format");
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Time: ", load_I_Str_2("world_time", "label-color", -4743522));
       if ("ticks".equals(fmt) && init_Minecraft.level != null) {
          line.init(Long.toString(init_J() % 24000L), load_I_Str_2("world_time", "value-color", -791321));
@@ -2370,10 +2370,10 @@ public final class AutismHudManager {
       return line;
    }
 
-   private static AutismHudManager.Inner_NetHelper get() {
+   private static AutismHudManager.ColoredTextLine get() {
       String fmt = init_Str_Str_Str("real_time", "real-time-format");
       DateTimeFormatter formatter = "24h".equals(fmt) ? DateTimeFormatter.ofPattern("HH:mm") : DateTimeFormatter.ofPattern("h:mm a", Locale.US);
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       line.init("Time: ", load_I_Str_2("real_time", "label-color", -4743522));
       line.init(LocalTime.now().format(formatter), load_I_Str_2("real_time", "value-color", -791321));
       if (init_Z_Str_Str("real_time", "show-date")) {
@@ -2460,9 +2460,9 @@ public final class AutismHudManager {
       return var10000;
    }
 
-   private static AutismHudManager.Inner_NetHelper set() {
+   private static AutismHudManager.ColoredTextLine set() {
       Item target = init_Item();
-      AutismHudManager.Inner_NetHelper line = new AutismHudManager.Inner_NetHelper();
+      AutismHudManager.ColoredTextLine line = new AutismHudManager.ColoredTextLine();
       if (init_Z_Str_Str("item_counter", "item-show-name")) {
          line.init(init_Str_Item(target) + ": ", load_I_Str_2("item_counter", "label-color", -4743522));
       }
@@ -2523,7 +2523,7 @@ public final class AutismHudManager {
       return String.format(Locale.ROOT, "%d, %d, %d", (int)Math.floor(x), (int)Math.floor(y), (int)Math.floor(z));
    }
 
-   private static void write(List<AutismHudManager.Inner_NetHelper> lines) {
+   private static void write(List<AutismHudManager.ColoredTextLine> lines) {
       if (init_Minecraft.player != null && !init_Minecraft.player.getActiveEffects().isEmpty()) {
          for (MobEffectInstance effect : init_Minecraft.player.getActiveEffects()) {
             String name = Component.translatable(effect.getDescriptionId()).getString();
@@ -2577,12 +2577,12 @@ public final class AutismHudManager {
       return var10000;
    }
 
-   private static int init_I_Font_al_NetHelper(Font font, AutismHudManager.Inner_NetHelper line) {
+   private static int init_I_Font_al_NetHelper(Font font, AutismHudManager.ColoredTextLine line) {
       int[] widths = new int[line.init_List.size()];
       int width = 0;
 
       for (int i = 0; i < line.init_List.size(); i++) {
-         AutismHudManager.Inner_StateCache segment = line.init_List.get(i);
+         AutismHudManager.ColoredSegment segment = line.init_List.get(i);
          int w = autismclient.gui.f.b.k.init(font, segment.init_Str, init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), segment.init_I);
          widths[i] = w;
          width += w;
@@ -3394,7 +3394,7 @@ public final class AutismHudManager {
    }
 
    private static boolean init_Z_Module(Module module, String id, boolean fallback) {
-      AutismHudManager.Inner_UiHelper option = new AutismHudManager.Inner_UiHelper(module, id);
+      AutismHudManager.SettingValueCache option = new AutismHudManager.SettingValueCache(module, id);
       return !option.init_Z ? fallback : Boolean.parseBoolean(option.init_Str);
    }
 
@@ -3437,7 +3437,7 @@ public final class AutismHudManager {
       return Math.max(min, Math.min(max, value));
    }
 
-   private static boolean init_Z_I(int mouseX, int mouseY, AutismHudManager.Inner_BufferHelper bounds) {
+   private static boolean init_Z_I(int mouseX, int mouseY, AutismHudManager.HudElementBounds bounds) {
       return init_Z_I(mouseX, mouseY, bounds.init_I, bounds.load, bounds.read, bounds.write);
    }
 
@@ -3471,14 +3471,14 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract_3(
-      GuiGraphicsExtractor context, Font font, String id, AutismHudManager.Inner_HashUtil rect, int color, List<AutismHudManager.Inner_HashUtil> blockers
+      GuiGraphicsExtractor context, Font font, String id, AutismHudManager.LayoutRect rect, int color, List<AutismHudManager.LayoutRect> blockers
    ) {
-      List<AutismHudManager.Inner_HashUtil> occluders = init_List_Font(font, id, rect);
+      List<AutismHudManager.LayoutRect> occluders = init_List_Font(font, id, rect);
       init_V_GuiGraphicsExtract(context, rect, occluders, color);
       load(context, rect, blockers != null ? blockers : load_List_Font(font, id, rect), color);
    }
 
-   private static AutismHudManager.Inner_HashUtil init_al_HashUtil_al_HashUtil(AutismHudManager.Inner_HashUtil rect) {
+   private static AutismHudManager.LayoutRect init_al_HashUtil_al_HashUtil(AutismHudManager.LayoutRect rect) {
       if (rect == null) {
          return null;
       }
@@ -3511,18 +3511,18 @@ public final class AutismHudManager {
       y = init_I_I_2(y, 0, screenH);
       right = init_I_I_2(right, x, screenW);
       bottom = init_I_I_2(bottom, y, screenH);
-      return new AutismHudManager.Inner_HashUtil(rect.init_Str(), x, y, Math.max(0, right - x), Math.max(0, bottom - y));
+      return new AutismHudManager.LayoutRect(rect.init_Str(), x, y, Math.max(0, right - x), Math.max(0, bottom - y));
    }
 
-   private static AutismHudManager.Inner_HashUtil init_al_HashUtil_al_HashUtil_al_SyncManager(AutismHudManager.Inner_HashUtil contentRect, AutismHudManager.Inner_SyncManager style) {
+   private static AutismHudManager.LayoutRect init_al_HashUtil_al_HashUtil_al_SyncManager(AutismHudManager.LayoutRect contentRect, AutismHudManager.ElementStyle style) {
       if (contentRect == null) {
          return null;
       }
 
-      AutismHudManager.Inner_HashUtil rect = contentRect;
+      AutismHudManager.LayoutRect rect = contentRect;
       if (style.load_Z()) {
          int pad = 2;
-         rect = new AutismHudManager.Inner_HashUtil(
+         rect = new AutismHudManager.LayoutRect(
             contentRect.init_Str(), contentRect.read() - pad, contentRect.write() - pad, contentRect.update() + pad * 2, contentRect.sync() + pad * 2
          );
       }
@@ -3540,7 +3540,7 @@ public final class AutismHudManager {
       return index;
    }
 
-   private static List<AutismHudManager.Inner_JsonUtil> init_List_Font_Z(Font font, boolean editor) {
+   private static List<AutismHudManager.PlacedHudItem> init_List_Font_Z(Font font, boolean editor) {
       boolean changed = false;
 
       for (int i = 0; i < init_List.size(); i++) {
@@ -3550,7 +3550,7 @@ public final class AutismHudManager {
             hiddenBedDanger = !autismclient.modules.BedDangerHudRenderer.init();
          }
 
-         AutismHudManager.Inner_CachePool current = !flush_Z(id) && init_AutismConfig_HudEl_Str(id).enabled && !hiddenBedDanger
+         AutismHudManager.CachedElementLayout current = !flush_Z(id) && init_AutismConfig_HudEl_Str(id).enabled && !hiddenBedDanger
             ? init_al_CachePool_Str_Font(id, font)
             : null;
          if (init_al_CachePoolArr[i] != current) {
@@ -3564,16 +3564,16 @@ public final class AutismHudManager {
          return update_List;
       }
 
-      List<AutismHudManager.Inner_JsonUtil> entries = new ArrayList<>();
+      List<AutismHudManager.PlacedHudItem> entries = new ArrayList<>();
 
       for (int i = 0; i < init_List.size(); i++) {
          String other = init_List.get(i);
-         AutismHudManager.Inner_CachePool cached = init_al_CachePoolArr[i];
+         AutismHudManager.CachedElementLayout cached = init_al_CachePoolArr[i];
          if (cached != null) {
-            AutismHudManager.Inner_SyncManager style = cached.init_al_SyncManager();
+            AutismHudManager.ElementStyle style = cached.init_al_SyncManager();
             if (style.init_Z() || style.load_Z()) {
-               for (AutismHudManager.Inner_HashUtil rect : init_List_Str_Font(other, font)) {
-                  entries.add(new AutismHudManager.Inner_JsonUtil(other, i, rect, style.init_Z()));
+               for (AutismHudManager.LayoutRect rect : init_List_Str_Font(other, font)) {
+                  entries.add(new AutismHudManager.PlacedHudItem(other, i, rect, style.init_Z()));
                }
             }
          }
@@ -3587,7 +3587,7 @@ public final class AutismHudManager {
    private static long load_J() {
       long signature = load_List.size();
 
-      for (AutismHudManager.Inner_BufferHelper bounds : load_List) {
+      for (AutismHudManager.HudElementBounds bounds : load_List) {
          if (bounds != null) {
             signature = signature * 31L + bounds.read();
             signature = signature * 31L + bounds.write();
@@ -3599,15 +3599,15 @@ public final class AutismHudManager {
       return signature;
    }
 
-   private static List<AutismHudManager.Inner_HashUtil> init_List_Font(Font font, String id, AutismHudManager.Inner_HashUtil self) {
-      List<AutismHudManager.Inner_HashUtil> occluders = new ArrayList<>();
-      List<AutismHudManager.Inner_JsonUtil> snapshot = write_List;
+   private static List<AutismHudManager.LayoutRect> init_List_Font(Font font, String id, AutismHudManager.LayoutRect self) {
+      List<AutismHudManager.LayoutRect> occluders = new ArrayList<>();
+      List<AutismHudManager.PlacedHudItem> snapshot = write_List;
       if (snapshot != null) {
          int selfOrder = update_Map.getOrDefault(id, -1);
 
-         for (AutismHudManager.Inner_JsonUtil entry : snapshot) {
+         for (AutismHudManager.PlacedHudItem entry : snapshot) {
             if (entry.init_Z() && entry.init_I() <= selfOrder) {
-               AutismHudManager.Inner_HashUtil rect = entry.init_al_HashUtil();
+               AutismHudManager.LayoutRect rect = entry.init_al_HashUtil();
                if (!rect.init(self) && (entry.init_I() != selfOrder || init_Z_al_HashUtil_al_HashUtil(rect, self)) && rect.load(self)) {
                   occluders.add(rect);
                }
@@ -3622,7 +3622,7 @@ public final class AutismHudManager {
             if (!flush_Z(other) && init_AutismConfig_HudEl_Str(other).enabled && init_Z_Str_Str(other, "background")) {
                int otherOrder = init_List.indexOf(other);
                if (otherOrder <= selfOrder) {
-                  for (AutismHudManager.Inner_HashUtil rect : init_List_Str_Font(other, font)) {
+                  for (AutismHudManager.LayoutRect rect : init_List_Str_Font(other, font)) {
                      if (!rect.init(self) && (otherOrder != selfOrder || init_Z_al_HashUtil_al_HashUtil(rect, self)) && rect.load(self)) {
                         occluders.add(rect);
                      }
@@ -3635,7 +3635,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static boolean init_Z_al_HashUtil_al_HashUtil(AutismHudManager.Inner_HashUtil rect, AutismHudManager.Inner_HashUtil self) {
+   private static boolean init_Z_al_HashUtil_al_HashUtil(AutismHudManager.LayoutRect rect, AutismHudManager.LayoutRect self) {
       if (rect.write() != self.write()) {
          return rect.write() < self.write();
       } else if (rect.read() != self.read()) {
@@ -3645,7 +3645,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, AutismHudManager.Inner_HashUtil rect, List<AutismHudManager.Inner_HashUtil> occluders, int color) {
+   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, AutismHudManager.LayoutRect rect, List<AutismHudManager.LayoutRect> occluders, int color) {
       if (occluders.isEmpty()) {
          autismclient.gui.f.b.k.init(context, rect.read(), rect.write(), rect.init_I_2(), rect.load_I(), color);
       } else {
@@ -3653,7 +3653,7 @@ public final class AutismHudManager {
          cuts.add(rect.write());
          cuts.add(rect.load_I());
 
-         for (AutismHudManager.Inner_HashUtil other : occluders) {
+         for (AutismHudManager.LayoutRect other : occluders) {
             int top = init_I_I_2(other.write(), rect.write(), rect.load_I());
             int bottom = init_I_I_2(other.load_I(), rect.write(), rect.load_I());
             if (top < bottom) {
@@ -3670,7 +3670,7 @@ public final class AutismHudManager {
             if (bandY < bandBottom) {
                List<int[]> blocked = new ArrayList<>();
 
-               for (AutismHudManager.Inner_HashUtil other : occluders) {
+               for (AutismHudManager.LayoutRect other : occluders) {
                   if (other.write() < bandBottom && other.load_I() > bandY) {
                      int left = init_I_I_2(other.read(), rect.read(), rect.init_I_2());
                      int right = init_I_I_2(other.init_I_2(), rect.read(), rect.init_I_2());
@@ -3688,8 +3688,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static void load(GuiGraphicsExtractor context, AutismHudManager.Inner_HashUtil rect, List<AutismHudManager.Inner_HashUtil> blockers, int color) {
-      for (AutismHudManager.Inner_HashUtil other : blockers) {
+   private static void load(GuiGraphicsExtractor context, AutismHudManager.LayoutRect rect, List<AutismHudManager.LayoutRect> blockers, int color) {
+      for (AutismHudManager.LayoutRect other : blockers) {
          if (rect.init_I_2() <= other.read() && other.read() - rect.init_I_2() <= 1) {
             int y0 = Math.max(rect.write(), other.write());
             int y1 = Math.min(rect.load_I(), other.load_I());
@@ -3721,11 +3721,11 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract_5(GuiGraphicsExtractor context, Font font, String id, int x, int y, int w, int h, int color, int width) {
-      AutismHudManager.Inner_HashUtil rect = new AutismHudManager.Inner_HashUtil(id, x, y, w, h);
+      AutismHudManager.LayoutRect rect = new AutismHudManager.LayoutRect(id, x, y, w, h);
       init_V_GuiGraphicsExtract_2(context, rect, load_List_Font(font, id, rect), color, width);
    }
 
-   private static void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor context, AutismHudManager.Inner_HashUtil rect, List<AutismHudManager.Inner_HashUtil> blockers, int color, int width) {
+   private static void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor context, AutismHudManager.LayoutRect rect, List<AutismHudManager.LayoutRect> blockers, int color, int width) {
       int size = Math.max(1, width);
       int screenW = read_I();
       int screenH = write_I();
@@ -3753,11 +3753,11 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract(
-      GuiGraphicsExtractor context, List<AutismHudManager.Inner_HashUtil> blockers, int fromX, int toX, int drawY, int edgeY, int size, int color, boolean top
+      GuiGraphicsExtractor context, List<AutismHudManager.LayoutRect> blockers, int fromX, int toX, int drawY, int edgeY, int size, int color, boolean top
    ) {
       List<int[]> blocked = new ArrayList<>();
 
-      for (AutismHudManager.Inner_HashUtil other : blockers) {
+      for (AutismHudManager.LayoutRect other : blockers) {
          boolean connected = top ? other.write() < edgeY && other.load_I() >= edgeY - 1 : other.write() <= edgeY + 1 && other.load_I() > edgeY;
          if (connected) {
             int overlapStart = Math.max(fromX, other.read());
@@ -3772,11 +3772,11 @@ public final class AutismHudManager {
    }
 
    private static void load(
-      GuiGraphicsExtractor context, List<AutismHudManager.Inner_HashUtil> blockers, int fromY, int toY, int drawX, int edgeX, int size, int color, boolean left
+      GuiGraphicsExtractor context, List<AutismHudManager.LayoutRect> blockers, int fromY, int toY, int drawX, int edgeX, int size, int color, boolean left
    ) {
       List<int[]> blocked = new ArrayList<>();
 
-      for (AutismHudManager.Inner_HashUtil other : blockers) {
+      for (AutismHudManager.LayoutRect other : blockers) {
          boolean connected = left ? other.read() < edgeX && other.init_I_2() >= edgeX - 1 : other.read() <= edgeX + 1 && other.init_I_2() > edgeX;
          if (connected) {
             int overlapStart = Math.max(fromY, other.write());
@@ -3790,13 +3790,13 @@ public final class AutismHudManager {
       init_V_GuiGraphicsExtract_2(context, fromY, toY, blocked, size, (a, b) -> autismclient.gui.f.b.k.init(context, drawX, a, drawX + size, b, color));
    }
 
-   private static List<AutismHudManager.Inner_HashUtil> load_List_Font(Font font, String id, AutismHudManager.Inner_HashUtil self) {
-      List<AutismHudManager.Inner_HashUtil> blockers = new ArrayList<>();
-      List<AutismHudManager.Inner_JsonUtil> snapshot = write_List;
+   private static List<AutismHudManager.LayoutRect> load_List_Font(Font font, String id, AutismHudManager.LayoutRect self) {
+      List<AutismHudManager.LayoutRect> blockers = new ArrayList<>();
+      List<AutismHudManager.PlacedHudItem> snapshot = write_List;
       if (snapshot != null) {
-         for (AutismHudManager.Inner_JsonUtil entry : snapshot) {
+         for (AutismHudManager.PlacedHudItem entry : snapshot) {
             if (!entry.init_Str().equals(id) || "active_modules".equals(entry.init_Str())) {
-               AutismHudManager.Inner_HashUtil rect = entry.init_al_HashUtil();
+               AutismHudManager.LayoutRect rect = entry.init_al_HashUtil();
                if (self == null || !rect.init(self)) {
                   blockers.add(rect);
                }
@@ -3807,7 +3807,7 @@ public final class AutismHudManager {
       } else {
          for (String other : init_List) {
             if (!flush_Z(other) && init_AutismConfig_HudEl_Str(other).enabled && close_Z(other) && (!other.equals(id) || "active_modules".equals(other))) {
-               for (AutismHudManager.Inner_HashUtil rect : init_List_Str_Font(other, font)) {
+               for (AutismHudManager.LayoutRect rect : init_List_Str_Font(other, font)) {
                   if (self == null || !rect.init(self)) {
                      blockers.add(rect);
                   }
@@ -3819,14 +3819,14 @@ public final class AutismHudManager {
       }
    }
 
-   private static List<AutismHudManager.Inner_HashUtil> init_List_Str_Font(String id, Font font) {
-      AutismHudManager.Inner_CachePool cached = init_al_CachePool_Str_Font(id, font);
+   private static List<AutismHudManager.LayoutRect> init_List_Str_Font(String id, Font font) {
+      AutismHudManager.CachedElementLayout cached = init_al_CachePool_Str_Font(id, font);
       if ("active_modules".equals(id)) {
-         List<AutismHudManager.Inner_HashUtil> rects = init_List_Str_al_CachePool(id, cached);
+         List<AutismHudManager.LayoutRect> rects = init_List_Str_al_CachePool(id, cached);
          if (!load_List.isEmpty() && !rects.isEmpty()) {
-            List<AutismHudManager.Inner_HashUtil> visible = new ArrayList<>(rects.size());
+            List<AutismHudManager.LayoutRect> visible = new ArrayList<>(rects.size());
 
-            for (AutismHudManager.Inner_HashUtil rect : rects) {
+            for (AutismHudManager.LayoutRect rect : rects) {
                if (!init_Z_al_HashUtil(rect)) {
                   visible.add(rect);
                }
@@ -3837,41 +3837,41 @@ public final class AutismHudManager {
             return rects;
          }
       } else {
-         AutismHudManager.Inner_BufferHelper bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
+         AutismHudManager.HudElementBounds bounds = cached.init_al_TaskQueue().init_al_BufferHelper();
          return init_Z_al_BufferHelper(bounds)
             ? List.of()
             : List.of(
                init_al_HashUtil_al_HashUtil_al_SyncManager(
-                  new AutismHudManager.Inner_HashUtil(id, bounds.read(), bounds.write(), bounds.update(), bounds.sync()), cached.init_al_SyncManager()
+                  new AutismHudManager.LayoutRect(id, bounds.read(), bounds.write(), bounds.update(), bounds.sync()), cached.init_al_SyncManager()
                )
             );
       }
    }
 
-   private static List<AutismHudManager.Inner_HashUtil> init_List_Str_al_CachePool(String id, AutismHudManager.Inner_CachePool cached) {
-      List<AutismHudManager.Inner_HashUtil> content = load(id, cached);
+   private static List<AutismHudManager.LayoutRect> init_List_Str_al_CachePool(String id, AutismHudManager.CachedElementLayout cached) {
+      List<AutismHudManager.LayoutRect> content = load(id, cached);
       if (content.isEmpty()) {
          return content;
       }
 
-      List<AutismHudManager.Inner_HashUtil> visual = new ArrayList<>(content.size());
-      AutismHudManager.Inner_SyncManager style = cached.init_al_SyncManager();
+      List<AutismHudManager.LayoutRect> visual = new ArrayList<>(content.size());
+      AutismHudManager.ElementStyle style = cached.init_al_SyncManager();
 
-      for (AutismHudManager.Inner_HashUtil rect : content) {
+      for (AutismHudManager.LayoutRect rect : content) {
          visual.add(init_al_HashUtil_al_HashUtil_al_SyncManager(rect, style));
       }
 
       return visual;
    }
 
-   private static List<AutismHudManager.Inner_HashUtil> load(String id, AutismHudManager.Inner_CachePool cached) {
+   private static List<AutismHudManager.LayoutRect> load(String id, AutismHudManager.CachedElementLayout cached) {
       if (cached.read != null) {
          return cached.read;
       }
 
-      List<AutismHudManager.Inner_HashUtil> rects = new ArrayList<>();
-      AutismHudManager.Inner_TaskQueue layout = cached.init_al_TaskQueue();
-      AutismHudManager.Inner_SyncManager style = cached.init_al_SyncManager();
+      List<AutismHudManager.LayoutRect> rects = new ArrayList<>();
+      AutismHudManager.ScaledElementBox layout = cached.init_al_TaskQueue();
+      AutismHudManager.ElementStyle style = cached.init_al_SyncManager();
       int rowH = style.sync();
       int gap = style.write();
       int stairSnap = style.flush();
@@ -3889,7 +3889,7 @@ public final class AutismHudManager {
 
          int rowX = init_I_Str(style.init_Str(), layout.read(), layout.update(), rowW);
          int rowY = layout.write() + i * (rowH + gap);
-         rects.add(new AutismHudManager.Inner_HashUtil(id, rowX, rowY, rowW, rowH));
+         rects.add(new AutismHudManager.LayoutRect(id, rowX, rowY, rowW, rowH));
       }
 
       cached.read = List.copyOf(rects);
@@ -3905,13 +3905,13 @@ public final class AutismHudManager {
    }
 
    private static boolean close_Z(String id) {
-      AutismHudManager.Inner_SyncManager style = init_al_CachePool_Str_Font(id, init_Minecraft.font).init_al_SyncManager();
+      AutismHudManager.ElementStyle style = init_al_CachePool_Str_Font(id, init_Minecraft.font).init_al_SyncManager();
       return style.init_Z() || style.load_Z();
    }
 
-   private static boolean init_Z_al_BufferHelper(AutismHudManager.Inner_BufferHelper bounds) {
+   private static boolean init_Z_al_BufferHelper(AutismHudManager.HudElementBounds bounds) {
       if (bounds != null && !load_List.isEmpty()) {
-         for (AutismHudManager.Inner_BufferHelper occluder : load_List) {
+         for (AutismHudManager.HudElementBounds occluder : load_List) {
             if (bounds.init(occluder)) {
                return true;
             }
@@ -3923,9 +3923,9 @@ public final class AutismHudManager {
       }
    }
 
-   private static boolean init_Z_al_HashUtil(AutismHudManager.Inner_HashUtil rect) {
+   private static boolean init_Z_al_HashUtil(AutismHudManager.LayoutRect rect) {
       if (rect != null && !load_List.isEmpty()) {
-         for (AutismHudManager.Inner_BufferHelper occluder : load_List) {
+         for (AutismHudManager.HudElementBounds occluder : load_List) {
             if (rect.read() < occluder.init_I() && rect.init_I_2() > occluder.read() && rect.write() < occluder.load() && rect.load_I() > occluder.write()) {
                return true;
             }
@@ -3937,7 +3937,7 @@ public final class AutismHudManager {
       }
    }
 
-   private static int init_I_al_BufferHelper(AutismHudManager.Inner_BufferHelper bounds) {
+   private static int init_I_al_BufferHelper(AutismHudManager.HudElementBounds bounds) {
       if (bounds != null && !load_List.isEmpty() && init_Z_al_BufferHelper(bounds)) {
          int sh = write_I();
          int down = init_I_al_BufferHelper(bounds, 1, sh);
@@ -3956,14 +3956,14 @@ public final class AutismHudManager {
       }
    }
 
-   private static int init_I_al_BufferHelper(AutismHudManager.Inner_BufferHelper bounds, int dir, int sh) {
+   private static int init_I_al_BufferHelper(AutismHudManager.HudElementBounds bounds, int dir, int sh) {
       int shift = 0;
 
       for (int iter = 0; iter < 32; iter++) {
-         AutismHudManager.Inner_BufferHelper moved = new AutismHudManager.Inner_BufferHelper(bounds.init_Str(), bounds.read(), bounds.write() + shift, bounds.update(), bounds.sync());
-         AutismHudManager.Inner_BufferHelper hit = null;
+         AutismHudManager.HudElementBounds moved = new AutismHudManager.HudElementBounds(bounds.init_Str(), bounds.read(), bounds.write() + shift, bounds.update(), bounds.sync());
+         AutismHudManager.HudElementBounds hit = null;
 
-         for (AutismHudManager.Inner_BufferHelper occ : load_List) {
+         for (AutismHudManager.HudElementBounds occ : load_List) {
             if (moved.init(occ)) {
                hit = occ;
                break;
@@ -3991,7 +3991,7 @@ public final class AutismHudManager {
    }
 
    private static void init_V_GuiGraphicsExtract_2(
-      GuiGraphicsExtractor context, int from, int to, List<int[]> blocked, int capOverlap, AutismHudManager.Inner_FileCache drawer
+      GuiGraphicsExtractor context, int from, int to, List<int[]> blocked, int capOverlap, AutismHudManager.LineDrawCallback drawer
    ) {
       if (from < to) {
          if (blocked.isEmpty()) {
@@ -4042,8 +4042,8 @@ public final class AutismHudManager {
       }
    }
 
-   private static AutismHudManager.Inner_SyncManager init_al_SyncManager_Str(String id) {
-      return new AutismHudManager.Inner_SyncManager(
+   private static AutismHudManager.ElementStyle init_al_SyncManager_Str(String id) {
+      return new AutismHudManager.ElementStyle(
          init_Z_Str_Str(id, "background"),
          init_Z_Str_Str(id, "outline"),
          init_Z_Str_Str(id, "shadow"),
@@ -4062,7 +4062,7 @@ public final class AutismHudManager {
       );
    }
 
-   public record Inner_BufferHelper(String init_Str, int init_I, int load, int read, int write) {
+   public record HudElementBounds(String init_Str, int init_I, int load, int read, int write) {
       public int init_I() {
          return this.init_I + this.read;
       }
@@ -4071,7 +4071,7 @@ public final class AutismHudManager {
          return this.load + this.write;
       }
 
-      public boolean init(AutismHudManager.Inner_BufferHelper other) {
+      public boolean init(AutismHudManager.HudElementBounds other) {
          return other != null && this.init_I < other.init_I() && this.init_I() > other.read() && this.load < other.load() && this.load() > other.write();
       }
 
@@ -4092,17 +4092,17 @@ public final class AutismHudManager {
       }
    }
 
-   private static final class Inner_CachePool {
-      private final AutismHudManager.Inner_ConfigStore init_al_ConfigStore;
-      private final List<AutismHudManager.Inner_NetHelper> init_List;
+   private static final class CachedElementLayout {
+      private final AutismHudManager.LayoutSignature init_al_ConfigStore;
+      private final List<AutismHudManager.ColoredTextLine> init_List;
       private final List<Integer> load;
-      private final AutismHudManager.Inner_TaskQueue init_al_TaskQueue;
-      private final AutismHudManager.Inner_SyncManager init_al_SyncManager;
+      private final AutismHudManager.ScaledElementBox init_al_TaskQueue;
+      private final AutismHudManager.ElementStyle init_al_SyncManager;
       private long init_J;
-      private List<AutismHudManager.Inner_HashUtil> read;
+      private List<AutismHudManager.LayoutRect> read;
 
-      private Inner_CachePool(
-         AutismHudManager.Inner_ConfigStore signature, List<AutismHudManager.Inner_NetHelper> lines, List<Integer> widths, AutismHudManager.Inner_TaskQueue layout, AutismHudManager.Inner_SyncManager style
+      private CachedElementLayout(
+         AutismHudManager.LayoutSignature signature, List<AutismHudManager.ColoredTextLine> lines, List<Integer> widths, AutismHudManager.ScaledElementBox layout, AutismHudManager.ElementStyle style
       ) {
          this.init_al_ConfigStore = signature;
          this.init_List = lines;
@@ -4111,11 +4111,11 @@ public final class AutismHudManager {
          this.init_al_SyncManager = style;
       }
 
-      AutismHudManager.Inner_ConfigStore init_al_ConfigStore() {
+      AutismHudManager.LayoutSignature init_al_ConfigStore() {
          return this.init_al_ConfigStore;
       }
 
-      List<AutismHudManager.Inner_NetHelper> init_List() {
+      List<AutismHudManager.ColoredTextLine> init_List() {
          return this.init_List;
       }
 
@@ -4123,31 +4123,31 @@ public final class AutismHudManager {
          return this.load;
       }
 
-      AutismHudManager.Inner_TaskQueue init_al_TaskQueue() {
+      AutismHudManager.ScaledElementBox init_al_TaskQueue() {
          return this.init_al_TaskQueue;
       }
 
-      AutismHudManager.Inner_SyncManager init_al_SyncManager() {
+      AutismHudManager.ElementStyle init_al_SyncManager() {
          return this.init_al_SyncManager;
       }
    }
 
-   private record Inner_ConfigStore(
+   private record LayoutSignature(
       boolean init_Z, String init_Str, int init_I, int load, int read, long init_J, int write, int update, int sync, int flush, int close, int open, int poll
    ) {
    }
 
-   private record Inner_EventBus(
+   private record RainbowParams(
       String init_Str, float init_F, float load_F, float read_F, float write_F, int init_I, int load_I, int read_I, int write_I, double init_D
    ) {
    }
 
    @FunctionalInterface
-   private interface Inner_FileCache {
+   private interface LineDrawCallback {
       void draw(int var1, int var2);
    }
 
-   private record Inner_HashUtil(String init_Str, int init_I, int load, int read, int write) {
+   private record LayoutRect(String init_Str, int init_I, int load, int read, int write) {
       int init_I_2() {
          return this.init_I + this.read;
       }
@@ -4156,11 +4156,11 @@ public final class AutismHudManager {
          return this.load + this.write;
       }
 
-      boolean init(AutismHudManager.Inner_HashUtil other) {
+      boolean init(AutismHudManager.LayoutRect other) {
          return other != null && this.init_I == other.init_I && this.load == other.load && this.read == other.read && this.write == other.write;
       }
 
-      boolean load(AutismHudManager.Inner_HashUtil other) {
+      boolean load(AutismHudManager.LayoutRect other) {
          return other != null
             && this.init_I < other.init_I_2()
             && this.init_I_2() > other.read()
@@ -4185,23 +4185,23 @@ public final class AutismHudManager {
       }
    }
 
-   private record Inner_JsonUtil(String init_Str, int init_I, AutismHudManager.Inner_HashUtil init_al_HashUtil, boolean init_Z) {
+   private record PlacedHudItem(String init_Str, int init_I, AutismHudManager.LayoutRect init_al_HashUtil, boolean init_Z) {
    }
 
-   private static final class Inner_NetHelper {
-      private final List<AutismHudManager.Inner_StateCache> init_List = new ArrayList<>();
+   private static final class ColoredTextLine {
+      private final List<AutismHudManager.ColoredSegment> init_List = new ArrayList<>();
       private int[] init_IArr;
 
       void init(String text, int color) {
          if (text != null && !text.isEmpty()) {
-            this.init_List.add(new AutismHudManager.Inner_StateCache(text, color));
+            this.init_List.add(new AutismHudManager.ColoredSegment(text, color));
          }
       }
 
       String init() {
          StringBuilder builder = new StringBuilder();
 
-         for (AutismHudManager.Inner_StateCache segment : this.init_List) {
+         for (AutismHudManager.ColoredSegment segment : this.init_List) {
             builder.append(segment.init_Str);
          }
 
@@ -4209,10 +4209,10 @@ public final class AutismHudManager {
       }
    }
 
-   private record Inner_StateCache(String init_Str, int init_I) {
+   private record ColoredSegment(String init_Str, int init_I) {
    }
 
-   private record Inner_SyncManager(
+   private record ElementStyle(
       boolean init_Z,
       boolean load_Z,
       boolean read_Z,
@@ -4231,7 +4231,7 @@ public final class AutismHudManager {
    ) {
    }
 
-   public record Inner_TaskQueue(String init_Str, int init_I, int load, int read, int write, double init_D) {
+   public record ScaledElementBox(String init_Str, int init_I, int load, int read, int write, double init_D) {
       public int init_I() {
          return (int)Math.ceil(this.read * this.init_D);
       }
@@ -4240,8 +4240,8 @@ public final class AutismHudManager {
          return (int)Math.ceil(this.write * this.init_D);
       }
 
-      public AutismHudManager.Inner_BufferHelper init_al_BufferHelper() {
-         return new AutismHudManager.Inner_BufferHelper(this.init_Str, this.init_I, this.load, this.init_I(), this.load());
+      public AutismHudManager.HudElementBounds init_al_BufferHelper() {
+         return new AutismHudManager.HudElementBounds(this.init_Str, this.init_I, this.load, this.init_I(), this.load());
       }
 
       public int read() {
@@ -4261,8 +4261,8 @@ public final class AutismHudManager {
       }
    }
 
-   private record Inner_UiHelper(boolean init_Z, String init_Str) {
-      Inner_UiHelper(Module module, String id) {
+   private record SettingValueCache(boolean init_Z, String init_Str) {
+      SettingValueCache(Module module, String id) {
          this(module != null && module.setting(id) != null, module != null && module.setting(id) != null ? module.value(id) : "");
       }
    }

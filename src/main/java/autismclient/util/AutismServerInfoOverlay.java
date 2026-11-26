@@ -81,10 +81,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private final autismclient.gui.ui.layout.CollapsibleWindowNode init_CharEncoder_2 = new autismclient.gui.ui.layout.CollapsibleWindowNode("Server Info");
    private final autismclient.gui.ui.layout.LayoutTreeHost init_TextFormat = new autismclient.gui.ui.layout.LayoutTreeHost(this.init_CharEncoder, this.init_CharEncoder_2);
-   private final AutismServerInfoOverlay.Inner_RingBuffer init_AutismServerInfoOv_4 = new AutismServerInfoOverlay.Inner_RingBuffer();
+   private final AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_4 = new AutismServerInfoOverlay.TabBarNode();
    private final autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil = new autismclient.gui.ui.widgets.TextInputWidget();
-   private final AutismServerInfoOverlay.Inner_TableIndex init_AutismServerInfoOv_5 = new AutismServerInfoOverlay.Inner_TableIndex();
-   private final AutismServerInfoOverlay.Inner_HashUtil init_AutismServerInfoOv_2 = new AutismServerInfoOverlay.Inner_HashUtil();
+   private final AutismServerInfoOverlay.SliderNode init_AutismServerInfoOv_5 = new AutismServerInfoOverlay.SliderNode();
+   private final AutismServerInfoOverlay.ProgressBarNode init_AutismServerInfoOv_2 = new AutismServerInfoOverlay.ProgressBarNode();
    private final autismclient.gui.ui.layout.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.ui.layout.VerticalSpacerNode();
    private autismclient.gui.ui.layout.ColumnLayout init_PacketUtil;
    private boolean open_Z = false;
@@ -92,7 +92,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private long init_J = 0L;
    private static final String[] init_StrArr = new String[]{"Info", "Plugins"};
    private int start = 0;
-   private final List<AutismServerInfoOverlay.Inner_DataUtil> init_List = new ArrayList<>();
+   private final List<AutismServerInfoOverlay.ClickHotspot> init_List = new ArrayList<>();
    private volatile String load_Str = null;
    private volatile String read_Str = null;
    private volatile boolean push_Z = false;
@@ -101,7 +101,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private final Map<String, List<String>> init_Map = new LinkedHashMap<>();
    private final Map<String, List<String>> load_Map = new LinkedHashMap<>();
    private final Map<String, List<String>> read_Map = new LinkedHashMap<>();
-   private List<AutismServerInfoOverlay.Inner_StateCache> read_List = List.of();
+   private List<AutismServerInfoOverlay.DetailRow> read_List = List.of();
    private String write_Str = null;
    private String update_Str = null;
    private int stop = -1;
@@ -110,7 +110,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private int prev = 0;
    private int valid = 0;
    private int size = -1;
-   private Map<String, AutismServerInfoOverlay.Inner_TaskQueue> write_Map = Map.of();
+   private Map<String, AutismServerInfoOverlay.DetectedPluginEntry> write_Map = Map.of();
    private int data = -1;
    private final autismclient.gui.ui.widgets.ScrollOffsetController init_CacheEntry = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private int value = 0;
@@ -118,32 +118,32 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private int state = 50;
    private boolean pop_Z = false;
    private boolean tick_Z = false;
-   private AutismServerInfoOverlay.Inner_PacketUtil init_AutismServerInfoOv_3;
+   private AutismServerInfoOverlay.ActiveScanSession init_AutismServerInfoOv_3;
    private long read_J = 1L;
    private final ServerScanIdAllocator init_bR = new ServerScanIdAllocator();
-   private AutismServerInfoOverlay.Inner_ByteReader init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
+   private AutismServerInfoOverlay.ScanStatus init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
    private String close_Str = "";
    private int queue;
    private int buffer;
    private int entry;
    private int node;
    private final Set<String> load_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.Inner_JsonUtil> update_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.Inner_JsonUtil> sync_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.Inner_ConfigStore> flush_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.Inner_EventBus> close_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.EvidenceSource> update_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.EvidenceSource> sync_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.MatchConfidence> flush_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.DetectionType> close_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
    private final Map<String, List<String>> open_Map = new LinkedHashMap<>();
-   private final Map<String, AutismServerInfoOverlay.Inner_TextFormat> poll_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<String, AutismServerInfoOverlay.Inner_TextFormat> push_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-   private final Map<Integer, AutismServerInfoOverlay.Inner_RenderState> pop_Map = new LinkedHashMap<>();
-   private final Deque<AutismServerInfoOverlay.Inner_StreamUtil> init_Deque = new ArrayDeque<>();
+   private final Map<String, AutismServerInfoOverlay.PluginAccumulator> poll_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<String, AutismServerInfoOverlay.PluginAccumulator> push_Map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private final Map<Integer, AutismServerInfoOverlay.ProbeSpec> pop_Map = new LinkedHashMap<>();
+   private final Deque<AutismServerInfoOverlay.CommandHistoryEntry> init_Deque = new ArrayDeque<>();
    private static final long write_J = 250L;
    private static final int task = 8192;
    private static final int pool = 1000;
    private static final int index = 256;
    private static final int count = 64;
-   private final List<AutismServerInfoOverlay.Inner_BufferHelper> write_List = new ArrayList<>();
-   private final List<AutismServerInfoOverlay.Inner_CachePool> update_List = new ArrayList<>();
+   private final List<AutismServerInfoOverlay.ProbeObservation> write_List = new ArrayList<>();
+   private final List<AutismServerInfoOverlay.CommandEvidence> update_List = new ArrayList<>();
    private boolean run_Z = false;
    private long update_J = 0L;
    private final Set<String> read_Set = new HashSet<>();
@@ -1001,7 +1001,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void data_V_3() {
       int progressPercent = Math.max(0, Math.min(100, Math.round(this.init_F_2() * 100.0F)));
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       this.init_CharEncoder_2
          .init_PacketUtil()
          .init_TableIndex_TableIndex(
@@ -1058,7 +1058,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       String query = this.init_BitSetUtil.init_Str().toLowerCase(Locale.ROOT);
       int filteredCount = 0;
 
-      for (AutismServerInfoOverlay.Inner_TaskQueue detail : this.init_Collection()) {
+      for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.init_Collection()) {
          if (detail != null && (query.isEmpty() || detail.update.contains(query))) {
             filteredCount++;
          }
@@ -1377,7 +1377,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.pop_Z = false;
       this.put_Z = false;
       this.read_V_3("clear");
-      this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
+      this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
       this.close_Str = "";
       this.queue = 0;
       this.buffer = 0;
@@ -1460,11 +1460,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.put_Z = false;
       this.read_V_3("cache-load");
       this.init_AutismServerInfoOv = this.init_AutismServerInfoOv_Str(cached.scanStatus);
-      if (this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.NONE) {
-         this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.COMPLETE;
+      if (this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.NONE) {
+         this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.COMPLETE;
       }
 
-      this.close_Str = this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.PARTIAL ? "Cached partial scan" : "";
+      this.close_Str = this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Cached partial scan" : "";
       this.queue = Math.max(0, cached.totalProbes);
       this.buffer = Math.max(0, cached.answeredProbes);
       this.entry = Math.max(0, cached.retriedProbes);
@@ -1487,8 +1487,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       for (String plugin : this.load_List) {
          String key = this.load_Str_2(plugin);
          this.update_Map.put(key, this.init_AutismServerInfoOv_Str_2(cachedEvidence.get(key)));
-         AutismServerInfoOverlay.Inner_JsonUtil copyEvidence = this.init_AutismServerInfoOv_Str_2(cachedCopyEvidence.get(key));
-         if (copyEvidence == AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN) {
+         AutismServerInfoOverlay.EvidenceSource copyEvidence = this.init_AutismServerInfoOv_Str_2(cachedCopyEvidence.get(key));
+         if (copyEvidence == AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
             copyEvidence = this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(plugin, this.update_Map.get(key));
          }
 
@@ -1514,13 +1514,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          Map<String, String> evidenceSnapshot = new LinkedHashMap<>();
          Map<String, String> copyEvidenceSnapshot = new LinkedHashMap<>();
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_JsonUtil> entry : this.update_Map.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.EvidenceSource> entry : this.update_Map.entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null) {
                evidenceSnapshot.put(entry.getKey(), entry.getValue().name());
             }
          }
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_JsonUtil> entry : this.sync_Map.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.EvidenceSource> entry : this.sync_Map.entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null) {
                copyEvidenceSnapshot.put(entry.getKey(), entry.getValue().name());
             }
@@ -1528,7 +1528,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          Map<String, String> confidenceSnapshot = new LinkedHashMap<>();
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_ConfigStore> entry : this.flush_Map.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.MatchConfidence> entry : this.flush_Map.entrySet()) {
             if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null) {
                confidenceSnapshot.put(entry.getKey(), entry.getValue().name());
             }
@@ -1570,7 +1570,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          boolean sameAddress = currentAddress.equals(this.poll_Str);
          boolean hasCurrentSignature = !currentContextSignature.isEmpty();
          boolean sameContext = sameAddress && currentContextSignature.equals(this.pop_Str);
-         AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
          if (session != null && this.tick_Z) {
             if (currentAddress.equals(session.init_Str)) {
                session.load_Str = currentContextSignature;
@@ -1602,7 +1602,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return PluginSignatureCatalog.init_Str(plugin);
    }
 
-   private int init_I_AutismServerInfoOv_3(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
+   private int init_I_AutismServerInfoOv_3(AutismServerInfoOverlay.EvidenceSource evidence) {
       byte var10000;
       switch (evidence) {
          case PAYLOAD_CHANNEL:
@@ -1648,9 +1648,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private int init_I_AutismServerInfoOv(AutismServerInfoOverlay.Inner_ConfigStore confidence) {
+   private int init_I_AutismServerInfoOv(AutismServerInfoOverlay.MatchConfidence confidence) {
       byte var10000;
-      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+      switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
             var10000 = 0;
             break;
@@ -1670,11 +1670,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(
-      AutismServerInfoOverlay.Inner_JsonUtil current, AutismServerInfoOverlay.Inner_JsonUtil candidate
+   private AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(
+      AutismServerInfoOverlay.EvidenceSource current, AutismServerInfoOverlay.EvidenceSource candidate
    ) {
       if (current == null) {
-         return candidate == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : candidate;
+         return candidate == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : candidate;
       } else if (candidate == null) {
          return current;
       } else {
@@ -1682,9 +1682,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int load_I(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
+   private int load_I(AutismServerInfoOverlay.EvidenceSource evidence) {
       byte var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+      switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case PAYLOAD_CHANNEL:
             var10000 = 4;
             break;
@@ -1720,11 +1720,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private AutismServerInfoOverlay.Inner_JsonUtil load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
-      AutismServerInfoOverlay.Inner_JsonUtil current, AutismServerInfoOverlay.Inner_JsonUtil candidate
+   private AutismServerInfoOverlay.EvidenceSource load_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
+      AutismServerInfoOverlay.EvidenceSource current, AutismServerInfoOverlay.EvidenceSource candidate
    ) {
       if (candidate == null) {
-         return current == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : current;
+         return current == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : current;
       } else if (current == null) {
          return candidate;
       } else {
@@ -1732,9 +1732,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_AutismServerInfoOv(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
+   private boolean init_Z_AutismServerInfoOv(AutismServerInfoOverlay.EvidenceSource evidence) {
       boolean var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+      switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case COMMAND_TREE:
          case NAMESPACE:
          case ROOT_HINT:
@@ -1751,9 +1751,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean load_Z(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
+   private boolean load_Z(AutismServerInfoOverlay.EvidenceSource evidence) {
       boolean var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+      switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case PAYLOAD_CHANNEL:
          case COMMAND_GUI:
          case COMMAND_TREE:
@@ -1773,11 +1773,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
-      AutismServerInfoOverlay.Inner_ConfigStore current, AutismServerInfoOverlay.Inner_ConfigStore candidate
+   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
+      AutismServerInfoOverlay.MatchConfidence current, AutismServerInfoOverlay.MatchConfidence candidate
    ) {
       if (current == null) {
-         return candidate == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : candidate;
+         return candidate == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : candidate;
       } else if (candidate == null) {
          return current;
       } else {
@@ -1785,13 +1785,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_AutismServerInfoOv(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
-      AutismServerInfoOverlay.Inner_ConfigStore var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_AutismServerInfoOv(AutismServerInfoOverlay.EvidenceSource evidence) {
+      AutismServerInfoOverlay.MatchConfidence var10000;
+      switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case PAYLOAD_CHANNEL:
          case NAMESPACE:
          case VERSION_HINT:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
+            var10000 = AutismServerInfoOverlay.MatchConfidence.EXACT;
             break;
          case COMMAND_GUI:
          case COMMAND_TREE:
@@ -1800,13 +1800,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          case HELP_HINT:
          case PLUGIN_LIST:
          case FEATURE:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
+            var10000 = AutismServerInfoOverlay.MatchConfidence.FEATURE;
             break;
          case ROOT_HINT:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.STRONG;
+            var10000 = AutismServerInfoOverlay.MatchConfidence.STRONG;
             break;
          case UNKNOWN:
-            var10000 = AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN;
+            var10000 = AutismServerInfoOverlay.MatchConfidence.UNKNOWN;
             break;
          default:
             throw new MatchException(null, null);
@@ -1815,9 +1815,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean read(AutismServerInfoOverlay.Inner_JsonUtil evidence) {
+   private boolean read(AutismServerInfoOverlay.EvidenceSource evidence) {
       boolean var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+      switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case USER_AUTOCOMPLETE:
          case SCANNER_AUTOCOMPLETE:
          case HELP_HINT:
@@ -1836,26 +1836,26 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean init_Z_AutismServerInfoOv_4(AutismServerInfoOverlay.Inner_TextFormat entry) {
+   private boolean init_Z_AutismServerInfoOv_4(AutismServerInfoOverlay.PluginAccumulator entry) {
       return entry == null
          ? false
-         : entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.FEATURE || this.read(entry.init_AutismServerInfoOv_3);
+         : entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.DetectionType.FEATURE || this.read(entry.init_AutismServerInfoOv_3);
    }
 
-   private boolean load(AutismServerInfoOverlay.Inner_TextFormat entry) {
+   private boolean load(AutismServerInfoOverlay.PluginAccumulator entry) {
       return entry != null
-         && entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+         && entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.DetectionType.PLUGIN
          && !this.read(entry.init_AutismServerInfoOv_3)
-         && entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI;
+         && entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI;
    }
 
-   private int init_I_AutismServerInfoOv_5(AutismServerInfoOverlay.Inner_TextFormat entry) {
+   private int init_I_AutismServerInfoOv_5(AutismServerInfoOverlay.PluginAccumulator entry) {
       if (entry == null) {
          return 2147483647;
       }
 
       int score = this.init_I_AutismServerInfoOv_3(entry.init_AutismServerInfoOv_3) * 100 + this.init_I_AutismServerInfoOv(entry.init_AutismServerInfoOv) * 10;
-      if (entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.Inner_EventBus.FEATURE) {
+      if (entry.init_AutismServerInfoOv_2 == AutismServerInfoOverlay.DetectionType.FEATURE) {
          score += 1000;
       }
 
@@ -1875,39 +1875,39 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return score;
    }
 
-   private AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_Str_2(String value) {
+   private AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_Str_2(String value) {
       if (value != null && !value.isBlank()) {
          try {
-            return AutismServerInfoOverlay.Inner_JsonUtil.valueOf(value);
+            return AutismServerInfoOverlay.EvidenceSource.valueOf(value);
          } catch (IllegalArgumentException ignored) {
-            return AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+            return AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
          }
       } else {
-         return AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+         return AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
       }
    }
 
-   private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_Str_AutismServerInfoOv(
-      String value, AutismServerInfoOverlay.Inner_ConfigStore fallback
+   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_Str_AutismServerInfoOv(
+      String value, AutismServerInfoOverlay.MatchConfidence fallback
    ) {
       if (value != null && !value.isBlank()) {
          try {
-            return AutismServerInfoOverlay.Inner_ConfigStore.valueOf(value);
+            return AutismServerInfoOverlay.MatchConfidence.valueOf(value);
          } catch (IllegalArgumentException ignored) {
-            return fallback == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : fallback;
+            return fallback == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : fallback;
          }
       } else {
-         return fallback == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : fallback;
+         return fallback == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : fallback;
       }
    }
 
-   private int init_I_AutismServerInfoOv_Z(AutismServerInfoOverlay.Inner_ConfigStore confidence, boolean hovered) {
+   private int init_I_AutismServerInfoOv_Z(AutismServerInfoOverlay.MatchConfidence confidence, boolean hovered) {
       if (hovered) {
          return UiColorPalette.task();
       }
 
       int var10000;
-      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+      switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
             var10000 = UiColorPalette.cache();
             break;
@@ -1927,9 +1927,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private String init_Str_AutismServerInfoOv(AutismServerInfoOverlay.Inner_ConfigStore confidence) {
+   private String init_Str_AutismServerInfoOv(AutismServerInfoOverlay.MatchConfidence confidence) {
       String var10000;
-      switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+      switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
          case EXACT:
             var10000 = "Exact";
             break;
@@ -1949,29 +1949,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private Map<String, AutismServerInfoOverlay.Inner_TextFormat> init_Map_3() {
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private Map<String, AutismServerInfoOverlay.PluginAccumulator> init_Map_3() {
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       for (String plugin : this.load_List) {
          if (plugin != null && !plugin.isBlank()) {
             List<String> existing = this.load_List(plugin);
-            AutismServerInfoOverlay.Inner_JsonUtil evidence = this.update_Map
+            AutismServerInfoOverlay.EvidenceSource evidence = this.update_Map
                .getOrDefault(
                   this.load_Str_2(plugin),
-                  existing != null && !existing.isEmpty() ? AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT : AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN
+                  existing != null && !existing.isEmpty() ? AutismServerInfoOverlay.EvidenceSource.ROOT_HINT : AutismServerInfoOverlay.EvidenceSource.UNKNOWN
                );
             List<String> existingChannels = this.write_List_2(plugin);
             List<String> existingGuis = this.read_List_2(plugin);
-            AutismServerInfoOverlay.Inner_ConfigStore confidence = this.flush_Map
+            AutismServerInfoOverlay.MatchConfidence confidence = this.flush_Map
                .getOrDefault(this.load_Str_2(plugin), this.init_AutismServerInfoOv_AutismServerInfoOv(evidence));
-            AutismServerInfoOverlay.Inner_EventBus resultKind = this.init_AutismServerInfoOv_Str(plugin, evidence, confidence);
+            AutismServerInfoOverlay.DetectionType resultKind = this.init_AutismServerInfoOv_Str(plugin, evidence, confidence);
             this.init_Z_Map(
                entries, null, plugin, existing, existingChannels, existingGuis, existing != null && !existing.isEmpty(), evidence, confidence, resultKind
             );
             String key = this.load_Str_2(plugin);
-            AutismServerInfoOverlay.Inner_TextFormat entry = entries.get(key);
+            AutismServerInfoOverlay.PluginAccumulator entry = entries.get(key);
             if (entry != null) {
-               AutismServerInfoOverlay.Inner_JsonUtil copyEvidence = this.sync_Map
+               AutismServerInfoOverlay.EvidenceSource copyEvidence = this.sync_Map
                   .getOrDefault(key, this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(plugin, evidence));
                if (this.load_I(copyEvidence) < this.load_I(entry.load_AutismServerInfoOv)) {
                   entry.load_Set.clear();
@@ -1993,24 +1993,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return entries;
    }
 
-   private AutismServerInfoOverlay.Inner_ByteReader init_AutismServerInfoOv_Str(String value) {
+   private AutismServerInfoOverlay.ScanStatus init_AutismServerInfoOv_Str(String value) {
       if (value != null && !value.isBlank()) {
          try {
-            return AutismServerInfoOverlay.Inner_ByteReader.valueOf(value.trim().toUpperCase(Locale.ROOT));
+            return AutismServerInfoOverlay.ScanStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
          } catch (IllegalArgumentException ignored) {
-            return AutismServerInfoOverlay.Inner_ByteReader.NONE;
+            return AutismServerInfoOverlay.ScanStatus.NONE;
          }
       } else {
-         return AutismServerInfoOverlay.Inner_ByteReader.NONE;
+         return AutismServerInfoOverlay.ScanStatus.NONE;
       }
    }
 
    private boolean init_Z_Map(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String pluginName,
       Collection<String> commands,
       boolean commandBacked,
-      AutismServerInfoOverlay.Inner_JsonUtil evidence
+      AutismServerInfoOverlay.EvidenceSource evidence
    ) {
       return this.init_Z_Map(
          entries, null, pluginName, commands, List.of(), List.of(), commandBacked, evidence, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence)
@@ -2018,12 +2018,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Map(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String pluginName,
       Collection<String> commands,
       Collection<String> channels,
       boolean commandBacked,
-      AutismServerInfoOverlay.Inner_JsonUtil evidence
+      AutismServerInfoOverlay.EvidenceSource evidence
    ) {
       return this.init_Z_Map(
          entries, null, pluginName, commands, channels, List.of(), commandBacked, evidence, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence)
@@ -2031,13 +2031,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Map(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String explicitKey,
       String pluginName,
       Collection<String> commands,
       Collection<String> channels,
       boolean commandBacked,
-      AutismServerInfoOverlay.Inner_JsonUtil evidence
+      AutismServerInfoOverlay.EvidenceSource evidence
    ) {
       return this.init_Z_Map(
          entries, explicitKey, pluginName, commands, channels, List.of(), commandBacked, evidence, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence)
@@ -2045,53 +2045,53 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Map(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String explicitKey,
       String pluginName,
       Collection<String> commands,
       Collection<String> channels,
       Collection<String> guis,
       boolean commandBacked,
-      AutismServerInfoOverlay.Inner_JsonUtil evidence,
-      AutismServerInfoOverlay.Inner_ConfigStore confidence
+      AutismServerInfoOverlay.EvidenceSource evidence,
+      AutismServerInfoOverlay.MatchConfidence confidence
    ) {
       return this.init_Z_Map(
-         entries, explicitKey, pluginName, commands, channels, guis, commandBacked, evidence, confidence, AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+         entries, explicitKey, pluginName, commands, channels, guis, commandBacked, evidence, confidence, AutismServerInfoOverlay.DetectionType.PLUGIN
       );
    }
 
    private boolean init_Z_Map(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
       String explicitKey,
       String pluginName,
       Collection<String> commands,
       Collection<String> channels,
       Collection<String> guis,
       boolean commandBacked,
-      AutismServerInfoOverlay.Inner_JsonUtil evidence,
-      AutismServerInfoOverlay.Inner_ConfigStore confidence,
-      AutismServerInfoOverlay.Inner_EventBus resultKind
+      AutismServerInfoOverlay.EvidenceSource evidence,
+      AutismServerInfoOverlay.MatchConfidence confidence,
+      AutismServerInfoOverlay.DetectionType resultKind
    ) {
       if (pluginName != null && !pluginName.isBlank()) {
          String cleanName = pluginName.trim();
          String key = explicitKey != null && !explicitKey.isBlank() ? this.load_Str_2(explicitKey) : this.load_Str_2(cleanName);
-         if (!key.isEmpty() && (!sync_Set.contains(key) || evidence == AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL)) {
-            AutismServerInfoOverlay.Inner_TextFormat entry = entries.get(key);
+         if (!key.isEmpty() && (!sync_Set.contains(key) || evidence == AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL)) {
+            AutismServerInfoOverlay.PluginAccumulator entry = entries.get(key);
             if (entry == null) {
                if (entries.size() >= 1000) {
                   return false;
                }
 
-               entry = new AutismServerInfoOverlay.Inner_TextFormat();
+               entry = new AutismServerInfoOverlay.PluginAccumulator();
                entries.put(key, entry);
             }
 
             String beforeName = entry.init_Str;
             boolean beforeBacked = entry.init_Z;
-            AutismServerInfoOverlay.Inner_JsonUtil beforeEvidence = entry.init_AutismServerInfoOv_3;
-            AutismServerInfoOverlay.Inner_JsonUtil beforeCopyEvidence = entry.load_AutismServerInfoOv;
-            AutismServerInfoOverlay.Inner_ConfigStore beforeConfidence = entry.init_AutismServerInfoOv;
-            AutismServerInfoOverlay.Inner_EventBus beforeKind = entry.init_AutismServerInfoOv_2;
+            AutismServerInfoOverlay.EvidenceSource beforeEvidence = entry.init_AutismServerInfoOv_3;
+            AutismServerInfoOverlay.EvidenceSource beforeCopyEvidence = entry.load_AutismServerInfoOv;
+            AutismServerInfoOverlay.MatchConfidence beforeConfidence = entry.init_AutismServerInfoOv;
+            AutismServerInfoOverlay.DetectionType beforeKind = entry.init_AutismServerInfoOv_2;
             int beforeCommandCount = entry.init_Set.size();
             int beforeCopyCommandCount = entry.load_Set.size();
             int beforeChannelCount = entry.read.size();
@@ -2180,7 +2180,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean init_Z_Map_2(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> target, String explicitKey, AutismServerInfoOverlay.Inner_TextFormat source
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> target, String explicitKey, AutismServerInfoOverlay.PluginAccumulator source
    ) {
       if (target != null && source != null && source.init_Str != null && !source.init_Str.isBlank()) {
          boolean changed = this.init_Z_Map(
@@ -2196,9 +2196,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             source.init_AutismServerInfoOv_2
          );
          String key = explicitKey != null && !explicitKey.isBlank() ? this.load_Str_2(explicitKey) : this.load_Str_2(source.init_Str);
-         AutismServerInfoOverlay.Inner_TextFormat entry = target.get(key);
+         AutismServerInfoOverlay.PluginAccumulator entry = target.get(key);
          if (entry != null) {
-            AutismServerInfoOverlay.Inner_JsonUtil beforeCopyEvidence = entry.load_AutismServerInfoOv;
+            AutismServerInfoOverlay.EvidenceSource beforeCopyEvidence = entry.load_AutismServerInfoOv;
             int beforeCopyCommandCount = entry.load_Set.size();
             boolean betterCopySource = this.load_I(source.load_AutismServerInfoOv) < this.load_I(entry.load_AutismServerInfoOv);
             if (betterCopySource) {
@@ -2228,11 +2228,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_Map_Map(Map<String, AutismServerInfoOverlay.Inner_TextFormat> target, Map<String, AutismServerInfoOverlay.Inner_TextFormat> source) {
+   private boolean init_Z_Map_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> target, Map<String, AutismServerInfoOverlay.PluginAccumulator> source) {
       if (target != null && source != null && !source.isEmpty()) {
          boolean changed = false;
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_TextFormat> entry : source.entrySet()) {
+         for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> entry : source.entrySet()) {
             changed |= this.init_Z_Map_2(target, entry.getKey(), entry.getValue());
          }
 
@@ -2265,7 +2265,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_Map_Str(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, String command) {
+   private String init_Str_Map_Str(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String command) {
       if (entries != null && !entries.isEmpty()) {
          String token = this.read_Str_3(command);
          if (token.isBlank()) {
@@ -2275,8 +2275,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String bestKey = null;
          int bestScore = 2147483647;
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_TextFormat> mapEntry : new ArrayList<>(entries.entrySet())) {
-            AutismServerInfoOverlay.Inner_TextFormat entry = mapEntry.getValue();
+         for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> mapEntry : new ArrayList<>(entries.entrySet())) {
+            AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
             if (entry != null && entry.init_Set != null && entry.init_Set.contains(token)) {
                int score = this.init_I_AutismServerInfoOv_5(entry);
                if (score < bestScore) {
@@ -2289,7 +2289,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String aliasedPlugin = tick_Map.get(token);
          if (aliasedPlugin != null && !aliasedPlugin.isBlank()) {
             String aliasedKey = this.load_Str_2(aliasedPlugin);
-            AutismServerInfoOverlay.Inner_TextFormat aliasedEntry = entries.get(aliasedKey);
+            AutismServerInfoOverlay.PluginAccumulator aliasedEntry = entries.get(aliasedKey);
             if (this.load(aliasedEntry)) {
                int score = this.init_I_AutismServerInfoOv_5(aliasedEntry);
                if (bestKey == null || score <= bestScore || !this.load(entries.get(bestKey))) {
@@ -2304,24 +2304,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.Inner_TextFormat init_AutismServerInfoOv_Str_4(String command) {
+   private AutismServerInfoOverlay.PluginAccumulator init_AutismServerInfoOv_Str_4(String command) {
       String token = this.read_Str_3(command);
-      AutismServerInfoOverlay.Inner_TextFormat entry = new AutismServerInfoOverlay.Inner_TextFormat();
+      AutismServerInfoOverlay.PluginAccumulator entry = new AutismServerInfoOverlay.PluginAccumulator();
       entry.init_Str = "/" + token;
       entry.init_Z = true;
-      entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
-      entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE;
-      entry.load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
-      entry.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
+      entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.DetectionType.PLUGIN;
+      entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE;
+      entry.load_AutismServerInfoOv = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+      entry.init_AutismServerInfoOv = AutismServerInfoOverlay.MatchConfidence.FEATURE;
       entry.init_Set.add(token);
       return entry;
    }
 
-   private boolean init_Z_Map(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries) {
+   private boolean init_Z_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       if (entries != null && !entries.isEmpty()) {
          boolean changed = false;
 
-         for (AutismServerInfoOverlay.Inner_TextFormat entry : entries.values()) {
+         for (AutismServerInfoOverlay.PluginAccumulator entry : entries.values()) {
             if (entry != null) {
                changed |= this.init_Z_Set(entry.init_Set);
                changed |= this.init_Z_Set(entry.load_Set);
@@ -2330,7 +2330,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          TreeSet<String> allCommands = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-         for (AutismServerInfoOverlay.Inner_TextFormat entry : entries.values()) {
+         for (AutismServerInfoOverlay.PluginAccumulator entry : entries.values()) {
             if (entry != null && entry.init_Set != null) {
                allCommands.addAll(entry.init_Set);
             }
@@ -2345,14 +2345,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             }
          }
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_TextFormat> mapEntry : new ArrayList<>(entries.entrySet())) {
+         for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> mapEntry : new ArrayList<>(entries.entrySet())) {
             String key = mapEntry.getKey();
-            AutismServerInfoOverlay.Inner_TextFormat entry = mapEntry.getValue();
+            AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
             if (key != null && entry != null && !entry.init_Set.isEmpty()) {
                for (String command : new ArrayList<>(entry.init_Set)) {
                   String ownerKey = ownerByCommand.get(command);
                   if (ownerKey != null && !ownerKey.equals(key)) {
-                     AutismServerInfoOverlay.Inner_TextFormat owner = entries.get(ownerKey);
+                     AutismServerInfoOverlay.PluginAccumulator owner = entries.get(ownerKey);
                      if (owner != null) {
                         if (owner.init_Set.add(command)) {
                            changed = true;
@@ -2378,11 +2378,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          List<String> removeKeys = new ArrayList<>();
-         Map<String, AutismServerInfoOverlay.Inner_TextFormat> addEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+         Map<String, AutismServerInfoOverlay.PluginAccumulator> addEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_TextFormat> mapEntry : new ArrayList<>(entries.entrySet())) {
+         for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> mapEntry : new ArrayList<>(entries.entrySet())) {
             String key = mapEntry.getKey();
-            AutismServerInfoOverlay.Inner_TextFormat entry = mapEntry.getValue();
+            AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
             if (key == null || entry == null) {
                removeKeys.add(key);
             } else if (this.init_Z_AutismServerInfoOv_4(entry)) {
@@ -2396,23 +2396,23 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      changed = true;
                   }
 
-                  if (entry.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.Inner_EventBus.PLUGIN) {
-                     entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
+                  if (entry.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.DetectionType.PLUGIN) {
+                     entry.init_AutismServerInfoOv_2 = AutismServerInfoOverlay.DetectionType.PLUGIN;
                      changed = true;
                   }
 
-                  if (entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE) {
-                     entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE;
+                  if (entry.init_AutismServerInfoOv_3 != AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE) {
+                     entry.init_AutismServerInfoOv_3 = AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE;
                      changed = true;
                   }
 
-                  if (entry.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN) {
-                     entry.load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+                  if (entry.load_AutismServerInfoOv != AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
+                     entry.load_AutismServerInfoOv = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
                      entry.load_Set.clear();
                      changed = true;
                   }
 
-                  entry.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
+                  entry.init_AutismServerInfoOv = AutismServerInfoOverlay.MatchConfidence.FEATURE;
                } else {
                   for (String command : entry.init_Set) {
                      String hintKey = this.load_Str_2("command_" + command);
@@ -2444,11 +2444,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int init_I_Map(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries) {
+   private int init_I_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       if (entries != null && !entries.isEmpty()) {
          int count = 0;
 
-         for (AutismServerInfoOverlay.Inner_TextFormat entry : entries.values()) {
+         for (AutismServerInfoOverlay.PluginAccumulator entry : entries.values()) {
             if (entry != null && entry.init_Str != null && !entry.init_Str.isBlank()) {
                count++;
             }
@@ -2460,68 +2460,68 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_AutismServerInfoOv_Str_2(AutismServerInfoOverlay.Inner_PacketUtil session, String message) {
+   private void init_V_AutismServerInfoOv_Str_2(AutismServerInfoOverlay.ActiveScanSession session, String message) {
       if (clear_Z) {
          String generation = session == null ? "-" : Long.toString(session.init_J);
          System.out.println("[AUTISM][PluginScan][gen=" + generation + "] " + message);
       }
    }
 
-   private AutismServerInfoOverlay.Inner_EventBus init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_2(
-      AutismServerInfoOverlay.Inner_EventBus current, AutismServerInfoOverlay.Inner_EventBus candidate
+   private AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_2(
+      AutismServerInfoOverlay.DetectionType current, AutismServerInfoOverlay.DetectionType candidate
    ) {
       if (candidate == null) {
-         return current == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : current;
+         return current == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : current;
       } else if (current == null) {
          return candidate;
       } else {
-         return current != AutismServerInfoOverlay.Inner_EventBus.PLUGIN && candidate != AutismServerInfoOverlay.Inner_EventBus.PLUGIN
-            ? AutismServerInfoOverlay.Inner_EventBus.FEATURE
-            : AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
+         return current != AutismServerInfoOverlay.DetectionType.PLUGIN && candidate != AutismServerInfoOverlay.DetectionType.PLUGIN
+            ? AutismServerInfoOverlay.DetectionType.FEATURE
+            : AutismServerInfoOverlay.DetectionType.PLUGIN;
       }
    }
 
-   private AutismServerInfoOverlay.Inner_EventBus init_AutismServerInfoOv_Str(
-      String plugin, AutismServerInfoOverlay.Inner_JsonUtil evidence, AutismServerInfoOverlay.Inner_ConfigStore confidence
+   private AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_Str(
+      String plugin, AutismServerInfoOverlay.EvidenceSource evidence, AutismServerInfoOverlay.MatchConfidence confidence
    ) {
       String key = this.load_Str_2(plugin);
-      AutismServerInfoOverlay.Inner_EventBus stored = this.close_Map.get(key);
+      AutismServerInfoOverlay.DetectionType stored = this.close_Map.get(key);
       if (stored != null) {
          return stored;
       }
 
-      if (confidence != AutismServerInfoOverlay.Inner_ConfigStore.EXACT && confidence != AutismServerInfoOverlay.Inner_ConfigStore.STRONG) {
-         if (evidence != AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL
-            && evidence != AutismServerInfoOverlay.Inner_JsonUtil.VERSION_HINT
-            && evidence != AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE) {
+      if (confidence != AutismServerInfoOverlay.MatchConfidence.EXACT && confidence != AutismServerInfoOverlay.MatchConfidence.STRONG) {
+         if (evidence != AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL
+            && evidence != AutismServerInfoOverlay.EvidenceSource.VERSION_HINT
+            && evidence != AutismServerInfoOverlay.EvidenceSource.NAMESPACE) {
             String lower = plugin == null ? "" : plugin.trim().toLowerCase(Locale.ROOT);
 
             for (String featureLabel : run_Map.values()) {
                if (lower.equals(featureLabel.toLowerCase(Locale.ROOT))) {
-                  return AutismServerInfoOverlay.Inner_EventBus.FEATURE;
+                  return AutismServerInfoOverlay.DetectionType.FEATURE;
                }
             }
 
-            return AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
+            return AutismServerInfoOverlay.DetectionType.PLUGIN;
          } else {
-            return AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
+            return AutismServerInfoOverlay.DetectionType.PLUGIN;
          }
       } else {
-         return AutismServerInfoOverlay.Inner_EventBus.PLUGIN;
+         return AutismServerInfoOverlay.DetectionType.PLUGIN;
       }
    }
 
-   private AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_Str_AutismServerInfoOv_2(
-      String plugin, AutismServerInfoOverlay.Inner_JsonUtil evidence
+   private AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_Str_AutismServerInfoOv_2(
+      String plugin, AutismServerInfoOverlay.EvidenceSource evidence
    ) {
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN || evidence == null) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.UNKNOWN || evidence == null) {
          List<String> commands = this.init_List_Map_Str(this.init_Map, plugin);
          if (commands != null && !commands.isEmpty()) {
-            return AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT;
+            return AutismServerInfoOverlay.EvidenceSource.ROOT_HINT;
          }
       }
 
-      return this.load_Z(evidence) ? evidence : AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
+      return this.load_Z(evidence) ? evidence : AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
    }
 
    private List<String> init_List_Map_Str(Map<String, List<String>> map, String plugin) {
@@ -2573,8 +2573,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Map_Z(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, boolean resetSelection) {
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> normalizedEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private void init_V_Map_Z(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, boolean resetSelection) {
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> normalizedEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
       if (entries != null) {
          normalizedEntries.putAll(entries);
       }
@@ -2589,11 +2589,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.open_Map.clear();
       this.flush_Map.clear();
       this.close_Map.clear();
-      List<AutismServerInfoOverlay.Inner_TextFormat> sortedEntries = new ArrayList<>(normalizedEntries.values());
+      List<AutismServerInfoOverlay.PluginAccumulator> sortedEntries = new ArrayList<>(normalizedEntries.values());
       sortedEntries.removeIf(entryx -> entryx == null || entryx.init_Str == null || entryx.init_Str.isBlank());
       sortedEntries.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.init_Str, b.init_Str));
 
-      for (AutismServerInfoOverlay.Inner_TextFormat entry : sortedEntries) {
+      for (AutismServerInfoOverlay.PluginAccumulator entry : sortedEntries) {
          String plugin = entry.init_Str;
          List<String> commands = new ArrayList<>(entry.init_Set);
          commands.removeIf(cmd -> cmd == null || cmd.isBlank());
@@ -2607,10 +2607,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.read_Map.put(plugin, List.copyOf(guis));
          this.update_Map
             .put(
-               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_3 == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : entry.init_AutismServerInfoOv_3
+               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_3 == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : entry.init_AutismServerInfoOv_3
             );
          this.sync_Map
-            .put(this.load_Str_2(plugin), entry.load_AutismServerInfoOv == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : entry.load_AutismServerInfoOv);
+            .put(this.load_Str_2(plugin), entry.load_AutismServerInfoOv == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : entry.load_AutismServerInfoOv);
          List<String> copyCommands = new ArrayList<>(entry.load_Set);
          copyCommands.removeIf(cmd -> cmd == null || cmd.isBlank());
          copyCommands.sort(String.CASE_INSENSITIVE_ORDER);
@@ -2624,7 +2624,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             );
          this.close_Map
             .put(
-               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_2 == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : entry.init_AutismServerInfoOv_2
+               this.load_Str_2(plugin), entry.init_AutismServerInfoOv_2 == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : entry.init_AutismServerInfoOv_2
             );
       }
 
@@ -2691,7 +2691,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_Map(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, String rawCommand, AutismServerInfoOverlay.Inner_JsonUtil source) {
+   private boolean init_Z_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String rawCommand, AutismServerInfoOverlay.EvidenceSource source) {
       String token = this.read_Str_3(rawCommand);
       if (!this.load_Z_3(token)) {
          return false;
@@ -2711,34 +2711,34 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                List.of(),
                List.of(),
                !command.isBlank(),
-               AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE,
-               AutismServerInfoOverlay.Inner_ConfigStore.EXACT
+               AutismServerInfoOverlay.EvidenceSource.NAMESPACE,
+               AutismServerInfoOverlay.MatchConfidence.EXACT
             )
             : false;
       }
 
       String plugin = null;
-      AutismServerInfoOverlay.Inner_ConfigStore confidence = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
-      AutismServerInfoOverlay.Inner_JsonUtil evidence = source == null ? AutismServerInfoOverlay.Inner_JsonUtil.FEATURE : source;
+      AutismServerInfoOverlay.MatchConfidence confidence = AutismServerInfoOverlay.MatchConfidence.FEATURE;
+      AutismServerInfoOverlay.EvidenceSource evidence = source == null ? AutismServerInfoOverlay.EvidenceSource.FEATURE : source;
       if (this.init_Z_Str_6(token)) {
          plugin = token;
-         confidence = AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
-         evidence = AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE;
+         confidence = AutismServerInfoOverlay.MatchConfidence.EXACT;
+         evidence = AutismServerInfoOverlay.EvidenceSource.NAMESPACE;
       } else if (tick_Map.containsKey(token)) {
          plugin = tick_Map.get(token);
-         confidence = AutismServerInfoOverlay.Inner_ConfigStore.STRONG;
-         evidence = AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT;
+         confidence = AutismServerInfoOverlay.MatchConfidence.STRONG;
+         evidence = AutismServerInfoOverlay.EvidenceSource.ROOT_HINT;
       }
 
       if (plugin != null && !plugin.isBlank()) {
          return this.init_Z_Map(
-            entries, null, plugin, List.of(token), List.of(), List.of(), true, evidence, confidence, AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+            entries, null, plugin, List.of(token), List.of(), List.of(), true, evidence, confidence, AutismServerInfoOverlay.DetectionType.PLUGIN
          );
       }
 
       String ownerKey = this.init_Str_Map_Str(entries, token);
       if (ownerKey != null) {
-         AutismServerInfoOverlay.Inner_TextFormat owner = entries.get(ownerKey);
+         AutismServerInfoOverlay.PluginAccumulator owner = entries.get(ownerKey);
          if (owner == null) {
             return false;
          }
@@ -2750,9 +2750,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          return changed;
       } else {
-         return source != AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE
-               && source != AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI
-               && source != AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE
+         return source != AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE
+               && source != AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
+               && source != AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE
                && !run_Map.containsKey(token)
             ? false
             : this.init_Z_Map(
@@ -2763,9 +2763,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                List.of(),
                List.of(),
                true,
-               AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE,
-               AutismServerInfoOverlay.Inner_ConfigStore.FEATURE,
-               AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+               AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE,
+               AutismServerInfoOverlay.MatchConfidence.FEATURE,
+               AutismServerInfoOverlay.DetectionType.PLUGIN
             );
       }
    }
@@ -2835,11 +2835,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          || root.equals("help") || root.equals("?");
    }
 
-   private static boolean auditIsRootProbe(AutismServerInfoOverlay.Inner_RenderState state) {
+   private static boolean auditIsRootProbe(AutismServerInfoOverlay.ProbeSpec state) {
       if (state == null) {
          return false;
       }
-      if (state.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.ROOT) {
+      if (state.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.ROOT) {
          return true;
       }
       String query = state.init_Str == null ? "" : state.init_Str.trim();
@@ -2903,7 +2903,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return !rootProbe && nonNamespaced >= 120 && knownPluginMatches * 20 < nonNamespaced;
    }
 
-   private boolean init_Z_Str_AutismServerInfoOv(String candidate, AutismServerInfoOverlay.Inner_SyncManager kind) {
+   private boolean init_Z_Str_AutismServerInfoOv(String candidate, AutismServerInfoOverlay.ProbeKind kind) {
       if (candidate == null) {
          return false;
       } else {
@@ -2923,7 +2923,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (players.contains(key) || players.contains(clean.toLowerCase(Locale.ROOT))) {
             return false;
          } else {
-            return (kind == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST || kind == AutismServerInfoOverlay.Inner_SyncManager.VERSION)
+            return (kind == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST || kind == AutismServerInfoOverlay.ProbeKind.VERSION)
                   && (key.equals("plugins") || key.equals("plugin") || key.equals("version") || key.equals("about"))
                ? false
                : key.chars().allMatch(ch -> Character.isLetterOrDigit(ch) || ch == 95 || ch == 45 || ch == 46);
@@ -2944,11 +2944,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Map(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries) {
+   private void init_V_Map(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       this.load_V(entries);
    }
 
-   private void load_V(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries) {
+   private void load_V(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       if (!this.load_Set.isEmpty()) {
          Map<String, Set<String>> inferredMatches = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -2966,12 +2966,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          for (Entry<String, Set<String>> entry : inferredMatches.entrySet()) {
-            this.init_Z_Map(entries, entry.getKey(), entry.getValue(), true, AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT);
+            this.init_Z_Map(entries, entry.getKey(), entry.getValue(), true, AutismServerInfoOverlay.EvidenceSource.ROOT_HINT);
          }
       }
    }
 
-   private boolean init_Z_Map_Str(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, String rawCommand) {
+   private boolean init_Z_Map_Str(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String rawCommand) {
       String token = this.read_Str_3(rawCommand);
       if (!this.read_Z_2(token)) {
          return false;
@@ -2983,7 +2983,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       String ownerKey = this.init_Str_Map_Str(entries, token);
       if (ownerKey != null) {
-         AutismServerInfoOverlay.Inner_TextFormat owner = entries.get(ownerKey);
+         AutismServerInfoOverlay.PluginAccumulator owner = entries.get(ownerKey);
          if (owner != null && !owner.init_Set.contains(token)) {
             owner.init_Set.add(token);
             if (this.init_Z_AutismServerInfoOv(owner.load_AutismServerInfoOv)) {
@@ -3003,9 +3003,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             List.of(),
             List.of(),
             true,
-            AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE,
-            AutismServerInfoOverlay.Inner_ConfigStore.FEATURE,
-            AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+            AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE,
+            AutismServerInfoOverlay.MatchConfidence.FEATURE,
+            AutismServerInfoOverlay.DetectionType.PLUGIN
          );
       }
    }
@@ -3027,7 +3027,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean load_Z(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries) {
+   private boolean load_Z(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       String address = this.load_Str_11();
       if (address != null && !address.isBlank()) {
          boolean changed = false;
@@ -3035,7 +3035,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.init_List(address, this.close_Str_2())) {
             if (fingerprint != null && fingerprint.init_Str() != null && !fingerprint.init_Str().isBlank()) {
                changed |= this.init_Z_Map_bQ_CachePool(entries, fingerprint);
-               AutismServerInfoOverlay.Inner_ConfigStore confidence = this.init_AutismServerInfoOv_bQ_CachePool(fingerprint);
+               AutismServerInfoOverlay.MatchConfidence confidence = this.init_AutismServerInfoOv_bQ_CachePool(fingerprint);
                changed |= this.init_Z_Map(
                   entries,
                   fingerprint.load(),
@@ -3044,7 +3044,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   fingerprint.init_List(),
                   List.of(),
                   false,
-                  AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL,
+                  AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL,
                   confidence
                );
             }
@@ -3056,12 +3056,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv_bQ_CachePool(PluginSignatureCatalog.Inner_CachePool fingerprint) {
       String basis = fingerprint == null ? "" : fingerprint.read();
-      return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.Inner_ConfigStore.STRONG : AutismServerInfoOverlay.Inner_ConfigStore.EXACT;
+      return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.MatchConfidence.STRONG : AutismServerInfoOverlay.MatchConfidence.EXACT;
    }
 
-   private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, PluginSignatureCatalog.Inner_CachePool fingerprint) {
       if (entries != null && !entries.isEmpty() && fingerprint != null) {
          Set<String> keywords = this.init_Set_bQ_CachePool(fingerprint);
          if (keywords.isEmpty()) {
@@ -3071,9 +3071,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          boolean changed = false;
          List<String> removeKeys = new ArrayList<>();
 
-         for (Entry<String, AutismServerInfoOverlay.Inner_TextFormat> mapEntry : new ArrayList<>(entries.entrySet())) {
+         for (Entry<String, AutismServerInfoOverlay.PluginAccumulator> mapEntry : new ArrayList<>(entries.entrySet())) {
             String key = mapEntry.getKey();
-            AutismServerInfoOverlay.Inner_TextFormat entry = mapEntry.getValue();
+            AutismServerInfoOverlay.PluginAccumulator entry = mapEntry.getValue();
             if (key != null && key.startsWith("feature") && entry != null && this.init_Z_AutismServerInfoOv_Set(entry, keywords)) {
                changed |= this.init_Z_Map(
                   entries,
@@ -3083,7 +3083,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   fingerprint.init_List(),
                   entry.write,
                   entry.init_Z,
-                  AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL,
+                  AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL,
                   this.init_AutismServerInfoOv_bQ_CachePool(fingerprint)
                );
                removeKeys.add(key);
@@ -3133,7 +3133,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean init_Z_AutismServerInfoOv_Set(AutismServerInfoOverlay.Inner_TextFormat entry, Set<String> keywords) {
+   private boolean init_Z_AutismServerInfoOv_Set(AutismServerInfoOverlay.PluginAccumulator entry, Set<String> keywords) {
       if (entry != null && keywords != null && !keywords.isEmpty()) {
          List<String> evidenceText = new ArrayList<>();
          evidenceText.add(entry.init_Str);
@@ -3162,7 +3162,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (this.tick_Z) {
          if (this.load_Z(this.poll_Map)) {
             this.init_Z_Map(this.poll_Map);
-            AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+            AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
             if (session != null) {
                session.read_J = System.currentTimeMillis();
             }
@@ -3173,7 +3173,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (revision != this.sync_J) {
             this.sync_J = revision;
             if (revision > 0L) {
-               Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries = this.init_Map_3();
+               Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = this.init_Map_3();
                if (this.load_Z(entries)) {
                   this.init_V_Map_Z(entries, false);
                   if (this.pop_Z) {
@@ -3186,10 +3186,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int init_I_Map(
-      Map<Integer, AutismServerInfoOverlay.Inner_RenderState> probes,
+      Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes,
       Set<String> seen,
       int nextId,
-      AutismServerInfoOverlay.Inner_SyncManager kind,
+      AutismServerInfoOverlay.ProbeKind kind,
       String... baseCommands
    ) {
       for (String base : baseCommands) {
@@ -3203,18 +3203,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return nextId;
    }
 
-   private Map<Integer, AutismServerInfoOverlay.Inner_RenderState> load_Map() {
-      Map<Integer, AutismServerInfoOverlay.Inner_RenderState> probes = new LinkedHashMap<>();
+   private Map<Integer, AutismServerInfoOverlay.ProbeSpec> load_Map() {
+      Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes = new LinkedHashMap<>();
       Set<String> seen = new HashSet<>();
       int nextId = this.value_I_2();
-      nextId = this.init_I_Map(probes, seen, nextId, "/", AutismServerInfoOverlay.Inner_SyncManager.ROOT, null);
-      nextId = this.init_I_Map(probes, seen, nextId, "/ ", AutismServerInfoOverlay.Inner_SyncManager.ROOT, null);
-      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST, "/plugins", "/pl", "/bukkit:plugins", "/bukkit:pl");
+      nextId = this.init_I_Map(probes, seen, nextId, "/", AutismServerInfoOverlay.ProbeKind.ROOT, null);
+      nextId = this.init_I_Map(probes, seen, nextId, "/ ", AutismServerInfoOverlay.ProbeKind.ROOT, null);
+      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST, "/plugins", "/pl", "/bukkit:plugins", "/bukkit:pl");
       nextId = this.init_I_Map(
          probes,
          seen,
          nextId,
-         AutismServerInfoOverlay.Inner_SyncManager.VERSION,
+         AutismServerInfoOverlay.ProbeKind.VERSION,
          "/ver",
          "/version",
          "/about",
@@ -3222,24 +3222,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          "/bukkit:ver",
          "/bukkit:version"
       );
-      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.Inner_SyncManager.HELP, "/help", "/?", "/bukkit:help", "/minecraft:help");
+      nextId = this.init_I_Map(probes, seen, nextId, AutismServerInfoOverlay.ProbeKind.HELP, "/help", "/?", "/bukkit:help", "/minecraft:help");
 
       for (int i = 0; i < "abcdefghijklmnopqrstuvwxyz0123456789".length(); i++) {
          char prefix = "abcdefghijklmnopqrstuvwxyz0123456789".charAt(i);
          String rootProbe = "/" + prefix;
-         nextId = this.init_I_Map(probes, seen, nextId, rootProbe, AutismServerInfoOverlay.Inner_SyncManager.ROOT, String.valueOf(prefix));
-         nextId = this.init_I_Map(probes, seen, nextId, "/help " + prefix, AutismServerInfoOverlay.Inner_SyncManager.HELP, String.valueOf(prefix));
-         nextId = this.init_I_Map(probes, seen, nextId, "/? " + prefix, AutismServerInfoOverlay.Inner_SyncManager.HELP, String.valueOf(prefix));
+         nextId = this.init_I_Map(probes, seen, nextId, rootProbe, AutismServerInfoOverlay.ProbeKind.ROOT, String.valueOf(prefix));
+         nextId = this.init_I_Map(probes, seen, nextId, "/help " + prefix, AutismServerInfoOverlay.ProbeKind.HELP, String.valueOf(prefix));
+         nextId = this.init_I_Map(probes, seen, nextId, "/? " + prefix, AutismServerInfoOverlay.ProbeKind.HELP, String.valueOf(prefix));
       }
 
       for (String namespace : load_StrArr) {
-         nextId = this.init_I_Map(probes, seen, nextId, "/" + namespace + ":", AutismServerInfoOverlay.Inner_SyncManager.NAMESPACE, namespace);
+         nextId = this.init_I_Map(probes, seen, nextId, "/" + namespace + ":", AutismServerInfoOverlay.ProbeKind.NAMESPACE, namespace);
       }
 
       for (String plugin : sync_StrArr) {
-         nextId = this.init_I_Map(probes, seen, nextId, "/version " + plugin, AutismServerInfoOverlay.Inner_SyncManager.VERSION, plugin);
-         nextId = this.init_I_Map(probes, seen, nextId, "/ver " + plugin, AutismServerInfoOverlay.Inner_SyncManager.VERSION, plugin);
-         nextId = this.init_I_Map(probes, seen, nextId, "/help " + plugin, AutismServerInfoOverlay.Inner_SyncManager.HELP, plugin);
+         nextId = this.init_I_Map(probes, seen, nextId, "/version " + plugin, AutismServerInfoOverlay.ProbeKind.VERSION, plugin);
+         nextId = this.init_I_Map(probes, seen, nextId, "/ver " + plugin, AutismServerInfoOverlay.ProbeKind.VERSION, plugin);
+         nextId = this.init_I_Map(probes, seen, nextId, "/help " + plugin, AutismServerInfoOverlay.ProbeKind.HELP, plugin);
       }
 
       return probes;
@@ -3275,12 +3275,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.frame_V_2();
          if (this.tick_Z) {
             return true;
-         } else if (context.equals(this.open_Str) && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.COMPLETE) {
+         } else if (context.equals(this.open_Str) && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
             return true;
          } else {
             long cachedAt = AutismConfig.getGlobal().getPluginScanTimestampByAddress(address);
             boolean fresh = cachedAt > 0L && System.currentTimeMillis() - cachedAt < 5184000000L;
-            if (fresh && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_ByteReader.COMPLETE) {
+            if (fresh && this.pop_Z && this.init_AutismServerInfoOv == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
                this.open_Str = context;
                return true;
             } else {
@@ -3310,7 +3310,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void read_V_3(String reason) {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       if (session != null) {
          session.init_bS.init();
          this.init_V_AutismServerInfoOv_Str_2(session, "cancel reason=" + reason);
@@ -3323,7 +3323,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.run_Z = false;
    }
 
-   private void init_V_AutismServerInfoOv(AutismServerInfoOverlay.Inner_PacketUtil session, String stage, Throwable error) {
+   private void init_V_AutismServerInfoOv(AutismServerInfoOverlay.ActiveScanSession session, String stage, Throwable error) {
       if (session != null && !session.init_bS.load()) {
          session.sync++;
          String detail = error == null ? "unknown" : error.getClass().getSimpleName() + ": " + error.getMessage();
@@ -3337,11 +3337,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.init_V_AutismServerInfoOv_Str(null, "");
    }
 
-   private void init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader requestedOutcome, String issue) {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+   private void init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus requestedOutcome, String issue) {
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       if (session != null && session.init_bS.init()) {
          this.flush(true);
-         Map<String, AutismServerInfoOverlay.Inner_TextFormat> finalEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+         Map<String, AutismServerInfoOverlay.PluginAccumulator> finalEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          boolean processingFailed = false;
 
          try {
@@ -3357,21 +3357,21 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.init_V_AutismServerInfoOv_Str_2(session, "error stage=final-processing detail=" + error.getClass().getSimpleName());
          }
 
-         AutismServerInfoOverlay.Inner_ByteReader outcome = requestedOutcome;
+         AutismServerInfoOverlay.ScanStatus outcome = requestedOutcome;
          if (outcome == null) {
             outcome = !processingFailed && !session.init_bS.init(session.sync, session.update, session.init_Set.size())
-               ? AutismServerInfoOverlay.Inner_ByteReader.COMPLETE
-               : AutismServerInfoOverlay.Inner_ByteReader.PARTIAL;
+               ? AutismServerInfoOverlay.ScanStatus.COMPLETE
+               : AutismServerInfoOverlay.ScanStatus.PARTIAL;
          }
 
          if (processingFailed && finalEntries.isEmpty()) {
-            outcome = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
+            outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
          }
 
          boolean infrastructureFailure = processingFailed || session.sync > 0 || session.update > 0 || !session.init_Set.isEmpty();
          boolean restorePrevious = finalEntries.isEmpty() && infrastructureFailure && !session.init_Map.isEmpty();
          if (restorePrevious) {
-            outcome = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
+            outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
          }
 
          this.init_V_AutismServerInfoOv_Str_2(
@@ -3403,11 +3403,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          try {
             if (restorePrevious) {
                this.init_V_Map_Z(session.init_Map, false);
-            } else if (outcome != AutismServerInfoOverlay.Inner_ByteReader.FAILED || !finalEntries.isEmpty()) {
+            } else if (outcome != AutismServerInfoOverlay.ScanStatus.FAILED || !finalEntries.isEmpty()) {
                this.init_V_Map_Z(finalEntries, true);
             }
          } catch (RuntimeException error) {
-            outcome = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
+            outcome = AutismServerInfoOverlay.ScanStatus.FAILED;
             this.close_Str = "Could not publish results";
             init_Logger.warn("Plugin scan {} could not publish results", session.init_J, error);
             if (!session.init_Map.isEmpty()) {
@@ -3432,17 +3432,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.init_AutismServerInfoOv = outcome;
          if (issue != null && !issue.isBlank()) {
             this.close_Str = issue;
-         } else if (outcome == AutismServerInfoOverlay.Inner_ByteReader.COMPLETE) {
+         } else if (outcome == AutismServerInfoOverlay.ScanStatus.COMPLETE) {
             this.close_Str = "";
          } else if (this.close_Str.isBlank()) {
-            this.close_Str = outcome == AutismServerInfoOverlay.Inner_ByteReader.PARTIAL ? "Some probes did not reply" : "Scan failed";
+            this.close_Str = outcome == AutismServerInfoOverlay.ScanStatus.PARTIAL ? "Some probes did not reply" : "Scan failed";
          }
 
          this.load_Set.clear();
          this.poll_Map.clear();
          this.push_Map.clear();
          this.pool_V_2();
-         if (outcome != AutismServerInfoOverlay.Inner_ByteReader.FAILED || !this.load_List.isEmpty()) {
+         if (outcome != AutismServerInfoOverlay.ScanStatus.FAILED || !this.load_List.isEmpty()) {
             this.level_V_2();
          }
 
@@ -3455,11 +3455,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (autismclient.modules.aD.read_Z()) {
          this.poll_V_9();
       } else {
-         AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
          if (this.tick_Z && session != null && !session.init_bS.load() && init_Minecraft.getConnection() != null) {
             long now = System.currentTimeMillis();
             if (now >= session.write_J) {
-               AutismServerInfoOverlay.Inner_UiHelper request = session.init_Deque.pollFirst();
+               AutismServerInfoOverlay.QueuedProbe request = session.init_Deque.pollFirst();
                if (request != null) {
                   try {
                      ServerboundCommandSuggestionPacket packet = new ServerboundCommandSuggestionPacket(
@@ -3475,7 +3475,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         this.init_V_AutismServerInfoOv_Str_2(session, "retry probe=" + request.init_I + " reason=" + error.getClass().getSimpleName());
                         init_Logger.warn("Plugin scan {} will retry probe {}", session.init_J, request.init_I, error);
                         session.init_Deque
-                           .addLast(new AutismServerInfoOverlay.Inner_UiHelper(request.init_I, request.init_AutismServerInfoOv, request.load + 1));
+                           .addLast(new AutismServerInfoOverlay.QueuedProbe(request.init_I, request.init_AutismServerInfoOv, request.load + 1));
                      } else {
                         session.update++;
                         session.init_Set.remove(request.init_I);
@@ -3490,18 +3490,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int cache_I_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       return session == null ? 0 : Math.max(0, session.init_I);
    }
 
    private long init_J_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       int retryCount = session == null ? 0 : session.write_I;
       return Math.max(this.flags, (long)(this.cache_I_2() + retryCount) * this.flags);
    }
 
    private long load_J() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       if (session == null || session.load_J <= 0L) {
          return 0L;
       }
@@ -3536,13 +3536,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int state_I_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       int total = this.cache_I_2();
       return session == null ? 0 : Math.max(0, Math.min(total, session.load_I));
    }
 
    private int queue_I_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       int total = this.cache_I_2();
       return session == null ? 0 : Math.max(0, Math.min(total, session.read_I));
    }
@@ -3559,7 +3559,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
       float sentRatio = (float)this.state_I_2() / total;
       float answeredRatio = (float)this.queue_I_2() / total;
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       if (session != null && !session.init_Deque.isEmpty()) {
          float progress = 0.8F * sentRatio;
          progress += 0.05F * answeredRatio;
@@ -3592,17 +3592,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String update_Str_3() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       return session != null && !session.init_Deque.isEmpty() ? "Sending probes" : "Analyzing replies";
    }
 
    private int node_I_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       return session != null && !session.init_Deque.isEmpty() ? UiColorPalette.entry() : UiColorPalette.node();
    }
 
    private String sync_Str_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       int total = Math.max(1, this.cache_I_2());
       return session != null && !session.init_Deque.isEmpty() ? this.state_I_2() + "/" + total : this.queue_I_2() + "/" + total;
    }
@@ -3737,7 +3737,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void drain_V_2() {
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       if (this.tick_Z && session != null && !session.init_bS.load()) {
          try {
             this.table_V_2();
@@ -3750,14 +3750,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             boolean settledAfterLastResponse = session.read_J > 0L && now - session.read_J >= 700L;
             boolean timedOut = now - session.load_J >= this.read_J();
             if (allProbesSent && settledAfterSend && (!allResponsesReceived || settledAfterLastResponse) || timedOut) {
-               AutismServerInfoOverlay.Inner_ByteReader outcome = !session.init_bS.init(session.sync, session.update, session.init_Set.size())
-                  ? AutismServerInfoOverlay.Inner_ByteReader.COMPLETE
-                  : AutismServerInfoOverlay.Inner_ByteReader.PARTIAL;
+               AutismServerInfoOverlay.ScanStatus outcome = !session.init_bS.init(session.sync, session.update, session.init_Set.size())
+                  ? AutismServerInfoOverlay.ScanStatus.COMPLETE
+                  : AutismServerInfoOverlay.ScanStatus.PARTIAL;
                this.init_V_AutismServerInfoOv_Str(outcome, timedOut && !allResponsesReceived ? "Some probes timed out" : "");
             }
          } catch (RuntimeException error) {
             this.init_V_AutismServerInfoOv(session, "lifecycle", error);
-            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.PARTIAL, "Scan recovered from an error");
+            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from an error");
          }
       }
    }
@@ -3771,10 +3771,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             this.drain_V_2();
          }
       } catch (Throwable error) {
-         AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
          if (session != null) {
             this.init_V_AutismServerInfoOv(session, "background tick", error);
-            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.PARTIAL, "Scan recovered from an error");
+            this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from an error");
          } else {
             init_Logger.warn("Plugin scanner background update failed", error);
          }
@@ -3782,16 +3782,16 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_RootCommandNode(RootCommandNode<?> root) {
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
       entries.putAll(this.poll_Map);
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> legacyEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> legacyEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
       legacyEntries.putAll(this.push_Map);
       this.auditActiveKnownPlayers = this.init_Set_3();
 
       try {
          for (CommandNode<?> child : root.getChildren()) {
             String name = child.getName();
-            AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+            AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
             if (session != null) {
                session.flush++;
             }
@@ -3801,15 +3801,15 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                String ns = parts[0].toLowerCase();
                String cmd = parts[1];
                if (!sync_Set.contains(ns)) {
-                  this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
-                  this.init_Z_Map(entries, ns + ":" + cmd, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
+                  this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
+                  this.init_Z_Map(entries, ns + ":" + cmd, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
                   this.init_V_Str_11(cmd);
                }
             } else {
                this.init_V_Str_11(name);
                String token = this.read_Str_3(name);
                if (run_Map.containsKey(token)) {
-                  this.init_Z_Map(entries, name, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
+                  this.init_Z_Map(entries, name, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
                }
             }
          }
@@ -3826,7 +3826,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.push_Map.putAll(legacyEntries);
       this.poll_Map.clear();
       this.poll_Map.putAll(entries);
-      AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+      AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
       this.init_V_AutismServerInfoOv_Str_2(
          session,
          "command tree roots="
@@ -3864,7 +3864,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.pop_Z = false;
       this.put_Z = false;
       this.get_Z = false;
-      this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
+      this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
       this.close_Str = "";
       this.load_Set.clear();
       this.poll_Map.clear();
@@ -3886,11 +3886,11 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private int init_I_Map(
-      Map<Integer, AutismServerInfoOverlay.Inner_RenderState> probes,
+      Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes,
       Set<String> seen,
       int nextId,
       String query,
-      AutismServerInfoOverlay.Inner_SyncManager kind,
+      AutismServerInfoOverlay.ProbeKind kind,
       String hint
    ) {
       if (query != null && !query.isBlank()) {
@@ -3899,7 +3899,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             return nextId;
          }
 
-         probes.put(nextId++, new AutismServerInfoOverlay.Inner_RenderState(query, kind, hint));
+         probes.put(nextId++, new AutismServerInfoOverlay.ProbeSpec(query, kind, hint));
          return nextId;
       } else {
          return nextId;
@@ -3919,14 +3919,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if ((forceLive || !this.pop_Z) && !this.tick_Z) {
             if (init_Minecraft.getConnection() == null) {
                this.pop_Z = true;
-               this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.FAILED;
+               this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.FAILED;
                this.close_Str = "Not connected";
             } else {
                this.flags = this.state;
                this.poll_Str = this.load_Str_11();
                this.pop_Str = this.read_Str_8();
                long startedAt = System.currentTimeMillis();
-               AutismServerInfoOverlay.Inner_PacketUtil session = new AutismServerInfoOverlay.Inner_PacketUtil(
+               AutismServerInfoOverlay.ActiveScanSession session = new AutismServerInfoOverlay.ActiveScanSession(
                   this.read_J++, this.poll_Str, this.pop_Str, startedAt, this.init_Map_3()
                );
                session.write_J = startedAt + this.flags;
@@ -3937,7 +3937,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                this.load_Set.clear();
                this.poll_Map.clear();
                this.push_Map.clear();
-               this.init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ByteReader.NONE;
+               this.init_AutismServerInfoOv = AutismServerInfoOverlay.ScanStatus.NONE;
                this.close_Str = "";
                this.task_V_2();
 
@@ -3951,20 +3951,20 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   }
 
                   this.load_Z(this.poll_Map);
-                  Map<Integer, AutismServerInfoOverlay.Inner_RenderState> probes = this.load_Map();
+                  Map<Integer, AutismServerInfoOverlay.ProbeSpec> probes = this.load_Map();
                   session.init_I = probes.size();
 
-                  for (Entry<Integer, AutismServerInfoOverlay.Inner_RenderState> probe : probes.entrySet()) {
+                  for (Entry<Integer, AutismServerInfoOverlay.ProbeSpec> probe : probes.entrySet()) {
                      session.init_Set.add(probe.getKey());
                      session.load_Map.put(probe.getKey(), probe.getValue());
-                     session.init_Deque.addLast(new AutismServerInfoOverlay.Inner_UiHelper(probe.getKey(), probe.getValue()));
+                     session.init_Deque.addLast(new AutismServerInfoOverlay.QueuedProbe(probe.getKey(), probe.getValue()));
                   }
 
                   this.init_V_AutismServerInfoOv_Str_2(session, "start probes=" + session.init_I + " delay=" + this.flags + "ms");
                   this.drain_V_2();
                } catch (Exception error) {
                   this.init_V_AutismServerInfoOv(session, "startup", error);
-                  this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.Inner_ByteReader.PARTIAL, "Scan recovered from a startup error");
+                  this.init_V_AutismServerInfoOv_Str(AutismServerInfoOverlay.ScanStatus.PARTIAL, "Scan recovered from a startup error");
                }
             }
          }
@@ -3978,12 +3978,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (id >= 0 && command != null && !command.isBlank() && auditIsObservableCommandCompletion(command) && !CommandProbeIdAllocator.init(id)) {
             init_Minecraft.execute(() -> {
                try {
-                  AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+                  AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
                   if (session != null && session.load_Map.containsKey(id)) {
                      return;
                   }
 
-                  this.pop_Map.put(id, new AutismServerInfoOverlay.Inner_RenderState(command, AutismServerInfoOverlay.Inner_SyncManager.USER, null));
+                  this.pop_Map.put(id, new AutismServerInfoOverlay.ProbeSpec(command, AutismServerInfoOverlay.ProbeKind.USER, null));
 
                   while (this.pop_Map.size() > 256) {
                      Integer first = this.pop_Map.keySet().iterator().next();
@@ -4017,7 +4017,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                init_Minecraft.execute(() -> {
                   try {
                      this.load_V_Str_Str_2(root, fullCommand);
-                     this.init_V_Str_8(fullCommand, AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE, null);
+                     this.init_V_Str_8(fullCommand, AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE, null);
                   } catch (Throwable t) {
                      this.init_V_Str_Throwable("outgoing-command", t);
                   }
@@ -4033,9 +4033,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          if (title != null && !title.isBlank()) {
             init_Minecraft.execute(() -> {
                try {
-                  AutismServerInfoOverlay.Inner_StreamUtil command = this.init_AutismServerInfoOv_J(System.currentTimeMillis());
+                  AutismServerInfoOverlay.CommandHistoryEntry command = this.init_AutismServerInfoOv_J(System.currentTimeMillis());
                   if (command != null) {
-                     this.init_V_Str_8(command.load, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI, title);
+                     this.init_V_Str_8(command.load, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI, title);
                      return;
                   }
 
@@ -4055,7 +4055,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void load_V_Str_Str_2(String root, String fullCommand) {
       if (root != null && !root.isBlank()) {
-         this.init_Deque.addLast(new AutismServerInfoOverlay.Inner_StreamUtil(root, fullCommand == null ? root : fullCommand, System.currentTimeMillis()));
+         this.init_Deque.addLast(new AutismServerInfoOverlay.CommandHistoryEntry(root, fullCommand == null ? root : fullCommand, System.currentTimeMillis()));
 
          while (this.init_Deque.size() > 24) {
             this.init_Deque.removeFirst();
@@ -4063,14 +4063,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.Inner_StreamUtil init_AutismServerInfoOv_J(long now) {
-      AutismServerInfoOverlay.Inner_StreamUtil best = null;
+   private AutismServerInfoOverlay.CommandHistoryEntry init_AutismServerInfoOv_J(long now) {
+      AutismServerInfoOverlay.CommandHistoryEntry best = null;
 
       while (!this.init_Deque.isEmpty() && now - this.init_Deque.peekFirst().init_J > 1500L) {
          this.init_Deque.removeFirst();
       }
 
-      for (AutismServerInfoOverlay.Inner_StreamUtil command : this.init_Deque) {
+      for (AutismServerInfoOverlay.CommandHistoryEntry command : this.init_Deque) {
          if (command != null && now - command.init_J <= 1500L) {
             best = command;
          }
@@ -4079,7 +4079,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return best;
    }
 
-   private void init_V_Str_8(String rawCommand, AutismServerInfoOverlay.Inner_JsonUtil evidence, String guiTitle) {
+   private void init_V_Str_8(String rawCommand, AutismServerInfoOverlay.EvidenceSource evidence, String guiTitle) {
       if (rawCommand != null && !rawCommand.isBlank()) {
          init_Minecraft.execute(() -> {
             try {
@@ -4094,7 +4094,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                }
 
                this.load_V_Str_Str_2(root, rawCommand);
-               this.update_List.add(new AutismServerInfoOverlay.Inner_CachePool(rawCommand, evidence, guiTitle));
+               this.update_List.add(new AutismServerInfoOverlay.CommandEvidence(rawCommand, evidence, guiTitle));
                this.run_Z = true;
                this.flush(false);
             } catch (Throwable t) {
@@ -4127,7 +4127,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void read_V_Str_Str_2(String feature, String guiTitle) {
    }
 
-   private boolean init_Z_Map_3(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries, String rawCommand, String guiTitle) {
+   private boolean init_Z_Map_3(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, String rawCommand, String guiTitle) {
       String token = this.read_Str_3(rawCommand);
       if (!token.isBlank() && guiTitle != null && !guiTitle.isBlank()) {
          String ownerKey = this.init_Str_Map_Str(entries, token);
@@ -4135,7 +4135,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             return false;
          }
 
-         AutismServerInfoOverlay.Inner_TextFormat entry = entries.get(ownerKey);
+         AutismServerInfoOverlay.PluginAccumulator entry = entries.get(ownerKey);
          if (entry == null) {
             return false;
          }
@@ -4148,19 +4148,19 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          if (!this.read(entry.init_AutismServerInfoOv_3)) {
             entry.init_AutismServerInfoOv_3 = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(
-               entry.init_AutismServerInfoOv_3, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI
+               entry.init_AutismServerInfoOv_3, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
             );
          }
 
          entry.init_AutismServerInfoOv = this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(
-            entry.init_AutismServerInfoOv, AutismServerInfoOverlay.Inner_ConfigStore.FEATURE
+            entry.init_AutismServerInfoOv, AutismServerInfoOverlay.MatchConfidence.FEATURE
          );
          this.update_Map
             .put(ownerKey, this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv_3(this.update_Map.get(ownerKey), entry.init_AutismServerInfoOv_3));
          this.flush_Map
             .put(
                ownerKey,
-               this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.flush_Map.get(ownerKey), AutismServerInfoOverlay.Inner_ConfigStore.FEATURE)
+               this.init_AutismServerInfoOv_AutismServerInfoOv_AutismServerInfoOv(this.flush_Map.get(ownerKey), AutismServerInfoOverlay.MatchConfidence.FEATURE)
             );
          return before != entry.write.size();
       } else {
@@ -4168,13 +4168,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void read(Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries) {
+   private void read(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries) {
       this.load_Z(entries);
       this.init_Z_Map(entries);
       if (this.tick_Z) {
          this.poll_Map.clear();
          this.poll_Map.putAll(entries);
-         AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
          if (session != null) {
             session.read_J = System.currentTimeMillis();
          }
@@ -4211,9 +4211,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (!CommandProbeIdAllocator.init(id)) {
          init_Minecraft.execute(
             () -> {
-               AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
-               AutismServerInfoOverlay.Inner_RenderState probe = session == null ? null : session.load_Map.get(id);
-               AutismServerInfoOverlay.Inner_RenderState observed = this.pop_Map.remove(id);
+               AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
+               AutismServerInfoOverlay.ProbeSpec probe = session == null ? null : session.load_Map.get(id);
+               AutismServerInfoOverlay.ProbeSpec observed = this.pop_Map.remove(id);
                boolean scanProbe = probe != null || session != null && session.init_Set.contains(id);
                if (scanProbe || observed != null) {
                   long capturedGeneration = scanProbe ? session.init_J : -1L;
@@ -4251,7 +4251,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      if (!tokens.isEmpty()) {
                         this.write_List
                            .add(
-                              new AutismServerInfoOverlay.Inner_BufferHelper(
+                              new AutismServerInfoOverlay.ProbeObservation(
                                  liveObservation ? -1L : capturedGeneration, liveObservation, probe, observed, tokens
                               )
                            );
@@ -4293,26 +4293,26 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void close(boolean force) {
-      List<AutismServerInfoOverlay.Inner_BufferHelper> batch = new ArrayList<>(this.write_List);
+      List<AutismServerInfoOverlay.ProbeObservation> batch = new ArrayList<>(this.write_List);
       this.write_List.clear();
-      List<AutismServerInfoOverlay.Inner_CachePool> liveBatch = new ArrayList<>(this.update_List);
+      List<AutismServerInfoOverlay.CommandEvidence> liveBatch = new ArrayList<>(this.update_List);
       this.update_List.clear();
       if (!batch.isEmpty() || !liveBatch.isEmpty()) {
-         Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+         Map<String, AutismServerInfoOverlay.PluginAccumulator> entries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          if (this.tick_Z) {
             entries.putAll(this.poll_Map);
          } else {
             entries.putAll(this.init_Map_3());
          }
 
-         Map<String, AutismServerInfoOverlay.Inner_TextFormat> legacyEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+         Map<String, AutismServerInfoOverlay.PluginAccumulator> legacyEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          legacyEntries.putAll(this.push_Map);
 
          boolean scanData = false;
          Set<String> knownPlayers = this.init_Set_3();
          this.auditActiveKnownPlayers = knownPlayers;
          try {
-            for (AutismServerInfoOverlay.Inner_CachePool live : liveBatch) {
+            for (AutismServerInfoOverlay.CommandEvidence live : liveBatch) {
                this.init_Z_Map(entries, live.init_Str, live.init_AutismServerInfoOv);
                if (live.load != null && !live.load.isBlank()) {
                   this.init_Z_Map_3(entries, live.init_Str, live.load);
@@ -4322,7 +4322,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             Iterator var12 = batch.iterator();
 
             while (true) {
-               AutismServerInfoOverlay.Inner_BufferHelper reply;
+               AutismServerInfoOverlay.ProbeObservation reply;
                while (true) {
                   if (!var12.hasNext()) {
                      this.load_V(legacyEntries);
@@ -4336,7 +4336,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         this.push_Map.putAll(legacyEntries);
                         this.poll_Map.clear();
                         this.poll_Map.putAll(entries);
-                        AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+                        AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
                         this.init_V_AutismServerInfoOv_Str_2(
                            session,
                            "suggestions batch=" + batch.size() + " legacy=" + this.init_I_Map(this.push_Map) + " working=" + this.init_I_Map(this.poll_Map)
@@ -4349,12 +4349,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      return;
                   }
 
-                  reply = (AutismServerInfoOverlay.Inner_BufferHelper)var12.next();
+                  reply = (AutismServerInfoOverlay.ProbeObservation)var12.next();
                   if (reply.init_Z) {
                      break;
                   }
 
-                  AutismServerInfoOverlay.Inner_PacketUtil current = this.init_AutismServerInfoOv_3;
+                  AutismServerInfoOverlay.ActiveScanSession current = this.init_AutismServerInfoOv_3;
                   if (this.tick_Z && current != null && current.init(reply.init_J, this.load_Str_11())) {
                      scanData = true;
                      break;
@@ -4362,9 +4362,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                }
 
                boolean isArgCompletion = (reply.init_AutismServerInfoOv != null
-                     && (reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST
-                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.VERSION
-                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.HELP
+                     && (reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
+                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.VERSION
+                        || reply.init_AutismServerInfoOv.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.HELP
                         || (reply.init_AutismServerInfoOv.init_Str != null && reply.init_AutismServerInfoOv.init_Str.contains(" "))))
                   || (reply.load != null && reply.load.init_Str != null && reply.load.init_Str.contains(" "));
                boolean rootProbe = auditIsRootProbe(reply.init_AutismServerInfoOv) || auditIsRootProbe(reply.load);
@@ -4386,10 +4386,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_Map(
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> entries,
-      Map<String, AutismServerInfoOverlay.Inner_TextFormat> legacyEntries,
-      AutismServerInfoOverlay.Inner_RenderState probe,
-      AutismServerInfoOverlay.Inner_RenderState observed,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> entries,
+      Map<String, AutismServerInfoOverlay.PluginAccumulator> legacyEntries,
+      AutismServerInfoOverlay.ProbeSpec probe,
+      AutismServerInfoOverlay.ProbeSpec observed,
       boolean liveObservation,
       String text
    ) {
@@ -4403,24 +4403,24 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          String ns = parts[0].toLowerCase(Locale.ROOT);
          String cmd = parts.length > 1 ? parts[1] : "";
          if (!sync_Set.contains(ns)) {
-            this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
+            this.init_Z_Map(legacyEntries, ns, List.of(cmd), true, AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
             this.init_V_Str_11(cmd);
          }
 
-         this.init_Z_Map(entries, text, liveObservation ? AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE : AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE);
+         this.init_Z_Map(entries, text, liveObservation ? AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE : AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE);
       } else if (probe != null) {
-         if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.NAMESPACE && probe.load != null && !normalizedToken.isEmpty()) {
-            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE);
-            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.NAMESPACE);
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST
-            || probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.VERSION) {
+         if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.NAMESPACE && probe.load != null && !normalizedToken.isEmpty()) {
+            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
+            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.NAMESPACE);
+         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
+            || probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.VERSION) {
             String pluginCandidate = text.trim();
             String pluginKey = this.load_Str_2(pluginCandidate);
             if (this.init_Z_Str_AutismServerInfoOv(pluginCandidate, probe.init_AutismServerInfoOv) && !tick_Map.containsKey(pluginKey)) {
-               AutismServerInfoOverlay.Inner_JsonUtil candidateEvidence = probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.PLUGIN_LIST
-                  ? AutismServerInfoOverlay.Inner_JsonUtil.PLUGIN_LIST
-                  : AutismServerInfoOverlay.Inner_JsonUtil.VERSION_HINT;
-               AutismServerInfoOverlay.Inner_ConfigStore candidateConfidence = this.init_AutismServerInfoOv_AutismServerInfoOv(candidateEvidence);
+               AutismServerInfoOverlay.EvidenceSource candidateEvidence = probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.PLUGIN_LIST
+                  ? AutismServerInfoOverlay.EvidenceSource.PLUGIN_LIST
+                  : AutismServerInfoOverlay.EvidenceSource.VERSION_HINT;
+               AutismServerInfoOverlay.MatchConfidence candidateConfidence = this.init_AutismServerInfoOv_AutismServerInfoOv(candidateEvidence);
                this.init_Z_Map(
                   legacyEntries,
                   null,
@@ -4431,7 +4431,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   false,
                   candidateEvidence,
                   candidateConfidence,
-                  AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+                  AutismServerInfoOverlay.DetectionType.PLUGIN
                );
                this.init_Z_Map(
                   entries,
@@ -4443,17 +4443,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   false,
                   candidateEvidence,
                   candidateConfidence,
-                  AutismServerInfoOverlay.Inner_EventBus.PLUGIN
+                  AutismServerInfoOverlay.DetectionType.PLUGIN
                );
             }
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.HELP && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
-            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.HELP_HINT);
-            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.Inner_JsonUtil.HELP_HINT);
-         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.Inner_SyncManager.ROOT && !normalizedToken.isEmpty()) {
+         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.HELP && probe.load != null && probe.load.length() >= 2 && !normalizedToken.isEmpty()) {
+            this.init_Z_Map(legacyEntries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
+            this.init_Z_Map(entries, probe.load, List.of(normalizedToken), true, AutismServerInfoOverlay.EvidenceSource.HELP_HINT);
+         } else if (probe.init_AutismServerInfoOv == AutismServerInfoOverlay.ProbeKind.ROOT && !normalizedToken.isEmpty()) {
             this.init_Z_Map_Str(entries, normalizedToken);
          }
       } else if (observed != null && !normalizedToken.isEmpty()) {
-         this.init_Z_Map(entries, normalizedToken, AutismServerInfoOverlay.Inner_JsonUtil.USER_AUTOCOMPLETE);
+         this.init_Z_Map(entries, normalizedToken, AutismServerInfoOverlay.EvidenceSource.USER_AUTOCOMPLETE);
       }
    }
 
@@ -4472,7 +4472,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       String currentAddress = this.load_Str_11();
       if (!currentAddress.isEmpty()) {
          String currentContextSignature = this.read_Str_8();
-         AutismServerInfoOverlay.Inner_PacketUtil session = this.init_AutismServerInfoOv_3;
+         AutismServerInfoOverlay.ActiveScanSession session = this.init_AutismServerInfoOv_3;
          if (session != null && this.tick_Z && currentAddress.equals(session.init_Str)) {
             session.load_Str = currentContextSignature;
             this.pop_Str = currentContextSignature;
@@ -4769,7 +4769,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          int innerViewH = this.load_I_2(viewH);
          if (innerViewH > 0) {
             int rowContentW = Math.max(48, clipRight - clipLeft);
-            List<AutismServerInfoOverlay.Inner_StateCache> rows = this.init_List_Str_I(this.init_BitSetUtil.init_Str(), rowContentW);
+            List<AutismServerInfoOverlay.DetailRow> rows = this.init_List_Str_I(this.init_BitSetUtil.init_Str(), rowContentW);
             int estimatedContentHeight = this.load(rows);
             int maxScroll = Math.max(0, estimatedContentHeight - innerViewH);
             int quantizedTarget = this.init_I_I_3(this.init_CacheEntry.init(), this.o(), maxScroll);
@@ -4802,7 +4802,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   int cy = clipTop - visualScroll + this.read(startIndex);
 
                   for (int rowIndex = startIndex; rowIndex < rows.size(); rowIndex++) {
-                     AutismServerInfoOverlay.Inner_StateCache row = rows.get(rowIndex);
+                     AutismServerInfoOverlay.DetailRow row = rows.get(rowIndex);
                      int rowY = cy;
                      int rowTop = rowY;
                      int rowBottom = rowY + row.init_I;
@@ -4824,7 +4824,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               false
                            );
                         }
-                     } else if (row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.PLUGIN) {
+                     } else if (row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.PLUGIN) {
                         boolean standaloneCommandHint = this.init_Z_AutismServerInfoOv_2(row);
                         boolean selected = !standaloneCommandHint && this.read_Z_Str_Str(row.load, this.sync_Str);
                         boolean hovered = rowVisible && uiMouseX >= clipLeft && uiMouseX < clipLeft + rowContentW && uiMouseY >= rowTop && uiMouseY < rowBottom;
@@ -4897,7 +4897,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               int hitTop = Math.max(rowTop, clipTop);
                               int hitBottom = Math.min(rowBottom, clipBottom);
                               this.init_List
-                                 .add(new AutismServerInfoOverlay.Inner_DataUtil(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
+                                 .add(new AutismServerInfoOverlay.ClickHotspot(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
                                     this.sync_Str = this.read_Z_Str_Str(clickedPlugin, this.sync_Str) ? null : clickedPlugin;
                                     this.b_V_2();
                                     this.write_V_24();
@@ -4907,7 +4907,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                               int hitTop = Math.max(rowTop, clipTop);
                               int hitBottom = Math.min(rowBottom, clipBottom);
                               this.init_List
-                                 .add(new AutismServerInfoOverlay.Inner_DataUtil(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
+                                 .add(new AutismServerInfoOverlay.ClickHotspot(clipLeft, hitTop, rowContentW, Math.max(1, hitBottom - hitTop), () -> {
                                     this.push_V();
                                     this.init_List.clear();
                                     String fullCmd = hintCommand.startsWith("/") ? hintCommand : "/" + hintCommand;
@@ -4917,8 +4917,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            }
                         }
                      } else {
-                        boolean commandRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.COMMAND;
-                        boolean channelRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.CHANNEL
+                        boolean commandRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.COMMAND;
+                        boolean channelRow = row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.CHANNEL
                            && row.write != null
                            && !row.write.isBlank();
                         boolean clickableRow = commandRow || channelRow;
@@ -4961,7 +4961,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                            int hitBottom = Math.min(rowBottom, clipBottom);
                            this.init_List
                               .add(
-                                 new AutismServerInfoOverlay.Inner_DataUtil(
+                                 new AutismServerInfoOverlay.ClickHotspot(
                                     clipLeft + 9, hitTop, Math.max(1, rowContentW - 15), Math.max(1, hitBottom - hitTop), () -> {
                                        this.push_V();
                                        this.init_List.clear();
@@ -4995,7 +4995,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int init_I_AutismServerInfoOv_4(AutismServerInfoOverlay.Inner_StateCache row) {
+   private int init_I_AutismServerInfoOv_4(AutismServerInfoOverlay.DetailRow row) {
       if (row == null) {
          return this.init_CharEncoder.load(autismclient.gui.f.b.l.write);
       }
@@ -5025,10 +5025,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean init_Z_AutismServerInfoOv_2(AutismServerInfoOverlay.Inner_StateCache row) {
+   private boolean init_Z_AutismServerInfoOv_2(AutismServerInfoOverlay.DetailRow row) {
       return row != null
-         && row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.PLUGIN
-         && row.init_AutismServerInfoOv_4 == AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE
+         && row.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.PLUGIN
+         && row.init_AutismServerInfoOv_4 == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE
          && row.load != null
          && row.load.startsWith("/");
    }
@@ -5864,10 +5864,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<AutismServerInfoOverlay.Inner_StateCache> init_List_List_Str_3(List<AutismServerInfoOverlay.Inner_TaskQueue> filteredPlugins, String query) {
+   private List<AutismServerInfoOverlay.DetailRow> init_List_List_Str_3(List<AutismServerInfoOverlay.DetectedPluginEntry> filteredPlugins, String query) {
       String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       boolean searchActive = !normalizedQuery.isBlank();
-      Map<String, List<AutismServerInfoOverlay.Inner_StateCache>> grouped = new LinkedHashMap<>();
+      Map<String, List<AutismServerInfoOverlay.DetailRow>> grouped = new LinkedHashMap<>();
 
       for (String title : List.of(
          "Exact Plugins",
@@ -5883,7 +5883,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          grouped.put(title, new ArrayList<>());
       }
 
-      for (AutismServerInfoOverlay.Inner_TaskQueue detail : filteredPlugins) {
+      for (AutismServerInfoOverlay.DetectedPluginEntry detail : filteredPlugins) {
          if (detail != null && !detail.init_Str.isBlank()) {
             String plugin = detail.init_Str;
             String groupTitle = this.init_Str_AutismServerInfoOv(
@@ -5892,7 +5892,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             boolean standaloneCommandHint = this.init_Z_AutismServerInfoOv_3(detail);
             grouped.computeIfAbsent(groupTitle, unused -> new ArrayList<>())
                .add(
-                  AutismServerInfoOverlay.Inner_StateCache.init(
+                  AutismServerInfoOverlay.DetailRow.init(
                      plugin,
                      detail.init_AutismServerInfoOv_2,
                      detail.init_AutismServerInfoOv_3,
@@ -5909,8 +5909,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!searchActive || this.init_Z_Str(normalizedQuery, plugin, "/" + command, detail.read_Str)) {
                      grouped.get(groupTitle)
                         .add(
-                           AutismServerInfoOverlay.Inner_StateCache.init(
-                              AutismServerInfoOverlay.Inner_FileCache.COMMAND,
+                           AutismServerInfoOverlay.DetailRow.init(
+                              AutismServerInfoOverlay.DetailRowKind.COMMAND,
                               plugin,
                               "cmd /" + command,
                               "/" + command,
@@ -5927,8 +5927,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!searchActive || this.init_Z_Str(normalizedQuery, plugin, gui, detail.read_Str)) {
                      grouped.get(groupTitle)
                         .add(
-                           AutismServerInfoOverlay.Inner_StateCache.init(
-                              AutismServerInfoOverlay.Inner_FileCache.GUI,
+                           AutismServerInfoOverlay.DetailRow.init(
+                              AutismServerInfoOverlay.DetailRowKind.GUI,
                               plugin,
                               "gui " + gui,
                               null,
@@ -5946,8 +5946,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                   if (!searchActive || this.init_Z_Str(normalizedQuery, plugin, label, detail.read_Str)) {
                      grouped.get(groupTitle)
                         .add(
-                           AutismServerInfoOverlay.Inner_StateCache.init(
-                              AutismServerInfoOverlay.Inner_FileCache.CHANNEL,
+                           AutismServerInfoOverlay.DetailRow.init(
+                              AutismServerInfoOverlay.DetailRowKind.CHANNEL,
                               plugin,
                               "ch " + label,
                               this.open(channel),
@@ -5963,9 +5963,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
       }
 
-      List<AutismServerInfoOverlay.Inner_StateCache> rows = new ArrayList<>();
+      List<AutismServerInfoOverlay.DetailRow> rows = new ArrayList<>();
 
-      for (Entry<String, List<AutismServerInfoOverlay.Inner_StateCache>> group : grouped.entrySet()) {
+      for (Entry<String, List<AutismServerInfoOverlay.DetailRow>> group : grouped.entrySet()) {
          if (!group.getValue().isEmpty()) {
             group.getValue()
                .sort(
@@ -5978,7 +5978,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                         );
                   }
                );
-            rows.add(AutismServerInfoOverlay.Inner_StateCache.init(group.getKey(), this.g()));
+            rows.add(AutismServerInfoOverlay.DetailRow.init(group.getKey(), this.g()));
             rows.addAll(group.getValue());
          }
       }
@@ -5986,9 +5986,9 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return rows;
    }
 
-   private int init_I_AutismServerInfoOv_2(AutismServerInfoOverlay.Inner_FileCache type) {
+   private int init_I_AutismServerInfoOv_2(AutismServerInfoOverlay.DetailRowKind type) {
       byte var10000;
-      switch (type == null ? AutismServerInfoOverlay.Inner_FileCache.WHY : type) {
+      switch (type == null ? AutismServerInfoOverlay.DetailRowKind.WHY : type) {
          case HEADER:
             var10000 = 0;
             break;
@@ -6014,8 +6014,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private boolean init_Z_AutismServerInfoOv_3(AutismServerInfoOverlay.Inner_TaskQueue detail) {
-      if (detail != null && detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE && detail.init_List.size() == 1) {
+   private boolean init_Z_AutismServerInfoOv_3(AutismServerInfoOverlay.DetectedPluginEntry detail) {
+      if (detail != null && detail.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE && detail.init_List.size() == 1) {
          String command = detail.init_List.get(0);
          return command != null && detail.init_Str.equalsIgnoreCase("/" + command);
       } else {
@@ -6028,35 +6028,35 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String init_Str_AutismServerInfoOv(
-      AutismServerInfoOverlay.Inner_EventBus resultKind, AutismServerInfoOverlay.Inner_ConfigStore confidence, AutismServerInfoOverlay.Inner_JsonUtil evidence
+      AutismServerInfoOverlay.DetectionType resultKind, AutismServerInfoOverlay.MatchConfidence confidence, AutismServerInfoOverlay.EvidenceSource evidence
    ) {
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.SCANNER_AUTOCOMPLETE) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.SCANNER_AUTOCOMPLETE) {
          return "Command Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_TREE) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.COMMAND_TREE) {
          return "Command Tree";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.ROOT_HINT) {
          return "Command Root Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.PLUGIN_LIST) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.PLUGIN_LIST) {
          return "Plugin Command Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.VERSION_HINT) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.VERSION_HINT) {
          return "Version Hints";
       }
 
-      if (evidence == AutismServerInfoOverlay.Inner_JsonUtil.PAYLOAD_CHANNEL) {
+      if (evidence == AutismServerInfoOverlay.EvidenceSource.PAYLOAD_CHANNEL) {
          return "Payload Channels";
       }
 
-      if (resultKind != AutismServerInfoOverlay.Inner_EventBus.FEATURE && !this.read(evidence)) {
+      if (resultKind != AutismServerInfoOverlay.DetectionType.FEATURE && !this.read(evidence)) {
          String var10000;
-         switch (confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence) {
+         switch (confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence) {
             case EXACT:
                var10000 = "Exact Plugins";
                break;
@@ -6080,14 +6080,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String init_Str_AutismServerInfoOv_2(
-      AutismServerInfoOverlay.Inner_EventBus resultKind, AutismServerInfoOverlay.Inner_JsonUtil evidence, AutismServerInfoOverlay.Inner_ConfigStore confidence
+      AutismServerInfoOverlay.DetectionType resultKind, AutismServerInfoOverlay.EvidenceSource evidence, AutismServerInfoOverlay.MatchConfidence confidence
    ) {
-      if (resultKind == AutismServerInfoOverlay.Inner_EventBus.FEATURE) {
+      if (resultKind == AutismServerInfoOverlay.DetectionType.FEATURE) {
          return "feature command";
       }
 
       String var10000;
-      switch (evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence) {
+      switch (evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence) {
          case PAYLOAD_CHANNEL:
             var10000 = "payload channel";
             break;
@@ -6122,7 +6122,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             var10000 = "feature command";
             break;
          case UNKNOWN:
-            var10000 = confidence == AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN ? "unknown" : "weak hint";
+            var10000 = confidence == AutismServerInfoOverlay.MatchConfidence.UNKNOWN ? "unknown" : "weak hint";
             break;
          default:
             throw new MatchException(null, null);
@@ -6135,13 +6135,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return List.of("Command Tree", "Command Root Hint", "Plugin Command Hint", "Version Command Hint", "Payload Channel");
    }
 
-   private String init_Str_AutismServerInfoOv_2(AutismServerInfoOverlay.Inner_TaskQueue detail) {
+   private String init_Str_AutismServerInfoOv_2(AutismServerInfoOverlay.DetectedPluginEntry detail) {
       if (detail == null) {
          return "Other";
       }
 
-      AutismServerInfoOverlay.Inner_JsonUtil evidence = detail.load_AutismServerInfoOv == null
-         ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN
+      AutismServerInfoOverlay.EvidenceSource evidence = detail.load_AutismServerInfoOv == null
+         ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN
          : detail.load_AutismServerInfoOv;
       String var10000;
       switch (evidence) {
@@ -6185,7 +6185,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private String init_Str_Str(
-      String plugin, List<String> commands, List<String> guis, List<String> channels, String sourceLabel, AutismServerInfoOverlay.Inner_ConfigStore confidence
+      String plugin, List<String> commands, List<String> guis, List<String> channels, String sourceLabel, AutismServerInfoOverlay.MatchConfidence confidence
    ) {
       StringBuilder sb = new StringBuilder();
       sb.append(plugin == null ? "" : plugin)
@@ -6271,17 +6271,17 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Collection<AutismServerInfoOverlay.Inner_TaskQueue> init_Collection() {
+   private Collection<AutismServerInfoOverlay.DetectedPluginEntry> init_Collection() {
       if (this.data == this.prev) {
          return this.write_Map.values();
       }
 
-      Map<String, AutismServerInfoOverlay.Inner_NetHelper> builders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      Map<String, AutismServerInfoOverlay.NamespaceSummary> builders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       for (String plugin : this.load((Collection<String>)this.load_List)) {
          String key = this.load_Str_2(plugin);
          if (!key.isBlank()) {
-            AutismServerInfoOverlay.Inner_NetHelper builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.Inner_NetHelper());
+            AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
             if (builder.init_Str == null || builder.init_Str.isBlank() || this.load_Z_Str_Str_2(plugin, builder.init_Str)) {
                builder.init_Str = plugin.trim();
             }
@@ -6292,29 +6292,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.load_V_Map_Map(builders, this.open_Map);
       this.read_V_Map_Map(builders, this.read_Map);
       this.write(builders, this.load_Map);
-      Map<String, AutismServerInfoOverlay.Inner_TaskQueue> details = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      Map<String, AutismServerInfoOverlay.DetectedPluginEntry> details = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (Entry<String, AutismServerInfoOverlay.Inner_NetHelper> entry : builders.entrySet()) {
+      for (Entry<String, AutismServerInfoOverlay.NamespaceSummary> entry : builders.entrySet()) {
          String key = entry.getKey();
-         AutismServerInfoOverlay.Inner_NetHelper builder = entry.getValue();
+         AutismServerInfoOverlay.NamespaceSummary builder = entry.getValue();
          if (builder != null) {
             String displayName = builder.init_Str != null && !builder.init_Str.isBlank() ? builder.init_Str.trim() : key;
             List<String> commands = List.copyOf(builder.init_Set);
             List<String> copyCommands = builder.load.isEmpty() ? commands : List.copyOf(builder.load);
             List<String> guis = List.copyOf(builder.read);
             List<String> channels = this.init_List_Collection(builder.init_List);
-            AutismServerInfoOverlay.Inner_JsonUtil evidence = this.update_Map
-               .getOrDefault(key, commands.isEmpty() ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : AutismServerInfoOverlay.Inner_JsonUtil.ROOT_HINT);
-            AutismServerInfoOverlay.Inner_JsonUtil copyEvidence = this.sync_Map
+            AutismServerInfoOverlay.EvidenceSource evidence = this.update_Map
+               .getOrDefault(key, commands.isEmpty() ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : AutismServerInfoOverlay.EvidenceSource.ROOT_HINT);
+            AutismServerInfoOverlay.EvidenceSource copyEvidence = this.sync_Map
                .getOrDefault(key, this.init_AutismServerInfoOv_Str_AutismServerInfoOv_2(displayName, evidence));
-            AutismServerInfoOverlay.Inner_ConfigStore confidence = this.flush_Map.getOrDefault(key, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence));
-            AutismServerInfoOverlay.Inner_EventBus resultKind = this.init_AutismServerInfoOv_Str(displayName, evidence, confidence);
+            AutismServerInfoOverlay.MatchConfidence confidence = this.flush_Map.getOrDefault(key, this.init_AutismServerInfoOv_AutismServerInfoOv(evidence));
+            AutismServerInfoOverlay.DetectionType resultKind = this.init_AutismServerInfoOv_Str(displayName, evidence, confidence);
             String sourceLabel = this.init_Str_AutismServerInfoOv_2(resultKind, evidence, confidence);
             String countLabel = this.init_Str_List(commands, guis, channels);
             String searchText = this.init_Str_Str(displayName, commands, guis, channels, sourceLabel, confidence);
             details.put(
                key,
-               new AutismServerInfoOverlay.Inner_TaskQueue(
+               new AutismServerInfoOverlay.DetectedPluginEntry(
                   displayName, key, commands, guis, channels, resultKind, evidence, copyEvidence, confidence, sourceLabel, countLabel, copyCommands, searchText
                )
             );
@@ -6326,7 +6326,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return this.write_Map.values();
    }
 
-   private AutismServerInfoOverlay.Inner_TaskQueue init_AutismServerInfoOv_Str_3(String plugin) {
+   private AutismServerInfoOverlay.DetectedPluginEntry init_AutismServerInfoOv_Str_3(String plugin) {
       if (plugin != null && !plugin.isBlank()) {
          this.init_Collection();
          return this.write_Map.get(this.load_Str_2(plugin));
@@ -6335,12 +6335,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Map_Map(Map<String, AutismServerInfoOverlay.Inner_NetHelper> builders, Map<String, List<String>> source) {
+   private void init_V_Map_Map(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
             String key = this.load_Str_2(entry.getKey());
             if (!key.isBlank()) {
-               AutismServerInfoOverlay.Inner_NetHelper builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.Inner_NetHelper());
+               AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
                if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
                   builder.init_Str = entry.getKey().trim();
                }
@@ -6357,12 +6357,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load_V_Map_Map(Map<String, AutismServerInfoOverlay.Inner_NetHelper> builders, Map<String, List<String>> source) {
+   private void load_V_Map_Map(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
             String key = this.load_Str_2(entry.getKey());
             if (!key.isBlank()) {
-               AutismServerInfoOverlay.Inner_NetHelper builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.Inner_NetHelper());
+               AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
                if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
                   builder.init_Str = entry.getKey().trim();
                }
@@ -6379,12 +6379,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void read_V_Map_Map(Map<String, AutismServerInfoOverlay.Inner_NetHelper> builders, Map<String, List<String>> source) {
+   private void read_V_Map_Map(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
             String key = this.load_Str_2(entry.getKey());
             if (!key.isBlank()) {
-               AutismServerInfoOverlay.Inner_NetHelper builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.Inner_NetHelper());
+               AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
                if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
                   builder.init_Str = entry.getKey().trim();
                }
@@ -6401,12 +6401,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void write(Map<String, AutismServerInfoOverlay.Inner_NetHelper> builders, Map<String, List<String>> source) {
+   private void write(Map<String, AutismServerInfoOverlay.NamespaceSummary> builders, Map<String, List<String>> source) {
       if (source != null && !source.isEmpty()) {
          for (Entry<String, List<String>> entry : source.entrySet()) {
             String key = this.load_Str_2(entry.getKey());
             if (!key.isBlank()) {
-               AutismServerInfoOverlay.Inner_NetHelper builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.Inner_NetHelper());
+               AutismServerInfoOverlay.NamespaceSummary builder = builders.computeIfAbsent(key, unused -> new AutismServerInfoOverlay.NamespaceSummary());
                if ((builder.init_Str == null || builder.init_Str.isBlank()) && entry.getKey() != null) {
                   builder.init_Str = entry.getKey().trim();
                }
@@ -6420,30 +6420,30 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private List<String> load_List(String plugin) {
-      AutismServerInfoOverlay.Inner_TaskQueue detail = this.init_AutismServerInfoOv_Str_3(plugin);
+      AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
       return detail == null ? List.of() : detail.init_List;
    }
 
    private List<String> read_List_2(String plugin) {
-      AutismServerInfoOverlay.Inner_TaskQueue detail = this.init_AutismServerInfoOv_Str_3(plugin);
+      AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
       return detail == null ? List.of() : detail.load_List;
    }
 
    private List<String> write_List_2(String plugin) {
-      AutismServerInfoOverlay.Inner_TaskQueue detail = this.init_AutismServerInfoOv_Str_3(plugin);
+      AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
       return detail == null ? List.of() : detail.read_List;
    }
 
-   private List<AutismServerInfoOverlay.Inner_StateCache> init_List_Str_I(String queryText, int rowContentWidth) {
+   private List<AutismServerInfoOverlay.DetailRow> init_List_Str_I(String queryText, int rowContentWidth) {
       String query = queryText == null ? "" : queryText.trim().toLowerCase(Locale.ROOT);
       String selectedKey = this.sync_Str == null ? "" : this.load_Str_2(this.sync_Str);
       if (this.size == this.valid && Objects.equals(this.write_Str, query) && Objects.equals(this.update_Str, selectedKey) && this.stop == rowContentWidth) {
          return this.read_List;
       }
 
-      List<AutismServerInfoOverlay.Inner_TaskQueue> filtered = new ArrayList<>();
+      List<AutismServerInfoOverlay.DetectedPluginEntry> filtered = new ArrayList<>();
 
-      for (AutismServerInfoOverlay.Inner_TaskQueue detail : this.init_Collection()) {
+      for (AutismServerInfoOverlay.DetectedPluginEntry detail : this.init_Collection()) {
          if (detail != null && (query.isEmpty() || detail.update.contains(query))) {
             filtered.add(detail);
          }
@@ -6459,7 +6459,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private boolean write(String plugin, String query) {
       if (plugin != null && query != null && !query.isBlank()) {
-         AutismServerInfoOverlay.Inner_TaskQueue detail = this.init_AutismServerInfoOv_Str_3(plugin);
+         AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
          return detail != null && detail.update.contains(query);
       } else {
          return false;
@@ -6493,14 +6493,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       this.prev_V_7();
    }
 
-   private int load(List<AutismServerInfoOverlay.Inner_StateCache> rows) {
+   private int load(List<AutismServerInfoOverlay.DetailRow> rows) {
       if (rows == this.read_List) {
          return this.next;
       }
 
       int total = 0;
 
-      for (AutismServerInfoOverlay.Inner_StateCache row : rows) {
+      for (AutismServerInfoOverlay.DetailRow row : rows) {
          if (row != null) {
             total += row.init_I;
          }
@@ -6509,14 +6509,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return total;
    }
 
-   private void init_V_List_5(List<AutismServerInfoOverlay.Inner_StateCache> rows) {
-      List<AutismServerInfoOverlay.Inner_StateCache> safeRows = rows == null ? List.of() : List.copyOf(rows);
+   private void init_V_List_5(List<AutismServerInfoOverlay.DetailRow> rows) {
+      List<AutismServerInfoOverlay.DetailRow> safeRows = rows == null ? List.of() : List.copyOf(rows);
       int[] offsets = new int[safeRows.size()];
       int cursor = 0;
 
       for (int i = 0; i < safeRows.size(); i++) {
          offsets[i] = cursor;
-         AutismServerInfoOverlay.Inner_StateCache row = safeRows.get(i);
+         AutismServerInfoOverlay.DetailRow row = safeRows.get(i);
          cursor += row == null ? 0 : row.init_I;
       }
 
@@ -6529,7 +6529,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       return index >= 0 && index < this.init_IArr.length ? this.init_IArr[index] : 0;
    }
 
-   private int read_I_List_I(List<AutismServerInfoOverlay.Inner_StateCache> rows, int scrollOffset) {
+   private int read_I_List_I(List<AutismServerInfoOverlay.DetailRow> rows, int scrollOffset) {
       if (rows != null && !rows.isEmpty() && this.init_IArr.length != 0 && scrollOffset > 0) {
          int idx = Arrays.binarySearch(this.init_IArr, scrollOffset);
          if (idx < 0) {
@@ -6537,7 +6537,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          while (idx > 0) {
-            AutismServerInfoOverlay.Inner_StateCache row = rows.get(idx);
+            AutismServerInfoOverlay.DetailRow row = rows.get(idx);
             int rowBottom = this.init_IArr[idx] + (row == null ? 0 : row.init_I);
             if (rowBottom <= scrollOffset) {
                break;
@@ -6547,7 +6547,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          }
 
          while (idx < rows.size()) {
-            AutismServerInfoOverlay.Inner_StateCache row = rows.get(idx);
+            AutismServerInfoOverlay.DetailRow row = rows.get(idx);
             int rowBottom = this.init_IArr[idx] + (row == null ? 0 : row.init_I);
             if (rowBottom > scrollOffset) {
                break;
@@ -6625,7 +6625,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
 
       if (this.start == 1 && this.pop_Z && !this.tick_Z) {
-         for (AutismServerInfoOverlay.Inner_DataUtil region : this.init_List) {
+         for (AutismServerInfoOverlay.ClickHotspot region : this.init_List) {
             if (region.init(uiMouseX, uiMouseY)) {
                this.init_TextFormat.load();
                region.init_Runnable.run();
@@ -6804,7 +6804,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (this.load_List.isEmpty()) {
          bi.write("No plugins detected.");
       } else {
-         Map<String, List<AutismServerInfoOverlay.Inner_TaskQueue>> grouped = new TreeMap<>((a, b) -> {
+         Map<String, List<AutismServerInfoOverlay.DetectedPluginEntry>> grouped = new TreeMap<>((a, b) -> {
             int rank = Integer.compare(this.update_I(a), this.update_I(b));
             return rank != 0 ? rank : String.CASE_INSENSITIVE_ORDER.compare(a, b);
          });
@@ -6812,18 +6812,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          for (String plugin : this.load((Collection<String>)this.load_List)) {
             if (plugin != null && !plugin.isBlank()) {
-               AutismServerInfoOverlay.Inner_TaskQueue detail = this.init_AutismServerInfoOv_Str_3(plugin);
+               AutismServerInfoOverlay.DetectedPluginEntry detail = this.init_AutismServerInfoOv_Str_3(plugin);
                if (detail != null
-                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.HELP_HINT
-                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN) {
+                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.EvidenceSource.HELP_HINT
+                  && detail.load_AutismServerInfoOv != AutismServerInfoOverlay.EvidenceSource.UNKNOWN) {
                   String uiGroupTitle = this.init_Str_AutismServerInfoOv(
                      detail.init_AutismServerInfoOv_2, detail.init_AutismServerInfoOv, detail.init_AutismServerInfoOv_3
                   );
                   if (!"Command Hints".equals(uiGroupTitle)
                      && !"Other".equals(uiGroupTitle)
                      && (
-                        detail.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.Inner_EventBus.FEATURE
-                           || detail.load_AutismServerInfoOv == AutismServerInfoOverlay.Inner_JsonUtil.COMMAND_GUI
+                        detail.init_AutismServerInfoOv_2 != AutismServerInfoOverlay.DetectionType.FEATURE
+                           || detail.load_AutismServerInfoOv == AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI
                      )) {
                      grouped.computeIfAbsent(this.init_Str_AutismServerInfoOv_2(detail), unused -> new ArrayList<>()).add(detail);
                      copyCount++;
@@ -6838,13 +6838,13 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             StringBuilder sb = new StringBuilder();
             sb.append("Plugins (").append(copyCount).append("):\n");
 
-            for (Entry<String, List<AutismServerInfoOverlay.Inner_TaskQueue>> group : grouped.entrySet()) {
-               List<AutismServerInfoOverlay.Inner_TaskQueue> details = group.getValue();
+            for (Entry<String, List<AutismServerInfoOverlay.DetectedPluginEntry>> group : grouped.entrySet()) {
+               List<AutismServerInfoOverlay.DetectedPluginEntry> details = group.getValue();
                if (details != null && !details.isEmpty()) {
                   details.sort(Comparator.comparing(detailx -> detailx.init_Str, String.CASE_INSENSITIVE_ORDER));
                   sb.append("\n[").append(group.getKey()).append("]\n");
 
-                  for (AutismServerInfoOverlay.Inner_TaskQueue detail : details) {
+                  for (AutismServerInfoOverlay.DetectedPluginEntry detail : details) {
                      boolean ac = update_Set.contains(detail.load_Str.toLowerCase(Locale.ROOT));
                      String groupTitle = this.init_Str_AutismServerInfoOv_2(detail);
                      sb.append(ac ? "[AC] " : "- ").append(detail.init_Str);
@@ -6866,18 +6866,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_BufferHelper {
+   private static final class ProbeObservation {
       final long init_J;
       final boolean init_Z;
-      final AutismServerInfoOverlay.Inner_RenderState init_AutismServerInfoOv;
-      final AutismServerInfoOverlay.Inner_RenderState load;
+      final AutismServerInfoOverlay.ProbeSpec init_AutismServerInfoOv;
+      final AutismServerInfoOverlay.ProbeSpec load;
       final List<String> init_List;
 
-      Inner_BufferHelper(
+      ProbeObservation(
          long generation,
          boolean liveObservation,
-         AutismServerInfoOverlay.Inner_RenderState probe,
-         AutismServerInfoOverlay.Inner_RenderState observed,
+         AutismServerInfoOverlay.ProbeSpec probe,
+         AutismServerInfoOverlay.ProbeSpec observed,
          List<String> tokens
       ) {
          this.init_J = generation;
@@ -6888,40 +6888,40 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private enum Inner_ByteReader {
+   private enum ScanStatus {
       NONE,
       COMPLETE,
       PARTIAL,
       FAILED;
    }
 
-   private static final class Inner_CachePool {
+   private static final class CommandEvidence {
       final String init_Str;
-      final AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv;
+      final AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv;
       final String load;
 
-      Inner_CachePool(String command, AutismServerInfoOverlay.Inner_JsonUtil evidence, String guiTitle) {
+      CommandEvidence(String command, AutismServerInfoOverlay.EvidenceSource evidence, String guiTitle) {
          this.init_Str = command;
          this.init_AutismServerInfoOv = evidence;
          this.load = guiTitle;
       }
    }
 
-   private enum Inner_ConfigStore {
+   private enum MatchConfidence {
       EXACT,
       STRONG,
       FEATURE,
       UNKNOWN;
    }
 
-   private static class Inner_DataUtil {
+   private static class ClickHotspot {
       final int init_I;
       final int load;
       final int read;
       final int write;
       final Runnable init_Runnable;
 
-      Inner_DataUtil(int x, int y, int width, int height, Runnable action) {
+      ClickHotspot(int x, int y, int width, int height, Runnable action) {
          this.init_I = x;
          this.load = y;
          this.read = width;
@@ -6934,12 +6934,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private enum Inner_EventBus {
+   private enum DetectionType {
       PLUGIN,
       FEATURE;
    }
 
-   private enum Inner_FileCache {
+   private enum DetailRowKind {
       HEADER,
       PLUGIN,
       COMMAND,
@@ -6948,14 +6948,14 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       WHY;
    }
 
-   private static final class Inner_HashUtil extends autismclient.gui.ui.layout.LayoutNode {
+   private static final class ProgressBarNode extends autismclient.gui.ui.layout.LayoutNode {
       private float sync = 0.0F;
 
-      Inner_HashUtil() {
+      ProgressBarNode() {
          this.write = 12.0F;
       }
 
-      AutismServerInfoOverlay.Inner_HashUtil init(float progress) {
+      AutismServerInfoOverlay.ProgressBarNode init(float progress) {
          this.sync = Math.max(0.0F, Math.min(1.0F, progress));
          return this;
       }
@@ -6979,7 +6979,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private enum Inner_JsonUtil {
+   private enum EvidenceSource {
       PAYLOAD_CHANNEL,
       COMMAND_GUI,
       COMMAND_TREE,
@@ -6994,7 +6994,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       UNKNOWN;
    }
 
-   private static final class Inner_NetHelper {
+   private static final class NamespaceSummary {
       String init_Str;
       final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> load = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
@@ -7002,18 +7002,18 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       final List<String> init_List = new ArrayList<>();
    }
 
-   private static final class Inner_PacketUtil {
+   private static final class ActiveScanSession {
       final long init_J;
       final String init_Str;
       final ServerScanAttemptTracker init_bS;
       String load_Str;
       final long load_J;
-      final Map<String, AutismServerInfoOverlay.Inner_TextFormat> init_Map;
+      final Map<String, AutismServerInfoOverlay.PluginAccumulator> init_Map;
       long read_J;
       long write_J;
       final Set<Integer> init_Set = new HashSet<>();
-      final Map<Integer, AutismServerInfoOverlay.Inner_RenderState> load_Map = new HashMap<>();
-      final Deque<AutismServerInfoOverlay.Inner_UiHelper> init_Deque = new ArrayDeque<>();
+      final Map<Integer, AutismServerInfoOverlay.ProbeSpec> load_Map = new HashMap<>();
+      final Deque<AutismServerInfoOverlay.QueuedProbe> init_Deque = new ArrayDeque<>();
       int init_I;
       int load_I;
       int read_I;
@@ -7024,8 +7024,8 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       int close;
       int open;
 
-      Inner_PacketUtil(
-         long generation, String serverAddress, String contextSignature, long startedAt, Map<String, AutismServerInfoOverlay.Inner_TextFormat> previousEntries
+      ActiveScanSession(
+         long generation, String serverAddress, String contextSignature, long startedAt, Map<String, AutismServerInfoOverlay.PluginAccumulator> previousEntries
       ) {
          this.init_J = generation;
          this.init_Str = serverAddress == null ? "" : serverAddress;
@@ -7042,37 +7042,37 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_RenderState {
+   private static final class ProbeSpec {
       final String init_Str;
-      final AutismServerInfoOverlay.Inner_SyncManager init_AutismServerInfoOv;
+      final AutismServerInfoOverlay.ProbeKind init_AutismServerInfoOv;
       final String load;
 
-      Inner_RenderState(String query, AutismServerInfoOverlay.Inner_SyncManager kind, String hint) {
+      ProbeSpec(String query, AutismServerInfoOverlay.ProbeKind kind, String hint) {
          this.init_Str = query;
          this.init_AutismServerInfoOv = kind;
          this.load = hint;
       }
    }
 
-   private static final class Inner_RingBuffer extends autismclient.gui.ui.layout.LayoutNode {
+   private static final class TabBarNode extends autismclient.gui.ui.layout.LayoutNode {
       private static final int init_I = 2;
       private String[] init_StrArr = new String[0];
       private int load_I = 0;
       private IntConsumer init_IntConsumer;
 
-      AutismServerInfoOverlay.Inner_RingBuffer init_AutismServerInfoOv_StrArr(String... tabs) {
+      AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_StrArr(String... tabs) {
          this.init_StrArr = tabs == null ? new String[0] : (String[])tabs.clone();
          this.init_AutismServerInfoOv_I(this.load_I);
          this.load_V();
          return this;
       }
 
-      AutismServerInfoOverlay.Inner_RingBuffer init_AutismServerInfoOv_I(int activeIndex) {
+      AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_I(int activeIndex) {
          this.load_I = Math.max(0, Math.min(Math.max(0, this.init_StrArr.length - 1), activeIndex));
          return this;
       }
 
-      AutismServerInfoOverlay.Inner_RingBuffer init_AutismServerInfoOv_IntConsumer(IntConsumer onSelect) {
+      AutismServerInfoOverlay.TabBarNode init_AutismServerInfoOv_IntConsumer(IntConsumer onSelect) {
          this.init_IntConsumer = onSelect;
          return this;
       }
@@ -7129,28 +7129,28 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_StateCache {
-      final AutismServerInfoOverlay.Inner_FileCache init_AutismServerInfoOv_3;
+   private static final class DetailRow {
+      final AutismServerInfoOverlay.DetailRowKind init_AutismServerInfoOv_3;
       final String init_Str;
       final String load;
       final String read;
       final String write;
-      final AutismServerInfoOverlay.Inner_EventBus init_AutismServerInfoOv_2;
-      final AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_4;
-      final AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv;
+      final AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_2;
+      final AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_4;
+      final AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv;
       final int init_I;
       final String update;
       final String sync;
 
-      private Inner_StateCache(
-         AutismServerInfoOverlay.Inner_FileCache type,
+      private DetailRow(
+         AutismServerInfoOverlay.DetailRowKind type,
          String title,
          String plugin,
          String label,
          String actionCommand,
-         AutismServerInfoOverlay.Inner_EventBus resultKind,
-         AutismServerInfoOverlay.Inner_JsonUtil evidence,
-         AutismServerInfoOverlay.Inner_ConfigStore confidence,
+         AutismServerInfoOverlay.DetectionType resultKind,
+         AutismServerInfoOverlay.EvidenceSource evidence,
+         AutismServerInfoOverlay.MatchConfidence confidence,
          int height,
          String countLabel,
          String searchText
@@ -7160,61 +7160,61 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.load = plugin;
          this.read = label;
          this.write = actionCommand;
-         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : resultKind;
-         this.init_AutismServerInfoOv_4 = evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence;
-         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence;
+         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
+         this.init_AutismServerInfoOv_4 = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
+         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
          this.init_I = Math.max(1, height);
          this.update = countLabel == null ? "" : countLabel;
          this.sync = searchText == null ? "" : searchText;
       }
 
-      static AutismServerInfoOverlay.Inner_StateCache init(String title, int height) {
-         return new AutismServerInfoOverlay.Inner_StateCache(
-            AutismServerInfoOverlay.Inner_FileCache.HEADER,
+      static AutismServerInfoOverlay.DetailRow init(String title, int height) {
+         return new AutismServerInfoOverlay.DetailRow(
+            AutismServerInfoOverlay.DetailRowKind.HEADER,
             title,
             null,
             title,
             null,
-            AutismServerInfoOverlay.Inner_EventBus.PLUGIN,
-            AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN,
-            AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN,
+            AutismServerInfoOverlay.DetectionType.PLUGIN,
+            AutismServerInfoOverlay.EvidenceSource.UNKNOWN,
+            AutismServerInfoOverlay.MatchConfidence.UNKNOWN,
             height,
             "",
             init(title)
          );
       }
 
-      static AutismServerInfoOverlay.Inner_StateCache init(
+      static AutismServerInfoOverlay.DetailRow init(
          String plugin,
-         AutismServerInfoOverlay.Inner_EventBus resultKind,
-         AutismServerInfoOverlay.Inner_JsonUtil evidence,
-         AutismServerInfoOverlay.Inner_ConfigStore confidence,
+         AutismServerInfoOverlay.DetectionType resultKind,
+         AutismServerInfoOverlay.EvidenceSource evidence,
+         AutismServerInfoOverlay.MatchConfidence confidence,
          int height,
          String countLabel,
          String searchText
       ) {
-         return new AutismServerInfoOverlay.Inner_StateCache(
-            AutismServerInfoOverlay.Inner_FileCache.PLUGIN, null, plugin, plugin, null, resultKind, evidence, confidence, height, countLabel, searchText
+         return new AutismServerInfoOverlay.DetailRow(
+            AutismServerInfoOverlay.DetailRowKind.PLUGIN, null, plugin, plugin, null, resultKind, evidence, confidence, height, countLabel, searchText
          );
       }
 
-      static AutismServerInfoOverlay.Inner_StateCache init(
-         AutismServerInfoOverlay.Inner_FileCache type,
+      static AutismServerInfoOverlay.DetailRow init(
+         AutismServerInfoOverlay.DetailRowKind type,
          String plugin,
          String label,
          String actionCommand,
-         AutismServerInfoOverlay.Inner_JsonUtil evidence,
-         AutismServerInfoOverlay.Inner_ConfigStore confidence,
+         AutismServerInfoOverlay.EvidenceSource evidence,
+         AutismServerInfoOverlay.MatchConfidence confidence,
          int height,
          String searchText
       ) {
-         return new AutismServerInfoOverlay.Inner_StateCache(
-            type, null, plugin, label, actionCommand, AutismServerInfoOverlay.Inner_EventBus.PLUGIN, evidence, confidence, height, "", searchText
+         return new AutismServerInfoOverlay.DetailRow(
+            type, null, plugin, label, actionCommand, AutismServerInfoOverlay.DetectionType.PLUGIN, evidence, confidence, height, "", searchText
          );
       }
 
       boolean init() {
-         return this.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.Inner_FileCache.HEADER;
+         return this.init_AutismServerInfoOv_3 == AutismServerInfoOverlay.DetailRowKind.HEADER;
       }
 
       private static String init(String text) {
@@ -7222,10 +7222,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record Inner_StreamUtil(String init_Str, String load, long init_J) {
+   private record CommandHistoryEntry(String init_Str, String load, long init_J) {
    }
 
-   private enum Inner_SyncManager {
+   private enum ProbeKind {
       ROOT,
       HELP,
       PLUGIN_LIST,
@@ -7234,7 +7234,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       USER;
    }
 
-   private static final class Inner_TableIndex extends autismclient.gui.ui.layout.LayoutNode {
+   private static final class SliderNode extends autismclient.gui.ui.layout.LayoutNode {
       private float sync = 0.0F;
       private float flush = 1.0F;
       private float close = 0.0F;
@@ -7242,22 +7242,22 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       private boolean write_Z = false;
       private Consumer<Float> init_Consumer;
 
-      Inner_TableIndex() {
+      SliderNode() {
          this.write = 12.0F;
       }
 
-      AutismServerInfoOverlay.Inner_TableIndex init_AutismServerInfoOv(float min, float max) {
+      AutismServerInfoOverlay.SliderNode init_AutismServerInfoOv(float min, float max) {
          this.sync = min;
          this.flush = Math.max(min, max);
          return this.load_AutismServerInfoOv(this.close);
       }
 
-      AutismServerInfoOverlay.Inner_TableIndex init_AutismServerInfoOv(float step) {
+      AutismServerInfoOverlay.SliderNode init_AutismServerInfoOv(float step) {
          this.open = Math.max(0.0F, step);
          return this.load_AutismServerInfoOv(this.close);
       }
 
-      AutismServerInfoOverlay.Inner_TableIndex load_AutismServerInfoOv(float value) {
+      AutismServerInfoOverlay.SliderNode load_AutismServerInfoOv(float value) {
          float snapped = this.load_F(this.init_F(value));
          if (Math.abs(this.close - snapped) > 1.0E-4F) {
             this.close = snapped;
@@ -7269,7 +7269,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          return this;
       }
 
-      AutismServerInfoOverlay.Inner_TableIndex init(Consumer<Float> onChange) {
+      AutismServerInfoOverlay.SliderNode init(Consumer<Float> onChange) {
          this.init_Consumer = onChange;
          return this;
       }
@@ -7338,31 +7338,31 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_TaskQueue {
+   private static final class DetectedPluginEntry {
       final String init_Str;
       final String load_Str;
       final List<String> init_List;
       final List<String> load_List;
       final List<String> read_List;
-      final AutismServerInfoOverlay.Inner_EventBus init_AutismServerInfoOv_2;
-      final AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_3;
-      final AutismServerInfoOverlay.Inner_JsonUtil load_AutismServerInfoOv;
-      final AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv;
+      final AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_2;
+      final AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_3;
+      final AutismServerInfoOverlay.EvidenceSource load_AutismServerInfoOv;
+      final AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv;
       final String read_Str;
       final String write_Str;
       final List<String> write_List;
       final String update;
 
-      Inner_TaskQueue(
+      DetectedPluginEntry(
          String displayName,
          String key,
          List<String> commands,
          List<String> guis,
          List<String> channels,
-         AutismServerInfoOverlay.Inner_EventBus resultKind,
-         AutismServerInfoOverlay.Inner_JsonUtil evidence,
-         AutismServerInfoOverlay.Inner_JsonUtil copyEvidence,
-         AutismServerInfoOverlay.Inner_ConfigStore confidence,
+         AutismServerInfoOverlay.DetectionType resultKind,
+         AutismServerInfoOverlay.EvidenceSource evidence,
+         AutismServerInfoOverlay.EvidenceSource copyEvidence,
+         AutismServerInfoOverlay.MatchConfidence confidence,
          String sourceLabel,
          String countLabel,
          List<String> copyCommands,
@@ -7373,10 +7373,10 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.init_List = commands == null ? List.of() : commands;
          this.load_List = guis == null ? List.of() : guis;
          this.read_List = channels == null ? List.of() : channels;
-         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.Inner_EventBus.PLUGIN : resultKind;
-         this.init_AutismServerInfoOv_3 = evidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : evidence;
-         this.load_AutismServerInfoOv = copyEvidence == null ? AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN : copyEvidence;
-         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.Inner_ConfigStore.UNKNOWN : confidence;
+         this.init_AutismServerInfoOv_2 = resultKind == null ? AutismServerInfoOverlay.DetectionType.PLUGIN : resultKind;
+         this.init_AutismServerInfoOv_3 = evidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : evidence;
+         this.load_AutismServerInfoOv = copyEvidence == null ? AutismServerInfoOverlay.EvidenceSource.UNKNOWN : copyEvidence;
+         this.init_AutismServerInfoOv = confidence == null ? AutismServerInfoOverlay.MatchConfidence.UNKNOWN : confidence;
          this.read_Str = sourceLabel == null ? "" : sourceLabel;
          this.write_Str = countLabel == null ? "" : countLabel;
          this.write_List = copyCommands == null ? List.of() : copyCommands;
@@ -7384,29 +7384,29 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_TextFormat {
+   private static final class PluginAccumulator {
       String init_Str;
       boolean init_Z;
-      AutismServerInfoOverlay.Inner_EventBus init_AutismServerInfoOv_2;
-      AutismServerInfoOverlay.Inner_JsonUtil init_AutismServerInfoOv_3 = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
-      AutismServerInfoOverlay.Inner_JsonUtil load_AutismServerInfoOv = AutismServerInfoOverlay.Inner_JsonUtil.UNKNOWN;
-      AutismServerInfoOverlay.Inner_ConfigStore init_AutismServerInfoOv = AutismServerInfoOverlay.Inner_ConfigStore.FEATURE;
+      AutismServerInfoOverlay.DetectionType init_AutismServerInfoOv_2;
+      AutismServerInfoOverlay.EvidenceSource init_AutismServerInfoOv_3 = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+      AutismServerInfoOverlay.EvidenceSource load_AutismServerInfoOv = AutismServerInfoOverlay.EvidenceSource.UNKNOWN;
+      AutismServerInfoOverlay.MatchConfidence init_AutismServerInfoOv = AutismServerInfoOverlay.MatchConfidence.FEATURE;
       final Set<String> init_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> load_Set = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> read = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       final Set<String> write = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
    }
 
-   private static final class Inner_UiHelper {
+   private static final class QueuedProbe {
       final int init_I;
-      final AutismServerInfoOverlay.Inner_RenderState init_AutismServerInfoOv;
+      final AutismServerInfoOverlay.ProbeSpec init_AutismServerInfoOv;
       final int load;
 
-      Inner_UiHelper(int id, AutismServerInfoOverlay.Inner_RenderState spec) {
+      QueuedProbe(int id, AutismServerInfoOverlay.ProbeSpec spec) {
          this(id, spec, 0);
       }
 
-      Inner_UiHelper(int id, AutismServerInfoOverlay.Inner_RenderState spec, int attempt) {
+      QueuedProbe(int id, AutismServerInfoOverlay.ProbeSpec spec, int attempt) {
          this.init_I = id;
          this.init_AutismServerInfoOv = spec;
          this.load = attempt;

@@ -1712,7 +1712,7 @@ public final class f {
                   autismclient.util.AutismMacro runtimeMacro = this.init_aM_aM(macro);
                   if (runtimeMacro != null && runtimeMacro.init_List != null && !runtimeMacro.init_List.isEmpty()) {
                      runtimeMacro.load_V();
-                     this.init_J = MacroExecutor.init_J_aM_MacroExecutor_Pool(runtimeMacro, MacroExecutor.Inner_PoolEntry.init_MacroExecutor_Pool());
+                     this.init_J = MacroExecutor.init_J_aM_MacroExecutor_Pool(runtimeMacro, MacroExecutor.ExecutionFlags.init_MacroExecutor_Pool());
                      if (this.init_J < 0L) {
                         this.load("AutoFish auto stop could not start.");
                      }

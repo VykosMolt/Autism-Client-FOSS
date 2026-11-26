@@ -16,7 +16,7 @@ final class AiTranscriptLayout {
    static final int close = 3;
    static final int open = 8;
    static final int poll = 3;
-   private final Map<AiService.Inner_JsonUtil, AiTranscriptLayout.Inner_StateCache> init_Map = new IdentityHashMap<>();
+   private final Map<AiService.TranscriptEntry, AiTranscriptLayout.Inner_StateCache> init_Map = new IdentityHashMap<>();
    private List<AiTranscriptLayout.Inner_BufferHelper> init_List = List.of();
    private List<AiTranscriptLayout.Inner_DataUtil> load_List = List.of();
    private int push;
@@ -24,8 +24,8 @@ final class AiTranscriptLayout {
    private int tick = -1;
    private int run;
    private int get = -1;
-   private AiService.Inner_JsonUtil init_cc_JsonUtil;
-   private AiService.Inner_JsonUtil load_cc_JsonUtil;
+   private AiService.TranscriptEntry init_cc_JsonUtil;
+   private AiService.TranscriptEntry load_cc_JsonUtil;
    private AiTranscriptLayout.Inner_TaskQueue init_cC_TaskQueue;
 
    List<AiTranscriptLayout.Inner_BufferHelper> init_List() {
@@ -41,17 +41,17 @@ final class AiTranscriptLayout {
    }
 
    boolean init(
-      List<AiService.Inner_JsonUtil> messages,
+      List<AiService.TranscriptEntry> messages,
       int width,
       int epoch,
       AiTranscriptLayout.Inner_TaskQueue metrics,
-      Map<AiService.Inner_JsonUtil, Boolean> pinned,
+      Map<AiService.TranscriptEntry, Boolean> pinned,
       int toggleRevision,
       AiTranscriptLayout.Inner_ConfigStore measure
    ) {
       int size = messages.size();
-      AiService.Inner_JsonUtil first = size == 0 ? null : messages.get(0);
-      AiService.Inner_JsonUtil last = size == 0 ? null : messages.get(size - 1);
+      AiService.TranscriptEntry first = size == 0 ? null : messages.get(0);
+      AiService.TranscriptEntry last = size == 0 ? null : messages.get(size - 1);
       if (size == this.pop
          && first == this.init_cc_JsonUtil
          && last == this.load_cc_JsonUtil
@@ -163,18 +163,18 @@ final class AiTranscriptLayout {
       return text.length() <= max ? text : text.substring(0, max);
    }
 
-   static String init_Str_cc_JsonUtil(AiService.Inner_JsonUtil message) {
+   static String init_Str_cc_JsonUtil(AiService.TranscriptEntry message) {
       return "tool".equals(message.role()) && !message.detail().isBlank() ? message.text() + "\n" + message.detail() : message.text();
    }
 
    private void init_V_List(
-      List<AiService.Inner_JsonUtil> messages, int width, int epoch, AiTranscriptLayout.Inner_TaskQueue m, Map<AiService.Inner_JsonUtil, Boolean> pinned, AiTranscriptLayout.Inner_ConfigStore measure
+      List<AiService.TranscriptEntry> messages, int width, int epoch, AiTranscriptLayout.Inner_TaskQueue m, Map<AiService.TranscriptEntry, Boolean> pinned, AiTranscriptLayout.Inner_ConfigStore measure
    ) {
       List<AiTranscriptLayout.Inner_BufferHelper> nextLines = new ArrayList<>(Math.max(16, messages.size() * 2));
       List<AiTranscriptLayout.Inner_DataUtil> nextBlocks = new ArrayList<>(messages.size());
       int tools = 0;
 
-      for (AiService.Inner_JsonUtil message : messages) {
+      for (AiService.TranscriptEntry message : messages) {
          if ("tool".equals(message.role())) {
             tools++;
          }
@@ -184,7 +184,7 @@ final class AiTranscriptLayout {
       int y = 0;
       AiTranscriptLayout.Inner_CachePool previous = null;
 
-      for (AiService.Inner_JsonUtil message : messages) {
+      for (AiService.TranscriptEntry message : messages) {
          AiTranscriptLayout.Inner_CachePool kind = init_cC_CachePool_Str(message.role());
          if (previous != null) {
             y += init(previous, kind) ? m.groupGap() : m.blockGap();
@@ -293,9 +293,9 @@ final class AiTranscriptLayout {
       this.load_List = List.copyOf(nextBlocks);
       this.push = y;
       if (this.init_Map.size() > messages.size() + 32) {
-         Map<AiService.Inner_JsonUtil, Boolean> live = new IdentityHashMap<>();
+         Map<AiService.TranscriptEntry, Boolean> live = new IdentityHashMap<>();
 
-         for (AiService.Inner_JsonUtil message : messages) {
+         for (AiService.TranscriptEntry message : messages) {
             live.put(message, Boolean.TRUE);
          }
 
@@ -482,7 +482,7 @@ final class AiTranscriptLayout {
    }
 
    record Inner_BufferHelper(
-      AiService.Inner_JsonUtil message,
+      AiService.TranscriptEntry message,
       AiTranscriptLayout.Inner_CachePool kind,
       String text,
       String secondary,
@@ -495,7 +495,7 @@ final class AiTranscriptLayout {
       String marker,
       int flags
    ) {
-      Inner_BufferHelper(AiService.Inner_JsonUtil message, AiTranscriptLayout.Inner_CachePool kind, String text, String secondary, int x, int y, int height, boolean expanded) {
+      Inner_BufferHelper(AiService.TranscriptEntry message, AiTranscriptLayout.Inner_CachePool kind, String text, String secondary, int x, int y, int height, boolean expanded) {
          this(message, kind, text, secondary, x, y, height, expanded, null, AiTranscriptLayout.Inner_StreamUtil.NONE, "", 0);
       }
    }
@@ -520,7 +520,7 @@ final class AiTranscriptLayout {
       }
    }
 
-   record Inner_DataUtil(AiService.Inner_JsonUtil message, AiTranscriptLayout.Inner_CachePool kind, int top, int bottom, boolean expanded) {
+   record Inner_DataUtil(AiService.TranscriptEntry message, AiTranscriptLayout.Inner_CachePool kind, int top, int bottom, boolean expanded) {
    }
 
    record Inner_JsonUtil(String text, int style, int width) {

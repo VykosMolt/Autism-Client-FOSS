@@ -418,12 +418,12 @@ public final class CommandTabNameProber {
                   init_V_be_DataUtil(control);
                   int batch = Math.max(4, conc[0]);
                   int end = Math.min(pending.size(), start + batch);
-                  List<MacroExecutor.Inner_EventBus> listeners = new ArrayList<>(end - start);
+                  List<MacroExecutor.PacketWaiter> listeners = new ArrayList<>(end - start);
 
                   for (int k = start; k < end; k++) {
                      int idx = pending.get(k);
                      int requestId = CommandProbeIdAllocator.init();
-                     MacroExecutor.Inner_EventBus listener = MacroExecutor.init_MacroExecutor_Even_Predicate(
+                     MacroExecutor.PacketWaiter listener = MacroExecutor.init_MacroExecutor_Even_Predicate(
                         packet -> packet instanceof ClientboundCommandSuggestionsPacket replyx && replyx.id() == requestId
                      );
                      listeners.add(listener);
@@ -533,7 +533,7 @@ public final class CommandTabNameProber {
       return results;
    }
 
-   private static List<String> init_List_MacroExecutor_Even(MacroExecutor.Inner_EventBus listener) {
+   private static List<String> init_List_MacroExecutor_Even(MacroExecutor.PacketWaiter listener) {
       try {
          Packet<?> reply = listener.init_CompletableFuture.getNow(null);
          List<String> out = new ArrayList<>();

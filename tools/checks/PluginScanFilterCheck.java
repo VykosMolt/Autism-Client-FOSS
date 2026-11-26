@@ -41,8 +41,8 @@ public class PluginScanFilterCheck {
    }
 
    static Object state(String query, String kind) throws Exception {
-      Class<?> stateClass = Class.forName("autismclient.util.AutismServerInfoOverlay$Inner_RenderState");
-      Class<?> kindClass = Class.forName("autismclient.util.AutismServerInfoOverlay$Inner_SyncManager");
+      Class<?> stateClass = Class.forName("autismclient.util.AutismServerInfoOverlay$ProbeSpec");
+      Class<?> kindClass = Class.forName("autismclient.util.AutismServerInfoOverlay$ProbeKind");
       Constructor<?> ctor = stateClass.getDeclaredConstructor(String.class, kindClass, String.class);
       ctor.setAccessible(true);
       Field kindField = kindClass.getDeclaredField(kind);
@@ -61,7 +61,7 @@ public class PluginScanFilterCheck {
          check(!(Boolean) observable.invoke(null, no), "not observable: " + no);
       }
 
-      Class<?> stateClass = Class.forName("autismclient.util.AutismServerInfoOverlay$Inner_RenderState");
+      Class<?> stateClass = Class.forName("autismclient.util.AutismServerInfoOverlay$ProbeSpec");
       Method rootProbe = overlay.getDeclaredMethod("auditIsRootProbe", stateClass);
       rootProbe.setAccessible(true);
       check((Boolean) rootProbe.invoke(null, state("/", "USER")), "/ is a root probe");
@@ -86,7 +86,7 @@ public class PluginScanFilterCheck {
       // Through the batch loop: a dropped batch still keeps its namespaced tokens.
       AutismServerInfoOverlay live = new AutismServerInfoOverlay(null);
       setField(live, "tick_Z", true);
-      Class<?> replyClass = Class.forName("autismclient.util.AutismServerInfoOverlay$Inner_BufferHelper");
+      Class<?> replyClass = Class.forName("autismclient.util.AutismServerInfoOverlay$ProbeObservation");
       Constructor<?> replyCtor = replyClass.getDeclaredConstructor(long.class, boolean.class, stateClass, stateClass, List.class);
       replyCtor.setAccessible(true);
       List<String> tokens = new ArrayList<>(commands);

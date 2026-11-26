@@ -3911,7 +3911,7 @@ final class AiTools {
       }
 
       final String macroFingerprint = AiJson.init_Str_Str(init_JsonObject_aM(macro).toString());
-      final long run = MacroExecutor.init_J_aM_MacroExecutor_Pool(macro, MacroExecutor.Inner_PoolEntry.init_MacroExecutor_Pool);
+      final long run = MacroExecutor.init_J_aM_MacroExecutor_Pool(macro, MacroExecutor.ExecutionFlags.init_MacroExecutor_Pool);
       if (run < 0L) {
          return AiGameOperations.init_AiOperation(
             AiOperation.Status.FAILED,

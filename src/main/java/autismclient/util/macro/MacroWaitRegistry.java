@@ -34,7 +34,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class MacroWaitRegistry {
-   private static final List<MacroWaitRegistry.Inner_EventBus> init_List = Collections.synchronizedList(new ArrayList<>());
+   private static final List<MacroWaitRegistry.WaitEntry> init_List = Collections.synchronizedList(new ArrayList<>());
    private static final AtomicLong init_AtomicLong = new AtomicLong();
    private static volatile long init_J = 0L;
    private static volatile long load = 0L;
@@ -54,20 +54,20 @@ public class MacroWaitRegistry {
    public static CompletableFuture<Void> init_CompletableFuture(String guiTitle) {
       Minecraft mc = Minecraft.getInstance();
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_JsonUtil condition = new MacroWaitRegistry.Inner_JsonUtil(guiTitle, mc.gui.screen(), future);
+      MacroWaitRegistry.WaitGuiTitleEntry condition = new MacroWaitRegistry.WaitGuiTitleEntry(guiTitle, mc.gui.screen(), future);
       init_List.add(condition);
       return future;
    }
 
    public static CompletableFuture<Void> load(String guiTitle) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      init_List.add(new MacroWaitRegistry.Inner_NetHelper(guiTitle, future));
+      init_List.add(new MacroWaitRegistry.WaitGuiCloseEntry(guiTitle, future));
       return future;
    }
 
    public static CompletableFuture<Void> init_CompletableFuture(Screen prevScreen) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      init_List.add(new MacroWaitRegistry.Inner_TaskQueue(prevScreen, future));
+      init_List.add(new MacroWaitRegistry.WaitScreenChangeEntry(prevScreen, future));
       return future;
    }
 
@@ -77,7 +77,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(MacroItemTarget target) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_UiHelper condition = new MacroWaitRegistry.Inner_UiHelper(target, future);
+      MacroWaitRegistry.WaitInventoryItemEntry condition = new MacroWaitRegistry.WaitInventoryItemEntry(target, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -90,7 +90,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init_CompletableFuture_F_Z(float threshold, boolean below) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_SyncManager condition = new MacroWaitRegistry.Inner_SyncManager(threshold, below, future);
+      MacroWaitRegistry.WaitHealthEntry condition = new MacroWaitRegistry.WaitHealthEntry(threshold, below, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -103,7 +103,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(WaitForBlockAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_StreamUtil condition = new MacroWaitRegistry.Inner_StreamUtil(action, future);
+      MacroWaitRegistry.WaitBlockEntry condition = new MacroWaitRegistry.WaitBlockEntry(action, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -120,7 +120,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init_CompletableFuture_ArrayUtil_Z(MacroItemTarget target, boolean checkMainHand) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_CachePool condition = new MacroWaitRegistry.Inner_CachePool(target, checkMainHand, future);
+      MacroWaitRegistry.WaitCooldownEntry condition = new MacroWaitRegistry.WaitCooldownEntry(target, checkMainHand, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -133,7 +133,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(double x, double y, double z, double leeway, boolean checkRotation, float yaw, float pitch, float rotLeeway) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_IoWorker condition = new MacroWaitRegistry.Inner_IoWorker(x, y, z, leeway, checkRotation, yaw, pitch, rotLeeway, future);
+      MacroWaitRegistry.WaitPosEntry condition = new MacroWaitRegistry.WaitPosEntry(x, y, z, leeway, checkRotation, yaw, pitch, rotLeeway, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -151,14 +151,14 @@ public class MacroWaitRegistry {
    public static CompletableFuture<Void> init(WaitForWorldChangeAction action) {
       Minecraft mc = Minecraft.getInstance();
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_PoolEntry condition = new MacroWaitRegistry.Inner_PoolEntry(init_Str(mc), action == null ? "" : action.targetDimension, future);
+      MacroWaitRegistry.WaitWorldChangeEntry condition = new MacroWaitRegistry.WaitWorldChangeEntry(init_Str(mc), action == null ? "" : action.targetDimension, future);
       init_List.add(condition);
       return future;
    }
 
    public static CompletableFuture<Void> init(WaitGamemodeChangeAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_ConfigStore condition = new MacroWaitRegistry.Inner_ConfigStore(action, autismclient.util.FakeGamemodeManager.init_W_StreamUtil(), future);
+      MacroWaitRegistry.WaitGamemodeEntry condition = new MacroWaitRegistry.WaitGamemodeEntry(action, autismclient.util.FakeGamemodeManager.init_W_StreamUtil(), future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -177,14 +177,14 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init_CompletableFuture_Vec3(Vec3 origin, double distance, boolean horizontalOnly) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_FileCache condition = new MacroWaitRegistry.Inner_FileCache(origin, distance, horizontalOnly, future);
+      MacroWaitRegistry.WaitPositionDeltaEntry condition = new MacroWaitRegistry.WaitPositionDeltaEntry(origin, distance, horizontalOnly, future);
       init_List.add(condition);
       return future;
    }
 
    public static CompletableFuture<Void> load_CompletableFuture() {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_HashUtil condition = new MacroWaitRegistry.Inner_HashUtil(future);
+      MacroWaitRegistry.WaitTickSyncEntry condition = new MacroWaitRegistry.WaitTickSyncEntry(future);
       init_List.add(condition);
       return future;
    }
@@ -192,27 +192,27 @@ public class MacroWaitRegistry {
    public static void init_V(Minecraft mc) {
       if (!init_List.isEmpty()) {
          Screen current = mc.gui.screen();
-         List<MacroWaitRegistry.Inner_EventBus> toRemove = new ArrayList<>();
+         List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (init_List) {
-            for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
+            for (MacroWaitRegistry.WaitEntry cond : init_List) {
                if (cond.init_Z()) {
                   toRemove.add(cond);
-               } else if (cond instanceof MacroWaitRegistry.Inner_JsonUtil gc) {
+               } else if (cond instanceof MacroWaitRegistry.WaitGuiTitleEntry gc) {
                   if (current != null && gc.init(current)) {
                      gc.init_V();
                      toRemove.add(gc);
                   }
-               } else if (cond instanceof MacroWaitRegistry.Inner_StateCache hic) {
+               } else if (cond instanceof MacroWaitRegistry.WaitContainerItemEntry hic) {
                   if (hic.init_Z_Minecraft(mc)) {
                      hic.init_V();
                      toRemove.add(hic);
                   }
-               } else if (cond instanceof MacroWaitRegistry.Inner_UiHelper ic) {
+               } else if (cond instanceof MacroWaitRegistry.WaitInventoryItemEntry ic) {
                   if (ic.init_Z_Minecraft(mc)) {
                      ic.init_V();
                      toRemove.add(ic);
                   }
-               } else if (cond instanceof MacroWaitRegistry.Inner_ByteReader scc && scc.init_Z_Minecraft(mc)) {
+               } else if (cond instanceof MacroWaitRegistry.WaitSlotChangeEntry scc && scc.init_Z_Minecraft(mc)) {
                   scc.init_V();
                   toRemove.add(scc);
                }
@@ -227,22 +227,22 @@ public class MacroWaitRegistry {
       if (!init_List.isEmpty()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null) {
-            List<MacroWaitRegistry.Inner_EventBus> toRemove = new ArrayList<>();
+            List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
             synchronized (init_List) {
-               for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
+               for (MacroWaitRegistry.WaitEntry cond : init_List) {
                   if (cond.init_Z()) {
                      toRemove.add(cond);
-                  } else if (cond instanceof MacroWaitRegistry.Inner_ByteReader scc) {
+                  } else if (cond instanceof MacroWaitRegistry.WaitSlotChangeEntry scc) {
                      if (scc.init_Z_Minecraft(mc)) {
                         scc.init_V();
                         toRemove.add(scc);
                      }
-                  } else if (cond instanceof MacroWaitRegistry.Inner_StateCache hic) {
+                  } else if (cond instanceof MacroWaitRegistry.WaitContainerItemEntry hic) {
                      if (hic.init_Z_Minecraft(mc)) {
                         hic.init_V();
                         toRemove.add(hic);
                      }
-                  } else if (cond instanceof MacroWaitRegistry.Inner_UiHelper ic && ic.init_Z_Minecraft(mc)) {
+                  } else if (cond instanceof MacroWaitRegistry.WaitInventoryItemEntry ic && ic.init_Z_Minecraft(mc)) {
                      ic.init_V();
                      toRemove.add(ic);
                   }
@@ -256,9 +256,9 @@ public class MacroWaitRegistry {
 
    public static void load(Minecraft mc) {
       if (!init_List.isEmpty()) {
-         List<MacroWaitRegistry.Inner_EventBus> toRemove = new ArrayList<>();
+         List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (init_List) {
-            for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
+            for (MacroWaitRegistry.WaitEntry cond : init_List) {
                if (cond.init_Z()) {
                   toRemove.add(cond);
                } else {
@@ -281,21 +281,21 @@ public class MacroWaitRegistry {
 
    public static void init_V(Screen screen) {
       if (!init_List.isEmpty()) {
-         List<MacroWaitRegistry.Inner_EventBus> toRemove = new ArrayList<>();
+         List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (init_List) {
-            for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
-               if (cond instanceof MacroWaitRegistry.Inner_JsonUtil gc) {
+            for (MacroWaitRegistry.WaitEntry cond : init_List) {
+               if (cond instanceof MacroWaitRegistry.WaitGuiTitleEntry gc) {
                   if (gc.init(screen)) {
                      gc.init_V();
                      toRemove.add(gc);
                   }
-               } else if (cond instanceof MacroWaitRegistry.Inner_StateCache hic) {
+               } else if (cond instanceof MacroWaitRegistry.WaitContainerItemEntry hic) {
                   Minecraft mc = Minecraft.getInstance();
                   if (hic.init_Z_Minecraft(mc)) {
                      hic.init_V();
                      toRemove.add(hic);
                   }
-               } else if (cond instanceof MacroWaitRegistry.Inner_ByteReader scc) {
+               } else if (cond instanceof MacroWaitRegistry.WaitSlotChangeEntry scc) {
                   Minecraft mc = Minecraft.getInstance();
                   if (scc.init_Z_Minecraft(mc)) {
                      scc.init_V();
@@ -309,7 +309,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   private static boolean init_Z_Minecraft_b_EventBus(Minecraft mc, MacroWaitRegistry.Inner_EventBus condition) {
+   private static boolean init_Z_Minecraft_b_EventBus(Minecraft mc, MacroWaitRegistry.WaitEntry condition) {
       if (mc != null && condition != null) {
          try {
             if (mc.isSameThread()) {
@@ -357,7 +357,7 @@ public class MacroWaitRegistry {
 
    public static void load_V() {
       synchronized (init_List) {
-         for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
+         for (MacroWaitRegistry.WaitEntry cond : init_List) {
             cond.load_V();
          }
 
@@ -375,11 +375,11 @@ public class MacroWaitRegistry {
       }
 
       synchronized (init_List) {
-         for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
-            if (cond instanceof MacroWaitRegistry.Inner_JsonUtil
-               || cond instanceof MacroWaitRegistry.Inner_StateCache
-               || cond instanceof MacroWaitRegistry.Inner_UiHelper
-               || cond instanceof MacroWaitRegistry.Inner_ByteReader) {
+         for (MacroWaitRegistry.WaitEntry cond : init_List) {
+            if (cond instanceof MacroWaitRegistry.WaitGuiTitleEntry
+               || cond instanceof MacroWaitRegistry.WaitContainerItemEntry
+               || cond instanceof MacroWaitRegistry.WaitInventoryItemEntry
+               || cond instanceof MacroWaitRegistry.WaitSlotChangeEntry) {
                return true;
             }
          }
@@ -394,8 +394,8 @@ public class MacroWaitRegistry {
       }
 
       synchronized (init_List) {
-         for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
-            if (cond instanceof MacroWaitRegistry.Inner_PacketUtil) {
+         for (MacroWaitRegistry.WaitEntry cond : init_List) {
+            if (cond instanceof MacroWaitRegistry.WaitSoundEntry) {
                return true;
             }
          }
@@ -411,7 +411,7 @@ public class MacroWaitRegistry {
          return future;
       }
 
-      MacroWaitRegistry.Inner_DataUtil adapter = new MacroWaitRegistry.Inner_DataUtil(condition, future);
+      MacroWaitRegistry.WaitAddonConditionEntry adapter = new MacroWaitRegistry.WaitAddonConditionEntry(condition, future);
       init_List.add(adapter);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, adapter)) {
@@ -463,14 +463,14 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init_CompletableFuture_I(int bufferMs, int maxWaitMs, boolean ignorePing) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_TextFormat condition = new MacroWaitRegistry.Inner_TextFormat(future, bufferMs, maxWaitMs, ignorePing);
+      MacroWaitRegistry.WaitServerTickSyncEntry condition = new MacroWaitRegistry.WaitServerTickSyncEntry(future, bufferMs, maxWaitMs, ignorePing);
       init_List.add(condition);
       return future;
    }
 
    public static CompletableFuture<Void> init(WaitForEntityAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_BufferHelper condition = new MacroWaitRegistry.Inner_BufferHelper(action, future);
+      MacroWaitRegistry.WaitEntityEntry condition = new MacroWaitRegistry.WaitEntityEntry(action, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (condition.init_Z_Minecraft(mc)) {
@@ -487,7 +487,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> load(MacroItemTarget target) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_StateCache condition = new MacroWaitRegistry.Inner_StateCache(target, future);
+      MacroWaitRegistry.WaitContainerItemEntry condition = new MacroWaitRegistry.WaitContainerItemEntry(target, future);
       init_List.add(condition);
       Minecraft mc = Minecraft.getInstance();
       if (init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -504,19 +504,19 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(WaitForSoundAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      init_List.add(new MacroWaitRegistry.Inner_PacketUtil(action, future));
+      init_List.add(new MacroWaitRegistry.WaitSoundEntry(action, future));
       return future;
    }
 
    public static void init(String soundId, double x, double y, double z) {
       if (!init_List.isEmpty()) {
          Minecraft mc = Minecraft.getInstance();
-         List<MacroWaitRegistry.Inner_EventBus> toRemove = new ArrayList<>();
+         List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (init_List) {
-            for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
+            for (MacroWaitRegistry.WaitEntry cond : init_List) {
                if (cond.init_Z()) {
                   toRemove.add(cond);
-               } else if (cond instanceof MacroWaitRegistry.Inner_PacketUtil sc && sc.init(mc, soundId, x, y, z)) {
+               } else if (cond instanceof MacroWaitRegistry.WaitSoundEntry sc && sc.init(mc, soundId, x, y, z)) {
                   sc.init_aE.init(soundId, x, y, z);
                   sc.init_V();
                   toRemove.add(sc);
@@ -552,7 +552,7 @@ public class MacroWaitRegistry {
          }
       });
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_ByteReader condition = new MacroWaitRegistry.Inner_ByteReader(action, initialNames, initialCounts, future);
+      MacroWaitRegistry.WaitSlotChangeEntry condition = new MacroWaitRegistry.WaitSlotChangeEntry(action, initialNames, initialCounts, future);
       init_List.add(condition);
       boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.init_aD_StreamUtil == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE);
       if (!hasAnyChange && init_Z_Minecraft_b_EventBus(mc, condition)) {
@@ -576,7 +576,7 @@ public class MacroWaitRegistry {
 
    public static CompletableFuture<Void> init(WaitForLanStepAction action) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      MacroWaitRegistry.Inner_RenderState cond = new MacroWaitRegistry.Inner_RenderState(action, future);
+      MacroWaitRegistry.WaitLanStepEntry cond = new MacroWaitRegistry.WaitLanStepEntry(action, future);
       if (cond.load_Z()) {
          future.complete(null);
       } else {
@@ -588,12 +588,12 @@ public class MacroWaitRegistry {
 
    public static void update() {
       if (!init_List.isEmpty()) {
-         List<MacroWaitRegistry.Inner_EventBus> toRemove = new ArrayList<>();
+         List<MacroWaitRegistry.WaitEntry> toRemove = new ArrayList<>();
          synchronized (init_List) {
-            for (MacroWaitRegistry.Inner_EventBus cond : init_List) {
+            for (MacroWaitRegistry.WaitEntry cond : init_List) {
                if (cond.init_Z()) {
                   toRemove.add(cond);
-               } else if (cond instanceof MacroWaitRegistry.Inner_RenderState lsc && lsc.load_Z()) {
+               } else if (cond instanceof MacroWaitRegistry.WaitLanStepEntry lsc && lsc.load_Z()) {
                   lsc.init_V();
                   toRemove.add(lsc);
                }
@@ -677,14 +677,14 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_BufferHelper implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitEntityEntry implements MacroWaitRegistry.WaitEntry {
       final WaitForEntityAction init_aw;
       final Set<String> init_Set;
       final Set<String> load;
       final double init_D;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_BufferHelper(WaitForEntityAction action, CompletableFuture<Void> future) {
+      WaitEntityEntry(WaitForEntityAction action, CompletableFuture<Void> future) {
          this.init_aw = action;
          this.init_Set = new HashSet<>();
          this.load = new HashSet<>();
@@ -785,20 +785,20 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_ByteReader implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitSlotChangeEntry implements MacroWaitRegistry.WaitEntry {
       final WaitForSlotChangeAction init_aD;
       final Map<Integer, String> init_Map;
       final Map<Integer, Integer> load;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_ByteReader(WaitForSlotChangeAction action, Map<Integer, String> initialNames, Map<Integer, Integer> initialCounts, CompletableFuture<Void> future) {
+      WaitSlotChangeEntry(WaitForSlotChangeAction action, Map<Integer, String> initialNames, Map<Integer, Integer> initialCounts, CompletableFuture<Void> future) {
          this.init_aD = action;
          this.init_Map = initialNames;
          this.load = initialCounts;
          this.init_CompletableFuture = future;
       }
 
-      Inner_ByteReader(int slotNumber, String initialItemName, int initialCount, CompletableFuture<Void> future) {
+      WaitSlotChangeEntry(int slotNumber, String initialItemName, int initialCount, CompletableFuture<Void> future) {
          WaitForSlotChangeAction a = new WaitForSlotChangeAction(slotNumber);
          this.init_aD = a;
          this.init_Map = new HashMap<>();
@@ -942,12 +942,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_CachePool implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitCooldownEntry implements MacroWaitRegistry.WaitEntry {
       final MacroItemTarget init_ArrayUtil;
       final boolean init_Z;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_CachePool(MacroItemTarget target, boolean checkMainHand, CompletableFuture<Void> future) {
+      WaitCooldownEntry(MacroItemTarget target, boolean checkMainHand, CompletableFuture<Void> future) {
          this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.init_ArrayUtil();
          this.init_Z = checkMainHand;
          this.init_CompletableFuture = future;
@@ -995,13 +995,13 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_ConfigStore implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitGamemodeEntry implements MacroWaitRegistry.WaitEntry {
       final WaitGamemodeChangeAction init_aI;
       final autismclient.util.FakeGamemodeManager.Inner_StreamUtil init_W_StreamUtil;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_ConfigStore(WaitGamemodeChangeAction action, autismclient.util.FakeGamemodeManager.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
+      WaitGamemodeEntry(WaitGamemodeChangeAction action, autismclient.util.FakeGamemodeManager.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
          this.init_aI = action == null ? new WaitGamemodeChangeAction() : action;
          this.init_W_StreamUtil = baseline == null ? autismclient.util.FakeGamemodeManager.init_W_StreamUtil() : baseline;
          this.init_CompletableFuture = future;
@@ -1036,11 +1036,11 @@ public class MacroWaitRegistry {
       }
    }
 
-   static final class Inner_DataUtil implements MacroWaitRegistry.Inner_EventBus {
+   static final class WaitAddonConditionEntry implements MacroWaitRegistry.WaitEntry {
       private final AddonCondition init_AddonCondition;
       private final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_DataUtil(AddonCondition condition, CompletableFuture<Void> future) {
+      WaitAddonConditionEntry(AddonCondition condition, CompletableFuture<Void> future) {
          this.init_AddonCondition = condition;
          this.init_CompletableFuture = future;
       }
@@ -1071,7 +1071,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   interface Inner_EventBus {
+   interface WaitEntry {
       boolean init_Z_Minecraft(Minecraft var1);
 
       void init_V();
@@ -1081,7 +1081,7 @@ public class MacroWaitRegistry {
       boolean init_Z();
    }
 
-   static class Inner_FileCache implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitPositionDeltaEntry implements MacroWaitRegistry.WaitEntry {
       final Vec3 init_Vec3;
       final double init_D;
       final boolean init_Z;
@@ -1089,7 +1089,7 @@ public class MacroWaitRegistry {
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean read = false;
 
-      Inner_FileCache(Vec3 origin, double distance, boolean horizontalOnly, CompletableFuture<Void> future) {
+      WaitPositionDeltaEntry(Vec3 origin, double distance, boolean horizontalOnly, CompletableFuture<Void> future) {
          this.init_Vec3 = origin == null ? Vec3.ZERO : origin;
          double d = Math.max(0.0, distance);
          this.load = d <= 0.0;
@@ -1129,10 +1129,10 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_HashUtil implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitTickSyncEntry implements MacroWaitRegistry.WaitEntry {
       final CompletableFuture<Void> init;
 
-      Inner_HashUtil(CompletableFuture<Void> future) {
+      WaitTickSyncEntry(CompletableFuture<Void> future) {
          this.init = future;
       }
 
@@ -1157,7 +1157,7 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_IoWorker implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitPosEntry implements MacroWaitRegistry.WaitEntry {
       final double init_D;
       final double load_D;
       final double read_D;
@@ -1168,7 +1168,7 @@ public class MacroWaitRegistry {
       final float read_F;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_IoWorker(
+      WaitPosEntry(
          double x, double y, double z, double leeway, boolean checkRotation, float yaw, float pitch, float rotLeeway, CompletableFuture<Void> future
       ) {
          this.init_D = x;
@@ -1228,14 +1228,14 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_JsonUtil implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitGuiTitleEntry implements MacroWaitRegistry.WaitEntry {
       final String init_Str;
       final String load;
       final String[] init_StrArr;
       final WeakReference<Screen> init_WeakReference;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_JsonUtil(String title, Screen prevScreen, CompletableFuture<Void> future) {
+      WaitGuiTitleEntry(String title, Screen prevScreen, CompletableFuture<Void> future) {
          this.init_Str = MacroExecutor.init_Str_Str(title);
          this.load = this.init_Str.toLowerCase();
          this.init_StrArr = this.load.isEmpty() ? new String[0] : this.load.split("\\s+");
@@ -1294,14 +1294,14 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_NetHelper implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitGuiCloseEntry implements MacroWaitRegistry.WaitEntry {
       final String init_Str;
       final String[] init_StrArr;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
       private boolean load = false;
 
-      Inner_NetHelper(String title, CompletableFuture<Void> future) {
+      WaitGuiCloseEntry(String title, CompletableFuture<Void> future) {
          this.init_Str = MacroExecutor.init_Str_Str(title).toLowerCase();
          this.init_StrArr = this.init_Str.isEmpty() ? new String[0] : this.init_Str.split("\\s+");
          this.init_CompletableFuture = future;
@@ -1344,12 +1344,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_PacketUtil implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitSoundEntry implements MacroWaitRegistry.WaitEntry {
       final WaitForSoundAction init_aE;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_PacketUtil(WaitForSoundAction action, CompletableFuture<Void> future) {
+      WaitSoundEntry(WaitForSoundAction action, CompletableFuture<Void> future) {
          this.init_aE = action;
          this.init_CompletableFuture = future;
       }
@@ -1417,14 +1417,14 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_PoolEntry implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitWorldChangeEntry implements MacroWaitRegistry.WaitEntry {
       final String init_Str;
       final String load;
       final long init_J;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_PoolEntry(String initialDimension, String targetDimension, CompletableFuture<Void> future) {
+      WaitWorldChangeEntry(String initialDimension, String targetDimension, CompletableFuture<Void> future) {
          this.init_Str = initialDimension == null ? "" : initialDimension;
          this.load = MacroWaitRegistry.init_Str(targetDimension);
          this.init_CompletableFuture = future;
@@ -1460,12 +1460,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_RenderState implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitLanStepEntry implements MacroWaitRegistry.WaitEntry {
       final WaitForLanStepAction init_az;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_RenderState(WaitForLanStepAction action, CompletableFuture<Void> future) {
+      WaitLanStepEntry(WaitForLanStepAction action, CompletableFuture<Void> future) {
          this.init_az = action;
          this.init_CompletableFuture = future;
       }
@@ -1564,12 +1564,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_StateCache implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitContainerItemEntry implements MacroWaitRegistry.WaitEntry {
       final MacroItemTarget init_ArrayUtil;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_StateCache(MacroItemTarget target, CompletableFuture<Void> future) {
+      WaitContainerItemEntry(MacroItemTarget target, CompletableFuture<Void> future) {
          this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.init_ArrayUtil();
          this.init_CompletableFuture = future;
       }
@@ -1614,12 +1614,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_StreamUtil implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitBlockEntry implements MacroWaitRegistry.WaitEntry {
       final WaitForBlockAction init_at;
       final Set<String> init_Set;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_StreamUtil(WaitForBlockAction action, CompletableFuture<Void> future) {
+      WaitBlockEntry(WaitForBlockAction action, CompletableFuture<Void> future) {
          this.init_at = action;
          this.init_Set = new HashSet<>(action.blockIds);
          this.init_CompletableFuture = future;
@@ -1761,12 +1761,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_SyncManager implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitHealthEntry implements MacroWaitRegistry.WaitEntry {
       final float init_F;
       final boolean init_Z;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_SyncManager(float threshold, boolean below, CompletableFuture<Void> future) {
+      WaitHealthEntry(float threshold, boolean below, CompletableFuture<Void> future) {
          this.init_F = threshold;
          this.init_Z = below;
          this.init_CompletableFuture = future;
@@ -1798,12 +1798,12 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_TaskQueue implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitScreenChangeEntry implements MacroWaitRegistry.WaitEntry {
       final WeakReference<Screen> init_WeakReference;
       final CompletableFuture<Void> init_CompletableFuture;
       private volatile boolean init_Z = false;
 
-      Inner_TaskQueue(Screen prevScreen, CompletableFuture<Void> future) {
+      WaitScreenChangeEntry(Screen prevScreen, CompletableFuture<Void> future) {
          this.init_WeakReference = new WeakReference<>(prevScreen);
          this.init_CompletableFuture = future;
       }
@@ -1830,14 +1830,14 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_TextFormat implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitServerTickSyncEntry implements MacroWaitRegistry.WaitEntry {
       final CompletableFuture<Void> init_CompletableFuture;
       final int init_I;
       final int load;
       final boolean init_Z;
       final long init_J;
 
-      Inner_TextFormat(CompletableFuture<Void> future, int bufferMs, int maxWaitMs, boolean ignorePing) {
+      WaitServerTickSyncEntry(CompletableFuture<Void> future, int bufferMs, int maxWaitMs, boolean ignorePing) {
          this.init_CompletableFuture = future;
          this.init_I = bufferMs;
          this.load = maxWaitMs;
@@ -1877,11 +1877,11 @@ public class MacroWaitRegistry {
       }
    }
 
-   static class Inner_UiHelper implements MacroWaitRegistry.Inner_EventBus {
+   static class WaitInventoryItemEntry implements MacroWaitRegistry.WaitEntry {
       final MacroItemTarget init_ArrayUtil;
       final CompletableFuture<Void> init_CompletableFuture;
 
-      Inner_UiHelper(MacroItemTarget target, CompletableFuture<Void> future) {
+      WaitInventoryItemEntry(MacroItemTarget target, CompletableFuture<Void> future) {
          this.init_ArrayUtil = target == null ? new MacroItemTarget() : target.init_ArrayUtil();
          this.init_CompletableFuture = future;
       }

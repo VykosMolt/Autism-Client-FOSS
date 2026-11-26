@@ -57,7 +57,7 @@ public final class PacketDetailFormatter {
    private PacketDetailFormatter() {
    }
 
-   public static PacketDetailFormatter.Inner_DataUtil init_bh_DataUtil_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static PacketDetailFormatter.Inner_DataUtil init_bh_DataUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       PacketDetailFormatter.Inner_StreamUtil out = new PacketDetailFormatter.Inner_StreamUtil();
       if (entry == null) {
          return out.init(false, "fallback");
@@ -78,7 +78,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   public static String init_Str_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   public static String init_Str_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       PacketDetailFormatter.Inner_DataUtil analysis = init_bh_DataUtil_AutismPacketLogger(entry);
       if (!analysis.init_Z() && !analysis.load_Z()) {
          return "";
@@ -98,15 +98,15 @@ public final class PacketDetailFormatter {
       return out.toString().stripTrailing();
    }
 
-   private static void init_V_StringBuilder_List(StringBuilder out, List<PacketInspectorEngine.Inner_TaskQueue> lines) {
-      for (PacketInspectorEngine.Inner_TaskQueue line : lines) {
+   private static void init_V_StringBuilder_List(StringBuilder out, List<PacketInspectorEngine.ColoredLine> lines) {
+      for (PacketInspectorEngine.ColoredLine line : lines) {
          if (line != null) {
             out.append(line.init_Str()).append('\n');
          }
       }
    }
 
-   private static PacketDetailFormatter.Inner_CachePool init_bh_CachePool_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil entry) {
+   private static PacketDetailFormatter.Inner_CachePool init_bh_CachePool_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry == null || entry.init_Packet == null || entry.init_Class == null) {
          return PacketDetailFormatter.Inner_CachePool.init_bh_CachePool();
       }
@@ -356,7 +356,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static boolean init_Z_AutismPacketLogger(AutismPacketLoggerOverlay.Inner_JsonUtil entry, Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static boolean init_Z_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry, Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out) {
       PacketStateDeltaTracker.Inner_DataUtil capture = entry.init_bq_DataUtil;
       PacketStateDeltaTracker.Inner_CachePool before = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.init_bq_CachePool();
       PacketStateDeltaTracker.Inner_CachePool after = capture == null ? PacketStateDeltaTracker.Inner_CachePool.init_bq_CachePool : capture.load();
@@ -679,7 +679,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.Inner_JsonUtil entry, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketDetailFormatter.Inner_StreamUtil out) {
       if (entry != null && entry.init_Packet != null) {
          PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.init_Packet);
          if (snapshot != null) {
@@ -880,7 +880,7 @@ public final class PacketDetailFormatter {
    }
 
    public record Inner_DataUtil(
-      List<PacketInspectorEngine.Inner_TaskQueue> init_List, List<PacketInspectorEngine.Inner_TaskQueue> load, List<PacketInspectorEngine.Inner_TaskQueue> read, boolean init_Z, String init_Str
+      List<PacketInspectorEngine.ColoredLine> init_List, List<PacketInspectorEngine.ColoredLine> load, List<PacketInspectorEngine.ColoredLine> read, boolean init_Z, String init_Str
    ) {
       public Inner_DataUtil {
          init_List = init_List == null ? List.of() : List.copyOf(init_List);
@@ -901,11 +901,11 @@ public final class PacketDetailFormatter {
          return !this.read.isEmpty();
       }
 
-      public List<PacketInspectorEngine.Inner_TaskQueue> load_List() {
+      public List<PacketInspectorEngine.ColoredLine> load_List() {
          return this.load;
       }
 
-      public List<PacketInspectorEngine.Inner_TaskQueue> read_List() {
+      public List<PacketInspectorEngine.ColoredLine> read_List() {
          return this.read;
       }
 
@@ -915,20 +915,20 @@ public final class PacketDetailFormatter {
    }
 
    private static final class Inner_StreamUtil {
-      private final List<PacketInspectorEngine.Inner_TaskQueue> init = new ArrayList<>();
-      private final List<PacketInspectorEngine.Inner_TaskQueue> load = new ArrayList<>();
-      private final List<PacketInspectorEngine.Inner_TaskQueue> read = new ArrayList<>();
+      private final List<PacketInspectorEngine.ColoredLine> init = new ArrayList<>();
+      private final List<PacketInspectorEngine.ColoredLine> load = new ArrayList<>();
+      private final List<PacketInspectorEngine.ColoredLine> read = new ArrayList<>();
 
       void init(String text, int color) {
-         this.init.add(new PacketInspectorEngine.Inner_TaskQueue(text, color));
+         this.init.add(new PacketInspectorEngine.ColoredLine(text, color));
       }
 
       void load(String text, int color) {
-         this.load.add(new PacketInspectorEngine.Inner_TaskQueue(text, color));
+         this.load.add(new PacketInspectorEngine.ColoredLine(text, color));
       }
 
       void read(String text, int color) {
-         this.read.add(new PacketInspectorEngine.Inner_TaskQueue(text, color));
+         this.read.add(new PacketInspectorEngine.ColoredLine(text, color));
       }
 
       boolean init() {

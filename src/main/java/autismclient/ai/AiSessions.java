@@ -363,12 +363,12 @@ public final class AiSessions {
       );
    }
 
-   static List<AiService.Inner_JsonUtil> init_List_List_I(List<AiService.Inner_JsonUtil> messages, int charBudget) {
-      List<AiService.Inner_JsonUtil> kept = new ArrayList<>();
+   static List<AiService.TranscriptEntry> init_List_List_I(List<AiService.TranscriptEntry> messages, int charBudget) {
+      List<AiService.TranscriptEntry> kept = new ArrayList<>();
       int used = 0;
 
       for (int i = messages.size() - 1; i >= 0; i--) {
-         AiService.Inner_JsonUtil m = messages.get(i);
+         AiService.TranscriptEntry m = messages.get(i);
          int cost = m.text().length() + m.detail().length() + m.role().length() + 24;
          if (!kept.isEmpty() && used + cost > charBudget) {
             break;
@@ -388,7 +388,7 @@ public final class AiSessions {
       d.read_List.forEach(updates::add);
       JsonArray messages = new JsonArray();
 
-      for (AiService.Inner_JsonUtil m : init_List_List_I(d.load_List, 1000000)) {
+      for (AiService.TranscriptEntry m : init_List_List_I(d.load_List, 1000000)) {
          messages.add(AiJson.init_JsonObject_ObjArr("at", m.at(), "role", m.role(), "text", m.text(), "detail", m.detail()));
       }
 
@@ -480,7 +480,7 @@ public final class AiSessions {
             JsonObject m = item.getAsJsonObject();
             d.load_List
                .add(
-                  new AiService.Inner_JsonUtil(
+                  new AiService.TranscriptEntry(
                      m.has("at") ? m.get("at").getAsLong() : 0L,
                      AiJson.init_Str_JsonObject(m, "role", ""),
                      AiJson.init_Str_JsonObject(m, "text", ""),
@@ -547,7 +547,7 @@ public final class AiSessions {
       public long update_J;
       public boolean init_Z;
       public List<String> init_List = new ArrayList<>();
-      public List<AiService.Inner_JsonUtil> load_List = new ArrayList<>();
+      public List<AiService.TranscriptEntry> load_List = new ArrayList<>();
       public List<String> read_List = new ArrayList<>();
       public long sync_J;
       public long flush_J;
