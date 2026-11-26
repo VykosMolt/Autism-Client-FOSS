@@ -1,10 +1,10 @@
 package autismclient;
 
-import autismclient.ai.ConfigStore;
-import autismclient.ai.am;
-import autismclient.ai.cV;
-import autismclient.ai.o;
-import autismclient.ai.a.StateCache;
+import autismclient.ai.AiAssistant;
+import autismclient.ai.AiMacroTools;
+import autismclient.ai.SchematicWorkspace;
+import autismclient.ai.AiDirectOps;
+import autismclient.ai.a.AiChunkMemory;
 import autismclient.g.ServerPackSelectionRegistry;
 import autismclient.g.PackFailureGuard;
 import autismclient.g.ResourcePackSessionTracker;
@@ -148,13 +148,13 @@ public final class AutismClientMod implements ClientModInitializer {
       HoleEspModule.init_V_12();
       autismclient.commands.CommandManager.init_V();
       if (!AutismLiteVariant.enabled()) {
-         o.init_V();
-         am.init_V();
-         ConfigStore.init_V();
-         cV.init_V();
+         AiDirectOps.init_V();
+         AiMacroTools.init_V();
+         AiAssistant.init_V();
+         SchematicWorkspace.init_V();
       }
 
-      StateCache.init(AutismClientAddon.FOLDER.toPath().resolve("ai").resolve("chunkmemory"));
+      AiChunkMemory.init(AutismClientAddon.FOLDER.toPath().resolve("ai").resolve("chunkmemory"));
       autismclient.b.DataUtil.init_V();
       ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
          @Override
@@ -243,7 +243,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            StateCache.init(client);
+            AiChunkMemory.init(client);
          } catch (Throwable t) {
             logTickError("chunkMemory", t);
          }

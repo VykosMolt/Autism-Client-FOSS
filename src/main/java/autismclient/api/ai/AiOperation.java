@@ -1,6 +1,6 @@
 package autismclient.api.ai;
 
-import autismclient.ai.A;
+import autismclient.ai.AiFailure;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,7 +17,7 @@ public interface AiOperation {
 
    void cancel();
 
-   record Result(AiOperation.Status status, String message, String dataJson, List<AiObservation> evidence, A failure) {
+   record Result(AiOperation.Status status, String message, String dataJson, List<AiObservation> evidence, AiFailure failure) {
       public Result(AiOperation.Status status, String message, String dataJson, List<AiObservation> evidence) {
          this(status, message, dataJson, evidence, null);
       }
@@ -33,32 +33,32 @@ public interface AiOperation {
          return this.status != AiOperation.Status.RUNNING;
       }
 
-      public static AiOperation.Result failed(A failure, String message, String dataJson) {
+      public static AiOperation.Result failed(AiFailure failure, String message, String dataJson) {
          return new AiOperation.Result(AiOperation.Status.FAILED, message, dataJson, List.of(), failure);
       }
 
-      public static AiOperation.Result timedOut(A failure, String message, String dataJson) {
-         return new AiOperation.Result(AiOperation.Status.TIMED_OUT, message, dataJson, List.of(), failure == null ? A.prev : failure);
+      public static AiOperation.Result timedOut(AiFailure failure, String message, String dataJson) {
+         return new AiOperation.Result(AiOperation.Status.TIMED_OUT, message, dataJson, List.of(), failure == null ? AiFailure.prev : failure);
       }
 
-      public A failure() {
+      public AiFailure failure() {
          if (this.failure != null) {
             return this.failure;
          }
 
-         A var10000;
+         AiFailure var10000;
          switch (this.status) {
             case FAILED:
-               var10000 = A.flush;
+               var10000 = AiFailure.flush;
                break;
             case CANCELLED:
-               var10000 = A.size;
+               var10000 = AiFailure.size;
                break;
             case TIMED_OUT:
-               var10000 = A.prev;
+               var10000 = AiFailure.prev;
                break;
             default:
-               var10000 = A.value;
+               var10000 = AiFailure.value;
          }
 
          return var10000;

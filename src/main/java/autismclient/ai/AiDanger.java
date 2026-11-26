@@ -1,0 +1,650 @@
+package autismclient.ai;
+
+import autismclient.api.ai.AiOperation;
+import autismclient.mixin.accessor.AutismEntityAccessor;
+import autismclient.mixin.accessor.AutismLivingEntityAccessor;
+import autismclient.modules.Module;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.vehicle.minecart.MinecartTNT;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.BlocksAttacks;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RespawnAnchorBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+final class AiDanger {
+   static final String init_Str = "end_crystal";
+   static final String load_Str = "primed_tnt";
+   static final String read_Str = "tnt_minecart";
+   static final String write_Str = "creeper";
+   static final String update_Str = "bed";
+   static final String sync = "respawn_anchor";
+   static final int init_I = 12;
+   static final int load_I = 2;
+   static final int read_I = 20;
+   static final double init_D = -0.08;
+   static final double load_D = 0.01;
+   static final int write_I = 30;
+   static final double read_D = 0.91;
+   static final double write_D = 0.98;
+   private static final List<BlockPos> init_List = init_List_F(10.0F);
+   static final String flush = "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively";
+   private static final AiDanger.Inner_DataUtil init_i_DataUtil = new AiDanger.Inner_DataUtil(
+      List.of(), 0.0F, 0.0F, 0.0F, 0, 0, 0, 0.0, -1, false, 0.0F, "", 0.0F, 0.0F, false, false, false
+   );
+   private static final AiDanger.Inner_BufferHelper init_i_BufferHelper = new AiDanger.Inner_BufferHelper(init_i_DataUtil, -1, null);
+   private static AiDanger.Inner_BufferHelper load_i_BufferHelper;
+   private static int update_I = -2;
+
+   private AiDanger() {
+   }
+
+   static float init_F_Str(String kind, boolean creeperPowered, double minecartHorizontalSpeed) {
+      float var10000;
+      switch (kind) {
+         case "end_crystal":
+            var10000 = 6.0F;
+            break;
+         case "primed_tnt":
+            var10000 = 4.0F;
+            break;
+         case "tnt_minecart":
+            var10000 = 4.0F + (float)Math.min(Math.max(minecartHorizontalSpeed, 0.0), 5.0) * 1.5F;
+            break;
+         case "creeper":
+            var10000 = creeperPowered ? 6.0F : 3.0F;
+            break;
+         case "bed":
+            var10000 = 5.0F;
+            break;
+         case "respawn_anchor":
+            var10000 = 5.0F;
+            break;
+         case "large_fireball":
+         case "wither_skull":
+            var10000 = 1.0F;
+            break;
+         default:
+            var10000 = 0.0F;
+      }
+
+      return var10000;
+   }
+
+   static boolean init_Z_Z(boolean bedRuleExplodes) {
+      return bedRuleExplodes;
+   }
+
+   static boolean init_Z_Z_I(boolean respawnAnchorWorks, int charge) {
+      return !respawnAnchorWorks && charge > 0;
+   }
+
+   static float init_F_Str_Z(String landingBlockId, boolean suppressingBounce) {
+      if (landingBlockId != null && !landingBlockId.isEmpty()) {
+         float var10000;
+         switch (landingBlockId) {
+            case "water":
+            case "cobweb":
+            case "powder_snow":
+               var10000 = 0.0F;
+               break;
+            case "hay_block":
+            case "honey_block":
+               var10000 = 0.2F;
+               break;
+            case "slime_block":
+               var10000 = suppressingBounce ? 1.0F : 0.0F;
+               break;
+            default:
+               var10000 = landingBlockId.endsWith("_bed") ? 0.5F : 1.0F;
+         }
+
+         return var10000;
+      } else {
+         return 1.0F;
+      }
+   }
+
+   static int init_I_I(int fuseTicks) {
+      return Math.max(0, fuseTicks);
+   }
+
+   static int init_I_F(float swelling) {
+      float clamped = Math.max(0.0F, Math.min(1.0F, swelling));
+      return Math.round((1.0F - clamped) * 30.0F);
+   }
+
+   static double init_D_D(double motionY, double gravity, boolean slowFalling) {
+      double my = motionY - (motionY <= 0.0 && slowFalling ? Math.min(gravity, 0.01) : gravity);
+      return my * 0.98;
+   }
+
+   static float init_F_List(List<AiDanger.Inner_ConfigStore> sources) {
+      float worst = 0.0F;
+
+      for (AiDanger.Inner_ConfigStore s : sources) {
+         worst = Math.max(worst, s.damage());
+      }
+
+      return worst;
+   }
+
+   static float init_F_F_F(float worstSource, float fallDamage) {
+      return Math.max(0.0F, worstSource) + Math.max(0.0F, fallDamage);
+   }
+
+   static AiDanger.Inner_TaskQueue init_i_TaskQueue_F_i_CachePool(float totalPredicted, AiDanger.Inner_CachePool evaluator) {
+      return new AiDanger.Inner_TaskQueue(evaluator.init(totalPredicted), evaluator.load(totalPredicted));
+   }
+
+   static AiDanger.Inner_TaskQueue init_i_TaskQueue_F(float totalPredicted, boolean voidFall, AiDanger.Inner_CachePool evaluator) {
+      return voidFall ? new AiDanger.Inner_TaskQueue(true, true) : init_i_TaskQueue_F_i_CachePool(totalPredicted, evaluator);
+   }
+
+   static List<AiDanger.Inner_ConfigStore> init_List_List_I(List<AiDanger.Inner_ConfigStore> sources, int cap) {
+      int limit = Math.max(0, Math.min(12, cap));
+      List<AiDanger.Inner_ConfigStore> sorted = new ArrayList<>(sources);
+      sorted.sort(
+         Comparator.<AiDanger.Inner_ConfigStore>comparingInt(s -> s.etaTicks() < 0 ? 2147483647 : s.etaTicks())
+            .thenComparing(Comparator.comparingDouble(AiDanger.Inner_ConfigStore::damage).reversed())
+      );
+      return List.copyOf(sorted.size() <= limit ? sorted : sorted.subList(0, limit));
+   }
+
+   static JsonArray init_JsonArray_List(List<AiDanger.Inner_ConfigStore> sources) {
+      JsonArray out = new JsonArray();
+
+      for (AiDanger.Inner_ConfigStore s : sources) {
+         out.add(AiJson.init_JsonObject_ObjArr("kind", s.kind(), "x", s.x(), "y", s.y(), "z", s.z(), "damage", s.damage(), "etaTicks", s.etaTicks()));
+      }
+
+      return out;
+   }
+
+   static AiDanger.Inner_DataUtil init_i_DataUtil_Minecraft(Minecraft mc) {
+      try {
+         return init_i_BufferHelper_Minecraft(mc).assessment();
+      } catch (Throwable t) {
+         return init_i_DataUtil;
+      }
+   }
+
+   static JsonObject init_JsonObject_Minecraft_I(Minecraft mc, int cap) {
+      try {
+         AiDanger.Inner_BufferHelper snap = init_i_BufferHelper_Minecraft(mc);
+         AiDanger.Inner_DataUtil a = snap.assessment();
+         return AiJson.init_JsonObject_ObjArr(
+            "sources",
+            init_JsonArray_List(init_List_List_I(a.sources(), cap)),
+            "worstSource",
+            a.worstSource(),
+            "fallDamage",
+            a.fallDamage(),
+            "fallEtaTicks",
+            snap.fallEtaTicks(),
+            "totalPredicted",
+            a.totalPredicted(),
+            "totemsHeld",
+            a.totemsHeld(),
+            "totemsInventory",
+            a.totemsInventory(),
+            "armorPoints",
+            a.armorPoints(),
+            "toughness",
+            a.toughness(),
+            "resistanceAmplifier",
+            a.resistanceAmplifier(),
+            "fireResistant",
+            a.fireResistant(),
+            "absorption",
+            a.absorption(),
+            "blockingItem",
+            a.blockingItem(),
+            "effectiveHealth",
+            a.effectiveHealth(),
+            "afterWorstHit",
+            a.afterWorstHit(),
+            "lethal",
+            a.lethal(),
+            "lethalThroughTotem",
+            a.lethalThroughTotem(),
+            "voidFall",
+            a.voidFall(),
+            "note",
+            "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively"
+         );
+      } catch (Throwable t) {
+         return AiJson.init_JsonObject_ObjArr(
+            "sources", new JsonArray(), "note", "predictions from vanilla ballistics/explosion math at client state; server resolves authoritatively"
+         );
+      }
+   }
+
+   static AiOperation init_AiOperation_JsonObject(JsonObject args) {
+      int cap = args == null ? 12 : AiJson.init_I_JsonObject(args, "cap", 12);
+      return AiGameOperations.init_AiOperation(AiOperation.Status.SUCCEEDED, "Predicted danger assessment", init_JsonObject_Minecraft_I(Minecraft.getInstance(), cap));
+   }
+
+   private static AiDanger.Inner_BufferHelper init_i_BufferHelper_Minecraft(Minecraft mc) {
+      if (mc == null) {
+         mc = Minecraft.getInstance();
+      }
+
+      if (mc.player != null && mc.level != null) {
+         int now = autismclient.util.AutismSessionState.init_ck().state_I();
+         AiDanger.Inner_BufferHelper cached = load_i_BufferHelper;
+         if (cached != null && cached.player() == mc.player && now - update_I < 2) {
+            return cached;
+         }
+
+         List<AiDanger.Inner_ConfigStore> sources = new ArrayList<>();
+         init_V_Minecraft_List(mc, sources);
+         load(mc, sources);
+         read(mc, sources);
+         AiDanger.Inner_StreamUtil fall = init_i_StreamUtil_Minecraft(mc);
+         float fallDamage = fall == null ? 0.0F : fall.damage();
+         boolean voidFall = fall != null && fall.voidFall();
+         AiDanger.Inner_BufferHelper snap = new AiDanger.Inner_BufferHelper(init(mc, sources, fallDamage, voidFall), fall == null ? -1 : fall.etaTicks(), mc.player);
+         load_i_BufferHelper = snap;
+         update_I = now;
+         return snap;
+      } else {
+         return init_i_BufferHelper;
+      }
+   }
+
+   private static AiDanger.Inner_DataUtil init(Minecraft mc, List<AiDanger.Inner_ConfigStore> sources, float fallDamage, boolean voidFall) {
+      LocalPlayer player = mc.player;
+      float worst = init_F_List(sources);
+      float total = init_F_F_F(worst, fallDamage);
+      int held = (init_Z_ItemStack(player.getMainHandItem()) ? 1 : 0) + (init_Z_ItemStack(player.getOffhandItem()) ? 1 : 0);
+      int inventory = 0;
+
+      for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+         ItemStack stack = player.getInventory().getItem(i);
+         if (init_Z_ItemStack(stack)) {
+            inventory += stack.getCount();
+         }
+      }
+
+      MobEffectInstance resistance = player.getEffect(MobEffects.RESISTANCE);
+      ItemStack blocking = player.getItemBlockingWith();
+      float effectiveHealth = (float)autismclient.util.ExplosionDamageCalculator.init_D_LivingEntity(player);
+      AiDanger.Inner_TaskQueue verdict = init_i_TaskQueue_F(total, voidFall, AiDanger.Inner_CachePool.init);
+      return new AiDanger.Inner_DataUtil(
+         List.copyOf(sources),
+         worst,
+         fallDamage,
+         total,
+         held,
+         inventory,
+         player.getArmorValue(),
+         player.getAttributeValue(Attributes.ARMOR_TOUGHNESS),
+         resistance == null ? -1 : resistance.getAmplifier(),
+         player.hasEffect(MobEffects.FIRE_RESISTANCE),
+         player.getAbsorptionAmount(),
+         blocking == null ? "" : blocking.getHoverName().getString(),
+         effectiveHealth,
+         effectiveHealth - total,
+         verdict.lethal(),
+         verdict.lethalThroughTotem(),
+         voidFall
+      );
+   }
+
+   private static boolean init_Z_ItemStack(ItemStack stack) {
+      return !stack.isEmpty() && stack.has(DataComponents.DEATH_PROTECTION);
+   }
+
+   private static void init_V_Minecraft_List(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
+      float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+
+      for (Entity entity : mc.level.entitiesForRendering()) {
+         String kind;
+         Vec3 pos;
+         float power;
+         int eta;
+         if (entity instanceof EndCrystal) {
+            kind = "end_crystal";
+            pos = entity.position();
+            power = init_F_Str(kind, false, 0.0);
+            eta = -1;
+         } else if (entity instanceof PrimedTnt tnt) {
+            kind = "primed_tnt";
+            pos = entity.position().add(0.0, 0.0625, 0.0);
+            power = init_F_Str(kind, false, 0.0);
+            eta = init_I_I(tnt.getFuse());
+         } else if (entity instanceof MinecartTNT cart) {
+            kind = "tnt_minecart";
+            pos = cart.position();
+            power = init_F_Str(kind, false, Math.sqrt(cart.getDeltaMovement().horizontalDistanceSqr()));
+            eta = -1;
+         } else {
+            if (!(entity instanceof Creeper creeper)) {
+               continue;
+            }
+
+            kind = "creeper";
+            pos = creeper.position();
+            power = init_F_Str(kind, creeper.isPowered(), 0.0);
+            float swell = creeper.getSwelling(partialTick);
+            eta = !creeper.isIgnited() && !(swell > 0.001F) ? -1 : init_I_F(swell);
+         }
+
+         float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3(
+            pos, power, autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(Explosion.getDefaultDamageSource(mc.level, entity))
+         );
+         if (damage > 0.0F) {
+            out.add(new AiDanger.Inner_ConfigStore(kind, pos.x, pos.y, pos.z, damage, eta));
+         }
+      }
+   }
+
+   private static void load(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
+      boolean bedsExplode = mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.BED_RULE).destroyOnUse();
+      boolean anchorWorks = mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS);
+      if (bedsExplode || !anchorWorks) {
+         BlockPos center = mc.player.blockPosition();
+
+         for (BlockPos offset : init_List) {
+            BlockPos pos = center.offset(offset);
+            BlockState state = mc.level.getBlockState(pos);
+            Block block = state.getBlock();
+            String kind = null;
+            List<BlockPos> exclude = List.of();
+            if (block instanceof BedBlock && state.getValue(BedBlock.PART) == BedPart.HEAD && init_Z_Z(bedsExplode)) {
+               kind = "bed";
+               exclude = List.of(pos, pos.relative(state.getValue(HorizontalDirectionalBlock.FACING).getOpposite()));
+            } else if (block instanceof RespawnAnchorBlock && init_Z_Z_I(anchorWorks, state.getValue(RespawnAnchorBlock.CHARGE))) {
+               kind = "respawn_anchor";
+               exclude = List.of(pos);
+            }
+
+            if (kind != null) {
+               Vec3 blast = Vec3.atCenterOf(pos);
+               float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3(
+                  blast,
+                  init_F_Str(kind, false, 0.0),
+                  autismclient.util.ExplosionDamageCalculator.Inner_CachePool.init_S_CachePool.init(exclude).init(autismclient.util.ExplosionDamageCalculator.load(mc.level, blast))
+               );
+               if (damage > 0.0F) {
+                  out.add(new AiDanger.Inner_ConfigStore(kind, blast.x, blast.y, blast.z, damage, -1));
+               }
+            }
+         }
+      }
+   }
+
+   private static void read(Minecraft mc, List<AiDanger.Inner_ConfigStore> out) {
+      for (AiProjectiles.Inner_StreamUtil t : AiProjectiles.init(mc)) {
+         String type = t.type();
+         String kind = type.indexOf(58) >= 0 ? type.substring(type.indexOf(58) + 1) : type;
+         float power = init_F_Str(kind, false, 0.0);
+         if (!(power <= 0.0F) && !(t.secondsToClosest() < 0.0)) {
+            double ticks = t.secondsToClosest() * 20.0;
+            Vec3 impact = new Vec3(t.x() + t.vx() * ticks, t.y() + t.vy() * ticks, t.z() + t.vz() * ticks);
+            float damage = (float)autismclient.util.ExplosionDamageCalculator.init_D_Vec3_F(impact, power);
+            if (damage > 0.0F) {
+               out.add(new AiDanger.Inner_ConfigStore(kind, impact.x, impact.y, impact.z, damage, (int)Math.round(ticks)));
+            }
+         }
+      }
+   }
+
+   private static AiDanger.Inner_StreamUtil init_i_StreamUtil_Minecraft(Minecraft mc) {
+      LocalPlayer player = mc.player;
+      Vec3 delta = player.getDeltaMovement();
+      if (player.fallDistance <= 3.0 && delta.y >= -0.08) {
+         return null;
+      }
+
+      if (player.isFallFlying()) {
+         return null;
+      }
+
+      if (player.isInWater()) {
+         return null;
+      }
+
+      Module noFall = autismclient.modules.al.init_Module_Str("no-fall");
+      if (noFall != null && noFall.isEnabled()) {
+         return null;
+      }
+
+      double x = player.getX();
+      double y = player.getY();
+      double z = player.getZ();
+      double mx = delta.x;
+      double my = delta.y;
+      double mz = delta.z;
+      double gravity = player.getGravity();
+      boolean slowFalling = player.hasEffect(MobEffects.SLOW_FALLING);
+      double fall = player.fallDistance;
+
+      for (int tick = 1; tick <= 20; tick++) {
+         Vec3 start = new Vec3(x, y, z);
+         my = init_D_D(my, gravity, slowFalling);
+         mx *= 0.91;
+         mz *= 0.91;
+         if (my < 0.0) {
+            fall -= my;
+         }
+
+         x += mx;
+         y += my;
+         z += mz;
+         AABB swept = player.getDimensions(player.getPose()).makeBoundingBox(start).expandTowards(new Vec3(x, y, z).subtract(start));
+         if (init_Z_Minecraft_AABB(mc, swept)) {
+            return new AiDanger.Inner_StreamUtil(0.0F, tick, false);
+         }
+
+         Optional<BlockPos> support = mc.level.findSupportingBlock(player, swept);
+         if (support.isPresent()) {
+            String id = BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(support.get()).getBlock()).getPath();
+            float multiplier = init_F_Str_Z(id, player.isSuppressingBounce());
+            if (multiplier <= 0.0F) {
+               return new AiDanger.Inner_StreamUtil(0.0F, tick, false);
+            }
+
+            float amount = ((AutismLivingEntityAccessor)player).autism$calculateFallDamage(fall, multiplier);
+            return new AiDanger.Inner_StreamUtil(init_F_Minecraft(mc, player.damageSources().fall(), amount), tick, false);
+         }
+      }
+
+      boolean voidFall = y < mc.level.getMinY();
+      float amount = ((AutismLivingEntityAccessor)player).autism$calculateFallDamage(fall, 1.0F);
+      return new AiDanger.Inner_StreamUtil(init_F_Minecraft(mc, player.damageSources().fall(), amount), -1, voidFall);
+   }
+
+   private static boolean init_Z_Minecraft_AABB(Minecraft mc, AABB swept) {
+      MutableBlockPos p = new MutableBlockPos();
+
+      for (int bx = (int)Math.floor(swept.minX); bx <= (int)Math.floor(swept.maxX); bx++) {
+         for (int by = (int)Math.floor(swept.minY); by <= (int)Math.floor(swept.maxY); by++) {
+            for (int bz = (int)Math.floor(swept.minZ); bz <= (int)Math.floor(swept.maxZ); bz++) {
+               if (mc.level.getFluidState(p.set(bx, by, bz)).is(FluidTags.WATER)) {
+                  return true;
+               }
+            }
+         }
+      }
+
+      return false;
+   }
+
+   private static float init_F_Minecraft(Minecraft mc, DamageSource source, float damage) {
+      LocalPlayer player = mc.player;
+      if (!((AutismEntityAccessor)player).autism$isInvulnerableToBase(source) && !player.isDeadOrDying()) {
+         float amount = damage;
+         if (player.getAbilities().invulnerable && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return 0.0F;
+         }
+
+         if (source.scalesWithDifficulty()) {
+            Difficulty difficulty = mc.level.getDifficulty();
+            if (difficulty == Difficulty.PEACEFUL) {
+               amount = 0.0F;
+            } else if (difficulty == Difficulty.EASY) {
+               amount = Math.min(amount / 2.0F + 1.0F, amount);
+            } else if (difficulty == Difficulty.HARD) {
+               amount = amount * 3.0F / 2.0F;
+            }
+         }
+
+         if (amount == 0.0F) {
+            return 0.0F;
+         }
+
+         if (source.is(DamageTypeTags.IS_FIRE) && player.hasEffect(MobEffects.FIRE_RESISTANCE)) {
+            return 0.0F;
+         }
+
+         amount -= init_F_LocalPlayer(player, source, amount);
+         if (amount == 0.0F) {
+            return 0.0F;
+         }
+
+         amount = ((AutismLivingEntityAccessor)player).autism$getDamageAfterArmorAbsorb(source, amount);
+         return ((AutismLivingEntityAccessor)player).autism$getDamageAfterMagicAbsorb(source, amount);
+      } else {
+         return 0.0F;
+      }
+   }
+
+   private static float init_F_LocalPlayer(LocalPlayer player, DamageSource source, float amount) {
+      if (amount <= 0.0F) {
+         return 0.0F;
+      } else {
+         ItemStack blocking = player.getItemBlockingWith();
+         if (blocking == null) {
+            return 0.0F;
+         } else {
+            BlocksAttacks blocksAttacks = blocking.get(DataComponents.BLOCKS_ATTACKS);
+            if (blocksAttacks == null) {
+               return 0.0F;
+            } else if (blocksAttacks.bypassedBy().isPresent() && blocksAttacks.bypassedBy().get().contains(source.typeHolder())) {
+               return 0.0F;
+            } else if (source.getDirectEntity() instanceof AbstractArrow arrow && arrow.getPierceLevel() > 0) {
+               return 0.0F;
+            } else {
+               float horizontalAngle = 3.1415927F;
+               Vec3 sourcePosition = source.getSourcePosition();
+               if (sourcePosition != null) {
+                  Vec3 view = init_Vec3_LocalPlayer(player);
+                  Vec3 direction = sourcePosition.subtract(player.position());
+                  direction = new Vec3(direction.x, 0.0, direction.z).normalize();
+                  horizontalAngle = (float)Math.acos(direction.dot(view));
+               }
+
+               return blocksAttacks.resolveBlockedDamage(source, amount, horizontalAngle);
+            }
+         }
+      }
+   }
+
+   private static Vec3 init_Vec3_LocalPlayer(LocalPlayer player) {
+      float yaw = player.getYHeadRot() * 0.017453292F;
+      return new Vec3(-Mth.sin(yaw), 0.0, Mth.cos(yaw));
+   }
+
+   private static List<BlockPos> init_List_F(float radius) {
+      List<BlockPos> out = new ArrayList<>();
+      int r = Mth.ceil(radius);
+      float rSq = radius * radius;
+
+      for (int x = -r; x <= r; x++) {
+         for (int y = -r; y <= r; y++) {
+            for (int z = -r; z <= r; z++) {
+               if (x * x + y * y + z * z <= rSq) {
+                  out.add(new BlockPos(x, y, z));
+               }
+            }
+         }
+      }
+
+      out.sort(Comparator.comparingInt(p -> p.getX() * p.getX() + p.getY() * p.getY() + p.getZ() * p.getZ()));
+      return out;
+   }
+
+   private record Inner_BufferHelper(AiDanger.Inner_DataUtil assessment, int fallEtaTicks, LocalPlayer player) {
+   }
+
+   interface Inner_CachePool {
+      AiDanger.Inner_CachePool init = new AiDanger.Inner_CachePool() {
+         @Override
+         public boolean init(float totalPredicted) {
+            return autismclient.util.ExplosionDamageCalculator.init_Z_D(totalPredicted);
+         }
+
+         @Override
+         public boolean load(float totalPredicted) {
+            return autismclient.util.ExplosionDamageCalculator.load(totalPredicted);
+         }
+      };
+
+      boolean init(float var1);
+
+      boolean load(float var1);
+   }
+
+   record Inner_ConfigStore(String kind, double x, double y, double z, float damage, int etaTicks) {
+   }
+
+   record Inner_DataUtil(
+      List<AiDanger.Inner_ConfigStore> sources,
+      float worstSource,
+      float fallDamage,
+      float totalPredicted,
+      int totemsHeld,
+      int totemsInventory,
+      int armorPoints,
+      double toughness,
+      int resistanceAmplifier,
+      boolean fireResistant,
+      float absorption,
+      String blockingItem,
+      float effectiveHealth,
+      float afterWorstHit,
+      boolean lethal,
+      boolean lethalThroughTotem,
+      boolean voidFall
+   ) {
+   }
+
+   private record Inner_StreamUtil(float damage, int etaTicks, boolean voidFall) {
+   }
+
+   record Inner_TaskQueue(boolean lethal, boolean lethalThroughTotem) {
+   }
+}

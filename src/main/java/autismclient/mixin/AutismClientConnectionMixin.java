@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.aq;
+import autismclient.ai.AiMenuClose;
 import autismclient.api.custommenu.CustomMenuAdapterRegistry;
 import autismclient.g.ConnectionPrivacyRegistry;
 import autismclient.g.ServerPackSelectionRegistry;
@@ -196,7 +196,7 @@ public abstract class AutismClientConnectionMixin {
 
          ScaffoldModule.read_V_Packet(packet);
          if (!AutismLiteVariant.enabled()) {
-            aq.init(packet);
+            AiMenuClose.init(packet);
          }
       }
    }
@@ -351,7 +351,7 @@ public abstract class AutismClientConnectionMixin {
                      ci.cancel();
                   } else {
                      if (packet instanceof ServerboundContainerClosePacket closeForHold) {
-                        boolean requiredClose = !AutismLiteVariant.enabled() && aq.init(closeForHold);
+                        boolean requiredClose = !AutismLiteVariant.enabled() && AiMenuClose.init(closeForHold);
                         if (!requiredClose && shared.queue_Z()) {
                            ci.cancel();
                            return;
@@ -682,7 +682,7 @@ public abstract class AutismClientConnectionMixin {
             if (!(packet instanceof ServerboundCustomPayloadPacket) && !aD.read_Z()) {
                AutismSessionState shared = AutismSessionState.init_ck();
                if (packet instanceof ServerboundContainerClosePacket closeForHold) {
-                  boolean requiredClose = !AutismLiteVariant.enabled() && aq.init(closeForHold);
+                  boolean requiredClose = !AutismLiteVariant.enabled() && AiMenuClose.init(closeForHold);
                   if (!requiredClose && shared.queue_Z()) {
                      ci.cancel();
                      return;

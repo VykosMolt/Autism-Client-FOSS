@@ -20,22 +20,22 @@ public class JournalCacheCheck {
       SharedConstants.tryDetectVersion();
       Bootstrap.bootStrap();
       Path dir = Files.createTempDirectory("journals");
-      a.init_V();
+      AiScaffold.init_V();
       Path live = dir.resolve("live.json");
-      a.Inner_StreamUtil open = a.init(live, List.of());
+      AiScaffold.Inner_StreamUtil open = AiScaffold.init(live, List.of());
       BlockPos pos = new BlockPos(1, 2, 3);
-      a.init(pos, Blocks.DIRT);
+      AiScaffold.init(pos, Blocks.DIRT);
       check(open.init(pos) == Blocks.DIRT, "live scope records the scaffold");
 
       for (int i = 0; i < 70; i++) {
          Path other = dir.resolve("other-" + i + ".json");
-         a.init(other, List.of()).close();
+         AiScaffold.init(other, List.of()).close();
          check(Files.isRegularFile(other), "close() leaves the journal written");
       }
 
       // The live journal was never written, so a re-read would come back empty.
       check(!Files.exists(live), "live journal is still unsaved");
-      a.Inner_StreamUtil again = a.init(live, List.of());
+      AiScaffold.Inner_StreamUtil again = AiScaffold.init(live, List.of());
       check(again.init(pos) == Blocks.DIRT, "cache must not evict a journal a live scope still uses");
       System.out.println("PASS JournalCacheCheck");
    }

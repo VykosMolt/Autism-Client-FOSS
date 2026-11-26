@@ -21,7 +21,7 @@ import net.minecraft.world.phys.Vec3;
 final class AiParkourRoute implements AiOperation {
    private final JsonObject putAt_JsonObject;
    private final List<BlockPos> putAt_List;
-   private final autismclient.ai.a.HashUtil.Inner_TableCache putAt_HashEntry_TableCac;
+   private final autismclient.ai.a.AiGoto.Inner_TableCache putAt_HashEntry_TableCac;
    private final JsonArray putAt_JsonArray = new JsonArray();
    private AiOperation putAt_AiOperation;
    private int flowState;
@@ -35,7 +35,7 @@ final class AiParkourRoute implements AiOperation {
    private volatile boolean fill_Z;
    private volatile boolean readEx_Z;
    private volatile boolean value_Z;
-   private autismclient.ai.a.ArrayUtil putAt_BufferCore;
+   private autismclient.ai.a.AiParkourFallWarning putAt_BufferCore;
    private boolean prevEx_Z;
    private volatile float putAt_F = 0.0F / 0.0F;
    private boolean prev_Z;
@@ -50,7 +50,7 @@ final class AiParkourRoute implements AiOperation {
    private int state_I;
    private int closeOf_I;
    private double fill_D = -1.0;
-   private autismclient.ai.a.NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac;
+   private autismclient.ai.a.AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac;
    private long fill_J;
    private double readEx_D;
    private double value_D;
@@ -58,7 +58,7 @@ final class AiParkourRoute implements AiOperation {
    private boolean pollAt_Z;
    private boolean pollOf_Z;
    private boolean tick_Z;
-   private autismclient.ai.a.RingBuffer putAt_PoolStore;
+   private autismclient.ai.a.AiLiveGrid putAt_PoolStore;
    private volatile AiParkourRoute.Inner_CacheHelper putAt_RenderCodec_CacheH;
    private int pollAt_I;
    private int pollOf_I;
@@ -74,8 +74,8 @@ final class AiParkourRoute implements AiOperation {
    private static final float fill_F = 20.0F;
 
    AiParkourRoute(JsonObject var1) {
-      if (ag.init_Z_JsonObject(var1, "parkour", false)
-         && !ag.init_Z_JsonObject(var1, "yOnly", false)
+      if (AiJson.init_Z_JsonObject(var1, "parkour", false)
+         && !AiJson.init_Z_JsonObject(var1, "yOnly", false)
          && var1.has("x")
          && var1.has("y")
          && var1.has("z")) {
@@ -90,7 +90,7 @@ final class AiParkourRoute implements AiOperation {
 
          var2.add(putAt_BlockPos_JsonObject_2(var1));
          this.putAt_List = List.copyOf(var2);
-         this.putAt_HashEntry_TableCac = new autismclient.ai.a.HashUtil.Inner_TableCache(this.putAt_List);
+         this.putAt_HashEntry_TableCac = new autismclient.ai.a.AiGoto.Inner_TableCache(this.putAt_List);
          this.putAt_Z = true;
          this.putAt_JsonObject.remove("parkourRecordPace");
       } else {
@@ -99,8 +99,8 @@ final class AiParkourRoute implements AiOperation {
    }
 
    static boolean putAt_Z_JsonObject(JsonObject var0) {
-      return ag.init_Z_JsonObject(var0, "parkour", false)
-         && !ag.init_Z_JsonObject(var0, "yOnly", false)
+      return AiJson.init_Z_JsonObject(var0, "parkour", false)
+         && !AiJson.init_Z_JsonObject(var0, "yOnly", false)
          && var0.has("x")
          && var0.has("y")
          && var0.has("z");
@@ -137,7 +137,7 @@ final class AiParkourRoute implements AiOperation {
                var3.addProperty("interactOnArrival", false);
             }
 
-            this.putAt_AiOperation = autismclient.ai.a.HashUtil.putAt_AiOperation_JsonObject(var3, this.flowState, this.putAt_HashEntry_TableCac);
+            this.putAt_AiOperation = autismclient.ai.a.AiGoto.putAt_AiOperation_JsonObject(var3, this.flowState, this.putAt_HashEntry_TableCac);
          }
 
          var10 = this.putAt_AiOperation.tick();
@@ -146,16 +146,16 @@ final class AiParkourRoute implements AiOperation {
             return new AiOperation.Result(AiOperation.Status.RUNNING, var4 + " · " + var10.message(), var10.dataJson(), var10.evidence());
          }
 
-         var5 = ag.init_JsonObject_Str(var10.dataJson());
-         double var6 = ag.init_D_JsonObject(var5, "firstPathReadyMs", -1.0);
+         var5 = AiJson.init_JsonObject_Str(var10.dataJson());
+         double var6 = AiJson.init_D_JsonObject(var5, "firstPathReadyMs", -1.0);
          if (this.flowState == 0) {
             this.putAt_D = var6;
          }
 
-         this.flowTemp = this.flowTemp + ag.init_I_JsonObject(var5, "replans", 0);
+         this.flowTemp = this.flowTemp + AiJson.init_I_JsonObject(var5, "replans", 0);
          this.putAt_JsonArray
             .add(
-               ag.init_JsonObject_ObjArr(
+               AiJson.init_JsonObject_ObjArr(
                   "target",
                   List.of(var9.getX(), var9.getY(), var9.getZ()),
                   "startedAt",
@@ -169,9 +169,9 @@ final class AiParkourRoute implements AiOperation {
                   "firstPathReadyMs",
                   var6,
                   "searchMs",
-                  ag.init_D_JsonObject(var5, "checkpointSearchMs", -1.0),
+                  AiJson.init_D_JsonObject(var5, "checkpointSearchMs", -1.0),
                   "replans",
-                  ag.init_I_JsonObject(var5, "replans", 0)
+                  AiJson.init_I_JsonObject(var5, "replans", 0)
                )
             );
          this.putAt_AiOperation = null;
@@ -199,10 +199,10 @@ final class AiParkourRoute implements AiOperation {
          Minecraft var2 = Minecraft.getInstance();
          ItemStack[] var3 = new ItemStack[9];
          Arrays.fill(var3, ItemStack.EMPTY);
-         this.putAt_PoolStore = new autismclient.ai.a.RingBuffer(var2, var3, autismclient.ai.a.StateCache.init_StateCache());
-         autismclient.ai.a.NodeWalker.Inner_StreamUtil var4 = autismclient.ai.a.NodeWalker.Inner_StreamUtil.of(var1);
+         this.putAt_PoolStore = new autismclient.ai.a.AiLiveGrid(var2, var3, autismclient.ai.a.AiChunkMemory.init_StateCache());
+         autismclient.ai.a.AiPhysics.Inner_StreamUtil var4 = autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(var1);
          float var5 = var1.getYRot();
-         int var6 = ag.init_I_JsonObject(this.putAt_JsonObject, "parkourSpeed", -1);
+         int var6 = AiJson.init_I_JsonObject(this.putAt_JsonObject, "parkourSpeed", -1);
          double var7 = autismclient.ai.a.AiPacePlayback.putAt_D_LocalPlayer(var1);
          double var9 = var6 >= 0 ? 0.1 * (1.0 + 0.2 * var6) : var7;
          boolean var11 = !this.putAt_List.isEmpty() && autismclient.ai.a.AiPaceScript.putAt(var4, this.putAt_List.get(0));
@@ -211,8 +211,8 @@ final class AiParkourRoute implements AiOperation {
          this.value_D = this.pollAt_Z ? var7 : var9;
          this.readEx_D = var9;
          this.prevEx_D = !this.pollAt_Z && this.pollOf_Z && Math.abs(var7 - var9) > 1.0E-4 ? var7 : 0.0 / 0.0;
-         this.tick_Z = ag.init_Z_JsonObject(this.putAt_JsonObject, "assumeNoFallDamage", false);
-         autismclient.ai.a.RingBuffer var12 = this.putAt_PoolStore;
+         this.tick_Z = AiJson.init_Z_JsonObject(this.putAt_JsonObject, "assumeNoFallDamage", false);
+         autismclient.ai.a.AiLiveGrid var12 = this.putAt_PoolStore;
          double var13 = this.value_D;
          double var15 = this.readEx_D;
          boolean var17 = this.tick_Z;
@@ -240,7 +240,7 @@ final class AiParkourRoute implements AiOperation {
                         this.putAt_TextPool_JsonCache = var10x;
                      }
                   } catch (Throwable var15x) {
-                     autismclient.ai.a.ListPool.init("parkourwr planning failed: " + var15x);
+                     autismclient.ai.a.AiNavDebug.init("parkourwr planning failed: " + var15x);
                      AutismClientAddon.LOG.warn("[AI] parkourwr planning failed", var15x);
                   } finally {
                      this.fill_Z = true;
@@ -259,7 +259,7 @@ final class AiParkourRoute implements AiOperation {
             return this.putAt(var1, "no guide");
          }
 
-         autismclient.ai.a.NodeWalker.Inner_StreamUtil var21 = autismclient.ai.a.NodeWalker.Inner_StreamUtil.of(var1);
+         autismclient.ai.a.AiPhysics.Inner_StreamUtil var21 = autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(var1);
 
          while (this.pollAt_I < this.putAt_List.size() && autismclient.ai.a.AiPaceScript.putAt(var21, this.putAt_List.get(this.pollAt_I))) {
             this.putAt_V_LocalPlayer(var1);
@@ -349,7 +349,7 @@ final class AiParkourRoute implements AiOperation {
                this.state_I = this.pollAt_I;
                this.putAt_TextPool_CacheHelp = null;
                var var34 = List.copyOf(this.putAt_List.subList(this.pollAt_I, this.putAt_List.size()));
-               autismclient.ai.a.RingBuffer var39 = this.putAt_PoolStore;
+               autismclient.ai.a.AiLiveGrid var39 = this.putAt_PoolStore;
                boolean var40 = this.pollAt_Z
                   && this.pollAt_I == 0
                   && var34.size() >= 2
@@ -379,7 +379,7 @@ final class AiParkourRoute implements AiOperation {
 
                            this.putAt_TextPool_JsonCache = var10x;
                         } catch (Throwable var15x) {
-                           autismclient.ai.a.ListPool.init("parkourwr speed replan failed: " + var15x);
+                           autismclient.ai.a.AiNavDebug.init("parkourwr speed replan failed: " + var15x);
                         } finally {
                            this.fill_Z = true;
                         }
@@ -424,7 +424,7 @@ final class AiParkourRoute implements AiOperation {
                this.fill_Vec3 = var1.position();
             }
 
-            autismclient.ai.a.ListPool.init(
+            autismclient.ai.a.AiNavDebug.init(
                String.format(
                   Locale.ROOT,
                   "parkourwr script %d: %d ticks ready, searched from %.1f blocks",
@@ -440,7 +440,7 @@ final class AiParkourRoute implements AiOperation {
          if (var33 == autismclient.ai.a.AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach) {
             this.flushOf++;
             if (!AutismLiteVariant.enabled()) {
-               cG.init(this, var26.putAt_TextPool_IoHelper, var30.flowState(), this.putAt_List, this.pollAt_I);
+               AiVisualization.init(this, var26.putAt_TextPool_IoHelper, var30.flowState(), this.putAt_List, this.pollAt_I);
             }
 
             return new AiOperation.Result(
@@ -517,7 +517,7 @@ final class AiParkourRoute implements AiOperation {
                      this.readEx_D,
                      var30.putAt_Str()
                   );
-                  autismclient.ai.a.ListPool.init(var50);
+                  autismclient.ai.a.AiNavDebug.init(var50);
                   AutismClientAddon.LOG.info("[AI] " + var50);
                   return new AiOperation.Result(
                      AiOperation.Status.RUNNING, "Checkpoint " + (this.pollAt_I + 1) + "/" + this.putAt_List.size() + " · record route", "{}", List.of()
@@ -548,7 +548,7 @@ final class AiParkourRoute implements AiOperation {
 
          Minecraft var22 = Minecraft.getInstance();
          if (this.putAt_BufferCore == null && !autismclient.util.OverlayScreenController.init_Z()) {
-            autismclient.ai.a.ArrayUtil.Inner_DataUtil var27 = autismclient.ai.a.ArrayUtil.putAt_BufferCore_CacheHe_Minecraft_List(
+            autismclient.ai.a.AiParkourFallWarning.Inner_DataUtil var27 = autismclient.ai.a.AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
                var22, var20.movements()
             );
             if (var27.damage() == 0.0F) {
@@ -556,7 +556,7 @@ final class AiParkourRoute implements AiOperation {
                return this.fill(var1);
             }
 
-            this.putAt_BufferCore = new autismclient.ai.a.ArrayUtil(
+            this.putAt_BufferCore = new autismclient.ai.a.AiParkourFallWarning(
                var22, var27, var2x -> this.putAt(var1, var2x.booleanValue()), () -> this.prevEx_Z = true
             );
             if (!this.putAt_BufferCore.putAt_Z()) {
@@ -593,7 +593,7 @@ final class AiParkourRoute implements AiOperation {
                      var3.putAt_TextPool_IoHelper
                   );
                } catch (Throwable var7x) {
-                  autismclient.ai.a.ListPool.init("parkourwr search failed: " + var7x);
+                  autismclient.ai.a.AiNavDebug.init("parkourwr search failed: " + var7x);
                   var3.putAt_TextPool_IoHelper.putAt(false, null);
                }
             }
@@ -619,7 +619,7 @@ final class AiParkourRoute implements AiOperation {
       AiParkourRoute.Inner_CacheHelper var9 = this.putAt_RenderCodec_CacheH;
       autismclient.ai.a.AiPaceScript.Inner_JsonCache var10 = this.putAt_TextPool_JsonCache;
       if (var10 != null && !AutismLiteVariant.enabled()) {
-         cG.init(this, var10, this.putAt_List, this.pollAt_I);
+         AiVisualization.init(this, var10, this.putAt_List, this.pollAt_I);
       }
 
       if (var9 != null && var10 != null && !(var10.length() <= 0.0)) {
@@ -659,7 +659,7 @@ final class AiParkourRoute implements AiOperation {
          this.putAt_TextPool_CacheHelp.target().toShortString(),
          this.putAt_TextPool_CacheHelp.checkpoint() ? " (checkpoint)" : ""
       );
-      autismclient.ai.a.ListPool.init(var8);
+      autismclient.ai.a.AiNavDebug.init(var8);
       AutismClientAddon.LOG.info("[AI] " + var8);
       JsonObject var9 = this.putAt_JsonObject.deepCopy();
       if (this.pollAt_Z && this.pollAt_I == 0) {
@@ -675,7 +675,7 @@ final class AiParkourRoute implements AiOperation {
          var9.addProperty("interactOnArrival", false);
       }
 
-      this.fill_AiOperation = autismclient.ai.a.HashUtil.putAt(var9);
+      this.fill_AiOperation = autismclient.ai.a.AiGoto.putAt(var9);
       return new AiOperation.Result(
          AiOperation.Status.RUNNING, "Checkpoint " + (this.pollAt_I + 1) + "/" + this.putAt_List.size() + " · ordinary leg", "{}", List.of()
       );
@@ -685,7 +685,7 @@ final class AiParkourRoute implements AiOperation {
       BlockPos var2 = this.putAt_List.get(this.pollAt_I);
       this.putAt_JsonArray
          .add(
-            ag.init_JsonObject_ObjArr(
+            AiJson.init_JsonObject_ObjArr(
                "target",
                List.of(var2.getX(), var2.getY(), var2.getZ()),
                "startedAt",
@@ -713,7 +713,7 @@ final class AiParkourRoute implements AiOperation {
 
    private AiOperation.Result readEx(LocalPlayer var1) {
       if (!AutismLiteVariant.enabled()) {
-         cG.init_V(this);
+         AiVisualization.init_V(this);
       }
 
       autismclient.ai.a.AiPacePlayback.fill_V_LocalPlayer(var1);
@@ -734,7 +734,7 @@ final class AiParkourRoute implements AiOperation {
       var3.addProperty("paceRestarts", this.prevEx_I);
       var3.addProperty("paceWorstError", this.prev_D);
       var3.addProperty("parkourRecordPace", true);
-      var3.addProperty("parkourSpeed", ag.init_I_JsonObject(this.putAt_JsonObject, "parkourSpeed", -1));
+      var3.addProperty("parkourSpeed", AiJson.init_I_JsonObject(this.putAt_JsonObject, "parkourSpeed", -1));
       var3.addProperty("planningMovementSpeed", this.readEx_D);
       this.putAt_HashEntry_TableCac.close();
       return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Reached all " + this.putAt_List.size() + " checkpoints", var3.toString(), List.of());
@@ -742,11 +742,11 @@ final class AiParkourRoute implements AiOperation {
 
    private AiOperation.Result putAt(LocalPlayer var1, String var2) {
       if (!AutismLiteVariant.enabled()) {
-         cG.init_V(this);
+         AiVisualization.init_V(this);
       }
 
       String var3 = "parkourwr hands the course back at checkpoint " + this.pollAt_I + ": " + var2;
-      autismclient.ai.a.ListPool.init(var3);
+      autismclient.ai.a.AiNavDebug.init(var3);
       AutismClientAddon.LOG.info("[AI] " + var3);
       autismclient.ai.a.AiPacePlayback.fill_V_LocalPlayer(var1);
       AiParkourRoute.Inner_CacheHelper var4 = this.putAt_RenderCodec_CacheH;
@@ -770,7 +770,7 @@ final class AiParkourRoute implements AiOperation {
             this.putAt_JsonObject.addProperty("assumeNoFallDamage", true);
             this.tick_Z = true;
             autismclient.ai.a.AiPaceScript.Inner_JsonCache var4 = var3.guide();
-            autismclient.ai.a.NodeWalker.Inner_StreamUtil var5 = autismclient.ai.a.NodeWalker.Inner_StreamUtil.of(var1);
+            autismclient.ai.a.AiPhysics.Inner_StreamUtil var5 = autismclient.ai.a.AiPhysics.Inner_StreamUtil.of(var1);
             float var6 = autismclient.ai.a.AiPaceScript.putAt_F_TokenCore_TableCac(var5, var4, var1.getYRot());
             this.putAt_F = var6;
             this.putAt_TextPool_JsonCache = var4;
@@ -807,7 +807,7 @@ final class AiParkourRoute implements AiOperation {
    @Override
    public void cancel() {
       if (!AutismLiteVariant.enabled()) {
-         cG.init_V(this);
+         AiVisualization.init_V(this);
       }
 
       this.readEx_Z = true;

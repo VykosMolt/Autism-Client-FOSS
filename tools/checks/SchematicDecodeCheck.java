@@ -30,29 +30,29 @@ public final class SchematicDecodeCheck {
       Path lit = write("unknown.litematic", litematic(region(0, 0, 0, 3, 1, 1, List.of("minecraft:air", "minecraft:not_a_real_block", "minecraft:stone"), new int[]{1, 2, 2})));
       Path sponge = write("unknown.schem", sponge(3, 1, 1, List.of("minecraft:not_a_real_block", "minecraft:stone"), new byte[]{0, 1, 1}));
       for (Path p : List.of(lit, sponge)) {
-         check(throwsOn(() -> bP.init_bP_DataUtil_Path_Z(p, false)), "S3 strict import of " + p.getFileName() + " rejects the unknown block");
-         check(Integer.valueOf(2).equals(cellsOrNull(() -> bP.init_bP_DataUtil_Path_Z(p, true).cells().size())),"S3 skipUnknown keeps the 2 known cells of " + p.getFileName());
+         check(throwsOn(() -> AiSchematic.init_bP_DataUtil_Path_Z(p, false)), "S3 strict import of " + p.getFileName() + " rejects the unknown block");
+         check(Integer.valueOf(2).equals(cellsOrNull(() -> AiSchematic.init_bP_DataUtil_Path_Z(p, true).cells().size())),"S3 skipUnknown keeps the 2 known cells of " + p.getFileName());
       }
 
       // S8: trailing Sponge BlockData bytes are rejected by build like preview.
       CompoundTag trailing = sponge(1, 1, 1, List.of("minecraft:stone"), new byte[]{0, 0});
-      check(throwsOn(() -> cQ.load_cQ_CompoundTag(trailing)), "S8 preview rejects trailing Sponge bytes");
-      check(throwsOn(() -> bP.init_bP_DataUtil_Path_Z(write("trailing.schem", trailing), false)), "S8 build rejects trailing Sponge bytes");
-      check(!throwsOn(() -> bP.init_bP_DataUtil_Path_Z(write("ok.schem", sponge(1, 1, 1, List.of("minecraft:stone"), new byte[]{0})), false)), "S8 exact Sponge data still loads");
+      check(throwsOn(() -> SchematicDocument.load_cQ_CompoundTag(trailing)), "S8 preview rejects trailing Sponge bytes");
+      check(throwsOn(() -> AiSchematic.init_bP_DataUtil_Path_Z(write("trailing.schem", trailing), false)), "S8 build rejects trailing Sponge bytes");
+      check(!throwsOn(() -> AiSchematic.init_bP_DataUtil_Path_Z(write("ok.schem", sponge(1, 1, 1, List.of("minecraft:stone"), new byte[]{0})), false)), "S8 exact Sponge data still loads");
 
       // S4: excess BlockStates longs are rejected by both; the library keeps the stock 256 MiB NBT budget.
       CompoundTag extra = region(0, 0, 0, 1, 1, 1, List.of("minecraft:stone"), new int[]{0});
       extra.putLongArray("BlockStates", new long[2]);
       CompoundTag extraRoot = litematic(extra);
-      check(throwsOn(() -> cQ.init_cQ_CompoundTag(extraRoot)), "S4 preview rejects excess BlockStates longs");
-      check(throwsOn(() -> bP.init_bP_DataUtil_Path_Z(write("extra.litematic", extraRoot), false)), "S4 build rejects excess BlockStates longs");
+      check(throwsOn(() -> SchematicDocument.init_cQ_CompoundTag(extraRoot)), "S4 preview rejects excess BlockStates longs");
+      check(throwsOn(() -> AiSchematic.init_bP_DataUtil_Path_Z(write("extra.litematic", extraRoot), false)), "S4 build rejects excess BlockStates longs");
       CompoundTag padded = litematic(region(0, 0, 0, 1, 1, 1, List.of("minecraft:stone"), new int[]{0}));
       CompoundTag meta = new CompoundTag();
       meta.putLongArray("Pad", new long[9_000_000]);
       padded.put("Metadata", meta);
       Path big = write("padded.litematic", padded);
-      check(throwsOn(() -> bP.init_bP_DataUtil_Path_Z(big, false)), "S4 build rejects 72 MB of NBT");
-      check(!throwsOn(() -> cQ.init_cQ_Path(big)), "library scanner and paste read 72 MB of NBT (256 MiB budget)");
+      check(throwsOn(() -> AiSchematic.init_bP_DataUtil_Path_Z(big, false)), "S4 build rejects 72 MB of NBT");
+      check(!throwsOn(() -> SchematicDocument.init_cQ_Path(big)), "library scanner and paste read 72 MB of NBT (256 MiB budget)");
 
       // Sol-3: overlapping regions resolve the same in build and preview (later region wins, air included).
       CompoundTag overlap = litematic(
@@ -62,14 +62,14 @@ public final class SchematicDecodeCheck {
       );
       Path overlapFile = write("overlap.litematic", overlap);
       Set<String> build = new TreeSet<>();
-      for (TableIndex.Inner_StreamUtil c : bP.init_bP_BufferHelper(overlapFile, BlockPos.ZERO, 0, "none", false, 2097152).blueprint().cells()) {
+      for (AiBuilder.Inner_StreamUtil c : AiSchematic.init_bP_BufferHelper(overlapFile, BlockPos.ZERO, 0, "none", false, 2097152).blueprint().cells()) {
          build.add(c.dx() + "," + c.dy() + "," + c.dz() + "=" + c.block());
       }
 
-      cQ.Inner_StreamUtil shown = cQ.init_cQ_Path(overlapFile).init_cQ_StreamUtil_I(0, "none", v -> {});
+      SchematicDocument.Inner_StreamUtil shown = SchematicDocument.init_cQ_Path(overlapFile).init_cQ_StreamUtil_I(0, "none", v -> {});
       Set<String> preview = new TreeSet<>();
       BlockPos min = shown.nonAirMinimum();
-      for (TableIndex.Inner_StreamUtil c : shown.cells()) {
+      for (AiBuilder.Inner_StreamUtil c : shown.cells()) {
          preview.add((c.dx() - min.getX()) + "," + (c.dy() - min.getY()) + "," + (c.dz() - min.getZ()) + "=" + c.block());
       }
 
@@ -79,15 +79,15 @@ public final class SchematicDecodeCheck {
       Path wide = write("wide600.litematic", litematic(region(0, 0, 0, 600, 1, 1, List.of("minecraft:stone"), new int[600])));
       Path wider = write("wide1100.litematic", litematic(region(0, 0, 0, 1100, 1, 1, List.of("minecraft:stone"), new int[1100])));
       Path target = Files.createTempDirectory(dir, "attached");
-      check(!throwsOn(() -> TaskQueue.init(wide, target)), "S7 a 600-wide schematic attaches (direct build accepts it)");
-      check(!throwsOn(() -> bP.init_bP_BufferHelper(wide, BlockPos.ZERO, 0, "none", false, 2097152)), "S7 a 600-wide schematic builds");
-      check(throwsOn(() -> TaskQueue.init(wider, target)), "S7 a 1100-wide schematic is refused on attach like build");
+      check(!throwsOn(() -> AiAttachments.init(wide, target)), "S7 a 600-wide schematic attaches (direct build accepts it)");
+      check(!throwsOn(() -> AiSchematic.init_bP_BufferHelper(wide, BlockPos.ZERO, 0, "none", false, 2097152)), "S7 a 600-wide schematic builds");
+      check(throwsOn(() -> AiAttachments.init(wider, target)), "S7 a 1100-wide schematic is refused on attach like build");
 
       // S9: the capture writer refuses a palette its own reader would reject.
-      check(throwsOn(() -> cP.init(new int[1], 65537)), "S9 capture writer refuses 65537 block states");
+      check(throwsOn(() -> SchematicCapture.init(new int[1], 65537)), "S9 capture writer refuses 65537 block states");
       BlockState[] states = new BlockState[65536];
       java.util.Arrays.fill(states, Blocks.AIR.defaultBlockState());
-      check(!throwsOn(() -> new cQ.Inner_CachePool(0, 0, 0, 1, 1, 1, states, cP.init(new int[1], 65536), null)), "S9 65536 states round-trip");
+      check(!throwsOn(() -> new SchematicDocument.Inner_CachePool(0, 0, 0, 1, 1, 1, states, SchematicCapture.init(new int[1], 65536), null)), "S9 65536 states round-trip");
 
       if (!failures.isEmpty()) {
          failures.forEach(f -> System.out.println("FAIL SchematicDecodeCheck: " + f));
@@ -155,10 +155,10 @@ public final class SchematicDecodeCheck {
       }
 
       r.put("BlockStatePalette", entries);
-      int bits = cQ.init_I_I(palette.size());
+      int bits = SchematicDocument.init_I_I(palette.size());
       long[] packed = new long[(int)(((long)values.length * bits + 63L) / 64L)];
       for (int i = 0; i < values.length; i++) {
-         cQ.init(packed, i, bits, values[i]);
+         SchematicDocument.init(packed, i, bits, values[i]);
       }
 
       r.putLongArray("BlockStates", packed);

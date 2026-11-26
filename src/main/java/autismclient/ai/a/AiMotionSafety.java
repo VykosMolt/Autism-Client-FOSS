@@ -56,8 +56,8 @@ public final class AiMotionSafety {
       }
    }
 
-   public static NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac(LocalPlayer var0) {
-      return NodeWalker.Inner_StreamUtil.of(var0);
+   public static AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac(LocalPlayer var0) {
+      return AiPhysics.Inner_StreamUtil.of(var0);
    }
 
    public static boolean fill_Z() {
@@ -77,7 +77,7 @@ public final class AiMotionSafety {
       return var1.test(new AABB(var0.minX, var0.minY - 1.0E-6, var0.minZ, var0.maxX, var0.minY, var0.maxZ));
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1) {
+   static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
       AABB var2 = var1.box(false);
       AABB var3 = new AABB(var2.minX, var2.minY - 0.001, var2.minZ, var2.maxX, var2.minY, var2.maxZ);
 
@@ -90,18 +90,18 @@ public final class AiMotionSafety {
       return false;
    }
 
-   static NodeWalker.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_TaskStat_2(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_DataUtil var2, float var3, LongPredicate var4
+   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_TaskStat_2(
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2, float var3, LongPredicate var4
    ) {
       double var5 = Math.toRadians(var2.yaw());
       double var7 = -Math.sin(var5) * var1.vx() + Math.cos(var5) * var1.vz();
       double var9 = Math.cos(var5) * var1.vx() + Math.sin(var5) * var1.vz();
-      NodeWalker.Inner_DataUtil var11 = new NodeWalker.Inner_DataUtil(
+      AiPhysics.Inner_DataUtil var11 = new AiPhysics.Inner_DataUtil(
          var7 > 0.005 ? -1.0 : (var7 < -0.005 ? 1.0 : 0.0), var9 > 0.005 ? -1.0 : (var9 < -0.005 ? 1.0 : 0.0), false, false, var2.sneak(), var2.yaw()
       );
 
-      for (NodeWalker.Inner_DataUtil var15 : new NodeWalker.Inner_DataUtil[]{
-         new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, var2.sneak(), var2.yaw()), var11
+      for (AiPhysics.Inner_DataUtil var15 : new AiPhysics.Inner_DataUtil[]{
+         new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, var2.sneak(), var2.yaw()), var11
       }) {
          if (putAt_Z_TokenCore_TaskStat(var0, var1, var15, var3, var4)) {
             return var15;
@@ -112,21 +112,21 @@ public final class AiMotionSafety {
    }
 
    static boolean putAt_Z_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_DataUtil var2, float var3, LongPredicate var4
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2, float var3, LongPredicate var4
    ) {
       for (int var5 = 0; var5 < 2; var5++) {
-         NodeWalker.Inner_StreamUtil var6 = NodeWalker.putAt(var1, var2, var0);
-         if (NodeWalker.putAt_Z(var0, var1, var6)) {
+         AiPhysics.Inner_StreamUtil var6 = AiPhysics.putAt(var1, var2, var0);
+         if (AiPhysics.putAt_Z(var0, var1, var6)) {
             return false;
          }
 
          var1 = var6;
          if (!var1.onGround()) {
-            for (NodeWalker.Inner_DataUtil var10 : new NodeWalker.Inner_DataUtil[]{
-               NodeWalker.Inner_DataUtil.run(var3, var2.sprint()), NodeWalker.Inner_DataUtil.NONE, NodeWalker.Inner_DataUtil.run(var3 + 180.0F, false)
+            for (AiPhysics.Inner_DataUtil var10 : new AiPhysics.Inner_DataUtil[]{
+               AiPhysics.Inner_DataUtil.run(var3, var2.sprint()), AiPhysics.Inner_DataUtil.NONE, AiPhysics.Inner_DataUtil.run(var3 + 180.0F, false)
             }) {
-               l.Inner_TableCache var11 = l.putAt(var1, var10, false, var0);
-               if (var11.down() && var4.test(l.putAt_J_D_D(var11.at().x(), var11.at().z())) && l.putAt(var11.at(), var4, var0)) {
+               AiStride.Inner_TableCache var11 = AiStride.putAt(var1, var10, false, var0);
+               if (var11.down() && var4.test(AiStride.putAt_J_D_D(var11.at().x(), var11.at().z())) && AiStride.putAt(var11.at(), var4, var0)) {
                   return true;
                }
             }
@@ -138,7 +138,7 @@ public final class AiMotionSafety {
       return true;
    }
 
-   static NodeWalker.Inner_DataUtil putAt_TokenCore_CacheHel(LocalPlayer var0) {
+   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel(LocalPlayer var0) {
       double var1 = Math.floor(var0.getX()) + 0.5;
       double var3 = Math.floor(var0.getZ()) + 0.5;
       double var5 = var1 - var0.getX();
@@ -147,17 +147,17 @@ public final class AiMotionSafety {
          return null;
       }
 
-      int[] var9 = putAt_IArr_F_F(var0.getYRot(), NodeWalker.putAt_F_D(var0.getX(), var0.getZ(), var1, var3));
-      return new NodeWalker.Inner_DataUtil(var9[0], -var9[1], false, false, true, var0.getYRot());
+      int[] var9 = putAt_IArr_F_F(var0.getYRot(), AiPhysics.putAt_F_D(var0.getX(), var0.getZ(), var1, var3));
+      return new AiPhysics.Inner_DataUtil(var9[0], -var9[1], false, false, true, var0.getYRot());
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_2(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_DataUtil var2, int var3) {
+   static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2, int var3) {
       boolean var4 = !var1.onGround();
       int var5 = var4 ? Math.max(var3, 64) : var3;
 
       for (int var6 = 0; var6 < var5; var6++) {
-         NodeWalker.Inner_StreamUtil var7 = NodeWalker.putAt(var1, var6 == 0 ? var2 : var2.withJump(false), var0);
-         if (NodeWalker.putAt_Z(var0, var1, var7)) {
+         AiPhysics.Inner_StreamUtil var7 = AiPhysics.putAt(var1, var6 == 0 ? var2 : var2.withJump(false), var0);
+         if (AiPhysics.putAt_Z(var0, var1, var7)) {
             return false;
          }
 
@@ -185,9 +185,9 @@ public final class AiMotionSafety {
       if (var6.player != null && var6.level != null) {
          LocalPlayer var7 = var6.player;
          return putAt_Z_TokenCore_TaskStat_2(
-            new BitSetUtil(var6.level, var7),
-            NodeWalker.Inner_StreamUtil.of(var7),
-            new NodeWalker.Inner_DataUtil(var0, var2, var4, var5, var7.isShiftKeyDown(), var7.getYRot()),
+            new AiLiveWorld(var6.level, var7),
+            AiPhysics.Inner_StreamUtil.of(var7),
+            new AiPhysics.Inner_DataUtil(var0, var2, var4, var5, var7.isShiftKeyDown(), var7.getYRot()),
             var4 ? 30 : 2
          );
       } else {
@@ -201,14 +201,14 @@ public final class AiMotionSafety {
          return false;
       }
 
-      BitSetUtil var3 = new BitSetUtil(var2.level, var2.player);
+      AiLiveWorld var3 = new AiLiveWorld(var2.level, var2.player);
       int var4 = Math.max(1, (int)Math.ceil(var0.distanceTo(var1) * 4.0));
-      NodeWalker.Inner_StreamUtil var5 = new NodeWalker.Inner_StreamUtil(var0.x, var0.y, var0.z, 0.0, 0.0, 0.0, true, 0, false, false);
+      AiPhysics.Inner_StreamUtil var5 = new AiPhysics.Inner_StreamUtil(var0.x, var0.y, var0.z, 0.0, 0.0, 0.0, true, 0, false, false);
 
       for (int var6 = 1; var6 <= var4; var6++) {
          Vec3 var7 = var0.lerp(var1, (double)var6 / var4);
-         NodeWalker.Inner_StreamUtil var8 = new NodeWalker.Inner_StreamUtil(var7.x, var7.y, var7.z, 0.0, 0.0, 0.0, true, 0, false, false);
-         if (NodeWalker.putAt_Z(var3, var5, var8)) {
+         AiPhysics.Inner_StreamUtil var8 = new AiPhysics.Inner_StreamUtil(var7.x, var7.y, var7.z, 0.0, 0.0, 0.0, true, 0, false, false);
+         if (AiPhysics.putAt_Z(var3, var5, var8)) {
             return false;
          }
 
@@ -236,10 +236,10 @@ public final class AiMotionSafety {
       }
    }
 
-   static boolean putAt(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_DataUtil var2) {
+   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_DataUtil var2) {
       double var3 = var1.y();
-      NodeWalker.Inner_StreamUtil var5 = NodeWalker.putAt(var1, var2, var0);
-      if (NodeWalker.putAt_Z(var0, var1, var5)) {
+      AiPhysics.Inner_StreamUtil var5 = AiPhysics.putAt(var1, var2, var0);
+      if (AiPhysics.putAt_Z(var0, var1, var5)) {
          return false;
       }
 
@@ -256,8 +256,8 @@ public final class AiMotionSafety {
          }
 
          var1 = var5;
-         var5 = NodeWalker.putAt(var1, NodeWalker.Inner_DataUtil.NONE, var0);
-         if (NodeWalker.putAt_Z(var0, var1, var5)) {
+         var5 = AiPhysics.putAt(var1, AiPhysics.Inner_DataUtil.NONE, var0);
+         if (AiPhysics.putAt_Z(var0, var1, var5)) {
             return false;
          }
       }
@@ -265,17 +265,17 @@ public final class AiMotionSafety {
       return false;
    }
 
-   static boolean fill(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1) {
+   static boolean fill(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
       return putAt(var0, var1, 0.0);
    }
 
-   static boolean putAt(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, double var2) {
+   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, double var2) {
       double var4 = var1.y() + Math.max(0.0, var2);
       int var6 = 0;
 
       for (int var7 = 0; var7 < 64; var7++) {
-         NodeWalker.Inner_StreamUtil var8 = NodeWalker.putAt(var1, NodeWalker.Inner_DataUtil.NONE, var0);
-         if (NodeWalker.putAt_Z(var0, var1, var8)) {
+         AiPhysics.Inner_StreamUtil var8 = AiPhysics.putAt(var1, AiPhysics.Inner_DataUtil.NONE, var0);
+         if (AiPhysics.putAt_Z(var0, var1, var8)) {
             return false;
          }
 
@@ -299,7 +299,7 @@ public final class AiMotionSafety {
       return false;
    }
 
-   static boolean putAt(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, List<AABB> var2) {
+   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, List<AABB> var2) {
       for (int var3 = 0; var3 < 64; var3++) {
          AABB var4 = var1.box(false);
 
@@ -313,7 +313,7 @@ public final class AiMotionSafety {
             return false;
          }
 
-         var1 = NodeWalker.putAt(var1, NodeWalker.Inner_DataUtil.NONE, var0);
+         var1 = AiPhysics.putAt(var1, AiPhysics.Inner_DataUtil.NONE, var0);
       }
 
       return false;
@@ -334,14 +334,14 @@ public final class AiMotionSafety {
             return true;
          }
 
-         NodeWalker.Inner_StreamUtil var3 = putAt_TokenCore_TableCac(var1.player);
-         if (!putAt(new BitSetUtil(var1.level, var1.player), var3, var2)) {
+         AiPhysics.Inner_StreamUtil var3 = putAt_TokenCore_TableCac(var1.player);
+         if (!putAt(new AiLiveWorld(var1.level, var1.player), var3, var2)) {
             return true;
          }
 
-         boolean var4 = putAt(new BitSetUtil(var1.level, var1.player, var0), var3, var1.player.onGround() ? 0.0 : var1.player.fallDistance);
+         boolean var4 = putAt(new AiLiveWorld(var1.level, var1.player, var0), var3, var1.player.onGround() ? 0.0 : var1.player.fallDistance);
          if (putAt_Z && !var4) {
-            ListPool.init("unsafe support removal target=" + var0 + " state=" + var3 + " fallen=" + var1.player.fallDistance);
+            AiNavDebug.init("unsafe support removal target=" + var0 + " state=" + var3 + " fallen=" + var1.player.fallDistance);
          }
 
          return var4;
@@ -350,26 +350,26 @@ public final class AiMotionSafety {
       }
    }
 
-   static NodeWalker.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, float var2, double var3, LongPredicate var5
+   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_TaskStat(
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, float var2, double var3, LongPredicate var5
    ) {
       if (var1.y() - var3 > 3.00001) {
          return null;
       }
 
-      NodeWalker.Inner_DataUtil var6 = NodeWalker.Inner_DataUtil.run(var2, false);
-      NodeWalker.Inner_DataUtil[] var7 = new NodeWalker.Inner_DataUtil[]{
-         var6, NodeWalker.Inner_DataUtil.NONE.withYaw(var2), new NodeWalker.Inner_DataUtil(-1.0, 0.0, false, false, false, var2)
+      AiPhysics.Inner_DataUtil var6 = AiPhysics.Inner_DataUtil.run(var2, false);
+      AiPhysics.Inner_DataUtil[] var7 = new AiPhysics.Inner_DataUtil[]{
+         var6, AiPhysics.Inner_DataUtil.NONE.withYaw(var2), new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, false, var2)
       };
       int var8 = var1.onGround() ? 1 : var7.length;
 
       for (int var9 = 0; var9 < var8; var9++) {
-         NodeWalker.Inner_DataUtil var10 = var7[var9];
-         NodeWalker.Inner_StreamUtil var11 = var1;
+         AiPhysics.Inner_DataUtil var10 = var7[var9];
+         AiPhysics.Inner_StreamUtil var11 = var1;
 
          for (int var12 = 0; var12 < 24; var12++) {
-            NodeWalker.Inner_StreamUtil var13 = NodeWalker.putAt(var11, var12 == 0 ? var10 : var6, var0);
-            if (var13.y() < var3 - 0.02 || var13.y() > var1.y() + 0.02 || NodeWalker.fill(var0, var11, var13)) {
+            AiPhysics.Inner_StreamUtil var13 = AiPhysics.putAt(var11, var12 == 0 ? var10 : var6, var0);
+            if (var13.y() < var3 - 0.02 || var13.y() > var1.y() + 0.02 || AiPhysics.fill(var0, var11, var13)) {
                break;
             }
 
@@ -378,8 +378,8 @@ public final class AiMotionSafety {
             }
 
             if (!var13.onGround()) {
-               for (NodeWalker.Inner_DataUtil var17 : var7) {
-                  l.Inner_TableCache var18 = l.putAt(var13, var17, false, var0);
+               for (AiPhysics.Inner_DataUtil var17 : var7) {
+                  AiStride.Inner_TableCache var18 = AiStride.putAt(var13, var17, false, var0);
                   if (var18.down() && putAt_Z_TokenCore_TaskStat(var0, var18.at(), var3, var5)) {
                      return var10;
                   }
@@ -393,12 +393,12 @@ public final class AiMotionSafety {
       return null;
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, double var2, LongPredicate var4) {
+   private static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, double var2, LongPredicate var4) {
       return var1.onGround()
          && Math.abs(var1.y() - var2) <= 0.02
-         && var4.test(l.putAt_J_D_D(var1.x(), var1.z()))
+         && var4.test(AiStride.putAt_J_D_D(var1.x(), var1.z()))
          && putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var1)
-         && l.putAt(var1, var4, var0);
+         && AiStride.putAt(var1, var4, var0);
    }
 
    public static int[] putAt_IArr_F_F(float var0, float var1) {
@@ -422,7 +422,7 @@ public final class AiMotionSafety {
       Vec3 var2 = var0.getEyePosition();
       Vec3 var3 = var1.subtract(var2);
       double var4 = var3.length();
-      return !(var4 < 0.001) && !(EventBus.load(var3) >= putAt_F) ? var2.add(Vec3.directionFromRotation(putAt_F, EventBus.init(var3)).scale(var4)) : var1;
+      return !(var4 < 0.001) && !(AiDigLine.load(var3) >= putAt_F) ? var2.add(Vec3.directionFromRotation(putAt_F, AiDigLine.init(var3)).scale(var4)) : var1;
    }
 
    static float putAt_F() {

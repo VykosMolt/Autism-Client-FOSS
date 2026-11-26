@@ -17,13 +17,13 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private static final int open = 360;
    private static final int poll = 240;
    private static final Map<String, String> init_Map = Map.of("low", "Low", "medium", "Med", "high", "High", "max", "Max");
-   private final cc init_cc;
-   private final cF init_cF;
-   private final cE init_cE = new cE();
-   private final TaskTimer init_TaskTimer;
-   private final ce init_ce;
-   private final cf init_cf;
-   private final ap init_ap;
+   private final AiService init_cc;
+   private final AiViewState init_cF;
+   private final AiUiKit init_cE = new AiUiKit();
+   private final AiChatView init_TaskTimer;
+   private final AiSessionsDrawer init_ce;
+   private final AiSettingsView init_cf;
+   private final AiMemoryView init_ap;
    private final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget()
       .init_BitSetUtil_I(96)
       .load_BitSetUtil_Str("Chat title");
@@ -39,17 +39,17 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private int push;
    private int pop;
 
-   AiAssistantOverlay(cc service) {
+   AiAssistantOverlay(AiService service) {
       super("ai-assistant", 360, 240);
       this.init_cc = service;
       this.init_I_2 = 35;
       this.load_I = 30;
       this.b__V();
-      this.init_cF = new cF(service);
-      this.init_TaskTimer = new TaskTimer(service, this.init_cF, this);
-      this.init_ce = new ce(service, this.init_cF, this);
-      this.init_cf = new cf(service, this.init_cF, this);
-      this.init_ap = new ap(service, this.init_cF, this);
+      this.init_cF = new AiViewState(service);
+      this.init_TaskTimer = new AiChatView(service, this.init_cF, this);
+      this.init_ce = new AiSessionsDrawer(service, this.init_cF, this);
+      this.init_cf = new AiSettingsView(service, this.init_cF, this);
+      this.init_ap = new AiMemoryView(service, this.init_cF, this);
       this.write_Z = service.init_AiSettings().pinned;
       this.init_BitSetUtil.load_BitSetUtil_Consumer(text -> this.clear());
       List<autismclient.gui.f.b.TextInputWidget> all = new ArrayList<>(
@@ -65,7 +65,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       all.addAll(this.init_TaskTimer.init_StreamUtil.init_List());
       all.addAll(this.init_cf.init_List());
       this.init_List = List.copyOf(all);
-      this.init_F_2 = new autismclient.util.OverlayContextMenu<>(this.init_cE.init_CharEncoder, Minecraft.getInstance().font, id -> ce.init_StrArr, cE.read());
+      this.init_F_2 = new autismclient.util.OverlayContextMenu<>(this.init_cE.init_CharEncoder, Minecraft.getInstance().font, id -> AiSessionsDrawer.init_StrArr, AiUiKit.read());
       this.init_V_F(this.init_F_2);
    }
 
@@ -77,7 +77,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    @Override
    public int load_I() {
       return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init && this.init_TaskTimer != null
-         ? Math.max(180, 22 + cE.init_I() + 4 + 1 + this.init_TaskTimer.init_I())
+         ? Math.max(180, 22 + AiUiKit.init_I() + 4 + 1 + this.init_TaskTimer.init_I())
          : 180;
    }
 
@@ -284,7 +284,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init) {
             int body = this.init_TaskTimer.init_I_I(this.read_I - 8);
             if (body > 0) {
-               this.write = Math.min(this.write, Math.max(this.load_I(), 22 + cE.init_I() + 4 + 1 + body));
+               this.write = Math.min(this.write, Math.max(this.load_I(), 22 + AiUiKit.init_I() + 4 + 1 + body));
             }
          }
 
@@ -304,7 +304,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             autismclient.gui.f.NetHelper content = autismclient.gui.f.NetHelper.init(
                this.init_I_2 + 4, this.load_I + 14 + 4, this.read_I - 8, this.write - 14 - 8
             );
-            autismclient.gui.f.NetHelper toolbar = autismclient.gui.f.NetHelper.init(content.read(), content.write(), content.update(), cE.init_I());
+            autismclient.gui.f.NetHelper toolbar = autismclient.gui.f.NetHelper.init(content.read(), content.write(), content.update(), AiUiKit.init_I());
             int divider = toolbar.load() + 2;
             PacketUtil.init_V_GuiGraphicsExtract_2(graphics, content.read(), divider, content.update(), this.init_cE.init_JsonUtil.put);
             autismclient.gui.f.NetHelper area = autismclient.gui.f.NetHelper.init(

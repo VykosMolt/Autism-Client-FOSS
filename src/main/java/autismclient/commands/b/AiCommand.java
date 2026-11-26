@@ -1,8 +1,8 @@
 package autismclient.commands.b;
 
 import autismclient.ai.AiSettings;
-import autismclient.ai.bL;
-import autismclient.ai.cc;
+import autismclient.ai.AiRunTrace;
+import autismclient.ai.AiService;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.mixin.accessor.AutismChatComponentAccessor;
@@ -43,17 +43,17 @@ public final class AiCommand extends Command {
             )
       );
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
-         cc.init_cc().update_V();
+         AiService.init_cc().update_V();
          init_V_Str_2("§7AI task stopped.");
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("pause").executes(ctx -> {
-         cc.init_cc().write_V();
+         AiService.init_cc().write_V();
          init_V_Str_2("§7AI task paused.");
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("resume").executes(ctx -> {
-         cc.init_cc().read_V();
+         AiService.init_cc().read_V();
          init_V_Str_2("§7AI task resumed (when one was paused).");
          return 1;
       }));
@@ -124,7 +124,7 @@ public final class AiCommand extends Command {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       try {
-         cc service = cc.load_cc();
+         AiService service = AiService.load_cc();
          if (service != null) {
             TreeSet<String> ids = new TreeSet<>();
             AiSettings settings = service.init_AiSettings();
@@ -162,7 +162,7 @@ public final class AiCommand extends Command {
    }
 
    private int init_I_Str_2(String objective) {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       if (init_Z_cc(service)) {
          return this.sync("An objective is already executing - " + load_Str_2() + "ai stop first.");
       }
@@ -173,7 +173,7 @@ public final class AiCommand extends Command {
    }
 
    private int load(String instructions) {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       String text = instructions == null ? "" : instructions.trim();
       if (text.isEmpty() || text.equalsIgnoreCase("status")) {
          init_V_Str_2("§eChat mode §7- " + (service.read_Z() ? "§aactive" : "§7off") + "§7: §f" + init_Str_Str_I(service.init_Str(), 140));
@@ -206,7 +206,7 @@ public final class AiCommand extends Command {
    }
 
    private int load_I_2() {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       AiSettings settings = service.init_AiSettings();
       init_V_Str_2("§eAI Assistant §7- state: §f" + service.init_cc_FileCache());
       init_V_Str_2("§7progress: §f" + (service.open_Str().isBlank() ? "-" : init_Str_Str_I(service.open_Str(), 100)));
@@ -221,7 +221,7 @@ public final class AiCommand extends Command {
    }
 
    private int read(String name) {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       if (name == null) {
          init_V_Str_2("§7provider: §f" + service.init_AiSettings().provider + " §8(providers: " + init_Str_2() + ")");
          return 1;
@@ -237,7 +237,7 @@ public final class AiCommand extends Command {
    }
 
    private int write(String id) {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       if (id == null) {
          init_V_Str_2("§7model: §f" + service.init_AiSettings().model);
          return 1;
@@ -253,7 +253,7 @@ public final class AiCommand extends Command {
    }
 
    private int update(String level) {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       if (level == null) {
          init_V_Str_2("§7effort: §f" + service.init_AiSettings().effort);
          return 1;
@@ -273,7 +273,7 @@ public final class AiCommand extends Command {
       if (value != null && !value.isBlank()) {
          auditForgetKeyLine(value.trim());
          String normalized = provider.trim().toUpperCase(Locale.ROOT);
-         if (!cc.init_cc().init_Z_Str_Str(normalized, value.trim())) {
+         if (!AiService.init_cc().init_Z_Str_Str(normalized, value.trim())) {
             return this.sync("Could not set the key for '" + provider + "' (unknown provider, or protected credential storage unavailable).");
          }
 
@@ -301,7 +301,7 @@ public final class AiCommand extends Command {
    }
 
    private int init_I_I(int minutes) {
-      cc service = cc.init_cc();
+      AiService service = AiService.init_cc();
       if (init_Z_cc(service)) {
          return this.sync("An objective is already executing - " + load_Str_2() + "ai stop first.");
       }
@@ -315,7 +315,7 @@ public final class AiCommand extends Command {
    }
 
    private int load(int n) {
-      bL trace = bL.init_bL();
+      AiRunTrace trace = AiRunTrace.init_bL();
       if (trace == null) {
          init_V_Str_2("§7No run trace yet - start an objective first.");
          return 1;
@@ -336,8 +336,8 @@ public final class AiCommand extends Command {
       return 1;
    }
 
-   private static boolean init_Z_cc(cc service) {
-      return service.init_cc_FileCache() == cc.Inner_FileCache.load || service.init_cc_FileCache() == cc.Inner_FileCache.read;
+   private static boolean init_Z_cc(AiService service) {
+      return service.init_cc_FileCache() == AiService.Inner_FileCache.load || service.init_cc_FileCache() == AiService.Inner_FileCache.read;
    }
 
    private static String init_Str_2() {

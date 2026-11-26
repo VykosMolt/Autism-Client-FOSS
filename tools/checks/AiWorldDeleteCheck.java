@@ -26,11 +26,11 @@ public class AiWorldDeleteCheck {
       Files.writeString(victim.resolve("level.dat"), "");
       LevelStorageSource source = LevelStorageSource.createDefault(saves);
 
-      check(cK.auditIsSaveWorld(source, "World 1"), "listed world accepted");
-      check(!cK.auditIsSaveWorld(source, "../../victim"), "relative escape rejected");
-      check(!cK.auditIsSaveWorld(source, victim.toString()), "absolute path rejected");
-      check(!cK.auditIsSaveWorld(source, ".."), "parent rejected");
-      check(!cK.auditIsSaveWorld(source, "not a world"), "folder without level.dat rejected");
+      check(AiWorldCreate.auditIsSaveWorld(source, "World 1"), "listed world accepted");
+      check(!AiWorldCreate.auditIsSaveWorld(source, "../../victim"), "relative escape rejected");
+      check(!AiWorldCreate.auditIsSaveWorld(source, victim.toString()), "absolute path rejected");
+      check(!AiWorldCreate.auditIsSaveWorld(source, ".."), "parent rejected");
+      check(!AiWorldCreate.auditIsSaveWorld(source, "not a world"), "folder without level.dat rejected");
       System.out.println("PASS AiWorldDeleteCheck");
    }
 }

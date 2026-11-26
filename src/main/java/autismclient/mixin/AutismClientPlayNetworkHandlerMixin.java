@@ -1,12 +1,12 @@
 package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.PkgCls_b;
-import autismclient.ai.TokenStore;
-import autismclient.ai.ca;
-import autismclient.ai.cc;
-import autismclient.ai.a.IoWorker;
-import autismclient.ai.a.a;
+import autismclient.ai.AiContainerTransactions;
+import autismclient.ai.AiChatLedger;
+import autismclient.ai.AiServerEvidence;
+import autismclient.ai.AiService;
+import autismclient.ai.a.AiGridRevisions;
+import autismclient.ai.a.AiScaffold;
 import autismclient.modules.AnchorAuraModule;
 import autismclient.modules.AntiBotTracker;
 import autismclient.modules.EndPortalModule;
@@ -157,24 +157,24 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          AntiVanishModule.init_V_ClientPacketListen_Packet((ClientPacketListener)(Object)this, packet);
       }
 
-      if (!AutismLiteVariant.enabled() && cc.load_cc() != null) {
-         ca.init_V_Str(packet.content().getString());
-         TokenStore.init(packet.content(), "SERVER");
+      if (!AutismLiteVariant.enabled() && AiService.load_cc() != null) {
+         AiServerEvidence.init_V_Str(packet.content().getString());
+         AiChatLedger.init(packet.content(), "SERVER");
       }
    }
 
    @Inject(method = "handlePlayerChat", at = @At("RETURN"))
    private void autism$aiPlayerChat(ClientboundPlayerChatPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && cc.load_cc() != null) {
+      if (!AutismLiteVariant.enabled() && AiService.load_cc() != null) {
          Component content = packet.unsignedContent().orElse(Component.literal(packet.body().content()));
-         TokenStore.init(content, packet.sender(), packet.chatType().name().getString());
+         AiChatLedger.init(content, packet.sender(), packet.chatType().name().getString());
       }
    }
 
    @Inject(method = "handleDisguisedChat", at = @At("RETURN"))
    private void autism$aiDisguisedChat(ClientboundDisguisedChatPacket packet, CallbackInfo ci) {
-      if (!AutismLiteVariant.enabled() && cc.load_cc() != null) {
-         TokenStore.load(packet.message(), packet.chatType().name().getString());
+      if (!AutismLiteVariant.enabled() && AiService.load_cc() != null) {
+         AiChatLedger.load(packet.message(), packet.chatType().name().getString());
       }
    }
 
@@ -243,14 +243,14 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleBlockUpdate", at = @At("HEAD"))
    private void autism$aiBlockApplying(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ca.init_V_BlockPos(packet.getPos());
+         AiServerEvidence.init_V_BlockPos(packet.getPos());
       }
    }
 
    @Inject(method = "handleChunkBlocksUpdate", at = @At("HEAD"))
    private void autism$aiSectionApplying(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled() && Minecraft.getInstance().isSameThread()) {
-         packet.runUpdates((pos, state) -> ca.init_V_BlockPos(pos));
+         packet.runUpdates((pos, state) -> AiServerEvidence.init_V_BlockPos(pos));
       }
    }
 
@@ -260,9 +260,9 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          ScaffoldModule.init_V_BlockPos_BlockState_2(packet.getPos(), packet.getBlockState());
          AnchorAuraModule.init_V_BlockPos_BlockState(packet.getPos(), packet.getBlockState());
-         ca.init(packet.getPos(), packet.getBlockState());
-         IoWorker.init(packet.getPos());
-         a.init(packet.getPos(), packet.getBlockState());
+         AiServerEvidence.init(packet.getPos(), packet.getBlockState());
+         AiGridRevisions.init(packet.getPos());
+         AiScaffold.init(packet.getPos(), packet.getBlockState());
       }
    }
 
@@ -274,11 +274,11 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          packet.runUpdates((pos, state) -> {
             ScaffoldModule.init_V_BlockPos_BlockState_2(pos, state);
             AnchorAuraModule.init_V_BlockPos_BlockState(pos, state);
-            ca.init(pos, state);
-            a.init(pos, state);
+            AiServerEvidence.init(pos, state);
+            AiScaffold.init(pos, state);
             if (!bumped[0]) {
                bumped[0] = true;
-               IoWorker.init(pos);
+               AiGridRevisions.init(pos);
             }
          });
       }
@@ -292,8 +292,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         IoWorker.init_V(packet.pos().x(), packet.pos().z());
-         ca.init_V(packet.pos().x(), packet.pos().z());
+         AiGridRevisions.init_V(packet.pos().x(), packet.pos().z());
+         AiServerEvidence.init_V(packet.pos().x(), packet.pos().z());
       }
    }
 
@@ -305,24 +305,24 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         ca.load(packet.x(), packet.z());
-         IoWorker.init_V(packet.x(), packet.z());
+         AiServerEvidence.load(packet.x(), packet.z());
+         AiGridRevisions.init_V(packet.x(), packet.z());
       }
    }
 
    @Inject(method = "handleContainerSetSlot", at = @At("RETURN"))
    private void autism$aiSlotApplied(ClientboundContainerSetSlotPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ca.init_V();
-         PkgCls_b.init(packet.getContainerId(), packet.getSlot(), packet.getItem());
+         AiServerEvidence.init_V();
+         AiContainerTransactions.init(packet.getContainerId(), packet.getSlot(), packet.getItem());
       }
    }
 
    @Inject(method = "handleSetPlayerInventory", at = @At("RETURN"))
    private void autism$aiInventoryApplied(ClientboundSetPlayerInventoryPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         ca.init_V();
-         PkgCls_b.init(packet.slot(), packet.contents());
+         AiServerEvidence.init_V();
+         AiContainerTransactions.init(packet.slot(), packet.contents());
       }
    }
 
@@ -331,8 +331,8 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       VillagerTradeSession.init_V_ClientboundContain(packet);
       AutoCraftingEngine.init_V(packet.containerId());
       if (!AutismLiteVariant.enabled()) {
-         ca.init(packet.containerId(), packet.items());
-         PkgCls_b.init(packet.containerId(), packet.items(), packet.carriedItem());
+         AiServerEvidence.init(packet.containerId(), packet.items());
+         AiContainerTransactions.init(packet.containerId(), packet.items(), packet.carriedItem());
       }
    }
 
@@ -363,7 +363,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          Minecraft mc = Minecraft.getInstance();
          Entity entity = mc.level == null ? null : mc.level.getEntity(packet.id());
          if (entity != null) {
-            ca.init_V_I(packet.id(), entity.getUUID(), packet.movement());
+            AiServerEvidence.init_V_I(packet.id(), entity.getUUID(), packet.movement());
          }
       }
    }
@@ -378,7 +378,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
          Minecraft mc = Minecraft.getInstance();
          LocalPlayer player = mc.player;
          if (player != null && mc.level != null && packet.entityId() == player.getId() && mc.level.getEntity(packet.entityId()) == player) {
-            ca.init(mc.level, player, player.getUUID(), player.tickCount, player.getHealth(), packet.getSource(mc.level).is(DamageTypes.ON_FIRE));
+            AiServerEvidence.init(mc.level, player, player.getUUID(), player.tickCount, player.getHealth(), packet.getSource(mc.level).is(DamageTypes.ON_FIRE));
          }
       }
    }
@@ -395,11 +395,11 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
-            ca.init(mc.level, mc.player, mc.player.getUUID(), mc.player.tickCount, mc.player.getHealth());
+            AiServerEvidence.init(mc.level, mc.player, mc.player.getUUID(), mc.player.tickCount, mc.player.getHealth());
          }
 
          if (packet.getHealth() <= 0.0F) {
-            ca.load_V();
+            AiServerEvidence.load_V();
          }
       }
    }
@@ -409,7 +409,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          LocalPlayer player = Minecraft.getInstance().player;
          if (player != null && packet.playerId() == player.getId()) {
-            ca.load_V();
+            AiServerEvidence.load_V();
          }
       }
    }
@@ -660,7 +660,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetCursorItem", at = @At("RETURN"))
    private void autism$onSetCursorItem(ClientboundSetCursorItemPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         PkgCls_b.init(packet.contents());
+         AiContainerTransactions.init(packet.contents());
       }
 
       if (!aD.read_Z()) {

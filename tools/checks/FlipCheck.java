@@ -58,7 +58,7 @@ public class FlipCheck {
          float back = mapStore ? 10.0F : 1.0F;
          float outMin = mapStore ? 25.0F : 2.5F;
          int[] expected = old(yaws, pitches, next, filled, maxK, back, outMin, yaw, pitch);
-         int[] actual = RenderState.auditFlip(yaws, pitches, next, filled, maxK, back, outMin, yaw, pitch);
+         int[] actual = AiDecisionAudit.auditFlip(yaws, pitches, next, filled, maxK, back, outMin, yaw, pitch);
          if (!Arrays.equals(expected, actual)) {
             System.out.println("FAIL FlipCheck: round " + round + " expected " + Arrays.toString(expected) + " got " + Arrays.toString(actual));
             System.exit(1);

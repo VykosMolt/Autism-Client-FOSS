@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.cG;
+import autismclient.ai.AiVisualization;
 import autismclient.modules.PearlGhostRenderer;
 import autismclient.modules.EndPortalRenderer;
 import autismclient.modules.BedEspOverlayRenderer;
@@ -38,7 +38,7 @@ public class AutismLevelRendererTracerMixin {
       boolean esp = ar.load_Z();
       boolean waypoints = ar.read_Z();
       boolean skeleton = SkeletonEspRenderer.init_Z();
-      boolean ai = !AutismLiteVariant.enabled() && cG.init_Z();
+      boolean ai = !AutismLiteVariant.enabled() && AiVisualization.init_Z();
       boolean danger = !AutismLiteVariant.enabled() && PearlGhostRenderer.init();
       boolean beds = !AutismLiteVariant.enabled() && BedEspOverlayRenderer.init_Z();
       boolean portal = !AutismLiteVariant.enabled() && EndPortalRenderer.init_Z();
@@ -63,7 +63,7 @@ public class AutismLevelRendererTracerMixin {
 
          if (!AutismLiteVariant.enabled()) {
             if (ai) {
-               cG.init(matrixStack);
+               AiVisualization.init(matrixStack);
             }
 
             if (danger) {

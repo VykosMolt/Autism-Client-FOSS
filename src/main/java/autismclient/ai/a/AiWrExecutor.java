@@ -3,10 +3,10 @@ package autismclient.ai.a;
 import autismclient.compat263.Compat263;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.cG;
-import autismclient.ai.ca;
-import autismclient.ai.aV;
-import autismclient.ai.af;
+import autismclient.ai.AiVisualization;
+import autismclient.ai.AiServerEvidence;
+import autismclient.ai.AiPlanks;
+import autismclient.ai.AiItems;
 import autismclient.api.ai.AiOperation;
 import autismclient.mixin.accessor.AutismMultiPlayerGameModeAccessor;
 import autismclient.util.AutismLiteVariant;
@@ -61,7 +61,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
+public final class AiWrExecutor implements AiPathfinder.Inner_TaskQueue {
    private static final int flowState = 16;
    private static final int flowTemp = 6;
    private static final int readEx_I = 6;
@@ -76,18 +76,18 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private static final ItemStack[] putAt_ItemStackArr = new ItemStack[9];
    private static final boolean putAt_Z = Boolean.getBoolean("autism.navigation.debug");
    private final Minecraft putAt_Minecraft = Minecraft.getInstance();
-   private final DataUtil putAt_CacheHelper = new DataUtil();
+   private final AiAim putAt_CacheHelper = new AiAim();
    private final AiBlockDigger putAt_JsonCache = new AiBlockDigger(
       this.putAt_Minecraft, this::fill, this::putAt_V_Vec3, false, false, this.putAt_CacheHelper::load_V, () -> !this.putAt_CacheHelper.init_Z()
    );
-   private List<ClassCache.UiHelper> putAt_List = List.of();
+   private List<AiPathfinder.UiHelper> putAt_List = List.of();
    private int pollAt_I;
    private boolean fill_Z = true;
    private AiWrExecutor.Inner_TableCache putAt_RingCache_TableCac;
    private AiWrExecutor.Inner_TaskState putAt_RingCache_TaskStat;
    private AiWrExecutor.Inner_JsonCache putAt_RingCache_JsonCach;
-   private ClassCache.UiHelper putAt_FileStore_PacketHe;
-   private ClassCache.UiHelper fill_FileStore_PacketHe;
+   private AiPathfinder.UiHelper putAt_FileStore_PacketHe;
+   private AiPathfinder.UiHelper fill_FileStore_PacketHe;
    private int pollOf_I;
    private int tick_I;
    private int flushOf_I;
@@ -105,17 +105,17 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private int dataEx_I;
    private int frameOf_I;
    private int syncAt_I;
-   private NetHelper putAt_TokenCodec;
+   private AiBridgeDriver putAt_TokenCodec;
    private int stopBy;
    private int dataTo;
    private int initAt;
    private int setOf;
    private final Set<BlockPos> putAt_Set;
-   private EventBus.Inner_DataUtil putAt_EventBus_CacheHelp;
-   private EventBus.Inner_DataUtil fill_EventBus_CacheHelp;
-   private ClassCache.UiHelper readEx_FileStore_PacketHe;
-   private ClassCache.UiHelper value_FileStore_PacketHe;
-   private ClassCache.UiHelper prevEx_FileStore_PacketHe;
+   private AiDigLine.Inner_DataUtil putAt_EventBus_CacheHelp;
+   private AiDigLine.Inner_DataUtil fill_EventBus_CacheHelp;
+   private AiPathfinder.UiHelper readEx_FileStore_PacketHe;
+   private AiPathfinder.UiHelper value_FileStore_PacketHe;
+   private AiPathfinder.UiHelper prevEx_FileStore_PacketHe;
    private Set<BlockPos> fill_Set;
    private Set<BlockPos> readEx_Set;
    private boolean chunkAt_Z;
@@ -131,7 +131,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private int task;
    private int initEx;
    private boolean closeOf_Z;
-   private UtilCore putAt_SyncCore;
+   private AiRestock putAt_SyncCore;
    private ItemStack[] fill_ItemStackArr;
    private String putAt_Str;
    private int poolEx;
@@ -139,8 +139,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private boolean pollOf_Z;
    private boolean tick_Z;
    private AiOperation putAt_AiOperation;
-   private StateCache putAt_PacketHelper;
-   private ClassCache.Inner_NetHelper putAt_FileStore_RingUtil;
+   private AiChunkMemory putAt_PacketHelper;
+   private AiPathfinder.Inner_NetHelper putAt_FileStore_RingUtil;
    private boolean flushOf_Z;
    private boolean stateOf_Z;
    private boolean store_Z;
@@ -149,19 +149,19 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private boolean dataEx_Z;
    private static final Predicate<BlockPos> putAt_Predicate = var0 -> true;
    private Predicate<BlockPos> fill_Predicate;
-   private ClassCache.UiHelper prev_FileStore_PacketHe;
+   private AiPathfinder.UiHelper prev_FileStore_PacketHe;
    private boolean frameOf_Z;
    private Predicate<BlockPos> readEx_Predicate;
    private Function<BlockPos, Vec3> putAt_Function;
    private Function<Predicate<AABB>, Vec3> fill_Function;
    private Runnable putAt_Runnable;
-   private BitSetUtil putAt_NetEntry;
-   private RingBuffer putAt_PoolStore;
-   private StateCache fill_PacketHelper;
+   private AiLiveWorld putAt_NetEntry;
+   private AiLiveGrid putAt_PoolStore;
+   private AiChunkMemory fill_PacketHelper;
    private final AiRoutePolicy.Inner_CacheHelper putAt_ValueSink_CacheHel;
    private boolean syncAt_Z;
    private BlockPos prev_BlockPos;
-   private ClassCache.UiHelper chunkAt_FileStore_PacketHe;
+   private AiPathfinder.UiHelper chunkAt_FileStore_PacketHe;
    private String fill_Str;
    private int writeAt;
    private int reset;
@@ -177,7 +177,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       this.getTo = -2147483648;
       this.task = -1;
       this.initEx = -1;
-      this.putAt_FileStore_RingUtil = ClassCache.Inner_NetHelper.init;
+      this.putAt_FileStore_RingUtil = AiPathfinder.Inner_NetHelper.init;
       this.flushOf_Z = true;
       this.stateOf_Z = true;
       this.nextBy_Z = true;
@@ -199,16 +199,16 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       AiMotionSafety.fill_V();
    }
 
-   public static int putAt_I_List(List<ClassCache.UiHelper> var0) {
+   public static int putAt_I_List(List<AiPathfinder.UiHelper> var0) {
       return AiRoutePolicy.putAt(var0);
    }
 
    static boolean putAt_Z_FileStore_PacketHe(
-      ClassCache.UiHelper var0, Function<BlockPos, ClassCache.Inner_FileCache> var1, Predicate<BlockPos> var2, Predicate<BlockPos> var3
+      AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1, Predicate<BlockPos> var2, Predicate<BlockPos> var3
    ) {
       if (var0 != null && var0.cellsToBreak().isEmpty() && var0.cellsToPlace().isEmpty()) {
-         ClassCache.Inner_FileCache var4 = (ClassCache.Inner_FileCache)var1.apply(var0.from());
-         ClassCache.Inner_FileCache var5 = (ClassCache.Inner_FileCache)var1.apply(var0.to());
+         AiPathfinder.Inner_FileCache var4 = (AiPathfinder.Inner_FileCache)var1.apply(var0.from());
+         AiPathfinder.Inner_FileCache var5 = (AiPathfinder.Inner_FileCache)var1.apply(var0.to());
          if (!var4.water() && !var5.water()) {
             boolean var10000;
             switch (var0.type()) {
@@ -249,20 +249,20 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    }
 
    static int putAt_I_List(
-      List<ClassCache.UiHelper> var0, int var1, Function<BlockPos, ClassCache.Inner_FileCache> var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
+      List<AiPathfinder.UiHelper> var0, int var1, Function<BlockPos, AiPathfinder.Inner_FileCache> var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
    ) {
       int var5 = var1;
 
-      while (var5 < var0.size() && putAt_Z_FileStore_PacketHe((ClassCache.UiHelper)var0.get(var5), var2, var3, var4)) {
+      while (var5 < var0.size() && putAt_Z_FileStore_PacketHe((AiPathfinder.UiHelper)var0.get(var5), var2, var3, var4)) {
          var5++;
       }
 
       return var5;
    }
 
-   static boolean putAt_Z_List_Function(List<ClassCache.UiHelper> var0, Function<BlockPos, ClassCache.Inner_FileCache> var1) {
-      for (ClassCache.UiHelper var3 : var0) {
-         if (((ClassCache.Inner_FileCache)var1.apply(var3.from().below())).farmland() || ((ClassCache.Inner_FileCache)var1.apply(var3.to().below())).farmland()) {
+   static boolean putAt_Z_List_Function(List<AiPathfinder.UiHelper> var0, Function<BlockPos, AiPathfinder.Inner_FileCache> var1) {
+      for (AiPathfinder.UiHelper var3 : var0) {
+         if (((AiPathfinder.Inner_FileCache)var1.apply(var3.from().below())).farmland() || ((AiPathfinder.Inner_FileCache)var1.apply(var3.to().below())).farmland()) {
             return true;
          }
       }
@@ -274,11 +274,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return var0 && var1 && var2 && !var3 && var4 * var4 + var6 * var6 > 4.0E-4;
    }
 
-   public void putAt_V_List(List<ClassCache.UiHelper> var1) {
+   public void putAt_V_List(List<AiPathfinder.UiHelper> var1) {
       this.putAt_V_List_Z(var1, true);
    }
 
-   public void putAt_V_List_Z(List<ClassCache.UiHelper> var1, boolean var2) {
+   public void putAt_V_List_Z(List<AiPathfinder.UiHelper> var1, boolean var2) {
       this.fill_FileStore_PacketHe = this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill
          ? (
             this.putAt_FileStore_PacketHe != null
@@ -295,9 +295,9 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       this.putAt_RingCache_TableCac = AiWrExecutor.Inner_TableCache.fill;
    }
 
-   public boolean putAt_Z_List_Z(List<ClassCache.UiHelper> var1, boolean var2) {
+   public boolean putAt_Z_List_Z(List<AiPathfinder.UiHelper> var1, boolean var2) {
       if (this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill && !this.putAt_List.isEmpty() && !var1.isEmpty()) {
-         if (!((ClassCache.UiHelper)var1.get(0)).from().equals(this.putAt_List.get(this.putAt_List.size() - 1).to())) {
+         if (!((AiPathfinder.UiHelper)var1.get(0)).from().equals(this.putAt_List.get(this.putAt_List.size() - 1).to())) {
             return false;
          }
 
@@ -322,13 +322,13 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   boolean putAt_Z_List(List<ClassCache.UiHelper> var1) {
+   boolean putAt_Z_List(List<AiPathfinder.UiHelper> var1) {
       if (this.putAt_RingCache_TableCac != AiWrExecutor.Inner_TableCache.fill) {
          return false;
       }
 
       int var2 = this.pollAt_I;
-      var var3 = ClassCache.fill(this.putAt_List.subList(var2, this.putAt_List.size()), var1);
+      var var3 = AiPathfinder.fill(this.putAt_List.subList(var2, this.putAt_List.size()), var1);
       if (var3 == null) {
          return false;
       }
@@ -370,7 +370,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return this.prev_BlockPos;
    }
 
-   public ClassCache.UiHelper putAt_FileStore_PacketHe() {
+   public AiPathfinder.UiHelper putAt_FileStore_PacketHe() {
       return this.chunkAt_FileStore_PacketHe;
    }
 
@@ -405,15 +405,15 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    public void putAt_V_Z(boolean var1) {
       this.closeOf_Z = var1;
       if (var1 && this.putAt_SyncCore == null) {
-         this.putAt_SyncCore = new UtilCore(this.putAt_Minecraft);
+         this.putAt_SyncCore = new AiRestock(this.putAt_Minecraft);
       }
    }
 
-   public void putAt_V_PacketHelper(StateCache var1) {
+   public void putAt_V_PacketHelper(AiChunkMemory var1) {
       this.putAt_PacketHelper = var1;
    }
 
-   void putAt_V_FileStore_RingUtil(ClassCache.Inner_NetHelper var1) {
+   void putAt_V_FileStore_RingUtil(AiPathfinder.Inner_NetHelper var1) {
       this.putAt_FileStore_RingUtil = var1;
    }
 
@@ -429,7 +429,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       this.putAt_D = var1;
    }
 
-   void putAt_V_FileStore_PacketHe(ClassCache.UiHelper var1) {
+   void putAt_V_FileStore_PacketHe(AiPathfinder.UiHelper var1) {
       this.prev_FileStore_PacketHe = var1;
    }
 
@@ -505,10 +505,10 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          && !this.putAt_Minecraft.player.isInWater()
          && AiLadderJump.putAt(this.putAt_NetEntry(), this.putAt_Minecraft.player.blockPosition())) {
          LocalPlayer var1 = this.putAt_Minecraft.player;
-         NodeWalker.Inner_DataUtil var2 = AiLadderJump.putAt_TokenCore_CacheHel_TokenCore_TaskStat(
+         AiPhysics.Inner_DataUtil var2 = AiLadderJump.putAt_TokenCore_CacheHel_TokenCore_TaskStat(
             this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), var1.blockPosition(), false, var1.getYRot()
          );
-         this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new NodeWalker.Inner_DataUtil(var2.forward(), var2.strafe(), false, false, true, var2.yaw()));
+         this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.Inner_DataUtil(var2.forward(), var2.strafe(), false, false, true, var2.yaw()));
       }
    }
 
@@ -516,7 +516,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       if (this.putAt_Minecraft.player != null && this.putAt_Minecraft.level != null) {
          LocalPlayer var1 = this.putAt_Minecraft.player;
          if (!var1.isInWater() && (!var1.onGround() || !(var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4))) {
-            if (AiMotionSafety.putAt_Z_TokenCore_TaskStat_2(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), NodeWalker.Inner_DataUtil.NONE, 64)
+            if (AiMotionSafety.putAt_Z_TokenCore_TaskStat_2(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), AiPhysics.Inner_DataUtil.NONE, 64)
                )
              {
                return true;
@@ -561,7 +561,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          HashSet<BlockPos> var1 = new HashSet<>();
 
          for (int var2 = Math.max(0, this.pollAt_I); var2 < this.putAt_List.size(); var2++) {
-            ClassCache.UiHelper var3 = this.putAt_List.get(var2);
+            AiPathfinder.UiHelper var3 = this.putAt_List.get(var2);
             var1.add(var3.from().below());
             var1.add(var3.to().below());
             int var4 = var3.to().getX() - var3.from().getX();
@@ -647,7 +647,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
 
    public void state_V() {
       if (!AutismLiteVariant.enabled()) {
-         cG.init_V(this);
+         AiVisualization.init_V(this);
       }
 
       if (this.putAt_RingCache_TableCac != AiWrExecutor.Inner_TableCache.prevEx) {
@@ -666,7 +666,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         cG.init_V(this);
+         AiVisualization.init_V(this);
       }
 
       this.state(false);
@@ -698,7 +698,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
 
    @Override
    public BlockPos putAt_BlockPos() {
-      return i.init(this.putAt_Minecraft);
+      return AiStance.init(this.putAt_Minecraft);
    }
 
    @Override
@@ -715,7 +715,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    }
 
    @Override
-   public List<ClassCache.UiHelper> putAt_List() {
+   public List<AiPathfinder.UiHelper> putAt_List() {
       return this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill
          ? List.copyOf(this.putAt_List.subList(this.pollAt_I, this.putAt_List.size()))
          : List.of();
@@ -764,12 +764,12 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          if (this.putAt_RingCache_TaskStat != null && this.putAt_RingCache_TaskStat.putAt_TextPool_JsonCache != null) {
             var var1 = List.of(this.putAt_RingCache_TaskStat.putAt_TextPool_JsonCache.checkpoints());
             if (this.putAt_RingCache_TaskStat.putAt_TextPool_IoHelper.flowTemp() > 0 && this.putAt_RingCache_TaskStat.putAt_TableUtil != null) {
-               cG.init(this, this.putAt_RingCache_TaskStat.putAt_TextPool_IoHelper, this.putAt_RingCache_TaskStat.putAt_TableUtil.flowState(), var1, 0);
+               AiVisualization.init(this, this.putAt_RingCache_TaskStat.putAt_TextPool_IoHelper, this.putAt_RingCache_TaskStat.putAt_TableUtil.flowState(), var1, 0);
             } else {
-               cG.init(this, this.putAt_RingCache_TaskStat.putAt_TextPool_JsonCache, var1, 0);
+               AiVisualization.init(this, this.putAt_RingCache_TaskStat.putAt_TextPool_JsonCache, var1, 0);
             }
          } else {
-            cG.putAt_V_Obj_3(this, this.putAt_List, this.pollAt_I, this::putAt_BlockState);
+            AiVisualization.putAt_V_Obj_3(this, this.putAt_List, this.pollAt_I, this::putAt_BlockState);
          }
       }
    }
@@ -786,7 +786,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             }
 
             if (!AutismLiteVariant.enabled()) {
-               cG.init_V(this);
+               AiVisualization.init_V(this);
             }
 
             this.putAt_RingCache_TableCac = AiWrExecutor.Inner_TableCache.readEx;
@@ -823,7 +823,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                         return;
                      }
 
-                     ClassCache.UiHelper var10 = this.putAt_List.get(this.pollAt_I);
+                     AiPathfinder.UiHelper var10 = this.putAt_List.get(this.pollAt_I);
                      if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var10, this.fill_FileStore_PacketHe)
                         && this.putAt_ValueSink_CacheHel.putAt(var10, System.nanoTime())) {
                         this.syncAt_Z = true;
@@ -864,7 +864,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                   }
                }
 
-               if (this.putAt_FileStore_PacketHe.type() != ClassCache.Inner_SyncManager.run || this.putAt_TokenCodec == null && !this.pollOf_Z()) {
+               if (this.putAt_FileStore_PacketHe.type() != AiPathfinder.Inner_SyncManager.run || this.putAt_TokenCodec == null && !this.pollOf_Z()) {
                   if (!this.fill_Z(this.putAt_FileStore_PacketHe)) {
                      int var8 = AiRoutePolicy.putAt_I_List(this.putAt_List, this.pollAt_I, 5, this.putAt_Function(), this.dataEx_Z);
                      if (var8 < 0 && this.tick_Z() && !this.readEx(this.putAt_FileStore_PacketHe)) {
@@ -890,7 +890,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                      }
 
                      if (this.frameOf_Z && var1.onGround() && !this.value(this.putAt_FileStore_PacketHe)) {
-                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.write);
+                        this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.write);
                         if (!this.putAt_FileStore_PacketHe.cellsToBreak().isEmpty() && this.putAt_Z_LocalPlayer(var1, this.putAt_FileStore_PacketHe, false)) {
                            return;
                         }
@@ -899,36 +899,36 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                         return;
                      }
 
-                     boolean var4 = this.putAt_FileStore_PacketHe.type() == ClassCache.Inner_SyncManager.poll
+                     boolean var4 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.poll
                         && !var1.onGround()
                         && !var1.isInWater()
                         && !var1.onClimbable();
-                     boolean var5 = this.putAt_FileStore_PacketHe.type() == ClassCache.Inner_SyncManager.run
+                     boolean var5 = this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.run
                         && !this.value_Z
                         && (this.prevEx_Z || this.putAt_BlockPos != null)
-                        && this.pollOf_I < ClassCache.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks()) + 60;
+                        && this.pollOf_I < AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks()) + 60;
                      boolean var6 = !var1.isInWater() || ++this.stateOf_I % 3 == 0;
                      if (var5) {
                         this.pollOf_I++;
-                     } else if (!var4 && var6 && ++this.pollOf_I > ClassCache.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
+                     } else if (!var4 && var6 && ++this.pollOf_I > AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
                         this.putAt_V_Str("over its time budget" + this.putAt_Str_FileStore_PacketHe(this.putAt_FileStore_PacketHe));
                         return;
                      }
 
                      this.putAt_V_LocalPlayer_FileStore_PacketHe(var1, this.putAt_FileStore_PacketHe);
-                     PacketUtil.init(
+                     AiFallGuard.init(
                         this.putAt_FileStore_PacketHe.type(),
                         this.putAt_TokenCodec == null
-                           || this.putAt_TokenCodec.init_JsonUtil().putAt_TextStore_BitCore() == JsonUtil.Inner_ConfigStore.init,
+                           || this.putAt_TokenCodec.init_JsonUtil().putAt_TextStore_BitCore() == AiBridger.Inner_ConfigStore.init,
                         false
                      );
                      this.flushOf_V();
                      return;
                   }
 
-                  if (this.putAt_FileStore_PacketHe.type() == ClassCache.Inner_SyncManager.set
+                  if (this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.set
                      && !this.putAt_Z_FileStore_PacketHe(this.putAt_FileStore_PacketHe)) {
-                     if (++this.pollOf_I > ClassCache.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
+                     if (++this.pollOf_I > AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_FileStore_PacketHe.costTicks())) {
                         this.putAt_V_Str("over its time budget" + this.putAt_Str_FileStore_PacketHe(this.putAt_FileStore_PacketHe));
                      }
 
@@ -986,9 +986,9 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       boolean var13 = Double.isFinite(this.putAt_D) && this.putAt_D > 0.0 && Math.abs(var11 - this.putAt_D) > 1.0E-4;
       double var14 = var13 ? this.putAt_D : var11;
       double var16 = var13 ? var11 : 0.0 / 0.0;
-      NodeWalker.Inner_StreamUtil var18 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+      AiPhysics.Inner_StreamUtil var18 = putAt_TokenCore_TableCac_LocalPlayer(var1);
       float var19 = var1.getYRot();
-      RingBuffer var20 = this.putAt_PoolStore();
+      AiLiveGrid var20 = this.putAt_PoolStore();
       boolean var21 = this.fill_Z && var3 == this.putAt_List.size();
       AiPaceScript.Inner_JsonCache var22 = AiPaceScript.putAt_TextPool_JsonCache_FileStore_TextStor_2(var20, var18, var8, var14, var9, var10, var21);
       if (var22 == null) {
@@ -1014,7 +1014,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                   AiPaceScript.putAt(var28, var27, var22, var25, () -> var26.fill_Z, var26.putAt_TextPool_IoHelper);
                } catch (Throwable var9x) {
                   if (putAt_Z) {
-                     ListPool.init("wr travel search failed: " + var9x);
+                     AiNavDebug.init("wr travel search failed: " + var9x);
                   }
 
                   var26.putAt_TextPool_IoHelper.putAt(false, null);
@@ -1028,10 +1028,10 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private Predicate<BlockPos> putAt_Predicate_TokenCore_TableCac_Predicate(NodeWalker.Inner_StreamUtil var1, Predicate<BlockPos> var2) {
+   private Predicate<BlockPos> putAt_Predicate_TokenCore_TableCac_Predicate(AiPhysics.Inner_StreamUtil var1, Predicate<BlockPos> var2) {
       if (var2 != null && var1.onGround()) {
          BlockPos var3 = BlockPos.containing(var1.x(), var1.y() + 1.0E-4, var1.z());
-         BlockPos var4 = i.init(this.putAt_Minecraft);
+         BlockPos var4 = AiStance.init(this.putAt_Minecraft);
          if (var3.equals(var4)) {
             return var2;
          }
@@ -1128,8 +1128,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          Vec3 var14 = var1.getDeltaMovement();
          if (putAt_Z_Z(this.fill_Z && this.nextBy_Z, var2.flowTemp >= this.putAt_List.size(), var1.onGround(), var1.isInWater(), var14.x, var14.z)
             && ++var2.prev <= 6) {
-            NodeWalker.Inner_DataUtil var17 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
-            this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new NodeWalker.Inner_DataUtil(var17.forward(), var17.strafe(), false, false, true, var17.yaw()));
+            AiPhysics.Inner_DataUtil var17 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
+            this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.Inner_DataUtil(var17.forward(), var17.strafe(), false, false, true, var17.yaw()));
             return true;
          } else {
             this.putAt_V_RingCache_TaskStat(var2);
@@ -1168,7 +1168,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             }
 
             if (var2.value_I < 2 && var1.onGround() && var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-6) {
-               NodeWalker.Inner_StreamUtil var13 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+               AiPhysics.Inner_StreamUtil var13 = putAt_TokenCore_TableCac_LocalPlayer(var1);
                double var16 = Math.hypot(var13.x() - var2.putAt_TokenCore_TableCac.x(), var13.z() - var2.putAt_TokenCore_TableCac.z());
                if (var13.pose() == 0 && (var16 > 0.025 || var13.pose() != var2.putAt_TokenCore_TableCac.pose())) {
                   this.putAt(var1, var2.flowState, var2.flowTemp, var2.putAt_Z, var2.readEx_I, var2.prevEx_I, var2.value_I + 1);
@@ -1178,7 +1178,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             return true;
          } else {
             if (var2.putAt_TableUtil.flowState() == 0) {
-               NodeWalker.Inner_StreamUtil var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+               AiPhysics.Inner_StreamUtil var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
                double var4 = Math.hypot(var11.x() - var2.putAt_TokenCore_TableCac.x(), var11.z() - var2.putAt_TokenCore_TableCac.z());
                if (var4 > 0.025 || var11.pose() != var2.putAt_TokenCore_TableCac.pose()) {
                   if (var2.value_I < 2 && var1.onGround() && var1.getDeltaMovement().horizontalDistanceSqr() < 1.0E-6 && var11.pose() == 0) {
@@ -1222,7 +1222,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                      return this.putAt_Z_LocalPlayer_2(var1, var2, "wr search starved mid-stretch");
                   } else {
                      if (!var1.onGround() && !var1.onClimbable() && !var1.isInWater()) {
-                        NodeWalker.Inner_StreamUtil var20 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
+                        AiPhysics.Inner_StreamUtil var20 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
                         if (var20 != null) {
                            AiPacePlayback.putAt_V_LocalPlayer_TokenCore_TableCac(var1, var20);
                            return true;
@@ -1249,9 +1249,9 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                      if (putAt_Z_Z(this.fill_Z && this.nextBy_Z, var2.flowTemp >= this.putAt_List.size(), var1.onGround(), var1.isInWater(), var19.x, var19.z)) {
                         var2.value_Z = true;
                         var2.prev = 0;
-                        NodeWalker.Inner_DataUtil var9 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
+                        AiPhysics.Inner_DataUtil var9 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
                         this.putAt_V_LocalPlayer_TokenCore_CacheHel(
-                           var1, new NodeWalker.Inner_DataUtil(var9.forward(), var9.strafe(), false, false, true, var9.yaw())
+                           var1, new AiPhysics.Inner_DataUtil(var9.forward(), var9.strafe(), false, false, true, var9.yaw())
                         );
                         return true;
                      }
@@ -1262,7 +1262,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                case prevEx:
                case value:
                   if (!var1.onGround() && !var1.onClimbable() && !var1.isInWater()) {
-                     NodeWalker.Inner_StreamUtil var8 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
+                     AiPhysics.Inner_StreamUtil var8 = var2.putAt_TableUtil.putAt_TokenCore_TableCac();
                      if (var8 != null) {
                         AiPacePlayback.putAt_V_LocalPlayer_TokenCore_TableCac(var1, var8);
                         return true;
@@ -1350,13 +1350,13 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       int var6 = var2.readEx_I + 1;
       if ((var14 || var6 <= 3) && this.pollAt_I < var2.flowTemp && var2.flowTemp <= this.putAt_List.size()) {
          if (putAt_Z) {
-            ListPool.init("wr recover #" + var6 + " (fine=" + (var14 || var2.putAt_Z) + "): " + var3);
+            AiNavDebug.init("wr recover #" + var6 + " (fine=" + (var14 || var2.putAt_Z) + "): " + var3);
          }
 
          int var7 = var2.flowState;
          int var8 = var2.flowTemp;
          boolean var9 = var14 || var2.putAt_Z;
-         NodeWalker.Inner_StreamUtil var10 = !var1.onGround() && !var1.onClimbable() ? var2.putAt_TableUtil.putAt_TokenCore_TableCac() : null;
+         AiPhysics.Inner_StreamUtil var10 = !var1.onGround() && !var1.onClimbable() ? var2.putAt_TableUtil.putAt_TokenCore_TableCac() : null;
          this.tick_V();
          boolean var11 = var1.onGround() && var1.getDeltaMovement().horizontalDistanceSqr() <= 1.0E-6 && putAt_TokenCore_TableCac_LocalPlayer(var1).pose() == 0;
          if (!var11) {
@@ -1380,7 +1380,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
 
       this.tick_V();
-      ClassCache.UiHelper var15 = this.pollAt_I < this.putAt_List.size()
+      AiPathfinder.UiHelper var15 = this.pollAt_I < this.putAt_List.size()
          ? this.putAt_List.get(this.pollAt_I)
          : (this.putAt_List.isEmpty() ? null : this.putAt_List.get(this.putAt_List.size() - 1));
       this.fill_Str = var3;
@@ -1388,14 +1388,14 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return true;
    }
 
-   static int putAt_I_List_2(List<ClassCache.UiHelper> var0, Vec3 var1, int var2, int var3, int var4) {
+   static int putAt_I_List_2(List<AiPathfinder.UiHelper> var0, Vec3 var1, int var2, int var3, int var4) {
       int var5 = Math.max(Math.max(0, var2), var3 - 6);
       int var6 = Math.min(var0.size(), Math.min(var4, var3 + 8));
       int var7 = Math.min(var3, Math.max(0, var6 - 1));
       double var8 = 1.7976931348623157E308;
 
       for (int var10 = var5; var10 < var6; var10++) {
-         BlockPos var11 = ((ClassCache.UiHelper)var0.get(var10)).from();
+         BlockPos var11 = ((AiPathfinder.UiHelper)var0.get(var10)).from();
          double var12 = var1.distanceToSqr(var11.getX() + 0.5, var11.getY(), var11.getZ() + 0.5);
          if (var12 < var8) {
             var8 = var12;
@@ -1407,7 +1407,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    }
 
    private BlockPos putAt_BlockPos_I(int var1) {
-      if (var1 < this.putAt_List.size() && this.putAt_List.get(var1).type() == ClassCache.Inner_SyncManager.set) {
+      if (var1 < this.putAt_List.size() && this.putAt_List.get(var1).type() == AiPathfinder.Inner_SyncManager.set) {
          BlockPos var2 = this.putAt_List.get(var1).to();
          if (this.putAt_Z_BlockPos(var2)) {
             return var2;
@@ -1420,7 +1420,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    private void putAt_V_BlockPos(BlockPos var1) {
       LocalPlayer var2 = this.putAt_Minecraft.player;
       if (var2 != null && this.putAt_Z_BlockPos(var1) && var2.tickCount - this.syncAt_I >= 3) {
-         BlockHitResult var3 = DataUtil.init_BlockHitResult();
+         BlockHitResult var3 = AiAim.init_BlockHitResult();
          if (var3 != null && (var3.getBlockPos().equals(var1) || var3.getBlockPos().equals(var1.above()))) {
             this.putAt_Minecraft.gameMode.useItemOn(var2, InteractionHand.MAIN_HAND, var3);
             Compat263.swing(var2, InteractionHand.MAIN_HAND);
@@ -1429,7 +1429,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void fill_V(ClassCache.UiHelper var1) {
+   private void fill_V(AiPathfinder.UiHelper var1) {
       this.pollOf_I = 0;
       this.tick_I = 0;
       this.flushOf_I = 0;
@@ -1445,14 +1445,14 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       this.value_FileStore_PacketHe = null;
       this.prevEx_FileStore_PacketHe = null;
       this.nextBy_I = 0;
-      if (var1.type() != ClassCache.Inner_SyncManager.push) {
+      if (var1.type() != AiPathfinder.Inner_SyncManager.push) {
          this.state_Z = false;
       }
 
       this.putAt_CacheHelper.init_V_DataUtil_DataUtil(
-            var1.type() != ClassCache.Inner_SyncManager.tick && var1.type() != ClassCache.Inner_SyncManager.run
-               ? DataUtil.Inner_DataUtil.write
-               : DataUtil.Inner_DataUtil.sync
+            var1.type() != AiPathfinder.Inner_SyncManager.tick && var1.type() != AiPathfinder.Inner_SyncManager.run
+               ? AiAim.Inner_DataUtil.write
+               : AiAim.Inner_DataUtil.sync
          );
       if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var1, this.fill_FileStore_PacketHe) && this.putAt_ValueSink_CacheHel.putAt(var1, System.nanoTime())) {
          this.syncAt_Z = true;
@@ -1466,11 +1466,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private static boolean putAt_Z_FileStore_PacketHe_FileStore_PacketHe(ClassCache.UiHelper var0, ClassCache.UiHelper var1) {
+   private static boolean putAt_Z_FileStore_PacketHe_FileStore_PacketHe(AiPathfinder.UiHelper var0, AiPathfinder.UiHelper var1) {
       return var0 != null && var1 != null && var0.type() == var1.type() && var0.from().equals(var1.from()) && var0.to().equals(var1.to());
    }
 
-   private void putAt_V_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void putAt_V_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       switch (var2.type()) {
          case get:
             this.tick(var1, var2);
@@ -1518,7 +1518,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void fill(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void fill(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       if (!this.putAt_Z_LocalPlayer_FileStore_PacketHe(var1, var2)) {
          this.nextBy();
          BlockPos var3 = var2.cellsToBreak().get(0);
@@ -1583,7 +1583,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private boolean putAt_Z_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private boolean putAt_Z_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       if (var2.from().getX() != this.getTo || var2.from().getZ() != this.tableEx || var2.from().getY() > this.levelOf) {
          this.getTo = var2.from().getX();
          this.tableEx = var2.from().getZ();
@@ -1606,8 +1606,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
 
          this.nextBy();
          AiBlockDigger.putAt_V_Minecraft(this.putAt_Minecraft);
-         if (TaskTimer.init_Z()) {
-            TaskTimer.init_V("cap " + this.value_BlockPos.toShortString());
+         if (AiMotionAudit.init_Z()) {
+            AiMotionAudit.init_V("cap " + this.value_BlockPos.toShortString());
          }
 
          if (this.fill_RingCache_CacheHel(this.value_BlockPos) == AiWrExecutor.Inner_CacheHelper.readEx) {
@@ -1632,7 +1632,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          AutismClientAddon.LOG.info("[AI] capping the shaft at {}: {} deep{}", var4.toShortString(), var5, var6 ? ", a hostile after the player" : "");
          this.value_BlockPos = var4;
          this.count = 0;
-         FileCache.read_V(var4);
+         AiEditLedger.read_V(var4);
          return this.putAt_Z_LocalPlayer_FileStore_PacketHe(var1, var2);
       } else {
          return false;
@@ -1644,8 +1644,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       int var3 = 0;
 
       for (int var4 = this.pollAt_I; var4 < this.putAt_List.size(); var4++) {
-         ClassCache.UiHelper var5 = this.putAt_List.get(var4);
-         if (var5.type() != ClassCache.Inner_SyncManager.push || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
+         AiPathfinder.UiHelper var5 = this.putAt_List.get(var4);
+         if (var5.type() != AiPathfinder.Inner_SyncManager.push || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
             break;
          }
 
@@ -1697,7 +1697,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void readEx(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void readEx(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       if (!this.putAt_Z_LocalPlayer(var1, var2, true)) {
          Vec3 var3 = this.putAt_Vec3_LocalPlayer(var1);
          if (var3 == null && this.putAt_Function != null && this.pollAt_I == this.putAt_List.size() - 1) {
@@ -1711,7 +1711,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void value(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void value(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       if (!this.putAt_Z_LocalPlayer(var1, var2, true)) {
          AiBlockDigger.putAt_V_Minecraft(this.putAt_Minecraft);
          Vec3 var3 = this.putAt_Vec3_LocalPlayer(var1);
@@ -1729,7 +1729,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void prevEx(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void prevEx(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       boolean var3 = false;
 
       for (BlockPos var5 : var2.cellsToBreak()) {
@@ -1747,7 +1747,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private boolean putAt_Z_LocalPlayer(LocalPlayer var1, ClassCache.UiHelper var2, boolean var3) {
+   private boolean putAt_Z_LocalPlayer(LocalPlayer var1, AiPathfinder.UiHelper var2, boolean var3) {
       var var4 = var2.cellsToBreak();
       ArrayList var5 = new ArrayList(var4.size());
 
@@ -1771,13 +1771,13 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          if (!this.putAt_CacheHelper.init_Z()) {
             Vec3 var8 = var1.getEyePosition();
             double var9 = var1.blockInteractionRange();
-            EventBus.Inner_CachePool var11 = this.putAt_EventBus_JsonCache();
-            Vec3 var12 = var3 && var2.type() == ClassCache.Inner_SyncManager.stop ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
+            AiDigLine.Inner_CachePool var11 = this.putAt_EventBus_JsonCache();
+            Vec3 var12 = var3 && var2.type() == AiPathfinder.Inner_SyncManager.stop ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
             this.putAt_EventBus_CacheHelp = this.putAt_EventBus_CacheHelp_FileStore_PacketHe(var2, var5, var12, var1, var11, var9);
-            BlockPos var13 = this.putAt_EventBus_CacheHelp == null ? null : EventBus.init(this.putAt_EventBus_CacheHelp, var8, var5, var11, var9);
+            BlockPos var13 = this.putAt_EventBus_CacheHelp == null ? null : AiDigLine.init(this.putAt_EventBus_CacheHelp, var8, var5, var11, var9);
             if (var13 != null) {
                var21 = var13;
-               var22 = EventBus.init(this.putAt_EventBus_CacheHelp, var8, var11, var9);
+               var22 = AiDigLine.init(this.putAt_EventBus_CacheHelp, var8, var11, var9);
             }
          }
 
@@ -1789,8 +1789,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          if (this.putAt_Minecraft.gameMode instanceof AutismMultiPlayerGameModeAccessor var24 && var24.autism$getDestroyProgress() > 0.0F) {
             BlockPos var26 = var24.autism$getDestroyBlockPos();
             if (var26 != null && !var26.equals(var21) && var5.contains(var26)) {
-               BlockHitResult var28 = DataUtil.init_BlockHitResult();
-               BlockHitResult var29 = var28 != null && var28.getBlockPos().equals(var26) ? var28 : CachePool.init(this.putAt_Minecraft, var26);
+               BlockHitResult var28 = AiAim.init_BlockHitResult();
+               BlockHitResult var29 = var28 != null && var28.getBlockPos().equals(var26) ? var28 : AiBlockInteraction.init(this.putAt_Minecraft, var26);
                if (var29 != null) {
                   var21 = var26.immutable();
                   var22 = var29.getLocation();
@@ -1830,7 +1830,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                && var27 * var27 + var30 * var30 > 0.6889
                && (var2.to().getY() >= var2.from().getY() || !putAt_Z_FileStore_BitCache(this.putAt_FileStore_BitCache_BlockPos(var2.to().above())));
             if (var14) {
-               this.putAt_Z_F(NodeWalker.putAt_F_D(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5));
+               this.putAt_Z_F(AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5));
             } else {
                this.putAt_Minecraft.options.keyUp.setDown(false);
                this.putAt_Minecraft.options.keyDown.setDown(false);
@@ -1873,7 +1873,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    }
 
    private BlockPos putAt_BlockPos_LocalPlayer_BlockPos(LocalPlayer var1, BlockPos var2) {
-      if (CachePool.init(this.putAt_Minecraft, var2) != null) {
+      if (AiBlockInteraction.init(this.putAt_Minecraft, var2) != null) {
          return null;
       }
 
@@ -1904,8 +1904,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private EventBus.Inner_DataUtil putAt_EventBus_CacheHelp_FileStore_PacketHe(
-      ClassCache.UiHelper var1, List<BlockPos> var2, Vec3 var3, LocalPlayer var4, EventBus.Inner_CachePool var5, double var6
+   private AiDigLine.Inner_DataUtil putAt_EventBus_CacheHelp_FileStore_PacketHe(
+      AiPathfinder.UiHelper var1, List<BlockPos> var2, Vec3 var3, LocalPlayer var4, AiDigLine.Inner_CachePool var5, double var6
    ) {
       var var8 = new ArrayList<>(var2);
       var8.addAll(this.putAt_List_List(var2));
@@ -1916,11 +1916,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          && var1.equals(this.readEx_FileStore_PacketHe)
          && this.fill_EventBus_CacheHelp != null
          && var9.equals(this.readEx_Set)
-         && EventBus.init(this.fill_EventBus_CacheHelp, var3, var2, var5, var6) != null) {
+         && AiDigLine.init(this.fill_EventBus_CacheHelp, var3, var2, var5, var6) != null) {
          this.readEx_FileStore_PacketHe = null;
          return this.fill_EventBus_CacheHelp;
       } else {
-         return EventBus.init_EventBus_DataUtil_EventBus_DataUtil(
+         return AiDigLine.init_EventBus_DataUtil_EventBus_DataUtil(
             this.putAt_EventBus_CacheHelp, var10, var3, var4.getYRot(), var4.getXRot(), var2, var8, var5, var6, this.putAt_F()
          );
       }
@@ -1935,7 +1935,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       BlockPos var2 = this.putAt_List.get(Math.min(this.putAt_List.size() - 1, this.pollAt_I + 3)).to();
       return Math.hypot(var2.getX() - var1.getX(), var2.getZ() - var1.getZ()) < 1.5
          ? 0.0F / 0.0F
-         : NodeWalker.putAt_F_D(var1.getX(), var1.getZ(), var2.getX(), var2.getZ());
+         : AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var2.getX(), var2.getZ());
    }
 
    private List<BlockPos> putAt_List_List(List<BlockPos> var1) {
@@ -1948,8 +1948,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
 
       if (var2 >= 0 && var2 + 1 < this.putAt_List.size()) {
-         ClassCache.UiHelper var7 = this.putAt_List.get(var2 + 1);
-         if (var7.type() != ClassCache.Inner_SyncManager.pop && var7.type() != ClassCache.Inner_SyncManager.stop && var7.type() != ClassCache.Inner_SyncManager.next) {
+         AiPathfinder.UiHelper var7 = this.putAt_List.get(var2 + 1);
+         if (var7.type() != AiPathfinder.Inner_SyncManager.pop && var7.type() != AiPathfinder.Inner_SyncManager.stop && var7.type() != AiPathfinder.Inner_SyncManager.next) {
             return List.of();
          }
 
@@ -1977,13 +1977,13 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private EventBus.Inner_CachePool putAt_EventBus_JsonCache() {
+   private AiDigLine.Inner_CachePool putAt_EventBus_JsonCache() {
       return var1 -> this.putAt_Minecraft.level.getBlockState(var1).getShape(this.putAt_Minecraft.level, var1);
    }
 
    private Vec3 putAt_Vec3_LocalPlayer(LocalPlayer var1) {
       if (!this.putAt_CacheHelper.init_Z() && this.pollAt_I + 1 < this.putAt_List.size()) {
-         ClassCache.UiHelper var2 = this.putAt_List.get(this.pollAt_I + 1);
+         AiPathfinder.UiHelper var2 = this.putAt_List.get(this.pollAt_I + 1);
          if (var2.cellsToBreak().isEmpty()) {
             return null;
          }
@@ -2002,22 +2002,22 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
 
          Vec3 var15 = new Vec3(var2.from().getX() + 0.5, var2.from().getY() + var1.getEyeHeight(), var2.from().getZ() + 0.5);
          double var16 = var1.blockInteractionRange();
-         EventBus.Inner_CachePool var7 = this.putAt_EventBus_JsonCache();
+         AiDigLine.Inner_CachePool var7 = this.putAt_EventBus_JsonCache();
          ArrayList var8 = new ArrayList(var3);
          var8.addAll(this.putAt_List_List(var3));
          var var9 = Set.copyOf(var8);
          if (!var2.equals(this.readEx_FileStore_PacketHe)
             || !var9.equals(this.readEx_Set)
             || this.fill_EventBus_CacheHelp == null
-            || EventBus.init(this.fill_EventBus_CacheHelp, var15, var3, var7, var16) == null) {
-            this.fill_EventBus_CacheHelp = EventBus.init_EventBus_DataUtil_Vec3(
+            || AiDigLine.init(this.fill_EventBus_CacheHelp, var15, var3, var7, var16) == null) {
+            this.fill_EventBus_CacheHelp = AiDigLine.init_EventBus_DataUtil_Vec3(
                var15, var1.getYRot(), var1.getXRot(), var3, var8, var7, var16, this.putAt_F()
             );
             this.readEx_FileStore_PacketHe = var2;
             this.readEx_Set = var9;
          }
 
-         Vec3 var10 = this.fill_EventBus_CacheHelp == null ? null : EventBus.init(this.fill_EventBus_CacheHelp, var15, var7, var16);
+         Vec3 var10 = this.fill_EventBus_CacheHelp == null ? null : AiDigLine.init(this.fill_EventBus_CacheHelp, var15, var7, var16);
          if (var10 == null) {
             return null;
          }
@@ -2025,7 +2025,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          RotationMath.Inner_DataUtil var11 = RotationMath.init(var10, var15);
          float var12 = Math.abs(var11.load()) > 70.0F ? var1.getYRot() : var11.init();
          Vec3 var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var11.load(), var12).scale(Math.max(2.0, var10.distanceTo(var15))));
-         float var14 = EventBus.load(var13.subtract(var1.getEyePosition()));
+         float var14 = AiDigLine.load(var13.subtract(var1.getEyePosition()));
          if (Math.abs(var14) > 70.0F) {
             var13 = var1.getEyePosition().add(Vec3.directionFromRotation(var14, var1.getYRot()).scale(3.0));
          }
@@ -2036,7 +2036,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private static boolean putAt_Z_FileStore_BitCache(ClassCache.Inner_FileCache var0) {
+   private static boolean putAt_Z_FileStore_BitCache(AiPathfinder.Inner_FileCache var0) {
       return var0.passable() && !var0.web();
    }
 
@@ -2056,7 +2056,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return false;
    }
 
-   private void prev(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void prev(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       BlockPos var3 = var2.cellsToPlace().get(0);
       if (this.prev_Z || var2.cellsToBreak().isEmpty() || !var1.onGround() || !this.putAt_Z_LocalPlayer(var1, var2, false)) {
          if (!this.prev_Z) {
@@ -2111,7 +2111,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             if (this.putAt_BlockPos != null) {
                this.reset++;
                AiRoutePolicy.putAt_V_BlockPos_Block(var3, this.putAt_Block);
-               FileCache.write_V(var3);
+               AiEditLedger.write_V(var3);
                AutismClientAddon.LOG.info(
                      "[AI] placed {} at {} (pillar, {} -> {})",
                      this.putAt_Block,
@@ -2177,7 +2177,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          this.fill(var2);
          ItemStack var5 = this.putAt_Minecraft.player.getInventory().getItem(var2);
          this.putAt_Str = BuiltInRegistries.ITEM.getKey(var5.getItem()).toString();
-         this.readEx_J = ca.init_J_BlockPos(var1);
+         this.readEx_J = AiServerEvidence.init_J_BlockPos(var1);
          this.putAt_Block = ((BlockItem)var5.getItem()).getBlock();
          InteractionResult var6 = this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var4);
          if (var6.consumesAction() && !this.putAt_Minecraft.level.getBlockState(var1).isAir()) {
@@ -2204,14 +2204,14 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
    }
 
    private void putAt_V_LocalPlayer(LocalPlayer var1) {
-      ClassCache.UiHelper var2 = this.putAt_FileStore_PacketHe;
+      AiPathfinder.UiHelper var2 = this.putAt_FileStore_PacketHe;
       int var3 = var2.to().getX() - var2.from().getX();
       int var4 = var2.to().getZ() - var2.from().getZ();
 
       int var5;
       for (var5 = this.pollAt_I; var5 + 1 < this.putAt_List.size(); var5++) {
-         ClassCache.UiHelper var6 = this.putAt_List.get(var5 + 1);
-         if (var6.type() != ClassCache.Inner_SyncManager.run
+         AiPathfinder.UiHelper var6 = this.putAt_List.get(var5 + 1);
+         if (var6.type() != AiPathfinder.Inner_SyncManager.run
             || !var6.from().equals(this.putAt_List.get(var5).to())
             || var6.to().getX() - var6.from().getX() != var3
             || var6.to().getZ() - var6.from().getZ() != var4
@@ -2229,33 +2229,33 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          var5++;
       }
 
-      JsonUtil.Inner_CachePool var9 = new JsonUtil.Inner_CachePool(var2.from().getX(), var2.from().getZ(), var15, var3, var4, var7);
-      JsonUtil.Inner_ConfigStore var10 = NetHelper.init_JsonUtil_ConfigSto_Z(!this.dataEx_Z, var9, var1, this.pollOf_I());
+      AiBridger.Inner_CachePool var9 = new AiBridger.Inner_CachePool(var2.from().getX(), var2.from().getZ(), var15, var3, var4, var7);
+      AiBridger.Inner_ConfigStore var10 = AiBridgeDriver.init_JsonUtil_ConfigSto_Z(!this.dataEx_Z, var9, var1, this.pollOf_I());
       boolean var11 = var5 + 1 < this.putAt_List.size() && putAt_Z_FileStore_PacketHe(this.putAt_List.get(var5 + 1), var3, var4);
       if (var9.length() <= 2) {
-         var10 = JsonUtil.Inner_ConfigStore.load;
+         var10 = AiBridger.Inner_ConfigStore.load;
       }
 
-      this.putAt_TokenCodec = new NetHelper(var9, var10, this.putAt_CacheHelper, var11);
+      this.putAt_TokenCodec = new AiBridgeDriver(var9, var10, this.putAt_CacheHelper, var11);
       this.stopBy = this.pollAt_I;
       this.dataTo = var5;
       double var12 = 0.0;
 
       for (int var14 = this.pollAt_I; var14 <= var5; var14++) {
-         var12 += ClassCache.Inner_CachePool.putAt_I_D(this.putAt_List.get(var14).costTicks());
+         var12 += AiPathfinder.Inner_CachePool.putAt_I_D(this.putAt_List.get(var14).costTicks());
       }
 
       this.setOf = (int)Math.ceil(var12) + 60;
       AutismClientAddon.LOG.info("[AI] bridge {} cells {} from {} toward {},{}", var9.length(), var10.name().toLowerCase(Locale.ROOT), var2.from().toShortString(), var3, var4);
    }
 
-   private static boolean putAt_Z_FileStore_PacketHe(ClassCache.UiHelper var0, int var1, int var2) {
+   private static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var0, int var1, int var2) {
       int var3 = Integer.signum(var0.to().getX() - var0.from().getX());
       int var4 = Integer.signum(var0.to().getZ() - var0.from().getZ());
       return var3 != var1 || var4 != var2;
    }
 
-   private int putAt_I_FileStore_PacketHe(ClassCache.UiHelper var1, BlockPos var2, int var3, int var4, int var5) {
+   private int putAt_I_FileStore_PacketHe(AiPathfinder.UiHelper var1, BlockPos var2, int var3, int var4, int var5) {
       if (AiRoutePolicy.fill(var1.type()) && var1.to().getY() == var2.getY()) {
          int var6 = var1.to().getX() - var2.getX();
          int var7 = var1.to().getZ() - var2.getZ();
@@ -2264,7 +2264,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          if (var8 > var5 && var9 <= 1) {
             for (int var10 = var5 + 1; var10 <= var8; var10++) {
                BlockPos var11 = new BlockPos(var2.getX() + var3 * var10, var2.getY() - 1, var2.getZ() + var4 * var10);
-               ClassCache.Inner_FileCache var12 = this.putAt_FileStore_BitCache_BlockPos(var11);
+               AiPathfinder.Inner_FileCache var12 = this.putAt_FileStore_BitCache_BlockPos(var11);
                if (!var12.loaded()) {
                   return -1;
                }
@@ -2295,7 +2295,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          this.putAt_V_LocalPlayer(var1);
       }
 
-      JsonUtil.Inner_CachePool var2 = this.putAt_TokenCodec.init_JsonUtil_CachePool();
+      AiBridger.Inner_CachePool var2 = this.putAt_TokenCodec.init_JsonUtil_CachePool();
       if (this.putAt_TokenCodec.init_I() > this.setOf) {
          this.putAt_V_Str("bridge over its time budget");
          return true;
@@ -2318,20 +2318,20 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             return true;
          }
       } else {
-         NetHelper.Inner_DataUtil var4 = this.putAt_TokenCodec.init(var3, this::fill, var3x -> {
+         AiBridgeDriver.Inner_DataUtil var4 = this.putAt_TokenCodec.init(var3, this::fill, var3x -> {
             this.readBy++;
             ItemStack var4x = var1.getInventory().getItem(var3);
             this.putAt_Str = BuiltInRegistries.ITEM.getKey(var4x.getItem()).toString();
             Block var5x = this.putAt_Minecraft.level.getBlockState(var3x).getBlock();
             AiRoutePolicy.putAt_V_BlockPos_Block(var3x, var5x);
-            FileCache.write_V(var3x);
+            AiEditLedger.write_V(var3x);
          });
-         if (var4 == NetHelper.Inner_DataUtil.write) {
+         if (var4 == AiBridgeDriver.Inner_DataUtil.write) {
             this.putAt_V_Str("bridge footing below the planned support level");
             return true;
          }
 
-         if (var4 == NetHelper.Inner_DataUtil.read) {
+         if (var4 == AiBridgeDriver.Inner_DataUtil.read) {
             this.putAt_V_Str("fell off the bridge");
             return true;
          }
@@ -2347,7 +2347,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          }
 
          this.putAt_FileStore_PacketHe = this.putAt_List.get(this.pollAt_I);
-         if (var4 != NetHelper.Inner_DataUtil.load) {
+         if (var4 != AiBridgeDriver.Inner_DataUtil.load) {
             return true;
          }
 
@@ -2364,7 +2364,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private static boolean putAt_Z_FileStore_PacketHe_LocalPlayer(ClassCache.UiHelper var0, LocalPlayer var1) {
+   private static boolean putAt_Z_FileStore_PacketHe_LocalPlayer(AiPathfinder.UiHelper var0, LocalPlayer var1) {
       if (AiRoutePolicy.putAt_Z(var0) && !(Math.abs(var1.getY() - var0.to().getY()) > 0.6)) {
          double var2 = var0.to().getX() - var0.from().getX();
          double var4 = var0.to().getZ() - var0.from().getZ();
@@ -2381,7 +2381,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void chunkAt(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void chunkAt(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       BlockPos var3 = var2.cellsToPlace().get(0);
       if (!this.putAt_FileStore_BitCache_BlockPos(var3).passable()) {
          if (!this.value_Z) {
@@ -2389,7 +2389,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             if (this.putAt_BlockPos != null) {
                this.readBy++;
                AiRoutePolicy.putAt_V_BlockPos_Block(var3, this.putAt_Block);
-               FileCache.write_V(var3);
+               AiEditLedger.write_V(var3);
                this.putAt_BlockPos = null;
             }
          }
@@ -2443,7 +2443,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private static double putAt_D_LocalPlayer_FileStore_PacketHe(LocalPlayer var0, ClassCache.UiHelper var1) {
+   private static double putAt_D_LocalPlayer_FileStore_PacketHe(LocalPlayer var0, AiPathfinder.UiHelper var1) {
       int var2 = Integer.signum(var1.to().getX() - var1.from().getX());
       int var3 = Integer.signum(var1.to().getZ() - var1.from().getZ());
       if (var2 > 0) {
@@ -2457,7 +2457,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void state(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void state(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       BlockPos var3 = var2.to();
       boolean var4 = this.putAt_Z_BlockPos(var3);
       int var5 = Integer.signum(var2.to().getX() - var2.from().getX());
@@ -2470,7 +2470,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          this.putAt_V_Vec3(var7);
       }
 
-      float var8 = NodeWalker.putAt_F_D(var1.getX(), var1.getZ(), var7.x, var7.z);
+      float var8 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var7.x, var7.z);
       boolean var9 = this.putAt_Z_F(var8);
       this.putAt_V_LocalPlayer_Z(var1, this.stateOf_Z && var9 && this.prev(var1));
       this.putAt_Minecraft.options.keyJump.setDown(false);
@@ -2489,7 +2489,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       LocalPlayer var2 = this.putAt_Minecraft.player;
       if (var2 != null && this.putAt_Z_BlockPos(var1) && var2.tickCount - this.syncAt_I >= 3) {
          this.putAt_CacheHelper.load_V();
-         BlockHitResult var3 = DataUtil.init_BlockHitResult();
+         BlockHitResult var3 = AiAim.init_BlockHitResult();
          if (var3 != null && (var3.getBlockPos().equals(var1) || var3.getBlockPos().equals(var1.above()))) {
             this.putAt_Minecraft.gameMode.useItemOn(var2, InteractionHand.MAIN_HAND, var3);
             Compat263.swing(var2, InteractionHand.MAIN_HAND);
@@ -2498,7 +2498,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private boolean putAt_Z_FileStore_PacketHe(ClassCache.UiHelper var1) {
+   private boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var1) {
       if (this.putAt_Z_BlockPos(var1.to())) {
          this.state(this.putAt_Minecraft.player, var1);
          return false;
@@ -2540,8 +2540,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                      )
                   );
                   this.putAt_CacheHelper.load_V();
-                  if (DataUtil.init_Z_BlockPos(var1)) {
-                     BlockHitResult var3 = DataUtil.init_BlockHitResult();
+                  if (AiAim.init_Z_BlockPos(var1)) {
+                     BlockHitResult var3 = AiAim.init_BlockHitResult();
                      if (var3 != null) {
                         this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var3);
                         Compat263.swing(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND);
@@ -2586,7 +2586,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return putAt_Z_BlockState(var2) && var2.hasProperty(BlockStateProperties.OPEN) && var2.getValue(BlockStateProperties.OPEN);
    }
 
-   private void closeOf(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void closeOf(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       if (!var1.onGround() && !var1.isInWater() && !var1.onClimbable()) {
          this.pollAt(var1, var2);
       } else if (var1.onGround() && !var1.isInWater() && !this.putAt_Z_TokenCore_TableCac_FileStore_PacketHe(putAt_TokenCore_TableCac_LocalPlayer(var1), var2)) {
@@ -2596,18 +2596,18 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void pollAt(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void pollAt(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       Vec3 var3 = new Vec3(var2.to().getX() + 0.5, var1.getEyePosition().y, var2.to().getZ() + 0.5);
       this.putAt_V_Vec3(var3);
       double var4 = var2.to().getX() + 0.5;
       double var6 = var2.to().getZ() + 0.5;
-      float var8 = NodeWalker.putAt_F_D(var1.getX(), var1.getZ(), var4, var6);
-      NodeWalker.Inner_StreamUtil var9 = putAt_TokenCore_TableCac_LocalPlayer(var1);
-      BitSetUtil var10 = this.putAt_NetEntry();
+      float var8 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var4, var6);
+      AiPhysics.Inner_StreamUtil var9 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+      AiLiveWorld var10 = this.putAt_NetEntry();
       float var11 = this.putAt_CacheHelper.init_F();
-      NodeWalker.Inner_DataUtil[] var12 = new NodeWalker.Inner_DataUtil[]{
+      AiPhysics.Inner_DataUtil[] var12 = new AiPhysics.Inner_DataUtil[]{
          putAt_TokenCore_CacheHel_F_F(var11, var8),
-         new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, false, var11),
+         new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var11),
          putAt_TokenCore_CacheHel_F_F(var11, var8 + 180.0F)
       };
       int var13 = -1;
@@ -2616,7 +2616,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       double var17 = 1.7976931348623157E308;
 
       for (int var19 = 0; var19 < var12.length; var19++) {
-         l.Inner_TableCache var20 = l.putAt(var9, var12[var19], false, var10);
+         AiStride.Inner_TableCache var20 = AiStride.putAt(var9, var12[var19], false, var10);
          if (var20.down()) {
             double var21 = Math.hypot(var20.at().x() - var4, var20.at().z() - var6);
             if (var21 < var17) {
@@ -2648,30 +2648,30 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private boolean putAt_Z_TokenCore_TableCac_FileStore_PacketHe(NodeWalker.Inner_StreamUtil var1, ClassCache.UiHelper var2) {
-      BitSetUtil var3 = this.putAt_NetEntry();
+   private boolean putAt_Z_TokenCore_TableCac_FileStore_PacketHe(AiPhysics.Inner_StreamUtil var1, AiPathfinder.UiHelper var2) {
+      AiLiveWorld var3 = this.putAt_NetEntry();
       double var4 = var2.to().getX() + 0.5;
       double var6 = var2.to().getZ() + 0.5;
 
       for (int var8 = 0; var8 < 3; var8++) {
-         NodeWalker.Inner_StreamUtil var9 = var1;
+         AiPhysics.Inner_StreamUtil var9 = var1;
          boolean var10 = false;
          boolean var11 = false;
          boolean var12 = false;
          boolean var13 = false;
-         ArrayList<NodeWalker.Inner_StreamUtil> var14 = new ArrayList<>();
+         ArrayList<AiPhysics.Inner_StreamUtil> var14 = new ArrayList<>();
 
          for (int var15 = 0; var15 < 60 && !var11; var15++) {
-            float var16 = NodeWalker.putAt_F_D(var9.x(), var9.z(), var4, var6);
-            NodeWalker.Inner_DataUtil var17 = var10 && var8 != 0
+            float var16 = AiPhysics.putAt_F_D(var9.x(), var9.z(), var4, var6);
+            AiPhysics.Inner_DataUtil var17 = var10 && var8 != 0
                ? (
                   var8 == 1
-                     ? new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, false, var16)
-                     : new NodeWalker.Inner_DataUtil(-1.0, 0.0, false, false, false, var16)
+                     ? new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var16)
+                     : new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, false, var16)
                )
-               : new NodeWalker.Inner_DataUtil(1.0, 0.0, false, false, false, var16);
-            NodeWalker.Inner_StreamUtil var18 = NodeWalker.putAt(var9, var17, var3);
-            if (NodeWalker.putAt_Z(var3, var9, var18)) {
+               : new AiPhysics.Inner_DataUtil(1.0, 0.0, false, false, false, var16);
+            AiPhysics.Inner_StreamUtil var18 = AiPhysics.putAt(var9, var17, var3);
+            if (AiPhysics.putAt_Z(var3, var9, var18)) {
                break;
             }
 
@@ -2691,8 +2691,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             BlockPos var19 = BlockPos.containing(var9.x(), var9.y() + 0.01, var9.z());
             if (var10 && !var13 && this.putAt_FileStore_BitCache_BlockPos(var19).water()) {
                var13 = true;
-               var12 = !ClassCache.Inner_RenderState.putAt_Z_TokenCore_TaskStat(var3, var9.x(), var9.z(), var19)
-                  || !ClassCache.Inner_RenderState.putAt_Z_TokenCore_TaskStat(var3, var14, var19.getY());
+               var12 = !AiPathfinder.Inner_RenderState.putAt_Z_TokenCore_TaskStat(var3, var9.x(), var9.z(), var19)
+                  || !AiPathfinder.Inner_RenderState.putAt_Z_TokenCore_TaskStat(var3, var14, var19.getY());
             }
          }
 
@@ -2707,12 +2707,12 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return false;
    }
 
-   private void pollOf(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void pollOf(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       double var3 = var2.from().getX() + 0.5;
       double var5 = var2.from().getZ() + 0.5;
       double var7 = var3 - var1.getX();
       double var9 = var5 - var1.getZ();
-      NodeWalker.Inner_StreamUtil var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
+      AiPhysics.Inner_StreamUtil var11 = putAt_TokenCore_TableCac_LocalPlayer(var1);
       if (Math.hypot(var7, var9) > 1.5) {
          this.putAt_V_LocalPlayer_2(var1, var2, false, false, null);
       } else if (Math.hypot(var7, var9) <= 0.1 && Math.hypot(var11.vx(), var11.vz()) < 0.03) {
@@ -2726,7 +2726,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void tick(LocalPlayer var1, ClassCache.UiHelper var2) {
+   private void tick(LocalPlayer var1, AiPathfinder.UiHelper var2) {
       boolean var3 = var2.to().getY() > var2.from().getY();
       if (var1.isInWater()) {
          this.putAt_CacheHelper.init_V();
@@ -2739,10 +2739,10 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private void putAt_V_LocalPlayer_2(LocalPlayer var1, ClassCache.UiHelper var2, boolean var3, boolean var4, Vec3 var5) {
+   private void putAt_V_LocalPlayer_2(LocalPlayer var1, AiPathfinder.UiHelper var2, boolean var3, boolean var4, Vec3 var5) {
       Vec3 var6 = var5 != null ? var5 : AiRoutePolicy.putAt_Vec3_FileStore_PacketHe_D(var2, var1.getEyePosition().y);
       this.putAt_V_Vec3(var6);
-      float var7 = NodeWalker.putAt_F_D(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5);
+      float var7 = AiPhysics.putAt_F_D(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5);
       boolean var8 = this.putAt_Z_F(var7);
       this.putAt_V_LocalPlayer_Z(var1, var8 && var3 && !var1.isInWater());
       double var9 = var2.to().getY();
@@ -2755,7 +2755,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       this.putAt_Minecraft.options.keyShift.setDown(false);
    }
 
-   private boolean fill_Z(ClassCache.UiHelper var1) {
+   private boolean fill_Z(AiPathfinder.UiHelper var1) {
       LocalPlayer var2 = this.putAt_Minecraft.player;
       if (!var1.cellsToPlace().isEmpty()
          && !this.value_Z
@@ -2771,26 +2771,26 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             var1.to().getY()
          )) {
          return false;
-      } else if (var1.type() == ClassCache.Inner_SyncManager.set) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.set) {
          int var6 = Integer.signum(var1.to().getX() - var1.from().getX());
          int var4 = Integer.signum(var1.to().getZ() - var1.from().getZ());
          return !this.putAt_Z_BlockPos(var1.to())
             && AiRoutePolicy.putAt(this.putAt_List_BlockPos(var1.to()), Vec3.atLowerCornerOf(var1.to()), var2.getBoundingBox(), var6, var4, 0.05);
-      } else if (var1.type() == ClassCache.Inner_SyncManager.get) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.get) {
          boolean var5 = var1.to().getY() > var1.from().getY();
          return (var5 ? var2.getY() >= var1.to().getY() + 0.1 : var2.getY() < var1.to().getY() + 0.9 && var2.getY() > var1.to().getY() - 0.5)
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4
             && (var2.isInWater() || var2.onClimbable() || var2.onGround());
-      } else if (var1.type() == ClassCache.Inner_SyncManager.push) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.push) {
          return !this.putAt_FileStore_BitCache_BlockPos(var1.cellsToBreak().get(0)).passable()
             ? false
             : var2.getY() < var1.from().getY() - 0.5 && (var2.onGround() || var2.isInWater() || var2.onClimbable());
-      } else if (var1.type() == ClassCache.Inner_SyncManager.next) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.next) {
          return AiRoutePolicy.putAt_Z_FileStore_PacketHe(
             var1, var2.blockPosition().getX(), var2.blockPosition().getZ(), var2.getY(), var2.onGround() || var2.isInWater() || var2.onClimbable()
          );
-      } else if (var1.type() == ClassCache.Inner_SyncManager.poll) {
+      } else if (var1.type() == AiPathfinder.Inner_SyncManager.poll) {
          return AiRoutePolicy.putAt_Z_D(var2.getY(), var1.to().getY(), var2.onGround(), var2.isInWater(), var2.onClimbable())
             && Math.abs(var2.getX() - (var1.to().getX() + 0.5)) < 1.4
             && Math.abs(var2.getZ() - (var1.to().getZ() + 0.5)) < 1.4;
@@ -2802,8 +2802,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          && Math.abs(var2.getY() - var1.to().getY()) <= 1.0) {
          return true;
       } else if (var2.blockPosition().getX() == var1.to().getX() && var2.blockPosition().getZ() == var1.to().getZ()) {
-         double var3 = ClassCache.Inner_RenderState.putAt(var1.to().getY(), this.putAt_FileStore_BitCache_BlockPos(var1.to().below()));
-         return var1.type() != ClassCache.Inner_SyncManager.tick && var1.type() != ClassCache.Inner_SyncManager.stop
+         double var3 = AiPathfinder.Inner_RenderState.putAt(var1.to().getY(), this.putAt_FileStore_BitCache_BlockPos(var1.to().below()));
+         return var1.type() != AiPathfinder.Inner_SyncManager.tick && var1.type() != AiPathfinder.Inner_SyncManager.stop
             ? Math.abs(var2.getY() - var3) <= 0.6 && (var2.onGround() || var2.isInWater() || var2.onClimbable())
             : var2.onGround() && Math.abs(var2.getY() - var3) <= 0.55;
       } else {
@@ -2816,11 +2816,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          || AiRoutePolicy.putAt_Z_FileStore_SyncPool(this.putAt_FileStore_PacketHe.type(), this.prev_Z, this.putAt_BlockPos != null || this.value_Z);
    }
 
-   private boolean readEx(ClassCache.UiHelper var1) {
+   private boolean readEx(AiPathfinder.UiHelper var1) {
       return AiRoutePolicy.putAt_Z_FileStore_PacketHe(var1, this.putAt_Function(), this.dataEx_Z);
    }
 
-   private boolean value(ClassCache.UiHelper var1) {
+   private boolean value(AiPathfinder.UiHelper var1) {
       return this.readEx_Predicate != null
          && var1.cellsToBreak().isEmpty()
          && var1.cellsToPlace().isEmpty()
@@ -2832,7 +2832,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return this.putAt_FileStore_BitCache_BlockPos(var1).passable()
          ? false
          : this.putAt_BlockPos == null
-            || this.putAt_Minecraft.level.getBlockState(var1).getBlock() == this.putAt_Block && ca.init_J_BlockPos(var1) > this.readEx_J;
+            || this.putAt_Minecraft.level.getBlockState(var1).getBlock() == this.putAt_Block && AiServerEvidence.init_J_BlockPos(var1) > this.readEx_J;
    }
 
    private AiWrExecutor.Inner_CacheHelper fill_RingCache_CacheHel(BlockPos var1) {
@@ -2861,11 +2861,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             return AiWrExecutor.Inner_CacheHelper.readEx;
          }
 
-         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(DataUtil.Inner_DataUtil.write);
+         this.putAt_CacheHelper.init_V_DataUtil_DataUtil(AiAim.Inner_DataUtil.write);
          RotationMath.Inner_DataUtil var7 = var6.init_U_DataUtil().init_ce_DataUtil();
          Vec3 var8 = this.putAt_Minecraft.player.getEyePosition();
          Vec3 var9 = var6.init_U_DataUtil().init_Vec3();
-         boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == ClassCache.Inner_SyncManager.tick;
+         boolean var10 = this.putAt_FileStore_PacketHe != null && this.putAt_FileStore_PacketHe.type() == AiPathfinder.Inner_SyncManager.tick;
          if (var10 && var7 != null && var9 != null && Math.hypot(var9.x - var8.x, var9.z - var8.z) < 0.4) {
             this.putAt_CacheHelper.init_V_Vec3(var9);
          } else if (var7 != null) {
@@ -2875,11 +2875,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          }
 
          this.putAt_CacheHelper.load_V();
-         if (!DataUtil.init_Z_BlockPos(var6.init_BlockHitResult().getBlockPos())) {
+         if (!AiAim.init_Z_BlockPos(var6.init_BlockHitResult().getBlockPos())) {
             return AiWrExecutor.Inner_CacheHelper.fill;
          }
 
-         this.readEx_J = ca.init_J_BlockPos(var1);
+         this.readEx_J = AiServerEvidence.init_J_BlockPos(var1);
          this.putAt_Block = ((BlockItem)var3.getItem()).getBlock();
          InteractionResult var11 = this.putAt_Minecraft.gameMode.useItemOn(this.putAt_Minecraft.player, InteractionHand.MAIN_HAND, var6.init_BlockHitResult());
          if (var11.consumesAction() && !this.putAt_Minecraft.level.getBlockState(var1).isAir()) {
@@ -2924,8 +2924,8 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             && var6.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition())
             && !var6.getBlock().defaultBlockState().hasBlockEntity()) {
             String var9 = BuiltInRegistries.ITEM.getKey(var5.getItem()).toString();
-            int var8 = UtilCore.init_I(var9);
-            if (var8 >= 0 && UtilCore.init(var5, this.putAt_Minecraft.player.getInventory())) {
+            int var8 = AiRestock.init_I(var9);
+            if (var8 >= 0 && AiRestock.init(var5, this.putAt_Minecraft.player.getInventory())) {
                if (var9.equals(this.putAt_Str)) {
                   var8 = -1;
                }
@@ -2952,7 +2952,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
             && var4.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition())
             && !var4.getBlock().defaultBlockState().hasBlockEntity()) {
             String var6 = BuiltInRegistries.ITEM.getKey(var3.getItem()).toString();
-            if (UtilCore.init_I(var6) >= 0 && UtilCore.init(var3, this.putAt_Minecraft.player.getInventory())) {
+            if (AiRestock.init_I(var6) >= 0 && AiRestock.init(var3, this.putAt_Minecraft.player.getInventory())) {
                var1 += var3.getCount();
             }
          }
@@ -2982,7 +2982,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
 
       if (this.putAt_SyncCore == null) {
-         this.putAt_SyncCore = new UtilCore(this.putAt_Minecraft);
+         this.putAt_SyncCore = new AiRestock(this.putAt_Minecraft);
       }
 
       if (!this.putAt_SyncCore.init_Z() && !this.pollAt_Z) {
@@ -3004,28 +3004,28 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                return false;
             }
          } else {
-            var7 = UtilCore.init(var2, this.putAt_Str);
+            var7 = AiRestock.init(var2, this.putAt_Str);
          }
 
          if (var7 < 0) {
             return false;
          }
 
-         ArrayList<UtilCore.Inner_DataUtil> var8 = new ArrayList<>(9);
+         ArrayList<AiRestock.Inner_DataUtil> var8 = new ArrayList<>(9);
 
          for (int var5 = 0; var5 < 9; var5++) {
             ItemStack var6 = this.putAt_Minecraft.player.getInventory().getItem(var5);
             var8.add(
-               new UtilCore.Inner_DataUtil(var6.isEmpty(), var6.getItem() instanceof BlockItem, var6.has(DataComponents.FOOD), var6.isDamageableItem())
+               new AiRestock.Inner_DataUtil(var6.isEmpty(), var6.getItem() instanceof BlockItem, var6.has(DataComponents.FOOD), var6.isDamageableItem())
             );
          }
 
-         int var9 = UtilCore.init(var8);
+         int var9 = AiRestock.init(var8);
          if (var9 < 0) {
             return false;
          }
 
-         String var10 = var1 != null ? BuiltInRegistries.ITEM.getKey(var1).toString() : ((UtilCore.Inner_CachePool)var2.get(var7)).itemId();
+         String var10 = var1 != null ? BuiltInRegistries.ITEM.getKey(var1).toString() : ((AiRestock.Inner_CachePool)var2.get(var7)).itemId();
          this.putAt_SyncCore.init_V_I(9 + var7, var9, var10);
          return true;
       } else {
@@ -3042,7 +3042,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          return false;
       }
 
-      if (UtilCore.init(this.putAt_Minecraft.player.getInventory()) <= 0) {
+      if (AiRestock.init(this.putAt_Minecraft.player.getInventory()) <= 0) {
          return false;
       }
 
@@ -3052,7 +3052,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          var1 += this.putAt_List.get(var2).cellsToPlace().size();
       }
 
-      this.putAt_AiOperation = aV.init(this.putAt_Minecraft.player.getInventory(), Math.max(1, var1));
+      this.putAt_AiOperation = AiPlanks.init(this.putAt_Minecraft.player.getInventory(), Math.max(1, var1));
       if (this.putAt_AiOperation == null) {
          this.pollOf_Z = true;
          return false;
@@ -3067,9 +3067,9 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          int var3 = autismclient.util.BlockBreakSpeedHelper.init(this.putAt_Minecraft, var2, 9, false);
          if (var3 < 0
             || var2.requiresCorrectToolForDrops()
-               && ClassCache.Inner_StreamUtil.chunkAt(var2)
+               && AiPathfinder.Inner_StreamUtil.chunkAt(var2)
                && !this.putAt_Minecraft.player.getInventory().getItem(var3).isCorrectToolForDrops(var2)) {
-            if (v.init(this.putAt_List_BlockState(var2)) instanceof v.Inner_DataUtil.Inner_CachePool var4) {
+            if (ToolUpkeep.init(this.putAt_List_BlockState(var2)) instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool var4) {
                int var6 = var4.backpackSlot();
                this.putAt_SyncCore.init_V_I(
                      var6,
@@ -3088,30 +3088,30 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private UtilCore.Inner_CachePool putAt_SyncCore_JsonCache_ItemStack(ItemStack var1) {
-      return var1.getItem() instanceof BlockItem var2 && UtilCore.init(var1, this.putAt_Minecraft.player.getInventory())
-         ? new UtilCore.Inner_CachePool(
+   private AiRestock.Inner_CachePool putAt_SyncCore_JsonCache_ItemStack(ItemStack var1) {
+      return var1.getItem() instanceof BlockItem var2 && AiRestock.init(var1, this.putAt_Minecraft.player.getInventory())
+         ? new AiRestock.Inner_CachePool(
             BuiltInRegistries.ITEM.getKey(var1.getItem()).toString(),
             var1.getCount(),
             var2.getBlock() instanceof FallingBlock,
             var2.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.putAt_Minecraft.level, this.putAt_Minecraft.player.blockPosition()),
             var2.getBlock().defaultBlockState().hasBlockEntity()
          )
-         : new UtilCore.Inner_CachePool(null, 0, false, false, false);
+         : new AiRestock.Inner_CachePool(null, 0, false, false, false);
    }
 
-   private List<v.Inner_StreamUtil> putAt_List_BlockState(BlockState var1) {
+   private List<ToolUpkeep.Inner_StreamUtil> putAt_List_BlockState(BlockState var1) {
       boolean var2 = !var1.requiresCorrectToolForDrops();
-      ArrayList<v.Inner_StreamUtil> var3 = new ArrayList<>(36);
+      ArrayList<ToolUpkeep.Inner_StreamUtil> var3 = new ArrayList<>(36);
 
       for (int var4 = 0; var4 < 36; var4++) {
          ItemStack var5 = this.putAt_Minecraft.player.getInventory().getItem(var4);
          var3.add(
-            new v.Inner_StreamUtil(
+            new ToolUpkeep.Inner_StreamUtil(
                var4,
                var5.isDamageableItem() ? var5.getMaxDamage() - var5.getDamageValue() : -1,
                var2 || var5.isCorrectToolForDrops(var1),
-               af.load_Z(var5)
+               AiItems.load_Z(var5)
             )
          );
       }
@@ -3155,44 +3155,44 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       }
    }
 
-   private BitSetUtil putAt_NetEntry() {
+   private AiLiveWorld putAt_NetEntry() {
       if (this.putAt_NetEntry == null || this.putAt_NetEntry.putAt_ClientLevel() != this.putAt_Minecraft.level) {
-         this.putAt_NetEntry = new BitSetUtil(this.putAt_Minecraft.level, this.putAt_Minecraft.player);
+         this.putAt_NetEntry = new AiLiveWorld(this.putAt_Minecraft.level, this.putAt_Minecraft.player);
       }
 
       this.putAt_NetEntry.putAt_V_D(this.putAt_FileStore_RingUtil.putAt_D);
       return this.putAt_NetEntry;
    }
 
-   private RingBuffer putAt_PoolStore() {
-      StateCache var1 = this.putAt_PacketHelper != null ? this.putAt_PacketHelper : StateCache.init_StateCache();
+   private AiLiveGrid putAt_PoolStore() {
+      AiChunkMemory var1 = this.putAt_PacketHelper != null ? this.putAt_PacketHelper : AiChunkMemory.init_StateCache();
       if (this.putAt_PoolStore == null || this.putAt_PoolStore.putAt_ClientLevel() != this.putAt_Minecraft.level || this.fill_PacketHelper != var1) {
          ItemStack[] var2 = new ItemStack[9];
          Arrays.fill(var2, ItemStack.EMPTY);
-         this.putAt_PoolStore = new RingBuffer(this.putAt_Minecraft, var2, var1);
+         this.putAt_PoolStore = new AiLiveGrid(this.putAt_Minecraft, var2, var1);
          this.fill_PacketHelper = var1;
       }
 
       return this.putAt_PoolStore;
    }
 
-   private static NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac_LocalPlayer(LocalPlayer var0) {
+   private static AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_LocalPlayer(LocalPlayer var0) {
       return AiMotionSafety.putAt_TokenCore_TableCac(var0);
    }
 
-   private ClassCache.Inner_FileCache putAt_FileStore_BitCache_BlockPos(BlockPos var1) {
-      ClassCache.Inner_FileCache var2 = ClassCache.Inner_StreamUtil.putAt_FileStore_BitCache_Minecraft(
+   private AiPathfinder.Inner_FileCache putAt_FileStore_BitCache_BlockPos(BlockPos var1) {
+      AiPathfinder.Inner_FileCache var2 = AiPathfinder.Inner_StreamUtil.putAt_FileStore_BitCache_Minecraft(
          this.putAt_Minecraft, this.putAt_Minecraft.level, var1, putAt_ItemStackArr
       );
       if (!var2.loaded() && this.putAt_PacketHelper != null) {
-         ClassCache.Inner_FileCache var3 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1.getX(), var1.getY(), var1.getZ());
+         AiPathfinder.Inner_FileCache var3 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var1.getX(), var1.getY(), var1.getZ());
          return var3 != null ? var3 : var2;
       } else {
          return var2;
       }
    }
 
-   private Function<BlockPos, ClassCache.Inner_FileCache> putAt_Function() {
+   private Function<BlockPos, AiPathfinder.Inner_FileCache> putAt_Function() {
       if (this.fill_ItemStackArr == null && this.putAt_Minecraft.player != null) {
          this.fill_ItemStackArr = new ItemStack[36];
 
@@ -3203,11 +3203,11 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
 
       ItemStack[] var2 = this.fill_ItemStackArr != null ? this.fill_ItemStackArr : putAt_ItemStackArr;
       return var2x -> {
-         ClassCache.Inner_FileCache var3 = ClassCache.Inner_StreamUtil.putAt_FileStore_BitCache_Minecraft(
+         AiPathfinder.Inner_FileCache var3 = AiPathfinder.Inner_StreamUtil.putAt_FileStore_BitCache_Minecraft(
             this.putAt_Minecraft, this.putAt_Minecraft.level, var2x, var2
          );
          if (!var3.loaded() && this.putAt_PacketHelper != null) {
-            ClassCache.Inner_FileCache var4 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var2x.getX(), var2x.getY(), var2x.getZ());
+            AiPathfinder.Inner_FileCache var4 = this.putAt_PacketHelper.init_ClassCache_FileCac_I(var2x.getX(), var2x.getY(), var2x.getZ());
             return var4 != null ? var4 : var3;
          } else {
             return var3;
@@ -3264,7 +3264,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
                if (var6 < 0.3) {
                   double var8 = Math.hypot(var1.x - var3.x, var1.z - var3.z);
                   float var10 = (float)Math.toDegrees(Math.atan2(var3.y - var1.y, Math.max(0.3, var8)));
-                  float var11 = NodeWalker.putAt_F_D(0.0, 0.0, var4, var5);
+                  float var11 = AiPhysics.putAt_F_D(0.0, 0.0, var4, var5);
                   if (this.putAt_Z_Vec3(var3, var11, var10, BlockPos.containing(var1))) {
                      this.putAt_CacheHelper.init_V_ce_DataUtil(new RotationMath.Inner_DataUtil(var11, var10));
                      return;
@@ -3306,12 +3306,12 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       return var2[0] > 0;
    }
 
-   private static NodeWalker.Inner_DataUtil putAt_TokenCore_CacheHel_F_F(float var0, float var1) {
+   private static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_F_F(float var0, float var1) {
       int[] var2 = AiMotionSafety.putAt_IArr_F_F(var0, var1);
-      return new NodeWalker.Inner_DataUtil(var2[0], -var2[1], false, false, false, var0);
+      return new AiPhysics.Inner_DataUtil(var2[0], -var2[1], false, false, false, var0);
    }
 
-   private void putAt_V_LocalPlayer_TokenCore_CacheHel(LocalPlayer var1, NodeWalker.Inner_DataUtil var2) {
+   private void putAt_V_LocalPlayer_TokenCore_CacheHel(LocalPlayer var1, AiPhysics.Inner_DataUtil var2) {
       AiPacePlayback.putAt_V_LocalPlayer(var1, var2, var1.getXRot());
    }
 
@@ -3344,7 +3344,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       this.nextBy();
    }
 
-   private String putAt_Str_FileStore_PacketHe(ClassCache.UiHelper var1) {
+   private String putAt_Str_FileStore_PacketHe(AiPathfinder.UiHelper var1) {
       if (var1 != null && this.putAt_Minecraft.level != null) {
          BlockPos var2 = var1.to();
          Function var3 = var1x -> BuiltInRegistries.BLOCK.getKey(this.putAt_Minecraft.level.getBlockState(((BlockPos)var1x)).getBlock()).getPath();
@@ -3367,9 +3367,9 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       );
    }
 
-   private void putAt_V_BlockPos_FileStore_PacketHe(BlockPos var1, ClassCache.UiHelper var2) {
+   private void putAt_V_BlockPos_FileStore_PacketHe(BlockPos var1, AiPathfinder.UiHelper var2) {
       if (putAt_Z && this.putAt_Minecraft.player != null) {
-         ListPool.init("wr stall move=" + var2 + " reason=" + this.fill_Str + " pos=" + this.putAt_Minecraft.player.position());
+         AiNavDebug.init("wr stall move=" + var2 + " reason=" + this.fill_Str + " pos=" + this.putAt_Minecraft.player.position());
       }
 
       this.prev_BlockPos = var1;
@@ -3416,10 +3416,10 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       final int fill;
       final int readEx;
       final boolean putAt_Z;
-      final NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac;
+      final AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac;
       int value;
 
-      Inner_JsonCache(int var1, int var2, boolean var3, int var4, NodeWalker.Inner_StreamUtil var5) {
+      Inner_JsonCache(int var1, int var2, boolean var3, int var4, AiPhysics.Inner_StreamUtil var5) {
          this.flowState = var1;
          this.fill = var2;
          this.putAt_Z = var3;
@@ -3440,7 +3440,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
       int flowState;
       int flowTemp;
       final double putAt_D;
-      final NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac;
+      final AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac;
       final AiPaceScript.Inner_JsonCache putAt_TextPool_JsonCache;
       final Predicate<BlockPos> putAt_Predicate;
       final AiPaceScript.Inner_IoHelper putAt_TextPool_IoHelper = new AiPaceScript.Inner_IoHelper();
@@ -3461,7 +3461,7 @@ public final class AiWrExecutor implements ClassCache.Inner_TaskQueue {
          int var2,
          double var3,
          double var5,
-         NodeWalker.Inner_StreamUtil var7,
+         AiPhysics.Inner_StreamUtil var7,
          AiPaceScript.Inner_JsonCache var8,
          Predicate<BlockPos> var9,
          boolean var10,

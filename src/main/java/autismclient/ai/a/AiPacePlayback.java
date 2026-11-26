@@ -60,8 +60,8 @@ public final class AiPacePlayback {
    private double closeOf_D;
    private double pollAt_D = 0.0 / 0.0;
    private String fill_Str;
-   private final Map<Integer, NodeWalker.Inner_StreamUtil> putAt_Map = new HashMap<>();
-   private final Map<Integer, NodeWalker.Inner_DataUtil> fill_Map = new HashMap<>();
+   private final Map<Integer, AiPhysics.Inner_StreamUtil> putAt_Map = new HashMap<>();
+   private final Map<Integer, AiPhysics.Inner_DataUtil> fill_Map = new HashMap<>();
 
    public AiPacePlayback(AiPaceScript.Inner_IoHelper var1) {
       this(var1, 0.1, 0.0 / 0.0);
@@ -121,8 +121,8 @@ public final class AiPacePlayback {
       return this.fill_Str;
    }
 
-   private NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac_I(int var1) {
-      NodeWalker.Inner_StreamUtil var2 = this.putAt_Map.get(var1);
+   private AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac_I(int var1) {
+      AiPhysics.Inner_StreamUtil var2 = this.putAt_Map.get(var1);
       return var2 != null ? var2 : this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var1);
    }
 
@@ -136,25 +136,25 @@ public final class AiPacePlayback {
 
    public AiPacePlayback.Inner_JsonCache putAt(LocalPlayer var1, Vec3 var2, Runnable var3, Vec3 var4, Predicate<BlockPos> var5) {
       Minecraft var6 = Minecraft.getInstance();
-      BitSetUtil var7 = var6.level != null ? new BitSetUtil(var6.level, var1) : null;
+      AiLiveWorld var7 = var6.level != null ? new AiLiveWorld(var6.level, var1) : null;
       Predicate var8 = var6.level != null
          ? var1x -> var6.level.getChunkSource().getChunk(((net.minecraft.core.BlockPos)var1x).getX() >> 4, ((net.minecraft.core.BlockPos)var1x).getZ() >> 4, ChunkStatus.FULL, false) != null
          : null;
-      NodeWalker.Inner_StreamUtil var9 = NodeWalker.Inner_StreamUtil.of(var1);
+      AiPhysics.Inner_StreamUtil var9 = AiPhysics.Inner_StreamUtil.of(var1);
       AiPacePlayback.Inner_TableCache var10 = this.putAt_TableUtil_TableCac_TokenCore_TaskStat(var7, var9, var8, var5);
       if (var10.status() != AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach) {
          return var10.status();
       }
 
-      NodeWalker.Inner_DataUtil var11 = var10.applied();
+      AiPhysics.Inner_DataUtil var11 = var10.applied();
       if (var2 != null && var1.onGround() && !var11.jump() && !var11.sneak()) {
          RotationMath.Inner_DataUtil var12 = RotationMath.init(var2, var1.getEyePosition());
-         NodeWalker.Inner_DataUtil var13 = putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(var11, var12.init());
-         NodeWalker.Inner_StreamUtil var14 = var7 != null ? NodeWalker.fill(var9, var13, var7) : null;
+         AiPhysics.Inner_DataUtil var13 = putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(var11, var12.init());
+         AiPhysics.Inner_StreamUtil var14 = var7 != null ? AiPhysics.fill(var9, var13, var7) : null;
          boolean var15 = var14 == null
             || var14.onGround()
                && var14.vy() <= 0.1
-               && !NodeWalker.putAt_Z(var7, var9, var14)
+               && !AiPhysics.putAt_Z(var7, var9, var14)
                && AiPaceScript.putAt_Z_TokenCore_TaskStat(var7, var14, 0.002)
                && (var5 == null || var5.test(BlockPos.containing(var14.x(), var14.y() + 1.0E-4, var14.z())))
                && this.putAt_Z_TokenCore_TaskStat(var7, var14, this.store - 1, var5);
@@ -175,19 +175,19 @@ public final class AiPacePlayback {
       return AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach;
    }
 
-   private boolean putAt_Z_TokenCore_TaskStat(NodeWalker.Inner_CachePool var1, NodeWalker.Inner_StreamUtil var2, int var3, Predicate<BlockPos> var4) {
+   private boolean putAt_Z_TokenCore_TaskStat(AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, int var3, Predicate<BlockPos> var4) {
       int var5 = this.putAt_TextPool_IoHelper.flowTemp();
       int var6 = Math.min(var5, var3 + 1 + 24 + 24);
       ArrayList var7 = new ArrayList(var6 - var3);
       var7.add(var2);
-      NodeWalker.Inner_StreamUtil var8 = var2;
+      AiPhysics.Inner_StreamUtil var8 = var2;
 
       for (int var9 = var3 + 1; var9 < var6; var9++) {
-         NodeWalker.Inner_DataUtil var10 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var9);
+         AiPhysics.Inner_DataUtil var10 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var9);
          boolean var11 = var10.sprint() && var10.forward() > 0.8 && !var10.sneak() && var8.pose() == 0 && !var8.sprintCut();
-         NodeWalker.Inner_DataUtil var12 = new NodeWalker.Inner_DataUtil(var10.forward(), var10.strafe(), var10.jump(), var11, var10.sneak(), var10.yaw());
-         NodeWalker.Inner_StreamUtil var13 = NodeWalker.fill(var8, var12, var1);
-         if (NodeWalker.putAt_Z(var1, var8, var13)) {
+         AiPhysics.Inner_DataUtil var12 = new AiPhysics.Inner_DataUtil(var10.forward(), var10.strafe(), var10.jump(), var11, var10.sneak(), var10.yaw());
+         AiPhysics.Inner_StreamUtil var13 = AiPhysics.fill(var8, var12, var1);
+         if (AiPhysics.putAt_Z(var1, var8, var13)) {
             return false;
          }
 
@@ -195,7 +195,7 @@ public final class AiPacePlayback {
             return false;
          }
 
-         NodeWalker.Inner_StreamUtil var14 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var9);
+         AiPhysics.Inner_StreamUtil var14 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var9);
          if (var14 != null) {
             if (var13.y() < var14.y() - 1.2) {
                return false;
@@ -215,13 +215,13 @@ public final class AiPacePlayback {
       }
 
       for (int var15 = 0; var15 < var7.size(); var15++) {
-         this.putAt_Map.put(var3 + var15, (NodeWalker.Inner_StreamUtil)var7.get(var15));
+         this.putAt_Map.put(var3 + var15, (AiPhysics.Inner_StreamUtil)var7.get(var15));
       }
 
       return true;
    }
 
-   static NodeWalker.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(NodeWalker.Inner_DataUtil var0, float var1) {
+   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_TokenCore_CacheHel_F(AiPhysics.Inner_DataUtil var0, float var1) {
       if (var0.forward() == 0.0 && var0.strafe() == 0.0) {
          return var0.withYaw(var1);
       }
@@ -229,18 +229,18 @@ public final class AiPacePlayback {
       double var2 = Math.toRadians(var0.yaw());
       double var4 = -Math.sin(var2) * var0.forward() + Math.cos(var2) * var0.strafe();
       double var6 = Math.cos(var2) * var0.forward() + Math.sin(var2) * var0.strafe();
-      float var8 = NodeWalker.putAt_F_D(0.0, 0.0, var4, var6);
+      float var8 = AiPhysics.putAt_F_D(0.0, 0.0, var4, var6);
       int[] var9 = AiMotionSafety.putAt_IArr_F_F(var1, var8);
-      return new NodeWalker.Inner_DataUtil(var9[0], -var9[1], var0.jump(), var0.sprint() && var9[0] > 0, var0.sneak(), var1);
+      return new AiPhysics.Inner_DataUtil(var9[0], -var9[1], var0.jump(), var0.sprint() && var9[0] > 0, var0.sneak(), var1);
    }
 
    public AiPacePlayback.Inner_TableCache putAt_TableUtil_TableCac_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var1, NodeWalker.Inner_StreamUtil var2, Predicate<BlockPos> var3
+      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, Predicate<BlockPos> var3
    ) {
       return this.putAt_TableUtil_TableCac_TokenCore_TaskStat(var1, var2, var3, null);
    }
 
-   private static int putAt_I_BlockPosArr(BlockPos[] var0, int var1, NodeWalker.Inner_StreamUtil var2) {
+   private static int putAt_I_BlockPosArr(BlockPos[] var0, int var1, AiPhysics.Inner_StreamUtil var2) {
       if (var0 != null && var2 != null) {
          while (var1 < var0.length && AiPaceScript.putAt(var2, var0[var1])) {
             var1++;
@@ -253,7 +253,7 @@ public final class AiPacePlayback {
    }
 
    private AiPacePlayback.Inner_TableCache putAt_TableUtil_TableCac_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var1, NodeWalker.Inner_StreamUtil var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
+      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
    ) {
       this.nextBy = putAt_I_BlockPosArr(this.putAt_TextPool_IoHelper.putAt_BlockPosArr(), this.nextBy, var2);
       if (this.dataEx >= 0 && this.store >= this.dataEx && !this.prevEx_Z && !this.prev_Z) {
@@ -276,12 +276,12 @@ public final class AiPacePlayback {
       boolean var7 = false;
       String var8 = null;
       if (this.store > 0) {
-         NodeWalker.Inner_StreamUtil var9 = this.putAt_TokenCore_TableCac_I(this.store - 1);
+         AiPhysics.Inner_StreamUtil var9 = this.putAt_TokenCore_TableCac_I(this.store - 1);
          if (var9 != null) {
             double var10 = Math.sqrt(putAt_D_D(var2.x() - var9.x()) + putAt_D_D(var2.y() - var9.y()) + putAt_D_D(var2.z() - var9.z()));
             this.closeOf_D = Math.max(this.closeOf_D, var10);
-            if (ListPool.init_Z() && var10 > 0.001) {
-               ListPool.init(String.format(Locale.ROOT, "pace tick %d error %.4f live %s want %s", this.store, var10, var2, var9));
+            if (AiNavDebug.init_Z() && var10 > 0.001) {
+               AiNavDebug.init(String.format(Locale.ROOT, "pace tick %d error %.4f live %s want %s", this.store, var10, var2, var9));
             }
 
             if (var10 > 0.05 || var2.onGround() != var9.onGround() && var10 > 0.01) {
@@ -349,7 +349,7 @@ public final class AiPacePlayback {
          this.fill_Str = var27 != null ? var27 : "reached safe landing for replan";
          return new AiPacePlayback.Inner_TableCache(AiPacePlayback.Inner_JsonCache.prevEx, null, this.fill_Str);
       } else {
-         NodeWalker.Inner_DataUtil var26 = null;
+         AiPhysics.Inner_DataUtil var26 = null;
          if (var1 != null) {
             double var28 = var1.movementSpeed();
             if (this.closeOf_I >= 0 && !this.putAt_Z) {
@@ -584,7 +584,7 @@ public final class AiPacePlayback {
                } else if (var37) {
                   this.putAt_Z = true;
                   this.state_D = this.chunkAt_D;
-                  NodeWalker.Inner_DataUtil var44 = !var6 && !var2.onGround() ? this.fill_Map.remove(this.store) : null;
+                  AiPhysics.Inner_DataUtil var44 = !var6 && !var2.onGround() ? this.fill_Map.remove(this.store) : null;
                   if (var44 == null || var44.sprint() && !(var44.forward() <= 0.0)) {
                      boolean var51 = this.fill_Z || var6 || this.store > this.closeOf_I || !this.fill_Map.isEmpty();
                      if (var51) {
@@ -658,7 +658,7 @@ public final class AiPacePlayback {
                      this.pollOf = Math.max(this.pollOf, 4);
                   }
                } else if (this.store < this.closeOf_I + 30) {
-                  NodeWalker.Inner_DataUtil var45 = !var6 && !var2.onGround() ? this.fill_Map.remove(this.store) : null;
+                  AiPhysics.Inner_DataUtil var45 = !var6 && !var2.onGround() ? this.fill_Map.remove(this.store) : null;
                   if (var45 == null || var45.sprint() && !(var45.forward() <= 0.0)) {
                      this.fill_Map.keySet().removeIf(var1x -> var1x >= this.store);
                      AiPacePlayback.Inner_CacheHelper var52 = this.putAt_TableUtil_CacheHel_TokenCore_TaskStat(
@@ -758,7 +758,7 @@ public final class AiPacePlayback {
                   return new AiPacePlayback.Inner_TableCache(AiPacePlayback.Inner_JsonCache.value, null, this.fill_Str);
                }
 
-               NodeWalker.Inner_StreamUtil var13 = this.store > 0 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(this.store - 1) : null;
+               AiPhysics.Inner_StreamUtil var13 = this.store > 0 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(this.store - 1) : null;
                double var14 = (this.fill_Z || this.readEx_Z) && !this.value_Z && var13 != null
                   ? fill_D_TokenCore_TableCac_TokenCore_TableCac(var2, var13)
                   : 0.0;
@@ -883,7 +883,7 @@ public final class AiPacePlayback {
             }
          }
 
-         NodeWalker.Inner_DataUtil var29 = this.putAt_TextPool_IoHelper.putAt_TokenCore_CacheHel_I(this.store);
+         AiPhysics.Inner_DataUtil var29 = this.putAt_TextPool_IoHelper.putAt_TokenCore_CacheHel_I(this.store);
          if (var29 == null) {
             return new AiPacePlayback.Inner_TableCache(
                this.putAt_TextPool_IoHelper.putAt_Z() ? AiPacePlayback.Inner_JsonCache.fill : AiPacePlayback.Inner_JsonCache.readEx, null, null
@@ -893,10 +893,10 @@ public final class AiPacePlayback {
             this.prev_F = var26.yaw();
             return new AiPacePlayback.Inner_TableCache(AiPacePlayback.Inner_JsonCache.putAt_TableUtil_JsonCach, var26, null);
          } else {
-            NodeWalker.Inner_StreamUtil var11 = this.store > 0 ? this.putAt_TokenCore_TableCac_I(this.store - 1) : var2;
+            AiPhysics.Inner_StreamUtil var11 = this.store > 0 ? this.putAt_TokenCore_TableCac_I(this.store - 1) : var2;
             boolean var33 = var29.sprint() && var29.forward() > 0.8 && !var29.sneak() && var11 != null && var11.pose() == 0 && !var11.sprintCut();
             this.store++;
-            NodeWalker.Inner_DataUtil var38 = new NodeWalker.Inner_DataUtil(
+            AiPhysics.Inner_DataUtil var38 = new AiPhysics.Inner_DataUtil(
                var29.forward(), var29.strafe(), var29.jump(), var33, var29.sneak(), var29.yaw()
             );
             this.prev_F = var38.yaw();
@@ -905,11 +905,11 @@ public final class AiPacePlayback {
       }
    }
 
-   private void putAt_V_TokenCore_TableCacArr_Z(NodeWalker.Inner_StreamUtil[] var1, boolean var2) {
+   private void putAt_V_TokenCore_TableCacArr_Z(AiPhysics.Inner_StreamUtil[] var1, boolean var2) {
       this.putAt_V_I(this.store, var1, var2);
    }
 
-   private void putAt_V_I(int var1, NodeWalker.Inner_StreamUtil[] var2, boolean var3) {
+   private void putAt_V_I(int var1, AiPhysics.Inner_StreamUtil[] var2, boolean var3) {
       if (var2 != null) {
          if (var3) {
             this.putAt_Map.keySet().removeIf(var1x -> var1x >= var1);
@@ -928,7 +928,7 @@ public final class AiPacePlayback {
       this.fill_Map.keySet().removeIf(var1x -> var1x >= var1);
       this.putAt_Map.put(var3, var2.afterTick());
       this.putAt_V_I(var3 + 1, var2.tailRebased(), false);
-      NodeWalker.Inner_DataUtil[] var5 = var2.futureOverrides();
+      AiPhysics.Inner_DataUtil[] var5 = var2.futureOverrides();
       if (var5 != null) {
          for (int var6 = 0; var6 < var5.length; var6++) {
             if (var5[var6] != null) {
@@ -977,8 +977,8 @@ public final class AiPacePlayback {
       for (Entry var3 : this.putAt_Map.entrySet()) {
          int var4 = (Integer)var3.getKey();
          if (var4 >= var1) {
-            NodeWalker.Inner_StreamUtil var5 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var4);
-            if (var5 != null && putAt_D_TokenCore_TableCac_TokenCore_TableCac((NodeWalker.Inner_StreamUtil)var3.getValue(), var5) > 0.04000000000000001) {
+            AiPhysics.Inner_StreamUtil var5 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var4);
+            if (var5 != null && putAt_D_TokenCore_TableCac_TokenCore_TableCac((AiPhysics.Inner_StreamUtil)var3.getValue(), var5) > 0.04000000000000001) {
                return false;
             }
          }
@@ -988,7 +988,7 @@ public final class AiPacePlayback {
    }
 
    private AiPacePlayback.Inner_CacheHelper putAt(
-      NodeWalker.Inner_CachePool var1, NodeWalker.Inner_StreamUtil var2, int var3, double var4, Predicate<BlockPos> var6, Predicate<BlockPos> var7
+      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, int var3, double var4, Predicate<BlockPos> var6, Predicate<BlockPos> var7
    ) {
       int var8 = this.putAt_TextPool_IoHelper.flowTemp();
       if (var3 >= var8) {
@@ -999,11 +999,11 @@ public final class AiPacePlayback {
       return var9 != null && !var9.partial() ? var9 : null;
    }
 
-   private static double putAt_D_TokenCore_TableCac_TokenCore_TableCac(NodeWalker.Inner_StreamUtil var0, NodeWalker.Inner_StreamUtil var1) {
+   private static double putAt_D_TokenCore_TableCac_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_StreamUtil var1) {
       return Math.sqrt(putAt_D_D(var0.x() - var1.x()) + putAt_D_D(var0.y() - var1.y()) + putAt_D_D(var0.z() - var1.z()));
    }
 
-   private static double fill_D_TokenCore_TableCac_TokenCore_TableCac(NodeWalker.Inner_StreamUtil var0, NodeWalker.Inner_StreamUtil var1) {
+   private static double fill_D_TokenCore_TableCac_TokenCore_TableCac(AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_StreamUtil var1) {
       if (var0 != null && var1 != null) {
          double var2 = putAt_D_TokenCore_TableCac_TokenCore_TableCac(var0, var1);
          double var4 = Math.hypot(var0.vx() - var1.vx(), var0.vz() - var1.vz());
@@ -1029,8 +1029,8 @@ public final class AiPacePlayback {
    }
 
    private AiPacePlayback.Inner_CacheHelper putAt_TableUtil_CacheHel_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var1,
-      NodeWalker.Inner_StreamUtil var2,
+      AiPhysics.Inner_CachePool var1,
+      AiPhysics.Inner_StreamUtil var2,
       int var3,
       double var4,
       double var6,
@@ -1049,10 +1049,10 @@ public final class AiPacePlayback {
       AiPacePlayback.Inner_CacheHelper var15 = var13 != null && var13.partial() ? var13 : null;
       double var16 = var14 != null ? this.putAt_D_TableUtil_CacheHel(var14, var3, var12, 0.0) : 1.0 / 0.0;
       if (this.flushOf < 4) {
-         NodeWalker.Inner_StreamUtil var18 = var3 > 0 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3 - 1) : null;
+         AiPhysics.Inner_StreamUtil var18 = var3 > 0 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3 - 1) : null;
          double var19 = var18 != null ? putAt_D_TokenCore_TableCac_TokenCore_TableCac(var2, var18) : 0.0;
          if (var11 && this.putAt_Z && var3 >= 2 && var3 != this.stateOf && var2.onGround()) {
-            NodeWalker.Inner_StreamUtil var21 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3 - 2);
+            AiPhysics.Inner_StreamUtil var21 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3 - 2);
             double var22 = putAt_D_TokenCore_TableCac(var2, var18, var21, var18);
             boolean var24 = var22 < -0.01;
             boolean var25 = var24
@@ -1071,7 +1071,7 @@ public final class AiPacePlayback {
 
          boolean var30 = var3 >= this.closeOf_I && var3 + 1 < var12 && (!this.putAt_TextPool_IoHelper.putAt_Z() || var3 + 2 < var12);
          if (var30) {
-            NodeWalker.Inner_StreamUtil var31 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
+            AiPhysics.Inner_StreamUtil var31 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
             double var23 = putAt_D_TokenCore_TableCac(var2, var18, var18, var31);
             boolean var32 = var23 > 0.01;
             boolean var33 = var14 == null && (var11 || var3 >= this.closeOf_I + 1) && var23 > -0.02
@@ -1098,7 +1098,7 @@ public final class AiPacePlayback {
    }
 
    private static double putAt_D_TokenCore_TableCac(
-      NodeWalker.Inner_StreamUtil var0, NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_StreamUtil var2, NodeWalker.Inner_StreamUtil var3
+      AiPhysics.Inner_StreamUtil var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, AiPhysics.Inner_StreamUtil var3
    ) {
       if (var1 != null && var2 != null && var3 != null) {
          double var4 = var3.x() - var2.x();
@@ -1112,20 +1112,20 @@ public final class AiPacePlayback {
 
    private double putAt_D_TableUtil_CacheHel(AiPacePlayback.Inner_CacheHelper var1, int var2, int var3, double var4) {
       int var6 = var2 + var1.tickDelta();
-      NodeWalker.Inner_StreamUtil var7 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var6);
+      AiPhysics.Inner_StreamUtil var7 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var6);
       double var8 = var1.futureOverrides() != null ? 0.015 * var1.futureOverrides().length : 0.0;
       return this.putAt(var1.afterTick(), var7, var1.tailRebased(), var6 + 1, var3) + var8 + var4;
    }
 
-   private double putAt(NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_StreamUtil var2, NodeWalker.Inner_StreamUtil[] var3, int var4, int var5) {
+   private double putAt(AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, AiPhysics.Inner_StreamUtil[] var3, int var4, int var5) {
       double var6 = var2 != null ? fill_D_TokenCore_TableCac_TokenCore_TableCac(var1, var2) : 0.0;
       if (var3 != null && var3.length != 0) {
          int var8 = var3.length - 1;
          int var9 = Math.min(5, var8);
-         NodeWalker.Inner_StreamUtil var10 = var4 + var9 < var5 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var4 + var9) : null;
+         AiPhysics.Inner_StreamUtil var10 = var4 + var9 < var5 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var4 + var9) : null;
          double var11 = var10 != null ? fill_D_TokenCore_TableCac_TokenCore_TableCac(var3[var9], var10) : var6;
          int var13 = Math.min(12, var8);
-         NodeWalker.Inner_StreamUtil var14 = var4 + var13 < var5 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var4 + var13) : null;
+         AiPhysics.Inner_StreamUtil var14 = var4 + var13 < var5 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var4 + var13) : null;
          double var15 = var14 != null ? fill_D_TokenCore_TableCac_TokenCore_TableCac(var3[var13], var14) : var11;
          return 0.15 * var6 + 0.55 * var11 + 0.3 * var15;
       } else {
@@ -1134,8 +1134,8 @@ public final class AiPacePlayback {
    }
 
    private AiPacePlayback.Inner_CacheHelper putAt(
-      NodeWalker.Inner_CachePool var1,
-      NodeWalker.Inner_StreamUtil var2,
+      AiPhysics.Inner_CachePool var1,
+      AiPhysics.Inner_StreamUtil var2,
       int var3,
       int var4,
       double var5,
@@ -1149,8 +1149,8 @@ public final class AiPacePlayback {
    }
 
    private AiPacePlayback.Inner_CacheHelper putAt(
-      NodeWalker.Inner_CachePool var1,
-      NodeWalker.Inner_StreamUtil var2,
+      AiPhysics.Inner_CachePool var1,
+      AiPhysics.Inner_StreamUtil var2,
       int var3,
       int var4,
       double var5,
@@ -1165,47 +1165,47 @@ public final class AiPacePlayback {
       int var17 = var3 + var4;
       int var18 = var17 + 1;
       if (var17 >= 0 && var17 < var16) {
-         NodeWalker.Inner_DataUtil var19 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var17);
-         NodeWalker.Inner_StreamUtil var20 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var17);
+         AiPhysics.Inner_DataUtil var19 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var17);
+         AiPhysics.Inner_StreamUtil var20 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var17);
          boolean var21 = var4 < 0;
          boolean var22 = !var21 && var19.jump();
          double var23 = var21 && var19.forward() <= 0.0 && var19.strafe() == 0.0 ? 1.0 : var19.forward();
          double var25 = var21 && var19.forward() <= 0.0 && var19.strafe() == 0.0 ? 0.0 : var19.strafe();
          float var27 = var19.yaw();
          if (var21 && var20 != null && Math.hypot(var20.x() - var2.x(), var20.z() - var2.z()) > 0.08) {
-            float var28 = NodeWalker.putAt_F_D(var2.x(), var2.z(), var20.x(), var20.z());
+            float var28 = AiPhysics.putAt_F_D(var2.x(), var2.z(), var20.x(), var20.z());
             if (Math.abs(Mth.wrapDegrees(var28 - var19.yaw())) <= 45.0F) {
                var27 = this.putAt_F_F(var19.yaw(), var28, 20.0F);
             }
          }
 
          boolean var72 = var23 > 0.8 && !var19.sneak() && var2.pose() == 0 && !var2.sprintCut();
-         NodeWalker.Inner_DataUtil var29 = new NodeWalker.Inner_DataUtil(var23, var25, var22, (var19.sprint() || var21) && var72, var19.sneak(), var27);
+         AiPhysics.Inner_DataUtil var29 = new AiPhysics.Inner_DataUtil(var23, var25, var22, (var19.sprint() || var21) && var72, var19.sneak(), var27);
          int var30 = this.closeOf_I > 0 && var17 < this.closeOf_I ? this.closeOf_I - 1 : var16 - 1;
-         NodeWalker.Inner_StreamUtil var31 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(Math.min(var17 + 3, var30));
+         AiPhysics.Inner_StreamUtil var31 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(Math.min(var17 + 3, var30));
          float var32 = var29.yaw();
          if (!var29.sneak() && var29.forward() > 0.0 && var31 != null && Math.hypot(var31.x() - var2.x(), var31.z() - var2.z()) > 0.2) {
-            float var33 = NodeWalker.putAt_F_D(var2.x(), var2.z(), var31.x(), var31.z());
+            float var33 = AiPhysics.putAt_F_D(var2.x(), var2.z(), var31.x(), var31.z());
             var32 = this.putAt_F_F(var29.yaw(), var33, var2.onGround() ? 18.0F : 14.0F);
          }
 
          boolean var73 = Math.abs(Mth.wrapDegrees(var32 - var29.yaw())) >= 1.5F;
          double var34 = var20 != null ? Math.hypot(var2.x() - var20.x(), var2.z() - var20.z()) : 0.0;
-         ArrayList<NodeWalker.Inner_DataUtil> var36 = new ArrayList<>(16);
+         ArrayList<AiPhysics.Inner_DataUtil> var36 = new ArrayList<>(16);
          var36.add(var29);
          if (var2.onGround()) {
             if (var29.sprint() && !var29.sneak()) {
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), false, false, var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), false, false, var29.yaw()));
             }
 
             if (!var29.sprint() && var72) {
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), true, false, var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), true, false, var29.yaw()));
             }
 
             if (!var29.jump() && !var29.sneak() && (var29.forward() != 0.0 || var29.strafe() != 0.0)) {
-               var36.add(new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, false, var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var29.yaw()));
                if (var2.speed() > 0.03) {
-                  NodeWalker.Inner_DataUtil var37 = AiPaceScript.putAt(var29.yaw(), var2);
+                  AiPhysics.Inner_DataUtil var37 = AiPaceScript.putAt(var29.yaw(), var2);
                   if (var37.forward() != 0.0 || var37.strafe() != 0.0) {
                      var36.add(var37);
                   }
@@ -1215,69 +1215,69 @@ public final class AiPacePlayback {
             if (!var29.sneak() && var29.forward() > 0.0) {
                boolean var74 = this.closeOf_I < 0 || var17 >= this.closeOf_I;
                if (var73) {
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var32));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var32));
                   if (var29.sprint()) {
-                     var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), false, false, var32));
+                     var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), false, false, var32));
                   } else if (var72) {
-                     var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), true, false, var32));
+                     var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), true, false, var32));
                   }
                }
 
                if (var74 && (var29.jump() || var34 > 0.025)) {
                   float var38 = this.putAt_F_F(var29.yaw(), var29.yaw() - 6.0F, 18.0F);
                   float var39 = this.putAt_F_F(var29.yaw(), var29.yaw() + 6.0F, 18.0F);
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var38));
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var39));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var38));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var39));
                }
 
                if (var74 && (var29.jump() || var34 > 0.06)) {
                   float var77 = this.putAt_F_F(var29.yaw(), var29.yaw() - 12.0F, 18.0F);
                   float var80 = this.putAt_F_F(var29.yaw(), var29.yaw() + 12.0F, 18.0F);
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var77));
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var80));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var77));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), var29.jump(), var29.sprint(), false, var80));
                }
 
                if (var74 && !var29.jump() && var34 > 0.04) {
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), 1.0, false, var29.sprint(), false, var29.yaw()));
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), -1.0, false, var29.sprint(), false, var29.yaw()));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), 1.0, false, var29.sprint(), false, var29.yaw()));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), -1.0, false, var29.sprint(), false, var29.yaw()));
                }
             }
          } else {
             if (var29.sprint()) {
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), false, false, var29.sneak(), var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), false, false, var29.sneak(), var29.yaw()));
             } else if (var19.forward() > 0.8 && !var29.sneak()) {
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), false, true, false, var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), false, true, false, var29.yaw()));
             }
 
             if (var29.forward() != 0.0 || var29.strafe() != 0.0) {
-               var36.add(new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, var29.sneak(), var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, var29.sneak(), var29.yaw()));
             }
 
             if (!var29.sneak()) {
-               var36.add(new NodeWalker.Inner_DataUtil(-1.0, 0.0, false, false, false, var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, false, var29.yaw()));
             }
 
             if (!var29.sneak() && var29.forward() > 0.0 && var73) {
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), false, var29.sprint(), false, var32));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), false, var29.sprint(), false, var32));
                if (var29.sprint()) {
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), false, false, false, var32));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), false, false, false, var32));
                }
             }
 
             if (var34 > 0.03) {
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), 1.0, false, var29.sprint(), var29.sneak(), var29.yaw()));
-               var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), -1.0, false, var29.sprint(), var29.sneak(), var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), 1.0, false, var29.sprint(), var29.sneak(), var29.yaw()));
+               var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), -1.0, false, var29.sprint(), var29.sneak(), var29.yaw()));
                if (!var29.sneak() && var29.forward() > 0.0) {
                   float var75 = this.putAt_F_F(var29.yaw(), var29.yaw() - 6.0F, 14.0F);
                   float var78 = this.putAt_F_F(var29.yaw(), var29.yaw() + 6.0F, 14.0F);
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), false, var29.sprint(), false, var75));
-                  var36.add(new NodeWalker.Inner_DataUtil(var29.forward(), var29.strafe(), false, var29.sprint(), false, var78));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), false, var29.sprint(), false, var75));
+                  var36.add(new AiPhysics.Inner_DataUtil(var29.forward(), var29.strafe(), false, var29.sprint(), false, var78));
                }
             }
          }
 
          int var76 = 24 + (var4 < 0 ? 1 : 0);
-         NodeWalker.Inner_CachePool var79 = AiPaceScript.fill(var1, var5);
+         AiPhysics.Inner_CachePool var79 = AiPaceScript.fill(var1, var5);
          BlockPos[] var81 = this.putAt_TextPool_IoHelper.putAt_BlockPosArr();
          int var40 = putAt_I_BlockPosArr(var81, this.nextBy, var2);
          AiPacePlayback.Inner_CacheHelper var41 = null;
@@ -1286,12 +1286,12 @@ public final class AiPacePlayback {
          double var45 = 1.0 / 0.0;
 
          for (int var47 = 0; var47 < var36.size(); var47++) {
-            NodeWalker.Inner_DataUtil var48 = (NodeWalker.Inner_DataUtil)var36.get(var47);
-            NodeWalker.Inner_StreamUtil var49 = NodeWalker.fill(var2, var48, var79);
+            AiPhysics.Inner_DataUtil var48 = (AiPhysics.Inner_DataUtil)var36.get(var47);
+            AiPhysics.Inner_StreamUtil var49 = AiPhysics.fill(var2, var48, var79);
             if (this.putAt_Z_TokenCore_TaskStat(var1, var2, var49, var20, var17, var16, var9, var10, var14)) {
                int var50 = putAt_I_BlockPosArr(var81, var40, var49);
-               NodeWalker.Inner_StreamUtil[] var51 = null;
-               NodeWalker.Inner_DataUtil[] var52 = null;
+               AiPhysics.Inner_StreamUtil[] var51 = null;
+               AiPhysics.Inner_DataUtil[] var52 = null;
                double var53 = 0.0;
                AiPacePlayback.Inner_TaskState var55 = putAt(
                   var1,
@@ -1322,7 +1322,7 @@ public final class AiPacePlayback {
                      && (var55.reason().startsWith("transition speed shift") || var55.reason().startsWith("rebase missed"))) {
                      int var56 = Math.min(var55.rebased().length, var55.safeUntilTick() - var18);
                      if (var56 > 0) {
-                        NodeWalker.Inner_StreamUtil[] var57 = Arrays.copyOf(var55.rebased(), var56);
+                        AiPhysics.Inner_StreamUtil[] var57 = Arrays.copyOf(var55.rebased(), var56);
                         double var58 = 3.0E-4 * Math.abs(Mth.wrapDegrees(var48.yaw() - var29.yaw()));
                         double var60 = this.putAt(var49, var20, var57, var18, var16) + (var47 == 0 ? 0.0 : 0.003) + var58;
                         if (var60 < var45) {
@@ -1357,48 +1357,48 @@ public final class AiPacePlayback {
                         {6, 6},
                         {7, 7}
                      };
-                     NodeWalker.Inner_CachePool var93 = AiPaceScript.fill(var1, var7);
+                     AiPhysics.Inner_CachePool var93 = AiPaceScript.fill(var1, var7);
 
                      for (int[] var61 : var90) {
                         if (var18 + var61.length <= var16) {
-                           NodeWalker.Inner_StreamUtil var62 = var49;
+                           AiPhysics.Inner_StreamUtil var62 = var49;
                            int var63 = var50;
-                           ArrayList<NodeWalker.Inner_StreamUtil> var64 = new ArrayList<>(var61.length);
-                           NodeWalker.Inner_DataUtil[] var65 = new NodeWalker.Inner_DataUtil[var61.length];
+                           ArrayList<AiPhysics.Inner_StreamUtil> var64 = new ArrayList<>(var61.length);
+                           AiPhysics.Inner_DataUtil[] var65 = new AiPhysics.Inner_DataUtil[var61.length];
                            boolean var66 = true;
 
                            for (int var67 = 0; var67 < var61.length; var67++) {
                               int var68 = var18 + var67;
-                              NodeWalker.Inner_DataUtil var69 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var68);
-                              NodeWalker.Inner_DataUtil var10000;
+                              AiPhysics.Inner_DataUtil var69 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var68);
+                              AiPhysics.Inner_DataUtil var10000;
                               switch (var61[var67]) {
                                  case 1:
-                                    var10000 = new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, var69.sneak(), var69.yaw());
                                     break;
                                  case 2:
-                                    var10000 = new NodeWalker.Inner_DataUtil(-1.0, 0.0, false, false, var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(-1.0, 0.0, false, false, var69.sneak(), var69.yaw());
                                     break;
                                  case 3:
-                                    var10000 = new NodeWalker.Inner_DataUtil(1.0, var69.strafe(), false, true, false, var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(1.0, var69.strafe(), false, true, false, var69.yaw());
                                     break;
                                  case 4:
-                                    var10000 = new NodeWalker.Inner_DataUtil(var69.forward(), 1.0, false, var69.sprint(), var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(var69.forward(), 1.0, false, var69.sprint(), var69.sneak(), var69.yaw());
                                     break;
                                  case 5:
-                                    var10000 = new NodeWalker.Inner_DataUtil(var69.forward(), -1.0, false, var69.sprint(), var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(var69.forward(), -1.0, false, var69.sprint(), var69.sneak(), var69.yaw());
                                     break;
                                  case 6:
-                                    var10000 = new NodeWalker.Inner_DataUtil(var69.forward(), 1.0, false, false, var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(var69.forward(), 1.0, false, false, var69.sneak(), var69.yaw());
                                     break;
                                  case 7:
-                                    var10000 = new NodeWalker.Inner_DataUtil(var69.forward(), -1.0, false, false, var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(var69.forward(), -1.0, false, false, var69.sneak(), var69.yaw());
                                     break;
                                  default:
-                                    var10000 = new NodeWalker.Inner_DataUtil(var69.forward(), var69.strafe(), false, false, var69.sneak(), var69.yaw());
+                                    var10000 = new AiPhysics.Inner_DataUtil(var69.forward(), var69.strafe(), false, false, var69.sneak(), var69.yaw());
                               }
 
-                              NodeWalker.Inner_DataUtil var70 = var10000;
-                              NodeWalker.Inner_StreamUtil var71 = NodeWalker.fill(var62, var70, var93);
+                              AiPhysics.Inner_DataUtil var70 = var10000;
+                              AiPhysics.Inner_StreamUtil var71 = AiPhysics.fill(var62, var70, var93);
                               if (!this.putAt_Z_TokenCore_TaskStat(
                                  var1, var62, var71, this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var68), var68, var16, var9, var10, var14
                               )) {
@@ -1436,10 +1436,10 @@ public final class AiPacePlayback {
                                  var63
                               );
                               if (var105.valid()) {
-                                 var51 = new NodeWalker.Inner_StreamUtil[var64.size() + var105.rebased().length];
+                                 var51 = new AiPhysics.Inner_StreamUtil[var64.size() + var105.rebased().length];
 
                                  for (int var106 = 0; var106 < var64.size(); var106++) {
-                                    var51[var106] = (NodeWalker.Inner_StreamUtil)var64.get(var106);
+                                    var51[var106] = (AiPhysics.Inner_StreamUtil)var64.get(var106);
                                  }
 
                                  System.arraycopy(var105.rebased(), 0, var51, var64.size(), var105.rebased().length);
@@ -1465,44 +1465,44 @@ public final class AiPacePlayback {
          }
 
          if (var41 == null && var11 && var2.onGround() && var18 + 1 < var16) {
-            NodeWalker.Inner_CachePool var82 = AiPaceScript.fill(var1, var7);
-            NodeWalker.Inner_DataUtil var83 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var18);
-            NodeWalker.Inner_StreamUtil var84 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var18);
-            NodeWalker.Inner_StreamUtil var85 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(Math.min(var18 + 3, var16 - 1));
+            AiPhysics.Inner_CachePool var82 = AiPaceScript.fill(var1, var7);
+            AiPhysics.Inner_DataUtil var83 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var18);
+            AiPhysics.Inner_StreamUtil var84 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var18);
+            AiPhysics.Inner_StreamUtil var85 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(Math.min(var18 + 3, var16 - 1));
 
             for (int var86 = 0; var86 < var36.size(); var86++) {
-               NodeWalker.Inner_DataUtil var87 = (NodeWalker.Inner_DataUtil)var36.get(var86);
-               NodeWalker.Inner_StreamUtil var88 = NodeWalker.fill(var2, var87, var79);
+               AiPhysics.Inner_DataUtil var87 = (AiPhysics.Inner_DataUtil)var36.get(var86);
+               AiPhysics.Inner_StreamUtil var88 = AiPhysics.fill(var2, var87, var79);
                if (var88.onGround() && this.putAt_Z_TokenCore_TaskStat(var1, var2, var88, var20, var17, var16, var9, var10, var14)) {
                   boolean var54 = var83.forward() > 0.8 && !var83.sneak() && var88.pose() == 0 && !var88.sprintCut();
-                  NodeWalker.Inner_DataUtil var89 = new NodeWalker.Inner_DataUtil(
+                  AiPhysics.Inner_DataUtil var89 = new AiPhysics.Inner_DataUtil(
                      var83.forward(), var83.strafe(), var83.jump(), var83.sprint() && var54, var83.sneak(), var83.yaw()
                   );
-                  ArrayList<NodeWalker.Inner_DataUtil> var92 = new ArrayList<>(7);
+                  ArrayList<AiPhysics.Inner_DataUtil> var92 = new ArrayList<>(7);
                   if (var89.sprint() && !var89.sneak()) {
-                     var92.add(new NodeWalker.Inner_DataUtil(var89.forward(), var89.strafe(), var89.jump(), false, false, var89.yaw()));
+                     var92.add(new AiPhysics.Inner_DataUtil(var89.forward(), var89.strafe(), var89.jump(), false, false, var89.yaw()));
                   }
 
                   if (!var89.jump() && !var89.sneak() && (var89.forward() != 0.0 || var89.strafe() != 0.0)) {
-                     var92.add(new NodeWalker.Inner_DataUtil(0.0, 0.0, false, false, false, var89.yaw()));
+                     var92.add(new AiPhysics.Inner_DataUtil(0.0, 0.0, false, false, false, var89.yaw()));
                   }
 
                   if (!var89.sneak() && var89.forward() > 0.0 && var85 != null && Math.hypot(var85.x() - var88.x(), var85.z() - var88.z()) > 0.2) {
                      float var94 = var89.yaw()
-                        + Math.clamp(Mth.wrapDegrees(NodeWalker.putAt_F_D(var88.x(), var88.z(), var85.x(), var85.z()) - var89.yaw()), -18.0F, 18.0F);
-                     var92.add(new NodeWalker.Inner_DataUtil(var89.forward(), var89.strafe(), var89.jump(), var89.sprint(), false, var94));
+                        + Math.clamp(Mth.wrapDegrees(AiPhysics.putAt_F_D(var88.x(), var88.z(), var85.x(), var85.z()) - var89.yaw()), -18.0F, 18.0F);
+                     var92.add(new AiPhysics.Inner_DataUtil(var89.forward(), var89.strafe(), var89.jump(), var89.sprint(), false, var94));
                      if (var89.sprint()) {
-                        var92.add(new NodeWalker.Inner_DataUtil(var89.forward(), var89.strafe(), var89.jump(), false, false, var94));
+                        var92.add(new AiPhysics.Inner_DataUtil(var89.forward(), var89.strafe(), var89.jump(), false, false, var94));
                      }
                   }
 
                   if ((this.closeOf_I < 0 || var18 >= this.closeOf_I) && !var89.jump() && !var89.sneak() && var89.forward() > 0.0) {
-                     var92.add(new NodeWalker.Inner_DataUtil(var89.forward(), 1.0, false, var89.sprint(), false, var89.yaw()));
-                     var92.add(new NodeWalker.Inner_DataUtil(var89.forward(), -1.0, false, var89.sprint(), false, var89.yaw()));
+                     var92.add(new AiPhysics.Inner_DataUtil(var89.forward(), 1.0, false, var89.sprint(), false, var89.yaw()));
+                     var92.add(new AiPhysics.Inner_DataUtil(var89.forward(), -1.0, false, var89.sprint(), false, var89.yaw()));
                   }
 
-                  for (NodeWalker.Inner_DataUtil var98 : var92) {
-                     NodeWalker.Inner_StreamUtil var99 = NodeWalker.fill(var88, var98, var82);
+                  for (AiPhysics.Inner_DataUtil var98 : var92) {
+                     AiPhysics.Inner_StreamUtil var99 = AiPhysics.fill(var88, var98, var82);
                      if (this.putAt_Z_TokenCore_TaskStat(var1, var88, var99, var84, var18, var16, var9, var10, var14)) {
                         int var101 = putAt_I_BlockPosArr(var81, putAt_I_BlockPosArr(var81, var40, var88), var99);
                         AiPacePlayback.Inner_TaskState var102 = putAt(
@@ -1524,13 +1524,13 @@ public final class AiPacePlayback {
                            var101
                         );
                         if (var102.valid()) {
-                           NodeWalker.Inner_StreamUtil[] var103 = new NodeWalker.Inner_StreamUtil[1 + var102.rebased().length];
+                           AiPhysics.Inner_StreamUtil[] var103 = new AiPhysics.Inner_StreamUtil[1 + var102.rebased().length];
                            var103[0] = var99;
                            System.arraycopy(var102.rebased(), 0, var103, 1, var102.rebased().length);
                            double var104 = this.putAt(var88, var20, var103, var18, var16) + 0.02 + var12;
                            if (var104 < var42) {
                               var42 = var104;
-                              var41 = new AiPacePlayback.Inner_CacheHelper(var87, var88, var103, new NodeWalker.Inner_DataUtil[]{var98}, var4, false);
+                              var41 = new AiPacePlayback.Inner_CacheHelper(var87, var88, var103, new AiPhysics.Inner_DataUtil[]{var98}, var4, false);
                            }
                         }
                      }
@@ -1545,27 +1545,27 @@ public final class AiPacePlayback {
       }
    }
 
-   private static boolean putAt_Z_TextPool_IoHelper(AiPaceScript.Inner_IoHelper var0, int var1, NodeWalker.Inner_StreamUtil var2, double var3) {
+   private static boolean putAt_Z_TextPool_IoHelper(AiPaceScript.Inner_IoHelper var0, int var1, AiPhysics.Inner_StreamUtil var2, double var3) {
       if (Math.abs(var3 - var2.y()) <= 0.15) {
          return true;
       }
 
       if (var1 > 0) {
-         NodeWalker.Inner_StreamUtil var5 = var0.putAt_TokenCore_TableCac_I(var1 - 1);
+         AiPhysics.Inner_StreamUtil var5 = var0.putAt_TokenCore_TableCac_I(var1 - 1);
          if (var5 != null && var5.onGround() && var5.vy() <= 0.1 && Math.abs(var5.y() - var2.y()) <= 0.65 && Math.abs(var3 - var5.y()) <= 0.15) {
             return true;
          }
       }
 
-      NodeWalker.Inner_StreamUtil var6 = var0.putAt_TokenCore_TableCac_I(var1 + 1);
+      AiPhysics.Inner_StreamUtil var6 = var0.putAt_TokenCore_TableCac_I(var1 + 1);
       return var6 != null && var6.onGround() && var6.vy() <= 0.1 && Math.abs(var6.y() - var2.y()) <= 0.65 && Math.abs(var3 - var6.y()) <= 0.15;
    }
 
    private boolean putAt_Z_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var1,
-      NodeWalker.Inner_StreamUtil var2,
-      NodeWalker.Inner_StreamUtil var3,
-      NodeWalker.Inner_StreamUtil var4,
+      AiPhysics.Inner_CachePool var1,
+      AiPhysics.Inner_StreamUtil var2,
+      AiPhysics.Inner_StreamUtil var3,
+      AiPhysics.Inner_StreamUtil var4,
       int var5,
       int var6,
       Predicate<BlockPos> var7,
@@ -1583,7 +1583,7 @@ public final class AiPacePlayback {
          }
       }
 
-      if (NodeWalker.putAt_Z(var1, var2, var3)) {
+      if (AiPhysics.putAt_Z(var1, var2, var3)) {
          return false;
       }
 
@@ -1617,13 +1617,13 @@ public final class AiPacePlayback {
    }
 
    private AiPacePlayback.Inner_TableCache putAt(
-      NodeWalker.Inner_CachePool var1, NodeWalker.Inner_StreamUtil var2, double var3, AiPacePlayback.Inner_TaskState var5, boolean var6
+      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, double var3, AiPacePlayback.Inner_TaskState var5, boolean var6
    ) {
       return this.putAt_TableUtil_TableCac_TokenCore_TaskStat(var1, var2, var3, var5, var6, false, false);
    }
 
    private AiPacePlayback.Inner_TableCache putAt_TableUtil_TableCac_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var1, NodeWalker.Inner_StreamUtil var2, double var3, AiPacePlayback.Inner_TaskState var5, boolean var6, boolean var7, boolean var8
+      AiPhysics.Inner_CachePool var1, AiPhysics.Inner_StreamUtil var2, double var3, AiPacePlayback.Inner_TaskState var5, boolean var6, boolean var7, boolean var8
    ) {
       boolean var9 = var2.onGround() || AiPaceScript.fill(var1, var2);
       if (!var9 && var5.safeUntilTick() > this.store && var5.safeLanding() != null && var5.rebased() != null) {
@@ -1649,14 +1649,14 @@ public final class AiPacePlayback {
    }
 
    public static AiPacePlayback.Inner_TaskState putAt_TableUtil_TaskStat_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, AiPaceScript.Inner_IoHelper var2, int var3, double var4, int var6, Predicate<BlockPos> var7
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPaceScript.Inner_IoHelper var2, int var3, double var4, int var6, Predicate<BlockPos> var7
    ) {
       return putAt(var0, var1, var2, var3, var4, var6, var7, null);
    }
 
    public static AiPacePlayback.Inner_TaskState putAt(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiPaceScript.Inner_IoHelper var2,
       int var3,
       double var4,
@@ -1668,39 +1668,39 @@ public final class AiPacePlayback {
    }
 
    private static AiPacePlayback.Inner_TaskState putAt(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiPaceScript.Inner_IoHelper var2,
       int var3,
       double var4,
       int var6,
       Predicate<BlockPos> var7,
       Predicate<BlockPos> var8,
-      IntFunction<NodeWalker.Inner_StreamUtil> var9,
+      IntFunction<AiPhysics.Inner_StreamUtil> var9,
       IntToDoubleFunction var10,
       boolean var11,
       boolean var12,
-      Map<Integer, NodeWalker.Inner_StreamUtil> var13,
-      Map<Integer, NodeWalker.Inner_DataUtil> var14
+      Map<Integer, AiPhysics.Inner_StreamUtil> var13,
+      Map<Integer, AiPhysics.Inner_DataUtil> var14
    ) {
       return putAt(var0, var1, var2, var3, var4, var6, var7, var8, var9, var10, var11, var12, var13, var14, 1.0 / 0.0, -1);
    }
 
    private static AiPacePlayback.Inner_TaskState putAt(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiPaceScript.Inner_IoHelper var2,
       int var3,
       double var4,
       int var6,
       Predicate<BlockPos> var7,
       Predicate<BlockPos> var8,
-      IntFunction<NodeWalker.Inner_StreamUtil> var9,
+      IntFunction<AiPhysics.Inner_StreamUtil> var9,
       IntToDoubleFunction var10,
       boolean var11,
       boolean var12,
-      Map<Integer, NodeWalker.Inner_StreamUtil> var13,
-      Map<Integer, NodeWalker.Inner_DataUtil> var14,
+      Map<Integer, AiPhysics.Inner_StreamUtil> var13,
+      Map<Integer, AiPhysics.Inner_DataUtil> var14,
       double var15,
       int var17
    ) {
@@ -1713,13 +1713,13 @@ public final class AiPacePlayback {
             int var62 = putAt_I_BlockPosArr(var61, var17, var1);
             if (var62 < var61.length) {
                for (int var63 = Math.max(0, var18 - 2); var63 < var18; var63++) {
-                  NodeWalker.Inner_StreamUtil var64 = var2.putAt_TokenCore_TableCac_I(var63);
+                  AiPhysics.Inner_StreamUtil var64 = var2.putAt_TokenCore_TableCac_I(var63);
                   if (var64 != null && AiPaceScript.putAt(var64, var61[var62])) {
                      return new AiPacePlayback.Inner_TaskState(
                         false,
                         var21,
                         var18,
-                        new NodeWalker.Inner_StreamUtil[0],
+                        new AiPhysics.Inner_StreamUtil[0],
                         null,
                         String.format(Locale.ROOT, "rebase missed checkpoint %s", var61[var62].toShortString())
                      );
@@ -1728,16 +1728,16 @@ public final class AiPacePlayback {
             }
          }
 
-         return new AiPacePlayback.Inner_TaskState(true, var21, var18, new NodeWalker.Inner_StreamUtil[0], null, null);
+         return new AiPacePlayback.Inner_TaskState(true, var21, var18, new AiPhysics.Inner_StreamUtil[0], null, null);
       } else {
          int var22 = Math.min(var18, var3 + Math.max(1, var6));
          int var23 = Math.min(var18, var22 + 24);
          ArrayList var24 = new ArrayList(var22 - var3);
-         NodeWalker.Inner_StreamUtil var25 = var1;
+         AiPhysics.Inner_StreamUtil var25 = var1;
          int var26 = var3;
-         NodeWalker.Inner_StreamUtil var27 = null;
+         AiPhysics.Inner_StreamUtil var27 = null;
          boolean var28 = false;
-         NodeWalker.Inner_CachePool var29 = var0;
+         AiPhysics.Inner_CachePool var29 = var0;
          double var30 = var19;
          BlockPos[] var32 = var2.putAt_BlockPosArr();
          boolean var33 = var17 >= 0 && var32 != null && var17 < var32.length && (var11 || var12 || var21);
@@ -1745,7 +1745,7 @@ public final class AiPacePlayback {
          int var35 = -1;
          if (var33 && var34 < var32.length) {
             for (int var36 = Math.max(0, var3 - 2); var36 < var3; var36++) {
-               NodeWalker.Inner_StreamUtil var37 = var2.putAt_TokenCore_TableCac_I(var36);
+               AiPhysics.Inner_StreamUtil var37 = var2.putAt_TokenCore_TableCac_I(var36);
                if (var37 != null && AiPaceScript.putAt(var37, var32[var34])) {
                   var35 = var36;
                }
@@ -1760,13 +1760,13 @@ public final class AiPacePlayback {
                );
             var65++
          ) {
-            NodeWalker.Inner_DataUtil var67 = var14 != null ? (NodeWalker.Inner_DataUtil)var14.get(var65) : null;
-            NodeWalker.Inner_DataUtil var38 = var67 != null ? var67 : var2.fill_TokenCore_CacheHel(var65);
+            AiPhysics.Inner_DataUtil var67 = var14 != null ? (AiPhysics.Inner_DataUtil)var14.get(var65) : null;
+            AiPhysics.Inner_DataUtil var38 = var67 != null ? var67 : var2.fill_TokenCore_CacheHel(var65);
             boolean var39 = var38.sprint() && var38.forward() > 0.8 && !var38.sneak() && var25.pose() == 0 && !var25.sprintCut();
-            NodeWalker.Inner_DataUtil var40 = new NodeWalker.Inner_DataUtil(
+            AiPhysics.Inner_DataUtil var40 = new AiPhysics.Inner_DataUtil(
                var38.forward(), var38.strafe(), var38.jump(), var39, var38.sneak(), var38.yaw()
             );
-            NodeWalker.Inner_CachePool var41 = var0;
+            AiPhysics.Inner_CachePool var41 = var0;
             if (var10 != null) {
                double var42 = var10.applyAsDouble(var65);
                if (Math.abs(var42 - var30) > 1.0E-9) {
@@ -1777,33 +1777,33 @@ public final class AiPacePlayback {
                var41 = var29;
             }
 
-            NodeWalker.Inner_StreamUtil var68 = NodeWalker.fill(var25, var40, var41);
+            AiPhysics.Inner_StreamUtil var68 = AiPhysics.fill(var25, var40, var41);
             if (var7 != null || var8 != null) {
                BlockPos var43 = BlockPos.containing(var68.x(), var68.y() + 1.0E-4, var68.z());
                if (var7 != null && (!var7.test(var43) || !var7.test(var43.below()))) {
                   return new AiPacePlayback.Inner_TaskState(
-                     false, var21, var26, ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new), var27, "unloaded chunk ahead at tick " + (var65 + 1)
+                     false, var21, var26, ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new), var27, "unloaded chunk ahead at tick " + (var65 + 1)
                   );
                }
 
                if (var8 != null && (var68.onGround() || AiPaceScript.fill(var0, var68)) && !var8.test(var43)) {
                   return new AiPacePlayback.Inner_TaskState(
-                     false, var21, var26, ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new), var27, "forbidden cell ahead at tick " + (var65 + 1)
+                     false, var21, var26, ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new), var27, "forbidden cell ahead at tick " + (var65 + 1)
                   );
                }
             }
 
-            if (NodeWalker.putAt_Z(var0, var25, var68)) {
+            if (AiPhysics.putAt_Z(var0, var25, var68)) {
                return new AiPacePlayback.Inner_TaskState(
-                  false, var21, var26, ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new), var27, "hazard appeared ahead at tick " + (var65 + 1)
+                  false, var21, var26, ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new), var27, "hazard appeared ahead at tick " + (var65 + 1)
                );
             }
 
-            NodeWalker.Inner_StreamUtil var69 = var2.putAt_TokenCore_TableCac_I(var65);
-            NodeWalker.Inner_StreamUtil var44 = var9 != null ? (NodeWalker.Inner_StreamUtil)var9.apply(var65) : var69;
+            AiPhysics.Inner_StreamUtil var69 = var2.putAt_TokenCore_TableCac_I(var65);
+            AiPhysics.Inner_StreamUtil var44 = var9 != null ? (AiPhysics.Inner_StreamUtil)var9.apply(var65) : var69;
             boolean var45 = var13 != null && var13.containsKey(var65);
             boolean var46 = var11 || var12 && !var45;
-            NodeWalker.Inner_StreamUtil var47 = var46 && var69 != null ? var69 : var44;
+            AiPhysics.Inner_StreamUtil var47 = var46 && var69 != null ? var69 : var44;
             if (var47 != null) {
                double var48 = Math.sqrt(putAt_D_D(var68.x() - var47.x()) + putAt_D_D(var68.y() - var47.y()) + putAt_D_D(var68.z() - var47.z()));
                if (var48 > 0.05) {
@@ -1820,7 +1820,7 @@ public final class AiPacePlayback {
                         false,
                         false,
                         var26,
-                        ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                        ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                         var27,
                         String.format(Locale.ROOT, "transition speed shift drops below route at tick %d", var65 + 1)
                      );
@@ -1832,7 +1832,7 @@ public final class AiPacePlayback {
                         false,
                         false,
                         var26,
-                        ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                        ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                         var27,
                         String.format(Locale.ROOT, "drift exceeded rail margin at tick %d (error %.3f)", var65 + 1, var55)
                      );
@@ -1855,7 +1855,7 @@ public final class AiPacePlayback {
                               false,
                               false,
                               var26,
-                              ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                              ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                               var27,
                               String.format(Locale.ROOT, "transition speed shift invalidated landing at tick %d", var65 + 1)
                            );
@@ -1871,7 +1871,7 @@ public final class AiPacePlayback {
                         false,
                         false,
                         var26,
-                        ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                        ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                         var27,
                         String.format(Locale.ROOT, "transition speed shift misses finish at tick %d", var65 + 1)
                      );
@@ -1882,7 +1882,7 @@ public final class AiPacePlayback {
                         false,
                         false,
                         var26,
-                        ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                        ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                         var27,
                         String.format(Locale.ROOT, "terrain changed ahead at tick %d (error %.3f)", var65 + 1, var48)
                      );
@@ -1898,7 +1898,7 @@ public final class AiPacePlayback {
                         false,
                         true,
                         var26,
-                        ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                        ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                         var27,
                         String.format(Locale.ROOT, "speed change (%.3f -> %.3f) drops below route at tick %d", var4, var19, var65 + 1)
                      );
@@ -1915,7 +1915,7 @@ public final class AiPacePlayback {
                            false,
                            true,
                            var26,
-                           ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                           ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                            var27,
                            String.format(Locale.ROOT, "speed change (%.3f -> %.3f) invalidated landing at tick %d", var4, var19, var65 + 1)
                         );
@@ -1945,7 +1945,7 @@ public final class AiPacePlayback {
                      false,
                      var21,
                      var26,
-                     ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                     ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                      var27,
                      String.format(Locale.ROOT, "rebase missed checkpoint %s at tick %d", var32[var34].toShortString(), var65 + 1)
                   );
@@ -1959,20 +1959,20 @@ public final class AiPacePlayback {
                false,
                var21,
                var26,
-               ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+               ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                var27,
                String.format(Locale.ROOT, "rebase missed checkpoint %s", var32[var34].toShortString())
             );
          } else if (!var21 || !var28 || var66 >= var18) {
-            return new AiPacePlayback.Inner_TaskState(true, var21, var66, ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new), var27, null);
+            return new AiPacePlayback.Inner_TaskState(true, var21, var66, ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new), var27, null);
          } else {
             return var27 != null && var26 > var3
-               ? new AiPacePlayback.Inner_TaskState(true, true, var26, ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new), var27, null)
+               ? new AiPacePlayback.Inner_TaskState(true, true, var26, ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new), var27, null)
                : new AiPacePlayback.Inner_TaskState(
                   false,
                   true,
                   var26,
-                  ((java.util.Collection<NodeWalker.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(NodeWalker.Inner_StreamUtil[]::new),
+                  ((java.util.Collection<AiPhysics.Inner_StreamUtil>)(java.util.Collection<?>)var24).toArray(AiPhysics.Inner_StreamUtil[]::new),
                   var27,
                   String.format(Locale.ROOT, "speed change (%.3f -> %.3f) drifted off script before safe landing", var4, var19)
                );
@@ -1987,16 +1987,16 @@ public final class AiPacePlayback {
 
       int var2 = this.putAt_TextPool_IoHelper.flowTemp();
       int var3 = Math.min(this.store + 10, var2 - 1);
-      NodeWalker.Inner_StreamUtil var4 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
+      AiPhysics.Inner_StreamUtil var4 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
       float var5 = AiMotionSafety.putAt_F();
       if (var4 == null) {
          return Float.isNaN(var5) ? var1.getXRot() : Math.max(var1.getXRot(), var5);
       }
 
-      NodeWalker.Inner_StreamUtil var6 = var4;
+      AiPhysics.Inner_StreamUtil var6 = var4;
       if (!var4.onGround() && var4.vy() > -0.45) {
          for (int var7 = 1; var7 <= 12; var7++) {
-            NodeWalker.Inner_StreamUtil var8 = var3 + var7 < var2 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3 + var7) : null;
+            AiPhysics.Inner_StreamUtil var8 = var3 + var7 < var2 ? this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3 + var7) : null;
             if (var8 != null && var8.onGround() && var8.vy() <= 0.1) {
                var6 = var8;
                break;
@@ -2027,9 +2027,9 @@ public final class AiPacePlayback {
       return Float.isNaN(var5) ? var19 : Math.max(var19, var5);
    }
 
-   static void putAt_V_LocalPlayer(LocalPlayer var0, NodeWalker.Inner_DataUtil var1, float var2) {
+   static void putAt_V_LocalPlayer(LocalPlayer var0, AiPhysics.Inner_DataUtil var1, float var2) {
       Minecraft var3 = Minecraft.getInstance();
-      PacketUtil.load();
+      AiFallGuard.load();
       float var4 = var0.getYRot();
       float var5 = var0.getXRot();
       RotationMath.init_V_LocalPlayer(var0, new RotationMath.Inner_DataUtil(var1.yaw(), var2), false);
@@ -2048,9 +2048,9 @@ public final class AiPacePlayback {
       }
    }
 
-   public NodeWalker.Inner_StreamUtil putAt_TokenCore_TableCac() {
+   public AiPhysics.Inner_StreamUtil putAt_TokenCore_TableCac() {
       for (int var1 = Math.max(0, this.store - 1); var1 < this.putAt_TextPool_IoHelper.flowTemp(); var1++) {
-         NodeWalker.Inner_StreamUtil var2 = this.putAt_TokenCore_TableCac_I(var1);
+         AiPhysics.Inner_StreamUtil var2 = this.putAt_TokenCore_TableCac_I(var1);
          if (var2 != null && var2.onGround() && var2.vy() <= 0.1) {
             return var2;
          }
@@ -2059,19 +2059,19 @@ public final class AiPacePlayback {
       return null;
    }
 
-   public static void putAt_V_LocalPlayer_TokenCore_TableCac(LocalPlayer var0, NodeWalker.Inner_StreamUtil var1) {
+   public static void putAt_V_LocalPlayer_TokenCore_TableCac(LocalPlayer var0, AiPhysics.Inner_StreamUtil var1) {
       Minecraft var2 = Minecraft.getInstance();
       BlockPos var3 = BlockPos.containing(var1.x(), var1.y() + 1.0E-4, var1.z());
-      TableIndex.Inner_DataUtil var4 = TableIndex.putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
-         new BitSetUtil(var2.level, var0), NodeWalker.Inner_StreamUtil.of(var0), var0.getYRot(), true, var3, var1.y()
+      AiJumpSolver.Inner_DataUtil var4 = AiJumpSolver.putAt_IoUtil_CacheHelper_TokenCore_TaskStat(
+         new AiLiveWorld(var2.level, var0), AiPhysics.Inner_StreamUtil.of(var0), var0.getYRot(), true, var3, var1.y()
       );
       putAt_V_LocalPlayer(
-         var0, new NodeWalker.Inner_DataUtil(var4.forward(), var4.strafe(), false, var4.forward() > 0.0, false, var0.getYRot()), var0.getXRot()
+         var0, new AiPhysics.Inner_DataUtil(var4.forward(), var4.strafe(), false, var4.forward() > 0.0, false, var0.getYRot()), var0.getXRot()
       );
    }
 
    public static double putAt_D_LocalPlayer(LocalPlayer var0) {
-      return BitSetUtil.putAt_D_LivingEntity(var0);
+      return AiLiveWorld.putAt_D_LivingEntity(var0);
    }
 
    public static void putAt_V_LocalPlayer(LocalPlayer var0) {
@@ -2104,10 +2104,10 @@ public final class AiPacePlayback {
    }
 
    private record Inner_CacheHelper(
-      NodeWalker.Inner_DataUtil input,
-      NodeWalker.Inner_StreamUtil afterTick,
-      NodeWalker.Inner_StreamUtil[] tailRebased,
-      NodeWalker.Inner_DataUtil[] futureOverrides,
+      AiPhysics.Inner_DataUtil input,
+      AiPhysics.Inner_StreamUtil afterTick,
+      AiPhysics.Inner_StreamUtil[] tailRebased,
+      AiPhysics.Inner_DataUtil[] futureOverrides,
       int tickDelta,
       boolean partial
    ) {
@@ -2121,11 +2121,11 @@ public final class AiPacePlayback {
       prevEx;
    }
 
-   public record Inner_TableCache(AiPacePlayback.Inner_JsonCache status, NodeWalker.Inner_DataUtil applied, String reason) {
+   public record Inner_TableCache(AiPacePlayback.Inner_JsonCache status, AiPhysics.Inner_DataUtil applied, String reason) {
    }
 
    public record Inner_TaskState(
-      boolean valid, boolean speedChanged, int safeUntilTick, NodeWalker.Inner_StreamUtil[] rebased, NodeWalker.Inner_StreamUtil safeLanding, String reason
+      boolean valid, boolean speedChanged, int safeUntilTick, AiPhysics.Inner_StreamUtil[] rebased, AiPhysics.Inner_StreamUtil safeLanding, String reason
    ) {
    }
 }

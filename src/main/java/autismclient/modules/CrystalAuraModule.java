@@ -1,6 +1,6 @@
 package autismclient.modules;
 
-import autismclient.ai.ca;
+import autismclient.ai.AiServerEvidence;
 import autismclient.api.module.BoolSetting;
 import autismclient.api.module.ChoiceSetting;
 import autismclient.api.module.ColorSetting;
@@ -1547,7 +1547,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       Vec3 eye = player.getEyePosition();
       BlockPos origin = player.blockPosition();
       int tick = AutismSessionState.init_ck().state_I();
-      long worldKey = ca.init_J_BlockPos(origin) ^ ca.init_J_BlockPos(enemy.blockPosition());
+      long worldKey = AiServerEvidence.init_J_BlockPos(origin) ^ AiServerEvidence.init_J_BlockPos(enemy.blockPosition());
       long optionsKey = Objects.hash(
          this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"), this.bool("only-above"), this.bool("terrain")
       );

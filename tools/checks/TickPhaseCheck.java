@@ -5,7 +5,7 @@ import java.util.List;
 
 public class TickPhaseCheck {
    public static void main(String[] args) {
-      cw phase = new cw();
+      AiTickQueue phase = new AiTickQueue();
       List<Throwable> failures = new ArrayList<>();
       try {
          phase.init(() -> {

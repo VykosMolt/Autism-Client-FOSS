@@ -262,12 +262,12 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.init_DataUtil.init_PacketUtil_2(),
             this.init("AI Assistant", autismclient.gui.f.a.DataUtil.get, autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
-                  autismclient.ai.ConfigStore.init_ConfigStore().read();
+                  autismclient.ai.AiAssistant.init_ConfigStore().read();
                }
             }),
             this.init("Schematics", autismclient.gui.f.a.DataUtil.clear, autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.SECONDARY, () -> {
                if (!AutismLiteVariant.enabled()) {
-                  autismclient.ai.cV.load_V();
+                  autismclient.ai.SchematicWorkspace.load_V();
                }
             })
          );

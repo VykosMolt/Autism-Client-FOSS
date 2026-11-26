@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.ClassCache;
+import autismclient.ai.AiClientTick;
 import autismclient.ai.aP;
 import autismclient.compat263.CompatGLFW;
 import autismclient.g.LateRegisterSynthesizer;
@@ -183,7 +183,7 @@ public class AutismMinecraftClientMixin {
       am.read_V();
       if (!AutismLiteVariant.enabled()) {
          SilentMiningCoordinator.load();
-         ClassCache.init_V_Minecraft((Minecraft)(Object)this);
+         AiClientTick.init_V_Minecraft((Minecraft)(Object)this);
       }
 
       if (aD.read_Z()) {

@@ -2,10 +2,10 @@ package autismclient.commands.b;
 
 import autismclient.ai.AiCatalog;
 import autismclient.ai.aP;
-import autismclient.ai.ag;
-import autismclient.ai.cA;
-import autismclient.ai.cy;
-import autismclient.ai.o;
+import autismclient.ai.AiJson;
+import autismclient.ai.AiToolsSuggest;
+import autismclient.ai.AiToolCallParser;
+import autismclient.ai.AiDirectOps;
 import autismclient.commands.AutismCommandSource;
 import autismclient.commands.Command;
 import autismclient.util.AutismClientMessaging;
@@ -78,7 +78,7 @@ public final class ToolsCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("list").executes(ctx -> this.init_I_Str("")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("category", StringArgumentType.greedyString())
-                  .suggests((ctx, builder) -> cA.load(builder))
+                  .suggests((ctx, builder) -> AiToolsSuggest.load(builder))
                   .executes(ctx -> this.init_I_Str(StringArgumentType.getString(ctx, "category")))
             )
       );
@@ -96,7 +96,7 @@ public final class ToolsCommand extends Command {
                .executes(ctx -> this.sync("Missing capability id\nUsage: " + load_Str() + "tools call <id> [k=v ...]")))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("invocation", StringArgumentType.greedyString())
-                  .suggests((ctx, builder) -> cA.init(builder))
+                  .suggests((ctx, builder) -> AiToolsSuggest.init(builder))
                   .executes(ctx -> this.read(StringArgumentType.getString(ctx, "invocation")))
             )
       );
@@ -106,7 +106,7 @@ public final class ToolsCommand extends Command {
             .executes(ctx -> this.load(sub, ""));
          shorthand.then(
             RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString())
-               .suggests((ctx, builder) -> cA.init(sub, builder))
+               .suggests((ctx, builder) -> AiToolsSuggest.init(sub, builder))
                .executes(ctx -> this.load(sub, StringArgumentType.getString(ctx, "args")))
          );
          root.then(shorthand);
@@ -114,15 +114,15 @@ public final class ToolsCommand extends Command {
 
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("status").executes(ctx -> this.load_I()));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
-         o.load_V();
+         AiDirectOps.load_V();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("pause").executes(ctx -> {
-         o.read_V();
+         AiDirectOps.read_V();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("resume").executes(ctx -> {
-         o.write_V();
+         AiDirectOps.write_V();
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("settings").executes(ctx -> this.read()));
@@ -150,7 +150,7 @@ public final class ToolsCommand extends Command {
       Map<String, List<AiCatalog.Entry>> grouped = new TreeMap<>();
       int total = 0;
 
-      for (AiCatalog.Entry entry : o.init_AiCatalog_Snapshot().entries()) {
+      for (AiCatalog.Entry entry : AiDirectOps.init_AiCatalog_Snapshot().entries()) {
          if (init_Z_Str(entry.contract().id())) {
             grouped.computeIfAbsent(entry.contract().family(), f -> new ArrayList<>()).add(entry);
             total++;
@@ -218,7 +218,7 @@ public final class ToolsCommand extends Command {
                break;
             }
 
-            init_V_Str("§8- §f" + entry.contract().id() + " §7" + o.load_Str(entry.contract().purpose()));
+            init_V_Str("§8- §f" + entry.contract().id() + " §7" + AiDirectOps.load_Str(entry.contract().purpose()));
          }
 
          if (entries.size() > 40) {
@@ -235,17 +235,17 @@ public final class ToolsCommand extends Command {
          return this.update(rawId);
       }
 
-      AiCatalog.Entry entry = o.init_AiCatalog_Entry(id);
+      AiCatalog.Entry entry = AiDirectOps.init_AiCatalog_Entry(id);
       if (entry == null) {
          return this.update(rawId);
       }
 
       init_V_Str("§f" + id + " §8[" + entry.contract().family() + "]");
-      init_V_Str("§7" + o.load_Str(entry.contract().purpose()));
+      init_V_Str("§7" + AiDirectOps.load_Str(entry.contract().purpose()));
 
       JsonObject schema;
       try {
-         schema = ag.init_JsonObject_Str(entry.contract().inputSchema());
+         schema = AiJson.init_JsonObject_Str(entry.contract().inputSchema());
       } catch (Exception e) {
          init_V_Str("§7(no argument schema)");
          return 1;
@@ -260,7 +260,7 @@ public final class ToolsCommand extends Command {
          }
 
          for (Entry<String, JsonElement> property : schema.getAsJsonObject("properties").entrySet()) {
-            String type = ag.init_Str_JsonObject(property.getValue().getAsJsonObject(), "type", "any");
+            String type = AiJson.init_Str_JsonObject(property.getValue().getAsJsonObject(), "type", "any");
             init_V_Str("§8- §f" + property.getKey() + " §7" + type + (required.contains(property.getKey()) ? " §c(required)" : ""));
          }
 
@@ -295,7 +295,7 @@ public final class ToolsCommand extends Command {
 
       JsonObject args;
       try {
-         args = cy.init_JsonObject(argsString);
+         args = AiToolCallParser.init_JsonObject(argsString);
       } catch (IllegalArgumentException e) {
          return this.sync(e.getMessage());
       }
@@ -326,7 +326,7 @@ public final class ToolsCommand extends Command {
          if (out.has(keys[i]) && out.get(keys[i]).isJsonPrimitive() && out.get(keys[i]).getAsJsonPrimitive().isString()) {
             String raw = out.get(keys[i]).getAsString();
             if (raw.startsWith("~")) {
-               out.addProperty(keys[i], cy.init_I_Str_D(raw, bases[i]));
+               out.addProperty(keys[i], AiToolCallParser.init_I_Str_D(raw, bases[i]));
             }
          }
       }
@@ -341,17 +341,17 @@ public final class ToolsCommand extends Command {
 
       List<String> args;
       try {
-         args = cy.init_List(argsString);
+         args = AiToolCallParser.init_List(argsString);
       } catch (IllegalArgumentException e) {
          return this.sync(e.getMessage());
       }
 
       boolean parkour = sub.equals("parkour");
-      boolean parkourPicker = parkour && !args.isEmpty() && args.stream().allMatch(cy::isParkourFlag);
+      boolean parkourPicker = parkour && !args.isEmpty() && args.stream().allMatch(AiToolCallParser::isParkourFlag);
       if (parkourPicker || args.isEmpty() && (sub.equals("goto") || parkour)) {
-         cy.Inner_CachePool parkourOptions;
+         AiToolCallParser.Inner_CachePool parkourOptions;
          try {
-            parkourOptions = parkour ? cy.parseParkourFlags(args) : new cy.Inner_CachePool(false, -1);
+            parkourOptions = parkour ? AiToolCallParser.parseParkourFlags(args) : new AiToolCallParser.Inner_CachePool(false, -1);
          } catch (IllegalArgumentException e) {
             return this.sync(e.getMessage());
          }
@@ -366,9 +366,9 @@ public final class ToolsCommand extends Command {
       double py = mc.player != null ? mc.player.getY() : 0.0;
       double pz = mc.player != null ? mc.player.getZ() : 0.0;
 
-      cy.Inner_StreamUtil invocation;
+      AiToolCallParser.Inner_StreamUtil invocation;
       try {
-         invocation = cy.init(sub, args, px, py, pz);
+         invocation = AiToolCallParser.init(sub, args, px, py, pz);
       } catch (IllegalArgumentException e) {
          return this.sync(e.getMessage());
       }
@@ -394,7 +394,7 @@ public final class ToolsCommand extends Command {
             return this.sync("Blueprint names are plain file names (no paths)");
          }
 
-         Path file = o.load_Path().resolve(clean + ".json");
+         Path file = AiDirectOps.load_Path().resolve(clean + ".json");
          if (!name.contains("/") && !name.contains("\\") && Files.isRegularFile(file)) {
             String content;
             try {
@@ -411,14 +411,14 @@ public final class ToolsCommand extends Command {
             }
 
             try {
-               ag.init_JsonObject_Str(content);
+               AiJson.init_JsonObject_Str(content);
             } catch (Exception e) {
                return this.sync("Blueprint is not a JSON object: " + e.getMessage());
             }
 
-            return this.init_I_Str_JsonObject("game:build", ag.init_JsonObject_ObjArr("blueprint", content));
+            return this.init_I_Str_JsonObject("game:build", AiJson.init_JsonObject_ObjArr("blueprint", content));
          } else {
-            return this.init_I_Str_JsonObject("game:build", ag.init_JsonObject_ObjArr("schematic", name));
+            return this.init_I_Str_JsonObject("game:build", AiJson.init_JsonObject_ObjArr("schematic", name));
          }
       } else {
          String content = name;
@@ -427,17 +427,17 @@ public final class ToolsCommand extends Command {
          }
 
          try {
-            ag.init_JsonObject_Str(content);
+            AiJson.init_JsonObject_Str(content);
          } catch (Exception e) {
             return this.sync("Blueprint is not a JSON object: " + e.getMessage());
          }
 
-         return this.init_I_Str_JsonObject("game:build", ag.init_JsonObject_ObjArr("blueprint", content));
+         return this.init_I_Str_JsonObject("game:build", AiJson.init_JsonObject_ObjArr("blueprint", content));
       }
    }
 
    private int load_I() {
-      for (String line : o.init_List()) {
+      for (String line : AiDirectOps.init_List()) {
          init_V_Str(line);
       }
 
@@ -456,7 +456,7 @@ public final class ToolsCommand extends Command {
 
    private int init_I_Str_JsonObject(String id, JsonObject args) {
       try {
-         o.init_V(id, args);
+         AiDirectOps.init_V(id, args);
          return 1;
       } catch (IllegalArgumentException | IllegalStateException e) {
          return this.sync(e.getMessage());
@@ -466,20 +466,20 @@ public final class ToolsCommand extends Command {
    }
 
    private static String init_Str_Str(String raw) {
-      return o.init_Str(raw);
+      return AiDirectOps.init_Str(raw);
    }
 
    private int update(String raw) {
       this.sync("Unknown capability: §f" + raw);
       List<String> ids = new ArrayList<>();
 
-      for (AiCatalog.Entry entry : o.init_AiCatalog_Snapshot().entries()) {
+      for (AiCatalog.Entry entry : AiDirectOps.init_AiCatalog_Snapshot().entries()) {
          if (init_Z_Str(entry.contract().id())) {
             ids.add(entry.contract().id());
          }
       }
 
-      List<String> near = cy.init(raw, ids, 4);
+      List<String> near = AiToolCallParser.init(raw, ids, 4);
       if (!near.isEmpty()) {
          init_V_Str("§7Did you mean: §f" + String.join("§7, §f", near));
       }
@@ -489,7 +489,7 @@ public final class ToolsCommand extends Command {
    }
 
    private static boolean init_Z_Str(String id) {
-      return o.load_Z(id);
+      return AiDirectOps.load_Z(id);
    }
 
    private static CompletableFuture<Suggestions> init_CompletableFuture_CommandContext_SuggestionsBuilder(
@@ -498,7 +498,7 @@ public final class ToolsCommand extends Command {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       try {
-         for (AiCatalog.Entry entry : o.init_AiCatalog_Snapshot().entries()) {
+         for (AiCatalog.Entry entry : AiDirectOps.init_AiCatalog_Snapshot().entries()) {
             String id = entry.contract().id();
             if (init_Z_Str(id) && id.toLowerCase(Locale.ROOT).startsWith(remaining)) {
                builder.suggest(id);
@@ -514,7 +514,7 @@ public final class ToolsCommand extends Command {
       StringBuilder out = new StringBuilder();
 
       try {
-         Path dir = o.load_Path();
+         Path dir = AiDirectOps.load_Path();
          if (Files.isDirectory(dir)) {
             List<String> names = new ArrayList<>();
 
@@ -536,7 +536,7 @@ public final class ToolsCommand extends Command {
       }
 
       try {
-         Path dir = o.read_Path();
+         Path dir = AiDirectOps.read_Path();
          if (Files.isDirectory(dir)) {
             List<String> names = new ArrayList<>();
 

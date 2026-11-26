@@ -11,7 +11,7 @@ public class EventRingCheck {
    }
 
    public static void main(String[] args) {
-      x ring = x.init_x();
+      AiEventLog ring = AiEventLog.init_x();
       for (int i = 0; i < 300; i++) {
          ring.init("e", new JsonObject());
       }

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.aF;
+import autismclient.ai.AiOps;
 import autismclient.modules.AntiBotTracker;
 import autismclient.modules.BacktrackModule;
 import autismclient.modules.BedNukerModule;
@@ -121,7 +121,7 @@ public class AutismMultiPlayerGameModeMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            aF.init_V(hitPos);
+            AiOps.init_V(hitPos);
          }
       }
    }

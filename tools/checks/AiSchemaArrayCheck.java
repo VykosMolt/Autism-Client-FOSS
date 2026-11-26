@@ -15,7 +15,7 @@ public class AiSchemaArrayCheck {
    }
 
    static JsonObject schemaFor(String id) {
-      for (AiCapabilityDescriptor d : cz.init_List()) {
+      for (AiCapabilityDescriptor d : AiTools.init_List()) {
          if (d.id().equals(id)) {
             return JsonParser.parseString(d.inputSchema()).getAsJsonObject();
          }
@@ -25,7 +25,7 @@ public class AiSchemaArrayCheck {
 
    static boolean valid(String id, String args) {
       try {
-         bO.init(schemaFor(id), JsonParser.parseString(args));
+         AiSchemas.init(schemaFor(id), JsonParser.parseString(args));
          return true;
       } catch (IllegalArgumentException e) {
          return false;
@@ -44,8 +44,8 @@ public class AiSchemaArrayCheck {
          "{\"action\":\"withdraw\",\"x\":1,\"y\":64,\"z\":2,\"items\":[\"minecraft:stone\",{\"item\":\"minecraft:diamond\",\"count\":\"16\",\"extra\":1},{\"item\":\"minecraft:oak_log\",\"count\":null}]}"
       ).getAsJsonObject();
       List<String> ignored = new ArrayList<>();
-      JsonObject normalized = bO.init(containerSchema, raw, true, ignored);
-      bO.init(containerSchema, normalized);
+      JsonObject normalized = AiSchemas.init(containerSchema, raw, true, ignored);
+      AiSchemas.init(containerSchema, normalized);
       var items = normalized.getAsJsonArray("items");
       check(items.get(1).getAsJsonObject().get("count").getAsInt() == 16, "anyOf object count string coerced to int");
       check(!items.get(1).getAsJsonObject().has("extra") && ignored.contains("items[].extra"), "anyOf object dropped unknown field");

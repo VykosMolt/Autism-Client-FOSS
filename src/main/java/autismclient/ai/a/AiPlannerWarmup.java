@@ -31,20 +31,20 @@ public final class AiPlannerWarmup {
    private static void putAt_V() {
       try {
          long var0 = System.nanoTime();
-         ClassCache.Inner_StateCache var2 = putAt_FileStore_TextStor();
-         ClassCache.Inner_DataUtil var3 = new ClassCache.Inner_DataUtil(
-               false, false, false, true, false, true, ClassCache.Inner_IoWorker.init, ClassCache.Inner_PoolEntry.value
+         AiPathfinder.Inner_StateCache var2 = putAt_FileStore_TextStor();
+         AiPathfinder.Inner_DataUtil var3 = new AiPathfinder.Inner_DataUtil(
+               false, false, false, true, false, true, AiPathfinder.Inner_IoWorker.init, AiPathfinder.Inner_PoolEntry.value
             )
-            .withFallPolicy(ClassCache.Inner_NetHelper.read);
+            .withFallPolicy(AiPathfinder.Inner_NetHelper.read);
          BlockPos var4 = putAt_BlockPos;
          BlockPos var5 = fill_BlockPos;
 
          for (int var6 = 0; var6 < 3 && System.nanoTime() - var0 < 12000000000L; var6++) {
             double var7 = 0.1 * (1.0 + 0.2 * var6);
-            ClassCache.Inner_TextFormat var9 = ClassCache.Inner_TextFormat.putAt(
+            AiPathfinder.Inner_TextFormat var9 = AiPathfinder.Inner_TextFormat.putAt(
                new AiPlannerWarmup.Inner_CacheHelper(var2, var7),
                var4,
-               ClassCache.Inner_JsonUtil.putAt_FileStore_TokenCod_BlockPos(var5, 0.6, true),
+               AiPathfinder.Inner_JsonUtil.putAt_FileStore_TokenCod_BlockPos(var5, 0.6, true),
                var3,
                Set.of(),
                true
@@ -59,17 +59,17 @@ public final class AiPlannerWarmup {
          }
 
          int var12 = putAt(var2, var0 + 12000000000L);
-         ListPool.init("planner warm-up " + (System.nanoTime() - var0) / 1000000L + " ms, " + var12 + " jumps");
+         AiNavDebug.init("planner warm-up " + (System.nanoTime() - var0) / 1000000L + " ms, " + var12 + " jumps");
       } catch (Throwable var11) {
-         ListPool.init("planner warm-up skipped: " + var11);
+         AiNavDebug.init("planner warm-up skipped: " + var11);
       }
    }
 
-   static int putAt(ClassCache.Inner_StateCache var0, long var1) {
+   static int putAt(AiPathfinder.Inner_StateCache var0, long var1) {
       int var3 = 0;
 
       for (int var4 = 0; var4 < 3; var4++) {
-         StreamGate var5 = new StreamGate(new AiPlannerWarmup.Inner_CacheHelper(var0, 0.1 * (1.0 + 0.2 * var4)), null);
+         AiPlannerWorld var5 = new AiPlannerWorld(new AiPlannerWarmup.Inner_CacheHelper(var0, 0.1 * (1.0 + 0.2 * var4)), null);
 
          for (byte var6 = 0; var6 <= 24; var6 += 3) {
             for (byte var7 = 0; var7 <= 24; var7 += 3) {
@@ -84,7 +84,7 @@ public final class AiPlannerWarmup {
                      }
 
                      BlockPos var15 = putAt(var0, var13, var14);
-                     TableIndex.putAt(var5, var8, var8.getY(), var15, var15.getY(), (var3 & 1) == 0 ? 0.0 : 0.2, (var3 & 2) == 0, false, true, false, false);
+                     AiJumpSolver.putAt(var5, var8, var8.getY(), var15, var15.getY(), (var3 & 1) == 0 ? 0.0 : 0.2, (var3 & 2) == 0, false, true, false, false);
                      var3++;
                   }
                }
@@ -95,7 +95,7 @@ public final class AiPlannerWarmup {
       return var3;
    }
 
-   private static BlockPos putAt(ClassCache.Inner_StateCache var0, int var1, int var2) {
+   private static BlockPos putAt(AiPathfinder.Inner_StateCache var0, int var1, int var2) {
       for (int var3 = 60; var3 <= 66; var3++) {
          if (!var0.probe(var1, var3, var2).passable()) {
             return new BlockPos(var1, var3 + 1, var2);
@@ -105,9 +105,9 @@ public final class AiPlannerWarmup {
       return new BlockPos(var1, 64, var2);
    }
 
-   static ClassCache.Inner_StateCache putAt_FileStore_TextStor() {
+   static AiPathfinder.Inner_StateCache putAt_FileStore_TextStor() {
       Long2ObjectOpenHashMap var0 = new Long2ObjectOpenHashMap();
-      ClassCache.Inner_FileCache var1 = ClassCache.Inner_FileCache.fullBlock(1.0 / 0.0);
+      AiPathfinder.Inner_FileCache var1 = AiPathfinder.Inner_FileCache.fullBlock(1.0 / 0.0);
 
       for (byte var2 = 0; var2 <= 24; var2 += 3) {
          for (byte var3 = 0; var3 <= 24; var3 += 3) {
@@ -120,13 +120,13 @@ public final class AiPlannerWarmup {
       }
 
       return (var1x, var2x, var3x) -> var2x >= 50 && var2x <= 90 && var1x >= -16 && var1x <= 48 && var3x >= -16 && var3x <= 24
-         ? (ClassCache.Inner_FileCache)var0.getOrDefault(BlockPos.asLong(var1x, var2x, var3x), ClassCache.Inner_FileCache.air())
-         : ClassCache.Inner_FileCache.UNLOADED;
+         ? (AiPathfinder.Inner_FileCache)var0.getOrDefault(BlockPos.asLong(var1x, var2x, var3x), AiPathfinder.Inner_FileCache.air())
+         : AiPathfinder.Inner_FileCache.UNLOADED;
    }
 
-   private record Inner_CacheHelper(ClassCache.Inner_StateCache grid, double speed) implements ClassCache.Inner_StateCache {
+   private record Inner_CacheHelper(AiPathfinder.Inner_StateCache grid, double speed) implements AiPathfinder.Inner_StateCache {
       @Override
-      public ClassCache.Inner_FileCache probe(int var1, int var2, int var3) {
+      public AiPathfinder.Inner_FileCache probe(int var1, int var2, int var3) {
          return this.grid.probe(var1, var2, var3);
       }
 

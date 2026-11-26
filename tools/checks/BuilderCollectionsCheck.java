@@ -21,17 +21,17 @@ public class BuilderCollectionsCheck {
    }
 
    public static void main(String[] args) throws Exception {
-      Map<Long, String> map = new bj.Inner_ConfigStore<>();
+      Map<Long, String> map = new AiPrintSupply.Inner_ConfigStore<>();
       check(map.put(5L, "a") == null && "a".equals(map.put(5L, "b")) && "b".equals(map.get(5L)) && map.size() == 1, "Map.put");
       check("c".equals(map.computeIfAbsent(7L, k -> "c")) && map.size() == 2, "Map.computeIfAbsent");
 
-      List<BlockPos> list = new bj.Inner_JsonUtil();
+      List<BlockPos> list = new AiPrintSupply.Inner_JsonUtil();
       for (int i = 0; i < 1500; i++) {
          check(list.add(new BlockPos(i, 0, 0)), "List.add");
       }
       check(list.size() == 1500 && list.get(1234).getX() == 1234, "List.get after add");
 
-      Set<Long> set = Collections.newSetFromMap(new bj.Inner_ConfigStore<>());
+      Set<Long> set = Collections.newSetFromMap(new AiPrintSupply.Inner_ConfigStore<>());
       check(set.add(1L) && !set.add(1L) && set.contains(1L) && set.size() == 1, "newSetFromMap.add");
 
       SharedConstants.tryDetectVersion();
@@ -48,9 +48,9 @@ public class BuilderCollectionsCheck {
             throw new UnsupportedOperationException(method.getName());
          }
       });
-      bj.Inner_CachePool prep = new bj.Inner_CachePool(new TableIndex.Inner_DataUtil(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
+      AiPrintSupply.Inner_CachePool prep = new AiPrintSupply.Inner_CachePool(new AiBuilder.Inner_DataUtil(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
       BlockPos candidate = new BlockPos(3, 64, 3);
-      prep.init_Map.put(candidate.above().asLong(), new TableIndex.Inner_StreamUtil(3, 65, 3, "minecraft:torch"));
+      prep.init_Map.put(candidate.above().asLong(), new AiBuilder.Inner_StreamUtil(3, 65, 3, "minecraft:torch"));
       boolean[] result = new boolean[]{true};
       Thread t = new Thread(() -> result[0] = prep.init_Z_BlockPos(candidate));
       t.setDaemon(true);

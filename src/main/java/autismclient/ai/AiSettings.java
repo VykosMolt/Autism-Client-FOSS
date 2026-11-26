@@ -397,7 +397,7 @@ public final class AiSettings {
 
    public static String alternateDashScopeEndpoint(String endpoint) {
       try {
-         return aw.load(AiSettings.Provider.DASHSCOPE, ac.init_Str(AiSettings.Provider.DASHSCOPE, endpoint));
+         return AiModels.load(AiSettings.Provider.DASHSCOPE, AiHttp.init_Str(AiSettings.Provider.DASHSCOPE, endpoint));
       } catch (IllegalArgumentException e) {
          return null;
       }
@@ -434,11 +434,11 @@ public final class AiSettings {
    synchronized String keyMarker(String id) {
       String stored = this.sealedKeys.get(id);
       if (stored != null) {
-         return ag.init_Str_Str(stored);
+         return AiJson.init_Str_Str(stored);
       }
 
       String external = externalKey(id);
-      return external.isEmpty() ? "none" : ag.init_Str_Str(external);
+      return external.isEmpty() ? "none" : AiJson.init_Str_Str(external);
    }
 
    private static String externalKey(String id) {
@@ -495,7 +495,7 @@ public final class AiSettings {
    }
 
    public void validate() {
-      ac.init_Str(this.provider, this.endpoint);
+      AiHttp.init_Str(this.provider, this.endpoint);
       if (this.model != null && !this.model.isBlank()) {
          if (this.model.chars().anyMatch(c -> c <= 32 || c == 127) || this.model.indexOf(63) >= 0 || this.model.indexOf(35) >= 0) {
             throw new IllegalArgumentException("Model ID contains invalid characters; choose a model from Scan models");
@@ -515,7 +515,7 @@ public final class AiSettings {
    }
 
    public synchronized void save(Path directory) throws IOException {
-      ag.init_V_Path_Obj(directory.resolve("settings.json"), this);
+      AiJson.init_V_Path_Obj(directory.resolve("settings.json"), this);
    }
 
    public static AiSettings load(Path directory) throws IOException {
@@ -526,7 +526,7 @@ public final class AiSettings {
          s.builtIn = true;
       } else {
          String text = Files.readString(path);
-         s = ag.init.fromJson(text, AiSettings.class);
+         s = AiJson.init.fromJson(text, AiSettings.class);
          if (s == null || s.version != 1 || s.provider == null || s.sealedKeys == null) {
             throw new IllegalArgumentException("Invalid AI settings file");
          }
@@ -572,7 +572,7 @@ public final class AiSettings {
    }
 
    public synchronized AiSettings copy() {
-      return ag.init.fromJson(ag.init.toJson(this), AiSettings.class);
+      return AiJson.init.fromJson(AiJson.init.toJson(this), AiSettings.class);
    }
 
    public enum Provider {

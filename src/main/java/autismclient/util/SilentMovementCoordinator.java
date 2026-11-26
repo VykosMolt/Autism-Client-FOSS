@@ -40,7 +40,7 @@ public final class SilentMovementCoordinator {
          if (rotation == null) {
             return null;
          } else if (!AutismLiteVariant.enabled() && "ai-assistant".equals(SilentRotationManager.init_Str())) {
-            return autismclient.ai.ConfigStore.init_ConfigStore().load_Z_23() ? rotation : null;
+            return autismclient.ai.AiAssistant.init_ConfigStore().load_Z_23() ? rotation : null;
          } else {
             return autismclient.modules.al.init_Module_Str(SilentRotationManager.init_Str()) instanceof SilentMovementCoordinator.Inner_DataUtil owner && owner.load_Z_23() ? rotation : null;
          }

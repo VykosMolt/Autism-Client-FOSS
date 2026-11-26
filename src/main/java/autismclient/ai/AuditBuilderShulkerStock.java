@@ -82,7 +82,7 @@ final class AuditBuilderShulkerStock {
       return null;
    }
 
-   static JsonObject before(cc assistant, long generation, cc.Inner_RenderState session, ad.Inner_BufferHelper step, String label)
+   static JsonObject before(AiService assistant, long generation, AiService.Inner_RenderState session, AiIntents.Inner_BufferHelper step, String label)
       throws InterruptedException {
       try {
          String capability = step.capability();
@@ -101,7 +101,7 @@ final class AuditBuilderShulkerStock {
          int count = args.has("count") ? Math.max(1, args.get("count").getAsInt()) : 1;
          boolean additional = args.has("additional") && args.get("additional").getAsBoolean();
          int target = additional ? held(item) + count : count;
-         g.Inner_CachePool plan = plan(item, target);
+         AiCraftPlanner.Inner_CachePool plan = plan(item, target);
          Map<String, Integer> missing = new LinkedHashMap<>(plan.missing());
          if (plan.requiresTable() && held("minecraft:crafting_table") == 0) {
             missing.putIfAbsent("minecraft:crafting_table", 1);
@@ -123,7 +123,7 @@ final class AuditBuilderShulkerStock {
                assistant.auditRunStep(
                   generation,
                   session,
-                  new ad.Inner_BufferHelper("take materials from a shulker box", "game:container", take, "take " + missing.keySet() + " from the shulker box at " + box.toShortString()),
+                  new AiIntents.Inner_BufferHelper("take materials from a shulker box", "game:container", take, "take " + missing.keySet() + " from the shulker box at " + box.toShortString()),
                   "stock/withdraw"
                );
                plan = plan(item, target);
@@ -149,7 +149,7 @@ final class AuditBuilderShulkerStock {
                return assistant.auditRunStep(
                   generation,
                   session,
-                  new ad.Inner_BufferHelper("craft " + item, "game:craft", craft, "craft " + target + " " + item),
+                  new AiIntents.Inner_BufferHelper("craft " + item, "game:craft", craft, "craft " + target + " " + item),
                   "stock/craft"
                );
             }
@@ -180,8 +180,8 @@ final class AuditBuilderShulkerStock {
       return null;
    }
 
-   private static g.Inner_CachePool plan(String item, int target) throws Exception {
-      return onClient(() -> g.init(e.init_g_StreamUtil(), item, target));
+   private static AiCraftPlanner.Inner_CachePool plan(String item, int target) throws Exception {
+      return onClient(() -> AiCraftPlanner.init(AiCraft.init_g_StreamUtil(), item, target));
    }
 
    private static int held(String item) throws Exception {

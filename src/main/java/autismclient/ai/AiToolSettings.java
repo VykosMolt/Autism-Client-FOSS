@@ -38,12 +38,12 @@ public final class AiToolSettings {
    }
 
    public synchronized AiToolSettings copy() {
-      return ag.init.fromJson(ag.init.toJson(this), AiToolSettings.class);
+      return AiJson.init.fromJson(AiJson.init.toJson(this), AiToolSettings.class);
    }
 
    public synchronized void save(Path directory) throws IOException {
       this.clamp();
-      ag.init_V_Path_Obj(directory.resolve("tools-settings.json"), this);
+      AiJson.init_V_Path_Obj(directory.resolve("tools-settings.json"), this);
    }
 
    public static AiToolSettings load(Path directory) {
@@ -53,7 +53,7 @@ public final class AiToolSettings {
       }
 
       try {
-         AiToolSettings s = ag.init.fromJson(Files.readString(path), AiToolSettings.class);
+         AiToolSettings s = AiJson.init.fromJson(Files.readString(path), AiToolSettings.class);
          if (s != null && s.version == 1) {
             s.clamp();
             return s;

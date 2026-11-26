@@ -25,7 +25,7 @@ public final class AiSlimeBounce {
    }
 
    static List<AiSlimeBounce.Inner_JsonCache> putAt_List_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, float var2, BlockPos var3, boolean var4
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, float var2, BlockPos var3, boolean var4
    ) {
       LinkedHashMap var5 = new LinkedHashMap();
       HashMap var6 = new HashMap();
@@ -63,7 +63,7 @@ public final class AiSlimeBounce {
                );
                byte var28 = (byte)(var26 != 0 ? var22 : var23);
                if (var27.highClear() && var27.hadObstacleOrSecondBounce() && var28 < 5 && var48.size() < 56) {
-                  NodeWalker.Inner_StreamUtil var29 = var25.state();
+                  AiPhysics.Inner_StreamUtil var29 = var25.state();
                   long var30 = (Math.round(var29.x() * 4.0) & 255L) << 20
                      | (Math.round(var29.z() * 4.0) & 255L) << 12
                      | (Math.round(var21 / 15.0F) & 15L) << 4
@@ -200,12 +200,12 @@ public final class AiSlimeBounce {
       } else {
          return var5.entrySet()
             .stream()
-            .map(var0x -> new AiSlimeBounce.Inner_JsonCache((BlockPos)((java.util.Map.Entry)var0x).getKey(), (TableIndex.Inner_StateCache)((java.util.Map.Entry)var0x).getValue()))
+            .map(var0x -> new AiSlimeBounce.Inner_JsonCache((BlockPos)((java.util.Map.Entry)var0x).getKey(), (AiJumpSolver.Inner_StateCache)((java.util.Map.Entry)var0x).getValue()))
             .toList();
       }
    }
 
-   private static int putAt_I_TokenCore_TaskStat_BlockPos(NodeWalker.Inner_CachePool var0, BlockPos var1) {
+   private static int putAt_I_TokenCore_TaskStat_BlockPos(AiPhysics.Inner_CachePool var0, BlockPos var1) {
       int var2 = var1.getY();
 
       while (var0.state(var1.getX(), var2 + 1, var1.getZ())) {
@@ -222,7 +222,7 @@ public final class AiSlimeBounce {
       return var0.plan().ticks() + var5 + var7 + var9;
    }
 
-   private static boolean putAt(NodeWalker.Inner_CachePool var0, Map<BlockPos, TableIndex.Inner_StateCache> var1, double var2) {
+   private static boolean putAt(AiPhysics.Inner_CachePool var0, Map<BlockPos, AiJumpSolver.Inner_StateCache> var1, double var2) {
       for (BlockPos var5 : var1.keySet()) {
          if (!var0.state(var5.getX(), var5.getY(), var5.getZ())) {
             return false;
@@ -242,18 +242,18 @@ public final class AiSlimeBounce {
    }
 
    private static AiSlimeBounce.Inner_TaskState putAt_StreamCore_TaskSta_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, float var2, int var3, boolean var4
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, float var2, int var3, boolean var4
    ) {
-      ArrayList<NodeWalker.Inner_DataUtil> var5 = new ArrayList<>();
-      NodeWalker.Inner_StreamUtil var6 = var1;
+      ArrayList<AiPhysics.Inner_DataUtil> var5 = new ArrayList<>();
+      AiPhysics.Inner_StreamUtil var6 = var1;
       double var7 = var1.y();
-      NodeWalker.Inner_DataUtil var9 = NodeWalker.Inner_DataUtil.run(var2, var4);
-      NodeWalker.Inner_DataUtil var10 = var9.withJump(true);
+      AiPhysics.Inner_DataUtil var9 = AiPhysics.Inner_DataUtil.run(var2, var4);
+      AiPhysics.Inner_DataUtil var10 = var9.withJump(true);
 
       for (int var11 = 0; var11 < 38; var11++) {
-         NodeWalker.Inner_DataUtil var12 = var11 == var3 ? var10 : var9;
-         NodeWalker.Inner_StreamUtil var13 = NodeWalker.putAt(var6, var12, var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var6, var13, var7, var1.y()) || TableIndex.putAt(var0, var13)) {
+         AiPhysics.Inner_DataUtil var12 = var11 == var3 ? var10 : var9;
+         AiPhysics.Inner_StreamUtil var13 = AiPhysics.putAt(var6, var12, var0);
+         if (!putAt_Z_TokenCore_TaskStat(var0, var6, var13, var7, var1.y()) || AiJumpSolver.putAt(var0, var13)) {
             return null;
          }
 
@@ -274,8 +274,8 @@ public final class AiSlimeBounce {
    }
 
    private static AiSlimeBounce.Inner_TableCache putAt_StreamCore_TableCa_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiSlimeBounce.Inner_TaskState var2,
       float var3,
       boolean var4,
@@ -285,7 +285,7 @@ public final class AiSlimeBounce {
       float var8,
       boolean var9
    ) {
-      NodeWalker.Inner_StreamUtil var10 = var2.state();
+      AiPhysics.Inner_StreamUtil var10 = var2.state();
       double var11 = var10.y();
       double var13 = var11;
       double var15 = var11;
@@ -314,8 +314,8 @@ public final class AiSlimeBounce {
 
          var17 = putAt_F_F_F(var17, var30);
          boolean var31 = var28 == var21 && var5 || var23 && var9 && var10.onGround() && var10.vy() > 0.2;
-         NodeWalker.Inner_DataUtil var32 = new NodeWalker.Inner_DataUtil(1.0, 0.0, var31, var4, false, var17);
-         NodeWalker.Inner_StreamUtil var33 = NodeWalker.putAt(var10, var32, var0);
+         AiPhysics.Inner_DataUtil var32 = new AiPhysics.Inner_DataUtil(1.0, 0.0, var31, var4, false, var17);
+         AiPhysics.Inner_StreamUtil var33 = AiPhysics.putAt(var10, var32, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var10, var33, var13, var1.y())) {
             return new AiSlimeBounce.Inner_TableCache(null, !var24 && var15 > var11 + 4.5, var27, var25, var26);
          }
@@ -326,7 +326,7 @@ public final class AiSlimeBounce {
             var25 = true;
          }
 
-         boolean var35 = TableIndex.putAt(var0, var33);
+         boolean var35 = AiJumpSolver.putAt(var0, var33);
          if (!var35 && (var33.horizontalCollision() || AiPaceScript.value(var0, var33))) {
             var26++;
          }
@@ -354,7 +354,7 @@ public final class AiSlimeBounce {
             var13 = Math.max(var13, var33.y());
          }
 
-         boolean var37 = TableIndex.putAt(var33);
+         boolean var37 = AiJumpSolver.putAt(var33);
          if (!var35 && !var37) {
             var10 = var33;
          } else {
@@ -375,8 +375,8 @@ public final class AiSlimeBounce {
    }
 
    private static AiSlimeBounce.Inner_RingUtil putAt(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiSlimeBounce.Inner_TaskState var2,
       float var3,
       boolean var4,
@@ -384,7 +384,7 @@ public final class AiSlimeBounce {
       int var6,
       float var7
    ) {
-      NodeWalker.Inner_StreamUtil var8 = var2.state();
+      AiPhysics.Inner_StreamUtil var8 = var2.state();
       double var9 = var8.y();
       double var11 = var9;
       double var13 = var9;
@@ -400,8 +400,8 @@ public final class AiSlimeBounce {
          int var23 = var22 - var18;
          float var24 = var23 >= var6 ? var17 : var16;
          var15 = putAt_F_F_F(var15, var24);
-         NodeWalker.Inner_DataUtil var25 = new NodeWalker.Inner_DataUtil(1.0, 0.0, var22 == var18 && var5, var4, false, var15);
-         NodeWalker.Inner_StreamUtil var26 = NodeWalker.putAt(var8, var25, var0);
+         AiPhysics.Inner_DataUtil var25 = new AiPhysics.Inner_DataUtil(1.0, 0.0, var22 == var18 && var5, var4, false, var15);
+         AiPhysics.Inner_StreamUtil var26 = AiPhysics.putAt(var8, var25, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var8, var26, var11, var1.y())) {
             return null;
          }
@@ -411,7 +411,7 @@ public final class AiSlimeBounce {
             var20 = true;
          }
 
-         boolean var27 = TableIndex.putAt(var0, var26);
+         boolean var27 = AiJumpSolver.putAt(var0, var26);
          if (!var27 && (var26.horizontalCollision() || AiPaceScript.value(var0, var26))) {
             var21++;
          }
@@ -422,7 +422,7 @@ public final class AiSlimeBounce {
          }
 
          var11 = Math.max(var11, var26.y());
-         boolean var28 = TableIndex.putAt(var26);
+         boolean var28 = AiJumpSolver.putAt(var26);
          if (var27 || var28) {
             AiSlimeBounce.Inner_JsonCache var29 = putAt_StreamCore_JsonCac_TokenCore_TaskStat(var0, var1, var2, var19, var26, var9, var15, var4, var27, var28);
             if (var29 == null) {
@@ -439,15 +439,15 @@ public final class AiSlimeBounce {
    }
 
    private static AiSlimeBounce.Inner_TableCache putAt(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiSlimeBounce.Inner_TaskState var2,
       AiSlimeBounce.Inner_JsonEntry var3,
       float var4,
       boolean var5,
       boolean var6
    ) {
-      NodeWalker.Inner_StreamUtil var7 = var3.state();
+      AiPhysics.Inner_StreamUtil var7 = var3.state();
       double var8 = var2.state().y();
       double var10 = var3.peak();
       float var12 = var3.cam();
@@ -460,8 +460,8 @@ public final class AiSlimeBounce {
       for (int var18 = var14; var18 < 76; var18++) {
          var12 = putAt_F_F_F(var12, var4);
          boolean var19 = var6 && var7.onGround() && var7.vy() > 0.2;
-         NodeWalker.Inner_DataUtil var20 = new NodeWalker.Inner_DataUtil(1.0, 0.0, var19, var5, false, var12);
-         NodeWalker.Inner_StreamUtil var21 = NodeWalker.putAt(var7, var20, var0);
+         AiPhysics.Inner_DataUtil var20 = new AiPhysics.Inner_DataUtil(1.0, 0.0, var19, var5, false, var12);
+         AiPhysics.Inner_StreamUtil var21 = AiPhysics.putAt(var7, var20, var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var7, var21, var10, var1.y())) {
             return new AiSlimeBounce.Inner_TableCache(null, false, true, var16, var17);
          }
@@ -471,13 +471,13 @@ public final class AiSlimeBounce {
             var16 = true;
          }
 
-         boolean var22 = TableIndex.putAt(var0, var21);
+         boolean var22 = AiJumpSolver.putAt(var0, var21);
          if (!var22 && (var21.horizontalCollision() || AiPaceScript.value(var0, var21))) {
             var17++;
          }
 
          var10 = putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var21) ? var21.y() : Math.max(var10, var21.y());
-         boolean var23 = TableIndex.putAt(var21);
+         boolean var23 = AiJumpSolver.putAt(var21);
          if (var22 || var23) {
             ArrayList var24 = new ArrayList(var3.prefixTail().size() + var15.size());
             var24.addAll(var3.prefixTail());
@@ -497,11 +497,11 @@ public final class AiSlimeBounce {
    }
 
    private static AiSlimeBounce.Inner_JsonCache putAt_StreamCore_JsonCac_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0,
-      NodeWalker.Inner_StreamUtil var1,
+      AiPhysics.Inner_CachePool var0,
+      AiPhysics.Inner_StreamUtil var1,
       AiSlimeBounce.Inner_TaskState var2,
-      List<NodeWalker.Inner_DataUtil> var3,
-      NodeWalker.Inner_StreamUtil var4,
+      List<AiPhysics.Inner_DataUtil> var3,
+      AiPhysics.Inner_StreamUtil var4,
       double var5,
       float var7,
       boolean var8,
@@ -514,8 +514,8 @@ public final class AiSlimeBounce {
       }
 
       double var12 = var9 ? 0.1 : -1.0;
-      if (var10 && var4.y() > var5 + 0.5 && var4.y() < var1.y() - 0.05 && TableIndex.putAt_Z_D(var4.x(), var4.y(), var4.z(), var11, var4.y())) {
-         var12 = TableIndex.putAt_D_TokenCore_TaskStat_2(var0, var4, var11, var4.y(), var7);
+      if (var10 && var4.y() > var5 + 0.5 && var4.y() < var1.y() - 0.05 && AiJumpSolver.putAt_Z_D(var4.x(), var4.y(), var4.z(), var11, var4.y())) {
+         var12 = AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var4, var11, var4.y(), var7);
       }
 
       if (var12 < -0.04) {
@@ -525,23 +525,23 @@ public final class AiSlimeBounce {
       ArrayList var14 = new ArrayList(var2.approach().size() + var3.size());
       var14.addAll(var2.approach());
       var14.addAll(var3);
-      PoolEntry var15 = new PoolEntry(var14, var1, var4, var12, Math.max(0, var2.takeoff()));
+      AiJumpManeuver var15 = new AiJumpManeuver(var14, var1, var4, var12, Math.max(0, var2.takeoff()));
       return new AiSlimeBounce.Inner_JsonCache(
          var11,
-         new TableIndex.Inner_StateCache(
+         new AiJumpSolver.Inner_StateCache(
             var2.yaw(), 0, var8, 2147483647, var14.size(), var1.x(), var1.z(), var4.x(), var4.y(), var4.z(), var4.speed(), var15.margin(), 0.0, 0.0, var15
          )
       );
    }
 
-   static boolean putAt(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, PoolEntry var2, int var3, BlockPos var4, double var5) {
+   static boolean putAt(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiJumpManeuver var2, int var3, BlockPos var4, double var5) {
       for (int var7 = var3; var7 < var2.inputs().size() + 4; var7++) {
-         NodeWalker.Inner_StreamUtil var8 = NodeWalker.putAt(var1, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7), var0);
+         AiPhysics.Inner_StreamUtil var8 = AiPhysics.putAt(var1, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7), var0);
          if (!putAt_Z_TokenCore_TaskStat(var0, var1, var8, var5, var2.start().y())) {
             return false;
          }
 
-         if (TableIndex.putAt(var0, var8)) {
+         if (AiJumpSolver.putAt(var0, var8)) {
             BlockPos var9 = BlockPos.containing(var8.x(), var8.y(), var8.z());
             return putAt(var0, var9, var4)
                && (
@@ -550,10 +550,10 @@ public final class AiSlimeBounce {
                );
          }
 
-         if (TableIndex.putAt(var8)
+         if (AiJumpSolver.putAt(var8)
             && Math.abs(var8.y() - var2.landing().y()) <= 0.02
-            && TableIndex.putAt_Z_D(var8.x(), var8.y(), var8.z(), var4, var2.landing().y())
-            && TableIndex.putAt_D_TokenCore_TaskStat_2(var0, var8, var4, var2.landing().y(), putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw()) >= -0.04) {
+            && AiJumpSolver.putAt_Z_D(var8.x(), var8.y(), var8.z(), var4, var2.landing().y())
+            && AiJumpSolver.putAt_D_TokenCore_TaskStat_2(var0, var8, var4, var2.landing().y(), putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw()) >= -0.04) {
             return true;
          }
 
@@ -564,11 +564,11 @@ public final class AiSlimeBounce {
       return false;
    }
 
-   static NodeWalker.Inner_DataUtil putAt_TokenCore_CacheHel_TaskStore_I(PoolEntry var0, int var1) {
+   static AiPhysics.Inner_DataUtil putAt_TokenCore_CacheHel_TaskStore_I(AiJumpManeuver var0, int var1) {
       return var1 < var0.inputs().size() ? var0.inputs().get(var1) : var0.inputs().getLast().withJump(false);
    }
 
-   static boolean putAt(NodeWalker.Inner_CachePool var0, BlockPos var1, BlockPos var2) {
+   static boolean putAt(AiPhysics.Inner_CachePool var0, BlockPos var1, BlockPos var2) {
       if (var1.getX() == var2.getX() && var1.getZ() == var2.getZ()) {
          if (Math.abs(var1.getY() - var2.getY()) > 4) {
             return false;
@@ -587,16 +587,16 @@ public final class AiSlimeBounce {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat(
-      NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1, NodeWalker.Inner_StreamUtil var2, double var3, double var5
+      AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1, AiPhysics.Inner_StreamUtil var2, double var3, double var5
    ) {
       return var2.y() >= var5 - 24.0
-         && !NodeWalker.fill(var0, var1, var2)
+         && !AiPhysics.fill(var0, var1, var2)
          && (!var2.onGround() || putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var2) || var3 - var2.y() <= var0.putAt_D());
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(NodeWalker.Inner_CachePool var0, NodeWalker.Inner_StreamUtil var1) {
+   static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(AiPhysics.Inner_CachePool var0, AiPhysics.Inner_StreamUtil var1) {
       if (var1.onGround() && !(var1.vy() < 0.2)) {
-         long var2 = var1.support() == -9223372036854775808L ? NodeWalker.putAt_J_AABB(var1.box(false), var1.x(), var1.y(), var1.z(), var0) : var1.support();
+         long var2 = var1.support() == -9223372036854775808L ? AiPhysics.putAt_J_AABB(var1.box(false), var1.x(), var1.y(), var1.z(), var0) : var1.support();
          BlockPos var4 = var2 == -9223372036854775808L ? BlockPos.containing(var1.x(), var1.y() - 0.15, var1.z()) : BlockPos.of(var2);
          return var0.readEx_D(var4.getX(), var4.getY(), var4.getZ()) >= 0.9;
       } else {
@@ -604,14 +604,14 @@ public final class AiSlimeBounce {
       }
    }
 
-   private record Inner_BitCore(NodeWalker.Inner_StreamUtil state, float yaw, int ticks) {
+   private record Inner_BitCore(AiPhysics.Inner_StreamUtil state, float yaw, int ticks) {
    }
 
-   record Inner_JsonCache(BlockPos cell, TableIndex.Inner_StateCache plan) {
+   record Inner_JsonCache(BlockPos cell, AiJumpSolver.Inner_StateCache plan) {
    }
 
    private record Inner_JsonEntry(
-      NodeWalker.Inner_StreamUtil state, List<NodeWalker.Inner_DataUtil> prefixTail, float cam, double peak, boolean headBonked, int wallHits
+      AiPhysics.Inner_StreamUtil state, List<AiPhysics.Inner_DataUtil> prefixTail, float cam, double peak, boolean headBonked, int wallHits
    ) {
    }
 
@@ -624,6 +624,6 @@ public final class AiSlimeBounce {
       }
    }
 
-   private record Inner_TaskState(NodeWalker.Inner_StreamUtil state, List<NodeWalker.Inner_DataUtil> approach, float yaw, int takeoff) {
+   private record Inner_TaskState(AiPhysics.Inner_StreamUtil state, List<AiPhysics.Inner_DataUtil> approach, float yaw, int takeoff) {
    }
 }

@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.a.HashUtil;
+import autismclient.ai.a.AiGoto;
 import autismclient.api.ai.AiCapabilities;
 import autismclient.api.ai.AiCapabilityDescriptor;
 import autismclient.api.custommenu.CustomMenuAdapterRegistry;
@@ -43,7 +43,7 @@ public final class AiCatalog {
          autismclient.modules.al.init_I(),
          autismclient.commands.CommandManager.init_I(),
          AiCapabilities.revision(),
-         ck.init_Str(),
+         AiSourceKnowledge.init_Str(),
          MacroActionRegistry.entries().stream().map(ex -> ex.typeId()).toList(),
          CustomMenuAdapterRegistry.ids()
       );
@@ -56,7 +56,7 @@ public final class AiCatalog {
 
             for (Setting<?, ?> s : m.settings()) {
                settings.add(
-                  ag.init_JsonObject_ObjArr(
+                  AiJson.init_JsonObject_ObjArr(
                      "id",
                      s.id(),
                      "label",
@@ -84,7 +84,7 @@ public final class AiCatalog {
                }
             }
 
-            String schema = ag.init_JsonObject_ObjArr(
+            String schema = AiJson.init_JsonObject_ObjArr(
                   "enabled",
                   "boolean, optional",
                   "settings",
@@ -101,7 +101,7 @@ public final class AiCatalog {
                "module:" + m.id(),
                m.isAddon() ? "addon-module" : "autism",
                "modules/" + m.category().load(),
-               m.name() + ": " + m.description() + ck.init(m.getClass()),
+               m.name() + ": " + m.description() + AiSourceKnowledge.init(m.getClass()),
                List.of(m.name(), m.category().load()),
                schema,
                "Available in the installed registry; world/container requirements and hidden-state restrictions are checked at execution.",
@@ -109,7 +109,7 @@ public final class AiCatalog {
                List.of("MODULES"),
                "Module activation and setting readback match the requested values; gameplay outcomes require separate observations.",
                "Inspect current state and availability after rejection. Do not repeatedly enable a self-disabling module.",
-               ag.init_JsonObject_ObjArr("capability", "module:" + m.id(), "arguments", ag.init_JsonObject_ObjArr("enabled", true)).toString(),
+               AiJson.init_JsonObject_ObjArr("capability", "module:" + m.id(), "arguments", AiJson.init_JsonObject_ObjArr("enabled", true)).toString(),
                m.settingsShareable() && !m.id().equals("ai-assistant")
                   ? AiCapabilityDescriptor.Classification.CONFIGURE
                   : AiCapabilityDescriptor.Classification.DISCOVER_ONLY
@@ -177,7 +177,7 @@ public final class AiCatalog {
             );
          }
 
-         for (AiCapabilityDescriptor d : cz.init_List()) {
+         for (AiCapabilityDescriptor d : AiTools.init_List()) {
             init(entries, d, "{}");
          }
 
@@ -196,7 +196,7 @@ public final class AiCatalog {
             }
          }
 
-         this.init_AiCatalog_Snapshot = new AiCatalog.Snapshot(ag.init_Str_Str(ag.init.toJson(unique)), unique);
+         this.init_AiCatalog_Snapshot = new AiCatalog.Snapshot(AiJson.init_Str_Str(AiJson.init.toJson(unique)), unique);
          this.init_J = source;
       }
    }
@@ -218,20 +218,20 @@ public final class AiCatalog {
 
       for (String form : shown) {
          if (!form.contains("<")) {
-            calls.add(ag.init_JsonObject_ObjArr("capability", "command:" + name, "arguments", ag.init_JsonObject_ObjArr("body", form)));
+            calls.add(AiJson.init_JsonObject_ObjArr("capability", "command:" + name, "arguments", AiJson.init_JsonObject_ObjArr("body", form)));
          }
       }
 
       if (calls.isEmpty()) {
-         calls.add(ag.init_JsonObject_ObjArr("capability", "command:" + name, "arguments", ag.init_JsonObject_ObjArr("body", shown.get(0))));
+         calls.add(AiJson.init_JsonObject_ObjArr("capability", "command:" + name, "arguments", AiJson.init_JsonObject_ObjArr("body", shown.get(0))));
       }
 
-      String schema = ag.init_JsonObject_ObjArr(
+      String schema = AiJson.init_JsonObject_ObjArr(
             "type",
             "object",
             "properties",
-            ag.init_JsonObject_ObjArr(
-               "body", ag.init_JsonObject_ObjArr("type", "string", "description", "Chat line without the client prefix. Forms: " + syntax)
+            AiJson.init_JsonObject_ObjArr(
+               "body", AiJson.init_JsonObject_ObjArr("type", "string", "description", "Chat line without the client prefix. Forms: " + syntax)
             )
          )
          .toString();
@@ -247,18 +247,18 @@ public final class AiCatalog {
          List.of("NETWORK", "WORLD_ACTION"),
          "SUCCEEDED means the client parsed and ran the line; data.replies[] holds the command's own chat replies (a red reply FAILS the call with its text). Read them for the outcome instead of re-observing.",
          "A parse FAILURE lists every accepted form: fix the body and perform again. Never repeat a refused line unchanged.",
-         ag.init_JsonObject_ObjArr("note", "replace <placeholders> with values", "calls", calls).toString(),
+         AiJson.init_JsonObject_ObjArr("note", "replace <placeholders> with values", "calls", calls).toString(),
          AiCapabilityDescriptor.Classification.ACTION
       );
    }
 
    static void init(List<AiCatalog.Entry> entries, String id, MacroAction action, ActionFieldSchema schema, String owner, String tip) {
       String defaults = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.init_CompoundTag_MacroAction(action)).toString();
-      String fields = ag.init_JsonObject_ObjArr(
+      String fields = AiJson.init_JsonObject_ObjArr(
             "fields",
             schema == null ? List.of() : schema.fields(),
             "serializedDefaults",
-            ag.init_JsonObject_Str(defaults),
+            AiJson.init_JsonObject_Str(defaults),
             "dynamicBindings",
             "Optional _dynamicBindings object maps schema fields marked dynamic to native {variable} templates. Keep typed fallback values in ordinary fields."
          )
@@ -270,9 +270,9 @@ public final class AiCatalog {
          .findFirst()
          .orElse(null);
       String semantics = (
-            action.getType() == null ? "Legacy add-on action; behavior is undocumented until its owner contributes an AI contract." : an.init(action.getType())
+            action.getType() == null ? "Legacy add-on action; behavior is undocumented until its owner contributes an AI contract." : AiMacroValidator.init(action.getType())
          )
-         + ck.init(action.getClass());
+         + AiSourceKnowledge.init(action.getClass());
       if (contributed != null) {
          semantics = "Owning contract v"
             + contributed.version()
@@ -322,7 +322,7 @@ public final class AiCatalog {
          );
       }
 
-      init(entries, descriptor, defaults, ck.load(action.getClass()) + ck.load(autismclient.util.AutismMacro.class) + ck.load(an.class));
+      init(entries, descriptor, defaults, AiSourceKnowledge.load(action.getClass()) + AiSourceKnowledge.load(autismclient.util.AutismMacro.class) + AiSourceKnowledge.load(AiMacroValidator.class));
    }
 
    static AiCapabilityDescriptor init(
@@ -350,88 +350,88 @@ public final class AiCatalog {
       if (d.id().startsWith("module:")) {
          Module module = autismclient.modules.al.init_Module_Str(d.id().substring(7));
          if (module != null) {
-            dependency = ck.load(module.getClass());
+            dependency = AiSourceKnowledge.load(module.getClass());
          }
       } else if (d.id().startsWith("command:")) {
          dependency = autismclient.commands.CommandManager.init_List()
             .stream()
             .filter(c -> d.id().equals("command:" + autismclient.commands.CommandManager.init_Str(c)))
-            .map(c -> ck.load(c.getClass()))
+            .map(c -> AiSourceKnowledge.load(c.getClass()))
             .findFirst()
             .orElse("");
       } else if (d.owner().equals("autism")) {
-         dependency = ck.load(R.class)
-            + ck.load(T.class)
-            + ck.load(ae.class)
-            + ck.load(PkgCls_b.class)
-            + ck.load(y.class)
-            + ck.load(cu.class)
-            + ck.load(MethodUtil.class)
-            + ck.load(TokenStore.class)
-            + ck.load(aI.class)
-            + ck.load(aJ.class)
-            + ck.load(cb.class)
-            + ck.load(ai.class)
-            + ck.load(cN.class)
-            + ck.load(bY.class)
-            + ck.load(cq.class)
-            + ck.load(TableIndex.class)
-            + ck.load(UtilCore.class)
-            + ck.load(s.class)
-            + ck.load(aG.class)
-            + ck.load(CachePool.class)
-            + ck.load(ct.class)
-            + ck.load(bN.class)
-            + ck.load(p.class)
-            + ck.load(by.class)
-            + ck.load(i.class)
-            + ck.load(au.class)
-            + ck.load(cK.class)
-            + ck.load(RefQueue.class)
-            + ck.load(KeyHolder.class)
-            + ck.load(af.class)
-            + ck.load(e.class)
-            + ck.load(g.class)
-            + ck.load(aE.class)
-            + ck.load(ValueSink.class)
-            + ck.load(PkgCls_a.class)
-            + ck.load(w.class)
-            + ck.load(ci.class)
-            + ck.load(cB.class)
-            + ck.load(B.class)
-            + ck.load(n.class)
-            + ck.load(bz.class)
-            + ck.load(X.class)
-            + ck.load(j.class)
-            + ck.load(bE.class)
-            + ck.load(aS.class)
-            + ck.load(aU.class)
-            + ck.load(ch.class)
-            + ck.load(L.class)
-            + ck.load(TextFormat.class)
-            + ck.load(bI.class)
-            + ck.load(bF.class)
-            + ck.load(bC.class)
-            + ck.load(cx.class)
-            + ck.load(autismclient.ai.a.DataUtil.class)
-            + ck.load(autismclient.ai.a.DataPipe.class)
-            + ck.load(autismclient.ai.a.ClassCache.class)
-            + ck.load(autismclient.ai.a.AiWrExecutor.class)
-            + ck.load(autismclient.ai.a.AiPaceScript.class)
-            + ck.load(autismclient.ai.a.AiPacePlayback.class)
-            + ck.load(autismclient.ai.a.AiWallJump.class)
-            + ck.load(autismclient.ai.a.AiLadderJump.class)
-            + ck.load(autismclient.ai.a.AiSlimeBounce.class)
-            + ck.load(AiParkourRoute.class)
-            + ck.load(HashUtil.class)
-            + ck.load(autismclient.ai.a.TokenStore.class);
+         dependency = AiSourceKnowledge.load(AiGameOperations.class)
+            + AiSourceKnowledge.load(AiGameplay.class)
+            + AiSourceKnowledge.load(AiInventoryController.class)
+            + AiSourceKnowledge.load(AiContainerTransactions.class)
+            + AiSourceKnowledge.load(AiExpectations.class)
+            + AiSourceKnowledge.load(AiTerrain.class)
+            + AiSourceKnowledge.load(AiChatOps.class)
+            + AiSourceKnowledge.load(AiChatLedger.class)
+            + AiSourceKnowledge.load(AiPacketLog.class)
+            + AiSourceKnowledge.load(AiPacketSend.class)
+            + AiSourceKnowledge.load(AiServerIntel.class)
+            + AiSourceKnowledge.load(AiLanSync.class)
+            + AiSourceKnowledge.load(AiWorldReaders.class)
+            + AiSourceKnowledge.load(AiScreens.class)
+            + AiSourceKnowledge.load(AiSurvival.class)
+            + AiSourceKnowledge.load(AiBuilder.class)
+            + AiSourceKnowledge.load(AiCommandOp.class)
+            + AiSourceKnowledge.load(AiEnchant.class)
+            + AiSourceKnowledge.load(AiOracle.class)
+            + AiSourceKnowledge.load(AiAddons.class)
+            + AiSourceKnowledge.load(AiTelly.class)
+            + AiSourceKnowledge.load(AiScaffoldWalk.class)
+            + AiSourceKnowledge.load(AiDodge.class)
+            + AiSourceKnowledge.load(AiProjectiles.class)
+            + AiSourceKnowledge.load(AiDanger.class)
+            + AiSourceKnowledge.load(AiMlg.class)
+            + AiSourceKnowledge.load(AiWorldCreate.class)
+            + AiSourceKnowledge.load(AiChop.class)
+            + AiSourceKnowledge.load(AiCollect.class)
+            + AiSourceKnowledge.load(AiItems.class)
+            + AiSourceKnowledge.load(AiCraft.class)
+            + AiSourceKnowledge.load(AiCraftPlanner.class)
+            + AiSourceKnowledge.load(AiObtain.class)
+            + AiSourceKnowledge.load(AiCombat.class)
+            + AiSourceKnowledge.load(AiContainer.class)
+            + AiSourceKnowledge.load(AiEquip.class)
+            + AiSourceKnowledge.load(AiSmelt.class)
+            + AiSourceKnowledge.load(AiTrade.class)
+            + AiSourceKnowledge.load(AiFarm.class)
+            + AiSourceKnowledge.load(AiDimension.class)
+            + AiSourceKnowledge.load(AiProspect.class)
+            + AiSourceKnowledge.load(AiGuard.class)
+            + AiSourceKnowledge.load(AiDeathLog.class)
+            + AiSourceKnowledge.load(AiRecover.class)
+            + AiSourceKnowledge.load(AiPlan.class)
+            + AiSourceKnowledge.load(AiPlanRunner.class)
+            + AiSourceKnowledge.load(AiSleep.class)
+            + AiSourceKnowledge.load(AiFish.class)
+            + AiSourceKnowledge.load(AiBucket.class)
+            + AiSourceKnowledge.load(AiRide.class)
+            + AiSourceKnowledge.load(AiRedstone.class)
+            + AiSourceKnowledge.load(AiRanged.class)
+            + AiSourceKnowledge.load(AiTidy.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiAim.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiPlacer.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiPathfinder.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiWrExecutor.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiPaceScript.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiPacePlayback.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiWallJump.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiLadderJump.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiSlimeBounce.class)
+            + AiSourceKnowledge.load(AiParkourRoute.class)
+            + AiSourceKnowledge.load(AiGoto.class)
+            + AiSourceKnowledge.load(autismclient.ai.a.AiMine.class);
       }
 
       init(entries, d, defaults, dependency);
    }
 
    private static void init(List<AiCatalog.Entry> entries, AiCapabilityDescriptor d, String defaults, String dependency) {
-      entries.add(new AiCatalog.Entry(d, ag.init_Str_Str(ag.init.toJson(d) + defaults + dependency), defaults));
+      entries.add(new AiCatalog.Entry(d, AiJson.init_Str_Str(AiJson.init.toJson(d) + defaults + dependency), defaults));
    }
 
    public record Entry(AiCapabilityDescriptor contract, String fingerprint, String defaultsJson) {

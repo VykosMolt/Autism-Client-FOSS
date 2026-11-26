@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.cc;
+import autismclient.ai.AiService;
 import autismclient.modules.AntiWebModule;
 import autismclient.modules.NoSlowModule;
 import autismclient.modules.FreecamController;
@@ -72,7 +72,7 @@ public class AutismEntityMovementMixin {
          } else if (RemoteViewController.init_Z()) {
             ci.cancel();
          } else if (!AutismLiteVariant.enabled()) {
-            cc ai = cc.load_cc();
+            AiService ai = AiService.load_cc();
             if (ai != null && ai.close_Z()) {
                ci.cancel();
             }

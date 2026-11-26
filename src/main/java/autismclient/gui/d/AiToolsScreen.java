@@ -1,7 +1,7 @@
 package autismclient.gui.d;
 
 import autismclient.ai.AiToolSettings;
-import autismclient.ai.o;
+import autismclient.ai.AiDirectOps;
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.b.ToggleSwitchRenderer;
 import autismclient.util.bi;
@@ -43,8 +43,8 @@ public final class AiToolsScreen extends Screen {
    public AiToolsScreen(Screen parent) {
       super(Component.literal("AI Tools"));
       this.init_Screen = parent;
-      this.init_AiToolSettings = o.init_AiToolSettings().copy();
-      this.init_Z = o.init_AiSettings().aiSilentAim;
+      this.init_AiToolSettings = AiDirectOps.init_AiToolSettings().copy();
+      this.init_Z = AiDirectOps.init_AiSettings().aiSilentAim;
       this.init_RefQueue = new autismclient.gui.f.b.DropdownMenu(
          autismclient.gui.f.NetHelper.init(0, 0, 0, 0),
          List.of("fastest", "safest", "saver"),
@@ -372,8 +372,8 @@ public final class AiToolsScreen extends Screen {
    }
 
    private void load_V() {
-      o.init(this.init_AiToolSettings.copy());
-      o.init(settings -> settings.aiSilentAim = this.init_Z);
+      AiDirectOps.init(this.init_AiToolSettings.copy());
+      AiDirectOps.init(settings -> settings.aiSilentAim = this.init_Z);
       bi.load("AI tool settings saved");
    }
 

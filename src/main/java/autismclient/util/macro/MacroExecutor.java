@@ -8491,7 +8491,7 @@ public class MacroExecutor {
          int timeoutSeconds = Math.max(1, goToAction.timeoutMs / 1000);
          MacroExecutor.Inner_TableIndex run = init_ThreadLocal.get();
          AiOperation op = init_AiOperation_Minecraft(
-            mc, run, () -> autismclient.ai.a.HashUtil.init_AiOperation_BlockPos(target, radius, false, true, true, timeoutSeconds), false
+            mc, run, () -> autismclient.ai.a.AiGoto.init_AiOperation_BlockPos(target, radius, false, true, true, timeoutSeconds), false
          );
          if (op == null) {
             AutismClientMessaging.sendPrefixed("Failed to start navigation.");
@@ -8572,7 +8572,7 @@ public class MacroExecutor {
                   mineArgs.addProperty("block", blockArg);
                   mineArgs.addProperty("count", count);
                   mineArgs.addProperty("timeoutSeconds", opTimeoutSeconds);
-                  AiOperation op = init_AiOperation_Minecraft(mc, run, () -> autismclient.ai.a.TokenStore.init(mineArgs), mineAction.h_());
+                  AiOperation op = init_AiOperation_Minecraft(mc, run, () -> autismclient.ai.a.AiMine.init(mineArgs), mineAction.h_());
                   if (op == null) {
                      AutismClientMessaging.sendPrefixed("Failed to start mining.");
                      return;

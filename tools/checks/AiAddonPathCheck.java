@@ -14,7 +14,7 @@ public class AiAddonPathCheck {
 
    static boolean accepted(Path addon, String relative) {
       try {
-         CachePool.init(addon, relative);
+         AiAddons.init(addon, relative);
          return true;
       } catch (IllegalArgumentException e) {
          return false;
@@ -40,7 +40,7 @@ public class AiAddonPathCheck {
       check(accepted(root.resolve("missing"), "src/A.java"), "addon dir not created yet accepted");
 
       // A8: cleanup deletes the link, not what it points to
-      Method cleanup = CachePool.class.getDeclaredMethod("load", Path.class);
+      Method cleanup = AiAddons.class.getDeclaredMethod("load", Path.class);
       cleanup.setAccessible(true);
       cleanup.invoke(null, addon);
       check(!Files.exists(addon), "addon dir removed");

@@ -1,6 +1,6 @@
 package autismclient.modules;
 
-import autismclient.ai.cc;
+import autismclient.ai.AiService;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.GridWalkNavigator;
 import autismclient.util.RemoteViewController;
@@ -53,8 +53,8 @@ public final class FreecamController {
          return false;
       }
 
-      cc ai = cc.load_cc();
-      return ai != null && ai.open_Z() || autismclient.ai.o.load_Z();
+      AiService ai = AiService.load_cc();
+      return ai != null && ai.open_Z() || autismclient.ai.AiDirectOps.load_Z();
    }
 
    public static boolean init_Z_KeyMapping(KeyMapping mapping) {

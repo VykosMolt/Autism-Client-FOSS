@@ -38,11 +38,11 @@ public final class AuditBuilderLifeguard {
 
       boolean wet = p.isInWater() || p.isEyeInFluid(FluidTags.WATER);
       boolean danger = wet && (p.getAirSupply() < 200 || p.getHealth() < 10.0F);
-      if (danger && !active && cc.auditIsSchematicBuildRunning()) {
+      if (danger && !active && AiService.auditIsSchematicBuildRunning()) {
          active = true;
          activeTicks = 0;
          land = null;
-         cc assistant = cc.load_cc();
+         AiService assistant = AiService.load_cc();
          if (assistant != null) {
             assistant.update_V();
             LOG.info("lifeguard: stopped the AI operation");

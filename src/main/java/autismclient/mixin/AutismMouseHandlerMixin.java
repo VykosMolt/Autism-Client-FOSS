@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.ai.aP;
-import autismclient.ai.cc;
+import autismclient.ai.AiService;
 import autismclient.compat263.Compat263;
 import autismclient.compat263.CompatGLFW;
 import autismclient.modules.AutoTotemModule;
@@ -115,7 +115,7 @@ public abstract class AutismMouseHandlerMixin {
    private void autism$clearQueuedMouseInputWhenUnavailable(CallbackInfo ci) {
       MouseDeltaAccumulator.init(this.accumulatedDX, this.accumulatedDY, AutismSessionState.init_ck().state_I());
       if (!AutismLiteVariant.enabled() && this.minecraft.gui.screen() == null && (Math.abs(this.accumulatedDX) > 0.5 || Math.abs(this.accumulatedDY) > 0.5)) {
-         cc ai = cc.load_cc();
+         AiService ai = AiService.load_cc();
          if (ai != null) {
             ai.flush_V("Manual camera movement; AI controls released");
          }
@@ -131,7 +131,7 @@ public abstract class AutismMouseHandlerMixin {
             Screen screen = this.minecraft == null ? null : this.minecraft.gui.screen();
             boolean gameplay = screen == null ? ((MouseHandler)(Object)this).isMouseGrabbed() : screen instanceof AbstractContainerScreen;
             if (gameplay && CompatGLFW.glfwGetMouseButton(window, Compat263.mouseInfoGlfwButton(button)) == 1) {
-               cc ai = cc.load_cc();
+               AiService ai = AiService.load_cc();
                if (ai != null) {
                   ai.flush_V("Manual interaction; AI operation paused");
                }
@@ -170,7 +170,7 @@ public abstract class AutismMouseHandlerMixin {
    @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
    private void autism$freecamScrollSpeed(long window, double xOffset, double yOffset, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled() && this.minecraft != null && this.minecraft.gui.screen() == null && yOffset != 0.0) {
-         cc ai = cc.load_cc();
+         AiService ai = AiService.load_cc();
          if (ai != null) {
             ai.flush_V("Manual hotbar selection; AI operation paused");
          }
@@ -182,7 +182,7 @@ public abstract class AutismMouseHandlerMixin {
          ci.cancel();
       } else {
          if (!AutismLiteVariant.enabled()) {
-            cc ai = cc.load_cc();
+            AiService ai = AiService.load_cc();
             if (this.minecraft != null && this.minecraft.gui.screen() == null && ai != null && ai.close_Z()) {
                ci.cancel();
                return;

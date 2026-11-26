@@ -13,12 +13,12 @@ final class BedTargetAimSolver {
    }
 
    static Vec3 init(
-      autismclient.ai.a.NodeWalker.Inner_StreamUtil state,
-      autismclient.ai.a.NodeWalker.Inner_DataUtil input,
-      autismclient.ai.a.NodeWalker.Inner_CachePool world,
+      autismclient.ai.a.AiPhysics.Inner_StreamUtil state,
+      autismclient.ai.a.AiPhysics.Inner_DataUtil input,
+      autismclient.ai.a.AiPhysics.Inner_CachePool world,
       double eyeHeight
    ) {
-      return autismclient.ai.a.NodeWalker.init(state, input, world).position().add(0.0, eyeHeight, 0.0);
+      return autismclient.ai.a.AiPhysics.init(state, input, world).position().add(0.0, eyeHeight, 0.0);
    }
 
    static boolean init(List<AABB> boxes, Vec3 eye, double reach) {

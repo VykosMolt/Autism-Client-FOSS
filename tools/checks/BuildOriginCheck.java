@@ -7,12 +7,12 @@ import net.minecraft.core.BlockPos;
 public final class BuildOriginCheck {
    public static void main(String[] a) {
       BlockPos player = new BlockPos(1, 2, 3);
-      check(TableIndex.auditOrigin(JsonParser.parseString("{}").getAsJsonObject(), player).equals(player), "missing origin uses the player");
-      check(TableIndex.auditOrigin(JsonParser.parseString("{\"origin\":null}").getAsJsonObject(), player).equals(player), "null origin uses the player");
-      check(TableIndex.auditOrigin(JsonParser.parseString("{\"origin\":{\"x\":100,\"y\":64,\"z\":-5}}").getAsJsonObject(), player).equals(new BlockPos(100, 64, -5)), "object origin");
+      check(AiBuilder.auditOrigin(JsonParser.parseString("{}").getAsJsonObject(), player).equals(player), "missing origin uses the player");
+      check(AiBuilder.auditOrigin(JsonParser.parseString("{\"origin\":null}").getAsJsonObject(), player).equals(player), "null origin uses the player");
+      check(AiBuilder.auditOrigin(JsonParser.parseString("{\"origin\":{\"x\":100,\"y\":64,\"z\":-5}}").getAsJsonObject(), player).equals(new BlockPos(100, 64, -5)), "object origin");
       for (String bad : new String[]{"\"100,64,100\"", "[100,64,100]", "7"}) {
          try {
-            TableIndex.auditOrigin(JsonParser.parseString("{\"origin\":" + bad + "}").getAsJsonObject(), player);
+            AiBuilder.auditOrigin(JsonParser.parseString("{\"origin\":" + bad + "}").getAsJsonObject(), player);
             check(false, "origin " + bad + " is rejected");
          } catch (IllegalArgumentException expected) {
          }

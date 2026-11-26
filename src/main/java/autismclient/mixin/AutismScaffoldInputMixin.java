@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.ai.a.PacketUtil;
+import autismclient.ai.a.AiFallGuard;
 import autismclient.modules.AutoTotemModule;
 import autismclient.modules.BedDefenderModule;
 import autismclient.modules.AntiKnockbackModule;
@@ -44,7 +44,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
       Input bed = BedDefenderModule.init_Input_ClientInput_Input_2(this, aura);
       Input safe = SafeWalkModule.init(this, bed);
       if (!AutismLiteVariant.enabled()) {
-         safe = PacketUtil.init(this, safe);
+         safe = AiFallGuard.init(this, safe);
       }
 
       Input totem = AutoTotemModule.init_Input_ClientInput_Input(this, safe);

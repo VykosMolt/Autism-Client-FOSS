@@ -1,6 +1,6 @@
 package autismclient.gui.d;
 
-import autismclient.ai.cV;
+import autismclient.ai.SchematicWorkspace;
 import autismclient.api.module.Setting;
 import autismclient.compat263.Compat263;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
@@ -348,8 +348,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private void write() {
       OverlayManager manager = OverlayManager.init_bk();
       if (!AutismLiteVariant.enabled()) {
-         autismclient.ai.ConfigStore.init_ConfigStore().load_V();
-         cV.read_V();
+         autismclient.ai.AiAssistant.init_ConfigStore().load_V();
+         SchematicWorkspace.read_V();
       }
 
       this.init_AutismMacroListOve = this.init(AutismMacroListOverlay.class, null);
@@ -539,7 +539,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       this.init_V_cX(this.init_AutismKeybindOverl);
       this.init_V_cX(this.init_AutismAdminToolsOv);
       if (!AutismLiteVariant.enabled()) {
-         AutismOverlay assistant = autismclient.ai.ConfigStore.init_ConfigStore().init_cX();
+         AutismOverlay assistant = autismclient.ai.AiAssistant.init_ConfigStore().init_cX();
          if (assistant != null && !assistant.f_()) {
             this.init_V_cX(assistant);
          }
@@ -652,11 +652,11 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private void load(String id) {
       if ("schematics".equals(id)) {
          if (!AutismLiteVariant.enabled()) {
-            cV.load_V();
+            SchematicWorkspace.load_V();
          }
       } else if ("ai".equals(id)) {
          if (!AutismLiteVariant.enabled()) {
-            autismclient.ai.ConfigStore.init_ConfigStore().read();
+            autismclient.ai.AiAssistant.init_ConfigStore().read();
          }
       } else if ("macros".equals(id)) {
          this.open();

@@ -86,14 +86,14 @@ public final class AiMemoryStore {
             }
 
             JsonObject root = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
-            if (ag.init_I_JsonObject(root, "version", 0) != 1) {
+            if (AiJson.init_I_JsonObject(root, "version", 0) != 1) {
                throw new IllegalArgumentException("Unsupported memory version");
             }
 
             Map<String, AiMemoryStore.Memory> loaded = new LinkedHashMap<>();
 
             for (JsonElement e : root.getAsJsonArray("records")) {
-               AiMemoryStore.Memory m = ag.init.fromJson(e, AiMemoryStore.Memory.class);
+               AiMemoryStore.Memory m = AiJson.init.fromJson(e, AiMemoryStore.Memory.class);
                if (m == null || m.id() == null || m.id().isBlank() || m.kind() == null || m.scope() == null || m.text() == null || m.catalogRevision() == null) {
                   throw new IllegalArgumentException("Incomplete memory record");
                }
@@ -212,7 +212,7 @@ public final class AiMemoryStore {
          this.read_Map.remove(this.read_Map.keySet().iterator().next());
       }
 
-      this.init_V_Str_JsonElement("observation", ag.init.toJsonTree(observation));
+      this.init_V_Str_JsonElement("observation", AiJson.init.toJsonTree(observation));
    }
 
    public synchronized AiMemoryStore.Memory init(
@@ -377,12 +377,12 @@ public final class AiMemoryStore {
    }
 
    public synchronized void read() throws IOException {
-      JsonObject snapshot = ag.init_JsonObject_ObjArr("version", 1, "records", this.init_Map.values(), "epochs", this.load_Map);
+      JsonObject snapshot = AiJson.init_JsonObject_ObjArr("version", 1, "records", this.init_Map.values(), "epochs", this.load_Map);
       if (snapshot.toString().getBytes(StandardCharsets.UTF_8).length > 15000000) {
          throw new IOException("Memory capacity reached; inspect and prune records before adding more");
       }
 
-      ag.init_V_Path_Obj(this.init_Path.resolve("memory.json"), snapshot);
+      AiJson.init_V_Path_Obj(this.init_Path.resolve("memory.json"), snapshot);
       this.sync();
    }
 
@@ -394,10 +394,10 @@ public final class AiMemoryStore {
    public synchronized void init_V_Str_JsonElement(String event, JsonElement data) throws IOException {
       Files.createDirectories(this.init_Path);
       Path file = this.init_Path.resolve("journal-" + LocalDate.now() + ".jsonl");
-      ag.auditPrivateFile(file);
+      AiJson.auditPrivateFile(file);
       Files.writeString(
          file,
-         ag.init_JsonObject_ObjArr("at", System.currentTimeMillis(), "event", event, "data", data) + "\n",
+         AiJson.init_JsonObject_ObjArr("at", System.currentTimeMillis(), "event", event, "data", data) + "\n",
          StandardOpenOption.CREATE,
          StandardOpenOption.APPEND
       );

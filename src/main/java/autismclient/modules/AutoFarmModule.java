@@ -1,6 +1,6 @@
 package autismclient.modules;
 
-import autismclient.ai.ca;
+import autismclient.ai.AiServerEvidence;
 import autismclient.api.module.BoolSetting;
 import autismclient.api.module.IntSetting;
 import autismclient.api.module.RegistryListSetting;
@@ -2183,7 +2183,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    private void init_V_BlockPos_2(BlockPos pos, Block crop, int tick) {
       this.init_V_BlockPos_2(pos);
       if ((this.bool("replant") || this.bool("plant")) && autismclient.util.FarmCropCatalog.init_Item_Block(crop) != null && this.init_ac.init_Obj(pos.asLong()) == null) {
-         this.init_ac.init(pos.asLong(), new AutoFarmModule.Inner_StreamUtil(pos.immutable(), crop, tick, ca.init_J_BlockPos(pos), false));
+         this.init_ac.init(pos.asLong(), new AutoFarmModule.Inner_StreamUtil(pos.immutable(), crop, tick, AiServerEvidence.init_J_BlockPos(pos), false));
       }
    }
 
@@ -2192,7 +2192,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       ClientPacketListener connection = MC.getConnection();
       PlayerInfo info = connection == null ? null : connection.getPlayerInfo(MC.player.getUUID());
       if (entry.init_Z() && !autismclient.util.BlockBreakGraceCalc.init(now, entry.init_I(), info == null ? 0 : info.getLatency())) {
-         ca.Inner_DataUtil update = ca.init_ca_DataUtil_BlockPos(entry.init_BlockPos());
+         AiServerEvidence.Inner_DataUtil update = AiServerEvidence.init_ca_DataUtil_BlockPos(entry.init_BlockPos());
          return update == null || update.revision() <= entry.init_J() || !update.state().isAir();
       } else {
          return true;
@@ -2209,7 +2209,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                if (MC.level.hasChunkAt(pos) && tick != entry.init_I()) {
                   BlockState state = MC.level.getBlockState(pos);
                   if (state.is(entry.init_Block())) {
-                     ca.Inner_DataUtil update = ca.init_ca_DataUtil_BlockPos(pos);
+                     AiServerEvidence.Inner_DataUtil update = AiServerEvidence.init_ca_DataUtil_BlockPos(pos);
                      return !this.load(state)
                         && update != null
                         && update.revision() > entry.init_J()
@@ -2221,7 +2221,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
                      return true;
                   }
 
-                  ca.Inner_DataUtil update = ca.init_ca_DataUtil_BlockPos(pos);
+                  AiServerEvidence.Inner_DataUtil update = AiServerEvidence.init_ca_DataUtil_BlockPos(pos);
                   if (!entry.init_Z() && update != null && update.revision() > entry.init_J() && update.state().isAir()) {
                      this.init_ac.init(pos.asLong(), new AutoFarmModule.Inner_StreamUtil(pos, entry.init_Block(), tick, entry.init_J(), true));
                   }

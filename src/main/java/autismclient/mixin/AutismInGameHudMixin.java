@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.AutismClientAddon;
-import autismclient.ai.cG;
+import autismclient.ai.AiVisualization;
 import autismclient.e.PathHelper;
 import autismclient.gui.f.UiClipStack;
 import autismclient.gui.f.NetHelper;
@@ -82,7 +82,7 @@ public abstract class AutismInGameHudMixin {
          boolean macroFrameWork = MacroExecutor.flush_Z();
          cf.Inner_DataUtil activity = cf.init_cf_DataUtil();
          long hudWork = 31168L;
-         boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && cG.load_Z();
+         boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && AiVisualization.load_Z();
          boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.load();
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
             UiClipStack.init_HashUtil().load(context);
@@ -141,7 +141,7 @@ public abstract class AutismInGameHudMixin {
                         : null;
                      ArrayList<AutismHudManager.Inner_BufferHelper> hudOccluders = new ArrayList<>(3);
                      if (!AutismLiteVariant.enabled() && aiPlan) {
-                        NetHelper b = cG.init_NetHelper(context);
+                        NetHelper b = AiVisualization.init_NetHelper(context);
                         hudOccluders.add(new AutismHudManager.Inner_BufferHelper("ai_plan", b.read(), b.write(), b.update(), b.sync()));
                      }
 
@@ -215,7 +215,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && aiPlan) {
-                        cG.init_V(context);
+                        AiVisualization.init_V(context);
                      }
 
                      y = 0;

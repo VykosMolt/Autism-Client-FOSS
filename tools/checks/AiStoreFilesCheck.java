@@ -20,14 +20,14 @@ public class AiStoreFilesCheck {
    }
 
    static JsonObject user(String text) {
-      return ag.init_JsonObject_ObjArr("role", "user", "content", text);
+      return AiJson.init_JsonObject_ObjArr("role", "user", "content", text);
    }
 
    public static void main(String[] args) throws Exception {
       Path dir = Files.createTempDirectory("ai-store");
 
       // A6: after a rotation, replay still sees the archived lines, oldest first
-      cd store = new cd(dir);
+      AiSessions store = new AiSessions(dir);
       String big = "x".repeat(900000);
       for (int i = 0; i < 5; i++) {
          store.init_V_Str_JsonObject("s", user("old-" + i + big));
@@ -45,7 +45,7 @@ public class AiStoreFilesCheck {
 
       // N5: trace rotation keeps older generations
       Path trace = dir.resolve("trace/ai-trace-s.jsonl");
-      bL t = new bL(trace, System.currentTimeMillis(), 300L);
+      AiRunTrace t = new AiRunTrace(trace, System.currentTimeMillis(), 300L);
       for (int i = 0; i < 20; i++) {
          t.read("split-" + i, "y".repeat(100));
       }

@@ -33,9 +33,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private static final int pop = 2;
    private static final int tick = 14;
    private static final DateTimeFormatter init_DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
-   private static final Comparator<cR.Inner_DataUtil> init_Comparator = Comparator.comparing(cR.Inner_DataUtil::name, String.CASE_INSENSITIVE_ORDER)
+   private static final Comparator<SchematicLibrary.Inner_DataUtil> init_Comparator = Comparator.comparing(SchematicLibrary.Inner_DataUtil::name, String.CASE_INSENSITIVE_ORDER)
       .thenComparing(entry -> entry.file().toString());
-   private final cV init_cV;
+   private final SchematicWorkspace init_cV;
    private final Minecraft init_Minecraft = Minecraft.getInstance();
    private final Font init_Font = this.init_Minecraft.font;
    private final List<SchematicLibraryOverlay.Inner_BufferHelper> init_List = new ArrayList<>();
@@ -55,8 +55,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private int run;
    private String load_Str = "";
    private Path init_Path;
-   private List<cR.Inner_DataUtil> load_List = List.of();
-   private List<cR.Inner_DataUtil> read_List = List.of();
+   private List<SchematicLibrary.Inner_DataUtil> load_List = List.of();
+   private List<SchematicLibrary.Inner_DataUtil> read_List = List.of();
    private String read_Str;
    private SchematicLibraryOverlay.Inner_CachePool init_SchematicLibraryOv;
    private SchematicLibraryOverlay.Inner_CachePool load_SchematicLibraryOv;
@@ -66,7 +66,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private final autismclient.gui.f.b.DropdownMenu init_RefQueue;
    private final autismclient.gui.f.b.DropdownMenu load_RefQueue;
 
-   SchematicLibraryOverlay(cV workspace) {
+   SchematicLibraryOverlay(SchematicWorkspace workspace) {
       super("schematic-library", 270, 132);
       this.init_SchematicLibraryOv = SchematicLibraryOverlay.Inner_CachePool.init_SchematicLibraryOv;
       this.init_SchematicLibraryOv_3 = SchematicLibraryOverlay.Inner_StreamUtil.init_SchematicLibraryOv;
@@ -374,7 +374,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.init_cV.read_Z(),
          this.init_cV::write_V
       );
-      List<cR.Inner_DataUtil> entries = this.init_List();
+      List<SchematicLibrary.Inner_DataUtil> entries = this.init_List();
       this.init(
          ui,
          x,
@@ -383,7 +383,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          Math.max(4, bottom - y - 13 - 3),
          entries.size(),
          (index, row) -> {
-            cR.Inner_DataUtil e = entries.get(index);
+            SchematicLibrary.Inner_DataUtil e = entries.get(index);
             String blocks = e.blocks() >= 0L
                ? this.init_NumberFormat.format(e.blocks()) + " blocks"
                : (e.error().isEmpty() ? "Counting blocks…" : "Unreadable");
@@ -403,8 +403,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.init_V_SyncManager_4(ui, "No schematic files", x, y + 13 + 12, width);
       }
 
-      cR.Inner_DataUtil file = entries.stream().filter(e -> e.id().equals(this.init_cV.load_Str)).findFirst().orElse(null);
-      cR.Inner_StreamUtil active = this.init_cV.init_cR_StreamUtil_cR_DataUtil(file);
+      SchematicLibrary.Inner_DataUtil file = entries.stream().filter(e -> e.id().equals(this.init_cV.load_Str)).findFirst().orElse(null);
+      SchematicLibrary.Inner_StreamUtil active = this.init_cV.init_cR_StreamUtil_cR_DataUtil(file);
       this.init_V_SyncManager_3(
          ui,
          x,
@@ -442,14 +442,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       );
    }
 
-   private List<cR.Inner_DataUtil> init_List() {
-      List<cR.Inner_DataUtil> current = this.init_cV.init_cR.load_List;
+   private List<SchematicLibrary.Inner_DataUtil> init_List() {
+      List<SchematicLibrary.Inner_DataUtil> current = this.init_cV.init_cR.load_List;
       Set<String> loaded = Set.of();
       if (this.init_SchematicLibraryOv_3 == SchematicLibraryOverlay.Inner_StreamUtil.load
          || this.init_SchematicLibraryOv_3 == SchematicLibraryOverlay.Inner_StreamUtil.read) {
          loaded = new HashSet<>();
 
-         for (cR.Inner_StreamUtil placement : this.init_cV.init_List()) {
+         for (SchematicLibrary.Inner_StreamUtil placement : this.init_cV.init_List()) {
             if (placement.visible()) {
                loaded.add(placement.file());
             }
@@ -512,14 +512,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init_V_SyncManager_2(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom) {
-      List<cR.Inner_StreamUtil> placements = this.init_cV.init_List();
-      cR.Inner_StreamUtil picked = this.init_cV.init_cR_StreamUtil_Str(this.init_cV.read_Str);
+      List<SchematicLibrary.Inner_StreamUtil> placements = this.init_cV.init_List();
+      SchematicLibrary.Inner_StreamUtil picked = this.init_cV.init_cR_StreamUtil_Str(this.init_cV.read_Str);
       boolean local = this.init_cV.update_Z();
       int listBottom = bottom - (local ? 17 : 0);
       this.init(ui, x, y, width, Math.max(4, listBottom - y), placements.size(), (index, row) -> {
-         cR.Inner_StreamUtil p = placements.get(index);
+         SchematicLibrary.Inner_StreamUtil p = placements.get(index);
          String detail = p.x() + ", " + p.y() + ", " + p.z() + "  ·  " + p.rotation() + "°  ·  " + this.init_cV.init_Str_cR_StreamUtil(p);
-         this.init_V_SyncManager_3(ui, row, cV.load_Str_cR_StreamUtil(p), detail, p.id().equals(this.init_cV.read_Str), () -> this.init_cV.read_Str = p.id());
+         this.init_V_SyncManager_3(ui, row, SchematicWorkspace.load_Str_cR_StreamUtil(p), detail, p.id().equals(this.init_cV.read_Str), () -> this.init_cV.read_Str = p.id());
       });
       if (placements.isEmpty()) {
          this.init_V_SyncManager_4(ui, this.init_cV.write_Z() ? "Load a file to place its hologram" : "Join a world to place schematics", x, y + 8, width);
@@ -995,18 +995,18 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private enum Inner_CachePool {
-      init_SchematicLibraryOv("Last edited", Comparator.comparingLong(cR.Inner_DataUtil::modified).reversed()),
-      load("Date added", Comparator.comparingLong(cR.Inner_DataUtil::added).reversed()),
+      init_SchematicLibraryOv("Last edited", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::modified).reversed()),
+      load("Date added", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::added).reversed()),
       read("Name A–Z", SchematicLibraryOverlay.init_Comparator),
       write("Name Z–A", SchematicLibraryOverlay.init_Comparator.reversed()),
-      update("Largest", Comparator.comparingLong(cR.Inner_DataUtil::bytes).reversed()),
-      sync("Smallest", Comparator.comparingLong(cR.Inner_DataUtil::bytes)),
-      flush("Most blocks", Comparator.comparingLong(cR.Inner_DataUtil::blocks).reversed());
+      update("Largest", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::bytes).reversed()),
+      sync("Smallest", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::bytes)),
+      flush("Most blocks", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::blocks).reversed());
 
       final String init_Str;
-      final Comparator<cR.Inner_DataUtil> init_Comparator;
+      final Comparator<SchematicLibrary.Inner_DataUtil> init_Comparator;
 
-      Inner_CachePool(String label, Comparator<cR.Inner_DataUtil> order) {
+      Inner_CachePool(String label, Comparator<SchematicLibrary.Inner_DataUtil> order) {
          this.init_Str = label;
          this.init_Comparator = order.thenComparing(SchematicLibraryOverlay.init_Comparator);
       }
@@ -1035,7 +1035,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.init_Str = label;
       }
 
-      boolean init(cR.Inner_DataUtil file, Set<String> loaded) {
+      boolean init(SchematicLibrary.Inner_DataUtil file, Set<String> loaded) {
          boolean var10000;
          switch (this) {
             case init_SchematicLibraryOv:
