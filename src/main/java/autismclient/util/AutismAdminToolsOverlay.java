@@ -3,10 +3,10 @@ package autismclient.util;
 import autismclient.api.module.Kind;
 import autismclient.api.module.Setting;
 import autismclient.compat263.CompatGLFW;
-import autismclient.gui.f.b.b;
-import autismclient.gui.f.b.c;
-import autismclient.gui.f.b.d;
-import autismclient.gui.f.b.e;
+import autismclient.gui.f.b.SectionCardRenderer;
+import autismclient.gui.f.b.SliderRenderer;
+import autismclient.gui.f.b.TabStripRenderer;
+import autismclient.gui.f.b.TextFieldRenderer;
 import autismclient.modules.Module;
 import autismclient.modules.f;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    private int clear;
    private int reset;
    private int start;
-   private autismclient.gui.f.b.RefQueue init_RefQueue;
+   private autismclient.gui.f.b.DropdownMenu init_RefQueue;
    private Setting<?, ?> init_Setting;
    private AutismAdminToolsOverlay.Inner_StreamUtil init_AutismAdminToolsOv;
    private Setting<?, ?> load_Setting;
@@ -102,7 +102,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private static int push_I_4() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private static int pop_I_4() {
@@ -110,7 +110,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private static int tick_I_2() {
-      return autismclient.gui.f.RenderState.init(10);
+      return autismclient.gui.f.UiDensityMetrics.init(10);
    }
 
    private static int run_I_2() {
@@ -118,7 +118,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private static int get_I_2() {
-      return autismclient.gui.f.RenderState.init(12);
+      return autismclient.gui.f.UiDensityMetrics.init(12);
    }
 
    private static int set_I_2() {
@@ -126,7 +126,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private static int put() {
-      return autismclient.gui.f.RenderState.init(10);
+      return autismclient.gui.f.UiDensityMetrics.init(10);
    }
 
    private static int add_I_2() {
@@ -198,9 +198,9 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.NetHelper strip = autismclient.gui.f.NetHelper.init(x, y, w, pop_I_4());
 
       for (int i = 0; i < init_StrArr.length; i++) {
-         autismclient.gui.f.NetHelper tab = d.init(strip, init_StrArr.length, i, 2);
+         autismclient.gui.f.NetHelper tab = TabStripRenderer.init(strip, init_StrArr.length, i, 2);
          boolean active = i == this.put;
-         d.init(context, tab, init_StrArr[i], active);
+         TabStripRenderer.init(context, tab, init_StrArr[i], active);
          this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.TAB, tab, null, Integer.toString(i)));
       }
 
@@ -213,7 +213,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          ? autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - 6 - 2, body.sync())
          : body;
       this.load_NetHelper = viewport;
-      autismclient.gui.f.HashUtil.init_HashUtil().init(context.init_GuiGraphicsExtract(), viewport);
+      autismclient.gui.f.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract(), viewport);
 
       try {
          int contentY = viewport.write() - this.reset;
@@ -228,13 +228,13 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                this.init_V_SyncManager_4(context, module, viewport.read(), contentY, viewport.update(), mouseX, mouseY);
          }
       } finally {
-         autismclient.gui.f.HashUtil.init_HashUtil().init(context.init_GuiGraphicsExtract());
+         autismclient.gui.f.UiClipStack.init_HashUtil().init(context.init_GuiGraphicsExtract());
       }
 
       if (this.start > body.sync()) {
          autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(body.init() - 6, body.write(), 6, body.sync());
-         autismclient.gui.f.b.UtilCore.Inner_DataUtil metrics = autismclient.gui.f.b.UtilCore.init(track, this.start, body.sync(), this.reset);
-         autismclient.gui.f.b.UtilCore.init_V_SyncManager(context, metrics, this.update_Z);
+         autismclient.gui.f.b.ScrollbarRenderer.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarRenderer.init(track, this.start, body.sync(), this.reset);
+         autismclient.gui.f.b.ScrollbarRenderer.init_V_SyncManager(context, metrics, this.update_Z);
          this.init_List.add(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.SCROLLBAR, track, null, ""));
       }
    }
@@ -400,9 +400,9 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.NetHelper strip = flow.init_NetHelper(pop_I_4());
 
       for (int i = 0; i < load_StrArr.length; i++) {
-         autismclient.gui.f.NetHelper tab = d.init(strip, load_StrArr.length, i, 2);
+         autismclient.gui.f.NetHelper tab = TabStripRenderer.init(strip, load_StrArr.length, i, 2);
          boolean active = i == this.add;
-         d.init(context, tab, load_StrArr[i], active);
+         TabStripRenderer.init(context, tab, load_StrArr[i], active);
          this.init_V_AutismAdminToolsOv(
             new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.ITEM_TAB, tab, null, Integer.toString(i))
          );
@@ -718,7 +718,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       Setting<?, ?> wait = this.init_Setting_Module_Str(module, "forceop-wait");
       autismclient.gui.f.NetHelper waitRow = autismclient.gui.f.NetHelper.init(innerX, cursor, innerW, push_I_4());
       autismclient.gui.f.NetHelper toggle = autismclient.gui.f.NetHelper.init(innerX, cursor, set_I_2(), push_I_4());
-      autismclient.gui.f.b.UiHelper.init(
+      autismclient.gui.f.b.WidgetRenderFacade.init(
          context, toggle, Boolean.parseBoolean(module.value(wait.id())), toggle.init_Z(mouseX, mouseY), "admintools:" + module.id() + "/" + wait.id()
       );
       this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.BOOLEAN, waitRow, wait, ""));
@@ -759,7 +759,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_SyncManager(autismclient.gui.f.SyncManager context, String title, autismclient.gui.f.NetHelper bounds) {
-      b.init(context, bounds, title);
+      SectionCardRenderer.init(context, bounds, title);
    }
 
    private void init_V_SyncManager(
@@ -793,7 +793,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             int yOffset = rowIndex * (push_I_4() + gap);
             autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y + yOffset, w, push_I_4());
             int countInRow = Math.min(columns, actions.length - rowIndex * columns);
-            autismclient.gui.f.NetHelper cell = autismclient.gui.f.b.TokenStore.init(row, countInRow, colIndex, gap);
+            autismclient.gui.f.NetHelper cell = autismclient.gui.f.b.CellSplitHelper.init(row, countInRow, colIndex, gap);
             autismclient.gui.f.b.CachePool.Inner_DataUtil tone = !action.init.toLowerCase(Locale.ROOT).contains("run") && !action.init.equals("Start")
                ? (
                   !action.init.equals("Stop") && !action.init.equals("Clear")
@@ -911,7 +911,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.SyncManager context, Module module, int x, int y, int w, String label, String optionId, int mouseX, int mouseY
    ) {
       Setting<?, ?> option = this.init_Setting_Module_Str(module, optionId);
-      int clearW = autismclient.gui.f.RenderState.load(context.init_PoolEntry().init("Clear"));
+      int clearW = autismclient.gui.f.UiDensityMetrics.load(context.init_PoolEntry().init("Clear"));
       autismclient.gui.f.NetHelper clear = autismclient.gui.f.NetHelper.init(x + w - clearW, y, clearW, push_I_4());
       autismclient.gui.f.NetHelper bind = autismclient.gui.f.NetHelper.init(clear.read() - 2 - 78, y, 78, push_I_4());
       this.load_V_SyncManager_2(
@@ -942,7 +942,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
       for (int index = 0; index < ids.length; index++) {
          String id = ids[index];
-         autismclient.gui.f.NetHelper field = autismclient.gui.f.b.RenderState.init(bounds, ids.length, index, gap);
+         autismclient.gui.f.NetHelper field = autismclient.gui.f.b.RectSplitHelper.init(bounds, ids.length, index, gap);
          this.init_V_SyncManager_2(
             context,
             module,
@@ -970,7 +970,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          this.load_V_SyncManager_2(context, label, row.read() + 2, row.write(), row.update() - 4);
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(row.read(), row.write() + tick_I_2() + 1, row.update(), push_I_4());
          boolean focused = this.init_AutismAdminToolsOv != null && this.init_AutismAdminToolsOv.init_Setting == option;
-         e.init(
+         TextFieldRenderer.init(
             context,
             bounds,
             focused ? this.init_AutismAdminToolsOv.init_Str : module.value(option.id()),
@@ -994,7 +994,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    ) {
       this.load_V_SyncManager_2(context, label, row.read() + 2, row.write(), row.update() - 4);
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(row.read(), row.write() + tick_I_2() + 1, row.update(), push_I_4());
-      autismclient.gui.f.b.UiHelper.init(context, bounds, module.displayValue(option), "", false, 0);
+      autismclient.gui.f.b.WidgetRenderFacade.init(context, bounds, module.displayValue(option), "", false, 0);
    }
 
    private void load_V_SyncManager(
@@ -1019,7 +1019,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    ) {
       if (option != null) {
          autismclient.gui.f.NetHelper toggle = autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), set_I_2(), push_I_4());
-         autismclient.gui.f.b.UiHelper.init(
+         autismclient.gui.f.b.WidgetRenderFacade.init(
             context, toggle, Boolean.parseBoolean(module.value(option.id())), bounds.init_Z(mouseX, mouseY), "admintools:" + module.id() + "/" + option.id()
          );
          this.init_V_AutismAdminToolsOv(new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.BOOLEAN, bounds, option, ""));
@@ -1058,9 +1058,9 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       double current = option.kind() == Kind.INTEGER
          ? init_I_Str_I_2(module.value(option.id()), init_I_Str_I_2(option.defaultValue(), 0))
          : init_D_Str_D(module.value(option.id()), init_D_Str_D(option.defaultValue(), 0.0));
-      c.init(context, slider, c.init_D_D(current, option.sliderMin(), option.sliderMax()), slider.init_Z(mouseX, mouseY));
+      SliderRenderer.init(context, slider, SliderRenderer.init_D_D(current, option.sliderMin(), option.sliderMax()), slider.init_Z(mouseX, mouseY));
       boolean focused = this.init_AutismAdminToolsOv != null && this.init_AutismAdminToolsOv.init_Setting == option;
-      e.init(
+      TextFieldRenderer.init(
          context,
          value,
          focused ? this.init_AutismAdminToolsOv.init_Str : module.value(option.id()),
@@ -1085,7 +1085,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       int mouseY
    ) {
       boolean open = this.init_RefQueue != null && this.init_Setting == option && this.init_RefQueue.init_NetHelper().equals(bounds);
-      autismclient.gui.f.b.UiHelper.init(context, bounds, label, bounds.init_Z(mouseX, mouseY), open);
+      autismclient.gui.f.b.WidgetRenderFacade.init(context, bounds, label, bounds.init_Z(mouseX, mouseY), open);
       this.init_V_AutismAdminToolsOv(
          new AutismAdminToolsOverlay.Inner_ConfigStore(AutismAdminToolsOverlay.Inner_TaskQueue.DROPDOWN, bounds, option, String.join("\u0000", choices))
       );
@@ -1096,7 +1096,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
 
    private int init_I_SyncManager_NetHelper(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds) {
       this.read_NetHelper = bounds;
-      this.init_AutismAdminToolsOv.load = e.init(
+      this.init_AutismAdminToolsOv.load = TextFieldRenderer.init(
          this.init_AutismAdminToolsOv.init_Str,
          this.init_AutismAdminToolsOv.init_I,
          bounds.update() - 8,
@@ -1206,7 +1206,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                      List<String> values = hit.init_Str.isEmpty() ? List.of() : List.of(hit.init_Str.split("\u0000", -1));
                      String selected = hit.init_Setting == null ? read_StrArr[this.clear] : module.value(hit.init_Setting.id());
                      this.init_Setting = hit.init_Setting;
-                     this.init_RefQueue = new autismclient.gui.f.b.RefQueue(hit.init_NetHelper, values, selected, value -> {
+                     this.init_RefQueue = new autismclient.gui.f.b.DropdownMenu(hit.init_NetHelper, values, selected, value -> {
                         if (hit.init_Setting == null) {
                            this.clear = Math.max(0, values.indexOf(value));
                            this.init_V_Module_I(module, this.clear);
@@ -1229,11 +1229,11 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                      this.init_V_f_DataUtil_AutismAdminToolsOv(module, hit);
                      return true;
                   case SCROLLBAR:
-                     autismclient.gui.f.b.UtilCore.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
+                     autismclient.gui.f.b.ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
                      if (metrics != null && metrics.init_I() > 0) {
                         this.stop = metrics.load().init_Z((int)mouseX, (int)mouseY) ? (int)mouseY - metrics.load().write() : metrics.load().sync() / 2;
                         this.update_Z = true;
-                        this.reset = autismclient.gui.f.b.UtilCore.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
+                        this.reset = autismclient.gui.f.b.ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
                      }
 
                      return true;
@@ -1272,20 +1272,20 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                this.init_V_f_DataUtil(module);
                break;
             case "edit-lore":
-               this.init_V_Module(module, "nbt-item-lore", autismclient.gui.d.BufferHelper.Inner_DataUtil.LORE);
+               this.init_V_Module(module, "nbt-item-lore", autismclient.gui.d.NbtTextEditorScreen.Inner_DataUtil.LORE);
                break;
             case "edit-enchants":
-               this.init_V_Module_2(module, "nbt-enchants", autismclient.gui.d.ConfigStore.Inner_DataUtil.ENCHANTMENTS);
+               this.init_V_Module_2(module, "nbt-enchants", autismclient.gui.d.EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS);
                break;
             case "edit-attributes":
-               this.init_V_Module_2(module, "nbt-attributes", autismclient.gui.d.ConfigStore.Inner_DataUtil.ATTRIBUTES);
+               this.init_V_Module_2(module, "nbt-attributes", autismclient.gui.d.EnchantmentAttributeEditorScreen.Inner_DataUtil.ATTRIBUTES);
                break;
             case "edit-custom-data":
-               this.init_V_Module(module, "nbt-custom-data", autismclient.gui.d.BufferHelper.Inner_DataUtil.RAW);
+               this.init_V_Module(module, "nbt-custom-data", autismclient.gui.d.NbtTextEditorScreen.Inner_DataUtil.RAW);
                break;
             case "edit-item-stack":
                module.sync_V_9();
-               this.init_V_Module(module, "nbt-item-stack", autismclient.gui.d.BufferHelper.Inner_DataUtil.FULL_NBT);
+               this.init_V_Module(module, "nbt-item-stack", autismclient.gui.d.NbtTextEditorScreen.Inner_DataUtil.FULL_NBT);
                break;
             case "copy-item-stack-snbt":
                Minecraft mcx = Minecraft.getInstance();
@@ -1319,19 +1319,19 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Module(Module module, String optionId, autismclient.gui.d.BufferHelper.Inner_DataUtil mode) {
+   private void init_V_Module(Module module, String optionId, autismclient.gui.d.NbtTextEditorScreen.Inner_DataUtil mode) {
       Minecraft mc = Minecraft.getInstance();
       Setting<?, ?> option = this.init_Setting_Module_Str(module, optionId);
       if (mc != null && option != null) {
-         mc.gui.setScreen(new autismclient.gui.d.BufferHelper(mc.gui.screen(), module, option, mode));
+         mc.gui.setScreen(new autismclient.gui.d.NbtTextEditorScreen(mc.gui.screen(), module, option, mode));
       }
    }
 
-   private void init_V_Module_2(Module module, String optionId, autismclient.gui.d.ConfigStore.Inner_DataUtil mode) {
+   private void init_V_Module_2(Module module, String optionId, autismclient.gui.d.EnchantmentAttributeEditorScreen.Inner_DataUtil mode) {
       Minecraft mc = Minecraft.getInstance();
       Setting<?, ?> option = this.init_Setting_Module_Str(module, optionId);
       if (mc != null && option != null) {
-         mc.gui.setScreen(new autismclient.gui.d.ConfigStore(mc.gui.screen(), module, option, mode));
+         mc.gui.setScreen(new autismclient.gui.d.EnchantmentAttributeEditorScreen(mc.gui.screen(), module, option, mode));
       }
    }
 
@@ -1547,9 +1547,9 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
 
       if (this.update_Z) {
-         autismclient.gui.f.b.UtilCore.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
+         autismclient.gui.f.b.ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil_2();
          if (metrics != null) {
-            this.reset = autismclient.gui.f.b.UtilCore.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
+            this.reset = autismclient.gui.f.b.ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, (int)mouseY, this.stop);
          }
 
          return true;
@@ -1626,7 +1626,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          } else if (keyCode == 259 && this.poll_Z_3()) {
             return true;
          } else if (keyCode == 259 && this.init_AutismAdminToolsOv.init_I > 0) {
-            int previous = autismclient.gui.f.b.m.read(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I);
+            int previous = autismclient.gui.f.b.Utf16TextCursor.read(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I);
             this.init_AutismAdminToolsOv.init_Str = this.init_AutismAdminToolsOv.init_Str.substring(0, previous)
                + this.init_AutismAdminToolsOv.init_Str.substring(this.init_AutismAdminToolsOv.init_I);
             this.init_AutismAdminToolsOv.init_I = previous;
@@ -1638,14 +1638,14 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             this.init_AutismAdminToolsOv.init_Str = this.init_AutismAdminToolsOv.init_Str.substring(0, this.init_AutismAdminToolsOv.init_I)
                + this.init_AutismAdminToolsOv
                   .init_Str
-                  .substring(autismclient.gui.f.b.m.write(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I));
+                  .substring(autismclient.gui.f.b.Utf16TextCursor.write(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I));
             this.init_AutismAdminToolsOv.init_V();
             return true;
          } else if (keyCode == 263) {
             this.init_V_I_Z(
                !shift && this.init_AutismAdminToolsOv.init_Z()
                   ? this.init_AutismAdminToolsOv.init_I()
-                  : autismclient.gui.f.b.m.read(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I),
+                  : autismclient.gui.f.b.Utf16TextCursor.read(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I),
                shift
             );
             return true;
@@ -1653,7 +1653,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             this.init_V_I_Z(
                !shift && this.init_AutismAdminToolsOv.init_Z()
                   ? this.init_AutismAdminToolsOv.load_I()
-                  : autismclient.gui.f.b.m.write(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I),
+                  : autismclient.gui.f.b.Utf16TextCursor.write(this.init_AutismAdminToolsOv.init_Str, this.init_AutismAdminToolsOv.init_I),
                shift
             );
             return true;
@@ -1726,7 +1726,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                break;
             }
 
-            i = autismclient.gui.f.b.m.write(value, i);
+            i = autismclient.gui.f.b.Utf16TextCursor.write(value, i);
          }
 
          return nearest;
@@ -1748,7 +1748,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             this.init_AutismAdminToolsOv.read = this.init_AutismAdminToolsOv.init_I;
          }
 
-         this.init_AutismAdminToolsOv.init_I = autismclient.gui.f.b.m.init_I(this.init_AutismAdminToolsOv.init_Str, cursor);
+         this.init_AutismAdminToolsOv.init_I = autismclient.gui.f.b.Utf16TextCursor.init_I(this.init_AutismAdminToolsOv.init_Str, cursor);
          if (!extendSelection) {
             this.init_AutismAdminToolsOv.init_V();
          }
@@ -1848,7 +1848,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       if (module != null && this.read_Setting != null) {
          for (AutismAdminToolsOverlay.Inner_ConfigStore hit : this.init_List) {
             if (hit.init_AutismAdminToolsOv == AutismAdminToolsOverlay.Inner_TaskQueue.SLIDER && hit.init_Setting == this.read_Setting) {
-               double value = c.init(
+               double value = SliderRenderer.init(
                   mouseX,
                   hit.init_NetHelper.read(),
                   hit.init_NetHelper.update(),
@@ -1868,14 +1868,14 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private autismclient.gui.f.b.UtilCore.Inner_DataUtil init_UtilCore_DataUtil_2() {
+   private autismclient.gui.f.b.ScrollbarRenderer.Inner_DataUtil init_UtilCore_DataUtil_2() {
       autismclient.gui.f.NetHelper body = this.init_NetHelper();
       if (this.start <= body.sync()) {
          return null;
       }
 
       autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(body.init() - 6, body.write(), 6, body.sync());
-      return autismclient.gui.f.b.UtilCore.init(track, this.start, body.sync(), this.reset);
+      return autismclient.gui.f.b.ScrollbarRenderer.init(track, this.start, body.sync(), this.reset);
    }
 
    private autismclient.gui.f.NetHelper init_NetHelper() {
@@ -2011,7 +2011,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       private Inner_StreamUtil(Setting<?, ?> option, String text, int cursor) {
          this.init_Setting = option;
          this.init_Str = text == null ? "" : text;
-         this.init_I = autismclient.gui.f.b.m.init_I(this.init_Str, cursor);
+         this.init_I = autismclient.gui.f.b.Utf16TextCursor.init_I(this.init_Str, cursor);
       }
 
       private boolean init_Z() {

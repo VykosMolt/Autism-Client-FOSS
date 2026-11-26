@@ -351,13 +351,13 @@ public final class AutismProfileManager {
    public synchronized void read(AutismProfile p) {
       if (p != null && !this.write && !p.id.equals(this.load_Str)) {
          this.write = true;
-         Runnable applyJob = autismclient.gui.CachePool.init("Switching Profile", "Applying profile…");
-         autismclient.gui.CachePool.init(() -> this.init_V_AutismProfile_Runnable(p, applyJob));
+         Runnable applyJob = autismclient.gui.ThemeApplyProgressOverlay.init("Switching Profile", "Applying profile…");
+         autismclient.gui.ThemeApplyProgressOverlay.init(() -> this.init_V_AutismProfile_Runnable(p, applyJob));
       }
    }
 
    private synchronized void init_V_AutismProfile_Runnable(AutismProfile p, Runnable applyJob) {
-      Runnable macroJob = autismclient.gui.CachePool.init("Switching Profile", "Loading macros…");
+      Runnable macroJob = autismclient.gui.ThemeApplyProgressOverlay.init("Switching Profile", "Loading macros…");
       boolean macroKicked = false;
 
       try {

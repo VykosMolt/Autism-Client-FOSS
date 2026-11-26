@@ -9,8 +9,8 @@ public final class ContainerScreenToolbar {
    private ContainerScreenToolbar() {
    }
 
-   public static List<autismclient.gui.f.b.DataPipe> init(Minecraft client, AutismQueueEditorOverlay queueEditorOverlay) {
-      List<autismclient.gui.f.b.DataPipe> buttons = new ArrayList<>();
+   public static List<autismclient.gui.f.b.SimpleClickButton> init(Minecraft client, AutismQueueEditorOverlay queueEditorOverlay) {
+      List<autismclient.gui.f.b.SimpleClickButton> buttons = new ArrayList<>();
       if (!AutismLiteVariant.enabled() && !autismclient.e.FileCache.init()) {
          return buttons;
       }
@@ -21,7 +21,7 @@ public final class ContainerScreenToolbar {
       int defaultWidth = 140;
       int defaultHeight = 20;
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX,
             baseY,
             defaultWidth,
@@ -32,7 +32,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX, baseY + 24, defaultWidth, defaultHeight, Component.literal("De-sync"), autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> {
                if (!GuiDesyncHelper.load(client)) {
                   AutismClientMessaging.sendPrefixed("Failed to desync: no open networked GUI.");
@@ -41,7 +41,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX,
             baseY + 48,
             defaultWidth,
@@ -56,7 +56,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX,
             baseY + 72,
             defaultWidth,
@@ -73,7 +73,7 @@ public final class ContainerScreenToolbar {
       );
       int thirdWidth = (defaultWidth - 10) / 3;
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX, baseY + 96, thirdWidth, defaultHeight, Component.literal("Clear Q"), autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> {
                autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.init_PoolEntry();
                int count = module.write_I();
@@ -82,7 +82,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX + thirdWidth + 5,
             baseY + 96,
             thirdWidth,
@@ -97,7 +97,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX + thirdWidth * 2 + 10,
             baseY + 96,
             thirdWidth,
@@ -109,7 +109,7 @@ public final class ContainerScreenToolbar {
       );
       int halfWidth = (defaultWidth - 5) / 2;
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX,
             baseY + 120,
             halfWidth,
@@ -120,7 +120,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX + halfWidth + 5,
             baseY + 120,
             halfWidth,
@@ -143,7 +143,7 @@ public final class ContainerScreenToolbar {
          )
       );
       buttons.add(
-         new autismclient.gui.f.b.DataPipe(
+         new autismclient.gui.f.b.SimpleClickButton(
             baseX,
             baseY + 144,
             defaultWidth + 45,

@@ -133,7 +133,7 @@ public final class NameTagsRenderer {
          long frame = ++init_J;
          long tick = init_Minecraft.level.getGameTime();
          int revision = al.init_I();
-         int fontEpoch = autismclient.gui.e.SyncManager.init_I();
+         int fontEpoch = autismclient.gui.e.MsdfTextRenderer.init_I();
          boolean players = module.bool("players");
          boolean mobs = module.bool("mobs");
          boolean items = module.bool("items");
@@ -467,9 +467,9 @@ public final class NameTagsRenderer {
          : Math.max(
             10,
             (int)Math.ceil(
-                  autismclient.gui.e.SyncManager.load(
-                     autismclient.gui.e.ConfigStore.BODY,
-                     autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
+                  autismclient.gui.e.MsdfTextRenderer.load(
+                     autismclient.gui.e.MsdfFontFace.BODY,
+                     autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.e.MsdfFontFace.BODY)
                   )
                )
                + 2
@@ -676,11 +676,11 @@ public final class NameTagsRenderer {
    }
 
    private static float init_F(String text) {
-      return !init_Z && autismclient.gui.e.SyncManager.init(autismclient.gui.e.ConfigStore.BODY, text)
-         ? autismclient.gui.e.SyncManager.init_F(
-            autismclient.gui.e.ConfigStore.BODY,
+      return !init_Z && autismclient.gui.e.MsdfTextRenderer.init(autismclient.gui.e.MsdfFontFace.BODY, text)
+         ? autismclient.gui.e.MsdfTextRenderer.init_F(
+            autismclient.gui.e.MsdfFontFace.BODY,
             text,
-            autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
+            autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.e.MsdfFontFace.BODY)
          )
          : init_Minecraft.font.width(text);
    }
@@ -761,7 +761,7 @@ public final class NameTagsRenderer {
             runs.add(NameTagsRenderer.Inner_NetHelper.init(text.toString(), current[0]));
          }
 
-         if (supported && !runs.stream().anyMatch(runx -> !autismclient.gui.e.SyncManager.init(runx.init_ConfigStore, runx.init_Str))) {
+         if (supported && !runs.stream().anyMatch(runx -> !autismclient.gui.e.MsdfTextRenderer.init(runx.init_ConfigStore, runx.init_Str))) {
             float width = 0.0F;
 
             for (NameTagsRenderer.Inner_NetHelper run : runs) {
@@ -786,7 +786,7 @@ public final class NameTagsRenderer {
                   context.pose().popMatrix();
                }
             } else {
-               float size = autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY);
+               float size = autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.e.MsdfFontFace.BODY);
 
                for (NameTagsRenderer.Inner_NetHelper run : this.init_List) {
                   int tint = run.init_Integer == null ? color : color & 0xFF000000 | run.init_Integer;
@@ -798,13 +798,13 @@ public final class NameTagsRenderer {
                         context.pose().shearX(-0.2F);
                      }
 
-                     autismclient.gui.e.SyncManager.init(
+                     autismclient.gui.e.MsdfTextRenderer.init(
                         context,
                         run.init_ConfigStore,
                         run.init_Str,
                         0.0F,
-                        autismclient.gui.e.SyncManager.init(
-                           run.init_ConfigStore, autismclient.gui.e.SyncManager.init(run.init_ConfigStore, 0.0F, rowHeight, size), size
+                        autismclient.gui.e.MsdfTextRenderer.init(
+                           run.init_ConfigStore, autismclient.gui.e.MsdfTextRenderer.init(run.init_ConfigStore, 0.0F, rowHeight, size), size
                         ),
                         size,
                         tint,
@@ -830,16 +830,16 @@ public final class NameTagsRenderer {
       }
    }
 
-   private record Inner_NetHelper(String init_Str, autismclient.gui.e.ConfigStore init_ConfigStore, Integer init_Integer, float init_F, boolean init_Z) {
+   private record Inner_NetHelper(String init_Str, autismclient.gui.e.MsdfFontFace init_ConfigStore, Integer init_Integer, float init_F, boolean init_Z) {
       static NameTagsRenderer.Inner_NetHelper init(String text, Style style) {
-         autismclient.gui.e.ConfigStore face = style.isBold() ? autismclient.gui.e.ConfigStore.TITLE : autismclient.gui.e.ConfigStore.BODY;
+         autismclient.gui.e.MsdfFontFace face = style.isBold() ? autismclient.gui.e.MsdfFontFace.TITLE : autismclient.gui.e.MsdfFontFace.BODY;
          TextColor color = style.getColor();
          return new NameTagsRenderer.Inner_NetHelper(
             text,
             face,
             color == null ? null : color.getValue(),
-            autismclient.gui.e.SyncManager.init_F(
-               face, text, autismclient.gui.e.SyncManager.init_F_ConfigStore(autismclient.gui.e.ConfigStore.BODY)
+            autismclient.gui.e.MsdfTextRenderer.init_F(
+               face, text, autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(autismclient.gui.e.MsdfFontFace.BODY)
             ),
             style.isItalic()
          );

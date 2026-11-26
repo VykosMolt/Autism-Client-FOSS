@@ -53,7 +53,7 @@ public final class ActionFieldRegistry {
       if (action == null) {
          return init_ActionFieldSchema;
       } else if (action instanceof ToolsAction tools) {
-         return BufferHelper.init(tools);
+         return ToolsActionSchemaBuilder.init(tools);
       } else {
          MacroActionType type = action.getType();
          if (type == MacroActionType.IF || type == MacroActionType.FLOW) {

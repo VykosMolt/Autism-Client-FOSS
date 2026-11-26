@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.gui.d.StreamGate;
+import autismclient.gui.d.StyledButton;
 import autismclient.gui.f.b.CachePool;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.BedSleepDesyncHelper;
@@ -22,7 +22,7 @@ public abstract class AutismSleepingChatScreenMixin extends Screen {
    private void autism$init(CallbackInfo ci) {
       ModuleRuntimeManager module = ModuleRuntimeManager.init_PoolEntry();
       if (module != null && module.init_Z()) {
-         this.addRenderableWidget(new StreamGate(5, 5, 140, 20, Component.literal("Client wake up"), CachePool.Inner_DataUtil.read, button -> BedSleepDesyncHelper.init_V()));
+         this.addRenderableWidget(new StyledButton(5, 5, 140, 20, Component.literal("Client wake up"), CachePool.Inner_DataUtil.read, button -> BedSleepDesyncHelper.init_V()));
       }
    }
 }

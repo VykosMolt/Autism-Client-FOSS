@@ -1,7 +1,7 @@
 package autismclient.ai;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.d.PacketUtil;
+import autismclient.gui.d.PromptDialogScreen;
 import autismclient.util.OverlayManager;
 import autismclient.util.OverlayBounds;
 import com.google.gson.JsonObject;
@@ -479,7 +479,7 @@ public final class cV {
 
    void init_V_cR_DataUtil(cR.Inner_DataUtil file) {
       if (this.read_Z() && !this.flush_Z() && file != null) {
-         PacketUtil screen = new PacketUtil("Rename file", file.name(), name -> this.init_V_cR_DataUtil_Str(file, name));
+         PromptDialogScreen screen = new PromptDialogScreen("Rename file", file.name(), name -> this.init_V_cR_DataUtil_Str(file, name));
          autismclient.util.OverlayScreenController.init_Z(this.init_Minecraft, screen);
       }
    }
@@ -520,7 +520,7 @@ public final class cV {
 
    void init_V_cR_StreamUtil(cR.Inner_StreamUtil p) {
       if (!this.flush_Z() && p != null) {
-         PacketUtil screen = new PacketUtil("Rename schematic", load_Str_cR_StreamUtil(p), name -> {
+         PromptDialogScreen screen = new PromptDialogScreen("Rename schematic", load_Str_cR_StreamUtil(p), name -> {
             cR.Inner_StreamUtil current = this.init_cR_StreamUtil_Str(p.id());
             if (current != null && !this.flush_Z()) {
                this.init_Map.put(current.id(), current.named(name));

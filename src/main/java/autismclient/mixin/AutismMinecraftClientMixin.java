@@ -4,9 +4,9 @@ import autismclient.ai.ClassCache;
 import autismclient.ai.aP;
 import autismclient.compat263.CompatGLFW;
 import autismclient.g.LateRegisterSynthesizer;
-import autismclient.gui.StreamUtil;
-import autismclient.gui.d.RefQueue;
-import autismclient.gui.d.UtilCore;
+import autismclient.gui.AutismLoadingOverlay;
+import autismclient.gui.d.StealthTitleScreen;
+import autismclient.gui.d.AutismTitleScreen;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
 import autismclient.modules.AutoTotemModule;
 import autismclient.modules.BlinkPacketManager;
@@ -156,7 +156,7 @@ public class AutismMinecraftClientMixin {
    private static LoadingOverlay autism$replaceLoadingOverlay(
       Minecraft minecraft, ReloadInstance reload, Consumer<Optional<Throwable>> onFinish, boolean fadeIn
    ) {
-      return StreamUtil.init_LoadingOverlay_Minecraft(minecraft, reload, onFinish, fadeIn);
+      return AutismLoadingOverlay.init_LoadingOverlay_Minecraft(minecraft, reload, onFinish, fadeIn);
    }
 
    @Inject(method = "createTitle", at = @At("HEAD"), cancellable = true)
@@ -237,9 +237,9 @@ public class AutismMinecraftClientMixin {
       Minecraft client = (Minecraft)(Object)this;
       if (client.gui.screen() instanceof TitleScreen) {
          if (aD.init_Z()) {
-            client.gui.setScreen(new RefQueue());
+            client.gui.setScreen(new StealthTitleScreen());
          } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.init()) {
-            client.gui.setScreen(new UtilCore());
+            client.gui.setScreen(new AutismTitleScreen());
          }
       }
    }
@@ -248,10 +248,10 @@ public class AutismMinecraftClientMixin {
    private void autism$swapMenuOnPanicChange(CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
          Minecraft client = (Minecraft)(Object)this;
-         if (aD.init_Z() && client.gui.screen() instanceof UtilCore) {
-            client.gui.setScreen(new RefQueue());
-         } else if (!aD.init_Z() && client.gui.screen() instanceof RefQueue && CustomMainMenuGuard.init()) {
-            client.gui.setScreen(new UtilCore());
+         if (aD.init_Z() && client.gui.screen() instanceof AutismTitleScreen) {
+            client.gui.setScreen(new StealthTitleScreen());
+         } else if (!aD.init_Z() && client.gui.screen() instanceof StealthTitleScreen && CustomMainMenuGuard.init()) {
+            client.gui.setScreen(new AutismTitleScreen());
          }
       }
    }

@@ -13,17 +13,17 @@ public final class CharEncoder {
    private static final int sync = 2;
    private static final int flush = 13;
    private static final int close = 1;
-   private autismclient.gui.f.JsonUtil init_JsonUtil;
+   private autismclient.gui.f.UiColorScheme init_JsonUtil;
    private int open = -2147483648;
 
    private static int init_I_I_ct_DataUtil(int color, ThemePaletteManager.Inner_DataUtil channel) {
       return ThemePaletteManager.init_I_I_ct_DataUtil(color, channel);
    }
 
-   private autismclient.gui.f.JsonUtil init_JsonUtil() {
+   private autismclient.gui.f.UiColorScheme init_JsonUtil() {
       int generation = ThemePaletteManager.init_I();
       if (this.init_JsonUtil == null) {
-         this.init_JsonUtil = new autismclient.gui.f.JsonUtil();
+         this.init_JsonUtil = new autismclient.gui.f.UiColorScheme();
          this.open = generation;
       } else if (this.open != generation) {
          this.init_JsonUtil.init();
@@ -100,10 +100,10 @@ public final class CharEncoder {
       return value;
    }
 
-   public autismclient.gui.f.c.IoWorker init_IoWorker_IoWorker(autismclient.gui.f.c.IoWorker insets) {
+   public autismclient.gui.f.c.EdgeInsets init_IoWorker_IoWorker(autismclient.gui.f.c.EdgeInsets insets) {
       return insets == null
-         ? autismclient.gui.f.c.IoWorker.init_IoWorker
-         : new autismclient.gui.f.c.IoWorker(this.load(insets.read()), this.load(insets.write()), this.load(insets.update()), this.load(insets.sync()));
+         ? autismclient.gui.f.c.EdgeInsets.init_IoWorker
+         : new autismclient.gui.f.c.EdgeInsets(this.load(insets.read()), this.load(insets.write()), this.load(insets.update()), this.load(insets.sync()));
    }
 
    public int init_I_l(l tone) {
@@ -201,7 +201,7 @@ public final class CharEncoder {
 
    private int init_I_I(int rgb, int alpha, float tint) {
       int accent = init_I_I_ct_DataUtil(-50373, ThemePaletteManager.Inner_DataUtil.ACCENT);
-      int tinted = j.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
+      int tinted = UiLayoutMath.init_I_I(0xFF000000 | rgb & 16777215, 0xFF000000 | accent & 16777215, tint);
       return alpha << 24 | tinted & 16777215;
    }
 
@@ -210,7 +210,7 @@ public final class CharEncoder {
    }
 
    public int push() {
-      return j.init_I_I(this.init_JsonUtil().update, -736814558, 0.16F);
+      return UiLayoutMath.init_I_I(this.init_JsonUtil().update, -736814558, 0.16F);
    }
 
    public int pop() {
@@ -245,13 +245,13 @@ public final class CharEncoder {
       return init_I_I_ct_DataUtil(-33411, ThemePaletteManager.Inner_DataUtil.DANGER);
    }
 
-   public int init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   public int init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = j.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.2F);
+            var10000 = UiLayoutMath.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.2F);
             break;
          case SECONDARY:
             var10000 = this.init_JsonUtil().load;
@@ -266,7 +266,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   private int flush(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   private int flush(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -289,17 +289,17 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int init_I_ByteReader_StreamU_Z_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant, boolean active) {
+   public int init_I_ByteReader_StreamU_Z_2(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant, boolean active) {
       return !active ? this.close(variant) : this.init_I_ByteReader_StreamU_2(variant);
    }
 
-   private int close(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   private int close(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = j.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.07F);
+            var10000 = UiLayoutMath.init_I_I(this.init_JsonUtil().load, this.flush(variant), 0.07F);
             break;
          case SECONDARY:
             var10000 = this.init_JsonUtil().load;
@@ -314,7 +314,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int load(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   public int load(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -333,13 +333,13 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int read(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   public int read(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = j.init_I_I(this.close(variant), this.flush(variant), 0.5F);
+            var10000 = UiLayoutMath.init_I_I(this.close(variant), this.flush(variant), 0.5F);
             break;
          case SECONDARY:
          case GHOST:
@@ -352,13 +352,13 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int write(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   public int write(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
          case DANGER:
          case SUCCESS:
-            var10000 = j.init_I_I(this.flush(variant), -1, 0.18F);
+            var10000 = UiLayoutMath.init_I_I(this.flush(variant), -1, 0.18F);
             break;
          case SECONDARY:
          case GHOST:
@@ -371,7 +371,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int update(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   public int update(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -394,7 +394,7 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int sync(autismclient.gui.f.c.ByteReader.Inner_StreamUtil variant) {
+   public int sync(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil variant) {
       int var10000;
       switch (variant) {
          case PRIMARY:
@@ -417,24 +417,24 @@ public final class CharEncoder {
       return var10000;
    }
 
-   public int init_I_ByteReader_StreamU_Z(ByteReader.Inner_StreamUtil variant, boolean active) {
-      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
+   public int init_I_ByteReader_StreamU_Z(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
+      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
          return 1430088703;
       } else {
-         return variant == ByteReader.Inner_StreamUtil.FILTER_OFF
+         return variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF
             ? 1713842993
             : this.init_I_ByteReader_StreamU_Z_2(this.init_ByteReader_StreamU_ByteReader_StreamU(variant), active);
       }
    }
 
-   private int load(ByteReader.Inner_StreamUtil variant) {
+   private int load(OverlayActionButton.Inner_StreamUtil variant) {
       return this.close(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
    }
 
-   public int load(ByteReader.Inner_StreamUtil variant, boolean active) {
-      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
+   public int load(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
+      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
          return -9466369;
-      } else if (variant == ByteReader.Inner_StreamUtil.FILTER_OFF) {
+      } else if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF) {
          return -11117210;
       } else {
          return active
@@ -443,22 +443,22 @@ public final class CharEncoder {
       }
    }
 
-   private int read(ByteReader.Inner_StreamUtil variant) {
+   private int read(OverlayActionButton.Inner_StreamUtil variant) {
       return this.read(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
    }
 
-   public int init_I_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
-      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
+   public int init_I_ByteReader_StreamU(OverlayActionButton.Inner_StreamUtil variant) {
+      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
          return -7231489;
       } else {
-         return variant == ByteReader.Inner_StreamUtil.FILTER_OFF ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
+         return variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF ? -9143161 : this.write(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
       }
    }
 
-   public int read(ByteReader.Inner_StreamUtil variant, boolean active) {
-      if (variant == ByteReader.Inner_StreamUtil.FILTER_ON) {
+   public int read(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
+      if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_ON) {
          return -1;
-      } else if (variant == ByteReader.Inner_StreamUtil.FILTER_OFF) {
+      } else if (variant == OverlayActionButton.Inner_StreamUtil.FILTER_OFF) {
          return -4669753;
       } else {
          return active
@@ -467,33 +467,33 @@ public final class CharEncoder {
       }
    }
 
-   private int write(ByteReader.Inner_StreamUtil variant) {
+   private int write(OverlayActionButton.Inner_StreamUtil variant) {
       return this.sync(this.init_ByteReader_StreamU_ByteReader_StreamU(variant));
    }
 
-   private autismclient.gui.f.c.ByteReader.Inner_StreamUtil init_ByteReader_StreamU_ByteReader_StreamU(ByteReader.Inner_StreamUtil variant) {
-      autismclient.gui.f.c.ByteReader.Inner_StreamUtil var10000;
+   private autismclient.gui.f.c.ButtonNode.Inner_StreamUtil init_ByteReader_StreamU_ByteReader_StreamU(OverlayActionButton.Inner_StreamUtil variant) {
+      autismclient.gui.f.c.ButtonNode.Inner_StreamUtil var10000;
       switch (variant) {
          case PRIMARY:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.PRIMARY;
             break;
          case SECONDARY:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.SECONDARY;
             break;
          case GHOST:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.GHOST;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.GHOST;
             break;
          case DANGER:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.DANGER;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.DANGER;
             break;
          case SUCCESS:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.SUCCESS;
             break;
          case FILTER_ON:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.PRIMARY;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.PRIMARY;
             break;
          case FILTER_OFF:
-            var10000 = autismclient.gui.f.c.ByteReader.Inner_StreamUtil.GHOST;
+            var10000 = autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.GHOST;
             break;
          default:
             throw new MatchException(null, null);

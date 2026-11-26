@@ -26,13 +26,13 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-public class PluginLibraryScreen extends KeyHolder {
+public class PluginLibraryScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 440;
    private static final int load_I = 12;
    private static final int read_I = 3;
    private final Screen init_Screen;
-   private final List<autismclient.gui.f.b.ByteReader> init_List = new ArrayList<>();
+   private final List<autismclient.gui.f.b.OverlayActionButton> init_List = new ArrayList<>();
    private final List<PluginLibraryScreen.Inner_CachePool> load_List = new ArrayList<>();
    private final List<PluginLibraryScreen.Inner_StreamUtil> read_List = new ArrayList<>();
    private final Set<String> init_Set = new HashSet<>();
@@ -53,7 +53,7 @@ public class PluginLibraryScreen extends KeyHolder {
 
    @Override
    protected void init() {
-      this.init_EditBox = new StateCache(this.font, this.put(), this.get(), this.add(), this.sync(), Component.literal("Search"));
+      this.init_EditBox = new MsdfEditBox(this.font, this.put(), this.get(), this.add(), this.sync(), Component.literal("Search"));
       this.init_EditBox.setHint(Component.literal(this.init_Str_5()));
       this.init_EditBox.setMaxLength(128);
       this.init_EditBox.setValue(this.init_Str);
@@ -316,24 +316,24 @@ public class PluginLibraryScreen extends KeyHolder {
       this.load_List.clear();
       this.read_List.clear();
       int ctl = this.sync();
-      this.init_List.add(autismclient.gui.f.b.ByteReader.init(this.pop(), this.run() + 4, this.read(), ctl, Component.literal("Back"), b -> this.onClose()));
+      this.init_List.add(autismclient.gui.f.b.OverlayActionButton.init(this.pop(), this.run() + 4, this.read(), ctl, Component.literal("Back"), b -> this.onClose()));
       int toggleY = this.get();
       int toggleW = this.write();
       int toggleX = this.pop();
       this.init_List
          .add(
-            autismclient.gui.f.b.ByteReader.init(
+            autismclient.gui.f.b.OverlayActionButton.init(
                   toggleX, toggleY, toggleW, ctl, Component.literal("By Server"), b -> this.init_V_MapStore_DataUtil(PluginLibraryScreen.Inner_DataUtil.BY_SERVER)
                )
                .init_ByteReader_ByteReader_StreamU(
                   this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
-                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS
-                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY
+                     ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS
+                     : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY
                )
          );
       this.init_List
          .add(
-            autismclient.gui.f.b.ByteReader.init(
+            autismclient.gui.f.b.OverlayActionButton.init(
                   toggleX + toggleW + 2,
                   toggleY,
                   toggleW,
@@ -343,8 +343,8 @@ public class PluginLibraryScreen extends KeyHolder {
                )
                .init_ByteReader_ByteReader_StreamU(
                   this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_PLUGIN
-                     ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS
-                     : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY
+                     ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS
+                     : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY
                )
          );
       this.write_List = this.load_List_3();
@@ -373,8 +373,8 @@ public class PluginLibraryScreen extends KeyHolder {
                   cursor -= btnH;
                   this.init_List
                      .add(
-                        autismclient.gui.f.b.ByteReader.init(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
-                           .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER)
+                        autismclient.gui.f.b.OverlayActionButton.init(cursor, btnY, btnH, btnH, Component.empty(), b -> this.init_V_MapStore_StreamUti(row))
+                           .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER)
                            .init_ByteReader_Identifier(GuiIconAtlas.open)
                      );
                   cursor -= 2;
@@ -383,8 +383,8 @@ public class PluginLibraryScreen extends KeyHolder {
                cursor -= copyW;
                this.init_List
                   .add(
-                     autismclient.gui.f.b.ByteReader.init(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.load_V_MapStore_StreamUti(row))
-                        .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+                     autismclient.gui.f.b.OverlayActionButton.init(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.load_V_MapStore_StreamUti(row))
+                        .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
                   );
                this.load_List.add(new PluginLibraryScreen.Inner_CachePool(this.size(), rowY, Math.max(1, cursor - 4 - this.size()), rowH, row.init_Str));
             }
@@ -399,7 +399,7 @@ public class PluginLibraryScreen extends KeyHolder {
    }
 
    private int init_I_Str_11(String label) {
-      return autismclient.gui.f.RenderState.load(k.init(this.font, label, init_Identifier(), 0));
+      return autismclient.gui.f.UiDensityMetrics.load(k.init(this.font, label, init_Identifier(), 0));
    }
 
    private int write() {
@@ -442,7 +442,7 @@ public class PluginLibraryScreen extends KeyHolder {
 
       if (!text.isBlank() && this.minecraft != null) {
          this.minecraft.keyboardHandler.setClipboard(text);
-         this.init_V_Str_I(note, ValueSink.open);
+         this.init_V_Str_I(note, GuiColorPalette.open);
       }
    }
 
@@ -462,16 +462,16 @@ public class PluginLibraryScreen extends KeyHolder {
                   ? (this.write_I == 1 ? " server" : " servers")
                   : (this.write_I == 1 ? " plugin" : " plugins")
             );
-         int countW = k.init(this.font, count, init_Identifier(), ValueSink.close);
+         int countW = k.init(this.font, count, init_Identifier(), GuiColorPalette.close);
          int countX = this.pop() + this.tick_I_9() - countW;
          int headerTextY = this.init_I_I_I_5(this.run() + 4, this.sync());
          int titleX = this.pop() + this.read() + 4;
-         this.init(graphics, "Plugin Library", titleX, headerTextY, ValueSink.flush, Math.max(1, countX - 8 - titleX));
-         this.init(graphics, count, countX, headerTextY, ValueSink.close, countW + 4);
+         this.init(graphics, "Plugin Library", titleX, headerTextY, GuiColorPalette.flush, Math.max(1, countX - 8 - titleX));
+         this.init(graphics, count, countX, headerTextY, GuiColorPalette.close, countW + 4);
          String header = this.init_MapStore_DataUtil == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? "Servers you have scanned" : "Plugin -> servers running it";
-         this.init(graphics, header, this.reset() + 4, this.init_I_I_I_5(this.clear() + 4, 12), ValueSink.close, this.start() - 8);
+         this.init(graphics, header, this.reset() + 4, this.init_I_I_I_5(this.clear() + 4, 12), GuiColorPalette.close, this.start() - 8);
          String queryLower = this.init_Str.toLowerCase(Locale.ROOT);
-         autismclient.gui.f.HashUtil.init_HashUtil()
+         autismclient.gui.f.UiClipStack.init_HashUtil()
             .init(
                graphics,
                autismclient.gui.f.NetHelper.init(this.size(), this.next(), Math.max(0, this.data() - this.size()), Math.max(0, this.prev() - this.next()))
@@ -480,7 +480,7 @@ public class PluginLibraryScreen extends KeyHolder {
          try {
             if (this.write_List.isEmpty()) {
                this.init(
-                  graphics, this.load_Str_2(), this.size() + 4, this.init_I_I_I_5(this.next(), this.flush()), ValueSink.close, this.data() - this.size() - 4
+                  graphics, this.load_Str_2(), this.size() + 4, this.init_I_I_I_5(this.next(), this.flush()), GuiColorPalette.close, this.data() - this.size() - 4
                );
             } else {
                for (PluginLibraryScreen.Inner_StreamUtil row : this.read_List) {
@@ -488,16 +488,16 @@ public class PluginLibraryScreen extends KeyHolder {
                }
             }
          } finally {
-            autismclient.gui.f.HashUtil.init_HashUtil().init(graphics);
+            autismclient.gui.f.UiClipStack.init_HashUtil().init(graphics);
          }
 
-         for (autismclient.gui.f.b.ByteReader b : this.init_List) {
-            autismclient.gui.f.b.ByteReader.init(graphics, this.font, b, mx, my);
+         for (autismclient.gui.f.b.OverlayActionButton b : this.init_List) {
+            autismclient.gui.f.b.OverlayActionButton.init(graphics, this.font, b, mx, my);
          }
 
          if (!this.init_Z_6()) {
-            autismclient.gui.f.b.PoolEntry.Inner_DataUtil sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
-            autismclient.gui.f.b.PoolEntry.init(graphics, sb, sb.init(mx, my), this.init_Z);
+            autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
+            autismclient.gui.f.b.ScrollbarMetricsHelper.init(graphics, sb, sb.init(mx, my), this.init_Z);
          }
 
          super.extractRenderState(graphics, mx, my, delta);
@@ -522,20 +522,20 @@ public class PluginLibraryScreen extends KeyHolder {
       if (!child) {
          int fill = hovered ? 620756991 : 352321535;
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), fill);
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, 2, h), row.init_Z ? ValueSink.sync : 872415231);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x, y, 2, h), row.init_Z ? GuiColorPalette.sync : 872415231);
       }
 
       int textY = this.init_I_I_I_5(y, h);
       int textLeft = x + 6 + (child ? 12 : 0);
       if (!child) {
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x + 5, y + (h - 8) / 2, 8, 8), row.init_Z, ValueSink.close);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(x + 5, y + (h - 8) / 2, 8, 8), row.init_Z, GuiColorPalette.close);
          textLeft += 10;
       } else {
-         this.init(graphics, "-", x + 6 + 12 - 8, textY, ValueSink.close, 8);
+         this.init(graphics, "-", x + 6 + 12 - 8, textY, GuiColorPalette.close, 8);
       }
 
-      int baseColor = child ? -3158065 : ValueSink.flush;
-      int secondaryColor = ValueSink.close;
+      int baseColor = child ? -3158065 : GuiColorPalette.flush;
+      int secondaryColor = GuiColorPalette.close;
       int secondaryW = row.read.isEmpty() ? 0 : k.init(this.font, row.read, init_Identifier(), secondaryColor);
       int rowActionReserve = child ? 0 : this.update() + 2 + (row.init_MapStore_BufferHel == PluginLibraryScreen.Inner_BufferHelper.SERVER ? this.open() + 2 : 0);
       int rightLimit = this.data() - rowActionReserve - 4;
@@ -582,18 +582,18 @@ public class PluginLibraryScreen extends KeyHolder {
       double mx = ve.x();
       double my = ve.y();
       if (Compat263.mouseEventGlfwButton(ve) == 0 && !this.init_Z_6()) {
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
          if (sb.init_Z() && sb.init(mx, my)) {
             this.init_Z = true;
             this.sync = sb.load(mx, my) ? (int)Math.round(my) - sb.update() : sb.sync() / 2;
-            this.update = autismclient.gui.f.b.PoolEntry.init(sb, my, this.sync);
+            this.update = autismclient.gui.f.b.ScrollbarMetricsHelper.init(sb, my, this.sync);
             this.load_V_13();
             return true;
          }
       }
 
-      for (autismclient.gui.f.b.ByteReader b : this.init_List) {
-         if (autismclient.gui.f.b.ByteReader.init(b, mx, my, Compat263.mouseEventGlfwButton(ve))) {
+      for (autismclient.gui.f.b.OverlayActionButton b : this.init_List) {
+         if (autismclient.gui.f.b.OverlayActionButton.init(b, mx, my, Compat263.mouseEventGlfwButton(ve))) {
             return true;
          }
       }
@@ -624,8 +624,8 @@ public class PluginLibraryScreen extends KeyHolder {
    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
       MouseButtonEvent ve = init_MouseButtonEvent_MouseButtonEvent(event);
       if (this.init_Z) {
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
-         this.update = autismclient.gui.f.b.PoolEntry.init(sb, ve.y(), this.sync);
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil sb = this.init_PoolEntry_DataUtil_I_3(this.write_List.size());
+         this.update = autismclient.gui.f.b.ScrollbarMetricsHelper.init(sb, ve.y(), this.sync);
          this.load_V_13();
          return true;
       } else {
@@ -668,11 +668,11 @@ public class PluginLibraryScreen extends KeyHolder {
    }
 
    private int sync() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int flush() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int close() {
@@ -688,11 +688,11 @@ public class PluginLibraryScreen extends KeyHolder {
    }
 
    private int poll() {
-      return autismclient.gui.f.c.NetHelper.init(this.init_I(), 6, 440);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_I(), 6, 440);
    }
 
    private int push() {
-      return autismclient.gui.f.c.NetHelper.load(this.init_I(), this.poll(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.init_I(), this.poll(), 6);
    }
 
    private int pop() {
@@ -772,9 +772,9 @@ public class PluginLibraryScreen extends KeyHolder {
       return this.reset() + this.start() - 4 - 6;
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_I_3(int rowCount) {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_I_3(int rowCount) {
       int contentPixels = Math.max(0, rowCount * this.close() - 2);
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(contentPixels, this.valid(), this.value(), this.next(), 6, this.valid(), this.update);
+      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, this.valid(), this.value(), this.next(), 6, this.valid(), this.update);
    }
 
    private boolean init_Z_6() {

@@ -4,7 +4,7 @@ import autismclient.AutismClientAddon;
 import autismclient.api.AddonRegistrationResult;
 import autismclient.b.DataUtil;
 import autismclient.gui.macro.editor.ActionFieldSchema;
-import autismclient.gui.macro.editor.CachePool;
+import autismclient.gui.macro.editor.FieldType;
 import autismclient.gui.macro.editor.FieldDef;
 import autismclient.util.macro.MacroAction;
 import java.util.ArrayList;
@@ -172,7 +172,7 @@ public final class MacroActionRegistry {
       if (schema != null) {
          for (FieldDef field : schema.fields()) {
             String key = field.key();
-            if (field.type() == CachePool.BLOCK_POS) {
+            if (field.type() == FieldType.BLOCK_POS) {
                for (String axisKey : field.xyzKeys()) {
                   if (axisKey != null && !axisKey.isEmpty() && !tag.contains(axisKey)) {
                      return "schema field '" + axisKey + "' is not written by toTag()/save()";

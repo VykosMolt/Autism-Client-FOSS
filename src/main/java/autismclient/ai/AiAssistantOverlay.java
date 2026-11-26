@@ -24,10 +24,10 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private final ce init_ce;
    private final cf init_cf;
    private final ap init_ap;
-   private final autismclient.gui.f.b.BitSetUtil init_BitSetUtil = new autismclient.gui.f.b.BitSetUtil()
+   private final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget()
       .init_BitSetUtil_I(96)
       .load_BitSetUtil_Str("Chat title");
-   private final List<autismclient.gui.f.b.BitSetUtil> init_List;
+   private final List<autismclient.gui.f.b.TextInputWidget> init_List;
    private final autismclient.util.OverlayContextMenu<String> init_F_2;
    private AiAssistantOverlay.Inner_DataUtil init_AiAssistantOverlay = AiAssistantOverlay.Inner_DataUtil.init;
    private boolean write_Z;
@@ -52,7 +52,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.init_ap = new ap(service, this.init_cF, this);
       this.write_Z = service.init_AiSettings().pinned;
       this.init_BitSetUtil.load_BitSetUtil_Consumer(text -> this.clear());
-      List<autismclient.gui.f.b.BitSetUtil> all = new ArrayList<>(
+      List<autismclient.gui.f.b.TextInputWidget> all = new ArrayList<>(
          List.of(
             this.init_TaskTimer.init_BitSetUtil,
             this.init_ce.init_BitSetUtil,
@@ -147,8 +147,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       return this.pop;
    }
 
-   void init(autismclient.gui.f.b.BitSetUtil field) {
-      for (autismclient.gui.f.b.BitSetUtil other : this.init_List) {
+   void init(autismclient.gui.f.b.TextInputWidget field) {
+      for (autismclient.gui.f.b.TextInputWidget other : this.init_List) {
          if (other != field) {
             other.init_V_Z(false);
          }
@@ -220,7 +220,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    private void init(AiAssistantOverlay.Inner_DataUtil next) {
       if (next != this.init_AiAssistantOverlay) {
-         for (autismclient.gui.f.b.BitSetUtil field : this.init_List) {
+         for (autismclient.gui.f.b.TextInputWidget field : this.init_List) {
             field.init_V_Z(false);
          }
 
@@ -336,7 +336,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    private void init(autismclient.gui.f.NetHelper bar) {
-      autismclient.gui.f.JsonUtil colors = this.init_cE.init_JsonUtil;
+      autismclient.gui.f.UiColorScheme colors = this.init_cE.init_JsonUtil;
       int h = bar.sync();
       int x = bar.read();
       int right = bar.init();
@@ -385,7 +385,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          for (String level : levels) {
             String label = init_Map.getOrDefault(level, level);
             autismclient.gui.f.NetHelper chip = autismclient.gui.f.NetHelper.init(cx, bar.write(), this.init_cE.init_I_Str(label) + 10, h);
-            autismclient.gui.f.b.ConfigStore.init(
+            autismclient.gui.f.b.PillBadgeRenderer.init(
                this.init_cE.init_SyncManager, chip, label, colors.clear, level.equals(this.init_cF.sync_Str), this.init_cE.init_Z_NetHelper(chip)
             );
             this.init_cE.init_V_NetHelper(chip, () -> this.read(level), null, "Reasoning effort");
@@ -487,7 +487,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          used = true;
       }
 
-      autismclient.gui.f.b.BitSetUtil focused = this.init_BitSetUtil();
+      autismclient.gui.f.b.TextInputWidget focused = this.init_BitSetUtil();
       if (focused != null && this.init_cE.init_Z() && focused.load_Z_SyncManager(this.init_cE.init_SyncManager_2, (float)x, (float)y, button)) {
          used = true;
       }
@@ -511,7 +511,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       }
 
-      autismclient.gui.f.b.BitSetUtil focused = this.init_BitSetUtil();
+      autismclient.gui.f.b.TextInputWidget focused = this.init_BitSetUtil();
       return focused != null
          && this.init_cE.init_Z()
          && focused.init_Z_SyncManager(this.init_cE.init_SyncManager_2, (float)x, (float)y, button, (float)dx, (float)dy);
@@ -558,7 +558,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       }
 
-      autismclient.gui.f.b.BitSetUtil focused = this.init_BitSetUtil();
+      autismclient.gui.f.b.TextInputWidget focused = this.init_BitSetUtil();
       return this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init
             && !this.init_ce.init_Z
             && !this.init_F_2.init_Z()
@@ -582,7 +582,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       } else if (this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init && !this.init_ce.init_Z && this.init_TaskTimer.load_Z()) {
          return true;
       } else {
-         autismclient.gui.f.b.BitSetUtil focused = this.init_BitSetUtil();
+         autismclient.gui.f.b.TextInputWidget focused = this.init_BitSetUtil();
          if (focused != null) {
             focused.init_V_Z(false);
             return true;
@@ -604,9 +604,9 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return false;
       }
 
-      autismclient.gui.f.b.BitSetUtil focused = this.init_BitSetUtil();
+      autismclient.gui.f.b.TextInputWidget focused = this.init_BitSetUtil();
       if (focused == null && this.init_AiAssistantOverlay == AiAssistantOverlay.Inner_DataUtil.init && !this.init_ce.init_Z && !this.init_F_2.init_Z()) {
-         autismclient.gui.f.b.BitSetUtil target = this.init_TaskTimer.init_BitSetUtil_C(c);
+         autismclient.gui.f.b.TextInputWidget target = this.init_TaskTimer.init_BitSetUtil_C(c);
          if (target != null) {
             this.init(target);
             return target.init_Z_SyncManager_2(this.init_cE.init_SyncManager_2, c, mods);
@@ -616,8 +616,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       return focused != null && focused.init_Z_SyncManager_2(this.init_cE.init_SyncManager_2, c, mods);
    }
 
-   private autismclient.gui.f.b.BitSetUtil init_BitSetUtil() {
-      for (autismclient.gui.f.b.BitSetUtil field : this.init_List) {
+   private autismclient.gui.f.b.TextInputWidget init_BitSetUtil() {
+      for (autismclient.gui.f.b.TextInputWidget field : this.init_List) {
          if (field.load_Z()) {
             return field;
          }
@@ -646,7 +646,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    @Override
    public void push_V() {
-      for (autismclient.gui.f.b.BitSetUtil field : this.init_List) {
+      for (autismclient.gui.f.b.TextInputWidget field : this.init_List) {
          field.init_V_Z(false);
       }
 

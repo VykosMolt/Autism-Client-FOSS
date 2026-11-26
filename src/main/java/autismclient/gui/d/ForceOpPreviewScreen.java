@@ -1,7 +1,7 @@
 package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.util.cA;
@@ -13,7 +13,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-public class ForceOpPreviewScreen extends KeyHolder {
+public class ForceOpPreviewScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = -1442840576;
    private static final int load_I = init_CharEncoder.poll();
@@ -50,7 +50,7 @@ public class ForceOpPreviewScreen extends KeyHolder {
    }
 
    private int read() {
-      return autismclient.gui.f.c.NetHelper.init(this.init_I(), 6, 300);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_I(), 6, 300);
    }
 
    private int write() {
@@ -58,15 +58,15 @@ public class ForceOpPreviewScreen extends KeyHolder {
       int maxRows = Math.max(3, (int)(this.load_I() * 0.65F) / rowH);
       int rows = Math.max(3, Math.min(maxRows, this.init_List.size()));
       int chrome = this.update() + 8 + 4;
-      return autismclient.gui.f.c.NetHelper.init(this.load_I(), 6, chrome + rows * rowH);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.load_I(), 6, chrome + rows * rowH);
    }
 
    private int update() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int sync() {
-      return autismclient.gui.f.RenderState.init(12);
+      return autismclient.gui.f.UiDensityMetrics.init(12);
    }
 
    private int flush() {
@@ -85,9 +85,9 @@ public class ForceOpPreviewScreen extends KeyHolder {
       return autismclient.gui.f.NetHelper.init(list.read() + 2, list.write() + 2, list.update() - 4, list.sync() - 4);
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_6() {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_6() {
       autismclient.gui.f.NetHelper inner = this.load_NetHelper();
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(this.flush(), inner.sync(), inner.init() - 6, inner.write(), 6, inner.sync(), this.poll);
+      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(this.flush(), inner.sync(), inner.init() - 6, inner.write(), 6, inner.sync(), this.poll);
    }
 
    @Override
@@ -118,7 +118,7 @@ public class ForceOpPreviewScreen extends KeyHolder {
          int rowH = this.sync();
          int maxScroll = Math.max(0, this.flush() - innerH);
          this.poll = Math.max(0, Math.min(maxScroll, this.poll));
-         autismclient.gui.f.HashUtil.init_HashUtil()
+         autismclient.gui.f.UiClipStack.init_HashUtil()
             .init(graphics, autismclient.gui.f.NetHelper.init(innerX, innerY, Math.max(0, innerW), Math.max(0, innerH)));
 
          try {
@@ -128,19 +128,19 @@ public class ForceOpPreviewScreen extends KeyHolder {
                int rowY = contentY + i * rowH;
                if (rowY + rowH > innerY && rowY < innerY + innerH) {
                   int color = i % 2 == 0 ? -10046721 : -24474;
-                  autismclient.gui.f.b.TableIndex.init(graphics, innerX, rowY, innerW - 8, rowH, false, false);
+                  autismclient.gui.f.b.PanelSurfaceHelper.init(graphics, innerX, rowY, innerW - 8, rowH, false, false);
                   String text = k.init(this.font, this.init_List.get(i), innerW - 8 - 8, init_CharEncoder.init_Identifier_l(l.read), color);
-                  this.init(graphics, text, innerX + 4, j.init(rowY, rowH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush()), color, innerW - 8 - 8);
+                  this.init(graphics, text, innerX + 4, UiLayoutMath.init(rowY, rowH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush()), color, innerW - 8 - 8);
                }
             }
          } finally {
-            autismclient.gui.f.HashUtil.init_HashUtil().init(graphics);
+            autismclient.gui.f.UiClipStack.init_HashUtil().init(graphics);
          }
 
          if (maxScroll > 0) {
-            autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
+            autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
             boolean overBar = metrics.init(mx, my);
-            autismclient.gui.f.b.PoolEntry.init(graphics, metrics, overBar, this.init_Z);
+            autismclient.gui.f.b.ScrollbarMetricsHelper.init(graphics, metrics, overBar, this.init_Z);
             this.load_List.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
          }
       } finally {
@@ -151,10 +151,10 @@ public class ForceOpPreviewScreen extends KeyHolder {
    private void init(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
       int headerH = this.update();
-      autismclient.gui.f.b.IoWorker.init(
+      autismclient.gui.f.b.DialogFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
-      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
+      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.DialogFrameRenderer.init(bounds, headerH);
       this.load_List.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync()));
    }
 
@@ -191,12 +191,12 @@ public class ForceOpPreviewScreen extends KeyHolder {
             }
 
             if (hit.init_SyncManager_Stream == ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
-               autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
+               autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_6();
                if (metrics.load(mx, my)) {
                   this.init_Z = true;
                   this.init_D = my - metrics.update();
                } else {
-                  this.poll = autismclient.gui.f.b.PoolEntry.init(metrics, my, metrics.sync() / 2);
+                  this.poll = autismclient.gui.f.b.ScrollbarMetricsHelper.init(metrics, my, metrics.sync() / 2);
                }
 
                return true;
@@ -223,7 +223,7 @@ public class ForceOpPreviewScreen extends KeyHolder {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_Z) {
-         this.poll = autismclient.gui.f.b.PoolEntry.init(this.init_PoolEntry_DataUtil_6(), my, (int)this.init_D);
+         this.poll = autismclient.gui.f.b.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_6(), my, (int)this.init_D);
          return true;
       } else {
          return super.mouseDragged(event, dragX, dragY);
@@ -263,11 +263,11 @@ public class ForceOpPreviewScreen extends KeyHolder {
    }
 
    private int close() {
-      return autismclient.gui.f.c.NetHelper.load(this.init_I(), this.read(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.init_I(), this.read(), 6);
    }
 
    private int open() {
-      return autismclient.gui.f.c.NetHelper.load(this.load_I(), this.write(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.load_I(), this.write(), 6);
    }
 
    private record Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil init_SyncManager_Stream, int init_I, int load, int read, int write) {

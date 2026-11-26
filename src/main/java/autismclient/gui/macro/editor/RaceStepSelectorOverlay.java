@@ -1,22 +1,22 @@
 package autismclient.gui.macro.editor;
 
-import autismclient.gui.f.HashUtil;
+import autismclient.gui.f.UiClipStack;
 import autismclient.gui.f.NetHelper;
-import autismclient.gui.f.b.BitSetUtil;
+import autismclient.gui.f.b.TextInputWidget;
 import autismclient.gui.f.b.CharEncoder;
-import autismclient.gui.f.b.ClassCache;
-import autismclient.gui.f.b.FileCache;
-import autismclient.gui.f.b.TableIndex;
-import autismclient.gui.f.b.a;
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.WindowHeaderHelper;
+import autismclient.gui.f.b.ListRowRenderer;
+import autismclient.gui.f.b.PanelSurfaceHelper;
+import autismclient.gui.f.b.SearchFilterList;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
-import autismclient.gui.f.c.EventBus;
-import autismclient.gui.f.c.IoWorker;
-import autismclient.gui.f.c.PoolEntry;
-import autismclient.gui.f.c.RingBuffer;
-import autismclient.gui.f.c.SyncManager;
-import autismclient.gui.f.c.TextFormat;
+import autismclient.gui.f.c.ScrollableListView;
+import autismclient.gui.f.c.EdgeInsets;
+import autismclient.gui.f.c.LabelNode;
+import autismclient.gui.f.c.LayoutViewport;
+import autismclient.gui.f.c.LayoutContext;
+import autismclient.gui.f.c.LayoutTreeHost;
 import autismclient.util.DraggableOverlayWindow;
 import autismclient.util.OverlayManager;
 import autismclient.util.OverlayBounds;
@@ -43,13 +43,13 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private static final int put = 6;
    private final Font init_Font;
    private final CharEncoder init_CharEncoder_2 = new CharEncoder();
-   private final autismclient.gui.f.c.CharEncoder init_CharEncoder_3 = new autismclient.gui.f.c.CharEncoder("Race Selector");
-   private final TextFormat init_TextFormat = new TextFormat(this.init_CharEncoder_2, this.init_CharEncoder_3);
-   private final BitSetUtil init_BitSetUtil = new BitSetUtil();
-   private final PoolEntry init_PoolEntry = new PoolEntry("", l.write).load_PoolEntry(true);
-   private final autismclient.gui.f.c.BitSetUtil init_BitSetUtil_2 = new autismclient.gui.f.c.BitSetUtil();
-   private EventBus init_EventBus;
-   private final a<RaceStepSelectorOverlay.Inner_DataUtil> init_a = new a<>(
+   private final autismclient.gui.f.c.CollapsibleWindowNode init_CharEncoder_3 = new autismclient.gui.f.c.CollapsibleWindowNode("Race Selector");
+   private final LayoutTreeHost init_TextFormat = new LayoutTreeHost(this.init_CharEncoder_2, this.init_CharEncoder_3);
+   private final TextInputWidget init_BitSetUtil = new TextInputWidget();
+   private final LabelNode init_PoolEntry = new LabelNode("", l.write).load_PoolEntry(true);
+   private final autismclient.gui.f.c.VerticalSpacerNode init_BitSetUtil_2 = new autismclient.gui.f.c.VerticalSpacerNode();
+   private ScrollableListView init_EventBus;
+   private final SearchFilterList<RaceStepSelectorOverlay.Inner_DataUtil> init_a = new SearchFilterList<>(
       option -> option.load() + "\n" + option.read() + "\n" + option.init() + "\n" + option.write()
    );
    private List<RaceStepSelectorOverlay.Inner_DataUtil> init_List = List.of();
@@ -67,7 +67,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private int clear;
    private int reset = 160;
    private int start;
-   private final autismclient.gui.f.CharEncoder init_CharEncoder = new autismclient.gui.f.CharEncoder(false);
+   private final autismclient.gui.f.VisibilityTransition init_CharEncoder = new autismclient.gui.f.VisibilityTransition(false);
 
    public RaceStepSelectorOverlay(Font textRenderer) {
       this.init_Font = textRenderer;
@@ -75,7 +75,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.init_CharEncoder_3.init(l.load);
       this.init_CharEncoder_3.init_CharEncoder_Z_Z(true, true);
       this.init_CharEncoder_3.init_CharEncoder_I_I(8, pop_I_3());
-      this.init_CharEncoder_3.init_PacketUtil().init(2).init(IoWorker.init(4));
+      this.init_CharEncoder_3.init_PacketUtil().init(2).init(EdgeInsets.init(4));
       this.init_BitSetUtil.load_BitSetUtil_Str("Search...").read_BitSetUtil_I(13).close(true).init_BitSetUtil_Consumer(this::init_V_2);
       this.write_V_4();
    }
@@ -96,12 +96,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.init_BitSetUtil.init_BitSetUtil_Str("");
       this.init_BitSetUtil.init_V_Z(true);
       this.write_V_4();
-      SyncManager metrics = this.init_TextFormat.init_SyncManager();
+      LayoutContext metrics = this.init_TextFormat.init_SyncManager();
       if (metrics != null) {
          this.start = Math.round(this.init_CharEncoder_3.init_F_SyncManager_F(metrics, this.reset));
       }
 
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       this.add = Math.max(8, Math.round((viewport.init() - this.reset) / 2.0F));
       this.clear = Math.max(8, Math.round((viewport.load() - this.start) / 2.0F));
       OverlayBounds clamped = this.init_cH(new OverlayBounds(this.add, this.clear, this.reset, this.start, this.write_Z, this.update_Z));
@@ -206,10 +206,10 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    private void load(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
       context.nextStratum();
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
-      SyncManager metrics = new SyncManager(context, init_Minecraft.font, viewport, this.init_CharEncoder_2, uiMouseX, uiMouseY, delta);
+      LayoutContext metrics = new LayoutContext(context, init_Minecraft.font, viewport, this.init_CharEncoder_2, uiMouseX, uiMouseY, delta);
       this.init_CharEncoder_3.load_CharEncoder(!this.update_Z);
       this.init_CharEncoder_3.update(true);
       this.init_CharEncoder_3.sync(this.init_Z_F_F(uiMouseX, uiMouseY));
@@ -226,7 +226,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          try {
             this.init_V_GuiGraphicsExtract(context, uiMouseX, uiMouseY);
          } finally {
-            HashUtil.init_HashUtil().init(context);
+            UiClipStack.init_HashUtil().init(context);
          }
       }
    }
@@ -238,7 +238,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       int h = Math.round(this.init_BitSetUtil_2.update_F());
       if (w > 2 && h > 2) {
          if (this.load_List.isEmpty()) {
-            FileCache.init(context, this.init_Font, "Nothing to pick.", x, y, w - 6 - 1);
+            ListRowRenderer.init(context, this.init_Font, "Nothing to pick.", x, y, w - 6 - 1);
          } else {
             if (this.init_EventBus == null
                || this.init_EventBus.init_I() != x
@@ -246,7 +246,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
                || this.init_EventBus.read_I() != w
                || this.init_EventBus.write_I() != h) {
                int oldScroll = this.init_EventBus == null ? 0 : this.init_EventBus.open();
-               this.init_EventBus = new EventBus(x, y, w, h, 14, 6);
+               this.init_EventBus = new ScrollableListView(x, y, w, h, 14, 6);
                this.init_EventBus.load_V(oldScroll);
             }
 
@@ -275,15 +275,15 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 14;
       int bg = hovered ? this.init_CharEncoder_2.next() : this.init_CharEncoder_2.stop();
       int accent = "Condition".equalsIgnoreCase(option.init()) ? UiColorPalette.node() : UiColorPalette.init();
-      TableIndex.init(context, x, y, width, 14, bg);
-      TableIndex.read(context, x, y, 2, 14, accent);
+      PanelSurfaceHelper.init(context, x, y, width, 14, bg);
+      PanelSurfaceHelper.read(context, x, y, 2, 14, accent);
       String label = option.init() + " / " + option.read();
       String trimmed = k.init(
          this.init_Font, label, Math.max(1, width - 10), this.init_CharEncoder_2.init_Identifier_l(l.read), this.init_CharEncoder_2.load(l.read)
       );
-      int textY = j.init(y, 14, this.init_CharEncoder_2.init_I_l(l.read), this.init_CharEncoder_2.flush());
+      int textY = UiLayoutMath.init(y, 14, this.init_CharEncoder_2.init_I_l(l.read), this.init_CharEncoder_2.flush());
       k.init(context, this.init_Font, trimmed, this.init_CharEncoder_2.init_Identifier_l(l.read), this.init_CharEncoder_2.load(l.read), x + 6, textY, false);
-      TableIndex.init(context, x + 4, y + 14 - 1, width - 8, UiColorPalette.mark());
+      PanelSurfaceHelper.init(context, x + 4, y + 14 - 1, width - 8, UiColorPalette.mark());
    }
 
    @Override
@@ -292,7 +292,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       if (button == 0 && this.load_Z_F_F(uiMouseX, uiMouseY)) {
@@ -350,7 +350,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean load_Z_D_3(double mouseX, double mouseY, int button) {
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       if (button == 0 && this.sync_Z) {
@@ -380,7 +380,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       if (this.sync_Z && button == 0) {
@@ -410,7 +410,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D_2(double mouseX, double mouseY, double amount) {
       if (this.write_Z && !this.update_Z && this.init_EventBus != null) {
-         RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+         LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
          float uiMouseX = viewport.init_F_D(mouseX);
          float uiMouseY = viewport.load(mouseY);
          if (this.init(
@@ -454,7 +454,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       int renderedHeight = this.update_Z ? this.init_CharEncoder_2.load() : this.start;
@@ -467,7 +467,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       float uiMouseX = viewport.init_F_D(mouseX);
       float uiMouseY = viewport.load(mouseY);
       return this.init_Z_F_F(uiMouseX, uiMouseY) && !this.load_Z_F_F(uiMouseX, uiMouseY);
@@ -532,7 +532,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean load_Z_F_F(float x, float y) {
-      return ClassCache.init(
+      return WindowHeaderHelper.init(
          NetHelper.init(this.add, this.clear, this.reset, Math.max(this.init_CharEncoder_2.load(), this.start)), this.init_CharEncoder_2.load(), x, y
       );
    }
@@ -542,7 +542,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private OverlayBounds init_cH(OverlayBounds layout) {
-      RingBuffer viewport = this.init_TextFormat.init_RingBuffer();
+      LayoutViewport viewport = this.init_TextFormat.init_RingBuffer();
       int margin = 4;
       int viewportW = Math.round(viewport.init());
       int viewportH = Math.round(viewport.load());

@@ -91,7 +91,7 @@ public interface AutismOverlay {
    }
 
    default boolean read_Z_D_D(double mouseX, double mouseY) {
-      return this.read_Z() && this.sync_Z() && !this.flush_Z() ? autismclient.gui.f.b.ValueSink.init(this.init_cH(), mouseX, mouseY) : false;
+      return this.read_Z() && this.sync_Z() && !this.flush_Z() ? autismclient.gui.f.b.ResizeGripRenderer.init(this.init_cH(), mouseX, mouseY) : false;
    }
 
    default void init_V_I_I(int width, int height) {

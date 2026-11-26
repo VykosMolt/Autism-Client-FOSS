@@ -86,7 +86,7 @@ public class UiColorPalette {
    }
 
    public static int tick() {
-      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SECONDARY);
+      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.SECONDARY);
    }
 
    public static int run() {
@@ -138,7 +138,7 @@ public class UiColorPalette {
    }
 
    public static int size() {
-      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ByteReader.Inner_StreamUtil.SUCCESS);
+      return init_CharEncoder.init_I_ByteReader_StreamU_2(autismclient.gui.f.c.ButtonNode.Inner_StreamUtil.SUCCESS);
    }
 
    public static int data() {

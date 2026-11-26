@@ -194,7 +194,7 @@ public final class NameScrapeController {
          Minecraft mc = Minecraft.getInstance();
          if (graphics != null && mc != null && mc.font != null) {
             autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, mc.font, -1, -1);
-            autismclient.gui.f.JsonUtil colors = ctx.init_TableIndex().init_JsonUtil();
+            autismclient.gui.f.UiColorScheme colors = ctx.init_TableIndex().init_JsonUtil();
             int names = read_I;
             char spin = init_CArr[(int)(System.currentTimeMillis() / 120L % init_CArr.length)];
             int width = 244;
@@ -209,7 +209,7 @@ public final class NameScrapeController {
             ctx.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, title, x + pad, y + 6, colors.prev);
             int cw = ctx.init_PoolEntry().init(count);
             ctx.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, count, x + width - pad - cw, y + 6, colors.valid);
-            autismclient.gui.f.b.NodeWalker.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), init_D());
+            autismclient.gui.f.b.ProgressBarRenderer.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), init_D());
             String status = init_Str != null && !init_Str.isBlank() ? init_Str : "Starting...";
             ctx.init_PoolEntry().init_V_GuiGraphicsExtract_2(graphics, init(ctx, status, width - pad * 2), x + pad, y + 33, colors.valid);
          }

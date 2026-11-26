@@ -5,9 +5,9 @@ import autismclient.gui.d.ProxiesScreen;
 import autismclient.gui.d.JoinMacroScreen;
 import autismclient.gui.d.PluginLibraryScreen;
 import autismclient.gui.d.SimpleVoiceChatDetectedScreen;
-import autismclient.gui.f.RenderState;
+import autismclient.gui.f.UiDensityMetrics;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.h;
+import autismclient.gui.f.b.TooltipRenderer;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
 import autismclient.util.AutismConfig;
@@ -265,7 +265,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
    @Unique
    private int autism$hugWidth(String label) {
-      return RenderState.load(this.font.width(label));
+      return UiDensityMetrics.load(this.font.width(label));
    }
 
    @Unique
@@ -355,7 +355,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
          try {
             graphics.nextStratum();
-            h.init(UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY), guidance, virtualMouseX, virtualMouseY, 240);
+            TooltipRenderer.init(UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY), guidance, virtualMouseX, virtualMouseY, 240);
          } finally {
             cA.load_V_GuiGraphicsExtract(graphics);
          }

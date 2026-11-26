@@ -6,7 +6,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 public final class OverlayScreenController {
-   private static final autismclient.gui.f.CachePool<Screen> init_CachePool = new autismclient.gui.f.CachePool<>();
+   private static final autismclient.gui.f.ForegroundScreenSlot<Screen> init_CachePool = new autismclient.gui.f.ForegroundScreenSlot<>();
    private static int init_I;
    private static int load_I;
    private static boolean init_Z;
@@ -138,7 +138,7 @@ public final class OverlayScreenController {
    }
 
    private static boolean load_Z(Screen screen) {
-      return AutismLiteVariant.enabled() ? false : screen instanceof autismclient.gui.f.StreamUtil;
+      return AutismLiteVariant.enabled() ? false : screen instanceof autismclient.gui.f.RetainedForegroundScreen;
    }
 
    public static void init_V(Minecraft client) {
@@ -169,7 +169,7 @@ public final class OverlayScreenController {
 
             try {
                Screen previous = init_CachePool.load(load_Z(requested) ? requested : null);
-               autismclient.gui.f.b.BitSetUtil.init_V();
+               autismclient.gui.f.b.TextInputWidget.init_V();
                if (previous == actual) {
                   return false;
                }

@@ -1,7 +1,7 @@
 package autismclient.util;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
 import com.google.gson.JsonObject;
 import java.time.Instant;
@@ -166,7 +166,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    private double load_D;
    private boolean flush_Z;
    private int next;
-   private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
+   private final autismclient.gui.f.b.ScrollOffsetController init_CacheEntry = new autismclient.gui.f.b.ScrollOffsetController();
    private boolean close_Z;
    private int prev;
    private String load_Str = "";
@@ -1099,7 +1099,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.next = this.init_I_I_3(this.next, this.put_I_6(), maxScroll);
                   this.init_CacheEntry.init_V_I_I(this.next, maxScroll);
                   int drawScroll = this.init_CacheEntry.init_I_F_I(delta, maxScroll);
-                  autismclient.gui.f.HashUtil.init_HashUtil()
+                  autismclient.gui.f.UiClipStack.init_HashUtil()
                      .init(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2, contentY, this.reset, contentEndY - contentY));
                   int drawBase = contentY - drawScroll;
 
@@ -1115,9 +1115,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  autismclient.gui.f.HashUtil.init_HashUtil().init(ctx);
-                  autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
-                  autismclient.gui.f.b.PoolEntry.init(ctx, scrollbarMetrics, scrollbarMetrics.init(bodyMx, bodyMy), this.close_Z);
+                  autismclient.gui.f.UiClipStack.init_HashUtil().init(ctx);
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.init(ctx, scrollbarMetrics, scrollbarMetrics.init(bodyMx, bodyMy), this.close_Z);
                }
             } finally {
                this.init_V_GuiGraphicsExtract_Z(ctx, clipBody);
@@ -1136,8 +1136,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int x = this.init_I_2 + 4;
 
       for (AutismPacketLoggerOverlay.Inner_DataUtil cat : AutismPacketLoggerOverlay.Inner_DataUtil.values()) {
-         int w = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
-         autismclient.gui.f.b.PacketUtil.init(ctx, this.init_Font, x, y, w, this.clear_I_6(), cat.init_Str, this.init_AutismPacketLogger_2 == cat, mx, my);
+         int w = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
+         autismclient.gui.f.b.ButtonDrawHelper.init(ctx, this.init_Font, x, y, w, this.clear_I_6(), cat.init_Str, this.init_AutismPacketLogger_2 == cat, mx, my);
          x += w + 2;
       }
 
@@ -1157,7 +1157,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int summaryX = this.init_I_2 + this.reset - 6 - summaryWidth;
       int minSummaryX = x + 4;
       if (summaryX >= minSummaryX) {
-         int summaryY = j.init(y, this.clear_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
+         int summaryY = UiLayoutMath.init(y, this.clear_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush());
          this.init_V_GuiGraphicsExtract_8(ctx, summary, autismclient.gui.f.b.l.write, summaryColor, summaryX, summaryY);
       }
    }
@@ -1171,11 +1171,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       return this.sync_I(rawHeight, this.put_I_6());
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_7() {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_7() {
       int contentHeight = this.load_List.size() * this.put_I_6();
       int viewHeight = this.pop_I_19();
       int maxScroll = Math.max(0, contentHeight - viewHeight);
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
          contentHeight, viewHeight, this.init_I_2 + this.reset - 5, this.push_I_19(), 3, viewHeight, this.init_CacheEntry.init_I_F_I(0.0F, maxScroll)
       );
    }
@@ -1203,15 +1203,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       int[] legacy = new int[labels.length];
-      legacy[0] = autismclient.gui.f.c.NetHelper.init(
+      legacy[0] = autismclient.gui.f.c.PanelLayoutMath.init(
          this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[0], 5, 38, this.update_Z ? 66 : 54
       );
-      legacy[1] = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[1], 5, 34, 54);
-      legacy[2] = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[2], 5, 34, 52);
-      legacy[3] = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[3], 5, 38, 58);
-      legacy[4] = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[4], 5, 54, 72);
-      legacy[5] = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[5], 5, 58, 78);
-      legacy[6] = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[6], 5, 44, 64);
+      legacy[1] = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[1], 5, 34, 54);
+      legacy[2] = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[2], 5, 34, 52);
+      legacy[3] = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[3], 5, 38, 58);
+      legacy[4] = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[4], 5, 54, 72);
+      legacy[5] = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[5], 5, 58, 78);
+      legacy[6] = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, labels[6], 5, 44, 64);
       return new AutismPacketLoggerOverlay.Inner_BufferHelper(labels, legacy, 2);
    }
 
@@ -1224,25 +1224,25 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[0], this.reset_I_5(), row1.init_StrArr[0], !this.write_Z, "packet-logger:capture", mx, my);
       x += row1.init_IArr[0] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[1], this.reset_I_5(), row1.init_StrArr[1], autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[1] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[2], this.reset_I_5(), row1.init_StrArr[2], autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[2] + row1.init_I;
       this.init_V_GuiGraphicsExtract_4(ctx, x, row1Y, row1.init_IArr[3], this.reset_I_5(), row1.init_StrArr[3], this.open_Z, "packet-logger:grouping", mx, my);
       x += row1.init_IArr[3] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[4], this.reset_I_5(), row1.init_StrArr[4], autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[4] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[5], this.reset_I_5(), row1.init_StrArr[5], autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
       );
       x += row1.init_IArr[5] + row1.init_I;
       this.init_V_GuiGraphicsExtract_3(
-         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST, true, mx, my
+         ctx, x, row1Y, row1.init_IArr[6], this.reset_I_5(), row1.init_StrArr[6], autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my
       );
       x = this.init_I_2 + 4;
       int sw = this.prev_I_4();
@@ -1259,15 +1259,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       String[] dirLabels = new String[]{"Both", "C2S", "S2C"};
 
       for (int d = 0; d < 3; d++) {
-         int bw = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
-         autismclient.gui.f.b.PacketUtil.init(ctx, this.init_Font, x, row2Y, bw, this.reset_I_5(), dirLabels[d], this.valid == d, mx, my);
+         int bw = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
+         autismclient.gui.f.b.ButtonDrawHelper.init(ctx, this.init_Font, x, row2Y, bw, this.reset_I_5(), dirLabels[d], this.valid == d, mx, my);
          x += bw + gap;
       }
 
       if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD) {
          String listenLabel = this.poll_Z ? "Filtered" : "All";
-         int listenW = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
-         autismclient.gui.f.b.PacketUtil.init(ctx, this.init_Font, x, row2Y, listenW, this.reset_I_5(), listenLabel, this.poll_Z, mx, my);
+         int listenW = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
+         autismclient.gui.f.b.ButtonDrawHelper.init(ctx, this.init_Font, x, row2Y, listenW, this.reset_I_5(), listenLabel, this.poll_Z, mx, my);
       }
    }
 
@@ -1278,18 +1278,18 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int w,
       int h,
       String label,
-      autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant,
+      autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil variant,
       boolean active,
       int mx,
       int my
    ) {
-      autismclient.gui.f.b.PacketUtil.init(ctx, this.init_Font, x, y, w, h, label, variant, active, mx, my);
+      autismclient.gui.f.b.ButtonDrawHelper.init(ctx, this.init_Font, x, y, w, h, label, variant, active, mx, my);
    }
 
    private void init_V_GuiGraphicsExtract_4(
       GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean enabled, String animationKey, int mx, int my
    ) {
-      autismclient.gui.f.b.PacketUtil.init(ctx, this.init_Font, x, y, w, h, label, enabled, animationKey, mx, my);
+      autismclient.gui.f.b.ButtonDrawHelper.init(ctx, this.init_Font, x, y, w, h, label, enabled, animationKey, mx, my);
    }
 
    private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor ctx, AutismPacketLoggerOverlay.Inner_CachePool row, int y, int mx, int my) {
@@ -1302,15 +1302,15 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       if (listenerMatch != null) {
          ctx.fill(this.init_I_2 + 2, y, this.init_I_2 + this.reset - 4, y + this.put_I_6(), UiColorPalette.init(hov));
       } else if (hov) {
-         autismclient.gui.f.b.TableIndex.init(ctx, this.init_I_2 + 2, y, this.reset - 4, this.put_I_6(), true, false);
+         autismclient.gui.f.b.PanelSurfaceHelper.init(ctx, this.init_I_2 + 2, y, this.reset - 4, this.put_I_6(), true, false);
       }
 
-      autismclient.gui.f.b.StateCache.init(
+      autismclient.gui.f.b.GlyphIndicatorRenderer.init(
          ctx,
          x,
          y + (this.put_I_6() - 8) / 2,
          8,
-         exp ? autismclient.gui.f.b.StateCache.Inner_DataUtil.DOWN : autismclient.gui.f.b.StateCache.Inner_DataUtil.RIGHT,
+         exp ? autismclient.gui.f.b.GlyphIndicatorRenderer.Inner_DataUtil.DOWN : autismclient.gui.f.b.GlyphIndicatorRenderer.Inner_DataUtil.RIGHT,
          hov ? -659730 : -1582374,
          -1204153320,
          1.0F
@@ -1344,7 +1344,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       if (listenerMatch != null) {
          ctx.fill(this.init_I_2 + 2, y, this.init_I_2 + this.reset - 4, y + this.put_I_6(), UiColorPalette.init(hov));
       } else if (hov) {
-         autismclient.gui.f.b.TableIndex.init(ctx, this.init_I_2 + 2, y, this.reset - 4, this.put_I_6(), true, false);
+         autismclient.gui.f.b.PanelSurfaceHelper.init(ctx, this.init_I_2 + 2, y, this.reset - 4, this.put_I_6(), true, false);
       }
 
       int color = e.init_Str.equals("C2S") ? -12268289 : -21948;
@@ -1382,7 +1382,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private void load(GuiGraphicsExtractor ctx, int mx, int my, int startY, int endY) {
-      autismclient.gui.f.b.TableIndex.init(ctx, this.init_I_2 + 4, startY, this.reset - 8);
+      autismclient.gui.f.b.PanelSurfaceHelper.init(ctx, this.init_I_2 + 4, startY, this.reset - 8);
       int y = startY + 3;
       boolean hh = mx >= this.init_I_2 + 4 && mx <= this.init_I_2 + 150 && my >= y && my < y + this.put_I_6();
       int blockedColor = hh ? ThemePaletteManager.init_I_I_ct_DataUtil(-30584, ThemePaletteManager.Inner_DataUtil.DANGER) : ThemePaletteManager.init_I_I_ct_DataUtil(-39322, ThemePaletteManager.Inner_DataUtil.DANGER);
@@ -1494,7 +1494,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             int x = this.init_I_2 + 4;
 
             for (AutismPacketLoggerOverlay.Inner_DataUtil cat : AutismPacketLoggerOverlay.Inner_DataUtil.values()) {
-               int w = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
+               int w = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, cat.init_Str, 5, 32, 64);
                if (mouseX >= x && mouseX < x + w) {
                   this.init_AutismPacketLogger_2 = cat;
                   this.pop_Z = true;
@@ -1518,12 +1518,12 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             int contentEndY = contentY + this.pop_I_19();
             if (mouseY >= contentY && mouseY < contentEndY) {
                if (button == 0) {
-                  autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
                   if (scrollbarMetrics.init_Z() && scrollbarMetrics.init((int)mouseX, (int)mouseY)) {
                      this.close_Z = true;
                      this.prev = Math.max(0, (int)mouseY - scrollbarMetrics.update());
                      this.next = this.init_I_I_3(
-                        autismclient.gui.f.b.PoolEntry.init(scrollbarMetrics, (int)mouseY, this.prev), this.put_I_6(), scrollbarMetrics.flush()
+                        autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbarMetrics, (int)mouseY, this.prev), this.put_I_6(), scrollbarMetrics.flush()
                      );
                      this.init_CacheEntry.load(this.next, scrollbarMetrics.flush());
                      return true;
@@ -1590,7 +1590,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       String[] dirLabels = new String[]{"Both", "C2S", "S2C"};
 
       for (int d = 0; d < 3; d++) {
-         int dirW = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
+         int dirW = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, dirLabels[d], 4, 30, 48);
          if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + dirW) {
             this.valid = d;
             this.pop_Z = true;
@@ -1602,7 +1602,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
       if (this.init_AutismPacketLogger_2 == AutismPacketLoggerOverlay.Inner_DataUtil.PAYLOAD) {
          String listenLabel = this.poll_Z ? "Filtered" : "All";
-         int listenW = autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
+         int listenW = autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, listenLabel, 4, 42, 62);
          if (mouseY >= row2Y && mouseY < row2Y + this.reset_I_5() && mouseX >= x && mouseX < x + listenW) {
             this.poll_Z = !this.poll_Z;
             this.pop_Z = true;
@@ -1763,8 +1763,8 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    @Override
    public boolean init_Z_D(double mx, double my, int b, double dx, double dy) {
       if (this.close_Z && b == 0) {
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
-         this.next = this.init_I_I_3(autismclient.gui.f.b.PoolEntry.init(scrollbarMetrics, (int)my, this.prev), this.put_I_6(), scrollbarMetrics.flush());
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbarMetrics = this.init_PoolEntry_DataUtil_7();
+         this.next = this.init_I_I_3(autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbarMetrics, (int)my, this.prev), this.put_I_6(), scrollbarMetrics.flush());
          this.init_CacheEntry.load(this.next, scrollbarMetrics.flush());
          return true;
       }
@@ -2067,7 +2067,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       int row2 = this.next_I_5() + 3;
 
       for (String label : new String[]{"Both", "C2S", "S2C"}) {
-         row2 += autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 4, 30, 48) + 2;
+         row2 += autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 4, 30, 48) + 2;
       }
 
       return Math.max(row1, row2) + 8;
@@ -2078,21 +2078,21 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    }
 
    private int init_I_Str_6(String label) {
-      return autismclient.gui.f.RenderState.load(
+      return autismclient.gui.f.UiDensityMetrics.load(
          autismclient.gui.f.b.k.init(this.init_Font, label, this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
       );
    }
 
    private int put_I_6() {
-      return Math.max(autismclient.gui.f.RenderState.init(12), this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.read, 2));
+      return Math.max(autismclient.gui.f.UiDensityMetrics.init(12), this.init_CharEncoder.init_I_l_I(autismclient.gui.f.b.l.read, 2));
    }
 
    private int init_I_I_8(int y) {
-      return j.init(y, this.put_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+      return UiLayoutMath.init(y, this.put_I_6(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
    }
 
    private int add_I_13() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int clear_I_6() {
@@ -2125,7 +2125,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
    private final class BlockedPacketListOverlay extends DraggableOverlayWindow {
       private final ThemedTextInputBox init_k = new ThemedTextInputBox(AutismPacketLoggerOverlay.init_Minecraft, AutismPacketLoggerOverlay.this.init_Font, 0, 0, 120, 16, false);
-      private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
+      private final autismclient.gui.f.b.ScrollOffsetController init_CacheEntry = new autismclient.gui.f.b.ScrollOffsetController();
       private final List<Class<? extends Packet<?>>> init_List = new ArrayList<>();
       private final Set<Class<? extends Packet<?>>> init_Set = new HashSet<>();
       private final List<Class<? extends Packet<?>>> load_List = new ArrayList<>();
@@ -2212,11 +2212,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.init_k.init_V(ctx, mx, my, delta);
                   y = this.get_I_16();
                   int bx = x;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx, AutismPacketLoggerOverlay.this.init_Font, bx, y, this.push_I_20(), rowH, "Blocked", this.update_Z, mx, my
                   );
                   int clearX = bx + this.push_I_20() + 2;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      clearX,
@@ -2224,13 +2224,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      this.pop_I_20(),
                      rowH,
                      "Clear",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER,
                      true,
                      mx,
                      my
                   );
                   int resetX = clearX + this.pop_I_20() + 2;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      resetX,
@@ -2238,7 +2238,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      this.tick_I_18(),
                      rowH,
                      "Reset",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -2250,7 +2250,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      autismclient.gui.f.b.l.write,
                      UiColorPalette.parse(),
                      countX,
-                     j.init(
+                     UiLayoutMath.init(
                         y,
                         rowH,
                         AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write),
@@ -2264,7 +2264,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.flush_I = this.init_I_I_3(this.flush_I, AutismPacketLoggerOverlay.this.put_I_6(), maxScroll);
                   this.init_CacheEntry.init_V_I_I(this.flush_I, maxScroll);
                   int drawScroll = this.init_CacheEntry.init_I_F_I(delta, maxScroll);
-                  autismclient.gui.f.HashUtil.init_HashUtil().init(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2 + 4, listTop, this.read_I - 8, listH));
+                  autismclient.gui.f.UiClipStack.init_HashUtil().init(ctx, autismclient.gui.f.NetHelper.init(this.init_I_2 + 4, listTop, this.read_I - 8, listH));
                   int base = listTop - drawScroll;
                   int rowHeight = AutismPacketLoggerOverlay.this.put_I_6();
                   int firstVisible = Math.max(0, drawScroll / rowHeight);
@@ -2299,11 +2299,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      );
                   }
 
-                  autismclient.gui.f.HashUtil.init_HashUtil().init(ctx);
-                  autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+                  autismclient.gui.f.UiClipStack.init_HashUtil().init(ctx);
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                      contentH, listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, drawScroll
                   );
-                  autismclient.gui.f.b.PoolEntry.init(ctx, metrics, metrics.init(mx, my), this.write_Z);
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.init(ctx, metrics, metrics.init(mx, my), this.write_Z);
                } finally {
                   this.init_V_GuiGraphicsExtract_Z(ctx, clip);
                   this.init_V_GuiGraphicsExtract_14(ctx, bounds, this.load_Z, false);
@@ -2391,7 +2391,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
          int listTop = this.set_I_16();
          int listH = Math.max(20, this.load_I + this.write - listTop - 6);
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
             this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, this.flush_I
          );
          if (button == 0 && metrics.init_Z() && metrics.init((int)mx, (int)my)) {
@@ -2430,11 +2430,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else if (this.write_Z && button == 0) {
             int listTop = this.set_I_16();
             int listH = Math.max(20, this.load_I + this.write - listTop - 6);
-            autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+            autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                this.load_List.size() * AutismPacketLoggerOverlay.this.put_I_6(), listH, this.init_I_2 + this.read_I - 5, listTop, 3, listH, this.flush_I
             );
             this.flush_I = this.init_I_I_3(
-               autismclient.gui.f.b.PoolEntry.init(metrics, (int)my, this.close_I), AutismPacketLoggerOverlay.this.put_I_6(), metrics.flush()
+               autismclient.gui.f.b.ScrollbarMetricsHelper.init(metrics, (int)my, this.close_I), AutismPacketLoggerOverlay.this.put_I_6(), metrics.flush()
             );
             return true;
          } else {
@@ -2750,7 +2750,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
    private final class PayloadChannelListenerOverlay extends DraggableOverlayWindow {
       private final ThemedTextInputBox init_k = new ThemedTextInputBox(AutismPacketLoggerOverlay.init_Minecraft, AutismPacketLoggerOverlay.this.init_Font, 0, 0, 120, 16, false);
       private final ThemedTextInputBox load_k = new ThemedTextInputBox(AutismPacketLoggerOverlay.init_Minecraft, AutismPacketLoggerOverlay.this.init_Font, 0, 0, 112, 16, false);
-      private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
+      private final autismclient.gui.f.b.ScrollOffsetController init_CacheEntry = new autismclient.gui.f.b.ScrollOffsetController();
       private final List<AutismPacketLoggerOverlay.Inner_ConfigStore> init_List = new ArrayList<>();
       private int flush_I;
       private boolean write_Z;
@@ -2986,7 +2986,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   this.load_k.init_V(ctx, mx, my, delta);
                   int addW = this.valid();
                   int addX = x + customW + 2;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      addX,
@@ -2994,14 +2994,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      addW,
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      this.poll_Z_14() ? "Save" : "Add",
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
                   );
                   if (this.poll_Z_14()) {
                      int cancelX = addX + addW + 2;
-                     autismclient.gui.f.b.PacketUtil.init(
+                     autismclient.gui.f.b.ButtonDrawHelper.init(
                         ctx,
                         AutismPacketLoggerOverlay.this.init_Font,
                         cancelX,
@@ -3009,7 +3009,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                         this.size(),
                         AutismPacketLoggerOverlay.this.add_I_13(),
                         "Cancel",
-                        autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                        autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                         true,
                         mx,
                         my
@@ -3019,7 +3019,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   y = this.run_I_19();
                   AutismPacketLoggerOverlay.Inner_StreamUtil controls = this.init_AutismPacketLogger_4();
                   int cx = x;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3028,14 +3028,14 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[0],
                      AutismPacketLoggerOverlay.this.init_bB.read_Z()
-                        ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST
-                        : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+                        ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST
+                        : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
                   );
                   cx += controls.init_IArr[0] + controls.init_I;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3043,13 +3043,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[1],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[1],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
                   );
                   cx += controls.init_IArr[1] + controls.init_I;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3057,13 +3057,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[2],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[2],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
                   );
                   cx += controls.init_IArr[2] + controls.init_I;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3071,13 +3071,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[3],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[3],
-                     this.sync_Z ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                     this.sync_Z ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
                   );
                   cx += controls.init_IArr[3] + controls.init_I;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3085,13 +3085,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[4],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[4],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
                      true,
                      mx,
                      my
                   );
                   cx += controls.init_IArr[4] + controls.init_I;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3099,13 +3099,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[5],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[5],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
                   );
                   cx += controls.init_IArr[5] + controls.init_I;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      cx,
@@ -3113,7 +3113,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      controls.init_IArr[6],
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      controls.init_StrArr[6],
-                     autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                     autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -3127,7 +3127,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   boolean registrationUnlocked = PayloadSubscriptionManager.init_Z();
                   int lockW = this.data();
                   int lockX = this.init_I_2 + this.read_I - 8 - lockW;
-                  autismclient.gui.f.b.PacketUtil.init(
+                  autismclient.gui.f.b.ButtonDrawHelper.init(
                      ctx,
                      AutismPacketLoggerOverlay.this.init_Font,
                      lockX,
@@ -3135,7 +3135,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      lockW,
                      AutismPacketLoggerOverlay.this.add_I_13(),
                      registrationUnlocked ? "Registration : On" : "Registration : Off",
-                     registrationUnlocked ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                     registrationUnlocked ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                      true,
                      mx,
                      my
@@ -3155,7 +3155,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      autismclient.gui.f.b.l.write,
                      UiColorPalette.parse(),
                      countX,
-                     j.init(
+                     UiLayoutMath.init(
                         this.get_I_17(),
                         AutismPacketLoggerOverlay.this.add_I_13(),
                         AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write),
@@ -3175,7 +3175,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      UiColorPalette.count(),
                      UiColorPalette.c()
                   );
-                  autismclient.gui.f.HashUtil.init_HashUtil().init(ctx, autismclient.gui.f.NetHelper.init(this.add_I_14(), listTop, this.reset_I_6(), listH));
+                  autismclient.gui.f.UiClipStack.init_HashUtil().init(ctx, autismclient.gui.f.NetHelper.init(this.add_I_14(), listTop, this.reset_I_6(), listH));
                   int base = listTop - drawScroll;
                   int firstVisible = Math.max(0, drawScroll / 14);
                   int lastVisible = Math.min(this.init_List.size() - 1, (drawScroll + listH - 1) / 14);
@@ -3185,11 +3185,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      this.init(ctx, this.init_List.get(i), ry, mx, my, i);
                   }
 
-                  autismclient.gui.f.HashUtil.init_HashUtil().init(ctx);
-                  autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+                  autismclient.gui.f.UiClipStack.init_HashUtil().init(ctx);
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                      contentH, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, drawScroll
                   );
-                  autismclient.gui.f.b.PoolEntry.init(ctx, metrics, metrics.init(mx, my), this.write_Z);
+                  autismclient.gui.f.b.ScrollbarMetricsHelper.init(ctx, metrics, metrics.init(mx, my), this.write_Z);
                   if (this.close_Z) {
                      this.init_V_GuiGraphicsExtract_6(ctx, mx, my);
                   }
@@ -3226,7 +3226,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int buttonsW = cancelW + 6 + acceptW;
          int cancelX = x + (w - buttonsW) / 2;
          int acceptX = cancelX + cancelW + 6;
-         autismclient.gui.f.b.PacketUtil.init(
+         autismclient.gui.f.b.ButtonDrawHelper.init(
             ctx,
             AutismPacketLoggerOverlay.this.init_Font,
             cancelX,
@@ -3234,13 +3234,13 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             cancelW,
             AutismPacketLoggerOverlay.this.add_I_13(),
             "Cancel",
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+            autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
             true,
             mx,
             my
          );
          boolean ready = this.state() <= 0;
-         autismclient.gui.f.b.PacketUtil.init(
+         autismclient.gui.f.b.ButtonDrawHelper.init(
             ctx,
             AutismPacketLoggerOverlay.this.init_Font,
             acceptX,
@@ -3248,7 +3248,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             acceptW,
             AutismPacketLoggerOverlay.this.add_I_13(),
             this.load_Str_10(),
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER,
+            autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER,
             ready,
             mx,
             my
@@ -3357,7 +3357,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             boolean groupHeader = this.load_Map.getOrDefault(this.init_Str_2(row.init_Str), 0) > 0;
             boolean groupOn = groupHeader && this.load_Z_2(row.init_Str);
             ctx.fill(left, y, right, y + 14, UiColorPalette.clear());
-            autismclient.gui.f.b.TableIndex.init(ctx, left + 2, y + 14 - 1, Math.max(1, width - 4));
+            autismclient.gui.f.b.PanelSurfaceHelper.init(ctx, left + 2, y + 14 - 1, Math.max(1, width - 4));
             int statusW = groupHeader ? 30 : 0;
             int statusX = right - statusW - 4;
             int channelX = groupHeader ? statusX - 58 - 3 : right;
@@ -3610,11 +3610,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          boolean disabled = AutismPacketLoggerOverlay.this.update_Z && !"Use".equals(label);
          boolean hover = !disabled && mx >= x && mx < x + 36 && my >= py && my < py + h;
          if (disabled) {
-            autismclient.gui.f.b.ConfigStore.init(
+            autismclient.gui.f.b.PillBadgeRenderer.init(
                autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.init_Font, mx, my), autismclient.gui.f.NetHelper.init(x, py, 36, h), label
             );
          } else {
-            autismclient.gui.f.b.ConfigStore.init(
+            autismclient.gui.f.b.PillBadgeRenderer.init(
                autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.init_Font, mx, my),
                autismclient.gui.f.NetHelper.init(x, py, 36, h),
                label,
@@ -3811,7 +3811,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void init(GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean enabled) {
-         autismclient.gui.f.b.ConfigStore.init(
+         autismclient.gui.f.b.PillBadgeRenderer.init(
             autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.init_Font, -1, -1),
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             label,
@@ -3821,7 +3821,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private int init_I_I_l(int y, autismclient.gui.f.b.l tone) {
-         return j.init(y, 14, AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(tone), AutismPacketLoggerOverlay.this.init_CharEncoder.flush());
+         return UiLayoutMath.init(y, 14, AutismPacketLoggerOverlay.this.init_CharEncoder.init_I_l(tone), AutismPacketLoggerOverlay.this.init_CharEncoder.flush());
       }
 
       private void poll_V_8() {
@@ -4569,7 +4569,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
-            autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+            autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                this.init_List.size() * 14, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, this.flush_I
             );
             if (button == 0 && metrics.init_Z() && metrics.init((int)mx, (int)my)) {
@@ -5362,10 +5362,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          } else if (this.write_Z && button == 0) {
             int listTop = this.put_I_7();
             int listH = this.next_I_6();
-            autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+            autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
                this.init_List.size() * 14, listH, this.init_I_2 + this.read_I - 7, listTop, 3, listH, this.flush_I
             );
-            this.flush_I = this.init_I_I_3(autismclient.gui.f.b.PoolEntry.init(metrics, (int)my, this.close_I), 14, metrics.flush());
+            this.flush_I = this.init_I_I_3(autismclient.gui.f.b.ScrollbarMetricsHelper.init(metrics, (int)my, this.close_I), 14, metrics.flush());
             return true;
          } else {
             return this.init_k.init(mx, my, button, dx, dy) ? true : this.load_k.init(mx, my, button, dx, dy);

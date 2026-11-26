@@ -23,7 +23,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-public class WaypointsScreen extends KeyHolder {
+public class WaypointsScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 340;
    private static final int load_I = 18;
@@ -114,7 +114,7 @@ public class WaypointsScreen extends KeyHolder {
             fieldY,
             addW,
             ctl,
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS,
+            autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS,
             WaypointsScreen.Inner_StreamUtil.ADD,
             "",
             mx,
@@ -131,7 +131,7 @@ public class WaypointsScreen extends KeyHolder {
 
          int listY = this.tick_I_15();
          int listH = this.run();
-         autismclient.gui.f.b.TextFormat.Inner_DataUtil listLayout = this.init_TextFormat_DataUti(listY, listH);
+         autismclient.gui.f.b.ScrollListLayout.Inner_DataUtil listLayout = this.init_TextFormat_DataUti(listY, listH);
          this.load(graphics, fieldX, listY, panelW - 8, listH, -1442248437, init_CharEncoder.set());
          listLayout.init(graphics);
 
@@ -147,7 +147,7 @@ public class WaypointsScreen extends KeyHolder {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, autismclient.gui.f.b.TextFormat.Inner_DataUtil layout, float delta, int mx, int my) {
+   private void init(GuiGraphicsExtractor graphics, autismclient.gui.f.b.ScrollListLayout.Inner_DataUtil layout, float delta, int mx, int my) {
       List<AutismWaypoints.Waypoint> rows = this.init_List_14();
       this.get = this.init_I_I_4(this.get, 0, layout.open());
       int x = layout.init_I() + layout.pop();
@@ -163,7 +163,7 @@ public class WaypointsScreen extends KeyHolder {
                AutismWaypoints.Waypoint waypoint = rows.get(i);
                this.load_List.add(waypoint.name());
                boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
-               autismclient.gui.f.b.TableIndex.init(graphics, x, rowY, w, rowH, over ? -1441000940 : -1441722092);
+               autismclient.gui.f.b.PanelSurfaceHelper.init(graphics, x, rowY, w, rowH, over ? -1441000940 : -1441722092);
                int swatchX = x + 3;
                int swatchY = rowY + (rowH - 10) / 2;
                boolean swatchOver = mx >= swatchX && mx < swatchX + 18 && my >= swatchY && my < swatchY + 10;
@@ -187,7 +187,7 @@ public class WaypointsScreen extends KeyHolder {
                int delY = rowY + (rowH - del) / 2;
                int coordsX = nameX + 120 + 8;
                this.init(graphics, waypoint.x() + " " + waypoint.y() + " " + waypoint.z(), coordsX, this.init_I_6(rowY, rowH), read_I_17(), delX - 4 - coordsX);
-               autismclient.gui.f.b.FileCache.load(graphics, delX, delY, del, del, over);
+               autismclient.gui.f.b.ListRowRenderer.load(graphics, delX, delY, del, del, over);
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.ROW, x, rowY, w, rowH, waypoint.name()));
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.SWATCH, swatchX, swatchY, 18, 10, waypoint.name()));
                this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.REMOVE, delX, delY, del, del, waypoint.name()));
@@ -240,23 +240,23 @@ public class WaypointsScreen extends KeyHolder {
       int y,
       int w,
       int h,
-      autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant,
+      autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil variant,
       WaypointsScreen.Inner_StreamUtil type,
       String value,
       int mx,
       int my
    ) {
-      autismclient.gui.f.b.PacketUtil.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
+      autismclient.gui.f.b.ButtonDrawHelper.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
       this.init_List.add(new WaypointsScreen.Inner_DataUtil(type, x, y, w, h, value));
    }
 
    private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
       int headerH = this.sync_I_11();
-      autismclient.gui.f.b.IoWorker.init(
+      autismclient.gui.f.b.DialogFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Waypoints", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
-      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
+      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.DialogFrameRenderer.init(bounds, headerH);
       this.init_List.add(new WaypointsScreen.Inner_DataUtil(WaypointsScreen.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
@@ -273,11 +273,11 @@ public class WaypointsScreen extends KeyHolder {
          this.write_V_15();
       }
 
-      autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_8();
+      autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_8();
       if (metrics.init_Z() && metrics.init(mx, my)) {
          this.init_Z = true;
          this.set = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
-         this.get = this.init_I_I_15(autismclient.gui.f.b.PoolEntry.init(metrics, my, this.set));
+         this.get = this.init_I_I_15(autismclient.gui.f.b.ScrollbarMetricsHelper.init(metrics, my, this.set));
          return true;
       }
 
@@ -391,7 +391,7 @@ public class WaypointsScreen extends KeyHolder {
          return true;
       }
 
-      this.get = this.init_I_I_15(autismclient.gui.f.b.PoolEntry.init(this.init_PoolEntry_DataUtil_8(), my, this.set));
+      this.get = this.init_I_I_15(autismclient.gui.f.b.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_8(), my, this.set));
       return true;
    }
 
@@ -713,7 +713,7 @@ public class WaypointsScreen extends KeyHolder {
    }
 
    private int update_I_14() {
-      return autismclient.gui.f.RenderState.load(autismclient.gui.f.b.k.init(this.font, "Add", init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.f.UiDensityMetrics.load(autismclient.gui.f.b.k.init(this.font, "Add", init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private String init_Str_13() {
@@ -727,15 +727,15 @@ public class WaypointsScreen extends KeyHolder {
    }
 
    private int sync_I_11() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int flush_I_9() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int close_I_7() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int open_I_6() {
@@ -763,18 +763,18 @@ public class WaypointsScreen extends KeyHolder {
       return Math.max(1, this.set() + this.add() - 4 - this.tick_I_15());
    }
 
-   private autismclient.gui.f.b.TextFormat.Inner_DataUtil init_TextFormat_DataUti(int listY, int listH) {
-      return autismclient.gui.f.b.TextFormat.init(
+   private autismclient.gui.f.b.ScrollListLayout.Inner_DataUtil init_TextFormat_DataUti(int listY, int listH) {
+      return autismclient.gui.f.b.ScrollListLayout.init(
          this.get() + 4, listY, this.put() - 8, listH, this.init_List_14().size(), this.close_I_7(), this.open_I_6(), this.get, 4, 8, 2, 6, false
       );
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_8() {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_8() {
       return this.init_TextFormat_DataUti(this.tick_I_15(), this.run()).init_PoolEntry_DataUtil();
    }
 
    private boolean init_Z(int mx, int my) {
-      autismclient.gui.f.b.TextFormat.Inner_DataUtil listLayout = this.init_TextFormat_DataUti(this.tick_I_15(), this.run());
+      autismclient.gui.f.b.ScrollListLayout.Inner_DataUtil listLayout = this.init_TextFormat_DataUti(this.tick_I_15(), this.run());
       return mx >= listLayout.init_I() + listLayout.pop()
          && mx < listLayout.init_I() + listLayout.pop() + listLayout.push()
          && my >= listLayout.load() + listLayout.pop()
@@ -794,22 +794,22 @@ public class WaypointsScreen extends KeyHolder {
    }
 
    private int get() {
-      return autismclient.gui.f.c.NetHelper.load(this.init_I(), this.put(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.init_I(), this.put(), 6);
    }
 
    private int set() {
-      return autismclient.gui.f.c.NetHelper.load(this.load_I(), this.add(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.load_I(), this.add(), 6);
    }
 
    private int put() {
-      return autismclient.gui.f.c.NetHelper.init(this.init_I(), 6, 340);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_I(), 6, 340);
    }
 
    private int add() {
       int cap = Math.max(3, this.load_I() * 65 / 100 / this.open_I_6());
       int shown = Math.max(3, Math.min(cap, this.init_List_14().size()));
       int content = this.pop() + shown * this.open_I_6() + 4 + 4;
-      return autismclient.gui.f.c.NetHelper.init(this.load_I(), 6, content);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.load_I(), 6, content);
    }
 
    private void load(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill, int border) {

@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.gui.f.TaskQueue;
+import autismclient.gui.f.UiAlphaStack;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismGuiAlphaMixin {
    @ModifyVariable(method = "innerFill", at = @At("HEAD"), argsOnly = true, ordinal = 4)
    private int autism$fadeFill(int color) {
-      return TaskQueue.init_I_I(color);
+      return UiAlphaStack.init_I_I(color);
    }
 
    @ModifyVariable(method = "innerFill", at = @At("HEAD"), argsOnly = true)
    private Integer autism$fadeFillGradient(Integer color) {
-      return color == null ? null : TaskQueue.init_I_I(color);
+      return color == null ? null : UiAlphaStack.init_I_I(color);
    }
 
    @ModifyVariable(
@@ -30,12 +30,12 @@ public abstract class AutismGuiAlphaMixin {
       ordinal = 4
    )
    private int autism$fadeBlit(int color) {
-      return TaskQueue.init_I_I(color);
+      return UiAlphaStack.init_I_I(color);
    }
 
    @ModifyVariable(method = "innerTiledBlit", at = @At("HEAD"), argsOnly = true, ordinal = 6)
    private int autism$fadeTiledBlit(int color) {
-      return TaskQueue.init_I_I(color);
+      return UiAlphaStack.init_I_I(color);
    }
 
    @ModifyVariable(
@@ -45,7 +45,7 @@ public abstract class AutismGuiAlphaMixin {
       ordinal = 2
    )
    private int autism$fadeText(int color) {
-      return TaskQueue.init_I_I(color);
+      return UiAlphaStack.init_I_I(color);
    }
 
    @Inject(
@@ -54,14 +54,14 @@ public abstract class AutismGuiAlphaMixin {
       cancellable = true
    )
    private void autism$skipFadedItem(LivingEntity owner, Level level, ItemStack stack, int x, int y, int seed, CallbackInfo ci) {
-      if (TaskQueue.init_F() < 0.5F) {
+      if (UiAlphaStack.init_F() < 0.5F) {
          ci.cancel();
       }
    }
 
    @Inject(method = {"entity", "skin"}, at = @At("HEAD"), cancellable = true)
    private void autism$skipFadedPreview(CallbackInfo ci) {
-      if (TaskQueue.init_F() < 0.5F) {
+      if (UiAlphaStack.init_F() < 0.5F) {
          ci.cancel();
       }
    }

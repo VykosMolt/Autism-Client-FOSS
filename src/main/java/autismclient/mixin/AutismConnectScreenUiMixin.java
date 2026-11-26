@@ -1,6 +1,6 @@
 package autismclient.mixin;
 
-import autismclient.gui.d.StreamGate;
+import autismclient.gui.d.StyledButton;
 import autismclient.gui.f.b.CachePool;
 import autismclient.modules.AutoReconnectController;
 import autismclient.modules.aD;
@@ -29,7 +29,7 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
    private static final char[] SPINNER = new char[]{'|', '/', '-', '\\'};
    private int autism$step;
    @Unique
-   private StreamGate autism$reconnectToggle;
+   private StyledButton autism$reconnectToggle;
 
    protected AutismConnectScreenUiMixin(Component title) {
       super(title);
@@ -40,7 +40,7 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
       if (!aD.init_Z() && AutoReconnectController.read()) {
          int w = 148;
          int h = 16;
-         this.autism$reconnectToggle = new StreamGate(
+         this.autism$reconnectToggle = new StyledButton(
             this.width / 2 - w / 2,
             this.height - 18 - h,
             w,

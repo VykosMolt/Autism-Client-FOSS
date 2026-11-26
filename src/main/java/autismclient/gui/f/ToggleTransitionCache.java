@@ -1,0 +1,72 @@
+package autismclient.gui.f;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+public final class ToggleTransitionCache {
+   private static final long init_J = 150000000L;
+   private static final long load = 30000000000L;
+   private static final Map<String, ToggleTransitionCache.Inner_DataUtil> init_Map = new HashMap<>();
+   private static long read;
+
+   private ToggleTransitionCache() {
+   }
+
+   public static float init(String key, boolean on) {
+      long now = System.nanoTime();
+      ToggleTransitionCache.Inner_DataUtil state = init_Map.get(key);
+      if (state == null) {
+         state = new ToggleTransitionCache.Inner_DataUtil(on ? 1.0F : 0.0F, on, now);
+         init_Map.put(key, state);
+         return state.load_F;
+      }
+
+      if (state.init_Z != on) {
+         state.init_F = state.init(now);
+         state.init_Z = on;
+         state.init_J = now;
+      }
+
+      state.load_J = now;
+      if (now - read > 30000000000L) {
+         read = now;
+         Iterator<ToggleTransitionCache.Inner_DataUtil> it = init_Map.values().iterator();
+
+         while (it.hasNext()) {
+            if (now - it.next().load_J > 30000000000L) {
+               it.remove();
+            }
+         }
+      }
+
+      return state.init(now);
+   }
+
+   public static String init(NetHelper bounds) {
+      return bounds.read() + ":" + bounds.write() + ":" + bounds.update() + ":" + bounds.sync();
+   }
+
+   private static final class Inner_DataUtil {
+      float init_F;
+      float load_F;
+      boolean init_Z;
+      long init_J;
+      long load_J;
+
+      Inner_DataUtil(float value, boolean target, long now) {
+         this.load_F = value;
+         this.init_F = value;
+         this.init_Z = target;
+         this.init_J = now;
+         this.load_J = now;
+      }
+
+      float init(long now) {
+         float elapsed = Math.min(1.0F, (float)(now - this.init_J) / 1.5E8F);
+         float eased = elapsed * elapsed * (3.0F - 2.0F * elapsed);
+         this.load_F = this.init_F + ((this.init_Z ? 1.0F : 0.0F) - this.init_F) * eased;
+         return this.load_F;
+      }
+   }
+}

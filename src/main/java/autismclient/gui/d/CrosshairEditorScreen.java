@@ -1,7 +1,7 @@
 package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.h;
+import autismclient.gui.f.b.TooltipRenderer;
 import autismclient.modules.CrosshairPixelArt;
 import autismclient.modules.CrosshairModule;
 import autismclient.modules.CrosshairPresetGeometry;
@@ -21,7 +21,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-public final class CrosshairEditorScreen extends KeyHolder {
+public final class CrosshairEditorScreen extends VirtualScaledScreen {
    private static final int init_I = 540;
    private static final int load_I = 344;
    private static final int read_I = 6;
@@ -59,7 +59,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
    private int set;
    private int put;
    private boolean update_Z;
-   private autismclient.gui.f.b.NetHelper init_NetHelper_2;
+   private autismclient.gui.f.b.ColorPickerPopup init_NetHelper_2;
    private autismclient.gui.f.NetHelper init_NetHelper;
    private int add;
    private int clear;
@@ -119,8 +119,8 @@ public final class CrosshairEditorScreen extends KeyHolder {
       int h = Math.max(1, Math.min(344, sh - 12));
       int x = (sw - w) / 2;
       int y = (sh - h) / 2;
-      int header = autismclient.gui.f.RenderState.init(14);
-      int ctl = autismclient.gui.f.RenderState.init(13);
+      int header = autismclient.gui.f.UiDensityMetrics.init(14);
+      int ctl = autismclient.gui.f.UiDensityMetrics.init(13);
       int gap = 2;
       int rowY = y + header + 6;
       int cx = x + 6 + this.init_I_Str_13("Resolution") + 4;
@@ -191,7 +191,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
             )
          );
       ty += (tools.length + 2) / 2 * (ctl + gap) - gap + 6;
-      int rowText = autismclient.gui.f.RenderState.init(12);
+      int rowText = autismclient.gui.f.UiDensityMetrics.init(12);
       this.add = ty;
       ty += rowText;
       int brushW = (84 - gap * 3) / 4;
@@ -239,9 +239,9 @@ public final class CrosshairEditorScreen extends KeyHolder {
 
       int sx = x + w - 6 - 128;
       int inner = 120;
-      int titleH = autismclient.gui.f.RenderState.init(14);
+      int titleH = autismclient.gui.f.UiDensityMetrics.init(14);
       int swatch = (inner - gap * 7) / 8;
-      int colorH = titleH + 2 + 16 + 4 + swatch * 2 + gap + 4 + autismclient.gui.f.RenderState.init(12) + 11 + 4;
+      int colorH = titleH + 2 + 16 + 4 + swatch * 2 + gap + 4 + autismclient.gui.f.UiDensityMetrics.init(12) + 11 + 4;
       autismclient.gui.f.NetHelper colorCard = autismclient.gui.f.NetHelper.init(sx, bodyTop, 128, colorH);
       this.init(colorCard, "Color");
       int iy = bodyTop + titleH + 2;
@@ -271,7 +271,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
             );
       }
 
-      iy += swatch * 2 + gap + 4 + autismclient.gui.f.RenderState.init(12);
+      iy += swatch * 2 + gap + 4 + autismclient.gui.f.UiDensityMetrics.init(12);
       autismclient.gui.f.NetHelper opacityBounds = autismclient.gui.f.NetHelper.init(sx + 4, iy, inner, 11);
       autismclient.gui.f.NetHelper preview = null;
       int previewTop = colorCard.load() + 6;
@@ -362,9 +362,9 @@ public final class CrosshairEditorScreen extends KeyHolder {
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(
             graphics, this.font, this.init_NetHelper_2 == null ? mx : -10000, this.init_NetHelper_2 == null ? my : -10000
          );
-         autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
+         autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
          autismclient.gui.f.NetHelper window = layout.init_NetHelper();
-         autismclient.gui.f.b.IoWorker.init(
+         autismclient.gui.f.b.DialogFrameRenderer.init(
             context,
             window,
             layout.init_I(),
@@ -377,7 +377,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
          }
 
          int rowY = window.write() + layout.init_I() + 6;
-         int ctl = autismclient.gui.f.RenderState.init(13);
+         int ctl = autismclient.gui.f.UiDensityMetrics.init(13);
          context.init_PoolEntry()
             .init_V_GuiGraphicsExtract_2(
                graphics, "Resolution", window.read() + 6, context.init_PoolEntry().init_I(autismclient.gui.f.NetHelper.init(0, rowY, 1, ctl)), colors.valid
@@ -395,7 +395,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
 
             switch (control.init_NetHelper_StreamUt()) {
                case CHIP:
-                  autismclient.gui.f.b.ConfigStore.init(context, control.init_NetHelper(), control.init_Str(), control.init_Z(), over);
+                  autismclient.gui.f.b.PillBadgeRenderer.init(context, control.init_NetHelper(), control.init_Str(), control.init_Z(), over);
                   break;
                case BUTTON:
                   autismclient.gui.f.b.CachePool.init(context, control.init_NetHelper(), control.init_Str(), control.init_CachePool_DataUtil(), over, false);
@@ -408,12 +408,12 @@ public final class CrosshairEditorScreen extends KeyHolder {
          autismclient.gui.f.NetHelper opacityBounds = layout.read();
          context.init_PoolEntry()
             .init_V_GuiGraphicsExtract_2(
-               graphics, "Opacity " + this.pop + "%", opacityBounds.read(), opacityBounds.write() - autismclient.gui.f.RenderState.init(12) + 1, colors.valid
+               graphics, "Opacity " + this.pop + "%", opacityBounds.read(), opacityBounds.write() - autismclient.gui.f.UiDensityMetrics.init(12) + 1, colors.valid
             );
-         autismclient.gui.f.b.c.init(
+         autismclient.gui.f.b.SliderRenderer.init(
             context,
             opacityBounds,
-            autismclient.gui.f.b.c.init_D_D(this.pop, 5.0, 100.0),
+            autismclient.gui.f.b.SliderRenderer.init_D_D(this.pop, 5.0, 100.0),
             this.init_NetHelper_2 == null && (this.update_Z || opacityBounds.init_Z(mx, my))
          );
          String status = this.stop >= 0 ? this.init_NetHelper_ConfigSt.read_Str + "   " + this.stop + ", " + this.next : this.init_NetHelper_ConfigSt.read_Str;
@@ -425,7 +425,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
 
          if (hovered != null && hovered.load() != null && this.tick < 0) {
             graphics.nextStratum();
-            h.init(context, hovered.load(), mx, my);
+            TooltipRenderer.init(context, hovered.load(), mx, my);
          }
 
          if (this.init_NetHelper_2 != null) {
@@ -442,7 +442,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
 
    private void init(autismclient.gui.f.SyncManager context, CrosshairEditorScreen.Inner_CachePool layout, int mx, int my) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       autismclient.gui.f.NetHelper canvas = layout.load_NetHelper();
       int cell = layout.load_I();
       autismclient.gui.f.PacketUtil.load(graphics, canvas.init(-3), 5, colors.pop, colors.get);
@@ -522,7 +522,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
 
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int argb, boolean selected, boolean hovered) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       int half = Math.max(1, bounds.sync() / 2);
 
       for (int ty = 0; ty * half < bounds.sync(); ty++) {
@@ -561,7 +561,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
          0.0,
          look.init_m()
       );
-      autismclient.gui.f.b.PathHelper.load(context, box, shown);
+      autismclient.gui.f.b.CrosshairPreviewRenderer.load(context, box, shown);
    }
 
    private void load_V_15() {
@@ -621,7 +621,7 @@ public final class CrosshairEditorScreen extends KeyHolder {
          return true;
       } else {
          CrosshairEditorScreen.Inner_CachePool layout = this.init_NetHelper_CachePoo();
-         if (button == 0 && autismclient.gui.f.b.IoWorker.init(layout.init_NetHelper(), layout.init_I(), mx, my)) {
+         if (button == 0 && autismclient.gui.f.b.DialogFrameRenderer.init(layout.init_NetHelper(), layout.init_I(), mx, my)) {
             this.pop();
             return true;
          }
@@ -827,11 +827,11 @@ public final class CrosshairEditorScreen extends KeyHolder {
    }
 
    private void init(int mouseX, autismclient.gui.f.NetHelper bounds) {
-      this.pop = (int)Math.round(autismclient.gui.f.b.c.init(mouseX, bounds.read(), bounds.update(), 5.0, 100.0, 5.0));
+      this.pop = (int)Math.round(autismclient.gui.f.b.SliderRenderer.init(mouseX, bounds.read(), bounds.update(), 5.0, 100.0, 5.0));
    }
 
    private void update() {
-      this.init_NetHelper_2 = new autismclient.gui.f.b.NetHelper(
+      this.init_NetHelper_2 = new autismclient.gui.f.b.ColorPickerPopup(
          this.init_NetHelper, 0xFF000000 | this.push, -1, this.init_I(), this.load_I(), this::init_V_I_7
       );
    }

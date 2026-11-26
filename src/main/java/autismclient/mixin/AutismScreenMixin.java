@@ -2,7 +2,7 @@ package autismclient.mixin;
 
 import autismclient.c.ExternalButtonScreenDuck;
 import autismclient.e.TableIndex;
-import autismclient.gui.f.b.DataPipe;
+import autismclient.gui.f.b.SimpleClickButton;
 import autismclient.mixin.accessor.AutismScreenAccessor;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.modules.aD;
@@ -85,7 +85,7 @@ public abstract class AutismScreenMixin {
                cA.init_V_GuiGraphicsExtract(context);
 
                try {
-                  for (DataPipe button : ContainerScreenToolbar.init(MC, this.autism$queueEditorOverlay)) {
+                  for (SimpleClickButton button : ContainerScreenToolbar.init(MC, this.autism$queueEditorOverlay)) {
                      button.init(context, textRenderer, virtualMouseX, virtualMouseY);
                   }
                } finally {

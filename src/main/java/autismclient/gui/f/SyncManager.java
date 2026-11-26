@@ -4,8 +4,8 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class SyncManager {
    private final GuiGraphicsExtractor init_GuiGraphicsExtract;
-   private final TableIndex init_TableIndex;
-   private final PoolEntry init_PoolEntry;
+   private final UiTheme init_TableIndex;
+   private final UiTextRenderer init_PoolEntry;
    private final int init_I;
    private final int load;
    private final int read;
@@ -13,14 +13,14 @@ public final class SyncManager {
    private final float init_F;
    private final boolean init_Z;
 
-   public SyncManager(GuiGraphicsExtractor graphics, TableIndex theme, PoolEntry text, int screenWidth, int screenHeight, int mouseX, int mouseY, float delta) {
+   public SyncManager(GuiGraphicsExtractor graphics, UiTheme theme, UiTextRenderer text, int screenWidth, int screenHeight, int mouseX, int mouseY, float delta) {
       this(graphics, theme, text, screenWidth, screenHeight, mouseX, mouseY, delta, false);
    }
 
    private SyncManager(
       GuiGraphicsExtractor graphics,
-      TableIndex theme,
-      PoolEntry text,
+      UiTheme theme,
+      UiTextRenderer text,
       int screenWidth,
       int screenHeight,
       int mouseX,
@@ -43,11 +43,11 @@ public final class SyncManager {
       return this.init_GuiGraphicsExtract;
    }
 
-   public TableIndex init_TableIndex() {
+   public UiTheme init_TableIndex() {
       return this.init_TableIndex;
    }
 
-   public PoolEntry init_PoolEntry() {
+   public UiTextRenderer init_PoolEntry() {
       return this.init_PoolEntry;
    }
 

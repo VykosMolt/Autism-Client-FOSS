@@ -42,11 +42,11 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 
-public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f.StreamUtil {
+public class AutismModulesScreen extends VirtualScaledScreen implements autismclient.gui.f.RetainedForegroundScreen {
    private static final Set<String> init_Set = new LinkedHashSet<>();
    private final Screen init_Screen;
    private final AutismModulesScreen.Inner_DataUtil init_HashUtil_DataUtil;
-   private autismclient.gui.f.d.ConfigStore init_ConfigStore;
+   private autismclient.gui.f.d.ModulesMenuController init_ConfigStore;
    private AutismPacketSelectorOverlay init_AutismPacketSelect;
    private AutismMacroListOverlay init_AutismMacroListOve;
    private AutismFabricatorOverlay init_AutismFabricatorOv;
@@ -74,7 +74,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       return this.init_HashUtil_DataUtil == AutismModulesScreen.Inner_DataUtil.TITLE_SETUP;
    }
 
-   public autismclient.gui.f.d.ConfigStore init_ConfigStore() {
+   public autismclient.gui.f.d.ModulesMenuController init_ConfigStore() {
       return this.init_ConfigStore;
    }
 
@@ -100,7 +100,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       }
 
       if (this.init_ConfigStore == null) {
-         this.init_ConfigStore = new autismclient.gui.f.d.ConfigStore(new AutismModulesScreen.Inner_StreamUtil());
+         this.init_ConfigStore = new autismclient.gui.f.d.ModulesMenuController(new AutismModulesScreen.Inner_StreamUtil());
       }
 
       this.init_ConfigStore.init_V();
@@ -125,7 +125,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
          this.load_V_11();
       } else {
          if (this.init_ConfigStore == null) {
-            this.init_ConfigStore = new autismclient.gui.f.d.ConfigStore(new AutismModulesScreen.Inner_StreamUtil());
+            this.init_ConfigStore = new autismclient.gui.f.d.ModulesMenuController(new AutismModulesScreen.Inner_StreamUtil());
             this.init_ConfigStore.init_V();
          }
 
@@ -913,7 +913,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       TITLE_SETUP;
    }
 
-   private final class Inner_StreamUtil implements autismclient.gui.f.d.ConfigStore.Inner_BufferHelper {
+   private final class Inner_StreamUtil implements autismclient.gui.f.d.ModulesMenuController.Inner_BufferHelper {
       @Override
       public boolean init_Z() {
          return AutismModulesScreen.this.init_Z_5();
@@ -948,7 +948,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       public void load(Module module, Setting<?, ?> option) {
          if (AutismModulesScreen.this.minecraft != null) {
             AutismModulesScreen.this.init_Str = module == null ? null : module.id();
-            AutismModulesScreen.this.minecraft.gui.setScreen(new DataPipe(AutismModulesScreen.this, module, option));
+            AutismModulesScreen.this.minecraft.gui.setScreen(new StringListEditorScreen(AutismModulesScreen.this, module, option));
          }
       }
 
@@ -956,7 +956,7 @@ public class AutismModulesScreen extends KeyHolder implements autismclient.gui.f
       public void read(Module module, Setting<?, ?> option) {
          if (AutismModulesScreen.this.minecraft != null) {
             AutismModulesScreen.this.init_Str = module == null ? null : module.id();
-            AutismModulesScreen.this.minecraft.gui.setScreen(new NodeWalker(AutismModulesScreen.this, module, option));
+            AutismModulesScreen.this.minecraft.gui.setScreen(new RegistrySelectorScreen(AutismModulesScreen.this, module, option));
          }
       }
 

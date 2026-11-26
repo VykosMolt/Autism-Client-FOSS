@@ -1,7 +1,7 @@
 package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.f.b.l;
 import autismclient.util.DisplayItemStackFactory;
 import autismclient.util.cA;
@@ -24,7 +24,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-public final class PickItemScreen extends KeyHolder {
+public final class PickItemScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 300;
    private static final int load_I = 4;
@@ -94,16 +94,16 @@ public final class PickItemScreen extends KeyHolder {
          int listH = list.sync();
          autismclient.gui.f.PacketUtil.load(graphics, list, 5, -1442248437, init_CharEncoder.set());
          autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(listX + 1, listY + 1, Math.max(1, listW - 8), Math.max(1, listH - 2));
-         autismclient.gui.f.HashUtil.init_HashUtil().init(graphics, clip);
+         autismclient.gui.f.UiClipStack.init_HashUtil().init(graphics, clip);
 
          try {
             this.init(graphics, listX + 3, listY + 3, listW - 9, Math.max(1, listH - 6), mx, my);
          } finally {
-            autismclient.gui.f.HashUtil.init_HashUtil().init(graphics);
+            autismclient.gui.f.UiClipStack.init_HashUtil().init(graphics);
          }
 
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil(listX, listY, listW, listH);
-         autismclient.gui.f.b.PoolEntry.init(graphics, metrics, metrics.init(mx, my), this.init_Z);
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil(listX, listY, listW, listH);
+         autismclient.gui.f.b.ScrollbarMetricsHelper.init(graphics, metrics, metrics.init(mx, my), this.init_Z);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -134,7 +134,7 @@ public final class PickItemScreen extends KeyHolder {
       boolean selected = entry.init_Str.equals(this.init_Str);
       int rowH = this.sync();
       boolean over = mx >= x && mx < x + w && my >= y && my < y + rowH;
-      autismclient.gui.f.b.TableIndex.init(graphics, x, y, w, rowH - 1, selected ? -1440345836 : (over ? -1441000940 : -1441722092));
+      autismclient.gui.f.b.PanelSurfaceHelper.init(graphics, x, y, w, rowH - 1, selected ? -1440345836 : (over ? -1441000940 : -1441722092));
       this.init(graphics, entry.init_ItemStack, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
       int textX = x + 2 + 16 + 4;
       int textMax = Math.max(1, w - (textX - x) - 4);
@@ -161,10 +161,10 @@ public final class PickItemScreen extends KeyHolder {
    private void load(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
       int headerH = this.write();
-      autismclient.gui.f.b.IoWorker.init(
+      autismclient.gui.f.b.DialogFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Pick Item", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
-      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.IoWorker.init(bounds, headerH);
+      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.DialogFrameRenderer.init(bounds, headerH);
       this.load_List.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
@@ -180,11 +180,11 @@ public final class PickItemScreen extends KeyHolder {
          return true;
       }
 
-      autismclient.gui.f.b.PoolEntry.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_7();
+      autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil metrics = this.init_PoolEntry_DataUtil_7();
       if (metrics.init_Z() && metrics.init(mx, my)) {
          this.init_Z = true;
          this.tick = metrics.load(mx, my) ? my - metrics.update() : metrics.sync() / 2;
-         this.pop = autismclient.gui.f.b.PoolEntry.init(metrics, my, this.tick);
+         this.pop = autismclient.gui.f.b.ScrollbarMetricsHelper.init(metrics, my, this.tick);
          return true;
       }
 
@@ -221,7 +221,7 @@ public final class PickItemScreen extends KeyHolder {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.init_Z) {
-         this.pop = autismclient.gui.f.b.PoolEntry.init(this.init_PoolEntry_DataUtil_7(), my, this.tick);
+         this.pop = autismclient.gui.f.b.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_7(), my, this.tick);
          return true;
       } else {
          return this.init_k != null && this.init_k.init(mx, my, Compat263.mouseEventGlfwButton(event), dx, dy) ? true : true;
@@ -333,26 +333,26 @@ public final class PickItemScreen extends KeyHolder {
       return List.copyOf(out);
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_7() {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_7() {
       autismclient.gui.f.NetHelper list = this.init_NetHelper_5();
       return this.init_PoolEntry_DataUtil(list.read(), list.write(), list.update(), list.sync());
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil(int listX, int listY, int listW, int listH) {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil(int listX, int listY, int listW, int listH) {
       int viewH = Math.max(1, listH - 6);
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(this.close(), viewH, listX + listW - 6, listY + 1, 4, Math.max(1, listH - 2), this.pop);
+      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(this.close(), viewH, listX + listW - 6, listY + 1, 4, Math.max(1, listH - 2), this.pop);
    }
 
    private int write() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int update() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int sync() {
-      return autismclient.gui.f.RenderState.init(18);
+      return autismclient.gui.f.UiDensityMetrics.init(18);
    }
 
    private int flush() {
@@ -370,19 +370,19 @@ public final class PickItemScreen extends KeyHolder {
    }
 
    private int init_I_5(int boxY, int boxH) {
-      return j.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private int open() {
-      return autismclient.gui.f.c.NetHelper.load(this.init_I(), this.push(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.init_I(), this.push(), 6);
    }
 
    private int poll() {
-      return autismclient.gui.f.c.NetHelper.load(this.load_I(), this.pop(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.load_I(), this.pop(), 6);
    }
 
    private int push() {
-      return autismclient.gui.f.c.NetHelper.init(this.init_I(), 6, 300);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_I(), 6, 300);
    }
 
    private int pop() {
@@ -391,7 +391,7 @@ public final class PickItemScreen extends KeyHolder {
       int maxList = Math.max(minList, (int)(this.load_I() * 0.65F));
       int list = init(this.init_List.size() * rowH + 2, minList, maxList);
       int chrome = this.write() + 4 + this.update() + 2 + 6 + 4;
-      return autismclient.gui.f.c.NetHelper.init(this.load_I(), 6, chrome + list);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.load_I(), 6, chrome + list);
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {

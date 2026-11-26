@@ -34,17 +34,17 @@ public final class k {
 
    public static int init(Font renderer, String value, Identifier fontId, int color) {
       String safe = value == null ? "" : value;
-      autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init(fontId);
-      return autismclient.gui.e.SyncManager.init(face, safe)
-         ? autismclient.gui.e.SyncManager.init_I(face, safe, autismclient.gui.e.SyncManager.init_F_ConfigStore(face))
+      autismclient.gui.e.MsdfFontFace face = autismclient.gui.e.MsdfFontFace.init(fontId);
+      return autismclient.gui.e.MsdfTextRenderer.init(face, safe)
+         ? autismclient.gui.e.MsdfTextRenderer.init_I(face, safe, autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(face))
          : renderer.width(safe);
    }
 
    public static int init(Font renderer, String value, String fragment, Identifier fontId, int color) {
       String safe = fragment == null ? "" : fragment;
-      autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init(fontId);
-      return autismclient.gui.e.SyncManager.init(face, value == null ? "" : value)
-         ? autismclient.gui.e.SyncManager.init_I(face, safe, autismclient.gui.e.SyncManager.init_F_ConfigStore(face))
+      autismclient.gui.e.MsdfFontFace face = autismclient.gui.e.MsdfFontFace.init(fontId);
+      return autismclient.gui.e.MsdfTextRenderer.init(face, value == null ? "" : value)
+         ? autismclient.gui.e.MsdfTextRenderer.init_I(face, safe, autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(face))
          : renderer.width(safe);
    }
 
@@ -54,7 +54,7 @@ public final class k {
 
    public static String init(Font renderer, String value, int maxWidth, Identifier fontId, int color) {
       String safeValue = value == null ? "" : value;
-      k.Inner_DataUtil key = new k.Inner_DataUtil(safeValue, maxWidth, fontId, autismclient.gui.e.SyncManager.init_I());
+      k.Inner_DataUtil key = new k.Inner_DataUtil(safeValue, maxWidth, fontId, autismclient.gui.e.MsdfTextRenderer.init_I());
       String cached = init_Map.get(key);
       if (cached != null) {
          return cached;
@@ -70,10 +70,10 @@ public final class k {
          return safeValue;
       }
 
-      autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init(fontId);
+      autismclient.gui.e.MsdfFontFace face = autismclient.gui.e.MsdfFontFace.init(fontId);
       String trimmed;
-      if (autismclient.gui.e.SyncManager.init(face, safeValue)) {
-         trimmed = autismclient.gui.e.SyncManager.init(face, safeValue, autismclient.gui.e.SyncManager.init_F_ConfigStore(face), allowedWidth);
+      if (autismclient.gui.e.MsdfTextRenderer.init(face, safeValue)) {
+         trimmed = autismclient.gui.e.MsdfTextRenderer.init(face, safeValue, autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(face), allowedWidth);
       } else {
          trimmed = renderer.plainSubstrByWidth(safeValue, Math.max(0, allowedWidth));
       }
@@ -89,9 +89,9 @@ public final class k {
             return safeValue;
          }
 
-         autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init(fontId);
-         if (autismclient.gui.e.SyncManager.init(face, safeValue)) {
-            return autismclient.gui.e.SyncManager.load(face, safeValue, autismclient.gui.e.SyncManager.init_F_ConfigStore(face), maxWidth);
+         autismclient.gui.e.MsdfFontFace face = autismclient.gui.e.MsdfFontFace.init(fontId);
+         if (autismclient.gui.e.MsdfTextRenderer.init(face, safeValue)) {
+            return autismclient.gui.e.MsdfTextRenderer.load(face, safeValue, autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(face), maxWidth);
          }
 
          String ellipsis = "...";
@@ -114,10 +114,10 @@ public final class k {
 
    public static void init(GuiGraphicsExtractor context, Font renderer, String value, Identifier fontId, int color, int x, int y, boolean shadow) {
       String safe = value == null ? "" : value;
-      autismclient.gui.e.ConfigStore face = autismclient.gui.e.ConfigStore.init(fontId);
-      if (autismclient.gui.e.SyncManager.init(face, safe)) {
-         float size = autismclient.gui.e.SyncManager.init_F_ConfigStore(face);
-         autismclient.gui.e.SyncManager.init(context, face, safe, x, autismclient.gui.e.SyncManager.init(face, y, size), size, color, shadow);
+      autismclient.gui.e.MsdfFontFace face = autismclient.gui.e.MsdfFontFace.init(fontId);
+      if (autismclient.gui.e.MsdfTextRenderer.init(face, safe)) {
+         float size = autismclient.gui.e.MsdfTextRenderer.init_F_ConfigStore(face);
+         autismclient.gui.e.MsdfTextRenderer.init(context, face, safe, x, autismclient.gui.e.MsdfTextRenderer.init(face, y, size), size, color, shadow);
       } else {
          context.text(renderer, safe, x, y, color, shadow);
       }
@@ -157,7 +157,7 @@ public final class k {
    public static void init_V() {
       init_Map.clear();
       load++;
-      autismclient.gui.e.SyncManager.init_V();
+      autismclient.gui.e.MsdfTextRenderer.init_V();
    }
 
    private record Inner_DataUtil(String init_Str, int init_I, Identifier init_Identifier, int load) {

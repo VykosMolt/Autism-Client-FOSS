@@ -1,6 +1,6 @@
 package autismclient.ai;
 
-import autismclient.gui.f.b.a;
+import autismclient.gui.f.b.SearchFilterList;
 import autismclient.util.AuditWaypointScope;
 import autismclient.util.AutismWaypoints;
 import com.google.gson.JsonObject;
@@ -45,12 +45,12 @@ final class StreamUtil {
    private final AiAssistantOverlay init_AiAssistantOverlay;
    private final Runnable init_Runnable;
    private final ad.Inner_StreamUtil init_ad_StreamUtil = cc.init_ad_StreamUtil();
-   final autismclient.gui.f.b.BitSetUtil init_BitSetUtil = new autismclient.gui.f.b.BitSetUtil().init_BitSetUtil_I(64);
-   final autismclient.gui.f.b.BitSetUtil load_BitSetUtil = new autismclient.gui.f.b.BitSetUtil()
+   final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(64);
+   final autismclient.gui.f.b.TextInputWidget load_BitSetUtil = new autismclient.gui.f.b.TextInputWidget()
       .init_BitSetUtil_I(4)
       .init_BitSetUtil_Predicate(s -> s.chars().allMatch(Character::isDigit));
    private final cE.Inner_StreamUtil init_cE_StreamUtil = new cE.Inner_StreamUtil(false);
-   private final a<StreamUtil.Inner_CachePool> init_a = new a<>(StreamUtil.Inner_CachePool::search);
+   private final SearchFilterList<StreamUtil.Inner_CachePool> init_a = new SearchFilterList<>(StreamUtil.Inner_CachePool::search);
    private final Map<StreamUtil.Inner_DataUtil, StreamUtil.Inner_ConfigStore> init_Map = new EnumMap<>(StreamUtil.Inner_DataUtil.class);
    private StreamUtil.Inner_DataUtil init_StreamUtil_DataUti;
    private List<StreamUtil.Inner_DataUtil> init_List;
@@ -68,7 +68,7 @@ final class StreamUtil {
    private StreamUtil.Inner_BufferHelper init_StreamUtil_BufferH;
    private StreamUtil.Inner_CachePool init_StreamUtil_CachePo;
    private final Map<String, StreamUtil.Inner_CachePool> read_Map;
-   private final Map<String, autismclient.gui.f.b.BitSetUtil> write_Map;
+   private final Map<String, autismclient.gui.f.b.TextInputWidget> write_Map;
    private List<String> update;
    private Object load_Obj;
    private boolean load_Z;
@@ -105,8 +105,8 @@ final class StreamUtil {
       this.load_BitSetUtil.load_BitSetUtil_Consumer(text -> this.sync_V());
    }
 
-   List<autismclient.gui.f.b.BitSetUtil> init_List() {
-      ArrayList<autismclient.gui.f.b.BitSetUtil> fields = new ArrayList<>(List.of(this.init_BitSetUtil, this.load_BitSetUtil));
+   List<autismclient.gui.f.b.TextInputWidget> init_List() {
+      ArrayList<autismclient.gui.f.b.TextInputWidget> fields = new ArrayList<>(List.of(this.init_BitSetUtil, this.load_BitSetUtil));
       fields.addAll(this.write_Map.values());
       return fields;
    }
@@ -147,7 +147,7 @@ final class StreamUtil {
       this.write_Map.values().forEach(field -> field.init_V_Z(false));
    }
 
-   autismclient.gui.f.b.BitSetUtil init_BitSetUtil_C(char c) {
+   autismclient.gui.f.b.TextInputWidget init_BitSetUtil_C(char c) {
       return this.init_StreamUtil_BufferH == StreamUtil.Inner_BufferHelper.load && (Character.isLetterOrDigit(c) || c == ' ' || c == '-')
          ? this.init_BitSetUtil
          : null;
@@ -707,7 +707,7 @@ final class StreamUtil {
          int fieldW = Math.min(88, w / 3);
 
          for (Entry<String, StreamUtil.Inner_CachePool> entry : this.read_Map.entrySet()) {
-            autismclient.gui.f.b.BitSetUtil field = this.init_BitSetUtil_Str(entry.getKey());
+            autismclient.gui.f.b.TextInputWidget field = this.init_BitSetUtil_Str(entry.getKey());
             field.load_BitSetUtil_Str(this.load_BitSetUtil.init_Str().isBlank() ? this.write_Str() : this.load_BitSetUtil.init_Str());
             kit.init_V_Str_3(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.init_JsonUtil.prev);
             kit.init_V_BitSetUtil_NetHelper(field, autismclient.gui.f.NetHelper.init(x + w - fieldW, y, fieldW, h));
@@ -826,12 +826,12 @@ final class StreamUtil {
          : this.init_StreamUtil_CachePo.fallback();
    }
 
-   private autismclient.gui.f.b.BitSetUtil init_BitSetUtil_Str(String key) {
+   private autismclient.gui.f.b.TextInputWidget init_BitSetUtil_Str(String key) {
       return this.write_Map
          .computeIfAbsent(
             key,
             k -> {
-               autismclient.gui.f.b.BitSetUtil field = new autismclient.gui.f.b.BitSetUtil()
+               autismclient.gui.f.b.TextInputWidget field = new autismclient.gui.f.b.TextInputWidget()
                   .init_BitSetUtil_I(3)
                   .init_BitSetUtil_Predicate(s -> s.chars().allMatch(Character::isDigit));
                field.load_BitSetUtil_Consumer(text -> this.sync_V());
@@ -863,7 +863,7 @@ final class StreamUtil {
 
    private void init_V_cE_2(cE kit, autismclient.gui.f.NetHelper frame, List<StreamUtil.Inner_CachePool> rows) {
       if (frame.sync() >= 8) {
-         autismclient.gui.f.b.FileCache.init(
+         autismclient.gui.f.b.ListRowRenderer.init(
             kit.init_GuiGraphicsExtract, frame.read(), frame.write(), frame.update(), frame.sync(), this.init_BitSetUtil.load_Z()
          );
          autismclient.gui.f.NetHelper inner = frame.init(2);
@@ -871,7 +871,7 @@ final class StreamUtil {
          this.init_cE_StreamUtil.init(inner, rows.size() * rowH);
          kit.init_V_cE_StreamUtil(this.init_cE_StreamUtil);
          if (rows.isEmpty()) {
-            autismclient.gui.f.b.FileCache.init(kit.init_GuiGraphicsExtract, kit.init_Font, this.update_Str(), inner.read(), inner.write(), inner.update());
+            autismclient.gui.f.b.ListRowRenderer.init(kit.init_GuiGraphicsExtract, kit.init_Font, this.update_Str(), inner.read(), inner.write(), inner.update());
          } else {
             kit.init_V_NetHelper(inner);
             int w = inner.update() - (this.init_cE_StreamUtil.init_I() > 0 ? 7 : 0);
@@ -884,7 +884,7 @@ final class StreamUtil {
 
                StreamUtil.Inner_CachePool row = rows.get(i);
                autismclient.gui.f.NetHelper b = autismclient.gui.f.NetHelper.init(inner.read(), ry, w, rowH);
-               autismclient.gui.f.b.FileCache.init(
+               autismclient.gui.f.b.ListRowRenderer.init(
                   kit.init_GuiGraphicsExtract,
                   kit.init_Font,
                   Component.literal(row.label()),

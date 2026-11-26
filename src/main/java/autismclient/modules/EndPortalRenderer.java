@@ -139,12 +139,12 @@ public final class EndPortalRenderer {
          label = prompt;
       }
 
-      autismclient.gui.f.b.TaskTimer.Inner_StreamUtil size = autismclient.gui.f.b.TaskTimer.init(
+      autismclient.gui.f.b.WorldIndicatorBadge.Inner_StreamUtil size = autismclient.gui.f.b.WorldIndicatorBadge.init(
          ui.init_PoolEntry().init(label), 9, !label.isEmpty(), target != null
       );
-      autismclient.gui.f.b.TaskTimer.Inner_DataUtil placement;
+      autismclient.gui.f.b.WorldIndicatorBadge.Inner_DataUtil placement;
       if (target == null) {
-         placement = autismclient.gui.f.b.TaskTimer.init(0.0F, 0.0F, -1.0F, 180.0, ui.init_I(), ui.load_I(), size, scale, 104.0F * scale);
+         placement = autismclient.gui.f.b.WorldIndicatorBadge.init(0.0F, 0.0F, -1.0F, 180.0, ui.init_I(), ui.load_I(), size, scale, 104.0F * scale);
       } else {
          if (!WorldProjectionHelper.init(init_Matrix4f)) {
             return null;
@@ -156,7 +156,7 @@ public final class EndPortalRenderer {
          init_Matrix4f.transform(init_Vector4f);
          float yaw = init_Minecraft.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.yRot;
          float ring = 76.0F + (Math.max(size.init(), size.load()) / 2.0F + 24.0F) * scale;
-         placement = autismclient.gui.f.b.TaskTimer.init(
+         placement = autismclient.gui.f.b.WorldIndicatorBadge.init(
             init_Vector4f.x, init_Vector4f.y, init_Vector4f.w, StrongholdTriangulator.init(camera, target, yaw), ui.init_I(), ui.load_I(), size, scale, ring
          );
       }
@@ -173,7 +173,7 @@ public final class EndPortalRenderer {
       EndPortalRenderer.Inner_DataUtil marker = init(graphics, module);
       return marker == null
          ? autismclient.gui.f.NetHelper.init(0, 0, 0, 0)
-         : autismclient.gui.f.b.TaskTimer.init(marker.init_TaskTimer_DataUtil, marker.init_TaskTimer_StreamUt, marker.init_F);
+         : autismclient.gui.f.b.WorldIndicatorBadge.init(marker.init_TaskTimer_DataUtil, marker.init_TaskTimer_StreamUt, marker.init_F);
    }
 
    public static void init_V(GuiGraphicsExtractor graphics) {
@@ -181,7 +181,7 @@ public final class EndPortalRenderer {
       if (module != null && module.update_Z() && init_Minecraft.gui.screen() == null) {
          EndPortalRenderer.Inner_DataUtil marker = init(graphics, module);
          if (marker != null) {
-            autismclient.gui.f.b.TaskTimer.init(
+            autismclient.gui.f.b.WorldIndicatorBadge.init(
                autismclient.gui.f.UiHelper.init(graphics, init_Minecraft.font, 0, 0),
                marker.init_TaskTimer_DataUtil,
                marker.init_TaskTimer_StreamUt,
@@ -196,8 +196,8 @@ public final class EndPortalRenderer {
    }
 
    private record Inner_DataUtil(
-      autismclient.gui.f.b.TaskTimer.Inner_DataUtil init_TaskTimer_DataUtil,
-      autismclient.gui.f.b.TaskTimer.Inner_StreamUtil init_TaskTimer_StreamUt,
+      autismclient.gui.f.b.WorldIndicatorBadge.Inner_DataUtil init_TaskTimer_DataUtil,
+      autismclient.gui.f.b.WorldIndicatorBadge.Inner_StreamUtil init_TaskTimer_StreamUt,
       String init_Str,
       boolean init_Z,
       float init_F,

@@ -3,10 +3,10 @@ package autismclient.mixin;
 import autismclient.AutismClientAddon;
 import autismclient.ai.cG;
 import autismclient.e.PathHelper;
-import autismclient.gui.f.HashUtil;
+import autismclient.gui.f.UiClipStack;
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.StreamUtil;
+import autismclient.gui.f.b.StatusToastCardRenderer;
 import autismclient.gui.macro.editor.ActionEditorOverlay;
 import autismclient.modules.EndPortalRenderer;
 import autismclient.modules.Module;
@@ -85,7 +85,7 @@ public abstract class AutismInGameHudMixin {
          boolean aiPlan = !AutismLiteVariant.enabled() && MC.gui.screen() == null && cG.load_Z();
          boolean portalGuide = !AutismLiteVariant.enabled() && EndPortalRenderer.load();
          if (macroFrameWork || activity.init(hudWork) || aiPlan || portalGuide) {
-            HashUtil.init_HashUtil().load(context);
+            UiClipStack.init_HashUtil().load(context);
             if (macroFrameWork) {
                MacroExecutor.init_V_F(1.0F);
             }
@@ -195,7 +195,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (captureBanner != null) {
-                        StreamUtil.init(
+                        StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
                            NetHelper.init(captureBanner.init_I(), captureBanner.load_I(), captureBanner.read_I(), captureBanner.write()),
                            captureBanner.init_Str(),
@@ -205,7 +205,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (payloadStudyBanner != null) {
-                        StreamUtil.init(
+                        StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
                            NetHelper.init(payloadStudyBanner.init_I(), payloadStudyBanner.load_I(), payloadStudyBanner.read_I(), payloadStudyBanner.write()),
                            payloadStudyBanner.init_Str(),
@@ -360,9 +360,9 @@ public abstract class AutismInGameHudMixin {
       }
 
       int sw = cA.init_I();
-      autismclient.gui.f.PoolEntry text = UiHelper.init(MC.font);
+      autismclient.gui.f.UiTextRenderer text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(270, Math.max(text.init(title), Math.max(text.init(line1), line2.isEmpty() ? 0 : text.init(line2))) + 18));
-      int height = StreamUtil.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
+      int height = StatusToastCardRenderer.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
       return new HudBannerSpec((sw - boxWidth) / 2, 0, boxWidth, height, title, line1, line2);
    }
 
@@ -376,9 +376,9 @@ public abstract class AutismInGameHudMixin {
       String line1 = PayloadStudyTracker.load_Str();
       String line2 = PayloadStudyTracker.read();
       int sw = cA.init_I();
-      autismclient.gui.f.PoolEntry text = UiHelper.init(MC.font);
+      autismclient.gui.f.UiTextRenderer text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.init(title), Math.max(text.init(line1), text.init(line2))) + 18));
-      int height = StreamUtil.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
+      int height = StatusToastCardRenderer.init(UiHelper.init(graphics, MC.font, 0, 0), boxWidth, line1, line2);
       return new HudBannerSpec((sw - boxWidth) / 2, Math.max(0, topOffset), boxWidth, height, title, line1, line2);
    }
 

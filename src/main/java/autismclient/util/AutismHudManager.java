@@ -614,7 +614,7 @@ public final class AutismHudManager {
    ) {
       long perf = bK.load_J();
       init_V();
-      autismclient.gui.e.SyncManager.init_V_Z(!init_Z());
+      autismclient.gui.e.MsdfTextRenderer.init_V_Z(!init_Z());
       init_V_Font_Z(font, editor);
       load_List = !editor && occluders != null && !occluders.isEmpty() ? occluders : List.of();
 
@@ -652,7 +652,7 @@ public final class AutismHudManager {
       } finally {
          load_List = List.of();
          write_List = null;
-         autismclient.gui.e.SyncManager.init_V_Z(false);
+         autismclient.gui.e.MsdfTextRenderer.init_V_Z(false);
          sync_V();
          bK.init("hud.render", perf);
       }
@@ -676,7 +676,7 @@ public final class AutismHudManager {
          init_V();
          AutismConfig.HudElementState state = init_AutismConfig_HudEl_Str(id);
          if (state.enabled && (!"anti_vanish".equals(id) || autismclient.modules.AntiVanishModule.init_Z_19())) {
-            autismclient.gui.e.SyncManager.init_V_Z(!init_Z());
+            autismclient.gui.e.MsdfTextRenderer.init_V_Z(!init_Z());
             init_V_Font_Z(font, false);
 
             try {
@@ -690,7 +690,7 @@ public final class AutismHudManager {
                init_V_GuiGraphicsExtract_7(context, font, id, state, cached, false, false, false, 0);
             } finally {
                write_List = null;
-               autismclient.gui.e.SyncManager.init_V_Z(false);
+               autismclient.gui.e.MsdfTextRenderer.init_V_Z(false);
                sync_V();
             }
 

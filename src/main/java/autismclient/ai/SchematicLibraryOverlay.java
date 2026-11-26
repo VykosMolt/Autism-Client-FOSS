@@ -2,7 +2,7 @@ package autismclient.ai;
 
 import autismclient.compat263.Compat263;
 import autismclient.gui.f.PacketUtil;
-import autismclient.gui.f.b.PoolEntry;
+import autismclient.gui.f.b.ScrollbarMetricsHelper;
 import autismclient.util.OverlayBounds;
 import java.nio.file.Path;
 import java.text.NumberFormat;
@@ -39,13 +39,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private final Minecraft init_Minecraft = Minecraft.getInstance();
    private final Font init_Font = this.init_Minecraft.font;
    private final List<SchematicLibraryOverlay.Inner_BufferHelper> init_List = new ArrayList<>();
-   private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
+   private final autismclient.gui.f.b.ScrollOffsetController init_CacheEntry = new autismclient.gui.f.b.ScrollOffsetController();
    private final NumberFormat init_NumberFormat = NumberFormat.getIntegerInstance();
    private SchematicLibraryOverlay.Inner_ConfigStore init_SchematicLibraryOv_2 = SchematicLibraryOverlay.Inner_ConfigStore.init;
    private autismclient.util.ThemedTextInputBox init_k;
    private autismclient.gui.f.NetHelper init_NetHelper;
    private autismclient.gui.f.NetHelper load_NetHelper;
-   private autismclient.gui.f.b.TextFormat.Inner_DataUtil init_TextFormat_DataUti;
+   private autismclient.gui.f.b.ScrollListLayout.Inner_DataUtil init_TextFormat_DataUti;
    private boolean write_Z;
    private boolean update_Z;
    private boolean sync_Z = true;
@@ -63,15 +63,15 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private SchematicLibraryOverlay.Inner_StreamUtil init_SchematicLibraryOv_3;
    private SchematicLibraryOverlay.Inner_StreamUtil load_SchematicLibraryOv_2;
    private Set<String> init_Set;
-   private final autismclient.gui.f.b.RefQueue init_RefQueue;
-   private final autismclient.gui.f.b.RefQueue load_RefQueue;
+   private final autismclient.gui.f.b.DropdownMenu init_RefQueue;
+   private final autismclient.gui.f.b.DropdownMenu load_RefQueue;
 
    SchematicLibraryOverlay(cV workspace) {
       super("schematic-library", 270, 132);
       this.init_SchematicLibraryOv = SchematicLibraryOverlay.Inner_CachePool.init_SchematicLibraryOv;
       this.init_SchematicLibraryOv_3 = SchematicLibraryOverlay.Inner_StreamUtil.init_SchematicLibraryOv;
       this.init_Set = Set.of();
-      this.init_RefQueue = new autismclient.gui.f.b.RefQueue(
+      this.init_RefQueue = new autismclient.gui.f.b.DropdownMenu(
          null, Arrays.stream(SchematicLibraryOverlay.Inner_CachePool.values()).map(v -> v.init_Str).toList(), this.init_SchematicLibraryOv.init_Str, label -> {
             for (SchematicLibraryOverlay.Inner_CachePool value : SchematicLibraryOverlay.Inner_CachePool.values()) {
                if (value.init_Str.equals(label)) {
@@ -82,7 +82,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             this.init_CacheEntry.init(0);
          }
       );
-      this.load_RefQueue = new autismclient.gui.f.b.RefQueue(
+      this.load_RefQueue = new autismclient.gui.f.b.DropdownMenu(
          null,
          Arrays.stream(SchematicLibraryOverlay.Inner_StreamUtil.values()).map(v -> v.init_Str).toList(),
          this.init_SchematicLibraryOv_3.init_Str,
@@ -222,7 +222,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    private void write_V_2() {
       if (this.init_Minecraft != null) {
-         autismclient.gui.f.b.BitSetUtil.init_V();
+         autismclient.gui.f.b.TextInputWidget.init_V();
          this.init_k = null;
          if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.init
             || this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.read) {
@@ -291,7 +291,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                   String label = names[value.ordinal()];
                   int tabWidth = Math.min((tabs.update() - 9) / 4, ui.init_PoolEntry().init(label) + 12);
                   autismclient.gui.f.NetHelper at = autismclient.gui.f.NetHelper.init(tabX, tabs.write(), tabWidth, 13);
-                  autismclient.gui.f.b.d.init(ui, at, label, value == this.init_SchematicLibraryOv_2);
+                  autismclient.gui.f.b.TabStripRenderer.init(ui, at, label, value == this.init_SchematicLibraryOv_2);
                   this.init_List.add(new SchematicLibraryOverlay.Inner_BufferHelper(at, () -> this.init_V_SchematicLibraryOv(value)));
                   tabX = at.init() + 3;
                }
@@ -340,14 +340,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                   int pctX = this.init_NetHelper.init() - 10 - 3 - pctWidth;
                   int barX = pctX - 3 - barWidth;
                   this.init_V_SyncManager_5(ui, statusText, x, progressY - 1, barX - x - 3, ui.init_TableIndex().init_JsonUtil().valid);
-                  autismclient.gui.f.b.NodeWalker.init(ui, autismclient.gui.f.NetHelper.init(barX, progressY + 2, barWidth, 4), progress / 100.0);
+                  autismclient.gui.f.b.ProgressBarRenderer.init(ui, autismclient.gui.f.NetHelper.init(barX, progressY + 2, barWidth, 4), progress / 100.0);
                   this.init_V_SyncManager_5(ui, pctText, pctX, progressY - 1, pctWidth, ui.init_TableIndex().init_JsonUtil().prev);
                }
             } finally {
                this.init_V_GuiGraphicsExtract_Z(graphics, clipped);
             }
 
-            autismclient.gui.f.b.RefQueue var231 = this.init_RefQueue();
+            autismclient.gui.f.b.DropdownMenu var231 = this.init_RefQueue();
             if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.init && var231 != null) {
                graphics.nextStratum();
                var231.init_V_SyncManager(autismclient.gui.f.UiHelper.init(graphics, this.init_Font, mx, my));
@@ -487,12 +487,12 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       return this.read_List;
    }
 
-   private void init(autismclient.gui.f.SyncManager ui, autismclient.gui.f.b.RefQueue dropdown, autismclient.gui.f.NetHelper bounds, String label) {
+   private void init(autismclient.gui.f.SyncManager ui, autismclient.gui.f.b.DropdownMenu dropdown, autismclient.gui.f.NetHelper bounds, String label) {
       dropdown.init_V_NetHelper(bounds);
-      autismclient.gui.f.b.RefQueue.init_V_SyncManager(ui, bounds, label, bounds.init_Z(ui.read(), ui.write()), dropdown.init_Z_2());
+      autismclient.gui.f.b.DropdownMenu.init_V_SyncManager(ui, bounds, label, bounds.init_Z(ui.read(), ui.write()), dropdown.init_Z_2());
    }
 
-   private autismclient.gui.f.b.RefQueue init_RefQueue() {
+   private autismclient.gui.f.b.DropdownMenu init_RefQueue() {
       if (this.init_RefQueue.init_Z_2()) {
          return this.init_RefQueue;
       } else {
@@ -507,7 +507,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    @Override
    public boolean init_Z_D_D(double x, double y) {
-      autismclient.gui.f.b.RefQueue menu = this.init_RefQueue();
+      autismclient.gui.f.b.DropdownMenu menu = this.init_RefQueue();
       return super.init_Z_D_D(x, y) || this.init_Z && menu != null && menu.init_Z((int)x, (int)y);
    }
 
@@ -774,7 +774,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private void init_V_SyncManager_4(
       autismclient.gui.f.SyncManager ui, autismclient.gui.f.NetHelper bounds, String text, boolean value, boolean enabled, Runnable run
    ) {
-      autismclient.gui.f.b.g.init(ui, bounds, text, value, enabled && bounds.init_Z(ui.read(), ui.write()), "schematic/" + text);
+      autismclient.gui.f.b.ToggleSwitchRenderer.init(ui, bounds, text, value, enabled && bounds.init_Z(ui.read(), ui.write()), "schematic/" + text);
       if (enabled) {
          this.init_List.add(new SchematicLibraryOverlay.Inner_BufferHelper(bounds, run));
       }
@@ -790,7 +790,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init(autismclient.gui.f.SyncManager ui, int x, int y, int w, int h, int count, BiConsumer<Integer, autismclient.gui.f.NetHelper> render) {
-      this.init_TextFormat_DataUti = autismclient.gui.f.b.TextFormat.init(x, y, w, h, count, 20, 21, this.init_CacheEntry.init(), 6, 4, 2, 4, true);
+      this.init_TextFormat_DataUti = autismclient.gui.f.b.ScrollListLayout.init(x, y, w, h, count, 20, 21, this.init_CacheEntry.init(), 6, 4, 2, 4, true);
       this.load_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, h);
       this.init_CacheEntry.init_V_I_I(this.init_TextFormat_DataUti.poll(), this.init_TextFormat_DataUti.open());
       this.init_TextFormat_DataUti.init(ui.init_GuiGraphicsExtract(), false);
@@ -817,7 +817,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       autismclient.gui.f.SyncManager ui, autismclient.gui.f.NetHelper bounds, String title, String detail, boolean selected, Runnable run
    ) {
       boolean hovered = this.load_NetHelper.init_Z(ui.read(), ui.write()) && bounds.init_Z(ui.read(), ui.write());
-      autismclient.gui.f.JsonUtil colors = ui.init_TableIndex().init_JsonUtil();
+      autismclient.gui.f.UiColorScheme colors = ui.init_TableIndex().init_JsonUtil();
       PacketUtil.load(ui.init_GuiGraphicsExtract(), bounds, 3, selected ? colors.push : (hovered ? colors.poll : colors.open));
       if (selected) {
          PacketUtil.load(ui.init_GuiGraphicsExtract(), bounds, 3, 0, colors.start);
@@ -834,7 +834,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void init_V_SyncManager_4(autismclient.gui.f.SyncManager ui, String label, int x, int y, int width) {
-      autismclient.gui.f.b.FileCache.init(ui.init_GuiGraphicsExtract(), this.init_Font, label, x, y, width);
+      autismclient.gui.f.b.ListRowRenderer.init(ui.init_GuiGraphicsExtract(), this.init_Font, label, x, y, width);
    }
 
    private void init_V_SyncManager_5(autismclient.gui.f.SyncManager ui, String text, int x, int y, int width, int color) {
@@ -854,7 +854,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    @Override
    public boolean init_Z_D_3(double mx, double my, int button) {
       if (this.init_Z && button == 0 && this.init_Z_D_D(mx, my)) {
-         autismclient.gui.f.b.RefQueue popup = this.init_RefQueue();
+         autismclient.gui.f.b.DropdownMenu popup = this.init_RefQueue();
          if (popup != null && popup.init_Z((int)mx, (int)my)) {
             popup.init_EventBus_I_2((int)mx, (int)my, button);
             return true;
@@ -879,7 +879,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          int x = (int)mx;
          int y = (int)my;
          if (this.init_SchematicLibraryOv_2 == SchematicLibraryOverlay.Inner_ConfigStore.init) {
-            autismclient.gui.f.b.RefQueue menu = this.init_RefQueue();
+            autismclient.gui.f.b.DropdownMenu menu = this.init_RefQueue();
             if (menu != null) {
                menu.init_EventBus_I_2(x, y, button);
                return true;
@@ -900,7 +900,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          if (this.init_TextFormat_DataUti != null
             && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().init_Z()
             && this.init_TextFormat_DataUti.init_PoolEntry_DataUtil().init(x, y)) {
-            PoolEntry.Inner_DataUtil bar = this.init_TextFormat_DataUti.init_PoolEntry_DataUtil();
+            ScrollbarMetricsHelper.Inner_DataUtil bar = this.init_TextFormat_DataUti.init_PoolEntry_DataUtil();
             this.run = bar.load(x, y) ? y - bar.update() : bar.sync() / 2;
             this.init_CacheEntry.init_V_PoolEntry_DataUtil(bar, y, this.run);
             this.write_Z = true;
@@ -923,7 +923,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    @Override
    public boolean init_Z_D_2(double x, double y, double amount) {
-      autismclient.gui.f.b.RefQueue menu = this.init_RefQueue();
+      autismclient.gui.f.b.DropdownMenu menu = this.init_RefQueue();
       if (this.init_Z && !this.load_Z && menu != null && menu.init_Z((int)x, (int)y)) {
          menu.init_EventBus_I((int)x, (int)y, amount);
          return true;
@@ -943,7 +943,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.load_I = clamped.load_I;
          return true;
       } else {
-         autismclient.gui.f.b.RefQueue menu = this.init_RefQueue();
+         autismclient.gui.f.b.DropdownMenu menu = this.init_RefQueue();
          if (menu != null) {
             menu.init_EventBus_I((int)x, (int)y, button, dx, dy);
             return true;
@@ -963,7 +963,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.a__V();
          return true;
       } else {
-         autismclient.gui.f.b.RefQueue menu = this.init_RefQueue();
+         autismclient.gui.f.b.DropdownMenu menu = this.init_RefQueue();
          if (menu != null) {
             menu.load((int)x, (int)y, button);
             return true;

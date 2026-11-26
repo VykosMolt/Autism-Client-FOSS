@@ -15,14 +15,14 @@ import javax.tools.*;
  * Uses jdk.compiler (JavacTask.analyze()) for exact symbol resolution across:
  *   - Enum constant renames (E): decl, MemberSelect, Identifier (incl. switch cases & static imports)
  *   - In-place top-level class renames (C): decl, constructors, imports, all type/expr refs, file move
- * Never reads or modifies frozen integrity/attestation/AI/API files.
+ * Never reads or modifies untouched integrity/attestation files; never renames symbols declared in autismclient/api/.
  * Synchronizes mappings/disambig.tsv atomically so ReverseRemapJar preserves 100% runtime ABI.
  */
 public final class AstBatchRenamer {
 
     private static final List<String> FROZEN_PREFIXES = List.of(
         "autismclient/e/", "autismclient/sys/", "autismclient/obf/", "autismclient/a/",
-        "autismclient/util/mm/guardian/", "autismclient/api/", "autismclient/ai/"
+        "autismclient/util/mm/guardian/", "autismclient/api/"
     );
     // Never read or edit these source files at all (untouched integrity / attestation layer)
     private static final Set<String> UNTOUCHABLE_SOURCE_EXACT = Set.of(
@@ -59,7 +59,20 @@ public final class AstBatchRenamer {
         "autismclient/util/mm/StateCache",
         "autismclient/util/mm/a/CachePool",
         "autismclient/util/mm/a/DataUtil",
-        "autismclient/util/mm/a/StreamUtil"
+        "autismclient/util/mm/a/StreamUtil",
+        // Compile-time GUI ABI pins directly referenced by untouched gui/d/JsonUtil.java
+        "autismclient/gui/f/NetHelper",
+        "autismclient/gui/f/PacketUtil",
+        "autismclient/gui/f/SyncManager",
+        "autismclient/gui/f/UiHelper",
+        "autismclient/gui/f/a/DataUtil",
+        "autismclient/gui/f/b/BufferHelper",
+        "autismclient/gui/f/b/CachePool",
+        "autismclient/gui/f/b/CharEncoder",
+        "autismclient/gui/f/b/k",
+        "autismclient/gui/f/b/l",
+        // Compile-time AI ABI pin directly referenced by untouched modules/al.java
+        "autismclient/ai/aP"
     );
     private static final Set<String> FROZEN_ENUMS = Set.of(
         "autismclient/gui/f/b/CachePool$Inner_DataUtil",

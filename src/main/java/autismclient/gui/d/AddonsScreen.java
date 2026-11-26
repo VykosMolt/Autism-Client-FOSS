@@ -17,15 +17,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 
-public final class AddonsScreen extends KeyHolder {
+public final class AddonsScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = -7429889;
    private static final int load_I = 560;
    private static final int read_I = 3;
    private static final String[] init_StrArr = new String[]{"Status", "API", "Version", "Authors", "Extensions", "Rejected", "Runtime Errors"};
    private final Screen init_Screen;
-   private final List<autismclient.gui.f.b.ByteReader> init_List = new ArrayList<>();
-   private final autismclient.gui.f.b.CacheEntry init_CacheEntry = new autismclient.gui.f.b.CacheEntry();
+   private final List<autismclient.gui.f.b.OverlayActionButton> init_List = new ArrayList<>();
+   private final autismclient.gui.f.b.ScrollOffsetController init_CacheEntry = new autismclient.gui.f.b.ScrollOffsetController();
    private EditBox init_EditBox;
    private String init_Str = "";
    private String load_Str = "";
@@ -49,7 +49,7 @@ public final class AddonsScreen extends KeyHolder {
       this.load_List = List.copyOf(autismclient.b.DataUtil.load_List());
       this.write_Str = "\u0000";
       this.read_List = List.of();
-      this.init_EditBox = new StateCache(this.font, this.set() + 4, this.reset(), this.get() - 8, this.sync_I_2(), Component.literal("Search addons"));
+      this.init_EditBox = new MsdfEditBox(this.font, this.set() + 4, this.reset(), this.get() - 8, this.sync_I_2(), Component.literal("Search addons"));
       this.init_EditBox.setHint(Component.literal("Search addons..."));
       this.init_EditBox.setMaxLength(96);
       this.init_EditBox.setResponder(value -> {
@@ -67,10 +67,10 @@ public final class AddonsScreen extends KeyHolder {
       int ctl = this.sync_I_2();
       this.init_List
          .add(
-            autismclient.gui.f.b.ByteReader.init(
+            autismclient.gui.f.b.OverlayActionButton.init(
                   this.write_I_3(), this.pop(), this.read_I_3(), ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                )
-               .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+               .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
          );
       autismclient.b.DataUtil.StreamUtil selected = this.init_DataUtil_StreamUti();
       int gap = 2;
@@ -84,28 +84,28 @@ public final class AddonsScreen extends KeyHolder {
       int copyReportW = this.init_I_Str_4("Copy Report");
       int toggleW = this.init_I_Str_4(toggleLabel);
       int modsFolderW = this.init_I_Str_4("Mods Folder");
-      autismclient.gui.f.b.ByteReader toggle;
+      autismclient.gui.f.b.OverlayActionButton toggle;
       if (this.init_Z_DataUtil_StreamUti(selected)) {
          int x = btnLeft;
          int y = row2Y;
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(x, y, copyIdW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+               autismclient.gui.f.b.OverlayActionButton.init(x, y, copyIdW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
             );
          x += copyIdW + gap;
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(x, y, copyReportW, ctl, Component.literal("Copy Report"), b -> this.update_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+               autismclient.gui.f.b.OverlayActionButton.init(x, y, copyReportW, ctl, Component.literal("Copy Report"), b -> this.update_V_3())
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
             );
          x += copyReportW + gap;
-         toggle = autismclient.gui.f.b.ByteReader.init(x, y, toggleW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
+         toggle = autismclient.gui.f.b.OverlayActionButton.init(x, y, toggleW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
          x += toggleW + gap;
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(x, y, modsFolderW, ctl, Component.literal("Mods Folder"), b -> this.flush_V_2())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY)
+               autismclient.gui.f.b.OverlayActionButton.init(x, y, modsFolderW, ctl, Component.literal("Mods Folder"), b -> this.flush_V_2())
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.PRIMARY)
             );
       } else {
          int halfW = (areaW - gap) / 2;
@@ -115,12 +115,12 @@ public final class AddonsScreen extends KeyHolder {
          boolean row2Fits = toggleW + modsFolderW + gap <= areaW;
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(btnLeft, row1Y, row1Fits ? copyIdW : halfW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+               autismclient.gui.f.b.OverlayActionButton.init(btnLeft, row1Y, row1Fits ? copyIdW : halfW, ctl, Component.literal("Copy ID"), b -> this.write_V_3())
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
             );
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(
+               autismclient.gui.f.b.OverlayActionButton.init(
                      row1Fits ? btnLeft + copyIdW + gap : rightX,
                      row1Y,
                      row1Fits ? copyReportW : rightW,
@@ -128,12 +128,12 @@ public final class AddonsScreen extends KeyHolder {
                      Component.literal("Copy Report"),
                      b -> this.update_V_3()
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
             );
-         toggle = autismclient.gui.f.b.ByteReader.init(btnLeft, row2Y, row2Fits ? toggleW : halfW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
+         toggle = autismclient.gui.f.b.OverlayActionButton.init(btnLeft, row2Y, row2Fits ? toggleW : halfW, ctl, Component.literal(toggleLabel), b -> this.sync_V_2());
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(
+               autismclient.gui.f.b.OverlayActionButton.init(
                      row2Fits ? btnLeft + toggleW + gap : rightX,
                      row2Y,
                      row2Fits ? modsFolderW : rightW,
@@ -141,12 +141,12 @@ public final class AddonsScreen extends KeyHolder {
                      Component.literal("Mods Folder"),
                      b -> this.flush_V_2()
                   )
-                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.PRIMARY)
+                  .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.PRIMARY)
             );
       }
 
       toggle.init_ByteReader_ByteReader_StreamU(
-         disabledRestart ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
+         disabledRestart ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER
       );
       toggle.init_Z = selected != null;
       this.init_List.add(toggle);
@@ -171,7 +171,7 @@ public final class AddonsScreen extends KeyHolder {
    }
 
    private int init_I_Str_4(String label) {
-      return autismclient.gui.f.RenderState.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.f.UiDensityMetrics.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private int read_I_3() {
@@ -230,21 +230,21 @@ public final class AddonsScreen extends KeyHolder {
          int ctl = this.sync_I_2();
          int titleX = this.write_I_3() + this.read_I_3() + 4;
          int titleY = this.init_I_I_I_3(this.pop(), ctl);
-         this.init(graphics, "Addons", titleX, titleY, ValueSink.flush, false);
+         this.init(graphics, "Addons", titleX, titleY, GuiColorPalette.flush, false);
          int summaryLeft = titleX + this.load_I_Str_2("Addons") + 8;
          this.init(
-            graphics, this.init_Str_2(), this.poll() + this.open() - 4, titleY, ValueSink.close, Math.max(1, this.poll() + this.open() - 4 - summaryLeft)
+            graphics, this.init_Str_2(), this.poll() + this.open() - 4, titleY, GuiColorPalette.close, Math.max(1, this.poll() + this.open() - 4 - summaryLeft)
          );
-         this.init(graphics, "Addon Library", this.set() + 4, this.init_I_I_I_3(this.run() + 4, 12), ValueSink.flush, false, this.get() - 8);
+         this.init(graphics, "Addon Library", this.set() + 4, this.init_I_I_I_3(this.run() + 4, 12), GuiColorPalette.flush, false, this.get() - 8);
          this.init_V_GuiGraphicsExtract_3(graphics, mx, my);
          this.init_V_GuiGraphicsExtract(graphics);
 
-         for (autismclient.gui.f.b.ByteReader button : this.init_List) {
-            autismclient.gui.f.b.ByteReader.init(graphics, this.font, button, mx, my);
+         for (autismclient.gui.f.b.OverlayActionButton button : this.init_List) {
+            autismclient.gui.f.b.OverlayActionButton.init(graphics, this.font, button, mx, my);
          }
 
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
-         autismclient.gui.f.b.PoolEntry.init(graphics, scrollbar, scrollbar.init(mx, my), this.load_Z);
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
+         autismclient.gui.f.b.ScrollbarMetricsHelper.init(graphics, scrollbar, scrollbar.init(mx, my), this.load_Z);
          super.extractRenderState(graphics, mx, my, delta);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -277,7 +277,7 @@ public final class AddonsScreen extends KeyHolder {
             this.load_List.isEmpty() ? "No AUTISM addons discovered." : "No addons match the search.",
             this.valid(),
             this.init_I_I_I_3(this.start(), this.flush_I_2()),
-            ValueSink.close,
+            GuiColorPalette.close,
             false,
             this.value()
          );
@@ -289,7 +289,7 @@ public final class AddonsScreen extends KeyHolder {
       boolean selected = report.init_Str().equals(this.read_Str);
       boolean hovered = mouseX >= this.valid() && mouseX < this.data() && mouseY >= y && mouseY < y + h;
       int fill = selected ? 858052714 : (hovered ? 606804509 : 403771667);
-      int status = selected ? ValueSink.sync : this.load_I_DataUtil_StreamUti(report);
+      int status = selected ? GuiColorPalette.sync : this.load_I_DataUtil_StreamUti(report);
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.valid(), y, this.value(), h), fill);
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.valid(), y, 2, h), status);
       autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(this.valid() + 4, y + 3, 3, h - 6), report.init_I());
@@ -301,11 +301,11 @@ public final class AddonsScreen extends KeyHolder {
       int nameX = this.valid() + 10;
       int nameMax = Math.max(1, statusX - 4 - nameX);
       int nameW = Math.min(this.load_I_Str_2(report.load_Str()), nameMax);
-      this.init(graphics, report.load_Str(), nameX, ty, ValueSink.flush, false, nameMax);
+      this.init(graphics, report.load_Str(), nameX, ty, GuiColorPalette.flush, false, nameMax);
       int idX = nameX + nameW + 4;
       int idMax = statusX - 4 - idX;
       if (idMax > 12) {
-         this.init(graphics, report.init_Str() + (report.read_Str().isBlank() ? "" : "  v" + report.read_Str()), idX, ty, ValueSink.close, false, idMax);
+         this.init(graphics, report.init_Str() + (report.read_Str().isBlank() ? "" : "  v" + report.read_Str()), idX, ty, GuiColorPalette.close, false, idMax);
       }
    }
 
@@ -318,29 +318,29 @@ public final class AddonsScreen extends KeyHolder {
       int x = this.put() + 4;
       int y = this.run() + 4;
       int width = this.clear();
-      this.init(graphics, "Details", x, this.init_I_I_I_3(y, 12), ValueSink.flush, false, width);
+      this.init(graphics, "Details", x, this.init_I_I_I_3(y, 12), GuiColorPalette.flush, false, width);
       y += 14;
       if (report == null) {
-         this.init(graphics, "Select an addon to inspect its status.", x, this.init_I_I_I_3(y, line), ValueSink.close, false, width);
+         this.init(graphics, "Select an addon to inspect its status.", x, this.init_I_I_I_3(y, line), GuiColorPalette.close, false, width);
          return y + line;
       }
 
       int labelW = this.update_I_3();
-      this.init(graphics, report.load_Str(), x, this.init_I_I_I_3(y, line), ValueSink.flush, false, width);
+      this.init(graphics, report.load_Str(), x, this.init_I_I_I_3(y, line), GuiColorPalette.flush, false, width);
       y += line;
-      this.init(graphics, report.init_Str(), x, this.init_I_I_I_3(y, line), ValueSink.close, false, width);
+      this.init(graphics, report.init_Str(), x, this.init_I_I_I_3(y, line), GuiColorPalette.close, false, width);
       y += line + 2;
       y = this.init(graphics, x, y, width, labelW, "Status", this.load_Str_DataUtil_StreamUti(report), this.load_I_DataUtil_StreamUti(report));
       y = this.init(graphics, x, y, width, labelW, "API", this.read(report), -7429889);
-      y = this.init(graphics, x, y, width, labelW, "Version", report.read_Str().isBlank() ? "unknown" : report.read_Str(), ValueSink.flush);
-      y = this.init(graphics, x, y, width, labelW, "Authors", report.write_Str().isBlank() ? "unknown" : report.write_Str(), ValueSink.flush);
-      y = this.init(graphics, x, y, width, labelW, "Extensions", report.close(), ValueSink.open);
+      y = this.init(graphics, x, y, width, labelW, "Version", report.read_Str().isBlank() ? "unknown" : report.read_Str(), GuiColorPalette.flush);
+      y = this.init(graphics, x, y, width, labelW, "Authors", report.write_Str().isBlank() ? "unknown" : report.write_Str(), GuiColorPalette.flush);
+      y = this.init(graphics, x, y, width, labelW, "Extensions", report.close(), GuiColorPalette.open);
       if (report.sync_I() > 0) {
          y = this.init(graphics, x, y, width, labelW, "Rejected", Integer.toString(report.sync_I()), -14249);
       }
 
       if (report.write_I() > 0) {
-         y = this.init(graphics, x, y, width, labelW, "Runtime Errors", Integer.toString(report.write_I()), ValueSink.poll);
+         y = this.init(graphics, x, y, width, labelW, "Runtime Errors", Integer.toString(report.write_I()), GuiColorPalette.poll);
       }
 
       if (autismclient.b.DataUtil.read(report.init_Str())) {
@@ -351,13 +351,13 @@ public final class AddonsScreen extends KeyHolder {
 
       if (!report.sync_Str().isBlank()) {
          y += 2;
-         this.init(graphics, report.sync_Str(), x, this.init_I_I_I_3(y, line), ValueSink.poll, false, width);
+         this.init(graphics, report.sync_Str(), x, this.init_I_I_I_3(y, line), GuiColorPalette.poll, false, width);
          y += line;
       }
 
       if (!report.init_List().isEmpty()) {
          y += 2;
-         this.init(graphics, "Latest rejection:", x, this.init_I_I_I_3(y, line), ValueSink.close, false, width);
+         this.init(graphics, "Latest rejection:", x, this.init_I_I_I_3(y, line), GuiColorPalette.close, false, width);
          y += line;
          this.init(graphics, report.init_List().get(report.init_List().size() - 1), x, this.init_I_I_I_3(y, line), -14249, false, width);
          y += line;
@@ -372,7 +372,7 @@ public final class AddonsScreen extends KeyHolder {
 
    private int init(GuiGraphicsExtractor graphics, int x, int y, int width, int labelW, String label, String value, int valueColor) {
       int ty = this.init_I_I_I_3(y, 12);
-      this.init(graphics, label + ":", x, ty, ValueSink.close, false, labelW);
+      this.init(graphics, label + ":", x, ty, GuiColorPalette.close, false, labelW);
       this.init(graphics, value, x + width, ty, valueColor, Math.max(1, width - labelW - 4));
       return y + 12;
    }
@@ -394,17 +394,17 @@ public final class AddonsScreen extends KeyHolder {
          return super.mouseClicked(virtual, doubleClick);
       }
 
-      for (autismclient.gui.f.b.ByteReader button : this.init_List) {
-         if (autismclient.gui.f.b.ByteReader.init(button, virtual.x(), virtual.y(), Compat263.mouseEventGlfwButton(virtual))) {
+      for (autismclient.gui.f.b.OverlayActionButton button : this.init_List) {
+         if (autismclient.gui.f.b.OverlayActionButton.init(button, virtual.x(), virtual.y(), Compat263.mouseEventGlfwButton(virtual))) {
             return true;
          }
       }
 
-      autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
+      autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
       if (scrollbar.init_Z() && scrollbar.init(virtual.x(), virtual.y())) {
          this.load_Z = true;
          this.sync = scrollbar.load(virtual.x(), virtual.y()) ? Math.max(0, (int)Math.round(virtual.y()) - scrollbar.update()) : scrollbar.sync() / 2;
-         this.write_I = init_I_I(autismclient.gui.f.b.PoolEntry.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
+         this.write_I = init_I_I(autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
          this.init_CacheEntry.load(this.write_I, scrollbar.flush());
          return true;
       } else {
@@ -434,8 +434,8 @@ public final class AddonsScreen extends KeyHolder {
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       MouseButtonEvent virtual = init_MouseButtonEvent_MouseButtonEvent(event);
       if (this.load_Z) {
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
-         this.write_I = init_I_I(autismclient.gui.f.b.PoolEntry.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_I_2(this.init_List_3().size());
+         this.write_I = init_I_I(autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbar, virtual.y(), this.sync), this.close_I_2(), scrollbar.flush());
          this.init_CacheEntry.load(this.write_I, scrollbar.flush());
          return true;
       } else {
@@ -506,7 +506,7 @@ public final class AddonsScreen extends KeyHolder {
       if (report != null) {
          boolean next = !autismclient.b.DataUtil.read(report.init_Str());
          autismclient.b.DataUtil.init(report.init_Str(), next);
-         bi.init(next ? "Addon disables after restart." : "Addon enables after restart.", next ? -14249 : ValueSink.open);
+         bi.init(next ? "Addon disables after restart." : "Addon enables after restart.", next ? -14249 : GuiColorPalette.open);
          this.load_V_5();
       }
    }
@@ -587,12 +587,12 @@ public final class AddonsScreen extends KeyHolder {
 
    private int load_I_DataUtil_StreamUti(autismclient.b.DataUtil.StreamUtil report) {
       if (report == null) {
-         return ValueSink.close;
+         return GuiColorPalette.close;
       } else if (report.init_DataUtil_DataUtil().init_Z()) {
-         return ValueSink.poll;
+         return GuiColorPalette.poll;
       } else {
          return !autismclient.b.DataUtil.read(report.init_Str()) && report.init_DataUtil_DataUtil() != autismclient.b.DataUtil.Inner_DataUtil.DISABLED
-            ? ValueSink.open
+            ? GuiColorPalette.open
             : -14249;
       }
    }
@@ -602,9 +602,9 @@ public final class AddonsScreen extends KeyHolder {
       return "addon v" + addon + " / host v" + report.read_I();
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_I_2(int rows) {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_I_2(int rows) {
       int view = Math.max(1, this.stop() - this.start());
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(
+      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(
          this.load_I_I_2(rows), view, this.size(), this.start(), 6, this.stop() - this.start(), this.write_I
       );
    }
@@ -664,11 +664,11 @@ public final class AddonsScreen extends KeyHolder {
    }
 
    private int sync_I_2() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int flush_I_2() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int close_I_2() {

@@ -16,8 +16,8 @@ final class ap {
    private final cc init_cc;
    private final cF init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.f.b.BitSetUtil init_BitSetUtil = new autismclient.gui.f.b.BitSetUtil().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search memory");
-   final autismclient.gui.f.b.BitSetUtil load_BitSetUtil = new autismclient.gui.f.b.BitSetUtil().init_BitSetUtil_I(4000);
+   final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search memory");
+   final autismclient.gui.f.b.TextInputWidget load_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(4000);
    private final cE.Inner_StreamUtil init_cE_StreamUtil = new cE.Inner_StreamUtil(false);
    private final Set<String> init_Set = new HashSet<>();
    private final Map<String, ap.Inner_StreamUtil> init_Map = new HashMap<>();
@@ -88,7 +88,7 @@ final class ap {
          this.write_Str = null;
       }
 
-      autismclient.gui.f.JsonUtil colors = kit.init_JsonUtil;
+      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
       int ctrl = cE.init_I();
       String count = this.init_List.size() == 1 ? "1 memory" : this.init_List.size() + " memories";
       int countW = kit.init_I_Str(count);
@@ -108,7 +108,7 @@ final class ap {
    }
 
    private void load(cE kit, autismclient.gui.f.NetHelper v, long now) {
-      autismclient.gui.f.JsonUtil colors = kit.init_JsonUtil;
+      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
       int rowH = cE.load_I();
       int line = cE.write();
       int rowW = v.update() - 6 - 2;
@@ -176,7 +176,7 @@ final class ap {
    }
 
    private void init(cE kit, ap.Inner_DataUtil entry, autismclient.gui.f.NetHelper row, int chipW, int textX, int textW, long now) {
-      autismclient.gui.f.JsonUtil colors = kit.init_JsonUtil;
+      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
       AiMemoryStore.Memory memory = entry.memory();
       String id = memory.id();
       int rowH = cE.load_I();
@@ -195,7 +195,7 @@ final class ap {
             this.init_Set.add(id);
          }
       }, () -> read(memory.text()), null);
-      autismclient.gui.f.b.ConfigStore.init(
+      autismclient.gui.f.b.PillBadgeRenderer.init(
          kit.init_SyncManager,
          autismclient.gui.f.NetHelper.init(row.read() + 2, row.write() + 1, chipW, rowH - 2),
          init_Str_AiMemoryStore_Data(memory.kind()),

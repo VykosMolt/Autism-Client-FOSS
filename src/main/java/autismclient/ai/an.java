@@ -288,7 +288,7 @@ public final class an {
                         }
                   }
 
-                  if (f.type() == autismclient.gui.macro.editor.CachePool.TOGGLE && ag.init_Z_JsonObject(input, f.key(), false)) {
+                  if (f.type() == autismclient.gui.macro.editor.FieldType.TOGGLE && ag.init_Z_JsonObject(input, f.key(), false)) {
                      for (String other : f.mutuallyExclusiveWith()) {
                         if (ag.init_Z_JsonObject(input, other, false)) {
                            throw new IllegalArgumentException("Mutually exclusive fields " + f.key() + " and " + other);

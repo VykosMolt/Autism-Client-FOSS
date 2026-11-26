@@ -73,7 +73,7 @@ final class bY {
                }
             }
 
-            if (screen instanceof autismclient.gui.d.TaskQueue access && !widgetsTruncated) {
+            if (screen instanceof autismclient.gui.d.ScreenButtonBoundsProvider access && !widgetsTruncated) {
                for (Entry<String, autismclient.gui.f.NetHelper> entry : access.init_Map().entrySet()) {
                   if (index >= 80) {
                      break;
@@ -522,7 +522,7 @@ final class bY {
          }
       }
 
-      if (screen instanceof autismclient.gui.d.TaskQueue access) {
+      if (screen instanceof autismclient.gui.d.ScreenButtonBoundsProvider access) {
          int index = infos.size();
 
          for (Entry<String, autismclient.gui.f.NetHelper> entry : access.init_Map().entrySet()) {

@@ -1,6 +1,6 @@
 package autismclient.gui.d;
 
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.util.cA;
@@ -22,7 +22,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 
-public final class LoginPasswordScreen extends KeyHolder {
+public final class LoginPasswordScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 16;
    private static final int load_I = 9;
@@ -33,7 +33,7 @@ public final class LoginPasswordScreen extends KeyHolder {
    private EditBox init_EditBox;
    private boolean load_Z = true;
    private String read_Str = "";
-   private int update = ValueSink.close;
+   private int update = GuiColorPalette.close;
    private int sync = 124;
 
    public LoginPasswordScreen(Screen parent, Map<String, String> values, Consumer<Map<String, String>> onSave) {
@@ -57,14 +57,14 @@ public final class LoginPasswordScreen extends KeyHolder {
       revealW = Math.max(1, Math.min(revealW, innerW - gap - 1));
       String existing = this.init_EditBox != null ? this.init_EditBox.getValue() : Objects.requireNonNullElse(this.init_Map.get("password"), "");
       int editW = Math.max(1, innerW - revealW - gap);
-      this.init_EditBox = new StateCache(this.font, innerX, fieldY, editW, ctrlH, Component.literal("Password"));
+      this.init_EditBox = new MsdfEditBox(this.font, innerX, fieldY, editW, ctrlH, Component.literal("Password"));
       this.init_EditBox.setMaxLength(16);
       this.init_EditBox.setHint(Component.literal("Type a password"));
       this.load_V_23();
       this.init_EditBox.setValue(existing);
       this.addRenderableWidget(this.init_EditBox);
       this.addRenderableWidget(
-         new StreamGate(
+         new StyledButton(
             innerX + innerW - revealW,
             fieldY,
             revealW,
@@ -125,11 +125,11 @@ public final class LoginPasswordScreen extends KeyHolder {
    }
 
    private int read_I_16() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int write_I_14() {
-      return autismclient.gui.f.RenderState.init(12);
+      return autismclient.gui.f.UiDensityMetrics.init(12);
    }
 
    private void load_V_23() {
@@ -143,7 +143,7 @@ public final class LoginPasswordScreen extends KeyHolder {
          this.init_EditBox.setValue("");
       }
 
-      this.load("Password cleared. Press Save to apply.", ValueSink.open);
+      this.load("Password cleared. Press Save to apply.", GuiColorPalette.open);
    }
 
    private void update_V_13() {
@@ -153,7 +153,7 @@ public final class LoginPasswordScreen extends KeyHolder {
          this.init_EditBox.setValue(generated);
       }
 
-      this.load("Generated a random password (9-16 chars). Press Save to keep it.", ValueSink.open);
+      this.load("Generated a random password (9-16 chars). Press Save to keep it.", GuiColorPalette.open);
    }
 
    private static String init_Str_12() {
@@ -175,7 +175,7 @@ public final class LoginPasswordScreen extends KeyHolder {
    private void close() {
       String password = this.init_EditBox == null ? "" : this.init_EditBox.getValue();
       if (password != null && password.length() > 16) {
-         this.load("Password must be at most 16 characters.", ValueSink.poll);
+         this.load("Password must be at most 16 characters.", GuiColorPalette.poll);
          return;
       }
 
@@ -198,12 +198,12 @@ public final class LoginPasswordScreen extends KeyHolder {
    }
 
    private int init_I_Str_19(String label) {
-      return autismclient.gui.f.RenderState.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.f.UiDensityMetrics.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private void init(int x, int y, int w, int h, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
       int width = w <= 0 ? this.init_I_Str_19(label) : Math.max(1, w);
-      this.addRenderableWidget(new StreamGate(x, y, width, h, Component.literal(label), tone, press));
+      this.addRenderableWidget(new StyledButton(x, y, width, h, Component.literal(label), tone, press));
    }
 
    private void init(int x, int y, int w, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
@@ -236,9 +236,9 @@ public final class LoginPasswordScreen extends KeyHolder {
             graphics, autismclient.gui.f.NetHelper.init(0, 0, this.init_I(), this.load_I()), ThemePaletteManager.init_I_I_ct_DataUtil(-15987181, ThemePaletteManager.Inner_DataUtil.BACKDROP)
          );
          LoginPasswordScreen.Layout l = this.computeLayout();
-         int border = ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.update, ThemePaletteManager.Inner_DataUtil.OUTLINE);
-         int textColor = ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.flush, ThemePaletteManager.Inner_DataUtil.TEXT);
-         int muted = ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.close, ThemePaletteManager.Inner_DataUtil.TEXT);
+         int border = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.Inner_DataUtil.OUTLINE);
+         int textColor = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.flush, ThemePaletteManager.Inner_DataUtil.TEXT);
+         int muted = ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.close, ThemePaletteManager.Inner_DataUtil.TEXT);
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(l.x(), l.y(), l.w(), l.h()),
@@ -285,7 +285,7 @@ public final class LoginPasswordScreen extends KeyHolder {
    }
 
    private int init_I_I_I_10(int boxY, int boxH) {
-      return j.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color) {

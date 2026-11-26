@@ -38,7 +38,7 @@ public final class GuiIconAtlas {
    }
 
    public static void init(GuiGraphicsExtractor graphics, Identifier icon, int x, int y, int w, int h, int color) {
-      if (!autismclient.gui.e.CachePool.init(graphics, icon, x, y, w, h, color)) {
+      if (!autismclient.gui.e.SdfIconRenderer.init(graphics, icon, x, y, w, h, color)) {
          graphics.blit(RenderPipelines.GUI_TEXTURED, icon, x, y, 0.0F, 0.0F, w, h, 512, 512, 512, 512, color);
       }
    }

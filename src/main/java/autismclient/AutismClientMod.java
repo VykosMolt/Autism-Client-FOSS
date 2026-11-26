@@ -11,7 +11,7 @@ import autismclient.g.ResourcePackSessionTracker;
 import autismclient.g.ProtectorFeatureFlags;
 import autismclient.g.ModNamespaceCatalog;
 import autismclient.g.VanillaTranslationKeyLoader;
-import autismclient.gui.e.BufferHelper;
+import autismclient.gui.e.SdfShapeRenderer;
 import autismclient.gui.f.b.k;
 import autismclient.modules.NoFallPauseTimer;
 import autismclient.modules.HoleEspModule;
@@ -168,9 +168,9 @@ public final class AutismClientMod implements ClientModInitializer {
             GifTextureManager.init();
             Thread prewarm = new Thread(() -> {
                try {
-                  BufferHelper.prewarm();
-                  autismclient.gui.e.CachePool.prewarm();
-                  autismclient.gui.e.ConfigStore.prewarm();
+                  SdfShapeRenderer.prewarm();
+                  autismclient.gui.e.SdfIconRenderer.prewarm();
+                  autismclient.gui.e.MsdfFontFace.prewarm();
                   PacketTypeRegistry.load();
                } catch (Throwable var1x) {
                }

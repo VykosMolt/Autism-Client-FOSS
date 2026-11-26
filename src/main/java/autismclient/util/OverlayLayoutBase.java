@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 public abstract class OverlayLayoutBase {
    protected static final int update = 14;
    protected static final int sync = 8;
-   private autismclient.gui.f.RingBuffer init_RingBuffer;
+   private autismclient.gui.f.EaseOutAnimator init_RingBuffer;
    private int init_I = -1;
 
    public static int open_I() {
@@ -50,7 +50,7 @@ public abstract class OverlayLayoutBase {
       int full = Math.max(14, bounds.write);
       float target = collapsed ? 0.0F : 1.0F;
       if (this.init_RingBuffer == null) {
-         this.init_RingBuffer = new autismclient.gui.f.RingBuffer(target, 180);
+         this.init_RingBuffer = new autismclient.gui.f.EaseOutAnimator(target, 180);
       }
 
       float reveal = this.init_RingBuffer.init_F_F(target);
@@ -85,7 +85,7 @@ public abstract class OverlayLayoutBase {
    protected void init_V_SyncManager_10(autismclient.gui.f.SyncManager ui, OverlayBounds bounds, String title, boolean collapsed, boolean activeDrag) {
       boolean active = activeDrag || this.open_Z_3();
       int frameHeight = this.init_I_cH_Z(bounds, collapsed);
-      autismclient.gui.f.b.HashUtil.init(
+      autismclient.gui.f.b.OverlayFrameHelper.init(
          ui,
          autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, frameHeight),
          14,
@@ -100,17 +100,17 @@ public abstract class OverlayLayoutBase {
       int frameHeight = this.init_I_cH_Z(bounds, collapsed);
       return frameHeight <= 15
          ? false
-         : autismclient.gui.f.b.HashUtil.init(context, autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, frameHeight), 14, false);
+         : autismclient.gui.f.b.OverlayFrameHelper.init(context, autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, frameHeight), 14, false);
    }
 
    protected void init_V_GuiGraphicsExtract_Z(GuiGraphicsExtractor context, boolean clipped) {
-      autismclient.gui.f.b.HashUtil.init(context, clipped);
+      autismclient.gui.f.b.OverlayFrameHelper.init(context, clipped);
    }
 
    protected void init_V_GuiGraphicsExtract_14(GuiGraphicsExtractor context, OverlayBounds bounds, boolean collapsed, boolean activeDrag) {
       int frameHeight = this.init_I_cH_Z(bounds, collapsed);
       if (!activeDrag && !this.open_Z_3()) {
-         autismclient.gui.e.BufferHelper.init(
+         autismclient.gui.e.SdfShapeRenderer.init(
             context, bounds.init_I + 1, bounds.load_I + 1, Math.max(0, bounds.read - 2), Math.max(0, frameHeight - 2), 7.0F, 603979776
          );
       }
@@ -172,11 +172,11 @@ public abstract class OverlayLayoutBase {
    }
 
    private autismclient.gui.f.NetHelper load(OverlayBounds bounds) {
-      return autismclient.gui.f.b.ClassCache.load(this.init(bounds), 14);
+      return autismclient.gui.f.b.WindowHeaderHelper.load(this.init(bounds), 14);
    }
 
    private autismclient.gui.f.NetHelper read(OverlayBounds bounds) {
-      return autismclient.gui.f.b.ClassCache.read(this.init(bounds), 14);
+      return autismclient.gui.f.b.WindowHeaderHelper.read(this.init(bounds), 14);
    }
 
    private boolean poll_Z_17() {

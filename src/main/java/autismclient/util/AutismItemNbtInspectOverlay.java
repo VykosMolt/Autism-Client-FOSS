@@ -1,6 +1,6 @@
 package autismclient.util;
 
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.UiLayoutMath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +16,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private final Font init_Font;
    private final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private ItemNbtInspector.Inner_StreamUtil init_az_StreamUtil;
-   private autismclient.gui.f.c.EventBus init_EventBus;
+   private autismclient.gui.f.c.ScrollableListView init_EventBus;
    private List<AutismItemNbtInspectOverlay.Inner_StreamUtil> init_List = Collections.emptyList();
    private boolean write_Z = true;
    private boolean update_Z;
@@ -158,7 +158,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   int tabY = this.tick_I_8();
 
                   for (AutismItemNbtInspectOverlay.Inner_DataUtil tab : this.init_List_I(tabY)) {
-                     autismclient.gui.f.b.PacketUtil.init(
+                     autismclient.gui.f.b.ButtonDrawHelper.init(
                         context,
                         this.init_Font,
                         tab.init_I(),
@@ -179,7 +179,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   int listHeight = Math.max(1, footerY - listY - 4);
                   int lineH = this.start_I_6();
                   int textX = listX + this.put();
-                  int maxTextWidth = autismclient.gui.f.b.MapStore.init(listWidth, this.put());
+                  int maxTextWidth = autismclient.gui.f.b.ScrollbarContentMath.init(listWidth, this.put());
                   this.init_V_I_3(maxTextWidth);
                   if (this.init_EventBus == null
                      || this.init_EventBus.init_I() != listX
@@ -187,7 +187,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      || this.init_EventBus.read_I() != listWidth
                      || this.init_EventBus.write_I() != listHeight) {
                      int oldScroll = this.init_EventBus == null ? 0 : this.init_EventBus.open();
-                     this.init_EventBus = new autismclient.gui.f.c.EventBus(listX, listY, listWidth, listHeight, lineH, 4);
+                     this.init_EventBus = new autismclient.gui.f.c.ScrollableListView(listX, listY, listWidth, listHeight, lineH, 4);
                      this.init_EventBus.load_V(oldScroll);
                   }
 
@@ -197,7 +197,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   try {
                      this.init_EventBus.init_V_GuiGraphicsExtract_3(context, this.init_List.size(), (idx, bnd) -> {
                         AutismItemNbtInspectOverlay.Inner_StreamUtil line = this.init_List.get(idx);
-                        int y = j.init(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
+                        int y = UiLayoutMath.init(bnd.load, lineH, this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.read), this.init_CharEncoder.flush());
                         this.init_V_GuiGraphicsExtract_3(context, line, textX, y);
                      });
                   } finally {
@@ -212,12 +212,12 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                      this.init_CharEncoder.init_Identifier_l(autismclient.gui.f.b.l.write),
                      this.init_CharEncoder.load(autismclient.gui.f.b.l.write),
                      this.init_I_2 + this.set_I_6() + 2,
-                     j.init(footerY, this.clear(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
+                     UiLayoutMath.init(footerY, this.clear(), this.init_CharEncoder.init_I_l(autismclient.gui.f.b.l.write), this.init_CharEncoder.flush()),
                      false
                   );
 
                   for (AutismItemNbtInspectOverlay.Inner_DataUtil button : this.load(footerY)) {
-                     autismclient.gui.f.b.PacketUtil.init(
+                     autismclient.gui.f.b.ButtonDrawHelper.init(
                         context,
                         this.init_Font,
                         button.init_I(),
@@ -225,7 +225,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                         button.read(),
                         this.clear(),
                         button.init_Str(),
-                        button.init_Z() ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.GHOST,
+                        button.init_Z() ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.GHOST,
                         true,
                         mouseX,
                         mouseY
@@ -235,7 +235,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   return;
                }
 
-               autismclient.gui.f.b.FileCache.init(
+               autismclient.gui.f.b.ListRowRenderer.init(
                   context,
                   this.init_Font,
                   "No item selected.",
@@ -496,7 +496,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       int maxWidth,
       List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target
    ) {
-      int safeContinuationOffset = autismclient.gui.f.b.MapStore.load(maxWidth, continuationOffset);
+      int safeContinuationOffset = autismclient.gui.f.b.ScrollbarContentMath.load(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
          this.init_V_Str_3(prefix.stripTrailing(), 0, UiColorPalette.pool(), maxWidth, target);
          this.init_V_Str_3(value, safeContinuationOffset, valueColor, maxWidth, target);
@@ -505,9 +505,9 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
          for (boolean firstLine = true; !remaining.isEmpty(); firstLine = false) {
             int offset = firstLine ? prefixWidth : safeContinuationOffset;
-            int availableWidth = autismclient.gui.f.b.MapStore.read(maxWidth, offset);
+            int availableWidth = autismclient.gui.f.b.ScrollbarContentMath.read(maxWidth, offset);
             String current = remaining;
-            int split = autismclient.gui.f.ConfigStore.init(
+            int split = autismclient.gui.f.TextWrapLayout.init(
                current, 0, current.length(), availableWidth, (start, end) -> this.load(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
@@ -526,13 +526,13 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          if (text.isEmpty()) {
             target.add(AutismItemNbtInspectOverlay.Inner_StreamUtil.init("", offset, color));
          } else {
-            int safeOffset = autismclient.gui.f.b.MapStore.load(maxWidth, offset);
+            int safeOffset = autismclient.gui.f.b.ScrollbarContentMath.load(maxWidth, offset);
             String remaining = text;
 
             while (!remaining.isEmpty()) {
-               int availableWidth = autismclient.gui.f.b.MapStore.read(maxWidth, safeOffset);
+               int availableWidth = autismclient.gui.f.b.ScrollbarContentMath.read(maxWidth, safeOffset);
                String current = remaining;
-               int split = autismclient.gui.f.ConfigStore.init(
+               int split = autismclient.gui.f.TextWrapLayout.init(
                   current, 0, current.length(), availableWidth, (start, end) -> this.load(current.substring(start, end))
                );
                String part = remaining.substring(0, split).stripTrailing();
@@ -568,7 +568,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private void init_V_List_2(List<ItemNbtInspector.Inner_TaskQueue> source, int maxWidth, List<AutismItemNbtInspectOverlay.Inner_StreamUtil> target) {
       if (source != null && !source.isEmpty()) {
          int indent = this.init_I_List_2(source);
-         int continuationOffset = autismclient.gui.f.b.MapStore.load(maxWidth, indent + this.stop());
+         int continuationOffset = autismclient.gui.f.b.ScrollbarContentMath.load(maxWidth, indent + this.stop());
          List<ItemNbtInspector.Inner_TaskQueue> current = new ArrayList<>();
          int currentWidth = 0;
          boolean continuation = false;
@@ -808,11 +808,11 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int read(String label) {
-      return autismclient.gui.f.c.NetHelper.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 36, 78);
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_Font, this.init_CharEncoder, autismclient.gui.f.b.l.read, label, 5, 36, 78);
    }
 
    private int write(String label) {
-      return autismclient.gui.f.RenderState.load(
+      return autismclient.gui.f.UiDensityMetrics.load(
          autismclient.gui.f.b.k.init(
             this.init_Font,
             label,
@@ -836,7 +836,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int clear() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int reset() {
@@ -844,7 +844,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int start_I_6() {
-      return autismclient.gui.f.RenderState.init(12);
+      return autismclient.gui.f.UiDensityMetrics.init(12);
    }
 
    private int stop() {

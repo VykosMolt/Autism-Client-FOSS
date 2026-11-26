@@ -9,7 +9,7 @@ public final class BufferHelper {
    }
 
    public static void init_V(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title) {
-      autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       autismclient.gui.f.PacketUtil.read(context.init_GuiGraphicsExtract(), bounds, 5, colors.open, colors.get);
       if (title != null && !title.isBlank()) {
          autismclient.gui.f.NetHelper header = init(bounds);
@@ -30,12 +30,12 @@ public final class BufferHelper {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String key, boolean active, boolean hovered) {
-      autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
-      float hover = autismclient.gui.f.DataUtil.init(key, hovered);
-      int fill = j.init_I_I(colors.open, colors.push, hover);
+      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
+      float hover = autismclient.gui.f.HoverTransitionCache.init(key, hovered);
+      int fill = UiLayoutMath.init_I_I(colors.open, colors.push, hover);
       if (active) {
-         fill = j.init_I_I(fill, colors.stop, 0.09F);
-         int rim = j.init_I_I(fill, colors.stop, 0.65F);
+         fill = UiLayoutMath.init_I_I(fill, colors.stop, 0.09F);
+         int rim = UiLayoutMath.init_I_I(fill, colors.stop, 0.65F);
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 5, fill, rim);
       } else {
          autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 5, fill);
@@ -43,7 +43,7 @@ public final class BufferHelper {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float alpha) {
-      autismclient.gui.f.JsonUtil colors = context.init_TableIndex().init_JsonUtil();
+      autismclient.gui.f.UiColorScheme colors = context.init_TableIndex().init_JsonUtil();
       autismclient.gui.f.PacketUtil.read(
          context.init_GuiGraphicsExtract(),
          bounds,
@@ -58,6 +58,6 @@ public final class BufferHelper {
    }
 
    private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds) {
-      return autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), autismclient.gui.f.RenderState.init(14));
+      return autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), autismclient.gui.f.UiDensityMetrics.init(14));
    }
 }

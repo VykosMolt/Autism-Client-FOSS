@@ -15,7 +15,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-public class ProxyConfigScreen extends KeyHolder {
+public class ProxyConfigScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder init_CharEncoder = new autismclient.gui.f.b.CharEncoder();
    private static final int init_I = 380;
    private static final int load_I = 8;
@@ -26,8 +26,8 @@ public class ProxyConfigScreen extends KeyHolder {
    private static final int[] write_IArr = new int[]{0, 500, 1000, 1500, 2000, 3000, 5000, 10000};
    private static final int[] update_IArr = new int[]{0, 25, 50, 100, 250, 500, 1000};
    private final Screen init_Screen;
-   private final List<autismclient.gui.f.b.ByteReader> init_List = new ArrayList<>();
-   private final List<autismclient.gui.f.b.SyncManager> load_List = new ArrayList<>();
+   private final List<autismclient.gui.f.b.OverlayActionButton> init_List = new ArrayList<>();
+   private final List<autismclient.gui.f.b.DropdownWidget> load_List = new ArrayList<>();
    private final List<ProxyConfigScreen.Inner_StreamUtil> read_List = new ArrayList<>();
    private int write_I;
    private int update_I = 380;
@@ -99,18 +99,18 @@ public class ProxyConfigScreen extends KeyHolder {
             int backWidth = this.init_I_Str_6("Back");
             this.init_List
                .add(
-                  autismclient.gui.f.b.ByteReader.init(
+                  autismclient.gui.f.b.OverlayActionButton.init(
                         panelX + 4, footerY, backWidth, ctl, Component.literal("Back"), b -> this.minecraft.gui.setScreen(this.init_Screen)
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
                );
             int defaultsWidth = this.init_I_Str_6("Defaults");
             this.init_List
                .add(
-                  autismclient.gui.f.b.ByteReader.init(
+                  autismclient.gui.f.b.OverlayActionButton.init(
                         panelX + panelW - 4 - defaultsWidth, footerY, defaultsWidth, ctl, Component.literal("Defaults"), b -> this.read_V_5()
                      )
-                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY)
+                     .init_ByteReader_ByteReader_StreamU(autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY)
                );
          }
 
@@ -128,7 +128,7 @@ public class ProxyConfigScreen extends KeyHolder {
       if (this.init_Z_I_2(y)) {
          this.load_List
             .add(
-               new autismclient.gui.f.b.SyncManager(
+               new autismclient.gui.f.b.DropdownWidget(
                   this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), labels, this.init(current, options), index -> {
                      if (index >= 0 && index < options.length) {
                         setter.accept(options[index]);
@@ -146,14 +146,14 @@ public class ProxyConfigScreen extends KeyHolder {
       if (this.init_Z_I_2(y)) {
          this.init_List
             .add(
-               autismclient.gui.f.b.ByteReader.init(
+               autismclient.gui.f.b.OverlayActionButton.init(
                      this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), Component.literal(enabled ? "Enabled" : "Disabled"), b -> {
                         setter.accept(!enabled);
                         this.load_V_7();
                      }
                   )
                   .init_ByteReader_ByteReader_StreamU(
-                     enabled ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.DANGER
+                     enabled ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.DANGER
                   )
                   .init_ByteReader_Z(enabled)
                   .init_ByteReader_Str("proxy-config:" + label)
@@ -219,24 +219,24 @@ public class ProxyConfigScreen extends KeyHolder {
          int panelW = this.open();
          int panelTop = this.push();
          autismclient.gui.f.NetHelper panelBounds = autismclient.gui.f.NetHelper.init(panelX, panelTop, panelW, this.set() - panelTop);
-         autismclient.gui.f.b.IoWorker.init(
+         autismclient.gui.f.b.DialogFrameRenderer.init(
             autismclient.gui.f.UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY),
             panelBounds,
             this.read_I_5(),
             "Proxy Settings",
             panelBounds.init_Z(virtualMouseX, virtualMouseY)
          );
-         autismclient.gui.f.b.b.init(
+         autismclient.gui.f.b.SectionCardRenderer.init(
             autismclient.gui.f.UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY),
             autismclient.gui.f.NetHelper.init(panelX + 4, this.put(), Math.max(0, panelW - 8), Math.max(0, this.reset() + 4 - this.put())),
             -1206840035
          );
-         boolean suppressUnderlyingPointer = autismclient.gui.f.b.SyncManager.init_Z();
-         boolean dropdownMenuHovered = autismclient.gui.f.b.SyncManager.init(this.load_List, virtualMouseX, virtualMouseY);
+         boolean suppressUnderlyingPointer = autismclient.gui.f.b.DropdownWidget.init_Z();
+         boolean dropdownMenuHovered = autismclient.gui.f.b.DropdownWidget.init(this.load_List, virtualMouseX, virtualMouseY);
          int buttonMouseX = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseX : -2147483648;
          int buttonMouseY = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseY : -2147483648;
          if (this.init_Z_3()) {
-            this.init(graphics, "Window too small.", this.init_I_I_5(panelX), this.init_I_2(this.put(), 12), ValueSink.close, false, Math.max(0, panelW - 16));
+            this.init(graphics, "Window too small.", this.init_I_I_5(panelX), this.init_I_2(this.put(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
             return;
          }
 
@@ -244,13 +244,13 @@ public class ProxyConfigScreen extends KeyHolder {
             this.init(graphics, row, panelX, panelW);
          }
 
-         for (autismclient.gui.f.b.ByteReader button : this.init_List) {
-            autismclient.gui.f.b.ByteReader.init(graphics, this.font, button, buttonMouseX, buttonMouseY);
+         for (autismclient.gui.f.b.OverlayActionButton button : this.init_List) {
+            autismclient.gui.f.b.OverlayActionButton.init(graphics, this.font, button, buttonMouseX, buttonMouseY);
          }
 
-         autismclient.gui.f.b.SyncManager.load(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
-         if (autismclient.gui.f.b.SyncManager.init_Z_List(this.load_List)) {
-            autismclient.gui.f.b.SyncManager.read(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.f.b.DropdownWidget.load(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
+         if (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.load_List)) {
+            autismclient.gui.f.b.DropdownWidget.read(graphics, this.font, this.load_List, virtualMouseX, virtualMouseY);
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -267,12 +267,12 @@ public class ProxyConfigScreen extends KeyHolder {
          int fill = row.init_Z() && row.load_Z() ? 571483674 : 403771667;
          autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), 4, fill);
          if (row.init_Z() && row.load_Z()) {
-            autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y + 2, 2, h - 4), 1, ValueSink.open);
+            autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y + 2, 2, h - 4), 1, GuiColorPalette.open);
          }
 
          int textMaxWidth = Math.max(1, this.init(panelX, panelW, row.load_I()) - 4 - (x + 6));
-         this.init(graphics, row.init_Str(), x + 6, this.init_I_2(y, line), ValueSink.flush, false, textMaxWidth);
-         this.init(graphics, row.read(), x + 6, this.init_I_2(y + line, line), ValueSink.close, false, textMaxWidth);
+         this.init(graphics, row.init_Str(), x + 6, this.init_I_2(y, line), GuiColorPalette.flush, false, textMaxWidth);
+         this.init(graphics, row.read(), x + 6, this.init_I_2(y + line, line), GuiColorPalette.close, false, textMaxWidth);
       }
    }
 
@@ -280,7 +280,7 @@ public class ProxyConfigScreen extends KeyHolder {
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
       MouseButtonEvent virtualEvent = init_MouseButtonEvent_MouseButtonEvent(event);
       if (Compat263.mouseEventGlfwButton(virtualEvent) == 0
-         && autismclient.gui.f.b.IoWorker.init(
+         && autismclient.gui.f.b.DialogFrameRenderer.init(
             autismclient.gui.f.NetHelper.init(this.close(), this.push(), this.open(), this.set() - this.push()),
             this.read_I_5(),
             (int)virtualEvent.x(),
@@ -290,7 +290,7 @@ public class ProxyConfigScreen extends KeyHolder {
          return true;
       }
 
-      if (autismclient.gui.f.b.SyncManager.init_Z_List_2(this.load_List, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+      if (autismclient.gui.f.b.DropdownWidget.init_Z_List_2(this.load_List, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
          return true;
       }
 
@@ -298,8 +298,8 @@ public class ProxyConfigScreen extends KeyHolder {
          return super.mouseClicked(virtualEvent, doubleClick);
       }
 
-      for (autismclient.gui.f.b.ByteReader button : this.init_List) {
-         if (autismclient.gui.f.b.ByteReader.init(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
+      for (autismclient.gui.f.b.OverlayActionButton button : this.init_List) {
+         if (autismclient.gui.f.b.OverlayActionButton.init(button, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
             return true;
          }
       }
@@ -311,7 +311,7 @@ public class ProxyConfigScreen extends KeyHolder {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       double virtualX = cA.init_D_D(mouseX);
       double virtualY = cA.init_D_D(mouseY);
-      if (autismclient.gui.f.b.SyncManager.init_Z_List(this.load_List, virtualX, virtualY, scrollY)) {
+      if (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.load_List, virtualX, virtualY, scrollY)) {
          return true;
       } else if (!(virtualX < this.close()) && !(virtualX > this.close() + this.open()) && !(virtualY < this.add()) && !(virtualY > this.reset())) {
          this.write_I = Math.max(0, Math.min(this.stop(), this.write_I + (scrollY < 0.0 ? this.flush() : -this.flush())));
@@ -328,15 +328,15 @@ public class ProxyConfigScreen extends KeyHolder {
    }
 
    private int read_I_5() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int write() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int update() {
-      return autismclient.gui.f.RenderState.init(12);
+      return autismclient.gui.f.UiDensityMetrics.init(12);
    }
 
    private int sync() {
@@ -368,11 +368,11 @@ public class ProxyConfigScreen extends KeyHolder {
    }
 
    private int close() {
-      return autismclient.gui.f.c.NetHelper.load(this.init_I(), this.open(), 6);
+      return autismclient.gui.f.c.PanelLayoutMath.load(this.init_I(), this.open(), 6);
    }
 
    private int open() {
-      return autismclient.gui.f.c.NetHelper.init(this.init_I(), 6, Math.min(380, this.update_I));
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.init_I(), 6, Math.min(380, this.update_I));
    }
 
    private int poll() {
@@ -406,7 +406,7 @@ public class ProxyConfigScreen extends KeyHolder {
    }
 
    private int get() {
-      return autismclient.gui.f.c.NetHelper.init(this.load_I(), 6, this.pop() + this.run());
+      return autismclient.gui.f.c.PanelLayoutMath.init(this.load_I(), 6, this.pop() + this.run());
    }
 
    private int set() {
@@ -446,7 +446,7 @@ public class ProxyConfigScreen extends KeyHolder {
    }
 
    private int init_I_Str_6(String label) {
-      return autismclient.gui.f.RenderState.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
+      return autismclient.gui.f.UiDensityMetrics.load(k.init(this.font, label, init_CharEncoder.init_Identifier_l(l.read), 0));
    }
 
    private int load(String text) {

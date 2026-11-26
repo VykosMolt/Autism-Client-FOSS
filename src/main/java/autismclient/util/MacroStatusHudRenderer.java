@@ -32,7 +32,7 @@ public final class MacroStatusHudRenderer {
    private static int poll = -2147483648;
    private static String init_Str = null;
    private static String load_Str = "";
-   private static List<autismclient.gui.f.c.BufferHelper.Inner_DataUtil> init_List = List.of();
+   private static List<autismclient.gui.f.c.InfoCardRenderer.Inner_DataUtil> init_List = List.of();
    private static long load_J;
    private static Font init_Font;
    private static int push = -2147483648;
@@ -52,7 +52,7 @@ public final class MacroStatusHudRenderer {
       if (textRenderer == null) {
          return 0;
       } else {
-         return !init_Z(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.f.c.BufferHelper.init(init_List.size());
+         return !init_Z(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.f.c.InfoCardRenderer.init(init_List.size());
       }
    }
 
@@ -60,7 +60,7 @@ public final class MacroStatusHudRenderer {
       GuiGraphicsExtractor context, Font textRenderer, int x, int y, int panelWidth, int maxLines, boolean topBorder, boolean bottomBorder, boolean rightBorder
    ) {
       return textRenderer != null && init_Z(textRenderer, panelWidth, maxLines)
-         ? autismclient.gui.f.c.BufferHelper.init(
+         ? autismclient.gui.f.c.InfoCardRenderer.init(
             context, textRenderer, x, y, panelWidth, load_Str, init_List, init_CharEncoder.run(), 0, true, rightBorder, topBorder, bottomBorder
          )
          : 0;
@@ -156,7 +156,7 @@ public final class MacroStatusHudRenderer {
    private static void init(Font textRenderer, List<MacroExecutor.Inner_UiHelper> runs, int rowsPerRun, int panelWidth, long now) {
       int contentWidth = panelWidth - 12;
       int nowColor = init_I();
-      ArrayList<autismclient.gui.f.c.BufferHelper.Inner_DataUtil> rows = new ArrayList<>();
+      ArrayList<autismclient.gui.f.c.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>();
 
       for (MacroExecutor.Inner_UiHelper run : runs) {
          AutismMacro macro = run.init_aM();
@@ -167,7 +167,7 @@ public final class MacroStatusHudRenderer {
             int visibleRows = init(total, rowsPerRun);
             int scroll = init(current, total, rowsPerRun);
             rows.add(
-               new autismclient.gui.f.c.BufferHelper.Inner_DataUtil(
+               new autismclient.gui.f.c.InfoCardRenderer.Inner_DataUtil(
                   autismclient.gui.f.b.k.init(
                      textRenderer, run.init_Str() + "  " + Math.min(current + 1, total) + "/" + total, contentWidth, read_Identifier, read_I
                   ),
@@ -180,7 +180,7 @@ public final class MacroStatusHudRenderer {
                MacroAction action = actions.get(i);
                int color = MacroStepColorHelper.init(i, current, run.read(), nowColor);
                rows.add(
-                  new autismclient.gui.f.c.BufferHelper.Inner_DataUtil(
+                  new autismclient.gui.f.c.InfoCardRenderer.Inner_DataUtil(
                      autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, load_Identifier, color),
                      load_Identifier,
                      color
@@ -190,7 +190,7 @@ public final class MacroStatusHudRenderer {
 
             if (run.load_Str() != null && !run.load_Str().isBlank()) {
                rows.add(
-                  new autismclient.gui.f.c.BufferHelper.Inner_DataUtil(
+                  new autismclient.gui.f.c.InfoCardRenderer.Inner_DataUtil(
                      autismclient.gui.f.b.k.init(textRenderer, run.load_Str(), contentWidth, init_Identifier, load_I), init_Identifier, load_I
                   )
                );

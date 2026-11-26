@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.c.DisconnectedScreenDuck;
-import autismclient.gui.d.StreamGate;
+import autismclient.gui.d.StyledButton;
 import autismclient.gui.f.b.CachePool;
 import autismclient.modules.AutoReconnectController;
 import autismclient.modules.aD;
@@ -44,7 +44,7 @@ public abstract class AutismDisconnectedScreenMixin extends Screen implements Di
       if (!aD.init_Z() && AutoReconnectController.read()) {
          int w = 148;
          this.addRenderableWidget(
-            new StreamGate(
+            new StyledButton(
                this.width / 2 - w / 2,
                this.height - 38,
                w,

@@ -14,8 +14,8 @@ final class ce {
    private final cc init_cc;
    private final cF init_cF;
    private final AiAssistantOverlay init_AiAssistantOverlay;
-   final autismclient.gui.f.b.BitSetUtil init_BitSetUtil = new autismclient.gui.f.b.BitSetUtil().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search chats");
-   final autismclient.gui.f.b.BitSetUtil load_BitSetUtil = new autismclient.gui.f.b.BitSetUtil().init_BitSetUtil_I(96);
+   final autismclient.gui.f.b.TextInputWidget init_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(96).load_BitSetUtil_Str("Search chats");
+   final autismclient.gui.f.b.TextInputWidget load_BitSetUtil = new autismclient.gui.f.b.TextInputWidget().init_BitSetUtil_I(96);
    private final cE.Inner_StreamUtil init_cE_StreamUtil = new cE.Inner_StreamUtil(false);
    private autismclient.gui.f.NetHelper init_NetHelper = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    boolean init_Z;
@@ -129,7 +129,7 @@ final class ce {
    }
 
    private void init(cE kit, cd.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
-      autismclient.gui.f.JsonUtil colors = kit.init_JsonUtil;
+      autismclient.gui.f.UiColorScheme colors = kit.init_JsonUtil;
       String id = meta.id();
       boolean active = id.equals(this.init_cF.read_Str);
       boolean hovered = kit.init_Z_NetHelper(row);

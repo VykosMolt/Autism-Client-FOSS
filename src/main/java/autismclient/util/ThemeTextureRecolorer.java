@@ -250,7 +250,7 @@ public final class ThemeTextureRecolorer {
    public static void init_V() {
       if (init_cu_ConfigStore != null && init_Z) {
          int generation = init_I;
-         Runnable jobDone = autismclient.gui.CachePool.init("Recoloring panorama");
+         Runnable jobDone = autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring panorama");
          init_Minecraft.execute(() -> {
             try {
                if (generation != init_I) {
@@ -359,7 +359,7 @@ public final class ThemeTextureRecolorer {
       ThemePaletteManager.Inner_StreamUtil st = ThemePaletteManager.init_ct_StreamUtil();
       if (st.init_Z_ct_DataUtil(ThemePaletteManager.Inner_DataUtil.BACKDROP)) {
          load_Z = true;
-         init(st, autismclient.gui.CachePool.init("Recoloring backdrop"));
+         init(st, autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring backdrop"));
       }
 
       init_V();

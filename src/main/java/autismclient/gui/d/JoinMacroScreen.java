@@ -23,7 +23,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-public final class JoinMacroScreen extends KeyHolder {
+public final class JoinMacroScreen extends VirtualScaledScreen {
    private static final int init_I = 382;
    private static final int load_I = 3;
    private static final String[] init_StrArr = new String[]{"Edit", "Create", "Password"};
@@ -35,9 +35,9 @@ public final class JoinMacroScreen extends KeyHolder {
    private String init_Str = "";
    private long init_J = -9223372036854775808L;
    private boolean init_Z = true;
-   private final List<autismclient.gui.f.b.SyncManager> read_List = new ArrayList<>();
-   private autismclient.gui.f.b.SyncManager init_SyncManager;
-   private autismclient.gui.f.b.SyncManager load_SyncManager;
+   private final List<autismclient.gui.f.b.DropdownWidget> read_List = new ArrayList<>();
+   private autismclient.gui.f.b.DropdownWidget init_SyncManager;
+   private autismclient.gui.f.b.DropdownWidget load_SyncManager;
    private boolean load_Z;
    private int write;
 
@@ -93,7 +93,7 @@ public final class JoinMacroScreen extends KeyHolder {
             0,
             ctl,
             "Back",
-            autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
+            autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY,
             true,
             () -> {
                if (this.minecraft != null) {
@@ -106,21 +106,21 @@ public final class JoinMacroScreen extends KeyHolder {
             autismclient.gui.f.NetHelper.init(x, this.push(), panelW, this.reset()),
             5,
             -401402080,
-            ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
          );
          autismclient.gui.f.PacketUtil.load(
             graphics,
             autismclient.gui.f.NetHelper.init(this.start(), this.stop(), this.next(), this.valid()),
             5,
             -1206840035,
-            ThemePaletteManager.init_I_I_ct_DataUtil(ValueSink.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
+            ThemePaletteManager.init_I_I_ct_DataUtil(GuiColorPalette.update, ThemePaletteManager.Inner_DataUtil.OUTLINE)
          );
          int titleX = this.open() + this.init_I_Str_3("Back") + 4;
          autismclient.gui.f.b.k.init(
-            graphics, this.font, "Join Macro", autismclient.gui.f.a.DataUtil.read, ValueSink.flush, titleX, this.init_I_I_I_2(this.pop(), ctl), false
+            graphics, this.font, "Join Macro", autismclient.gui.f.a.DataUtil.read, GuiColorPalette.flush, titleX, this.init_I_I_I_2(this.pop(), ctl), false
          );
          this.init(graphics, this.open(), this.tick_I_3(), this.poll());
-         boolean menuOpen = autismclient.gui.f.b.SyncManager.init_Z_List(this.read_List);
+         boolean menuOpen = autismclient.gui.f.b.DropdownWidget.init_Z_List(this.read_List);
          int hoverX = menuOpen ? -2147483648 : virtualMouseX;
          int hoverY = menuOpen ? -2147483648 : virtualMouseY;
          this.init_k.init_V(graphics, virtualMouseX, virtualMouseY, delta);
@@ -128,8 +128,8 @@ public final class JoinMacroScreen extends KeyHolder {
          this.init(graphics, hoverX, hoverY);
          this.load(graphics, hoverX, hoverY);
          this.read(graphics, hoverX, hoverY);
-         autismclient.gui.f.b.SyncManager.load(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
-         autismclient.gui.f.b.SyncManager.read(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.f.b.DropdownWidget.load(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
+         autismclient.gui.f.b.DropdownWidget.read(graphics, this.font, this.read_List, virtualMouseX, virtualMouseY);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
@@ -139,11 +139,11 @@ public final class JoinMacroScreen extends KeyHolder {
       int x = this.set() + this.put() + 2;
       int y = this.get();
       int ctl = this.write_I_2();
-      this.init_V_I(x, y, 0, ctl, "Edit", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, this.init_aM() != null, () -> this.init_V_aM_2(this.init_aM()));
+      this.init_V_I(x, y, 0, ctl, "Edit", autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY, this.init_aM() != null, () -> this.init_V_aM_2(this.init_aM()));
       x += this.init_I_Str_3("Edit") + 2;
-      this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS, true, () -> this.init_V_aM_2(null));
+      this.init_V_I(x, y, 0, ctl, "Create", autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS, true, () -> this.init_V_aM_2(null));
       x += this.init_I_Str_3("Create") + 2;
-      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY, true, this::load_V_4);
+      this.init_V_I(x, y, 0, ctl, "Password", autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY, true, this::load_V_4);
    }
 
    private void load_V_4() {
@@ -182,7 +182,7 @@ public final class JoinMacroScreen extends KeyHolder {
          0,
          ctl,
          keep ? "Stays Enabled" : "Clears After",
-         keep ? autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.ByteReader.Inner_StreamUtil.SECONDARY,
+         keep ? autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SUCCESS : autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil.SECONDARY,
          true,
          () -> JoinMacroController.load(!JoinMacroController.init_Z())
       );
@@ -224,11 +224,11 @@ public final class JoinMacroScreen extends KeyHolder {
       return Math.max(56, widest + 26);
    }
 
-   private autismclient.gui.f.b.SyncManager init_SyncManager_SyncManager(
-      autismclient.gui.f.b.SyncManager existing, int x, int y, int w, int h, List<String> options, int selected, IntConsumer onSelect
+   private autismclient.gui.f.b.DropdownWidget init_SyncManager_SyncManager(
+      autismclient.gui.f.b.DropdownWidget existing, int x, int y, int w, int h, List<String> options, int selected, IntConsumer onSelect
    ) {
       if (existing == null) {
-         return new autismclient.gui.f.b.SyncManager(x, y, w, h, options, selected, onSelect);
+         return new autismclient.gui.f.b.DropdownWidget(x, y, w, h, options, selected, onSelect);
       }
 
       existing.init_SyncManager_I(x, y, w, h).init_SyncManager_List(options).init_SyncManager_I(selected).init_SyncManager_IntConsumer(onSelect);
@@ -240,22 +240,22 @@ public final class JoinMacroScreen extends KeyHolder {
       String selected = JoinMacroController.init_Str();
       if (selected.isBlank()) {
          autismclient.gui.f.b.k.init(
-            graphics, this.font, "Click a macro to select it.", autismclient.gui.f.a.DataUtil.init, ValueSink.close, x, this.init_I_I_I_2(y, line), false
+            graphics, this.font, "Click a macro to select it.", autismclient.gui.f.a.DataUtil.init, GuiColorPalette.close, x, this.init_I_I_I_2(y, line), false
          );
       } else {
          String selectedLine = "Selected: " + selected;
          String modeLine = JoinMacroController.load_Str();
          if (!this.init_Z_I(maxWidth)) {
             autismclient.gui.f.b.k.init(
-               graphics, this.font, selectedLine + "  " + modeLine, autismclient.gui.f.a.DataUtil.init, ValueSink.open, x, this.init_I_I_I_2(y, line), false
+               graphics, this.font, selectedLine + "  " + modeLine, autismclient.gui.f.a.DataUtil.init, GuiColorPalette.open, x, this.init_I_I_I_2(y, line), false
             );
          } else {
             autismclient.gui.f.b.k.init(
                graphics,
                this.font,
-               autismclient.gui.f.b.k.init(this.font, selectedLine, maxWidth, autismclient.gui.f.a.DataUtil.init, ValueSink.open),
+               autismclient.gui.f.b.k.init(this.font, selectedLine, maxWidth, autismclient.gui.f.a.DataUtil.init, GuiColorPalette.open),
                autismclient.gui.f.a.DataUtil.init,
-               ValueSink.open,
+               GuiColorPalette.open,
                x,
                this.init_I_I_I_2(y, line),
                false
@@ -263,9 +263,9 @@ public final class JoinMacroScreen extends KeyHolder {
             autismclient.gui.f.b.k.init(
                graphics,
                this.font,
-               autismclient.gui.f.b.k.init(this.font, modeLine, maxWidth, autismclient.gui.f.a.DataUtil.init, ValueSink.open),
+               autismclient.gui.f.b.k.init(this.font, modeLine, maxWidth, autismclient.gui.f.a.DataUtil.init, GuiColorPalette.open),
                autismclient.gui.f.a.DataUtil.init,
-               ValueSink.open,
+               GuiColorPalette.open,
                x,
                this.init_I_I_I_2(y + line, line),
                false
@@ -287,7 +287,7 @@ public final class JoinMacroScreen extends KeyHolder {
    private void load(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
       int listX = this.start();
       int listW = this.next();
-      autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_2();
+      autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_2();
       int rowX = this.value();
       int rowRight = this.init_I_PoolEntry_DataUtil(scrollbar);
       int rowH = this.update_I_2();
@@ -299,16 +299,16 @@ public final class JoinMacroScreen extends KeyHolder {
       autismclient.gui.f.b.k.init(
          graphics,
          this.font,
-         autismclient.gui.f.b.k.init(this.font, title, listW - 8, autismclient.gui.f.a.DataUtil.init, ValueSink.flush),
+         autismclient.gui.f.b.k.init(this.font, title, listW - 8, autismclient.gui.f.a.DataUtil.init, GuiColorPalette.flush),
          autismclient.gui.f.a.DataUtil.init,
-         ValueSink.flush,
+         GuiColorPalette.flush,
          listX + 4,
          this.init_I_I_I_2(this.stop() + 4, 12),
          false
       );
       if (this.init_List.isEmpty()) {
          autismclient.gui.f.b.k.init(
-            graphics, this.font, "No macros found.", autismclient.gui.f.a.DataUtil.init, ValueSink.close, rowX + 8, this.init_I_I_I_2(this.size(), rowH), false
+            graphics, this.font, "No macros found.", autismclient.gui.f.a.DataUtil.init, GuiColorPalette.close, rowX + 8, this.init_I_I_I_2(this.size(), rowH), false
          );
       } else {
          String selected = JoinMacroController.init_Str();
@@ -321,7 +321,7 @@ public final class JoinMacroScreen extends KeyHolder {
             boolean hovered = rowBounds.init_Z(mouseX, mouseY);
             boolean active = row.init_Str.equalsIgnoreCase(selected);
             if (row.init_cY_DataUtil.init_Z()) {
-               autismclient.gui.f.b.TaskQueue.load(
+               autismclient.gui.f.b.GroupHeaderRenderer.load(
                   autismclient.gui.f.UiHelper.init(graphics, this.font, mouseX, mouseY),
                   rowBounds,
                   row.init_cY_DataUtil.init_Str(),
@@ -347,18 +347,18 @@ public final class JoinMacroScreen extends KeyHolder {
                   false
                );
                autismclient.gui.f.b.k.init(
-                  graphics, this.font, stepsText, autismclient.gui.f.a.DataUtil.init, active ? ValueSink.open : ValueSink.close, rightX, ty, false
+                  graphics, this.font, stepsText, autismclient.gui.f.a.DataUtil.init, active ? GuiColorPalette.open : GuiColorPalette.close, rightX, ty, false
                );
             }
          }
 
-         autismclient.gui.f.b.PoolEntry.init(graphics, scrollbar, scrollbar.init(mouseX, mouseY), this.load_Z);
+         autismclient.gui.f.b.ScrollbarMetricsHelper.init(graphics, scrollbar, scrollbar.init(mouseX, mouseY), this.load_Z);
       }
    }
 
    private void read(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
       for (JoinMacroScreen.Inner_DataUtil button : this.load_List) {
-         autismclient.gui.f.b.PacketUtil.init(
+         autismclient.gui.f.b.ButtonDrawHelper.init(
             graphics,
             this.font,
             button.init_I,
@@ -374,7 +374,7 @@ public final class JoinMacroScreen extends KeyHolder {
       }
    }
 
-   private void init_V_I(int x, int y, int w, int h, String label, autismclient.gui.f.b.ByteReader.Inner_StreamUtil variant, boolean enabled, Runnable action) {
+   private void init_V_I(int x, int y, int w, int h, String label, autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil variant, boolean enabled, Runnable action) {
       if (w <= 0) {
          w = this.init_I_Str_3(label);
       }
@@ -396,7 +396,7 @@ public final class JoinMacroScreen extends KeyHolder {
             graphics, bounds.load(1, 1, 1, 1), 3, ThemePaletteManager.init_I_I_ct_DataUtil(hovered ? 1463146611 : 976607347, ThemePaletteManager.Inner_DataUtil.SUCCESS)
          );
          autismclient.gui.f.PacketUtil.load(
-            graphics, autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write() + 2, 2, bounds.sync() - 4), 1, ValueSink.open
+            graphics, autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write() + 2, 2, bounds.sync() - 4), 1, GuiColorPalette.open
          );
       }
    }
@@ -404,7 +404,7 @@ public final class JoinMacroScreen extends KeyHolder {
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
       event = init_MouseButtonEvent_MouseButtonEvent(event);
-      if (autismclient.gui.f.b.SyncManager.init_Z_List_2(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      if (autismclient.gui.f.b.DropdownWidget.init_Z_List_2(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       }
 
@@ -413,11 +413,11 @@ public final class JoinMacroScreen extends KeyHolder {
       }
 
       if (Compat263.mouseEventGlfwButton(event) == 0) {
-         autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_2();
+         autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbar = this.init_PoolEntry_DataUtil_2();
          if (scrollbar.init_Z() && scrollbar.init(event.x(), event.y())) {
             this.load_Z = true;
             this.write = scrollbar.load(event.x(), event.y()) ? Math.max(0, (int)Math.round(event.y()) - scrollbar.update()) : scrollbar.sync() / 2;
-            this.init_V_I_2(autismclient.gui.f.b.PoolEntry.init(scrollbar, event.y(), this.write));
+            this.init_V_I_2(autismclient.gui.f.b.ScrollbarMetricsHelper.init(scrollbar, event.y(), this.write));
             if (this.init_k != null) {
                this.init_k.push(false);
             }
@@ -460,7 +460,7 @@ public final class JoinMacroScreen extends KeyHolder {
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
       event = init_MouseButtonEvent_MouseButtonEvent(event);
-      if (autismclient.gui.f.b.SyncManager.write(this.read_List)) {
+      if (autismclient.gui.f.b.DropdownWidget.write(this.read_List)) {
          return true;
       } else if (this.load_Z) {
          this.load_Z = false;
@@ -475,10 +475,10 @@ public final class JoinMacroScreen extends KeyHolder {
       event = init_MouseButtonEvent_MouseButtonEvent(event);
       dx = cA.init_D_D(dx);
       dy = cA.init_D_D(dy);
-      if (autismclient.gui.f.b.SyncManager.load(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
+      if (autismclient.gui.f.b.DropdownWidget.load(this.read_List, event.x(), event.y(), Compat263.mouseEventGlfwButton(event))) {
          return true;
       } else if (this.load_Z) {
-         this.init_V_I_2(autismclient.gui.f.b.PoolEntry.init(this.init_PoolEntry_DataUtil_2(), event.y(), this.write));
+         this.init_V_I_2(autismclient.gui.f.b.ScrollbarMetricsHelper.init(this.init_PoolEntry_DataUtil_2(), event.y(), this.write));
          return true;
       } else {
          return this.init_k != null && this.init_k.init(event.x(), event.y(), Compat263.mouseEventGlfwButton(event), dx, dy);
@@ -489,7 +489,7 @@ public final class JoinMacroScreen extends KeyHolder {
    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
       mouseX = cA.init_D_D(mouseX);
       mouseY = cA.init_D_D(mouseY);
-      if (autismclient.gui.f.b.SyncManager.init_Z_List(this.read_List, mouseX, mouseY, scrollY)) {
+      if (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.read_List, mouseX, mouseY, scrollY)) {
          return true;
       }
 
@@ -516,7 +516,7 @@ public final class JoinMacroScreen extends KeyHolder {
       }
 
       if (Compat263.keyEventGlfwKey(input) == 256) {
-         if (autismclient.gui.f.b.SyncManager.read(this.read_List)) {
+         if (autismclient.gui.f.b.DropdownWidget.read(this.read_List)) {
             return true;
          }
 
@@ -616,7 +616,7 @@ public final class JoinMacroScreen extends KeyHolder {
    }
 
    private int init_I_Str_3(String label) {
-      return autismclient.gui.f.RenderState.load(autismclient.gui.f.b.k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
+      return autismclient.gui.f.UiDensityMetrics.load(autismclient.gui.f.b.k.init(this.font, label, autismclient.gui.f.a.DataUtil.init, 0));
    }
 
    private int init_I_I_I_2(int top, int height) {
@@ -634,11 +634,11 @@ public final class JoinMacroScreen extends KeyHolder {
    }
 
    private int write_I_2() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int update_I_2() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int sync() {
@@ -742,7 +742,7 @@ public final class JoinMacroScreen extends KeyHolder {
       return this.start() + 4;
    }
 
-   private int init_I_PoolEntry_DataUtil(autismclient.gui.f.b.PoolEntry.Inner_DataUtil scrollbar) {
+   private int init_I_PoolEntry_DataUtil(autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil scrollbar) {
       int right = this.start() + this.next() - 4;
       return scrollbar.init_Z() ? this.cache() - 2 : right;
    }
@@ -751,13 +751,13 @@ public final class JoinMacroScreen extends KeyHolder {
       return this.start() + this.next() - 4 - 6;
    }
 
-   private autismclient.gui.f.b.PoolEntry.Inner_DataUtil init_PoolEntry_DataUtil_2() {
+   private autismclient.gui.f.b.ScrollbarMetricsHelper.Inner_DataUtil init_PoolEntry_DataUtil_2() {
       int pitch = this.sync();
       int trackY = this.size();
       int trackH = Math.max(1, this.data() * pitch - 2);
       int contentPixels = Math.max(0, this.init_List.size() * pitch);
       int viewPixels = Math.max(1, this.data() * pitch);
-      return autismclient.gui.f.b.PoolEntry.init_PoolEntry_DataUtil_I_2(contentPixels, viewPixels, this.cache(), trackY, 6, trackH, this.read_I * pitch);
+      return autismclient.gui.f.b.ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, viewPixels, this.cache(), trackY, 6, trackH, this.read_I * pitch);
    }
 
    private void init_V_I_2(int scrollPixels) {
@@ -795,7 +795,7 @@ public final class JoinMacroScreen extends KeyHolder {
       int read,
       int write,
       String init_Str,
-      autismclient.gui.f.b.ByteReader.Inner_StreamUtil init_ByteReader_StreamU,
+      autismclient.gui.f.b.OverlayActionButton.Inner_StreamUtil init_ByteReader_StreamU,
       boolean init_Z,
       Runnable init_Runnable
    ) {

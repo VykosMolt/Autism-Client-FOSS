@@ -1,12 +1,12 @@
 package autismclient.util;
 
-import autismclient.gui.f.b.f;
+import autismclient.gui.f.b.ToastNotificationStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class bi {
    private static final int init_I = -14249;
-   private static final f init_f = new f(2100L, 140.0F, 220.0F, 4, 4, 18);
+   private static final ToastNotificationStack init_f = new ToastNotificationStack(2100L, 140.0F, 220.0F, 4, 4, 18);
 
    private static int load() {
       return ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.Inner_DataUtil.SUCCESS);

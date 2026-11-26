@@ -165,7 +165,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private int read() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int write() {
@@ -174,7 +174,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    }
 
    private int update() {
-      int scaleKey = Math.round(autismclient.gui.e.SyncManager.init_F() * 100.0F);
+      int scaleKey = Math.round(autismclient.gui.e.MsdfTextRenderer.init_F() * 100.0F);
       if (scaleKey != this.run) {
          int widest = k.init(this.font, "Simple Voice Chat detected", init_Identifier, -1);
 
@@ -214,7 +214,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    private void load_V() {
       int screenW = cA.init_I();
       int screenH = cA.load_I();
-      int scaleKey = Math.round(autismclient.gui.e.SyncManager.init_F() * 100.0F);
+      int scaleKey = Math.round(autismclient.gui.e.MsdfTextRenderer.init_F() * 100.0F);
       if (this.poll != screenW || this.push != screenH || this.pop != scaleKey) {
          this.poll = screenW;
          this.push = screenH;

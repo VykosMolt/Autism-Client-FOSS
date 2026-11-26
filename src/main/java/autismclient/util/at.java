@@ -24,7 +24,7 @@ public final class at {
          AutismConfig config = AutismConfig.getGlobal();
          if (init == null) {
             return false;
-         } else if (autismclient.gui.f.b.BitSetUtil.read_Z()) {
+         } else if (autismclient.gui.f.b.TextInputWidget.read_Z()) {
             return false;
          } else if (init.gui.screen() == null) {
             return true;

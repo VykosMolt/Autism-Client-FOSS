@@ -383,7 +383,7 @@ final class cC {
             byte[] styles = block.styles();
             int first = out.size();
 
-            for (autismclient.gui.f.ConfigStore.Inner_DataUtil w : autismclient.gui.f.ConfigStore.init(
+            for (autismclient.gui.f.TextWrapLayout.Inner_DataUtil w : autismclient.gui.f.TextWrapLayout.init(
                safe, Math.max(1, width - indent), (s, e) -> init_I(safe, styles, s, e, measure)
             )) {
                String rowText = safe.substring(w.init(), w.read());
@@ -464,7 +464,7 @@ final class cC {
       String safe = text == null ? "" : text.replace("\r", "").replace('\t', ' ');
       List<String> out = new ArrayList<>();
 
-      for (autismclient.gui.f.ConfigStore.Inner_DataUtil line : autismclient.gui.f.ConfigStore.init(
+      for (autismclient.gui.f.TextWrapLayout.Inner_DataUtil line : autismclient.gui.f.TextWrapLayout.init(
          safe, Math.max(1, width), (s, e) -> measure.init(safe, s, e)
       )) {
          out.add(safe.substring(line.init(), line.read()));

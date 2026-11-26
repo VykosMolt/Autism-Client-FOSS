@@ -103,7 +103,7 @@ public final class AutoTotemModule extends Module {
    private int set;
    private int put;
    private int add = -1;
-   private autismclient.gui.DataUtil init_DataUtil;
+   private autismclient.gui.AutismGhostInventoryScreen init_DataUtil;
    private boolean init_Z;
    private int clear = -1;
    private static volatile int reset = -2147483648;
@@ -378,7 +378,7 @@ public final class AutoTotemModule extends Module {
 
                               this.clear = -1;
                            } else if (this.init_DataUtil == null && MC.gui.screen() == null && this.init_Z_I_2(fromSlot)) {
-                              this.init_DataUtil = new autismclient.gui.DataUtil(MC.player);
+                              this.init_DataUtil = new autismclient.gui.AutismGhostInventoryScreen(MC.player);
                               this.init_Z = true;
                               MC.gui.setScreen(this.init_DataUtil);
                               MC.mouseHandler.grabMouse();
@@ -835,7 +835,7 @@ public final class AutoTotemModule extends Module {
    private void init_V_Z_2(boolean humanShape) {
       this.init_Z = false;
       this.clear = -1;
-      autismclient.gui.DataUtil screen = this.init_DataUtil;
+      autismclient.gui.AutismGhostInventoryScreen screen = this.init_DataUtil;
       this.init_DataUtil = null;
       if (screen != null && MC.gui.screen() == screen) {
          if (humanShape && MC.getConnection() != null && MC.player != null) {

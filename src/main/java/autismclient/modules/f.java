@@ -5433,8 +5433,8 @@ public final class f {
       private void init() {
          if (MC != null) {
             WindowIconManager.load(MC);
-            if (!AutismLiteVariant.enabled() && MC.gui.screen() instanceof autismclient.gui.d.UtilCore) {
-               MC.gui.setScreen(new autismclient.gui.d.UtilCore());
+            if (!AutismLiteVariant.enabled() && MC.gui.screen() instanceof autismclient.gui.d.AutismTitleScreen) {
+               MC.gui.setScreen(new autismclient.gui.d.AutismTitleScreen());
             }
          }
       }

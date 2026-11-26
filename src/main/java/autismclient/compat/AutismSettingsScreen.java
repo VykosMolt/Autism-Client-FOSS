@@ -2,13 +2,13 @@ package autismclient.compat;
 
 import autismclient.compat263.Compat263;
 import autismclient.gui.d.ThemeColorScreen;
-import autismclient.gui.f.HashUtil;
+import autismclient.gui.f.UiClipStack;
 import autismclient.gui.f.NetHelper;
 import autismclient.gui.f.PacketUtil;
 import autismclient.gui.f.SyncManager;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.RefQueue;
-import autismclient.gui.f.b.UtilCore;
+import autismclient.gui.f.b.DropdownMenu;
+import autismclient.gui.f.b.ScrollbarRenderer;
 import autismclient.gui.f.b.k;
 import autismclient.modules.ModuleRuntimeManager;
 import autismclient.util.AutismConfig;
@@ -52,7 +52,7 @@ public class AutismSettingsScreen extends Screen {
    private int get;
    private int set;
    private SyncManager init_SyncManager;
-   private RefQueue init_RefQueue;
+   private DropdownMenu init_RefQueue;
 
    public AutismSettingsScreen(Screen parent) {
       super(Component.literal("AUTISM Client Settings"));
@@ -130,7 +130,7 @@ public class AutismSettingsScreen extends Screen {
          this.tick = this.init_I(this.tick);
          boolean needsBar = this.get > this.init_NetHelper.sync();
          int rowW = this.init_NetHelper.update() - (needsBar ? 6 : 0);
-         HashUtil.init_HashUtil().init(graphics, this.init_NetHelper);
+         UiClipStack.init_HashUtil().init(graphics, this.init_NetHelper);
 
          try {
             for (int i = 0; i < rows.size(); i++) {
@@ -142,12 +142,12 @@ public class AutismSettingsScreen extends Screen {
                }
             }
          } finally {
-            HashUtil.init_HashUtil().init(graphics);
+            UiClipStack.init_HashUtil().init(graphics);
          }
 
          if (needsBar) {
-            UtilCore.Inner_DataUtil metrics = this.init_UtilCore_DataUtil();
-            UtilCore.init(this.init_SyncManager, metrics, metrics.init(mx, my), this.init_Z);
+            ScrollbarRenderer.Inner_DataUtil metrics = this.init_UtilCore_DataUtil();
+            ScrollbarRenderer.init(this.init_SyncManager, metrics, metrics.init(mx, my), this.init_Z);
             this.init_V_NetHelper(metrics.init_NetHelper(), () -> this.init(metrics, my), null);
          }
 
@@ -243,7 +243,7 @@ public class AutismSettingsScreen extends Screen {
 
    private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel_PoolEntry(ModuleRuntimeManager module, List<String> prefixes, String current) {
       if (this.init_RefQueue == null) {
-         this.init_RefQueue = new RefQueue(NetHelper.init(0, 0, 0, 0), prefixes, current, module::init_V_Str);
+         this.init_RefQueue = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::init_V_Str);
       } else {
          this.init_RefQueue.init(prefixes);
          this.init_RefQueue.init(current);
@@ -256,7 +256,7 @@ public class AutismSettingsScreen extends Screen {
          NetHelper ctrl = NetHelper.init(rb.init() - ctrlW - 2, rb.write() + 1, ctrlW, rb.sync() - 2);
          this.init_RefQueue.init_V_NetHelper(ctrl);
          boolean hover = clickable && ctrl.init_Z(mx, my);
-         RefQueue.init_V_SyncManager(this.init_SyncManager, ctrl, current, hover, this.init_RefQueue.init_Z_2());
+         DropdownMenu.init_V_SyncManager(this.init_SyncManager, ctrl, current, hover, this.init_RefQueue.init_Z_2());
          if (clickable) {
             this.init_V_NetHelper(ctrl, () -> {
                if (!this.init_RefQueue.init_Z_2()) {
@@ -309,15 +309,15 @@ public class AutismSettingsScreen extends Screen {
       return Math.max(0, Math.min(value, max));
    }
 
-   private UtilCore.Inner_DataUtil init_UtilCore_DataUtil() {
+   private ScrollbarRenderer.Inner_DataUtil init_UtilCore_DataUtil() {
       NetHelper track = NetHelper.init(this.init_NetHelper.init() - 6, this.init_NetHelper.write(), 6, this.init_NetHelper.sync());
-      return UtilCore.init(track, this.get, this.init_NetHelper.sync(), this.tick);
+      return ScrollbarRenderer.init(track, this.get, this.init_NetHelper.sync(), this.tick);
    }
 
-   private void init(UtilCore.Inner_DataUtil metrics, int my) {
+   private void init(ScrollbarRenderer.Inner_DataUtil metrics, int my) {
       this.init_Z = true;
       this.run = metrics.load(metrics.init_NetHelper().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
-      this.tick = this.init_I(UtilCore.init_I_UtilCore_DataUtil(metrics, my, this.run));
+      this.tick = this.init_I(ScrollbarRenderer.init_I_UtilCore_DataUtil(metrics, my, this.run));
    }
 
    private int init(int argb, ThemePaletteManager.Inner_DataUtil ch) {
@@ -404,7 +404,7 @@ public class AutismSettingsScreen extends Screen {
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
       if (this.init_Z) {
-         this.tick = this.init_I(UtilCore.init_I_UtilCore_DataUtil(this.init_UtilCore_DataUtil(), cA.init_I_D(event.y()), this.run));
+         this.tick = this.init_I(ScrollbarRenderer.init_I_UtilCore_DataUtil(this.init_UtilCore_DataUtil(), cA.init_I_D(event.y()), this.run));
          return true;
       } else if (this.init_RefQueue != null && this.init_RefQueue.init_Z_2()) {
          this.init_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy);

@@ -23,32 +23,32 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class ArrayUtil {
    private final Minecraft putAt_Minecraft;
-   private final autismclient.gui.d.PacketUtil putAt_RingBuffer;
+   private final autismclient.gui.d.PromptDialogScreen putAt_RingBuffer;
 
    public ArrayUtil(Minecraft var1, ArrayUtil.Inner_DataUtil var2, Consumer<Boolean> var3, Runnable var4) {
       this.putAt_Minecraft = var1;
       ArrayList var5 = new ArrayList();
       var5.add(
-         new autismclient.gui.d.PacketUtil.Inner_DataUtil(
+         new autismclient.gui.d.PromptDialogScreen.Inner_DataUtil(
             "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::putAt_V
          )
       );
       var5.add(
-         new autismclient.gui.d.PacketUtil.Inner_DataUtil(
+         new autismclient.gui.d.PromptDialogScreen.Inner_DataUtil(
             "Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, () -> this.putAt_V_Consumer_Z(var3, false)
          )
       );
       Module var6 = al.init_Module_Str("no-fall");
       if (var6 != null && !var6.isEnabled()) {
          var5.add(
-            new autismclient.gui.d.PacketUtil.Inner_DataUtil(
+            new autismclient.gui.d.PromptDialogScreen.Inner_DataUtil(
                "NoFall & Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> this.putAt_V_Consumer_Z(var3, true)
             )
          );
       }
 
       String var7 = putAt_Str_BufferCore_CacheHe(var2);
-      this.putAt_RingBuffer = new autismclient.gui.d.PacketUtil(
+      this.putAt_RingBuffer = new autismclient.gui.d.PromptDialogScreen(
          "Parkour fall warning",
          List.of(
             var2.lethal() ? "This route could kill you in vanilla." : "This route can cause fall damage.",

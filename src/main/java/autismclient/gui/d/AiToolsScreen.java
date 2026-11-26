@@ -3,7 +3,7 @@ package autismclient.gui.d;
 import autismclient.ai.AiToolSettings;
 import autismclient.ai.o;
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.g;
+import autismclient.gui.f.b.ToggleSwitchRenderer;
 import autismclient.util.bi;
 import autismclient.util.cA;
 import java.util.List;
@@ -28,8 +28,8 @@ public final class AiToolsScreen extends Screen {
    private final Screen init_Screen;
    private final AiToolSettings init_AiToolSettings;
    private boolean init_Z;
-   private final autismclient.gui.f.b.RefQueue init_RefQueue;
-   private final autismclient.gui.f.b.RefQueue load_RefQueue;
+   private final autismclient.gui.f.b.DropdownMenu init_RefQueue;
+   private final autismclient.gui.f.b.DropdownMenu load_RefQueue;
    private autismclient.gui.f.NetHelper init_NetHelper;
    private autismclient.gui.f.NetHelper load_NetHelper;
    private autismclient.gui.f.NetHelper read_NetHelper;
@@ -45,13 +45,13 @@ public final class AiToolsScreen extends Screen {
       this.init_Screen = parent;
       this.init_AiToolSettings = o.init_AiToolSettings().copy();
       this.init_Z = o.init_AiSettings().aiSilentAim;
-      this.init_RefQueue = new autismclient.gui.f.b.RefQueue(
+      this.init_RefQueue = new autismclient.gui.f.b.DropdownMenu(
          autismclient.gui.f.NetHelper.init(0, 0, 0, 0),
          List.of("fastest", "safest", "saver"),
          this.init_AiToolSettings.strategy,
          value -> this.init_AiToolSettings.strategy = value
       );
-      this.load_RefQueue = new autismclient.gui.f.b.RefQueue(
+      this.load_RefQueue = new autismclient.gui.f.b.DropdownMenu(
          autismclient.gui.f.NetHelper.init(0, 0, 0, 0),
          List.of("quiet", "normal", "verbose"),
          this.init_AiToolSettings.verbosity,
@@ -93,7 +93,7 @@ public final class AiToolsScreen extends Screen {
          int x = panel.read() + pad;
          int y = autismclient.gui.f.b.BufferHelper.init_I(ctx, panel, title) + 2;
          int w = panel.update() - pad * 2;
-         autismclient.gui.f.JsonUtil colors = ctx.init_TableIndex().init_JsonUtil();
+         autismclient.gui.f.UiColorScheme colors = ctx.init_TableIndex().init_JsonUtil();
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, rowH);
          this.init(ctx, this.init_NetHelper, "Pathfinding strategy", this.init_RefQueue, this.init_AiToolSettings.strategy, mx, my);
          y += rowStep;
@@ -103,8 +103,8 @@ public final class AiToolsScreen extends Screen {
             y += rowStep;
          }
 
-         g.init(ctx, this.init_NetHelperArr[0], init_StrArr[0], this.init_AiToolSettings.allowDig, this.init_NetHelperArr[0].init_Z(mx, my), "aitools:allowDig");
-         g.init(
+         ToggleSwitchRenderer.init(ctx, this.init_NetHelperArr[0], init_StrArr[0], this.init_AiToolSettings.allowDig, this.init_NetHelperArr[0].init_Z(mx, my), "aitools:allowDig");
+         ToggleSwitchRenderer.init(
             ctx,
             this.init_NetHelperArr[1],
             init_StrArr[1],
@@ -112,7 +112,7 @@ public final class AiToolsScreen extends Screen {
             this.init_NetHelperArr[1].init_Z(mx, my),
             "aitools:allowPillar"
          );
-         g.init(
+         ToggleSwitchRenderer.init(
             ctx,
             this.init_NetHelperArr[2],
             init_StrArr[2],
@@ -120,7 +120,7 @@ public final class AiToolsScreen extends Screen {
             this.init_NetHelperArr[2].init_Z(mx, my),
             "aitools:allowBridge"
          );
-         g.init(
+         ToggleSwitchRenderer.init(
             ctx,
             this.init_NetHelperArr[3],
             init_StrArr[3],
@@ -137,10 +137,10 @@ public final class AiToolsScreen extends Screen {
          ctx.init_PoolEntry().load(graphics, reluctanceValue, x + w - reluctanceValueW, reluctanceTextY, reluctanceValueW, colors.prev);
          y += labelH;
          this.write_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, 12);
-         autismclient.gui.f.b.c.init(
+         autismclient.gui.f.b.SliderRenderer.init(
             ctx,
             this.write_NetHelper,
-            autismclient.gui.f.b.c.init_D_D(this.init_AiToolSettings.digReluctance, 0.0, 60.0),
+            autismclient.gui.f.b.SliderRenderer.init_D_D(this.init_AiToolSettings.digReluctance, 0.0, 60.0),
             this.write_NetHelper.init_Z(mx, my) || this.read_Z
          );
          y += 12 + sectionGap;
@@ -148,8 +148,8 @@ public final class AiToolsScreen extends Screen {
          y += rowStep;
          this.init_NetHelperArr[5] = autismclient.gui.f.NetHelper.init(x, y, w, rowH);
          y += rowStep;
-         g.init(ctx, this.init_NetHelperArr[4], init_StrArr[4], this.init_Z, this.init_NetHelperArr[4].init_Z(mx, my), "aitools:silentAim");
-         g.init(
+         ToggleSwitchRenderer.init(ctx, this.init_NetHelperArr[4], init_StrArr[4], this.init_Z, this.init_NetHelperArr[4].init_Z(mx, my), "aitools:silentAim");
+         ToggleSwitchRenderer.init(
             ctx, this.init_NetHelperArr[5], init_StrArr[5], this.init_AiToolSettings.useShield, this.init_NetHelperArr[5].init_Z(mx, my), "aitools:useShield"
          );
          y += sectionGap;
@@ -161,10 +161,10 @@ public final class AiToolsScreen extends Screen {
          ctx.init_PoolEntry().load(graphics, timeoutValue, x + w - valueW, timeoutTextY, valueW, colors.prev);
          y += labelH;
          this.read_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, 12);
-         autismclient.gui.f.b.c.init(
+         autismclient.gui.f.b.SliderRenderer.init(
             ctx,
             this.read_NetHelper,
-            autismclient.gui.f.b.c.init_D_D(this.init_AiToolSettings.timeoutSeconds, 30.0, 1800.0),
+            autismclient.gui.f.b.SliderRenderer.init_D_D(this.init_AiToolSettings.timeoutSeconds, 30.0, 1800.0),
             this.read_NetHelper.init_Z(mx, my) || this.load_Z
          );
          y += 12 + sectionGap;
@@ -187,15 +187,15 @@ public final class AiToolsScreen extends Screen {
    }
 
    private int init_I() {
-      return autismclient.gui.f.RenderState.init(14);
+      return autismclient.gui.f.UiDensityMetrics.init(14);
    }
 
    private int load_I() {
-      return autismclient.gui.f.RenderState.init(12);
+      return autismclient.gui.f.UiDensityMetrics.init(12);
    }
 
    private int read() {
-      return autismclient.gui.f.RenderState.init(13);
+      return autismclient.gui.f.UiDensityMetrics.init(13);
    }
 
    private int write() {
@@ -242,19 +242,19 @@ public final class AiToolsScreen extends Screen {
       autismclient.gui.f.SyncManager ctx,
       autismclient.gui.f.NetHelper row,
       String label,
-      autismclient.gui.f.b.RefQueue dropdown,
+      autismclient.gui.f.b.DropdownMenu dropdown,
       String selected,
       int mx,
       int my
    ) {
-      autismclient.gui.f.JsonUtil colors = ctx.init_TableIndex().init_JsonUtil();
+      autismclient.gui.f.UiColorScheme colors = ctx.init_TableIndex().init_JsonUtil();
       autismclient.gui.f.NetHelper control = autismclient.gui.f.NetHelper.init(row.init() - 96, row.write(), 96, row.sync());
       ctx.init_PoolEntry()
          .load(
             ctx.init_GuiGraphicsExtract(), label, row.read() + 1, ctx.init_PoolEntry().init_I(row), Math.max(1, control.read() - row.read() - 8), colors.prev
          );
       dropdown.init_V_NetHelper(control);
-      autismclient.gui.f.b.RefQueue.init_V_SyncManager(ctx, control, selected, control.init_Z(mx, my), dropdown.init_Z_2());
+      autismclient.gui.f.b.DropdownMenu.init_V_SyncManager(ctx, control, selected, control.init_Z(mx, my), dropdown.init_Z_2());
    }
 
    @Override
@@ -265,11 +265,11 @@ public final class AiToolsScreen extends Screen {
          return true;
       }
 
-      if (this.init_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.EventBus.HANDLED) {
+      if (this.init_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.UiInputResult.HANDLED) {
          return true;
       }
 
-      if (this.load_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.EventBus.HANDLED) {
+      if (this.load_RefQueue.init_EventBus_I_2(mx, my, Compat263.mouseEventGlfwButton(event)) == autismclient.gui.f.UiInputResult.HANDLED) {
          return true;
       }
 
@@ -334,13 +334,13 @@ public final class AiToolsScreen extends Screen {
    }
 
    private void load(int mx) {
-      this.init_AiToolSettings.timeoutSeconds = (int)autismclient.gui.f.b.c.init(
+      this.init_AiToolSettings.timeoutSeconds = (int)autismclient.gui.f.b.SliderRenderer.init(
          mx, this.read_NetHelper.read(), this.read_NetHelper.update(), 30.0, 1800.0, 30.0
       );
    }
 
    private void read(int mx) {
-      this.init_AiToolSettings.digReluctance = (int)autismclient.gui.f.b.c.init(mx, this.write_NetHelper.read(), this.write_NetHelper.update(), 0.0, 60.0, 1.0);
+      this.init_AiToolSettings.digReluctance = (int)autismclient.gui.f.b.SliderRenderer.init(mx, this.write_NetHelper.read(), this.write_NetHelper.update(), 0.0, 60.0, 1.0);
    }
 
    @Override
@@ -352,11 +352,11 @@ public final class AiToolsScreen extends Screen {
          this.read(cA.init_I_D(event.x()));
          return true;
       } else if (this.init_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
-         == autismclient.gui.f.EventBus.HANDLED) {
+         == autismclient.gui.f.UiInputResult.HANDLED) {
          return true;
       } else {
          return this.load_RefQueue.init_EventBus_I(cA.init_I_D(event.x()), cA.init_I_D(event.y()), Compat263.mouseEventGlfwButton(event), dx, dy)
-               == autismclient.gui.f.EventBus.HANDLED
+               == autismclient.gui.f.UiInputResult.HANDLED
             ? true
             : true;
       }

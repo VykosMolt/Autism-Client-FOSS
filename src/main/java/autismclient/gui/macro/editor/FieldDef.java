@@ -6,7 +6,7 @@ import java.util.List;
 public final class FieldDef {
    private final String key;
    private final String label;
-   private final CachePool type;
+   private final FieldType type;
    private final int min;
    private final int max;
    private final double decMin;
@@ -18,14 +18,14 @@ public final class FieldDef {
    private final String addLabel;
    private final String[] xyzKeys;
    private final boolean xyzDouble;
-   private final StreamUtil captureMode;
+   private final CaptureMode captureMode;
    private final String[] mutuallyExclusiveWith;
    private final boolean dynamic;
 
    FieldDef(
       String key,
       String label,
-      CachePool type,
+      FieldType type,
       int min,
       int max,
       double decMin,
@@ -37,7 +37,7 @@ public final class FieldDef {
       String addLabel,
       String[] xyzKeys,
       boolean xyzDouble,
-      StreamUtil captureMode,
+      CaptureMode captureMode,
       String[] mutuallyExclusiveWith,
       boolean dynamic
    ) {
@@ -55,7 +55,7 @@ public final class FieldDef {
       this.addLabel = addLabel != null ? addLabel : "Add";
       this.xyzKeys = xyzKeys != null ? (String[])xyzKeys.clone() : new String[]{"x", "y", "z"};
       this.xyzDouble = xyzDouble;
-      this.captureMode = captureMode != null ? captureMode : StreamUtil.NONE;
+      this.captureMode = captureMode != null ? captureMode : CaptureMode.NONE;
       this.mutuallyExclusiveWith = mutuallyExclusiveWith != null ? (String[])mutuallyExclusiveWith.clone() : new String[0];
       this.dynamic = dynamic;
    }
@@ -68,7 +68,7 @@ public final class FieldDef {
       return this.label;
    }
 
-   public CachePool type() {
+   public FieldType type() {
       return this.type;
    }
 
@@ -120,7 +120,7 @@ public final class FieldDef {
       return this.showWhenKey != null && !this.showWhenKey.isEmpty();
    }
 
-   public StreamUtil captureMode() {
+   public CaptureMode captureMode() {
       return this.captureMode;
    }
 

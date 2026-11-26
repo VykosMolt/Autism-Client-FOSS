@@ -3,18 +3,18 @@ package autismclient.gui.macro.editor;
 import autismclient.api.custommenu.CustomMenuButton;
 import autismclient.api.custommenu.CustomMenuSnapshot;
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.HashUtil;
-import autismclient.gui.f.RenderState;
+import autismclient.gui.f.UiClipStack;
+import autismclient.gui.f.UiDensityMetrics;
 import autismclient.gui.f.UiHelper;
-import autismclient.gui.f.b.ByteReader;
+import autismclient.gui.f.b.OverlayActionButton;
 import autismclient.gui.f.b.CharEncoder;
-import autismclient.gui.f.b.FileCache;
-import autismclient.gui.f.b.PoolEntry;
-import autismclient.gui.f.b.TableIndex;
-import autismclient.gui.f.b.f;
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.ListRowRenderer;
+import autismclient.gui.f.b.ScrollbarMetricsHelper;
+import autismclient.gui.f.b.PanelSurfaceHelper;
+import autismclient.gui.f.b.ToastNotificationStack;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.f.b.l;
-import autismclient.gui.f.c.EventBus;
+import autismclient.gui.f.c.ScrollableListView;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.AutismPacketSelectorOverlay;
@@ -253,19 +253,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private final Map<String, MacroItemTarget> update_Map = new HashMap<>();
    private final Map<String, List<MacroItemTarget>> sync_Map = new HashMap<>();
    private final Map<String, ThemedTextInputBox> flush_Map = new LinkedHashMap<>();
-   private final Map<String, EventBus> close_Map = new HashMap<>();
+   private final Map<String, ScrollableListView> close_Map = new HashMap<>();
    private final Map<String, Integer> open_Map = new HashMap<>();
    private final Map<String, String> poll_Map = new HashMap<>();
    private final Map<String, List<Integer>> push_Map = new HashMap<>();
    private final Map<String, List<String>> pop_Map = new HashMap<>();
-   private final Map<String, EventBus> tick_Map = new HashMap<>();
+   private final Map<String, ScrollableListView> tick_Map = new HashMap<>();
    private final List<MacroExecutor.Inner_PacketUtil> update_List = new ArrayList<>();
    private int f_e_I = 0;
    private ItemAction init_MapStore;
-   private final autismclient.gui.macro.editor.a.StreamUtil init_StreamUtil = new autismclient.gui.macro.editor.a.StreamUtil();
+   private final autismclient.gui.macro.editor.a.ActiveCaptureSession init_StreamUtil = new autismclient.gui.macro.editor.a.ActiveCaptureSession();
    private String write_Str;
-   private final List<autismclient.gui.f.b.SyncManager> sync_List = new ArrayList<>();
-   private final Map<String, autismclient.gui.f.b.SyncManager> run_Map = new HashMap<>();
+   private final List<autismclient.gui.f.b.DropdownWidget> sync_List = new ArrayList<>();
+   private final Map<String, autismclient.gui.f.b.DropdownWidget> run_Map = new HashMap<>();
    private final List<String> flush_List = new ArrayList<>();
    private AutismMacro init_aM;
    private int f_f_I = -1;
@@ -335,7 +335,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       "Misc / DESYNC"
    );
    private List<AutismOverlay> poll_List;
-   private final f init_f = new f(700L, 140.0F, 180.0F, 4, 4, 18);
+   private final ToastNotificationStack init_f = new ToastNotificationStack(700L, 140.0F, 180.0F, 4, 4, 18);
    private List<autismclient.util.macro.CraftAction.Inner_DataUtil> push_List;
    private List<AutoCraftingEngine.Inner_TaskQueue> pop_List;
    private List<AutoCraftingEngine.Inner_TaskQueue> tick_List;
@@ -575,8 +575,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return true;
    }
 
-   private boolean init_Z_StreamUtil(StreamUtil mode) {
-      return mode == StreamUtil.CUSTOM_MENU_BUTTON ? true : mode == StreamUtil.PACKET_NAME || this.clear_Z();
+   private boolean init_Z_StreamUtil(CaptureMode mode) {
+      return mode == CaptureMode.CUSTOM_MENU_BUTTON ? true : mode == CaptureMode.PACKET_NAME || this.clear_Z();
    }
 
    public void init_V_List(List<MacroAction> actions) {
@@ -1238,7 +1238,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.size_List.clear();
       } else {
          this.push(true);
-         autismclient.gui.f.b.SyncManager.read(this.sync_List);
+         autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
          this.init_AutismPacketSelect.init_V_Z(false);
          this.init_RaceStepSelectorOv.init_V_Z(false);
          this.push_V();
@@ -1255,7 +1255,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.load_Z != value) {
          super.write_V_Z(value);
          if (value) {
-            autismclient.gui.f.b.SyncManager.read(this.sync_List);
+            autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
             this.init_AutismPacketSelect.init_V_Z(false);
             this.init_RaceStepSelectorOv.init_V_Z(false);
             this.valid_List.clear();
@@ -1286,7 +1286,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && (
             this.init_AutismPacketSelect.sync_Z()
                || this.init_RaceStepSelectorOv.sync_Z()
-               || autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List)
+               || autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)
                || mx >= this.bind && mx < this.bind + this.f_b_I && my >= this.f_a_I && my < this.f_a_I + (this.load_Z ? 14 : this.f_c_I)
          );
    }
@@ -1543,7 +1543,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                FieldDef field = this.read_FieldDef(key);
-               if (field != null && field.type() == CachePool.SLOT) {
+               if (field != null && field.type() == FieldType.SLOT) {
                   tf.init_V_Str(String.valueOf(Math.max(0, visibleSlot)));
                } else if (useSlot) {
                   tf.init_V_Str(capturedTarget.write_Str());
@@ -1577,7 +1577,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.size_List.clear();
          int rawMouseX = mouseX;
          int rawMouseY = mouseY;
-         if (!this.sync_List.isEmpty() && autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List)) {
+         if (!this.sync_List.isEmpty() && autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
             mouseX = -2147483648;
             mouseY = -2147483648;
          }
@@ -1615,7 +1615,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (!this.sync_List.isEmpty()) {
-                  autismclient.gui.f.b.SyncManager.load(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
+                  autismclient.gui.f.b.DropdownWidget.load(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
                }
             } finally {
                this.init_V_GuiGraphicsExtract_Z(context, true);
@@ -1623,9 +1623,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          this.init_V_GuiGraphicsExtract_14(context, bounds, this.load_Z, this.update_Z);
-         if (!this.sync_List.isEmpty() && autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List)) {
+         if (!this.sync_List.isEmpty() && autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
             context.nextStratum();
-            autismclient.gui.f.b.SyncManager.read(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
+            autismclient.gui.f.b.DropdownWidget.read(context, this.init_Font, this.sync_List, rawMouseX, rawMouseY);
          }
 
          if (this.init_AutismPacketSelect.sync_Z()) {
@@ -1640,7 +1640,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, int bodyTop, int bodyBtm) {
       if (this.isLegacyMulti()) {
-         FileCache.init(
+         ListRowRenderer.init(
             context, this.init_Font, "Legacy Multi is unsupported. This block and its steps are skipped when the macro runs.",
             this.bind + 6, bodyTop + 4, this.f_b_I - 12
          );
@@ -1658,13 +1658,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int sbReserve = needsScroll ? 6 : 0;
          int x = this.bind + 4;
          int w = this.f_b_I - 8 - sbReserve;
-         HashUtil.init_HashUtil()
+         UiClipStack.init_HashUtil()
             .init(context, autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), Math.max(0, contentBtm - bodyTop)));
 
          try {
             this.open(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
          } finally {
-            HashUtil.init_HashUtil().init(context);
+            UiClipStack.init_HashUtil().init(context);
          }
 
          if (needsScroll) {
@@ -1763,12 +1763,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), contentAreaH);
             this.init_NetHelper = clip;
             int firstBodyHit = this.valid_List.size();
-            HashUtil.init_HashUtil().init(context, clip);
+            UiClipStack.init_HashUtil().init(context, clip);
 
             try {
                this.state(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
             } finally {
-               HashUtil.init_HashUtil().init(context);
+               UiClipStack.init_HashUtil().init(context);
             }
 
             this.init_V_I_NetHelper(firstBodyHit, clip);
@@ -1799,12 +1799,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), contentAreaH);
             this.init_NetHelper = clip;
             int firstBodyHit = this.valid_List.size();
-            HashUtil.init_HashUtil().init(context, clip);
+            UiClipStack.init_HashUtil().init(context, clip);
 
             try {
                this.buffer(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
             } finally {
-               HashUtil.init_HashUtil().init(context);
+               UiClipStack.init_HashUtil().init(context);
             }
 
             this.init_V_I_NetHelper(firstBodyHit, clip);
@@ -1831,12 +1831,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), contentAreaH);
             this.init_NetHelper = clip;
             int firstBodyHit = this.valid_List.size();
-            HashUtil.init_HashUtil().init(context, clip);
+            UiClipStack.init_HashUtil().init(context, clip);
 
             try {
                this.set(context, x, bodyTop - this.f_e_I, w, mouseX, mouseY, delta);
             } finally {
-               HashUtil.init_HashUtil().init(context);
+               UiClipStack.init_HashUtil().init(context);
             }
 
             this.init_V_I_NetHelper(firstBodyHit, clip);
@@ -1884,7 +1884,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int sbReserve = needsScroll ? 6 : 0;
             int x = this.bind + 4;
             int w = this.f_b_I - 8 - sbReserve;
-            HashUtil.init_HashUtil()
+            UiClipStack.init_HashUtil()
                .init(context, autismclient.gui.f.NetHelper.init(this.bind + 1, bodyTop, Math.max(0, this.f_b_I - 2), Math.max(0, contentBtm - bodyTop)));
 
             try {
@@ -1930,7 +1930,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                  if (field.type() != CachePool.STRING_LIST
+                  if (field.type() != FieldType.STRING_LIST
                      && !this.flush_Z(field.key())
                      && this.write(field)
                      && (
@@ -1944,7 +1944,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                  if (field.type() == CachePool.STRING_LIST
+                  if (field.type() == FieldType.STRING_LIST
                      && !this.flush_Z(field.key())
                      && this.write(field)
                      && (
@@ -1971,7 +1971,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.update_V(context, x, y, w, mouseX, mouseY);
                }
             } finally {
-               HashUtil.init_HashUtil().init(context);
+               UiClipStack.init_HashUtil().init(context);
             }
 
             if (needsScroll) {
@@ -2001,7 +2001,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Exact Slots (" + this.init_MapStore.itemNames.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClearAll = !this.init_MapStore.itemNames.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
          this.init_MapStore.itemNames.clear();
          this.init_MapStore.itemTimes.clear();
          this.init_MapStore.itemActionIdx.clear();
@@ -2014,7 +2014,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 14;
       int selAreaH = 56;
       int sbX = x + w - 5;
-      EventBus itemViewport = this.init_EventBus_Map(this.tick_Map, "_item_entries", x, cy, w, selAreaH, 14, 5);
+      ScrollableListView itemViewport = this.init_EventBus_Map(this.tick_Map, "_item_entries", x, cy, w, selAreaH, 14, 5);
       itemViewport.init_V(this.init_MapStore.itemNames.size() * 14);
       itemViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       ContainerClickType[] ACTIONS = ContainerClickType.values();
@@ -2060,8 +2060,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int times = this.init_MapStore.init_I_I_3(i);
                String summary = " • " + summaryAct + (summaryBtn.isBlank() ? "" : " " + summaryBtn) + (times != 1 ? " ×" + times : "");
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
-               autismclient.gui.macro.editor.a.CachePool.init(
-                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, itemW, 13), rowHovered, selected, FileCache.Inner_DataUtil.NORMAL, true
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, itemW, 13), rowHovered, selected, ListRowRenderer.Inner_DataUtil.NORMAL, true
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
                   int fi = i;
@@ -2109,7 +2109,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      }
 
                      this.write_V_3();
-                     EventBus vp = this.tick_Map.get("_item_entries");
+                     ScrollableListView vp = this.tick_Map.get("_item_entries");
                      if (vp != null) {
                         vp.read_V(-1);
                      }
@@ -2120,13 +2120,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          itemViewport.init(ctx);
       } else {
-         FileCache.init(ctx, this.init_Font, "No rows yet. Add an item or exact slot.", x, cy, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, "No rows yet. Add an item or exact slot.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
-      int addPickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+      int addPickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
       String addLbl = this.f_j_I >= 0 ? "New" : "+Add";
       int addBtnW = this.write_I(addLbl);
       int slotW = 26;
@@ -2145,8 +2145,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          entrySlotF.update(slotW);
          entrySlotF.init_V(ctx, mx, my, delta);
          boolean capturing = this.init_StreamUtil.init("_item_entries");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_item_entries"));
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_item_entries"));
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (this.f_j_I >= 0) {
                this.update_V_3();
             } else {
@@ -2216,7 +2216,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                editBtnW,
                13,
                btnLbl,
-               eiAct == ContainerClickType.SWAP ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
+               eiAct == ContainerClickType.SWAP ? OverlayActionButton.Inner_StreamUtil.PRIMARY : OverlayActionButton.Inner_StreamUtil.GHOST,
                btnActive,
                mx,
                my,
@@ -2564,10 +2564,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Craft Entries (" + this.push_List.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClearEntries = !this.push_List.isEmpty();
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + w - headerBtnW, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearEntries, mx, my, () -> {
+         ctx, x + w - headerBtnW, cy, headerBtnW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, canClearEntries, mx, my, () -> {
             this.push_List.clear();
             this.set_V_2();
-            EventBus craftVp = this.tick_Map.get("_craft_entries");
+            ScrollableListView craftVp = this.tick_Map.get("_craft_entries");
             if (craftVp != null) {
                craftVp.load_V(0);
             }
@@ -2575,7 +2575,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
       cy += 14;
       int selAreaH = 56;
-      EventBus craftViewport = this.init_EventBus_Map(this.tick_Map, "_craft_entries", x, cy, w, selAreaH, 14, 5);
+      ScrollableListView craftViewport = this.init_EventBus_Map(this.tick_Map, "_craft_entries", x, cy, w, selAreaH, 14, 5);
       craftViewport.init_V(this.push_List.size() * 14);
       craftViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       int sbGap = 7;
@@ -2593,7 +2593,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.init_V_GuiGraphicsExtract_2(ctx, removeX, siy + 1, removeW, mx, my, () -> {
                   this.push_List.remove(fi);
                   this.set_V_2();
-                  EventBus vp = this.tick_Map.get("_craft_entries");
+                  ScrollableListView vp = this.tick_Map.get("_craft_entries");
                   if (vp != null) {
                      vp.read_V(-1);
                   }
@@ -2627,14 +2627,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                int nameW = useMax ? maxX - 3 - x : maxX - 3 - amountW - 3 - x;
                boolean rowHovered = mx >= x && mx < x + nameW && my >= siy && my < siy + 13;
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   entry.init_Component(),
                   autismclient.gui.f.NetHelper.init(x, siy, Math.max(1, nameW), 13),
                   rowHovered,
                   false,
-                  useMax ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
+                  useMax ? ListRowRenderer.Inner_DataUtil.READY : ListRowRenderer.Inner_DataUtil.NORMAL,
                   true
                );
             }
@@ -2642,11 +2642,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          craftViewport.init(ctx);
       } else {
-         FileCache.init(ctx, this.init_Font, "No craft entries yet.", x, cy, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, "No craft entries yet.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       int refreshW = this.write_I("Reload");
       ThemedTextInputBox srchF = this.flush_Map.get("_craft_search");
@@ -2658,7 +2658,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       int rfX = x + w - refreshW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, rfX, cy, refreshW, 13, "Reload", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, this::open_V_2);
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, rfX, cy, refreshW, 13, "Reload", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, this::open_V_2);
       cy += 16;
       String query = srchF != null ? srchF.load_Str() : "";
       if (!query.equals(this.update_Str)) {
@@ -2672,13 +2672,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       List<AutoCraftingEngine.Inner_TaskQueue> filtered = this.tick_List != null ? this.tick_List : List.of();
       int recipeListH = 52;
-      EventBus recipeViewport = this.init_EventBus_Map(this.close_Map, "_craft_recipe_browser", x, cy, w, recipeListH, 13, 5);
+      ScrollableListView recipeViewport = this.init_EventBus_Map(this.close_Map, "_craft_recipe_browser", x, cy, w, recipeListH, 13, 5);
       recipeViewport.init_V(filtered.size() * 13);
       this.init_IArr = new int[]{cy, recipeListH};
       recipeViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       int recW = w - 5 - 1;
       if (filtered.isEmpty()) {
-         FileCache.init(
+         ListRowRenderer.init(
             ctx,
             this.init_Font,
             this.pop_List != null && !this.pop_List.isEmpty() ? "No recipes match the search." : "No crafting recipes loaded. Use Reload.",
@@ -2698,10 +2698,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   .stream()
                   .anyMatch(e -> opt.init_Str != null && opt.init_Str.equals(e.init_Str) || opt.init_I >= 0 && opt.init_I == e.init_I);
                boolean hov = !inList && mx >= x && mx < x + recW && my >= ry && my < ry + 13;
-               FileCache.Inner_DataUtil tone = inList
-                  ? FileCache.Inner_DataUtil.READY
-                  : (opt.read_Z ? FileCache.Inner_DataUtil.NORMAL : FileCache.Inner_DataUtil.MISSING);
-               autismclient.gui.macro.editor.a.CachePool.init(
+               ListRowRenderer.Inner_DataUtil tone = inList
+                  ? ListRowRenderer.Inner_DataUtil.READY
+                  : (opt.read_Z ? ListRowRenderer.Inner_DataUtil.NORMAL : ListRowRenderer.Inner_DataUtil.MISSING);
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx, this.init_Font, opt.init_Component, autismclient.gui.f.NetHelper.init(x, ry, recW, 13), hov, inList, tone, true
                );
                if (opt.init_ItemStack != null && opt.init_ItemStack.getCount() > 1) {
@@ -2815,7 +2815,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Drop Entries (" + this.init_PacketUtil.itemNames.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClearAll = !this.init_PacketUtil.itemNames.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, canClearAll, mx, my, () -> {
          this.init_PacketUtil.itemNames.clear();
          this.init_PacketUtil.itemTargets.clear();
          this.init_PacketUtil.itemCounts.clear();
@@ -2824,7 +2824,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       });
       cy += 14;
       int selAreaH = 56;
-      EventBus dropViewport = this.init_EventBus_Map(this.tick_Map, "_drop_entries", x, cy, w, selAreaH, 14, 5);
+      ScrollableListView dropViewport = this.init_EventBus_Map(this.tick_Map, "_drop_entries", x, cy, w, selAreaH, 14, 5);
       dropViewport.init_V(this.init_PacketUtil.itemNames.size() * 14);
       dropViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       int sbGap = 7;
@@ -2845,14 +2845,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String summary = " • " + (cnt == 0 ? "all" : "×" + cnt);
                Component rowLabel = Component.empty().append(displayName).append(Component.literal(summary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + dropItemW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   rowLabel,
                   autismclient.gui.f.NetHelper.init(x, iy, dropItemW, 13),
                   rowHovered,
                   selected,
-                  FileCache.Inner_DataUtil.NORMAL,
+                  ListRowRenderer.Inner_DataUtil.NORMAL,
                   true
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
@@ -2885,7 +2885,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      }
 
                      this.put_V();
-                     EventBus vp = this.tick_Map.get("_drop_entries");
+                     ScrollableListView vp = this.tick_Map.get("_drop_entries");
                      if (vp != null) {
                         vp.read_V(-1);
                      }
@@ -2896,13 +2896,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          dropViewport.init(ctx);
       } else {
-         FileCache.init(ctx, this.init_Font, "Optional: add items/slots, or use the fallback below.", x, cy, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, "Optional: add items/slots, or use the fallback below.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
-      int addPickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+      int addPickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
       String addLbl = this.f_k_I >= 0 ? "New" : "+Add";
       int addBtnW = this.write_I(addLbl);
       int slotW = 44;
@@ -2921,8 +2921,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          entrySlotF.update(slotW);
          entrySlotF.init_V(ctx, mx, my, delta);
          boolean capturing = this.init_StreamUtil.init("_drop_entries");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_drop_entries"));
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, addPickW, 14, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_drop_entries"));
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, addLbl, OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (this.f_k_I >= 0) {
                this.add_V_2();
             } else {
@@ -2961,7 +2961,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          modeBtns[1],
          13,
          "Drop All",
-         dropAllSelected ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
+         dropAllSelected ? OverlayActionButton.Inner_StreamUtil.PRIMARY : OverlayActionButton.Inner_StreamUtil.GHOST,
          true,
          mx,
          my,
@@ -2983,7 +2983,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          modeBtns[3],
          13,
          "Times",
-         !dropAllSelected ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.GHOST,
+         !dropAllSelected ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.GHOST,
          true,
          mx,
          my,
@@ -3312,7 +3312,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          boolean hasEntries = !this.clear_List.isEmpty();
          int visibleRows = hasEntries ? Math.min(3, Math.max(1, this.clear_List.size())) : 1;
          int selAreaH = hasEntries ? visibleRows * 14 : 12;
-         EventBus lanViewport = null;
+         ScrollableListView lanViewport = null;
          if (hasEntries) {
             lanViewport = this.init_EventBus_Map(this.tick_Map, "_lan_entries", x, cy, w, selAreaH, 14, 5);
             lanViewport.init_V(this.clear_List.size() * 14);
@@ -3336,7 +3336,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             for (int i = firstVis; i < this.clear_List.size() && i <= lanViewport.tick(); i++) {
                int iy = lanViewport.init_I(i);
                if (iy != -2147483648) {
-                  TableIndex.read(ctx, x, iy, stepX - gapPx - x, 13);
+                  PanelSurfaceHelper.read(ctx, x, iy, stepX - gapPx - x, 13);
                   ThemedTextInputBox uf = this.init_Map.get("lan_user_" + i);
                   if (uf != null) {
                      uf.read(x);
@@ -3357,7 +3357,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.init_V_GuiGraphicsExtract_2(ctx, removeX, iy + 1, removeW, mx, my, () -> {
                      this.clear_List.remove(fi);
                      this.valid();
-                     EventBus vp = this.tick_Map.get("_lan_entries");
+                     ScrollableListView vp = this.tick_Map.get("_lan_entries");
                      if (vp != null) {
                         vp.read_V(-1);
                      }
@@ -3367,11 +3367,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             lanViewport.init(ctx);
          } else {
-            FileCache.init(ctx, this.init_Font, "No peer filters yet.", x, cy, w - 5 - 1);
+            ListRowRenderer.init(ctx, this.init_Font, "No peer filters yet.", x, cy, w - 5 - 1);
          }
 
          cy += selAreaH;
-         TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+         PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
          cy += 6;
          int addBtnW = this.write_I("+Add");
          ThemedTextInputBox newUF = this.flush_Map.get("_lan_user_add");
@@ -3388,7 +3388,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             newSF.write(cy);
             newSF.update(stepW);
             newSF.init_V(ctx, mx, my, delta);
-            this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+            this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
                String uname = newUF.load_Str().strip();
                int step = 1;
 
@@ -3480,12 +3480,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.init_V_GuiGraphicsExtract(ctx, loadBtns[0], cy, loadBtns[1], 13, "Load Queue", mx, my, this::A);
       this.init_V_GuiGraphicsExtract(ctx, loadBtns[2], cy, loadBtns[3], 13, "Clear All", mx, my, () -> {
          this.close_List().clear();
-         EventBus vpC2s = this.tick_Map.get("wait_packet_c2s");
+         ScrollableListView vpC2s = this.tick_Map.get("wait_packet_c2s");
          if (vpC2s != null) {
             vpC2s.load_V(0);
          }
 
-         EventBus vpS2c = this.tick_Map.get("wait_packet_s2c");
+         ScrollableListView vpS2c = this.tick_Map.get("wait_packet_s2c");
          if (vpS2c != null) {
             vpS2c.load_V(0);
          }
@@ -3655,8 +3655,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int idx = Math.max(0, Math.min(selectedIdx, options.size() - 1));
       List<String> opts = options;
       IntConsumer cb = onSelect;
-      autismclient.gui.f.b.SyncManager dd = this.run_Map
-         .computeIfAbsent(cacheKey, k -> new autismclient.gui.f.b.SyncManager(ctrlX, cy + 2, ctrlW, 13, opts, idx, cb));
+      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
+         .computeIfAbsent(cacheKey, k -> new autismclient.gui.f.b.DropdownWidget(ctrlX, cy + 2, ctrlW, 13, opts, idx, cb));
       dd.init_SyncManager_I(ctrlX, cy + 2, ctrlW, 13).init_SyncManager_List(opts).init_SyncManager_I(idx).init_SyncManager_IntConsumer(cb);
       this.sync_List.add(dd);
       return cy + 14 + 2;
@@ -3667,7 +3667,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int idx = Math.max(0, Math.min(selectedIdx, options.size() - 1));
          List<String> opts = options;
          IntConsumer cb = onSelect;
-         autismclient.gui.f.b.SyncManager dd = this.run_Map.computeIfAbsent(cacheKey, k -> new autismclient.gui.f.b.SyncManager(x, y, w, h, opts, idx, cb));
+         autismclient.gui.f.b.DropdownWidget dd = this.run_Map.computeIfAbsent(cacheKey, k -> new autismclient.gui.f.b.DropdownWidget(x, y, w, h, opts, idx, cb));
          dd.init_SyncManager_I(x, y, w, h).init_SyncManager_List(opts).init_SyncManager_I(idx).init_SyncManager_IntConsumer(cb);
          this.sync_List.add(dd);
       }
@@ -3678,7 +3678,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Rules (" + this.reset_List.size() + ")", font, UiColorPalette.parse(), x, y + 2, false);
       int clearW = this.write_I("Clear");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + w - clearW, y, clearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, !this.reset_List.isEmpty(), mx, my, () -> {
+         ctx, x + w - clearW, y, clearW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, !this.reset_List.isEmpty(), mx, my, () -> {
             this.reset_List.clear();
             this.f_z_I = -1;
          }
@@ -3688,9 +3688,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH = rows * 14;
       int delW = 13;
       if (this.reset_List.isEmpty()) {
-         FileCache.init(ctx, this.init_Font, "No packet rules selected.", x, y, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, "No packet rules selected.", x, y, w - 5 - 1);
       } else {
-         EventBus viewport = this.init_EventBus_Map(this.tick_Map, "_wpm_rules", x, y, w, listH, 14, 5);
+         ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, "_wpm_rules", x, y, w, listH, 14, 5);
          viewport.init_V(this.reset_List.size() * 14);
          viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
          int rowW = w - 5 - 1 - delW - 2;
@@ -3702,14 +3702,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.reset_List.get(i);
                boolean selected = i == this.f_z_I;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   this.init_Component_aM_CachePool(rule),
                   autismclient.gui.f.NetHelper.init(x, iy, rowW, 13),
                   hovered,
                   selected,
-                  FileCache.Inner_DataUtil.NORMAL,
+                  ListRowRenderer.Inner_DataUtil.NORMAL,
                   true
                );
                int fi = i;
@@ -3752,7 +3752,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          apClearW,
          13,
          "Clear",
-         ByteReader.Inner_StreamUtil.DANGER,
+         OverlayActionButton.Inner_StreamUtil.DANGER,
          !actionPackets.isEmpty(),
          mx,
          my,
@@ -3766,7 +3766,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.write(updated);
          }
       });
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       ThemedTextInputBox nameField = this.init_Map.get("customName");
       if (nameField != null) {
@@ -3833,7 +3833,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       });
       this.init_V_GuiGraphicsExtract(ctx, clearBtns[2], cy, clearBtns[3], 13, "GBreak", mx, my, this::bind);
       cy += 20;
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Current Queue (" + finalQueuePackets.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 14;
@@ -3861,7 +3861,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    ) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       int listH = 56;
-      EventBus packetViewport = this.init_EventBus_Map(this.tick_Map, listKey, x, y, w, listH, 14, 5);
+      ScrollableListView packetViewport = this.init_EventBus_Map(this.tick_Map, listKey, x, y, w, listH, 14, 5);
       packetViewport.init_V(packets.size() * 14);
       packetViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       int removeW = removable ? 13 : 0;
@@ -3882,14 +3882,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String pname = qp != null && qp.init_Packet != null ? PacketNameResolver.init_Str_Packet(qp.init_Packet) : "???";
             String rowText = i + 1 + ". " + pname + " d=" + (qp != null ? qp.load_I() : 0);
             boolean hovered = mx >= x && mx < x + textW && my >= iy && my < iy + 13;
-            autismclient.gui.macro.editor.a.CachePool.init(
+            autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                ctx,
                this.init_Font,
                Component.literal(rowText),
                autismclient.gui.f.NetHelper.init(x, iy, textW, 13),
                hovered,
                false,
-               FileCache.Inner_DataUtil.NORMAL,
+               ListRowRenderer.Inner_DataUtil.NORMAL,
                false
             );
             int rowIndex = i;
@@ -3907,7 +3907,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   modeW,
                   13,
                   exact ? "E" : "R",
-                  exact ? ByteReader.Inner_StreamUtil.DANGER : ByteReader.Inner_StreamUtil.SUCCESS,
+                  exact ? OverlayActionButton.Inner_StreamUtil.DANGER : OverlayActionButton.Inner_StreamUtil.SUCCESS,
                   qp != null && qp.init_Packet != null,
                   mx,
                   my,
@@ -3961,7 +3961,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          AutismClientMessaging.sendPrefixed("Cleared packet list");
       });
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, bottomBtns[2], bottomY, bottomBtns[3], btnH, gbreakLbl, ByteReader.Inner_StreamUtil.SECONDARY, !this.close_Z, mx, my, () -> {
+         ctx, bottomBtns[2], bottomY, bottomBtns[3], btnH, gbreakLbl, OverlayActionButton.Inner_StreamUtil.SECONDARY, !this.close_Z, mx, my, () -> {
             if (!this.close_Z) {
                final int session = this.auditEditSession;
                AutismSessionState.init_ck().init_V_Runnable(() -> init_Minecraft.execute(() -> {
@@ -4595,7 +4595,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int modeLabelW = 28;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Dir", font, UiColorPalette.bind(), x, cy + 3, false);
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
+         ctx, x + dirLabelW, cy, dirW, 13, template.init_bJ_ConfigStore().name(), OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
             this.push(true);
             if (this.init_bE != null) {
                this.init_bE.init_Str = PayloadFieldCodec.init_Str(this.init_bE.init_Str);
@@ -4649,7 +4649,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                btnW,
                13,
                override ? "Override" : "Exact",
-               override ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.SECONDARY,
+               override ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.SECONDARY,
                true,
                mx,
                my,
@@ -4673,7 +4673,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          autismclient.gui.f.b.k.init(ctx, this.init_Font, "Packet Script", font, UiColorPalette.parse(), x, cy + 2, false);
          int psClearW = this.write_I("Clear");
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, x + w - psClearW, cy, psClearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, !this.load_List().isEmpty(), mx, my, () -> {
+            ctx, x + w - psClearW, cy, psClearW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, !this.load_List().isEmpty(), mx, my, () -> {
                ThemedTextInputBox contentField = this.init_Map.get("payload_content");
                if (contentField != null) {
                   contentField.init_V_Str("");
@@ -4693,7 +4693,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             addButtonW,
             13,
             "Add",
-            ByteReader.Inner_StreamUtil.SUCCESS,
+            OverlayActionButton.Inner_StreamUtil.SUCCESS,
             true,
             mx,
             my,
@@ -4762,7 +4762,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String sendLbl = this.close_Z ? "Send: In Game" : "Send";
       int[] sendBtns = this.init_IArr_I(x, w, false, sendLbl, "Reset");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, ByteReader.Inner_StreamUtil.SUCCESS, !this.close_Z && built.init_Z() && !modelBad, mx, my, () -> {
+         ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, OverlayActionButton.Inner_StreamUtil.SUCCESS, !this.close_Z && built.init_Z() && !modelBad, mx, my, () -> {
             if (!this.close_Z) {
                try {
                   PayloadAction action = this.load_H();
@@ -4773,7 +4773,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
       );
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, sendBtns[2], cy, sendBtns[3], 13, "Reset", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, sendBtns[2], cy, sendBtns[3], 13, "Reset", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
          this.cache();
          this.fill();
       });
@@ -4793,7 +4793,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       for (int i = 0; i < tabs.length; i++) {
          int tx = x + i * (tabW + gap);
          int tw = i == tabs.length - 1 ? Math.max(30, x + w - tx) : tabW;
-         ByteReader.Inner_StreamUtil variant = this.f_i_I == i ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.SECONDARY;
+         OverlayActionButton.Inner_StreamUtil variant = this.f_i_I == i ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.SECONDARY;
          int index = i;
          this.init_ByteReader_GuiGraphicsExtract_2(ctx, tx, y, tw, 13, tabs[i], variant, true, mx, my, () -> {
             this.push(true);
@@ -4827,8 +4827,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             set_List.size() - 1
          )
       );
-      autismclient.gui.f.b.SyncManager dd = this.run_Map
-         .computeIfAbsent("payload_add_type", key -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, set_List, idx, newIdx -> {
+      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
+         .computeIfAbsent("payload_add_type", key -> new autismclient.gui.f.b.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> {
             this.reset_Z = true;
             this.read_Map.put("payload_add_type", newIdx);
          }));
@@ -5259,8 +5259,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_I_2(int x, int y, int w, int mx, int my, PayloadFieldCodec.Inner_JsonUtil template) {
       int idx = this.init_I_bJ_StreamUtil(template == null ? PayloadFieldCodec.Inner_StreamUtil.ADVANCED_MIXED : template.init_bJ_StreamUtil());
-      autismclient.gui.f.b.SyncManager dd = this.run_Map
-         .computeIfAbsent("payload_mode", key -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, put_List, idx, newIdx -> {
+      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
+         .computeIfAbsent("payload_mode", key -> new autismclient.gui.f.b.DropdownWidget(x, y, w, 13, put_List, idx, newIdx -> {
             if (newIdx >= 0 && newIdx < add_List.size()) {
                this.push(true);
                this.clear_Z = true;
@@ -5322,13 +5322,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       int ax = valueX + valueW + gap;
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, ax, y + 2, actionW, btnH, "Up", ByteReader.Inner_StreamUtil.SECONDARY, row > 0, mx, my, () -> this.update_V(row, -1)
+         ctx, ax, y + 2, actionW, btnH, "Up", OverlayActionButton.Inner_StreamUtil.SECONDARY, row > 0, mx, my, () -> this.update_V(row, -1)
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, ax + actionW + gap, y + 2, actionW, btnH, "Dn", ByteReader.Inner_StreamUtil.SECONDARY, row < this.f_h_I - 1, mx, my, () -> this.update_V(row, 1)
+         ctx, ax + actionW + gap, y + 2, actionW, btnH, "Dn", OverlayActionButton.Inner_StreamUtil.SECONDARY, row < this.f_h_I - 1, mx, my, () -> this.update_V(row, 1)
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, ax + (actionW + gap) * 2, y + 2, actionW, btnH, "X", ByteReader.Inner_StreamUtil.DANGER, this.f_h_I > 1, mx, my, () -> this.write_V(row)
+         ctx, ax + (actionW + gap) * 2, y + 2, actionW, btnH, "X", OverlayActionButton.Inner_StreamUtil.DANGER, this.f_h_I > 1, mx, my, () -> this.write_V(row)
       );
       return y + 18;
    }
@@ -5336,8 +5336,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_I(int row, int x, int y, int w, int mx, int my) {
       String key = this.init_Str_I(row);
       int idx = Math.max(0, Math.min(this.read_Map.getOrDefault(key, this.init_I_bJ_BufferHelper(PayloadFieldCodec.Inner_BufferHelper.STRING_BYTES)), set_List.size() - 1));
-      autismclient.gui.f.b.SyncManager dd = this.run_Map
-         .computeIfAbsent(key, cacheKey -> new autismclient.gui.f.b.SyncManager(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
+      autismclient.gui.f.b.DropdownWidget dd = this.run_Map
+         .computeIfAbsent(key, cacheKey -> new autismclient.gui.f.b.DropdownWidget(x, y, w, 13, set_List, idx, newIdx -> this.write_V_I_I(row, newIdx)));
       dd.init_SyncManager_I(x, y, w, 13)
          .init_SyncManager_List(set_List)
          .init_SyncManager_I(idx)
@@ -5691,7 +5691,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                commandField.update(fieldW);
                commandField.init_V(ctx, mx, my, delta);
                this.init_ByteReader_GuiGraphicsExtract_2(
-                  ctx, ctrlX + fieldW + 2, cy + 2, btnW, 13, "Sync", ByteReader.Inner_StreamUtil.GHOST, true, mx, my, () -> {
+                  ctx, ctrlX + fieldW + 2, cy + 2, btnW, 13, "Sync", OverlayActionButton.Inner_StreamUtil.GHOST, true, mx, my, () -> {
                      this.queue();
                      this.fill();
                   }
@@ -5757,7 +5757,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.fill();
          });
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, seedBtns[2], cy, seedBtns[3], 13, sendNowLbl, ByteReader.Inner_StreamUtil.SUCCESS, !this.close_Z, mx, my, () -> {
+            ctx, seedBtns[2], cy, seedBtns[3], 13, sendNowLbl, OverlayActionButton.Inner_StreamUtil.SUCCESS, !this.close_Z, mx, my, () -> {
                if (!this.close_Z) {
                   try {
                      PayloadAction action = this.load_H();
@@ -5943,7 +5943,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int btnH = 13;
       int[] presetBtns = this.init_IArr_I(x, w, false, "Default", "Module");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, presetBtns[0], y + 2, presetBtns[1], btnH, "Default", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
+         ctx, presetBtns[0], y + 2, presetBtns[1], btnH, "Default", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
             autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
             tmp.read();
             this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
@@ -5951,7 +5951,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, presetBtns[2], y + 2, presetBtns[3], btnH, "Module", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> {
+         ctx, presetBtns[2], y + 2, presetBtns[3], btnH, "Module", OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, () -> {
             autismclient.util.macro.DelayPacketsAction tmp = new autismclient.util.macro.DelayPacketsAction();
             tmp.write();
             this.write_Map.put("c2sPackets", new ArrayList<>(tmp.c2sPacketNames));
@@ -5960,20 +5960,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
    }
 
-   private ByteReader init_ByteReader_GuiGraphicsExtract_2(
-      GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, ByteReader.Inner_StreamUtil variant, boolean active, int mx, int my, Runnable action
+   private OverlayActionButton init_ByteReader_GuiGraphicsExtract_2(
+      GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, OverlayActionButton.Inner_StreamUtil variant, boolean active, int mx, int my, Runnable action
    ) {
       return this.init_ByteReader_GuiGraphicsExtract(ctx, x, y, w, h, label, variant, active, mx, my, action, null, null, null);
    }
 
-   private ByteReader init_ByteReader_GuiGraphicsExtract(
+   private OverlayActionButton init_ByteReader_GuiGraphicsExtract(
       GuiGraphicsExtractor ctx,
       int x,
       int y,
       int w,
       int h,
       String label,
-      ByteReader.Inner_StreamUtil variant,
+      OverlayActionButton.Inner_StreamUtil variant,
       boolean active,
       int mx,
       int my,
@@ -5983,7 +5983,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return this.init_ByteReader_GuiGraphicsExtract(ctx, x, y, w, h, label, variant, active, mx, my, action, secondaryAction, null, null);
    }
 
-   private ByteReader init_ByteReader_GuiGraphicsExtract_3(
+   private OverlayActionButton init_ByteReader_GuiGraphicsExtract_3(
       GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean toggleState, String animationKey, int mx, int my, Runnable action
    ) {
       return this.init_ByteReader_GuiGraphicsExtract(
@@ -5993,7 +5993,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          w,
          h,
          label,
-         toggleState ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.DANGER,
+         toggleState ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.DANGER,
          true,
          mx,
          my,
@@ -6004,14 +6004,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
    }
 
-   private ByteReader init_ByteReader_GuiGraphicsExtract(
+   private OverlayActionButton init_ByteReader_GuiGraphicsExtract(
       GuiGraphicsExtractor ctx,
       int x,
       int y,
       int w,
       int h,
       String label,
-      ByteReader.Inner_StreamUtil variant,
+      OverlayActionButton.Inner_StreamUtil variant,
       boolean active,
       int mx,
       int my,
@@ -6020,7 +6020,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       Boolean toggleState,
       String animationKey
    ) {
-      ByteReader button = ByteReader.init(
+      OverlayActionButton button = OverlayActionButton.init(
          x, y, w, h, Component.literal(label), ignored -> action.run(), secondaryAction == null ? null : ignored -> secondaryAction.run()
       );
       button.init_ByteReader_ByteReader_StreamU(variant);
@@ -6029,18 +6029,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       button.init_Z = active;
-      ByteReader.init(ctx, this.init_Font, button, mx, my);
+      OverlayActionButton.init(ctx, this.init_Font, button, mx, my);
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(button, action));
       return button;
    }
 
-   private static int init_I_ByteReader_StreamU_Z(ByteReader.Inner_StreamUtil variant, boolean active) {
+   private static int init_I_ByteReader_StreamU_Z(OverlayActionButton.Inner_StreamUtil variant, boolean active) {
       if (!active) {
          return -2009060816;
       }
 
       int var10000;
-      switch (variant == null ? ByteReader.Inner_StreamUtil.SECONDARY : variant) {
+      switch (variant == null ? OverlayActionButton.Inner_StreamUtil.SECONDARY : variant) {
          case SUCCESS:
             var10000 = ThemePaletteManager.init_I_I_ct_DataUtil(-13248397, ThemePaletteManager.Inner_DataUtil.SUCCESS);
             break;
@@ -6063,19 +6063,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return var10000;
    }
 
-   private ByteReader init_ByteReader_GuiGraphicsExtract(
-      GuiGraphicsExtractor ctx, int x, int y, int w, int h, StreamUtil mode, boolean capturing, boolean active, int mx, int my, Runnable action
+   private OverlayActionButton init_ByteReader_GuiGraphicsExtract(
+      GuiGraphicsExtractor ctx, int x, int y, int w, int h, CaptureMode mode, boolean capturing, boolean active, int mx, int my, Runnable action
    ) {
       return this.init_ByteReader_GuiGraphicsExtract(ctx, x, y, w, h, mode, capturing, active, mx, my, null, null, action);
    }
 
-   private ByteReader init_ByteReader_GuiGraphicsExtract(
+   private OverlayActionButton init_ByteReader_GuiGraphicsExtract(
       GuiGraphicsExtractor ctx,
       int x,
       int y,
       int w,
       int h,
-      StreamUtil mode,
+      CaptureMode mode,
       boolean capturing,
       boolean active,
       int mx,
@@ -6088,7 +6088,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      ByteReader button = autismclient.gui.macro.editor.a.DataUtil.init(
+      OverlayActionButton button = autismclient.gui.macro.editor.a.CaptureButtonRenderer.init(
          ctx, this.init_Font, autismclient.gui.f.NetHelper.init(x, y, w, h), mode, capturing, active, mx, my, idleLabel, capturingLabel, action
       );
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(button, action));
@@ -6097,7 +6097,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, Runnable action) {
       boolean hovered = mx >= x && mx < x + size && my >= y && my < y + size;
-      autismclient.gui.macro.editor.a.CachePool.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
+      autismclient.gui.macro.editor.a.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (mouseButton != 0) {
             return false;
@@ -6109,7 +6109,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, int mx, int my, Runnable action) {
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, x, y, w, h, label, ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, action);
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, x, y, w, h, label, OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, action);
    }
 
    private int init_I_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int y, int w, String text) {
@@ -6402,7 +6402,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (definition.has("required")) {
                for (JsonElement required : definition.getAsJsonArray("required")) {
                   if (name.equals(required.getAsString())) {
-                     return BufferHelper.init(name);
+                     return ToolsActionSchemaBuilder.init(name);
                   }
                }
             }
@@ -6566,7 +6566,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             case STRING_LIST:
                if (this.init_Z_FieldDef(field)) {
                   this.load_V_GuiGraphicsExtract_2(ctx, field, x, y, w, mx, my);
-               } else if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
+               } else if (field.captureMode() == CaptureMode.BLOCK_CATALOG) {
                   this.update(ctx, field, x, y, w, mx, my, delta);
                } else {
                   this.write(ctx, field, x, y, w, mx, my, delta);
@@ -6662,7 +6662,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox nameF = this.init_Map.get("itemName");
       ThemedTextInputBox slotF = this.init_Map.get("place_itemSlot");
       if (nameF != null && slotF != null) {
-         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+         int pickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
          int slotW = 26;
          int gap = 3;
          int pickX = x + w - pickW;
@@ -6677,7 +6677,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          slotF.update(slotW);
          slotF.init_V(ctx, mx, my, delta);
          boolean capt = this.init_StreamUtil.init("itemName");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y, pickW, 14, StreamUtil.ITEM_SLOT, capt, true, mx, my, () -> this.close_V("itemName"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y, pickW, 14, CaptureMode.ITEM_SLOT, capt, true, mx, my, () -> this.close_V("itemName"));
       }
    }
 
@@ -6698,14 +6698,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void init_V_GuiGraphicsExtract_4(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my) {
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-      int btnW = this.init_I_StreamUtil(StreamUtil.PACKET_CLICK_TARGET, "Re-capture", "Click slot...");
+      int btnW = this.init_I_StreamUtil(CaptureMode.PACKET_CLICK_TARGET, "Re-capture", "Click slot...");
       int btnH = 13;
       int lw = this.init_I_I(w, field.label(), font, btnW);
       this.init_V_GuiGraphicsExtract_3(ctx, field.label(), x, y, lw, font);
       boolean capturing = field.key().equals(this.write_Str);
       int btnX = x + w - btnW;
       this.init_ByteReader_GuiGraphicsExtract(
-         ctx, btnX, y + 2, btnW, btnH, StreamUtil.PACKET_CLICK_TARGET, capturing, true, mx, my, "Re-capture", "Click slot...", () -> this.sync_V(field.key())
+         ctx, btnX, y + 2, btnW, btnH, CaptureMode.PACKET_CLICK_TARGET, capturing, true, mx, my, "Re-capture", "Click slot...", () -> this.sync_V(field.key())
       );
    }
 
@@ -6729,20 +6729,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int addY = y + 13;
       int[] addBtns = this.init_IArr_I(x, w, false, "+ Condition", "+ Action");
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, addBtns[0], addY, addBtns[1], 13, "+ Condition", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.init_V_List_Z(values, true)
+         ctx, addBtns[0], addY, addBtns[1], 13, "+ Condition", OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.init_V_List_Z(values, true)
       );
       this.init_ByteReader_GuiGraphicsExtract_2(
-         ctx, addBtns[2], addY, addBtns[3], 13, "+ Action", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> this.init_V_List_Z(values, false)
+         ctx, addBtns[2], addY, addBtns[3], 13, "+ Action", OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> this.init_V_List_Z(values, false)
       );
       int listY = addY + 13 + 2;
       int rowH = 14;
       int visibleRows = 4;
-      EventBus viewport = this.init_EventBus_Map(this.tick_Map, key + "_race", x, listY, w, visibleRows * rowH, rowH, 5);
+      ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, key + "_race", x, listY, w, visibleRows * rowH, rowH, 5);
       viewport.init_V(values.size() * rowH);
       viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (values.isEmpty()) {
          String hint = "Use +Cond for waits or +Act for batch actions.";
-         FileCache.init(ctx, this.init_Font, hint, x, listY, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, hint, x, listY, w - 5 - 1);
       } else {
          int buttonW = 12;
          int rowGap = 2;
@@ -6793,9 +6793,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String canonical = RaceAction.load_Str(step);
       boolean condition = RaceAction.init_Z_2(canonical);
       int bgColor = hovered ? UiColorPalette.level() : UiColorPalette.flags();
-      TableIndex.init(ctx, x, y + 1, w, h - 2, bgColor);
+      PanelSurfaceHelper.init(ctx, x, y + 1, w, h - 2, bgColor);
       int badgeColor = condition ? -30720 : -12268476;
-      TableIndex.read(ctx, x + 1, y + 3, 3, h - 6, badgeColor);
+      PanelSurfaceHelper.read(ctx, x + 1, y + 3, 3, h - 6, badgeColor);
       int numberColor = UiColorPalette.bind();
       autismclient.gui.f.b.k.init(
          ctx,
@@ -6804,7 +6804,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder.init_Identifier_l(l.read),
          numberColor,
          x + 8,
-         j.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
+         UiLayoutMath.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
          false
       );
       String role = condition ? "COND" : "ACT";
@@ -6817,7 +6817,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder.init_Identifier_l(l.load),
          roleColor,
          roleX,
-         j.init(y, h, this.init_CharEncoder.init_I_l(l.load), this.init_CharEncoder.flush()),
+         UiLayoutMath.init(y, h, this.init_CharEncoder.init_I_l(l.load), this.init_CharEncoder.flush()),
          false
       );
       String label = this.open_Str(step).replaceFirst("^(COND|ACT)\\s+", "");
@@ -6830,7 +6830,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_CharEncoder.init_Identifier_l(l.read),
          -1,
          labelX,
-         j.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
+         UiLayoutMath.init(y, h, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush()),
          false
       );
    }
@@ -6839,7 +6839,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, String symbol, boolean danger, boolean active, Runnable action
    ) {
       boolean hovered = active && mx >= x && mx < x + size && my >= y && my < y + size;
-      autismclient.gui.macro.editor.a.CachePool.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
+      autismclient.gui.macro.editor.a.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
       this.valid_List.add(new ActionEditorOverlay.Inner_StreamUtil(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (active && mouseButton == 0) {
             action.run();
@@ -6942,7 +6942,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private ContainerClickSnapshot.Inner_DataUtil init_bo_DataUtil() {
       FieldDef modeField = this.init_FieldDef_Str("mode");
-      if (modeField != null && modeField.type() == CachePool.ENUM && !modeField.enumOptions().isEmpty()) {
+      if (modeField != null && modeField.type() == FieldType.ENUM && !modeField.enumOptions().isEmpty()) {
          int idx = Math.max(0, Math.min(this.read_Map.getOrDefault("mode", 0), modeField.enumOptions().size() - 1));
          return ContainerClickSnapshot.Inner_DataUtil.init(modeField.enumOptions().get(idx));
       } else {
@@ -7024,7 +7024,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox tf = this.init_Map.get(key);
       if (tf != null) {
          Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
-         if (field.type() == CachePool.MACRO_SELECT) {
+         if (field.type() == FieldType.MACRO_SELECT) {
             this.init_V_GuiGraphicsExtract_6(ctx, field, tf, x, y, w, mx, my);
          } else if (this.read(field)) {
             autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, UiColorPalette.parse(), x, y + 2, false);
@@ -7038,10 +7038,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.init_V_FieldDef(field, tf, x + w - variableW, y + 13, variableW);
             }
          } else {
-            boolean packetPick = field.captureMode() == StreamUtil.PACKET_NAME;
-            boolean slotPick = field.type() == CachePool.SLOT && this.clear_Z();
-            boolean itemSlotPick = field.captureMode() == StreamUtil.ITEM_SLOT && this.clear_Z();
-            boolean menuButtonPick = field.captureMode() == StreamUtil.CUSTOM_MENU_BUTTON;
+            boolean packetPick = field.captureMode() == CaptureMode.PACKET_NAME;
+            boolean slotPick = field.type() == FieldType.SLOT && this.clear_Z();
+            boolean itemSlotPick = field.captureMode() == CaptureMode.ITEM_SLOT && this.clear_Z();
+            boolean menuButtonPick = field.captureMode() == CaptureMode.CUSTOM_MENU_BUTTON;
             boolean nbtBookFilePick = this.init_MacroAction != null
                && this.init_MacroAction.getType() == MacroActionType.NBT_BOOK
                && "customFilePath".equals(key);
@@ -7050,7 +7050,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int tfX = this.flush_I(x, lw);
             int variableW = this.close_Z(key) ? 24 : 0;
             if (menuButtonPick) {
-               int pickW = this.init_I_StreamUtil(StreamUtil.CUSTOM_MENU_BUTTON, null, null);
+               int pickW = this.init_I_StreamUtil(CaptureMode.CUSTOM_MENU_BUTTON, null, null);
                int availableW = Math.max(1, this.close(w, lw) - (variableW > 0 ? variableW + 2 : 0));
                int tfW = Math.max(1, availableW - pickW - 2);
                tf.read(tfX);
@@ -7058,7 +7058,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                tf.update(tfW);
                tf.init_V(ctx, mx, my, delta);
                String fKey = key;
-               this.init_ByteReader_GuiGraphicsExtract(ctx, tfX + tfW + 2, y + 2, pickW, 13, StreamUtil.CUSTOM_MENU_BUTTON, false, true, mx, my, () -> this.flush_V(fKey));
+               this.init_ByteReader_GuiGraphicsExtract(ctx, tfX + tfW + 2, y + 2, pickW, 13, CaptureMode.CUSTOM_MENU_BUTTON, false, true, mx, my, () -> this.flush_V(fKey));
                if (variableW > 0) {
                   this.init_V_FieldDef(field, tf, tfX + tfW + pickW + 4, y + 2, variableW);
                }
@@ -7071,7 +7071,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                tf.update(tfW);
                tf.init_V(ctx, mx, my, delta);
                this.init_ByteReader_GuiGraphicsExtract_2(
-                  ctx, tfX + tfW + 2, y + 2, pickW, 13, "Pick", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.init_V_k(tf)
+                  ctx, tfX + tfW + 2, y + 2, pickW, 13, "Pick", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.init_V_k(tf)
                );
                if (variableW > 0) {
                   this.init_V_FieldDef(field, tf, tfX + tfW + pickW + 4, y + 2, variableW);
@@ -7086,7 +7086,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.init_V_FieldDef(field, tf, tfX + tfW + 2, y + 2, variableW);
                }
             } else {
-               int pickW = this.init_I_StreamUtil(packetPick ? StreamUtil.PACKET_NAME : StreamUtil.ITEM_SLOT, null, null);
+               int pickW = this.init_I_StreamUtil(packetPick ? CaptureMode.PACKET_NAME : CaptureMode.ITEM_SLOT, null, null);
                int availableW = Math.max(1, this.close(w, lw) - (variableW > 0 ? variableW + 2 : 0));
                int tfW = slotPick ? Math.max(26, availableW - pickW - 2) : Math.max(1, availableW - pickW - 2);
                tf.read(tfX);
@@ -7097,7 +7097,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean capt = !packetPick && this.init_StreamUtil.init(key);
                String fKey = key;
                this.init_ByteReader_GuiGraphicsExtract(
-                  ctx, pkX, y + 2, pickW, 14, packetPick ? StreamUtil.PACKET_NAME : StreamUtil.ITEM_SLOT, capt, true, mx, my, () -> {
+                  ctx, pkX, y + 2, pickW, 14, packetPick ? CaptureMode.PACKET_NAME : CaptureMode.ITEM_SLOT, capt, true, mx, my, () -> {
                      if (packetPick) {
                         this.run_V(fKey);
                      } else {
@@ -7159,8 +7159,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_Str_2(String key, ThemedTextInputBox textField, int x, int y, int width) {
       if (this.close_Z(key) && textField != null) {
          String cacheKey = "__vars_" + key;
-         autismclient.gui.f.b.SyncManager dropdown = this.run_Map
-            .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.f.b.SyncManager(x, y, width, 13, this.flush_List, 0, index -> {}));
+         autismclient.gui.f.b.DropdownWidget dropdown = this.run_Map
+            .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.f.b.DropdownWidget(x, y, width, 13, this.flush_List, 0, index -> {}));
          dropdown.init_SyncManager_I(x, y, width, 13).init_SyncManager_List(this.flush_List).init_SyncManager_Str("{}").init_SyncManager_IntConsumer(index -> {
             if (index >= 0 && index < this.flush_List.size()) {
                textField.read(this.flush_List.get(index));
@@ -7319,7 +7319,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, field.label(), font, UiColorPalette.parse(), x, y + 2, false);
       int badgeW = Math.min(150, Math.max(60, w / 2));
       int badgeX = x + w - badgeW;
-      TableIndex.read(ctx, badgeX, y + 1, badgeW, 14);
+      PanelSurfaceHelper.read(ctx, badgeX, y + 1, badgeW, 14);
       String selectedLabel = current.isBlank() ? "No macro selected" : current;
       String selectedTrimmed = autismclient.gui.f.b.k.init(this.init_Font, selectedLabel, badgeW - 6, font, -1);
       autismclient.gui.f.b.k.init(ctx, this.init_Font, selectedTrimmed, font, current.isBlank() ? UiColorPalette.a() : UiColorPalette.scan(), badgeX + 3, y + 3, false);
@@ -7327,12 +7327,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int listH = 70;
       int itemW = w - 5 - 1;
       String viewportKey = "macro_select_" + field.key();
-      EventBus viewport = this.init_EventBus_Map(this.tick_Map, viewportKey, x, listY, w, listH, 14, 5);
+      ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, viewportKey, x, listY, w, listH, 14, 5);
       viewport.init_V(macros.size() * 14);
       viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (macros.isEmpty()) {
-         TableIndex.init(ctx, x, listY, itemW, 13, false, false);
-         FileCache.init(ctx, this.init_Font, "No saved macros", x, listY, itemW);
+         PanelSurfaceHelper.init(ctx, x, listY, itemW, 13, false, false);
+         ListRowRenderer.init(ctx, this.init_Font, "No saved macros", x, listY, itemW);
       } else {
          viewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
          int first = viewport.pop();
@@ -7344,7 +7344,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (iy != -2147483648) {
                if (folderRow.init_Z()) {
                   autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, iy, itemW, 14);
-                  autismclient.gui.f.b.TaskQueue.load(
+                  autismclient.gui.f.b.GroupHeaderRenderer.load(
                      UiHelper.init(ctx, this.init_Font, mx, my), bounds, folderRow.init_Str(), folderRow.load_Z(), bounds.init_Z(mx, my)
                   );
                   int hitTop = Math.max(iy, listY);
@@ -7360,14 +7360,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                } else {
                   boolean selected = macroName.equals(current);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + 14;
-                  autismclient.gui.macro.editor.a.CachePool.init(
+                  autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                      ctx,
                      this.init_Font,
                      Component.literal(macroName),
                      autismclient.gui.f.NetHelper.init(x, iy, itemW, 14),
                      hovered,
                      selected,
-                     FileCache.Inner_DataUtil.NORMAL,
+                     ListRowRenderer.Inner_DataUtil.NORMAL,
                      false
                   );
                   String selectedMacro = macroName;
@@ -7408,11 +7408,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          } else {
             boolean toolsLabels = this.init_MacroAction instanceof ToolsAction || key.startsWith("cond_tool");
-            List<String> displayOpts = toolsLabels ? opts.stream().map(value -> BufferHelper.init(key, value)).toList() : opts;
+            List<String> displayOpts = toolsLabels ? opts.stream().map(value -> ToolsActionSchemaBuilder.init(key, value)).toList() : opts;
             int ddW = this.init_I_List_I(displayOpts, valueW);
-            autismclient.gui.f.b.SyncManager dd = this.run_Map
+            autismclient.gui.f.b.DropdownWidget dd = this.run_Map
                .computeIfAbsent(
-                  key, k -> new autismclient.gui.f.b.SyncManager(ctrlX, y + 2, ddW, ddH, displayOpts, idx, newIdx -> this.init_V_FieldDef_I(field, newIdx))
+                  key, k -> new autismclient.gui.f.b.DropdownWidget(ctrlX, y + 2, ddW, ddH, displayOpts, idx, newIdx -> this.init_V_FieldDef_I(field, newIdx))
                );
             dd.init_SyncManager_I(ctrlX, y + 2, ddW, ddH)
                .init_SyncManager_List(displayOpts)
@@ -7431,8 +7431,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       options.add("Static");
       options.addAll(this.flush_List);
       String cacheKey = "__enum_vars_" + field.key();
-      autismclient.gui.f.b.SyncManager dropdown = this.run_Map
-         .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.f.b.SyncManager(x, y, width, 13, options, 0, index -> {}));
+      autismclient.gui.f.b.DropdownWidget dropdown = this.run_Map
+         .computeIfAbsent(cacheKey, ignored -> new autismclient.gui.f.b.DropdownWidget(x, y, width, 13, options, 0, index -> {}));
       dropdown.init_SyncManager_I(x, y, width, 13).init_SyncManager_List(options).init_SyncManager_Str("{}").init_SyncManager_IntConsumer(index -> {
          if (index <= 0) {
             bindingField.init_V_Str("");
@@ -7449,7 +7449,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String key = field.key();
       Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
       String[] axis = new String[]{"X", "Y", "Z"};
-      boolean hasCapture = field.captureMode() != StreamUtil.NONE && this.init_Z_StreamUtil(field.captureMode());
+      boolean hasCapture = field.captureMode() != CaptureMode.NONE && this.init_Z_StreamUtil(field.captureMode());
       int capBtnW = this.init_I_StreamUtil(field.captureMode(), null, null);
       int capBtnH = 13;
       int labelW = hasCapture ? w - capBtnW - 4 : w;
@@ -7457,7 +7457,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.init_MacroAction instanceof ToolsAction && "position".equals(key) && !"OFFSET".equals(this.tick_Str("destination"))) {
          int currentW = autismclient.gui.f.b.k.init(this.init_Font, "Use current", font, UiColorPalette.scan()) + 12;
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, x + w - currentW, y, currentW, 13, "Use current", ByteReader.Inner_StreamUtil.SECONDARY, init_Minecraft.player != null, mx, my, () -> {
+            ctx, x + w - currentW, y, currentW, 13, "Use current", OverlayActionButton.Inner_StreamUtil.SECONDARY, init_Minecraft.player != null, mx, my, () -> {
                if (init_Minecraft.player != null) {
                   BlockPos position = init_Minecraft.player.blockPosition();
                   int[] values = new int[]{position.getX(), position.getY(), position.getZ()};
@@ -7522,16 +7522,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       String filter = !editable && af != null ? af.load_Str().toLowerCase() : "";
       String emptyHint = this.pop_Str(key);
-      List<Integer> filtered = autismclient.gui.macro.editor.a.CachePool.init(
+      List<Integer> filtered = autismclient.gui.macro.editor.a.EditorListRowHelper.init(
          lst, this.push_Map.computeIfAbsent(key, ignored -> new ArrayList<>()), value -> filter.isEmpty() || value.toLowerCase().contains(filter)
       );
       String sectionLabel = filter.isEmpty() ? field.label() + " (" + lst.size() + ")" : field.label() + " (" + filtered.size() + "/" + lst.size() + ")";
       autismclient.gui.f.b.k.init(ctx, this.init_Font, sectionLabel, font, UiColorPalette.parse(), x, y + 2, false);
-      boolean hasCapture = field.captureMode() != StreamUtil.NONE && this.init_Z_StreamUtil(field.captureMode());
+      boolean hasCapture = field.captureMode() != CaptureMode.NONE && this.init_Z_StreamUtil(field.captureMode());
       boolean hasSlotField = editable && this.reset_Z(key);
       int btnH = 13;
       int addY = y + 13;
-      autismclient.gui.macro.editor.a.CachePool.Inner_DataUtil toolbar = autismclient.gui.macro.editor.a.CachePool.init(
+      autismclient.gui.macro.editor.a.EditorListRowHelper.Inner_DataUtil toolbar = autismclient.gui.macro.editor.a.EditorListRowHelper.init(
          autismclient.gui.f.NetHelper.init(x, addY, w, 13), hasSlotField, hasCapture
       );
       int slotW = toolbar.load() == null ? 0 : toolbar.load().update();
@@ -7575,7 +7575,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox fSlotField = slotField;
       if (af != null) {
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+            ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
                String nameText = af.load_Str().strip();
                String slotText = hasSlotField && fSlotField != null ? fSlotField.load_Str().strip() : "";
                String entry = write_Str_Str_Str(nameText, slotText);
@@ -7592,7 +7592,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (hasCapture) {
-         boolean isItemSlot = field.captureMode() == StreamUtil.ITEM_SLOT;
+         boolean isItemSlot = field.captureMode() == CaptureMode.ITEM_SLOT;
          boolean capturing = isItemSlot && this.init_StreamUtil.init(key);
          String fKey = key;
          FieldDef fField = field;
@@ -7635,7 +7635,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             boolean custom = this.init_aQ_DataUtil_I(editIdx) == XCarryAction.Inner_DataUtil.CUSTOM;
             int amountBtnW = Math.max(this.write_I("Count"), this.write_I("FullStk"));
             this.init_ByteReader_GuiGraphicsExtract_2(
-               ctx, modeX, amountY, amountBtnW, btnH, custom ? "Count" : "FullStk", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
+               ctx, modeX, amountY, amountBtnW, btnH, custom ? "Count" : "FullStk", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> {
                   boolean nowCustom = this.init_aQ_DataUtil_I(selectedXCarryIndex) == XCarryAction.Inner_DataUtil.CUSTOM;
                   this.init_V_I_aQ_DataUtil(selectedXCarryIndex, nowCustom ? XCarryAction.Inner_DataUtil.FULL_STK : XCarryAction.Inner_DataUtil.CUSTOM);
                   ThemedTextInputBox cf = this.init_Map.get(key + "_xcarry_count");
@@ -7665,7 +7665,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      EventBus strViewport = this.init_EventBus_Map(this.tick_Map, key, x, itemsY, w, selAreaH, 14, 5);
+      ScrollableListView strViewport = this.init_EventBus_Map(this.tick_Map, key, x, itemsY, w, selAreaH, 14, 5);
       strViewport.init_V(filtered.size() * 14);
       strViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (!filtered.isEmpty()) {
@@ -7680,20 +7680,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                Component displayValue = this.init_Component_Str(key, lst.get(ri), ri);
                boolean selected = editable && ri == editIdx;
                boolean hovered = mx >= x && mx < x + rowAreaW && my >= iy && my < iy + 14;
-               if (field.captureMode() == StreamUtil.PACKET_NAME) {
+               if (field.captureMode() == CaptureMode.PACKET_NAME) {
                   int textColor = this.init_I_Str(lst.get(ri), ri, selected);
-                  autismclient.gui.macro.editor.a.CachePool.init(
+                  autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                      ctx, this.init_Font, displayValue, autismclient.gui.f.NetHelper.init(x, iy, rowAreaW, 14), hovered, selected, textColor, this.reset_Z(key)
                   );
                } else {
-                  autismclient.gui.macro.editor.a.CachePool.init(
+                  autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                      ctx,
                      this.init_Font,
                      displayValue,
                      autismclient.gui.f.NetHelper.init(x, iy, rowAreaW, 14),
                      hovered,
                      selected,
-                     FileCache.Inner_DataUtil.NORMAL,
+                     ListRowRenderer.Inner_DataUtil.NORMAL,
                      this.reset_Z(key)
                   );
                }
@@ -7747,8 +7747,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   String ddKey = key + "_xcarry_dest_" + fDestIndex;
                   int ddX = actionX;
                   int ddY = iy + 1;
-                  autismclient.gui.f.b.SyncManager dd = this.run_Map
-                     .computeIfAbsent(ddKey, k -> new autismclient.gui.f.b.SyncManager(ddX, ddY, destW, 13, destOptions, selectedDestIndex, newIdx -> {
+                  autismclient.gui.f.b.DropdownWidget dd = this.run_Map
+                     .computeIfAbsent(ddKey, k -> new autismclient.gui.f.b.DropdownWidget(ddX, ddY, destW, 13, destOptions, selectedDestIndex, newIdx -> {
                         if (newIdx >= 0 && newIdx < destValues.length) {
                            this.sync_V(fDestIndex, destValues[newIdx]);
                         }
@@ -7773,7 +7773,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      amountW,
                      13,
                      amountLabel,
-                     custom ? ByteReader.Inner_StreamUtil.SUCCESS : ByteReader.Inner_StreamUtil.SECONDARY,
+                     custom ? OverlayActionButton.Inner_StreamUtil.SUCCESS : OverlayActionButton.Inner_StreamUtil.SECONDARY,
                      true,
                      mx,
                      my,
@@ -7808,7 +7808,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.open_Map.put(key, this.open_Map.get(key) - 1);
                   }
 
-                  EventBus vp = this.tick_Map.get(key);
+                  ScrollableListView vp = this.tick_Map.get(key);
                   if (vp != null) {
                      vp.read_V(-1);
                   }
@@ -7823,8 +7823,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          strViewport.init(ctx);
       } else if (emptyHint != null && !emptyHint.isBlank()) {
          int itemW = w - 5 - 1;
-         TableIndex.init(ctx, x, itemsY, itemW, 12, false, false);
-         FileCache.init(ctx, this.init_Font, emptyHint, x, itemsY, itemW);
+         PanelSurfaceHelper.init(ctx, x, itemsY, itemW, 12, false, false);
+         ListRowRenderer.init(ctx, this.init_Font, emptyHint, x, itemsY, itemW);
       }
    }
 
@@ -7850,7 +7850,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 13;
       int delW = 13;
       int selAreaH = 56;
-      EventBus catSelViewport = this.init_EventBus_Map(this.tick_Map, key, x, cy, w, selAreaH, 14, 5);
+      ScrollableListView catSelViewport = this.init_EventBus_Map(this.tick_Map, key, x, cy, w, selAreaH, 14, 5);
       catSelViewport.init_V(sel.size() * 14);
       catSelViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (!sel.isEmpty()) {
@@ -7862,20 +7862,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int siy = catSelViewport.init_I(i);
             if (siy != -2147483648) {
                String display = RegistryDisplayNameCache.load(sel.get(i));
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(display),
                   autismclient.gui.f.NetHelper.init(x, siy, delX - x - 1, 13),
                   mx >= x && mx < delX - 1 && my >= siy && my < siy + 13,
                   false,
-                  FileCache.Inner_DataUtil.NORMAL,
+                  ListRowRenderer.Inner_DataUtil.NORMAL,
                   false
                );
                int fi = i;
                this.init_V_GuiGraphicsExtract_2(ctx, delX, siy, delW, mx, my, () -> {
                   sel.remove(fi);
-                  EventBus vp = this.tick_Map.get(key);
+                  ScrollableListView vp = this.tick_Map.get(key);
                   if (vp != null) {
                      vp.read_V(-1);
                   }
@@ -7885,11 +7885,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          catSelViewport.init(ctx);
       } else {
-         FileCache.init(ctx, this.init_Font, "(none selected)", x, cy, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, "(none selected)", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 1, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 1, w, UiColorPalette.c());
       cy += 5;
       if (af != null) {
          af.read(x);
@@ -7905,19 +7905,19 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int cbX = x + w - capBtnW2;
       int headerTextW = Math.max(24, cbX - x - 4);
       String headerLabel = autismclient.gui.f.b.k.init(this.init_Font, "Available Blocks", headerTextW, font, UiColorPalette.parse());
-      int headerTextY = j.init(cy, headerH, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush());
+      int headerTextY = UiLayoutMath.init(cy, headerH, this.init_CharEncoder.init_I_l(l.read), this.init_CharEncoder.flush());
       this.init_ByteReader_GuiGraphicsExtract(
          ctx, cbX, cy, capBtnW2, capBtnH2, field.captureMode(), false, true, mx, my, () -> this.init_V_FieldDef_List(field, sel)
       );
       autismclient.gui.f.b.k.init(ctx, this.init_Font, headerLabel, font, UiColorPalette.parse(), x, headerTextY, false);
       cy += headerH + 2;
-      List<String> filtered = autismclient.gui.macro.editor.a.CachePool.load(
+      List<String> filtered = autismclient.gui.macro.editor.a.EditorListRowHelper.load(
          pop_List(),
          this.pop_Map.computeIfAbsent(key + "_catalog", ignored -> new ArrayList<>()),
          idx -> init_Z_Str_StrArr(filter, idx, clear_Str_Str(idx), RegistryDisplayNameCache.load(idx))
       );
       int catItemW = w - 5 - 1;
-      EventBus catViewport = this.init_EventBus_Map(this.close_Map, key, x, cy, w, 60, 13, 5);
+      ScrollableListView catViewport = this.init_EventBus_Map(this.close_Map, key, x, cy, w, 60, 13, 5);
       catViewport.init_V(filtered.size() * 13);
       catViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       catViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
@@ -7930,14 +7930,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             String display = RegistryDisplayNameCache.load(id);
             boolean already = sel.contains(id);
             boolean hov = mx >= x && mx < x + catItemW && my >= iy && my < iy + 13;
-            autismclient.gui.macro.editor.a.CachePool.init(
+            autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                ctx,
                this.init_Font,
                Component.literal(display),
                autismclient.gui.f.NetHelper.init(x, iy, catItemW, 13),
                hov,
                already,
-               already ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
+               already ? ListRowRenderer.Inner_DataUtil.READY : ListRowRenderer.Inner_DataUtil.NORMAL,
                false
             );
             if (!already) {
@@ -7960,7 +7960,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int tick_I() {
-      return this.init_Str_2.isBlank() ? 0 : RenderState.init(12);
+      return this.init_Str_2.isBlank() ? 0 : UiDensityMetrics.init(12);
    }
 
    private int run_I() {
@@ -7975,9 +7975,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.run_Z || this.isLegacyMulti()) {
          int closeW = this.write_I("Close");
          int closeX = this.bind + (this.f_b_I - closeW) / 2;
-         TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.c());
+         PanelSurfaceHelper.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.c());
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, closeX, btnY, closeW, btnH, "Close", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
+            ctx, closeX, btnY, closeW, btnH, "Close", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
          );
       } else {
          String saveLbl = this.init_H != null ? "Save Macro" : "Save";
@@ -7990,7 +7990,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          int total = cancelW + saveW + gap;
          int sx = this.bind + (this.f_b_I - total) / 2;
-         TableIndex.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.c());
+         PanelSurfaceHelper.init(ctx, this.bind + 4, footerY, this.f_b_I - 8, UiColorPalette.c());
          if (!variableWarning.isBlank()) {
             Identifier font = this.init_CharEncoder.init_Identifier_l(l.read);
             String text = autismclient.gui.f.b.k.init(this.init_Font, variableWarning, this.f_b_I - 8, font, -1);
@@ -8001,17 +8001,17 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                font,
                -38037,
                this.bind + Math.max(4, (this.f_b_I - this.init_I_Identifier_Str(font, text)) / 2),
-               j.init(footerY + 2, warnH, this.init_I_Identifier(font), this.init_CharEncoder.flush()),
+               UiLayoutMath.init(footerY + 2, warnH, this.init_I_Identifier(font), this.init_CharEncoder.flush()),
                false
             );
          }
 
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, sx, btnY, cancelW, btnH, "Cancel", ByteReader.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
+            ctx, sx, btnY, cancelW, btnH, "Cancel", OverlayActionButton.Inner_StreamUtil.SECONDARY, true, mx, my, () -> this.set(false)
          );
          int saveX = sx + cancelW + gap;
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, saveX, btnY, saveW, btnH, saveLbl, ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.set(true)
+            ctx, saveX, btnY, saveW, btnH, saveLbl, OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.set(true)
          );
       }
    }
@@ -8467,7 +8467,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                this.write_Map.put(key, list);
                ThemedTextInputBox af = this.init_k_I(80);
-               if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
+               if (field.captureMode() == CaptureMode.BLOCK_CATALOG) {
                   af.init_V_Component(Component.literal("Search blocks..."));
                } else {
                   af.init_V_Component(Component.literal("Search / " + field.addLabel()));
@@ -8526,7 +8526,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ToolsAction draft = new ToolsAction();
             draft.fromTag(this.init_CompoundTag);
             DynamicBindingManager.init(draft, this.init_CompoundTag);
-            this.init_ActionFieldSchema = BufferHelper.init(draft);
+            this.init_ActionFieldSchema = ToolsActionSchemaBuilder.init(draft);
             this.init_Map.clear();
             this.load_Map.clear();
             this.read_Map.clear();
@@ -9089,12 +9089,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int imx = (int)mx;
       int imy = (int)my;
       if (!this.sync_List.isEmpty()) {
-         if (autismclient.gui.f.b.SyncManager.init_Z_List_2(this.sync_List, mx, my, button)) {
+         if (autismclient.gui.f.b.DropdownWidget.init_Z_List_2(this.sync_List, mx, my, button)) {
             OverlayManager.init_bk().update_V(this);
             return true;
          }
 
-         if (autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List)) {
+         if (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
             return true;
          }
       }
@@ -9174,14 +9174,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (bodyInputAllowed) {
-         for (EventBus vp : this.tick_Map.values()) {
+         for (ScrollableListView vp : this.tick_Map.values()) {
             if (vp.load(mx, my)) {
                vp.init_Z_D_2(mx, my, button);
                return true;
             }
          }
 
-         for (EventBus vp : this.close_Map.values()) {
+         for (ScrollableListView vp : this.close_Map.values()) {
             if (vp.load(mx, my)) {
                vp.init_Z_D_2(mx, my, button);
                return true;
@@ -9232,14 +9232,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       boolean consumed = false;
 
-      for (EventBus vp : this.tick_Map.values()) {
+      for (ScrollableListView vp : this.tick_Map.values()) {
          if (vp.init_Z()) {
             vp.read_V();
             consumed = true;
          }
       }
 
-      for (EventBus vp : this.close_Map.values()) {
+      for (ScrollableListView vp : this.close_Map.values()) {
          if (vp.init_Z()) {
             vp.read_V();
             consumed = true;
@@ -9271,7 +9271,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          consumed = true;
       }
 
-      if (autismclient.gui.f.b.SyncManager.write(this.sync_List)) {
+      if (autismclient.gui.f.b.DropdownWidget.write(this.sync_List)) {
          return true;
       }
 
@@ -9301,7 +9301,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      if (autismclient.gui.f.b.SyncManager.load(this.sync_List, mx, my, button)) {
+      if (autismclient.gui.f.b.DropdownWidget.load(this.sync_List, mx, my, button)) {
          return true;
       }
 
@@ -9341,14 +9341,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      for (EventBus vp : this.tick_Map.values()) {
+      for (ScrollableListView vp : this.tick_Map.values()) {
          if (vp.init_Z()) {
             vp.init_V_D_D(mx, my);
             return true;
          }
       }
 
-      for (EventBus vp : this.close_Map.values()) {
+      for (ScrollableListView vp : this.close_Map.values()) {
          if (vp.init_Z()) {
             vp.init_V_D_D(mx, my);
             return true;
@@ -9376,8 +9376,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (this.write_Z && this.init_Z_D_D(mx, my)) {
          if (!this.sync_List.isEmpty()
-            && (autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List) || autismclient.gui.f.b.SyncManager.init(this.sync_List, mx, my))
-            && autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List, mx, my, amount)) {
+            && (autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List) || autismclient.gui.f.b.DropdownWidget.init(this.sync_List, mx, my))
+            && autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List, mx, my, amount)) {
             return true;
          }
 
@@ -9395,16 +9395,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
             }
 
-            for (Entry<String, EventBus> entry : this.tick_Map.entrySet()) {
-               EventBus vp = entry.getValue();
+            for (Entry<String, ScrollableListView> entry : this.tick_Map.entrySet()) {
+               ScrollableListView vp = entry.getValue();
                if (vp.init_Z_D_D(mx, my)) {
                   vp.init_Z_D(mx, my, amount);
                   return true;
                }
             }
 
-            for (Entry<String, EventBus> entry : this.close_Map.entrySet()) {
-               EventBus vp = entry.getValue();
+            for (Entry<String, ScrollableListView> entry : this.close_Map.entrySet()) {
+               ScrollableListView vp = entry.getValue();
                if (vp.init_Z_D_D(mx, my)) {
                   vp.init_Z_D(mx, my, amount);
                   return true;
@@ -9439,7 +9439,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return this.init_RaceStepSelectorOv.init_Z_I(keyCode, scanCode, modifiers);
       }
 
-      if (!autismclient.gui.f.b.SyncManager.init_Z_List(this.sync_List)) {
+      if (!autismclient.gui.f.b.DropdownWidget.init_Z_List(this.sync_List)) {
          if (keyCode == 256) {
             if (this.poll_Z_2()) {
                return true;
@@ -9469,7 +9469,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       } else {
          if (keyCode == 256 || keyCode == 257) {
-            autismclient.gui.f.b.SyncManager.read(this.sync_List);
+            autismclient.gui.f.b.DropdownWidget.read(this.sync_List);
          }
 
          return true;
@@ -9700,7 +9700,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-         if (field.key().equals(key) && field.type() == CachePool.ENUM) {
+         if (field.key().equals(key) && field.type() == FieldType.ENUM) {
             List<String> opts = field.enumOptions();
             if (opts.isEmpty()) {
                return "";
@@ -11094,7 +11094,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       List<String> selected = this.write_Map.getOrDefault("soundIds", Collections.emptyList());
       cy = this.init_I_GuiGraphicsExtract_2(ctx, x, cy, w, mx, my, "wait_sound_selected", "Sounds", selected, value -> {
          selected.remove(value);
-         EventBus vp = this.tick_Map.get("wait_sound_selected");
+         ScrollableListView vp = this.tick_Map.get("wait_sound_selected");
          if (vp != null) {
             vp.read_V(-1);
          }
@@ -11264,7 +11264,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int storeEditIdx = this.open_Map.getOrDefault("store_items_selected", -1);
          boolean storeEditing = storeEditIdx >= 0 && storeEditIdx < selected.size();
          ThemedTextInputBox search = this.flush_Map.get("targetItems");
-         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+         int pickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
          int addBtnW = this.write_I("+Add");
          int slotW = 44;
          int capBtnX = x + w - pickW;
@@ -11314,7 +11314,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          ThemedTextInputBox fStoreSlotF = storeSlotF;
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, "+Add", OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (search != null) {
                String nameText = search.load_Str().strip();
                String slotText = fStoreSlotF.load_Str().strip();
@@ -11333,7 +11333,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          });
          boolean capturing = this.init_StreamUtil.init("targetItems");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, capBtnX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, capBtnX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
          cy += 18;
          String filter = search != null ? search.load_Str().trim().toLowerCase() : "";
          List<String> filtered = this.init_List_Str_2("store_items_search", push_List(), filter, RegistryDisplayNameCache::init);
@@ -11411,7 +11411,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          boolean auditEditing = auditEditIdx >= 0 && auditEditIdx < selected.size();
          ThemedTextInputBox search = this.flush_Map.get("targetItems");
          String addLabel = auditEditing ? "New" : "+Add";
-         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+         int pickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
          int addBtnW = this.write_I(addLabel);
          int slotW = 26;
          int pickX = x + w - addBtnW - 3 - pickW;
@@ -11462,8 +11462,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          ThemedTextInputBox fAuditSlotF = auditSlotF;
          boolean capturing = this.init_StreamUtil.init("targetItems");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
-         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, addLabel, ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("targetItems"));
+         this.init_ByteReader_GuiGraphicsExtract_2(ctx, addBtnX, cy, addBtnW, 13, addLabel, OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
             if (search != null) {
                if (this.open_Map.getOrDefault("audit_items_selected", -1) >= 0) {
                   this.open_Map.put("audit_items_selected", -1);
@@ -11617,8 +11617,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int rowH = 13;
       List<ActionEditorOverlay.Inner_BufferHelper> entries = this.load_List_Str(query);
       if (entries.isEmpty()) {
-         TableIndex.init(ctx, x, y, w, 12, false, false);
-         FileCache.init(ctx, this.init_Font, "No players found", x, y, w);
+         PanelSurfaceHelper.init(ctx, x, y, w, 12, false, false);
+         ListRowRenderer.init(ctx, this.init_Font, "No players found", x, y, w);
          return y + rowH;
       }
 
@@ -11664,14 +11664,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean sel = this.init_Z_List_Str(selected, row.load());
                boolean hovered = mx >= x && mx < x + w && my >= iy && my < iy + rowH;
                String label = autismclient.gui.f.b.k.init(this.init_Font, "  " + row.load(), w - 6, font, UiColorPalette.parse());
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(label),
                   autismclient.gui.f.NetHelper.init(x, iy, w, rowH),
                   hovered,
                   sel,
-                  sel ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
+                  sel ? ListRowRenderer.Inner_DataUtil.READY : ListRowRenderer.Inner_DataUtil.NORMAL,
                   false
                );
                String name = row.load();
@@ -11693,9 +11693,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       boolean canClear = !selected.isEmpty();
       int tmClearW = this.write_I("Clear");
       int clearX = x + w - tmClearW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, tmClearW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, tmClearW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
          selected.clear();
-         EventBus vp = this.tick_Map.get("toggle_module_selected");
+         ScrollableListView vp = this.tick_Map.get("toggle_module_selected");
          if (vp != null) {
             vp.load_V(0);
          }
@@ -11703,11 +11703,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 14;
       int listH = 56;
       int itemW = w - 5 - 1;
-      EventBus toggleViewport = this.init_EventBus_Map(this.tick_Map, "toggle_module_selected", x, cy, w, listH, 14, 5);
+      ScrollableListView toggleViewport = this.init_EventBus_Map(this.tick_Map, "toggle_module_selected", x, cy, w, listH, 14, 5);
       toggleViewport.init_V(selected.size() * 14);
       toggleViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (selected.isEmpty()) {
-         FileCache.init(ctx, this.init_Font, "Pick modules below.", x, cy, itemW);
+         ListRowRenderer.init(ctx, this.init_Font, "Pick modules below.", x, cy, itemW);
       } else {
          toggleViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
          int first = toggleViewport.pop();
@@ -11727,14 +11727,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int modeW = this.init_I_List_I(tmOptions, 52);
                int rowW = itemW - removeW - modeW - 4;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy + 1 && my < iy + 14;
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(entry.init_Str),
                   autismclient.gui.f.NetHelper.init(x, iy + 1, rowW, 13),
                   hovered,
                   false,
-                  FileCache.Inner_DataUtil.NORMAL,
+                  ListRowRenderer.Inner_DataUtil.NORMAL,
                   false
                );
                int modeX = x + rowW + 2;
@@ -11748,7 +11748,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.init_V_GuiGraphicsExtract_2(ctx, removeX, iy + 1, removeW, mx, my, () -> {
                   if (entryIndex >= 0 && entryIndex < selected.size()) {
                      selected.remove(entryIndex);
-                     EventBus vp = this.tick_Map.get("toggle_module_selected");
+                     ScrollableListView vp = this.tick_Map.get("toggle_module_selected");
                      if (vp != null) {
                         vp.read_V(-1);
                      }
@@ -11825,8 +11825,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int x, int y, int w, String listKey, int visibleRows, String message) {
       int listH = visibleRows * 13;
       int itemW = w - 5 - 1;
-      TableIndex.init(ctx, x, y, itemW, 12, false, false);
-      FileCache.init(ctx, this.init_Font, this.write_Str(message), x, y, itemW);
+      PanelSurfaceHelper.init(ctx, x, y, itemW, 12, false, false);
+      ListRowRenderer.init(ctx, this.init_Font, this.write_Str(message), x, y, itemW);
    }
 
    private void b() {
@@ -11834,7 +11834,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.get_Map.clear();
       this.set_Map.clear();
       this.state_Z = true;
-      EventBus vp = this.close_Map.get("pay_players_scan");
+      ScrollableListView vp = this.close_Map.get("pay_players_scan");
       if (vp != null) {
          vp.load_V(0);
       }
@@ -11897,12 +11897,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void c() {
       this.stop_List.clear();
-      EventBus autismVp = this.close_Map.get("toggle_module_autism_registry");
+      ScrollableListView autismVp = this.close_Map.get("toggle_module_autism_registry");
       if (autismVp != null) {
          autismVp.load_V(0);
       }
 
-      EventBus emptyVp = this.close_Map.get("toggle_module_registry_empty");
+      ScrollableListView emptyVp = this.close_Map.get("toggle_module_registry_empty");
       if (emptyVp != null) {
          emptyVp.load_V(0);
       }
@@ -11923,7 +11923,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<String> init_List_Str_2(String cacheKey, List<String> source, String query, Function<String, String> labeler) {
       String filter = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       List<String> target = this.pop_Map.computeIfAbsent(cacheKey, ignored -> new ArrayList<>());
-      return autismclient.gui.macro.editor.a.CachePool.load(
+      return autismclient.gui.macro.editor.a.EditorListRowHelper.load(
          source, target, id -> id != null && init_Z_Str_StrArr(filter, id, clear_Str_Str(id), labeler.apply(id))
       );
    }
@@ -11932,7 +11932,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (source != null && !source.isEmpty()) {
          String filter = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
          List<String> target = cacheKey == null ? new ArrayList<>() : this.pop_Map.computeIfAbsent(cacheKey, ignored -> new ArrayList<>());
-         return autismclient.gui.macro.editor.a.CachePool.load(
+         return autismclient.gui.macro.editor.a.EditorListRowHelper.load(
             source, target, value -> value != null && (filter.isEmpty() || value.toLowerCase(Locale.ROOT).contains(filter))
          );
       } else {
@@ -12038,7 +12038,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "Items / Slots (" + entries.size() + ")", font, UiColorPalette.parse(), x, cy + 2, false);
       boolean canClear = !entries.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, cy, headerBtnW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
          entries.clear();
          this.f_l_I = -1;
          this.mark();
@@ -12047,7 +12047,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int delW = 13;
       int rowW = w - 5 - 1 - delW - 2;
       int selAreaH = 56;
-      EventBus wscViewport = this.init_EventBus_Map(this.tick_Map, "_wsc_entries", x, cy, w, selAreaH, 14, 5);
+      ScrollableListView wscViewport = this.init_EventBus_Map(this.tick_Map, "_wsc_entries", x, cy, w, selAreaH, 14, 5);
       wscViewport.init_V(entries.size() * 14);
       wscViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (!entries.isEmpty()) {
@@ -12063,8 +12063,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String modeSummary = " • " + e.init_Str();
                Component rowLabel = Component.empty().append(targetDisp).append(Component.literal(modeSummary).withStyle(s -> s.withColor(-7829368)));
                boolean rowHovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
-               autismclient.gui.macro.editor.a.CachePool.init(
-                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), rowHovered, selected, FileCache.Inner_DataUtil.NORMAL, true
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+                  ctx, this.init_Font, rowLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), rowHovered, selected, ListRowRenderer.Inner_DataUtil.NORMAL, true
                );
                int fi = i;
                if (iy + 13 > cy && iy < cy + selAreaH) {
@@ -12086,7 +12086,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
 
                   entries.remove(fi);
-                  EventBus vp = this.tick_Map.get("_wsc_entries");
+                  ScrollableListView vp = this.tick_Map.get("_wsc_entries");
                   if (vp != null) {
                      vp.read_V(-1);
                   }
@@ -12096,16 +12096,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          wscViewport.init(ctx);
       } else {
-         FileCache.init(ctx, this.init_Font, "No entries yet. Add an item or slot below.", x, cy, w - 5 - 1);
+         ListRowRenderer.init(ctx, this.init_Font, "No entries yet. Add an item or slot below.", x, cy, w - 5 - 1);
       }
 
       cy += selAreaH;
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 6;
       ThemedTextInputBox wscAddF = this.flush_Map.get("_wsc_add");
       ThemedTextInputBox wscSlotF = this.init_Map.get("wsc_slot");
       if (wscAddF != null && wscSlotF != null) {
-         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+         int pickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
          int slotW = 44;
          int pickX = x + w - pickW;
          int slotX = pickX - 2 - slotW;
@@ -12118,7 +12118,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          wscAddF.init_V(ctx, mx, my, delta);
          wscSlotF.init_V(ctx, mx, my, delta);
          boolean capturing = this.init_StreamUtil.init("_wsc_entries");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_wsc_entries"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("_wsc_entries"));
       }
 
       cy += 16;
@@ -12159,14 +12159,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             countF.init_V(ctx, mx, my, delta);
          } else {
-            TableIndex.read(ctx, cntX, cy, cntW, 13);
+            PanelSurfaceHelper.read(ctx, cntX, cy, cntW, 13);
             this.sync_V(ctx, cntX, cy, cntW, 13, -14018022);
             autismclient.gui.f.b.k.init(ctx, this.init_Font, "-", font, UiColorPalette.bind(), cntX + (cntW - this.init_I_Identifier_Str(font, "-")) / 2, cy + 3, false);
          }
       }
 
       int plusX = cntX + cntW + 2;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", ByteReader.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, plusX, cy, addBtnW, 13, "+Add", OverlayActionButton.Inner_StreamUtil.SUCCESS, true, mx, my, () -> {
          if (wscAddF != null && wscSlotF != null) {
             this.init_V_k_k(wscAddF, wscSlotF);
             this.f_l_I = -1;
@@ -12221,7 +12221,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_V_GuiGraphicsExtract_3(ctx, itemFieldDef.label(), x, y, labelW, font);
          int controlX = this.flush_I(x, labelW);
          int controlW = Math.max(1, this.close(w, labelW));
-         int pickW = this.init_I_StreamUtil(StreamUtil.ITEM_SLOT, null, null);
+         int pickW = this.init_I_StreamUtil(CaptureMode.ITEM_SLOT, null, null);
          int slotW = 34;
          int gap = 2;
          int itemW = Math.max(1, controlW - pickW - slotW - gap * 2);
@@ -12236,7 +12236,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          slotField.init_V(ctx, mx, my, delta);
          int pickX = slotX + slotW + gap;
          boolean capturing = this.init_StreamUtil.init("itemName");
-         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y + 2, pickW, 14, StreamUtil.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("itemName"));
+         this.init_ByteReader_GuiGraphicsExtract(ctx, pickX, y + 2, pickW, 14, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.close_V("itemName"));
          return y + 14 + 2;
       } else {
          int cy = this.init_I_GuiGraphicsExtract_5(ctx, "itemName", x, y, w, mx, my, delta);
@@ -12394,7 +12394,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromUseItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromItemName", x, cy, w, mx, my, delta);
       cy = this.init_I_GuiGraphicsExtract_5(ctx, "fromSlot", x, cy, w, mx, my, delta);
-      TableIndex.init(ctx, x, cy + 2, w, UiColorPalette.c());
+      PanelSurfaceHelper.init(ctx, x, cy + 2, w, UiColorPalette.c());
       cy += 8;
       autismclient.gui.f.b.k.init(ctx, this.init_Font, "To", font, UiColorPalette.parse(), x, cy + 2, false);
       cy += 16;
@@ -12507,7 +12507,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             cellW,
             13,
             label,
-            selected ? ByteReader.Inner_StreamUtil.PRIMARY : ByteReader.Inner_StreamUtil.GHOST,
+            selected ? OverlayActionButton.Inner_StreamUtil.PRIMARY : OverlayActionButton.Inner_StreamUtil.GHOST,
             true,
             mx,
             my,
@@ -12544,7 +12544,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.init_V_GuiGraphicsExtract(ctx, slotBtns[0], cy, slotBtns[1], 13, "Selected", mx, my, this::f);
          boolean capturing = this.init_StreamUtil.init("wait_inventory_slot");
          this.init_ByteReader_GuiGraphicsExtract(
-            ctx, slotBtns[2], cy, slotBtns[3], 13, StreamUtil.ITEM_SLOT, capturing, true, mx, my, "Pick Slot", "Done", this::g
+            ctx, slotBtns[2], cy, slotBtns[3], 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, "Pick Slot", "Done", this::g
          );
          this.init_V_GuiGraphicsExtract(ctx, slotBtns[4], cy, slotBtns[5], 13, "Slot 0", mx, my, () -> this.poll(0));
          cy += 18;
@@ -12671,11 +12671,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       y += 13;
       int listH = lines.isEmpty() ? 24 : Math.min(5, lines.size()) * 22;
       int itemW = Math.max(1, w - 5 - 1);
-      EventBus viewport = this.init_EventBus_Map(this.tick_Map, "capture_value_scoreboard", x, y, w, listH, 22, 5);
+      ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, "capture_value_scoreboard", x, y, w, listH, 22, 5);
       viewport.init_V(lines.size() * 22);
       viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (lines.isEmpty()) {
-         TableIndex.init(ctx, x, y, itemW, 24, false, false);
+         PanelSurfaceHelper.init(ctx, x, y, itemW, 24, false, false);
          autismclient.gui.f.b.k.init(ctx, this.init_Font, "No scoreboard", font, UiColorPalette.bind(), x + 3, y + 7, false);
          return y + 24 + 2;
       }
@@ -12690,8 +12690,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line = lines.get(i);
             boolean selected = line.init_Str().equals(selectedKey);
             boolean hovered = mx >= x && mx < x + itemW && my >= rowY && my < rowY + 22;
-            TableIndex.init(ctx, x, rowY, itemW, 22, hovered, selected);
-            TableIndex.read(ctx, x, rowY + 2, 3, 18, selected ? -13248397 : -3376606);
+            PanelSurfaceHelper.init(ctx, x, rowY, itemW, 22, hovered, selected);
+            PanelSurfaceHelper.read(ctx, x, rowY + 2, 3, 18, selected ? -13248397 : -3376606);
             String rowLabel = "Row " + (line.init_I() + 1);
             autismclient.gui.f.b.k.init(ctx, this.init_Font, rowLabel, font, UiColorPalette.bind(), x + 6, rowY + 2, false);
             autismclient.gui.f.b.k.init(
@@ -12754,11 +12754,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       y += 13;
       int listH = pool.isEmpty() ? 24 : Math.min(5, pool.size()) * 14;
       int itemW = Math.max(1, w - 5 - 1);
-      EventBus viewport = this.init_EventBus_Map(this.tick_Map, "capture_value_tablist", x, y, w, listH, 14, 5);
+      ScrollableListView viewport = this.init_EventBus_Map(this.tick_Map, "capture_value_tablist", x, y, w, listH, 14, 5);
       viewport.init_V(pool.size() * 14);
       viewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (pool.isEmpty()) {
-         TableIndex.init(ctx, x, y, itemW, 24, false, false);
+         PanelSurfaceHelper.init(ctx, x, y, itemW, 24, false, false);
          autismclient.gui.f.b.k.init(ctx, this.init_Font, "No matches", font, UiColorPalette.bind(), x + 3, y + 7, false);
          return y + 24 + 2;
       }
@@ -12771,7 +12771,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (rowY != -2147483648) {
             String name = pool.get(i);
             boolean hovered = mx >= x && mx < x + itemW && my >= rowY && my < rowY + 14;
-            TableIndex.init(ctx, x, rowY, itemW, 14, hovered, false);
+            PanelSurfaceHelper.init(ctx, x, rowY, itemW, 14, hovered, false);
             autismclient.gui.f.b.k.init(
                ctx,
                this.init_Font,
@@ -13656,11 +13656,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int desiredListH = values.isEmpty() ? 24 : Math.min(Math.max(1, visibleRows), values.size()) * 34;
       listH = Math.max(24, Math.min(listH, desiredListH));
       int itemW = w - 5 - 1;
-      EventBus chatViewport = this.init_EventBus_Map(this.tick_Map, viewportKey, x, y, w, listH, 34, 5);
+      ScrollableListView chatViewport = this.init_EventBus_Map(this.tick_Map, viewportKey, x, y, w, listH, 34, 5);
       chatViewport.init_V(values.size() * 34);
       chatViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (values.isEmpty()) {
-         TableIndex.init(ctx, x, y, itemW, 24, false, false);
+         PanelSurfaceHelper.init(ctx, x, y, itemW, 24, false, false);
          String firstLine = "capture_value_recent".equals(viewportKey) ? "No recent chat yet." : "No recent messages matched your search.";
          String secondLine = "capture_value_recent".equals(viewportKey) ? "Send or receive a message first." : "Send or receive chat first, then pick it here.";
          autismclient.gui.f.b.k.init(ctx, this.init_Font, firstLine, font, UiColorPalette.bind(), x + 3, y + 3, false);
@@ -13680,7 +13680,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (itemH > 0) {
                   MacroExecutor.Inner_PacketUtil value = values.get(i);
                   boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + itemH;
-                  TableIndex.init(ctx, x, iy, itemW, itemH, hovered, false);
+                  PanelSurfaceHelper.init(ctx, x, iy, itemW, itemH, hovered, false);
                   int border = value.init_MacroExecutor_Task() == MacroExecutor.Inner_TaskQueue.SERVER
                      ? (hovered ? -20134 : -3376606)
                      : (hovered ? -8597761 : -11627064);
@@ -13800,10 +13800,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if ("ENABLE".equals(mode)) {
          int[] addBtns = this.init_IArr_I(x, w, false, "Add C2S (" + c2sTargets.size() + ")", "Add S2C (" + s2cTargets.size() + ")");
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, addBtns[0], cy, addBtns[1], 13, "Add C2S (" + c2sTargets.size() + ")", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.put(true)
+            ctx, addBtns[0], cy, addBtns[1], 13, "Add C2S (" + c2sTargets.size() + ")", OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.put(true)
          );
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, addBtns[2], cy, addBtns[3], 13, "Add S2C (" + s2cTargets.size() + ")", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.put(false)
+            ctx, addBtns[2], cy, addBtns[3], 13, "Add S2C (" + s2cTargets.size() + ")", OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, () -> this.put(false)
          );
          cy += 18;
          int[] loadBtns = this.init_IArr_I(x, w, false, "Load Queue", "Clear All");
@@ -13812,10 +13812,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          cy += 18;
          int[] presetBtns = this.init_IArr_I(x, w, false, "Default Preset", "Module Preset");
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, presetBtns[0], cy, presetBtns[1], 13, "Default Preset", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, this::m
+            ctx, presetBtns[0], cy, presetBtns[1], 13, "Default Preset", OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, this::m
          );
          this.init_ByteReader_GuiGraphicsExtract_2(
-            ctx, presetBtns[2], cy, presetBtns[3], 13, "Module Preset", ByteReader.Inner_StreamUtil.PRIMARY, true, mx, my, this::n
+            ctx, presetBtns[2], cy, presetBtns[3], 13, "Module Preset", OverlayActionButton.Inner_StreamUtil.PRIMARY, true, mx, my, this::n
          );
       }
    }
@@ -14368,10 +14368,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.init_Font, label + " (" + values.size() + ")", font, UiColorPalette.parse(), x, y + 2, false);
       boolean canClear = !values.isEmpty();
       int clearX = x + w - headerBtnW;
-      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, y, headerBtnW, 13, "Clear", ByteReader.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
+      this.init_ByteReader_GuiGraphicsExtract_2(ctx, clearX, y, headerBtnW, 13, "Clear", OverlayActionButton.Inner_StreamUtil.DANGER, canClear, mx, my, () -> {
          clearAction.run();
          this.open_Map.put(listKey, -1);
-         EventBus vp = this.tick_Map.get(listKey);
+         ScrollableListView vp = this.tick_Map.get(listKey);
          if (vp != null) {
             vp.load_V(0);
          }
@@ -14379,12 +14379,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       y += 14;
       int listH = 56;
       int itemW = w - 5 - 1;
-      EventBus simpleViewport = this.init_EventBus_Map(this.tick_Map, listKey, x, y, w, listH, 14, 5);
+      ScrollableListView simpleViewport = this.init_EventBus_Map(this.tick_Map, listKey, x, y, w, listH, 14, 5);
       simpleViewport.init_V(values.size() * 14);
       simpleViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (values.isEmpty()) {
-         TableIndex.init(ctx, x, y, itemW, 12, false, false);
-         FileCache.init(ctx, this.init_Font, emptyLabel, x, y, itemW);
+         PanelSurfaceHelper.init(ctx, x, y, itemW, 12, false, false);
+         ListRowRenderer.init(ctx, this.init_Font, emptyLabel, x, y, itemW);
          return y + listH + 4;
       }
 
@@ -14401,18 +14401,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
             Component richLabel = richFormatter == null ? null : richFormatter.apply(value);
             if (richLabel != null) {
-               autismclient.gui.macro.editor.a.CachePool.init(
-                  ctx, this.init_Font, richLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), hovered, selected, FileCache.Inner_DataUtil.NORMAL, true
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
+                  ctx, this.init_Font, richLabel, autismclient.gui.f.NetHelper.init(x, iy, rowW, 13), hovered, selected, ListRowRenderer.Inner_DataUtil.NORMAL, true
                );
             } else {
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(formatter.apply(value)),
                   autismclient.gui.f.NetHelper.init(x, iy, rowW, 13),
                   hovered,
                   selected,
-                  FileCache.Inner_DataUtil.NORMAL,
+                  ListRowRenderer.Inner_DataUtil.NORMAL,
                   false
                );
             }
@@ -14446,7 +14446,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
                }
 
-               EventBus vp = this.tick_Map.get(listKey);
+               ScrollableListView vp = this.tick_Map.get(listKey);
                if (vp != null) {
                   vp.read_V(-1);
                }
@@ -14491,12 +14491,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int rowH = 13;
       int listH = visibleRows * rowH;
       int itemW = w - 5 - 1;
-      EventBus regViewport = this.init_EventBus_Map(this.close_Map, listKey, x, y, w, listH, rowH, 5);
+      ScrollableListView regViewport = this.init_EventBus_Map(this.close_Map, listKey, x, y, w, listH, rowH, 5);
       regViewport.init_V(values.size() * rowH);
       regViewport.init_V_GuiGraphicsExtract(ctx, mx, my);
       if (values.isEmpty()) {
-         TableIndex.init(ctx, x, y, itemW, 12, false, false);
-         FileCache.init(ctx, this.init_Font, "No matches", x, y, itemW);
+         PanelSurfaceHelper.init(ctx, x, y, itemW, 12, false, false);
+         ListRowRenderer.init(ctx, this.init_Font, "No matches", x, y, itemW);
       } else {
          regViewport.init_V_GuiGraphicsExtract_2(ctx, this.init_CharEncoder.set(), 905969664);
          int first = regViewport.pop();
@@ -14509,7 +14509,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean selected = selectedPredicate != null && selectedPredicate.test(value);
                boolean hovered = mx >= x && mx < x + itemW && my >= iy && my < iy + rowH;
                ItemStack icon = this.init_ItemStack_Str_Obj(listKey, value);
-               autismclient.gui.macro.editor.a.CachePool.init(
+               autismclient.gui.macro.editor.a.EditorListRowHelper.init(
                   ctx,
                   this.init_Font,
                   Component.literal(display),
@@ -14517,7 +14517,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.f.NetHelper.init(x, iy, itemW, rowH),
                   hovered,
                   selected,
-                  selected ? FileCache.Inner_DataUtil.READY : FileCache.Inner_DataUtil.NORMAL,
+                  selected ? ListRowRenderer.Inner_DataUtil.READY : ListRowRenderer.Inner_DataUtil.NORMAL,
                   false
                );
                T clickedValue = value;
@@ -15026,12 +15026,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void get_V(String direction) {
       this.close_List().removeIf(target -> direction.equalsIgnoreCase(WaitForPacketAction.init(this.prev(target))));
-      EventBus vpC2s = this.tick_Map.get("wait_packet_c2s");
+      ScrollableListView vpC2s = this.tick_Map.get("wait_packet_c2s");
       if (vpC2s != null) {
          vpC2s.load_V(0);
       }
 
-      EventBus vpS2c = this.tick_Map.get("wait_packet_s2c");
+      ScrollableListView vpS2c = this.tick_Map.get("wait_packet_s2c");
       if (vpS2c != null) {
          vpS2c.load_V(0);
       }
@@ -15305,7 +15305,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          case STRING_LIST:
             if (this.init_Z_FieldDef(field)) {
                var10000 = 86;
-            } else if (field.captureMode() == StreamUtil.BLOCK_CATALOG) {
+            } else if (field.captureMode() == CaptureMode.BLOCK_CATALOG) {
                var10000 = 161;
             } else {
                int extraEditorRow = this.put_Z(field.key()) && this.open_Map.getOrDefault(field.key(), -1) >= 0 ? 15 : 0;
@@ -15761,13 +15761,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                               int h = 4;
 
                               for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                                 if (field.type() != CachePool.STRING_LIST && !this.flush_Z(field.key()) && this.write(field)) {
+                                 if (field.type() != FieldType.STRING_LIST && !this.flush_Z(field.key()) && this.write(field)) {
                                     h += this.init_I_FieldDef(field) + 2;
                                  }
                               }
 
                               for (FieldDef field : this.init_ActionFieldSchema.fields()) {
-                                 if (field.type() == CachePool.STRING_LIST && !this.flush_Z(field.key()) && this.write(field)) {
+                                 if (field.type() == FieldType.STRING_LIST && !this.flush_Z(field.key()) && this.write(field)) {
                                     h += this.init_I_FieldDef(field) + 2;
                                  }
                               }
@@ -15834,7 +15834,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, String text, int x, int y, int maxW, Identifier font) {
       String trimmed = autismclient.gui.f.b.k.init(this.init_Font, text, maxW - 4, font, -1);
       autismclient.gui.f.b.k.init(
-         ctx, this.init_Font, trimmed, font, UiColorPalette.scan(), x, j.init(y, 14, this.init_I_Identifier(font), this.init_CharEncoder.flush()), false
+         ctx, this.init_Font, trimmed, font, UiColorPalette.scan(), x, UiLayoutMath.init(y, 14, this.init_I_Identifier(font), this.init_CharEncoder.flush()), false
       );
    }
 
@@ -15855,13 +15855,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int write_I(String label) {
-      return RenderState.load(this.read_I(label));
+      return UiDensityMetrics.load(this.read_I(label));
    }
 
-   private int init_I_StreamUtil(StreamUtil mode, String idleLabel, String capturingLabel) {
+   private int init_I_StreamUtil(CaptureMode mode, String idleLabel, String capturingLabel) {
       return Math.max(
-         this.write_I(autismclient.gui.macro.editor.a.DataUtil.init(mode, false, idleLabel, capturingLabel)),
-         this.write_I(autismclient.gui.macro.editor.a.DataUtil.init(mode, true, idleLabel, capturingLabel))
+         this.write_I(autismclient.gui.macro.editor.a.CaptureButtonRenderer.init(mode, false, idleLabel, capturingLabel)),
+         this.write_I(autismclient.gui.macro.editor.a.CaptureButtonRenderer.init(mode, true, idleLabel, capturingLabel))
       );
    }
 
@@ -15938,16 +15938,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (totalCount > visibleCount) {
          int viewPixels = Math.max(1, Math.min(trackH, visibleCount * itemH));
          int contentPixels = Math.max(0, totalCount * itemH);
-         PoolEntry.Inner_DataUtil metrics = PoolEntry.init_PoolEntry_DataUtil_I_2(contentPixels, viewPixels, trackX, trackY, 5, trackH, scrollOffset);
+         ScrollbarMetricsHelper.Inner_DataUtil metrics = ScrollbarMetricsHelper.init_PoolEntry_DataUtil_I_2(contentPixels, viewPixels, trackX, trackY, 5, trackH, scrollOffset);
          boolean sbDragging = this.init_IntConsumer != null;
-         PoolEntry.init(ctx, metrics, metrics.init(mouseX, mouseY), sbDragging);
+         ScrollbarMetricsHelper.init(ctx, metrics, metrics.init(mouseX, mouseY), sbDragging);
       }
    }
 
-   private EventBus init_EventBus_Map(Map<String, EventBus> viewports, String key, int x, int y, int width, int height, int rowHeight, int scrollbarWidth) {
-      EventBus vp = viewports.get(key);
+   private ScrollableListView init_EventBus_Map(Map<String, ScrollableListView> viewports, String key, int x, int y, int width, int height, int rowHeight, int scrollbarWidth) {
+      ScrollableListView vp = viewports.get(key);
       if (vp == null || vp.init_I() != x || vp.load_I() != y || vp.read_I() != width || vp.write_I() != height) {
-         vp = new EventBus(x, y, width, height, rowHeight, scrollbarWidth);
+         vp = new ScrollableListView(x, y, width, height, rowHeight, scrollbarWidth);
          viewports.put(key, vp);
       }
 
@@ -15979,7 +15979,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_FieldDef_List(FieldDef field, List<String> lst) {
-      if (field.captureMode() == StreamUtil.PACKET_NAME) {
+      if (field.captureMode() == CaptureMode.PACKET_NAME) {
          boolean both = this.init_MacroAction != null && this.init_MacroAction.getType() == MacroActionType.PACKET_GATE;
          if (!both) {
             Consumer<Class<? extends Packet<?>>> add = packetClass -> {
@@ -16041,7 +16041,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          });
          AutismSessionState state = AutismSessionState.init_ck();
          state.read_V_Runnable(() -> this.init_V_Z_Z(true, false));
-         if (field.captureMode() == StreamUtil.BLOCK_ID || field.captureMode() == StreamUtil.BLOCK_CATALOG) {
+         if (field.captureMode() == CaptureMode.BLOCK_ID || field.captureMode() == CaptureMode.BLOCK_CATALOG) {
             state.init_V_Consumer(pos -> {
                if (init_Minecraft.level != null) {
                   String id = BuiltInRegistries.BLOCK.getKey(init_Minecraft.level.getBlockState(pos).getBlock()).toString();
@@ -16052,7 +16052,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                this.init_V_Z_Z(true, false);
             });
-         } else if (field.captureMode() == StreamUtil.ENTITY_ID) {
+         } else if (field.captureMode() == CaptureMode.ENTITY_ID) {
             boolean specificCapture = this.add_Z(field.key());
             boolean replaceOnCapture = this.clear_Z_Str(field.key());
             state.value(specificCapture);
@@ -16290,8 +16290,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          });
       }
 
-      private Inner_StreamUtil(ByteReader button, Runnable action) {
-         this(button.init_I(), button.load(), button.read(), button.write(), (mx, my, mouseButton) -> ByteReader.init(button, mx, my, mouseButton));
+      private Inner_StreamUtil(OverlayActionButton button, Runnable action) {
+         this(button.init_I(), button.load(), button.read(), button.write(), (mx, my, mouseButton) -> OverlayActionButton.init(button, mx, my, mouseButton));
       }
 
       private Inner_StreamUtil(int x, int y, int w, int h, ActionEditorOverlay.Inner_CachePool action) {

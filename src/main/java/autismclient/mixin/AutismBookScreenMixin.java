@@ -1,7 +1,7 @@
 package autismclient.mixin;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.DataPipe;
+import autismclient.gui.f.b.SimpleClickButton;
 import autismclient.util.AutismClientMessaging;
 import autismclient.util.ScreenOverlayHost;
 import autismclient.util.ContainerScreenToolbar;
@@ -51,7 +51,7 @@ public abstract class AutismBookScreenMixin extends Screen implements Desyncable
             double mouseX = cA.init_D_D(click.x());
             double mouseY = cA.init_D_D(click.y());
 
-            for (DataPipe button : ContainerScreenToolbar.init(MC, this.autism$host.queueEditorOverlay())) {
+            for (SimpleClickButton button : ContainerScreenToolbar.init(MC, this.autism$host.queueEditorOverlay())) {
                if (button.init(mouseX, mouseY, Compat263.mouseEventGlfwButton(click))) {
                   cir.setReturnValue(true);
                   return;

@@ -1,7 +1,7 @@
 package autismclient.gui.d;
 
 import autismclient.compat263.Compat263;
-import autismclient.gui.f.b.j;
+import autismclient.gui.f.b.UiLayoutMath;
 import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 import autismclient.modules.Module;
@@ -108,14 +108,14 @@ public class AutismHudEditorScreen extends Screen {
       int titleW = k.init(this.font, "Autism HUD Editor", init_CharEncoder.init_Identifier_l(l.read), -791321) + 8;
       int helpW = k.init(this.font, help, init_CharEncoder.init_Identifier_l(l.read), init_I()) + 8;
       int w = Math.min(sw - 12, Math.min(430, Math.max(titleW, helpW)));
-      int headerH = autismclient.gui.f.RenderState.init(14);
-      int lineH = autismclient.gui.f.RenderState.init(12);
+      int headerH = autismclient.gui.f.UiDensityMetrics.init(14);
+      int lineH = autismclient.gui.f.UiDensityMetrics.init(12);
       int h = headerH + lineH + 2;
       int[] pos = this.init_IArr(sw, sh, w, h);
       if (pos != null) {
          int x = pos[0];
          int y = pos[1];
-         autismclient.gui.f.b.FieldCache.init(
+         autismclient.gui.f.b.WindowFrameRenderer.init(
             autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             "Autism HUD Editor",
@@ -202,9 +202,9 @@ public class AutismHudEditorScreen extends Screen {
    private AutismHudEditorScreen.Inner_DataUtil init_RenderState_DataUt() {
       int pad = 4;
       int gap = 4;
-      int titleH = autismclient.gui.f.RenderState.init(14);
-      int catH = autismclient.gui.f.RenderState.init(12) + 2;
-      int rowH = autismclient.gui.f.RenderState.init(12) + 2;
+      int titleH = autismclient.gui.f.UiDensityMetrics.init(14);
+      int catH = autismclient.gui.f.UiDensityMetrics.init(12) + 2;
+      int rowH = autismclient.gui.f.UiDensityMetrics.init(12) + 2;
       int longest = 0;
 
       for (String[] cat : init_StrArr2) {
@@ -233,7 +233,7 @@ public class AutismHudEditorScreen extends Screen {
 
    private void load(GuiGraphicsExtractor graphics, int mx, int my) {
       AutismHudEditorScreen.Inner_DataUtil p = this.init_RenderState_DataUt();
-      autismclient.gui.f.b.FieldCache.init(
+      autismclient.gui.f.b.WindowFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
          autismclient.gui.f.NetHelper.init(p.init, p.load, p.read, p.write),
          "Add Element",
@@ -258,9 +258,9 @@ public class AutismHudEditorScreen extends Screen {
          for (String id : init_StrArr2[col]) {
             boolean over = this.init(mx, my, colX, cy, p.update, p.close - 2);
             boolean enabled = AutismHudManager.init_AutismConfig_HudEl_Str(id).enabled;
-            autismclient.gui.f.b.TableIndex.init(graphics, colX, cy, p.update, p.close - 2, over ? 1714756383 : 856888344);
+            autismclient.gui.f.b.PanelSurfaceHelper.init(graphics, colX, cy, p.update, p.close - 2, over ? 1714756383 : 856888344);
             if (enabled) {
-               autismclient.gui.f.b.TableIndex.read(graphics, colX + 1, cy + 1, 3, p.close - 4, -10682470);
+               autismclient.gui.f.b.PanelSurfaceHelper.read(graphics, colX + 1, cy + 1, 3, p.close - 4, -10682470);
             }
 
             this.init(graphics, AutismHudManager.init_Str_Str(id), colX + 7, this.load(cy, p.close - 2), enabled ? -791321 : init_I(), p.update - 9);
@@ -593,7 +593,7 @@ public class AutismHudEditorScreen extends Screen {
    }
 
    private int load(int boxY, int boxH) {
-      return j.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
+      return UiLayoutMath.init(boxY, boxH, init_CharEncoder.init_I_l(l.read), init_CharEncoder.flush());
    }
 
    private boolean init(int mx, int my, int x, int y, int w, int h) {

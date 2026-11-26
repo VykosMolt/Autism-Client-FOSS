@@ -61,8 +61,8 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
 
    protected autismclient.gui.f.NetHelper init_NetHelper_cH(OverlayBounds bounds) {
       autismclient.gui.f.NetHelper window = autismclient.gui.f.NetHelper.init(bounds.init_I, bounds.load_I, bounds.read, 14);
-      autismclient.gui.f.NetHelper bar = autismclient.gui.f.b.ClassCache.init(window, 14);
-      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.ClassCache.load(window, 14);
+      autismclient.gui.f.NetHelper bar = autismclient.gui.f.b.WindowHeaderHelper.init(window, 14);
+      autismclient.gui.f.NetHelper close = autismclient.gui.f.b.WindowHeaderHelper.load(window, 14);
       int size = Math.min(12, Math.max(9, 10));
       int x = close.read() - 3 - size;
       int y = bar.write() + Math.max(1, (bar.sync() - size) / 2);
@@ -76,7 +76,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    protected void init_V_GuiGraphicsExtract_13(GuiGraphicsExtractor context, int mouseX, int mouseY, OverlayBounds bounds) {
       if (this.d_()) {
          autismclient.gui.f.NetHelper pin = this.init_NetHelper_cH(bounds);
-         autismclient.gui.f.JsonUtil colors = autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, mouseX, mouseY)
+         autismclient.gui.f.UiColorScheme colors = autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, mouseX, mouseY)
             .init_TableIndex()
             .init_JsonUtil();
          boolean hovered = pin.init_Z(mouseX, mouseY);

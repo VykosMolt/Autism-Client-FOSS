@@ -3,10 +3,10 @@ package autismclient.mixin;
 import autismclient.AutismClientAddon;
 import autismclient.e.PoolEntry;
 import autismclient.gui.d.JsonUtil;
-import autismclient.gui.d.ListPool;
-import autismclient.gui.d.RefQueue;
-import autismclient.gui.d.UtilCore;
-import autismclient.gui.f.b.BitSetUtil;
+import autismclient.gui.d.StealthPauseScreen;
+import autismclient.gui.d.StealthTitleScreen;
+import autismclient.gui.d.AutismTitleScreen;
+import autismclient.gui.f.b.TextInputWidget;
 import autismclient.modules.aD;
 import autismclient.util.AutismLiteVariant;
 import autismclient.util.CustomMainMenuGuard;
@@ -87,12 +87,12 @@ public class AutismGuiSetScreenMixin {
 
       if (!AutismLiteVariant.enabled() && screen instanceof JsonUtil) {
          OverlayScreenController.update();
-         BitSetUtil.init_V();
+         TextInputWidget.init_V();
       } else if (!this.autism$replacingScreen && OverlayScreenController.init(this.minecraft, this.screen, screen)) {
          ci.cancel();
       } else {
          if (!OverlayScreenController.read_Z()) {
-            BitSetUtil.init_V();
+            TextInputWidget.init_V();
          }
 
          if (!this.autism$replacingScreen) {
@@ -101,17 +101,17 @@ public class AutismGuiSetScreenMixin {
 
          if (!this.autism$replacingScreen && screen != null) {
             if (aD.init_Z() && screen instanceof PauseScreen pauseScreen && pauseScreen.showsPauseMenu()) {
-               this.autism$setScreen(new ListPool());
+               this.autism$setScreen(new StealthPauseScreen());
                ci.cancel();
             } else if (screen instanceof TitleScreen) {
                if (!aD.init_Z() && !AutismLiteVariant.enabled() && !PoolEntry.init()) {
                   this.autism$setScreen(new JsonUtil());
                   ci.cancel();
                } else if (aD.init_Z()) {
-                  this.autism$setScreen(new RefQueue());
+                  this.autism$setScreen(new StealthTitleScreen());
                   ci.cancel();
                } else if (!AutismLiteVariant.enabled() && CustomMainMenuGuard.init()) {
-                  this.autism$setScreen(new UtilCore());
+                  this.autism$setScreen(new AutismTitleScreen());
                   ci.cancel();
                }
             }
